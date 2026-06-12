@@ -1,0 +1,11 @@
+from enum import Enum
+
+
+class RuleFamily(str, Enum):
+    CCNS_MINIMUM = "CCNS_MINIMUM"
+    SHORT_PART_TIME = "SHORT_PART_TIME"
+    SENIORITY = "SENIORITY"
+    CEE = "CEE"
+    APPRENTICESHIP = "APPRENTICESHIP"
+    PREPARATION = "PREPARATION"
+    MINOR = "MINOR"
