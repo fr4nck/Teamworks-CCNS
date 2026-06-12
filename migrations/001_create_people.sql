@@ -1,0 +1,11 @@
+CREATE TABLE IF NOT EXISTS people (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    internal_code VARCHAR(64) UNIQUE,
+    last_name VARCHAR(128),
+    first_name VARCHAR(128),
+    display_name VARCHAR(255) NOT NULL,
+    birth_date DATE,
+    is_active BOOLEAN NOT NULL DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);

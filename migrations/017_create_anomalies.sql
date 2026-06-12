@@ -1,0 +1,23 @@
+CREATE TABLE IF NOT EXISTS anomalies (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    object_type VARCHAR(64) NOT NULL,
+    object_id INTEGER NOT NULL,
+    person_id INTEGER,
+    contract_id INTEGER,
+    assignment_id INTEGER,
+    calculation_result_id INTEGER,
+    severity_level VARCHAR(16) NOT NULL,
+    anomaly_code VARCHAR(64) NOT NULL,
+    message TEXT NOT NULL,
+    details_json TEXT,
+    detected_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    is_resolved BOOLEAN NOT NULL DEFAULT 0,
+    resolved_at DATETIME,
+    resolved_by_user_id INTEGER,
+    resolution_comment TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (person_id) REFERENCES people(id),
+    FOREIGN KEY (contract_id) REFERENCES contracts(id),
+    FOREIGN KEY (assignment_id) REFERENCES assignments(id),
+    FOREIGN KEY (calculation_result_id) REFERENCES calculation_results(id)
+);

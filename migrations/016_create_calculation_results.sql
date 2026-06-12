@@ -1,0 +1,23 @@
+CREATE TABLE IF NOT EXISTS calculation_results (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    object_type VARCHAR(64) NOT NULL,
+    object_id INTEGER NOT NULL,
+    person_id INTEGER,
+    contract_id INTEGER,
+    assignment_id INTEGER,
+    calculation_rule_id INTEGER,
+    rule_code VARCHAR(64),
+    calculated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    retained_base VARCHAR(64),
+    actual_value DECIMAL(12,2),
+    theoretical_value DECIMAL(12,2),
+    retained_coefficient DECIMAL(12,4),
+    delta_value DECIMAL(12,2),
+    result_status VARCHAR(32) NOT NULL,
+    readable_message TEXT,
+    details_json TEXT,
+    FOREIGN KEY (person_id) REFERENCES people(id),
+    FOREIGN KEY (contract_id) REFERENCES contracts(id),
+    FOREIGN KEY (assignment_id) REFERENCES assignments(id),
+    FOREIGN KEY (calculation_rule_id) REFERENCES calculation_rules(id)
+);

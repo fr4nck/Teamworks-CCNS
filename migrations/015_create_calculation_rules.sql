@@ -1,0 +1,22 @@
+CREATE TABLE IF NOT EXISTS calculation_rules (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    code VARCHAR(64) NOT NULL UNIQUE,
+    label VARCHAR(255) NOT NULL,
+    rule_family VARCHAR(64) NOT NULL,
+    context VARCHAR(64) NOT NULL,
+    target_object VARCHAR(64),
+    population_code VARCHAR(64),
+    classification_code VARCHAR(64),
+    contract_type_code VARCHAR(64),
+    employment_regime_code VARCHAR(64),
+    time_organization_code VARCHAR(64),
+    convention_frame VARCHAR(64),
+    effective_date DATE,
+    end_date DATE,
+    priority INTEGER NOT NULL DEFAULT 100,
+    is_active BOOLEAN NOT NULL DEFAULT 1,
+    parameters_json TEXT,
+    notes TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
