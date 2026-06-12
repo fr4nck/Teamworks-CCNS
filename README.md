@@ -1,21 +1,21 @@
-Teamworks-CCNS
+Teamworks
 ==================
 
-Fork libre et gratuit de gestion d'équipes, orienté CCNS pour le sport associatif.
+Fork de Teamworks orienté CCNS pour la gestion d’équipes et des cadres d’emploi dans le sport associatif.
 Pour Windows, Mac OS et Linux.
 
-Projet d'origine : https://github.com/Noethys/Teamworks
+Projet d’origine : https://github.com/Noethys/Teamworks
 
 Ce dépôt vise à faire évoluer Teamworks pour intégrer progressivement les spécificités de la convention collective nationale du sport (CCNS), notamment autour :
-- des cadres d'emploi ;
+- des cadres d’emploi ;
 - des contrats ;
 - du temps de travail ;
 - des contrôles métier.
 
-Télécharger Teamworks-CCNS
+Télécharger Teamworks
 ------------------
 
-Cliquez sur le bouton *Code* ci-dessus puis sélectionnez *Download ZIP* pour télécharger l'intégralité du code source. Décompressez ensuite l'archive dans le répertoire de votre choix.
+Cliquez sur le bouton *Code* ci-dessus puis sélectionnez *Download ZIP* pour télécharger l'intégralité du code source. Décompressez ensuite l’archive dans le répertoire de votre choix.
 
 Installer Teamworks sous Linux
 ------------------
