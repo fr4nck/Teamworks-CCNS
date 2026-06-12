@@ -30,21 +30,21 @@ def build_default_salary_grid_2026() -> tuple[SalaryGrid, list[SalaryGridLine]]:
         code="CCNS-2026",
         label="CCNS 2026",
         effective_date=date(2026, 1, 1),
-        source_reference="Bootstrap Teamworks-CCNS",
+        source_reference="CCNS 2026 - montants applicables au 1er janvier 2026",
     )
     lines = [
         SalaryGridLine(
             salary_grid_id=grid.id,
             classification_code="G1",
             minimum_type=MinimumType.MONTHLY,
-            amount=1801.84,
+            amount=1848.42,
             unit="EUR",
         ),
         SalaryGridLine(
             salary_grid_id=grid.id,
             classification_code="G2",
             minimum_type=MinimumType.MONTHLY,
-            amount=1888.93,
+            amount=1885.14,
             unit="EUR",
         ),
         SalaryGridLine(
@@ -58,21 +58,21 @@ def build_default_salary_grid_2026() -> tuple[SalaryGrid, list[SalaryGridLine]]:
             salary_grid_id=grid.id,
             classification_code="G4",
             minimum_type=MinimumType.MONTHLY,
-            amount=2138.43,
+            amount=2099.37,
             unit="EUR",
         ),
         SalaryGridLine(
             salary_grid_id=grid.id,
             classification_code="G5",
             minimum_type=MinimumType.MONTHLY,
-            amount=2353.79,
+            amount=2333.99,
             unit="EUR",
         ),
         SalaryGridLine(
             salary_grid_id=grid.id,
             classification_code="G6",
             minimum_type=MinimumType.MONTHLY,
-            amount=2736.28,
+            amount=2865.97,
             unit="EUR",
         ),
         SalaryGridLine(
@@ -86,7 +86,7 @@ def build_default_salary_grid_2026() -> tuple[SalaryGrid, list[SalaryGridLine]]:
             salary_grid_id=grid.id,
             classification_code="G8",
             minimum_type=MinimumType.ANNUAL,
-            amount=53577.30,
+            amount=46833.81,
             unit="EUR",
         ),
         SalaryGridLine(

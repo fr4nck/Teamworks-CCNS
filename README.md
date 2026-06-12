@@ -93,6 +93,7 @@ Sous Linux ou macOS :
 
 ```bash
 source .venv/bin/activate
+cd teamworks
 python3 Teamworks.py
 ```
 
@@ -100,10 +101,11 @@ Sous Windows :
 
 ```bash
 .venv\Scripts\activate
+cd teamworks
 python Teamworks.py
 ```
 
-Le fichier principal de lancement reste pour le moment `Teamworks.py`.
+Le fichier principal de lancement reste pour le moment `teamworks/Teamworks.py`.
 
 ## Cohabitation avec Teamworks d’origine
 
