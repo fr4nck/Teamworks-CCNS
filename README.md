@@ -1,119 +1,218 @@
 # Teamworks-CCNS
 
-Fork de Teamworks orienté CCNS pour la gestion d’équipes et des cadres d’emploi dans le sport associatif.
+Fork de **Teamworks** orienté **CCNS** pour la gestion d’équipes, de contrats, de classifications et de contrôles métier dans le sport associatif.
 
-Pour Windows, macOS et Linux.
+Projet d’origine : Teamworks  
+Cible du fork : **structurer une surcouche CCNS utile, lisible et progressive**, branchée sur les écrans réellement utilisés dans Teamworks.
 
-Projet d’origine : https://github.com/Noethys/Teamworks
+---
 
-Ce dépôt vise à faire évoluer Teamworks afin d’intégrer progressivement les spécificités de la convention collective nationale du sport (CCNS), notamment autour :
+## Positionnement du fork
 
-* des cadres d’emploi ;
-* des contrats ;
-* du temps de travail ;
-* des contrôles métier.
+Teamworks-CCNS n’a pas vocation à être une réécriture complète de Teamworks.
 
-## Télécharger Teamworks-CCNS
+Le projet vise à :
 
-Cliquez sur le bouton **Code** ci-dessus, puis sélectionnez **Download ZIP** pour télécharger l’intégralité du code source.
+- conserver les usages utiles déjà présents dans Teamworks ;
+- ajouter un **cœur métier CCNS** dédié ;
+- introduire des **contrôles métier** exploitables ;
+- faire remonter les alertes aux bons endroits de l’interface ;
+- éviter la multiplication d’écrans parallèles quand un point d’entrée pertinent existe déjà.
 
-Décompressez ensuite l’archive dans le répertoire de votre choix.
+En pratique :
 
-## Installer Teamworks-CCNS sous Linux ou macOS
+- l’**accueil** sert d’appel rapide ;
+- la fenêtre **Dossiers incomplets** sert de supervision globale par individu ;
+- la **fiche individuelle** sert de point de lecture détaillé ;
+- les **écrans contrats** restent le point naturel de correction ;
+- l’**audit CCNS** sert de vue transverse et exportable.
 
-1. Installez Python 3.7 ou plus depuis le site https://www.python.org.
+---
 
-2. Ouvrez votre terminal.
+## Ce que le fork introduit
 
-3. Placez-vous dans le répertoire d’installation de Teamworks-CCNS. Exemple :
+### 1. Un cœur métier CCNS
+Le fork prépare une couche dédiée pour gérer notamment :
 
-```bash
-cd Teamworks-CCNS/
+- personnes ;
+- profils juridiques ;
+- contrats ;
+- classifications CCNS ;
+- grilles salariales ;
+- affectations ;
+- règles métier ;
+- résultats de contrôle ;
+- anomalies ;
+- compteurs individuels.
+
+### 2. Des contrôles CCNS
+Le moteur posé dans le fork couvre déjà la logique de base autour de :
+
+- classification présente ou absente ;
+- grille salariale présente ou absente ;
+- calcul du minimum conventionnel depuis une grille ;
+- comparaison entre salaire saisi et minimum théorique ;
+- temps partiel court ;
+- ancienneté standard ;
+- premiers cas CEE ;
+- premiers cas apprentissage.
+
+### 3. Une intégration progressive dans Teamworks
+L’intégration est pensée autour des écrans existants, notamment :
+
+- gadget d’accueil CCNS ;
+- extension CCNS de la fenêtre **Dossiers incomplets** ;
+- synthèse CCNS par individu dans la **fiche individuelle** ;
+- audit CCNS des contrats ;
+- listes exportables ;
+- points d’ouverture directe des contrats.
+
+---
+
+## Architecture projet
+
+Le fork s’organise autour de quatre niveaux :
+
+1. **cœur métier**
+2. **moteur de contrôle**
+3. **raccord Teamworks**
+4. **points d’entrée interface**
+
+### Vue simple
+
+```text
+Accueil Teamworks
+ └─ Gadget CCNS
+      └─ alertes prioritaires / ouverture contrat
+
+Dossiers incomplets
+ └─ supervision CCNS par individu
+      ├─ alertes bloquantes
+      ├─ contrats à revoir
+      └─ synthèse globale
+
+Fiche individuelle
+ └─ onglet Synthèse CCNS
+      └─ détail des contrats et anomalies de la personne
+
+Audit contrats
+ └─ lecture transverse
+      ├─ filtres
+      ├─ tri par individu puis gravité
+      ├─ export CSV
+      └─ ouverture contrat
 ```
 
-Si le dossier obtenu porte un autre nom après décompression de l’archive ZIP, adaptez simplement la commande `cd` au nom réel du dossier.
+---
 
-4. Créez un environnement virtuel Python dédié :
+## État d’avancement
+
+### Déjà posé
+- socle domaine ;
+- moteur de contrôle ;
+- anomalies ;
+- calcul des minima depuis grilles ;
+- calcul d’ancienneté standard ;
+- bootstrap de données de référence ;
+- seed Teamworks ;
+- audit CCNS des contrats ;
+- liste d’audit exportable ;
+- filtres ;
+- marquage visuel ;
+- tri par individu puis gravité ;
+- synthèse CCNS par individu ;
+- extension de la fenêtre **Dossiers incomplets** ;
+- gadgets d’accueil CCNS ;
+- premiers raccords au dépôt Teamworks.
+
+### À consolider
+- branchements effectifs dans les menus et écrans réels ;
+- validation des imports et noms exacts de classes Teamworks ;
+- tests manuels complets dans le dépôt réel ;
+- consolidation des tables et colonnes réellement utiles ;
+- durcissement progressif des cas métier spécifiques.
+
+---
+
+## Documents utiles
+
+Le dépôt a vocation à contenir une documentation projet simple et lisible, notamment :
+
+- cartographie fonctionnelle et technique ;
+- ordre de migration ;
+- objets conventionnels ;
+- activité et affectations ;
+- moteur et anomalies ;
+- contrôles CCNS détaillés ;
+- synthèse d’intégration dans Teamworks.
+
+---
+
+## Principe de conception
+
+Le principe directeur du fork est le suivant :
+
+> **pas de surcouche décorative ; une surcouche métier CCNS utile, progressive et branchée sur les écrans réellement utilisés.**
+
+---
+
+## Installation
+
+Les modalités d’installation restent proches de Teamworks tant que le fork poursuit son intégration progressive.
+
+### Linux
+
+1. Installer Python 3.7 ou plus.
+2. Ouvrir un terminal.
+3. Se placer dans le répertoire du projet.
+4. Installer les dépendances :
 
 ```bash
-python3 -m venv .venv
+pip install -r requirements.txt
 ```
 
-5. Activez l’environnement virtuel :
+### Windows
+
+1. Installer Python 3.7 ou plus.
+2. Cocher l’option d’ajout au `PATH` lors de l’installation.
+3. Ouvrir l’invite de commandes.
+4. Se placer dans le répertoire du projet.
+5. Installer les dépendances :
 
 ```bash
-source .venv/bin/activate
+pip install -r requirements.txt
 ```
 
-6. Installez les dépendances avec la commande suivante :
+---
+
+## Lancement
+
+Depuis le répertoire `teamworks/` :
 
 ```bash
-python3 -m pip install -r requirements.txt
-```
-
-## Installer Teamworks-CCNS sous Windows
-
-1. Installez Python 3.7 ou plus depuis le site https://www.python.org.
-
-   Durant l’installation, cochez bien l’option **Add Python 3.x to PATH**.
-
-2. Ouvrez l’invite de commandes Windows.
-
-3. Placez-vous dans le répertoire d’installation de Teamworks-CCNS. Exemple :
-
-```bash
-cd Teamworks-CCNS
-```
-
-Si le dossier obtenu porte un autre nom après décompression de l’archive ZIP, adaptez simplement la commande `cd` au nom réel du dossier.
-
-4. Créez un environnement virtuel Python dédié :
-
-```bash
-python -m venv .venv
-```
-
-5. Activez l’environnement virtuel :
-
-```bash
-.venv\Scripts\activate
-```
-
-6. Installez les dépendances avec la commande suivante :
-
-```bash
-python -m pip install -r requirements.txt
-```
-
-## Lancer Teamworks-CCNS
-
-Depuis le répertoire du projet, activez d’abord l’environnement virtuel si ce n’est pas déjà fait.
-
-Sous Linux ou macOS :
-
-```bash
-source .venv/bin/activate
-cd teamworks
-python3 Teamworks.py
-```
-
-Sous Windows :
-
-```bash
-.venv\Scripts\activate
-cd teamworks
 python Teamworks.py
 ```
 
-Le fichier principal de lancement reste pour le moment `teamworks/Teamworks.py`.
+---
 
-## Cohabitation avec Teamworks d’origine
+## Objectif du projet
 
-Teamworks-CCNS peut cohabiter avec le projet Teamworks d’origine, à condition de conserver deux répertoires séparés, par exemple :
+L’objectif n’est pas seulement de stocker davantage d’informations RH.
 
-```text
-Teamworks/
-Teamworks-CCNS/
-```
+L’objectif est de permettre à Teamworks de mieux couvrir :
 
-L’utilisation d’un environnement virtuel Python propre à chaque projet est recommandée afin d’éviter les conflits de dépendances.
+- les contrats et cadres d’emploi ;
+- les classifications CCNS ;
+- les minima conventionnels ;
+- la lecture des anomalies ;
+- les points de contrôle utiles au quotidien ;
+- la supervision par individu et par contrat.
+
+---
+
+## Statut
+
+Le projet est en cours de structuration active.
+
+Le fork est déjà au-delà d’un simple cadrage :
+il constitue une **base d’implémentation cohérente** pour une extension CCNS de Teamworks, mais demande encore de la consolidation côté intégration réelle.
