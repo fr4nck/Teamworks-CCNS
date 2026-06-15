@@ -1,0 +1,5 @@
+Test manuel recommande :
+1. ouvrir une fiche individuelle
+2. ouvrir l'onglet 'Synthese CCNS' apres integration
+3. verifier le statut global, les compteurs et la liste des contrats
+4. verifier l'ouverture d'un contrat depuis cette page

@@ -1,0 +1,21 @@
+Integration de la synthese CCNS dans la fiche individuelle
+
+1. Dans `teamworks/Dlg/DLG_Fiche_individuelle.py`, ajouter l'import :
+from Ctrl import CTRL_Page_ccns_synthese
+
+2. Dans la classe `Notebook`, ajouter une image de plus dans l'ImageList
+(par exemple un pictogramme de controle ou de calculatrice si deja disponible).
+
+3. Ajouter une page apres `pageContrats` ou juste avant `pagePresences` :
+
+self.pageSyntheseCCNS = CTRL_Page_ccns_synthese.Panel(self, -1, IDpersonne=self.IDpersonne)
+self.AddPage(self.pageSyntheseCCNS, _(u"Synthese CCNS"))
+
+4. Lui affecter une image dans le notebook.
+
+5. Dans `AfficheAutresPages`, penser a gerer aussi cette page si la logique de masquage est utilisee.
+
+But :
+- transformer la fiche individuelle existante en ecran de controle CCNS par personne ;
+- garder la navigation Teamworks d'origine ;
+- eviter de multiplier des ecrans paralleles.
