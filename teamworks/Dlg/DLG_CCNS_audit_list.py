@@ -8,6 +8,7 @@ import wx
 
 from teamworks.CcnsCore.audit_contracts_ccns import audit_contracts
 from teamworks.CcnsCore.audit_filters import filter_audit_rows
+from teamworks.CcnsCore.audit_sorting import compute_row_severity, sort_audit_rows_by_person_and_severity
 from teamworks.Ol.OL_CCNS_audit import ListView
 
 try:
@@ -70,7 +71,7 @@ class Dialog(wx.Dialog):
         self.legend = wx.StaticText(
             self,
             -1,
-            "Legende : rouge = blocant / structurel, jaune = anomalie a revoir, vert = pas d'anomalie detectee",
+            "Tri : individu d'abord, puis gravite. Legende : rouge = bloquant, jaune = a revoir, vert = OK",
         )
         self.listview = ListView(self, donnees=[])
 
@@ -85,7 +86,7 @@ class Dialog(wx.Dialog):
         self.listview.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.OnOpenContract)
 
         self.__do_layout()
-        self.SetSize((1360, 800))
+        self.SetSize((1400, 800))
         self.CentreOnScreen()
 
     def __do_layout(self):
@@ -122,18 +123,25 @@ class Dialog(wx.Dialog):
         self.SetSizer(sizer_base)
         self.Layout()
 
+    def _sort_rows(self, rows):
+        for row in rows:
+            severity_label, severity_rank = compute_row_severity(row)
+            row["severity_label"] = severity_label
+            row["severity_rank"] = severity_rank
+        return sort_audit_rows_by_person_and_severity(rows)
+
     def _refresh_list(self):
+        self.filtered_rows = self._sort_rows(self.filtered_rows)
         self.listview.donnees = self.filtered_rows
         self.listview.MAJ()
+
         nb_anomalies = sum(len(item.get("anomalies", [])) for item in self.filtered_rows)
-        nb_bloquantes = 0
-        for item in self.filtered_rows:
-            for code in item.get("anomalies", []):
-                if code in ("CONTRAT_SANS_CLASSIFICATION", "CONTRAT_SANS_GRILLE", "CEE_DEPASSEMENT_80_JOURS", "REGLE_INTROUVABLE"):
-                    nb_bloquantes += 1
+        nb_bloquantes = sum(1 for item in self.filtered_rows if item.get("severity_label") == "blocking")
+        nb_individus = len(set((item.get("nom_complet") or "").strip().upper() for item in self.filtered_rows))
+
         self.ctrl_resume.SetLabel(
-            "Audit charge - %d ligne(s) affichee(s), %d anomalie(s), %d signalement(s) bloquant(s)." % (
-                len(self.filtered_rows), nb_anomalies, nb_bloquantes
+            "Audit charge - %d individu(s), %d ligne(s), %d anomalie(s), %d ligne(s) bloquante(s)." % (
+                nb_individus, len(self.filtered_rows), nb_anomalies, nb_bloquantes
             )
         )
         self.button_export.Enable(bool(self.filtered_rows))
@@ -285,13 +293,15 @@ class Dialog(wx.Dialog):
             with open(path, "w", newline="", encoding="utf-8-sig") as f:
                 writer = csv.writer(f, delimiter=";")
                 writer.writerow([
-                    "IDcontrat", "Nom", "Classification", "Type contrat",
+                    "Nom", "Gravite", "IDcontrat", "Classification", "Type contrat",
                     "Salaire base", "Nb anomalies", "Anomalies", "Messages"
                 ])
                 for row in self.filtered_rows:
+                    labels = {"blocking": "Bloquant", "warning": "A revoir", "ok": "OK"}
                     writer.writerow([
-                        row["IDcontrat"],
                         row["nom_complet"],
+                        labels.get(row.get("severity_label", "ok"), ""),
+                        row["IDcontrat"],
                         row["classification"],
                         row["type_contrat"],
                         row["salaire_base"] if row["salaire_base"] is not None else "",
