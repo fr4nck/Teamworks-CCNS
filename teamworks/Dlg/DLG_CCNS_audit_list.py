@@ -67,6 +67,11 @@ class Dialog(wx.Dialog):
         self.button_export.Enable(False)
 
         self.ctrl_resume = wx.StaticText(self, -1, "Aucun audit lance.")
+        self.legend = wx.StaticText(
+            self,
+            -1,
+            "Legende : rouge = blocant / structurel, jaune = anomalie a revoir, vert = pas d'anomalie detectee",
+        )
         self.listview = ListView(self, donnees=[])
 
         self.button_launch.Bind(wx.EVT_BUTTON, self.OnLaunch)
@@ -80,7 +85,7 @@ class Dialog(wx.Dialog):
         self.listview.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.OnOpenContract)
 
         self.__do_layout()
-        self.SetSize((1360, 780))
+        self.SetSize((1360, 800))
         self.CentreOnScreen()
 
     def __do_layout(self):
@@ -111,6 +116,7 @@ class Dialog(wx.Dialog):
         sizer_base.Add(sizer_filters, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
 
         sizer_base.Add(self.ctrl_resume, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, 10)
+        sizer_base.Add(self.legend, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, 10)
         sizer_base.Add(self.listview, 1, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, 10)
 
         self.SetSizer(sizer_base)
@@ -120,8 +126,15 @@ class Dialog(wx.Dialog):
         self.listview.donnees = self.filtered_rows
         self.listview.MAJ()
         nb_anomalies = sum(len(item.get("anomalies", [])) for item in self.filtered_rows)
+        nb_bloquantes = 0
+        for item in self.filtered_rows:
+            for code in item.get("anomalies", []):
+                if code in ("CONTRAT_SANS_CLASSIFICATION", "CONTRAT_SANS_GRILLE", "CEE_DEPASSEMENT_80_JOURS", "REGLE_INTROUVABLE"):
+                    nb_bloquantes += 1
         self.ctrl_resume.SetLabel(
-            "Audit charge - %d ligne(s) affichee(s), %d anomalie(s) visible(s)." % (len(self.filtered_rows), nb_anomalies)
+            "Audit charge - %d ligne(s) affichee(s), %d anomalie(s), %d signalement(s) bloquant(s)." % (
+                len(self.filtered_rows), nb_anomalies, nb_bloquantes
+            )
         )
         self.button_export.Enable(bool(self.filtered_rows))
         self.OnSelectionChanged(None)
@@ -210,7 +223,6 @@ class Dialog(wx.Dialog):
             return
 
         id_contrat = row["IDcontrat"]
-
         opened = False
         errors = []
 

@@ -30,6 +30,18 @@ class Track(object):
     def GetMessages(self):
         return " | ".join(self.messages)
 
+    def HasAnomalies(self):
+        return bool(self.anomalies)
+
+    def HasBlockingHint(self):
+        blocking_codes = {
+            "CONTRAT_SANS_CLASSIFICATION",
+            "CONTRAT_SANS_GRILLE",
+            "CEE_DEPASSEMENT_80_JOURS",
+            "REGLE_INTROUVABLE",
+        }
+        return any(code in blocking_codes for code in self.anomalies)
+
 
 if OL_Base:
     class ListView(OL_Base.ListView):
@@ -59,10 +71,30 @@ if OL_Base:
             ])
             self.SetEmptyListMsg(u"Aucun resultat d'audit")
             self.cellEditMode = False
+            try:
+                self.oddRowsBackColor = wx.Colour(248, 248, 248)
+            except Exception:
+                pass
+
+        def _apply_row_style(self, index, track):
+            try:
+                if track.HasBlockingHint():
+                    self.SetItemBackgroundColour(index, wx.Colour(255, 228, 228))
+                    self.SetItemTextColour(index, wx.Colour(120, 0, 0))
+                elif track.HasAnomalies():
+                    self.SetItemBackgroundColour(index, wx.Colour(255, 245, 204))
+                    self.SetItemTextColour(index, wx.Colour(90, 60, 0))
+                else:
+                    self.SetItemBackgroundColour(index, wx.Colour(232, 247, 232))
+                    self.SetItemTextColour(index, wx.Colour(0, 70, 0))
+            except Exception:
+                pass
 
         def MAJ(self):
             tracks = [Track(item) for item in self.donnees]
             self.SetObjects(tracks)
+            for index, track in enumerate(tracks):
+                self._apply_row_style(index, track)
 else:
     class ListView(wx.ListCtrl):
         def __init__(self, parent, donnees=None):
@@ -78,6 +110,27 @@ else:
             self.donnees = donnees or []
             self.MAJ()
 
+        def _apply_row_style(self, index, item):
+            anomalies = item.get("anomalies", []) or []
+            blocking_codes = {
+                "CONTRAT_SANS_CLASSIFICATION",
+                "CONTRAT_SANS_GRILLE",
+                "CEE_DEPASSEMENT_80_JOURS",
+                "REGLE_INTROUVABLE",
+            }
+            try:
+                if any(code in blocking_codes for code in anomalies):
+                    self.SetItemBackgroundColour(index, wx.Colour(255, 228, 228))
+                    self.SetItemTextColour(index, wx.Colour(120, 0, 0))
+                elif anomalies:
+                    self.SetItemBackgroundColour(index, wx.Colour(255, 245, 204))
+                    self.SetItemTextColour(index, wx.Colour(90, 60, 0))
+                else:
+                    self.SetItemBackgroundColour(index, wx.Colour(232, 247, 232))
+                    self.SetItemTextColour(index, wx.Colour(0, 70, 0))
+            except Exception:
+                pass
+
         def MAJ(self):
             self.DeleteAllItems()
             for item in self.donnees:
@@ -91,3 +144,4 @@ else:
                 self.SetItem(idx, 5, str(len(anomalies)))
                 self.SetItem(idx, 6, ", ".join(anomalies))
                 self.SetItem(idx, 7, " | ".join(item.get("messages", [])))
+                self._apply_row_style(idx, item)

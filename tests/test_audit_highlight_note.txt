@@ -1,0 +1,5 @@
+Test manuel recommande :
+1. lancer l'audit CCNS en liste
+2. verifier la presence de lignes rouges / jaunes / vertes selon les anomalies
+3. verifier la legende
+4. verifier le compteur bloquant dans le resume
