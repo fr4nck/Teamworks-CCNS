@@ -1,0 +1,6 @@
+Test manuel recommandé :
+1. intégrer le gadget sur l'accueil
+2. vérifier l'affichage des compteurs
+3. vérifier la liste des alertes prioritaires
+4. ouvrir un contrat depuis le gadget
+5. tester le bouton Actualiser

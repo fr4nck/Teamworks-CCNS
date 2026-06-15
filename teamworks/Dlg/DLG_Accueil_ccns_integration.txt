@@ -1,0 +1,23 @@
+Intégration des gadgets d'accueil CCNS
+
+Objectif :
+ajouter un gadget CCNS sur la page d'accueil Teamworks, sans remplacer les gadgets existants.
+
+1. Dans le module de l'accueil / tableau de bord, ajouter l'import :
+from Ctrl import CTRL_Gadget_CCNS
+
+2. Dans la zone qui instancie les gadgets d'accueil, ajouter un panneau :
+self.gadgetCCNS = CTRL_Gadget_CCNS.Panel(parent_gadgets, -1)
+
+3. L'insérer dans le sizer des gadgets, au même niveau que les autres briques d'accueil.
+
+4. Recommandation :
+- garder ce gadget compact ;
+- ne pas en faire un écran complet ;
+- s'en servir comme tableau d'alerte rapide avec accès au contrat.
+
+Contenu du gadget :
+- compteurs CCNS
+- quelques alertes prioritaires
+- bouton d'actualisation
+- ouverture de contrat
