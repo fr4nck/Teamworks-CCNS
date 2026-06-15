@@ -1,0 +1,21 @@
+Intégration complète de l’audit CCNS
+
+1. Dans `Teamworks.py`, ajouter selon le niveau choisi :
+from Dlg import DLG_CCNS_audit_list
+
+2. Ajouter un item dans le menu utilitaires / administration :
+- Auditer les contrats CCNS
+
+3. Ajouter la méthode :
+def On_outils_ccns_audit_list(self, event):
+    dlg = DLG_CCNS_audit_list.Dialog(self)
+    dlg.ShowModal()
+    dlg.Destroy()
+
+4. Vérifier :
+- ouverture du dialogue ;
+- lecture des contrats ;
+- filtres ;
+- tri par individu puis gravité ;
+- export CSV ;
+- ouverture contrat.

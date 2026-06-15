@@ -1,0 +1,15 @@
+Intégration complète du gadget accueil CCNS
+
+1. Dans le module d’accueil Teamworks, ajouter :
+from Ctrl import CTRL_Gadget_CCNS
+
+2. Dans la zone où les gadgets sont créés :
+self.gadgetCCNS = CTRL_Gadget_CCNS.Panel(parent_gadgets, -1)
+
+3. L’insérer dans le sizer existant des gadgets, sans remplacer les blocs déjà présents.
+
+4. Vérifier :
+- affichage des compteurs ;
+- affichage des alertes prioritaires ;
+- bouton Actualiser ;
+- ouverture contrat.

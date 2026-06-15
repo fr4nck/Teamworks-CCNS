@@ -1,0 +1,31 @@
+Intégration complète CCNS dans Dossiers incomplets
+
+1. Dans le module de la fenêtre Dossiers incomplets, ajouter :
+from teamworks.CcnsCore.incomplete_files_ccns import build_ccns_tree_nodes
+from teamworks.Ctrl.CTRL_Dossiers_incomplets_ccns_helper import (
+    apply_ccns_item_style,
+    open_ccns_target,
+)
+
+2. Lors de la création des sous-noeuds d’un individu :
+ccns_nodes = build_ccns_tree_nodes(IDpersonne)
+
+for node in ccns_nodes:
+    item_ccns = self.arbre.AppendItem(item_individu, node["label"])
+    self.arbre.SetItemData(item_ccns, {
+        "type": node["type"],
+        "severity": node["severity"],
+        "contract_ids": node["contract_ids"],
+        "IDpersonne": IDpersonne,
+    })
+    apply_ccns_item_style(self.arbre, item_ccns, node["severity"])
+
+3. Dans le gestionnaire de double-clic :
+- récupérer ItemData
+- si type commence par `ccns_`, appeler `open_ccns_target(...)`
+
+4. Vérifier :
+- présence des noeuds ;
+- couleurs ;
+- ouverture contrat si un seul contrat ;
+- bascule vers fiche individuelle sinon.

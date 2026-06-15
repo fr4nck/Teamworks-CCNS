@@ -1,0 +1,19 @@
+Checklist d’intégration interface Teamworks
+
+[ ] Gadget accueil CCNS monté dans l’accueil
+[ ] Gadget accueil : bouton Actualiser OK
+[ ] Gadget accueil : ouverture contrat OK
+
+[ ] Dossiers incomplets : nœuds CCNS générés
+[ ] Dossiers incomplets : style visuel OK
+[ ] Dossiers incomplets : double-clic contrat / fiche individuelle OK
+
+[ ] Fiche individuelle : onglet Synthèse CCNS présent
+[ ] Fiche individuelle : statut global cohérent
+[ ] Fiche individuelle : ouverture contrat OK
+
+[ ] Audit CCNS : entrée de menu OK
+[ ] Audit CCNS : lecture contrats OK
+[ ] Audit CCNS : filtres OK
+[ ] Audit CCNS : export CSV OK
+[ ] Audit CCNS : ouverture contrat OK

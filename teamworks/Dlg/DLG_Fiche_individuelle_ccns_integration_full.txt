@@ -1,0 +1,19 @@
+Intégration complète de la Synthèse CCNS dans la fiche individuelle
+
+1. Dans `DLG_Fiche_individuelle.py`, ajouter :
+from Ctrl import CTRL_Page_ccns_synthese
+
+2. Dans le notebook de la fiche individuelle, créer :
+self.pageSyntheseCCNS = CTRL_Page_ccns_synthese.Panel(self, -1, IDpersonne=self.IDpersonne)
+
+3. Ajouter la page :
+self.AddPage(self.pageSyntheseCCNS, _(u"Synthèse CCNS"))
+
+4. Lui affecter une image si le notebook en utilise déjà.
+
+5. Vérifier :
+- affichage de la page ;
+- calcul du statut global ;
+- liste des contrats ;
+- ouverture du contrat ;
+- cohérence avec l’audit.

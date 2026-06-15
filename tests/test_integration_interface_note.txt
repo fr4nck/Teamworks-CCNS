@@ -1,0 +1,14 @@
+Plan de test manuel — intégration interface
+
+1. Lancer Teamworks
+2. Vérifier la présence du gadget CCNS sur l’accueil
+3. Ouvrir l’audit CCNS depuis le menu
+4. Charger l’audit, tester filtres, tri et export
+5. Ouvrir un contrat depuis l’audit
+6. Ouvrir une fiche individuelle
+7. Vérifier l’onglet Synthèse CCNS
+8. Ouvrir un contrat depuis cette synthèse
+9. Ouvrir Dossiers incomplets
+10. Vérifier les noeuds CCNS sous un individu
+11. Tester le double-clic sur ces noeuds
+12. Vérifier la cohérence générale entre les écrans
