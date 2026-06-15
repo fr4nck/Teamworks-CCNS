@@ -1,0 +1,5 @@
+Titre de commit
+Met à jour Teamworks pour la compatibilité Python et Pillow
+
+Description de commit
+Mise à jour de compatibilité générale de Teamworks avec les versions récentes de Python et Pillow, via un helper de compatibilité pour les filtres de redimensionnement PIL et un premier nettoyage de warnings Python non spécifiques au fork CCNS.
