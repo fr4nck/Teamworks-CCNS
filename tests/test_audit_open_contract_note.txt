@@ -1,0 +1,5 @@
+Test manuel recommande :
+1. lancer l'audit CCNS en liste
+2. selectionner une ligne
+3. cliquer sur 'Ouvrir le contrat'
+4. verifier l'ouverture de la fiche ou, a defaut, le message explicite d'echec

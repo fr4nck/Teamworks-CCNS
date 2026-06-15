@@ -10,6 +10,11 @@ from teamworks.CcnsCore.audit_contracts_ccns import audit_contracts
 from teamworks.CcnsCore.audit_filters import filter_audit_rows
 from teamworks.Ol.OL_CCNS_audit import ListView
 
+try:
+    from Ctrl import CTRL_Page_contrats
+except Exception:
+    CTRL_Page_contrats = None
+
 
 class Dialog(wx.Dialog):
     def __init__(self, parent):
@@ -54,8 +59,11 @@ class Dialog(wx.Dialog):
         self.button_launch = wx.Button(self, -1, "Lancer l'audit")
         self.button_apply_filters = wx.Button(self, -1, "Appliquer filtres")
         self.button_reset_filters = wx.Button(self, -1, "Reinitialiser filtres")
+        self.button_open_contract = wx.Button(self, -1, "Ouvrir le contrat")
         self.button_export = wx.Button(self, -1, "Exporter CSV")
         self.button_close = wx.Button(self, wx.ID_CANCEL, "Fermer")
+
+        self.button_open_contract.Enable(False)
         self.button_export.Enable(False)
 
         self.ctrl_resume = wx.StaticText(self, -1, "Aucun audit lance.")
@@ -64,10 +72,15 @@ class Dialog(wx.Dialog):
         self.button_launch.Bind(wx.EVT_BUTTON, self.OnLaunch)
         self.button_apply_filters.Bind(wx.EVT_BUTTON, self.OnApplyFilters)
         self.button_reset_filters.Bind(wx.EVT_BUTTON, self.OnResetFilters)
+        self.button_open_contract.Bind(wx.EVT_BUTTON, self.OnOpenContract)
         self.button_export.Bind(wx.EVT_BUTTON, self.OnExport)
 
+        self.listview.Bind(wx.EVT_LIST_ITEM_SELECTED, self.OnSelectionChanged)
+        self.listview.Bind(wx.EVT_LIST_ITEM_DESELECTED, self.OnSelectionChanged)
+        self.listview.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.OnOpenContract)
+
         self.__do_layout()
-        self.SetSize((1320, 760))
+        self.SetSize((1360, 780))
         self.CentreOnScreen()
 
     def __do_layout(self):
@@ -78,6 +91,7 @@ class Dialog(wx.Dialog):
         sizer_top.Add(self.label_limit, 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 8)
         sizer_top.Add(self.ctrl_limit, 0, wx.RIGHT, 12)
         sizer_top.Add(self.button_launch, 0, wx.RIGHT, 8)
+        sizer_top.Add(self.button_open_contract, 0, wx.RIGHT, 8)
         sizer_top.Add(self.button_export, 0, wx.RIGHT, 8)
         sizer_top.Add(self.button_close, 0, 0, 0)
         sizer_base.Add(sizer_top, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
@@ -110,6 +124,21 @@ class Dialog(wx.Dialog):
             "Audit charge - %d ligne(s) affichee(s), %d anomalie(s) visible(s)." % (len(self.filtered_rows), nb_anomalies)
         )
         self.button_export.Enable(bool(self.filtered_rows))
+        self.OnSelectionChanged(None)
+
+    def _get_selected_row(self):
+        index = self.listview.GetFirstSelected()
+        if index == -1:
+            return None
+        if index >= len(self.filtered_rows):
+            return None
+        return self.filtered_rows[index]
+
+    def OnSelectionChanged(self, event):
+        row = self._get_selected_row()
+        self.button_open_contract.Enable(row is not None)
+        if event is not None:
+            event.Skip()
 
     def OnLaunch(self, event):
         try:
@@ -142,8 +171,7 @@ class Dialog(wx.Dialog):
         if value == "":
             return None
         try:
-            value = value.replace(",", ".")
-            return float(value)
+            return float(value.replace(",", "."))
         except Exception:
             return None
 
@@ -166,6 +194,60 @@ class Dialog(wx.Dialog):
         self.ctrl_max_salary.SetValue("")
         self.filtered_rows = list(self.rows)
         self._refresh_list()
+
+    def OnOpenContract(self, event):
+        row = self._get_selected_row()
+        if row is None:
+            return
+
+        if CTRL_Page_contrats is None:
+            wx.MessageBox(
+                "Le module d'ouverture de contrat n'est pas disponible dans cet environnement.",
+                "Ouverture indisponible",
+                wx.OK | wx.ICON_WARNING,
+                self,
+            )
+            return
+
+        id_contrat = row["IDcontrat"]
+
+        opened = False
+        errors = []
+
+        if hasattr(CTRL_Page_contrats, "Dialog"):
+            try:
+                dlg = CTRL_Page_contrats.Dialog(self, IDcontrat=id_contrat)
+                dlg.ShowModal()
+                dlg.Destroy()
+                opened = True
+            except Exception as exc:
+                errors.append("Dialog(IDcontrat=...): %s" % exc)
+
+        if not opened and hasattr(CTRL_Page_contrats, "CTRL"):
+            try:
+                dlg = wx.Dialog(self, -1, "Contrat %s" % id_contrat, style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
+                ctrl = CTRL_Page_contrats.CTRL(dlg, IDcontrat=id_contrat)
+                sizer = wx.BoxSizer(wx.VERTICAL)
+                sizer.Add(ctrl, 1, wx.EXPAND | wx.ALL, 8)
+                dlg.SetSizer(sizer)
+                dlg.SetSize((980, 720))
+                dlg.CentreOnScreen()
+                dlg.ShowModal()
+                dlg.Destroy()
+                opened = True
+            except Exception as exc:
+                errors.append("CTRL(IDcontrat=...): %s" % exc)
+
+        if not opened:
+            message = "Impossible d'ouvrir directement la fiche contrat %s." % id_contrat
+            if errors:
+                message += "\n\nTentatives effectuees :\n- " + "\n- ".join(errors)
+            wx.MessageBox(
+                message,
+                "Ouverture impossible",
+                wx.OK | wx.ICON_WARNING,
+                self,
+            )
 
     def OnExport(self, event):
         if not self.filtered_rows:
