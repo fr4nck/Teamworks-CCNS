@@ -80,7 +80,33 @@ class DB(GestionDB.DB):
         # =============================================================
 
 
+        # =============================================================
 
+        versionFiltre = (2, 1, 2, 0)
+        if versionFichier < versionFiltre:
+            try:
+                tables_ccns = (
+                    "tw_people",
+                    "tw_legal_profiles",
+                    "tw_contract_types",
+                    "tw_employment_regimes",
+                    "tw_time_organizations",
+                    "tw_contracts",
+                    "tw_ccns_classifications",
+                    "tw_salary_grids",
+                    "tw_salary_grid_lines",
+                    "tw_calculation_rules",
+                    "tw_calculation_results",
+                    "tw_anomalies",
+                    "tw_individual_counters",
+                )
+                for nomTable in tables_ccns:
+                    if self.IsTableExists(nomTable) == False:
+                        self.CreationTable(nomTable, Tables.DB_DATA)
+            except Exception as err:
+                return " filtre de conversion %s | " % ".".join([str(x) for x in versionFiltre]) + str(err)
+
+        # =============================================================
 
 
         return True

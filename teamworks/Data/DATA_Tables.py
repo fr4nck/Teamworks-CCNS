@@ -513,3 +513,155 @@ DB_DOCUMENTS = {
                                     ], # BLOB documents
                                     
     }
+
+# ---------------------------------------------------------------------------
+# Teamworks-CCNS : socle coeur CCNS branché dans la base Teamworks existante
+# ---------------------------------------------------------------------------
+
+DB_DATA.update({
+
+    "tw_people": [
+        ("IDtw_person", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID Teamworks-CCNS personne"),
+        ("code_interne", "VARCHAR(50)", u"Code interne", u"Code interne de la personne"),
+        ("nom_affiche", "VARCHAR(200)", u"Nom affiché", u"Nom affiché"),
+        ("date_naissance", "DATE", u"Date naissance", u"Date de naissance"),
+        ("actif", "INTEGER", u"Actif", u"Personne active (1/0)"),
+    ],
+
+    "tw_legal_profiles": [
+        ("IDtw_legal_profile", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID du profil juridique"),
+        ("IDtw_person", "INTEGER", u"ID personne", u"ID Teamworks-CCNS personne"),
+        ("est_mineur", "INTEGER", u"Mineur", u"Mineur (1/0)"),
+        ("age_group", "VARCHAR(20)", u"Groupe d'âge", u"Groupe d'âge"),
+        ("work_regime", "VARCHAR(100)", u"Régime", u"Régime de travail"),
+        ("convention_frame", "VARCHAR(100)", u"Cadre conventionnel", u"Cadre conventionnel"),
+        ("training_time_included", "INTEGER", u"Temps formation inclus", u"Temps de formation inclus"),
+        ("contract_hours_basis", "REAL", u"Base heures contrat", u"Base heures contrat"),
+    ],
+
+    "tw_contract_types": [
+        ("IDtw_contract_type", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID type contrat"),
+        ("code", "VARCHAR(30)", u"Code", u"Code du type de contrat"),
+        ("label", "VARCHAR(200)", u"Libellé", u"Libellé du type de contrat"),
+    ],
+
+    "tw_employment_regimes": [
+        ("IDtw_employment_regime", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID régime"),
+        ("code", "VARCHAR(50)", u"Code", u"Code du régime d'emploi"),
+        ("label", "VARCHAR(200)", u"Libellé", u"Libellé du régime d'emploi"),
+    ],
+
+    "tw_time_organizations": [
+        ("IDtw_time_organization", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID organisation"),
+        ("code", "VARCHAR(50)", u"Code", u"Code organisation temps"),
+        ("label", "VARCHAR(200)", u"Libellé", u"Libellé organisation temps"),
+    ],
+
+    "tw_contracts": [
+        ("IDtw_contract", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID contrat Teamworks-CCNS"),
+        ("IDtw_person", "INTEGER", u"ID personne", u"ID Teamworks-CCNS personne"),
+        ("IDtw_contract_type", "INTEGER", u"ID type", u"ID type de contrat"),
+        ("IDtw_employment_regime", "INTEGER", u"ID régime", u"ID régime d'emploi"),
+        ("IDtw_time_organization", "INTEGER", u"ID organisation", u"ID organisation temps"),
+        ("classification_code", "VARCHAR(30)", u"Classification", u"Code classification"),
+        ("salary_grid_code", "VARCHAR(50)", u"Grille", u"Code grille salariale"),
+        ("date_debut", "DATE", u"Début", u"Date de début"),
+        ("date_fin", "DATE", u"Fin", u"Date de fin"),
+        ("heures_hebdo_reference", "REAL", u"Heures hebdo", u"Heures hebdo de référence"),
+        ("quotite", "REAL", u"Quotité", u"Quotité de travail"),
+        ("salaire_base", "REAL", u"Salaire base", u"Salaire de base"),
+        ("unite_salaire", "VARCHAR(20)", u"Unité salaire", u"Unité du salaire"),
+        ("statut_contrat", "VARCHAR(30)", u"Statut", u"Statut du contrat"),
+    ],
+
+    "tw_ccns_classifications": [
+        ("IDtw_classification", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID classification"),
+        ("code", "VARCHAR(30)", u"Code", u"Code classification"),
+        ("label", "VARCHAR(200)", u"Libellé", u"Libellé classification"),
+        ("family", "VARCHAR(100)", u"Famille", u"Famille"),
+        ("level", "VARCHAR(100)", u"Niveau", u"Niveau"),
+        ("effective_date", "DATE", u"Date effet", u"Date d'effet"),
+        ("end_date", "DATE", u"Date fin", u"Date de fin"),
+        ("active", "INTEGER", u"Actif", u"Actif (1/0)"),
+    ],
+
+    "tw_salary_grids": [
+        ("IDtw_salary_grid", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID grille"),
+        ("code", "VARCHAR(50)", u"Code", u"Code grille"),
+        ("label", "VARCHAR(200)", u"Libellé", u"Libellé grille"),
+        ("convention_code", "VARCHAR(30)", u"Convention", u"Convention"),
+        ("effective_date", "DATE", u"Date effet", u"Date d'effet"),
+        ("end_date", "DATE", u"Date fin", u"Date de fin"),
+        ("source_reference", "VARCHAR(300)", u"Source", u"Source"),
+        ("active", "INTEGER", u"Actif", u"Actif (1/0)"),
+    ],
+
+    "tw_salary_grid_lines": [
+        ("IDtw_salary_grid_line", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID ligne grille"),
+        ("IDtw_salary_grid", "INTEGER", u"ID grille", u"ID grille salariale"),
+        ("classification_code", "VARCHAR(30)", u"Classification", u"Code classification"),
+        ("minimum_type", "VARCHAR(30)", u"Type minimum", u"Type de minimum"),
+        ("amount", "REAL", u"Montant", u"Montant"),
+        ("unit", "VARCHAR(20)", u"Unité", u"Unité"),
+        ("age_min", "INTEGER", u"Âge min", u"Âge minimum"),
+        ("age_max", "INTEGER", u"Âge max", u"Âge maximum"),
+        ("execution_year_min", "INTEGER", u"Année exécution min", u"Année d'exécution min"),
+        ("execution_year_max", "INTEGER", u"Année exécution max", u"Année d'exécution max"),
+        ("notes", "VARCHAR(400)", u"Notes", u"Notes"),
+    ],
+
+    "tw_calculation_rules": [
+        ("IDtw_rule", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID règle"),
+        ("code", "VARCHAR(50)", u"Code", u"Code règle"),
+        ("label", "VARCHAR(250)", u"Libellé", u"Libellé règle"),
+        ("family", "VARCHAR(50)", u"Famille", u"Famille règle"),
+        ("context", "VARCHAR(50)", u"Contexte", u"Contexte"),
+        ("target_object", "VARCHAR(50)", u"Cible", u"Cible"),
+        ("effective_date", "DATE", u"Date effet", u"Date d'effet"),
+        ("end_date", "DATE", u"Date fin", u"Date de fin"),
+        ("priority", "INTEGER", u"Priorité", u"Priorité"),
+        ("active", "INTEGER", u"Actif", u"Actif"),
+        ("parameters_json", "VARCHAR(4000)", u"Paramètres", u"Paramètres JSON"),
+    ],
+
+    "tw_calculation_results": [
+        ("IDtw_result", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID résultat"),
+        ("object_type", "VARCHAR(50)", u"Type objet", u"Type objet"),
+        ("object_id", "VARCHAR(50)", u"ID objet", u"ID objet"),
+        ("person_id", "VARCHAR(50)", u"ID personne", u"ID personne"),
+        ("contract_id", "VARCHAR(50)", u"ID contrat", u"ID contrat"),
+        ("assignment_id", "VARCHAR(50)", u"ID affectation", u"ID affectation"),
+        ("rule_code", "VARCHAR(50)", u"Code règle", u"Code règle"),
+        ("calculation_date", "DATE", u"Date calcul", u"Date calcul"),
+        ("actual_value", "REAL", u"Valeur réelle", u"Valeur réelle"),
+        ("theoretical_value", "REAL", u"Valeur théorique", u"Valeur théorique"),
+        ("gap", "REAL", u"Ecart", u"Ecart"),
+        ("status", "VARCHAR(30)", u"Statut", u"Statut"),
+        ("message", "VARCHAR(500)", u"Message", u"Message lisible"),
+    ],
+
+    "tw_anomalies": [
+        ("IDtw_anomaly", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID anomalie"),
+        ("object_type", "VARCHAR(50)", u"Type objet", u"Type objet"),
+        ("object_id", "VARCHAR(50)", u"ID objet", u"ID objet"),
+        ("person_id", "VARCHAR(50)", u"ID personne", u"ID personne"),
+        ("contract_id", "VARCHAR(50)", u"ID contrat", u"ID contrat"),
+        ("assignment_id", "VARCHAR(50)", u"ID affectation", u"ID affectation"),
+        ("level", "VARCHAR(20)", u"Niveau", u"Niveau"),
+        ("code", "VARCHAR(50)", u"Code", u"Code anomalie"),
+        ("message", "VARCHAR(500)", u"Message", u"Message"),
+        ("detection_date", "DATE", u"Date détection", u"Date détection"),
+        ("resolved", "INTEGER", u"Résolue", u"Résolue"),
+    ],
+
+    "tw_individual_counters": [
+        ("IDtw_counter", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID compteur"),
+        ("person_id", "VARCHAR(50)", u"ID personne", u"ID personne"),
+        ("contract_id", "VARCHAR(50)", u"ID contrat", u"ID contrat"),
+        ("counter_code", "VARCHAR(50)", u"Code compteur", u"Code compteur"),
+        ("value", "REAL", u"Valeur", u"Valeur"),
+        ("unit", "VARCHAR(20)", u"Unité", u"Unité"),
+        ("calculation_date", "DATE", u"Date calcul", u"Date calcul"),
+    ],
+
+})
