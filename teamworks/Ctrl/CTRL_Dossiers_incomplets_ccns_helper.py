@@ -1,0 +1,70 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+from __future__ import annotations
+
+import wx
+
+try:
+    from Ctrl import CTRL_Page_contrats
+except Exception:
+    CTRL_Page_contrats = None
+
+
+def apply_ccns_item_style(tree_ctrl, item, severity):
+    try:
+        if severity == "blocking":
+            tree_ctrl.SetItemTextColour(item, wx.Colour(150, 0, 0))
+        elif severity == "warning":
+            tree_ctrl.SetItemTextColour(item, wx.Colour(130, 80, 0))
+        elif severity == "ok":
+            tree_ctrl.SetItemTextColour(item, wx.Colour(0, 110, 0))
+    except Exception:
+        pass
+
+
+def open_ccns_target(parent, contract_ids, open_individual_callback=None, IDpersonne=None):
+    contract_ids = contract_ids or []
+
+    if len(contract_ids) == 1:
+        id_contrat = contract_ids[0]
+        if CTRL_Page_contrats is None:
+            wx.MessageBox(
+                u"Le module de contrat n'est pas disponible.",
+                u"Ouverture indisponible",
+                wx.OK | wx.ICON_WARNING,
+                parent,
+            )
+            return False
+
+        opened = False
+        if hasattr(CTRL_Page_contrats, "Dialog"):
+            try:
+                dlg = CTRL_Page_contrats.Dialog(parent, IDcontrat=id_contrat)
+                dlg.ShowModal()
+                dlg.Destroy()
+                opened = True
+            except Exception:
+                opened = False
+
+        if not opened and hasattr(CTRL_Page_contrats, "CTRL"):
+            try:
+                dlg = wx.Dialog(parent, -1, u"Contrat %s" % id_contrat, style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
+                ctrl = CTRL_Page_contrats.CTRL(dlg, IDcontrat=id_contrat)
+                sizer = wx.BoxSizer(wx.VERTICAL)
+                sizer.Add(ctrl, 1, wx.EXPAND | wx.ALL, 8)
+                dlg.SetSizer(sizer)
+                dlg.SetSize((980, 720))
+                dlg.CentreOnScreen()
+                dlg.ShowModal()
+                dlg.Destroy()
+                opened = True
+            except Exception:
+                opened = False
+        return opened
+
+    if open_individual_callback and IDpersonne is not None:
+        open_individual_callback(IDpersonne, page_code="ccns_summary")
+        return True
+
+    return False

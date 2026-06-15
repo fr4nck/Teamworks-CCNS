@@ -1,0 +1,42 @@
+Extension de la fenêtre "Dossiers incomplets" avec une branche CCNS
+
+Objectif :
+ajouter, sous chaque individu, des noeuds CCNS calculés à partir de l'audit par personne.
+
+1. Dans le module qui construit l'arborescence des dossiers incomplets,
+ajouter l'import :
+from teamworks.CcnsCore.incomplete_files_ccns import build_ccns_tree_nodes
+
+2. Lors de la création des sous-noeuds d'un individu, après les blocs :
+- informations manquantes
+- pièces manquantes
+- contrats à voir
+
+ajouter :
+
+ccns_nodes = build_ccns_tree_nodes(IDpersonne)
+for node in ccns_nodes:
+    item = self.arbre.AppendItem(item_individu, node["label"])
+    self.arbre.SetItemData(item, {
+        "type": node["type"],
+        "severity": node["severity"],
+        "contract_ids": node["contract_ids"],
+        "IDpersonne": IDpersonne,
+    })
+
+3. Marquage visuel conseillé :
+- blocking -> texte rouge
+- warning -> texte brun / orange
+- ok -> texte vert
+
+4. Double-clic conseillé :
+- si un seul contrat dans contract_ids : ouvrir directement la fiche contrat
+- sinon : ouvrir la fiche individuelle sur l'onglet Synthèse CCNS
+
+5. Icônes possibles :
+- rouge pour bloquant
+- jaune pour à revoir
+- vert pour ok
+
+But :
+faire de cette fenêtre le tableau d'appel global du contrôle CCNS par individu.
