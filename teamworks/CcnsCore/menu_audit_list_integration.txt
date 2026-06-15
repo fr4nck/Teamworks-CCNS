@@ -1,0 +1,17 @@
+Integration menu Teamworks pour l'audit CCNS en liste
+
+1. Dans Teamworks.py, ajouter l'import :
+from Dlg import DLG_CCNS_audit_list
+
+2. Dans le menu utilitaires / administration, ajouter un item :
+{"code": "ccns_audit_list",
+ "label": _(u"Auditer les contrats CCNS (liste)"),
+ "infobulle": _(u"Afficher les resultats d'audit CCNS dans une liste exportable"),
+ "image": "Images/16x16/Controle.png",
+ "action": self.On_outils_ccns_audit_list},
+
+3. Ajouter la methode :
+def On_outils_ccns_audit_list(self, event):
+    dlg = DLG_CCNS_audit_list.Dialog(self)
+    dlg.ShowModal()
+    dlg.Destroy()
