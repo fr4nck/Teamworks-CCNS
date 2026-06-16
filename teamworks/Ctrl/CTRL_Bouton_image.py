@@ -55,7 +55,12 @@ class CTRL(wx.Button):
         # Redimensionne et ajoute des marges autour de l'image
         if self.cheminImage not in ("", None) :
             img = Image.open(self.cheminImage)
-            img = img.resize(self.tailleImage, Image.ANTIALIAS)
+            try:
+            resample_filter = Image.Resampling.LANCZOS
+        except AttributeError:
+            resample_filter = getattr(Image, "LANCZOS", Image.BICUBIC)
+
+        img = img.resize(self.tailleImage, resample_filter)
             img = ImageOps.expand(img, border=self.margesImage)
             img = PILtoWx(img) 
             bmp = img.ConvertToBitmap()
