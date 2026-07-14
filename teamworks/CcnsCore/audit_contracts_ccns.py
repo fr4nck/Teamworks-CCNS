@@ -7,7 +7,6 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Optional
 
-import GestionDB
 
 from domain.contracts.contract import Contract
 from domain.contracts.contract_type import ContractType
@@ -22,6 +21,7 @@ from domain.engine.seniority import check_ccns_seniority_amount
 from domain.convention.salary_grid import SalaryGrid
 from domain.convention.salary_grid_line import SalaryGridLine
 from domain.convention.minimum_type import MinimumType
+from infrastructure.persistence.ccns_data_reader import CcnsDataReader
 
 
 @dataclass
@@ -68,107 +68,69 @@ def _map_time_org(contract_type):
     return TimeOrganization.WEEKLY_CONSTANT
 
 
-def _fetch_salary_grid(db):
-    req = """
-    SELECT IDtw_salary_grid, code, label, convention_code, employment_regime_code, effective_date, end_date, source_reference
-    FROM tw_salary_grids
-    ORDER BY IDtw_salary_grid
-    LIMIT 1;
-    """
-    db.ExecuterReq(req)
-    rows = db.ResultatReq()
-    if not rows:
+def _build_salary_grid(grid_record, line_records):
+    if grid_record is None:
         return None, []
 
-    row = rows[0]
     grid = SalaryGrid(
-        id=str(row[0]),
-        code=row[1],
-        label=row[2],
-        convention_code=row[3] or "CCNS",
-        employment_regime_code=row[4],
-        effective_date=row[5],
-        end_date=row[6],
-        source_reference=row[7],
+        id=str(grid_record.IDtw_salary_grid),
+        code=grid_record.code,
+        label=grid_record.label,
+        convention_code=grid_record.convention_code or "CCNS",
+        employment_regime_code=grid_record.employment_regime_code,
+        effective_date=grid_record.effective_date,
+        end_date=grid_record.end_date,
+        source_reference=grid_record.source_reference,
     )
 
-    req = """
-    SELECT IDtw_salary_grid_line, classification_code, minimum_type, amount, unit,
-           age_min, age_max, execution_year_min, execution_year_max, notes
-    FROM tw_salary_grid_lines
-    WHERE IDtw_salary_grid=%d;
-    """ % row[0]
-    db.ExecuterReq(req)
-    rows = db.ResultatReq()
     lines = []
-    for item in rows:
+    for item in line_records:
         try:
-            minimum_type = MinimumType(item[2])
+            minimum_type = MinimumType(item.minimum_type)
         except Exception:
             minimum_type = MinimumType.MONTHLY
         lines.append(
             SalaryGridLine(
-                id=str(item[0]),
-                salary_grid_id=str(row[0]),
-                classification_code=item[1],
+                id=str(item.IDtw_salary_grid_line),
+                salary_grid_id=str(item.IDtw_salary_grid),
+                classification_code=item.classification_code,
                 minimum_type=minimum_type,
-                amount=item[3],
-                unit=item[4],
-                age_min=item[5],
-                age_max=item[6],
-                execution_year_min=item[7],
-                execution_year_max=item[8],
-                notes=item[9] or "",
+                amount=item.amount,
+                unit=item.unit,
+                age_min=item.age_min,
+                age_max=item.age_max,
+                execution_year_min=item.execution_year_min,
+                execution_year_max=item.execution_year_max,
+                notes=item.notes or "",
             )
         )
     return grid, lines
 
 
-def audit_contracts(limit=None):
-    db = GestionDB.DB()
+def audit_contracts(limit=None, data_reader=None):
+    reader = data_reader or CcnsDataReader()
+    close_reader = data_reader is None
     try:
-        req = """
-    SELECT
-        contrats.IDcontrat,
-        contrats.date_debut,
-        contrats.date_fin,
-        contrats.salaire_base,
-        contrats.temps_hebdo,
-        contrats.prime_anciennete,
-        individus.prenom,
-        individus.nom,
-        contrats_class.nom AS classification,
-        contrats_types.nom AS type_contrat
-    FROM contrats
-    LEFT JOIN individus ON individus.IDindividu = contrats.IDpersonne
-    LEFT JOIN contrats_class ON contrats_class.IDclassification = contrats.IDclassification
-    LEFT JOIN contrats_types ON contrats_types.IDtype = contrats.IDtype
-    ORDER BY contrats.IDcontrat;
-    """
-        if limit:
-            req = req.replace("ORDER BY contrats.IDcontrat;", "ORDER BY contrats.IDcontrat LIMIT %d;" % int(limit))
-
-        db.ExecuterReq(req)
-        records = db.ResultatReq()
-
-        salary_grid, salary_grid_lines = _fetch_salary_grid(db)
+        records = reader.lire_contrats(limit=limit)
+        grid_records = reader.lire_grilles(limit=1)
+        grid_record = grid_records[0] if grid_records else None
+        line_records = reader.lire_lignes_grille(grid_record.IDtw_salary_grid) if grid_record else []
+        salary_grid, salary_grid_lines = _build_salary_grid(grid_record, line_records)
         results = []
         reference_date = date.today()
         controles_simples = (check_contract_has_classification, check_contract_has_salary_grid)
 
         for rec in records:
-            (
-                IDcontrat,
-                date_debut,
-                date_fin,
-                salaire_base,
-                temps_hebdo,
-                prime_anciennete,
-                prenom,
-                nom,
-                classification,
-                type_contrat_label,
-            ) = rec
+            IDcontrat = rec.IDcontrat
+            date_debut = rec.date_debut
+            date_fin = rec.date_fin
+            salaire_base = rec.salaire_base
+            temps_hebdo = rec.temps_hebdo
+            prime_anciennete = rec.prime_anciennete
+            prenom = rec.prenom
+            nom = rec.nom
+            classification = rec.classification
+            type_contrat_label = rec.type_contrat
 
             full_name = ((prenom or "") + " " + (nom or "")).strip() or ("Contrat %d" % IDcontrat)
             contract_type = _map_contract_type(type_contrat_label)
@@ -236,7 +198,8 @@ def audit_contracts(limit=None):
 
         return results
     finally:
-        db.Close()
+        if close_reader:
+            reader.close()
 
 
 if __name__ == "__main__":

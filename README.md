@@ -222,3 +222,13 @@ Le projet est en cours de structuration active.
 
 Le fork est déjà au-delà d’un simple cadrage :
 il constitue une **base d’implémentation cohérente** pour une extension CCNS de Teamworks, mais demande encore de la consolidation côté intégration réelle.
+
+### Couche d’accès aux données CCNS
+
+Une première couche moderne de lecture des données CCNS est introduite au-dessus de `GestionDB` :
+
+- `domain/repositories/ccns_data.py` définit les DTO de lecture ;
+- `infrastructure/persistence/ccns_data_reader.py` centralise les requêtes SQL pour les contrats, classifications, grilles et lignes de grilles ;
+- `teamworks/CcnsCore/audit_contracts_ccns.py` consomme ce lecteur au lieu de porter directement les requêtes SQL.
+
+Cette couche ne remplace pas encore `GestionDB`; elle prépare une migration progressive sans dépendance wxPython et sans changement de comportement utilisateur. Voir `docs/40-couche-acces-donnees.md`.
