@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
-from typing import Optional
+from typing import Iterable, Optional
 
 
 from domain.contracts.contract import Contract
@@ -21,6 +21,9 @@ from domain.engine.seniority import check_ccns_seniority_amount
 from domain.convention.salary_grid import SalaryGrid
 from domain.convention.salary_grid_line import SalaryGridLine
 from domain.convention.minimum_type import MinimumType
+from domain.convention.salary_grid_version import SalaryGridVersion
+from domain.convention.salary_grid_version_selector import SalaryGridVersionSelector
+from application.bootstrap.seed_reference_data import build_default_salary_grid_version_2026
 from infrastructure.persistence.ccns_data_reader import CcnsDataReader
 from teamworks.Utils import UTILS_Diagnostic_performance as DiagnosticPerformance
 
@@ -108,18 +111,80 @@ def _build_salary_grid(grid_record, line_records):
     return grid, lines
 
 
-def audit_contracts(limit=None, data_reader=None, reference_date=None):
+def _select_salary_grid_record(
+    grid_records,
+    salary_grid_versions: Iterable[SalaryGridVersion],
+    reference_date: date,
+):
+    versions = tuple(salary_grid_versions)
+    if not versions:
+        return None, ["Diagnostic grille salariale : aucune version disponible."]
+
+    records_by_code = {}
+    for grid_record in grid_records:
+        records_by_code.setdefault(grid_record.code, []).append(grid_record)
+
+    selector = SalaryGridVersionSelector.from_iterable(versions)
+    applicable_versions = []
+    for grid_code in records_by_code:
+        version = selector.find_applicable_version(grid_code, reference_date)
+        if version is not None:
+            applicable_versions.append(version)
+
+    if not applicable_versions:
+        version_codes = []
+        for version in versions:
+            if version.grid_code not in version_codes:
+                version_codes.append(version.grid_code)
+        applicable_without_grid = []
+        for grid_code in version_codes:
+            version = selector.find_applicable_version(grid_code, reference_date)
+            if version is not None:
+                applicable_without_grid.append(version)
+        if applicable_without_grid:
+            selected_without_grid = max(
+                applicable_without_grid,
+                key=lambda version: (version.effective_date, version.version, version.grid_code),
+            )
+            return None, [
+                "Diagnostic grille salariale : version applicable sans grille réelle (%s)."
+                % selected_without_grid.grid_code
+            ]
+        return None, ["Diagnostic grille salariale : aucune version applicable aux grilles disponibles."]
+
+    selected_version = max(
+        applicable_versions,
+        key=lambda version: (version.effective_date, version.version, version.grid_code),
+    )
+    matching_records = records_by_code.get(selected_version.grid_code, [])
+    if not matching_records:
+        return None, [
+            "Diagnostic grille salariale : version applicable sans grille réelle (%s)." % selected_version.grid_code
+        ]
+    if len(matching_records) > 1:
+        return None, [
+            "Diagnostic grille salariale : plusieurs grilles réelles pour le code %s." % selected_version.grid_code
+        ]
+    return matching_records[0], []
+
+
+def audit_contracts(limit=None, data_reader=None, reference_date=None, salary_grid_versions=None):
     reader = data_reader or CcnsDataReader()
     close_reader = data_reader is None
     try:
         records = reader.lire_contrats(limit=limit)
-        grid_records = reader.lire_grilles(limit=1)
-        grid_record = grid_records[0] if grid_records else None
+        grid_records = reader.lire_grilles()
+        control_date = reference_date or date.today()
+        versions = (
+            tuple(salary_grid_versions)
+            if salary_grid_versions is not None
+            else (build_default_salary_grid_version_2026(),)
+        )
+        grid_record, grid_diagnostics = _select_salary_grid_record(grid_records, versions, control_date)
         line_records = reader.lire_lignes_grille(grid_record.IDtw_salary_grid) if grid_record else []
         with DiagnosticPerformance.mesurer("transformation_python", "audit_contracts_ccns.construction_grille"):
             salary_grid, salary_grid_lines = _build_salary_grid(grid_record, line_records)
         results = []
-        control_date = reference_date or date.today()
         controles_simples = (check_contract_has_classification, check_contract_has_salary_grid)
 
         with DiagnosticPerformance.mesurer("transformation_python", "audit_contracts_ccns.controles", {"contrats": len(records)}):
@@ -158,7 +223,7 @@ def audit_contracts(limit=None, data_reader=None, reference_date=None):
                 )
 
                 anomalies = []
-                messages = []
+                messages = list(grid_diagnostics)
 
                 for checker in controles_simples:
                     result, anomaly = checker(contract)
