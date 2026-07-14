@@ -3,10 +3,12 @@ from __future__ import annotations
 from datetime import date
 
 from domain.engine.calculation_rule import CalculationRule
+from domain.engine.default_rule_references_ccns import build_default_ccns_rule_references
 from domain.engine.rule_family import RuleFamily
 
 
 def build_default_ccns_rules() -> list[CalculationRule]:
+    references = build_default_ccns_rule_references()
     return [
         CalculationRule(
             code="SENIORITY_G1_G6",
@@ -16,6 +18,7 @@ def build_default_ccns_rules() -> list[CalculationRule]:
             target_object="contract",
             effective_date=date(2026, 1, 1),
             priority=10,
+            rule_reference=references["SENIORITY_G1_G6"],
             parameters={
                 "groups_from": 1,
                 "groups_to": 6,
@@ -52,6 +55,7 @@ def build_default_ccns_rules() -> list[CalculationRule]:
             target_object="contract",
             effective_date=date(2026, 1, 1),
             priority=10,
+            rule_reference=references["CCNS_MIN_G1_G6_MONTHLY"],
             parameters={
                 "base_type": "MONTHLY",
                 "groups": [1, 2, 3, 4, 5, 6],

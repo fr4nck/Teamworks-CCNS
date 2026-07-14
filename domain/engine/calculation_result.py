@@ -17,6 +17,7 @@ class CalculationResult(Entity):
     assignment_id: Optional[str] = None
     rule_id: Optional[str] = None
     rule_code: Optional[str] = None
+    rule_reference_code: Optional[str] = None
     calculation_date: Optional[date] = None
     retained_base: Optional[str] = None
     actual_value: Optional[float] = None

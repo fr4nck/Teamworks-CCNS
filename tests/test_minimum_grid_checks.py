@@ -55,6 +55,7 @@ def test_monthly_minimum_compliant():
     assert anomaly is None
     assert result.theoretical_value == 1997.87
     assert result.actual_value == 2100.0
+    assert result.rule_reference_code == "REF_CCNS_MIN_G1_G6_MONTHLY_2026"
 
 
 def test_monthly_minimum_not_reached():
