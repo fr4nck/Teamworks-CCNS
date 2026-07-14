@@ -13,9 +13,11 @@ from domain.convention.minimum_resolver import (
 from domain.engine.anomaly import Anomaly
 from domain.engine.anomaly_level import AnomalyLevel
 from domain.engine.calculation_result import CalculationResult
+from domain.engine.legal_certainty import LegalCertainty
 from domain.engine.result_status import ResultStatus
 
 MINIMUM_FROM_GRID_REFERENCE_CODE = "REF_CCNS_MIN_G1_G6_MONTHLY_2026"
+MINIMUM_FROM_GRID_LEGAL_CERTAINTY = LegalCertainty.CERTAINE
 
 
 def check_contract_minimum_from_grid(
@@ -34,6 +36,7 @@ def check_contract_minimum_from_grid(
             contract_id=contract.id,
             rule_code="MINIMUM_FROM_GRID",
             rule_reference_code=MINIMUM_FROM_GRID_REFERENCE_CODE,
+            legal_certainty=MINIMUM_FROM_GRID_LEGAL_CERTAINTY,
             calculation_date=date.today(),
             status=ResultStatus.DATA_ERROR,
             readable_message="Classification absente, calcul du minimum impossible",
@@ -59,6 +62,7 @@ def check_contract_minimum_from_grid(
             contract_id=contract.id,
             rule_code="MINIMUM_FROM_GRID",
             rule_reference_code=MINIMUM_FROM_GRID_REFERENCE_CODE,
+            legal_certainty=MINIMUM_FROM_GRID_LEGAL_CERTAINTY,
             calculation_date=date.today(),
             status=ResultStatus.DATA_ERROR,
             readable_message="Grille salariale absente, calcul du minimum impossible",
@@ -93,6 +97,7 @@ def check_contract_minimum_from_grid(
             contract_id=contract.id,
             rule_code="MINIMUM_FROM_GRID",
             rule_reference_code=MINIMUM_FROM_GRID_REFERENCE_CODE,
+            legal_certainty=MINIMUM_FROM_GRID_LEGAL_CERTAINTY,
             calculation_date=date.today(),
             status=ResultStatus.DATA_ERROR,
             readable_message="Aucune ligne de grille applicable n'a été trouvée",
@@ -128,6 +133,7 @@ def check_contract_minimum_from_grid(
             contract_id=contract.id,
             rule_code="MINIMUM_FROM_GRID",
             rule_reference_code=MINIMUM_FROM_GRID_REFERENCE_CODE,
+            legal_certainty=MINIMUM_FROM_GRID_LEGAL_CERTAINTY,
             calculation_date=date.today(),
             status=ResultStatus.DATA_ERROR,
             readable_message="Le minimum théorique n'a pas pu être calculé à partir de la grille",
@@ -159,6 +165,7 @@ def check_contract_minimum_from_grid(
             contract_id=contract.id,
             rule_code="MINIMUM_FROM_GRID",
             rule_reference_code=MINIMUM_FROM_GRID_REFERENCE_CODE,
+            legal_certainty=MINIMUM_FROM_GRID_LEGAL_CERTAINTY,
             calculation_date=date.today(),
             retained_base=line.minimum_type.value,
             actual_value=None,
@@ -192,6 +199,7 @@ def check_contract_minimum_from_grid(
         contract_id=contract.id,
         rule_code="MINIMUM_FROM_GRID",
         rule_reference_code=MINIMUM_FROM_GRID_REFERENCE_CODE,
+        legal_certainty=MINIMUM_FROM_GRID_LEGAL_CERTAINTY,
         calculation_date=date.today(),
         retained_base=line.minimum_type.value,
         actual_value=actual_salary,

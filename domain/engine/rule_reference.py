@@ -6,6 +6,7 @@ from enum import Enum
 from typing import Optional
 
 from domain.common.base import Entity
+from domain.engine.legal_certainty import LegalCertainty
 
 
 class RuleReferenceStatus(str, Enum):
@@ -35,6 +36,7 @@ class RuleReference(Entity):
     comment: str = ""
     status: RuleReferenceStatus = RuleReferenceStatus.DRAFT
     confidence_level: str = "documented"
+    legal_certainty: LegalCertainty = LegalCertainty.MAJORITAIRE
     calculation_mode: str = ""
 
     def __post_init__(self) -> None:

@@ -8,6 +8,7 @@ from domain.convention.classification import CCNSClassification
 from domain.convention.salary_grid import SalaryGrid
 from domain.convention.salary_grid_line import SalaryGridLine
 from domain.convention.minimum_type import MinimumType
+from domain.engine.legal_certainty import LegalCertainty
 from domain.engine.minimum_checks import check_contract_minimum_from_grid
 
 
@@ -56,6 +57,7 @@ def test_monthly_minimum_compliant():
     assert result.theoretical_value == 1997.87
     assert result.actual_value == 2100.0
     assert result.rule_reference_code == "REF_CCNS_MIN_G1_G6_MONTHLY_2026"
+    assert result.legal_certainty == LegalCertainty.CERTAINE
 
 
 def test_monthly_minimum_not_reached():

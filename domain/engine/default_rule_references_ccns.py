@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 
+from domain.engine.legal_certainty import LegalCertainty
 from domain.engine.rule_reference import RuleReference, RuleReferenceStatus
 
 CCNS_OFFICIAL_URL = "https://www.legifrance.gouv.fr/conv_coll/id/KALICONT000017577652"
@@ -24,6 +25,7 @@ def build_default_ccns_rule_references() -> dict[str, RuleReference]:
             status=RuleReferenceStatus.DRAFT,
             confidence_level="à consolider par revue juridique",
             calculation_mode="Pourcentage progressif paramétré dans la règle métier existante.",
+            legal_certainty=LegalCertainty.MAJORITAIRE,
         ),
         "CCNS_MIN_G1_G6_MONTHLY": RuleReference(
             code="REF_CCNS_MIN_G1_G6_MONTHLY_2026",
@@ -38,5 +40,6 @@ def build_default_ccns_rule_references() -> dict[str, RuleReference]:
             status=RuleReferenceStatus.DRAFT,
             confidence_level="à consolider par revue juridique",
             calculation_mode="Comparaison entre la rémunération contractuelle et la ligne de grille applicable.",
+            legal_certainty=LegalCertainty.CERTAINE,
         ),
     }
