@@ -61,7 +61,7 @@ Points importants :
 
 - le reader isole les requêtes SQL de lecture des contrats et des grilles ;
 - le helper d'audit reste responsable d'une partie du mapping métier ;
-- la sélection de la grille est encore simplifiée (`limit=1`) et ne passe pas par `SalaryGridVersionSelector` ;
+- la sélection de la grille lit désormais les grilles réelles disponibles, peut exploiter des versions de grille lorsque le reader les expose, et conserve un repli déterministe compatible avec les bases sans version ;
 - la date de référence est `date.today()`, ce qui est pratique pour l'audit courant mais insuffisant pour une relecture historique.
 
 ### Flux synthèse individuelle
@@ -141,7 +141,7 @@ Ce flux est volontairement descriptif. Il documente et sélectionne des versions
 ## Ce qui manque
 
 - **Contrat d'architecture explicite entre adaptateurs Teamworks et services applicatifs** : il manque une règle simple indiquant quand un helper `teamworks/CcnsCore` peut appeler directement le domaine et quand il doit passer par un service.
-- **Sélecteur de grille utilisé dans l'audit réel** : `SalaryGridVersionSelector` existe, mais l'audit lit encore la première grille disponible. Il manque une décision datée et testée pour choisir la grille applicable.
+- **Persistance des versions de grille dans Teamworks réel** : l'audit sait utiliser des versions exposées par le reader et se replie proprement sur les grilles réelles, mais la lecture SQL dédiée aux versions de grille reste à matérialiser lorsque la table correspondante sera stabilisée.
 - **Date de référence injectable dans l'audit** : les contrôles historiques et les tests réglementaires gagneraient à recevoir une date explicite au lieu d'utiliser uniquement la date du jour.
 - **Mapper isolé pour SQL → domaine** : la transformation de records `CcnsDataReader` vers `Contract`, `SalaryGrid` et `SalaryGridLine` est assez centrale pour mériter une extraction lorsque le deuxième consommateur apparaît.
 - **Politique de cycle de vie des readers** : les readers ferment leur connexion, mais les règles d'usage dans les écrans longs, caches éventuels et erreurs partielles doivent être documentées avant optimisation.
@@ -165,7 +165,7 @@ Ce flux est volontairement descriptif. Il documente et sélectionne des versions
 
 1. **Conserver l'architecture par couches, mais nommer le chemin réel** : documenter que l'intégration Teamworks actuelle passe par des adaptateurs `teamworks/CcnsCore`, pas encore par une couche applicative complète.
 2. **Prioriser la date de référence injectable** dans l'audit avant toute évolution réglementaire active.
-3. **Brancher ensuite le choix de grille daté** avec `SalaryGridVersionSelector`, en conservant un comportement de repli explicite si aucune version applicable n'est trouvée.
+3. **Stabiliser ensuite la lecture persistée des versions de grille** : le choix daté et le repli existent côté audit, mais la source SQL des versions doit rester une évolution dédiée et testée.
 4. **Extraire un mapper SQL → domaine uniquement au deuxième usage** pour éviter une abstraction prématurée.
 5. **Maintenir les readers petits et testés** ; chaque nouvelle lecture doit être motivée par un écran, un contrôle ou une suppression de requête dispersée.
 6. **Garder la veille réglementaire sans activation automatique** tant que la validation métier et juridique n'est pas matérialisée dans une PR dédiée.

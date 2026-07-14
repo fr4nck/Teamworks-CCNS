@@ -50,6 +50,8 @@ La sélection filtre :
 
 Une version `SCHEDULED` n'est sélectionnable que si elle a atteint un niveau de validation suffisant (`LEGAL_REVIEWED` ou `BUSINESS_VALIDATED`). Les versions `DRAFT`, `SUPERSEDED` et `ARCHIVED` restent historisées mais ne sont pas applicables.
 
+Dans l'audit Teamworks réel, la sélection reste compatible avec les bases déjà installées : lorsqu'aucune version n'est disponible, qu'aucune version n'est applicable, qu'une version applicable ne pointe vers aucune grille réelle ou que plusieurs grilles partagent le code retenu, le diagnostic est conservé mais l'audit charge une grille réelle si elle existe. Le repli est déterministe : grille applicable à la date de référence la plus récente, puis à défaut grille à la date d'effet la plus ancienne, puis plus petit `IDtw_salary_grid` en cas d'égalité. L'absence de grille n'est donc conclue que si la lecture `tw_salary_grids` ne retourne réellement aucun enregistrement.
+
 ## Veille réglementaire et mises à jour futures
 
 La veille réglementaire produit des `RegulatorySnapshot` et des `RegulatoryChange` pour détecter les changements de sources officielles. Le versionnement des grilles prépare l'étape suivante : transformer une variation détectée en proposition de nouvelle `SalaryGridVersion`.

@@ -26,6 +26,11 @@ class _PersonScopedCcnsReader:
     def lire_lignes_grille(self, IDtw_salary_grid):
         return self._reader.lire_lignes_grille(IDtw_salary_grid)
 
+    def lire_versions_grilles(self):
+        if hasattr(self._reader, "lire_versions_grilles"):
+            return self._reader.lire_versions_grilles()
+        return []
+
 
 def build_person_ccns_summary(IDpersonne, data_reader=None, reference_date=None):
     """Construit la synthèse CCNS d'une personne sans dépendance wxPython.

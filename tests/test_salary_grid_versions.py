@@ -118,3 +118,31 @@ def test_default_salary_grid_version_does_not_change_current_grid_amounts():
     assert version.rule_reference_code == "REF_CCNS_MIN_G1_G6_MONTHLY_2026"
     assert amounts["G3"] == 1997.87
     assert amounts["G7"] == 40597.94
+
+
+def test_scheduled_salary_grid_version_insufficiently_validated_is_not_applicable():
+    scheduled = SalaryGridVersion(
+        grid_code="CCNS-2026",
+        version="2026-09-legal-review-required",
+        effective_date=date(2026, 9, 15),
+        status=SalaryGridVersionStatus.SCHEDULED,
+        validation_level=RuleVersionValidationLevel.LEGAL_REVIEW_REQUIRED,
+    )
+    selector = SalaryGridVersionSelector.from_iterable([scheduled])
+
+    assert not scheduled.is_applicable_on(date(2026, 9, 15))
+    assert selector.find_applicable_version("CCNS-2026", date(2026, 9, 15)) is None
+
+
+def test_scheduled_salary_grid_version_sufficiently_validated_is_applicable():
+    scheduled = SalaryGridVersion(
+        grid_code="CCNS-2026",
+        version="2026-09-business-validated",
+        effective_date=date(2026, 9, 15),
+        status=SalaryGridVersionStatus.SCHEDULED,
+        validation_level=RuleVersionValidationLevel.BUSINESS_VALIDATED,
+    )
+    selector = SalaryGridVersionSelector.from_iterable([scheduled])
+
+    assert scheduled.is_applicable_on(date(2026, 9, 15))
+    assert selector.find_applicable_version("CCNS-2026", date(2026, 9, 15)) == scheduled
