@@ -9,6 +9,19 @@
 | 3 | `teamworks/Ctrl/CTRL_Gadget_CCNS.py` | mesurer séparément vidage et remplissage wx | localiser les blocages de refresh | faible | absence de double chargement, même contenu affiché |
 | 4 | `teamworks/Ctrl/CTRL_Creation_contrat_p3.py`, `teamworks/Ctrl/CTRL_Creation_modele_contrat_p1.py` | remplacer les `SELECT *` référentiels par colonnes utiles | réduire volume transféré | faible | comparaison listes avant/après |
 
+## Pré-requis avant changement de stratégie de connexion
+
+Avant de modifier `GestionDB` ou d'introduire une connexion plus longue, comparer sur base représentative :
+
+| Stratégie | À mesurer | Point de vigilance |
+| --- | --- | --- |
+| Connexion par opération | coût d'ouverture, durée SQL/fetch, erreurs | simple mais potentiellement coûteux sur réseau |
+| Connexion réutilisée pendant une action | gain sur une fiche, un audit ou un assistant | option à privilégier en premier si le gain est mesuré |
+| Connexion conservée pendant la vie d'un écran | gain sur refreshs successifs | risque de connexion périmée et de verrou prolongé |
+| Connexion globale application | gain démarrage/actions | ne pas retenir sans test concurrence, perte réseau et fermeture propre |
+
+Cette comparaison doit identifier le moteur réel utilisé, la gestion des transactions, le comportement concurrent, le coût d'ouverture, les verrouillages et les pertes réseau.
+
 ## Lot 2 — accès aux données
 
 | Ordre | Fichiers concernés | Correctif | Bénéfice attendu | Risques | Tests nécessaires |
@@ -28,7 +41,16 @@ Aucun index n'est ajouté automatiquement. Les candidats doivent être validés 
 
 Chaque index devra être comparé aux index existants et son coût d'écriture/stockage documenté avant migration.
 
-## Lot 3 — interface
+## Lot 3 — accès distants et grandes listes
+
+| Ordre | Fichiers concernés | Correctif | Bénéfice attendu | Risques | Tests nécessaires |
+| --- | --- | --- | --- | --- | --- |
+| 1 | `teamworks/Ol/*`, `teamworks/Ctrl/CTRL_ObjectListView.py` | mesurer lignes visibles, lignes chargées, volume transféré et temps de rendu | savoir si le problème vient de la base ou de wxPython | faible | liste de grande taille en local, réseau et bureau distant |
+| 2 | listes volumineuses prioritaires | chargement par pages ou par lots si la liste dépasse les lignes visibles | réduire temps d'affichage initial | moyen : navigation, tri, filtres | identité des tris/filtres, affichage première page |
+| 3 | écrans avec images/icônes | mesurer coût des icônes, images et redimensionnements | réduire latence en bureau distant | faible à moyen | mesure avec et sans images, rendu identique |
+| 4 | refreshs complets | éviter reconstructions complètes lorsque filtre/tri/sélection n'a pas changé | diminuer blocage du fil graphique | moyen | nombre de `Refresh()`/`Layout()`/`Fit()` par action |
+
+## Lot 4 — interface
 
 | Ordre | Fichiers concernés | Correctif | Bénéfice attendu | Risques | Tests nécessaires |
 | --- | --- | --- | --- | --- | --- |
@@ -40,7 +62,8 @@ Chaque index devra être comparé aux index existants et son coût d'écriture/s
 ## Ordre recommandé global
 
 1. Déployer l'instrumentation et collecter des mesures sur une base représentative.
-2. Appliquer les gains rapides avec tests unitaires.
-3. Prioriser le référentiel géographique et les référentiels planning si les mesures confirment leur poids.
-4. Traiter les listes volumineuses avec limites/filtres SQL.
-5. Optimiser les rafraîchissements wxPython uniquement après identification des écrans les plus coûteux.
+2. Identifier le moteur réel et comparer les quatre stratégies de connexion avant toute connexion globale.
+3. Appliquer les gains rapides avec tests unitaires.
+4. Prioriser le référentiel géographique et les référentiels planning si les mesures confirment leur poids.
+5. Traiter les listes volumineuses avec limites/filtres SQL, pagination ou chargement par lots selon les mesures.
+6. Optimiser les rafraîchissements wxPython uniquement après identification des écrans les plus coûteux.
