@@ -108,7 +108,7 @@ def _build_salary_grid(grid_record, line_records):
     return grid, lines
 
 
-def audit_contracts(limit=None, data_reader=None):
+def audit_contracts(limit=None, data_reader=None, reference_date=None):
     reader = data_reader or CcnsDataReader()
     close_reader = data_reader is None
     try:
@@ -119,7 +119,7 @@ def audit_contracts(limit=None, data_reader=None):
         with DiagnosticPerformance.mesurer("transformation_python", "audit_contracts_ccns.construction_grille"):
             salary_grid, salary_grid_lines = _build_salary_grid(grid_record, line_records)
         results = []
-        reference_date = date.today()
+        control_date = reference_date or date.today()
         controles_simples = (check_contract_has_classification, check_contract_has_salary_grid)
 
         with DiagnosticPerformance.mesurer("transformation_python", "audit_contracts_ccns.controles", {"contrats": len(records)}):
@@ -171,6 +171,7 @@ def audit_contracts(limit=None, data_reader=None):
                         contract=contract,
                         salary_grid=salary_grid,
                         salary_grid_lines=salary_grid_lines,
+                        reference_date=control_date,
                     )
                     messages.append(result.readable_message)
                     if anomaly:
@@ -179,7 +180,7 @@ def audit_contracts(limit=None, data_reader=None):
                 if classification and classification.upper().startswith("G"):
                     result, anomaly = check_ccns_seniority_amount(
                         contract=contract,
-                        reference_date=reference_date,
+                        reference_date=control_date,
                         smc_group_3_amount=1997.87,
                         actual_seniority_amount=float(prime_anciennete or 0.0),
                     )
