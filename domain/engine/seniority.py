@@ -8,7 +8,12 @@ from domain.engine.anomaly import Anomaly
 from domain.engine.anomaly_level import AnomalyLevel
 from domain.engine.calculation_result import CalculationResult
 from domain.engine.detailed_checks import _extract_group_number
+from domain.engine.legal_certainty import LegalCertainty
 from domain.engine.result_status import ResultStatus
+
+
+SENIORITY_REFERENCE_CODE = "REF_CCNS_SENIORITY_G1_G6_2026"
+SENIORITY_LEGAL_CERTAINTY = LegalCertainty.MAJORITAIRE
 
 
 def check_ccns_seniority_amount(
@@ -81,6 +86,8 @@ def _result(contract, reference_date, theoretical_amount, actual_amount, status,
         person_id=contract.person_id,
         contract_id=contract.id,
         rule_code="CCNS_SENIORITY_AMOUNT",
+        rule_reference_code=SENIORITY_REFERENCE_CODE,
+        legal_certainty=SENIORITY_LEGAL_CERTAINTY,
         calculation_date=reference_date,
         retained_base="smc_group_3",
         actual_value=actual_amount,

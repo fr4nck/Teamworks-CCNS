@@ -3,6 +3,7 @@ from datetime import date
 import pytest
 
 from domain.engine.default_rules_ccns import build_default_ccns_rules
+from domain.engine.legal_certainty import LegalCertainty, LEGAL_CERTAINTY_DESCRIPTIONS
 from domain.engine.rule_reference import RuleReference, RuleReferenceStatus
 
 
@@ -26,6 +27,7 @@ def test_rule_reference_validity_period_and_explanation():
     assert reference.is_valid_on(date(2026, 7, 1))
     assert not reference.is_valid_on(date(2027, 1, 1))
     assert reference.explanation() == "Cette règle provient de Source officielle, article test (https://example.invalid/regle)."
+    assert reference.legal_certainty == LegalCertainty.MAJORITAIRE
 
 
 def test_default_ccns_rules_expose_initial_regulatory_references():
@@ -34,7 +36,14 @@ def test_default_ccns_rules_expose_initial_regulatory_references():
     seniority = rules["SENIORITY_G1_G6"]
     assert seniority.rule_reference is not None
     assert seniority.rule_reference.code == "REF_CCNS_SENIORITY_G1_G6_2026"
+    assert seniority.effective_legal_certainty == LegalCertainty.MAJORITAIRE
 
     minimum = rules["CCNS_MIN_G1_G6_MONTHLY"]
     assert minimum.rule_reference is not None
     assert minimum.rule_reference.official_url == "https://www.legifrance.gouv.fr/conv_coll/id/KALICONT000017577652"
+    assert minimum.effective_legal_certainty == LegalCertainty.CERTAINE
+
+
+def test_legal_certainty_levels_are_documented():
+    assert set(LEGAL_CERTAINTY_DESCRIPTIONS) == set(LegalCertainty)
+    assert "contexte" in LEGAL_CERTAINTY_DESCRIPTIONS[LegalCertainty.CONTEXTUELLE].lower()

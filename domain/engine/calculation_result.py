@@ -5,6 +5,7 @@ from datetime import date
 from typing import Any, Optional
 
 from domain.common.base import Entity
+from domain.engine.legal_certainty import LegalCertainty
 from domain.engine.result_status import ResultStatus
 
 
@@ -18,6 +19,7 @@ class CalculationResult(Entity):
     rule_id: Optional[str] = None
     rule_code: Optional[str] = None
     rule_reference_code: Optional[str] = None
+    legal_certainty: Optional[LegalCertainty] = None
     calculation_date: Optional[date] = None
     retained_base: Optional[str] = None
     actual_value: Optional[float] = None
