@@ -36,7 +36,7 @@ class RuleReference(Entity):
     comment: str = ""
     status: RuleReferenceStatus = RuleReferenceStatus.DRAFT
     confidence_level: str = "documented"
-    legal_certainty: LegalCertainty = LegalCertainty.MAJORITAIRE
+    legal_certainty: LegalCertainty = LegalCertainty.NON_EVALUEE
     calculation_mode: str = ""
 
     def __post_init__(self) -> None:

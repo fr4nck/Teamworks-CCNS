@@ -50,7 +50,7 @@ class CalculationRule(Entity):
             return self.legal_certainty
         if self.rule_reference is not None:
             return self.rule_reference.legal_certainty
-        return LegalCertainty.MAJORITAIRE
+        return LegalCertainty.NON_EVALUEE
 
     def is_applicable_on(self, reference_date: date) -> bool:
         if not self.is_active:

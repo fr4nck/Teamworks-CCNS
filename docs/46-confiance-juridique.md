@@ -18,6 +18,7 @@ Les niveaux sont portés par `LegalCertainty` dans le domaine moteur.
 
 | Niveau | Signification | Usage attendu |
 | --- | --- | --- |
+| `NON_EVALUEE` | La règle n'a pas encore été qualifiée juridiquement. | Valeur par défaut pour éviter de présenter implicitement une règle non analysée comme majoritaire. |
 | `CERTAINE` | Le texte officiel est clair et le contrôle est objectif. | Exemple : rémunération inférieure au minimum conventionnel applicable. |
 | `MAJORITAIRE` | Un texte existe et son interprétation est largement admise, avec peu de divergences identifiées. | Exemple : prime d'ancienneté standard modélisée par le moteur actuel. |
 | `DISCUTEE` | Plusieurs interprétations existent ou la jurisprudence et les pratiques peuvent varier. | À utiliser lorsque le moteur détecte un risque mais ne doit pas présenter l'analyse comme certaine. |
@@ -52,6 +53,7 @@ Le modèle permet désormais :
 
 - à une `RuleReference` de porter un niveau de confiance juridique ;
 - à une `CalculationRule` de surcharger ce niveau si nécessaire ;
+- aux règles sans référence ni niveau explicite de rester `NON_EVALUEE` au lieu d'être assimilées à une interprétation `MAJORITAIRE` ;
 - à un `CalculationResult` d'exposer le niveau utilisé par un contrôle.
 
 Deux règles existantes sont raccordées :

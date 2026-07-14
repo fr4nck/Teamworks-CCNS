@@ -58,12 +58,27 @@ def test_rule_version_selector_returns_version_applicable_to_reference_date():
         status=RuleVersionStatus.SCHEDULED,
         comment="Préparation d'une future version sans activation de calcul dans cette PR.",
         rule_reference=reference,
-        validation_level=RuleVersionValidationLevel.LEGAL_REVIEW_REQUIRED,
+        validation_level=RuleVersionValidationLevel.BUSINESS_VALIDATED,
     )
     selector = RuleVersionSelector.from_iterable([old_version, new_version])
 
     assert selector.require_applicable_version("SENIORITY_G1_G6", date(2026, 9, 14)) == old_version
     assert selector.require_applicable_version("SENIORITY_G1_G6", date(2026, 9, 15)) == new_version
+
+
+def test_scheduled_rule_version_requires_sufficient_validation_before_selection():
+    scheduled = RuleVersion(
+        rule_code="SENIORITY_G1_G6",
+        version="2026-09",
+        effective_date=date(2026, 9, 15),
+        status=RuleVersionStatus.SCHEDULED,
+        rule_reference=make_reference(),
+        validation_level=RuleVersionValidationLevel.LEGAL_REVIEW_REQUIRED,
+    )
+    selector = RuleVersionSelector.from_iterable([scheduled])
+
+    assert not scheduled.is_applicable_on(date(2026, 9, 15))
+    assert selector.find_applicable_version("SENIORITY_G1_G6", date(2026, 9, 15)) is None
 
 
 def test_rule_version_selector_ignores_drafts_for_applicable_date():
