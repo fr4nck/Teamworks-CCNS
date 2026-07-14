@@ -5,7 +5,10 @@ from datetime import date
 from domain.convention.classification import CCNSClassification
 from domain.convention.salary_grid import SalaryGrid
 from domain.convention.salary_grid_line import SalaryGridLine
+from domain.convention.salary_grid_version import SalaryGridVersion, SalaryGridVersionStatus
 from domain.convention.minimum_type import MinimumType
+from domain.engine.default_rule_references_ccns import build_default_ccns_rule_references
+from domain.engine.rule_version import RuleVersion, RuleVersionStatus, RuleVersionValidationLevel
 from domain.activity.time_nature import TimeNature
 from domain.security.default_roles import build_default_roles
 
@@ -102,6 +105,31 @@ def build_default_salary_grid_2026() -> tuple[SalaryGrid, list[SalaryGridLine]]:
         ),
     ]
     return grid, lines
+
+
+def build_default_salary_grid_version_2026() -> SalaryGridVersion:
+    references = build_default_ccns_rule_references()
+    reference = references["CCNS_MIN_G1_G6_MONTHLY"]
+    rule_version = RuleVersion(
+        rule_code="CCNS_MIN_G1_G6_MONTHLY",
+        version="2026-01",
+        effective_date=date(2026, 1, 1),
+        status=RuleVersionStatus.ACTIVE,
+        comment="Version descriptive raccordée à la grille salariale actuelle ; aucun calcul modifié.",
+        rule_reference=reference,
+        validation_level=RuleVersionValidationLevel.DOCUMENTED,
+    )
+    return SalaryGridVersion(
+        grid_code="CCNS-2026",
+        version="2026-01",
+        effective_date=date(2026, 1, 1),
+        status=SalaryGridVersionStatus.ACTIVE,
+        comment="Version descriptive de la grille actuellement utilisée par les tests et le runtime.",
+        rule_version=rule_version,
+        rule_reference=reference,
+        validation_level=RuleVersionValidationLevel.DOCUMENTED,
+        validation_date=date(2026, 1, 1),
+    )
 
 
 def build_default_time_natures() -> list[dict[str, str]]:

@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from application.bootstrap.seed_reference_data import (
     build_default_ccns_classifications,
     build_default_salary_grid_2026,
+    build_default_salary_grid_version_2026,
     build_default_roles_seed,
 )
 from infrastructure.repositories.people_repository import PeopleRepository, LegalProfileRepository
@@ -13,6 +14,7 @@ from infrastructure.repositories.convention_repository import (
     ClassificationRepository,
     SalaryGridRepository,
     SalaryGridLineRepository,
+    SalaryGridVersionRepository,
 )
 from infrastructure.repositories.activity_repository import (
     SeasonRepository,
@@ -40,6 +42,7 @@ class RuntimeContainer:
     classifications: ClassificationRepository
     salary_grids: SalaryGridRepository
     salary_grid_lines: SalaryGridLineRepository
+    salary_grid_versions: SalaryGridVersionRepository
     seasons: SeasonRepository
     periods: PeriodRepository
     activities: ActivityRepository
@@ -60,6 +63,7 @@ def build_runtime_container() -> RuntimeContainer:
         classifications=ClassificationRepository(),
         salary_grids=SalaryGridRepository(),
         salary_grid_lines=SalaryGridLineRepository(),
+        salary_grid_versions=SalaryGridVersionRepository(),
         seasons=SeasonRepository(),
         periods=PeriodRepository(),
         activities=ActivityRepository(),
@@ -79,6 +83,7 @@ def build_runtime_container() -> RuntimeContainer:
     container.salary_grids.add(grid)
     for line in lines:
         container.salary_grid_lines.add(line)
+    container.salary_grid_versions.add(build_default_salary_grid_version_2026())
 
     for rule in build_default_rules():
         container.calculation_rules.add(rule)
