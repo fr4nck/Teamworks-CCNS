@@ -31,7 +31,7 @@ def test_build_person_ccns_summary_utilise_le_reader_filtre_par_personne():
 
     summary = build_person_ccns_summary(42, data_reader=reader)
 
-    assert reader.calls == [("contrats_personne", 42, None), ("grilles", 1), ("lignes", 7)]
+    assert reader.calls == [("contrats_personne", 42, None), ("grilles", None), ("lignes", 7)]
     assert reader.closed is False
     assert summary["IDpersonne"] == 42
     assert summary["nb_contracts"] == 2

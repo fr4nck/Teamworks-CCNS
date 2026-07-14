@@ -1,3 +1,5 @@
+from datetime import date
+
 from domain.repositories.ccns_data import CcnsContratRecord, CcnsGrilleRecord, CcnsLigneGrilleRecord
 from teamworks.CcnsCore.audit_contracts_ccns import audit_contracts
 
@@ -28,10 +30,30 @@ def test_audit_contracts_utilise_le_lecteur_donnees_ccns_injecte():
 
     rows = audit_contracts(limit=25, data_reader=reader)
 
-    assert reader.calls == [("contrats", 25), ("grilles", 1), ("lignes", 7)]
+    assert reader.calls == [("contrats", 25), ("grilles", None), ("lignes", 7)]
     assert reader.closed is False
     assert len(rows) == 1
     assert rows[0].IDcontrat == 1
     assert rows[0].nom_complet == "Ada Lovelace"
     assert rows[0].classification == "G3"
     assert rows[0].type_contrat == "CDI"
+
+
+def test_audit_contracts_selectionne_la_grille_applicable_a_la_date_reference():
+    class VersionedReader(FakeReader):
+        def lire_grilles(self, limit=None):
+            self.calls.append(("grilles", limit))
+            return [
+                CcnsGrilleRecord(7, "CCNS-2026", "Grille 2026", "CCNS", "standard", "2026-01-01", "2026-09-14", "test"),
+                CcnsGrilleRecord(9, "CCNS-2026", "Grille 2026 rév. septembre", "CCNS", "standard", "2026-09-15", None, "test"),
+            ]
+
+        def lire_lignes_grille(self, IDtw_salary_grid):
+            self.calls.append(("lignes", IDtw_salary_grid))
+            return [CcnsLigneGrilleRecord(10, IDtw_salary_grid, "G3", "monthly", 1997.87, "EUR", None, None, None, None, "")]
+
+    reader = VersionedReader()
+
+    audit_contracts(limit=25, data_reader=reader, reference_date=date(2026, 9, 15))
+
+    assert ("lignes", 9) in reader.calls

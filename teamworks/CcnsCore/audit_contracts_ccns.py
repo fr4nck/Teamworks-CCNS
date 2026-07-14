@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, datetime
 from typing import Optional
 
 
@@ -20,6 +20,9 @@ from domain.engine.minimum_checks import check_contract_minimum_from_grid
 from domain.engine.seniority import check_ccns_seniority_amount
 from domain.convention.salary_grid import SalaryGrid
 from domain.convention.salary_grid_line import SalaryGridLine
+from domain.convention.salary_grid_version import SalaryGridVersion, SalaryGridVersionStatus
+from domain.convention.salary_grid_version_selector import SalaryGridVersionSelector
+from domain.engine.rule_version import RuleVersionValidationLevel
 from domain.convention.minimum_type import MinimumType
 from infrastructure.persistence.ccns_data_reader import CcnsDataReader
 from teamworks.Utils import UTILS_Diagnostic_performance as DiagnosticPerformance
@@ -69,6 +72,54 @@ def _map_time_org(contract_type):
     return TimeOrganization.WEEKLY_CONSTANT
 
 
+def _coerce_date(value):
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        return value.date()
+    if isinstance(value, date):
+        return value
+    if isinstance(value, str):
+        return date.fromisoformat(value[:10])
+    return value
+
+
+def _build_salary_grid_version(grid_record):
+    effective_date = _coerce_date(grid_record.effective_date)
+    if effective_date is None:
+        return None
+    return SalaryGridVersion(
+        grid_code=grid_record.code,
+        version=str(grid_record.IDtw_salary_grid),
+        effective_date=effective_date,
+        end_date=_coerce_date(grid_record.end_date),
+        status=SalaryGridVersionStatus.ACTIVE,
+        validation_level=RuleVersionValidationLevel.DOCUMENTED,
+    )
+
+
+def _select_applicable_grid_record(grid_records, reference_date):
+    versions = []
+    records_by_version = {}
+    for grid_record in grid_records:
+        version = _build_salary_grid_version(grid_record)
+        if version is not None:
+            versions.append(version)
+            records_by_version[version.version] = grid_record
+
+    if not versions:
+        return None
+
+    selector = SalaryGridVersionSelector.from_iterable(versions)
+    preferred_grid_code = "CCNS-2026"
+    available_codes = {version.grid_code for version in selector.versions}
+    grid_code = preferred_grid_code if preferred_grid_code in available_codes else next(iter(available_codes))
+    selected_version = selector.find_applicable_version(grid_code, reference_date)
+    if selected_version is None:
+        return None
+    return records_by_version[selected_version.version]
+
+
 def _build_salary_grid(grid_record, line_records):
     if grid_record is None:
         return None, []
@@ -79,8 +130,8 @@ def _build_salary_grid(grid_record, line_records):
         label=grid_record.label,
         convention_code=grid_record.convention_code or "CCNS",
         employment_regime_code=grid_record.employment_regime_code,
-        effective_date=grid_record.effective_date,
-        end_date=grid_record.end_date,
+        effective_date=_coerce_date(grid_record.effective_date),
+        end_date=_coerce_date(grid_record.end_date),
         source_reference=grid_record.source_reference,
     )
 
@@ -113,13 +164,13 @@ def audit_contracts(limit=None, data_reader=None, reference_date=None):
     close_reader = data_reader is None
     try:
         records = reader.lire_contrats(limit=limit)
-        grid_records = reader.lire_grilles(limit=1)
-        grid_record = grid_records[0] if grid_records else None
+        control_date = reference_date or date.today()
+        grid_records = reader.lire_grilles()
+        grid_record = _select_applicable_grid_record(grid_records, control_date)
         line_records = reader.lire_lignes_grille(grid_record.IDtw_salary_grid) if grid_record else []
         with DiagnosticPerformance.mesurer("transformation_python", "audit_contracts_ccns.construction_grille"):
             salary_grid, salary_grid_lines = _build_salary_grid(grid_record, line_records)
         results = []
-        control_date = reference_date or date.today()
         controles_simples = (check_contract_has_classification, check_contract_has_salary_grid)
 
         with DiagnosticPerformance.mesurer("transformation_python", "audit_contracts_ccns.controles", {"contrats": len(records)}):
