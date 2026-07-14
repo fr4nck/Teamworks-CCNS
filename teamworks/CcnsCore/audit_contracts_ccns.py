@@ -126,8 +126,8 @@ def _fetch_salary_grid(db):
 
 def audit_contracts(limit=None):
     db = GestionDB.DB()
-
-    req = """
+    try:
+        req = """
     SELECT
         contrats.IDcontrat,
         contrats.date_debut,
@@ -145,95 +145,96 @@ def audit_contracts(limit=None):
     LEFT JOIN contrats_types ON contrats_types.IDtype = contrats.IDtype
     ORDER BY contrats.IDcontrat;
     """
-    if limit:
-        req = req.replace("ORDER BY contrats.IDcontrat;", "ORDER BY contrats.IDcontrat LIMIT %d;" % int(limit))
+        if limit:
+            req = req.replace("ORDER BY contrats.IDcontrat;", "ORDER BY contrats.IDcontrat LIMIT %d;" % int(limit))
 
-    db.ExecuterReq(req)
-    records = db.ResultatReq()
+        db.ExecuterReq(req)
+        records = db.ResultatReq()
 
-    salary_grid, salary_grid_lines = _fetch_salary_grid(db)
-    results = []
+        salary_grid, salary_grid_lines = _fetch_salary_grid(db)
+        results = []
 
-    for rec in records:
-        (
-            IDcontrat,
-            date_debut,
-            date_fin,
-            salaire_base,
-            temps_hebdo,
-            prime_anciennete,
-            prenom,
-            nom,
-            classification,
-            type_contrat_label,
-        ) = rec
+        for rec in records:
+            (
+                IDcontrat,
+                date_debut,
+                date_fin,
+                salaire_base,
+                temps_hebdo,
+                prime_anciennete,
+                prenom,
+                nom,
+                classification,
+                type_contrat_label,
+            ) = rec
 
-        full_name = ((prenom or "") + " " + (nom or "")).strip() or ("Contrat %d" % IDcontrat)
-        contract_type = _map_contract_type(type_contrat_label)
-        employment_regime = _map_employment_regime(contract_type)
-        time_organization = _map_time_org(contract_type)
+            full_name = ((prenom or "") + " " + (nom or "")).strip() or ("Contrat %d" % IDcontrat)
+            contract_type = _map_contract_type(type_contrat_label)
+            employment_regime = _map_employment_regime(contract_type)
+            time_organization = _map_time_org(contract_type)
 
-        contract = Contract(
-            id=str(IDcontrat),
-            person_id="legacy-%d" % IDcontrat,
-            contract_type=contract_type,
-            employment_regime=employment_regime,
-            time_organization=time_organization,
-            start_date=_safe_date(date_debut),
-            end_date=_safe_date(date_fin),
-            weekly_reference_hours=float(temps_hebdo) if temps_hebdo is not None else None,
-            ccns_classification_code=classification,
-            salary_grid_code=salary_grid.code if salary_grid else None,
-            base_salary_amount=float(salaire_base) if salaire_base is not None else None,
-            salary_unit="monthly",
-            contract_status="legacy",
-            work_ratio=1.0,
-        )
-
-        anomalies = []
-        messages = []
-
-        for checker in (check_contract_has_classification, check_contract_has_salary_grid):
-            result, anomaly = checker(contract)
-            messages.append(result.readable_message)
-            if anomaly:
-                anomalies.append(anomaly.code)
-
-        if salary_grid:
-            result, anomaly = check_contract_minimum_from_grid(
-                contract=contract,
-                salary_grid=salary_grid,
-                salary_grid_lines=salary_grid_lines,
+            contract = Contract(
+                id=str(IDcontrat),
+                person_id="legacy-%d" % IDcontrat,
+                contract_type=contract_type,
+                employment_regime=employment_regime,
+                time_organization=time_organization,
+                start_date=_safe_date(date_debut),
+                end_date=_safe_date(date_fin),
+                weekly_reference_hours=float(temps_hebdo) if temps_hebdo is not None else None,
+                ccns_classification_code=classification,
+                salary_grid_code=salary_grid.code if salary_grid else None,
+                base_salary_amount=float(salaire_base) if salaire_base is not None else None,
+                salary_unit="monthly",
+                contract_status="legacy",
+                work_ratio=1.0,
             )
-            messages.append(result.readable_message)
-            if anomaly:
-                anomalies.append(anomaly.code)
 
-        if classification and classification.upper().startswith("G"):
-            result, anomaly = check_ccns_seniority_amount(
-                contract=contract,
-                reference_date=date.today(),
-                smc_group_3_amount=1997.87,
-                actual_seniority_amount=float(prime_anciennete or 0.0),
+            anomalies = []
+            messages = []
+
+            for checker in (check_contract_has_classification, check_contract_has_salary_grid):
+                result, anomaly = checker(contract)
+                messages.append(result.readable_message)
+                if anomaly:
+                    anomalies.append(anomaly.code)
+
+            if salary_grid:
+                result, anomaly = check_contract_minimum_from_grid(
+                    contract=contract,
+                    salary_grid=salary_grid,
+                    salary_grid_lines=salary_grid_lines,
+                )
+                messages.append(result.readable_message)
+                if anomaly:
+                    anomalies.append(anomaly.code)
+
+            if classification and classification.upper().startswith("G"):
+                result, anomaly = check_ccns_seniority_amount(
+                    contract=contract,
+                    reference_date=date.today(),
+                    smc_group_3_amount=1997.87,
+                    actual_seniority_amount=float(prime_anciennete or 0.0),
+                )
+                messages.append(result.readable_message)
+                if anomaly:
+                    anomalies.append(anomaly.code)
+
+            results.append(
+                AuditRow(
+                    IDcontrat=IDcontrat,
+                    nom_complet=full_name,
+                    classification=classification,
+                    type_contrat=type_contrat_label,
+                    salaire_base=float(salaire_base) if salaire_base is not None else None,
+                    anomalies=anomalies,
+                    messages=messages,
+                )
             )
-            messages.append(result.readable_message)
-            if anomaly:
-                anomalies.append(anomaly.code)
 
-        results.append(
-            AuditRow(
-                IDcontrat=IDcontrat,
-                nom_complet=full_name,
-                classification=classification,
-                type_contrat=type_contrat_label,
-                salaire_base=float(salaire_base) if salaire_base is not None else None,
-                anomalies=anomalies,
-                messages=messages,
-            )
-        )
-
-    db.Close()
-    return results
+        return results
+    finally:
+        db.Close()
 
 
 if __name__ == "__main__":

@@ -5,10 +5,7 @@ from __future__ import annotations
 
 import wx
 
-from teamworks.CcnsCore.home_gadgets_ccns import (
-    build_ccns_home_gadgets,
-    build_ccns_home_alert_lines,
-)
+from teamworks.CcnsCore.home_gadgets_ccns import build_ccns_home_data
 
 try:
     from Ctrl import CTRL_Page_contrats
@@ -42,7 +39,8 @@ class Panel(wx.Panel):
         self.list_alerts.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.OnOpenContract)
 
         self.__do_layout()
-        self.MAJ()
+        self._show_loading()
+        wx.CallAfter(self.MAJ)
 
     def __do_layout(self):
         sizer_base = wx.StaticBoxSizer(self.staticbox, wx.VERTICAL)
@@ -68,12 +66,22 @@ class Panel(wx.Panel):
         except Exception:
             pass
 
-    def MAJ(self):
+    def _show_loading(self):
+        self.list_stats.DeleteAllItems()
+        self.list_alerts.DeleteAllItems()
+        idx = self.list_stats.InsertItem(0, u"Chargement…")
+        self.list_stats.SetItem(idx, 1, u"")
+        self.rows = []
+        self.button_open_contract.Enable(False)
+
+    def MAJ(self, force_refresh=False):
         self.list_stats.DeleteAllItems()
         self.list_alerts.DeleteAllItems()
         self.rows = []
 
-        for stat in build_ccns_home_gadgets():
+        home_data = build_ccns_home_data(force_refresh=force_refresh)
+
+        for stat in home_data["stats"]:
             idx = self.list_stats.InsertItem(self.list_stats.GetItemCount(), stat["label"])
             self.list_stats.SetItem(idx, 1, str(stat["value"]))
             try:
@@ -86,7 +94,7 @@ class Panel(wx.Panel):
             except Exception:
                 pass
 
-        self.rows = build_ccns_home_alert_lines()
+        self.rows = home_data["alerts"]
         for row in self.rows:
             idx = self.list_alerts.InsertItem(self.list_alerts.GetItemCount(), row["label"])
             self.list_alerts.SetItem(idx, 1, row["details"])
@@ -96,7 +104,8 @@ class Panel(wx.Panel):
         self.button_open_contract.Enable(False)
 
     def OnRefresh(self, event):
-        self.MAJ()
+        self._show_loading()
+        wx.CallAfter(self.MAJ, True)
 
     def _get_selected_contract_id(self):
         index = self.list_alerts.GetFirstSelected()
