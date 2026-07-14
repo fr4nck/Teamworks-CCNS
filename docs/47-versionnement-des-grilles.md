@@ -71,3 +71,16 @@ Cette architecture permet désormais de préparer :
 - la comparaison de deux versions de grille ;
 - le rattachement aux `RuleVersion` et `RuleReference` ;
 - l'exploitation contrôlée des résultats de veille réglementaire.
+
+## Sélection réelle et replis historiques
+
+L'intégration historique de l'audit CCNS s'appuie désormais sur la sélection datée lorsqu'une ou plusieurs `SalaryGridVersion` sont disponibles. La version applicable est d'abord choisie selon sa période, son statut et son niveau de validation ; la grille réelle est ensuite recherchée par `grid_code`.
+
+Deux situations ambiguës ne sont plus ignorées silencieusement :
+
+- plusieurs grilles réelles partagent le même `grid_code` : l'interface historique ne lève pas d'exception bloquante, ajoute le motif de repli `grille_dupliquee` et retient de façon déterministe la grille au plus petit identifiant technique ;
+- une version applicable référence un `grid_code` absent des grilles réelles : l'interface ajoute le motif distinct `version_sans_grille_reelle` et revient à une grille disponible selon le repli daté déterministe.
+
+Lorsque des versions existent mais qu'aucune n'est applicable à la date de contrôle, le motif `aucune_version_applicable` documente le recours au comportement historique. Sans version disponible, le comportement reste compatible avec l'existant et aucun motif de repli n'est ajouté.
+
+L'instrumentation de performance couvre la sélection de version, la recherche de grille et le recours au repli via `UTILS_Diagnostic_performance`. Ces mesures restent strictement conditionnées à `TEAMWORKS_PERF_DIAG` et ne produisent aucun affichage permanent.

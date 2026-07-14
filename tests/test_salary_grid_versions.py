@@ -95,6 +95,32 @@ def test_future_salary_grid_version_requires_validation_before_selection():
     assert selector.find_applicable_version("CCNS-2026", date(2026, 9, 15)) is None
 
 
+
+def test_scheduled_salary_grid_version_insufficiently_validated_is_not_selected():
+    scheduled = SalaryGridVersion(
+        grid_code="CCNS-2026",
+        version="2026-09-legal-review-required",
+        effective_date=date(2026, 9, 15),
+        status=SalaryGridVersionStatus.SCHEDULED,
+        validation_level=RuleVersionValidationLevel.LEGAL_REVIEW_REQUIRED,
+    )
+    selector = SalaryGridVersionSelector.from_iterable([scheduled])
+
+    assert selector.find_applicable_version("CCNS-2026", date(2026, 9, 15)) is None
+
+
+def test_scheduled_salary_grid_version_sufficiently_validated_is_selected():
+    scheduled = SalaryGridVersion(
+        grid_code="CCNS-2026",
+        version="2026-09-business-validated",
+        effective_date=date(2026, 9, 15),
+        status=SalaryGridVersionStatus.SCHEDULED,
+        validation_level=RuleVersionValidationLevel.BUSINESS_VALIDATED,
+    )
+    selector = SalaryGridVersionSelector.from_iterable([scheduled])
+
+    assert selector.find_applicable_version("CCNS-2026", date(2026, 9, 15)) == scheduled
+
 def test_archived_salary_grid_version_is_not_selected():
     archived = SalaryGridVersion(
         grid_code="CCNS-2026",

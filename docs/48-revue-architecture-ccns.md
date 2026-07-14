@@ -173,3 +173,11 @@ Ce flux est volontairement descriptif. Il documente et sélectionne des versions
 ## Conclusion
 
 L'architecture actuelle est globalement cohérente pour un fork en migration progressive : le domaine CCNS est isolé, les premières lectures réelles sont testables, l'instrumentation reste locale et le versionnement réglementaire est descriptif. Les principales fragilités ne justifient pas une refonte générale ; elles concernent surtout la lisibilité des frontières, la sélection datée des grilles, l'injection d'une date de référence et la maîtrise de la duplication entre readers, repositories et helpers Teamworks.
+
+## Complément PR #24 : sélection datée des grilles
+
+La sélection des grilles de l'audit historique est maintenant plus explicite sans rendre l'interface bloquante. La chaîne d'intégration distingue la version applicable, la grille réelle trouvée et le repli éventuel. Les doublons de `grid_code` ne masquent plus une incohérence de données : ils produisent un motif de repli explicite et un choix déterministe. De même, une version applicable dont le `grid_code` ne correspond à aucune grille réelle est diagnostiquée séparément afin de ne pas confondre cette anomalie avec l'absence de version.
+
+Cette évolution reste locale au pont historique `teamworks/CcnsCore/audit_contracts_ccns.py`. Elle ne modifie ni les statuts de `SalaryGridVersion`, ni les niveaux de validation réutilisés depuis les règles, ni les montants de grille. Les contrôles automatisés couvrent également la preuve métier attendue : deux grilles de test avec des lignes et montants différents conduisent à des minima théoriques différents selon une date historique ou récente.
+
+Le diagnostic de performance conserve l'orientation architecturale existante : mesures en mémoire uniquement, activées par `TEAMWORKS_PERF_DIAG`, sur les étapes de sélection de version, de recherche de grille et de repli.

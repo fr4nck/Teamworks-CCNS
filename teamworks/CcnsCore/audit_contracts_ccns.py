@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
-from typing import Optional
+from typing import Iterable, Optional
 
 
 from domain.contracts.contract import Contract
@@ -21,8 +21,15 @@ from domain.engine.seniority import check_ccns_seniority_amount
 from domain.convention.salary_grid import SalaryGrid
 from domain.convention.salary_grid_line import SalaryGridLine
 from domain.convention.minimum_type import MinimumType
+from domain.convention.salary_grid_version import SalaryGridVersion
 from infrastructure.persistence.ccns_data_reader import CcnsDataReader
 from teamworks.Utils import UTILS_Diagnostic_performance as DiagnosticPerformance
+
+
+@dataclass(frozen=True)
+class SelectedGridRecord:
+    grid_record: object | None
+    fallback_reason: str | None = None
 
 
 @dataclass
@@ -69,6 +76,98 @@ def _map_time_org(contract_type):
     return TimeOrganization.WEEKLY_CONSTANT
 
 
+
+def _as_date(value):
+    if isinstance(value, date):
+        return value
+    if isinstance(value, str) and value:
+        return date.fromisoformat(value)
+    return None
+
+
+def _grid_sort_key(grid_record):
+    return (_as_date(grid_record.effective_date) or date.min, grid_record.IDtw_salary_grid)
+
+
+def _fallback_grid_record(grid_records: Iterable[object], reference_date: date):
+    records = sorted(grid_records, key=_grid_sort_key)
+    applicable = [
+        item
+        for item in records
+        if (_as_date(item.effective_date) is None or _as_date(item.effective_date) <= reference_date)
+        and (_as_date(item.end_date) is None or reference_date <= _as_date(item.end_date))
+    ]
+    if applicable:
+        return applicable[-1]
+    return records[0] if records else None
+
+
+def _select_applicable_version(versions: Iterable[SalaryGridVersion], reference_date: date) -> SalaryGridVersion | None:
+    candidates = [version for version in versions if version.is_applicable_on(reference_date)]
+    if not candidates:
+        return None
+    return max(candidates, key=lambda version: (version.effective_date, version.version, version.grid_code))
+
+
+def _select_grid_record(grid_records: Iterable[object], versions: Iterable[SalaryGridVersion], reference_date: date) -> SelectedGridRecord:
+    grids = list(grid_records)
+    version_items = list(versions)
+    with DiagnosticPerformance.mesurer(
+        "transformation_python",
+        "audit_contracts_ccns.selection_version",
+        {"versions": len(version_items)},
+    ):
+        selected_version = _select_applicable_version(version_items, reference_date)
+
+    if selected_version is None:
+        with DiagnosticPerformance.mesurer(
+            "transformation_python",
+            "audit_contracts_ccns.recherche_grille",
+            {"grilles": len(grids), "grid_code": None},
+        ):
+            selected_grid = _fallback_grid_record(grids, reference_date)
+        reason = "aucune_version_applicable" if version_items else None
+        if reason:
+            DiagnosticPerformance.enregistrer_mesure(
+                "transformation_python",
+                "audit_contracts_ccns.recours_repli",
+                0.0,
+                {"motif": reason},
+            )
+        return SelectedGridRecord(selected_grid, reason)
+
+    with DiagnosticPerformance.mesurer(
+        "transformation_python",
+        "audit_contracts_ccns.recherche_grille",
+        {"grilles": len(grids), "grid_code": selected_version.grid_code},
+    ):
+        matching_grids = [item for item in grids if item.code == selected_version.grid_code]
+
+    if len(matching_grids) == 1:
+        return SelectedGridRecord(matching_grids[0])
+
+    if len(matching_grids) > 1:
+        selected_grid = sorted(matching_grids, key=lambda item: item.IDtw_salary_grid)[0]
+        reason = "grille_dupliquee"
+    else:
+        selected_grid = _fallback_grid_record(grids, reference_date)
+        reason = "version_sans_grille_reelle"
+
+    DiagnosticPerformance.enregistrer_mesure(
+        "transformation_python",
+        "audit_contracts_ccns.recours_repli",
+        0.0,
+        {"motif": reason, "grid_code": selected_version.grid_code},
+    )
+    return SelectedGridRecord(selected_grid, reason)
+
+
+def _read_grid_versions(reader) -> list[SalaryGridVersion]:
+    read_versions = getattr(reader, "lire_versions_grilles", None)
+    if read_versions is None:
+        return []
+    return list(read_versions())
+
 def _build_salary_grid(grid_record, line_records):
     if grid_record is None:
         return None, []
@@ -113,13 +212,15 @@ def audit_contracts(limit=None, data_reader=None, reference_date=None):
     close_reader = data_reader is None
     try:
         records = reader.lire_contrats(limit=limit)
-        grid_records = reader.lire_grilles(limit=1)
-        grid_record = grid_records[0] if grid_records else None
+        control_date = reference_date or date.today()
+        grid_records = reader.lire_grilles()
+        grid_versions = _read_grid_versions(reader)
+        selected_grid = _select_grid_record(grid_records, grid_versions, control_date)
+        grid_record = selected_grid.grid_record
         line_records = reader.lire_lignes_grille(grid_record.IDtw_salary_grid) if grid_record else []
         with DiagnosticPerformance.mesurer("transformation_python", "audit_contracts_ccns.construction_grille"):
             salary_grid, salary_grid_lines = _build_salary_grid(grid_record, line_records)
         results = []
-        control_date = reference_date or date.today()
         controles_simples = (check_contract_has_classification, check_contract_has_salary_grid)
 
         with DiagnosticPerformance.mesurer("transformation_python", "audit_contracts_ccns.controles", {"contrats": len(records)}):
@@ -159,6 +260,9 @@ def audit_contracts(limit=None, data_reader=None, reference_date=None):
 
                 anomalies = []
                 messages = []
+
+                if selected_grid.fallback_reason:
+                    messages.append("Sélection grille CCNS en repli : %s" % selected_grid.fallback_reason)
 
                 for checker in controles_simples:
                     result, anomaly = checker(contract)
