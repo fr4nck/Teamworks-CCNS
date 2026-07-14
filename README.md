@@ -145,7 +145,8 @@ Le dépôt a vocation à contenir une documentation projet simple et lisible, no
 - moteur et anomalies ;
 - contrôles CCNS détaillés ;
 - synthèse d’intégration dans Teamworks ;
-- règles de développement relatives aux performances.
+- règles de développement relatives aux performances ;
+- règles de pérennité technique, de compatibilité multiplateforme et de gestion des dépendances.
 
 ---
 
