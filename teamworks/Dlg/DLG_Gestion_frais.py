@@ -13,6 +13,7 @@ from Ctrl import CTRL_Bouton_image
 import FonctionsPerso
 import six
 import GestionDB
+from infrastructure.persistence.person_reader import PersonReader
 from Ctrl import CTRL_Page_frais
 import wx.lib.mixins.listctrl  as  listmix
 
@@ -25,20 +26,20 @@ class Dialog(wx.Dialog):
         self.nomPersonne = None
         
         self.panel_base = wx.Panel(self, -1)
-        self.label_intro = wx.StaticText(self.panel_base, -1, _(u"Veuillez sélectionner un individu dans la liste pour afficher les déplacements et remboursements correspondants :"))
-        self.staticBox_selection = wx.StaticBox(self.panel_base, -1, _(u"Sélection"))
+        self.label_intro = wx.StaticText(self.panel_base, -1, _(u"Veuillez sÃ©lectionner un individu dans la liste pour afficher les dÃ©placements et remboursements correspondants :"))
+        self.staticBox_selection = wx.StaticBox(self.panel_base, -1, _(u"SÃ©lection"))
         
         # Filtres d'affichage
         self.label_check_tous = wx.StaticText(self.panel_base, -1, _(u"Afficher toutes les personnes") )
         self.ctrl_check_tous = wx.RadioButton(self.panel_base, -1, "", style = wx.RB_GROUP )
-        self.label_check_nonRembourses = wx.StaticText(self.panel_base, -1, _(u"Afficher uniquement les \npersonnes ayant au moins un \ndéplacement non remboursé") )
+        self.label_check_nonRembourses = wx.StaticText(self.panel_base, -1, _(u"Afficher uniquement les \npersonnes ayant au moins un \ndÃ©placement non remboursÃ©") )
         self.ctrl_check_nonRembourses = wx.RadioButton(self.panel_base, -1, "")
         self.ctrl_check_nonRembourses.SetValue(True)
         
         # ListCtrl Personnes
         self.ctrl_personnes = ListCtrl_personnes(self.panel_base)
         
-        # Page Frais à importer
+        # Page Frais Ã  importer
         self.panel_pageFrais = CTRL_Page_frais.Panel(self.panel_base,  IDpersonne=self.IDpersonne)
         
         self.bouton_aide = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))
@@ -53,13 +54,13 @@ class Dialog(wx.Dialog):
         self.Bind(wx.EVT_RADIOBUTTON, self.OnCheckTous, self.ctrl_check_tous )
         self.Bind(wx.EVT_RADIOBUTTON, self.OnCheckNonRembourses, self.ctrl_check_nonRembourses )
         
-        # Si aucune personne n'a de déplacements à rembourser, on affiche tout le monde
+        # Si aucune personne n'a de dÃ©placements Ã  rembourser, on affiche tout le monde
         if len(self.ctrl_personnes.donnees) == 0 :
             self.ctrl_check_tous.SetValue(True)
             self.ctrl_personnes.MAJListeCtrl()
 
     def __set_properties(self):
-        self.SetTitle(_(u"Gestion des frais de déplacement"))
+        self.SetTitle(_(u"Gestion des frais de dÃ©placement"))
         if 'phoenix' in wx.PlatformInfo:
             _icon = wx.Icon()
         else :
@@ -125,11 +126,11 @@ class Dialog(wx.Dialog):
         self.MAJlistes()
         
     def MAJlistes(self):
-        # MAJ du IDpersonne si demandé
+        # MAJ du IDpersonne si demandÃ©
         if self.IDpersonne != 0 :
             self.panel_pageFrais.IDpersonne = self.IDpersonne
-            if self.IDpersonne == None : self.panel_pageFrais.staticBox_deplacements.SetLabel(_(u"Déplacements"))
-            else : self.panel_pageFrais.staticBox_deplacements.SetLabel(_(u"Déplacements de %s") % self.nomPersonne)
+            if self.IDpersonne == None : self.panel_pageFrais.staticBox_deplacements.SetLabel(_(u"DÃ©placements"))
+            else : self.panel_pageFrais.staticBox_deplacements.SetLabel(_(u"DÃ©placements de %s") % self.nomPersonne)
             self.panel_pageFrais.ctrl_deplacements.IDpersonne = self.IDpersonne
             if self.IDpersonne == None : self.panel_pageFrais.staticBox_remboursements.SetLabel(_(u"Remboursements"))
             else : self.panel_pageFrais.staticBox_remboursements.SetLabel(_(u"Remboursements de %s") % self.nomPersonne)
@@ -178,18 +179,18 @@ class ListCtrl_personnes(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.Co
 
     def Remplissage(self):
         
-        # Récupération des données dans la base de données
+        # RÃ©cupÃ©ration des donnÃ©es dans la base de donnÃ©es
         self.Importation()
         
-        # Création des colonnes
+        # CrÃ©ation des colonnes
         self.nbreColonnes = 4
         self.InsertColumn(0, _(u"ID"))
         self.SetColumnWidth(0, 0)
-        self.InsertColumn(1, _(u"Nom et prénom"))
+        self.InsertColumn(1, _(u"Nom et prÃ©nom"))
         self.SetColumnWidth(1, 200)
-        self.InsertColumn(2, _(u"Déplac. remboursés"))
+        self.InsertColumn(2, _(u"DÃ©plac. remboursÃ©s"))
         self.SetColumnWidth(2, 120)
-        self.InsertColumn(3, _(u"Déplac. non remboursés"))
+        self.InsertColumn(3, _(u"DÃ©plac. non remboursÃ©s"))
         self.SetColumnWidth(3, 150)
 
         #These two should probably be passed to init more cleanly
@@ -218,24 +219,22 @@ class ListCtrl_personnes(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.Co
     
     def Importation(self):
         dictDonnees = {}
-        # Récupération de la liste des personnes
-        DB = GestionDB.DB()        
-        req = """SELECT IDpersonne, nom, prenom FROM personnes ORDER BY nom, prenom; """
-        DB.ExecuterReq(req)
-        listePersonnes = DB.ResultatReq()
+        reader = PersonReader()
+        listePersonnes = reader.lire_identites()
+        reader.close()
         DB.Close()
         
         for IDpersonne, nom, prenom in listePersonnes :
-            dictDonnees[IDpersonne] = [IDpersonne, nom + " " + prenom, 0, 0, 0, 0] # Nbre_remboursés, montant_remboursés, nbre_non_remboursés, montant_non_remboursés
+            dictDonnees[IDpersonne] = [IDpersonne, nom + " " + prenom, 0, 0, 0, 0] # Nbre_remboursÃ©s, montant_remboursÃ©s, nbre_non_remboursÃ©s, montant_non_remboursÃ©s
         
-        # Récupération des déplacements
+        # RÃ©cupÃ©ration des dÃ©placements
         DB = GestionDB.DB()        
         req = """SELECT IDdeplacement, IDpersonne, distance, tarif_km, IDremboursement FROM deplacements; """
         DB.ExecuterReq(req)
         listeDeplacements = DB.ResultatReq()
         DB.Close()
         
-        # Création de la liste de données
+        # CrÃ©ation de la liste de donnÃ©es
         for IDdeplacement, IDpersonne, distance, tarif_km, IDremboursement in listeDeplacements :
             montant = float(distance) * float(tarif_km)
             
@@ -256,9 +255,9 @@ class ListCtrl_personnes(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.Co
             nbreNonRembourses = valeurs[4]
             montantNonRembourses = valeurs[5]
             if nbreRembourses == 0 : txtRembourses = ""
-            else : txtRembourses = str(nbreRembourses) + _(u" (soit %.2f ¤) ") % montantRembourses
+            else : txtRembourses = str(nbreRembourses) + _(u" (soit %.2f Â¤) ") % montantRembourses
             if nbreNonRembourses == 0 : txtNonRembourses = ""
-            else : txtNonRembourses = str(nbreNonRembourses) + _(u" (soit %.2f ¤) ") % montantNonRembourses
+            else : txtNonRembourses = str(nbreNonRembourses) + _(u" (soit %.2f Â¤) ") % montantNonRembourses
             
             if self.GetGrandParent().ctrl_check_nonRembourses.GetValue() == True :
                 if nbreNonRembourses > 0 :
@@ -291,14 +290,14 @@ class ListCtrl_personnes(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.Co
         return valeur
 
     def OnGetItemImage(self, item):
-        """ Affichage des images en début de ligne """
+        """ Affichage des images en dÃ©but de ligne """
         index=self.itemIndexMap[item]
         valeur =self.itemDataMap[index][0]
         return -1
 
     def OnGetItemAttr(self, item):
         """ Application d'une couleur de fond pour une ligne sur deux """
-        # Création d'une ligne de couleur 1 ligne sur 2
+        # CrÃ©ation d'une ligne de couleur 1 ligne sur 2
         if item % 2 == 1:
             return self.attr1
         else:

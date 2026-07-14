@@ -11,6 +11,7 @@ from Utils.UTILS_Traduction import _
 import wx
 from Ctrl import CTRL_Bouton_image
 import GestionDB
+from infrastructure.persistence.person_reader import PersonReader
 import FonctionsPerso
 import os
 from Dlg import DLG_Selection_periode
@@ -30,20 +31,20 @@ class PanelPhoto(wx.Panel):
         wx.Panel.__init__(self, parent, id=-1, style=wx.TAB_TRAVERSAL)
         self.IDpersonne = IDpersonne
         
-        # Choix décoration
-        self.label_decoration = wx.StaticText(self, -1, _(u"Cadre de décoration :"), style=wx.ALIGN_RIGHT)
+        # Choix dÃ©coration
+        self.label_decoration = wx.StaticText(self, -1, _(u"Cadre de dÃ©coration :"), style=wx.ALIGN_RIGHT)
         listeCadres = FonctionsPerso.GetListeCadresPhotos()
         self.combobox_decoration = wx.Choice(self, -1, choices=listeCadres)
         
-        # Recherche du cadre de décoration attribué à la personne
+        # Recherche du cadre de dÃ©coration attribuÃ© Ã  la personne
         cadrePhoto, textePhoto = CTRL_Photo.GetCadreEtTexte(self.IDpersonne)
         if cadrePhoto != None and cadrePhoto != "" :
             self.combobox_decoration.SetStringSelection(cadrePhoto)
         else:
             self.combobox_decoration.SetSelection(0)
         
-        # Saisie du texte personnalisé
-        self.label_texte_perso = wx.StaticText(self, -1, _(u"Texte personnalisé :"), style=wx.ALIGN_RIGHT)
+        # Saisie du texte personnalisÃ©
+        self.label_texte_perso = wx.StaticText(self, -1, _(u"Texte personnalisÃ© :"), style=wx.ALIGN_RIGHT)
         self.texte_perso = wx.TextCtrl(self, -1, textePhoto)
         
         # Layout
@@ -61,7 +62,7 @@ class PanelPhoto(wx.Panel):
         self.Bind(wx.EVT_TEXT, self.OnTextePerso, self.texte_perso)
         
     def OnChoixDecoration(self, event):    
-        # Sauvegarde du cadre de décoration
+        # Sauvegarde du cadre de dÃ©coration
         cadrePhoto = self.combobox_decoration.GetStringSelection()
         if cadrePhoto == "Aucun" : cadrePhoto = ""
         DB = GestionDB.DB()
@@ -99,12 +100,12 @@ class ListBookPhotos(wx.Listbook):
             bmp = self.RecuperePhoto(IDpersonne)
             # Attribuer l'image
             indexImage = self.il.Add(bmp)
-            # Place l'index de l'image attribué dans la liste de données
+            # Place l'index de l'image attribuÃ© dans la liste de donnÃ©es
             self.listePersonnes[index][3] = indexImage
             index += 1
         self.AssignImageList(self.il)
 
-        # Création des pages
+        # CrÃ©ation des pages
         for IDpersonne, nom, prenom, indexImage in self.listePersonnes :
             page = PanelPhoto(self, IDpersonne=IDpersonne)
             self.AddPage(page, prenom, imageId=indexImage)
@@ -115,27 +116,27 @@ class ListBookPhotos(wx.Listbook):
     
     def RemplacePhoto(self, IDpersonne):
         """ MAJ la photo dans le listImage du listBook """
-        # Récupère l'index dans le listBook et l'index de la photo dans le listImages
+        # RÃ©cupÃ¨re l'index dans le listBook et l'index de la photo dans le listImages
         index = 0
         for IDpers, nom, prenom, indexImage in self.listePersonnes :
             if IDpers == IDpersonne : break
             index += 1
         il = self.GetImageList()
-        # Re-créé l'image
+        # Re-crÃ©Ã© l'image
         bmp = self.RecuperePhoto(IDpersonne)
         il.Replace(index, bmp)
-        # Met à jour l'image de la page
+        # Met Ã  jour l'image de la page
         self.SetPageImage(index, index)
     
     def RecuperePhoto(self, IDpersonne):
         IDphoto, bmp = CTRL_Photo.GetPhoto(IDindividu=IDpersonne, taillePhoto=(self.tailleImages, self.tailleImages), qualite=50)
         if bmp == None :
-            # Crée une image vide
+            # CrÃ©e une image vide
             bmp = self.CreationPhotoVide(self.tailleImages)
         return bmp
     
     def CreationPhotoVide(self, taille):
-        """ Création d'une photo vide """
+        """ CrÃ©ation d'une photo vide """
         bmp = wx.EmptyBitmap(taille, taille)
         dc = wx.MemoryDC()
         dc.SelectObject(bmp)
@@ -195,11 +196,11 @@ class Dialog(wx.Dialog):
             #"couleur_fond" : None,
             }
 
-        # Données
+        # DonnÃ©es
         self.ImportationDonnees()
         
-        # Paramètres de la page
-        self.staticbox_page = wx.StaticBox(self.panel_base, -1, _(u"Paramètres de la page"))
+        # ParamÃ¨tres de la page
+        self.staticbox_page = wx.StaticBox(self.panel_base, -1, _(u"ParamÃ¨tres de la page"))
         self.ctrl_disposition = BitmapComboBox(self.panel_base, size=(320,-1), style=wx.CB_READONLY)
         
         # Images pour le bitmapComboBox
@@ -209,8 +210,8 @@ class Dialog(wx.Dialog):
             self.ctrl_disposition.Append(nom, bmp, ID)
         self.ctrl_disposition.Select(self.dictAffichage["disposition_page"])
         
-        # Paramètres de l'impression
-        self.staticbox_param = wx.StaticBox(self.panel_base, -1, _(u"Paramètres de l'impression"))
+        # ParamÃ¨tres de l'impression
+        self.staticbox_param = wx.StaticBox(self.panel_base, -1, _(u"ParamÃ¨tres de l'impression"))
 
         self.label_bordure = wx.StaticText(self.panel_base, -1, _(u"Bordures :"), style=wx.ALIGN_RIGHT)
         self.bordure = wx.CheckBox(self.panel_base, -1, u"")
@@ -221,13 +222,13 @@ class Dialog(wx.Dialog):
         self.nbre_copies.SetValue(self.dictAffichage["nbre_copies"])
         
         # Liste des photos
-        self.sizer_grid_staticbox = wx.StaticBox(self.panel_base, -1, _(u"Paramètres des photos"))
-        self.label_intro = wx.StaticText(self.panel_base, -1, _(u"Sélectionnez les paramètres de votre choix et cliquez sur 'Aperçu'."))
+        self.sizer_grid_staticbox = wx.StaticBox(self.panel_base, -1, _(u"ParamÃ¨tres des photos"))
+        self.label_intro = wx.StaticText(self.panel_base, -1, _(u"SÃ©lectionnez les paramÃ¨tres de votre choix et cliquez sur 'AperÃ§u'."))
         self.listBook = ListBookPhotos(self.panel_base)
         
         # Boutons
         self.bouton_aide = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))
-        self.bouton_ok = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Aperçu"), cheminImage=Chemins.GetStaticPath("Images/32x32/Apercu.png"))
+        self.bouton_ok = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"AperÃ§u"), cheminImage=Chemins.GetStaticPath("Images/32x32/Apercu.png"))
         self.bouton_annuler = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Fermer"), cheminImage=Chemins.GetStaticPath("Images/32x32/Fermer.png"))
         
         self.bouton_ok.SetFocus()
@@ -267,7 +268,7 @@ class Dialog(wx.Dialog):
         sizer_page.Add(self.ctrl_disposition, 1, wx.ALL|wx.EXPAND, 5) 
         grid_sizer_haut.Add(sizer_page, 1, wx.LEFT|wx.RIGHT|wx.EXPAND, 0)
         
-        # Paramètres de l'impression
+        # ParamÃ¨tres de l'impression
         sizer_param = wx.StaticBoxSizer(self.staticbox_param, wx.VERTICAL)
         grid_sizer_param = wx.FlexGridSizer(rows=4, cols=2, vgap=5, hgap=5)
         
@@ -360,13 +361,11 @@ class Dialog(wx.Dialog):
             
     def ImportationDonnees(self):
         """ Importation de la liste des personnes """
-        # Récupération de la liste des personnes
-        DB = GestionDB.DB()        
-        req = """SELECT IDpersonne, nom, prenom FROM personnes ORDER BY nom, prenom; """
-        DB.ExecuterReq(req)
-        listePersonnes = DB.ResultatReq()
+        reader = PersonReader()
+        listePersonnes = reader.lire_identites()
+        reader.close()
         DB.Close()
-        # Création de la liste pour le listBox et du dict de données
+        # CrÃ©ation de la liste pour le listBox et du dict de donnÃ©es
         self.listeDonnees = []
         self.dictDonnees = {}
         index = 0
@@ -379,20 +378,20 @@ class Dialog(wx.Dialog):
     def Build_Hyperlink(self) :
         """ Construit un hyperlien """
         self.SetFont(wx.Font(10, wx.SWISS, wx.NORMAL, wx.NORMAL, False))
-        hyper = hl.HyperLinkCtrl(self.panel_base, -1, _(u"Sélectionner les présents d'une période"), URL="")
+        hyper = hl.HyperLinkCtrl(self.panel_base, -1, _(u"SÃ©lectionner les prÃ©sents d'une pÃ©riode"), URL="")
         hyper.Bind(hl.EVT_HYPERLINK_LEFT, self.OnLeftLink)
         hyper.AutoBrowse(False)
         hyper.SetColours("BLACK", "BLACK", "BLUE")
         hyper.EnableRollover(True)
         hyper.SetUnderlines(False, False, True)
         hyper.SetBold(False)
-        hyper.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour sélectionner les personnes présentes sur une période donnée")))
+        hyper.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour sÃ©lectionner les personnes prÃ©sentes sur une pÃ©riode donnÃ©e")))
         hyper.UpdateLink()
         hyper.DoPopup(False)
         return hyper
         
     def OnLeftLink(self, event):
-        """ Sélectionner les personnes présentes sur une période donnée """
+        """ SÃ©lectionner les personnes prÃ©sentes sur une pÃ©riode donnÃ©e """
         dlg = DLG_Selection_periode.SelectionPeriode(self)
         if dlg.ShowModal() == wx.ID_OK:
             listePersonnesPresentes = dlg.GetPersonnesPresentes()
@@ -400,16 +399,16 @@ class Dialog(wx.Dialog):
         else:
             dlg.Destroy()
             return False
-        # Sélection dans la listBox
+        # SÃ©lection dans la listBox
         for index, valeurs in self.dictDonnees.items():
             IDpersonne = valeurs[0]
             if IDpersonne in listePersonnesPresentes :
                 self.checkListBox.Check(index, True)
             else:
                 self.checkListBox.Check(index, False)
-        # S'il n'y a aucune personne présente sur la période sélectionnée
+        # S'il n'y a aucune personne prÃ©sente sur la pÃ©riode sÃ©lectionnÃ©e
         if len(listePersonnesPresentes) == 0 :
-            dlg = wx.MessageDialog(self, _(u"Il n'y a aucune personne présente sur la période que vous avez sélectionné."), _(u"Erreur de saisie"), wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Il n'y a aucune personne prÃ©sente sur la pÃ©riode que vous avez sÃ©lectionnÃ©."), _(u"Erreur de saisie"), wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -440,15 +439,15 @@ class DialogSelectionPersonnes(wx.Dialog):
         self.parent = parent
         
         self.panel_base = wx.Panel(self, -1)
-        self.label_intro = wx.StaticText(self.panel_base, -1, _(u"Veuillez sélectionner les personnes pour lesquelles vous souhaitez imprimer la photo :"))
+        self.label_intro = wx.StaticText(self.panel_base, -1, _(u"Veuillez sÃ©lectionner les personnes pour lesquelles vous souhaitez imprimer la photo :"))
         
-        # Données
+        # DonnÃ©es
         self.ImportationDonnees()
         
         # CheckListBox
         self.checkListBox = wx.CheckListBox(self.panel_base,  choices=self.listeDonnees)
         
-        # Hyperlink cocher les présents
+        # Hyperlink cocher les prÃ©sents
         self.hyperlink_presents = self.Build_Hyperlink()
         
         self.bouton_aide = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))
@@ -505,13 +504,11 @@ class DialogSelectionPersonnes(wx.Dialog):
     
     def ImportationDonnees(self):
         """ Importation de la liste des personnes """
-        # Récupération de la liste des personnes
-        DB = GestionDB.DB()        
-        req = """SELECT IDpersonne, nom, prenom FROM personnes ORDER BY nom, prenom; """
-        DB.ExecuterReq(req)
-        listePersonnes = DB.ResultatReq()
+        reader = PersonReader()
+        listePersonnes = reader.lire_identites()
+        reader.close()
         DB.Close()
-        # Création de la liste pour le listBox et du dict de données
+        # CrÃ©ation de la liste pour le listBox et du dict de donnÃ©es
         self.listeDonnees = []
         self.dictDonnees = {}
         index = 0
@@ -525,20 +522,20 @@ class DialogSelectionPersonnes(wx.Dialog):
     def Build_Hyperlink(self) :
         """ Construit un hyperlien """
         self.SetFont(wx.Font(10, wx.SWISS, wx.NORMAL, wx.NORMAL, False))
-        hyper = hl.HyperLinkCtrl(self.panel_base, -1, _(u"Sélectionner les présents sur une période donnée"), URL="")
+        hyper = hl.HyperLinkCtrl(self.panel_base, -1, _(u"SÃ©lectionner les prÃ©sents sur une pÃ©riode donnÃ©e"), URL="")
         hyper.Bind(hl.EVT_HYPERLINK_LEFT, self.OnLeftLink)
         hyper.AutoBrowse(False)
         hyper.SetColours("BLACK", "BLACK", "BLUE")
         hyper.EnableRollover(True)
         hyper.SetUnderlines(False, False, True)
         hyper.SetBold(False)
-        hyper.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour sélectionner les personnes présentes sur une période donnée")))
+        hyper.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour sÃ©lectionner les personnes prÃ©sentes sur une pÃ©riode donnÃ©e")))
         hyper.UpdateLink()
         hyper.DoPopup(False)
         return hyper
         
     def OnLeftLink(self, event):
-        """ Sélectionner les personnes présentes sur une période donnée """
+        """ SÃ©lectionner les personnes prÃ©sentes sur une pÃ©riode donnÃ©e """
         dlg = DLG_Selection_periode.SelectionPeriode(self)
         if dlg.ShowModal() == wx.ID_OK:
             listePersonnesPresentes = dlg.GetPersonnesPresentes()
@@ -546,16 +543,16 @@ class DialogSelectionPersonnes(wx.Dialog):
         else:
             dlg.Destroy()
             return False
-        # Sélection dans la listBox
+        # SÃ©lection dans la listBox
         for index, valeurs in self.dictDonnees.items():
             IDpersonne = valeurs[0]
             if IDpersonne in listePersonnesPresentes :
                 self.checkListBox.Check(index, True)
             else:
                 self.checkListBox.Check(index, False)
-        # S'il n'y a aucune personne présente sur la période sélectionnée
+        # S'il n'y a aucune personne prÃ©sente sur la pÃ©riode sÃ©lectionnÃ©e
         if len(listePersonnesPresentes) == 0 :
-            dlg = wx.MessageDialog(self, _(u"Il n'y a aucune personne présente sur la période que vous avez sélectionné."), _(u"Erreur de saisie"), wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Il n'y a aucune personne prÃ©sente sur la pÃ©riode que vous avez sÃ©lectionnÃ©."), _(u"Erreur de saisie"), wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -568,26 +565,26 @@ class DialogSelectionPersonnes(wx.Dialog):
         self.EndModal(wx.ID_CANCEL)
 
     def OnBoutonOk(self, event):
-        """ Validation des données saisies """
+        """ Validation des donnÃ©es saisies """
         if 'phoenix' in wx.PlatformInfo:
             selections = self.checkListBox.GetCheckedItems()
         else:
             selections = self.checkListBox.GetChecked()
         
-        # Validation de la sélection
+        # Validation de la sÃ©lection
         if len(selections) == 0 :
-            dlg = wx.MessageDialog(self, _(u"Vous n'avez fait aucune sélection"), _(u"Erreur de saisie"), wx.OK | wx.ICON_ERROR)
+            dlg = wx.MessageDialog(self, _(u"Vous n'avez fait aucune sÃ©lection"), _(u"Erreur de saisie"), wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
             dlg.Destroy()
             return
         
-        # Création de la liste des personnes sélectionnées
+        # CrÃ©ation de la liste des personnes sÃ©lectionnÃ©es
         listePersonnes = []
         for index in selections :
             IDpersonne, nom, prenom = self.dictDonnees[index]
             listePersonnes.append([IDpersonne, nom, prenom, None])
 
-        # Ouverture de la frame des paramètres d'impression des photos
+        # Ouverture de la frame des paramÃ¨tres d'impression des photos
         dlg = Dialog(None, listePersonnes=listePersonnes)
         dlg.ShowModal()
         dlg.Destroy()
@@ -650,9 +647,9 @@ class CreationPDF():
 
         # Style du tableau
         styleTemp = [
-                            #('GRID', (0,0), (-1,-1), 0.25, colors.black), # Crée la bordure noire pour tout le tableau
+                            #('GRID', (0,0), (-1,-1), 0.25, colors.black), # CrÃ©e la bordure noire pour tout le tableau
                             ('VALIGN', (0,0), (-1,-1), 'TOP'), # Centre verticalement toutes les cases
-                            ('ALIGN', (0,0), (-1,-1), 'CENTRE'), # Colonne ID centrée
+                            ('ALIGN', (0,0), (-1,-1), 'CENTRE'), # Colonne ID centrÃ©e
                             ]
         
 ##        if dictAffichage["couleur_fond"] != None :
@@ -671,7 +668,7 @@ class CreationPDF():
         for IDpersonne, nom, prenom, bmp in self.listePersonnes :
             IDphoto, bmp = CTRL_Photo.GetPhoto(IDindividu=IDpersonne, taillePhoto=(tailleImageTmp, tailleImageTmp), qualite=100)
             if bmp != None :
-                # Création de la photo dans le répertoire Temp
+                # CrÃ©ation de la photo dans le rÃ©pertoire Temp
                 nomFichier = UTILS_Fichiers.GetRepTemp("photoTmp%d.jpg" % IDpersonne)
                 bmp.SaveFile(nomFichier, type=wx.BITMAP_TYPE_JPEG)
                 img = Image(nomFichier, width=tailleImageFinal, height=tailleImageFinal)
@@ -679,12 +676,12 @@ class CreationPDF():
                 self.listePersonnesTmp.append((IDpersonne, nom, prenom))
                 
         if len(self.listePersonnesTmp) == 0 :
-            dlg = wx.MessageDialog(None, _(u"Il n'existe aucune photo pour la ou les personnes sélectionnées !"), _(u"Mot de passe erroné"), wx.OK | wx.ICON_ERROR)
+            dlg = wx.MessageDialog(None, _(u"Il n'existe aucune photo pour la ou les personnes sÃ©lectionnÃ©es !"), _(u"Mot de passe erronÃ©"), wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
             dlg.Destroy()
             return
             
-        # Création des largeurs de colonnes
+        # CrÃ©ation des largeurs de colonnes
         largeursColonnes = []
         for numCol in range(0, nbreColonnes) :
             largeursColonnes.append(tailleImageFinal + (padding*2))
@@ -696,7 +693,7 @@ class CreationPDF():
         else:
             nbreLignes = int(nbreLignes)
             
-        # Création du tableau vide
+        # CrÃ©ation du tableau vide
         dataTableau = []
         for numLigne in range(0, nbreLignes*3):
             ligne = []
@@ -718,7 +715,7 @@ class CreationPDF():
             styleTemp.append(('BOTTOMPADDING', (0, numLigne), (-1, numLigne), padding))
             # Style du nom
             styleTemp.append(('FONT',(0, numLigne+1),(-1, numLigne+1), "Helvetica-Bold", taille_nom))
-            # Style du texte personnalisé
+            # Style du texte personnalisÃ©
             styleTemp.append(('FONT',(0, numLigne+2),(-1, numLigne+2), "Helvetica", taille_texte))
             styleTemp.append(('BOTTOMPADDING', (0, numLigne+2), (-1, numLigne+2), padding))
             # Style de la bordure de la carte
@@ -734,7 +731,7 @@ class CreationPDF():
         
         style = TableStyle(styleTemp)
         
-        # Création du tableau
+        # CrÃ©ation du tableau
         tableau = Table(dataTableau, largeursColonnes)
         tableau.setStyle(style)
         story.append(tableau)
