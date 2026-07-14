@@ -1,3 +1,5 @@
+from datetime import date
+
 from domain.repositories.ccns_data import CcnsContratRecord, CcnsGrilleRecord, CcnsLigneGrilleRecord
 from teamworks.CcnsCore.audit_contracts_ccns import audit_contracts
 
@@ -35,3 +37,27 @@ def test_audit_contracts_utilise_le_lecteur_donnees_ccns_injecte():
     assert rows[0].nom_complet == "Ada Lovelace"
     assert rows[0].classification == "G3"
     assert rows[0].type_contrat == "CDI"
+
+
+def test_audit_contracts_accepte_une_date_de_reference_injectee_pour_l_anciennete():
+    reader = FakeReader()
+
+    rows = audit_contracts(limit=25, data_reader=reader, reference_date=date(2024, 12, 31))
+
+    assert rows[0].anomalies == []
+    assert "Prime d'ancienneté conforme" in rows[0].messages
+
+
+def test_audit_contracts_conserve_la_date_du_jour_par_defaut(monkeypatch):
+    class FixedDate(date):
+        @classmethod
+        def today(cls):
+            return cls(2026, 1, 2)
+
+    monkeypatch.setattr("teamworks.CcnsCore.audit_contracts_ccns.date", FixedDate)
+    reader = FakeReader()
+
+    rows = audit_contracts(limit=25, data_reader=reader)
+
+    assert "ANCIENNETE_INFERIEURE_THEORIQUE" in rows[0].anomalies
+    assert "Prime d'ancienneté inférieure au théorique" in rows[0].messages
