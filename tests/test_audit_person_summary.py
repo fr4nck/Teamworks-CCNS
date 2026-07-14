@@ -1,3 +1,5 @@
+from datetime import date
+
 from domain.repositories.ccns_data import CcnsContratRecord, CcnsGrilleRecord, CcnsLigneGrilleRecord
 from teamworks.CcnsCore.audit_person_summary import build_person_ccns_summary
 
@@ -26,6 +28,15 @@ class FakePersonSummaryReader:
         self.closed = True
 
 
+class FakePersonSummaryReferenceDateReader(FakePersonSummaryReader):
+    def lire_contrats_personne(self, IDpersonne, limit=None):
+        self.calls.append(("contrats_personne", IDpersonne, limit))
+        return [
+            CcnsContratRecord(2, "2024-01-01", None, 2200.0, 35.0, 10.0, "Ada", "Lovelace", "G3", "CDI"),
+            CcnsContratRecord(1, "2024-01-01", None, 2200.0, 35.0, 10.0, "Ada", "Lovelace", "G3", "CDI"),
+        ]
+
+
 def test_build_person_ccns_summary_utilise_le_reader_filtre_par_personne():
     reader = FakePersonSummaryReader()
 
@@ -39,3 +50,13 @@ def test_build_person_ccns_summary_utilise_le_reader_filtre_par_personne():
     assert summary["nb_ok"] == 1
     assert summary["global_status"] == "A_REVOIR"
     assert [row["IDcontrat"] for row in summary["rows"]] == [2, 1]
+
+
+def test_build_person_ccns_summary_propage_la_date_de_reference():
+    reader = FakePersonSummaryReferenceDateReader()
+
+    summary = build_person_ccns_summary(42, data_reader=reader, reference_date=date(2025, 12, 31))
+
+    assert summary["nb_warning"] == 0
+    assert summary["nb_ok"] == 2
+    assert summary["global_status"] == "OK"

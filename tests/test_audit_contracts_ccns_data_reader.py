@@ -1,3 +1,5 @@
+from datetime import date
+
 from domain.repositories.ccns_data import CcnsContratRecord, CcnsGrilleRecord, CcnsLigneGrilleRecord
 from teamworks.CcnsCore.audit_contracts_ccns import audit_contracts
 
@@ -35,3 +37,11 @@ def test_audit_contracts_utilise_le_lecteur_donnees_ccns_injecte():
     assert rows[0].nom_complet == "Ada Lovelace"
     assert rows[0].classification == "G3"
     assert rows[0].type_contrat == "CDI"
+
+
+def test_audit_contracts_utilise_la_date_de_reference_injectee():
+    reader = FakeReader()
+
+    rows = audit_contracts(data_reader=reader, reference_date=date(2025, 12, 31))
+
+    assert "ANCIENNETE_OUBLIEE" not in rows[0].anomalies
