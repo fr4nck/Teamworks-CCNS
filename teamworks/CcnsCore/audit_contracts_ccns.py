@@ -153,6 +153,8 @@ def audit_contracts(limit=None):
 
         salary_grid, salary_grid_lines = _fetch_salary_grid(db)
         results = []
+        reference_date = date.today()
+        controles_simples = (check_contract_has_classification, check_contract_has_salary_grid)
 
         for rec in records:
             (
@@ -193,7 +195,7 @@ def audit_contracts(limit=None):
             anomalies = []
             messages = []
 
-            for checker in (check_contract_has_classification, check_contract_has_salary_grid):
+            for checker in controles_simples:
                 result, anomaly = checker(contract)
                 messages.append(result.readable_message)
                 if anomaly:
@@ -212,7 +214,7 @@ def audit_contracts(limit=None):
             if classification and classification.upper().startswith("G"):
                 result, anomaly = check_ccns_seniority_amount(
                     contract=contract,
-                    reference_date=date.today(),
+                    reference_date=reference_date,
                     smc_group_3_amount=1997.87,
                     actual_seniority_amount=float(prime_anciennete or 0.0),
                 )

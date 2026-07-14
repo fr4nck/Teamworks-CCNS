@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import wx
 
+from teamworks.Utils import UTILS_Diagnostic_performance as DiagnosticPerformance
+
 from teamworks.CcnsCore.home_gadgets_ccns import build_ccns_home_data
 
 try:
@@ -75,12 +77,18 @@ class Panel(wx.Panel):
         self.button_open_contract.Enable(False)
 
     def MAJ(self, force_refresh=False):
-        self.list_stats.DeleteAllItems()
-        self.list_alerts.DeleteAllItems()
-        self.rows = []
+        with DiagnosticPerformance.mesurer("total_action", "CTRL_Gadget_CCNS.MAJ", {"force_refresh": force_refresh}):
+            with DiagnosticPerformance.mesurer("widget", "CTRL_Gadget_CCNS.vider_listes"):
+                self.list_stats.DeleteAllItems()
+                self.list_alerts.DeleteAllItems()
+                self.rows = []
 
-        home_data = build_ccns_home_data(force_refresh=force_refresh)
+            home_data = build_ccns_home_data(force_refresh=force_refresh)
 
+            with DiagnosticPerformance.mesurer("widget", "CTRL_Gadget_CCNS.remplir_listes"):
+                self._remplir_listes(home_data)
+
+    def _remplir_listes(self, home_data):
         for stat in home_data["stats"]:
             idx = self.list_stats.InsertItem(self.list_stats.GetItemCount(), stat["label"])
             self.list_stats.SetItem(idx, 1, str(stat["value"]))
