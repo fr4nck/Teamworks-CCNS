@@ -21,6 +21,8 @@ from domain.engine.seniority import check_ccns_seniority_amount
 from domain.convention.salary_grid import SalaryGrid
 from domain.convention.salary_grid_line import SalaryGridLine
 from domain.convention.minimum_type import MinimumType
+from domain.convention.salary_grid_version_selector import SalaryGridVersionSelector
+from application.bootstrap.seed_reference_data import build_default_salary_grid_version_2026
 from infrastructure.persistence.ccns_data_reader import CcnsDataReader
 from teamworks.Utils import UTILS_Diagnostic_performance as DiagnosticPerformance
 
@@ -108,18 +110,51 @@ def _build_salary_grid(grid_record, line_records):
     return grid, lines
 
 
-def audit_contracts(limit=None, data_reader=None, reference_date=None):
+def _default_salary_grid_versions():
+    return [build_default_salary_grid_version_2026()]
+
+
+def _select_grid_record(grid_records, salary_grid_versions, reference_date):
+    if not grid_records:
+        return None, None, None
+
+    selector = SalaryGridVersionSelector.from_iterable(salary_grid_versions)
+    grids_by_code = {grid.code: grid for grid in grid_records}
+    applicable_versions = []
+    for grid_code in grids_by_code:
+        version = selector.find_applicable_version(grid_code, reference_date)
+        if version is not None:
+            applicable_versions.append(version)
+    if applicable_versions:
+        selected_version = max(applicable_versions, key=lambda version: (version.effective_date, version.version))
+        return grids_by_code[selected_version.grid_code], selected_version, None
+
+    fallback = grid_records[0]
+    fallback_reason = (
+        "Aucune version de grille salariale applicable au %s ; "
+        "repli explicite sur la première grille disponible (%s)."
+        % (reference_date.isoformat(), fallback.code)
+    )
+    return fallback, None, fallback_reason
+
+
+def audit_contracts(limit=None, data_reader=None, reference_date=None, salary_grid_versions=None):
     reader = data_reader or CcnsDataReader()
     close_reader = data_reader is None
     try:
         records = reader.lire_contrats(limit=limit)
-        grid_records = reader.lire_grilles(limit=1)
-        grid_record = grid_records[0] if grid_records else None
+        control_date = reference_date or date.today()
+        versions = list(salary_grid_versions) if salary_grid_versions is not None else _default_salary_grid_versions()
+        grid_records = reader.lire_grilles()
+        grid_record, selected_grid_version, grid_fallback_reason = _select_grid_record(
+            grid_records,
+            versions,
+            control_date,
+        )
         line_records = reader.lire_lignes_grille(grid_record.IDtw_salary_grid) if grid_record else []
         with DiagnosticPerformance.mesurer("transformation_python", "audit_contracts_ccns.construction_grille"):
             salary_grid, salary_grid_lines = _build_salary_grid(grid_record, line_records)
         results = []
-        control_date = reference_date or date.today()
         controles_simples = (check_contract_has_classification, check_contract_has_salary_grid)
 
         with DiagnosticPerformance.mesurer("transformation_python", "audit_contracts_ccns.controles", {"contrats": len(records)}):
@@ -159,6 +194,13 @@ def audit_contracts(limit=None, data_reader=None, reference_date=None):
 
                 anomalies = []
                 messages = []
+                if selected_grid_version is not None:
+                    messages.append(
+                        "Version de grille salariale retenue : %s / %s."
+                        % (selected_grid_version.grid_code, selected_grid_version.version)
+                    )
+                elif grid_fallback_reason:
+                    messages.append(grid_fallback_reason)
 
                 for checker in controles_simples:
                     result, anomaly = checker(contract)
