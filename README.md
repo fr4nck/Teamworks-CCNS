@@ -146,7 +146,10 @@ Le dépôt a vocation à contenir une documentation projet simple et lisible, no
 - contrôles CCNS détaillés ;
 - synthèse d’intégration dans Teamworks ;
 - règles de développement relatives aux performances ;
-- règles de pérennité technique, de compatibilité multiplateforme et de gestion des dépendances.
+- règles de pérennité technique, de compatibilité multiplateforme et de gestion des dépendances ;
+- guide opérationnel des agents et contributeurs (`AGENTS.md`) ;
+- matrice de compatibilité réelle (`docs/MATRICE_COMPATIBILITE.md`) ;
+- feuille de route de maintenance (`docs/FEUILLE_ROUTE_MAINTENANCE.md`).
 
 ---
 
