@@ -29,6 +29,12 @@ class RuleVersionValidationLevel(str, Enum):
     BUSINESS_VALIDATED = "BUSINESS_VALIDATED"
 
 
+SCHEDULED_APPLICABLE_VALIDATION_LEVELS = {
+    RuleVersionValidationLevel.LEGAL_REVIEWED,
+    RuleVersionValidationLevel.BUSINESS_VALIDATED,
+}
+
+
 @dataclass(slots=True)
 class RuleVersion(Entity):
     """Version datée d'une règle métier reliée à sa référence réglementaire.
@@ -63,6 +69,11 @@ class RuleVersion(Entity):
         return self.rule_reference.code
 
     def is_applicable_on(self, reference_date: date) -> bool:
+        if (
+            self.status == RuleVersionStatus.SCHEDULED
+            and self.validation_level not in SCHEDULED_APPLICABLE_VALIDATION_LEVELS
+        ):
+            return False
         if self.status not in {RuleVersionStatus.ACTIVE, RuleVersionStatus.SCHEDULED}:
             return False
         if reference_date < self.effective_date:

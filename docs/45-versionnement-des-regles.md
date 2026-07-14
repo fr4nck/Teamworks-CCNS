@@ -27,7 +27,7 @@ Les dates sont inclusives : une version est applicable à partir de sa date d'ef
 Les statuts prévus couvrent les usages futurs :
 
 - `DRAFT` : version préparatoire non sélectionnable ;
-- `SCHEDULED` : version prête avec une date d'effet future ou atteinte ;
+- `SCHEDULED` : version prête avec une date d'effet future ou atteinte, sélectionnable seulement après validation suffisante ;
 - `ACTIVE` : version applicable ;
 - `SUPERSEDED` : version remplacée ;
 - `ARCHIVED` : version conservée pour historique mais non sélectionnable.
@@ -48,7 +48,7 @@ Ainsi :
 
 Le service `RuleVersionSelector` répond à la question : « quelle version de cette règle était applicable le 15 septembre 2026 ? ».
 
-Il filtre les versions par code de règle, statut sélectionnable et période de validité. En cas de coexistence technique de plusieurs versions applicables, il retient la version dont la date d'effet est la plus récente.
+Il filtre les versions par code de règle, statut sélectionnable, validation suffisante et période de validité. Une version `SCHEDULED` dont le niveau reste `DRAFT`, `DOCUMENTED` ou `LEGAL_REVIEW_REQUIRED` n'est pas sélectionnable, même lorsque sa date d'effet est atteinte. Elle doit être revue juridiquement (`LEGAL_REVIEWED`) ou validée métier (`BUSINESS_VALIDATED`) avant de pouvoir être considérée applicable par le sélecteur. En cas de coexistence technique de plusieurs versions applicables, il retient la version dont la date d'effet est la plus récente.
 
 Cette sélection est purement descriptive dans cette étape : elle ne pilote pas encore les calculs du moteur.
 

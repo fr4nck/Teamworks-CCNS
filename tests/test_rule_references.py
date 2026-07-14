@@ -27,7 +27,14 @@ def test_rule_reference_validity_period_and_explanation():
     assert reference.is_valid_on(date(2026, 7, 1))
     assert not reference.is_valid_on(date(2027, 1, 1))
     assert reference.explanation() == "Cette règle provient de Source officielle, article test (https://example.invalid/regle)."
-    assert reference.legal_certainty == LegalCertainty.MAJORITAIRE
+    assert reference.legal_certainty == LegalCertainty.NON_EVALUEE
+
+
+def test_unqualified_rule_legal_certainty_is_explicitly_not_evaluated():
+    rule = next(rule for rule in build_default_ccns_rules() if rule.code == "APPRENTICESHIP_SCALE_STANDARD")
+
+    assert rule.rule_reference is None
+    assert rule.effective_legal_certainty == LegalCertainty.NON_EVALUEE
 
 
 def test_default_ccns_rules_expose_initial_regulatory_references():
@@ -46,4 +53,5 @@ def test_default_ccns_rules_expose_initial_regulatory_references():
 
 def test_legal_certainty_levels_are_documented():
     assert set(LEGAL_CERTAINTY_DESCRIPTIONS) == set(LegalCertainty)
+    assert "non qualifié" in LEGAL_CERTAINTY_DESCRIPTIONS[LegalCertainty.NON_EVALUEE].lower()
     assert "contexte" in LEGAL_CERTAINTY_DESCRIPTIONS[LegalCertainty.CONTEXTUELLE].lower()
