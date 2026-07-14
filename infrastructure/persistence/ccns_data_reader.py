@@ -56,6 +56,13 @@ class CcnsDataReader:
         return rows
 
     def lire_contrats(self, limit: Optional[int] = None) -> list[CcnsContratRecord]:
+        return self._lire_contrats(where_clause="", limit=limit, nom="contrats")
+
+    def lire_contrats_personne(self, IDpersonne: int, limit: Optional[int] = None) -> list[CcnsContratRecord]:
+        where_clause = "WHERE contrats.IDpersonne=%d" % int(IDpersonne)
+        return self._lire_contrats(where_clause=where_clause, limit=limit, nom="contrats_personne")
+
+    def _lire_contrats(self, where_clause: str, limit: Optional[int], nom: str) -> list[CcnsContratRecord]:
         req = """
     SELECT
         contrats.IDcontrat,
@@ -72,9 +79,10 @@ class CcnsDataReader:
     LEFT JOIN individus ON individus.IDindividu = contrats.IDpersonne
     LEFT JOIN contrats_class ON contrats_class.IDclassification = contrats.IDclassification
     LEFT JOIN contrats_types ON contrats_types.IDtype = contrats.IDtype
+    %s
     ORDER BY contrats.IDcontrat%s;
-    """ % self._limit_clause(limit)
-        return [CcnsContratRecord(*row) for row in self._fetch(req, "contrats")]
+    """ % (where_clause, self._limit_clause(limit))
+        return [CcnsContratRecord(*row) for row in self._fetch(req, nom)]
 
     def lire_classifications(self) -> list[CcnsClassificationRecord]:
         req = """

@@ -1,10 +1,3 @@
-import sys
-import types
-
-seniority = types.ModuleType("domain.engine.seniority")
-seniority.check_ccns_seniority_amount = lambda *args, **kwargs: (types.SimpleNamespace(readable_message="Ancienneté test"), None)
-sys.modules.setdefault("domain.engine.seniority", seniority)
-
 from domain.repositories.ccns_data import CcnsContratRecord, CcnsGrilleRecord, CcnsLigneGrilleRecord
 from teamworks.CcnsCore.audit_contracts_ccns import audit_contracts
 

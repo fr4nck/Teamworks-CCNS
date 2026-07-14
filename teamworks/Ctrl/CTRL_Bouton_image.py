@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: iso-8859-15 -*-
 #------------------------------------------------------------------------
-# Application :    Noethys, gestion multi-activités
+# Application :    Noethys, gestion multi-activitÃ©s
 # Site internet :  www.noethys.com
 # Auteur:           Ivan LUCAS
 # Copyright:       (c) 2010-15 Ivan LUCAS
@@ -44,11 +44,11 @@ class CTRL(wx.Button):
         self.positionImage = positionImage
         self.margesTexte = margesTexte
 
-        # Vérifie que l'image est bien dans le dossier static
-        if "Static" not in self.cheminImage:
-            self.cheminImage = Chemins.GetStaticPath(self.cheminImage)
+                resample_filter = Image.Resampling.LANCZOS
+            except AttributeError:
+                resample_filter = getattr(Image, "LANCZOS", Image.BICUBIC)
 
-        # MAJ
+            img = img.resize(self.tailleImage, resample_filter)
         self.MAJ() 
     
     def MAJ(self):
@@ -157,12 +157,12 @@ def ModifieFichiers():
         ("""wx.BitmapButton(self.panel_base, wx.ID_CANCEL, wx.Bitmap("Images/BoutonsImages/Fermer_L72.png", wx.BITMAP_TYPE_ANY))""", """CTRL_Bouton_image.CTRL(self.panel_base, id=wx.ID_CANCEL, texte=_(u"Fermer"), cheminImage=Chemins.GetStaticPath("Images/32x32/Fermer.png"))"""),
         
         ("""wx.BitmapButton(self.panel_frame, -1, wx.Bitmap("Images/BoutonsImages/Imprimer_L72.png", wx.BITMAP_TYPE_ANY))""", """CTRL_Bouton_image.CTRL(self.panel_frame, texte=_(u"Imprimer"), cheminImage="Images/32x32/Imprimante.png")"""),
-        ("""wx.BitmapButton(self.panel_frame, -1, wx.Bitmap("Images/BoutonsImages/Apercu_L72.png", wx.BITMAP_TYPE_ANY))""", """CTRL_Bouton_image.CTRL(self.panel_frame, texte=_(u"Aperçu"), cheminImage="Images/32x32/Apercu.png")"""),        
+        ("""wx.BitmapButton(self.panel_frame, -1, wx.Bitmap("Images/BoutonsImages/Apercu_L72.png", wx.BITMAP_TYPE_ANY))""", """CTRL_Bouton_image.CTRL(self.panel_frame, texte=_(u"AperÃ§u"), cheminImage="Images/32x32/Apercu.png")"""),        
         
         ("""wx.BitmapButton(self, -1, wx.Bitmap("Images/BoutonsImages/Envoyer_par_email.png", wx.BITMAP_TYPE_ANY))""", """CTRL_Bouton_image.CTRL(self, texte=_(u"Envoyer par Email"), cheminImage="Images/32x32/Emails_exp.png")"""),        
         ("""wx.BitmapButton(self, -1, wx.Bitmap("Images/BoutonsImages/Envoyer_mail.png", wx.BITMAP_TYPE_ANY))""", """CTRL_Bouton_image.CTRL(self, texte=_(u"Envoyer l'Email"), cheminImage="Images/32x32/Emails_exp.png")"""),        
         
-        ("""wx.BitmapButton(self, -1, wx.Bitmap("Images/BoutonsImages/Rafraichir_liste.png", wx.BITMAP_TYPE_ANY))""", """CTRL_Bouton_image.CTRL(self, texte=_(u"Rafraîchir la liste"), cheminImage="Images/32x32/Actualiser.png")"""),        
+        ("""wx.BitmapButton(self, -1, wx.Bitmap("Images/BoutonsImages/Rafraichir_liste.png", wx.BITMAP_TYPE_ANY))""", """CTRL_Bouton_image.CTRL(self, texte=_(u"RafraÃ®chir la liste"), cheminImage="Images/32x32/Actualiser.png")"""),        
         
         ("""wx.BitmapButton(self, -1, wx.Bitmap("Images/BoutonsImages/Options_L72.png", wx.BITMAP_TYPE_ANY))""", """CTRL_Bouton_image.CTRL(self, texte=_(u"Options"), cheminImage="Images/32x32/Configuration.png")"""),        
         ("""wx.BitmapButton(self, -1, wx.Bitmap("Images/BoutonsImages/Options.png", wx.BITMAP_TYPE_ANY))""", """CTRL_Bouton_image.CTRL(self, texte=_(u"Options"), cheminImage="Images/32x32/Configuration2.png")"""),        
@@ -208,7 +208,7 @@ def ModifieFichiers():
 ##                    listeLignes.append("import CTRL_Bouton_image\n")
 ##                    dirty = True
                 
-            # Clôture des fichiers
+            # ClÃ´ture des fichiers
             fichier.close()
             
             # Ecriture du nouveau fichier
