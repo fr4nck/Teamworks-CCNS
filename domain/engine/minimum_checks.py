@@ -27,7 +27,9 @@ def check_contract_minimum_from_grid(
     salary_grid_lines: Iterable[SalaryGridLine],
     age: Optional[int] = None,
     execution_year: Optional[int] = None,
+    reference_date: Optional[date] = None,
 ) -> tuple[CalculationResult, Optional[Anomaly]]:
+    control_date = reference_date or date.today()
     if not contract.ccns_classification_code:
         result = CalculationResult(
             object_type="contract",
@@ -37,7 +39,7 @@ def check_contract_minimum_from_grid(
             rule_code="MINIMUM_FROM_GRID",
             rule_reference_code=MINIMUM_FROM_GRID_REFERENCE_CODE,
             legal_certainty=MINIMUM_FROM_GRID_LEGAL_CERTAINTY,
-            calculation_date=date.today(),
+            calculation_date=control_date,
             status=ResultStatus.DATA_ERROR,
             readable_message="Classification absente, calcul du minimum impossible",
         )
@@ -50,7 +52,7 @@ def check_contract_minimum_from_grid(
             level=AnomalyLevel.BLOCKING,
             code="CONTRAT_SANS_CLASSIFICATION",
             message="La classification conventionnelle du contrat est manquante.",
-            detection_date=date.today(),
+            detection_date=control_date,
         )
         return result, anomaly
 
@@ -63,7 +65,7 @@ def check_contract_minimum_from_grid(
             rule_code="MINIMUM_FROM_GRID",
             rule_reference_code=MINIMUM_FROM_GRID_REFERENCE_CODE,
             legal_certainty=MINIMUM_FROM_GRID_LEGAL_CERTAINTY,
-            calculation_date=date.today(),
+            calculation_date=control_date,
             status=ResultStatus.DATA_ERROR,
             readable_message="Grille salariale absente, calcul du minimum impossible",
             details={"classification_code": contract.ccns_classification_code},
@@ -77,7 +79,7 @@ def check_contract_minimum_from_grid(
             level=AnomalyLevel.BLOCKING,
             code="CONTRAT_SANS_GRILLE",
             message="Aucune grille salariale n'est renseignée pour ce contrat.",
-            detection_date=date.today(),
+            detection_date=control_date,
         )
         return result, anomaly
 
@@ -98,7 +100,7 @@ def check_contract_minimum_from_grid(
             rule_code="MINIMUM_FROM_GRID",
             rule_reference_code=MINIMUM_FROM_GRID_REFERENCE_CODE,
             legal_certainty=MINIMUM_FROM_GRID_LEGAL_CERTAINTY,
-            calculation_date=date.today(),
+            calculation_date=control_date,
             status=ResultStatus.DATA_ERROR,
             readable_message="Aucune ligne de grille applicable n'a été trouvée",
             details={
@@ -115,7 +117,7 @@ def check_contract_minimum_from_grid(
             level=AnomalyLevel.BLOCKING,
             code="REGLE_INTROUVABLE",
             message="Aucune ligne de grille applicable n'a été trouvée pour ce contrat.",
-            detection_date=date.today(),
+            detection_date=control_date,
         )
         return result, anomaly
 
@@ -134,7 +136,7 @@ def check_contract_minimum_from_grid(
             rule_code="MINIMUM_FROM_GRID",
             rule_reference_code=MINIMUM_FROM_GRID_REFERENCE_CODE,
             legal_certainty=MINIMUM_FROM_GRID_LEGAL_CERTAINTY,
-            calculation_date=date.today(),
+            calculation_date=control_date,
             status=ResultStatus.DATA_ERROR,
             readable_message="Le minimum théorique n'a pas pu être calculé à partir de la grille",
             details={
@@ -152,7 +154,7 @@ def check_contract_minimum_from_grid(
             level=AnomalyLevel.ATTENTION,
             code="MINIMUM_THEORIQUE_NON_CALCULABLE",
             message="Le minimum théorique n'a pas pu être calculé à partir de la ligne de grille.",
-            detection_date=date.today(),
+            detection_date=control_date,
         )
         return result, anomaly
 
@@ -166,7 +168,7 @@ def check_contract_minimum_from_grid(
             rule_code="MINIMUM_FROM_GRID",
             rule_reference_code=MINIMUM_FROM_GRID_REFERENCE_CODE,
             legal_certainty=MINIMUM_FROM_GRID_LEGAL_CERTAINTY,
-            calculation_date=date.today(),
+            calculation_date=control_date,
             retained_base=line.minimum_type.value,
             actual_value=None,
             theoretical_value=theoretical_minimum,
@@ -185,7 +187,7 @@ def check_contract_minimum_from_grid(
             level=AnomalyLevel.ATTENTION,
             code="REMUNERATION_BASE_ABSENTE",
             message="La rémunération de base du contrat est absente.",
-            detection_date=date.today(),
+            detection_date=control_date,
         )
         return result, anomaly
 
@@ -200,7 +202,7 @@ def check_contract_minimum_from_grid(
         rule_code="MINIMUM_FROM_GRID",
         rule_reference_code=MINIMUM_FROM_GRID_REFERENCE_CODE,
         legal_certainty=MINIMUM_FROM_GRID_LEGAL_CERTAINTY,
-        calculation_date=date.today(),
+        calculation_date=control_date,
         retained_base=line.minimum_type.value,
         actual_value=actual_salary,
         theoretical_value=theoretical_minimum,
@@ -227,7 +229,7 @@ def check_contract_minimum_from_grid(
         level=AnomalyLevel.ATTENTION,
         code="MINIMUM_CCNS_NON_ATTEINT",
         message="La rémunération saisie est inférieure au minimum conventionnel calculé.",
-        detection_date=date.today(),
+        detection_date=control_date,
         details={
             "actual_salary": actual_salary,
             "theoretical_minimum": theoretical_minimum,

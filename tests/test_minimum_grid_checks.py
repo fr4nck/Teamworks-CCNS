@@ -156,3 +156,30 @@ def test_apprenticeship_line_selected_by_age_and_execution_year():
     )
     assert anomaly is None
     assert result.theoretical_value == 800.0
+
+
+def test_minimum_check_uses_injected_reference_date_for_result_and_anomaly():
+    contract = _base_contract()
+    contract.base_salary_amount = 1800.0
+    grid = _grid()
+    reference_date = date(2026, 3, 15)
+    lines = [
+        SalaryGridLine(
+            salary_grid_id=grid.id,
+            classification_code="G3",
+            minimum_type=MinimumType.MONTHLY,
+            amount=1997.87,
+            unit="EUR",
+        )
+    ]
+
+    result, anomaly = check_contract_minimum_from_grid(
+        contract=contract,
+        salary_grid=grid,
+        salary_grid_lines=lines,
+        reference_date=reference_date,
+    )
+
+    assert result.calculation_date == reference_date
+    assert anomaly is not None
+    assert anomaly.detection_date == reference_date

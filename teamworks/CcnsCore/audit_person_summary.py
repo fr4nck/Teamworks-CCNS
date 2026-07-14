@@ -27,7 +27,7 @@ class _PersonScopedCcnsReader:
         return self._reader.lire_lignes_grille(IDtw_salary_grid)
 
 
-def build_person_ccns_summary(IDpersonne, data_reader=None):
+def build_person_ccns_summary(IDpersonne, data_reader=None, reference_date=None):
     """Construit la synthèse CCNS d'une personne sans dépendance wxPython.
 
     La lecture des contrats est déléguée au Reader CCNS afin de conserver les
@@ -38,7 +38,10 @@ def build_person_ccns_summary(IDpersonne, data_reader=None):
     reader = data_reader or CcnsDataReader()
     close_reader = data_reader is None
     try:
-        rows = audit_contracts(data_reader=_PersonScopedCcnsReader(reader, IDpersonne))
+        rows = audit_contracts(
+            data_reader=_PersonScopedCcnsReader(reader, IDpersonne),
+            reference_date=reference_date,
+        )
         prepared = []
         nb_blocking = 0
         nb_warning = 0
