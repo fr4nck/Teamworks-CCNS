@@ -2,7 +2,7 @@
 
 Teamworks-CCNS est un projet de long terme. Les évolutions doivent donc privilégier des choix techniques stables, maintenables et compatibles avec plusieurs générations d'environnements.
 
-Ce document complète les règles de performance et de modernisation continue. Il ne demande pas de refonte générale : il fixe un cadre de décision pour les changements futurs.
+Ce document complète les règles de performance et de modernisation continue. Il ne déclenche pas de refonte générale par principe : il fixe un cadre de décision pour les changements futurs, y compris lorsqu'une modernisation structurelle devient justifiée.
 
 ---
 
@@ -97,6 +97,34 @@ Si une modernisation locale est simple, sûre et sans impact métier, elle peut 
 La règle pratique est :
 
 > moderniser ce qui est proche, sûr et utile ; reporter ce qui demande une analyse large.
+
+
+---
+
+## Refonte et modernisation structurelle
+
+Une refonte générale n'est pas interdite. Elle peut être recommandée lorsqu'un composant ancien, transversal et difficilement optimisable localement provoque simultanément ou durablement :
+
+- des ralentissements importants ;
+- des incompatibilités avec les systèmes ou versions récentes de Python ;
+- des duplications nombreuses ;
+- des risques de maintenance élevés.
+
+Toute proposition de refonte doit toutefois être précédée d'un dossier de décision comprenant :
+
+- des mesures reproductibles ;
+- l'identification précise du goulot d'étranglement ;
+- une comparaison entre optimisation locale et remplacement structurel ;
+- une estimation du gain attendu ;
+- une analyse des risques ;
+- la couverture des règles métier par des tests ;
+- un plan de migration progressif ;
+- une stratégie de retour arrière.
+
+La migration doit être conduite par couches ou par modules plutôt que par réécriture complète en une seule fois. Les anciens et nouveaux chemins peuvent coexister temporairement si cela facilite la vérification, la comparaison des résultats et le retour arrière.
+
+Une refonte est justifiée lorsque le coût cumulé des correctifs locaux devient supérieur au coût et au risque d'une migration structurée. Ce seuil doit être argumenté avec des faits mesurés, pas seulement avec une préférence technique.
+
 
 ---
 
