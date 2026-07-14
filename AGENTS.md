@@ -84,6 +84,10 @@ Si l'application graphique est modifiée de manière perceptible, prévoir une v
 - Décrire le problème, la solution, les tests, les mesures, les limites et les risques.
 - Ne jamais fusionner automatiquement.
 
+## Philosophie du fork
+
+Teamworks-CCNS reste un fork autonome : les améliorations génériques peuvent être proposées au Teamworks d'origine lorsque cela est naturel, mais cette possibilité ne doit jamais ralentir ni contraindre les besoins CCNS. Lors d'une modification, identifier autant que possible les zones génériques Teamworks, les zones spécifiques CCNS et les zones d'intégration afin de préserver une migration progressive et lisible.
+
 ## Couche d’accès aux données CCNS
 
 Pour les nouvelles lectures nécessaires au moteur CCNS, privilégier la couche dédiée plutôt que des requêtes dispersées dans les modules applicatifs :

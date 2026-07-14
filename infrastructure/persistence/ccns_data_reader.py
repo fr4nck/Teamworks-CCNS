@@ -11,6 +11,7 @@ from domain.repositories.ccns_data import (
     CcnsGrilleRecord,
     CcnsLigneGrilleRecord,
 )
+from teamworks.Utils import UTILS_Diagnostic_performance as DiagnosticPerformance
 
 
 class CcnsDataReader:
@@ -32,9 +33,27 @@ class CcnsDataReader:
             self._db = self._db_factory()
         return self._db
 
-    def _fetch(self, req: str):
-        self.db.ExecuterReq(req)
-        return self.db.ResultatReq()
+    @staticmethod
+    def _limit_clause(limit: Optional[int]) -> str:
+        if limit is None:
+            return ""
+        limit_value = int(limit)
+        if limit_value <= 0:
+            return ""
+        return " LIMIT %d" % limit_value
+
+    def _fetch(self, req: str, nom: str):
+        with DiagnosticPerformance.mesurer("sql", "ccns_data_reader.%s.executer" % nom):
+            self.db.ExecuterReq(req)
+        with DiagnosticPerformance.mesurer("sql_fetch", "ccns_data_reader.%s.resultats" % nom):
+            rows = self.db.ResultatReq()
+        DiagnosticPerformance.enregistrer_mesure(
+            "sql_requetes",
+            "ccns_data_reader.%s.nombre" % nom,
+            1.0,
+            {"lignes": len(rows)},
+        )
+        return rows
 
     def lire_contrats(self, limit: Optional[int] = None) -> list[CcnsContratRecord]:
         req = """
@@ -53,11 +72,9 @@ class CcnsDataReader:
     LEFT JOIN individus ON individus.IDindividu = contrats.IDpersonne
     LEFT JOIN contrats_class ON contrats_class.IDclassification = contrats.IDclassification
     LEFT JOIN contrats_types ON contrats_types.IDtype = contrats.IDtype
-    ORDER BY contrats.IDcontrat;
-    """
-        if limit:
-            req = req.replace("ORDER BY contrats.IDcontrat;", "ORDER BY contrats.IDcontrat LIMIT %d;" % int(limit))
-        return [CcnsContratRecord(*row) for row in self._fetch(req)]
+    ORDER BY contrats.IDcontrat%s;
+    """ % self._limit_clause(limit)
+        return [CcnsContratRecord(*row) for row in self._fetch(req, "contrats")]
 
     def lire_classifications(self) -> list[CcnsClassificationRecord]:
         req = """
@@ -65,15 +82,15 @@ class CcnsDataReader:
     FROM contrats_class
     ORDER BY IDclassification;
     """
-        return [CcnsClassificationRecord(*row) for row in self._fetch(req)]
+        return [CcnsClassificationRecord(*row) for row in self._fetch(req, "classifications")]
 
     def lire_grilles(self, limit: Optional[int] = None) -> list[CcnsGrilleRecord]:
         req = """
     SELECT IDtw_salary_grid, code, label, convention_code, employment_regime_code, effective_date, end_date, source_reference
     FROM tw_salary_grids
     ORDER BY IDtw_salary_grid%s;
-    """ % (" LIMIT %d" % int(limit) if limit else "")
-        return [CcnsGrilleRecord(*row) for row in self._fetch(req)]
+    """ % self._limit_clause(limit)
+        return [CcnsGrilleRecord(*row) for row in self._fetch(req, "grilles")]
 
     def lire_lignes_grille(self, IDtw_salary_grid: int) -> list[CcnsLigneGrilleRecord]:
         req = """
@@ -82,7 +99,7 @@ class CcnsDataReader:
     FROM tw_salary_grid_lines
     WHERE IDtw_salary_grid=%d;
     """ % int(IDtw_salary_grid)
-        return [CcnsLigneGrilleRecord(*row) for row in self._fetch(req)]
+        return [CcnsLigneGrilleRecord(*row) for row in self._fetch(req, "lignes_grille")]
 
     def close(self) -> None:
         if self._db is not None:
