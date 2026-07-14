@@ -4,9 +4,6 @@ from pathlib import Path
 
 sys.modules.setdefault("wx", types.SimpleNamespace())
 sys.modules.setdefault("GestionDB", types.SimpleNamespace(DB=object))
-seniority = types.ModuleType("domain.engine.seniority")
-seniority.check_ccns_seniority_amount = lambda *args, **kwargs: (types.SimpleNamespace(readable_message=""), None)
-sys.modules.setdefault("domain.engine.seniority", seniority)
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "teamworks"))
 
 from teamworks.CcnsCore.audit_contracts_ccns import AuditRow

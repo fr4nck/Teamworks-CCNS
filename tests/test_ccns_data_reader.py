@@ -77,3 +77,14 @@ def test_ccns_data_reader_alimente_les_mesures_sql(monkeypatch):
     assert [mesure["categorie"] for mesure in mesures] == ["sql", "sql_fetch", "sql_requetes"]
     assert mesures[-1]["nom"] == "ccns_data_reader.contrats.nombre"
     assert mesures[-1]["details"] == {"lignes": 1}
+
+
+def test_ccns_data_reader_filtre_les_contrats_par_personne():
+    db = FakeDB()
+    reader = CcnsDataReader(db_factory=lambda: db)
+
+    contrats = reader.lire_contrats_personne(42, limit=3)
+
+    assert len(contrats) == 1
+    assert "WHERE contrats.IDpersonne=42" in db.requests[0]
+    assert "LIMIT 3" in db.requests[0]
