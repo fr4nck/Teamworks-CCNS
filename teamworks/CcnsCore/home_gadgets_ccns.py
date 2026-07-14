@@ -3,15 +3,27 @@
 
 from __future__ import annotations
 
-import GestionDB
+import logging
+import time
 
 from teamworks.CcnsCore.audit_contracts_ccns import audit_contracts
 from teamworks.CcnsCore.audit_sorting import compute_row_severity
 
+_CACHE_TTL_SECONDS = 45.0
+_cache_home_data = {}
+_LOGGER = logging.getLogger(__name__)
 
-def build_ccns_home_gadgets(limit=5000):
-    rows = audit_contracts(limit=limit)
 
+def clear_ccns_home_cache():
+    """Vide explicitement le cache mémoire des données d'accueil CCNS."""
+    _cache_home_data.clear()
+
+
+def _cache_key(limit, max_lines):
+    return (int(limit) if limit is not None else None, int(max_lines))
+
+
+def _build_stats(rows):
     nb_contracts = len(rows)
     nb_anomalies = 0
     nb_blocking_contracts = 0
@@ -76,8 +88,7 @@ def build_ccns_home_gadgets(limit=5000):
     ]
 
 
-def build_ccns_home_alert_lines(limit=5000, max_lines=12):
-    rows = audit_contracts(limit=limit)
+def _build_alert_lines(rows, max_lines=12):
     prepared = []
 
     for row in rows:
@@ -120,3 +131,40 @@ def build_ccns_home_alert_lines(limit=5000, max_lines=12):
             "details": u", ".join(item["anomalies"]),
         })
     return result
+
+
+def build_ccns_home_data(limit=5000, max_lines=12, force_refresh=False):
+    """Construit les statistiques et alertes CCNS avec un seul audit.
+
+    Le résultat est conservé en mémoire pendant une courte durée. Le cache est
+    volontairement simple, non persistant et invalidable via ``force_refresh``
+    ou ``clear_ccns_home_cache``.
+    """
+    key = _cache_key(limit, max_lines)
+    now = time.monotonic()
+    cached = _cache_home_data.get(key)
+    if not force_refresh and cached and now - cached["created_at"] < _CACHE_TTL_SECONDS:
+        return cached["data"]
+
+    start = time.perf_counter()
+    rows = audit_contracts(limit=limit)
+    data = {
+        "stats": _build_stats(rows),
+        "alerts": _build_alert_lines(rows, max_lines=max_lines),
+    }
+    _cache_home_data[key] = {"created_at": time.monotonic(), "data": data}
+    _LOGGER.debug("Données accueil CCNS construites en %.3fs", time.perf_counter() - start)
+    return data
+
+
+def refresh_ccns_home_data(limit=5000, max_lines=12):
+    """Renouvelle explicitement les données d'accueil CCNS."""
+    return build_ccns_home_data(limit=limit, max_lines=max_lines, force_refresh=True)
+
+
+def build_ccns_home_gadgets(limit=5000, force_refresh=False):
+    return build_ccns_home_data(limit=limit, force_refresh=force_refresh)["stats"]
+
+
+def build_ccns_home_alert_lines(limit=5000, max_lines=12, force_refresh=False):
+    return build_ccns_home_data(limit=limit, max_lines=max_lines, force_refresh=force_refresh)["alerts"]
