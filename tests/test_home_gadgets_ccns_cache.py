@@ -115,3 +115,21 @@ def test_resultats_identiques_aux_calculs_precedents(monkeypatch):
 
     assert data["stats"] == _anciennes_stats(rows)
     assert data["alerts"] == _anciennes_alertes(rows)
+
+
+def test_mesures_accueil_ccns_separe_sql_et_transformation(monkeypatch):
+    from teamworks.Utils import UTILS_Diagnostic_performance as diag
+
+    diag.reinitialiser_mesures()
+    monkeypatch.setenv("TEAMWORKS_PERF_DIAG", "1")
+    monkeypatch.setattr(home, "audit_contracts", lambda limit=None: _rows())
+
+    home.build_ccns_home_data(limit=5000, max_lines=12, force_refresh=True)
+
+    categories = [mesure["categorie"] for mesure in diag.obtenir_mesures()]
+    noms = [mesure["nom"] for mesure in diag.obtenir_mesures()]
+    assert "sql" in categories
+    assert "transformation_python" in categories
+    assert "total_action" in categories
+    assert "accueil_ccns.audit_contracts" in noms
+    diag.reinitialiser_mesures()

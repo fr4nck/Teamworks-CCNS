@@ -6,6 +6,8 @@ from __future__ import annotations
 import logging
 import time
 
+from teamworks.Utils import UTILS_Diagnostic_performance as DiagnosticPerformance
+
 from teamworks.CcnsCore.audit_contracts_ccns import audit_contracts
 from teamworks.CcnsCore.audit_sorting import compute_row_severity
 
@@ -147,11 +149,14 @@ def build_ccns_home_data(limit=5000, max_lines=12, force_refresh=False):
         return cached["data"]
 
     start = time.perf_counter()
-    rows = audit_contracts(limit=limit)
-    data = {
-        "stats": _build_stats(rows),
-        "alerts": _build_alert_lines(rows, max_lines=max_lines),
-    }
+    with DiagnosticPerformance.mesurer("total_action", "accueil_ccns.build_ccns_home_data"):
+        with DiagnosticPerformance.mesurer("sql", "accueil_ccns.audit_contracts", {"limit": limit}):
+            rows = audit_contracts(limit=limit)
+        with DiagnosticPerformance.mesurer("transformation_python", "accueil_ccns.stats_et_alertes"):
+            data = {
+                "stats": _build_stats(rows),
+                "alerts": _build_alert_lines(rows, max_lines=max_lines),
+            }
     _cache_home_data[key] = {"created_at": time.monotonic(), "data": data}
     _LOGGER.debug("Données accueil CCNS construites en %.3fs", time.perf_counter() - start)
     return data
