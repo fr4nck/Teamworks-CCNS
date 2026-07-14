@@ -1,4 +1,5 @@
 from infrastructure.persistence.ccns_data_reader import CcnsDataReader
+from teamworks.Utils import UTILS_Diagnostic_performance as DiagnosticPerformance
 
 
 class FakeDB:
@@ -61,3 +62,18 @@ def test_ccns_data_reader_reutilise_une_seule_connexion():
 
     assert len(instances) == 1
     assert len(instances[0].requests) == 3
+
+
+def test_ccns_data_reader_alimente_les_mesures_sql(monkeypatch):
+    monkeypatch.setenv("TEAMWORKS_PERF_DIAG", "1")
+    DiagnosticPerformance.reinitialiser_mesures()
+    reader = CcnsDataReader(db_factory=FakeDB)
+
+    contrats = reader.lire_contrats(limit=1)
+
+    mesures = DiagnosticPerformance.obtenir_mesures()
+    DiagnosticPerformance.reinitialiser_mesures()
+    assert len(contrats) == 1
+    assert [mesure["categorie"] for mesure in mesures] == ["sql", "sql_fetch", "sql_requetes"]
+    assert mesures[-1]["nom"] == "ccns_data_reader.contrats.nombre"
+    assert mesures[-1]["details"] == {"lignes": 1}
