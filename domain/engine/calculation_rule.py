@@ -7,6 +7,7 @@ from typing import Any, Optional
 from domain.common.base import Entity
 from domain.engine.rule_family import RuleFamily
 from domain.engine.rule_reference import RuleReference
+from domain.engine.rule_version import RuleVersion
 
 
 @dataclass(slots=True)
@@ -29,6 +30,7 @@ class CalculationRule(Entity):
     parameters: dict[str, Any] = field(default_factory=dict)
     notes: str = ""
     rule_reference: Optional[RuleReference] = None
+    rule_versions: list[RuleVersion] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         if not self.code.strip():

@@ -5,6 +5,7 @@ from datetime import date
 from domain.engine.calculation_rule import CalculationRule
 from domain.engine.default_rule_references_ccns import build_default_ccns_rule_references
 from domain.engine.rule_family import RuleFamily
+from domain.engine.rule_version import RuleVersion, RuleVersionStatus, RuleVersionValidationLevel
 
 
 def build_default_ccns_rules() -> list[CalculationRule]:
@@ -19,6 +20,17 @@ def build_default_ccns_rules() -> list[CalculationRule]:
             effective_date=date(2026, 1, 1),
             priority=10,
             rule_reference=references["SENIORITY_G1_G6"],
+            rule_versions=[
+                RuleVersion(
+                    rule_code="SENIORITY_G1_G6",
+                    version="2026-01",
+                    effective_date=date(2026, 1, 1),
+                    status=RuleVersionStatus.ACTIVE,
+                    comment="Version initiale descriptive raccordée à la référence réglementaire ; aucun calcul modifié.",
+                    rule_reference=references["SENIORITY_G1_G6"],
+                    validation_level=RuleVersionValidationLevel.DOCUMENTED,
+                )
+            ],
             parameters={
                 "groups_from": 1,
                 "groups_to": 6,
