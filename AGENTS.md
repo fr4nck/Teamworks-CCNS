@@ -83,3 +83,13 @@ Si l'application graphique est modifiée de manière perceptible, prévoir une v
 - Rédiger les PR en français.
 - Décrire le problème, la solution, les tests, les mesures, les limites et les risques.
 - Ne jamais fusionner automatiquement.
+
+## Couche d’accès aux données CCNS
+
+Pour les nouvelles lectures nécessaires au moteur CCNS, privilégier la couche dédiée plutôt que des requêtes dispersées dans les modules applicatifs :
+
+- DTO dans `domain/repositories/ccns_data.py` ;
+- lecteur SQL `CcnsDataReader` dans `infrastructure/persistence/ccns_data_reader.py` ;
+- documentation de référence dans `docs/40-couche-acces-donnees.md`.
+
+Cette couche s’appuie encore sur `GestionDB` et ne doit pas contenir de logique wxPython ni de règles métier CCNS. Toute extension doit rester limitée, mesurée et compatible SQLite/MySQL.
