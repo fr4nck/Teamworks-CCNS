@@ -29,6 +29,8 @@ Cette étape ajoute le socle des habilitations et de l'historique sensible.
 
 ## Account métier
 
-Le package `domain.access` contient désormais `Account`, qui représente un utilisateur métier Teamworks indépendamment de toute authentification. Il porte un UUID, une identité civile minimale, un email normalisé, un état actif, des rôles directs et des délégations éventuelles.
+Le package `domain.access` contient désormais `Account`, qui représente un utilisateur métier Teamworks indépendamment de toute authentification. Il porte un UUID, une identité civile minimale, un email normalisé, un état actif, des habilitations directes (`AccessGrant`) et des délégations éventuelles.
 
-`Account` reste volontairement limité au domaine : il ne contient ni mot de passe, ni session, ni écran wxPython, ni accès base de données, ni persistance. Les responsabilités effectives sont évaluées via `can(responsibility)`, `has_workspace(workspace)` et `has_role(code)`. Un compte désactivé ne porte aucun droit effectif jusqu'à réactivation.
+Une habilitation lie obligatoirement un `Role` et un `Scope` explicite. Une délégation porte elle aussi ce couple, ainsi que son état d'activité. `AuthorizationService.authorize(...)` est l'unique point d'entrée : il autorise une demande seulement lorsqu'une même habilitation active porte à la fois la responsabilité et un périmètre couvrant la demande. Les rôles et les scopes de plusieurs habilitations ne sont jamais combinés. Aucun scope global implicite n'est créé : un accès global doit être déclaré avec `Scope.global_scope()`.
+
+`Account` reste volontairement limité au domaine : il ne contient ni mot de passe, ni session, ni écran wxPython, ni accès base de données, ni persistance. Un compte désactivé ne porte aucun droit effectif jusqu'à réactivation.

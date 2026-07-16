@@ -1,6 +1,6 @@
 # Scope métier
 
-`Scope` décrit le périmètre métier sur lequel un `Account` peut exercer ses responsabilités. Il ne porte pas les droits eux-mêmes : les responsabilités restent décrites par les rôles, tandis que le scope limite leur portée d'application.
+`Scope` décrit le périmètre métier sur lequel un `Account` peut exercer ses responsabilités. Il ne porte pas les droits eux-mêmes : les responsabilités restent décrites par les rôles, tandis que le scope limite leur portée d'application. Chaque `Scope` est lié à son rôle dans un `AccessGrant`; il n'existe pas de scope global attribué implicitement à un compte.
 
 Le modèle est volontairement générique et réutilisable hors client lourd : il ne dépend ni de wxPython, ni d'une base SQLite, ni de SQLAlchemy, ni d'un accès Web.
 
