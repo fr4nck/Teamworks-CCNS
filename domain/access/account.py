@@ -5,6 +5,7 @@ from uuid import UUID, uuid4
 
 from .responsibility import Responsibility
 from .role import Role
+from .scope import Scope
 from .workspace import Workspace
 
 
@@ -38,6 +39,7 @@ class Account:
     active: bool = True
     roles: tuple[Role, ...] = field(default_factory=tuple)
     delegations: tuple[Delegation, ...] = field(default_factory=tuple)
+    scopes: tuple[Scope, ...] = field(default_factory=lambda: (Scope.global_scope(),))
 
     def __post_init__(self) -> None:
         if not isinstance(self.id, UUID):
@@ -53,10 +55,12 @@ class Account:
             raise ValueError("L'email du compte est invalide.")
         self.roles = tuple(self.roles)
         self.delegations = tuple(self.delegations)
+        self.scopes = tuple(self.scopes)
         if not self.roles:
             raise ValueError("Un compte doit porter au moins un rôle métier.")
         _ensure_roles(self.roles)
         _ensure_delegations(self.delegations)
+        _ensure_scopes(self.scopes)
         _ensure_unique_role_codes(self.roles)
         _ensure_unique_delegated_role_codes(self.delegations)
 
@@ -114,6 +118,13 @@ def _ensure_roles(roles: tuple[Role, ...]) -> None:
 def _ensure_delegations(delegations: tuple[Delegation, ...]) -> None:
     if any(not isinstance(delegation, Delegation) for delegation in delegations):
         raise ValueError("Les délégations d'un compte doivent être des délégations métier.")
+
+
+def _ensure_scopes(scopes: tuple[Scope, ...]) -> None:
+    if not scopes:
+        raise ValueError("Un compte doit porter au moins un périmètre métier.")
+    if any(not isinstance(scope, Scope) for scope in scopes):
+        raise ValueError("Les périmètres d'un compte doivent être des Scope métier.")
 
 
 def _ensure_unique_role_codes(roles: tuple[Role, ...]) -> None:
