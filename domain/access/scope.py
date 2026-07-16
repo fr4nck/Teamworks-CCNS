@@ -50,6 +50,10 @@ class ScopeAtom:
 
     @classmethod
     def targeted(cls, kind: ScopeKind, identifiers: Iterable[str]) -> "ScopeAtom":
+        if kind in {ScopeKind.GLOBAL, ScopeKind.PERSONAL}:
+            raise ValueError(
+                "Les périmètres global et personnel doivent utiliser leurs constructeurs dédiés."
+            )
         return cls(kind=kind, identifiers=frozenset(identifiers))
 
     def contains(self, other: "ScopeAtom") -> bool:
