@@ -60,10 +60,15 @@ def _map_contract_type(label):
 
 
 def _map_employment_regime(contract_type):
+    """Convertit les types historiques vers un régime métier canonique."""
     if contract_type == ContractType.CEE:
         return EmploymentRegime.CEE
     if contract_type == ContractType.APPRENTICESHIP:
         return EmploymentRegime.APPRENTICE
+    if contract_type == ContractType.CIVIC_SERVICE:
+        return EmploymentRegime.SERVICE_CIVIQUE
+    if contract_type == ContractType.INTERNSHIP:
+        return EmploymentRegime.STAGE_PFMP
     if contract_type == ContractType.CDII:
         return EmploymentRegime.CCNS_CDII
     return EmploymentRegime.CCNS_STANDARD

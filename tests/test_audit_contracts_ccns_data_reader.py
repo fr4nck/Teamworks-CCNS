@@ -1,6 +1,8 @@
 from datetime import date
 
 from domain.convention.salary_grid_version import SalaryGridVersion, SalaryGridVersionStatus
+from domain.contracts.contract_type import ContractType
+from domain.contracts.employment_regime import EmploymentRegime
 from domain.engine.rule_version import RuleVersionValidationLevel
 from domain.repositories.ccns_data import CcnsContratRecord, CcnsGrilleRecord, CcnsLigneGrilleRecord
 from teamworks.CcnsCore import audit_contracts_ccns as audit_module
@@ -60,6 +62,11 @@ def test_audit_signale_un_cdd_historique_sans_date_fin_et_poursuit():
     assert "CONTRAT_A_DUREE_DETERMINEE_SANS_DATE_FIN" not in rows[1].anomalies
     assert "Classification conventionnelle présente" in rows[1].messages
 
+
+def test_mapping_historique_des_regimes_utilise_les_codes_canoniques():
+    assert audit_module._map_employment_regime(ContractType.APPRENTICESHIP) is EmploymentRegime.APPRENTICE
+    assert audit_module._map_employment_regime(ContractType.CIVIC_SERVICE) is EmploymentRegime.SERVICE_CIVIQUE
+    assert audit_module._map_employment_regime(ContractType.INTERNSHIP) is EmploymentRegime.STAGE_PFMP
 
 
 def _grid(grid_id, code, effective_date, amount_code="CCNS"):
