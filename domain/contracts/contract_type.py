@@ -7,4 +7,6 @@ class ContractType(str, Enum):
     CDII = "CDII"
     APPRENTICESHIP = "APPRENTICESHIP"
     CEE = "CEE"
+    INTERNSHIP = "INTERNSHIP"
+    CIVIC_SERVICE = "CIVIC_SERVICE"
     OTHER = "OTHER"

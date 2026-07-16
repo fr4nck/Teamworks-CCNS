@@ -126,6 +126,7 @@ def test_apprenticeship_line_selected_by_age_and_execution_year():
         employment_regime=EmploymentRegime.APPRENTICE,
         time_organization=TimeOrganization.WEEKLY_CONSTANT,
         start_date=date(2026, 9, 1),
+        end_date=date(2027, 8, 31),
         ccns_classification_code="APPRENTI",
         salary_grid_code="CCNS-2026",
         base_salary_amount=900.0,

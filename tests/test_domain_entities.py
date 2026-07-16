@@ -1,5 +1,7 @@
 from datetime import date
 
+import pytest
+
 from domain.people.person import Person
 from domain.people.legal_profile import LegalProfile, AgeGroup
 from domain.contracts.contract import Contract
@@ -34,3 +36,18 @@ def test_contract_basic_creation():
         salary_unit="monthly",
     )
     assert contract.is_ccns is True
+
+
+@pytest.mark.parametrize(
+    "contract_type",
+    [
+        ContractType.CDD,
+        ContractType.CEE,
+        ContractType.APPRENTICESHIP,
+        ContractType.INTERNSHIP,
+        ContractType.CIVIC_SERVICE,
+    ],
+)
+def test_fixed_term_contract_requires_end_date(contract_type):
+    with pytest.raises(ValueError, match="end_date is required for fixed-term contracts"):
+        Contract(person_id="person-1", contract_type=contract_type)
