@@ -66,6 +66,10 @@ def _map_employment_regime(contract_type):
         return EmploymentRegime.APPRENTICE
     if contract_type == ContractType.CDII:
         return EmploymentRegime.CCNS_CDII
+    if contract_type == ContractType.CIVIC_SERVICE:
+        return EmploymentRegime.SERVICE_CIVIQUE
+    if contract_type == ContractType.INTERNSHIP:
+        return EmploymentRegime.STAGE_PFMP
     return EmploymentRegime.CCNS_STANDARD
 
 

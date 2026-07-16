@@ -27,3 +27,20 @@ Préparer le terrain pour :
 - la persistance ;
 - le moteur de calcul complet ;
 - l'injection automatique des valeurs CCNS.
+
+## Régimes d'emploi canoniques
+
+`EmploymentRegime` ne porte qu'un seul régime métier pour chaque situation.
+Les codes historiques reçus par l'audit sont normalisés pendant le mapping :
+
+| Code historique de type de contrat | Régime métier canonique |
+| --- | --- |
+| `APPRENTICESHIP` | `APPRENTICE` |
+| `CIVIC_SERVICE` | `SERVICE_CIVIQUE` |
+| `INTERNSHIP` | `STAGE_PFMP` |
+
+Dans le périmètre actuel du domaine, `INTERNSHIP` et `STAGE_PFMP` ne sont pas
+distingués comme deux situations juridiques : le premier est un code historique
+de type de contrat et le second est le régime d'emploi canonique. Toute
+distinction juridique future devra être documentée et accompagnée de tests avant
+l'ajout d'un nouveau régime.

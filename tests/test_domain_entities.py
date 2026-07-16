@@ -38,6 +38,20 @@ def test_contract_basic_creation():
     assert contract.is_ccns is True
 
 
+def test_employment_regimes_do_not_duplicate_historical_business_regimes():
+    """Les codes d'import ne créent pas de nouveaux régimes métier."""
+    assert EmploymentRegime.__members__.keys() >= {
+        "APPRENTICE",
+        "SERVICE_CIVIQUE",
+        "STAGE_PFMP",
+    }
+    assert not EmploymentRegime.__members__.keys() & {
+        "APPRENTICESHIP",
+        "CIVIC_SERVICE",
+        "INTERNSHIP",
+    }
+
+
 @pytest.mark.parametrize(
     "contract_type",
     [
