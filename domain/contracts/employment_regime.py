@@ -2,6 +2,14 @@ from enum import Enum
 
 
 class EmploymentRegime(str, Enum):
+    """Régimes métier canoniques utilisés par le domaine CCNS.
+
+    Les libellés historiques ``APPRENTICE``, ``SERVICE_CIVIQUE`` et
+    ``STAGE_PFMP`` sont les codes canoniques. Les codes d'import plus récents
+    (``APPRENTICESHIP``, ``CIVIC_SERVICE`` et ``INTERNSHIP``) doivent être
+    convertis à la frontière du domaine et ne constituent pas des régimes.
+    """
+
     CCNS_STANDARD = "CCNS_STANDARD"
     CCNS_MODULATION = "CCNS_MODULATION"
     CCNS_CDII = "CCNS_CDII"
