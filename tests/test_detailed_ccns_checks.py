@@ -69,6 +69,7 @@ def test_cee_limit_exceeded():
         employment_regime=EmploymentRegime.CEE,
         time_organization=TimeOrganization.DAILY_CEE,
         start_date=date(2026, 7, 1),
+        end_date=date(2026, 9, 30),
     )
     result, anomaly = check_cee_max_days(82, contract)
     assert anomaly is not None
@@ -82,6 +83,7 @@ def test_apprenticeship_scale_for_18_years_second_year():
         employment_regime=EmploymentRegime.APPRENTICE,
         time_organization=TimeOrganization.WEEKLY_CONSTANT,
         start_date=date(2026, 9, 1),
+        end_date=date(2027, 8, 31),
     )
     result, anomaly = check_apprenticeship_bar_scale(age=18, execution_year=2, contract=contract)
     assert anomaly is None

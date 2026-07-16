@@ -47,7 +47,12 @@ def _map_contract_type(label):
         "CDD": ContractType.CDD,
         "CDII": ContractType.CDII,
         "APPRENTISSAGE": ContractType.APPRENTICESHIP,
+        "APPRENTICESHIP": ContractType.APPRENTICESHIP,
         "CEE": ContractType.CEE,
+        "STAGE": ContractType.INTERNSHIP,
+        "INTERNSHIP": ContractType.INTERNSHIP,
+        "SERVICE CIVIQUE": ContractType.CIVIC_SERVICE,
+        "CIVIC_SERVICE": ContractType.CIVIC_SERVICE,
     }
     if not label:
         return ContractType.OTHER
@@ -263,23 +268,40 @@ def audit_contracts(limit=None, data_reader=None, reference_date=None):
                 contract_type = _map_contract_type(type_contrat_label)
                 employment_regime = _map_employment_regime(contract_type)
                 time_organization = _map_time_org(contract_type)
+                end_date = _safe_date(date_fin)
 
-                contract = Contract(
-                    id=str(IDcontrat),
-                    person_id="legacy-%d" % IDcontrat,
-                    contract_type=contract_type,
-                    employment_regime=employment_regime,
-                    time_organization=time_organization,
-                    start_date=_safe_date(date_debut),
-                    end_date=_safe_date(date_fin),
-                    weekly_reference_hours=float(temps_hebdo) if temps_hebdo is not None else None,
-                    ccns_classification_code=classification,
-                    salary_grid_code=salary_grid.code if salary_grid else None,
-                    base_salary_amount=float(salaire_base) if salaire_base is not None else None,
-                    salary_unit="monthly",
-                    contract_status="legacy",
-                    work_ratio=1.0,
-                )
+                try:
+                    contract = Contract(
+                        id=str(IDcontrat),
+                        person_id="legacy-%d" % IDcontrat,
+                        contract_type=contract_type,
+                        employment_regime=employment_regime,
+                        time_organization=time_organization,
+                        start_date=_safe_date(date_debut),
+                        end_date=end_date,
+                        weekly_reference_hours=float(temps_hebdo) if temps_hebdo is not None else None,
+                        ccns_classification_code=classification,
+                        salary_grid_code=salary_grid.code if salary_grid else None,
+                        base_salary_amount=float(salaire_base) if salaire_base is not None else None,
+                        salary_unit="monthly",
+                        contract_status="legacy",
+                        work_ratio=1.0,
+                    )
+                except ValueError as error:
+                    if str(error) != "end_date is required for fixed-term contracts":
+                        raise
+                    results.append(
+                        AuditRow(
+                            IDcontrat=IDcontrat,
+                            nom_complet=full_name,
+                            classification=classification,
+                            type_contrat=type_contrat_label,
+                            salaire_base=float(salaire_base) if salaire_base is not None else None,
+                            anomalies=["CONTRAT_A_DUREE_DETERMINEE_SANS_DATE_FIN"],
+                            messages=["La date de fin est obligatoire pour ce contrat à durée déterminée."],
+                        )
+                    )
+                    continue
 
                 anomalies = []
                 messages = []

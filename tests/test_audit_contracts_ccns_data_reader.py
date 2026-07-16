@@ -42,6 +42,25 @@ def test_audit_contracts_utilise_le_lecteur_donnees_ccns_injecte():
     assert rows[0].type_contrat == "CDI"
 
 
+def test_audit_signale_un_cdd_historique_sans_date_fin_et_poursuit():
+    class IncompleteContractsReader(FakeReader):
+        def lire_contrats(self, limit=None):
+            self.calls.append(("contrats", limit))
+            return [
+                CcnsContratRecord(1, "2024-01-01", None, 2100.0, 35.0, 10.0, "Ada", "Lovelace", "G3", "CDD"),
+                CcnsContratRecord(2, "2024-02-01", "2024-12-31", 2100.0, 35.0, 10.0, "Grace", "Hopper", "G3", "CDD"),
+            ]
+
+    rows = audit_contracts(data_reader=IncompleteContractsReader())
+
+    assert len(rows) == 2
+    assert rows[0].IDcontrat == 1
+    assert rows[0].anomalies == ["CONTRAT_A_DUREE_DETERMINEE_SANS_DATE_FIN"]
+    assert rows[1].IDcontrat == 2
+    assert "CONTRAT_A_DUREE_DETERMINEE_SANS_DATE_FIN" not in rows[1].anomalies
+    assert "Classification conventionnelle présente" in rows[1].messages
+
+
 
 def _grid(grid_id, code, effective_date, amount_code="CCNS"):
     return CcnsGrilleRecord(grid_id, code, f"Grille {code}", amount_code, "standard", effective_date, None, "test")

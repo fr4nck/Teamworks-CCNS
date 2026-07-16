@@ -32,6 +32,14 @@ class Contract(Entity):
     def __post_init__(self) -> None:
         if not self.person_id.strip():
             raise ValueError("person_id is required")
+        if self.contract_type in {
+            ContractType.CDD,
+            ContractType.CEE,
+            ContractType.APPRENTICESHIP,
+            ContractType.INTERNSHIP,
+            ContractType.CIVIC_SERVICE,
+        } and self.end_date is None:
+            raise ValueError("end_date is required for fixed-term contracts")
         if self.start_date and self.end_date and self.end_date < self.start_date:
             raise ValueError("end_date cannot be earlier than start_date")
         if self.weekly_reference_hours is not None and self.weekly_reference_hours < 0:
