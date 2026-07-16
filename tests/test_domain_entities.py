@@ -1,5 +1,7 @@
 from datetime import date
 
+import pytest
+
 from domain.people.person import Person
 from domain.people.legal_profile import LegalProfile, AgeGroup
 from domain.contracts.contract import Contract
@@ -34,3 +36,47 @@ def test_contract_basic_creation():
         salary_unit="monthly",
     )
     assert contract.is_ccns is True
+
+
+def test_contract_accepts_signature_date_after_start_date():
+    contract = Contract(
+        person_id="person-1",
+        contract_type=ContractType.CDI,
+        start_date=date(2026, 9, 1),
+        signature_date=date(2026, 9, 15),
+    )
+
+    assert contract.signature_date == date(2026, 9, 15)
+
+
+def test_contract_signature_date_is_optional_and_must_be_a_date():
+    contract = Contract(person_id="person-1", contract_type=ContractType.CDI)
+    assert contract.signature_date is None
+
+    with pytest.raises(ValueError, match="signature_date must be a date"):
+        Contract(
+            person_id="person-1",
+            contract_type=ContractType.CDI,
+            signature_date="2026-09-01",  # type: ignore[arg-type]
+        )
+
+
+def test_cdii_can_be_created_without_end_date():
+    contract = Contract(person_id="person-1", contract_type=ContractType.CDII)
+
+    assert contract.is_open_ended is True
+
+
+@pytest.mark.parametrize(
+    "contract_type",
+    [
+        ContractType.CDD,
+        ContractType.CEE,
+        ContractType.APPRENTICESHIP,
+        ContractType.INTERNSHIP,
+        ContractType.CIVIC_SERVICE,
+    ],
+)
+def test_fixed_term_contract_types_require_an_end_date(contract_type):
+    with pytest.raises(ValueError, match="end_date is required"):
+        Contract(person_id="person-1", contract_type=contract_type)
