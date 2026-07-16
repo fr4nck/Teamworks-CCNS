@@ -30,7 +30,6 @@ def build_accounting_administrator_role() -> Role:
             R.VALIDATE_SPORT_TIME,
             R.VALIDATE_ALL_TIME,
             R.VIEW_SPORT_CONVENTIONS,
-            R.GENERATE_SPORT_CONVENTIONS,
             R.MANAGE_ACCOUNTS,
             R.MANAGE_TECHNICAL_MAINTENANCE,
         },
