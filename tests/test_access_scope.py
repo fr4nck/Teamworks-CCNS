@@ -21,6 +21,13 @@ def test_targeted_scope_requires_identifiers_and_normalizes_them():
     assert scope.atoms == (ScopeAtom.targeted(ScopeKind.SITE, ["Bais", "Evron"]),)
 
 
+def test_targeted_scope_rejects_global_and_personal_kinds():
+    with pytest.raises(ValueError, match="constructeurs dédiés"):
+        Scope.for_targets(ScopeKind.GLOBAL, [])
+    with pytest.raises(ValueError, match="constructeurs dédiés"):
+        Scope.for_targets(ScopeKind.PERSONAL, [])
+
+
 def test_global_and_personal_scopes_do_not_accept_identifiers():
     with pytest.raises(ValueError, match="pas d'identifiant"):
         ScopeAtom(kind=ScopeKind.GLOBAL, identifiers=frozenset({"association"}))
