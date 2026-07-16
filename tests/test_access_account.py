@@ -2,7 +2,9 @@ from uuid import uuid4
 
 import pytest
 
+from domain.access.access_grant import AccessGrant
 from domain.access.account import Account, Delegation
+from domain.access.authorization_service import AuthorizationService
 from domain.access.responsibility import Responsibility as R
 from domain.access.role_catalog import (
     build_alsh_manager_role,
@@ -10,31 +12,42 @@ from domain.access.role_catalog import (
     build_employee_role,
     build_sports_coordinator_role,
 )
-from domain.access.workspace import Workspace
+from domain.access.scope import Scope, ScopeKind
 
 
-def test_account_requires_business_identity_and_role():
-    role = build_employee_role()
+def _site(name: str) -> Scope:
+    return Scope.for_targets(ScopeKind.SITE, [name])
+
+
+def _account(*grants: AccessGrant, delegations: tuple[Delegation, ...] = ()) -> Account:
+    return Account(
+        first_name="Ada",
+        last_name="Lovelace",
+        email="ada@example.org",
+        access_grants=grants,
+        delegations=delegations,
+    )
+
+
+def test_account_requires_business_identity_and_explicit_access_grant():
+    grant = AccessGrant(build_employee_role(), _site("Bais"))
 
     with pytest.raises(ValueError, match="UUID"):
-        Account(id="not-a-uuid", first_name="Ada", last_name="Lovelace", email="ada@example.org", roles=(role,))
+        Account(id="not-a-uuid", first_name="Ada", last_name="Lovelace", email="ada@example.org", access_grants=(grant,))
     with pytest.raises(ValueError, match="prénom"):
-        Account(first_name=" ", last_name="Lovelace", email="ada@example.org", roles=(role,))
+        Account(first_name=" ", last_name="Lovelace", email="ada@example.org", access_grants=(grant,))
     with pytest.raises(ValueError, match="nom"):
-        Account(first_name="Ada", last_name=" ", email="ada@example.org", roles=(role,))
+        Account(first_name="Ada", last_name=" ", email="ada@example.org", access_grants=(grant,))
     with pytest.raises(ValueError, match="email"):
-        Account(first_name="Ada", last_name="Lovelace", email="ada", roles=(role,))
-    with pytest.raises(ValueError, match="rôle"):
+        Account(first_name="Ada", last_name="Lovelace", email="ada", access_grants=(grant,))
+    with pytest.raises(ValueError, match="habilitation"):
         Account(first_name="Ada", last_name="Lovelace", email="ada@example.org")
 
 
 def test_account_normalizes_identity_fields():
     account = Account(
-        id=uuid4(),
-        first_name=" Ada ",
-        last_name=" Lovelace ",
-        email=" ADA@EXAMPLE.ORG ",
-        roles=(build_employee_role(),),
+        id=uuid4(), first_name=" Ada ", last_name=" Lovelace ", email=" ADA@EXAMPLE.ORG ",
+        access_grants=(AccessGrant(build_employee_role(), _site("Bais")),),
     )
 
     assert account.first_name == "Ada"
@@ -42,73 +55,76 @@ def test_account_normalizes_identity_fields():
     assert account.email == "ada@example.org"
 
 
-def test_account_checks_direct_roles_responsibilities_and_workspaces():
-    account = Account(
-        first_name="Ada",
-        last_name="Lovelace",
-        email="ada@example.org",
-        roles=(build_employee_role(), build_sports_coordinator_role()),
+def test_role_with_responsibility_on_covered_scope_is_authorized():
+    account = _account(AccessGrant(build_sports_coordinator_role(), _site("Evron")))
+
+    assert AuthorizationService.authorize(
+        account=account, responsibility=R.MANAGE_SPORT_PLANNING, scope=_site("Evron")
     )
 
-    assert account.can(R.SUBMIT_OWN_TIME)
-    assert account.can(R.MANAGE_SPORT_PLANNING)
-    assert not account.can(R.MANAGE_ACCOUNTS)
-    assert account.has_workspace(Workspace.EMPLOYEE)
-    assert account.has_workspace(Workspace.SPORT_COORDINATION)
-    assert not account.has_workspace(Workspace.ALSH_MANAGEMENT)
-    assert account.has_role("employee")
-    assert not account.has_role("direction")
 
+def test_role_with_responsibility_on_insufficient_scope_is_refused():
+    account = _account(AccessGrant(build_sports_coordinator_role(), _site("Bais")))
 
-def test_account_checks_active_delegations():
-    account = Account(
-        first_name="Ada",
-        last_name="Lovelace",
-        email="ada@example.org",
-        roles=(build_employee_role(),),
-        delegations=(Delegation(role=build_alsh_manager_role()), Delegation(role=build_direction_role(), active=False)),
+    assert not AuthorizationService.authorize(
+        account=account, responsibility=R.MANAGE_SPORT_PLANNING, scope=_site("Evron")
     )
 
-    assert account.can(R.MANAGE_ALSH_PLANNING)
-    assert account.has_workspace(Workspace.ALSH_MANAGEMENT)
-    assert account.has_role("alsh_manager")
-    assert not account.can(R.MANAGE_ACCOUNTS)
-    assert not account.has_role("direction")
 
-
-def test_deactivated_account_has_no_effective_rights_until_reactivated():
-    account = Account(
-        first_name="Ada",
-        last_name="Lovelace",
-        email="ada@example.org",
-        roles=(build_direction_role(),),
+def test_distinct_grants_cannot_combine_role_and_scope():
+    account = _account(
+        AccessGrant(build_sports_coordinator_role(), _site("Bais")),
+        AccessGrant(build_employee_role(), _site("Evron")),
     )
 
+    assert not AuthorizationService.authorize(
+        account=account, responsibility=R.MANAGE_SPORT_PLANNING, scope=_site("Evron")
+    )
+
+
+def test_inactive_delegation_is_refused():
+    account = _account(
+        AccessGrant(build_employee_role(), _site("Bais")),
+        delegations=(Delegation(build_alsh_manager_role(), _site("Evron"), active=False),),
+    )
+
+    assert not AuthorizationService.authorize(
+        account=account, responsibility=R.MANAGE_ALSH_PLANNING, scope=_site("Evron")
+    )
+
+
+def test_active_delegation_with_suitable_role_and_scope_is_authorized():
+    account = _account(
+        AccessGrant(build_employee_role(), _site("Bais")),
+        delegations=(Delegation(build_alsh_manager_role(), _site("Evron")),),
+    )
+
+    assert AuthorizationService.authorize(
+        account=account, responsibility=R.MANAGE_ALSH_PLANNING, scope=_site("Evron")
+    )
+
+
+def test_access_grant_requires_an_explicit_scope():
+    with pytest.raises(ValueError, match="périmètre explicite"):
+        AccessGrant(role=build_employee_role(), scope=None)  # type: ignore[arg-type]
+
+
+def test_global_scope_only_applies_when_explicitly_granted():
+    local_account = _account(AccessGrant(build_direction_role(), _site("Bais")))
+    global_account = _account(AccessGrant(build_direction_role(), Scope.global_scope()))
+
+    assert not AuthorizationService.authorize(
+        account=local_account, responsibility=R.MANAGE_ACCOUNTS, scope=_site("Evron")
+    )
+    assert AuthorizationService.authorize(
+        account=global_account, responsibility=R.MANAGE_ACCOUNTS, scope=_site("Evron")
+    )
+
+
+def test_inactive_account_is_refused():
+    account = _account(AccessGrant(build_direction_role(), Scope.global_scope()))
     account.deactivate()
 
-    assert not account.active
-    assert not account.can(R.MANAGE_ACCOUNTS)
-    assert not account.has_workspace(Workspace.DIRECTION)
-    assert not account.has_role("direction")
-
-    account.activate()
-
-    assert account.active
-    assert account.can(R.MANAGE_ACCOUNTS)
-    assert account.has_workspace(Workspace.DIRECTION)
-    assert account.has_role("direction")
-
-
-def test_account_rejects_duplicate_direct_or_delegated_roles():
-    employee = build_employee_role()
-
-    with pytest.raises(ValueError, match="directs"):
-        Account(first_name="Ada", last_name="Lovelace", email="ada@example.org", roles=(employee, employee))
-    with pytest.raises(ValueError, match="délégués"):
-        Account(
-            first_name="Ada",
-            last_name="Lovelace",
-            email="ada@example.org",
-            roles=(employee,),
-            delegations=(Delegation(role=build_alsh_manager_role()), Delegation(role=build_alsh_manager_role())),
-        )
+    assert not AuthorizationService.authorize(
+        account=account, responsibility=R.MANAGE_ACCOUNTS, scope=Scope.global_scope()
+    )

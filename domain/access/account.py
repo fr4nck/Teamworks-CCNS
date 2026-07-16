@@ -3,24 +3,27 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from uuid import UUID, uuid4
 
-from .responsibility import Responsibility
+from .access_grant import AccessGrant
 from .role import Role
-from .workspace import Workspace
+from .scope import Scope
 
 
 @dataclass(frozen=True)
 class Delegation:
-    """Rôle confié temporairement à un compte, sans notion d'authentification."""
+    """Habilitation confiée temporairement à un compte."""
 
     role: Role
+    scope: Scope
     active: bool = True
 
     def __post_init__(self) -> None:
-        if not isinstance(self.role, Role):
-            raise ValueError("Une délégation doit porter un rôle métier.")
+        AccessGrant(role=self.role, scope=self.scope)
 
-    def can(self, responsibility: Responsibility) -> bool:
-        return self.active and self.role.can(responsibility)
+    @property
+    def grant(self) -> AccessGrant:
+        """Expose la délégation sous la forme d'une habilitation liée."""
+
+        return AccessGrant(role=self.role, scope=self.scope)
 
 
 @dataclass(slots=True)
@@ -36,7 +39,7 @@ class Account:
     last_name: str = ""
     email: str = ""
     active: bool = True
-    roles: tuple[Role, ...] = field(default_factory=tuple)
+    access_grants: tuple[AccessGrant, ...] = field(default_factory=tuple)
     delegations: tuple[Delegation, ...] = field(default_factory=tuple)
 
     def __post_init__(self) -> None:
@@ -51,43 +54,18 @@ class Account:
             raise ValueError("Le nom du compte est obligatoire.")
         if not _is_valid_email(self.email):
             raise ValueError("L'email du compte est invalide.")
-        self.roles = tuple(self.roles)
+        self.access_grants = tuple(self.access_grants)
         self.delegations = tuple(self.delegations)
-        if not self.roles:
-            raise ValueError("Un compte doit porter au moins un rôle métier.")
-        _ensure_roles(self.roles)
+        if not self.access_grants:
+            raise ValueError("Un compte doit porter au moins une habilitation métier.")
+        _ensure_grants(self.access_grants)
         _ensure_delegations(self.delegations)
-        _ensure_unique_role_codes(self.roles)
-        _ensure_unique_delegated_role_codes(self.delegations)
 
-    def can(self, responsibility: Responsibility) -> bool:
-        """Indique si le compte actif porte la responsabilité demandée."""
+    def active_grants(self) -> tuple[AccessGrant, ...]:
+        """Retourne les habilitations directes et les délégations actives."""
 
-        if not self.active:
-            return False
-        return any(role.can(responsibility) for role in self.roles) or any(
-            delegation.can(responsibility) for delegation in self.delegations
-        )
-
-    def has_workspace(self, workspace: Workspace) -> bool:
-        """Indique si le compte actif accède à l'espace demandé."""
-
-        if not self.active:
-            return False
-        return any(role.workspace == workspace for role in self.roles) or any(
-            delegation.active and delegation.role.workspace == workspace
-            for delegation in self.delegations
-        )
-
-    def has_role(self, code: str) -> bool:
-        """Indique si le compte actif porte directement ou par délégation le rôle."""
-
-        searched_code = code.strip()
-        if not self.active or not searched_code:
-            return False
-        return any(role.code == searched_code for role in self.roles) or any(
-            delegation.active and delegation.role.code == searched_code
-            for delegation in self.delegations
+        return self.access_grants + tuple(
+            delegation.grant for delegation in self.delegations if delegation.active
         )
 
     def activate(self) -> None:
@@ -106,23 +84,11 @@ def _is_valid_email(email: str) -> bool:
     return "." in domain and " " not in email
 
 
-def _ensure_roles(roles: tuple[Role, ...]) -> None:
-    if any(not isinstance(role, Role) for role in roles):
-        raise ValueError("Les rôles directs d'un compte doivent être des rôles métier.")
+def _ensure_grants(grants: tuple[AccessGrant, ...]) -> None:
+    if any(not isinstance(grant, AccessGrant) for grant in grants):
+        raise ValueError("Les habilitations directes d'un compte doivent être des habilitations métier.")
 
 
 def _ensure_delegations(delegations: tuple[Delegation, ...]) -> None:
     if any(not isinstance(delegation, Delegation) for delegation in delegations):
         raise ValueError("Les délégations d'un compte doivent être des délégations métier.")
-
-
-def _ensure_unique_role_codes(roles: tuple[Role, ...]) -> None:
-    codes = [role.code for role in roles]
-    if len(codes) != len(set(codes)):
-        raise ValueError("Les rôles directs d'un compte doivent être uniques.")
-
-
-def _ensure_unique_delegated_role_codes(delegations: tuple[Delegation, ...]) -> None:
-    codes = [delegation.role.code for delegation in delegations]
-    if len(codes) != len(set(codes)):
-        raise ValueError("Les rôles délégués d'un compte doivent être uniques.")
