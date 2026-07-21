@@ -1,4 +1,8 @@
 from domain.contracts.contract import Contract
+from domain.contracts.contract_salary_batch_audit import (
+    ContractSalaryBatchAuditResult,
+    ContractSalaryBatchAuditService,
+)
 from domain.contracts.contract_salary_batch_evaluation import (
     ContractSalaryBatchEvaluationResult,
     ContractSalaryBatchEvaluationService,
@@ -15,6 +19,8 @@ from domain.contracts.time_organization import TimeOrganization
 
 __all__ = [
     "Contract",
+    "ContractSalaryBatchAuditResult",
+    "ContractSalaryBatchAuditService",
     "ContractSalaryBatchEvaluationResult",
     "ContractSalaryBatchEvaluationService",
     "ContractSalaryEvaluationFailure",

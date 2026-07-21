@@ -149,13 +149,16 @@ def test_service_plusieurs_non_conformes_meme_salarie_et_meme_contrat_autorises_
     assert result.issues_for_contract(other) == ()
 
 
-def test_service_refuse_entrees_invalides_vides_et_doublons():
+def test_service_refuse_entrees_invalides_et_doublons():
     valid_item = item("2000.00")
     for bad in (None, "abc", b"abc", 123):
         with pytest.raises(TypeError):
             service().audit(bad)
-    with pytest.raises(ValueError):
-        service().audit(())
+    empty = service().audit(())
+    assert empty.item_count() == empty.issue_count() == empty.compliant_count == empty.non_compliant_count == 0
+    assert empty.total_shortfall_amount == Decimal("0.00")
+    assert empty.is_valid()
+    assert empty.compliance_rate() == Decimal("0.0000")
     with pytest.raises(TypeError):
         service().audit((valid_item, "bad"))
     with pytest.raises(ValueError, match="Un même résultat de conformité ne peut pas être audité plusieurs fois dans le même lot."):
