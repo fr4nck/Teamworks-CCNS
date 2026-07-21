@@ -162,7 +162,7 @@ def _ensure_compatible_times(first: time, second: time) -> None:
 
 
 def _is_aware_time(value: time) -> bool:
-    return value.tzinfo is not None and value.utcoffset() is not None
+    return value.tzinfo is not None
 
 
 def _normalized_optional_text(value: Optional[str], field_name: str) -> Optional[str]:
