@@ -1,5 +1,9 @@
 """Services métier de planification."""
 
+from .assignment_validation_issue import AssignmentValidationIssue
+from .assignment_validation_issue_type import AssignmentValidationIssueType
+from .assignment_validation_result import AssignmentValidationResult
+from .assignment_validation_service import AssignmentValidationService
 from .employee_unavailability import EmployeeUnavailability
 from .employee_weekly_availability import EmployeeWeeklyAvailability
 from .employee_unavailability_reason import EmployeeUnavailabilityReason
@@ -15,6 +19,10 @@ from .weekly_availability_service import WeeklyAvailabilityService
 from .weekday import Weekday
 
 __all__ = [
+    "AssignmentValidationService",
+    "AssignmentValidationResult",
+    "AssignmentValidationIssueType",
+    "AssignmentValidationIssue",
     "EmployeeUnavailability",
     "EmployeeWeeklyAvailability",
     "EmployeeUnavailabilityReason",
