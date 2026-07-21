@@ -1,75 +1,47 @@
-# Versionnement des grilles salariales
+# Version temporelle des grilles salariales CCNS
 
-## Objectif
+## Pourquoi conserver les versions
 
-Le versionnement des grilles salariales introduit une couche descriptive entre le contrat et la grille utilisée par les contrôles existants : `SalaryGridVersion`. Cette couche ne modifie aucun calcul, aucun montant et aucune règle de contrôle. Elle prépare uniquement l'historisation réglementaire des grilles et leur activation future après validation.
+Un contrôle de rémunération doit utiliser le minimum conventionnel applicable à sa date de référence, et non le dernier montant connu. Chaque évolution de la CCNS produit donc une nouvelle `SalaryGridVersion` avec sa propre période d’application. Une ancienne grille n’est jamais modifiée ni écrasée : elle reste nécessaire aux contrôles historiques.
 
-## Modèle
+`SalaryGridCatalog` conserve les versions dans l’ordre fourni, refuse les codes et UUID dupliqués et interdit tout chevauchement de périodes. Les bornes sont inclusives. Des trous sont autorisés ; aucune grille n’est alors applicable pendant le trou. Aucune méthode ne consulte implicitement la date courante.
 
-`SalaryGridVersion` décrit une version de grille par :
+## Modèle métier
 
-- un identifiant technique hérité de l'entité de base ;
-- `grid_code`, le code de la grille concernée, par exemple `CCNS-2026` ;
-- `version`, le libellé stable de version ;
-- `effective_date` et `end_date`, qui bornent la période d'applicabilité ;
-- `status`, avec les états `DRAFT`, `SCHEDULED`, `ACTIVE`, `SUPERSEDED` et `ARCHIVED` ;
-- `comment`, pour documenter le contexte ;
-- `rule_version`, lien optionnel vers la version de règle qui justifie la grille ;
-- `rule_reference`, lien optionnel direct vers la référence réglementaire ;
-- `validation_level`, réutilisé depuis les versions de règles pour éviter une taxonomie parallèle ;
-- `validation_date`, date de validation documentaire ou métier.
+- `SalaryGridEntry` associe un `CCNSClassification` existant, un montant `Decimal` positif quantifié à deux décimales et une `SalaryMinimumPeriodicity` ;
+- `SalaryGridVersion` contient les entrées et leurs dates d’effet ;
+- `SalaryGridCatalog` sélectionne l’unique version applicable à une date ;
+- tous les nouveaux objets sont immuables, utilisent des tuples et valident strictement UUID, dates, booléens et `Decimal`.
 
-Le modèle reste volontairement descriptif. Il ne contient pas les montants, ne choisit pas de ligne de grille et ne remplace pas `SalaryGrid` ni `SalaryGridLine`.
+La périodicité suit l’article 9.2.1 : les groupes 1 à 6 portent un minimum mensuel brut à temps plein, tandis que les groupes 7 et 8 portent un minimum annuel brut de référence. Le modèle refuse une périodicité incohérente.
 
-## Relation avec `RuleVersion`
+## Montants applicables au 1er janvier 2026
 
-`RuleVersion` versionne une règle métier : elle explique quelle version d'une règle de calcul ou de contrôle est applicable à une date donnée. `SalaryGridVersion` versionne le support salarial : elle explique quelle édition de grille est documentée pour une période donnée.
+La fabrique publique `create_ccns_salary_grid_2026_01()` crée une nouvelle instance à chaque appel.
 
-Les deux concepts sont complémentaires : une grille peut pointer vers une `RuleVersion` lorsque la grille matérialise une règle déjà tracée, par exemple les minima conventionnels. Ce lien permet de préparer le chemin :
+| Groupe | Périodicité | Minimum brut |
+|---|---:|---:|
+| 1 | Mensuelle | 1 848,42 € |
+| 2 | Mensuelle | 1 885,14 € |
+| 3 | Mensuelle | 1 997,87 € |
+| 4 | Mensuelle | 2 099,37 € |
+| 5 | Mensuelle | 2 333,99 € |
+| 6 | Mensuelle | 2 865,97 € |
+| 7 | Annuelle | 40 597,94 € |
+| 8 | Annuelle | 46 833,81 € |
 
-`Contrat -> SalaryGridVersion -> SalaryGrid -> RuleVersion -> RuleReference -> source officielle`.
+Source portée par la grille : « CCNS, article 9.2.1, montants applicables au 1er janvier 2026 ».
 
-`SalaryGridVersion` ne duplique donc pas `RuleVersion`, car elle ne décrit pas l'algorithme ni les paramètres de contrôle ; elle décrit l'édition réglementaire de la grille et son cycle de validation.
+## Temps partiel inférieur à 24 heures
 
-## Relation avec `RuleReference`
+`PartTimeMinimumIncreaseRule` représente les deux tranches conventionnelles, sans calculer de paie :
 
-`RuleReference` demeure la trace de la source officielle : Légifrance, avenant, article conventionnel ou autre publication reconnue. `SalaryGridVersion` peut y être reliée directement ou indirectement via `RuleVersion`.
+- jusqu’à 10 heures hebdomadaires incluses : 5 % ;
+- au-delà de 10 heures et strictement en dessous de 24 heures : 2 % ;
+- à partir de 24 heures : 0 %.
 
-Le lien direct est utile lorsqu'une source publie une grille complète. Le lien indirect via `RuleVersion` est utile lorsqu'une règle métier documentée porte déjà la référence réglementaire commune.
+`increase_rate_for_weekly_hours()` retourne seulement le taux applicable. Les heures sont des `Decimal` strictement positives.
 
-## Sélection par date
+## Limites volontaires de TW-026
 
-`SalaryGridVersionSelector` répond à la question : « quelle version de grille était applicable le 15 septembre 2026 ? ».
-
-La sélection filtre :
-
-1. le code de grille ;
-2. la période d'effet ;
-3. les statuts applicables (`ACTIVE` et `SCHEDULED`) ;
-4. le niveau de validation pour les versions planifiées.
-
-Une version `SCHEDULED` n'est sélectionnable que si elle a atteint un niveau de validation suffisant (`LEGAL_REVIEWED` ou `BUSINESS_VALIDATED`). Les versions `DRAFT`, `SUPERSEDED` et `ARCHIVED` restent historisées mais ne sont pas applicables.
-
-Dans l'audit Teamworks réel, la sélection reste compatible avec les bases déjà installées : lorsqu'aucune version n'est disponible, qu'aucune version n'est applicable, qu'une version applicable ne pointe vers aucune grille réelle ou que plusieurs grilles partagent le code retenu, le diagnostic est conservé mais l'audit charge une grille réelle si elle existe. Le repli est déterministe : grille applicable à la date de référence la plus récente, puis à défaut grille à la date d'effet la plus ancienne, puis plus petit `IDtw_salary_grid` en cas d'égalité. L'absence de grille n'est donc conclue que si la lecture `tw_salary_grids` ne retourne réellement aucun enregistrement.
-
-## Veille réglementaire et mises à jour futures
-
-La veille réglementaire produit des `RegulatorySnapshot` et des `RegulatoryChange` pour détecter les changements de sources officielles. Le versionnement des grilles prépare l'étape suivante : transformer une variation détectée en proposition de nouvelle `SalaryGridVersion`.
-
-Cette préparation n'implique aucune application automatique en production. Une mise à jour future devra rester en brouillon ou planifiée tant qu'elle n'aura pas été relue, qualifiée juridiquement et validée métier. Les futures automatisations pourront donc créer, comparer et documenter des versions, mais l'activation effective restera conditionnée au statut et au niveau de validation.
-
-## Première intégration
-
-Une première version `CCNS-2026 / 2026-01` représente la grille actuellement utilisée. Elle est raccordée à la référence des minima mensuels déjà présente et n'altère pas les montants existants.
-
-## Capacités préparées
-
-Cette architecture permet désormais de préparer :
-
-- la coexistence de plusieurs grilles ;
-- la création d'une grille future sans activation immédiate ;
-- l'activation différée après validation ;
-- l'historisation complète des versions remplacées ou archivées ;
-- la comparaison de deux versions de grille ;
-- le rattachement aux `RuleVersion` et `RuleReference` ;
-- l'exploitation contrôlée des résultats de veille réglementaire.
+Ce ticket ne calcule ni paie réelle, ni salaire contractuel, ni proratisation, ni conversion mensuelle/horaire ou annuelle/mensuelle. Il ne traite pas le SMIC, les heures supplémentaires ou complémentaires, les primes, l’ancienneté, les avantages, les rappels, la polyvalence ou la classification automatique. Il n’ajoute aucune persistance, API, interface, veille Internet ou modification de contrat.
