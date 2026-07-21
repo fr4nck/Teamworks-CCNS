@@ -1,6 +1,7 @@
 from dataclasses import FrozenInstanceError
 from datetime import date, datetime, time, timedelta, timezone
 from uuid import UUID, uuid4
+from zoneinfo import ZoneInfo
 
 import pytest
 
@@ -145,6 +146,36 @@ def test_employee_weekly_availability_accepts_valid_variants(employee, kwargs):
     assert availability(employee, **kwargs).duration() > timedelta(0)
 
 
+def test_employee_weekly_availability_accepts_same_zoneinfo(employee):
+    paris = ZoneInfo("Europe/Paris")
+    item = availability(
+        employee,
+        starts_at=time(9, tzinfo=paris),
+        ends_at=time(17, tzinfo=paris),
+    )
+
+    assert item.duration() == timedelta(hours=8)
+    assert item.contains(datetime(2026, 7, 20, 10, tzinfo=paris)) is True
+
+
+def test_employee_weekly_availability_rejects_naive_and_zoneinfo_times(employee):
+    with pytest.raises(ValueError, match="fuseau horaire"):
+        availability(
+            employee,
+            starts_at=time(9),
+            ends_at=time(17, tzinfo=ZoneInfo("Europe/Paris")),
+        )
+
+
+def test_employee_weekly_availability_rejects_different_zoneinfo_times(employee):
+    with pytest.raises(ValueError, match="fuseaux horaires compatibles"):
+        availability(
+            employee,
+            starts_at=time(9, tzinfo=ZoneInfo("Europe/Paris")),
+            ends_at=time(17, tzinfo=ZoneInfo("Europe/London")),
+        )
+
+
 def test_employee_weekly_availability_is_immutable(employee):
     item = availability(employee)
 
@@ -250,6 +281,37 @@ def test_employee_weekly_availability_contains_rejects_incompatible_timezone(emp
 
     with pytest.raises(ValueError, match="fuseaux horaires compatibles"):
         item.contains(datetime(2026, 7, 20, 10, tzinfo=timezone(timedelta(hours=1))))
+
+
+def test_employee_weekly_availability_contains_rejects_naive_datetime_for_zoneinfo(employee):
+    paris = ZoneInfo("Europe/Paris")
+    item = availability(employee, starts_at=time(9, tzinfo=paris), ends_at=time(17, tzinfo=paris))
+
+    with pytest.raises(ValueError, match="fuseau horaire"):
+        item.contains(datetime(2026, 7, 20, 10))
+
+
+def test_employee_weekly_availability_contains_rejects_zoneinfo_datetime_for_naive_times(employee):
+    with pytest.raises(ValueError, match="fuseau horaire"):
+        availability(employee).contains(
+            datetime(2026, 7, 20, 10, tzinfo=ZoneInfo("Europe/Paris"))
+        )
+
+
+def test_employee_weekly_availability_contains_rejects_different_zoneinfo(employee):
+    paris = ZoneInfo("Europe/Paris")
+    item = availability(employee, starts_at=time(9, tzinfo=paris), ends_at=time(17, tzinfo=paris))
+
+    with pytest.raises(ValueError, match="fuseaux horaires compatibles"):
+        item.contains(datetime(2026, 7, 20, 10, tzinfo=ZoneInfo("Europe/London")))
+
+
+def test_employee_weekly_availability_does_not_convert_zoneinfo_wall_time(employee):
+    paris = ZoneInfo("Europe/Paris")
+    item = availability(employee, starts_at=time(9, tzinfo=paris), ends_at=time(17, tzinfo=paris))
+
+    assert item.contains(datetime(2026, 7, 20, 9, tzinfo=paris)) is True
+    assert item.contains(datetime(2026, 7, 20, 17, tzinfo=paris)) is False
 
 
 def test_employee_weekly_availability_does_not_consult_current_date_or_time(employee):
