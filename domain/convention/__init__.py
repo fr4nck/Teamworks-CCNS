@@ -10,6 +10,16 @@ from domain.convention.salary_grid import SalaryGrid
 from domain.convention.salary_grid_catalog import SalaryGridCatalog
 from domain.convention.salary_grid_entry import SalaryGridEntry, SalaryMinimumPeriodicity
 from domain.convention.salary_grid_line import SalaryGridLine
+from domain.convention.smic import (
+    SmicCatalog,
+    SmicTerritory,
+    SmicVersion,
+    create_mayotte_smic_2026_01,
+    create_mayotte_smic_2026_06,
+    create_metropolitan_smic_2026_01,
+    create_metropolitan_smic_2026_06,
+    create_smic_catalog_2026,
+)
 from domain.convention.salary_minimum_compliance import (
     SalaryMinimumComplianceResult,
     SalaryMinimumComplianceService,
@@ -36,4 +46,12 @@ __all__ = [
     "SalaryMinimumComplianceStatus",
     "SalaryMinimumComplianceResult",
     "SalaryMinimumComplianceService",
+    "SmicTerritory",
+    "SmicVersion",
+    "SmicCatalog",
+    "create_metropolitan_smic_2026_01",
+    "create_mayotte_smic_2026_01",
+    "create_metropolitan_smic_2026_06",
+    "create_mayotte_smic_2026_06",
+    "create_smic_catalog_2026",
 ]
