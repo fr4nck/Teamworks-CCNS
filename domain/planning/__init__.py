@@ -10,6 +10,10 @@ from .employee_unavailability_reason import EmployeeUnavailabilityReason
 from .planning import Planning
 from .planning_conflict import PlanningConflict
 from .planning_status import PlanningStatus
+from .planning_status_transition_failure import PlanningStatusTransitionFailure
+from .planning_status_transition_failure_reason import PlanningStatusTransitionFailureReason
+from .planning_status_transition_result import PlanningStatusTransitionResult
+from .planning_status_transition_service import PlanningStatusTransitionService
 from .planning_validation_result import PlanningValidationResult
 from .planning_validation_service import PlanningValidationService
 from .planning_conflict_result import PlanningConflictResult
@@ -33,6 +37,10 @@ __all__ = [
     "Planning",
     "PlanningConflict",
     "PlanningStatus",
+    "PlanningStatusTransitionFailure",
+    "PlanningStatusTransitionFailureReason",
+    "PlanningStatusTransitionResult",
+    "PlanningStatusTransitionService",
     "PlanningValidationResult",
     "PlanningValidationService",
     "PlanningConflictResult",
