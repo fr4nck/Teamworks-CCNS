@@ -4,6 +4,14 @@ from domain.convention.applicable_salary_minimum import (
     ApplicableSalaryMinimumSource,
     ApplicableSalaryMinimumStatus,
 )
+from domain.convention.salary_minimum_audit import (
+    SALARY_MINIMUM_AUDIT_CODE,
+    SALARY_MINIMUM_AUDIT_MESSAGE,
+    SalaryMinimumAuditIssue,
+    SalaryMinimumAuditIssueType,
+    SalaryMinimumAuditResult,
+    SalaryMinimumAuditService,
+)
 from domain.convention.classification import CCNSClassification
 from domain.convention.ccns_salary_grid_data import create_ccns_salary_grid_2026_01
 from domain.convention.minimum_type import MinimumType
@@ -39,6 +47,12 @@ __all__ = [
     "ApplicableSalaryMinimumStatus",
     "ApplicableSalaryMinimumResult",
     "ApplicableSalaryMinimumService",
+    "SALARY_MINIMUM_AUDIT_CODE",
+    "SALARY_MINIMUM_AUDIT_MESSAGE",
+    "SalaryMinimumAuditIssue",
+    "SalaryMinimumAuditIssueType",
+    "SalaryMinimumAuditResult",
+    "SalaryMinimumAuditService",
     "CCNSClassification",
     "SalaryMinimumPeriodicity",
     "SalaryGridEntry",
