@@ -2,12 +2,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from domain.common.base import Entity
 from domain.contracts.contract_type import ContractType
 from domain.contracts.employment_regime import EmploymentRegime
 from domain.contracts.time_organization import TimeOrganization
+
+if TYPE_CHECKING:
+    from domain.convention.smic import SmicTerritory
 
 
 @dataclass(slots=True)
@@ -26,6 +29,7 @@ class Contract(Entity):
     salary_grid_code: Optional[str] = None
     base_salary_amount: Optional[float] = None
     salary_unit: Optional[str] = None
+    smic_territory: Optional["SmicTerritory"] = None
     contract_status: str = "draft"
     notes: str = ""
 
@@ -46,6 +50,11 @@ class Contract(Entity):
             raise ValueError("weekly_reference_hours cannot be negative")
         if self.base_salary_amount is not None and self.base_salary_amount < 0:
             raise ValueError("base_salary_amount cannot be negative")
+        if self.smic_territory is not None:
+            from domain.convention.smic import SmicTerritory
+
+            if type(self.smic_territory) is not SmicTerritory:
+                raise TypeError("smic_territory must be a SmicTerritory")
 
     @property
     def is_open_ended(self) -> bool:
