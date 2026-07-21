@@ -8,6 +8,8 @@ from .employee_unavailability import EmployeeUnavailability
 from .employee_weekly_availability import EmployeeWeeklyAvailability
 from .employee_unavailability_reason import EmployeeUnavailabilityReason
 from .planning_conflict import PlanningConflict
+from .planning_validation_result import PlanningValidationResult
+from .planning_validation_service import PlanningValidationService
 from .planning_conflict_result import PlanningConflictResult
 from .planning_conflict_service import PlanningConflictService
 from .unavailability_conflict import UnavailabilityConflict
@@ -27,6 +29,8 @@ __all__ = [
     "EmployeeWeeklyAvailability",
     "EmployeeUnavailabilityReason",
     "PlanningConflict",
+    "PlanningValidationResult",
+    "PlanningValidationService",
     "PlanningConflictResult",
     "PlanningConflictService",
     "UnavailabilityConflict",
