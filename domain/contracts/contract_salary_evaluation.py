@@ -90,6 +90,7 @@ class ContractSalaryEvaluationResult:
     successful: bool
     applicable_salary_minimum_result: Optional[ApplicableSalaryMinimumResult]
     failure: Optional[ContractSalaryEvaluationFailure]
+    resolved_territory: Optional[SmicTerritory] = None
     id: UUID = field(default_factory=uuid4, kw_only=True)
 
     def __post_init__(self) -> None:
@@ -102,10 +103,14 @@ class ContractSalaryEvaluationResult:
             raise TypeError("applicable_salary_minimum_result doit être un ApplicableSalaryMinimumResult.")
         if self.failure is not None and type(self.failure) is not ContractSalaryEvaluationFailure:
             raise TypeError("failure doit être un ContractSalaryEvaluationFailure.")
+        if self.resolved_territory is not None and type(self.resolved_territory) is not SmicTerritory:
+            raise TypeError("resolved_territory doit être None ou un SmicTerritory.")
         _strict_uuid(self.id, "id")
         if self.successful:
             if self.applicable_salary_minimum_result is None or self.failure is not None:
                 raise ValueError("Un résultat réussi doit contenir uniquement le résultat salarial.")
+            if self.resolved_territory is None:
+                raise ValueError("Un résultat réussi doit conserver le territoire résolu.")
             result = self.applicable_salary_minimum_result
             if result.reference_date != self.reference_date:
                 raise ValueError("Le résultat salarial est incohérent avec la date de référence.")
@@ -115,8 +120,10 @@ class ContractSalaryEvaluationResult:
                 raise ValueError("Le résultat salarial est incohérent avec la rémunération du contrat.")
             if result.weekly_hours != self.contract.weekly_hours:
                 raise ValueError("Le résultat salarial est incohérent avec la durée du contrat.")
-            if self.contract.smic_territory is not None and result.territory is not self.contract.smic_territory:
-                raise ValueError("Le résultat salarial est incohérent avec le territoire du contrat.")
+            if result.territory is not self.resolved_territory:
+                raise ValueError("Le résultat salarial est incohérent avec le territoire résolu.")
+            if self.contract.smic_territory is not None and self.resolved_territory is not self.contract.smic_territory:
+                raise ValueError("Le territoire résolu est incohérent avec le territoire du contrat.")
         else:
             if self.applicable_salary_minimum_result is not None or self.failure is None:
                 raise ValueError("Un résultat refusé doit contenir uniquement un échec métier.")
@@ -124,6 +131,8 @@ class ContractSalaryEvaluationResult:
                 raise ValueError("L'échec est incohérent avec l'identifiant du contrat.")
             if self.failure.reference_date != self.reference_date:
                 raise ValueError("L'échec est incohérent avec la date de référence.")
+            if self.failure.reason is ContractSalaryEvaluationFailureReason.MISSING_TERRITORY and self.resolved_territory is not None:
+                raise ValueError("Un échec pour territoire absent ne doit pas conserver de territoire résolu.")
 
     def is_successful(self) -> bool:
         return self.successful
@@ -189,10 +198,17 @@ class ContractSalaryEvaluationService:
             result = self.applicable_salary_minimum_service.evaluate(classification, reference_date, resolved_territory, remuneration, weekly_hours)
         except ValueError as exc:
             if str(exc) == _ANNUAL_MINIMUM_ENGINE_MESSAGE:
-                return self._failure(contract, reference_date, ContractSalaryEvaluationFailureReason.ANNUAL_CCNS_MINIMUM_NOT_SUPPORTED, _ANNUAL_MINIMUM_CONTRACT_MESSAGE)
+                return self._failure(contract, reference_date, ContractSalaryEvaluationFailureReason.ANNUAL_CCNS_MINIMUM_NOT_SUPPORTED, _ANNUAL_MINIMUM_CONTRACT_MESSAGE, resolved_territory)
             raise
-        return ContractSalaryEvaluationResult(contract, reference_date, True, result, None)
+        return ContractSalaryEvaluationResult(contract, reference_date, True, result, None, resolved_territory)
 
-    def _failure(self, contract: Contract, reference_date: date, reason: ContractSalaryEvaluationFailureReason, message: str) -> ContractSalaryEvaluationResult:
+    def _failure(
+        self,
+        contract: Contract,
+        reference_date: date,
+        reason: ContractSalaryEvaluationFailureReason,
+        message: str,
+        resolved_territory: Optional[SmicTerritory] = None,
+    ) -> ContractSalaryEvaluationResult:
         failure = ContractSalaryEvaluationFailure(reason, message, _contract_identifier(contract), _employee_identifier(contract), reference_date)
-        return ContractSalaryEvaluationResult(contract, reference_date, False, None, failure)
+        return ContractSalaryEvaluationResult(contract, reference_date, False, None, failure, resolved_territory)
