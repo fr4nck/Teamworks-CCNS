@@ -8,6 +8,8 @@ from domain.common.base import Entity
 from domain.contracts.contract_type import ContractType
 from domain.contracts.employment_regime import EmploymentRegime
 from domain.contracts.time_organization import TimeOrganization
+from domain.convention.classification import CCNSClassification
+from domain.convention.smic import SmicTerritory
 
 
 @dataclass(slots=True)
@@ -23,7 +25,9 @@ class Contract(Entity):
     weekly_reference_hours: Optional[float] = None
     work_ratio: Optional[float] = None
     ccns_classification_code: Optional[str] = None
+    ccns_classification: Optional[CCNSClassification] = None
     salary_grid_code: Optional[str] = None
+    smic_territory: Optional[SmicTerritory] = None
     base_salary_amount: Optional[float] = None
     salary_unit: Optional[str] = None
     contract_status: str = "draft"
@@ -44,6 +48,10 @@ class Contract(Entity):
             raise ValueError("end_date cannot be earlier than start_date")
         if self.weekly_reference_hours is not None and self.weekly_reference_hours < 0:
             raise ValueError("weekly_reference_hours cannot be negative")
+        if self.ccns_classification is not None and type(self.ccns_classification) is not CCNSClassification:
+            raise TypeError("ccns_classification must be a CCNSClassification")
+        if self.smic_territory is not None and type(self.smic_territory) is not SmicTerritory:
+            raise TypeError("smic_territory must be a SmicTerritory")
         if self.base_salary_amount is not None and self.base_salary_amount < 0:
             raise ValueError("base_salary_amount cannot be negative")
 
