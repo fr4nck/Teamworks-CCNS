@@ -76,17 +76,20 @@ def test_evaluation_success_delegates_and_keeps_engine_instance():
     assert result.contract_id() == result.contract.id
     assert result.employee_id() == UUID(result.contract.person_id)
     assert result.result().classification_group == result.contract.ccns_classification
+    assert result.resolved_territory is SmicTerritory.METROPOLITAN_FRANCE
 
 
 def test_territory_parameter_used_only_when_contract_has_no_territory():
     c = contract(smic_territory=None)
     result = service().evaluate(c, date(2026, 6, 1), territory=SmicTerritory.MAYOTTE)
     assert result.result().territory is SmicTerritory.MAYOTTE
+    assert result.resolved_territory is SmicTerritory.MAYOTTE
 
 
 def test_contract_territory_has_priority_over_parameter():
     result = service().evaluate(contract(), date(2026, 6, 1), territory=SmicTerritory.MAYOTTE)
     assert result.result().territory is SmicTerritory.METROPOLITAN_FRANCE
+    assert result.resolved_territory is SmicTerritory.METROPOLITAN_FRANCE
 
 
 @pytest.mark.parametrize(
@@ -106,10 +109,17 @@ def test_business_failures_do_not_call_engine(kwargs, reason):
     assert result.failure_reason() is reason
 
 
+def test_missing_territory_failure_keeps_no_resolved_territory():
+    result = service().evaluate(contract(smic_territory=None), date(2026, 6, 1))
+    assert result.failure_reason() is ContractSalaryEvaluationFailureReason.MISSING_TERRITORY
+    assert result.resolved_territory is None
+
+
 def test_annual_group_failure_is_mapped():
     result = service().evaluate(contract(ccns_classification=group(7)), date(2026, 6, 1))
     assert result.failure_reason() is ContractSalaryEvaluationFailureReason.ANNUAL_CCNS_MINIMUM_NOT_SUPPORTED
     assert result.failure.message == "Le contrôle salarial direct du contrat est limité aux minima CCNS mensuels."
+    assert result.resolved_territory is SmicTerritory.METROPOLITAN_FRANCE
 
 
 def test_technical_inputs_are_strict():
@@ -124,11 +134,43 @@ def test_technical_inputs_are_strict():
         svc.evaluate(contract(), date(2026, 1, 1), territory="metro")
 
 
+def test_result_rejects_missing_or_inconsistent_resolved_territory():
+    ok = service().evaluate(contract(), date(2026, 6, 1))
+    with pytest.raises(ValueError, match="territoire résolu"):
+        ContractSalaryEvaluationResult(ok.contract, ok.reference_date, True, ok.result(), None)
+    with pytest.raises(ValueError, match="territoire résolu"):
+        ContractSalaryEvaluationResult(ok.contract, ok.reference_date, True, ok.result(), None, SmicTerritory.MAYOTTE)
+    with pytest.raises(TypeError):
+        ContractSalaryEvaluationResult(ok.contract, ok.reference_date, True, ok.result(), None, "metro")
+
+
+def test_missing_territory_failure_rejects_a_resolved_territory():
+    c = contract(smic_territory=None)
+    failure = ContractSalaryEvaluationFailure(
+        ContractSalaryEvaluationFailureReason.MISSING_TERRITORY,
+        "x",
+        c.id,
+        UUID(c.person_id),
+        date(2026, 6, 1),
+    )
+    with pytest.raises(ValueError, match="territoire absent"):
+        ContractSalaryEvaluationResult(
+            c,
+            date(2026, 6, 1),
+            False,
+            None,
+            failure,
+            SmicTerritory.MAYOTTE,
+        )
+
+
 def test_result_invariants_and_immutability():
     c = contract()
     ok = service().evaluate(c, date(2026, 6, 1))
     with pytest.raises(FrozenInstanceError):
         ok.successful = False
+    with pytest.raises(FrozenInstanceError):
+        ok.resolved_territory = SmicTerritory.MAYOTTE
     with pytest.raises(ValueError, match="L’évaluation salariale du contrat n’a pas abouti."):
         service().evaluate(contract(smic_territory=None), date(2026, 6, 1)).result()
     failure = ContractSalaryEvaluationFailure(ContractSalaryEvaluationFailureReason.MISSING_TERRITORY, "x", c.id, UUID(c.person_id), date(2026, 6, 1), id=uuid4())
