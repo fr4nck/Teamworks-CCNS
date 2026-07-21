@@ -7,6 +7,12 @@ from domain.contracts.contract_salary_batch_evaluation import (
     ContractSalaryBatchEvaluationResult,
     ContractSalaryBatchEvaluationService,
 )
+from domain.contracts.contract_salary_control_projection import (
+    ContractSalaryControlProjection,
+    ContractSalaryControlProjectionService,
+    ContractSalaryControlRow,
+    ContractSalaryControlStatus,
+)
 from domain.contracts.contract_salary_evaluation import (
     ContractSalaryEvaluationFailure,
     ContractSalaryEvaluationFailureReason,
@@ -23,6 +29,10 @@ __all__ = [
     "ContractSalaryBatchAuditService",
     "ContractSalaryBatchEvaluationResult",
     "ContractSalaryBatchEvaluationService",
+    "ContractSalaryControlProjection",
+    "ContractSalaryControlProjectionService",
+    "ContractSalaryControlRow",
+    "ContractSalaryControlStatus",
     "ContractSalaryEvaluationFailure",
     "ContractSalaryEvaluationFailureReason",
     "ContractSalaryEvaluationResult",
