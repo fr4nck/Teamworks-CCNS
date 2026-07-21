@@ -284,8 +284,6 @@ class SalaryMinimumBatchAuditResult:
             raise ValueError("total_shortfall_amount ne peut pas être négatif.")
         if type(self.id) is not UUID:
             raise TypeError("id doit être un UUID strict.")
-        if not self.items:
-            raise ValueError("items ne peut pas être vide.")
         if len(self.items) != len(self.audit_results):
             raise ValueError("items et audit_results doivent avoir la même longueur.")
 
@@ -345,6 +343,8 @@ class SalaryMinimumBatchAuditResult:
         return self.non_compliant_count > 0
 
     def compliance_rate(self) -> Decimal:
+        if self.item_count() == 0:
+            return Decimal("0.0000")
         rate = Decimal(self.compliant_count) / Decimal(self.item_count())
         return rate.quantize(_RATE_QUANT, rounding=ROUND_HALF_UP)
 
@@ -382,8 +382,6 @@ class SalaryMinimumBatchAuditService:
             materialized = tuple(items)
         except TypeError as exc:
             raise TypeError("items doit être itérable.") from exc
-        if not materialized:
-            raise ValueError("items ne peut pas être vide.")
         seen: set[UUID] = set()
         for item in materialized:
             if type(item) is not SalaryMinimumAuditItem:
