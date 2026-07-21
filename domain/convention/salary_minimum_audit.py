@@ -32,6 +32,12 @@ def _strict_uuid(value: object, field_name: str) -> Optional[UUID]:
     return value
 
 
+def _required_uuid(value: object, field_name: str) -> UUID:
+    if type(value) is not UUID:
+        raise TypeError(f"{field_name} doit être un UUID strict.")
+    return value
+
+
 def _strict_compliance_result(value: object) -> ApplicableSalaryMinimumResult:
     if type(value) is not ApplicableSalaryMinimumResult:
         raise TypeError("compliance_result doit être un ApplicableSalaryMinimumResult.")
@@ -343,19 +349,19 @@ class SalaryMinimumBatchAuditResult:
         return rate.quantize(_RATE_QUANT, rounding=ROUND_HALF_UP)
 
     def results_for_employee(self, employee_id: UUID) -> tuple[SalaryMinimumAuditResult, ...]:
-        employee = _strict_uuid(employee_id, "employee_id")
+        employee = _required_uuid(employee_id, "employee_id")
         return tuple(result for result in self.audit_results if result.employee_id == employee)
 
     def results_for_contract(self, contract_id: UUID) -> tuple[SalaryMinimumAuditResult, ...]:
-        contract = _strict_uuid(contract_id, "contract_id")
+        contract = _required_uuid(contract_id, "contract_id")
         return tuple(result for result in self.audit_results if result.contract_id == contract)
 
     def issues_for_employee(self, employee_id: UUID) -> tuple[SalaryMinimumAuditIssue, ...]:
-        employee = _strict_uuid(employee_id, "employee_id")
+        employee = _required_uuid(employee_id, "employee_id")
         return tuple(issue for issue in self.issues if issue.employee_id == employee)
 
     def issues_for_contract(self, contract_id: UUID) -> tuple[SalaryMinimumAuditIssue, ...]:
-        contract = _strict_uuid(contract_id, "contract_id")
+        contract = _required_uuid(contract_id, "contract_id")
         return tuple(issue for issue in self.issues if issue.contract_id == contract)
 
 
