@@ -9,6 +9,9 @@ from .planning_conflict_service import PlanningConflictService
 from .unavailability_conflict import UnavailabilityConflict
 from .unavailability_conflict_result import UnavailabilityConflictResult
 from .unavailability_conflict_service import UnavailabilityConflictService
+from .weekly_availability_check_result import WeeklyAvailabilityCheckResult
+from .weekly_availability_conflict import WeeklyAvailabilityConflict
+from .weekly_availability_service import WeeklyAvailabilityService
 from .weekday import Weekday
 
 __all__ = [
@@ -21,5 +24,8 @@ __all__ = [
     "UnavailabilityConflict",
     "UnavailabilityConflictResult",
     "UnavailabilityConflictService",
+    "WeeklyAvailabilityCheckResult",
+    "WeeklyAvailabilityConflict",
+    "WeeklyAvailabilityService",
     "Weekday",
 ]
