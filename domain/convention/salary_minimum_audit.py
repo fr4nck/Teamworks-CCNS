@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from enum import Enum
 from types import MappingProxyType
-from typing import Mapping, Optional
+from typing import Iterable, Mapping, Optional
 from uuid import UUID, uuid4
 
 from domain.convention.applicable_salary_minimum import (
@@ -17,6 +17,7 @@ from domain.engine.anomaly_level import AnomalyLevel
 SALARY_MINIMUM_AUDIT_CODE = "REMUNERATION_BELOW_APPLICABLE_MINIMUM"
 SALARY_MINIMUM_AUDIT_MESSAGE = "La rémunération brute mensuelle est inférieure au minimum salarial applicable."
 _ZERO = Decimal("0.00")
+_CENT = Decimal("0.01")
 
 
 class SalaryMinimumAuditIssueType(str, Enum):
@@ -28,6 +29,12 @@ def _strict_uuid(value: object, field_name: str) -> Optional[UUID]:
         return None
     if type(value) is not UUID:
         raise TypeError(f"{field_name} doit être None ou un UUID strict.")
+    return value
+
+
+def _required_uuid(value: object, field_name: str) -> UUID:
+    if type(value) is not UUID:
+        raise TypeError(f"{field_name} doit être un UUID strict.")
     return value
 
 
@@ -207,3 +214,206 @@ class SalaryMinimumAuditService:
             contract_id=contract,
         )
         return SalaryMinimumAuditResult(result, False, (issue,), employee, contract)
+
+
+_RATE_QUANT = Decimal("0.0001")
+
+
+@dataclass(frozen=True, slots=True)
+class SalaryMinimumAuditItem:
+    compliance_result: ApplicableSalaryMinimumResult
+    employee_id: Optional[UUID] = None
+    contract_id: Optional[UUID] = None
+    id: UUID = field(default_factory=uuid4, kw_only=True)
+
+    def __post_init__(self) -> None:
+        _strict_compliance_result(self.compliance_result)
+        _strict_uuid(self.employee_id, "employee_id")
+        _strict_uuid(self.contract_id, "contract_id")
+        if type(self.id) is not UUID:
+            raise TypeError("id doit être un UUID strict.")
+
+    def has_employee_reference(self) -> bool:
+        return self.employee_id is not None
+
+    def has_contract_reference(self) -> bool:
+        return self.contract_id is not None
+
+    def is_compliant(self) -> bool:
+        return self.compliance_result.is_compliant()
+
+    def is_non_compliant(self) -> bool:
+        return self.compliance_result.is_non_compliant()
+
+    def shortfall_amount(self) -> Decimal:
+        return self.compliance_result.shortfall_amount()
+
+
+@dataclass(frozen=True, slots=True)
+class SalaryMinimumBatchAuditResult:
+    items: tuple[SalaryMinimumAuditItem, ...]
+    audit_results: tuple[SalaryMinimumAuditResult, ...]
+    issues: tuple[SalaryMinimumAuditIssue, ...]
+    valid: bool
+    compliant_count: int
+    non_compliant_count: int
+    total_shortfall_amount: Decimal
+    id: UUID = field(default_factory=uuid4, kw_only=True)
+
+    def __post_init__(self) -> None:
+        if type(self.items) is not tuple:
+            raise TypeError("items doit être un tuple.")
+        if type(self.audit_results) is not tuple:
+            raise TypeError("audit_results doit être un tuple.")
+        if type(self.issues) is not tuple:
+            raise TypeError("issues doit être un tuple.")
+        if type(self.valid) is not bool:
+            raise TypeError("valid doit être un bool strict.")
+        if type(self.compliant_count) is not int:
+            raise TypeError("compliant_count doit être un int strict.")
+        if type(self.non_compliant_count) is not int:
+            raise TypeError("non_compliant_count doit être un int strict.")
+        if self.compliant_count < 0 or self.non_compliant_count < 0:
+            raise ValueError("Les compteurs ne peuvent pas être négatifs.")
+        if type(self.total_shortfall_amount) is not Decimal:
+            raise TypeError("total_shortfall_amount doit être un Decimal strict.")
+        total = self.total_shortfall_amount
+        if total != total.quantize(_CENT, rounding=ROUND_HALF_UP):
+            raise ValueError("total_shortfall_amount doit être quantifié à deux décimales.")
+        if total < _ZERO:
+            raise ValueError("total_shortfall_amount ne peut pas être négatif.")
+        if type(self.id) is not UUID:
+            raise TypeError("id doit être un UUID strict.")
+        if not self.items:
+            raise ValueError("items ne peut pas être vide.")
+        if len(self.items) != len(self.audit_results):
+            raise ValueError("items et audit_results doivent avoir la même longueur.")
+
+        expected_issues: list[SalaryMinimumAuditIssue] = []
+        expected_total = _ZERO
+        expected_compliant = 0
+        expected_non_compliant = 0
+        for item, result in zip(self.items, self.audit_results):
+            if type(item) is not SalaryMinimumAuditItem:
+                raise TypeError("items doit contenir des SalaryMinimumAuditItem.")
+            if type(result) is not SalaryMinimumAuditResult:
+                raise TypeError("audit_results doit contenir des SalaryMinimumAuditResult.")
+            if result.compliance_result is not item.compliance_result:
+                raise ValueError("Chaque résultat d'audit doit correspondre à l'item de même rang.")
+            if result.employee_id != item.employee_id or result.contract_id != item.contract_id:
+                raise ValueError("Les UUID salarié et contrat doivent correspondre.")
+            expected_issues.extend(result.issues)
+            expected_total += result.shortfall_amount()
+            if result.is_valid():
+                expected_compliant += 1
+            else:
+                expected_non_compliant += 1
+        for issue in self.issues:
+            if type(issue) is not SalaryMinimumAuditIssue:
+                raise TypeError("issues doit contenir des SalaryMinimumAuditIssue.")
+        if self.issues != tuple(expected_issues):
+            raise ValueError("issues doit être la concaténation ordonnée des anomalies des résultats.")
+        expected_valid = all(result.is_valid() for result in self.audit_results)
+        if self.valid is not expected_valid:
+            raise ValueError("valid doit refléter tous les résultats individuels.")
+        if self.compliant_count != expected_compliant:
+            raise ValueError("compliant_count est incohérent.")
+        if self.non_compliant_count != expected_non_compliant:
+            raise ValueError("non_compliant_count est incohérent.")
+        if self.compliant_count + self.non_compliant_count != len(self.items):
+            raise ValueError("La somme des compteurs doit être égale au nombre d'items.")
+        expected_total = expected_total.quantize(_CENT, rounding=ROUND_HALF_UP)
+        if total != expected_total:
+            raise ValueError("total_shortfall_amount est incohérent avec les déficits individuels.")
+
+    def is_valid(self) -> bool:
+        return self.valid
+
+    def has_issues(self) -> bool:
+        return len(self.issues) > 0
+
+    def item_count(self) -> int:
+        return len(self.items)
+
+    def issue_count(self) -> int:
+        return len(self.issues)
+
+    def all_compliant(self) -> bool:
+        return self.compliant_count == len(self.items)
+
+    def has_non_compliant_items(self) -> bool:
+        return self.non_compliant_count > 0
+
+    def compliance_rate(self) -> Decimal:
+        rate = Decimal(self.compliant_count) / Decimal(self.item_count())
+        return rate.quantize(_RATE_QUANT, rounding=ROUND_HALF_UP)
+
+    def results_for_employee(self, employee_id: UUID) -> tuple[SalaryMinimumAuditResult, ...]:
+        employee = _required_uuid(employee_id, "employee_id")
+        return tuple(result for result in self.audit_results if result.employee_id == employee)
+
+    def results_for_contract(self, contract_id: UUID) -> tuple[SalaryMinimumAuditResult, ...]:
+        contract = _required_uuid(contract_id, "contract_id")
+        return tuple(result for result in self.audit_results if result.contract_id == contract)
+
+    def issues_for_employee(self, employee_id: UUID) -> tuple[SalaryMinimumAuditIssue, ...]:
+        employee = _required_uuid(employee_id, "employee_id")
+        return tuple(issue for issue in self.issues if issue.employee_id == employee)
+
+    def issues_for_contract(self, contract_id: UUID) -> tuple[SalaryMinimumAuditIssue, ...]:
+        contract = _required_uuid(contract_id, "contract_id")
+        return tuple(issue for issue in self.issues if issue.contract_id == contract)
+
+
+@dataclass(frozen=True, slots=True)
+class SalaryMinimumBatchAuditService:
+    salary_minimum_audit_service: SalaryMinimumAuditService
+
+    def __post_init__(self) -> None:
+        if type(self.salary_minimum_audit_service) is not SalaryMinimumAuditService:
+            raise TypeError("salary_minimum_audit_service doit être un SalaryMinimumAuditService.")
+
+    def audit(self, items: Iterable[SalaryMinimumAuditItem]) -> SalaryMinimumBatchAuditResult:
+        if items is None:
+            raise TypeError("items ne peut pas être None.")
+        if isinstance(items, (str, bytes)):
+            raise TypeError("items doit être un itérable d'items d'audit salarial.")
+        try:
+            materialized = tuple(items)
+        except TypeError as exc:
+            raise TypeError("items doit être itérable.") from exc
+        if not materialized:
+            raise ValueError("items ne peut pas être vide.")
+        seen: set[UUID] = set()
+        for item in materialized:
+            if type(item) is not SalaryMinimumAuditItem:
+                raise TypeError("items doit contenir des SalaryMinimumAuditItem.")
+            result_id = item.compliance_result.id
+            if result_id in seen:
+                raise ValueError("Un même résultat de conformité ne peut pas être audité plusieurs fois dans le même lot.")
+            seen.add(result_id)
+
+        audit_results = tuple(
+            self.salary_minimum_audit_service.audit(
+                item.compliance_result,
+                employee_id=item.employee_id,
+                contract_id=item.contract_id,
+            )
+            for item in materialized
+        )
+        issues = tuple(issue for result in audit_results for issue in result.issues)
+        compliant_count = sum(1 for result in audit_results if result.is_valid())
+        non_compliant_count = len(audit_results) - compliant_count
+        total_shortfall = sum(
+            (result.shortfall_amount() for result in audit_results),
+            _ZERO,
+        ).quantize(_CENT, rounding=ROUND_HALF_UP)
+        return SalaryMinimumBatchAuditResult(
+            items=materialized,
+            audit_results=audit_results,
+            issues=issues,
+            valid=all(result.is_valid() for result in audit_results),
+            compliant_count=compliant_count,
+            non_compliant_count=non_compliant_count,
+            total_shortfall_amount=total_shortfall,
+        )
