@@ -16,6 +16,15 @@ Le service `PlanningValidationService` appartient au domaine pur :
 
 Il orchestre uniquement `AssignmentValidationService`, qui reste le point d’entrée des contrôles individuels : qualifications, conflits de planning, indisponibilités et disponibilités hebdomadaires.
 
+## Points d’entrée
+
+Le service expose deux points d’entrée métier :
+
+- `validate(assignments, qualification_requirements, employee_qualifications, unavailabilities, weekly_availabilities)` pour valider une collection d’affectations déjà disponible ;
+- `validate_planning(planning, qualification_requirements, employee_qualifications, unavailabilities, weekly_availabilities)` pour valider directement les affectations immutables portées par un agrégat `Planning`.
+
+Lorsque l’agrégat `Planning` existe déjà, `validate_planning()` est le point d’entrée recommandé. Il utilise exactement `planning.assignments`, sans tri, filtre, reconstruction ni changement de statut, refuse explicitement un planning sans affectation, puis délègue à `validate()` afin de produire un `PlanningValidationResult` compatible avec `PlanningStatusTransitionService`. Le statut et le champ `active` du planning ne modifient pas le résultat de validation.
+
 ## Règles de validation
 
 Pour chaque affectation du planning, le service appelle `AssignmentValidationService` une seule fois. Les affectations existantes transmises à cet appel contiennent toutes les autres affectations du planning, mais jamais l’affectation en cours de contrôle.
