@@ -11,6 +11,7 @@ from .assignment_validation_result import AssignmentValidationResult
 from .assignment_validation_service import AssignmentValidationService
 from .employee_unavailability import EmployeeUnavailability
 from .employee_weekly_availability import EmployeeWeeklyAvailability
+from .planning import Planning
 from .planning_validation_result import PlanningValidationResult
 
 
@@ -82,6 +83,28 @@ class PlanningValidationService:
         return PlanningValidationResult(
             assignment_results=assignment_results,
             valid=all(result.is_valid() for result in assignment_results),
+        )
+
+    def validate_planning(
+        self,
+        planning: Planning,
+        qualification_requirements: Iterable[QualificationRequirement],
+        employee_qualifications: Iterable[EmployeeQualification],
+        unavailabilities: Iterable[EmployeeUnavailability],
+        weekly_availabilities: Iterable[EmployeeWeeklyAvailability],
+    ) -> PlanningValidationResult:
+        """Valide directement les affectations portées par un agrégat Planning."""
+
+        if type(planning) is not Planning:
+            raise ValueError("Le planning à valider doit être un Planning.")
+        if not planning.assignments:
+            raise ValueError("Un planning sans affectation ne peut pas être validé.")
+        return self.validate(
+            planning.assignments,
+            qualification_requirements,
+            employee_qualifications,
+            unavailabilities,
+            weekly_availabilities,
         )
 
 
