@@ -47,11 +47,15 @@ from datetime import date
 
 from application.bootstrap import ContractSalaryControlControllerFactory
 from application.control import ContractSalaryControlControllerRequest
-from domain.convention import create_ccns_salary_grid_2026_01, create_smic_catalog_2026
+from domain.convention import (
+    SalaryGridCatalog,
+    create_ccns_salary_grid_2026_01,
+    create_smic_catalog_2026,
+)
 from infrastructure.repositories import ContractRepository
 
 contracts_repository = ContractRepository()
-salary_grid_catalog = create_ccns_salary_grid_2026_01()
+salary_grid_catalog = SalaryGridCatalog((create_ccns_salary_grid_2026_01(),))
 smic_catalog = create_smic_catalog_2026()
 
 controller = ContractSalaryControlControllerFactory().create(
