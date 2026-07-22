@@ -8,7 +8,8 @@ import wx
 from teamworks.CcnsCore.audit_contracts_ccns import audit_contracts
 from teamworks.CcnsCore.audit_employee_salary_summary import employee_salary_summary_from_audit_rows
 from teamworks.CcnsCore.audit_filters import MINIMUM_SOURCE_FILTERS, SALARY_STATUS_FILTERS, filter_audit_rows
-from teamworks.CcnsCore.audit_salary_details import audit_row_to_dict, summarize_salary_control_rows, write_audit_csv
+from teamworks.CcnsCore.audit_salary_dashboard import salary_dashboard_from_audit_rows
+from teamworks.CcnsCore.audit_salary_details import audit_row_to_dict, write_audit_csv
 from teamworks.CcnsCore.audit_sorting import (
     SALARY_SORT_FIELDS,
     compute_row_severity,
@@ -86,14 +87,29 @@ class Dialog(wx.Dialog):
         self.button_salary_detail = wx.Button(self, -1, "Détail salarial")
         self.button_employee_summary = wx.Button(self, -1, "Synthèse salarié")
         self.button_export = wx.Button(self, -1, "Exporter CSV")
+        self.button_show_non_compliant = wx.Button(self, -1, "Voir les non conformes")
+        self.button_show_not_evaluated = wx.Button(self, -1, "Voir les non évaluables")
         self.button_close = wx.Button(self, wx.ID_CANCEL, "Fermer")
 
         self.button_open_contract.Enable(False)
         self.button_salary_detail.Enable(False)
         self.button_employee_summary.Enable(False)
         self.button_export.Enable(False)
+        self.button_show_non_compliant.Enable(False)
+        self.button_show_not_evaluated.Enable(False)
 
         self.ctrl_resume = wx.StaticText(self, -1, "Aucun audit lance.")
+        self.dashboard_labels = {
+            "total": wx.StaticText(self, -1, "Contrats contrôlés : 0"),
+            "compliant": wx.StaticText(self, -1, "Conformes : 0"),
+            "non_compliant": wx.StaticText(self, -1, "Non conformes : 0"),
+            "not_evaluated": wx.StaticText(self, -1, "Non évaluables : 0"),
+            "shortfall": wx.StaticText(self, -1, "Montant total des écarts : 0,00 €"),
+            "compliant_pct": wx.StaticText(self, -1, "% conformes : 0 %"),
+            "non_compliant_pct": wx.StaticText(self, -1, "% non conformes : 0 %"),
+            "reference_date": wx.StaticText(self, -1, "Date de référence : Non disponible"),
+            "summary": wx.StaticText(self, -1, "Aucun contrat salarial contrôlé dans le périmètre courant."),
+        }
         self.legend = wx.StaticText(
             self,
             -1,
@@ -108,6 +124,8 @@ class Dialog(wx.Dialog):
         self.button_salary_detail.Bind(wx.EVT_BUTTON, self.OnOpenSalaryDetail)
         self.button_employee_summary.Bind(wx.EVT_BUTTON, self.OnOpenEmployeeSalarySummary)
         self.button_export.Bind(wx.EVT_BUTTON, self.OnExport)
+        self.button_show_non_compliant.Bind(wx.EVT_BUTTON, self.OnShowNonCompliant)
+        self.button_show_not_evaluated.Bind(wx.EVT_BUTTON, self.OnShowNotEvaluated)
 
         self.listview.Bind(wx.EVT_LIST_ITEM_SELECTED, self.OnSelectionChanged)
         self.listview.Bind(wx.EVT_LIST_ITEM_DESELECTED, self.OnSelectionChanged)
@@ -129,6 +147,8 @@ class Dialog(wx.Dialog):
         sizer_top.Add(self.button_salary_detail, 0, wx.RIGHT, 8)
         sizer_top.Add(self.button_employee_summary, 0, wx.RIGHT, 8)
         sizer_top.Add(self.button_export, 0, wx.RIGHT, 8)
+        sizer_top.Add(self.button_show_non_compliant, 0, wx.RIGHT, 8)
+        sizer_top.Add(self.button_show_not_evaluated, 0, wx.RIGHT, 8)
         sizer_top.Add(self.button_close, 0, 0, 0)
         sizer_base.Add(sizer_top, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
 
@@ -157,6 +177,13 @@ class Dialog(wx.Dialog):
         sizer_salary_filters.Add(self.ctrl_sort_direction, 0, 0, 0)
         sizer_base.Add(sizer_salary_filters, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
 
+        sizer_dashboard = wx.StaticBoxSizer(wx.StaticBox(self, -1, "Tableau de bord salarial"), wx.VERTICAL)
+        grid_dashboard = wx.FlexGridSizer(rows=0, cols=4, vgap=4, hgap=18)
+        for key in ("total", "compliant", "non_compliant", "not_evaluated", "shortfall", "compliant_pct", "non_compliant_pct", "reference_date"):
+            grid_dashboard.Add(self.dashboard_labels[key], 0, wx.EXPAND, 0)
+        sizer_dashboard.Add(grid_dashboard, 0, wx.ALL | wx.EXPAND, 8)
+        sizer_dashboard.Add(self.dashboard_labels["summary"], 0, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, 8)
+        sizer_base.Add(sizer_dashboard, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, 10)
         sizer_base.Add(self.ctrl_resume, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, 10)
         sizer_base.Add(self.legend, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, 10)
         sizer_base.Add(self.listview, 1, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, 10)
@@ -186,23 +213,48 @@ class Dialog(wx.Dialog):
         nb_anomalies = sum(len(item.get("anomalies", [])) for item in self.filtered_rows)
         nb_bloquantes = sum(1 for item in self.filtered_rows if item.get("severity_label") == "blocking")
         nb_individus = len(set((item.get("nom_complet") or "").strip().upper() for item in self.filtered_rows))
-        salary_summary = summarize_salary_control_rows(self.filtered_rows)
+        dashboard = salary_dashboard_from_audit_rows(self.filtered_rows)
+        self._update_salary_dashboard(dashboard)
 
         self.ctrl_resume.SetLabel(
-            "Audit charge - %d individu(s), %d ligne(s), %d anomalie(s), %d bloquante(s) ; "
-            "%d conforme(s), %d non conforme(s), %d non évaluable(s) ; écarts : %s." % (
+            "Audit charge - %d individu(s), %d ligne(s), %d anomalie(s), %d bloquante(s)." % (
                 nb_individus,
                 len(self.filtered_rows),
                 nb_anomalies,
                 nb_bloquantes,
-                salary_summary["compliant_count"],
-                salary_summary["non_compliant_count"],
-                salary_summary["not_evaluated_count"],
-                salary_summary["total_shortfall_amount_label"],
             )
         )
         self.button_export.Enable(bool(self.filtered_rows))
+        self.button_show_non_compliant.Enable(dashboard.non_compliant_contracts > 0)
+        self.button_show_not_evaluated.Enable(dashboard.not_evaluated_contracts > 0)
         self.OnSelectionChanged(None)
+
+
+    def _format_percentage_label(self, value):
+        return str(value.normalize()).replace(".", ",") + " %"
+
+    def _update_salary_dashboard(self, dashboard):
+        self.dashboard_labels["total"].SetLabel("Contrats contrôlés : %d" % dashboard.total_contracts)
+        self.dashboard_labels["compliant"].SetLabel("Conformes : %d" % dashboard.compliant_contracts)
+        self.dashboard_labels["non_compliant"].SetLabel("Non conformes : %d" % dashboard.non_compliant_contracts)
+        self.dashboard_labels["not_evaluated"].SetLabel("Non évaluables : %d" % dashboard.not_evaluated_contracts)
+        self.dashboard_labels["shortfall"].SetLabel("Montant total des écarts : %s" % dashboard.total_shortfall_amount_label)
+        self.dashboard_labels["compliant_pct"].SetLabel("% conformes : %s" % self._format_percentage_label(dashboard.compliant_percentage))
+        self.dashboard_labels["non_compliant_pct"].SetLabel("% non conformes : %s" % self._format_percentage_label(dashboard.non_compliant_percentage))
+        self.dashboard_labels["reference_date"].SetLabel("Date de référence : %s" % (dashboard.reference_date_label if dashboard.total_contracts else "Non disponible"))
+        self.dashboard_labels["summary"].SetLabel(dashboard.summary_label)
+
+    def _apply_salary_status_filter(self, label):
+        if label not in SALARY_STATUS_FILTERS:
+            raise ValueError("Filtre salarial inconnu : %s" % label)
+        self.ctrl_salary_status.SetValue(label)
+        self.OnApplyFilters(None)
+
+    def OnShowNonCompliant(self, event):
+        self._apply_salary_status_filter("Non conforme")
+
+    def OnShowNotEvaluated(self, event):
+        self._apply_salary_status_filter("Non évaluable")
 
     def _get_selected_row(self):
         index = self.listview.GetFirstSelected()
