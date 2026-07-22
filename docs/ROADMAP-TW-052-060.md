@@ -50,6 +50,8 @@ Permettre d’ouvrir depuis l’audit CCNS une fiche détaillée pour une ligne 
 
 ## TW-053 — Ajouter la synthèse salariale d’un salarié
 
+**Statut : En cours.**
+
 ### Objectif
 
 Regrouper les contrôles salariaux de tous les contrats d’un salarié dans une synthèse unique.

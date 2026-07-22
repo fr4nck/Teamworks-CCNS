@@ -12,6 +12,10 @@ from application.presentation.salary_control_detail_presenter import (
     ContractSalaryControlDetailViewModel,
     detail_from_audit_row,
 )
+from application.presentation.salary_control_employee_summary_presenter import (
+    ContractSalaryControlEmployeeSummaryPresenter,
+    ContractSalaryControlEmployeeSummaryViewModel,
+)
 from application.presentation.salary_control_json_exporter import (
     ContractSalaryControlJsonExport,
     ContractSalaryControlJsonExporter,
@@ -35,6 +39,8 @@ __all__ = [
     "ContractSalaryControlExporter",
     "ContractSalaryControlDetailPresenter",
     "ContractSalaryControlDetailViewModel",
+    "ContractSalaryControlEmployeeSummaryPresenter",
+    "ContractSalaryControlEmployeeSummaryViewModel",
     "ContractSalaryControlEmptyStateViewModel",
     "ContractSalaryControlJsonExport",
     "ContractSalaryControlJsonExporter",
