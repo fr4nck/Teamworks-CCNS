@@ -11,6 +11,11 @@ from application.control.salary_control_controller import (
     ContractSalaryControlControllerRequest,
     ContractSalaryControlControllerResult,
 )
+from application.control.salary_control_export_controller import (
+    ContractSalaryControlExportController,
+    ContractSalaryControlExportRequest,
+    ContractSalaryControlExportResponse,
+)
 
 __all__ = [
     "ConsultContractSalaryControlQuery",
@@ -22,4 +27,7 @@ __all__ = [
     "ContractSalaryControlControllerErrorCode",
     "ContractSalaryControlControllerRequest",
     "ContractSalaryControlControllerResult",
+    "ContractSalaryControlExportController",
+    "ContractSalaryControlExportRequest",
+    "ContractSalaryControlExportResponse",
 ]
