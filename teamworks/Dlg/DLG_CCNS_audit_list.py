@@ -9,6 +9,7 @@ from teamworks.CcnsCore.audit_contracts_ccns import audit_contracts
 from teamworks.CcnsCore.audit_employee_salary_summary import employee_salary_summary_from_audit_rows
 from teamworks.CcnsCore.audit_filters import MINIMUM_SOURCE_FILTERS, SALARY_STATUS_FILTERS, filter_audit_rows
 from teamworks.CcnsCore.audit_salary_dashboard import salary_dashboard_from_audit_rows
+from teamworks.CcnsCore.audit_salary_history import save_salary_control_snapshot_from_audit_rows
 from teamworks.CcnsCore.audit_salary_details import audit_row_to_dict, write_audit_csv
 from teamworks.CcnsCore.audit_sorting import (
     SALARY_SORT_FIELDS,
@@ -20,6 +21,7 @@ from teamworks.Ol.OL_CCNS_audit import ListView
 
 from teamworks.Dlg.DLG_CCNS_employee_salary_summary import Dialog as EmployeeSalarySummaryDialog
 from teamworks.Dlg.DLG_CCNS_salary_control_detail import Dialog as SalaryControlDetailDialog
+from teamworks.Dlg.DLG_CCNS_salary_control_history import Dialog as SalaryControlHistoryDialog
 
 try:
     from Ctrl import CTRL_Page_contrats
@@ -87,6 +89,8 @@ class Dialog(wx.Dialog):
         self.button_salary_detail = wx.Button(self, -1, "Détail salarial")
         self.button_employee_summary = wx.Button(self, -1, "Synthèse salarié")
         self.button_export = wx.Button(self, -1, "Exporter CSV")
+        self.button_save_snapshot = wx.Button(self, -1, "Enregistrer ce contrôle")
+        self.button_history = wx.Button(self, -1, "Historique salarial")
         self.button_show_non_compliant = wx.Button(self, -1, "Voir les non conformes")
         self.button_show_not_evaluated = wx.Button(self, -1, "Voir les non évaluables")
         self.button_close = wx.Button(self, wx.ID_CANCEL, "Fermer")
@@ -95,6 +99,7 @@ class Dialog(wx.Dialog):
         self.button_salary_detail.Enable(False)
         self.button_employee_summary.Enable(False)
         self.button_export.Enable(False)
+        self.button_save_snapshot.Enable(False)
         self.button_show_non_compliant.Enable(False)
         self.button_show_not_evaluated.Enable(False)
 
@@ -124,6 +129,8 @@ class Dialog(wx.Dialog):
         self.button_salary_detail.Bind(wx.EVT_BUTTON, self.OnOpenSalaryDetail)
         self.button_employee_summary.Bind(wx.EVT_BUTTON, self.OnOpenEmployeeSalarySummary)
         self.button_export.Bind(wx.EVT_BUTTON, self.OnExport)
+        self.button_save_snapshot.Bind(wx.EVT_BUTTON, self.OnSaveSalarySnapshot)
+        self.button_history.Bind(wx.EVT_BUTTON, self.OnOpenSalaryHistory)
         self.button_show_non_compliant.Bind(wx.EVT_BUTTON, self.OnShowNonCompliant)
         self.button_show_not_evaluated.Bind(wx.EVT_BUTTON, self.OnShowNotEvaluated)
 
@@ -147,6 +154,8 @@ class Dialog(wx.Dialog):
         sizer_top.Add(self.button_salary_detail, 0, wx.RIGHT, 8)
         sizer_top.Add(self.button_employee_summary, 0, wx.RIGHT, 8)
         sizer_top.Add(self.button_export, 0, wx.RIGHT, 8)
+        sizer_top.Add(self.button_save_snapshot, 0, wx.RIGHT, 8)
+        sizer_top.Add(self.button_history, 0, wx.RIGHT, 8)
         sizer_top.Add(self.button_show_non_compliant, 0, wx.RIGHT, 8)
         sizer_top.Add(self.button_show_not_evaluated, 0, wx.RIGHT, 8)
         sizer_top.Add(self.button_close, 0, 0, 0)
@@ -225,6 +234,7 @@ class Dialog(wx.Dialog):
             )
         )
         self.button_export.Enable(bool(self.filtered_rows))
+        self.button_save_snapshot.Enable(bool(self.rows) and any(item.get("salary_control_row") is not None for item in self.rows))
         self.button_show_non_compliant.Enable(dashboard.non_compliant_contracts > 0)
         self.button_show_not_evaluated.Enable(dashboard.not_evaluated_contracts > 0)
         self.OnSelectionChanged(None)
@@ -286,6 +296,7 @@ class Dialog(wx.Dialog):
             return
 
         self.rows = [audit_row_to_dict(row) for row in rows]
+        self._last_saved_snapshot_signature = None
         self.filtered_rows = list(self.rows)
         self._refresh_list()
 
@@ -437,6 +448,63 @@ class Dialog(wx.Dialog):
                 wx.OK | wx.ICON_WARNING,
                 self,
             )
+
+
+    def _salary_snapshot_signature(self):
+        return tuple(
+            (row["salary_control_row"].contract_id, row["salary_control_row"].status, row["salary_control_row"].shortfall_amount, row["salary_control_row"].issue_code, row["salary_control_row"].failure_reason)
+            for row in self.rows
+            if row.get("salary_control_row") is not None
+        )
+
+    def OnSaveSalarySnapshot(self, event):
+        salary_rows = [row for row in self.rows if row.get("salary_control_row") is not None]
+        if not salary_rows:
+            wx.MessageBox(
+                "Aucun contrôle salarial complet n'est disponible pour l'enregistrement.",
+                "Contrôle vide",
+                wx.OK | wx.ICON_INFORMATION,
+                self,
+            )
+            return
+        signature = self._salary_snapshot_signature()
+        if signature == getattr(self, "_last_saved_snapshot_signature", None):
+            wx.MessageBox(
+                "Ce contrôle vient déjà d'être enregistré dans cette session.",
+                "Enregistrement déjà effectué",
+                wx.OK | wx.ICON_INFORMATION,
+                self,
+            )
+            return
+        dashboard = salary_dashboard_from_audit_rows(self.rows)
+        message = "Enregistrer ce contrôle salarial ?\n\nContrats : %d\nMontant total des écarts : %s" % (
+            dashboard.total_contracts,
+            dashboard.total_shortfall_amount_label,
+        )
+        if wx.MessageBox(message, "Confirmation", wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION, self) != wx.YES:
+            return
+        try:
+            snapshot = save_salary_control_snapshot_from_audit_rows(self.rows)
+        except Exception as exc:
+            wx.MessageBox(
+                "Impossible d'enregistrer l'historique du contrôle salarial.\n\n%s" % exc,
+                "Erreur",
+                wx.OK | wx.ICON_ERROR,
+                self,
+            )
+            return
+        self._last_saved_snapshot_signature = signature
+        wx.MessageBox(
+            "Contrôle salarial enregistré.\n\nSnapshot : %s" % snapshot.snapshot_id,
+            "Enregistrement terminé",
+            wx.OK | wx.ICON_INFORMATION,
+            self,
+        )
+
+    def OnOpenSalaryHistory(self, event):
+        dlg = SalaryControlHistoryDialog(self)
+        dlg.ShowModal()
+        dlg.Destroy()
 
     def OnExport(self, event):
         if not self.filtered_rows:

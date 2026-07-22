@@ -11,6 +11,14 @@ from application.control.salary_control_controller import (
     ContractSalaryControlControllerRequest,
     ContractSalaryControlControllerResult,
 )
+from application.control.salary_control_snapshot_use_case import (
+    ContractSalaryControlSnapshotFactory,
+    SaveContractSalaryControlSnapshotUseCase,
+    ListContractSalaryControlSnapshotsUseCase,
+)
+from application.control.salary_control_snapshot_memory_repository import (
+    InMemoryContractSalaryControlSnapshotRepository,
+)
 from application.control.salary_control_export_controller import (
     ContractSalaryControlExportController,
     ContractSalaryControlExportRequest,
@@ -30,4 +38,8 @@ __all__ = [
     "ContractSalaryControlExportController",
     "ContractSalaryControlExportRequest",
     "ContractSalaryControlExportResponse",
+    "ContractSalaryControlSnapshotFactory",
+    "SaveContractSalaryControlSnapshotUseCase",
+    "ListContractSalaryControlSnapshotsUseCase",
+    "InMemoryContractSalaryControlSnapshotRepository",
 ]
