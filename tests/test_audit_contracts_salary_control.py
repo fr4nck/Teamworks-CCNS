@@ -43,6 +43,25 @@ class Reader:
         self.closed = True
 
 
+class UppercasePeriodicityReader(Reader):
+    def lire_lignes_grille(self, IDtw_salary_grid):
+        self.calls.append(("lignes", IDtw_salary_grid))
+        return [
+            CcnsLigneGrilleRecord(1, IDtw_salary_grid, "G3", "MONTHLY", 1997.87, "EUR", None, None, None, None, ""),
+            CcnsLigneGrilleRecord(2, IDtw_salary_grid, "G7", "ANNUAL", 50000.00, "EUR", None, None, None, None, ""),
+            CcnsLigneGrilleRecord(3, IDtw_salary_grid, "G8", "ANNUAL", 60000.00, "EUR", None, None, None, None, ""),
+        ]
+
+
+class ReaderWithoutSalaryGrid(Reader):
+    def lire_grilles(self, limit=None):
+        self.calls.append(("grilles", limit))
+        return []
+
+    def lire_lignes_grille(self, IDtw_salary_grid):
+        raise AssertionError("aucune ligne de grille ne doit être lue")
+
+
 def contract(IDcontrat, salaire, classification="G3", type_contrat="CDI", date_fin=None, prenom="Ada", nom="Lovelace"):
     return CcnsContratRecord(
         IDcontrat,
@@ -57,6 +76,27 @@ def contract(IDcontrat, salaire, classification="G3", type_contrat="CDI", date_f
         classification,
         type_contrat,
     )
+
+
+def test_audit_accepte_les_periodicites_teamworks_en_majuscules_avec_g7_et_g8():
+    rows = audit_contracts(
+        data_reader=UppercasePeriodicityReader([contract(1, 2100.0)]),
+        reference_date=date(2026, 7, 1),
+    )
+
+    assert [row.IDcontrat for row in rows] == [1]
+    assert "REMUNERATION_BELOW_APPLICABLE_MINIMUM" not in rows[0].anomalies
+
+
+def test_audit_sans_grille_retourne_une_anomalie_stable_sans_planter():
+    reader = ReaderWithoutSalaryGrid([contract(1, 2100.0)])
+
+    rows = audit_contracts(data_reader=reader, reference_date=date(2026, 7, 1))
+
+    assert [row.IDcontrat for row in rows] == [1]
+    assert "CONTRAT_SANS_GRILLE" in rows[0].anomalies
+    assert "Grille salariale manquante" in rows[0].messages
+    assert not any(call[0] == "lignes" for call in reader.calls)
 
 
 def test_audit_traduit_conforme_non_conforme_et_non_evaluable_sans_recalcul_ancien(monkeypatch):
