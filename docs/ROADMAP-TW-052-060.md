@@ -103,6 +103,10 @@ Afficher sur le tableau de bord CCNS les principaux indicateurs du contrôle sal
 
 ## TW-055 — Ajouter l’historique des contrôles salariaux
 
+**Statut : Réalisée.**
+
+**PR : En cours.**
+
 ### Objectif
 
 Conserver une trace datée des contrôles exécutés afin de comparer les résultats dans le temps.

@@ -1,0 +1,4 @@
+
+from domain.repositories.contract_salary_control_snapshot_repository import ContractSalaryControlSnapshotRepository
+
+__all__ = ["ContractSalaryControlSnapshotRepository"]
