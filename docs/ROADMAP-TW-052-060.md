@@ -105,7 +105,7 @@ Afficher sur le tableau de bord CCNS les principaux indicateurs du contrôle sal
 
 **Statut : Réalisée.**
 
-**PR : En cours.**
+**PR : #102.**
 
 ### Objectif
 
@@ -257,7 +257,7 @@ Finaliser le périmètre contrôle salarial sous forme d’un jalon utilisable p
 | TW-052 | Fiche de détail d’un contrôle salarial | Réalisée | #99 |
 | TW-053 | Synthèse salariale d’un salarié | Réalisée | #100 |
 | TW-054 | Indicateurs salariaux du tableau de bord | Réalisée | #101 |
-| TW-055 | Historique des contrôles salariaux | Planifiée | — |
+| TW-055 | Historique des contrôles salariaux | Réalisée | #102 |
 | TW-056 | Comparaison de contrôles salariaux | Planifiée | — |
 | TW-057 | Suivi des anomalies salariales | Planifiée | — |
 | TW-058 | Alertes de contrôle salarial | Planifiée | — |
