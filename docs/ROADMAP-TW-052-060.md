@@ -129,6 +129,10 @@ Conserver une trace datée des contrôles exécutés afin de comparer les résul
 
 ## TW-056 — Ajouter la comparaison entre deux contrôles salariaux
 
+**Statut : En cours.**
+
+**PR : à ouvrir.**
+
 ### Objectif
 
 Comparer deux snapshots afin d’identifier les améliorations, dégradations et changements de statut.
@@ -146,6 +150,11 @@ Comparer deux snapshots afin d’identifier les améliorations, dégradations et
 - comparaison pure et déterministe ;
 - aucune réévaluation métier ;
 - résultat immuable, testable et indépendant de l’interface.
+
+### Suivi
+
+- Modèles, service pur, cas d’usage, présentation et interface d’historique ajoutés.
+- Documentation : `docs/42-comparaison-controles-salariaux.md`.
 
 ---
 

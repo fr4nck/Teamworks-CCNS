@@ -20,6 +20,11 @@ from application.presentation.salary_control_dashboard_presenter import (
     ContractSalaryDashboardPresenter,
     ContractSalaryDashboardViewModel,
 )
+from application.presentation.salary_control_snapshot_comparison_presenter import (
+    ContractSalaryControlSnapshotComparisonPresenter,
+    ContractSalaryControlSnapshotComparisonViewModel,
+    ContractSalaryControlSnapshotComparisonRowViewModel,
+)
 from application.presentation.salary_control_json_exporter import (
     ContractSalaryControlJsonExport,
     ContractSalaryControlJsonExporter,
@@ -48,6 +53,9 @@ __all__ = [
     "ContractSalaryControlEmployeeSummaryPresenter",
     "ContractSalaryControlEmployeeSummaryViewModel",
     "ContractSalaryControlEmptyStateViewModel",
+    "ContractSalaryControlSnapshotComparisonPresenter",
+    "ContractSalaryControlSnapshotComparisonViewModel",
+    "ContractSalaryControlSnapshotComparisonRowViewModel",
     "ContractSalaryControlJsonExport",
     "ContractSalaryControlJsonExporter",
     "ContractSalaryControlPaginationViewModel",

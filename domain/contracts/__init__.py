@@ -19,6 +19,12 @@ from domain.contracts.contract_salary_control_snapshot import (
     ContractSalaryControlSnapshot,
     ContractSalaryControlSnapshotRow,
 )
+from domain.contracts.contract_salary_control_snapshot_comparison import (
+    ContractSalaryControlSnapshotChangeType,
+    ContractSalaryControlSnapshotComparison,
+    ContractSalaryControlSnapshotComparisonRow,
+    CompareContractSalaryControlSnapshotsService,
+)
 from domain.contracts.contract_salary_control_query import (
     ContractSalaryControlPage,
     ContractSalaryControlQuery,
@@ -59,6 +65,10 @@ __all__ = [
     "ContractSalaryControlService",
     "ContractSalaryControlSnapshot",
     "ContractSalaryControlSnapshotRow",
+    "ContractSalaryControlSnapshotChangeType",
+    "ContractSalaryControlSnapshotComparison",
+    "ContractSalaryControlSnapshotComparisonRow",
+    "CompareContractSalaryControlSnapshotsService",
     "ContractSalaryControlProjectionService",
     "ContractSalaryControlRow",
     "ContractSalaryControlStatus",
