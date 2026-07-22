@@ -7,6 +7,10 @@ from domain.contracts.contract_salary_batch_evaluation import (
     ContractSalaryBatchEvaluationResult,
     ContractSalaryBatchEvaluationService,
 )
+from domain.contracts.contract_salary_control import (
+    ContractSalaryControlResult,
+    ContractSalaryControlService,
+)
 from domain.contracts.contract_salary_control_projection import (
     ContractSalaryControlProjection,
     ContractSalaryControlProjectionService,
@@ -30,6 +34,8 @@ __all__ = [
     "ContractSalaryBatchEvaluationResult",
     "ContractSalaryBatchEvaluationService",
     "ContractSalaryControlProjection",
+    "ContractSalaryControlResult",
+    "ContractSalaryControlService",
     "ContractSalaryControlProjectionService",
     "ContractSalaryControlRow",
     "ContractSalaryControlStatus",
