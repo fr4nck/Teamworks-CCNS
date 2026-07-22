@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import Iterable, Optional
+from typing import Iterable, Optional, Sequence
 from uuid import NAMESPACE_URL, UUID, uuid5
 
 from application.control import ContractSalaryControlContractProvider
@@ -10,7 +10,7 @@ from domain.contracts.contract import Contract
 from domain.contracts.contract_type import ContractType
 from domain.repositories.ccns_data import CcnsContratRecord, CcnsDataReaderProtocol
 from domain.convention.classification import CCNSClassification
-from teamworks.CcnsCore.audit_contracts_ccns import _as_date, _map_contract_type, _map_employment_regime, _map_time_org
+from infrastructure.persistence.teamworks_contract_conversions import as_date, map_contract_type, map_employment_regime, map_time_organization
 
 HISTORICAL_FIXED_TERM_WITHOUT_END_DATE_REASON = "CONTRAT_A_DUREE_DETERMINEE_SANS_DATE_FIN"
 _CONTRACT_NAMESPACE = uuid5(NAMESPACE_URL, "teamworks-ccns:legacy-contract")
@@ -31,6 +31,7 @@ class TeamworksContractSalaryControlProvider(ContractSalaryControlContractProvid
     """Adaptateur des contrats Teamworks réels vers le contrôle salarial."""
 
     data_reader: CcnsDataReaderProtocol
+    records: Optional[Sequence[CcnsContratRecord]] = None
 
     def __post_init__(self) -> None:
         if not hasattr(self.data_reader, "lire_contrats"):
@@ -48,7 +49,8 @@ class TeamworksContractSalaryControlProvider(ContractSalaryControlContractProvid
         selected_employee_ids = set(employee_ids)
         result: list[Contract] = []
         seen_contract_ids: set[UUID] = set()
-        for record in self.data_reader.lire_contrats():
+        records = self.records if self.records is not None else self.data_reader.lire_contrats()
+        for record in records:
             contract = contract_from_ccns_record(record)
             contract_id = _legacy_contract_uuid(record.IDcontrat)
             employee_id = _legacy_employee_uuid(record.IDpersonne)
@@ -74,9 +76,9 @@ def legacy_employee_uuid(IDpersonne: int) -> UUID:
 def contract_from_ccns_record(record: CcnsContratRecord) -> Contract:
     if type(record) is not CcnsContratRecord:
         raise TypeError("record doit être un CcnsContratRecord strict.")
-    contract_type = _map_contract_type(record.type_contrat)
+    contract_type = map_contract_type(record.type_contrat)
     failure_reason: Optional[str] = None
-    end_date = _as_date(record.date_fin)
+    end_date = as_date(record.date_fin)
     if contract_type in _FIXED_TERM_TYPES and end_date is None:
         failure_reason = HISTORICAL_FIXED_TERM_WITHOUT_END_DATE_REASON
     classification = _classification(record.classification)
@@ -84,9 +86,9 @@ def contract_from_ccns_record(record: CcnsContratRecord) -> Contract:
         id=_legacy_contract_uuid(record.IDcontrat),
         person_id=str(_legacy_employee_uuid(record.IDpersonne)),
         contract_type=contract_type,
-        employment_regime=_map_employment_regime(contract_type),
-        time_organization=_map_time_org(contract_type),
-        start_date=_as_date(record.date_debut),
+        employment_regime=map_employment_regime(contract_type),
+        time_organization=map_time_organization(contract_type),
+        start_date=as_date(record.date_debut),
         end_date=end_date,
         weekly_reference_hours=float(record.temps_hebdo) if record.temps_hebdo is not None else None,
         ccns_classification_code=record.classification,

@@ -50,17 +50,18 @@ def test_audit_signale_un_cdd_historique_sans_date_fin_et_poursuit():
             self.calls.append(("contrats", limit))
             return [
                 CcnsContratRecord(1, 101, "2024-01-01", None, 2100.0, 35.0, 10.0, "Ada", "Lovelace", "G3", "CDD"),
-                CcnsContratRecord(2, 102, "2024-02-01", "2024-12-31", 2100.0, 35.0, 10.0, "Grace", "Hopper", "G3", "CDD"),
+                CcnsContratRecord(2, 102, "2024-02-01", "2026-12-31", 2100.0, 35.0, 10.0, "Grace", "Hopper", "G3", "CDD"),
             ]
 
     rows = audit_contracts(data_reader=IncompleteContractsReader())
 
     assert len(rows) == 2
     assert rows[0].IDcontrat == 1
-    assert rows[0].anomalies == ["CONTRAT_A_DUREE_DETERMINEE_SANS_DATE_FIN"]
+    assert "CONTROLE_SALARIAL_NON_EVALUABLE_HISTORICAL_FIXED_TERM_MISSING_END_DATE" in rows[0].anomalies
+    assert "CONTRAT_A_DUREE_DETERMINEE_SANS_DATE_FIN" in rows[0].anomalies
     assert rows[1].IDcontrat == 2
     assert "CONTRAT_A_DUREE_DETERMINEE_SANS_DATE_FIN" not in rows[1].anomalies
-    assert "Classification conventionnelle présente" in rows[1].messages
+    assert any("Rémunération conforme" in message for message in rows[1].messages)
 
 
 def test_mapping_historique_des_regimes_utilise_les_codes_canoniques():
@@ -167,7 +168,7 @@ def test_audit_selection_historique_charge_la_grille_reelle_selon_version():
 
     reader = HistoricalReader()
 
-    rows = audit_contracts(limit=25, data_reader=reader, reference_date=date(2025, 9, 15))
+    rows = audit_contracts(limit=25, data_reader=reader, reference_date=date(2026, 9, 15))
 
-    assert ("lignes", 1) in reader.calls
-    assert "MINIMUM_CCNS_NON_ATTEINT" in rows[0].anomalies
+    assert ("lignes", 2) in reader.calls
+    assert "REMUNERATION_BELOW_APPLICABLE_MINIMUM" not in rows[0].anomalies
