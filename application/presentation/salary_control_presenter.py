@@ -4,10 +4,11 @@ from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal, ROUND_HALF_UP
 from enum import Enum
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 from uuid import UUID
 
-from application.control import ContractSalaryControlConsultationApplicationResult
+if TYPE_CHECKING:
+    from application.control.salary_control_consultation_use_case import ContractSalaryControlConsultationApplicationResult
 from domain.contracts.contract_salary_control_projection import ContractSalaryControlRow, ContractSalaryControlStatus
 from domain.contracts.contract_salary_evaluation import ContractSalaryEvaluationFailureReason, _strict_date
 from domain.convention import ApplicableSalaryMinimumSource
@@ -109,6 +110,8 @@ class ContractSalaryControlPresenter:
         self,
         result: ContractSalaryControlConsultationApplicationResult,
     ) -> ContractSalaryControlViewModel:
+        from application.control.salary_control_consultation_use_case import ContractSalaryControlConsultationApplicationResult
+
         if type(result) is not ContractSalaryControlConsultationApplicationResult:
             raise TypeError("result doit être un ContractSalaryControlConsultationApplicationResult.")
         rows = tuple(_present_row(row) for row in result.rows)

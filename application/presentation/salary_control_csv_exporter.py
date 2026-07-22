@@ -82,7 +82,7 @@ def _row_values(row: ContractSalaryControlRowViewModel) -> tuple[str, ...]:
         row.reference_date.isoformat(),
         str(row.contract_id),
         _optional(row.employee_id),
-        row.status.value,
+        row.status.name,
         _optional(row.classification_code),
         _optional(row.remuneration_amount),
         _optional(row.applicable_minimum_amount),

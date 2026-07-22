@@ -4,8 +4,8 @@ from uuid import UUID
 
 import pytest
 
-from application.presentation import (
-    ContractSalaryControlCsvExporter,
+from application.presentation.salary_control_csv_exporter import ContractSalaryControlCsvExporter
+from application.presentation.salary_control_presenter import (
     ContractSalaryControlPaginationViewModel,
     ContractSalaryControlPresentationStatus,
     ContractSalaryControlRowViewModel,
@@ -92,7 +92,7 @@ def test_export_vide_est_deterministe():
 
 def test_export_preserve_ordre_valeurs_brutes_et_echappement():
     result = ContractSalaryControlCsvExporter().export(_view_model((_row(),)))
-    assert "2026-06-01;11111111-1111-1111-1111-111111111111;__ABSENT__;compliant" in result.content
+    assert "2026-06-01;11111111-1111-1111-1111-111111111111;__ABSENT__;COMPLIANT" in result.content
     assert '"G4; confirmé"' in result.content
     assert '"Texte avec ""guillemets""\net retour"' in result.content
 
