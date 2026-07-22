@@ -11,6 +11,7 @@ from uuid import NAMESPACE_URL, uuid5
 
 from application.bootstrap.contract_salary_control_controller_factory import ContractSalaryControlControllerFactory
 from application.control import ContractSalaryControlControllerRequest
+from application.presentation import ContractSalaryControlRowViewModel, format_euro_amount, format_french_date
 from domain.contracts.contract_salary_control_projection import ContractSalaryControlStatus
 from domain.engine.seniority import check_ccns_seniority_amount
 from domain.convention import (
@@ -19,6 +20,7 @@ from domain.convention import (
     SalaryGridEntry,
     SalaryGridVersion,
     SalaryMinimumPeriodicity,
+    ApplicableSalaryMinimumSource,
     SmicTerritory,
     create_smic_catalog_2026,
 )
@@ -47,6 +49,17 @@ class AuditRow:
     salaire_base: Optional[float]
     anomalies: list[str]
     messages: list[str]
+    reference_date: Optional[date] = None
+    salary_control_status: Optional[ContractSalaryControlStatus] = None
+    salary_control_status_label: Optional[str] = None
+    remuneration_amount: Optional[Decimal] = None
+    remuneration_amount_label: Optional[str] = None
+    applicable_minimum_amount: Optional[Decimal] = None
+    applicable_minimum_amount_label: Optional[str] = None
+    shortfall_amount: Optional[Decimal] = None
+    shortfall_amount_label: Optional[str] = None
+    minimum_source: Optional[ApplicableSalaryMinimumSource] = None
+    minimum_source_label: Optional[str] = None
 
 
 def _grid_is_applicable(grid_record, reference_date):
@@ -234,7 +247,24 @@ def _append_seniority_control(rec, control_date, anomalies, messages):
         anomalies.append(anomaly.code)
 
 
-def _audit_row(rec, anomalies, messages):
+def _audit_row(rec, anomalies, messages, control_row=None):
+    details = {}
+    if control_row is not None:
+        if type(control_row) is not ContractSalaryControlRowViewModel:
+            raise TypeError("control_row doit être un ContractSalaryControlRowViewModel strict.")
+        details = {
+            "reference_date": control_row.reference_date,
+            "salary_control_status": control_row.status,
+            "salary_control_status_label": control_row.status_label,
+            "remuneration_amount": control_row.remuneration_amount,
+            "remuneration_amount_label": control_row.remuneration_amount_label,
+            "applicable_minimum_amount": control_row.applicable_minimum_amount,
+            "applicable_minimum_amount_label": control_row.applicable_minimum_amount_label,
+            "shortfall_amount": control_row.shortfall_amount,
+            "shortfall_amount_label": control_row.shortfall_amount_label,
+            "minimum_source": control_row.minimum_source,
+            "minimum_source_label": control_row.minimum_source_label,
+        }
     return AuditRow(
         IDcontrat=rec.IDcontrat,
         nom_complet=_full_name(rec),
@@ -243,6 +273,42 @@ def _audit_row(rec, anomalies, messages):
         salaire_base=float(rec.salaire_base) if rec.salaire_base is not None else None,
         anomalies=anomalies,
         messages=messages,
+        **details,
+    )
+
+
+def _missing_grid_control_row(rec, control_date):
+    unavailable = "Non disponible"
+    return ContractSalaryControlRowViewModel(
+        id=uuid5(NAMESPACE_URL, "teamworks-ccns:missing-grid:%s" % rec.IDcontrat),
+        contract_id=legacy_contract_uuid(rec.IDcontrat),
+        contract_id_label=str(rec.IDcontrat),
+        employee_id=None,
+        employee_id_label="Non renseigné",
+        reference_date=control_date,
+        reference_date_label=format_french_date(control_date),
+        status=ContractSalaryControlStatus.NOT_EVALUATED,
+        status_label="Non évaluable",
+        classification_code=rec.classification,
+        classification_code_label=rec.classification or "Non renseignée",
+        remuneration_amount=None,
+        remuneration_amount_label=unavailable,
+        applicable_minimum_amount=None,
+        applicable_minimum_amount_label=unavailable,
+        shortfall_amount=Decimal("0.00"),
+        shortfall_amount_label=format_euro_amount(Decimal("0.00")),
+        minimum_source=None,
+        minimum_source_label=unavailable,
+        territory=None,
+        territory_label="Non renseigné",
+        failure_reason=None,
+        failure_reason_label="",
+        failure_message="Grille salariale manquante",
+        failure_message_label="Grille salariale manquante",
+        issue_code=None,
+        issue_code_label="",
+        issue_message=None,
+        issue_message_label="",
     )
 
 
@@ -250,7 +316,7 @@ def _audit_row_without_salary_grid(rec, control_date):
     anomalies = ["CONTRAT_SANS_GRILLE"]
     messages = ["Grille salariale manquante"]
     _append_seniority_control(rec, control_date, anomalies, messages)
-    return _audit_row(rec, anomalies, messages)
+    return _audit_row(rec, anomalies, messages, _missing_grid_control_row(rec, control_date))
 
 
 def _audit_row_from_record(rec, control_row, control_date):
@@ -271,7 +337,7 @@ def _audit_row_from_record(rec, control_row, control_date):
         messages.append("La date de fin est obligatoire pour ce contrat à durée déterminée.")
 
     _append_seniority_control(rec, control_date, anomalies, messages)
-    return _audit_row(rec, anomalies, messages)
+    return _audit_row(rec, anomalies, messages, control_row)
 
 
 class _NoReadReader:

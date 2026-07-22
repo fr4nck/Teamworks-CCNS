@@ -18,6 +18,11 @@ class Track(object):
         self.classification = donnees.get("classification", "")
         self.type_contrat = donnees.get("type_contrat", "")
         self.salaire_base = donnees.get("salaire_base")
+        self.salary_control_status_label = donnees.get("salary_control_status_label", "")
+        self.remuneration_amount_label = donnees.get("remuneration_amount_label", "")
+        self.applicable_minimum_amount_label = donnees.get("applicable_minimum_amount_label", "")
+        self.minimum_source_label = donnees.get("minimum_source_label", "")
+        self.shortfall_amount_label = donnees.get("shortfall_amount_label", "")
         self.anomalies = donnees.get("anomalies", [])
         self.messages = donnees.get("messages", [])
         self.severity_label = donnees.get("severity_label", "ok")
@@ -69,6 +74,11 @@ if OL_Base:
                 OL_Base.ColumnDefn(u"Classification", "left", 90, "classification"),
                 OL_Base.ColumnDefn(u"Type", "left", 90, "type_contrat"),
                 OL_Base.ColumnDefn(u"Salaire base", "right", 90, fmt_salaire),
+                OL_Base.ColumnDefn(u"Statut salarial", "left", 110, "salary_control_status_label"),
+                OL_Base.ColumnDefn(u"Rémunération contrôlée", "right", 145, "remuneration_amount_label"),
+                OL_Base.ColumnDefn(u"Minimum applicable", "right", 130, "applicable_minimum_amount_label"),
+                OL_Base.ColumnDefn(u"Source", "left", 100, "minimum_source_label"),
+                OL_Base.ColumnDefn(u"Écart", "right", 100, "shortfall_amount_label"),
                 OL_Base.ColumnDefn(u"Nb anomalies", "center", 90, "GetNbAnomalies"),
                 OL_Base.ColumnDefn(u"Anomalies", "left", 220, "GetListeAnomalies"),
                 OL_Base.ColumnDefn(u"Messages", "left", 360, "GetMessages"),
@@ -105,9 +115,14 @@ else:
             self.InsertColumn(3, "Classification", width=90)
             self.InsertColumn(4, "Type", width=90)
             self.InsertColumn(5, "Salaire base", width=90)
-            self.InsertColumn(6, "Nb anomalies", width=90)
-            self.InsertColumn(7, "Anomalies", width=220)
-            self.InsertColumn(8, "Messages", width=360)
+            self.InsertColumn(6, "Statut salarial", width=110)
+            self.InsertColumn(7, "Rémunération contrôlée", width=145)
+            self.InsertColumn(8, "Minimum applicable", width=130)
+            self.InsertColumn(9, "Source", width=100)
+            self.InsertColumn(10, "Écart", width=100)
+            self.InsertColumn(11, "Nb anomalies", width=90)
+            self.InsertColumn(12, "Anomalies", width=220)
+            self.InsertColumn(13, "Messages", width=360)
             self.donnees = donnees or []
             self.MAJ()
 
@@ -137,8 +152,13 @@ else:
                 self.SetItem(idx, 4, item.get("type_contrat", "") or "")
                 salaire = item.get("salaire_base")
                 self.SetItem(idx, 5, "" if salaire is None else "%.2f" % float(salaire))
+                self.SetItem(idx, 6, item.get("salary_control_status_label", ""))
+                self.SetItem(idx, 7, item.get("remuneration_amount_label", ""))
+                self.SetItem(idx, 8, item.get("applicable_minimum_amount_label", ""))
+                self.SetItem(idx, 9, item.get("minimum_source_label", ""))
+                self.SetItem(idx, 10, item.get("shortfall_amount_label", ""))
                 anomalies = item.get("anomalies", [])
-                self.SetItem(idx, 6, str(len(anomalies)))
-                self.SetItem(idx, 7, ", ".join(anomalies))
-                self.SetItem(idx, 8, " | ".join(item.get("messages", [])))
+                self.SetItem(idx, 11, str(len(anomalies)))
+                self.SetItem(idx, 12, ", ".join(anomalies))
+                self.SetItem(idx, 13, " | ".join(item.get("messages", [])))
                 self._apply_row_style(idx, item)
