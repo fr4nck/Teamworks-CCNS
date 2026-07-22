@@ -50,6 +50,10 @@ Permettre d’ouvrir depuis l’audit CCNS une fiche détaillée pour une ligne 
 
 ## TW-053 — Ajouter la synthèse salariale d’un salarié
 
+**Statut : Réalisée.**
+
+**PR : #100.**
+
 ### Objectif
 
 Regrouper les contrôles salariaux de tous les contrats d’un salarié dans une synthèse unique.
@@ -243,7 +247,7 @@ Finaliser le périmètre contrôle salarial sous forme d’un jalon utilisable p
 | TW | Intitulé | Statut | PR |
 |---|---|---|---|
 | TW-052 | Fiche de détail d’un contrôle salarial | Réalisée | #99 |
-| TW-053 | Synthèse salariale d’un salarié | Planifiée | — |
+| TW-053 | Synthèse salariale d’un salarié | Réalisée | #100 |
 | TW-054 | Indicateurs salariaux du tableau de bord | Planifiée | — |
 | TW-055 | Historique des contrôles salariaux | Planifiée | — |
 | TW-056 | Comparaison de contrôles salariaux | Planifiée | — |

@@ -6,6 +6,7 @@ from __future__ import annotations
 import wx
 
 from teamworks.CcnsCore.audit_contracts_ccns import audit_contracts
+from teamworks.CcnsCore.audit_employee_salary_summary import employee_salary_summary_from_audit_rows
 from teamworks.CcnsCore.audit_filters import MINIMUM_SOURCE_FILTERS, SALARY_STATUS_FILTERS, filter_audit_rows
 from teamworks.CcnsCore.audit_salary_details import audit_row_to_dict, summarize_salary_control_rows, write_audit_csv
 from teamworks.CcnsCore.audit_sorting import (
@@ -16,6 +17,7 @@ from teamworks.CcnsCore.audit_sorting import (
 )
 from teamworks.Ol.OL_CCNS_audit import ListView
 
+from teamworks.Dlg.DLG_CCNS_employee_salary_summary import Dialog as EmployeeSalarySummaryDialog
 from teamworks.Dlg.DLG_CCNS_salary_control_detail import Dialog as SalaryControlDetailDialog
 
 try:
@@ -82,11 +84,13 @@ class Dialog(wx.Dialog):
         self.button_reset_filters = wx.Button(self, -1, "Reinitialiser filtres")
         self.button_open_contract = wx.Button(self, -1, "Ouvrir le contrat")
         self.button_salary_detail = wx.Button(self, -1, "Détail salarial")
+        self.button_employee_summary = wx.Button(self, -1, "Synthèse salarié")
         self.button_export = wx.Button(self, -1, "Exporter CSV")
         self.button_close = wx.Button(self, wx.ID_CANCEL, "Fermer")
 
         self.button_open_contract.Enable(False)
         self.button_salary_detail.Enable(False)
+        self.button_employee_summary.Enable(False)
         self.button_export.Enable(False)
 
         self.ctrl_resume = wx.StaticText(self, -1, "Aucun audit lance.")
@@ -102,6 +106,7 @@ class Dialog(wx.Dialog):
         self.button_reset_filters.Bind(wx.EVT_BUTTON, self.OnResetFilters)
         self.button_open_contract.Bind(wx.EVT_BUTTON, self.OnOpenContract)
         self.button_salary_detail.Bind(wx.EVT_BUTTON, self.OnOpenSalaryDetail)
+        self.button_employee_summary.Bind(wx.EVT_BUTTON, self.OnOpenEmployeeSalarySummary)
         self.button_export.Bind(wx.EVT_BUTTON, self.OnExport)
 
         self.listview.Bind(wx.EVT_LIST_ITEM_SELECTED, self.OnSelectionChanged)
@@ -122,6 +127,7 @@ class Dialog(wx.Dialog):
         sizer_top.Add(self.button_launch, 0, wx.RIGHT, 8)
         sizer_top.Add(self.button_open_contract, 0, wx.RIGHT, 8)
         sizer_top.Add(self.button_salary_detail, 0, wx.RIGHT, 8)
+        sizer_top.Add(self.button_employee_summary, 0, wx.RIGHT, 8)
         sizer_top.Add(self.button_export, 0, wx.RIGHT, 8)
         sizer_top.Add(self.button_close, 0, 0, 0)
         sizer_base.Add(sizer_top, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
@@ -210,6 +216,8 @@ class Dialog(wx.Dialog):
         row = self._get_selected_row()
         self.button_open_contract.Enable(row is not None)
         self.button_salary_detail.Enable(row is not None and row.get("salary_control_row") is not None)
+        salary_row = row.get("salary_control_row") if row is not None else None
+        self.button_employee_summary.Enable(salary_row is not None and salary_row.employee_id is not None)
         if event is not None:
             event.Skip()
 
@@ -266,6 +274,48 @@ class Dialog(wx.Dialog):
         self.filtered_rows = list(self.rows)
         self._refresh_list()
 
+    def OnOpenEmployeeSalarySummary(self, event):
+        row = self._get_selected_row()
+        if row is None:
+            return
+        salary_row = row.get("salary_control_row")
+        if salary_row is None:
+            wx.MessageBox(
+                "Aucune ligne salariale n'est disponible pour construire la synthèse.",
+                "Synthèse salarié indisponible",
+                wx.OK | wx.ICON_INFORMATION,
+                self,
+            )
+            return
+        if salary_row.employee_id is None:
+            wx.MessageBox(
+                "Aucun identifiant salarié stable n'est disponible pour cette ligne.",
+                "Synthèse salarié indisponible",
+                wx.OK | wx.ICON_INFORMATION,
+                self,
+            )
+            return
+        try:
+            summary = employee_salary_summary_from_audit_rows(self.rows, salary_row.employee_id)
+        except Exception as exc:
+            wx.MessageBox(
+                "Impossible de construire la synthèse salariale depuis l'audit chargé.\n\n%s" % exc,
+                "Erreur",
+                wx.OK | wx.ICON_ERROR,
+                self,
+            )
+            return
+        if summary.empty:
+            wx.MessageBox(
+                "Aucune ligne salariale du périmètre chargé ne correspond à ce salarié.",
+                "Synthèse salarié vide",
+                wx.OK | wx.ICON_INFORMATION,
+                self,
+            )
+            return
+        dlg = EmployeeSalarySummaryDialog(self, summary)
+        dlg.ShowModal()
+        dlg.Destroy()
 
     def OnOpenSalaryDetail(self, event):
         row = self._get_selected_row()
