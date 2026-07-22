@@ -11,6 +11,13 @@ from domain.contracts.contract_salary_control import (
     ContractSalaryControlResult,
     ContractSalaryControlService,
 )
+from domain.contracts.contract_salary_control_query import (
+    ContractSalaryControlPage,
+    ContractSalaryControlQuery,
+    ContractSalaryControlQueryService,
+    ContractSalaryControlSortField,
+    SortDirection,
+)
 from domain.contracts.contract_salary_control_projection import (
     ContractSalaryControlProjection,
     ContractSalaryControlProjectionService,
@@ -33,6 +40,10 @@ __all__ = [
     "ContractSalaryBatchAuditService",
     "ContractSalaryBatchEvaluationResult",
     "ContractSalaryBatchEvaluationService",
+    "ContractSalaryControlPage",
+    "ContractSalaryControlQuery",
+    "ContractSalaryControlQueryService",
+    "ContractSalaryControlSortField",
     "ContractSalaryControlProjection",
     "ContractSalaryControlResult",
     "ContractSalaryControlService",
@@ -45,5 +56,6 @@ __all__ = [
     "ContractSalaryEvaluationService",
     "ContractType",
     "EmploymentRegime",
+    "SortDirection",
     "TimeOrganization",
 ]
