@@ -140,6 +140,21 @@ def test_lignes_non_evaluables_warning():
     assert vm.rows[0].remuneration_amount_label == "Non disponible"
 
 
+def test_libelle_contrat_historique_duree_determinee_sans_date_fin():
+    historical = replace(
+        row(ContractSalaryControlStatus.NOT_EVALUATED),
+        failure_reason=ContractSalaryEvaluationFailureReason.HISTORICAL_FIXED_TERM_MISSING_END_DATE,
+        failure_message="Le contrat historique à durée déterminée ne possède pas de date de fin.",
+    )
+
+    vm = present(app((historical,)))
+
+    assert vm.presentation_status is ContractSalaryControlPresentationStatus.WARNING
+    assert vm.rows[0].failure_reason is ContractSalaryEvaluationFailureReason.HISTORICAL_FIXED_TERM_MISSING_END_DATE
+    assert vm.rows[0].failure_reason_label == "Contrat historique à durée déterminée sans date de fin"
+    assert vm.rows[0].failure_message_label == "Le contrat historique à durée déterminée ne possède pas de date de fin."
+
+
 def test_melange_des_trois_statuts():
     vm = present(app((row(), row(ContractSalaryControlStatus.NON_COMPLIANT, shortfall=Decimal("5.00")), row(ContractSalaryControlStatus.NOT_EVALUATED))))
     assert vm.global_compliant_count == 1
