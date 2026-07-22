@@ -153,8 +153,12 @@ def _select_salary_grid_record(grid_records, reference_date, grid_versions=None)
 
 
 def _line_periodicity(line_record):
+    minimum_type = line_record.minimum_type
+    if isinstance(minimum_type, SalaryMinimumPeriodicity):
+        return minimum_type
+    normalized = str(minimum_type or SalaryMinimumPeriodicity.MONTHLY.value).strip().lower()
     try:
-        return SalaryMinimumPeriodicity(line_record.minimum_type or SalaryMinimumPeriodicity.MONTHLY.value)
+        return SalaryMinimumPeriodicity(normalized)
     except ValueError:
         return SalaryMinimumPeriodicity.MONTHLY
 
@@ -189,7 +193,7 @@ def _build_salary_grid_catalog(reader, grid_records):
                 id=uuid5(NAMESPACE_URL, "teamworks-ccns:salary-grid:%s" % grid_record.IDtw_salary_grid),
             )
         )
-    return SalaryGridCatalog(tuple(versions))
+    return SalaryGridCatalog(tuple(versions)) if versions else None
 
 
 def _salary_control_message(control_row):
@@ -213,6 +217,42 @@ def _full_name(rec):
     return ((rec.prenom or "") + " " + (rec.nom or "")).strip() or ("Contrat %d" % rec.IDcontrat)
 
 
+def _append_seniority_control(rec, control_date, anomalies, messages):
+    if not rec.classification or not rec.classification.upper().startswith("G"):
+        return
+    provider = TeamworksContractSalaryControlProvider(data_reader=_NoReadReader(), records=(rec,))
+    contract = next(iter(provider.list_for_salary_control()))
+    contract = replace(contract, id=str(contract.id), person_id=str(contract.person_id))
+    result, anomaly = check_ccns_seniority_amount(
+        contract=contract,
+        reference_date=control_date,
+        smc_group_3_amount=1997.87,
+        actual_seniority_amount=float(rec.prime_anciennete or 0.0),
+    )
+    messages.append(result.readable_message)
+    if anomaly:
+        anomalies.append(anomaly.code)
+
+
+def _audit_row(rec, anomalies, messages):
+    return AuditRow(
+        IDcontrat=rec.IDcontrat,
+        nom_complet=_full_name(rec),
+        classification=rec.classification,
+        type_contrat=rec.type_contrat,
+        salaire_base=float(rec.salaire_base) if rec.salaire_base is not None else None,
+        anomalies=anomalies,
+        messages=messages,
+    )
+
+
+def _audit_row_without_salary_grid(rec, control_date):
+    anomalies = ["CONTRAT_SANS_GRILLE"]
+    messages = ["Grille salariale manquante"]
+    _append_seniority_control(rec, control_date, anomalies, messages)
+    return _audit_row(rec, anomalies, messages)
+
+
 def _audit_row_from_record(rec, control_row, control_date):
     anomalies = []
     messages = []
@@ -230,29 +270,8 @@ def _audit_row_from_record(rec, control_row, control_date):
             anomalies.append(HISTORICAL_FIXED_TERM_WITHOUT_END_DATE_REASON)
         messages.append("La date de fin est obligatoire pour ce contrat à durée déterminée.")
 
-    if rec.classification and rec.classification.upper().startswith("G"):
-        provider = TeamworksContractSalaryControlProvider(data_reader=_NoReadReader(), records=(rec,))
-        contract = next(iter(provider.list_for_salary_control()))
-        contract = replace(contract, id=str(contract.id), person_id=str(contract.person_id))
-        result, anomaly = check_ccns_seniority_amount(
-            contract=contract,
-            reference_date=control_date,
-            smc_group_3_amount=1997.87,
-            actual_seniority_amount=float(rec.prime_anciennete or 0.0),
-        )
-        messages.append(result.readable_message)
-        if anomaly:
-            anomalies.append(anomaly.code)
-
-    return AuditRow(
-        IDcontrat=rec.IDcontrat,
-        nom_complet=_full_name(rec),
-        classification=rec.classification,
-        type_contrat=rec.type_contrat,
-        salaire_base=float(rec.salaire_base) if rec.salaire_base is not None else None,
-        anomalies=anomalies,
-        messages=messages,
-    )
+    _append_seniority_control(rec, control_date, anomalies, messages)
+    return _audit_row(rec, anomalies, messages)
 
 
 class _NoReadReader:
@@ -275,6 +294,8 @@ def audit_contracts(limit=None, data_reader=None, reference_date=None):
         catalog_grid_records = [selected_grid] if selected_grid is not None else []
         with DiagnosticPerformance.mesurer("transformation_python", "audit_contracts_ccns.construction_catalogue_grilles"):
             salary_grid_catalog = _build_salary_grid_catalog(reader, catalog_grid_records)
+        if salary_grid_catalog is None:
+            return [_audit_row_without_salary_grid(rec, control_date) for rec in records]
 
         provider = TeamworksContractSalaryControlProvider(reader, records=tuple(records))
         controller = ContractSalaryControlControllerFactory().create_from_provider(
