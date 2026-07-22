@@ -66,6 +66,7 @@ class CcnsDataReader:
         req = """
     SELECT
         contrats.IDcontrat,
+        contrats.IDpersonne,
         contrats.date_debut,
         contrats.date_fin,
         contrats.salaire_base,

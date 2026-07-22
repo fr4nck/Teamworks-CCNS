@@ -16,7 +16,7 @@ class FakeReader:
 
     def lire_contrats(self, limit=None):
         self.calls.append(("contrats", limit))
-        return [CcnsContratRecord(1, "2024-01-01", None, 2100.0, 35.0, 10.0, "Ada", "Lovelace", "G3", "CDI")]
+        return [CcnsContratRecord(1, 101, "2024-01-01", None, 2100.0, 35.0, 10.0, "Ada", "Lovelace", "G3", "CDI")]
 
     def lire_grilles(self, limit=None):
         self.calls.append(("grilles", limit))
@@ -49,8 +49,8 @@ def test_audit_signale_un_cdd_historique_sans_date_fin_et_poursuit():
         def lire_contrats(self, limit=None):
             self.calls.append(("contrats", limit))
             return [
-                CcnsContratRecord(1, "2024-01-01", None, 2100.0, 35.0, 10.0, "Ada", "Lovelace", "G3", "CDD"),
-                CcnsContratRecord(2, "2024-02-01", "2024-12-31", 2100.0, 35.0, 10.0, "Grace", "Hopper", "G3", "CDD"),
+                CcnsContratRecord(1, 101, "2024-01-01", None, 2100.0, 35.0, 10.0, "Ada", "Lovelace", "G3", "CDD"),
+                CcnsContratRecord(2, 102, "2024-02-01", "2024-12-31", 2100.0, 35.0, 10.0, "Grace", "Hopper", "G3", "CDD"),
             ]
 
     rows = audit_contracts(data_reader=IncompleteContractsReader())
