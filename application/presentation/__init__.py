@@ -2,6 +2,10 @@ from application.presentation.salary_control_csv_exporter import (
     ContractSalaryControlCsvExport,
     ContractSalaryControlCsvExporter,
 )
+from application.presentation.salary_control_json_exporter import (
+    ContractSalaryControlJsonExport,
+    ContractSalaryControlJsonExporter,
+)
 from application.presentation.salary_control_presenter import (
     ContractSalaryControlEmptyStateViewModel,
     ContractSalaryControlPaginationViewModel,
@@ -17,6 +21,8 @@ __all__ = [
     "ContractSalaryControlCsvExport",
     "ContractSalaryControlCsvExporter",
     "ContractSalaryControlEmptyStateViewModel",
+    "ContractSalaryControlJsonExport",
+    "ContractSalaryControlJsonExporter",
     "ContractSalaryControlPaginationViewModel",
     "ContractSalaryControlPresentationStatus",
     "ContractSalaryControlPresenter",
