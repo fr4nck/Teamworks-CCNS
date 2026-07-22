@@ -26,7 +26,7 @@ Cette roadmap est une **reconstruction validée à partir de l’état réel du 
 
 **Statut : Réalisée.**
 
-**PR : à renseigner après ouverture.**
+**PR : #99.**
 
 ### Objectif
 
@@ -242,7 +242,7 @@ Finaliser le périmètre contrôle salarial sous forme d’un jalon utilisable p
 
 | TW | Intitulé | Statut | PR |
 |---|---|---|---|
-| TW-052 | Fiche de détail d’un contrôle salarial | Planifiée | — |
+| TW-052 | Fiche de détail d’un contrôle salarial | Réalisée | #99 |
 | TW-053 | Synthèse salariale d’un salarié | Planifiée | — |
 | TW-054 | Indicateurs salariaux du tableau de bord | Planifiée | — |
 | TW-055 | Historique des contrôles salariaux | Planifiée | — |
