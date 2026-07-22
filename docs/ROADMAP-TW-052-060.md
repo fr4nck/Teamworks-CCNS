@@ -77,6 +77,10 @@ Regrouper les contrôles salariaux de tous les contrats d’un salarié dans une
 
 ## TW-054 — Ajouter les indicateurs salariaux au tableau de bord CCNS
 
+**Statut : Réalisée.**
+
+**PR : À renseigner après ouverture.**
+
 ### Objectif
 
 Afficher sur le tableau de bord CCNS les principaux indicateurs du contrôle salarial.
