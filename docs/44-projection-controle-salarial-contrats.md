@@ -24,7 +24,7 @@ Les montants sont des `Decimal` stricts quantifiés à deux décimales. Les iden
 
 Le service `ContractSalaryControlProjectionService` préserve exactement l'ordre de `ContractSalaryBatchAuditResult.evaluations` et produit exactement une ligne par contrat. Pour chaque évaluation réussie, il récupère le résultat d'audit correspondant via les méthodes publiques du résultat d'audit en lot. Pour chaque refus métier, il vérifie qu'aucun audit salarial n'existe.
 
-La projection reprend les montants, la source, le territoire, l'écart et les anomalies existants. Elle ne recalcule pas le minimum, ne réévalue pas les contrats et ne recrée pas d'anomalies.
+La projection reprend les montants, la source, le territoire, l'écart et les anomalies existants. Le domaine d'audit salarial impose actuellement exactement une anomalie pour un résultat non conforme ; le service vérifie cet invariant avant d'exposer `issue_code` et `issue_message`. Elle ne recalcule pas le minimum, ne réévalue pas les contrats et ne recrée pas d'anomalies.
 
 ## Limites volontaires
 

@@ -104,6 +104,7 @@ def test_contrat_non_conforme_reprise_anomalie_shortfall_et_aucun_echec():
     result = audit([c])
     row = project(result).rows[0]
     issue = result.issues[0]
+    assert result.audit_results[0].issue_count() == 1
     assert row.status is ContractSalaryControlStatus.NON_COMPLIANT
     assert row.shortfall_amount == result.audit_results[0].shortfall_amount() == Decimal("0.01")
     assert row.issue_code == issue.code
