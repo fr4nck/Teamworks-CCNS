@@ -35,7 +35,8 @@ def test_build_person_ccns_summary_utilise_le_reader_filtre_par_personne():
     assert reader.closed is False
     assert summary["IDpersonne"] == 42
     assert summary["nb_contracts"] == 2
-    assert summary["nb_warning"] == 1
+    assert summary["nb_blocking"] == 1
+    assert summary["nb_warning"] == 0
     assert summary["nb_ok"] == 1
-    assert summary["global_status"] == "A_REVOIR"
+    assert summary["global_status"] == "BLOQUANT"
     assert [row["IDcontrat"] for row in summary["rows"]] == [2, 1]

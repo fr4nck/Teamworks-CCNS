@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from application.control import ConsultContractSalaryControlUseCase, ContractSalaryControlController
+from application.control import ConsultContractSalaryControlUseCase, ContractSalaryControlController, ContractSalaryControlContractProvider
 from application.presentation import ContractSalaryControlPresenter
 from domain.contracts import (
     ContractSalaryBatchAuditService,
@@ -35,10 +35,41 @@ class ContractSalaryControlControllerFactory:
         salary_grid_catalog: SalaryGridCatalog,
         smic_catalog: SmicCatalog,
     ) -> ContractSalaryControlController:
-        """Construit un contrôleur prêt à exécuter une demande de contrôle salarial."""
+        """Construit un contrôleur depuis le dépôt historique de contrats."""
 
         if type(contracts_repository) is not ContractRepository:
             raise TypeError("contracts_repository doit être un ContractRepository strict.")
+        contract_provider = ContractRepositorySalaryControlProvider(contracts_repository)
+        return self._create_with_provider(
+            contract_provider=contract_provider,
+            salary_grid_catalog=salary_grid_catalog,
+            smic_catalog=smic_catalog,
+        )
+
+    def create_from_provider(
+        self,
+        *,
+        contract_provider: ContractSalaryControlContractProvider,
+        salary_grid_catalog: SalaryGridCatalog,
+        smic_catalog: SmicCatalog,
+    ) -> ContractSalaryControlController:
+        """Construit un contrôleur depuis un provider déjà assemblé."""
+
+        return self._create_with_provider(
+            contract_provider=contract_provider,
+            salary_grid_catalog=salary_grid_catalog,
+            smic_catalog=smic_catalog,
+        )
+
+    def _create_with_provider(
+        self,
+        *,
+        contract_provider: ContractSalaryControlContractProvider,
+        salary_grid_catalog: SalaryGridCatalog,
+        smic_catalog: SmicCatalog,
+    ) -> ContractSalaryControlController:
+        if not hasattr(contract_provider, "list_for_salary_control"):
+            raise TypeError("contract_provider doit exposer list_for_salary_control(...).")
         if type(salary_grid_catalog) is not SalaryGridCatalog:
             raise TypeError("salary_grid_catalog doit être un SalaryGridCatalog strict.")
         if type(smic_catalog) is not SmicCatalog:
@@ -73,7 +104,6 @@ class ContractSalaryControlControllerFactory:
             contract_salary_control_service,
             contract_salary_control_query_service,
         )
-        contract_provider = ContractRepositorySalaryControlProvider(contracts_repository)
         use_case = ConsultContractSalaryControlUseCase(contract_provider, consultation_service)
         presenter = ContractSalaryControlPresenter()
         return ContractSalaryControlController(use_case, presenter)
