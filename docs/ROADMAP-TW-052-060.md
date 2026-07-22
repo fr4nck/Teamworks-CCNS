@@ -129,6 +129,10 @@ Conserver une trace datée des contrôles exécutés afin de comparer les résul
 
 ## TW-056 — Ajouter la comparaison entre deux contrôles salariaux
 
+**Statut : Réalisée.**
+
+**PR : #103.**
+
 ### Objectif
 
 Comparer deux snapshots afin d’identifier les améliorations, dégradations et changements de statut.
@@ -258,7 +262,7 @@ Finaliser le périmètre contrôle salarial sous forme d’un jalon utilisable p
 | TW-053 | Synthèse salariale d’un salarié | Réalisée | #100 |
 | TW-054 | Indicateurs salariaux du tableau de bord | Réalisée | #101 |
 | TW-055 | Historique des contrôles salariaux | Réalisée | #102 |
-| TW-056 | Comparaison de contrôles salariaux | Planifiée | — |
+| TW-056 | Comparaison de contrôles salariaux | Réalisée | #103 |
 | TW-057 | Suivi des anomalies salariales | Planifiée | — |
 | TW-058 | Alertes de contrôle salarial | Planifiée | — |
 | TW-059 | Export consolidé du suivi salarial | Planifiée | — |
