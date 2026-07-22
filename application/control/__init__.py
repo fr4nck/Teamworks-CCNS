@@ -4,10 +4,22 @@ from application.control.salary_control_consultation_use_case import (
     ContractSalaryControlConsultationApplicationResult,
     ContractSalaryControlContractProvider,
 )
+from application.control.salary_control_controller import (
+    ContractSalaryControlController,
+    ContractSalaryControlControllerError,
+    ContractSalaryControlControllerErrorCode,
+    ContractSalaryControlControllerRequest,
+    ContractSalaryControlControllerResult,
+)
 
 __all__ = [
     "ConsultContractSalaryControlQuery",
     "ConsultContractSalaryControlUseCase",
     "ContractSalaryControlConsultationApplicationResult",
     "ContractSalaryControlContractProvider",
+    "ContractSalaryControlController",
+    "ContractSalaryControlControllerError",
+    "ContractSalaryControlControllerErrorCode",
+    "ContractSalaryControlControllerRequest",
+    "ContractSalaryControlControllerResult",
 ]
