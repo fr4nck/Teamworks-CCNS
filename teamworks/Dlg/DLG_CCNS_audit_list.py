@@ -6,9 +6,14 @@ from __future__ import annotations
 import wx
 
 from teamworks.CcnsCore.audit_contracts_ccns import audit_contracts
-from teamworks.CcnsCore.audit_filters import filter_audit_rows
+from teamworks.CcnsCore.audit_filters import MINIMUM_SOURCE_FILTERS, SALARY_STATUS_FILTERS, filter_audit_rows
 from teamworks.CcnsCore.audit_salary_details import audit_row_to_dict, summarize_salary_control_rows, write_audit_csv
-from teamworks.CcnsCore.audit_sorting import compute_row_severity, sort_audit_rows_by_person_and_severity
+from teamworks.CcnsCore.audit_sorting import (
+    SALARY_SORT_FIELDS,
+    compute_row_severity,
+    sort_audit_rows_by_person_and_severity,
+    sort_audit_rows_by_salary,
+)
 from teamworks.Ol.OL_CCNS_audit import ListView
 
 try:
@@ -56,6 +61,19 @@ class Dialog(wx.Dialog):
         self.ctrl_min_salary = wx.TextCtrl(self, -1, "")
         self.label_max_salary = wx.StaticText(self, -1, "Salaire max :")
         self.ctrl_max_salary = wx.TextCtrl(self, -1, "")
+
+        self.label_salary_status = wx.StaticText(self, -1, "Statut salarial :")
+        self.ctrl_salary_status = wx.ComboBox(self, -1, choices=["Tous"] + list(SALARY_STATUS_FILTERS), style=wx.CB_READONLY)
+        self.ctrl_salary_status.SetSelection(0)
+        self.label_minimum_source = wx.StaticText(self, -1, "Source :")
+        self.ctrl_minimum_source = wx.ComboBox(self, -1, choices=["Toutes"] + list(MINIMUM_SOURCE_FILTERS), style=wx.CB_READONLY)
+        self.ctrl_minimum_source.SetSelection(0)
+        self.checkbox_positive_shortfall = wx.CheckBox(self, -1, "Écart positif")
+        self.label_salary_sort = wx.StaticText(self, -1, "Trier par :")
+        self.ctrl_salary_sort = wx.ComboBox(self, -1, choices=["Tri historique"] + list(SALARY_SORT_FIELDS), style=wx.CB_READONLY)
+        self.ctrl_salary_sort.SetSelection(0)
+        self.ctrl_sort_direction = wx.ComboBox(self, -1, choices=["Croissant", "Décroissant"], style=wx.CB_READONLY)
+        self.ctrl_sort_direction.SetSelection(0)
 
         self.button_launch = wx.Button(self, -1, "Lancer l'audit")
         self.button_apply_filters = wx.Button(self, -1, "Appliquer filtres")
@@ -116,6 +134,17 @@ class Dialog(wx.Dialog):
         sizer_filters.Add(self.button_reset_filters, 0, 0, 0)
         sizer_base.Add(sizer_filters, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
 
+        sizer_salary_filters = wx.BoxSizer(wx.HORIZONTAL)
+        sizer_salary_filters.Add(self.label_salary_status, 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 4)
+        sizer_salary_filters.Add(self.ctrl_salary_status, 0, wx.RIGHT, 10)
+        sizer_salary_filters.Add(self.label_minimum_source, 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 4)
+        sizer_salary_filters.Add(self.ctrl_minimum_source, 0, wx.RIGHT, 10)
+        sizer_salary_filters.Add(self.checkbox_positive_shortfall, 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 10)
+        sizer_salary_filters.Add(self.label_salary_sort, 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 4)
+        sizer_salary_filters.Add(self.ctrl_salary_sort, 0, wx.RIGHT, 10)
+        sizer_salary_filters.Add(self.ctrl_sort_direction, 0, 0, 0)
+        sizer_base.Add(sizer_salary_filters, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
+
         sizer_base.Add(self.ctrl_resume, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, 10)
         sizer_base.Add(self.legend, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, 10)
         sizer_base.Add(self.listview, 1, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, 10)
@@ -128,6 +157,13 @@ class Dialog(wx.Dialog):
             severity_label, severity_rank = compute_row_severity(row)
             row["severity_label"] = severity_label
             row["severity_rank"] = severity_rank
+        sort_label = self.ctrl_salary_sort.GetValue()
+        if sort_label in SALARY_SORT_FIELDS:
+            return sort_audit_rows_by_salary(
+                rows,
+                SALARY_SORT_FIELDS[sort_label],
+                descending=self.ctrl_sort_direction.GetValue() == "Décroissant",
+            )
         return sort_audit_rows_by_person_and_severity(rows)
 
     def _refresh_list(self):
@@ -203,6 +239,9 @@ class Dialog(wx.Dialog):
             contract_type_filter=self.ctrl_type.GetValue(),
             min_salary=self._read_float(self.ctrl_min_salary),
             max_salary=self._read_float(self.ctrl_max_salary),
+            salary_control_status=SALARY_STATUS_FILTERS.get(self.ctrl_salary_status.GetValue()),
+            minimum_source=MINIMUM_SOURCE_FILTERS.get(self.ctrl_minimum_source.GetValue()),
+            positive_shortfall_only=self.checkbox_positive_shortfall.GetValue(),
         )
         self._refresh_list()
 
@@ -212,6 +251,11 @@ class Dialog(wx.Dialog):
         self.ctrl_type.SetSelection(0)
         self.ctrl_min_salary.SetValue("")
         self.ctrl_max_salary.SetValue("")
+        self.ctrl_salary_status.SetSelection(0)
+        self.ctrl_minimum_source.SetSelection(0)
+        self.checkbox_positive_shortfall.SetValue(False)
+        self.ctrl_salary_sort.SetSelection(0)
+        self.ctrl_sort_direction.SetSelection(0)
         self.filtered_rows = list(self.rows)
         self._refresh_list()
 
