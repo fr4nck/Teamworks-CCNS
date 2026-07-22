@@ -24,6 +24,10 @@ Cette roadmap est une **reconstruction validée à partir de l’état réel du 
 
 ## TW-052 — Ajouter la fiche de détail d’un contrôle salarial
 
+**Statut : Réalisée.**
+
+**PR : à renseigner après ouverture.**
+
 ### Objectif
 
 Permettre d’ouvrir depuis l’audit CCNS une fiche détaillée pour une ligne de contrat, sans recalculer le contrôle salarial.

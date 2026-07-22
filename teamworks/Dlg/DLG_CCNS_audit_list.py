@@ -16,6 +16,8 @@ from teamworks.CcnsCore.audit_sorting import (
 )
 from teamworks.Ol.OL_CCNS_audit import ListView
 
+from teamworks.Dlg.DLG_CCNS_salary_control_detail import Dialog as SalaryControlDetailDialog
+
 try:
     from Ctrl import CTRL_Page_contrats
 except Exception:
@@ -79,10 +81,12 @@ class Dialog(wx.Dialog):
         self.button_apply_filters = wx.Button(self, -1, "Appliquer filtres")
         self.button_reset_filters = wx.Button(self, -1, "Reinitialiser filtres")
         self.button_open_contract = wx.Button(self, -1, "Ouvrir le contrat")
+        self.button_salary_detail = wx.Button(self, -1, "Détail salarial")
         self.button_export = wx.Button(self, -1, "Exporter CSV")
         self.button_close = wx.Button(self, wx.ID_CANCEL, "Fermer")
 
         self.button_open_contract.Enable(False)
+        self.button_salary_detail.Enable(False)
         self.button_export.Enable(False)
 
         self.ctrl_resume = wx.StaticText(self, -1, "Aucun audit lance.")
@@ -97,11 +101,12 @@ class Dialog(wx.Dialog):
         self.button_apply_filters.Bind(wx.EVT_BUTTON, self.OnApplyFilters)
         self.button_reset_filters.Bind(wx.EVT_BUTTON, self.OnResetFilters)
         self.button_open_contract.Bind(wx.EVT_BUTTON, self.OnOpenContract)
+        self.button_salary_detail.Bind(wx.EVT_BUTTON, self.OnOpenSalaryDetail)
         self.button_export.Bind(wx.EVT_BUTTON, self.OnExport)
 
         self.listview.Bind(wx.EVT_LIST_ITEM_SELECTED, self.OnSelectionChanged)
         self.listview.Bind(wx.EVT_LIST_ITEM_DESELECTED, self.OnSelectionChanged)
-        self.listview.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.OnOpenContract)
+        self.listview.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.OnOpenSalaryDetail)
 
         self.__do_layout()
         self.SetSize((1400, 800))
@@ -116,6 +121,7 @@ class Dialog(wx.Dialog):
         sizer_top.Add(self.ctrl_limit, 0, wx.RIGHT, 12)
         sizer_top.Add(self.button_launch, 0, wx.RIGHT, 8)
         sizer_top.Add(self.button_open_contract, 0, wx.RIGHT, 8)
+        sizer_top.Add(self.button_salary_detail, 0, wx.RIGHT, 8)
         sizer_top.Add(self.button_export, 0, wx.RIGHT, 8)
         sizer_top.Add(self.button_close, 0, 0, 0)
         sizer_base.Add(sizer_top, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
@@ -203,6 +209,7 @@ class Dialog(wx.Dialog):
     def OnSelectionChanged(self, event):
         row = self._get_selected_row()
         self.button_open_contract.Enable(row is not None)
+        self.button_salary_detail.Enable(row is not None and row.get("salary_control_row") is not None)
         if event is not None:
             event.Skip()
 
@@ -258,6 +265,23 @@ class Dialog(wx.Dialog):
         self.ctrl_sort_direction.SetSelection(0)
         self.filtered_rows = list(self.rows)
         self._refresh_list()
+
+
+    def OnOpenSalaryDetail(self, event):
+        row = self._get_selected_row()
+        if row is None:
+            return
+        if row.get("salary_control_row") is None:
+            wx.MessageBox(
+                "Aucun détail salarial n'est disponible pour cette ligne d'audit.",
+                "Détail salarial indisponible",
+                wx.OK | wx.ICON_INFORMATION,
+                self,
+            )
+            return
+        dlg = SalaryControlDetailDialog.from_audit_row(self, row)
+        dlg.ShowModal()
+        dlg.Destroy()
 
     def OnOpenContract(self, event):
         row = self._get_selected_row()

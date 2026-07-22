@@ -7,6 +7,11 @@ from application.presentation.salary_control_exporter import (
     ContractSalaryControlExportFormat,
     ContractSalaryControlExporter,
 )
+from application.presentation.salary_control_detail_presenter import (
+    ContractSalaryControlDetailPresenter,
+    ContractSalaryControlDetailViewModel,
+    detail_from_audit_row,
+)
 from application.presentation.salary_control_json_exporter import (
     ContractSalaryControlJsonExport,
     ContractSalaryControlJsonExporter,
@@ -28,6 +33,8 @@ __all__ = [
     "ContractSalaryControlExport",
     "ContractSalaryControlExportFormat",
     "ContractSalaryControlExporter",
+    "ContractSalaryControlDetailPresenter",
+    "ContractSalaryControlDetailViewModel",
     "ContractSalaryControlEmptyStateViewModel",
     "ContractSalaryControlJsonExport",
     "ContractSalaryControlJsonExporter",
@@ -36,6 +43,7 @@ __all__ = [
     "ContractSalaryControlPresenter",
     "ContractSalaryControlRowViewModel",
     "ContractSalaryControlViewModel",
+    "detail_from_audit_row",
     "format_euro_amount",
     "format_french_date",
 ]
