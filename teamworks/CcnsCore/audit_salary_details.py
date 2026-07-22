@@ -49,6 +49,7 @@ def audit_row_to_dict(row):
         "shortfall_amount_label": row.shortfall_amount_label or "",
         "minimum_source": row.minimum_source,
         "minimum_source_label": row.minimum_source_label or "",
+        "salary_control_row": row.salary_control_row,
     }
 
 

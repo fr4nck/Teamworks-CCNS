@@ -60,6 +60,7 @@ class AuditRow:
     shortfall_amount_label: Optional[str] = None
     minimum_source: Optional[ApplicableSalaryMinimumSource] = None
     minimum_source_label: Optional[str] = None
+    salary_control_row: Optional[ContractSalaryControlRowViewModel] = None
 
 
 def _grid_is_applicable(grid_record, reference_date):
@@ -264,6 +265,7 @@ def _audit_row(rec, anomalies, messages, control_row=None):
             "shortfall_amount_label": control_row.shortfall_amount_label,
             "minimum_source": control_row.minimum_source,
             "minimum_source_label": control_row.minimum_source_label,
+            "salary_control_row": control_row,
         }
     return AuditRow(
         IDcontrat=rec.IDcontrat,
