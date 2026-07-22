@@ -11,6 +11,10 @@ from domain.contracts.contract_salary_control import (
     ContractSalaryControlResult,
     ContractSalaryControlService,
 )
+from domain.contracts.contract_salary_control_consultation import (
+    ContractSalaryControlConsultationResult,
+    ContractSalaryControlConsultationService,
+)
 from domain.contracts.contract_salary_control_query import (
     ContractSalaryControlPage,
     ContractSalaryControlQuery,
@@ -40,6 +44,8 @@ __all__ = [
     "ContractSalaryBatchAuditService",
     "ContractSalaryBatchEvaluationResult",
     "ContractSalaryBatchEvaluationService",
+    "ContractSalaryControlConsultationResult",
+    "ContractSalaryControlConsultationService",
     "ContractSalaryControlPage",
     "ContractSalaryControlQuery",
     "ContractSalaryControlQueryService",
