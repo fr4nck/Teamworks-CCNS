@@ -3,11 +3,11 @@
 
 from __future__ import annotations
 
-import csv
 import wx
 
 from teamworks.CcnsCore.audit_contracts_ccns import audit_contracts
 from teamworks.CcnsCore.audit_filters import filter_audit_rows
+from teamworks.CcnsCore.audit_salary_details import audit_row_to_dict, summarize_salary_control_rows, write_audit_csv
 from teamworks.CcnsCore.audit_sorting import compute_row_severity, sort_audit_rows_by_person_and_severity
 from teamworks.Ol.OL_CCNS_audit import ListView
 
@@ -138,10 +138,19 @@ class Dialog(wx.Dialog):
         nb_anomalies = sum(len(item.get("anomalies", [])) for item in self.filtered_rows)
         nb_bloquantes = sum(1 for item in self.filtered_rows if item.get("severity_label") == "blocking")
         nb_individus = len(set((item.get("nom_complet") or "").strip().upper() for item in self.filtered_rows))
+        salary_summary = summarize_salary_control_rows(self.filtered_rows)
 
         self.ctrl_resume.SetLabel(
-            "Audit charge - %d individu(s), %d ligne(s), %d anomalie(s), %d ligne(s) bloquante(s)." % (
-                nb_individus, len(self.filtered_rows), nb_anomalies, nb_bloquantes
+            "Audit charge - %d individu(s), %d ligne(s), %d anomalie(s), %d bloquante(s) ; "
+            "%d conforme(s), %d non conforme(s), %d non évaluable(s) ; écarts : %s." % (
+                nb_individus,
+                len(self.filtered_rows),
+                nb_anomalies,
+                nb_bloquantes,
+                salary_summary["compliant_count"],
+                salary_summary["non_compliant_count"],
+                salary_summary["not_evaluated_count"],
+                salary_summary["total_shortfall_amount_label"],
             )
         )
         self.button_export.Enable(bool(self.filtered_rows))
@@ -173,17 +182,7 @@ class Dialog(wx.Dialog):
             )
             return
 
-        self.rows = []
-        for row in rows:
-            self.rows.append({
-                "IDcontrat": row.IDcontrat,
-                "nom_complet": row.nom_complet,
-                "classification": row.classification or "",
-                "type_contrat": row.type_contrat or "",
-                "salaire_base": row.salaire_base,
-                "anomalies": row.anomalies,
-                "messages": row.messages,
-            })
+        self.rows = [audit_row_to_dict(row) for row in rows]
         self.filtered_rows = list(self.rows)
         self._refresh_list()
 
@@ -291,24 +290,7 @@ class Dialog(wx.Dialog):
 
         try:
             with open(path, "w", newline="", encoding="utf-8-sig") as f:
-                writer = csv.writer(f, delimiter=";")
-                writer.writerow([
-                    "Nom", "Gravite", "IDcontrat", "Classification", "Type contrat",
-                    "Salaire base", "Nb anomalies", "Anomalies", "Messages"
-                ])
-                for row in self.filtered_rows:
-                    labels = {"blocking": "Bloquant", "warning": "A revoir", "ok": "OK"}
-                    writer.writerow([
-                        row["nom_complet"],
-                        labels.get(row.get("severity_label", "ok"), ""),
-                        row["IDcontrat"],
-                        row["classification"],
-                        row["type_contrat"],
-                        row["salaire_base"] if row["salaire_base"] is not None else "",
-                        len(row["anomalies"]),
-                        ", ".join(row["anomalies"]),
-                        " | ".join(row["messages"]),
-                    ])
+                write_audit_csv(f, self.filtered_rows)
         except Exception as exc:
             wx.MessageBox(
                 "Impossible d'exporter le fichier CSV.\n\n%s" % exc,
