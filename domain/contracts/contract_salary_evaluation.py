@@ -27,6 +27,7 @@ class ContractSalaryEvaluationFailureReason(str, Enum):
     MISSING_WEEKLY_HOURS = "missing_weekly_hours"
     MISSING_TERRITORY = "missing_territory"
     ANNUAL_CCNS_MINIMUM_NOT_SUPPORTED = "annual_ccns_minimum_not_supported"
+    HISTORICAL_FIXED_TERM_MISSING_END_DATE = "historical_fixed_term_missing_end_date"
 
 
 def _strict_date(value: object, field_name: str = "reference_date") -> date:
@@ -175,6 +176,9 @@ class ContractSalaryEvaluationService:
         _strict_date(reference_date)
         if territory is not None and type(territory) is not SmicTerritory:
             raise TypeError("territory doit être un SmicTerritory.")
+
+        if contract.legacy_salary_control_failure_reason == "CONTRAT_A_DUREE_DETERMINEE_SANS_DATE_FIN":
+            return self._failure(contract, reference_date, ContractSalaryEvaluationFailureReason.HISTORICAL_FIXED_TERM_MISSING_END_DATE, "Le contrat historique à durée déterminée ne possède pas de date de fin et ne peut pas être évalué comme un CDI.")
 
         if not contract.is_applicable_on(reference_date):
             return self._failure(contract, reference_date, ContractSalaryEvaluationFailureReason.CONTRACT_NOT_ACTIVE_ON_REFERENCE_DATE, "Le contrat n’est pas applicable à la date de référence.")

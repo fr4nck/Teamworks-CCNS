@@ -10,8 +10,8 @@ class FakePersonSummaryReader:
     def lire_contrats_personne(self, IDpersonne, limit=None):
         self.calls.append(("contrats_personne", IDpersonne, limit))
         return [
-            CcnsContratRecord(2, "2026-01-01", None, 1500.0, 35.0, 0.0, "Ada", "Lovelace", "G3", "CDI"),
-            CcnsContratRecord(1, "2026-01-01", None, 2200.0, 35.0, 0.0, "Ada", "Lovelace", "G3", "CDI"),
+            CcnsContratRecord(2, 102, "2026-01-01", None, 1500.0, 35.0, 0.0, "Ada", "Lovelace", "G3", "CDI"),
+            CcnsContratRecord(1, 101, "2026-01-01", None, 2200.0, 35.0, 0.0, "Ada", "Lovelace", "G3", "CDI"),
         ]
 
     def lire_grilles(self, limit=None):

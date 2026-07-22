@@ -10,6 +10,7 @@ from typing import Optional, Protocol
 @dataclass(frozen=True)
 class CcnsContratRecord:
     IDcontrat: int
+    IDpersonne: int
     date_debut: object
     date_fin: object
     salaire_base: Optional[float]

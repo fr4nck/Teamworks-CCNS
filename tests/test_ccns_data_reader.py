@@ -14,7 +14,7 @@ class FakeDB:
 
     def ResultatReq(self):
         if "FROM contrats\n" in self.current:
-            return [(1, "2026-01-01", None, 2100.0, 35.0, 10.0, "Ada", "Lovelace", "G3", "CDI")]
+            return [(1, 42, "2026-01-01", None, 2100.0, 35.0, 10.0, "Ada", "Lovelace", "G3", "CDI")]
         if "FROM contrats_class" in self.current:
             return [(3, "G3")]
         if "FROM tw_salary_grids" in self.current:
@@ -38,6 +38,7 @@ def test_ccns_data_reader_lit_le_perimetre_ccns_sans_wx():
     reader.close()
 
     assert contrats[0].IDcontrat == 1
+    assert contrats[0].IDpersonne == 42
     assert contrats[0].classification == "G3"
     assert classifications[0].nom == "G3"
     assert grilles[0].code == "CCNS-2026"

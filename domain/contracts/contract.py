@@ -35,6 +35,7 @@ class Contract(Entity):
     monthly_gross_salary_amount: Optional[Decimal] = None
     weekly_hours: Optional[Decimal] = None
     smic_territory: Optional[SmicTerritory] = None
+    legacy_salary_control_failure_reason: Optional[str] = None
 
     def __post_init__(self) -> None:
         if not self.person_id.strip():
@@ -45,7 +46,7 @@ class Contract(Entity):
             ContractType.APPRENTICESHIP,
             ContractType.INTERNSHIP,
             ContractType.CIVIC_SERVICE,
-        } and self.end_date is None:
+        } and self.end_date is None and self.legacy_salary_control_failure_reason != "CONTRAT_A_DUREE_DETERMINEE_SANS_DATE_FIN":
             raise ValueError("end_date is required for fixed-term contracts")
         if self.start_date and self.end_date and self.end_date < self.start_date:
             raise ValueError("end_date cannot be earlier than start_date")
@@ -61,6 +62,8 @@ class Contract(Entity):
             raise TypeError("weekly_hours doit être un Decimal strict.")
         if self.smic_territory is not None and type(self.smic_territory) is not SmicTerritory:
             raise TypeError("smic_territory doit être un SmicTerritory.")
+        if self.legacy_salary_control_failure_reason is not None and type(self.legacy_salary_control_failure_reason) is not str:
+            raise TypeError("legacy_salary_control_failure_reason doit être None ou une chaîne.")
         if self.monthly_gross_salary_amount is not None and self.monthly_gross_salary_amount < Decimal("0.00"):
             raise ValueError("monthly_gross_salary_amount ne peut pas être négatif.")
         if self.weekly_hours is not None and self.weekly_hours <= Decimal("0.00"):

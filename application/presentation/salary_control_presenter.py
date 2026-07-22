@@ -238,6 +238,7 @@ def _failure_reason_label(reason: Optional[ContractSalaryEvaluationFailureReason
         ContractSalaryEvaluationFailureReason.MISSING_WEEKLY_HOURS: "Durée hebdomadaire manquante",
         ContractSalaryEvaluationFailureReason.MISSING_TERRITORY: "Territoire SMIC manquant",
         ContractSalaryEvaluationFailureReason.ANNUAL_CCNS_MINIMUM_NOT_SUPPORTED: "Minimum CCNS annuel non pris en charge",
+        ContractSalaryEvaluationFailureReason.HISTORICAL_FIXED_TERM_MISSING_END_DATE: "Contrat historique à durée déterminée sans date de fin",
     }[reason]
 
 
