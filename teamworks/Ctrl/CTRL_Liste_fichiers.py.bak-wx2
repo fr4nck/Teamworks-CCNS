@@ -65,7 +65,7 @@ class FirstColumnRenderer(object):
         """Draw a custom progress bar using double buffering to prevent flicker"""
         if self.icon != None :
             bmpWidth, bmpHeight = self.icon.GetWidth(), self.icon.GetHeight()        
-            dc.DrawBitmap(self.icon, int(rect.x+5), int(int(int(int(rect.y+(rect.height-bmpHeight)/2)))))
+            dc.DrawBitmap(self.icon, int(rect.x+5), int(int(rect.y+(rect.height-bmpHeight)/2)))
         else :
             bmpWidth, bmpHeight = TAILLE_IMAGE
             
@@ -73,7 +73,7 @@ class FirstColumnRenderer(object):
                         
         textWidth, textHeight = dc.GetTextExtent(self.text)
         dc.SetTextForeground(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNTEXT))
-        dc.DrawText(self.text, rect.x+bmpWidth+10, int(rect.y+(rect.height-textHeight)/4))
+        dc.DrawText(self.text, rect.x+bmpWidth+10, rect.y+(rect.height - textHeight)/4)
 
         if not self.description:
             return
@@ -82,7 +82,7 @@ class FirstColumnRenderer(object):
 
         textWidth, textHeight = dc.GetTextExtent(self.description)
         dc.SetTextForeground(self.greyColour)
-        dc.DrawText(self.description, rect.x+bmpWidth+10, int(rect.y+3*(rect.height-textHeight)/4))
+        dc.DrawText(self.description, rect.x+bmpWidth+10, rect.y+3*(rect.height - textHeight)/4)
         
 
     def GetLineHeight(self):
@@ -133,18 +133,18 @@ class SecondColumnRenderer(object):
             dummy1, dummy2= dc.GetTextExtent(_(u"Date modif.: "))
             textWidth, textHeight = dc.GetTextExtent(self.date)
             dc.SetTextForeground(self.greyColour)
-            dc.DrawText("Date modif.: ", rect.x+5, int(rect.y+(rect.height-textHeight)/4))
+            dc.DrawText("Date modif.: ", rect.x+5, rect.y+(rect.height - textHeight)/4)
             dc.SetTextForeground(wx.BLACK)
-            dc.DrawText(self.date, rect.x+dummy1+5, int(rect.y+(rect.height-textHeight)/4))
+            dc.DrawText(self.date, rect.x+dummy1+5, rect.y+(rect.height - textHeight)/4)
         else :
             textWidth, textHeight = 0, 0
 
         if self.size :
             dummy1, dummy2= dc.GetTextExtent("Taille: ")
             dc.SetTextForeground(self.greyColour)
-            dc.DrawText("Taille: ", rect.x+5, int(rect.y+3*(rect.height-textHeight)/4))
+            dc.DrawText("Taille: ", rect.x+5, rect.y+3*(rect.height - textHeight)/4)
             dc.SetTextForeground(wx.BLACK)
-            dc.DrawText(self.size, rect.x+dummy1+5, int(rect.y+3*(rect.height-textHeight)/4))
+            dc.DrawText(self.size, rect.x+dummy1+5, rect.y+3*(rect.height - textHeight)/4)
         
 
     def GetLineHeight(self):
@@ -458,7 +458,5 @@ if __name__ == '__main__':
     app.SetTopWindow(frame_1)
     frame_1.Show()
     app.MainLoop()
-
-
 
 

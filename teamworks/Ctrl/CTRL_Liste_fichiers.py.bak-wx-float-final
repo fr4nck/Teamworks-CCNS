@@ -65,7 +65,7 @@ class FirstColumnRenderer(object):
         """Draw a custom progress bar using double buffering to prevent flicker"""
         if self.icon != None :
             bmpWidth, bmpHeight = self.icon.GetWidth(), self.icon.GetHeight()        
-            dc.DrawBitmap(self.icon, int(rect.x+5), int(int(int(int(rect.y+(rect.height-bmpHeight)/2)))))
+            dc.DrawBitmap(self.icon, int(rect.x+5), int(int(int(rect.y+(rect.height-bmpHeight)/2))))
         else :
             bmpWidth, bmpHeight = TAILLE_IMAGE
             
@@ -82,7 +82,7 @@ class FirstColumnRenderer(object):
 
         textWidth, textHeight = dc.GetTextExtent(self.description)
         dc.SetTextForeground(self.greyColour)
-        dc.DrawText(self.description, rect.x+bmpWidth+10, int(rect.y+3*(rect.height-textHeight)/4))
+        dc.DrawText(self.description, rect.x+bmpWidth+10, rect.y+3*(rect.height - textHeight)/4)
         
 
     def GetLineHeight(self):
@@ -142,9 +142,9 @@ class SecondColumnRenderer(object):
         if self.size :
             dummy1, dummy2= dc.GetTextExtent("Taille: ")
             dc.SetTextForeground(self.greyColour)
-            dc.DrawText("Taille: ", rect.x+5, int(rect.y+3*(rect.height-textHeight)/4))
+            dc.DrawText("Taille: ", rect.x+5, rect.y+3*(rect.height - textHeight)/4)
             dc.SetTextForeground(wx.BLACK)
-            dc.DrawText(self.size, rect.x+dummy1+5, int(rect.y+3*(rect.height-textHeight)/4))
+            dc.DrawText(self.size, rect.x+dummy1+5, rect.y+3*(rect.height - textHeight)/4)
         
 
     def GetLineHeight(self):
@@ -458,7 +458,6 @@ if __name__ == '__main__':
     app.SetTopWindow(frame_1)
     frame_1.Show()
     app.MainLoop()
-
 
 
 

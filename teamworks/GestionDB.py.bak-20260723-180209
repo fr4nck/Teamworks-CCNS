@@ -111,7 +111,7 @@ class DB:
             else:
                 self.OuvertureFichierLocal(self.nomFichier)
 
-
+    
     def GetNomPosteReseau(self):
         if self.isNetwork == False :
             return None

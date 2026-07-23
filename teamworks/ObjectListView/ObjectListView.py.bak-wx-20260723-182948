@@ -1774,12 +1774,10 @@ class ObjectListView(wx.ListCtrl):
         # Make sure our empty msg is reasonably positioned
         sz = self.GetClientSize()
         if 'phoenix' in wx.PlatformInfo:
-            self.stEmptyListMsg.SetSize(0, int(int(sz.GetHeight()/3)), int(sz.GetWidth()), int(sz.GetHeight()))
+            self.stEmptyListMsg.SetSize(0, int(int(sz.GetHeight() / 3)), int(int(sz.GetWidth())), int(sz.GetHeight()))
         else:
-            self.stEmptyListMsg.SetDimensions(0, int(int(sz.GetHeight()/3)),
-                                              sz.GetWidth(),
-                                              sz.GetHeight())
-        # self.stEmptyListMsg.Wrap(sz.GetWidth())
+            self.stEmptyListMsg.SetDimensions(0, int(int(sz.GetHeight() / 3)), int(int(sz.GetWidth())), int(sz.GetHeight()))
+        # self.stEmptyListMsg.Wrap(int(sz.GetWidth()))
 
     def _HandleTabKey(self, isShiftDown):
         """
@@ -4345,6 +4343,5 @@ def _getSmallDownArrowBitmap():
 
 if __name__ == '__main__':
     pass
-
 
 

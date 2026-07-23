@@ -9,7 +9,6 @@
 import Chemins
 from Utils.UTILS_Traduction import _
 import wx
-from Utils.WX_COMPAT import wx_int
 import six
 import calendar
 import datetime
@@ -520,8 +519,8 @@ class Calendrier(wx.ScrolledWindow):
             if largCase < 25 :
                 texte = texte[0]
             largTexte, hautTexte = self.GetTextExtent(texte)
-            coordX = xMois+x+(largCase/2)-int(largTexte/2)
-            coordY = yMois+(hautHeader/2)-int(hautTexte/2)
+            coordX = xMois+x+(largCase/2)-(largTexte/2)
+            coordY = yMois+(hautHeader/2)-(hautTexte/2)
             dc.DrawText(texte, int(coordX), int(coordY))
             # M�morisation des jours et de leurs coordonn�es
             self.listeCasesJours.append((coordX, coordY, largTexte, hautTexte, texteComplet))
@@ -543,7 +542,7 @@ class Calendrier(wx.ScrolledWindow):
         # Dessin du texte
         texte = listeMois[mois-1] + " " + str(annee)      
         largTexte, hautTexte = self.GetTextExtent(texte)
-        dc.DrawText(texte, int(xMois+(largMois/2)-int(largTexte/2)), int(yMois+(hautHeader/2)-int(hautTexte/2)))
+        dc.DrawText(texte, int(xMois+(largMois/2)-(largTexte/2)), int(yMois+(hautHeader/2)-(hautTexte/2)))
         # Dessin de la ligne
         dc.SetPen(wx.Pen((210, 210, 210), 1))
         dc.DrawLine(xMois+2, yMois+hautHeader-2, xMois+largMois-2, yMois+hautHeader-2)
@@ -593,7 +592,7 @@ class Calendrier(wx.ScrolledWindow):
         if texteDate == datetime.date.today() :
             dc.SetBrush(wx.Brush((255, 0, 0)))
             dc.SetPen(wx.Pen((0, 0, 0), 0))
-            dc.DrawRectangle(int(x+l-7), int(y+2), 4, 4)
+            dc.DrawRectangle(x+l-7, y+2, 4, 4)
 
         # Dessin texte
         if six.text_type(texteDate) in self.listeJoursAvecPresents :
@@ -604,10 +603,10 @@ class Calendrier(wx.ScrolledWindow):
         font = self.GetFont()
         font.SetPointSize(self.tailleFont(l, h))
         dc.SetFont(font)
-        dc.DrawText(str(texteDate.day), int(x + 3), int(y + 2))
+        dc.DrawText(str(texteDate.day), x + 3, y + 2)
 
         # Traitement pour le PseudoDC
-        r = wx.Rect(int(x), int(y), int(l), int(h))
+        r = wx.Rect(x, y, l, h)
         dc.SetIdBounds(IDobjet,r) 
         
         
@@ -1119,11 +1118,6 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-
-
-
 
 
 

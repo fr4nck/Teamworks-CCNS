@@ -166,10 +166,10 @@ class ObjectListView(OLV.ObjectListView):
         else :
             proportion = 2
         try :
-            self.stEmptyListMsg.SetSize(0, int(int(sz.GetHeight() / proportion)), int(int(sz.GetWidth())), int(sz.GetHeight())) # J'ai mis 2 a la place de 3
+            self.stEmptyListMsg.SetSize(0, int(sz.GetHeight() / proportion), int(sz.GetWidth()), int(sz.GetHeight())) # J'ai mis 2 a la place de 3
         except :
-            self.stEmptyListMsg.SetDimensions(0, int(int(sz.GetHeight() / proportion)), int(int(sz.GetWidth())), int(sz.GetHeight()))  # J'ai mis 2 a la place de 3
-        #self.stEmptyListMsg.Wrap(int(sz.GetWidth()))
+            self.stEmptyListMsg.SetDimensions(0, int(sz.GetHeight() / proportion), int(sz.GetWidth()), int(sz.GetHeight()))  # J'ai mis 2 a la place de 3
+        #self.stEmptyListMsg.Wrap(sz.GetWidth())
 
     def _SortObjects(
             self,
@@ -1121,8 +1121,6 @@ class ColumnDefn(OLV.ColumnDefn):
         self.visible = kwargs.pop("visible", True)
         self.typeDonnee = kwargs.pop("typeDonnee", None)
         OLV.ColumnDefn.__init__(self, *args, **kwargs)
-
-
 
 
 
