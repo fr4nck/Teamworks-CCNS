@@ -291,8 +291,8 @@ Finaliser le périmètre contrôle salarial sous forme d’un jalon utilisable p
 | TW-053 | Synthèse salariale d’un salarié | Réalisée | #100 |
 | TW-054 | Indicateurs salariaux du tableau de bord | Réalisée | #101 |
 | TW-055 | Historique des contrôles salariaux | Réalisée | #102 |
-| TW-056 | Comparaison de contrôles salariaux | Planifiée | — |
-| TW-057 | Suivi des anomalies salariales | Planifiée | — |
-| TW-058 | Alertes de contrôle salarial | En cours | En cours |
-| TW-059 | Export consolidé du suivi salarial | Planifiée | — |
+| TW-056 | Comparaison de contrôles salariaux | Réalisée | #103 |
+| TW-057 | Suivi des anomalies salariales | Réalisée | #105 |
+| TW-058 | Alertes de contrôle salarial | Réalisée | #106 |
+| TW-059 | Export consolidé du suivi salarial | En cours | #107 |
 | TW-060 | Stabilisation du module salarial | Planifiée | — |
