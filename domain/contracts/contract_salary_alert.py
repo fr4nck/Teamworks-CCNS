@@ -135,11 +135,15 @@ class GenerateContractSalaryAlertsService:
                 alerts.append(self._alert(row.contract_id, employee_id, ContractSalaryAlertSeverity.CRITICAL, ContractSalaryAlertType.NON_COMPLIANT_CONTRACT, "contract_became_non_compliant", "contract_requires_action", current_snapshot.reference_date, row.shortfall_amount_after))
             if row.status_after is ContractSalaryControlStatus.NOT_EVALUATED and row.status_before is not ContractSalaryControlStatus.NOT_EVALUATED:
                 alerts.append(self._alert(row.contract_id, employee_id, ContractSalaryAlertSeverity.WARNING, ContractSalaryAlertType.NOT_EVALUATED_CONTRACT, "contract_not_evaluated", "missing_data_or_rule_prevents_evaluation", current_snapshot.reference_date))
-            if row.minimum_delta >= MINIMUM_INCREASE_THRESHOLD:
+            has_before_and_after = row.change_type not in (
+                ContractSalaryControlSnapshotChangeType.NEW_CONTRACT,
+                ContractSalaryControlSnapshotChangeType.REMOVED_CONTRACT,
+            )
+            if has_before_and_after and row.minimum_delta >= MINIMUM_INCREASE_THRESHOLD:
                 alerts.append(self._alert(row.contract_id, employee_id, ContractSalaryAlertSeverity.WARNING, ContractSalaryAlertType.MINIMUM_INCREASE, "minimum_increased", "applicable_minimum_above_previous_snapshot", current_snapshot.reference_date, row.minimum_delta))
-            if row.remuneration_delta <= -SALARY_DECREASE_THRESHOLD:
+            if has_before_and_after and row.remuneration_delta <= -SALARY_DECREASE_THRESHOLD:
                 alerts.append(self._alert(row.contract_id, employee_id, ContractSalaryAlertSeverity.WARNING, ContractSalaryAlertType.SALARY_DECREASE, "salary_decreased", "remuneration_below_previous_snapshot", current_snapshot.reference_date, row.remuneration_delta))
-            if row.shortfall_delta >= SIGNIFICANT_SHORTFALL_INCREASE_THRESHOLD and row.shortfall_amount_after and row.shortfall_amount_after > _ZERO:
+            if has_before_and_after and row.shortfall_delta >= SIGNIFICANT_SHORTFALL_INCREASE_THRESHOLD and row.shortfall_amount_after and row.shortfall_amount_after > _ZERO:
                 alerts.append(self._alert(row.contract_id, employee_id, ContractSalaryAlertSeverity.CRITICAL, ContractSalaryAlertType.SIGNIFICANT_SHORTFALL, "shortfall_increased", "shortfall_above_previous_snapshot", current_snapshot.reference_date, row.shortfall_delta))
         for issue in issue_history.rows:
             employee_id = issue.employee_id or (rows_by_contract.get(issue.contract_id).employee_id if issue.contract_id in rows_by_contract else None)
