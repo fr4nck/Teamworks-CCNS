@@ -2,7 +2,7 @@
 
 ## Statut du document
 
-Cette roadmap est une **reconstruction validée à partir de l’état réel du dépôt après TW-051**. Les formulations originales de TW-052 à TW-060 n’ayant pas été conservées, ce document devient la référence officielle pour la suite.
+Cette roadmap est une reconstruction validée à partir de l’état réel du dépôt après TW-051. Les formulations originales de TW-052 à TW-060 n’ayant pas été conservées, ce document devient la référence officielle pour la suite.
 
 État de départ vérifié :
 
@@ -14,9 +14,9 @@ Cette roadmap est une **reconstruction validée à partir de l’état réel du 
 ## Principes de gouvernance
 
 - Une TW ne démarre qu’après fusion de la précédente, sauf décision explicite.
-- Chaque TW doit produire une PR dédiée vers `master`.
+- Chaque TW doit produire une PR dédiée vers master.
 - Les calculs métier existants ne doivent pas être dupliqués dans l’interface.
-- Les valeurs monétaires restent des `Decimal` jusqu’aux frontières d’affichage ou d’export.
+- Les valeurs monétaires restent des Decimal jusqu’aux frontières d’affichage ou d’export.
 - Les filtres, tris, exports et vues utilisent les résultats déjà calculés lorsque cela est possible.
 - Toute modification de cette roadmap doit être versionnée dans GitHub.
 
@@ -129,9 +129,9 @@ Conserver une trace datée des contrôles exécutés afin de comparer les résul
 
 ## TW-056 — Ajouter la comparaison entre deux contrôles salariaux
 
-**Statut : En cours.**
+**Statut : Réalisée.**
 
-**PR : à ouvrir.**
+**PR : #103.**
 
 ### Objectif
 
@@ -154,15 +154,15 @@ Comparer deux snapshots afin d’identifier les améliorations, dégradations et
 ### Suivi
 
 - Modèles, service pur, cas d’usage, présentation et interface d’historique ajoutés.
-- Documentation : `docs/42-comparaison-controles-salariaux.md`.
+- Documentation : docs/42-comparaison-controles-salariaux.md.
 
 ---
 
 ## TW-057 — Ajouter le suivi des anomalies salariales
 
-**Statut : En cours.**
+**Statut : Réalisée.**
 
-**PR : à ouvrir.**
+**PR : #105.**
 
 ### Objectif
 
@@ -186,15 +186,15 @@ Identifier les anomalies salariales nouvelles, persistantes et résolues entre d
 
 ### Suivi
 
-- Documentation : `docs/43-suivi-anomalies-salariales.md`.
+- Documentation : docs/43-suivi-anomalies-salariales.md.
 
 ---
 
 ## TW-058 — Ajouter les alertes de contrôle salarial
 
-**Statut : En cours.**
+**Statut : Réalisée.**
 
-**PR : En cours.**
+**PR : #106.**
 
 ### Objectif
 
@@ -217,15 +217,15 @@ Détecter les situations qui nécessitent l’attention de la direction ou de la
 ### Suivi
 
 - Modèles, service pur, cas d'usage, présentateur et accès wxPython en lecture seule ajoutés.
-- Documentation : `docs/58-alertes-salariales.md`.
+- Documentation : docs/58-alertes-salariales.md.
 
 ---
 
 ## TW-059 — Ajouter l’export consolidé du suivi salarial
 
-**Statut : En cours.**
+**Statut : Réalisée.**
 
-**PR : En cours.**
+**PR : #107.**
 
 ### Objectif
 
@@ -248,6 +248,10 @@ Exporter une vue consolidée combinant résultat du contrôle, historique et sui
 ---
 
 ## TW-060 — Stabiliser le module de contrôle salarial pour une première utilisation réelle
+
+**Statut : En cours.**
+
+**PR : à ouvrir.**
 
 ### Objectif
 
@@ -294,5 +298,5 @@ Finaliser le périmètre contrôle salarial sous forme d’un jalon utilisable p
 | TW-056 | Comparaison de contrôles salariaux | Réalisée | #103 |
 | TW-057 | Suivi des anomalies salariales | Réalisée | #105 |
 | TW-058 | Alertes de contrôle salarial | Réalisée | #106 |
-| TW-059 | Export consolidé du suivi salarial | En cours | #107 |
-| TW-060 | Stabilisation du module salarial | Planifiée | — |
+| TW-059 | Export consolidé du suivi salarial | Réalisée | #107 |
+| TW-060 | Stabilisation du module salarial | En cours | à ouvrir |
