@@ -17,7 +17,7 @@ class Dialog(wx.Dialog):
         self.snapshots = list(list_salary_control_snapshots(repository=repository))
         self.listbox = wx.ListBox(self, -1, choices=[self._summary(s) for s in self.snapshots], style=wx.LB_EXTENDED)
         self.details = wx.TextCtrl(self, -1, "", style=wx.TE_MULTILINE | wx.TE_READONLY)
-        self.filter = wx.ComboBox(self, -1, choices=["Tous", "Critiques", "Warnings", "Informations", "Non conformités", "Nouvelles anomalies", "Résolues", "Contrats absents"], style=wx.CB_READONLY)
+        self.filter = wx.ComboBox(self, -1, choices=["Tous", "Améliorations", "Dégradations", "Nouveaux contrats", "Contrats absents", "Changements de statut", "Écarts modifiés", "Inchangés"], style=wx.CB_READONLY)
         self.filter.SetSelection(0)
         self.button_compare = wx.Button(self, -1, "Comparer")
         self.button_track_issues = wx.Button(self, -1, "Suivi des anomalies")
@@ -117,6 +117,8 @@ class Dialog(wx.Dialog):
             self._last_alerts = None
             self._last_issue_history = None
             self._last_comparison = compare_salary_control_snapshots(before.snapshot_id, after.snapshot_id, repository=self.repository)
+            self.filter.SetItems(["Tous", "Améliorations", "Dégradations", "Nouveaux contrats", "Contrats absents", "Changements de statut", "Écarts modifiés", "Inchangés"])
+            self.filter.SetSelection(0)
         except Exception as exc:
             wx.MessageBox("Impossible de comparer les snapshots.\n\n%s" % exc, "Comparaison impossible", wx.OK | wx.ICON_ERROR)
             return
@@ -146,6 +148,8 @@ class Dialog(wx.Dialog):
             self._last_alerts = None
             self._last_comparison = None
             self._last_issue_history = track_salary_control_issues(before.snapshot_id, after.snapshot_id, repository=self.repository)
+            self.filter.SetItems(["Toutes", "Nouvelles", "Persistantes", "Résolues"])
+            self.filter.SetSelection(0)
         except Exception as exc:
             wx.MessageBox("Impossible de suivre les anomalies.\n\n%s" % exc, "Suivi impossible", wx.OK | wx.ICON_ERROR)
             return
@@ -155,12 +159,8 @@ class Dialog(wx.Dialog):
         return (
             ContractSalaryControlIssueHistoryPresenter.FILTER_ALL,
             ContractSalaryControlIssueHistoryPresenter.FILTER_NEW,
-            ContractSalaryControlIssueHistoryPresenter.FILTER_RESOLVED,
-            ContractSalaryControlIssueHistoryPresenter.FILTER_ALL,
-            ContractSalaryControlIssueHistoryPresenter.FILTER_ALL,
             ContractSalaryControlIssueHistoryPresenter.FILTER_ONGOING,
-            ContractSalaryControlIssueHistoryPresenter.FILTER_ALL,
-            ContractSalaryControlIssueHistoryPresenter.FILTER_ALL,
+            ContractSalaryControlIssueHistoryPresenter.FILTER_RESOLVED,
         )[self.filter.GetSelection()]
 
     def _show_issue_history(self, history):
@@ -180,6 +180,8 @@ class Dialog(wx.Dialog):
             self._last_comparison = None
             self._last_issue_history = None
             self._last_alerts = generate_salary_control_alerts(repository=self.repository)
+            self.filter.SetItems(["Toutes", "Critiques", "Avertissements", "Informations", "Non conformités", "Nouvelles anomalies", "Résolues"])
+            self.filter.SetSelection(0)
         except Exception as exc:
             wx.MessageBox("Impossible de générer les alertes.\n\n%s" % exc, "Alertes indisponibles", wx.OK | wx.ICON_ERROR)
             return
@@ -194,7 +196,6 @@ class Dialog(wx.Dialog):
             ContractSalaryAlertPresenter.FILTER_NON_COMPLIANCE,
             ContractSalaryAlertPresenter.FILTER_NEW_ANOMALIES,
             ContractSalaryAlertPresenter.FILTER_RESOLVED,
-            ContractSalaryAlertPresenter.FILTER_ALL,
         )[self.filter.GetSelection()]
 
     def _show_alerts(self, alerts):
