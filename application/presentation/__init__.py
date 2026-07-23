@@ -30,6 +30,11 @@ from application.presentation.salary_control_issue_history_presenter import (
     ContractSalaryControlIssueHistoryViewModel,
     ContractSalaryControlIssueHistoryRowViewModel,
 )
+from application.presentation.salary_alert_presenter import (
+    ContractSalaryAlertPresenter,
+    ContractSalaryAlertViewModel,
+    ContractSalaryAlertRowViewModel,
+)
 from application.presentation.salary_control_json_exporter import (
     ContractSalaryControlJsonExport,
     ContractSalaryControlJsonExporter,
@@ -64,6 +69,9 @@ __all__ = [
     "ContractSalaryControlIssueHistoryPresenter",
     "ContractSalaryControlIssueHistoryViewModel",
     "ContractSalaryControlIssueHistoryRowViewModel",
+    "ContractSalaryAlertPresenter",
+    "ContractSalaryAlertViewModel",
+    "ContractSalaryAlertRowViewModel",
     "ContractSalaryControlJsonExport",
     "ContractSalaryControlJsonExporter",
     "ContractSalaryControlPaginationViewModel",

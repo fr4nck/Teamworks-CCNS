@@ -192,6 +192,10 @@ Identifier les anomalies salariales nouvelles, persistantes et résolues entre d
 
 ## TW-058 — Ajouter les alertes de contrôle salarial
 
+**Statut : En cours.**
+
+**PR : En cours.**
+
 ### Objectif
 
 Détecter les situations qui nécessitent l’attention de la direction ou de la comptabilité.
@@ -209,6 +213,11 @@ Détecter les situations qui nécessitent l’attention de la direction ou de la
 - moteur d’alertes indépendant de l’interface ;
 - aucune notification externe imposée à ce stade ;
 - alertes consultables et testées sans dépendance réseau.
+
+### Suivi
+
+- Modèles, service pur, cas d'usage, présentateur et accès wxPython en lecture seule ajoutés.
+- Documentation : `docs/58-alertes-salariales.md`.
 
 ---
 
@@ -280,6 +289,6 @@ Finaliser le périmètre contrôle salarial sous forme d’un jalon utilisable p
 | TW-055 | Historique des contrôles salariaux | Réalisée | #102 |
 | TW-056 | Comparaison de contrôles salariaux | Planifiée | — |
 | TW-057 | Suivi des anomalies salariales | Planifiée | — |
-| TW-058 | Alertes de contrôle salarial | Planifiée | — |
+| TW-058 | Alertes de contrôle salarial | En cours | En cours |
 | TW-059 | Export consolidé du suivi salarial | Planifiée | — |
 | TW-060 | Stabilisation du module salarial | Planifiée | — |
