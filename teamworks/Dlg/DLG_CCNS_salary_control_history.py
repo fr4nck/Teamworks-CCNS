@@ -5,7 +5,8 @@ from __future__ import annotations
 
 import wx
 
-from application.presentation import ContractSalaryAlertPresenter, ContractSalaryControlIssueHistoryPresenter, ContractSalaryControlSnapshotComparisonPresenter, format_euro_amount, format_french_date
+from application.control import BuildContractSalaryControlConsolidatedReportUseCase
+from application.presentation import ContractSalaryAlertPresenter, ContractSalaryControlConsolidatedExporter, ContractSalaryControlExportFormat, ContractSalaryControlIssueHistoryPresenter, ContractSalaryControlSnapshotComparisonPresenter, format_euro_amount, format_french_date
 from teamworks.CcnsCore.audit_salary_alerts import generate_salary_control_alerts
 from teamworks.CcnsCore.audit_salary_history import compare_salary_control_snapshots, list_salary_control_snapshots, track_salary_control_issues
 
@@ -22,11 +23,15 @@ class Dialog(wx.Dialog):
         self.button_compare = wx.Button(self, -1, "Comparer")
         self.button_track_issues = wx.Button(self, -1, "Suivi des anomalies")
         self.button_alerts = wx.Button(self, -1, "Alertes")
+        self.button_export_csv = wx.Button(self, -1, "Exporter le rapport consolidé CSV")
+        self.button_export_json = wx.Button(self, -1, "Exporter le rapport consolidé JSON")
         self.button_close = wx.Button(self, wx.ID_CANCEL, "Fermer")
         self.listbox.Bind(wx.EVT_LISTBOX, self.OnSelect)
         self.button_compare.Bind(wx.EVT_BUTTON, self.OnCompare)
         self.button_track_issues.Bind(wx.EVT_BUTTON, self.OnTrackIssues)
         self.button_alerts.Bind(wx.EVT_BUTTON, self.OnAlerts)
+        self.button_export_csv.Bind(wx.EVT_BUTTON, self.OnExportConsolidatedCsv)
+        self.button_export_json.Bind(wx.EVT_BUTTON, self.OnExportConsolidatedJson)
         self.filter.Bind(wx.EVT_COMBOBOX, self.OnFilter)
         self._last_comparison = None
         self._last_issue_history = None
@@ -39,6 +44,8 @@ class Dialog(wx.Dialog):
         actions.Add(self.button_compare, 0, wx.RIGHT, 8)
         actions.Add(self.button_track_issues, 0, wx.RIGHT, 8)
         actions.Add(self.button_alerts, 0, wx.RIGHT, 8)
+        actions.Add(self.button_export_csv, 0, wx.RIGHT, 8)
+        actions.Add(self.button_export_json, 0, wx.RIGHT, 8)
         actions.Add(self.button_close, 0)
         sizer.Add(actions, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.ALIGN_RIGHT, 8)
         self.SetSizer(sizer)
@@ -208,3 +215,43 @@ class Dialog(wx.Dialog):
             ))
             lines.append("  %s" % row.detail)
         self.details.SetValue("\n".join(lines))
+
+    def _selected_current_and_previous(self):
+        selections = list(self.listbox.GetSelections())
+        if not selections:
+            index = self.listbox.GetSelection()
+            selections = [index] if 0 <= index < len(self.snapshots) else []
+        if not selections:
+            wx.MessageBox("Sélectionnez au moins le snapshot courant à exporter.", "Export impossible", wx.OK | wx.ICON_WARNING)
+            return None, None
+        if len(selections) > 2:
+            wx.MessageBox("Sélectionnez un snapshot courant, et éventuellement un snapshot précédent.", "Export impossible", wx.OK | wx.ICON_WARNING)
+            return None, None
+        snapshots = [self.snapshots[index] for index in selections]
+        snapshots.sort(key=lambda snapshot: (snapshot.executed_at, snapshot.snapshot_id))
+        if len(snapshots) == 1:
+            return snapshots[0], None
+        return snapshots[1], snapshots[0]
+
+    def OnExportConsolidatedCsv(self, event):
+        self._export_consolidated(ContractSalaryControlExportFormat.CSV)
+
+    def OnExportConsolidatedJson(self, event):
+        self._export_consolidated(ContractSalaryControlExportFormat.JSON)
+
+    def _export_consolidated(self, format):
+        current, previous = self._selected_current_and_previous()
+        if current is None:
+            return
+        try:
+            report = BuildContractSalaryControlConsolidatedReportUseCase().execute(current, previous)
+            export = ContractSalaryControlConsolidatedExporter().export(report, format)
+        except Exception as exc:
+            wx.MessageBox("Impossible de construire le rapport consolidé.\n\n%s" % exc, "Export impossible", wx.OK | wx.ICON_ERROR)
+            return
+        wildcard = "CSV (*.csv)|*.csv" if format is ContractSalaryControlExportFormat.CSV else "JSON (*.json)|*.json"
+        with wx.FileDialog(self, "Exporter le rapport consolidé", wildcard=wildcard, defaultFile=export.suggested_filename, style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as dialog:
+            if dialog.ShowModal() != wx.ID_OK:
+                return
+            with open(dialog.GetPath(), "w", encoding="utf-8", newline="") as file_obj:
+                file_obj.write(export.content)
