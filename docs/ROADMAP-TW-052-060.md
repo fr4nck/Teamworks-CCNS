@@ -223,6 +223,10 @@ Détecter les situations qui nécessitent l’attention de la direction ou de la
 
 ## TW-059 — Ajouter l’export consolidé du suivi salarial
 
+**Statut : En cours.**
+
+**PR : En cours.**
+
 ### Objectif
 
 Exporter une vue consolidée combinant résultat du contrôle, historique et suivi des anomalies.

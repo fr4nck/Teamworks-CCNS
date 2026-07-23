@@ -20,6 +20,9 @@ from application.control.salary_control_snapshot_use_case import (
     ContractSalaryControlSnapshotNotFoundError,
     GenerateContractSalaryAlertsUseCase,
 )
+from application.control.salary_control_consolidated_report_use_case import (
+    BuildContractSalaryControlConsolidatedReportUseCase,
+)
 from application.control.salary_control_snapshot_memory_repository import (
     InMemoryContractSalaryControlSnapshotRepository,
 )
@@ -49,5 +52,6 @@ __all__ = [
     "TrackContractSalaryControlIssuesUseCase",
     "ContractSalaryControlSnapshotNotFoundError",
     "GenerateContractSalaryAlertsUseCase",
+    "BuildContractSalaryControlConsolidatedReportUseCase",
     "InMemoryContractSalaryControlSnapshotRepository",
 ]

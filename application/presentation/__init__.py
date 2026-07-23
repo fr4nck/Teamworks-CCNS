@@ -35,6 +35,17 @@ from application.presentation.salary_alert_presenter import (
     ContractSalaryAlertViewModel,
     ContractSalaryAlertRowViewModel,
 )
+from application.presentation.salary_control_consolidated_csv_exporter import (
+    ContractSalaryControlConsolidatedCsvExport,
+    ContractSalaryControlConsolidatedCsvExporter,
+)
+from application.presentation.salary_control_consolidated_json_exporter import (
+    ContractSalaryControlConsolidatedJsonExport,
+    ContractSalaryControlConsolidatedJsonExporter,
+)
+from application.presentation.salary_control_consolidated_exporter import (
+    ContractSalaryControlConsolidatedExporter,
+)
 from application.presentation.salary_control_json_exporter import (
     ContractSalaryControlJsonExport,
     ContractSalaryControlJsonExporter,
@@ -72,6 +83,11 @@ __all__ = [
     "ContractSalaryAlertPresenter",
     "ContractSalaryAlertViewModel",
     "ContractSalaryAlertRowViewModel",
+    "ContractSalaryControlConsolidatedCsvExport",
+    "ContractSalaryControlConsolidatedCsvExporter",
+    "ContractSalaryControlConsolidatedJsonExport",
+    "ContractSalaryControlConsolidatedJsonExporter",
+    "ContractSalaryControlConsolidatedExporter",
     "ContractSalaryControlJsonExport",
     "ContractSalaryControlJsonExporter",
     "ContractSalaryControlPaginationViewModel",

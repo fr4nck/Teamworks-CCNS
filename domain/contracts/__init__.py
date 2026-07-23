@@ -33,6 +33,9 @@ from domain.contracts.contract_salary_control_snapshot_comparison import (
     ContractSalaryControlSnapshotComparisonRow,
     CompareContractSalaryControlSnapshotsService,
 )
+from domain.contracts.contract_salary_control_consolidated_report import (
+    ContractSalaryControlConsolidatedReport,
+)
 from domain.contracts.contract_salary_alert import (
     ContractSalaryAlert,
     ContractSalaryAlertCollection,
@@ -71,6 +74,7 @@ __all__ = [
     "ContractSalaryBatchEvaluationService",
     "ContractSalaryControlConsultationResult",
     "ContractSalaryControlConsultationService",
+    "ContractSalaryControlConsolidatedReport",
     "ContractSalaryAlert",
     "ContractSalaryAlertCollection",
     "ContractSalaryAlertSeverity",
