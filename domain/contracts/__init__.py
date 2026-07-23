@@ -19,6 +19,14 @@ from domain.contracts.contract_salary_control_snapshot import (
     ContractSalaryControlSnapshot,
     ContractSalaryControlSnapshotRow,
 )
+from domain.contracts.contract_salary_control_issue_history import (
+    ContractSalaryControlIssue,
+    ContractSalaryControlIssueEvolutionType,
+    ContractSalaryControlIssueHistory,
+    ContractSalaryControlIssueHistoryRow,
+    ContractSalaryControlIssueStatus,
+    TrackContractSalaryControlIssuesService,
+)
 from domain.contracts.contract_salary_control_snapshot_comparison import (
     ContractSalaryControlSnapshotChangeType,
     ContractSalaryControlSnapshotComparison,
@@ -63,6 +71,12 @@ __all__ = [
     "ContractSalaryControlProjection",
     "ContractSalaryControlResult",
     "ContractSalaryControlService",
+    "ContractSalaryControlIssue",
+    "ContractSalaryControlIssueEvolutionType",
+    "ContractSalaryControlIssueHistory",
+    "ContractSalaryControlIssueHistoryRow",
+    "ContractSalaryControlIssueStatus",
+    "TrackContractSalaryControlIssuesService",
     "ContractSalaryControlSnapshot",
     "ContractSalaryControlSnapshotRow",
     "ContractSalaryControlSnapshotChangeType",
