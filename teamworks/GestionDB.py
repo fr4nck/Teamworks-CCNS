@@ -80,40 +80,37 @@ class DB:
         """ Utiliser GestionDB.DB(nomFichier=Chemins.GetStaticPath("Databases/Geographie.dat"), suffixe=None) pour ouvrir un autre type de fichier """
         self.nomFichier = nomFichier
         self.modeCreation = modeCreation
-        
+
         # Mémorisation de l'ouverture de la connexion et des requêtes
-        if IDconnexion == None :
+        if IDconnexion == None:
             self.IDconnexion = random.randint(0, 1000000)
-        else :
+        else:
             self.IDconnexion = IDconnexion
         DICT_CONNEXIONS[self.IDconnexion] = []
-        
-        with DiagnosticPerformance.mesurer("connexion", "GestionDB.DB.__init__", {"reseau": self.isNetwork}):
-            if self.isNetwork == True :
-                self.OuvertureFichierReseau(self.nomFichier, suffixe)
-            else:
-                self.OuvertureFichierLocal(self.nomFichier)
+
         # On ajoute le préfixe de type de fichier et l'extension du fichier
         if MODE_TEAMWORKS == True and suffixe not in ("", None):
             if suffixe[0] != "T":
                 suffixe = _(u"T%s") % suffixe
 
-        if suffixe != None :
+        if suffixe != None:
             self.nomFichier += u"_%s" % suffixe
 
         # Est-ce une connexion réseau ?
-        if "[RESEAU]" in self.nomFichier :
+        if "[RESEAU]" in self.nomFichier:
             self.isNetwork = True
         else:
             self.isNetwork = False
-            if suffixe != None :
+            if suffixe != None:
                 self.nomFichier = UTILS_Fichiers.GetRepData(u"%s.dat" % self.nomFichier)
-        
+
         # Ouverture de la base de données
-        if self.isNetwork == True :
-            self.OuvertureFichierReseau(self.nomFichier, suffixe)
-        else:
-            self.OuvertureFichierLocal(self.nomFichier)
+        with DiagnosticPerformance.mesurer("connexion", "GestionDB.DB.__init__", {"reseau": self.isNetwork}):
+            if self.isNetwork == True:
+                self.OuvertureFichierReseau(self.nomFichier, suffixe)
+            else:
+                self.OuvertureFichierLocal(self.nomFichier)
+
     
     def GetNomPosteReseau(self):
         if self.isNetwork == False :
