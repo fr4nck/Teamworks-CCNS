@@ -35,3 +35,9 @@ def save_salary_control_snapshot_from_audit_rows(rows, *, repository=None, creat
 def list_salary_control_snapshots(*, repository=None, reference_date: date | None = None):
     repo = repository or SqliteContractSalaryControlSnapshotRepository()
     return ListContractSalaryControlSnapshotsUseCase(repo).execute(reference_date=reference_date)
+
+
+def compare_salary_control_snapshots(before_snapshot_id, after_snapshot_id, *, repository=None):
+    from application.control import CompareContractSalaryControlSnapshotsUseCase
+    repo = repository or SqliteContractSalaryControlSnapshotRepository()
+    return CompareContractSalaryControlSnapshotsUseCase(repo).execute(before_snapshot_id, after_snapshot_id)

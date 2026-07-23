@@ -107,3 +107,26 @@ class ListContractSalaryControlSnapshotsUseCase:
         if reference_date is None:
             return self.repository.list_all()
         return self.repository.list_by_reference_date(reference_date)
+
+
+class ContractSalaryControlSnapshotNotFoundError(LookupError):
+    pass
+
+
+@dataclass(frozen=True, slots=True)
+class CompareContractSalaryControlSnapshotsUseCase:
+    repository: ContractSalaryControlSnapshotRepository
+    service: object = None
+
+    def execute(self, before_snapshot_id: UUID, after_snapshot_id: UUID):
+        from domain.contracts.contract_salary_control_snapshot_comparison import CompareContractSalaryControlSnapshotsService
+        if type(before_snapshot_id) is not UUID or type(after_snapshot_id) is not UUID:
+            raise TypeError("Les identifiants de snapshots doivent être des UUID stricts.")
+        before = self.repository.get(before_snapshot_id)
+        if before is None:
+            raise ContractSalaryControlSnapshotNotFoundError(f"Snapshot salarial introuvable : {before_snapshot_id}.")
+        after = self.repository.get(after_snapshot_id)
+        if after is None:
+            raise ContractSalaryControlSnapshotNotFoundError(f"Snapshot salarial introuvable : {after_snapshot_id}.")
+        service = self.service or CompareContractSalaryControlSnapshotsService()
+        return service.compare(before, after)
