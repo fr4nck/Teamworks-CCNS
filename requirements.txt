@@ -13,3 +13,5 @@ icalendar
 numpy
 opencv-python
 mailjet-rest
+pytest
+tzdata
