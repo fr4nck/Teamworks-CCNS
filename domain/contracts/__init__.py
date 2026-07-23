@@ -33,6 +33,13 @@ from domain.contracts.contract_salary_control_snapshot_comparison import (
     ContractSalaryControlSnapshotComparisonRow,
     CompareContractSalaryControlSnapshotsService,
 )
+from domain.contracts.contract_salary_alert import (
+    ContractSalaryAlert,
+    ContractSalaryAlertCollection,
+    ContractSalaryAlertSeverity,
+    ContractSalaryAlertType,
+    GenerateContractSalaryAlertsService,
+)
 from domain.contracts.contract_salary_control_query import (
     ContractSalaryControlPage,
     ContractSalaryControlQuery,
@@ -64,6 +71,11 @@ __all__ = [
     "ContractSalaryBatchEvaluationService",
     "ContractSalaryControlConsultationResult",
     "ContractSalaryControlConsultationService",
+    "ContractSalaryAlert",
+    "ContractSalaryAlertCollection",
+    "ContractSalaryAlertSeverity",
+    "ContractSalaryAlertType",
+    "GenerateContractSalaryAlertsService",
     "ContractSalaryControlPage",
     "ContractSalaryControlQuery",
     "ContractSalaryControlQueryService",

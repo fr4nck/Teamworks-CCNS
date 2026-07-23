@@ -5,7 +5,8 @@ from __future__ import annotations
 
 import wx
 
-from application.presentation import ContractSalaryControlIssueHistoryPresenter, ContractSalaryControlSnapshotComparisonPresenter, format_euro_amount, format_french_date
+from application.presentation import ContractSalaryAlertPresenter, ContractSalaryControlIssueHistoryPresenter, ContractSalaryControlSnapshotComparisonPresenter, format_euro_amount, format_french_date
+from teamworks.CcnsCore.audit_salary_alerts import generate_salary_control_alerts
 from teamworks.CcnsCore.audit_salary_history import compare_salary_control_snapshots, list_salary_control_snapshots, track_salary_control_issues
 
 
@@ -16,17 +17,20 @@ class Dialog(wx.Dialog):
         self.snapshots = list(list_salary_control_snapshots(repository=repository))
         self.listbox = wx.ListBox(self, -1, choices=[self._summary(s) for s in self.snapshots], style=wx.LB_EXTENDED)
         self.details = wx.TextCtrl(self, -1, "", style=wx.TE_MULTILINE | wx.TE_READONLY)
-        self.filter = wx.ComboBox(self, -1, choices=["Tous", "Nouvelles anomalies", "Anomalies résolues", "Nouveaux contrats", "Contrats absents", "Anomalies persistantes", "Écarts modifiés", "Inchangés"], style=wx.CB_READONLY)
+        self.filter = wx.ComboBox(self, -1, choices=["Tous", "Améliorations", "Dégradations", "Nouveaux contrats", "Contrats absents", "Changements de statut", "Écarts modifiés", "Inchangés"], style=wx.CB_READONLY)
         self.filter.SetSelection(0)
         self.button_compare = wx.Button(self, -1, "Comparer")
         self.button_track_issues = wx.Button(self, -1, "Suivi des anomalies")
+        self.button_alerts = wx.Button(self, -1, "Alertes")
         self.button_close = wx.Button(self, wx.ID_CANCEL, "Fermer")
         self.listbox.Bind(wx.EVT_LISTBOX, self.OnSelect)
         self.button_compare.Bind(wx.EVT_BUTTON, self.OnCompare)
         self.button_track_issues.Bind(wx.EVT_BUTTON, self.OnTrackIssues)
+        self.button_alerts.Bind(wx.EVT_BUTTON, self.OnAlerts)
         self.filter.Bind(wx.EVT_COMBOBOX, self.OnFilter)
         self._last_comparison = None
         self._last_issue_history = None
+        self._last_alerts = None
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(self.listbox, 1, wx.ALL | wx.EXPAND, 8)
         sizer.Add(self.details, 1, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, 8)
@@ -34,6 +38,7 @@ class Dialog(wx.Dialog):
         actions.Add(self.filter, 0, wx.RIGHT, 8)
         actions.Add(self.button_compare, 0, wx.RIGHT, 8)
         actions.Add(self.button_track_issues, 0, wx.RIGHT, 8)
+        actions.Add(self.button_alerts, 0, wx.RIGHT, 8)
         actions.Add(self.button_close, 0)
         sizer.Add(actions, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.ALIGN_RIGHT, 8)
         self.SetSizer(sizer)
@@ -91,7 +96,9 @@ class Dialog(wx.Dialog):
         )[self.filter.GetSelection()]
 
     def OnFilter(self, event):
-        if self._last_issue_history is not None:
+        if self._last_alerts is not None:
+            self._show_alerts(self._last_alerts)
+        elif self._last_issue_history is not None:
             self._show_issue_history(self._last_issue_history)
         elif self._last_comparison is not None:
             self._show_comparison(self._last_comparison)
@@ -107,8 +114,11 @@ class Dialog(wx.Dialog):
             wx.MessageBox("Un snapshot ne peut pas être comparé avec lui-même.", "Comparaison impossible", wx.OK | wx.ICON_WARNING)
             return
         try:
+            self._last_alerts = None
             self._last_issue_history = None
             self._last_comparison = compare_salary_control_snapshots(before.snapshot_id, after.snapshot_id, repository=self.repository)
+            self.filter.SetItems(["Tous", "Améliorations", "Dégradations", "Nouveaux contrats", "Contrats absents", "Changements de statut", "Écarts modifiés", "Inchangés"])
+            self.filter.SetSelection(0)
         except Exception as exc:
             wx.MessageBox("Impossible de comparer les snapshots.\n\n%s" % exc, "Comparaison impossible", wx.OK | wx.ICON_ERROR)
             return
@@ -135,8 +145,11 @@ class Dialog(wx.Dialog):
         before = self.snapshots[selections[0]]
         after = self.snapshots[selections[1]]
         try:
+            self._last_alerts = None
             self._last_comparison = None
             self._last_issue_history = track_salary_control_issues(before.snapshot_id, after.snapshot_id, repository=self.repository)
+            self.filter.SetItems(["Toutes", "Nouvelles", "Persistantes", "Résolues"])
+            self.filter.SetSelection(0)
         except Exception as exc:
             wx.MessageBox("Impossible de suivre les anomalies.\n\n%s" % exc, "Suivi impossible", wx.OK | wx.ICON_ERROR)
             return
@@ -146,12 +159,8 @@ class Dialog(wx.Dialog):
         return (
             ContractSalaryControlIssueHistoryPresenter.FILTER_ALL,
             ContractSalaryControlIssueHistoryPresenter.FILTER_NEW,
-            ContractSalaryControlIssueHistoryPresenter.FILTER_RESOLVED,
-            ContractSalaryControlIssueHistoryPresenter.FILTER_ALL,
-            ContractSalaryControlIssueHistoryPresenter.FILTER_ALL,
             ContractSalaryControlIssueHistoryPresenter.FILTER_ONGOING,
-            ContractSalaryControlIssueHistoryPresenter.FILTER_ALL,
-            ContractSalaryControlIssueHistoryPresenter.FILTER_ALL,
+            ContractSalaryControlIssueHistoryPresenter.FILTER_RESOLVED,
         )[self.filter.GetSelection()]
 
     def _show_issue_history(self, history):
@@ -163,4 +172,39 @@ class Dialog(wx.Dialog):
                 row.contract_id_label, row.employee_id_label, row.issue_label, row.status_label, row.evolution_label,
                 row.before_reason_label, row.after_reason_label, row.before_snapshot_date_label, row.after_snapshot_date_label,
             ))
+        self.details.SetValue("\n".join(lines))
+
+
+    def OnAlerts(self, event):
+        try:
+            self._last_comparison = None
+            self._last_issue_history = None
+            self._last_alerts = generate_salary_control_alerts(repository=self.repository)
+            self.filter.SetItems(["Toutes", "Critiques", "Avertissements", "Informations", "Non conformités", "Nouvelles anomalies", "Résolues"])
+            self.filter.SetSelection(0)
+        except Exception as exc:
+            wx.MessageBox("Impossible de générer les alertes.\n\n%s" % exc, "Alertes indisponibles", wx.OK | wx.ICON_ERROR)
+            return
+        self._show_alerts(self._last_alerts)
+
+    def _alert_filter_key(self):
+        return (
+            ContractSalaryAlertPresenter.FILTER_ALL,
+            ContractSalaryAlertPresenter.FILTER_CRITICAL,
+            ContractSalaryAlertPresenter.FILTER_WARNING,
+            ContractSalaryAlertPresenter.FILTER_INFO,
+            ContractSalaryAlertPresenter.FILTER_NON_COMPLIANCE,
+            ContractSalaryAlertPresenter.FILTER_NEW_ANOMALIES,
+            ContractSalaryAlertPresenter.FILTER_RESOLVED,
+        )[self.filter.GetSelection()]
+
+    def _show_alerts(self, alerts):
+        presenter = ContractSalaryAlertPresenter()
+        vm = presenter.present(alerts, filter_key=self._alert_filter_key())
+        lines = ["Alertes", "=======", *vm.summary_lines, "", "Liste", "====="]
+        for row in vm.rows:
+            lines.append("%s | salarié %s | contrat %s | %s | %s | %s" % (
+                row.severity_label, row.employee_label, row.contract_label, row.type_label, row.summary, row.date_label,
+            ))
+            lines.append("  %s" % row.detail)
         self.details.SetValue("\n".join(lines))

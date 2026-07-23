@@ -149,3 +149,23 @@ class CompareContractSalaryControlSnapshotsUseCase:
             raise ContractSalaryControlSnapshotNotFoundError(f"Snapshot salarial introuvable : {after_snapshot_id}.")
         service = self.service or CompareContractSalaryControlSnapshotsService()
         return service.compare(before, after)
+
+
+@dataclass(frozen=True, slots=True)
+class GenerateContractSalaryAlertsUseCase:
+    repository: ContractSalaryControlSnapshotRepository
+    service: object = None
+
+    def execute(self):
+        from domain.contracts.contract_salary_alert import GenerateContractSalaryAlertsService
+        from domain.contracts.contract_salary_control_issue_history import TrackContractSalaryControlIssuesService
+        from domain.contracts.contract_salary_control_snapshot_comparison import CompareContractSalaryControlSnapshotsService
+        snapshots = self.repository.list_all()
+        if len(snapshots) < 2:
+            raise ContractSalaryControlSnapshotNotFoundError("Deux snapshots salariaux sont nécessaires pour générer les alertes.")
+        ordered = sorted(snapshots, key=lambda snapshot: (snapshot.executed_at, snapshot.snapshot_id))
+        before, after = ordered[-2], ordered[-1]
+        comparison = CompareContractSalaryControlSnapshotsService().compare(before, after)
+        issue_history = TrackContractSalaryControlIssuesService().track(before, after)
+        service = self.service or GenerateContractSalaryAlertsService()
+        return service.generate(after, comparison, issue_history)
