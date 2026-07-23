@@ -65,8 +65,11 @@ def test_contrat_non_evalue_hausse_minimum_baisse_remuneration_nouveau_supprime(
     assert any(a.alert_type is ContractSalaryAlertType.MINIMUM_INCREASE for a in collection.alerts)
     assert any(a.alert_type is ContractSalaryAlertType.SALARY_DECREASE for a in collection.alerts)
     assert any(a.alert_type is ContractSalaryAlertType.REMOVED_CONTRACT for a in collection.alerts)
+    removed_alerts = tuple(a.alert_type for a in collection.alerts if a.contract_id == C2)
+    assert removed_alerts == (ContractSalaryAlertType.REMOVED_CONTRACT,)
     new_ok = alerts(snapshot([], day=1), snapshot([row(C1)], day=2))
     assert any(a.alert_type is ContractSalaryAlertType.NEW_CONTRACT and a.severity is ContractSalaryAlertSeverity.INFO for a in new_ok.alerts)
+    assert not any(a.alert_type in (ContractSalaryAlertType.MINIMUM_INCREASE, ContractSalaryAlertType.SALARY_DECREASE, ContractSalaryAlertType.SIGNIFICANT_SHORTFALL) for a in new_ok.alerts)
 
 
 def test_ordre_deterministe_presentateur_repository_absent_et_aucun_acces_base():
