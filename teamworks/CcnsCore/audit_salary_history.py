@@ -41,3 +41,9 @@ def compare_salary_control_snapshots(before_snapshot_id, after_snapshot_id, *, r
     from application.control import CompareContractSalaryControlSnapshotsUseCase
     repo = repository or SqliteContractSalaryControlSnapshotRepository()
     return CompareContractSalaryControlSnapshotsUseCase(repo).execute(before_snapshot_id, after_snapshot_id)
+
+
+def track_salary_control_issues(before_snapshot_id, after_snapshot_id, *, repository=None):
+    from application.control import TrackContractSalaryControlIssuesUseCase
+    repo = repository or SqliteContractSalaryControlSnapshotRepository()
+    return TrackContractSalaryControlIssuesUseCase(repo).execute(before_snapshot_id, after_snapshot_id)

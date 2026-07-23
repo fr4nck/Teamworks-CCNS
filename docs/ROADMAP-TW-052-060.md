@@ -160,22 +160,33 @@ Comparer deux snapshots afin d’identifier les améliorations, dégradations et
 
 ## TW-057 — Ajouter le suivi des anomalies salariales
 
+**Statut : En cours.**
+
+**PR : à ouvrir.**
+
 ### Objectif
 
-Permettre de suivre le traitement d’une anomalie salariale sans modifier le résultat métier d’origine.
+Identifier les anomalies salariales nouvelles, persistantes et résolues entre deux snapshots historisés, sans recalcul du contrôle salarial.
 
 ### Périmètre
 
-- statuts de suivi : à traiter, en cours, corrigée, classée ;
-- commentaire interne facultatif ;
-- date et auteur de la dernière action ;
-- lien stable avec le contrat, le salarié et le snapshot concerné.
+- modèles immuables d'anomalie et d'historique ;
+- statuts de suivi : nouvelle, persistante, résolue, inconnue ;
+- détection des anomalies remplacées, changements de statut, de motif et de gravité ;
+- cas d'usage chargeant deux snapshots puis appelant un service pur ;
+- présentateur et accès en lecture seule depuis l'historique des contrôles.
 
 ### Critères de sortie
 
-- séparation stricte entre anomalie métier et suivi opérationnel ;
-- historique minimal des changements ;
-- droits d’accès préparés pour les futures interfaces.
+- suivi strictement basé sur les snapshots TW-055 ;
+- aucun recalcul salarial ;
+- aucun système d'alerte automatique ;
+- aucun export consolidé ;
+- tests ciblés sur les scénarios d'évolution.
+
+### Suivi
+
+- Documentation : `docs/43-suivi-anomalies-salariales.md`.
 
 ---
 
