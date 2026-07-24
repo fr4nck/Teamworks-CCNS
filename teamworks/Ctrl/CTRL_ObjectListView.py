@@ -612,14 +612,14 @@ class ObjectListView(OLV.ObjectListView):
         if self.checkStateColumn != None:
 
             # Item Tout cocher
-            id = wx.NewId()
+            id = wx.NewIdRef()
             item = wx.MenuItem(menu, id, _(u"Tout cocher"))
             item.SetBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Cocher.png"), wx.BITMAP_TYPE_PNG))
             menu.AppendItem(item)
             self.Bind(wx.EVT_MENU, self.CocheListeTout, id=id)
 
             # Item Tout d�cocher
-            id = wx.NewId()
+            id = wx.NewIdRef()
             item = wx.MenuItem(menu, id, _(u"Tout d�cocher"))
             item.SetBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Decocher.png"), wx.BITMAP_TYPE_PNG))
             menu.AppendItem(item)
@@ -628,14 +628,14 @@ class ObjectListView(OLV.ObjectListView):
             menu.AppendSeparator()
 
         # Apercu avant impression
-        id = wx.NewId()
+        id = wx.NewIdRef()
         item = wx.MenuItem(menu, id, _(u"Aper�u avant impression"))
         item.SetBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Apercu.png"), wx.BITMAP_TYPE_PNG))
         menu.AppendItem(item)
         self.Bind(wx.EVT_MENU, self.Apercu, id=id)
 
         # Item Imprimer
-        id = wx.NewId()
+        id = wx.NewIdRef()
         item = wx.MenuItem(menu, id, _(u"Imprimer"))
         item.SetBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Imprimante.png"), wx.BITMAP_TYPE_PNG))
         menu.AppendItem(item)
@@ -644,14 +644,14 @@ class ObjectListView(OLV.ObjectListView):
         menu.AppendSeparator()
 
         # Item Export Texte
-        id = wx.NewId()
+        id = wx.NewIdRef()
         item = wx.MenuItem(menu, id, _(u"Exporter au format Texte"))
         item.SetBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Texte2.png"), wx.BITMAP_TYPE_PNG))
         menu.AppendItem(item)
         self.Bind(wx.EVT_MENU, self.ExportTexte, id=id)
 
         # Item Export Excel
-        id = wx.NewId()
+        id = wx.NewIdRef()
         item = wx.MenuItem(menu, id, _(u"Exporter au format Excel"))
         item.SetBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Excel.png"), wx.BITMAP_TYPE_PNG))
         menu.AppendItem(item)
@@ -667,7 +667,7 @@ class ObjectListView(OLV.ObjectListView):
                 menu.AppendSeparator()
 
                 # Envoyer des emails
-                id = wx.NewId()
+                id = wx.NewIdRef()
                 item = wx.MenuItem(menu, id, _(u"Envoyer un Email"))
                 item.SetBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Editeur_email.png"), wx.BITMAP_TYPE_PNG))
                 menu.AppendItem(item)

@@ -741,7 +741,7 @@ class Calendrier(wx.ScrolledWindow):
             else :
                 select = False
             # S�lection/d�selection du jour cliqu�
-            self.popupID1 = wx.NewId()
+            self.popupID1 = wx.NewIdRef()
             if select == False :
                 texte = _(u"S�lectionner le ") + six.text_type(texteDate.day) + "/" + six.text_type(texteDate.month) + "/" + six.text_type(texteDate.year)
             else:
@@ -752,17 +752,17 @@ class Calendrier(wx.ScrolledWindow):
             menu.AppendSeparator()
         
         # Choisir la date d'aujourd'hui
-        self.popupID4 = wx.NewId()
+        self.popupID4 = wx.NewIdRef()
         menu.Append(self.popupID4, _(u"S�lectionner aujourd'hui"))
         self.Bind(wx.EVT_MENU, self.OnPopup4, id=self.popupID4)
         
         # Choisir tout le mois
-        self.popupID5 = wx.NewId()
+        self.popupID5 = wx.NewIdRef()
         menu.Append(self.popupID5, _(u"S�lectionner tout le mois"))
         self.Bind(wx.EVT_MENU, self.OnPopup5, id=self.popupID5)
         
         # Choisir une p�riode de vacances
-        self.popupID3 = wx.NewId()
+        self.popupID3 = wx.NewIdRef()
         if len(self.listePeriodesVacs) != 0 :
             sm = UTILS_Adaptations.Menu()
             index = 0
@@ -777,12 +777,12 @@ class Calendrier(wx.ScrolledWindow):
             menu.AppendMenu(self.popupID3, _(u"S�lectionner une p�riode de vacances"), sm)
         
         # Tout d�s�lectionner
-        self.popupID7 = wx.NewId()
+        self.popupID7 = wx.NewIdRef()
         menu.Append(self.popupID7, _(u"Tout d�s�lectionner"))
         self.Bind(wx.EVT_MENU, self.OnPopup7, id=self.popupID7)
         
         # Exclure les jours de week-end dans les s�lections
-        self.popupID6 = wx.NewId()
+        self.popupID6 = wx.NewIdRef()
         menu.Append(self.popupID6, _(u"Exclure les week-ends des s�lections"), _(u"Exclure les week-ends de la s�lection"), wx.ITEM_CHECK)
         if self.selectExclureWE == True :
             menu.Check(self.popupID6, True)
@@ -790,7 +790,7 @@ class Calendrier(wx.ScrolledWindow):
         
         # Aide sur le calendrier
         menu.AppendSeparator()
-        self.popupID2 = wx.NewId()
+        self.popupID2 = wx.NewIdRef()
         menu.Append(self.popupID2, _(u"Aide sur le calendrier"))
         self.Bind(wx.EVT_MENU, self.OnPopup2, id=self.popupID2)
 
