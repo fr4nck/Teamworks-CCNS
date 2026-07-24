@@ -54,7 +54,7 @@ def GetPhoto(IDindividu=None, nomFichier=None, taillePhoto=(128, 128), qualite=w
                 if 'phoenix' in wx.PlatformInfo:
                     bmp = wx.Bitmap(tailleInitiale[0], tailleInitiale[1])
                 else:
-                    bmp = wx.EmptyBitmap(tailleInitiale[0], tailleInitiale[1])
+                    bmp = wx.Bitmap(tailleInitiale[0], tailleInitiale[1])
                 dc = wx.MemoryDC()
                 dc.SelectObject(bmp)
 
