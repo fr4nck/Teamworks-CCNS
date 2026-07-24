@@ -106,18 +106,18 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Migrate CTRL_Page_presences without changing its encoding
+      - name: Migrate CTRL_Photo without changing its encoding
         run: |
-          python tools/migrate_wx_empty_images.py --write --path teamworks/Ctrl/CTRL_Page_presences.py
+          python tools/migrate_wx_empty_images.py --write --path teamworks/Ctrl/CTRL_Photo.py
 
       - name: Commit targeted migration
         run: |
-          if git diff --quiet -- teamworks/Ctrl/CTRL_Page_presences.py; then
+          if git diff --quiet -- teamworks/Ctrl/CTRL_Photo.py; then
             echo "No migration required"
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add teamworks/Ctrl/CTRL_Page_presences.py
-          git commit -m "Frankenstein lot 2 — migrer l’image de CTRL_Page_presences"
+          git add teamworks/Ctrl/CTRL_Photo.py
+          git commit -m "Frankenstein lot 2 — migrer le bitmap de CTRL_Photo"
           git push origin HEAD:${{ github.head_ref }}
