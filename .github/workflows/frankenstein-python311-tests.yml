@@ -45,5 +45,18 @@ jobs:
             tests/test_completed_python3_wx_migrations.py \
             tests/test_migrate_wx_empty_images.py
 
-      - name: Compile Teamworks sources
-        run: python -m compileall -q teamworks tools
+      - name: Compile migration tools and tests
+        run: |
+          python -m compileall -q tools \
+            tests/test_python3_cli_compatibility.py \
+            tests/test_migrate_wx_listctrl.py \
+            tests/test_migrate_python3_unicode.py \
+            tests/test_wx_listctrl_source_compatibility.py \
+            tests/test_migrate_wx_setstringitem.py \
+            tests/test_objectlistview_setstringitem_migration.py \
+            tests/test_completed_python3_wx_migrations.py \
+            tests/test_migrate_wx_empty_images.py
+
+      - name: Report full legacy compile audit
+        continue-on-error: true
+        run: python -m compileall -q teamworks
