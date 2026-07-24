@@ -852,7 +852,7 @@ class ObjectListView(wx.ListCtrl):
                         modelObject, iCol), self.GetImageAt(
                         modelObject, iCol))
             else:
-                self.SetStringItem(
+                self.SetItem(
                     index, iCol, self.GetStringValueAt(
                         modelObject, iCol), self.GetImageAt(
                         modelObject, iCol))
