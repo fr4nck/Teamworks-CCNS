@@ -57,6 +57,9 @@ jobs:
       - name: Test wx image migrator
         run: python -m pytest -q tests/test_migrate_wx_empty_images.py
 
+      - name: Inventory wx image migration targets
+        run: python tools/migrate_wx_empty_images.py --path teamworks
+
       - name: Compile migration tools and tests
         run: |
           python -m compileall -q tools \
