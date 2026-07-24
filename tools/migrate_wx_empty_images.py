@@ -3,7 +3,7 @@
 
 Par défaut, le script analyse les fichiers Python sous ``teamworks`` sans les
 modifier. L'option ``--write`` applique uniquement les transformations exactes
-suivantes :
+suivantes dans le code Python, sans toucher aux chaînes ni aux commentaires :
 
 - ``wx.EmptyBitmap(...)`` -> ``wx.Bitmap(...)``
 - ``wx.EmptyImage(...)`` -> ``wx.Image(...)``
@@ -12,33 +12,65 @@ suivantes :
 from __future__ import annotations
 
 import argparse
+import io
 from pathlib import Path
-import re
+import tokenize
 
 
 ROOT = Path("teamworks")
-PATTERNS = (
-    (re.compile(r"\bwx\.EmptyBitmap\("), "wx.Bitmap("),
-    (re.compile(r"\bwx\.EmptyImage\("), "wx.Image("),
-)
+REPLACEMENTS = {
+    "EmptyBitmap": "Bitmap",
+    "EmptyImage": "Image",
+}
+
+
+def _line_offsets(source: str) -> list[int]:
+    offsets = [0]
+    for line in source.splitlines(keepends=True):
+        offsets.append(offsets[-1] + len(line))
+    return offsets
+
+
+def _absolute_offset(offsets: list[int], position: tuple[int, int]) -> int:
+    line, column = position
+    return offsets[line - 1] + column
 
 
 def migrate_source(source: str) -> tuple[str, int]:
+    tokens = list(tokenize.generate_tokens(io.StringIO(source).readline))
+    offsets = _line_offsets(source)
+    edits: list[tuple[int, int, str]] = []
+
+    for index in range(len(tokens) - 3):
+        first, dot, name, opening = tokens[index:index + 4]
+        if (
+            first.type == tokenize.NAME
+            and first.string == "wx"
+            and dot.type == tokenize.OP
+            and dot.string == "."
+            and name.type == tokenize.NAME
+            and name.string in REPLACEMENTS
+            and opening.type == tokenize.OP
+            and opening.string == "("
+        ):
+            start = _absolute_offset(offsets, name.start)
+            end = _absolute_offset(offsets, name.end)
+            edits.append((start, end, REPLACEMENTS[name.string]))
+
     migrated = source
-    total = 0
+    for start, end, replacement in reversed(edits):
+        migrated = migrated[:start] + replacement + migrated[end:]
 
-    for pattern, replacement in PATTERNS:
-        migrated, count = pattern.subn(replacement, migrated)
-        total += count
-
-    return migrated, total
+    return migrated, len(edits)
 
 
 def iter_python_files(root: Path):
     if root.is_file():
-        yield root
-    else:
-        yield from sorted(root.rglob("*.py"))
+        if root.suffix == ".py":
+            yield root
+        return
+
+    yield from sorted(root.rglob("*.py"))
 
 
 def main() -> int:
