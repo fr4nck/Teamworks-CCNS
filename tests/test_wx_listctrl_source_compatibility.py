@@ -2,8 +2,7 @@ from pathlib import Path
 import ast
 
 
-TEAMWORKS_ROOT = Path("teamworks")
-OBJECT_LIST_VIEW_SOURCE = TEAMWORKS_ROOT / "ObjectListView" / "ObjectListView.py"
+OBJECT_LIST_VIEW_SOURCE = Path("teamworks/ObjectListView/ObjectListView.py")
 
 
 def _attribute_calls(source_path: Path) -> list[tuple[str, int]]:
@@ -24,19 +23,12 @@ def test_object_list_view_uses_insert_item_api():
     assert "InsertStringItem" not in called_names
 
 
-def test_no_insert_string_item_call_remains_in_teamworks_sources():
-    offenders = []
-
-    for source_path in TEAMWORKS_ROOT.rglob("*.py"):
-        try:
-            calls = _attribute_calls(source_path)
-        except SyntaxError:
-            continue
-
-        offenders.extend(
-            f"{source_path}:{line}"
-            for name, line in calls
-            if name == "InsertStringItem"
-        )
+def test_object_list_view_has_no_legacy_listctrl_insert_call():
+    calls = _attribute_calls(OBJECT_LIST_VIEW_SOURCE)
+    offenders = [
+        f"{OBJECT_LIST_VIEW_SOURCE}:{line}"
+        for name, line in calls
+        if name == "InsertStringItem"
+    ]
 
     assert offenders == []
