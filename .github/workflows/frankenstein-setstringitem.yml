@@ -1,0 +1,45 @@
+name: Frankenstein SetStringItem migration
+
+on:
+  push:
+    branches:
+      - frankenstein/python3-wxphoenix-lot2
+    paths:
+      - .github/workflows/frankenstein-setstringitem.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  migrate-objectlistview:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout migration branch
+        uses: actions/checkout@v4
+        with:
+          ref: frankenstein/python3-wxphoenix-lot2
+
+      - name: Apply targeted SetStringItem migration
+        run: |
+          python tools/migrate_wx_setstringitem.py \
+            --path teamworks/ObjectListView/ObjectListView.py \
+            --write
+
+      - name: Verify obsolete API is gone
+        run: |
+          python tools/migrate_wx_setstringitem.py \
+            --path teamworks/ObjectListView/ObjectListView.py \
+            --check
+
+      - name: Commit migrated source
+        run: |
+          if git diff --quiet; then
+            echo "No migration change required"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add teamworks/ObjectListView/ObjectListView.py
+          git commit -m "Frankenstein lot 2 — appliquer SetItem dans ObjectListView"
+          git push
