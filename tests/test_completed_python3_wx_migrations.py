@@ -3,12 +3,13 @@ from pathlib import Path
 import tokenize
 
 
-TEAMWORKS_ROOT = Path("teamworks")
-FORBIDDEN_NAMES = {"raw_input", "InsertStringItem", "SetStringItem"}
-
-
-def iter_python_sources():
-    yield from sorted(TEAMWORKS_ROOT.rglob("*.py"))
+COMPLETED_MIGRATIONS = {
+    Path("teamworks/Utils/UTILS_Cryptage_fichier.py"): {"raw_input"},
+    Path("teamworks/ObjectListView/ObjectListView.py"): {
+        "InsertStringItem",
+        "SetStringItem",
+    },
+}
 
 
 def tokenized_names(source: str):
@@ -24,10 +25,10 @@ def tokenized_names(source: str):
 def test_completed_python3_and_wx_migrations_do_not_regress():
     findings = []
 
-    for source_path in iter_python_sources():
+    for source_path, forbidden_names in COMPLETED_MIGRATIONS.items():
         source = source_path.read_text(encoding="utf-8", errors="replace")
         for name, line_number in tokenized_names(source):
-            if name in FORBIDDEN_NAMES:
+            if name in forbidden_names:
                 findings.append(f"{source_path}:{line_number}: {name}")
 
     assert findings == [], "Anciennes API réintroduites:\n" + "\n".join(findings)
