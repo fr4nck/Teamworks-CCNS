@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   python311-compatibility:
@@ -90,3 +90,34 @@ jobs:
       - name: Report full legacy compile audit
         continue-on-error: true
         run: python -m compileall -q teamworks
+
+  apply-next-wx-image-migration:
+    if: github.event_name == 'pull_request' && github.head_ref == 'frankenstein/python3-wxphoenix-lot2'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout pull request branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Migrate CTRL_Liste_fichiers without changing its encoding
+        run: |
+          python tools/migrate_wx_empty_images.py --write --path teamworks/Ctrl/CTRL_Liste_fichiers.py
+
+      - name: Commit targeted migration
+        run: |
+          if git diff --quiet -- teamworks/Ctrl/CTRL_Liste_fichiers.py; then
+            echo "No migration required"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add teamworks/Ctrl/CTRL_Liste_fichiers.py
+          git commit -m "Frankenstein lot 2 — migrer les bitmaps de CTRL_Liste_fichiers"
+          git push origin HEAD:${{ github.head_ref }}
