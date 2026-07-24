@@ -73,24 +73,6 @@ jobs:
             wx-classic-inventory.md
           if-no-files-found: error
 
-      - name: Inventory wx image migration targets
-        run: python tools/migrate_wx_empty_images.py --path teamworks
-
-      - name: Generate wx image migration patch
-        run: |
-          python tools/migrate_wx_empty_images.py --write --path teamworks
-          git diff -- teamworks > wx-image-migration.patch
-
-      - name: Upload wx image migration patch
-        uses: actions/upload-artifact@v4
-        with:
-          name: wx-image-migration-patch
-          path: wx-image-migration.patch
-          if-no-files-found: error
-
-      - name: Restore repository after patch generation
-        run: git checkout -- teamworks
-
       - name: Compile migration tools and tests
         run: |
           python -m compileall -q tools \
@@ -107,7 +89,7 @@ jobs:
         continue-on-error: true
         run: python -m compileall -q teamworks
 
-  apply-wx-image-migration-batch:
+  apply-wx-listctrl-migration-batch:
     if: github.event_name == 'pull_request' && github.head_ref == 'frankenstein/python3-wxphoenix-lot2'
     runs-on: ubuntu-latest
 
@@ -122,10 +104,10 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Migrate all remaining wx image constructors
-        run: python tools/migrate_wx_empty_images.py --write --path teamworks
+      - name: Migrate safe wx ListCtrl calls in one batch
+        run: python tools/migrate_wx_listctrl_batch.py --write --path teamworks
 
-      - name: Commit wx image migration batch
+      - name: Commit wx ListCtrl migration batch
         run: |
           if git diff --quiet -- teamworks; then
             echo "No migration required"
@@ -134,5 +116,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add teamworks
-          git commit -m "Frankenstein lot 2 — migrer en lot les images wx restantes"
+          git commit -m "Frankenstein lot 2 — migrer en lot les appels wx ListCtrl"
           git push origin HEAD:${{ github.head_ref }}
