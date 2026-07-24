@@ -9,6 +9,8 @@ COMPLETED_MIGRATIONS = {
         "InsertStringItem",
         "SetStringItem",
     },
+    Path("teamworks/Ctrl/CTRL_Bouton_image.py"): {"EmptyImage"},
+    Path("teamworks/Ctrl/CTRL_Liste_fichiers.py"): {"EmptyBitmap"},
 }
 
 
