@@ -11,6 +11,7 @@ COMPLETED_MIGRATIONS = {
     },
     Path("teamworks/Ctrl/CTRL_Bouton_image.py"): {"EmptyImage"},
     Path("teamworks/Ctrl/CTRL_Liste_fichiers.py"): {"EmptyBitmap"},
+    Path("teamworks/Ctrl/CTRL_Page_presences.py"): {"EmptyImage"},
 }
 
 
