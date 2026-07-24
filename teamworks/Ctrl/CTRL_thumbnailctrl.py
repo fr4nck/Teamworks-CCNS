@@ -369,7 +369,7 @@ class PILImageHandler(object):
         if 'phoenix' in wx.PlatformInfo:
             img = wx.Image(pil.size[0], pil.size[1])
         else:
-            img = wx.EmptyImage(pil.size[0], pil.size[1])
+            img = wx.Image(pil.size[0], pil.size[1])
         img.SetData(pil.convert("RGB").tobytes())
 
         alpha = False
@@ -428,8 +428,8 @@ class Thumb(object):
             self._bitmap = wx.Bitmap(1,1)
             self._image = wx.Image(1,1)
         else:
-            self._bitmap = wx.EmptyBitmap(1,1)
-            self._image = wx.EmptyImage(1,1)
+            self._bitmap = wx.Bitmap(1,1)
+            self._image = wx.Image(1,1)
         self._rotation = 0
         self._alpha = None
         
@@ -608,7 +608,7 @@ class Thumb(object):
         if 'phoenix' in wx.PlatformInfo:
             bmp = wx.Bitmap(10,10)
         else:
-            bmp = wx.EmptyBitmap(10,10)
+            bmp = wx.Bitmap(10,10)
         dc.SelectObject(bmp)
         
         while 1:
@@ -1845,7 +1845,7 @@ class ScrolledThumbnail(wx.ScrolledWindow):
             if 'phoenix' in wx.PlatformInfo:
                 thmb = wx.Bitmap(tw, th)
             else:
-                thmb = wx.EmptyBitmap(tw, th)
+                thmb = wx.Bitmap(tw, th)
             self.DrawThumbnail(thmb, self._items[ii], ii)
             dc.DrawBitmap(thmb, tx, ty)
   
@@ -2161,7 +2161,7 @@ class ScrolledThumbnail(wx.ScrolledWindow):
                 newangle = thumb.GetRotation()*180//pi + angle
                 fil = opj(thumb.GetFullFileName())
                 pil = Image.open(fil).rotate(newangle)
-                img = wx.EmptyImage(pil.size[0], pil.size[1])
+                img = wx.Image(pil.size[0], pil.size[1])
                 img.SetData(pil.convert('RGB').tobytes())
                 thumb.SetRotation(newangle*pi//180)
             else:

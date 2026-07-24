@@ -920,7 +920,7 @@ def CreationPhotoPersonne(IDpersonne=0, nomFichierPhoto="", tailleFinale = None,
     photo = wx.Bitmap(nomFichierPhoto, wx.BITMAP_TYPE_ANY)
     tailleInitiale = photo.GetSize()
     # Création du dc temporaire
-    bmp = wx.EmptyBitmap(tailleInitiale[0], tailleInitiale[1])
+    bmp = wx.Bitmap(tailleInitiale[0], tailleInitiale[1])
     dc = wx.MemoryDC()
     dc.SelectObject(bmp)
     dc.SetBackground(wx.Brush("black"))

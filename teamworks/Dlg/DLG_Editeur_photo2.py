@@ -18,7 +18,7 @@ import FonctionsPerso
 
 def pil2wx(image):
     """Convert a PIL image to wx image format"""
-    imagewx=wx.EmptyImage(image.size[0], image.size[1])
+    imagewx=wx.Image(image.size[0], image.size[1])
     imagewx.SetData(image.tobytes('raw', 'RGB'))
     return imagewx
 
@@ -101,7 +101,7 @@ class ImgBox(wx.Window):
         self.ResizePhoto()
         largeurDC, hauteurDC = self.GetClientSizeTuple()
         # Redessine toute l'image
-        self._Buffer = wx.EmptyBitmap(largeurDC, hauteurDC)
+        self._Buffer = wx.Bitmap(largeurDC, hauteurDC)
         self.UpdateDrawing()
 
     def ResizePhoto(self):

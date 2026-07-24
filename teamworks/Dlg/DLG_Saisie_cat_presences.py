@@ -260,7 +260,7 @@ class TreeCtrlCategories(wx.TreeCtrl):
             bmp.SetRGB((0, 0, 16, 16), 255, 255, 255)
             bmp.SetRGB((6, 4, 8, 8), r, v, b)
         else:
-            bmp = wx.EmptyImage(tailleImages[0], tailleImages[1], True)
+            bmp = wx.Image(tailleImages[0], tailleImages[1], True)
             bmp.SetRGBRect((0, 0, 16, 16), 255, 255, 255)
             bmp.SetRGBRect((6, 4, 8, 8), r, v, b)
         return bmp.ConvertToBitmap()

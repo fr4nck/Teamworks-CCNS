@@ -24,7 +24,7 @@ def pil2wx(image):
     if 'phoenix' in wx.PlatformInfo:
         imagewx = wx.Image(image.size[0], image.size[1])
     else:
-        imagewx = wx.EmptyImage(image.size[0], image.size[1])
+        imagewx = wx.Image(image.size[0], image.size[1])
     imagewx.SetData(image.tobytes('raw', 'RGB'))
     return imagewx
 
@@ -209,7 +209,7 @@ class ImgBox(wx.Window):
         if 'phoenix' in wx.PlatformInfo:
             self._Buffer = wx.Bitmap(self.largeurDC, self.hauteurDC)
         else:
-            self._Buffer = wx.EmptyBitmap(self.largeurDC, self.hauteurDC)
+            self._Buffer = wx.Bitmap(self.largeurDC, self.hauteurDC)
         self.UpdateDrawing()
 
 

@@ -1794,7 +1794,7 @@ class PanelLegende(scrolled.ScrolledPanel):
             bmp.SetRGB((0, 0, l, h), 0, 0, 0)
             bmp.SetRGB((1, 1, l-2, h-2), r, v, b)
         else:
-            bmp = wx.EmptyImage(l, h, True)
+            bmp = wx.Image(l, h, True)
             bmp.SetRGBRect((0, 0, l, h), 0, 0, 0)
             bmp.SetRGBRect((1, 1, l-2, h-2), r, v, b)
         return bmp.ConvertToBitmap()
