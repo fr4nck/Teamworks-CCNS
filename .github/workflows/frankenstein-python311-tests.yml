@@ -89,7 +89,7 @@ jobs:
         continue-on-error: true
         run: python -m compileall -q teamworks
 
-  apply-wx-tree-data-migration-batch:
+  apply-wx-misc-legacy-migration-batch:
     if: github.event_name == 'pull_request' && github.head_ref == 'frankenstein/python3-wxphoenix-lot2'
     runs-on: ubuntu-latest
 
@@ -104,10 +104,10 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Migrate wx TreeCtrl data calls in one batch
-        run: python tools/migrate_wx_tree_data.py --write --path teamworks
+      - name: Migrate straightforward wx Classic APIs in one batch
+        run: python tools/migrate_wx_misc_legacy.py --write --path teamworks
 
-      - name: Commit wx TreeCtrl migration batch
+      - name: Commit wx utility API migration batch
         run: |
           if git diff --quiet -- teamworks; then
             echo "No migration required"
@@ -116,5 +116,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add teamworks
-          git commit -m "Frankenstein lot 2 — migrer en lot les données wx TreeCtrl"
+          git commit -m "Frankenstein lot 2 — migrer en lot les API wx utilitaires"
           git push origin HEAD:${{ github.head_ref }}
