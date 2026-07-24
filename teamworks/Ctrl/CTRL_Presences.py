@@ -672,7 +672,7 @@ class PanelPersonnes(FonctionsPerso.PanelArrondi):
         if self.triCritere == "presence" : smTri.Check(110, True)
         if self.triCritere == "nom" : smTri.Check(120, True)
         if self.triCritere == "prenom" : smTri.Check(130, True)
-        menu.AppendMenu(10, "Tri par", smTri)
+        menu.AppendSubMenu(smTri, "Tri par")
         
 
         smOrdre = UTILS_Adaptations.Menu()
@@ -680,7 +680,7 @@ class PanelPersonnes(FonctionsPerso.PanelArrondi):
         smOrdre.Append(220, _(u"Ordre décroissant"), _(u"Trier par ordre décroissant"), wx.ITEM_RADIO)
         if self.triOrdre == "croissant" : smOrdre.Check(210, True)
         if self.triOrdre == "decroissant" : smOrdre.Check(220, True)
-        menu.AppendMenu(20, "Ordre de tri", smOrdre)
+        menu.AppendSubMenu(smOrdre, "Ordre de tri")
 
         menu.AppendSeparator()
         

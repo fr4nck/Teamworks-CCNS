@@ -452,7 +452,7 @@ class MyFrame(wx.Frame):
                 else:
                     CreationItem(menu, sousitem)
             if sousmenu == True:
-                menuParent.AppendMenu(id, item["label"], menu)
+                menuParent.AppendSubMenu(menu, item["label"])
             else:
                 menuParent.Append(menu, item["label"])
             self.dictInfosMenu[item["code"]] = {"id": id, "ctrl": menu}

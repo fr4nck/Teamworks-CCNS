@@ -774,7 +774,7 @@ class Calendrier(wx.ScrolledWindow):
                 self.Bind(wx.EVT_MENU, self.OnPopup3, id=id)
                 index += 1
             # Inclus le sous-menu dans le menu
-            menu.AppendMenu(self.popupID3, _(u"S�lectionner une p�riode de vacances"), sm)
+            menu.AppendSubMenu(sm, _(u"S�lectionner une p�riode de vacances"))
         
         # Tout d�s�lectionner
         self.popupID7 = wx.NewIdRef()

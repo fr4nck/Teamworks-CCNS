@@ -1733,7 +1733,7 @@ class WidgetPlanning(wx.ScrolledWindow):
         if nbre != 0 :
             index, texte = 4, titre
             setattr(self, "popupID%s" % index, wx.Window.NewControlId())
-            menu.AppendMenu(getattr(self, "popupID%s" % index), texte, sm)
+            menu.AppendSubMenu(sm, texte)
                   
 
     def CreationImage(self, tailleImages, r, v, b, IDcategorie):

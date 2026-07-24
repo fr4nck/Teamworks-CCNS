@@ -191,7 +191,7 @@ class CTRL_Photo(wx.StaticBitmap):
                 sousmenu1.Check(indexID, True)
             self.Bind(wx.EVT_MENU, self.Menu_ChoixCadre, id=indexID)
             indexID += 1
-        menuPop.AppendMenu(50, _(u"Choisir un cadre de décoration"), sousmenu1)
+        menuPop.AppendSubMenu(sousmenu1, _(u"Choisir un cadre de décoration"))
 
         self.PopupMenu(menuPop)
         menuPop.Destroy()
