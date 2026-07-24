@@ -89,7 +89,7 @@ jobs:
         continue-on-error: true
         run: python -m compileall -q teamworks
 
-  apply-wx-newid-migration-batch:
+  apply-six-maxsize-migration-batch:
     if: github.event_name == 'pull_request' && github.head_ref == 'frankenstein/python3-wxphoenix-lot2'
     runs-on: ubuntu-latest
 
@@ -104,10 +104,10 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Migrate exact wx.NewId calls in one batch
-        run: python tools/migrate_wx_newid.py --write --path teamworks
+      - name: Migrate six.MAXSIZE calls in one batch
+        run: python tools/migrate_six_maxsize.py --write --path teamworks
 
-      - name: Commit wx.NewId migration batch
+      - name: Commit six.MAXSIZE migration batch
         run: |
           if git diff --quiet -- teamworks; then
             echo "No migration required"
@@ -116,5 +116,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add teamworks
-          git commit -m "Frankenstein lot 2 — migrer en lot les identifiants wx.NewId"
+          git commit -m "Frankenstein lot 2 — migrer en lot six.MAXSIZE vers sys.maxsize"
           git push origin HEAD:${{ github.head_ref }}
