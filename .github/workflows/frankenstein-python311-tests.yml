@@ -33,17 +33,29 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install pytest
 
-      - name: Run Frankenstein migration tests
-        run: |
-          python -m pytest -q \
-            tests/test_python3_cli_compatibility.py \
-            tests/test_migrate_wx_listctrl.py \
-            tests/test_migrate_python3_unicode.py \
-            tests/test_wx_listctrl_source_compatibility.py \
-            tests/test_migrate_wx_setstringitem.py \
-            tests/test_objectlistview_setstringitem_migration.py \
-            tests/test_completed_python3_wx_migrations.py \
-            tests/test_migrate_wx_empty_images.py
+      - name: Test Python 3 CLI compatibility
+        run: python -m pytest -q tests/test_python3_cli_compatibility.py
+
+      - name: Test ListCtrl migrator
+        run: python -m pytest -q tests/test_migrate_wx_listctrl.py
+
+      - name: Test unicode migrator
+        run: python -m pytest -q tests/test_migrate_python3_unicode.py
+
+      - name: Test ListCtrl source compatibility
+        run: python -m pytest -q tests/test_wx_listctrl_source_compatibility.py
+
+      - name: Test SetStringItem migrator
+        run: python -m pytest -q tests/test_migrate_wx_setstringitem.py
+
+      - name: Test ObjectListView migration state
+        run: python -m pytest -q tests/test_objectlistview_setstringitem_migration.py
+
+      - name: Test completed migration audit
+        run: python -m pytest -q tests/test_completed_python3_wx_migrations.py
+
+      - name: Test wx image migrator
+        run: python -m pytest -q tests/test_migrate_wx_empty_images.py
 
       - name: Compile migration tools and tests
         run: |
