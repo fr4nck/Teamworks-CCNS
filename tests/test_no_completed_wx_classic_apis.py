@@ -14,6 +14,7 @@ FORBIDDEN = (
     "wx.PySimpleApp(",
     ".GetClientSizeTuple(",
     ".SetToolTipString(",
+    ".AppendMenu(",
     "wx.NewId()",
     "six.MAXSIZE",
 )
