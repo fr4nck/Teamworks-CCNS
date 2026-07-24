@@ -1742,7 +1742,7 @@ class WidgetPlanning(wx.ScrolledWindow):
             bmp = wx.Image(tailleImages[0], tailleImages[1], True)
             bmp.SetRGB((0, 0, 16, 16), r, v, b)
         else:
-            bmp = wx.EmptyImage(tailleImages[0], tailleImages[1], True)
+            bmp = wx.Image(tailleImages[0], tailleImages[1], True)
             bmp.SetRGBRect((0, 0, 16, 16), r, v, b)
         # Si c'est la couleur d j  s lectionn e :
         if self.dictPresences[self.Context[0]][5] == IDcategorie :
