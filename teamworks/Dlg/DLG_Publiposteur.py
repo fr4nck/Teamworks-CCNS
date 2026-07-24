@@ -3024,8 +3024,8 @@ class listCtrl_Actions(wx.ListCtrl):
                 self.InsertItem(indexLigne, _(u"Document n°%d") % IDdocument)
                 self.SetItem(indexLigne, 1, u"")
             else:
-                self.InsertStringItem(indexLigne, _(u"Document n°%d") % IDdocument)
-                self.SetStringItem(indexLigne, 1, u"")
+                self.InsertItem(indexLigne, _(u"Document n°%d") % IDdocument)
+                self.SetItem(indexLigne, 1, u"")
             indexLigne += 1
             
     def ChangeImage(self, indexLigne, etat=None):
@@ -3042,7 +3042,7 @@ class listCtrl_Actions(wx.ListCtrl):
         if 'phoenix' in wx.PlatformInfo:
             self.SetItem(indexLigne, 1, info)
         else:
-            self.SetStringItem(indexLigne, 1, info)
+            self.SetItem(indexLigne, 1, info)
         self.ChangeImage(indexLigne, etat)
         
         

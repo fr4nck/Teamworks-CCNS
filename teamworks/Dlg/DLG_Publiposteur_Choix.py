@@ -92,9 +92,9 @@ class CheckListCtrl(wx.ListCtrl, CheckListCtrlMixin):
             index += 1
         
         for donnees in self.listeDonnees :
-            index = self.InsertStringItem(six.MAXSIZE, six.text_type(donnees[0]))
+            index = self.InsertItem(six.MAXSIZE, six.text_type(donnees[0]))
             for x in range(1, len(donnees)) :
-                self.SetStringItem(index, x, six.text_type(donnees[x]))
+                self.SetItem(index, x, six.text_type(donnees[x]))
             self.SetItemData(index, donnees[0])
 
 

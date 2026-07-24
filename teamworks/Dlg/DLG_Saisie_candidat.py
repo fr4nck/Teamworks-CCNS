@@ -844,7 +844,7 @@ class ListCtrl_Diplomes(wx.ListCtrl):
             if 'phoenix' in wx.PlatformInfo:
                 self.InsertItem(index, nom_diplome)
             else:
-                self.InsertStringItem(index, nom_diplome)
+                self.InsertItem(index, nom_diplome)
             # Intégration du data ID
             self.SetItemData(index, key)
             index += 1
@@ -1130,7 +1130,7 @@ class ListCtrlCoords(wx.ListCtrl):
             if 'phoenix' in wx.PlatformInfo:
                 self.InsertItem(index, texte)
             else:
-                self.InsertStringItem(index, texte)
+                self.InsertItem(index, texte)
             # Intégration de l'image
             if categorie == "Fixe":
                 self.SetItemImage(index, self.imgMaison)

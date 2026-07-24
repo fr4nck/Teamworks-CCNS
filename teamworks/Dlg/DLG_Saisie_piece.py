@@ -593,7 +593,7 @@ class ListCtrl_Pieces(wx.ListCtrl):
             if 'phoenix' in wx.PlatformInfo:
                 self.InsertItem(index, nomPiece)
             else:
-                self.InsertStringItem(index, nomPiece)
+                self.InsertItem(index, nomPiece)
             # Intégration de l'image
             if etat == "Ok":
                 self.SetItemImage(index, self.imgOk)

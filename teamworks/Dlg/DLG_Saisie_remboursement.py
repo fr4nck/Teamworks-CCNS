@@ -538,13 +538,13 @@ class ListCtrl_deplacements(wx.ListCtrl, CheckListCtrlMixin):
                 self.SetItem(index, 5, tarif_km)
                 self.SetItem(index, 6, montant)
             else:
-                index = self.InsertStringItem(six.MAXSIZE, str(IDdeplacement))
-                self.SetStringItem(index, 1, date)
-                self.SetStringItem(index, 2, objet)
-                self.SetStringItem(index, 3, trajet)
-                self.SetStringItem(index, 4, dist)
-                self.SetStringItem(index, 5, tarif_km)
-                self.SetStringItem(index, 6, montant)
+                index = self.InsertItem(six.MAXSIZE, str(IDdeplacement))
+                self.SetItem(index, 1, date)
+                self.SetItem(index, 2, objet)
+                self.SetItem(index, 3, trajet)
+                self.SetItem(index, 4, dist)
+                self.SetItem(index, 5, tarif_km)
+                self.SetItem(index, 6, montant)
 
             self.SetItemData(index, IDdeplacement)
             

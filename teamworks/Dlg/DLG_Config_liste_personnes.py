@@ -153,9 +153,9 @@ class ListCtrl(wx.ListCtrl, CheckListCtrlMixin):
                 self.SetItem(index, 1, labelCol)
                 self.SetItem(index, 2, description)
             else:
-                index = self.InsertStringItem(six.MAXSIZE, str(ordre))
-                self.SetStringItem(index, 1, labelCol)
-                self.SetStringItem(index, 2, description)
+                index = self.InsertItem(six.MAXSIZE, str(ordre))
+                self.SetItem(index, 1, labelCol)
+                self.SetItem(index, 2, description)
             self.SetItemData(index, ID)
 
             # Check

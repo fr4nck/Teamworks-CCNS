@@ -2019,7 +2019,7 @@ class listCtrl_Personnes(wx.ListCtrl, CheckListCtrlMixin):
             if 'phoenix' in wx.PlatformInfo:
                 index = self.InsertItem(six.MAXSIZE, valeurs[0] + " " + valeurs[1])
             else:
-                index = self.InsertStringItem(six.MAXSIZE, valeurs[0] + " " + valeurs[1])
+                index = self.InsertItem(six.MAXSIZE, valeurs[0] + " " + valeurs[1])
             self.SetItemData(index, key)
             # Sélection
             if key in self.listePersonnes :

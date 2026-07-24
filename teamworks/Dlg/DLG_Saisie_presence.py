@@ -635,14 +635,14 @@ class ListCtrl_donnees(wx.ListCtrl, CheckListCtrlMixin):
             if 'phoenix' in wx.PlatformInfo:
                 index = self.InsertItem(six.MAXSIZE, "")
             else:
-                index = self.InsertStringItem(six.MAXSIZE, "")
+                index = self.InsertItem(six.MAXSIZE, "")
             nomPersonne = self.dictPersonnes[IDpersonne][0] + " " + self.dictPersonnes[IDpersonne][1]
             if 'phoenix' in wx.PlatformInfo:
                 self.SetItem(index, 1, nomPersonne)
                 self.SetItem(index, 2, "> " + DatetimeDateEnStr(date))
             else:
-                self.SetStringItem(index, 1, nomPersonne)
-                self.SetStringItem(index, 2, "> " + DatetimeDateEnStr(date))
+                self.SetItem(index, 1, nomPersonne)
+                self.SetItem(index, 2, "> " + DatetimeDateEnStr(date))
             self.SetItemData(index, ID)
             self.CheckItem(index)
       

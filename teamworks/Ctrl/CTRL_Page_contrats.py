@@ -224,7 +224,7 @@ class Panel_Contrats(wx.Panel):
         if 'phoenix' in wx.PlatformInfo:
             self.list_ctrl_contrats.SetItem(index, 4, etatSignature)
         else:
-            self.list_ctrl_contrats.SetStringItem(index, 4, etatSignature)
+            self.list_ctrl_contrats.SetItem(index, 4, etatSignature)
         self.MAJ_barre_problemes()
 
     def OnBoutonDue(self, event):
@@ -255,7 +255,7 @@ class Panel_Contrats(wx.Panel):
         if 'phoenix' in wx.PlatformInfo:
             self.list_ctrl_contrats.SetItem(index, 5, etatDue)
         else:
-            self.list_ctrl_contrats.SetStringItem(index, 5, etatDue)
+            self.list_ctrl_contrats.SetItem(index, 5, etatDue)
         self.MAJ_barre_problemes()
         
     def OnBoutonImprimer(self, event):
@@ -362,7 +362,7 @@ class ListCtrl_contrats(wx.ListCtrl):
             if 'phoenix' in wx.PlatformInfo:
                 self.InsertItem(index, str(IDcontrat))
             else:
-                self.InsertStringItem(index, str(IDcontrat))
+                self.InsertItem(index, str(IDcontrat))
             # Etat
             if etat == "Perim":
                 item = self.GetItem(index)
@@ -373,7 +373,7 @@ class ListCtrl_contrats(wx.ListCtrl):
             if 'phoenix' in wx.PlatformInfo:
                 self.SetItem(index, 1, DateEngFr(date_debut))
             else:
-                self.SetStringItem(index, 1, DateEngFr(date_debut))
+                self.SetItem(index, 1, DateEngFr(date_debut))
             if date_fin == "2999-01-01" :
                 date_fin = _(u"Indétermin.")
             else:
@@ -385,15 +385,15 @@ class ListCtrl_contrats(wx.ListCtrl):
                 self.SetItem(index, 3, classification)
                 self.SetItem(index, 4, signature)
             else:
-                self.SetStringItem(index, 2, date_fin)
-                self.SetStringItem(index, 3, classification)
-                self.SetStringItem(index, 4, signature)
+                self.SetItem(index, 2, date_fin)
+                self.SetItem(index, 3, classification)
+                self.SetItem(index, 4, signature)
             if due == None :
                 due = ""
             if 'phoenix' in wx.PlatformInfo:
                 self.SetItem(index, 5, due)
             else:
-                self.SetStringItem(index, 5, due)
+                self.SetItem(index, 5, due)
             # Intégration du data ID
             self.SetItemData(index, IDcontrat)
             index += 1
