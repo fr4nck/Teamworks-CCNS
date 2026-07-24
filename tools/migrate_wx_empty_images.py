@@ -7,6 +7,8 @@ suivantes dans le code Python, sans toucher aux chaînes ni aux commentaires :
 
 - ``wx.EmptyBitmap(...)`` -> ``wx.Bitmap(...)``
 - ``wx.EmptyImage(...)`` -> ``wx.Image(...)``
+
+L'encodage déclaré par chaque fichier Python est conservé lors de l'écriture.
 """
 
 from __future__ import annotations
@@ -34,6 +36,16 @@ def _line_offsets(source: str) -> list[int]:
 def _absolute_offset(offsets: list[int], position: tuple[int, int]) -> int:
     line, column = position
     return offsets[line - 1] + column
+
+
+def _read_source(path: Path) -> tuple[str, str]:
+    raw = path.read_bytes()
+    encoding, _ = tokenize.detect_encoding(io.BytesIO(raw).readline)
+    return raw.decode(encoding), encoding
+
+
+def _write_source(path: Path, source: str, encoding: str) -> None:
+    path.write_bytes(source.encode(encoding))
 
 
 def migrate_source(source: str) -> tuple[str, int]:
@@ -82,7 +94,7 @@ def main() -> int:
 
     total = 0
     for path in iter_python_files(args.path):
-        source = path.read_text(encoding="utf-8", errors="replace")
+        source, encoding = _read_source(path)
         migrated, count = migrate_source(source)
         if not count:
             continue
@@ -90,7 +102,7 @@ def main() -> int:
         total += count
         print(f"{path}: {count} remplacement(s)")
         if args.write:
-            path.write_text(migrated, encoding="utf-8", newline="\n")
+            _write_source(path, migrated, encoding)
 
     print(f"Total: {total} remplacement(s)")
     if args.check and total:
