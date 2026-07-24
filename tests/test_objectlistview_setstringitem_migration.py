@@ -14,13 +14,14 @@ assert SPEC.loader is not None
 SPEC.loader.exec_module(MODULE)
 
 
-def test_objectlistview_has_a_single_setstringitem_migration_target():
+def test_objectlistview_no_longer_contains_setstringitem():
     source = OBJECT_LIST_VIEW_PATH.read_text(encoding="utf-8")
     migrated, count = MODULE.migrate_source(source)
 
-    assert count == 1
-    assert ".SetStringItem(" not in migrated
-    assert ".SetItem(" in migrated
+    assert count == 0
+    assert ".SetStringItem(" not in source
+    assert ".SetItem(" in source
+    assert migrated == source
 
 
 def test_objectlistview_setstringitem_migration_is_idempotent():
@@ -28,6 +29,6 @@ def test_objectlistview_setstringitem_migration_is_idempotent():
     migrated, first_count = MODULE.migrate_source(source)
     migrated_again, second_count = MODULE.migrate_source(migrated)
 
-    assert first_count == 1
+    assert first_count == 0
     assert second_count == 0
-    assert migrated_again == migrated
+    assert migrated_again == migrated == source
