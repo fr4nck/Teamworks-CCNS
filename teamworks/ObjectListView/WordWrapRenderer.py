@@ -255,7 +255,7 @@ The bottom of the red rectangle should be immediately below this."""
             self.SetSizer(sizer_1)
             self.Layout()
 
-    app = wx.PySimpleApp(0)
+    app = wx.App(0)
     wx.InitAllImageHandlers()
     frame_1 = MyFrame(None, -1, "")
     app.SetTopWindow(frame_1)

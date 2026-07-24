@@ -162,7 +162,7 @@ o\xda\x84pB2\x1f\x81Fa\x8c\x9c\x08\x04Z{\xcf\xa72\xbcv\xfa\xc5\x08 \x80r\x80\
 \x04\x10@\xf9X\xbe\x00\xc9 \x14K\xc1<={\x00\x00\x00\x00IEND\xaeB`\x82' 
 
 def GetMondrianBitmap():
-    return wx.BitmapFromImage(GetMondrianImage())
+    return wx.Bitmap(GetMondrianImage())
 
 def GetMondrianImage():
     stream = six.BytesIO(GetMondrianData())

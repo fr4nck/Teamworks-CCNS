@@ -2832,7 +2832,7 @@ class ImageDecoration(Decoration):
             if 'phoenix' in wx.PlatformInfo:
                 self.bitmap = wx.Bitmap(image)
             else:
-                self.bitmap = wx.BitmapFromImage(image)
+                self.bitmap = wx.Bitmap(image)
 
     def IsDrawOver(self):
         """

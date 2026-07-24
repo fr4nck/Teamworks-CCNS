@@ -92,7 +92,7 @@ class Track(object):
         # Si c'est une image :
         if self.type in ("jpg", "jpeg", "bmp", "png", "gif", "PNG", "JPG", "JPEG", None) :
             io = six.BytesIO(self.buffer)
-            # img = wx.ImageFromStream(io, wx.BITMAP_TYPE_JPEG)
+            # img = wx.Image(io, wx.BITMAP_TYPE_JPEG)
             # img = wxtopil(img)
             img = Image.open(io).convert("RGBA")
             self.isImage = True

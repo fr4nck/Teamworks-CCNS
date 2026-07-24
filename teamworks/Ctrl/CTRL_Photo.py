@@ -41,7 +41,7 @@ def GetPhoto(IDindividu=None, nomFichier=None, taillePhoto=(128, 128), qualite=w
             if 'phoenix' in wx.PlatformInfo:
                 img = wx.Image(io, wx.BITMAP_TYPE_JPEG)
             else:
-                img = wx.ImageFromStream(io, wx.BITMAP_TYPE_JPEG)
+                img = wx.Image(io, wx.BITMAP_TYPE_JPEG)
             bmp = img.ConvertToBitmap()
             
             # Récupération du cadre de décoration

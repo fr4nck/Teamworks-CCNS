@@ -153,7 +153,7 @@ class Calendrier(wx.ScrolledWindow):
         if 'phoenix' in wx.PlatformInfo:
             largeur, hauteur = self.GetClientSize()
         else:
-            largeur, hauteur = self.GetClientSizeTuple()
+            largeur, hauteur = self.GetClientSize()
 
         annee = self.anneeCalendrier
 
@@ -1101,7 +1101,7 @@ class TestFrame(wx.Frame):
         self.Destroy()
 
 ##    def OnSize(self, event):
-##        largeur, hauteur = self.GetClientSizeTuple()
+##        largeur, hauteur = self.GetClientSize()
 ##        self.tailleRect = (55, 55, largeur - 80, hauteur - 80)
 ##        self.canvas.MAJAffichage()
 ##        event.Skip()

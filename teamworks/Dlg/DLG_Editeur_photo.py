@@ -115,7 +115,7 @@ class ImgBox(wx.Window):
         if 'phoenix' in wx.PlatformInfo:
             largeurDC, hauteurDC = self.GetClientSize()
         else:
-            largeurDC, hauteurDC = self.GetClientSizeTuple()
+            largeurDC, hauteurDC = self.GetClientSize()
         largeurImg, hauteurImg = self.source.GetSize()
         # Calcule le zoom en fonction de la taille de la photo
         largeurMax = max(self.tailleCadre) * 1.0 #min(largeurDC, hauteurDC) / 2.0
@@ -147,7 +147,7 @@ class ImgBox(wx.Window):
         if 'phoenix' in wx.PlatformInfo:
             largeurDC, hauteurDC = self.GetClientSize()
         else:
-            largeurDC, hauteurDC = self.GetClientSizeTuple()
+            largeurDC, hauteurDC = self.GetClientSize()
         self.posxCadre = (largeurDC / 2.0) - (self.tailleCadre[0] / 2.0)
         self.posyCadre = (hauteurDC / 2.0) - (self.tailleCadre[1] / 2.0)
         
@@ -195,7 +195,7 @@ class ImgBox(wx.Window):
         if 'phoenix' in wx.PlatformInfo:
             self.largeurDC, self.hauteurDC = self.GetClientSize()
         else:
-            self.largeurDC, self.hauteurDC = self.GetClientSizeTuple()
+            self.largeurDC, self.hauteurDC = self.GetClientSize()
         # Initialise la taille et la position initiale de la photo
         if self.posxPhoto == None : 
             self.InitValeursPhoto()
@@ -226,7 +226,7 @@ class ImgBox(wx.Window):
         if 'phoenix' in wx.PlatformInfo:
             self.bmp = wx.Bitmap(source)
         else:
-            self.bmp = wx.BitmapFromImage(source)
+            self.bmp = wx.Bitmap(source)
     
     def UpdateDrawing(self):
         """Create the device context and draw the window contents"""
@@ -255,7 +255,7 @@ class ImgBox(wx.Window):
         if 'phoenix' in wx.PlatformInfo:
             self.bmp = wx.Bitmap(source)
         else:
-            self.bmp = wx.BitmapFromImage(source)
+            self.bmp = wx.Bitmap(source)
         # MAJ de l'affichage de la photo
         self.UpdateDrawing()
 

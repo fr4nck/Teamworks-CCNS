@@ -183,7 +183,7 @@ class MyFrame(wx.Frame):
         else:
             dlg = wx.FileDialog(self, _(u"Choisissez un fichier"),
                     wildcard = "*.*",
-                    style = wx.OPEN)
+                    style = wx.FD_OPEN)
             retour = dlg.ShowModal()
             chemin = dlg.GetPath()
             fichier = dlg.GetFilename()

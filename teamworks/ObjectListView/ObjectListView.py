@@ -927,14 +927,14 @@ class ObjectListView(wx.ListCtrl):
                 i, x) in enumerate(
                 self.columns) if not x.isSpaceFilling)
         # if wx.Platform == "__WXGTK__":
-        #    clientSize = self.MainWindow.GetClientSizeTuple()[0]
+        #    clientSize = self.MainWindow.GetClientSize()[0]
         # else:
-        #    clientSize = self.GetClientSizeTuple()[0]
+        #    clientSize = self.GetClientSize()[0]
         #freeSpace = max(0, clientSize - totalFixedWidth)
         if 'phoenix' in wx.PlatformInfo:
             freeSpace = max(0, self.GetClientSize()[0] - totalFixedWidth)
         else:
-            freeSpace = max(0, self.GetClientSizeTuple()[0] - totalFixedWidth)
+            freeSpace = max(0, self.GetClientSize()[0] - totalFixedWidth)
 
         # Calculate the total number of slices the free space will be divided
         # into
@@ -4318,7 +4318,7 @@ def _getSmallUpArrowBitmap():
     if 'phoenix' in wx.PlatformInfo:
         return wx.Bitmap(wx.Image(stream))
     else:
-        return wx.BitmapFromImage(wx.ImageFromStream(stream))
+        return wx.Bitmap(wx.Image(stream))
 
 
 def _getSmallDownArrowData():
@@ -4336,7 +4336,7 @@ def _getSmallDownArrowBitmap():
     if 'phoenix' in wx.PlatformInfo:
         return wx.Bitmap(wx.Image(stream))
     else:
-        return wx.BitmapFromImage(wx.ImageFromStream(stream))
+        return wx.Bitmap(wx.Image(stream))
 
 
 #

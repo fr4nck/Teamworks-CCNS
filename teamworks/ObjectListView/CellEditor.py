@@ -57,7 +57,7 @@ if 'phoenix' in wx.PlatformInfo:
     validator = wx.Validator
 else:
     from wx import DatePickerCtrl
-    validator = wx.PyValidator
+    validator = wx.Validator
 
 
 

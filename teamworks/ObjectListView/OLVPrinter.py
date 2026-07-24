@@ -1871,7 +1871,7 @@ if __name__ == '__main__':
 
             printer.PrintPreview(self)
 
-    app = wx.PySimpleApp(0)
+    app = wx.App(0)
     wx.InitAllImageHandlers()
     frame_1 = MyFrame(None, -1, "")
     app.SetTopWindow(frame_1)
