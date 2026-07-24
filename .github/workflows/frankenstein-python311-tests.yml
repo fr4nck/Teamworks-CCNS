@@ -57,6 +57,22 @@ jobs:
       - name: Test wx image migrator
         run: python -m pytest -q tests/test_migrate_wx_empty_images.py
 
+      - name: Inventory remaining wxPython Classic APIs
+        run: |
+          python tools/inventory_wx_classic_api.py --path teamworks \
+            --json wx-classic-inventory.json \
+            --markdown wx-classic-inventory.md
+          cat wx-classic-inventory.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload wxPython Classic inventory
+        uses: actions/upload-artifact@v4
+        with:
+          name: wx-classic-inventory
+          path: |
+            wx-classic-inventory.json
+            wx-classic-inventory.md
+          if-no-files-found: error
+
       - name: Inventory wx image migration targets
         run: python tools/migrate_wx_empty_images.py --path teamworks
 
