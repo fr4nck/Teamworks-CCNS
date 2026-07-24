@@ -90,7 +90,7 @@ class FirstColumnRenderer(object):
         if 'phoenix' in wx.PlatformInfo:
             bmp = wx.Bitmap(100, 20)
         else :
-            bmp = wx.EmptyBitmap(100, 20)
+            bmp = wx.Bitmap(100, 20)
         dc.SelectObject(bmp)
         
         if self.icon != None :
@@ -152,7 +152,7 @@ class SecondColumnRenderer(object):
         if 'phoenix' in wx.PlatformInfo:
             bmp = wx.Bitmap(100, 20)
         else :
-            bmp = wx.EmptyBitmap(100, 20)
+            bmp = wx.Bitmap(100, 20)
         dc.SelectObject(bmp)
         textWidth, textHeight, d1, d2 = dc.GetFullTextExtent("xx", self.smallerFont)
         dc.SelectObject(wx.NullBitmap)
@@ -164,7 +164,7 @@ class SecondColumnRenderer(object):
         if 'phoenix' in wx.PlatformInfo:
             bmp = wx.Bitmap(100, 20)
         else :
-            bmp = wx.EmptyBitmap(100, 20)
+            bmp = wx.Bitmap(100, 20)
         dc.SelectObject(bmp)
         
         if self.date != None :
