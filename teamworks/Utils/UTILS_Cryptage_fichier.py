@@ -180,11 +180,11 @@ def parseCommandLine():
 		menu +="2: Decrypt a file\n"
 		menu +="(1,2)?"
 		print(menu)
-		choice = raw_input()
+		choice = input()
 		
 		while (choice != '1') and (choice != '2'):
 			print(menu)
-			choice = raw_input()
+			choice = input()
 		
 		if choice == '1':
 			method = 'encrypt'
@@ -193,13 +193,13 @@ def parseCommandLine():
 
 	#If not present, ask for the arguments interactively
 	if len(args) == 0:
-		filename_in = raw_input("Please enter the input filename\n")
-		filename_out = raw_input("Please enter the output filename\n")
+		filename_in = input("Please enter the input filename\n")
+		filename_out = input("Please enter the output filename\n")
 		password = getpass.getpass()
 	
 	if len(args) == 1:
 		filename_in = args[0]
-		filename_out = raw_input("Please enter the output filename\n")
+		filename_out = input("Please enter the output filename\n")
 		password = getpass.getpass()
 	
 	if len(args) == 2:
