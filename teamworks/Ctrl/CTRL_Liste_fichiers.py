@@ -7,6 +7,7 @@
 # Licence:         Licence GNU GPL
 #-----------------------------------------------------------
 
+import sys
 import Chemins
 from Utils.UTILS_Traduction import _
 import wx
@@ -210,7 +211,7 @@ class CTRL(ULC.UltimateListCtrl):
         self.InsertColumn(1, "Column 2") 
         
         for dictFichier in self.listeFichiers :
-            index = self.InsertItem(six.MAXSIZE, "")
+            index = self.InsertItem(sys.maxsize, "")
 
             klass = FirstColumnRenderer(self, titre=dictFichier["titre"], image=dictFichier["image"], description=dictFichier["description"])
             self.SetItemCustomRenderer(index, 0, klass)

@@ -633,9 +633,9 @@ class ListCtrl_donnees(wx.ListCtrl, CheckListCtrlMixin):
         # Remplissage
         for ID, IDpersonne, date, selection in listeDonnees:
             if 'phoenix' in wx.PlatformInfo:
-                index = self.InsertItem(six.MAXSIZE, "")
+                index = self.InsertItem(sys.maxsize, "")
             else:
-                index = self.InsertItem(six.MAXSIZE, "")
+                index = self.InsertItem(sys.maxsize, "")
             nomPersonne = self.dictPersonnes[IDpersonne][0] + " " + self.dictPersonnes[IDpersonne][1]
             if 'phoenix' in wx.PlatformInfo:
                 self.SetItem(index, 1, nomPersonne)

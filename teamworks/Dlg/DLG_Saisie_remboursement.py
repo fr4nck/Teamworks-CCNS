@@ -6,6 +6,7 @@
 # Licence:      Licence GNU GPL
 #-----------------------------------------------------------
 
+import sys
 import Chemins
 from Utils.UTILS_Traduction import _
 import wx
@@ -530,7 +531,7 @@ class ListCtrl_deplacements(wx.ListCtrl, CheckListCtrlMixin):
         
         for IDdeplacement, date, objet, trajet, dist, tarif_km, montant, remboursement in self.donnees :
             if 'phoenix' in wx.PlatformInfo:
-                index = self.InsertItem(six.MAXSIZE, str(IDdeplacement))
+                index = self.InsertItem(sys.maxsize, str(IDdeplacement))
                 self.SetItem(index, 1, date)
                 self.SetItem(index, 2, objet)
                 self.SetItem(index, 3, trajet)
@@ -538,7 +539,7 @@ class ListCtrl_deplacements(wx.ListCtrl, CheckListCtrlMixin):
                 self.SetItem(index, 5, tarif_km)
                 self.SetItem(index, 6, montant)
             else:
-                index = self.InsertItem(six.MAXSIZE, str(IDdeplacement))
+                index = self.InsertItem(sys.maxsize, str(IDdeplacement))
                 self.SetItem(index, 1, date)
                 self.SetItem(index, 2, objet)
                 self.SetItem(index, 3, trajet)

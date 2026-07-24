@@ -6,6 +6,7 @@
 # Licence:      Licence GNU GPL
 #-----------------------------------------------------------
 
+import sys
 import Chemins
 from Utils.UTILS_Traduction import _
 import wx
@@ -186,9 +187,9 @@ class ListCtrl(wx.ListCtrl, CheckListCtrlMixin):
         for valeurs in self.listeValeurs :
             ID = int(valeurs[0])
             if 'phoenix' in wx.PlatformInfo:
-                index = self.InsertItem(six.MAXSIZE, str(ID))
+                index = self.InsertItem(sys.maxsize, str(ID))
             else:
-                index = self.InsertItem(six.MAXSIZE, str(ID))
+                index = self.InsertItem(sys.maxsize, str(ID))
             x = 1
             for valeur in valeurs[1:] :
                 if x <= len(self.liste_labelsColonnes)-1:

@@ -2017,9 +2017,9 @@ class listCtrl_Personnes(wx.ListCtrl, CheckListCtrlMixin):
         self.activeCheck = False
         for key, valeurs in self.dictPersonnes.items():
             if 'phoenix' in wx.PlatformInfo:
-                index = self.InsertItem(six.MAXSIZE, valeurs[0] + " " + valeurs[1])
+                index = self.InsertItem(sys.maxsize, valeurs[0] + " " + valeurs[1])
             else:
-                index = self.InsertItem(six.MAXSIZE, valeurs[0] + " " + valeurs[1])
+                index = self.InsertItem(sys.maxsize, valeurs[0] + " " + valeurs[1])
             self.SetItemData(index, key)
             # Sélection
             if key in self.listePersonnes :

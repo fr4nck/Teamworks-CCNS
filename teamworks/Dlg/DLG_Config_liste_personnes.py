@@ -6,6 +6,7 @@
 # Licence:      Licence GNU GPL
 #-----------------------------------------------------------
 
+import sys
 import Chemins
 from Utils.UTILS_Traduction import _
 import wx
@@ -149,11 +150,11 @@ class ListCtrl(wx.ListCtrl, CheckListCtrlMixin):
         self.listeColonnes.sort(key=operator.itemgetter(8))
         for ID, labelCol, alignement, largeur, nomChamp, args, description, affiche, ordre in self.listeColonnes :
             if 'phoenix' in wx.PlatformInfo:
-                index = self.InsertItem(six.MAXSIZE, str(ordre))
+                index = self.InsertItem(sys.maxsize, str(ordre))
                 self.SetItem(index, 1, labelCol)
                 self.SetItem(index, 2, description)
             else:
-                index = self.InsertItem(six.MAXSIZE, str(ordre))
+                index = self.InsertItem(sys.maxsize, str(ordre))
                 self.SetItem(index, 1, labelCol)
                 self.SetItem(index, 2, description)
             self.SetItemData(index, ID)

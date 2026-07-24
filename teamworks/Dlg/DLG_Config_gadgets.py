@@ -6,6 +6,7 @@
 # Licence:      Licence GNU GPL
 #-----------------------------------------------------------
 
+import sys
 import Chemins
 from Utils.UTILS_Traduction import _
 import wx
@@ -206,11 +207,11 @@ class ListCtrl(wx.ListCtrl, CheckListCtrlMixin):
         self.remplissage = True
         for IDgadget, nom, label, description, taille, affichage, ordre, config, parametres in self.listeGadgets :
             if 'phoenix' in wx.PlatformInfo:
-                index = self.InsertItem(six.MAXSIZE, str(ordre))
+                index = self.InsertItem(sys.maxsize, str(ordre))
                 self.SetItem(index, 1, label)
                 self.SetItem(index, 2, description)
             else:
-                index = self.InsertItem(six.MAXSIZE, str(ordre))
+                index = self.InsertItem(sys.maxsize, str(ordre))
                 self.SetItem(index, 1, label)
                 self.SetItem(index, 2, description)
             self.SetItemData(index, IDgadget)

@@ -9,6 +9,7 @@
 #------------------------------------------------------------------------
 
 
+import sys
 import Chemins
 from Utils import UTILS_Adaptations
 from Utils.UTILS_Traduction import _
@@ -196,7 +197,7 @@ class ListCtrl(wx.ListCtrl, CheckListCtrlMixin):
                 autorisationStr = "Oui"
             else:
                 autorisationStr = "Non"
-            index = self.InsertItem(six.MAXSIZE, autorisationStr)
+            index = self.InsertItem(sys.maxsize, autorisationStr)
             
             if user == "root" :
                 user = _(u"root (Administrateur)")

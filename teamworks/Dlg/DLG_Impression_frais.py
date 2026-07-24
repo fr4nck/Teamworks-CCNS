@@ -180,7 +180,7 @@ class ListCtrl(wx.ListCtrl, CheckListCtrlMixin):
         self.remplissage = True
         for IDdeplacement, date, objet, trajet, dist, tarif_km, montantStr, remboursement in self.listeDonnees :
             if 'phoenix' in wx.PlatformInfo:
-                index = self.InsertItem(six.MAXSIZE, str(IDdeplacement))
+                index = self.InsertItem(sys.maxsize, str(IDdeplacement))
                 self.SetItem(index, 1, date)
                 self.SetItem(index, 2, objet)
                 self.SetItem(index, 3, trajet)
@@ -189,7 +189,7 @@ class ListCtrl(wx.ListCtrl, CheckListCtrlMixin):
                 self.SetItem(index, 6, montantStr)
                 self.SetItem(index, 7, remboursement)
             else:
-                index = self.InsertItem(six.MAXSIZE, str(IDdeplacement))
+                index = self.InsertItem(sys.maxsize, str(IDdeplacement))
                 self.SetItem(index, 1, date)
                 self.SetItem(index, 2, objet)
                 self.SetItem(index, 3, trajet)

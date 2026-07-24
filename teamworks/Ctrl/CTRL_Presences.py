@@ -6,6 +6,7 @@
 # Licence:      Licence GNU GPL
 #-----------------------------------------------------------
 
+import sys
 import Chemins
 from Utils.UTILS_Traduction import _
 import wx
@@ -464,9 +465,9 @@ class listCtrl_Personnes(wx.ListCtrl, CheckListCtrlMixin):
                 else:
                     txt = valeurs[0] + " " + valeurs[1]
                 if 'phoenix' in wx.PlatformInfo:
-                    index = self.InsertItem(six.MAXSIZE, txt)
+                    index = self.InsertItem(sys.maxsize, txt)
                 else:
-                    index = self.InsertItem(six.MAXSIZE, txt)
+                    index = self.InsertItem(sys.maxsize, txt)
                 self.SetItemData(index, key)
                 # Sélection
                 if valeurs[4] == True :
