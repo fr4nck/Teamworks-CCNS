@@ -60,6 +60,21 @@ jobs:
       - name: Inventory wx image migration targets
         run: python tools/migrate_wx_empty_images.py --path teamworks
 
+      - name: Generate wx image migration patch
+        run: |
+          python tools/migrate_wx_empty_images.py --write --path teamworks
+          git diff -- teamworks > wx-image-migration.patch
+
+      - name: Upload wx image migration patch
+        uses: actions/upload-artifact@v4
+        with:
+          name: wx-image-migration-patch
+          path: wx-image-migration.patch
+          if-no-files-found: error
+
+      - name: Restore repository after patch generation
+        run: git checkout -- teamworks
+
       - name: Compile migration tools and tests
         run: |
           python -m compileall -q tools \
