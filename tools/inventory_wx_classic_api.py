@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Inventory remaining wxPython Classic API usages in Teamworks source files."""
+"""Inventory remaining wxPython Classic API usages in Teamworks source files.
+
+The inventory deliberately excludes API names that are still valid in Phoenix,
+such as ``TreeCtrl.AppendItem``. Patterns are restricted to obsolete call forms
+so already-migrated replacements such as ``wx.NewIdRef`` are not reported.
+"""
 
 from __future__ import annotations
 
@@ -13,20 +18,19 @@ import tokenize
 
 
 PATTERNS = {
-    "AppendItem": re.compile(r"\bAppendItem\b"),
-    "AppendMenu": re.compile(r"\bAppendMenu\b"),
-    "SetToolTipString": re.compile(r"\bSetToolTipString\b"),
-    "GetClientSizeTuple": re.compile(r"\bGetClientSizeTuple\b"),
-    "PySimpleApp": re.compile(r"\bPySimpleApp\b"),
-    "NewId": re.compile(r"\bNewId\b"),
-    "BitmapFromImage": re.compile(r"\bBitmapFromImage\b"),
-    "ImageFromStream": re.compile(r"\bImageFromStream\b"),
-    "EmptyBitmap": re.compile(r"\bEmptyBitmap\b"),
-    "EmptyImage": re.compile(r"\bEmptyImage\b"),
-    "InsertStringItem": re.compile(r"\bInsertStringItem\b"),
-    "SetStringItem": re.compile(r"\bSetStringItem\b"),
-    "SetPyData": re.compile(r"\bSetPyData\b"),
-    "GetPyData": re.compile(r"\bGetPyData\b"),
+    "AppendMenu": re.compile(r"\.AppendMenu\s*\("),
+    "SetToolTipString": re.compile(r"\.SetToolTipString\s*\("),
+    "GetClientSizeTuple": re.compile(r"\.GetClientSizeTuple\s*\("),
+    "PySimpleApp": re.compile(r"\bwx\.PySimpleApp\s*\("),
+    "NewId": re.compile(r"\bwx\.NewId\s*\("),
+    "BitmapFromImage": re.compile(r"\bwx\.BitmapFromImage\s*\("),
+    "ImageFromStream": re.compile(r"\bwx\.ImageFromStream\s*\("),
+    "EmptyBitmap": re.compile(r"\bwx\.EmptyBitmap\s*\("),
+    "EmptyImage": re.compile(r"\bwx\.EmptyImage\s*\("),
+    "InsertStringItem": re.compile(r"\.InsertStringItem\s*\("),
+    "SetStringItem": re.compile(r"\.SetStringItem\s*\("),
+    "SetPyData": re.compile(r"\.SetPyData\s*\("),
+    "GetPyData": re.compile(r"\.GetPyData\s*\("),
     "wx.PyValidator": re.compile(r"\bwx\.PyValidator\b"),
     "wx.PyControl": re.compile(r"\bwx\.PyControl\b"),
     "wx.PyPanel": re.compile(r"\bwx\.PyPanel\b"),
