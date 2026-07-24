@@ -4,6 +4,7 @@ from pathlib import Path
 
 
 MODULE_PATH = Path("tools/migrate_python3_unicode.py")
+TARGET_DIALOG = Path("teamworks/Dlg/DLG_Saisie_utilisateur_reseau.py")
 SPEC = importlib.util.spec_from_file_location("migrate_python3_unicode", MODULE_PATH)
 MODULE = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None
@@ -40,3 +41,18 @@ def test_is_idempotent_after_migration():
     assert count == 1
     assert second_count == 0
     assert migrated_again == migrated
+
+
+def test_network_user_dialog_no_longer_calls_unicode():
+    source = TARGET_DIALOG.read_text(encoding="utf-8")
+    tree = ast.parse(source)
+
+    unicode_calls = [
+        node.lineno
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "unicode"
+    ]
+
+    assert unicode_calls == []
