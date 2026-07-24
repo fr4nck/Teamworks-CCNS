@@ -112,7 +112,7 @@ class TreeCtrl(CT.CustomTreeCtrl):
         self.listeDonnees = self.GetListeProblemes()
         # Racine
         self.root = self.AddRoot("Root")
-        self.SetPyData(self.root, None)
+        self.SetItemData(self.root, None)
         # Branches
         self.AddTreeNodes(self.root, self.listeDonnees)
 
@@ -121,7 +121,7 @@ class TreeCtrl(CT.CustomTreeCtrl):
             if type(item) == str or type(item) == six.text_type:
                 # Label problème
                 newItem = self.AppendItem(parentItem, item)
-                self.SetPyData(newItem, None)
+                self.SetItemData(newItem, None)
                 font = self.GetFont()
                 font.SetPointSize(7)
                 self.SetItemFont(newItem, font)
@@ -130,7 +130,7 @@ class TreeCtrl(CT.CustomTreeCtrl):
                 # Tête de rubrique
                 texte = item[0]                
                 newItem = self.AppendItem(parentItem, texte)
-                self.SetPyData(newItem, None)
+                self.SetItemData(newItem, None)
                 if parentItem == self.root :
                     # Nom de la personne
                     self.SetItemTextColour(newItem, self.couleurPersonne)

@@ -305,7 +305,7 @@ class TreeCtrlTaches(wx.TreeCtrl):
         if 'phoenix' in wx.PlatformInfo:
             self.SetItemData(self.root, None)
         else:
-            self.SetPyData(self.root, None)
+            self.SetItemData(self.root, None)
         # Image
         self.SetItemImage(self.root, self.imgRacine, wx.TreeItemIcon_Normal)
         
@@ -317,7 +317,7 @@ class TreeCtrlTaches(wx.TreeCtrl):
             if 'phoenix' in wx.PlatformInfo:
                 self.SetItemData(itemPersonne, IDpersonne)
             else:
-                self.SetPyData(itemPersonne, IDpersonne)
+                self.SetItemData(itemPersonne, IDpersonne)
             # Image
             self.SetItemImage(itemPersonne, self.imgPersonne, wx.TreeItemIcon_Normal)
 
@@ -326,7 +326,7 @@ class TreeCtrlTaches(wx.TreeCtrl):
                 if 'phoenix' in wx.PlatformInfo:
                     self.SetItemData(itemDate, None)
                 else:
-                    self.SetPyData(itemDate, None)
+                    self.SetItemData(itemDate, None)
                 # Image
                 self.SetItemImage(itemDate, self.imgDate, wx.TreeItemIcon_Normal)
                 # Mémorisation de l'item Date du TreeCtrl
@@ -344,7 +344,7 @@ class TreeCtrlTaches(wx.TreeCtrl):
                     if 'phoenix' in wx.PlatformInfo:
                         self.SetItemData(itemTache, None)
                     else:
-                        self.SetPyData(itemTache, None)
+                        self.SetItemData(itemTache, None)
 
                     # Mémorisation de l'item TreeCtrl
                     self.dictItemsTree[ (IDpersonne, date, tache[0][0], tache[0][1]) ] = itemTache

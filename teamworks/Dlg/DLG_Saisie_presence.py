@@ -685,7 +685,7 @@ class TreeCtrlCategories(wx.TreeCtrl):
         if 'phoenix' in wx.PlatformInfo:
             self.SetItemData(self.root, None)
         else:
-            self.SetPyData(self.root, None)
+            self.SetItemData(self.root, None)
         self.Remplissage()
         
         self.Bind(wx.EVT_TREE_ITEM_EXPANDED, self.OnItemExpanded, self)
@@ -730,7 +730,7 @@ class TreeCtrlCategories(wx.TreeCtrl):
                 if 'phoenix' in wx.PlatformInfo:
                     self.SetItemData(newItem, item[0])
                 else:
-                    self.SetPyData(newItem, item[0])
+                    self.SetItemData(newItem, item[0])
                 exec("self.SetItemImage(newItem, self.img" + str(item[0]) + ", wx.TreeItemIcon_Normal)") 
                 self.nbreBranches += 1
                 
@@ -779,7 +779,7 @@ class TreeCtrlCategories(wx.TreeCtrl):
         # if 'phoenix' in wx.PlatformInfo:
         #     data = self.GetItemData(item)
         # else:
-        #     data = self.GetPyData(item)
+        #     data = self.GetItemData(item)
         # self.selection = data
         # event.Skip()
 
@@ -790,7 +790,7 @@ class TreeCtrlCategories(wx.TreeCtrl):
         if 'phoenix' in wx.PlatformInfo:
             IDcategorie = self.GetItemData(item)
         else:
-            IDcategorie = self.GetPyData(item)
+            IDcategorie = self.GetItemData(item)
         return IDcategorie
 
         

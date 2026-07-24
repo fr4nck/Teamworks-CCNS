@@ -514,7 +514,7 @@ class TreeCtrlCategories(wx.TreeCtrl):
 
 
         self.root = self.AddRoot(_(u"Problèmes à résoudre"))
-        self.SetPyData(self.root, None)
+        self.SetItemData(self.root, None)
 
         self.AddTreeNodes(self.root, self.listeDonnees)
 
@@ -523,13 +523,13 @@ class TreeCtrlCategories(wx.TreeCtrl):
             if type(item) == str or type(item) == six.text_type:
                 # Items
                 newItem = self.AppendItem(parentItem, item)
-                self.SetPyData(newItem, None)
+                self.SetItemData(newItem, None)
             else:
                 # Tête de rubrique
                 texte = item[0]
                     
                 newItem = self.AppendItem(parentItem, texte)
-                self.SetPyData(newItem, None)
+                self.SetItemData(newItem, None)
                 # Autres
                 self.AddTreeNodes(newItem, item[1], img)
                 

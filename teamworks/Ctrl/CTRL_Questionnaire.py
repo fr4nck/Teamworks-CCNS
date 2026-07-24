@@ -834,7 +834,7 @@ class CTRL(HTL.HyperTreeList):
             
                 # Niveau Catégorie
                 brancheCategorie = self.AppendItem(self.root, label)
-                self.SetPyData(brancheCategorie, IDcategorie)
+                self.SetItemData(brancheCategorie, IDcategorie)
                 self.SetItemBold(brancheCategorie, True)
                 self.SetItemBackgroundColour(brancheCategorie, couleur)
                 self.dictBranches[brancheCategorie] = {"type":"categorie", "ID":IDcategorie, "index":indexCategorie} 
@@ -858,7 +858,7 @@ class CTRL(HTL.HyperTreeList):
                     if questionVisible == 1 or self.afficherInvisibles == True :
 
                         brancheQuestion = self.AppendItem(brancheCategorie, track.label)
-                        self.SetPyData(brancheQuestion, track.IDquestion)
+                        self.SetItemData(brancheQuestion, track.IDquestion)
                         self.dictBranches[brancheQuestion] = {"type":"question", "ID":IDquestion, "IDcategorie":IDcategorie, "index":indexQuestion} 
                         
                         if questionVisible == 0 :

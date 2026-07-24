@@ -39,12 +39,12 @@ class TreeCtrl(CT.CustomTreeCtrl):
         # Affiche les types de sources
         for nomGroupe, items in listeDonnees :
             item = self.AppendItem(self.root,  nomGroupe, ct_type=1)
-            self.SetPyData(item, None)
+            self.SetItemData(item, None)
             
             # Affiche la 2ème branche
             for ID, intitule in items :
                 child = self.AppendItem(item,  intitule, ct_type=1)
-                self.SetPyData(child, ID)
+                self.SetItemData(child, ID)
                 
             # Déroule l'item
             self.Expand(item)

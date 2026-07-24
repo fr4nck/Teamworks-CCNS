@@ -53,17 +53,17 @@ class CTRL_Donnees(CT.CustomTreeCtrl):
         listeFichiersLocaux = self.GetListeFichiersLocaux()
         if len(listeFichiersLocaux) > 0 and self.parent.check_locaux.GetValue() == True :
             brancheType = self.AppendItem(self.root, _(u"Fichiers locaux"), ct_type=1)
-            self.SetPyData(brancheType, _(u"locaux"))
+            self.SetItemData(brancheType, _(u"locaux"))
             self.SetItemBold(brancheType)
             
             for nomFichier in listeFichiersLocaux :
                 brancheNom = self.AppendItem(brancheType, nomFichier, ct_type=1)
-                self.SetPyData(brancheNom, nomFichier)
+                self.SetItemData(brancheNom, nomFichier)
                 
                 for nomCategorie, codeCategorie in LISTE_CATEGORIES :
                     fichier = u"%s_%s.dat" % (nomFichier, codeCategorie)
                     brancheFichier = self.AppendItem(brancheNom, nomCategorie, ct_type=1)
-                    self.SetPyData(brancheFichier, fichier)
+                    self.SetItemData(brancheFichier, fichier)
                     
                     if os.path.isfile(UTILS_Fichiers.GetRepData(fichier)) == False :
                         brancheFichier.Enable(False)
@@ -72,29 +72,29 @@ class CTRL_Donnees(CT.CustomTreeCtrl):
         listeFichiersReseau, listeBases = self.GetListeFichiersReseau()
         if len(listeFichiersReseau) > 0  and self.parent.check_reseau.GetValue() == True :
             brancheType = self.AppendItem(self.root, _(u"Fichiers réseau"), ct_type=1)
-            self.SetPyData(brancheType, _(u"reseau"))
+            self.SetItemData(brancheType, _(u"reseau"))
             self.SetItemBold(brancheType)
             
             for nomFichier in listeFichiersReseau :
                 brancheNom = self.AppendItem(brancheType, nomFichier, ct_type=1)
-                self.SetPyData(brancheNom, nomFichier)
+                self.SetItemData(brancheNom, nomFichier)
                 
                 for nomCategorie, codeCategorie in LISTE_CATEGORIES :
                     fichier = u"%s_%s" % (nomFichier, codeCategorie.lower())
                     brancheFichier = self.AppendItem(brancheNom, nomCategorie, ct_type=1)
-                    self.SetPyData(brancheFichier, fichier)
+                    self.SetItemData(brancheFichier, fichier)
                     
                     if fichier not in listeBases :
                         brancheFichier.Enable(False)
 
         # Modèles de documents
         brancheType = self.AppendItem(self.root, _(u"Modèles de documents"), ct_type=1)
-        self.SetPyData(brancheType, _(u"modeles"))
+        self.SetItemData(brancheType, _(u"modeles"))
         self.SetItemBold(brancheType)
 
         # Editions de documents
         brancheType = self.AppendItem(self.root, _(u"Editions de documents"), ct_type=1)
-        self.SetPyData(brancheType, _(u"editions"))
+        self.SetItemData(brancheType, _(u"editions"))
         self.SetItemBold(brancheType)
 
         self.ExpandAll() 

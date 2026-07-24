@@ -142,7 +142,7 @@ class TreeCtrl(CT.CustomTreeCtrl):
         self.SetImageList(il)
         self.il = il
         self.root = self.AddRoot(_(u"Catégories"))
-        self.SetPyData(self.root, 0)
+        self.SetItemData(self.root, 0)
         self.SetItemImage(self.root, self.imgRoot, wx.TreeItemIcon_Normal)
         
         self.nbreCategories = len(self.listeCategories)
@@ -159,7 +159,7 @@ class TreeCtrl(CT.CustomTreeCtrl):
             if item[2] == IDparent:
                 # Création de la branche
                 newItem = self.AppendItem(itemParent, item[1], ct_type=1)
-                self.SetPyData(newItem, item[0])
+                self.SetItemData(newItem, item[0])
                 
                 if item[0] not in self.listeDisabledItems :
                     exec("self.SetItemImage(newItem, self.img" + str(item[0]) + ", wx.TreeItemIcon_Normal)")
