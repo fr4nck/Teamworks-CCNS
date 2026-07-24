@@ -1,6 +1,14 @@
 name: Frankenstein Python 3.11 checks
 
 on:
+  push:
+    branches:
+      - frankenstein/python3-wxphoenix-lot2
+    paths:
+      - "teamworks/**/*.py"
+      - "tools/**/*.py"
+      - "tests/test_*.py"
+      - ".github/workflows/frankenstein-python311-tests.yml"
   pull_request:
     branches:
       - master
