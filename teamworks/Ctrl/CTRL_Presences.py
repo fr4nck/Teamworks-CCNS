@@ -351,7 +351,7 @@ class ListCtrl_Legendes(wx.ListCtrl):
             bmp.SetRGB((3, 3, 10, 10), 0, 0, 0)
             bmp.SetRGB((4, 4, 8, 8), r, v, b)
         else:
-            bmp = wx.EmptyImage(tailleImages[0], tailleImages[1], True)
+            bmp = wx.Image(tailleImages[0], tailleImages[1], True)
             bmp.SetRGBRect((0, 0, 16, 16), colFond[0], colFond[1], colFond[2])
             bmp.SetRGBRect((3, 3, 10, 10), 0, 0, 0)
             bmp.SetRGBRect((4, 4, 8, 8), r, v, b)
