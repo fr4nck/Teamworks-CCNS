@@ -36,7 +36,7 @@ REPLACEMENTS = {
     Path("teamworks/Outils/mail/message.py"): [
         (
             """    if six.PY2:\n        # On Python 2, use the stdlib since `email.headerregistry` doesn't exist.\n        from email.utils import formataddr\n        if localpart and domain:\n            addr = '@'.join([localpart, domain])\n        return formataddr((nm, addr))\n\n""",
-            """,
+            "",
         ),
         (
             """        if six.PY2:\n            g.flatten(self, unixfrom=unixfrom)\n        else:\n            g.flatten(self, unixfrom=unixfrom, linesep=linesep)\n""",
@@ -54,15 +54,15 @@ REPLACEMENTS = {
     Path("teamworks/Utils/UTILS_Sauvegarde.py"): [
         (
             """            if six.PY2:\n                args = args.encode('utf8')\n""",
-            """,
+            "",
         ),
         (
             """                try :\n                    if six.PY2:\n                        out = str(out).decode(\"iso-8859-15\")\n                except :\n                    pass\n""",
-            """,
+            "",
         ),
         (
             """                try :\n                    if six.PY2:\n                        err = str(err).decode(\"iso-8859-15\")\n                except :\n                    pass\n""",
-            """,
+            "",
         ),
         (
             """        if six.PY3:\n            motdepasse = motdepasse.decode('utf8')\n""",
@@ -70,11 +70,17 @@ REPLACEMENTS = {
         ),
         (
             """            if six.PY2:\n                args = args.encode(\"iso-8859-15\")\n""",
-            """,
+            "",
         ),
         (
             """                if six.PY2:\n                    out = str(out).decode(\"iso-8859-15\")\n""",
-            """,
+            "",
+        ),
+    ],
+    Path("teamworks/Utils/UTILS_Envoi_email.py"): [
+        (
+            """                    if six.PY2:\n                        err = str(erreur).decode(\"iso-8859-15\")\n                    else:\n                        err = six.text_type(erreur)\n""",
+            """                    err = six.text_type(erreur)\n""",
         ),
     ],
 }
