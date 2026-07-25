@@ -1157,7 +1157,6 @@ def ImporterFichierDonnees() :
     index = 0
     for ligne in txt :
         ID, prenom, genre = ligne.split(";")
-            genre = genre.decode("iso-8859-15")
         listeDonnees = [("prenom", prenom), ("genre", genre),]
         IDprenom = db.ReqInsert("prenoms", listeDonnees)
         index += 1
