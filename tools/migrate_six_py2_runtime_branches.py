@@ -83,6 +83,16 @@ REPLACEMENTS = {
             """                    err = six.text_type(erreur)\n""",
         ),
     ],
+    Path("teamworks/Teamworks.py"): [
+        (
+            """from six.moves.urllib.request import urlopen\n\nif six.PY2:\n    import shelve\n    import dbhash\n    import anydbm\n""",
+            """from urllib.request import urlopen\n""",
+        ),
+        (
+            """        if six.PY2:\n            version_python = \"2\"\n        else :\n            version_python = \"3\"\n""",
+            """        version_python = \"3\"\n""",
+        ),
+    ],
 }
 
 
