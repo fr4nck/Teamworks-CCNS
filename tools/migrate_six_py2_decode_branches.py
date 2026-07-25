@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import re
+import tokenize
 from pathlib import Path
 
 
@@ -18,11 +19,20 @@ def iter_python_files(root: Path):
     yield from root.rglob("*.py")
 
 
+def read_source(path: Path) -> tuple[str, str]:
+    with tokenize.open(path) as stream:
+        return stream.read(), stream.encoding
+
+
+def write_source(path: Path, source: str, encoding: str) -> None:
+    path.write_text(source, encoding=encoding, newline="")
+
+
 def migrate_file(path: Path, write: bool) -> int:
-    source = path.read_text(encoding="utf-8")
+    source, encoding = read_source(path)
     migrated, count = PATTERN.subn("", source)
     if count and write:
-        path.write_text(migrated, encoding="utf-8")
+        write_source(path, migrated, encoding)
     return count
 
 
