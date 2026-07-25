@@ -93,6 +93,12 @@ REPLACEMENTS = {
             """        version_python = \"3\"\n""",
         ),
     ],
+    Path("teamworks/GestionDB.py"): [
+        (
+            """        ID, prenom, genre = ligne.split(\";\")\n            genre = genre.decode(\"iso-8859-15\")\n        listeDonnees = [(\"prenom\", prenom), (\"genre\", genre),]\n""",
+            """        ID, prenom, genre = ligne.split(\";\")\n        listeDonnees = [(\"prenom\", prenom), (\"genre\", genre),]\n""",
+        ),
+    ],
 }
 
 
