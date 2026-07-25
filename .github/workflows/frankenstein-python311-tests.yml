@@ -180,6 +180,9 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Apply final six.PY2 runtime migration
+        run: python tools/migrate_six_py2_runtime_branches.py --write
+
       - name: Clean redundant post-migration constructs
         run: python tools/cleanup_python2_builtin_migration.py --write --path teamworks
 
@@ -192,5 +195,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add teamworks
-          git commit -m "Frankenstein lot 2 — nettoyer les redondances Python 3"
+          git commit -m "Frankenstein lot 2 — finaliser les branches Python 2 restantes"
+          git pull --rebase origin frankenstein/python3-wxphoenix-lot2
           git push origin HEAD:frankenstein/python3-wxphoenix-lot2
