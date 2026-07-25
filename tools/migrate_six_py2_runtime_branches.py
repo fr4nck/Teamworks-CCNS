@@ -33,6 +33,24 @@ REPLACEMENTS = {
             """        groups = sorted(groups, key=_getLowerCaseKey,\n                        reverse=(not ascending))\n        # update self.groups which is used e.g. in _SetGroups\n        self.groups = groups\n""",
         ),
     ],
+    Path("teamworks/Outils/mail/message.py"): [
+        (
+            """    if six.PY2:\n        # On Python 2, use the stdlib since `email.headerregistry` doesn't exist.\n        from email.utils import formataddr\n        if localpart and domain:\n            addr = '@'.join([localpart, domain])\n        return formataddr((nm, addr))\n\n""",
+            """,
+        ),
+        (
+            """        if six.PY2:\n            g.flatten(self, unixfrom=unixfrom)\n        else:\n            g.flatten(self, unixfrom=unixfrom, linesep=linesep)\n""",
+            """        g.flatten(self, unixfrom=unixfrom, linesep=linesep)\n""",
+        ),
+        (
+            """    if six.PY2:\n        as_bytes = as_string\n    else:\n        def as_bytes(self, unixfrom=False, linesep='\\n'):\n            \"\"\"Return the entire formatted message as bytes.\n            Optional `unixfrom' when True, means include the Unix From_ envelope\n            header.\n\n            This overrides the default as_bytes() implementation to not mangle\n            lines that begin with 'From '. See bug #13433 for details.\n            \"\"\"\n            fp = BytesIO()\n            g = generator.BytesGenerator(fp, mangle_from_=False)\n            g.flatten(self, unixfrom=unixfrom, linesep=linesep)\n            return fp.getvalue()\n""",
+            """    def as_bytes(self, unixfrom=False, linesep='\\n'):\n        \"\"\"Return the entire formatted message as bytes.\n        Optional `unixfrom' when True, means include the Unix From_ envelope\n        header.\n\n        This overrides the default as_bytes() implementation to not mangle\n        lines that begin with 'From '. See bug #13433 for details.\n        \"\"\"\n        fp = BytesIO()\n        g = generator.BytesGenerator(fp, mangle_from_=False)\n        g.flatten(self, unixfrom=unixfrom, linesep=linesep)\n        return fp.getvalue()\n""",
+        ),
+        (
+            """                if six.PY2:\n                    filename = filename.encode('utf-8')\n""",
+            """,
+        ),
+    ],
 }
 
 
