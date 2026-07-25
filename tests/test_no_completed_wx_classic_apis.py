@@ -1,43 +1,71 @@
+import ast
+import io
+import tokenize
 from pathlib import Path
 
 
 ROOT = Path("teamworks")
-FORBIDDEN = (
-    ".InsertStringItem(",
-    ".SetStringItem(",
-    ".SetPyData(",
-    ".GetPyData(",
-    "wx.EmptyImage(",
-    "wx.EmptyBitmap(",
-    "wx.BitmapFromImage(",
-    "wx.ImageFromStream(",
-    "wx.PySimpleApp(",
-    ".GetClientSizeTuple(",
-    ".SetToolTipString(",
-    "wx.NewId()",
-    "six.MAXSIZE",
-)
+ADAPTER = ROOT / "Utils" / "UTILS_Adaptations.py"
+FORBIDDEN_ATTRIBUTES = {
+    "InsertStringItem",
+    "SetStringItem",
+    "SetPyData",
+    "GetPyData",
+    "EmptyImage",
+    "EmptyBitmap",
+    "BitmapFromImage",
+    "ImageFromStream",
+    "PySimpleApp",
+    "GetClientSizeTuple",
+    "SetToolTipString",
+    "NewId",
+    "MAXSIZE",
+}
+
+
+def read_source(path: Path) -> str:
+    raw = path.read_bytes()
+    encoding, _ = tokenize.detect_encoding(io.BytesIO(raw).readline)
+    return raw.decode(encoding)
+
+
+def iter_attribute_calls(path: Path):
+    try:
+        tree = ast.parse(read_source(path))
+    except (SyntaxError, UnicodeDecodeError):
+        return
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+            yield node.func.attr, node.lineno
+        elif (
+            isinstance(node, ast.Attribute)
+            and isinstance(node.value, ast.Name)
+            and node.value.id == "six"
+            and node.attr == "MAXSIZE"
+        ):
+            yield node.attr, node.lineno
 
 
 def test_completed_wx_classic_apis_do_not_return():
     violations = []
+
     for path in sorted(ROOT.rglob("*.py")):
-        source = path.read_text(encoding="utf-8", errors="ignore")
-        for token in FORBIDDEN:
-            if token in source:
-                violations.append(f"{path}: {token}")
+        for attribute, line_number in iter_attribute_calls(path) or ():
+            if attribute in FORBIDDEN_ATTRIBUTES:
+                violations.append(f"{path}:{line_number}: {attribute}")
 
     assert not violations, "Legacy wx APIs found:\n" + "\n".join(violations)
 
 
 def test_appendmenu_calls_are_gone_outside_compatibility_adapter():
     violations = []
-    adapter = ROOT / "Utils" / "UTILS_Adaptations.py"
+
     for path in sorted(ROOT.rglob("*.py")):
-        if path == adapter:
+        if path == ADAPTER:
             continue
-        source = path.read_text(encoding="utf-8", errors="ignore")
-        if ".AppendMenu(" in source:
-            violations.append(str(path))
+        for attribute, line_number in iter_attribute_calls(path) or ():
+            if attribute == "AppendMenu":
+                violations.append(f"{path}:{line_number}")
 
     assert not violations, "AppendMenu calls found:\n" + "\n".join(violations)
