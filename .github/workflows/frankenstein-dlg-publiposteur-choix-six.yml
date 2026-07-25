@@ -27,6 +27,9 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Install test dependencies
+        run: python -m pip install pytest
+
       - name: Run migrator tests
         run: python -m pytest -q tests/test_migrate_dlg_publiposteur_choix_six.py
 
