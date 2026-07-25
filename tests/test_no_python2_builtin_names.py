@@ -61,3 +61,24 @@ def test_sys_maxsize_is_backed_by_an_import():
             violations.append(str(path))
 
     assert not violations, "sys.maxsize used without import sys:\n" + "\n".join(violations)
+
+
+def test_python2_and_python3_six_runtime_branches_are_gone():
+    violations = []
+
+    for path in sorted(ROOT.rglob("*.py")):
+        try:
+            tree = ast.parse(read_source(path))
+        except (SyntaxError, UnicodeDecodeError):
+            continue
+
+        for node in ast.walk(tree):
+            if (
+                isinstance(node, ast.Attribute)
+                and isinstance(node.value, ast.Name)
+                and node.value.id == "six"
+                and node.attr in {"PY2", "PY3"}
+            ):
+                violations.append(f"{path}:{node.lineno}: six.{node.attr}")
+
+    assert not violations, "Legacy six runtime branches found:\n" + "\n".join(violations)
