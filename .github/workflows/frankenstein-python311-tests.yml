@@ -121,28 +121,28 @@ jobs:
         continue-on-error: true
         run: python -m compileall -q teamworks
 
-  apply-wx-appendmenu-migration-batch:
-    if: github.event_name == 'pull_request' && github.head_ref == 'frankenstein/python3-wxphoenix-lot2'
+  apply-python2-builtins-migration-batch:
+    if: github.event_name == 'push' && github.ref_name == 'frankenstein/python3-wxphoenix-lot2'
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout pull request branch
+      - name: Checkout migration branch
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.head_ref }}
+          ref: frankenstein/python3-wxphoenix-lot2
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Migrate exact AppendMenu calls in one batch
-        run: python tools/migrate_wx_appendmenu.py --write --path teamworks
+      - name: Migrate Python 2 builtin names in one batch
+        run: python tools/migrate_python2_builtin_names.py --write --path teamworks
 
-      - name: Verify obsolete AppendMenu calls are gone
-        run: python tools/migrate_wx_appendmenu.py --check --path teamworks
+      - name: Verify obsolete builtin names are gone from code tokens
+        run: python tools/migrate_python2_builtin_names.py --check --path teamworks
 
-      - name: Commit wx AppendMenu migration batch
+      - name: Commit Python 2 builtin migration batch
         run: |
           if git diff --quiet -- teamworks; then
             echo "No migration required"
@@ -151,5 +151,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add teamworks
-          git commit -m "Frankenstein lot 2 — migrer en lot AppendMenu vers AppendSubMenu"
-          git push origin HEAD:${{ github.head_ref }}
+          git commit -m "Frankenstein lot 2 — migrer les builtins Python 2 restants"
+          git push origin HEAD:frankenstein/python3-wxphoenix-lot2
