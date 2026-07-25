@@ -121,7 +121,7 @@ jobs:
         continue-on-error: true
         run: python -m compileall -q teamworks
 
-  apply-python2-builtins-migration-batch:
+  cleanup-python2-builtins-migration:
     if: github.event_name == 'push' && github.ref_name == 'frankenstein/python3-wxphoenix-lot2'
     runs-on: ubuntu-latest
 
@@ -136,20 +136,17 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Migrate Python 2 builtin names in one batch
-        run: python tools/migrate_python2_builtin_names.py --write --path teamworks
+      - name: Clean redundant post-migration constructs
+        run: python tools/cleanup_python2_builtin_migration.py --write --path teamworks
 
-      - name: Verify obsolete builtin names are gone from code tokens
-        run: python tools/migrate_python2_builtin_names.py --check --path teamworks
-
-      - name: Commit Python 2 builtin migration batch
+      - name: Commit post-migration cleanup
         run: |
           if git diff --quiet -- teamworks; then
-            echo "No migration required"
+            echo "No cleanup required"
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add teamworks
-          git commit -m "Frankenstein lot 2 — migrer les builtins Python 2 restants"
+          git commit -m "Frankenstein lot 2 — nettoyer les redondances Python 3"
           git push origin HEAD:frankenstein/python3-wxphoenix-lot2
