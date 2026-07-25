@@ -66,10 +66,7 @@ def encrypt(message, key):
 	TrailLen = 0
 	#AES requires blocks of 16
 	while (len(message) % 16) != 0:
-		if six.PY2:
-			message  = message + '_'
-		else :
-			message = message + b'_'
+		message = message + b'_'
 		TrailLen = TrailLen + 1
 	
 	CypherOut = CypherText()

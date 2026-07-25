@@ -3370,13 +3370,10 @@ class GroupListView(FastObjectListView):
             except:
                 return group.key
 
-        if six.PY2:
-            groups.sort(key=_getLowerCaseKey, reverse=(not ascending))
-        else:
-            groups = sorted(groups, key=_getLowerCaseKey,
-                            reverse=(not ascending))
-            # update self.groups which is used e.g. in _SetGroups
-            self.groups = groups
+        groups = sorted(groups, key=_getLowerCaseKey,
+                        reverse=(not ascending))
+        # update self.groups which is used e.g. in _SetGroups
+        self.groups = groups
 
         # Sort the model objects within each group.
         for x in groups:
