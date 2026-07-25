@@ -43,11 +43,37 @@ REPLACEMENTS = {
             """        g.flatten(self, unixfrom=unixfrom, linesep=linesep)\n""",
         ),
         (
-            """    if six.PY2:\n        as_bytes = as_string\n    else:\n        def as_bytes(self, unixfrom=False, linesep='\\n'):\n            \"\"\"Return the entire formatted message as bytes.\n            Optional `unixfrom' when True, means include the Unix From_ envelope\n            header.\n\n            This overrides the default as_bytes() implementation to not mangle\n            lines that begin with 'From '. See bug #13433 for details.\n            \"\"\"\n            fp = BytesIO()\n            g = generator.BytesGenerator(fp, mangle_from_=False)\n            g.flatten(self, unixfrom=unixfrom, linesep=linesep)\n            return fp.getvalue()\n""",
-            """    def as_bytes(self, unixfrom=False, linesep='\\n'):\n        \"\"\"Return the entire formatted message as bytes.\n        Optional `unixfrom' when True, means include the Unix From_ envelope\n        header.\n\n        This overrides the default as_bytes() implementation to not mangle\n        lines that begin with 'From '. See bug #13433 for details.\n        \"\"\"\n        fp = BytesIO()\n        g = generator.BytesGenerator(fp, mangle_from_=False)\n        g.flatten(self, unixfrom=unixfrom, linesep=linesep)\n        return fp.getvalue()\n""",
+            """    if six.PY2:\n        as_bytes = as_string\n    else:\n        def as_bytes(self, unixfrom=False, linesep='\\n'):\n""",
+            """    def as_bytes(self, unixfrom=False, linesep='\\n'):\n""",
         ),
         (
-            """                if six.PY2:\n                    filename = filename.encode('utf-8')\n""",
+            """                if six.PY2:\n                    filename = filename.encode('utf-8')\n                filename = ('utf-8', '', filename)\n""",
+            """                filename = ('utf-8', '', filename)\n""",
+        ),
+    ],
+    Path("teamworks/Utils/UTILS_Sauvegarde.py"): [
+        (
+            """            if six.PY2:\n                args = args.encode('utf8')\n""",
+            """,
+        ),
+        (
+            """                try :\n                    if six.PY2:\n                        out = str(out).decode(\"iso-8859-15\")\n                except :\n                    pass\n""",
+            """,
+        ),
+        (
+            """                try :\n                    if six.PY2:\n                        err = str(err).decode(\"iso-8859-15\")\n                except :\n                    pass\n""",
+            """,
+        ),
+        (
+            """        if six.PY3:\n            motdepasse = motdepasse.decode('utf8')\n""",
+            """        motdepasse = motdepasse.decode('utf8')\n""",
+        ),
+        (
+            """            if six.PY2:\n                args = args.encode(\"iso-8859-15\")\n""",
+            """,
+        ),
+        (
+            """                if six.PY2:\n                    out = str(out).decode(\"iso-8859-15\")\n""",
             """,
         ),
     ],
