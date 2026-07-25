@@ -25,11 +25,21 @@ def test_python2_builtin_names_do_not_return_in_code():
 
         for node in ast.walk(tree):
             if (
-                isinstance(node, ast.Name)
-                and isinstance(node.ctx, ast.Load)
-                and node.id in FORBIDDEN_NAMES
+                isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Name)
+                and node.func.id in FORBIDDEN_NAMES
             ):
-                violations.append(f"{path}:{node.lineno}: {node.id}")
+                violations.append(f"{path}:{node.lineno}: {node.func.id}")
+
+            if (
+                isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Name)
+                and node.func.id in {"isinstance", "issubclass"}
+                and len(node.args) >= 2
+                and isinstance(node.args[1], ast.Name)
+                and node.args[1].id in FORBIDDEN_NAMES
+            ):
+                violations.append(f"{path}:{node.lineno}: {node.args[1].id}")
 
     assert not violations, "Python 2 builtin names found:\n" + "\n".join(violations)
 
