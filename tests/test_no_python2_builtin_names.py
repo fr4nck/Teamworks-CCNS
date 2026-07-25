@@ -1,6 +1,5 @@
 import ast
 import io
-import token
 import tokenize
 from pathlib import Path
 
@@ -15,22 +14,18 @@ def read_source(path: Path) -> str:
     return data.decode(encoding)
 
 
-def iter_name_tokens(path: Path):
-    source = read_source(path)
-    yield from tokenize.generate_tokens(io.StringIO(source).readline)
-
-
 def test_python2_builtin_names_do_not_return_in_code():
     violations = []
 
     for path in sorted(ROOT.rglob("*.py")):
         try:
-            tokens = iter_name_tokens(path)
-            for item in tokens:
-                if item.type == token.NAME and item.string in FORBIDDEN_NAMES:
-                    violations.append(f"{path}:{item.start[0]}: {item.string}")
-        except (SyntaxError, UnicodeDecodeError, tokenize.TokenError):
+            tree = ast.parse(read_source(path))
+        except (SyntaxError, UnicodeDecodeError):
             continue
+
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Name) and node.id in FORBIDDEN_NAMES:
+                violations.append(f"{path}:{node.lineno}: {node.id}")
 
     assert not violations, "Python 2 builtin names found:\n" + "\n".join(violations)
 
