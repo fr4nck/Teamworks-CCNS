@@ -28,6 +28,9 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Install test dependencies
+        run: python -m pip install pytest
+
       - name: Apply Python 2 builtin migration
         run: python tools/migrate_python2_builtin_names.py --write --path teamworks
 
