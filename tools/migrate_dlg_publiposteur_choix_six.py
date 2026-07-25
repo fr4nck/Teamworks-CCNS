@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Remove the remaining ``six.text_type`` dependency from DLG_Publiposteur_Choix."""
+"""Remove the remaining ``six.text_type`` dependency from DLG_Publiposteur_Choix.
+
+The migration is intentionally narrow and idempotent so it can be executed by CI.
+"""
 
 from __future__ import annotations
 
