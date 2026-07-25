@@ -33,6 +33,8 @@ class Calendrier():
     def GetEvents(self):
         """ Parcours les Events """
         listeEvents = []
+        if self.cal is None :
+            return listeEvents
         for component in self.cal.walk():
             if component.name == "VEVENT" :
                 description = self.RechercheElement(component, "DESCRIPTION", "texte")
@@ -72,7 +74,8 @@ class Calendrier():
 
         for nomOriginal, nomFinal in listeCorrespondances :
             for dictEvent in listeEvents :
-                if nomOriginal in dictEvent["description"] :
+                description = dictEvent["description"]
+                if description and nomOriginal in description :
                     if dictEvent["date_debut"] != None and dictEvent["date_fin"] != None :
                         annee = dictEvent["date_debut"].year
                         date_debut = dictEvent["date_debut"]
@@ -113,4 +116,3 @@ if __name__ == "__main__":
 ##        print event
     for x in cal.GetVacances() :
         print(x)
-        
