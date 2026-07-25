@@ -107,6 +107,24 @@ jobs:
             python3-runtime-risks.md
           if-no-files-found: error
 
+      - name: Inventory legacy compatibility branches
+        if: always()
+        run: |
+          python tools/inventory_legacy_compatibility_branches.py --path teamworks \
+            --json legacy-compatibility-branches.json \
+            --markdown legacy-compatibility-branches.md
+          cat legacy-compatibility-branches.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload legacy compatibility branch inventory
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: legacy-compatibility-branches
+          path: |
+            legacy-compatibility-branches.json
+            legacy-compatibility-branches.md
+          if-no-files-found: error
+
       - name: Compile migration tools and tests
         run: |
           python -m compileall -q tools \
