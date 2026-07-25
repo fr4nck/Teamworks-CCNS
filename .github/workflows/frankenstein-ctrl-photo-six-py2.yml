@@ -1,0 +1,45 @@
+name: Frankenstein CTRL_Photo six.PY2 migration
+
+on:
+  push:
+    branches:
+      - frankenstein/python3-wxphoenix-lot2
+    paths:
+      - .github/workflows/frankenstein-ctrl-photo-six-py2.yml
+      - tools/migrate_ctrl_photo_six_py2.py
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout migration branch
+        uses: actions/checkout@v4
+        with:
+          ref: frankenstein/python3-wxphoenix-lot2
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Remove dead Python 2 decoding branches
+        run: python tools/migrate_ctrl_photo_six_py2.py --write
+
+      - name: Verify migration
+        run: python tools/migrate_ctrl_photo_six_py2.py --check
+
+      - name: Commit migrated source
+        run: |
+          if git diff --quiet -- teamworks/Ctrl/CTRL_Photo.py; then
+            echo "No migration required"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add teamworks/Ctrl/CTRL_Photo.py
+          git commit -m "Frankenstein lot 2 — supprimer les branches six.PY2 de CTRL_Photo"
+          git push origin HEAD:frankenstein/python3-wxphoenix-lot2
