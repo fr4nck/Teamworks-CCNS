@@ -48,7 +48,8 @@ jobs:
             teamworks/Outils/mail/message.py \
             teamworks/Utils/UTILS_Sauvegarde.py \
             teamworks/Utils/UTILS_Envoi_email.py \
-            teamworks/Teamworks.py
+            teamworks/Teamworks.py \
+            teamworks/GestionDB.py
 
       - name: Commit migrated sources
         run: |
