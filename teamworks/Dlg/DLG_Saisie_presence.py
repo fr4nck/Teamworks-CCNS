@@ -9,7 +9,6 @@
 import Chemins
 from Utils.UTILS_Traduction import _
 import wx
-import six
 from Ctrl import CTRL_Bouton_image
 import FonctionsPerso
 import GestionDB

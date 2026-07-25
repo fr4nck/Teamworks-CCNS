@@ -16,7 +16,6 @@ import platform
 import subprocess
 from Utils import UTILS_Customize
 import appdirs
-import six
 
 
 def GetRepData(fichier=""):

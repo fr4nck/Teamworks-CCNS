@@ -9,7 +9,6 @@
 import Chemins
 from Utils.UTILS_Traduction import _
 import wx
-import six
 import sys
 from wx.lib.mixins.listctrl import CheckListCtrlMixin
 import GestionDB

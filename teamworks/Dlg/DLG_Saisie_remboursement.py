@@ -15,7 +15,6 @@ import FonctionsPerso
 import GestionDB
 import datetime
 from wx.lib.mixins.listctrl import CheckListCtrlMixin
-import six
 if 'phoenix' in wx.PlatformInfo:
     from wx.adv import DatePickerCtrl, DP_DROPDOWN
 else :

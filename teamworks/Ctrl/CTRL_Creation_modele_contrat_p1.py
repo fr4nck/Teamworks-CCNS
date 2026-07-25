@@ -10,7 +10,6 @@ import sys
 import Chemins
 from Utils.UTILS_Traduction import _
 import wx
-import six
 import GestionDB
 from Dlg import DLG_Config_classifications
 from Dlg import DLG_Config_types_contrats

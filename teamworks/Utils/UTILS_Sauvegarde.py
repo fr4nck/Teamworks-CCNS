@@ -11,7 +11,6 @@
 import Chemins
 from Utils.UTILS_Traduction import _
 import wx
-import six
 import os
 import sys
 import base64

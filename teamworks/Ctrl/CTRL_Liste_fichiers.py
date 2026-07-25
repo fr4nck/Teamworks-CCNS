@@ -11,7 +11,6 @@ import sys
 import Chemins
 from Utils.UTILS_Traduction import _
 import wx
-import six
 from wx.lib.agw import ultimatelistctrl as ULC
 from Utils import UTILS_Fichiers
 import os

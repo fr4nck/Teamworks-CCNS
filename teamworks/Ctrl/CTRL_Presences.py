@@ -10,7 +10,6 @@ import sys
 import Chemins
 from Utils.UTILS_Traduction import _
 import wx
-import six
 from wx.lib.splitter import MultiSplitterWindow
 from wx.lib.mixins.listctrl import CheckListCtrlMixin
 import GestionDB

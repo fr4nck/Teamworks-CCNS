@@ -15,7 +15,6 @@ import datetime
 import decimal
 import json
 import shelve
-import six
 
 
 def DateEngEnDateDD(dateEng):

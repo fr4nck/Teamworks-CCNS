@@ -12,7 +12,6 @@ from Utils.UTILS_Traduction import _
 import wx
 from Ctrl import CTRL_Bouton_image
 import FonctionsPerso
-import six
 import wx.lib.agw.hyperlink as hl
 from wx.lib.mixins.listctrl import CheckListCtrlMixin
 
