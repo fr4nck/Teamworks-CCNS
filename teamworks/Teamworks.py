@@ -45,12 +45,7 @@ import random
 import sys
 import platform
 
-from six.moves.urllib.request import urlopen
-
-if six.PY2:
-    import shelve
-    import dbhash
-    import anydbm
+from urllib.request import urlopen
 
 import wx.lib.agw.advancedsplash as AS
 import wx.lib.agw.pybusyinfo as PBI
@@ -155,10 +150,7 @@ class MyFrame(wx.Frame):
         # Ecrit la date et l'heure dans le journal.log
         dateDuJour = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
         systeme = u"%s %s %s %s " % (sys.platform, platform.system(), platform.release(), platform.machine())
-        if six.PY2:
-            version_python = "2"
-        else :
-            version_python = "3"
+        version_python = "3"
         print(("-------- %s | %s | Python %s | wxPython %s | %s --------" % (dateDuJour, VERSION_APPLICATION, version_python, wx.version(), systeme)))
 
         # try : locale.setlocale(locale.LC_ALL, 'FR')
