@@ -1,4 +1,4 @@
-name: Frankenstein six.PY2 decode batch
+name: Frankenstein six.PY2 migration batch
 
 on:
   push:
@@ -6,6 +6,7 @@ on:
       - frankenstein/python3-wxphoenix-lot2
     paths:
       - "tools/migrate_six_py2_decode_branches.py"
+      - "tools/migrate_six_py2_runtime_branches.py"
       - ".github/workflows/frankenstein-six-py2-decode-batch.yml"
   workflow_dispatch:
 
@@ -29,8 +30,21 @@ jobs:
       - name: Remove Python 2-only decode branches
         run: python tools/migrate_six_py2_decode_branches.py --write --path teamworks
 
-      - name: Verify decode migration
-        run: python tools/migrate_six_py2_decode_branches.py --check --path teamworks
+      - name: Remove allowlisted Python 2 runtime branches
+        run: python tools/migrate_six_py2_runtime_branches.py --write
+
+      - name: Verify six.PY2 migrations
+        run: |
+          python tools/migrate_six_py2_decode_branches.py --check --path teamworks
+          python tools/migrate_six_py2_runtime_branches.py --check
+
+      - name: Compile migrated files
+        run: |
+          python -m compileall -q \
+            teamworks/Dlg/DLG_Saisie_procedure_sauvegarde.py \
+            teamworks/Utils/UTILS_Cryptage_fichier.py \
+            teamworks/Ctrl/CTRL_ObjectListView.py \
+            teamworks/ObjectListView/ObjectListView.py
 
       - name: Commit migrated sources
         run: |
@@ -41,5 +55,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add teamworks
-          git commit -m "Frankenstein lot 2 — supprimer les décodages six.PY2 morts"
+          git commit -m "Frankenstein lot 2 — supprimer les branches six.PY2 d’exécution"
           git push origin HEAD:frankenstein/python3-wxphoenix-lot2
