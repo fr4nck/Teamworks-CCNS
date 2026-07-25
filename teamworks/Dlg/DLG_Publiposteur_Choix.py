@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -11,7 +11,6 @@ import Chemins
 from Utils.UTILS_Traduction import _
 import wx
 from Ctrl import CTRL_Bouton_image
-import six
 import FonctionsPerso
 import GestionDB
 from wx.lib.mixins.listctrl import CheckListCtrlMixin
@@ -42,18 +41,18 @@ class TreeCtrl(CT.CustomTreeCtrl):
             item = self.AppendItem(self.root,  nomGroupe, ct_type=1)
             self.SetItemData(item, None)
             
-            # Affiche la 2ème branche
+            # Affiche la 2Ã¨me branche
             for ID, intitule in items :
                 child = self.AppendItem(item,  intitule, ct_type=1)
                 self.SetItemData(child, ID)
                 
-            # Déroule l'item
+            # DÃ©roule l'item
             self.Expand(item)
 
     def GetListeItemsCoches(self):
-        """ Obtient la liste des éléments cochés """
+        """ Obtient la liste des Ã©lÃ©ments cochÃ©s """
         listeFichiers = []
-        # Parcours les types de sources : (1ère branche)
+        # Parcours les types de sources : (1Ã¨re branche)
         nbreTypeSources = self.GetChildrenCount(self.root)
         item = self.GetFirstChild(self.root)[0]
         for index in range(nbreTypeSources) :
@@ -93,9 +92,9 @@ class CheckListCtrl(wx.ListCtrl, CheckListCtrlMixin):
             index += 1
         
         for donnees in self.listeDonnees :
-            index = self.InsertItem(sys.maxsize, six.text_type(donnees[0]))
+            index = self.InsertItem(sys.maxsize, str(donnees[0]))
             for x in range(1, len(donnees)) :
-                self.SetItem(index, x, six.text_type(donnees[x]))
+                self.SetItem(index, x, str(donnees[x]))
             self.SetItemData(index, donnees[0])
 
 
@@ -188,7 +187,7 @@ class ToolBook(wx.Toolbook):
             return
             
     def ImportationPersonnes(self):
-        """ Récupération des données """
+        """ RÃ©cupÃ©ration des donnÃ©es """
         DB = GestionDB.DB()
         req = """SELECT IDpersonne, nom || ' ' || prenom, adresse_resid, cp_resid, ville_resid
         FROM personnes ORDER BY nom, prenom; """
@@ -199,7 +198,7 @@ class ToolBook(wx.Toolbook):
         return listeColonnes, listeDonnees
 
     def ImportationContrats(self):
-        """ Récupération des données """
+        """ RÃ©cupÃ©ration des donnÃ©es """
         DB = GestionDB.DB()
         req = """
         SELECT contrats.IDcontrat, personnes.nom || ' ' || personnes.prenom AS nomPersonne, contrats_class.nom, contrats_types.nom, date_debut, date_fin
@@ -228,7 +227,7 @@ class ToolBook(wx.Toolbook):
 
                                     
     def ImportationCandidats(self):
-        """ Récupération des données """
+        """ RÃ©cupÃ©ration des donnÃ©es """
         DB = GestionDB.DB()
         req = """SELECT IDcandidat, nom || ' ' || prenom, adresse_resid, cp_resid, ville_resid
         FROM candidats ORDER BY nom, prenom; """
@@ -239,7 +238,7 @@ class ToolBook(wx.Toolbook):
         return listeColonnes, listeDonnees        
 
     def ImportationCandidatures(self):
-        """ Récupération des données """
+        """ RÃ©cupÃ©ration des donnÃ©es """
         DB = GestionDB.DB()
         req = """
         SELECT candidatures.IDcontrat, cabdacontrats_class.nom, contrats_types.nom, date_debut, date_fin
@@ -274,7 +273,7 @@ class Dialog(wx.Dialog):
         self.parent = parent
         self.panel = wx.Panel(self, -1)
         
-        self.label_intro = wx.StaticText(self.panel, -1, _(u"Veuillez sélectionner une catégorie de données puis cochez les données à utiliser :"))
+        self.label_intro = wx.StaticText(self.panel, -1, _(u"Veuillez sÃ©lectionner une catÃ©gorie de donnÃ©es puis cochez les donnÃ©es Ã  utiliser :"))
         self.sizer_staticbox = wx.StaticBox(self.panel, -1, u"")
         
         # Panel
@@ -362,17 +361,17 @@ class Dialog(wx.Dialog):
         self.EndModal(wx.ID_CANCEL)
         
     def OnBoutonOk(self, event):
-        """ Validation des données saisies """
+        """ Validation des donnÃ©es saisies """
         categorie = self.toolBook.GetCategorie() 
         listeID = self.toolBook.GetIDCoches()
         
         if len(listeID) == 0 :
-            dlg = wx.MessageDialog(self, _(u"Vous n'avez coché aucun élément."), _(u"Erreur de saisie"), wx.OK | wx.ICON_ERROR)
+            dlg = wx.MessageDialog(self, _(u"Vous n'avez cochÃ© aucun Ã©lÃ©ment."), _(u"Erreur de saisie"), wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
             dlg.Destroy()
             return
         
-        # Récupère les données pour le publipostage
+        # RÃ©cupÃ¨re les donnÃ©es pour le publipostage
         from Utils import UTILS_Publipostage_donnees
         dictDonnees = UTILS_Publipostage_donnees.GetDictDonnees(categorie, listeID)
 
