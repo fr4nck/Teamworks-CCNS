@@ -82,13 +82,14 @@ class Calendrier():
         # Recherche les grandes vacances
         dictTemp = {}
         for dictEvent in listeEvents :
-            if u"élèves" or u"été" in dictEvent["description"] :
+            description = dictEvent["description"]
+            if description and (u"élèves" in description or u"été" in description) :
                 annee = dictEvent["date_debut"].year
                 if (annee in dictTemp) == False :
                     dictTemp[annee] = {"date_debut" : None, "date_fin" : None}
-                if u"été" in dictEvent["description"] :
+                if u"été" in description :
                     dictTemp[annee]["date_debut"] = dictEvent["date_debut"] + datetime.timedelta(days=1)
-                if u"élèves" in dictEvent["description"] :
+                if u"élèves" in description :
                     dictTemp[annee]["date_fin"] = dictEvent["date_debut"] - datetime.timedelta(days=1)
 
         for annee, dictDates in dictTemp.items() :
