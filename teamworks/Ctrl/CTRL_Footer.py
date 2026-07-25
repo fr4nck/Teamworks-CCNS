@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: iso-8859-15 -*-
 #------------------------------------------------------------------------
-# Application :    Noethys, gestion multi-activités
+# Application :    Noethys, gestion multi-activitÃ©s
 # Site internet :  www.noethys.com
 # Auteur:           Ivan LUCAS
 # Copyright:       (c) 2010-14 Ivan LUCAS
@@ -10,7 +10,6 @@
 
 import wx
 import datetime
-import six
 
 if 'phoenix' in wx.PlatformInfo:
     from wx import Control
@@ -52,7 +51,7 @@ class Footer(Control):
                     if hasattr(track, nomColonne) :
                         total = getattr(track, nomColonne)
                         if (nomColonne in self.dictTotaux) == False :
-                            # Format classique (numérique)
+                            # Format classique (numÃ©rique)
                             self.dictTotaux[nomColonne] = 0
                             # Autre format
                             if "format" in dictColonne :
@@ -95,7 +94,7 @@ class Footer(Control):
             if col.align == "centre" : alignement = wx.ALIGN_CENTER
             if col.align == "right" : alignement = wx.ALIGN_RIGHT
             
-            # Recherche infos personnalisées à afficher dans la colonne
+            # Recherche infos personnalisÃ©es Ã  afficher dans la colonne
             mode = None
             if nom in self.dictColonnes :
                 infoColonne = self.dictColonnes[nom]
@@ -106,7 +105,7 @@ class Footer(Control):
                     if nom in self.dictTotaux :
                         texte = self.dictTotaux[nom]
                     else :
-                        # Total format classique (numérique)
+                        # Total format classique (numÃ©rique)
                         texte = 0
                         # Autres formats de total
                         if "format" in infoColonne :
@@ -114,11 +113,7 @@ class Footer(Control):
                                 texte = datetime.timedelta(0)
                     if converter != None :
                         texte = converter(texte)
-                    if six.PY2:
-                        liste_types = (int, float)
-                    else :
-                        liste_types = (int, float)
-                    if type(texte) in liste_types :
+                    if type(texte) in (int, float) :
                         texte = str(texte)
                 
                 # Valeur : NOMBRE
@@ -133,12 +128,12 @@ class Footer(Control):
                 if mode == "texte" :
                     texte = infoColonne["texte"]
 
-                # Paramètres personnalisés
+                # ParamÃ¨tres personnalisÃ©s
                 if "alignement" in infoColonne : alignement = infoColonne["alignement"]
                 if "font" in infoColonne : font = infoColonne["font"]
                 if "couleur" in infoColonne : couleur = infoColonne["couleur"]
             
-            # Pour éviter les bords si les cases sont vides
+            # Pour Ã©viter les bords si les cases sont vides
             ajustement = 0
             if mode != "total" and dernierTexte == "" :
                 ajustement = 5
@@ -146,7 +141,7 @@ class Footer(Control):
             self.DrawColonne(dc, x-ajustement, largeur+ajustement, texte, alignement, couleur, font)
             x += largeur
             
-            # Mémorisation pour impression
+            # MÃ©morisation pour impression
             self.listeImpression.append({"texte" : texte, "alignement" : alignement})
             
             if mode == "total" :
@@ -154,7 +149,7 @@ class Footer(Control):
             else :
                 dernierTexte = ""
         
-        # Dernière colonne de remplissage
+        # DerniÃ¨re colonne de remplissage
         if self.afficherColonneDroite :
             self.DrawColonne(dc, x, self.GetSize()[0]-x)
 
