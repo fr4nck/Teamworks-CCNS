@@ -89,7 +89,7 @@ class ImgBox(wx.Window):
 
     def InitImage(self):
         # Chargement de l'image source
-        if type(self.fichierImageSource) == str or type(self.fichierImageSource) == unicode :
+        if type(self.fichierImageSource) == str or type(self.fichierImageSource) == str :
             self.sourcePIL = load_image(self.fichierImageSource)
         else :
             self.sourcePIL = self.fichierImageSource

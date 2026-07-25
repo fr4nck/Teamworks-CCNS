@@ -47,7 +47,7 @@ def ParametresCategorie(mode="get", categorie="", dictParametres={}, nomFichier=
         # Préparation de la valeur par défaut
         type_parametre = type(valeur)
         if type_parametre == int : valeurTmp = str(valeur)
-        elif six.PY2 and type_parametre == long : valeurTmp = str(valeur)
+        elif six.PY2 and type_parametre == int : valeurTmp = str(valeur)
         elif type_parametre == float : valeurTmp = str(valeur)
         elif type_parametre == str : valeurTmp = valeur
         elif type_parametre == six.text_type : valeurTmp = valeur
@@ -66,7 +66,7 @@ def ParametresCategorie(mode="get", categorie="", dictParametres={}, nomFichier=
                 # On le formate pour le récupérer sous son vrai format
                 try :
                     if type_parametre == int : valeur = int(valeur)
-                    if six.PY2 and type_parametre == long : valeur = long(valeur)
+                    if six.PY2 and type_parametre == int : valeur = int(valeur)
                     if type_parametre == float : valeur = float(valeur)
                     if type_parametre == str : valeur = valeur
                     if type_parametre == six.text_type : valeur = valeur
@@ -117,7 +117,7 @@ def Parametres(mode="get", categorie="", nom="", valeur=None, nomFichier=""):
     # Préparation de la valeur par défaut
     type_parametre = type(valeur)
     if type_parametre == int : valeurTmp = str(valeur)
-    elif six.PY2 and type_parametre == long : valeurTmp = str(valeur)
+    elif six.PY2 and type_parametre == int : valeurTmp = str(valeur)
     elif type_parametre == float : valeurTmp = str(valeur)
     elif type_parametre == str : valeurTmp = valeur
     elif type_parametre == six.text_type : valeurTmp = valeur
@@ -143,7 +143,7 @@ def Parametres(mode="get", categorie="", nom="", valeur=None, nomFichier=""):
             valeurTmp = listeDonnees[0][1]
             # On le formate pour le récupérer sous son vrai format
             if type_parametre == int : valeurTmp = int(valeurTmp)
-            if six.PY2 and type_parametre == long : valeurTmp = long(valeurTmp)
+            if six.PY2 and type_parametre == int : valeurTmp = int(valeurTmp)
             if type_parametre == float : valeurTmp = float(valeurTmp)
             if type_parametre == str : valeurTmp = valeurTmp
             if type_parametre == six.text_type : valeurTmp = valeurTmp
@@ -184,5 +184,4 @@ if __name__ == u"__main__":
     #print(ParametresCategorie(mode="get", categorie="parametres_grille_conso", dictParametres={"affiche_colonne_memo":True, "test":u"ça marche !"}, nomFichier=""))
     reponse = Parametres(mode="get", categorie="dlg_ouvertures", nom="afficher_tous_groupes", valeur=False)
     print((reponse, type(reponse)))
-    
     

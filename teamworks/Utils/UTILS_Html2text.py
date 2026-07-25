@@ -243,7 +243,7 @@ class _html2text(HTMLParser.HTMLParser):
         else: self.out = out
         self.outtextlist = [] # empty list to store output characters before they are  "joined"
         try:
-            self.outtext = unicode()
+            self.outtext = str()
         except NameError: # Python3
             self.outtext = str()
         self.quiet = 0
@@ -346,7 +346,7 @@ class _html2text(HTMLParser.HTMLParser):
         strikethrough =  'line-through' in tag_emphasis and options.hide_strikethrough
         bold = 'bold' in tag_emphasis and not 'bold' in parent_emphasis
         italic = 'italic' in tag_emphasis and not 'italic' in parent_emphasis
-        fixed = google_fixed_width_font(tag_style) and not \
+        fixed = google_fixed_width_font(tag_style) and not\
                 google_fixed_width_font(parent_style) and not self.pre
 
         if start:
