@@ -76,6 +76,10 @@ REPLACEMENTS = {
             """                if six.PY2:\n                    out = str(out).decode(\"iso-8859-15\")\n""",
             "",
         ),
+        (
+            """                fichierZip.write(fichierSave.encode('utf8'), u\"%s.sql\" % nomFichier)\n""",
+            """                fichierZip.write(fichierSave, u\"%s.sql\" % nomFichier)\n""",
+        ),
     ],
     Path("teamworks/Utils/UTILS_Envoi_email.py"): [
         (
