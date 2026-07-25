@@ -497,10 +497,7 @@ class SmtpV2(Base_messagerie):
                         erreur = err
 
                 if erreur != None:
-                    if six.PY2:
-                        err = str(erreur).decode("iso-8859-15")
-                    else:
-                        err = six.text_type(erreur)
+                    err = six.text_type(erreur)
                     listeAnomalies.append((message, err))
                     print(("Erreur dans l'envoi d'un mail : %s...", err))
                     traceback.print_exc(file=sys.stdout)
