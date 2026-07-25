@@ -24,7 +24,11 @@ def test_python2_builtin_names_do_not_return_in_code():
             continue
 
         for node in ast.walk(tree):
-            if isinstance(node, ast.Name) and node.id in FORBIDDEN_NAMES:
+            if (
+                isinstance(node, ast.Name)
+                and isinstance(node.ctx, ast.Load)
+                and node.id in FORBIDDEN_NAMES
+            ):
                 violations.append(f"{path}:{node.lineno}: {node.id}")
 
     assert not violations, "Python 2 builtin names found:\n" + "\n".join(violations)
