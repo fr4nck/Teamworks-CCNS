@@ -71,6 +71,9 @@ jobs:
       - name: Block Python 2 builtin names
         run: python -m pytest -q tests/test_no_python2_builtin_names.py
 
+      - name: Lock public configuration API
+        run: python -m pytest -q tests/test_utils_config_api.py
+
       - name: Inventory remaining wxPython Classic APIs
         if: always()
         run: |
@@ -155,7 +158,8 @@ jobs:
             tests/test_completed_python3_wx_migrations.py \
             tests/test_migrate_wx_empty_images.py \
             tests/test_no_completed_wx_classic_apis.py \
-            tests/test_no_python2_builtin_names.py
+            tests/test_no_python2_builtin_names.py \
+            tests/test_utils_config_api.py
 
       - name: Report full legacy compile audit
         continue-on-error: true
