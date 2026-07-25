@@ -96,11 +96,7 @@ class EditorRegistry:
         self.typeToFunctionMap[six.text_type] = self._MakeStringEditor
         self.typeToFunctionMap[bool] = self._MakeBoolEditor
 
-        if six.PY2:
-            self.typeToFunctionMap[int] = self._MakeIntegerEditor
-            self.typeToFunctionMap[int] = self._MakeLongEditor
-        else:
-            self.typeToFunctionMap[int] = self._MakeLongEditor
+        self.typeToFunctionMap[int] = self._MakeLongEditor
 
         self.typeToFunctionMap[float] = self._MakeFloatEditor
         self.typeToFunctionMap[datetime.datetime] = self._MakeDateTimeEditor
@@ -268,7 +264,7 @@ class LongEditor(BaseCellTextEditor):
 
     def SetValue(self, value):
         "Put a new value into the editor"
-        if isinstance(value, (int, int, float)):
+        if isinstance(value, (int, float)):
             value = repr(value)
         super(LongEditor, self).SetValue(value)
 

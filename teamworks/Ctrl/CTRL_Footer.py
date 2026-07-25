@@ -115,7 +115,7 @@ class Footer(Control):
                     if converter != None :
                         texte = converter(texte)
                     if six.PY2:
-                        liste_types = (int, float, int)
+                        liste_types = (int, float)
                     else :
                         liste_types = (int, float)
                     if type(texte) in liste_types :
