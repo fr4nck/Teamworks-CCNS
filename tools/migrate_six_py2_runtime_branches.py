@@ -115,6 +115,18 @@ REPLACEMENTS = {
             """        ID, prenom, genre = ligne.split(\";\")\n        listeDonnees = [(\"prenom\", prenom), (\"genre\", genre),]\n""",
         ),
     ],
+    Path("teamworks/Ctrl/CTRL_Editeur_email.py"): [
+        (
+            """        if (six.PY3 and not isinstance(texteXml, bytes)) or (six.PY2 and not isinstance(texteXml, buffer)):\n            texteXml = texteXml.encode(\"utf8\")\n""",
+            """        if not isinstance(texteXml, bytes):\n            texteXml = texteXml.encode(\"utf8\")\n""",
+        ),
+    ],
+    Path("teamworks/FonctionsPerso.py"): [
+        (
+            """    if six.PY2 and type(chaineUnicode) == str :\n        chaineUnicode = chaineUnicode.decode(\"iso-8859-15\")\n""",
+            "",
+        ),
+    ],
 }
 
 
