@@ -44,7 +44,8 @@ jobs:
             teamworks/Dlg/DLG_Saisie_procedure_sauvegarde.py \
             teamworks/Utils/UTILS_Cryptage_fichier.py \
             teamworks/Ctrl/CTRL_ObjectListView.py \
-            teamworks/ObjectListView/ObjectListView.py
+            teamworks/ObjectListView/ObjectListView.py \
+            teamworks/Outils/mail/message.py
 
       - name: Commit migrated sources
         run: |
