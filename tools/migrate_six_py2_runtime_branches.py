@@ -82,6 +82,18 @@ REPLACEMENTS = {
             """                    if six.PY2:\n                        err = str(erreur).decode(\"iso-8859-15\")\n                    else:\n                        err = six.text_type(erreur)\n""",
             """                    err = six.text_type(erreur)\n""",
         ),
+        (
+            """import six\nfrom six.moves.email_mime_multipart import MIMEMultipart\nfrom six.moves.email_mime_base import MIMEBase\nfrom six.moves.email_mime_text import MIMEText\nfrom six.moves.email_mime_image import MIMEImage\n""",
+            """from email.mime.multipart import MIMEMultipart\nfrom email.mime.base import MIMEBase\nfrom email.mime.text import MIMEText\nfrom email.mime.image import MIMEImage\n""",
+        ),
+        (
+            """            if type(nomFichier) == six.text_type:\n""",
+            """            if isinstance(nomFichier, str):\n""",
+        ),
+        (
+            """                    err = six.text_type(erreur)\n""",
+            """                    err = str(erreur)\n""",
+        ),
     ],
     Path("teamworks/Teamworks.py"): [
         (
