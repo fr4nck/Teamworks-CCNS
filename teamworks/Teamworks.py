@@ -1507,8 +1507,6 @@ class MyFrame(wx.Frame):
         msg = txtLicence.read()
         txtLicence.close()
         from Dlg import DLG_Messagebox
-        if six.PY2:
-            msg = msg.decode("iso-8859-15")
         dlg = DLG_Messagebox.Dialog(self, titre=_(u"Notes de versions"), introduction=_("Liste des versions du logiciel :"), detail=msg, icone=wx.ICON_INFORMATION, boutons=[_(u"Fermer"), ], defaut=0)
         dlg.ShowModal()
         dlg.Destroy()
@@ -1519,8 +1517,6 @@ class MyFrame(wx.Frame):
         txtLicence = open(Chemins.GetMainPath("Licence.txt"), "r")
         msg = txtLicence.read()
         txtLicence.close()
-        if six.PY2:
-            msg = msg.decode("iso-8859-15")
         dlg = wx.lib.dialogs.ScrolledMessageDialog(self, msg, _(u"A propos"), size=(500, 500))
         dlg.ShowModal()
 

@@ -142,8 +142,6 @@ def DeplaceFichiers():
     # Déplace les fichiers de données du répertoire Data
     if GetRepData() != "Data/" and os.path.isdir(Chemins.GetMainPath("Data")) :
         for nomFichier in os.listdir(Chemins.GetMainPath("Data")) :
-            if six.PY2:
-                nomFichier = nomFichier.decode("iso-8859-15")
             if nomFichier.endswith(".dat") and "_" in nomFichier and "EXEMPLE_" not in nomFichier and "_archive.dat" not in nomFichier :
                 # Déplace le fichier vers le répertoire des fichiers de données
                 print(["copie base de donnees :", nomFichier, " > ", GetRepData(nomFichier)])

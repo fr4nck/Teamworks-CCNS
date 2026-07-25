@@ -40,8 +40,6 @@ def Activer_rapport_erreurs(version=""):
         # Affichage dans une DLG
         if UTILS_Config.GetParametre("rapports_bugs", True) == False :
             return
-        if six.PY2:
-            bug = bug.decode("iso-8859-15")
         texte = u"%s\n%s" % (infos, bug)
         dlg = DLG_Rapport(None, texte)
         dlg.ShowModal()

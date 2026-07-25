@@ -788,9 +788,6 @@ class CTRL(wx.Panel):
 </head>
         """
         source = source.replace("<head></head>", head)
-        if six.PY2:
-            source = source.decode("utf-8")
-
         import wx.html
         dlg = wx.Dialog(self, title="HTML", style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
         html = wx.html.HtmlWindow(dlg, size=(500,400), style=wx.BORDER_SUNKEN)
@@ -838,8 +835,6 @@ class CTRL(wx.Panel):
         if not handler.SaveStream(self.ctrl_editeur.GetBuffer(), stream):
             return False
         source = stream.getvalue()
-        if six.PY2:
-            source = source.decode("utf-8")
         for balise in ("<html>", "</html>", "<head>", "</head>", "<body>", "</body>"):
             source = source.replace(balise, "")
         return source

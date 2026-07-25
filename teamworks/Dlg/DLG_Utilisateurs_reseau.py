@@ -302,8 +302,6 @@ class ListCtrl(wx.ListCtrl, CheckListCtrlMixin):
                 if host == hostTmp and user == userTmp :
                     autorisation = True
 
-            if six.PY2:
-                host = host.decode("utf8")
             listeDonnees.append([user, host, autorisation])
         return listeDonnees
 

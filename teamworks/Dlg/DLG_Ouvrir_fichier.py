@@ -265,9 +265,6 @@ class MyDialog(wx.Dialog):
         # Version LOCAL
         if modeLocal == True :
             nomFichier = dictItem["titre"]
-            if six.PY2:
-                nomFichier = nomFichier.decode("iso-8859-15")
-    
         # Version RESEAU
         if modeLocal == False :
             dictCodes = self.GetCodesReseau() 

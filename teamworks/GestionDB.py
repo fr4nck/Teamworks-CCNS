@@ -1157,8 +1157,6 @@ def ImporterFichierDonnees() :
     index = 0
     for ligne in txt :
         ID, prenom, genre = ligne.split(";")
-        if six.PY2:
-            prenom = prenom.decode("iso-8859-15")
             genre = genre.decode("iso-8859-15")
         listeDonnees = [("prenom", prenom), ("genre", genre),]
         IDprenom = db.ReqInsert("prenoms", listeDonnees)

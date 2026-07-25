@@ -184,8 +184,6 @@ class CTRL_Photo(wx.StaticBitmap):
         sousmenu1 = UTILS_Adaptations.Menu()
         indexID = 500
         for nomCadre in FonctionsPerso.GetListeCadresPhotos() :
-            if six.PY2:
-                nomCadre = nomCadre.decode("iso-8859-15")
             sousmenu1.Append(indexID, nomCadre, _(u"Choisir le cadre de décoration '") + nomCadre + _(u"' pour cette personne"), wx.ITEM_RADIO)
             if nomCadre == nomCadrePersonne :
                 sousmenu1.Check(indexID, True)
@@ -330,8 +328,6 @@ class CTRL_Photo(wx.StaticBitmap):
             nomCadre = ""
         else :
             nomCadre = FonctionsPerso.GetListeCadresPhotos()[index]
-            if six.PY2:
-                nomCadre = nomCadre.decode("iso-8859-15")
         # Sauvegarde le choix du cadre
         DB = GestionDB.DB()
         DB.ReqMAJ("personnes", [("cadre_photo", nomCadre),], "IDpersonne", self.IDindividu)

@@ -369,8 +369,6 @@ class Page_recherche(wx.Panel):
                 texteIntro1 = _(u"La version ") + self.versionFichier + " de Teamworks est disponible (" + self.tailleFichier + ")."
                 self.parent.GetPage("page_disponible").label_introduction1.SetLabel(texteIntro1)
                 texteNouveautes = self.texteNouveautes
-                if six.PY2:
-                    texteNouveautes = texteNouveautes.decode("utf-8")
                 self.parent.GetPage("page_disponible").textCtrl_nouveautes.SetValue(texteNouveautes)
                 self.parent.Active_page("page_disponible")
               
