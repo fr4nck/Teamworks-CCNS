@@ -41,6 +41,14 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install pytest
 
+      - name: Apply pending Python 3 migrations in workspace
+        run: |
+          python tools/migrate_six_py2_runtime_branches.py --write
+          python tools/cleanup_python2_builtin_migration.py --write --path teamworks
+
+      - name: Verify pending migrations are idempotent
+        run: python tools/migrate_six_py2_runtime_branches.py --check
+
       - name: Test Python 3 CLI compatibility
         run: python -m pytest -q tests/test_python3_cli_compatibility.py
 
