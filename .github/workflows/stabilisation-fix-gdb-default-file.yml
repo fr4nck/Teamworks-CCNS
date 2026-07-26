@@ -7,6 +7,12 @@ on:
     paths:
       - "tools/fix_gestiondb_default_filename.py"
       - ".github/workflows/stabilisation-fix-gdb-default-file.yml"
+  pull_request:
+    branches:
+      - master
+    paths:
+      - "tools/fix_gestiondb_default_filename.py"
+      - ".github/workflows/stabilisation-fix-gdb-default-file.yml"
   workflow_dispatch:
 
 permissions:
