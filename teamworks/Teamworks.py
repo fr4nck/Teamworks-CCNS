@@ -875,8 +875,6 @@ class MyFrame(wx.Frame):
             # Affiche d'une fenêtre d'attente
             message = _(u"Mise à jour de la base de données en cours... Veuillez patientez...")
             dlgAttente = PBI.PyBusyInfo(message, parent=None, title=_(u"Mise à jour"), icon=wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Logo.png"), wx.BITMAP_TYPE_ANY))
-            if 'phoenix' not in wx.PlatformInfo:
-                wx.Yield()
 
             DB = UpgradeDB.DB(nomFichier=nomFichier)
             resultat = DB.Upgrade(versionFichier)
@@ -967,8 +965,6 @@ class MyFrame(wx.Frame):
         # Affiche d'une fenêtre d'attente
         message = _(u"Création du nouveau fichier en cours... Veuillez patientez...")
         dlgAttente = PBI.PyBusyInfo(message, parent=None, title=_(u"Création d'un fichier"), icon=wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Logo.png"), wx.BITMAP_TYPE_ANY))
-        if 'phoenix' not in wx.PlatformInfo:
-            wx.Yield()
             
         if "[RESEAU]" in nomFichier :
             self.SetStatusText(_(u"Création du fichier '%s' en cours...") % nomFichier[nomFichier.index("[RESEAU]"):])
@@ -1784,8 +1780,6 @@ class MyApp(wx.App):
         frame = AS.AdvancedSplash(None, bitmap=bmp, timeout=1000, agwStyle=AS.AS_TIMEOUT | AS.AS_CENTER_ON_SCREEN)
         frame.Refresh()
         frame.Update()
-        if 'phoenix' not in wx.PlatformInfo:
-            wx.Yield()
 
         # Création de la frame principale
         frame = MyFrame(None)

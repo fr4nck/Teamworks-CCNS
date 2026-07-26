@@ -425,12 +425,9 @@ class MyPreviewFrame(wx.PreviewFrame):
         self.Initialize()
 
         # Récupération de la bar de contrôle
-        if 'phoenix' not in wx.PlatformInfo:
-            controlBar = self.GetControlBar()
-        else:
-            for ctrl in self.GetChildren():
-                if "ControlBar" in str(ctrl):
-                    controlBar = ctrl
+        for ctrl in self.GetChildren():
+            if "ControlBar" in str(ctrl):
+                controlBar = ctrl
 
         liste_controles = controlBar.GetChildren()
 
@@ -446,8 +443,6 @@ class MyPreviewFrame(wx.PreviewFrame):
         liste_controles[10].SetLabel(_(u"Fermer"))
 
         # Ajustement taille et position de la fenêtre
-        if 'phoenix' not in wx.PlatformInfo:
-            self.MakeModal(False)
 
         frame = wx.GetApp().GetTopWindow()
         self.SetPosition(frame.GetPosition())

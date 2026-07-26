@@ -2900,8 +2900,6 @@ class Publipostage_Teamword():
     
     def RemplacementValeurs(self, listeValeurs=[]):
         """ Remplacements des mots-clés par les valeurs """
-        if 'phoenix' not in wx.PlatformInfo:
-            wx.Yield()
         try :
             listeValeurs2 = []
             for motcle, valeur in listeValeurs :
