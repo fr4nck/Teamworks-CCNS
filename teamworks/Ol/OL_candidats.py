@@ -145,10 +145,6 @@ class ListView(ObjectListView):
             self.Bind(wx.EVT_CONTEXT_MENU, self.OnContextMenu)
         self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.OnItemSelected)
         
-        if 'phoenix' not in wx.PlatformInfo and "linux" not in sys.platform and self.activePopup == True :
-            # Désactive la fenetre popup sous Linux
-            self.Bind(wx.EVT_MOTION, self.OnMouseMotion)
-        
     def OnItemActivated(self,event):
         self.DestroyPopup()
         self.Modifier()
