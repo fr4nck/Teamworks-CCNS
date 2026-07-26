@@ -464,9 +464,9 @@ class listCtrl_Personnes(wx.ListCtrl, CheckListCtrlMixin):
                 else:
                     txt = valeurs[0] + " " + valeurs[1]
                 if 'phoenix' in wx.PlatformInfo:
-                    index = self.InsertItem(sys.maxsize, txt)
+                    index = self.InsertItem(self.GetItemCount(), txt)
                 else:
-                    index = self.InsertItem(sys.maxsize, txt)
+                    index = self.InsertItem(self.GetItemCount(), txt)
                 self.SetItemData(index, key)
                 # Sélection
                 if valeurs[4] == True :
