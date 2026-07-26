@@ -4,37 +4,10 @@
 from __future__ import annotations
 
 from pathlib import Path
+import re
 
 ROOT = Path(__file__).resolve().parents[1]
 TARGET = ROOT / "teamworks" / "GestionDB.py"
-
-BROKEN = '''    def CreationTable(self, nomTable="", dicoDB={}):
-        req = "CREATE TABLE %s (" % nomTable
-        pk = ""
-        for descr in dicoDB[nomTable]:
-            nomChamp = descr[0]
-            typeChamp = descr[1]
-            with DiagnosticPerformance.mesurer("sql", "GestionDB.ExecuterReq", {"requete": req[:160]}):
-                self.cursor.execute(req)
-        with DiagnosticPerformance.mesurer("sql_fetch", "GestionDB.ResultatReq"):
-            resultat = self.cursor.fetchall()
-            if self.isNetwork == False and typeChamp == "BIGINT": typeChamp = "INTEGER"
-            # Adaptation à MySQL :
-            if self.isNetwork == True and typeChamp == "INTEGER PRIMARY KEY AUTOINCREMENT" : typeChamp = "INTEGER PRIMARY KEY AUTO_INCREMENT"
-            if self.isNetwork == True and typeChamp == "FLOAT" : typeChamp = "REAL"
-            if self.isNetwork == True and typeChamp == "DATE" : typeChamp = "VARCHAR(10)"
-            if self.isNetwork == True and typeChamp.startswith("VARCHAR") :
-                nbreCaract = int(typeChamp[typeChamp.find("(")+1:typeChamp.find(")")])
-                if nbreCaract > 255 :
-                    typeChamp = "TEXT(%d)" % nbreCaract
-                if nbreCaract > 20000 :
-                    typeChamp = "MEDIUMTEXT"
-
-            # ------------------------------
-            req = req + "%s %s, " % (nomChamp, typeChamp)
-        req = req[:-2] + ")"
-        self.cursor.execute(req)
-'''
 
 FIXED = '''    def CreationTable(self, nomTable="", dicoDB={}):
         req = "CREATE TABLE %s (" % nomTable
@@ -63,7 +36,13 @@ FIXED = '''    def CreationTable(self, nomTable="", dicoDB={}):
         req = req[:-2] + ")"
         with DiagnosticPerformance.mesurer("sql", "GestionDB.CreationTable", {"requete": req[:160]}):
             self.cursor.execute(req)
+
 '''
+
+PATTERN = re.compile(
+    r"    def CreationTable\(self, nomTable=\"\", dicoDB=\{\}\):\n.*?(?=    def ExecuterReq\(self, req\):)",
+    re.DOTALL,
+)
 
 
 def main() -> int:
@@ -71,10 +50,15 @@ def main() -> int:
     if FIXED in source:
         print("GestionDB.CreationTable already repaired")
         return 0
-    count = source.count(BROKEN)
-    if count != 1:
-        raise SystemExit(f"expected exactly one broken CreationTable block, found {count}")
-    TARGET.write_text(source.replace(BROKEN, FIXED), encoding="iso-8859-15")
+
+    matches = list(PATTERN.finditer(source))
+    if len(matches) != 1:
+        raise SystemExit(
+            f"expected exactly one CreationTable method before ExecuterReq, found {len(matches)}"
+        )
+
+    repaired = PATTERN.sub(FIXED, source, count=1)
+    TARGET.write_text(repaired, encoding="iso-8859-15")
     print(f"updated {TARGET.relative_to(ROOT)}")
     return 0
 
