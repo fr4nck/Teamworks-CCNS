@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Construit l'assistant de contrat réel sur un contrat d'exemple sous Windows."""
+"""Construit l'assistant de contrat réel et parcourt ses six étapes sous Windows."""
 
 from __future__ import annotations
 
@@ -43,7 +43,7 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 _smoke_dialog.Show()
                 wx.Yield()
 
-                print("TEAMWORKS_SMOKE_CONTRACT_STAGE:assertions", flush=True)
+                print("TEAMWORKS_SMOKE_CONTRACT_STAGE:initial", flush=True)
                 assert _smoke_dialog.nbrePages == 6
                 assert _smoke_dialog.pageVisible == 1
                 assert len(_smoke_dialog.listePages) == 6
@@ -56,6 +56,29 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 assert _smoke_dialog.dictContrats["IDcontrat"] == _smoke_contract_id
                 assert _smoke_dialog.dictContrats["IDpersonne"] == _smoke_person_id
                 assert _smoke_dialog.GetTitle() == "Modification d'un contrat"
+
+                print("TEAMWORKS_SMOKE_CONTRACT_STAGE:forward", flush=True)
+                for _smoke_target_page in range(2, 7):
+                    _smoke_dialog.Onbouton_suite(None)
+                    wx.Yield()
+                    assert _smoke_dialog.pageVisible == _smoke_target_page
+                    assert getattr(_smoke_dialog, "page%d" % _smoke_target_page).IsShown()
+                    assert _smoke_dialog.bouton_retour.IsEnabled()
+
+                assert _smoke_dialog.pageVisible == 6
+                assert _smoke_dialog.page6.IsShown()
+
+                print("TEAMWORKS_SMOKE_CONTRACT_STAGE:backward", flush=True)
+                for _smoke_target_page in range(5, 0, -1):
+                    _smoke_dialog.Onbouton_retour(None)
+                    wx.Yield()
+                    assert _smoke_dialog.pageVisible == _smoke_target_page
+                    assert getattr(_smoke_dialog, "page%d" % _smoke_target_page).IsShown()
+
+                assert _smoke_dialog.pageVisible == 1
+                assert _smoke_dialog.page1.IsShown()
+                assert not _smoke_dialog.bouton_retour.IsEnabled()
+                assert _smoke_dialog.bouton_suite.IsEnabled()
                 print("TEAMWORKS_SMOKE_CONTRACT_DIALOG_READY", flush=True)
                 _smoke_dialog.Destroy()
             except Exception:
@@ -73,6 +96,8 @@ def build_patched_entrypoint() -> int:
     if marker_count < 1:
         raise RuntimeError(f"marqueur principal introuvable: count={marker_count}")
     patched_source = source.replace(MARKER_LINE, INJECTION, 1)
+    if READY_MARKER not in patched_source or FAILURE_MARKER not in patched_source:
+        raise RuntimeError("injection des marqueurs du contrat absente")
     compile(patched_source, str(PATCHED), "exec")
     PATCHED.write_text(patched_source, encoding="iso-8859-15")
     return marker_count
@@ -85,6 +110,13 @@ def decode_output(data: bytes) -> str:
         except UnicodeDecodeError:
             pass
     return data.decode("utf-8", errors="replace")
+
+
+def github_error_summary(output: str, max_lines: int = 40) -> None:
+    lines = [line.strip() for line in output.splitlines() if line.strip()]
+    summary = " | ".join(lines[-max_lines:])
+    summary = summary.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+    print(f"::error title=Contract dialog smoke failed::{summary}")
 
 
 def write_diagnostic(*, return_code: int, marker_count: int | None, output: str) -> None:
@@ -103,10 +135,11 @@ def write_diagnostic(*, return_code: int, marker_count: int | None, output: str)
 def build_environment() -> dict[str, str]:
     env = os.environ.copy()
     env["TEAMWORKS_SMOKE_MODE"] = "main-window"
-    paths = [str(ROOT), str(TEAMWORKS_DIR)]
-    if env.get("PYTHONPATH"):
-        paths.append(env["PYTHONPATH"])
-    env["PYTHONPATH"] = os.pathsep.join(paths)
+    search_paths = [str(ROOT), str(TEAMWORKS_DIR)]
+    existing_pythonpath = env.get("PYTHONPATH")
+    if existing_pythonpath:
+        search_paths.append(existing_pythonpath)
+    env["PYTHONPATH"] = os.pathsep.join(search_paths)
     return env
 
 
@@ -120,19 +153,23 @@ def main() -> int:
             cwd=TEAMWORKS_DIR,
             env=build_environment(),
             capture_output=True,
-            timeout=150,
+            timeout=180,
             check=False,
         )
         output = decode_output(result.stdout) + "\n" + decode_output(result.stderr)
         write_diagnostic(return_code=result.returncode, marker_count=marker_count, output=output)
         if result.returncode != 0 or FAILURE_MARKER in output:
+            github_error_summary(output)
             return result.returncode or 1
         if READY_MARKER not in output:
+            github_error_summary(output)
+            print("marqueur du contrat absent", file=sys.stderr)
             return 2
         return 0
     except Exception:
         output = traceback.format_exc()
         write_diagnostic(return_code=3, marker_count=marker_count, output=output)
+        github_error_summary(output)
         return 3
     finally:
         PATCHED.unlink(missing_ok=True)
