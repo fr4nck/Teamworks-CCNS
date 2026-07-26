@@ -15,11 +15,11 @@ SOURCE = TEAMWORKS_DIR / "Teamworks.py"
 PATCHED = TEAMWORKS_DIR / "Teamworks_secondary_presence_smoke.py"
 REPORT_DIR = ROOT / "artifacts" / "presence-dialog-smoke"
 REPORT = REPORT_DIR / "diagnostic.txt"
-MARKER = 'print("TEAMWORKS_SMOKE_EXAMPLE_READY")'
+MARKER = 'print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)'
 SECONDARY_MARKER = "TEAMWORKS_SMOKE_PRESENCE_DIALOG_READY"
 
 INJECTION = r'''
-                print("TEAMWORKS_SMOKE_EXAMPLE_READY")
+                print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 import datetime as _smoke_datetime
                 import GestionDB as _smoke_gestiondb
                 from Dlg import DLG_Saisie_presence as _smoke_presence
@@ -54,7 +54,7 @@ INJECTION = r'''
                 assert _smoke_panel.treeCtrl_categories.GetCount() >= 1
                 assert _smoke_panel.bouton_ok.IsEnabled()
                 assert _smoke_panel.bouton_annuler.IsEnabled()
-                print("TEAMWORKS_SMOKE_PRESENCE_DIALOG_READY")
+                print("TEAMWORKS_SMOKE_PRESENCE_DIALOG_READY", flush=True)
                 _smoke_dialog.Destroy()
 '''
 
@@ -107,7 +107,7 @@ def main() -> int:
     try:
         marker_count = build_patched_entrypoint()
         env = os.environ.copy()
-        env["TEAMWORKS_SMOKE_MODE"] = "1"
+        env["TEAMWORKS_SMOKE_MODE"] = "main-window"
         result = subprocess.run(
             [sys.executable, str(PATCHED)],
             cwd=TEAMWORKS_DIR,
