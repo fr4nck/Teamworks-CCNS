@@ -30,5 +30,21 @@ jobs:
         run: python -m pip install --disable-pip-version-check --quiet -r requirements/python311-core.txt
 
       - name: Exercise real backup and restore utilities
+        id: backup_restore
+        continue-on-error: true
         shell: pwsh
         run: python tools/smoke_backup_restore.py
+
+      - name: Upload backup restore diagnostic
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backup-restore-smoke-diagnostic
+          path: artifacts/backup-restore-smoke/diagnostic.txt
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Fail when backup restore smoke failed
+        if: always() && steps.backup_restore.outcome == 'failure'
+        shell: pwsh
+        run: throw "La recette sauvegarde/restauration a échoué."
