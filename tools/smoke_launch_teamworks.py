@@ -1,30 +1,63 @@
 #!/usr/bin/env python3
-"""Launch Teamworks briefly on Windows and fail on an early process exit."""
+"""Launch Teamworks on Windows and verify that it creates a real top-level window."""
 
 from __future__ import annotations
 
+import ctypes
+from ctypes import wintypes
 import os
 from pathlib import Path
 import shutil
 import subprocess
 import sys
 import tempfile
+import time
 
 
 ROOT = Path(__file__).resolve().parents[1]
 TEAMWORKS_DIR = ROOT / "teamworks"
 ENTRYPOINT = ROOT / "run_teamworks.py"
-STARTUP_WINDOW_SECONDS = 15
+STARTUP_WINDOW_SECONDS = 20
 REPORT_PATH = ROOT / "teamworks-startup-smoke.log"
 
 
-def write_report(output: str, return_code: int | None, status: str) -> None:
+def visible_windows_for_process(process_id: int) -> list[str]:
+    """Return titles of visible top-level windows owned by ``process_id``."""
+    titles: list[str] = []
+    user32 = ctypes.windll.user32
+    callback_type = ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
+
+    def callback(hwnd: int, _lparam: int) -> bool:
+        owner_pid = wintypes.DWORD()
+        user32.GetWindowThreadProcessId(hwnd, ctypes.byref(owner_pid))
+        if owner_pid.value != process_id or not user32.IsWindowVisible(hwnd):
+            return True
+
+        length = user32.GetWindowTextLengthW(hwnd)
+        buffer = ctypes.create_unicode_buffer(length + 1)
+        user32.GetWindowTextW(hwnd, buffer, length + 1)
+        titles.append(buffer.value or "<untitled>")
+        return True
+
+    user32.EnumWindows(callback_type(callback), 0)
+    return titles
+
+
+def write_report(
+    output: str,
+    return_code: int | None,
+    status: str,
+    window_titles: list[str] | None = None,
+) -> None:
+    window_titles = window_titles or []
     REPORT_PATH.write_text(
         "\n".join(
             [
                 f"status={status}",
                 f"return_code={return_code}",
                 f"startup_window_seconds={STARTUP_WINDOW_SECONDS}",
+                f"window_count={len(window_titles)}",
+                *(f"window={title}" for title in window_titles),
                 "",
                 "--- process output ---",
                 output,
@@ -32,6 +65,16 @@ def write_report(output: str, return_code: int | None, status: str) -> None:
         ),
         encoding="utf-8",
     )
+
+
+def stop_process(process: subprocess.Popen[str]) -> str:
+    process.terminate()
+    try:
+        output, _ = process.communicate(timeout=5)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        output, _ = process.communicate(timeout=5)
+    return output
 
 
 def main() -> int:
@@ -72,29 +115,33 @@ def main() -> int:
             errors="replace",
         )
 
-        try:
-            output, _ = process.communicate(timeout=STARTUP_WINDOW_SECONDS)
-        except subprocess.TimeoutExpired:
-            process.terminate()
-            try:
+        deadline = time.monotonic() + STARTUP_WINDOW_SECONDS
+        window_titles: list[str] = []
+        while time.monotonic() < deadline:
+            return_code = process.poll()
+            if return_code is not None:
                 output, _ = process.communicate(timeout=5)
-            except subprocess.TimeoutExpired:
-                process.kill()
-                output, _ = process.communicate(timeout=5)
+                write_report(output, return_code, "early-exit")
+                print(output)
+                print(f"Teamworks exited before creating a stable window with code {return_code}")
+                return 1
 
-            write_report(output, process.returncode, "alive")
-            print(output)
-            print(
-                f"Teamworks remained alive for {STARTUP_WINDOW_SECONDS} seconds: "
-                "controlled startup smoke passed"
-            )
-            return 0
+            window_titles = visible_windows_for_process(process.pid)
+            if window_titles:
+                output = stop_process(process)
+                write_report(output, process.returncode, "window-created", window_titles)
+                print(output)
+                print(f"Teamworks created {len(window_titles)} visible top-level window(s): {window_titles}")
+                return 0
 
-        write_report(output, process.returncode, "early-exit")
+            time.sleep(0.5)
+
+        output = stop_process(process)
+        write_report(output, process.returncode, "alive-without-window")
         print(output)
         print(
-            "Teamworks exited before the startup observation window "
-            f"with code {process.returncode}"
+            f"Teamworks remained alive for {STARTUP_WINDOW_SECONDS} seconds "
+            "but created no visible top-level window"
         )
         return 1
     finally:
