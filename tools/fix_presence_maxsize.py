@@ -1,37 +1,56 @@
 #!/usr/bin/env python3
-"""Remplace les usages résiduels de six.MAXSIZE dans le formulaire de présence."""
+"""Corrige les insertions de fin de liste incompatibles avec wxPython Phoenix."""
 
 from __future__ import annotations
 
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-TARGET = ROOT / "teamworks" / "Dlg" / "DLG_Saisie_presence.py"
 ENCODING = "iso-8859-15"
+TARGETS = (
+    ROOT / "teamworks" / "Dlg" / "DLG_Saisie_presence.py",
+    ROOT / "teamworks" / "Ctrl" / "CTRL_Presences.py",
+)
 
 REPLACEMENTS = {
-    'self.InsertItem(six.MAXSIZE, "")': 'self.InsertItem(sys.maxsize, "")',
-    'self.InsertStringItem(six.MAXSIZE, "")': 'self.InsertStringItem(sys.maxsize, "")',
+    "self.InsertItem(six.MAXSIZE,": "self.InsertItem(self.GetItemCount(),",
+    "self.InsertItem(sys.maxsize,": "self.InsertItem(self.GetItemCount(),",
+    "self.InsertStringItem(six.MAXSIZE,": "self.InsertStringItem(self.GetItemCount(),",
+    "self.InsertStringItem(sys.maxsize,": "self.InsertStringItem(self.GetItemCount(),",
 }
 
+FORBIDDEN = (
+    "InsertItem(six.MAXSIZE,",
+    "InsertItem(sys.maxsize,",
+    "InsertStringItem(six.MAXSIZE,",
+    "InsertStringItem(sys.maxsize,",
+)
 
-def main() -> int:
-    source = TARGET.read_text(encoding=ENCODING)
+
+def correct(path: Path) -> bool:
+    source = path.read_text(encoding=ENCODING)
     updated = source
     for old, new in REPLACEMENTS.items():
         updated = updated.replace(old, new)
 
-    if "six.MAXSIZE" in updated:
-        raise RuntimeError("des usages de six.MAXSIZE subsistent dans DLG_Saisie_presence.py")
-    if 'self.InsertItem(sys.maxsize, "")' not in updated:
-        raise RuntimeError("l’insertion Phoenix via sys.maxsize est absente")
+    for token in FORBIDDEN:
+        if token in updated:
+            raise RuntimeError(f"insertion wxPython encore incompatible dans {path}: {token}")
 
+    compile(updated, str(path), "exec")
     if updated == source:
-        print("DLG_Saisie_presence.py est déjà corrigé")
-        return 0
+        print(f"{path.name} est déjà corrigé")
+        return False
 
-    TARGET.write_text(updated, encoding=ENCODING)
-    print("DLG_Saisie_presence.py corrigé : six.MAXSIZE -> sys.maxsize")
+    path.write_text(updated, encoding=ENCODING)
+    print(f"{path.name} corrigé : insertion explicite à GetItemCount()")
+    return True
+
+
+def main() -> int:
+    changed = [path for path in TARGETS if correct(path)]
+    if not changed:
+        print("Aucune correction supplémentaire nécessaire")
     return 0
 
 
