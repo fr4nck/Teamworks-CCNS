@@ -37,10 +37,8 @@ def migrate(path: Path, blocks: list[str], write: bool) -> int:
     count = 0
     for block in blocks:
         matches = source.count(block)
-        if matches not in (0, 1):
-            raise SystemExit(f"Unexpected match count in {path}: {matches}")
         if matches:
-            count += 1
+            count += matches
             replacement = REPLACEMENTS.get(block, "")
             source = source.replace(block, replacement)
     if count and write:
