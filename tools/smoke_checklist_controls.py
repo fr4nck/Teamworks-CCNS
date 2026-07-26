@@ -43,6 +43,7 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
 
                 _host = wx.Frame(frame, title="Smoke contrôles secondaires")
                 _host.label_rattachement = wx.StaticText(_host, -1, "")
+                _host.dictChamps = {}
                 _controls = []
                 _dialogs = []
 
@@ -95,7 +96,9 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 _controls.append(_modeles.listCtrl_Modeles(_host))
 
                 print("TEAMWORKS_SMOKE_CHECKLIST_STAGE:modele-contrat", flush=True)
-                _controls.append(_modele_contrat.ListCtrl_champs(_host))
+                _modele_mid = wx.Panel(_host, -1)
+                _modele_page = wx.Panel(_modele_mid, -1)
+                _controls.append(_modele_contrat.ListCtrl_champs(_modele_page))
 
                 print("TEAMWORKS_SMOKE_CHECKLIST_STAGE:assertions", flush=True)
                 for _control in _controls:
