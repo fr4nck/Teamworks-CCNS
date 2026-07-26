@@ -1,0 +1,48 @@
+name: Stabilisation presence dialog smoke
+
+on:
+  push:
+    branches:
+      - stabilisation/recette-fonctionnelle-secondaire
+    paths:
+      - "tools/smoke_secondary_presence_dialog.py"
+      - "teamworks/Dlg/DLG_Saisie_presence.py"
+      - ".github/workflows/stabilisation-presence-dialog-smoke.yml"
+  pull_request:
+    branches:
+      - master
+    paths:
+      - "tools/smoke_secondary_presence_dialog.py"
+      - "teamworks/Dlg/DLG_Saisie_presence.py"
+      - ".github/workflows/stabilisation-presence-dialog-smoke.yml"
+  workflow_dispatch:
+
+jobs:
+  smoke-presence-dialog:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements/python311-core.txt
+
+      - name: Install dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements/python311-core.txt
+
+      - name: Build and exercise presence dialog
+        shell: pwsh
+        run: python tools/smoke_secondary_presence_dialog.py
+
+      - name: Ensure temporary entry point was removed
+        shell: pwsh
+        run: |
+          if (Test-Path teamworks/Teamworks_secondary_presence_smoke.py) {
+            throw "Le point d'entrée temporaire n'a pas été supprimé"
+          }
