@@ -17,44 +17,57 @@ REPORT_DIR = ROOT / "artifacts" / "presence-dialog-smoke"
 REPORT = REPORT_DIR / "diagnostic.txt"
 MARKER_LINE = '            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)'
 SECONDARY_MARKER = "TEAMWORKS_SMOKE_PRESENCE_DIALOG_READY"
+FAILURE_MARKER = "TEAMWORKS_SMOKE_PRESENCE_DIALOG_FAILED"
 
 INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
-            import datetime as _smoke_datetime
-            import GestionDB as _smoke_gestiondb
-            from Dlg import DLG_Saisie_presence as _smoke_presence
+            try:
+                print("TEAMWORKS_SMOKE_PRESENCE_STAGE:imports", flush=True)
+                import datetime as _smoke_datetime
+                import GestionDB as _smoke_gestiondb
+                from Dlg import DLG_Saisie_presence as _smoke_presence
 
-            _smoke_db = _smoke_gestiondb.DB()
-            _smoke_db.ExecuterReq("SELECT IDpersonne FROM personnes ORDER BY IDpersonne LIMIT 1")
-            _smoke_rows = _smoke_db.ResultatReq()
-            _smoke_db.Close()
-            if not _smoke_rows:
-                raise RuntimeError("aucune personne disponible pour le smoke présence")
+                print("TEAMWORKS_SMOKE_PRESENCE_STAGE:database", flush=True)
+                _smoke_db = _smoke_gestiondb.DB()
+                _smoke_db.ExecuterReq("SELECT IDpersonne FROM personnes ORDER BY IDpersonne LIMIT 1")
+                _smoke_rows = _smoke_db.ResultatReq()
+                _smoke_db.Close()
+                if not _smoke_rows:
+                    raise RuntimeError("aucune personne disponible pour le smoke présence")
 
-            _smoke_dialog = wx.Dialog(frame, title="Smoke présence")
-            _smoke_panel = _smoke_presence.Panel(
-                _smoke_dialog,
-                listeDonnees=[(_smoke_rows[0][0], _smoke_datetime.date.today())],
-                mode="planning",
-            )
-            _smoke_panel.text_heure_debut.SetValue("09:00")
-            _smoke_panel.text_heure_fin.SetValue("10:00")
-            _smoke_panel.text_intitule.SetValue("Recette automatisée")
-            _smoke_dialog.SetSizer(wx.BoxSizer(wx.VERTICAL))
-            _smoke_dialog.GetSizer().Add(_smoke_panel, 1, wx.EXPAND)
-            _smoke_dialog.GetSizer().Fit(_smoke_dialog)
-            _smoke_dialog.Layout()
-            _smoke_dialog.Show()
-            wx.Yield()
+                print("TEAMWORKS_SMOKE_PRESENCE_STAGE:panel", flush=True)
+                _smoke_dialog = wx.Dialog(frame, title="Smoke présence")
+                _smoke_panel = _smoke_presence.Panel(
+                    _smoke_dialog,
+                    listeDonnees=[(_smoke_rows[0][0], _smoke_datetime.date.today())],
+                    mode="planning",
+                )
+                print("TEAMWORKS_SMOKE_PRESENCE_STAGE:fields", flush=True)
+                _smoke_panel.text_heure_debut.SetValue("09:00")
+                _smoke_panel.text_heure_fin.SetValue("10:00")
+                _smoke_panel.text_intitule.SetValue("Recette automatisée")
+                _smoke_dialog.SetSizer(wx.BoxSizer(wx.VERTICAL))
+                _smoke_dialog.GetSizer().Add(_smoke_panel, 1, wx.EXPAND)
+                _smoke_dialog.GetSizer().Fit(_smoke_dialog)
+                _smoke_dialog.Layout()
+                _smoke_dialog.Show()
+                wx.Yield()
 
-            assert _smoke_panel.text_heure_debut.GetValue() == "09:00"
-            assert _smoke_panel.text_heure_fin.GetValue() == "10:00"
-            assert _smoke_panel.text_intitule.GetValue() == "Recette automatisée"
-            assert _smoke_panel.listCtrl_donnees.GetItemCount() >= 1
-            assert _smoke_panel.treeCtrl_categories.GetCount() >= 1
-            assert _smoke_panel.bouton_ok.IsEnabled()
-            assert _smoke_panel.bouton_annuler.IsEnabled()
-            print("TEAMWORKS_SMOKE_PRESENCE_DIALOG_READY", flush=True)
-            _smoke_dialog.Destroy()
+                print("TEAMWORKS_SMOKE_PRESENCE_STAGE:assertions", flush=True)
+                assert _smoke_panel.text_heure_debut.GetValue() == "09:00"
+                assert _smoke_panel.text_heure_fin.GetValue() == "10:00"
+                assert _smoke_panel.text_intitule.GetValue() == "Recette automatisée"
+                assert _smoke_panel.listCtrl_donnees.GetItemCount() >= 1
+                assert _smoke_panel.treeCtrl_categories.GetCount() >= 1
+                assert _smoke_panel.bouton_ok.IsEnabled()
+                assert _smoke_panel.bouton_annuler.IsEnabled()
+                print("TEAMWORKS_SMOKE_PRESENCE_DIALOG_READY", flush=True)
+                _smoke_dialog.Destroy()
+            except Exception:
+                import traceback as _smoke_traceback
+                _smoke_traceback.print_exc()
+                print("TEAMWORKS_SMOKE_PRESENCE_DIALOG_FAILED", flush=True)
+                wx.CallAfter(self.ExitMainLoop)
+                return True
 '''
 
 
@@ -66,8 +79,8 @@ def build_patched_entrypoint() -> int:
             f"ligne marqueur du smoke principal introuvable: count={marker_count}"
         )
     patched_source = source.replace(MARKER_LINE, INJECTION, 1)
-    if SECONDARY_MARKER not in patched_source:
-        raise RuntimeError("injection du marqueur secondaire absente")
+    if SECONDARY_MARKER not in patched_source or FAILURE_MARKER not in patched_source:
+        raise RuntimeError("injection des marqueurs du formulaire absente")
     compile(patched_source, str(PATCHED), "exec")
     PATCHED.write_text(patched_source, encoding="iso-8859-15")
     return marker_count
@@ -82,7 +95,7 @@ def decode_output(data: bytes) -> str:
     return data.decode("utf-8", errors="replace")
 
 
-def github_error_summary(output: str, max_lines: int = 24) -> None:
+def github_error_summary(output: str, max_lines: int = 32) -> None:
     lines = [line.strip() for line in output.splitlines() if line.strip()]
     tail = lines[-max_lines:]
     summary = " | ".join(tail).replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
@@ -94,6 +107,7 @@ def write_diagnostic(*, return_code: int, marker_count: int | None, output: str)
         f"return_code={return_code}\n"
         f"entrypoint_marker_count={marker_count}\n"
         f"secondary_marker={SECONDARY_MARKER in output}\n"
+        f"failure_marker={FAILURE_MARKER in output}\n"
         "--- output ---\n"
         f"{output}"
     )
@@ -131,7 +145,7 @@ def main() -> int:
             marker_count=marker_count,
             output=output,
         )
-        if result.returncode != 0:
+        if result.returncode != 0 or FAILURE_MARKER in output:
             github_error_summary(output)
             return result.returncode or 1
         if SECONDARY_MARKER not in output:
