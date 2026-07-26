@@ -40,7 +40,16 @@ jobs:
         shell: pwsh
         run: python tools/smoke_secondary_presence_dialog.py
 
+      - name: Upload presence-dialog diagnostic
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: presence-dialog-smoke-diagnostic
+          path: artifacts/presence-dialog-smoke/diagnostic.txt
+          if-no-files-found: warn
+
       - name: Ensure temporary entry point was removed
+        if: always()
         shell: pwsh
         run: |
           if (Test-Path teamworks/Teamworks_secondary_presence_smoke.py) {
