@@ -49,8 +49,11 @@ def _digest(path: Path) -> str:
 
 
 def _integrity(path: Path) -> str:
-    with sqlite3.connect(path) as connection:
+    connection = sqlite3.connect(path)
+    try:
         return str(connection.execute("PRAGMA integrity_check").fetchone()[0])
+    finally:
+        connection.close()
 
 
 def run() -> None:
