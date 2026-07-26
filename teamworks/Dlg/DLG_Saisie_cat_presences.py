@@ -245,7 +245,7 @@ class TreeCtrlCategories(wx.TreeCtrl):
         if 'phoenix' in wx.PlatformInfo:
             self.SetItemData(self.root, 0)
         else:
-            self.SetPyData(self.root, 0)
+            self.SetItemData(self.root, 0)
         self.SetItemImage(self.root, self.imgRoot, wx.TreeItemIcon_Normal)
         self.Remplissage()
         self.Expand(self.root)
@@ -260,7 +260,7 @@ class TreeCtrlCategories(wx.TreeCtrl):
             bmp.SetRGB((0, 0, 16, 16), 255, 255, 255)
             bmp.SetRGB((6, 4, 8, 8), r, v, b)
         else:
-            bmp = wx.EmptyImage(tailleImages[0], tailleImages[1], True)
+            bmp = wx.Image(tailleImages[0], tailleImages[1], True)
             bmp.SetRGBRect((0, 0, 16, 16), 255, 255, 255)
             bmp.SetRGBRect((6, 4, 8, 8), r, v, b)
         return bmp.ConvertToBitmap()
@@ -283,7 +283,7 @@ class TreeCtrlCategories(wx.TreeCtrl):
                 if 'phoenix' in wx.PlatformInfo:
                     self.SetItemData(newItem, item[0])
                 else:
-                    self.SetPyData(newItem, item[0])
+                    self.SetItemData(newItem, item[0])
                 exec("self.SetItemImage(newItem, self.img" + str(item[0]) + ", wx.TreeItemIcon_Normal)")
 
                 # Sélection de l'item s'il sélectionné est par défaut
@@ -312,7 +312,7 @@ class TreeCtrlCategories(wx.TreeCtrl):
         if 'phoenix' in wx.PlatformInfo:
             data = self.GetItemData(self.item)
         else:
-            data = self.GetPyData(self.item)
+            data = self.GetItemData(self.item)
         self.IDcat_parent = data
         self.GetGrandParent().IDcat_parent = data
         event.Skip()

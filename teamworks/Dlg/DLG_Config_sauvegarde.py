@@ -715,7 +715,7 @@ class TreeCtrl_Sauvegarde(CT.CustomTreeCtrl):
         # Affiche les types de sources
         for typeSource, rep, extension in LISTE_SOURCES :
             item = self.AppendItem(self.root,  typeSource, ct_type=1)
-            self.SetPyData(item, None)
+            self.SetItemData(item, None)
             
             # Affiche les fichiers existants
             listeFichiers = os.listdir(rep)
@@ -724,7 +724,7 @@ class TreeCtrl_Sauvegarde(CT.CustomTreeCtrl):
                 for nomFichier in listeFichiers :
                     if nomFichier not in LISTE_INDESIRABLES :
                         child = self.AppendItem(item,  nomFichier, ct_type=1)
-                        self.SetPyData(child, extension + "===" + rep + "===" + nomFichier)
+                        self.SetItemData(child, extension + "===" + rep + "===" + nomFichier)
                         nbreFichiers += 1
                 
                 if nbreFichiers > 0 :
@@ -1016,7 +1016,7 @@ class TreeCtrl_Restauration(CT.CustomTreeCtrl):
         for typeSource, rep, extensionSource in LISTE_SOURCES :
             if (extensionSource in listeTypesSources) == True :
                 item = self.AppendItem(self.root,  typeSource, ct_type=1)
-                self.SetPyData(item, None)
+                self.SetItemData(item, None)
                 
                 # Affiche les fichiers existants
                 for fichier in fichierZip.namelist() :
@@ -1024,7 +1024,7 @@ class TreeCtrl_Restauration(CT.CustomTreeCtrl):
                     nomFichier = fichier[5:]
                     if extensionFichier == extensionSource :
                         child = self.AppendItem(item,  nomFichier, ct_type=1)
-                        self.SetPyData(child, fichier)
+                        self.SetItemData(child, fichier)
                     self.CheckItem(item, checked=True)
                     
                 # Déroule l'item

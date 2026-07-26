@@ -57,7 +57,7 @@ if 'phoenix' in wx.PlatformInfo:
     validator = wx.Validator
 else:
     from wx import DatePickerCtrl
-    validator = wx.PyValidator
+    validator = wx.Validator
 
 
 
@@ -96,11 +96,7 @@ class EditorRegistry:
         self.typeToFunctionMap[six.text_type] = self._MakeStringEditor
         self.typeToFunctionMap[bool] = self._MakeBoolEditor
 
-        if six.PY2:
-            self.typeToFunctionMap[int] = self._MakeIntegerEditor
-            self.typeToFunctionMap[long] = self._MakeLongEditor
-        else:
-            self.typeToFunctionMap[int] = self._MakeLongEditor
+        self.typeToFunctionMap[int] = self._MakeLongEditor
 
         self.typeToFunctionMap[float] = self._MakeFloatEditor
         self.typeToFunctionMap[datetime.datetime] = self._MakeDateTimeEditor
@@ -161,7 +157,7 @@ class EditorRegistry:
         dte = DateTimeEditor(olv, subItemIndex)
 
         column = olv.columns[subItemIndex]
-        if isinstance(column.stringConverter, basestring):
+        if isinstance(column.stringConverter, str):
             dte.formatString = column.stringConverter
 
         return dte
@@ -179,7 +175,7 @@ class EditorRegistry:
         editor = TimeEditor(olv, subItemIndex)
 
         column = olv.columns[subItemIndex]
-        if isinstance(column.stringConverter, basestring):
+        if isinstance(column.stringConverter, str):
             editor.formatString = column.stringConverter
 
         return editor
@@ -262,13 +258,13 @@ class LongEditor(BaseCellTextEditor):
         "Get the value from the editor"
         s = super(LongEditor, self).GetValue().strip()
         try:
-            return long(s)
+            return int(s)
         except ValueError:
             return None
 
     def SetValue(self, value):
         "Put a new value into the editor"
-        if isinstance(value, (long, int, float)):
+        if isinstance(value, (int, float)):
             value = repr(value)
         super(LongEditor, self).SetValue(value)
 

@@ -6,10 +6,10 @@
 # Licence:      Licence GNU GPL
 #-----------------------------------------------------------
 
+import sys
 import Chemins
 from Utils.UTILS_Traduction import _
 import wx
-import six
 from wx.lib.splitter import MultiSplitterWindow
 from wx.lib.mixins.listctrl import CheckListCtrlMixin
 import GestionDB
@@ -189,8 +189,8 @@ class ListCtrl_Legendes(wx.ListCtrl):
                     self.InsertItem(index, nomCategorie)
                     self.SetItem(index, 1, duree)
                 else:
-                    self.InsertStringItem(index, nomCategorie)
-                    self.SetStringItem(index, 1, duree)
+                    self.InsertItem(index, nomCategorie)
+                    self.SetItem(index, 1, duree)
 
                 # Intégration de l'image
                 self.SetItemImage(index, getattr(self, "img%s" % key))
@@ -209,8 +209,8 @@ class ListCtrl_Legendes(wx.ListCtrl):
                 self.InsertItem(index, "Total")
                 self.SetItem(index, 1, str(duree))
             else:
-                self.InsertStringItem(index, "Total")
-                self.SetStringItem(index, 1, str(duree))
+                self.InsertItem(index, "Total")
+                self.SetItem(index, 1, str(duree))
             self.SetItemData(index, 0)
             item = self.GetItem(index)
             item.SetTextColour(couleurFondPanneau)
@@ -351,7 +351,7 @@ class ListCtrl_Legendes(wx.ListCtrl):
             bmp.SetRGB((3, 3, 10, 10), 0, 0, 0)
             bmp.SetRGB((4, 4, 8, 8), r, v, b)
         else:
-            bmp = wx.EmptyImage(tailleImages[0], tailleImages[1], True)
+            bmp = wx.Image(tailleImages[0], tailleImages[1], True)
             bmp.SetRGBRect((0, 0, 16, 16), colFond[0], colFond[1], colFond[2])
             bmp.SetRGBRect((3, 3, 10, 10), 0, 0, 0)
             bmp.SetRGBRect((4, 4, 8, 8), r, v, b)
@@ -464,9 +464,9 @@ class listCtrl_Personnes(wx.ListCtrl, CheckListCtrlMixin):
                 else:
                     txt = valeurs[0] + " " + valeurs[1]
                 if 'phoenix' in wx.PlatformInfo:
-                    index = self.InsertItem(six.MAXSIZE, txt)
+                    index = self.InsertItem(sys.maxsize, txt)
                 else:
-                    index = self.InsertStringItem(six.MAXSIZE, txt)
+                    index = self.InsertItem(sys.maxsize, txt)
                 self.SetItemData(index, key)
                 # Sélection
                 if valeurs[4] == True :
@@ -671,7 +671,7 @@ class PanelPersonnes(FonctionsPerso.PanelArrondi):
         if self.triCritere == "presence" : smTri.Check(110, True)
         if self.triCritere == "nom" : smTri.Check(120, True)
         if self.triCritere == "prenom" : smTri.Check(130, True)
-        menu.AppendMenu(10, "Tri par", smTri)
+        menu.AppendSubMenu(smTri, "Tri par")
         
 
         smOrdre = UTILS_Adaptations.Menu()
@@ -679,7 +679,7 @@ class PanelPersonnes(FonctionsPerso.PanelArrondi):
         smOrdre.Append(220, _(u"Ordre décroissant"), _(u"Trier par ordre décroissant"), wx.ITEM_RADIO)
         if self.triOrdre == "croissant" : smOrdre.Check(210, True)
         if self.triOrdre == "decroissant" : smOrdre.Check(220, True)
-        menu.AppendMenu(20, "Ordre de tri", smOrdre)
+        menu.AppendSubMenu(smOrdre, "Ordre de tri")
 
         menu.AppendSeparator()
         

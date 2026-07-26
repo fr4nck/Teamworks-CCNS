@@ -11,7 +11,6 @@
 import Chemins
 from Utils.UTILS_Traduction import _
 import wx
-import six
 import os
 import sys
 import base64
@@ -133,18 +132,11 @@ def Sauvegarde(listeFichiersLocaux=[], listeFichiersReseau=[], nom="", repertoir
 
             args = u""""%sbin/mysqldump" --defaults-extra-file="%s" --single-transaction --opt --databases %s > "%s" """ % (repMySQL, nomFichierLoginTemp, nomFichier, fichierSave)
             print(("Chemin mysqldump =", args))
-            if six.PY2:
-                args = args.encode('utf8')
             proc = subprocess.Popen(args, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.PIPE)
             out, temp = proc.communicate()
             
             if out not in ("", b""):
                 print((out,))
-                try :
-                    if six.PY2:
-                        out = str(out).decode("iso-8859-15")
-                except :
-                    pass
                 dlgprogress.Destroy()
                 dlgErreur = wx.MessageDialog(None, _(u"Une erreur a été détectée dans la procédure de sauvegarde !\n\nErreur : %s") % out, _(u"Erreur"), wx.OK | wx.ICON_ERROR)
                 dlgErreur.ShowModal() 
@@ -153,15 +145,10 @@ def Sauvegarde(listeFichiersLocaux=[], listeFichiersReseau=[], nom="", repertoir
 
             # Insère le fichier Sql dans le ZIP
             try :
-                fichierZip.write(fichierSave.encode('utf8'), u"%s.sql" % nomFichier)
+                fichierZip.write(fichierSave, u"%s.sql" % nomFichier)
             except Exception as err :
                 dlgprogress.Destroy()
                 print(("insertion sql dans zip : ", err,))
-                try :
-                    if six.PY2:
-                        err = str(err).decode("iso-8859-15")
-                except :
-                    pass
                 dlgErreur = wx.MessageDialog(None, _(u"Une erreur est survenue dans la sauvegarde !\n\nErreur : %s") % err, _(u"Erreur"), wx.OK | wx.ICON_ERROR)
                 dlgErreur.ShowModal() 
                 dlgErreur.Destroy()
@@ -190,8 +177,7 @@ def Sauvegarde(listeFichiersLocaux=[], listeFichiersReseau=[], nom="", repertoir
         dlgprogress.Update(numEtape, _(u"Cryptage du fichier..."));numEtape += 1
         fichierCrypte = u"%s.%s" % (nom, EXTENSIONS["crypte"])
         motdepasse = base64.b64decode(motdepasse)
-        if six.PY3:
-            motdepasse = motdepasse.decode('utf8')
+        motdepasse = motdepasse.decode('utf8')
         UTILS_Cryptage_fichier.CrypterFichier(UTILS_Fichiers.GetRepTemp(fichier=nomFichierTemp), UTILS_Fichiers.GetRepTemp(fichier=fichierCrypte), motdepasse)
         nomFichierTemp = fichierCrypte
         extension = EXTENSIONS["crypte"]
@@ -373,15 +359,11 @@ def Restauration(parent=None, fichier="", listeFichiersLocaux=[], listeFichiersR
 
             args = u""""%sbin/mysql" --defaults-extra-file="%s" %s < "%s" """ % (repMySQL, nomFichierLoginTemp, fichier_temp, fichierRestore)
             print(("Chemin mysql =", args))
-            if six.PY2:
-                args = args.encode("iso-8859-15")
             proc = subprocess.Popen(args, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.PIPE)
             out, temp = proc.communicate()
 
             if out not in ("", b"") :
                 print(("subprocess de restauration mysql :", out))
-                if six.PY2:
-                    out = str(out).decode("iso-8859-15")
                 dlgprogress.Destroy()
                 dlgErreur = wx.MessageDialog(None, _(u"Une erreur a été détectée dans la procédure de restauration !\n\nErreur : %s") % out, _(u"Erreur"), wx.OK | wx.ICON_ERROR)
                 dlgErreur.ShowModal()

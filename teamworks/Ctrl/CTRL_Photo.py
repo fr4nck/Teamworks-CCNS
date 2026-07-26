@@ -41,7 +41,7 @@ def GetPhoto(IDindividu=None, nomFichier=None, taillePhoto=(128, 128), qualite=w
             if 'phoenix' in wx.PlatformInfo:
                 img = wx.Image(io, wx.BITMAP_TYPE_JPEG)
             else:
-                img = wx.ImageFromStream(io, wx.BITMAP_TYPE_JPEG)
+                img = wx.Image(io, wx.BITMAP_TYPE_JPEG)
             bmp = img.ConvertToBitmap()
             
             # Récupération du cadre de décoration
@@ -54,7 +54,7 @@ def GetPhoto(IDindividu=None, nomFichier=None, taillePhoto=(128, 128), qualite=w
                 if 'phoenix' in wx.PlatformInfo:
                     bmp = wx.Bitmap(tailleInitiale[0], tailleInitiale[1])
                 else:
-                    bmp = wx.EmptyBitmap(tailleInitiale[0], tailleInitiale[1])
+                    bmp = wx.Bitmap(tailleInitiale[0], tailleInitiale[1])
                 dc = wx.MemoryDC()
                 dc.SelectObject(bmp)
 
@@ -184,14 +184,12 @@ class CTRL_Photo(wx.StaticBitmap):
         sousmenu1 = UTILS_Adaptations.Menu()
         indexID = 500
         for nomCadre in FonctionsPerso.GetListeCadresPhotos() :
-            if six.PY2:
-                nomCadre = nomCadre.decode("iso-8859-15")
             sousmenu1.Append(indexID, nomCadre, _(u"Choisir le cadre de décoration '") + nomCadre + _(u"' pour cette personne"), wx.ITEM_RADIO)
             if nomCadre == nomCadrePersonne :
                 sousmenu1.Check(indexID, True)
             self.Bind(wx.EVT_MENU, self.Menu_ChoixCadre, id=indexID)
             indexID += 1
-        menuPop.AppendMenu(50, _(u"Choisir un cadre de décoration"), sousmenu1)
+        menuPop.AppendSubMenu(sousmenu1, _(u"Choisir un cadre de décoration"))
 
         self.PopupMenu(menuPop)
         menuPop.Destroy()
@@ -330,8 +328,6 @@ class CTRL_Photo(wx.StaticBitmap):
             nomCadre = ""
         else :
             nomCadre = FonctionsPerso.GetListeCadresPhotos()[index]
-            if six.PY2:
-                nomCadre = nomCadre.decode("iso-8859-15")
         # Sauvegarde le choix du cadre
         DB = GestionDB.DB()
         DB.ReqMAJ("personnes", [("cadre_photo", nomCadre),], "IDpersonne", self.IDindividu)

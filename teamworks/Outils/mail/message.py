@@ -140,13 +140,6 @@ def sanitize_address(addr, encoding):
     except UnicodeEncodeError:  # IDN or non-ascii in the local part
         localpart, domain = split_addr(addr, encoding)
 
-    if six.PY2:
-        # On Python 2, use the stdlib since `email.headerregistry` doesn't exist.
-        from email.utils import formataddr
-        if localpart and domain:
-            addr = '@'.join([localpart, domain])
-        return formataddr((nm, addr))
-
     # On Python 3, an `email.headerregistry.Address` object is used since
     # email.utils.formataddr() naively encodes the name as ascii (see #25986).
     from email.headerregistry import Address
@@ -175,16 +168,10 @@ class MIMEMixin():
         """
         fp = six.StringIO()
         g = generator.Generator(fp, mangle_from_=False)
-        if six.PY2:
-            g.flatten(self, unixfrom=unixfrom)
-        else:
-            g.flatten(self, unixfrom=unixfrom, linesep=linesep)
+        g.flatten(self, unixfrom=unixfrom, linesep=linesep)
         return fp.getvalue()
 
-    if six.PY2:
-        as_bytes = as_string
-    else:
-        def as_bytes(self, unixfrom=False, linesep='\n'):
+    def as_bytes(self, unixfrom=False, linesep='\n'):
             """Return the entire formatted message as bytes.
             Optional `unixfrom' when True, means include the Unix From_ envelope
             header.
@@ -457,8 +444,6 @@ class EmailMessage(object):
             try:
                 filename.encode('ascii')
             except UnicodeEncodeError:
-                if six.PY2:
-                    filename = filename.encode('utf-8')
                 filename = ('utf-8', '', filename)
             attachment.add_header('Content-Disposition', 'attachment',
                                   filename=filename)

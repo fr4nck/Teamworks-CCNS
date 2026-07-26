@@ -108,7 +108,7 @@ import unicodedata
 from . import CellEditor
 from . import OLVEvent
 
-if six.PY3:
+if True:
     # python 3 lacks cmp:
     def cmp(a, b):
         # protect for unorderable types in Py3
@@ -411,7 +411,7 @@ class ObjectListView(wx.ListCtrl):
             if 'phoenix' in wx.PlatformInfo:
                 bitmap = wx.Bitmap(size, size)
             else:
-                bitmap = wx.EmptyBitmap(size, size)
+                bitmap = wx.Bitmap(size, size)
             dc = wx.MemoryDC(bitmap)
             dc.Clear()
 
@@ -610,9 +610,9 @@ class ObjectListView(wx.ListCtrl):
             normalImage = normalImage or wx.Bitmap(
                 *self.normalImageList.GetSize(0))
         else:
-            smallImage = smallImage or wx.EmptyBitmap(
+            smallImage = smallImage or wx.Bitmap(
                 *self.smallImageList.GetSize(0))
-            normalImage = normalImage or wx.EmptyBitmap(
+            normalImage = normalImage or wx.Bitmap(
                 *self.normalImageList.GetSize(0))
 
         self.smallImageList.AddNamedImage(name, smallImage)
@@ -852,7 +852,7 @@ class ObjectListView(wx.ListCtrl):
                         modelObject, iCol), self.GetImageAt(
                         modelObject, iCol))
             else:
-                self.SetStringItem(
+                self.SetItem(
                     index, iCol, self.GetStringValueAt(
                         modelObject, iCol), self.GetImageAt(
                         modelObject, iCol))
@@ -927,14 +927,14 @@ class ObjectListView(wx.ListCtrl):
                 i, x) in enumerate(
                 self.columns) if not x.isSpaceFilling)
         # if wx.Platform == "__WXGTK__":
-        #    clientSize = self.MainWindow.GetClientSizeTuple()[0]
+        #    clientSize = self.MainWindow.GetClientSize()[0]
         # else:
-        #    clientSize = self.GetClientSizeTuple()[0]
+        #    clientSize = self.GetClientSize()[0]
         #freeSpace = max(0, clientSize - totalFixedWidth)
         if 'phoenix' in wx.PlatformInfo:
             freeSpace = max(0, self.GetClientSize()[0] - totalFixedWidth)
         else:
-            freeSpace = max(0, self.GetClientSizeTuple()[0] - totalFixedWidth)
+            freeSpace = max(0, self.GetClientSize()[0] - totalFixedWidth)
 
         # Calculate the total number of slices the free space will be divided
         # into
@@ -2755,7 +2755,7 @@ class GroupListView(FastObjectListView):
             if 'phoenix' in wx.PlatformInfo:
                 bitmap = wx.Bitmap(size, size)
             else:
-                bitmap = wx.EmptyBitmap(size, size)
+                bitmap = wx.Bitmap(size, size)
             dc = wx.MemoryDC(bitmap)
             dc.SetBackground(wx.Brush(self.groupBackgroundColour))
             dc.Clear()
@@ -3370,13 +3370,10 @@ class GroupListView(FastObjectListView):
             except:
                 return group.key
 
-        if six.PY2:
-            groups.sort(key=_getLowerCaseKey, reverse=(not ascending))
-        else:
-            groups = sorted(groups, key=_getLowerCaseKey,
-                            reverse=(not ascending))
-            # update self.groups which is used e.g. in _SetGroups
-            self.groups = groups
+        groups = sorted(groups, key=_getLowerCaseKey,
+                        reverse=(not ascending))
+        # update self.groups which is used e.g. in _SetGroups
+        self.groups = groups
 
         # Sort the model objects within each group.
         for x in groups:
@@ -4318,7 +4315,7 @@ def _getSmallUpArrowBitmap():
     if 'phoenix' in wx.PlatformInfo:
         return wx.Bitmap(wx.Image(stream))
     else:
-        return wx.BitmapFromImage(wx.ImageFromStream(stream))
+        return wx.Bitmap(wx.Image(stream))
 
 
 def _getSmallDownArrowData():
@@ -4336,7 +4333,7 @@ def _getSmallDownArrowBitmap():
     if 'phoenix' in wx.PlatformInfo:
         return wx.Bitmap(wx.Image(stream))
     else:
-        return wx.BitmapFromImage(wx.ImageFromStream(stream))
+        return wx.Bitmap(wx.Image(stream))
 
 
 #

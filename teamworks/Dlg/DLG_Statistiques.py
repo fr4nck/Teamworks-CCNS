@@ -9,7 +9,6 @@
 import Chemins
 from Utils.UTILS_Traduction import _
 import wx
-import six
 from Ctrl import CTRL_Bouton_image
 import GestionDB
 import datetime
@@ -69,9 +68,9 @@ class PanelGraph(wx.Panel):
     
     def Save_image(self):
         """ save figure image to file"""
-        file_choices = "PNG (*.png)|*.png|" \
-                       "PS (*.ps)|*.ps|" \
-                       "EPS (*.eps)|*.eps|" \
+        file_choices = "PNG (*.png)|*.png|"\
+                       "PS (*.ps)|*.ps|"\
+                       "EPS (*.eps)|*.eps|"\
                        "BMP (*.bmp)|*.bmp"
         
         standardPath = wx.StandardPaths.Get()
@@ -1000,7 +999,7 @@ class Dialog(wx.Dialog):
             cellText = []
             width = 0.5
             yoff = array([0.0] * len(colLabels)) 
-            for row in xrange(rows):
+            for row in range(rows):
                 couleur = dictCategories[IDcategorie][3]
                 ax.bar(ind, data[row], width, bottom=yoff, color=listeCouleurs[row])
                 yoff = yoff + data[row]
@@ -2017,9 +2016,9 @@ class listCtrl_Personnes(wx.ListCtrl, CheckListCtrlMixin):
         self.activeCheck = False
         for key, valeurs in self.dictPersonnes.items():
             if 'phoenix' in wx.PlatformInfo:
-                index = self.InsertItem(six.MAXSIZE, valeurs[0] + " " + valeurs[1])
+                index = self.InsertItem(sys.maxsize, valeurs[0] + " " + valeurs[1])
             else:
-                index = self.InsertStringItem(six.MAXSIZE, valeurs[0] + " " + valeurs[1])
+                index = self.InsertItem(sys.maxsize, valeurs[0] + " " + valeurs[1])
             self.SetItemData(index, key)
             # Sélection
             if key in self.listePersonnes :

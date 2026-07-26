@@ -9,6 +9,7 @@
 #------------------------------------------------------------------------
 
 
+import sys
 import Chemins
 from Utils import UTILS_Adaptations
 from Utils.UTILS_Traduction import _
@@ -196,16 +197,16 @@ class ListCtrl(wx.ListCtrl, CheckListCtrlMixin):
                 autorisationStr = "Oui"
             else:
                 autorisationStr = "Non"
-            index = self.InsertStringItem(six.MAXSIZE, autorisationStr)
+            index = self.InsertItem(sys.maxsize, autorisationStr)
             
             if user == "root" :
                 user = _(u"root (Administrateur)")
-            self.SetStringItem(index, 1, user)
+            self.SetItem(index, 1, user)
 
             if host == "%" : host = _(u"Connexion depuis n'importe quel hôte")
             elif host == "localhost" : host = _(u"Connexion uniquement depuis le serveur principal")
             else : host = _(u"Connexion uniquement depuis l'hôte %s") % host
-            self.SetStringItem(index, 2, host)
+            self.SetItem(index, 2, host)
 
             self.SetItemData(index, indexListe)
                 
@@ -240,11 +241,11 @@ class ListCtrl(wx.ListCtrl, CheckListCtrlMixin):
             if self.IsChecked(index) == False :
                 self.SetAutorisation(False, nom, hote)
                 self.listeDonnees[index][2] = False
-                self.SetStringItem(index, 0, "Non")
+                self.SetItem(index, 0, "Non")
             else:
                 etat = self.SetAutorisation(True, nom, hote)
                 self.listeDonnees[index][2] = True
-                self.SetStringItem(index, 0, "Oui")
+                self.SetItem(index, 0, "Oui")
 
         else:
             pass
@@ -301,8 +302,6 @@ class ListCtrl(wx.ListCtrl, CheckListCtrlMixin):
                 if host == hostTmp and user == userTmp :
                     autorisation = True
 
-            if six.PY2:
-                host = host.decode("utf8")
             listeDonnees.append([user, host, autorisation])
         return listeDonnees
 

@@ -12,7 +12,6 @@ from Utils.UTILS_Traduction import _
 import wx
 from Ctrl import CTRL_Bouton_image
 import GestionDB
-import six
 from Ctrl import CTRL_Liste_fichiers
 
 
@@ -265,9 +264,6 @@ class MyDialog(wx.Dialog):
         # Version LOCAL
         if modeLocal == True :
             nomFichier = dictItem["titre"]
-            if six.PY2:
-                nomFichier = nomFichier.decode("iso-8859-15")
-    
         # Version RESEAU
         if modeLocal == False :
             dictCodes = self.GetCodesReseau() 

@@ -45,12 +45,7 @@ import random
 import sys
 import platform
 
-from six.moves.urllib.request import urlopen
-
-if six.PY2:
-    import shelve
-    import dbhash
-    import anydbm
+from urllib.request import urlopen
 
 import wx.lib.agw.advancedsplash as AS
 import wx.lib.agw.pybusyinfo as PBI
@@ -155,10 +150,7 @@ class MyFrame(wx.Frame):
         # Ecrit la date et l'heure dans le journal.log
         dateDuJour = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
         systeme = u"%s %s %s %s " % (sys.platform, platform.system(), platform.release(), platform.machine())
-        if six.PY2:
-            version_python = "2"
-        else :
-            version_python = "3"
+        version_python = "3"
         print(("-------- %s | %s | Python %s | wxPython %s | %s --------" % (dateDuJour, VERSION_APPLICATION, version_python, wx.version(), systeme)))
 
         # try : locale.setlocale(locale.LC_ALL, 'FR')
@@ -452,7 +444,7 @@ class MyFrame(wx.Frame):
                 else:
                     CreationItem(menu, sousitem)
             if sousmenu == True:
-                menuParent.AppendMenu(id, item["label"], menu)
+                menuParent.AppendSubMenu(menu, item["label"])
             else:
                 menuParent.Append(menu, item["label"])
             self.dictInfosMenu[item["code"]] = {"id": id, "ctrl": menu}
@@ -883,8 +875,6 @@ class MyFrame(wx.Frame):
             # Affiche d'une fenêtre d'attente
             message = _(u"Mise à jour de la base de données en cours... Veuillez patientez...")
             dlgAttente = PBI.PyBusyInfo(message, parent=None, title=_(u"Mise à jour"), icon=wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Logo.png"), wx.BITMAP_TYPE_ANY))
-            if 'phoenix' not in wx.PlatformInfo:
-                wx.Yield()
 
             DB = UpgradeDB.DB(nomFichier=nomFichier)
             resultat = DB.Upgrade(versionFichier)
@@ -975,8 +965,6 @@ class MyFrame(wx.Frame):
         # Affiche d'une fenêtre d'attente
         message = _(u"Création du nouveau fichier en cours... Veuillez patientez...")
         dlgAttente = PBI.PyBusyInfo(message, parent=None, title=_(u"Création d'un fichier"), icon=wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Logo.png"), wx.BITMAP_TYPE_ANY))
-        if 'phoenix' not in wx.PlatformInfo:
-            wx.Yield()
             
         if "[RESEAU]" in nomFichier :
             self.SetStatusText(_(u"Création du fichier '%s' en cours...") % nomFichier[nomFichier.index("[RESEAU]"):])
@@ -1507,8 +1495,6 @@ class MyFrame(wx.Frame):
         msg = txtLicence.read()
         txtLicence.close()
         from Dlg import DLG_Messagebox
-        if six.PY2:
-            msg = msg.decode("iso-8859-15")
         dlg = DLG_Messagebox.Dialog(self, titre=_(u"Notes de versions"), introduction=_("Liste des versions du logiciel :"), detail=msg, icone=wx.ICON_INFORMATION, boutons=[_(u"Fermer"), ], defaut=0)
         dlg.ShowModal()
         dlg.Destroy()
@@ -1519,8 +1505,6 @@ class MyFrame(wx.Frame):
         txtLicence = open(Chemins.GetMainPath("Licence.txt"), "r")
         msg = txtLicence.read()
         txtLicence.close()
-        if six.PY2:
-            msg = msg.decode("iso-8859-15")
         dlg = wx.lib.dialogs.ScrolledMessageDialog(self, msg, _(u"A propos"), size=(500, 500))
         dlg.ShowModal()
 
@@ -1578,7 +1562,7 @@ Phillip Piper (ObjectListView), Armin Rigo (Psycho)...
                 fichierVersions = urlopen('http://www.teamworks.ovh/fichiers/windows/Versions.txt', timeout=5)
             texteNouveautes= fichierVersions.read()
             fichierVersions.close()
-            if six.PY3:
+            if True:
                 texteNouveautes = texteNouveautes.decode("utf-8")
             pos_debut_numVersion = texteNouveautes.find("n")
             if "(" in texteNouveautes[:50] :
@@ -1796,13 +1780,41 @@ class MyApp(wx.App):
         frame = AS.AdvancedSplash(None, bitmap=bmp, timeout=1000, agwStyle=AS.AS_TIMEOUT | AS.AS_CENTER_ON_SCREEN)
         frame.Refresh()
         frame.Update()
-        if 'phoenix' not in wx.PlatformInfo:
-            wx.Yield()
 
         # Création de la frame principale
         frame = MyFrame(None)
         self.SetTopWindow(frame)
-        frame.Show()   
+        frame.Show()
+
+        # Mode de validation fonctionnelle automatisée : la fenêtre principale
+        # est réellement construite et affichée, puis la boucle wx est arrêtée
+        # proprement sans ouvrir d'assistant ni de fichier utilisateur.
+        if os.environ.get("TEAMWORKS_SMOKE_MODE") == "main-window":
+            print("TEAMWORKS_SMOKE_MAIN_WINDOW_READY", flush=True)
+
+            for suffix in ("TDATA", "TDOCUMENTS", "TPHOTOS"):
+                source = Chemins.GetStaticPath(f"Exemples/Exemple_{suffix}.dat")
+                destination = UTILS_Fichiers.GetRepData(f"Exemple_{suffix}.dat")
+                with open(source, "rb") as source_file, open(destination, "wb") as destination_file:
+                    destination_file.write(source_file.read())
+
+            opened = frame.OuvrirFichier("Exemple")
+            if opened is False or frame.userConfig.get("nomFichier") != "Exemple":
+                raise RuntimeError("unable to open bundled example data")
+            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
+
+            def smoke_activate_page(index, pass_name):
+                frame.toolBook.SetSelection(index)
+                frame.toolBook.MAJ_panel(index)
+                print(f"TEAMWORKS_SMOKE_TAB_READY:{pass_name}:{index}", flush=True)
+
+            page_count = frame.toolBook.GetPageCount()
+            route = [("forward", index) for index in range(page_count)]
+            route.extend(("backward", index) for index in reversed(range(page_count)))
+            for delay, (pass_name, index) in enumerate(route, start=1):
+                wx.CallLater(delay * 750, smoke_activate_page, index, pass_name)
+            wx.CallLater((len(route) + 2) * 750, self.ExitMainLoop)
+            return True
 
         # Affiche une annonce si c'est un premier démarrage du logiciel
         frame.Annonce()

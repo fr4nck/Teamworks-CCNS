@@ -25,7 +25,7 @@ if not wx.USE_UNICODE:
 
 def pil2wx(image):
     """Convert a PIL image to wx image format"""
-    imagewx=wx.EmptyImage(image.size[0], image.size[1])
+    imagewx=wx.Image(image.size[0], image.size[1])
     imagewx.SetData(image.tobytes('raw', 'RGB'))
     return imagewx
 
@@ -183,7 +183,7 @@ class MyFrame(wx.Frame):
         else:
             dlg = wx.FileDialog(self, _(u"Choisissez un fichier"),
                     wildcard = "*.*",
-                    style = wx.OPEN)
+                    style = wx.FD_OPEN)
             retour = dlg.ShowModal()
             chemin = dlg.GetPath()
             fichier = dlg.GetFilename()

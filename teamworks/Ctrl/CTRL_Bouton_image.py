@@ -26,7 +26,7 @@ def PILtoWx(image):
         imagewx.SetData(image.tobytes('raw', 'RGB'))
         imagewx.SetAlpha(image.convert("RGBA").tobytes()[3::4])
     else:
-        imagewx = wx.EmptyImage(largeur, hauteur)
+        imagewx = wx.Image(largeur, hauteur)
         imagewx.SetData(image.tobytes('raw', 'RGB'))
         imagewx.SetAlphaData(image.convert("RGBA").tobytes()[3::4])
     return imagewx

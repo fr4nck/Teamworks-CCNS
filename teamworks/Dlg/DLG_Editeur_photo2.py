@@ -18,7 +18,7 @@ import FonctionsPerso
 
 def pil2wx(image):
     """Convert a PIL image to wx image format"""
-    imagewx=wx.EmptyImage(image.size[0], image.size[1])
+    imagewx=wx.Image(image.size[0], image.size[1])
     imagewx.SetData(image.tobytes('raw', 'RGB'))
     return imagewx
 
@@ -89,7 +89,7 @@ class ImgBox(wx.Window):
         
         # Dessin de la photo
         largeurImg, hauteurImg = self.bmp.GetSize()
-        largeurDC, hauteurDC = self.GetClientSizeTuple()
+        largeurDC, hauteurDC = self.GetClientSize()
         dc.DrawBitmap(self.bmp, (largeurDC / 2.0)  - (largeurImg / 2.0), (hauteurDC / 2.0) - (hauteurImg / 2.0), 0)
         
     def evt_paint(self, event):
@@ -99,9 +99,9 @@ class ImgBox(wx.Window):
     def evt_size(self,event):
         """ OnSize """
         self.ResizePhoto()
-        largeurDC, hauteurDC = self.GetClientSizeTuple()
+        largeurDC, hauteurDC = self.GetClientSize()
         # Redessine toute l'image
-        self._Buffer = wx.EmptyBitmap(largeurDC, hauteurDC)
+        self._Buffer = wx.Bitmap(largeurDC, hauteurDC)
         self.UpdateDrawing()
 
     def ResizePhoto(self):
@@ -109,7 +109,7 @@ class ImgBox(wx.Window):
         largeurImg, hauteurImg = self.source.GetSize()
         self.ratio = self.GetParent().slider_ratio.GetValue() / 100.0
         source = self.source.Scale(largeurImg * self.ratio, hauteurImg * self.ratio)
-        self.bmp=wx.BitmapFromImage(source)
+        self.bmp=wx.Bitmap(source)
     
     def UpdateDrawing(self):
         """Create the device context and draw the window contents"""
@@ -130,7 +130,7 @@ class ImgBox(wx.Window):
         # Réduction de l'image
         largeurImg, hauteurImg = self.source.GetSize()
         source = self.source.Scale(largeurImg * self.ratio, hauteurImg * self.ratio)
-        self.bmp=wx.BitmapFromImage(source)
+        self.bmp=wx.Bitmap(source)
         # MAJ de l'affichage de la photo
         self.UpdateDrawing()
 

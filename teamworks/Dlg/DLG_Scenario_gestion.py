@@ -94,7 +94,7 @@ class Panel(wx.Panel):
 
     def Modifier(self):
         item = self.listCtrl.GetSelection()
-        IDscenario = self.listCtrl.GetPyData(item)
+        IDscenario = self.listCtrl.GetItemData(item)
 
         # Vérifie qu'un item a bien été sélectionné
         if IDscenario > 100000 or IDscenario == None or IDscenario == -1 :
@@ -112,7 +112,7 @@ class Panel(wx.Panel):
 
     def Supprimer(self):
         item = self.listCtrl.GetSelection()
-        IDscenario = self.listCtrl.GetPyData(item)
+        IDscenario = self.listCtrl.GetItemData(item)
 
         # Vérifie qu'un item a bien été sélectionné
         if IDscenario > 100000 or IDscenario == None or IDscenario == -1 :
@@ -164,7 +164,7 @@ class Panel(wx.Panel):
     
     def OnBoutonDupliquer(self, event):
         item = self.listCtrl.GetSelection()
-        IDscenario = self.listCtrl.GetPyData(item)
+        IDscenario = self.listCtrl.GetItemData(item)
         if IDscenario == None:
             return False
 
@@ -301,7 +301,7 @@ class TreeListCtrl(HTL.HyperTreeList):
                 self.SetItemBold(child, True)
                 self.SetItemText(child, "", 1)
                 self.SetItemText(child, "", 2)
-                self.SetPyData(child, 100000 + IDpersonne)
+                self.SetItemData(child, 100000 + IDpersonne)
                 if civilite == "Mr" : 
                     image = self.img_homme
                 else:
@@ -317,7 +317,7 @@ class TreeListCtrl(HTL.HyperTreeList):
                     self.SetItemText(last, periode, 1)
                     if description == "" or description == None : description = _(u"Aucune description")
                     self.SetItemText(last, str(description), 2)
-                    self.SetPyData(last, IDscenario)
+                    self.SetItemData(last, IDscenario)
                     self.SetItemImage(last, self.img_scenario, which = wx.TreeItemIcon_Normal)
                     self.SetItemImage(last, self.img_scenario, which = wx.TreeItemIcon_Expanded)
                     
@@ -339,7 +339,7 @@ class TreeListCtrl(HTL.HyperTreeList):
                     if description == "" or description == None:
                         description = _(u"Aucune description")
                     self.SetItemText(last, str(description), 2)
-                    self.SetPyData(last, IDscenario)
+                    self.SetItemData(last, IDscenario)
                     self.SetItemImage(last, self.img_scenario, which = wx.TreeItemIcon_Normal)
                     self.SetItemImage(last, self.img_scenario, which = wx.TreeItemIcon_Expanded)
                     
@@ -390,7 +390,7 @@ class TreeListCtrl(HTL.HyperTreeList):
 
     def OnActivated(self,event):
         item = self.GetSelection()
-        data = self.GetPyData(item)
+        data = self.GetItemData(item)
         if data < 100000 :
             self.GetParent().Modifier()
         else:
@@ -400,7 +400,7 @@ class TreeListCtrl(HTL.HyperTreeList):
         """Ouverture du menu contextuel """
         # Recherche et sélection de l'item pointé avec la souris
         item = event.GetItem()
-        data = self.GetPyData(item)
+        data = self.GetItemData(item)
         if data == None or data > 100000 :
             return
         self.SelectItem(item, item)

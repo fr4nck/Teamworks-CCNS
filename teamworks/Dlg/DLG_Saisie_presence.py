@@ -9,7 +9,6 @@
 import Chemins
 from Utils.UTILS_Traduction import _
 import wx
-import six
 from Ctrl import CTRL_Bouton_image
 import FonctionsPerso
 import GestionDB
@@ -633,16 +632,16 @@ class ListCtrl_donnees(wx.ListCtrl, CheckListCtrlMixin):
         # Remplissage
         for ID, IDpersonne, date, selection in listeDonnees:
             if 'phoenix' in wx.PlatformInfo:
-                index = self.InsertItem(six.MAXSIZE, "")
+                index = self.InsertItem(sys.maxsize, "")
             else:
-                index = self.InsertStringItem(six.MAXSIZE, "")
+                index = self.InsertItem(sys.maxsize, "")
             nomPersonne = self.dictPersonnes[IDpersonne][0] + " " + self.dictPersonnes[IDpersonne][1]
             if 'phoenix' in wx.PlatformInfo:
                 self.SetItem(index, 1, nomPersonne)
                 self.SetItem(index, 2, "> " + DatetimeDateEnStr(date))
             else:
-                self.SetStringItem(index, 1, nomPersonne)
-                self.SetStringItem(index, 2, "> " + DatetimeDateEnStr(date))
+                self.SetItem(index, 1, nomPersonne)
+                self.SetItem(index, 2, "> " + DatetimeDateEnStr(date))
             self.SetItemData(index, ID)
             self.CheckItem(index)
       
@@ -685,7 +684,7 @@ class TreeCtrlCategories(wx.TreeCtrl):
         if 'phoenix' in wx.PlatformInfo:
             self.SetItemData(self.root, None)
         else:
-            self.SetPyData(self.root, None)
+            self.SetItemData(self.root, None)
         self.Remplissage()
         
         self.Bind(wx.EVT_TREE_ITEM_EXPANDED, self.OnItemExpanded, self)
@@ -707,7 +706,7 @@ class TreeCtrlCategories(wx.TreeCtrl):
             bmp.SetRGB((0, 0, 16, 16), 255, 255, 255)
             bmp.SetRGB((6, 4, 8, 8), r, v, b)
         else:
-            bmp = wx.EmptyImage(tailleImages[0], tailleImages[1], True)
+            bmp = wx.Image(tailleImages[0], tailleImages[1], True)
             bmp.SetRGBRect((0, 0, 16, 16), 255, 255, 255)
             bmp.SetRGBRect((6, 4, 8, 8), r, v, b)
         return bmp.ConvertToBitmap()
@@ -730,7 +729,7 @@ class TreeCtrlCategories(wx.TreeCtrl):
                 if 'phoenix' in wx.PlatformInfo:
                     self.SetItemData(newItem, item[0])
                 else:
-                    self.SetPyData(newItem, item[0])
+                    self.SetItemData(newItem, item[0])
                 exec("self.SetItemImage(newItem, self.img" + str(item[0]) + ", wx.TreeItemIcon_Normal)") 
                 self.nbreBranches += 1
                 
@@ -779,7 +778,7 @@ class TreeCtrlCategories(wx.TreeCtrl):
         # if 'phoenix' in wx.PlatformInfo:
         #     data = self.GetItemData(item)
         # else:
-        #     data = self.GetPyData(item)
+        #     data = self.GetItemData(item)
         # self.selection = data
         # event.Skip()
 
@@ -790,7 +789,7 @@ class TreeCtrlCategories(wx.TreeCtrl):
         if 'phoenix' in wx.PlatformInfo:
             IDcategorie = self.GetItemData(item)
         else:
-            IDcategorie = self.GetPyData(item)
+            IDcategorie = self.GetItemData(item)
         return IDcategorie
 
         

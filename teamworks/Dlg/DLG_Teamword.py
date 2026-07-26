@@ -346,19 +346,18 @@ class MyFrame(wx.Frame):
         handler.SetFlags(rt.RICHTEXT_HANDLER_SAVE_IMAGES_TO_MEMORY)
         handler.SetFontSizeMapping([7,9,11,12,14,22,100])
 
-        import cStringIO
-        stream = cStringIO.StringIO()
+        import io
+        stream = io.BytesIO()
         if not handler.SaveStream(self.rtc.GetBuffer(), stream):
             return
         
-        source = stream.getvalue()
+        source = stream.getvalue().decode("utf-8")
         head = """
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /> 
 </head>
         """
         source = source.replace("<head></head>", head)
-        source = source.decode("utf-8")
         
         import wx.html
         dlg = wx.Dialog(self, title="HTML", style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
@@ -383,20 +382,19 @@ class MyFrame(wx.Frame):
         else:
             handler.SetFlags(rt.RICHTEXT_HANDLER_SAVE_IMAGES_TO_MEMORY)
         handler.SetFontSizeMapping([7,9,11,12,14,22,100])
-        import cStringIO
-        stream = cStringIO.StringIO()
+        import io
+        stream = io.BytesIO()
         if self.rtc == None and self.nb.GetPageCount()>0 :
             self.rtc = self.nb.GetPage(self.nb.GetSelection())
         if not handler.SaveStream(self.rtc.GetBuffer(), stream):
             return False
-        source = stream.getvalue()
+        source = stream.getvalue().decode("utf-8")
         head = """
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /> 
 </head>
         """
         source = source.replace("<head></head>", head)
-        source = source.decode("utf-8")
         return source
         
     def OnMail(self, event):
@@ -408,18 +406,17 @@ class MyFrame(wx.Frame):
         handler = rt.RichTextHTMLHandler()
         handler.SetFlags(rt.RICHTEXT_HANDLER_SAVE_IMAGES_TO_BASE64)
         handler.SetFontSizeMapping([7,9,11,12,14,22,100])
-        import cStringIO
-        stream = cStringIO.StringIO()
+        import io
+        stream = io.BytesIO()
         if not handler.SaveStream(self.rtc.GetBuffer(), stream):
             return False
-        texteHtml = stream.getvalue()
+        texteHtml = stream.getvalue().decode("utf-8")
         head = """
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /> 
 </head>
         """
         texteHtml = texteHtml.replace("<head></head>", head)
-        texteHtml = texteHtml.decode("utf-8")
         
         # Intégration de la couleur de fond de page
         couleurFond = "#000000"

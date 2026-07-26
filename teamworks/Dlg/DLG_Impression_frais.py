@@ -9,7 +9,6 @@
 import Chemins
 from Utils.UTILS_Traduction import _
 import wx
-import six
 from Ctrl import CTRL_Bouton_image
 import FonctionsPerso
 from Utils import UTILS_Fichiers
@@ -180,7 +179,7 @@ class ListCtrl(wx.ListCtrl, CheckListCtrlMixin):
         self.remplissage = True
         for IDdeplacement, date, objet, trajet, dist, tarif_km, montantStr, remboursement in self.listeDonnees :
             if 'phoenix' in wx.PlatformInfo:
-                index = self.InsertItem(six.MAXSIZE, str(IDdeplacement))
+                index = self.InsertItem(sys.maxsize, str(IDdeplacement))
                 self.SetItem(index, 1, date)
                 self.SetItem(index, 2, objet)
                 self.SetItem(index, 3, trajet)
@@ -189,14 +188,14 @@ class ListCtrl(wx.ListCtrl, CheckListCtrlMixin):
                 self.SetItem(index, 6, montantStr)
                 self.SetItem(index, 7, remboursement)
             else:
-                index = self.InsertStringItem(six.MAXSIZE, str(IDdeplacement))
-                self.SetStringItem(index, 1, date)
-                self.SetStringItem(index, 2, objet)
-                self.SetStringItem(index, 3, trajet)
-                self.SetStringItem(index, 4, dist)
-                self.SetStringItem(index, 5, tarif_km)
-                self.SetStringItem(index, 6, montantStr)
-                self.SetStringItem(index, 7, remboursement)
+                index = self.InsertItem(sys.maxsize, str(IDdeplacement))
+                self.SetItem(index, 1, date)
+                self.SetItem(index, 2, objet)
+                self.SetItem(index, 3, trajet)
+                self.SetItem(index, 4, dist)
+                self.SetItem(index, 5, tarif_km)
+                self.SetItem(index, 6, montantStr)
+                self.SetItem(index, 7, remboursement)
 
             self.SetItemData(index, IDdeplacement)
                 

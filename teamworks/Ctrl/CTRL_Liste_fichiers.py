@@ -7,10 +7,10 @@
 # Licence:         Licence GNU GPL
 #-----------------------------------------------------------
 
+import sys
 import Chemins
 from Utils.UTILS_Traduction import _
 import wx
-import six
 from wx.lib.agw import ultimatelistctrl as ULC
 from Utils import UTILS_Fichiers
 import os
@@ -90,7 +90,7 @@ class FirstColumnRenderer(object):
         if 'phoenix' in wx.PlatformInfo:
             bmp = wx.Bitmap(100, 20)
         else :
-            bmp = wx.EmptyBitmap(100, 20)
+            bmp = wx.Bitmap(100, 20)
         dc.SelectObject(bmp)
         
         if self.icon != None :
@@ -152,7 +152,7 @@ class SecondColumnRenderer(object):
         if 'phoenix' in wx.PlatformInfo:
             bmp = wx.Bitmap(100, 20)
         else :
-            bmp = wx.EmptyBitmap(100, 20)
+            bmp = wx.Bitmap(100, 20)
         dc.SelectObject(bmp)
         textWidth, textHeight, d1, d2 = dc.GetFullTextExtent("xx", self.smallerFont)
         dc.SelectObject(wx.NullBitmap)
@@ -164,7 +164,7 @@ class SecondColumnRenderer(object):
         if 'phoenix' in wx.PlatformInfo:
             bmp = wx.Bitmap(100, 20)
         else :
-            bmp = wx.EmptyBitmap(100, 20)
+            bmp = wx.Bitmap(100, 20)
         dc.SelectObject(bmp)
         
         if self.date != None :
@@ -210,13 +210,13 @@ class CTRL(ULC.UltimateListCtrl):
         self.InsertColumn(1, "Column 2") 
         
         for dictFichier in self.listeFichiers :
-            index = self.InsertStringItem(six.MAXSIZE, "")
+            index = self.InsertItem(sys.maxsize, "")
 
             klass = FirstColumnRenderer(self, titre=dictFichier["titre"], image=dictFichier["image"], description=dictFichier["description"])
             self.SetItemCustomRenderer(index, 0, klass)
             
             if self.details == True and self.mode != "reseau" :
-                self.SetStringItem(index, 1, "")
+                self.SetItem(index, 1, "")
                 klass = SecondColumnRenderer(self, dateModif=dictFichier["dateModif"], taille=dictFichier["taille"])
                 self.SetItemCustomRenderer(index, 1, klass)
             

@@ -26,11 +26,10 @@ from Utils import UTILS_Parametres
 from Dlg import DLG_Messagebox
 
 import smtplib
-import six
-from six.moves.email_mime_multipart import MIMEMultipart
-from six.moves.email_mime_base import MIMEBase
-from six.moves.email_mime_text import MIMEText
-from six.moves.email_mime_image import MIMEImage
+from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email.mime.text import MIMEText
+from email.mime.image import MIMEImage
 from email.header import Header
 from email.utils import formatdate
 from email import encoders
@@ -274,7 +273,7 @@ class Message():
                 encoders.encode_base64(part)
             # Set the filename parameter
             nomFichier = os.path.basename(fichier)
-            if type(nomFichier) == six.text_type:
+            if isinstance(nomFichier, str):
                 nomFichier = FonctionsPerso.Supprime_accent(nomFichier)
             # changement cosmetique pour ajouter les guillements autour du filename
             part.add_header('Content-Disposition', "attachment; filename=\"%s\"" % nomFichier)
@@ -497,10 +496,7 @@ class SmtpV2(Base_messagerie):
                         erreur = err
 
                 if erreur != None:
-                    if six.PY2:
-                        err = str(erreur).decode("iso-8859-15")
-                    else:
-                        err = six.text_type(erreur)
+                    err = str(erreur)
                     listeAnomalies.append((message, err))
                     print(("Erreur dans l'envoi d'un mail : %s...", err))
                     traceback.print_exc(file=sys.stdout)

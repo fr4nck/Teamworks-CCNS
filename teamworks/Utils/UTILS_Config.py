@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #------------------------------------------------------------------------
-# Application :    Noethys, gestion multi-activitÈs
+# Application :    Noethys, gestion multi-activit√©s
 # Site internet :  www.noethys.com
 # Auteur:          Ivan LUCAS
 # Copyright:       (c) 2010-19 Ivan LUCAS
@@ -12,7 +12,6 @@
 import Chemins
 import wx
 import os
-import six
 import shutil
 from Utils import UTILS_Fichiers
 from Utils import UTILS_Json
@@ -31,23 +30,10 @@ def GenerationFichierConfig():
     dictDonnees = {}
     nouveau_fichier = True
 
-    # Importe l'ancien fichier 'config' s'il existe
-    nom_fichier_dat = UTILS_Fichiers.GetRepUtilisateur("Config.dat")
-    if os.path.isfile(nom_fichier_dat) and six.PY2:
-        print("Importation de l'ancien config de config dat")
-        nom_fichier_dat = nom_fichier_dat.encode("iso-8859-15")
+    # L'ancien fichier Config.dat n'est importable que par l'ancienne version Python 2.
+    # En Python 3, la configuration est cr√©√©e directement au format JSON.
 
-        import shelve
-        db = shelve.open(nom_fichier_dat, "r")
-        for key in list(db.keys()):
-            dictDonnees[key] = db[key]
-        db.close()
-        nouveau_fichier = False
-
-        # Supprime l'ancien fichier dat
-        os.remove(nom_fichier_dat)
-
-    # CrÈe les nouvelles donnÈes
+    # Cr√©e les nouvelles donn√©es
     if nouveau_fichier == True :
         dictDonnees = {
             "nomFichier": "",
@@ -56,7 +42,7 @@ def GenerationFichierConfig():
             "interface_mysql": "mysql.connector",
         }
 
-    # CrÈation d'un nouveau fichier json
+    # Cr√©ation d'un nouveau fichier json
     cfg = FichierConfig()
     cfg.SetDictConfig(dictConfig=dictDonnees)
 
@@ -71,10 +57,7 @@ def SupprimerFichier():
 
 class FichierConfig():
     def __init__(self):
-        nomFichier = GetNomFichierConfig()
-        if six.PY2:
-            nomFichier = nomFichier.encode("iso-8859-15")
-        self.nomFichier = nomFichier
+        self.nomFichier = GetNomFichierConfig()
         
     def GetDictConfig(self):
         """ Recupere une copie du dictionnaire du fichier de config """
@@ -89,13 +72,13 @@ class FichierConfig():
         return data
 
     def SetDictConfig(self, dictConfig={}):
-        """ Remplace le fichier de config prÈsent sur le disque dur par le dict donnÈ """
+        """ Remplace le fichier de config pr√©sent sur le disque dur par le dict donn√© """
         UTILS_Json.Ecrire(nom_fichier=self.nomFichier, data=dictConfig)
-        # CrÈation d'une copie de sauvegarde du config
+        # Cr√©ation d'une copie de sauvegarde du config
         shutil.copyfile(self.nomFichier, self.nomFichier + ".bak")
 
     def GetItemConfig(self, key, defaut=None):
-        """ RÈcupËre une valeur du dictionnaire du fichier de config """
+        """ R√©cup√®re une valeur du dictionnaire du fichier de config """
         data = self.GetDictConfig()
         if key in data :
             valeur = data[key]
@@ -133,13 +116,13 @@ def GetParametre(nomParametre="", defaut=None):
     except :
         nomWindow = None
     if nomWindow == "general" : 
-        # Si la frame 'General' est chargÈe, on y rÈcupËre le dict de config
+        # Si la frame 'General' est charg√©e, on y r√©cup√®re le dict de config
         if nomParametre in topWindow.userConfig :
             parametre = topWindow.userConfig[nomParametre]
         else :
             parametre = defaut
     else:
-        # RÈcupÈration du nom de la DB directement dans le fichier de config sur le disque dur
+        # R√©cup√©ration du nom de la DB directement dans le fichier de config sur le disque dur
         cfg = FichierConfig()
         parametre = cfg.GetItemConfig(nomParametre, defaut)
     return parametre
@@ -151,7 +134,7 @@ def SetParametre(nomParametre="", parametre=None):
     except :
         nomWindow = None
     if nomWindow == "general" : 
-        # Si la frame 'General' est chargÈe, on y rÈcupËre le dict de config
+        # Si la frame 'General' est charg√©e, on y r√©cup√®re le dict de config
         topWindow.userConfig[nomParametre] = parametre
     else:
         # Enregistrement du nom de la DB directement dans le fichier de config sur le disque dur
@@ -171,14 +154,14 @@ def GetParametres(dictParametres={}):
     except :
         nomWindow = None
         
-    # Cherche la sources des donnÈes
+    # Cherche la sources des donn√©es
     if nomWindow == "general" : 
         dictSource = topWindow.userConfig
     else :
         cfg = FichierConfig()
         dictSource = cfg.GetDictConfig()
         
-    # Lit les donnÈes
+    # Lit les donn√©es
     for nom, valeur in list(dictParametres.items()) :
         if nom in dictSource :
             dictFinal[nom] = dictSource[nom]
@@ -196,7 +179,7 @@ def SetParametres(dictParametres={}):
     except :
         nomWindow = None
     if nomWindow == "general" : 
-        # Si la frame 'General' est chargÈe, on y rÈcupËre le dict de config
+        # Si la frame 'General' est charg√©e, on y r√©cup√®re le dict de config
         for nom, valeur in list(dictParametres.items()) :
             topWindow.userConfig[nom] = valeur
     else:
@@ -211,4 +194,3 @@ def SetParametres(dictParametres={}):
 if __name__ == u"__main__":
     print(("GET :", GetParametres( {"impression_factures_impayes" : 0} )))
     #print("SET :", SetParametres( {"test1" : True, "test2" : True} ))
-

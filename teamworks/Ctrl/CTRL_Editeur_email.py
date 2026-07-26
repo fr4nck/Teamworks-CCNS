@@ -171,27 +171,27 @@ def DateComplete(dateDD):
     return dateComplete
 
 
-ID_SAUVEGARDER = wx.NewId()
-ID_OUVRIR = wx.NewId()
-ID_IMPRIMER = wx.NewId()
-ID_APERCU = wx.NewId()
-ID_GRAS = wx.NewId()
-ID_ITALIQUE = wx.NewId()
-ID_SOULIGNE = wx.NewId()
-ID_COULEUR_POLICE = wx.NewId()
-ID_ALIGNER_GAUCHE = wx.NewId()
-ID_ALIGNER_CENTRE = wx.NewId()
-ID_ALIGNER_DROIT = wx.NewId()
-ID_RETRAIT_GAUCHE = wx.NewId()
-ID_RETRAIT_DROIT = wx.NewId()
-ID_PARA_MOINS = wx.NewId()
-ID_PARA_PLUS = wx.NewId()
-ID_INTER_SIMPLE = wx.NewId()
-ID_INTER_DEMI = wx.NewId()
-ID_INTER_DOUBLE = wx.NewId()
-ID_URL = wx.NewId()
-ID_IMAGE = wx.NewId()
-ID_GOMME = wx.NewId()
+ID_SAUVEGARDER = wx.NewIdRef()
+ID_OUVRIR = wx.NewIdRef()
+ID_IMPRIMER = wx.NewIdRef()
+ID_APERCU = wx.NewIdRef()
+ID_GRAS = wx.NewIdRef()
+ID_ITALIQUE = wx.NewIdRef()
+ID_SOULIGNE = wx.NewIdRef()
+ID_COULEUR_POLICE = wx.NewIdRef()
+ID_ALIGNER_GAUCHE = wx.NewIdRef()
+ID_ALIGNER_CENTRE = wx.NewIdRef()
+ID_ALIGNER_DROIT = wx.NewIdRef()
+ID_RETRAIT_GAUCHE = wx.NewIdRef()
+ID_RETRAIT_DROIT = wx.NewIdRef()
+ID_PARA_MOINS = wx.NewIdRef()
+ID_PARA_PLUS = wx.NewIdRef()
+ID_INTER_SIMPLE = wx.NewIdRef()
+ID_INTER_DEMI = wx.NewIdRef()
+ID_INTER_DOUBLE = wx.NewIdRef()
+ID_URL = wx.NewIdRef()
+ID_IMAGE = wx.NewIdRef()
+ID_GOMME = wx.NewIdRef()
 
 
 class CTRL_Expediteur(wx.Choice):
@@ -391,7 +391,7 @@ class Editeur(rt.RichTextCtrl):
         handler = wx.richtext.RichTextXMLHandler()
         buffer = self.GetBuffer()
         buffer.AddHandler(handler)
-        if (six.PY3 and not isinstance(texteXml, bytes)) or (six.PY2 and not isinstance(texteXml, buffer)):
+        if not isinstance(texteXml, bytes):
             texteXml = texteXml.encode("utf8")
         out.write(texteXml)
         out.seek(0)
@@ -788,9 +788,6 @@ class CTRL(wx.Panel):
 </head>
         """
         source = source.replace("<head></head>", head)
-        if six.PY2:
-            source = source.decode("utf-8")
-
         import wx.html
         dlg = wx.Dialog(self, title="HTML", style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
         html = wx.html.HtmlWindow(dlg, size=(500,400), style=wx.BORDER_SUNKEN)
@@ -838,8 +835,6 @@ class CTRL(wx.Panel):
         if not handler.SaveStream(self.ctrl_editeur.GetBuffer(), stream):
             return False
         source = stream.getvalue()
-        if six.PY2:
-            source = source.decode("utf-8")
         for balise in ("<html>", "</html>", "<head>", "</head>", "<body>", "</body>"):
             source = source.replace(balise, "")
         return source

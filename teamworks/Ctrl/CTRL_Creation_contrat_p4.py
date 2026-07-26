@@ -6,10 +6,10 @@
 # Licence:      Licence GNU GPL
 #-----------------------------------------------------------
 
+import sys
 import Chemins
 from Utils.UTILS_Traduction import _
 import wx
-import six
 from wx.lib.mixins.listctrl import CheckListCtrlMixin
 import GestionDB
 from Utils import UTILS_Adaptations
@@ -115,9 +115,9 @@ class ListCtrl_champs(wx.ListCtrl, CheckListCtrlMixin):
         # Remplissage avec les valeurs
         for key, valeurs in self.dictChamps.items():
             if 'phoenix' in wx.PlatformInfo:
-                index = self.InsertItem(six.MAXSIZE, valeurs[1])
+                index = self.InsertItem(sys.maxsize, valeurs[1])
             else:
-                index = self.InsertStringItem(six.MAXSIZE, valeurs[1])
+                index = self.InsertItem(sys.maxsize, valeurs[1])
             self.SetItemData(index, key)
             # Sélection
             if key in self.selections :

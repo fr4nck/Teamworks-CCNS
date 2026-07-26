@@ -137,7 +137,7 @@ class ListBookPhotos(wx.Listbook):
     
     def CreationPhotoVide(self, taille):
         """ Création d'une photo vide """
-        bmp = wx.EmptyBitmap(taille, taille)
+        bmp = wx.Bitmap(taille, taille)
         dc = wx.MemoryDC()
         dc.SelectObject(bmp)
         dc.SetBackground(wx.Brush("WHITE"))

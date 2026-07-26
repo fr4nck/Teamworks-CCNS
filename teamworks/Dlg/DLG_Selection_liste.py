@@ -6,12 +6,12 @@
 # Licence:      Licence GNU GPL
 #-----------------------------------------------------------
 
+import sys
 import Chemins
 from Utils.UTILS_Traduction import _
 import wx
 from Ctrl import CTRL_Bouton_image
 import FonctionsPerso
-import six
 import wx.lib.agw.hyperlink as hl
 from wx.lib.mixins.listctrl import CheckListCtrlMixin
 
@@ -186,16 +186,16 @@ class ListCtrl(wx.ListCtrl, CheckListCtrlMixin):
         for valeurs in self.listeValeurs :
             ID = int(valeurs[0])
             if 'phoenix' in wx.PlatformInfo:
-                index = self.InsertItem(six.MAXSIZE, str(ID))
+                index = self.InsertItem(sys.maxsize, str(ID))
             else:
-                index = self.InsertStringItem(six.MAXSIZE, str(ID))
+                index = self.InsertItem(sys.maxsize, str(ID))
             x = 1
             for valeur in valeurs[1:] :
                 if x <= len(self.liste_labelsColonnes)-1:
                     if 'phoenix' in wx.PlatformInfo:
                         self.SetItem(index, x, valeur)
                     else:
-                        self.SetStringItem(index, x, valeur)
+                        self.SetItem(index, x, valeur)
                     x += 1
 
             self.SetItemData(index, ID)

@@ -240,7 +240,7 @@ class Dialog(wx.Dialog):
             sousMenuPort.AppendItem(item)
             self.Bind(wx.EVT_MENU, self.Menu_port, id=id)
             if self.port == index : item.Check(True)
-        menuPop.AppendMenu(10, _(u"Port de connexion"), sousMenuPort)
+        menuPop.AppendSubMenu(sousMenuPort, _(u"Port de connexion"))
 
         sousMenuFPS = UTILS_Adaptations.Menu()
         for index in (5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 60, 70, 80, 90, 100) :
@@ -249,7 +249,7 @@ class Dialog(wx.Dialog):
             sousMenuFPS.AppendItem(item)
             self.Bind(wx.EVT_MENU, self.Menu_fps, id=id)
             if self.ctrl_video.fps == index : item.Check(True)
-        menuPop.AppendMenu(20, _(u"Nombres d'images par secondes"), sousMenuFPS)
+        menuPop.AppendSubMenu(sousMenuFPS, _(u"Nombres d'images par secondes"))
 
         self.PopupMenu(menuPop)
         menuPop.Destroy()

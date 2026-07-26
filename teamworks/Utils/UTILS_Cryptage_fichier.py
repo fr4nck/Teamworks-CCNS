@@ -13,7 +13,6 @@ import hashlib
 import pickle
 import sys, getopt
 import getpass
-import six
 
 
 
@@ -41,13 +40,19 @@ class CypherText:
 	def getTrail(self):
 		return self.__trailLen
 	
+
+def _as_bytes(value):
+	if isinstance(value, bytes):
+		return value
+	return str(value).encode('utf-8')
+
+
 def hashPassword_MD5(Password):
 	m = hashlib.md5()
-	if six.PY3:
-		Password = str(Password).encode('utf-8')
-	m.update(Password)
+	m.update(_as_bytes(Password))
 	return m.hexdigest()
 	
+
 def read_keys_from_file():
 	f = open('./keys.txt','r')
 	key = ''
@@ -61,23 +66,19 @@ def read_keys_from_file():
 	else:
 		return key	
 	
+
 def encrypt(message, key):
 
 	TrailLen = 0
 	#AES requires blocks of 16
 	while (len(message) % 16) != 0:
-		if six.PY2:
-			message  = message + '_'
-		else :
-			message = message + b'_'
+		message = message + b'_'
 		TrailLen = TrailLen + 1
 	
 	CypherOut = CypherText()
 	CypherOut.setTrail(TrailLen)
 
-	if six.PY3:
-		key = key.encode("utf8")
-	cryptu = AES.new(key, AES.MODE_ECB)
+	cryptu = AES.new(_as_bytes(key), AES.MODE_ECB)
 
 	#Try to delete the key from memory
 	key = hashPassword_MD5('PYCRYPT_ERASE_')
@@ -85,16 +86,16 @@ def encrypt(message, key):
 	CypherOut.setCypherText( cryptu.encrypt(message) )
 	return CypherOut
 	
+
 def decrypt(ciphertext, key):
-	if six.PY3:
-		key = key.encode("utf8")
-	cryptu = AES.new(key, AES.MODE_ECB)
+	cryptu = AES.new(_as_bytes(key), AES.MODE_ECB)
 	
 	#Try to delete the key from memory
 	key = hashPassword_MD5('PYCRYPT_ERASE_')
 	
 	message_n_trail = cryptu.decrypt(ciphertext.getCypherText())
 	return message_n_trail[0:len(message_n_trail) - ciphertext.getTrail()]
+
 
 def cryptFile(filename_in, filename_out, key):
 	fr = open(filename_in, 'rb')
@@ -103,12 +104,14 @@ def cryptFile(filename_in, filename_out, key):
 	fw = open(filename_out, 'wb')
 	pickle.dump( cyphertext, fw, -1 )
 	
+
 def decryptFile(filename_in, filename_out, key):
 	fr = open(filename_in, 'rb')
 	cyphertext = pickle.load(fr)
 	message = decrypt(cyphertext, key)
 	fw = open(filename_out, 'wb')
 	fw.write(message)
+
 
 def getManual():
 	man = """-- PyCrypt V0.2 --
@@ -129,11 +132,13 @@ For more info, please visit the project's homepage at:
 	"""
 	return man
 
+
 __doc__ = """
 System exit code:
 2 : Argument parsing error
 -1: Error/Crash, please report
 """
+
 
 #Returns the parameters of execution of the program
 def parseCommandLine():
@@ -180,11 +185,11 @@ def parseCommandLine():
 		menu +="2: Decrypt a file\n"
 		menu +="(1,2)?"
 		print(menu)
-		choice = raw_input()
+		choice = input()
 		
 		while (choice != '1') and (choice != '2'):
 			print(menu)
-			choice = raw_input()
+			choice = input()
 		
 		if choice == '1':
 			method = 'encrypt'
@@ -193,13 +198,13 @@ def parseCommandLine():
 
 	#If not present, ask for the arguments interactively
 	if len(args) == 0:
-		filename_in = raw_input("Please enter the input filename\n")
-		filename_out = raw_input("Please enter the output filename\n")
+		filename_in = input("Please enter the input filename\n")
+		filename_out = input("Please enter the output filename\n")
 		password = getpass.getpass()
 	
 	if len(args) == 1:
 		filename_in = args[0]
-		filename_out = raw_input("Please enter the output filename\n")
+		filename_out = input("Please enter the output filename\n")
 		password = getpass.getpass()
 	
 	if len(args) == 2:
@@ -214,6 +219,7 @@ def parseCommandLine():
 		password = args[2]
 		
 	return (method, filename_in, filename_out, password)
+
 
 def checkProgArgs(method, filename_in, filename_out, password):
 	if (method != 'encrypt') and (method != 'decrypt'):
@@ -230,8 +236,10 @@ def checkProgArgs(method, filename_in, filename_out, password):
 	#++check the existense of filename_in and inexistence of filename_out
 	return 0
 
+
 def CrypterFichier(fichierDecrypte="", fichierCrypte="", motdepasse=""):
     cryptFile(fichierDecrypte, fichierCrypte, hashPassword_MD5(motdepasse))
+
 
 def DecrypterFichier(fichierCrypte="", fichierDecrypte="", motdepasse=""):
     decryptFile(fichierCrypte, fichierDecrypte, hashPassword_MD5(motdepasse))

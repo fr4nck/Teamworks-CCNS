@@ -525,7 +525,7 @@ class TreeCtrlPlanning(wx.TreeCtrl):
         if 'phoenix' in wx.PlatformInfo:
             self.SetItemData(self.root, None)
         else:
-            self.SetPyData(self.root, None)
+            self.SetItemData(self.root, None)
         
         # Création des périodes
         if self.GetGrandParent().periodes[0] == True :
@@ -533,7 +533,7 @@ class TreeCtrlPlanning(wx.TreeCtrl):
             if 'phoenix' in wx.PlatformInfo:
                 self.SetItemData(self.P1, 100000)
             else:
-                self.SetPyData(self.P1, 100000)
+                self.SetItemData(self.P1, 100000)
             self.CreationJours(self.P1, 1)
         
         if self.GetGrandParent().periodes[1] == True :
@@ -541,7 +541,7 @@ class TreeCtrlPlanning(wx.TreeCtrl):
             if 'phoenix' in wx.PlatformInfo:
                 self.SetItemData(self.P2, 200000)
             else:
-                self.SetPyData(self.P2, 200000)
+                self.SetItemData(self.P2, 200000)
             self.CreationJours(self.P2, 2)
         
         if self.GetGrandParent().periodes[2] == True :
@@ -549,7 +549,7 @@ class TreeCtrlPlanning(wx.TreeCtrl):
             if 'phoenix' in wx.PlatformInfo:
                 self.SetItemData(self.P3, 300000)
             else:
-                self.SetPyData(self.P3, 300000)
+                self.SetItemData(self.P3, 300000)
             self.CreationJours(self.P3, 3)
         
         self.CreationTaches(None, None)
@@ -628,7 +628,7 @@ class TreeCtrlPlanning(wx.TreeCtrl):
         if 'phoenix' in wx.PlatformInfo:
             data = self.GetItemData(self.item)
         else:
-            data = self.GetPyData(self.item)
+            data = self.GetItemData(self.item)
         self.selection = data
         if data == None : 
             mode = "aucun"
@@ -653,7 +653,7 @@ class TreeCtrlPlanning(wx.TreeCtrl):
         if 'phoenix' in wx.PlatformInfo:
             data = self.GetItemData(self.item)
         else:
-            data = self.GetPyData(self.item)
+            data = self.GetItemData(self.item)
         self.selection = data
         if data == None : 
             mode = "aucun"
@@ -676,7 +676,7 @@ class TreeCtrlPlanning(wx.TreeCtrl):
         if 'phoenix' in wx.PlatformInfo:
             data = self.GetItemData(item)
         else:
-            data = self.GetPyData(item)
+            data = self.GetItemData(item)
         if data == None : return
         if data >= 100000 : 
             mode = "jour"

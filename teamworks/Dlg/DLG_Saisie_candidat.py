@@ -844,7 +844,7 @@ class ListCtrl_Diplomes(wx.ListCtrl):
             if 'phoenix' in wx.PlatformInfo:
                 self.InsertItem(index, nom_diplome)
             else:
-                self.InsertStringItem(index, nom_diplome)
+                self.InsertItem(index, nom_diplome)
             # Intégration du data ID
             self.SetItemData(index, key)
             index += 1
@@ -1089,10 +1089,6 @@ class ListCtrlCoords(wx.ListCtrl):
         self.popupIndex = -1
 
         self.Bind(wx.EVT_SIZE, self.OnSize)
-        if 'phoenix' not in wx.PlatformInfo and "linux" not in sys.platform :
-            # Désactive la fenetre popup sous Linux
-            self.Bind(wx.EVT_MOTION, self.OnMouseMotion)
-       
         # ImageList
         self.il = wx.ImageList(16,16)
         self.imgMaison = self.il.Add(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Maison.png"), wx.BITMAP_TYPE_PNG))
@@ -1130,7 +1126,7 @@ class ListCtrlCoords(wx.ListCtrl):
             if 'phoenix' in wx.PlatformInfo:
                 self.InsertItem(index, texte)
             else:
-                self.InsertStringItem(index, texte)
+                self.InsertItem(index, texte)
             # Intégration de l'image
             if categorie == "Fixe":
                 self.SetItemImage(index, self.imgMaison)

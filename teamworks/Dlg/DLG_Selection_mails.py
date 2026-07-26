@@ -213,7 +213,7 @@ def AjouteTexteImage(image=None, texte="", alignement="droite-bas", padding=0, t
     if 'phoenix' in wx.PlatformInfo:
         bmp = wx.Bitmap(largeurImage, hauteurImage)
     else:
-        bmp = wx.EmptyBitmap(largeurImage, hauteurImage)
+        bmp = wx.Bitmap(largeurImage, hauteurImage)
     mdc = wx.MemoryDC(bmp)
     dc = wx.GCDC(mdc)
     mdc.SetBackgroundMode(wx.TRANSPARENT)

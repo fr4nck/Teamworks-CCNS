@@ -291,11 +291,7 @@ class Graduations(wx.ScrolledWindow):
         
     def DoDrawing(self, dc):
         dc.RemoveAll()
-        if 'phoenix' not in wx.PlatformInfo:
-            dc.BeginDrawing()
         self.DrawGraduations(dc, heureMin, heureMax)
-        if 'phoenix' not in wx.PlatformInfo:
-            dc.EndDrawing()
         
     def MAJAffichage(self):
         self.DoDrawing(self.pdc)
@@ -413,10 +409,7 @@ class WidgetPlanning(wx.ScrolledWindow):
     def OffsetRect(self, r):
         xView, yView = self.GetViewStart()
         xDelta, yDelta = self.GetScrollPixelsPerUnit()
-        if 'phoenix' in wx.PlatformInfo:
-            r.Offset(-(xView*xDelta),-(yView*yDelta))
-        else :
-            r.OffsetXY(-(xView*xDelta),-(yView*yDelta))
+        r.Offset(-(xView*xDelta),-(yView*yDelta))
 
 
         
@@ -455,12 +448,7 @@ class WidgetPlanning(wx.ScrolledWindow):
         """ Creation du dessin dans le PseudoDC """
         dc.RemoveAll()
         self.id_max = 1
-        if 'phoenix' not in wx.PlatformInfo:
-            dc.BeginDrawing()
-        if 'phoenix' in wx.PlatformInfo:
-            tailleDC = self.GetSize()[0]-20,  self.GetSize()[1]
-        else:
-            tailleDC = self.GetSizeTuple()[0] - 20, self.GetSizeTuple()[1]
+        tailleDC = self.GetSize()[0]-20, self.GetSize()[1]
 
             # Calcul de la largeur des entetes de lignes et des lignes
         self.CalcLargeurEnteteLigne(dc)
@@ -482,8 +470,6 @@ class WidgetPlanning(wx.ScrolledWindow):
             for keyGroupe, valeurs in self.dictGroupes.items() :
                 self.DessineNbrePresents(dc, IDobjet=None, keyGroupe=keyGroupe)
 
-        if 'phoenix' not in wx.PlatformInfo:
-            dc.EndDrawing()
 
     def CreateID(self):
         self.id_max += 1
@@ -1733,7 +1719,7 @@ class WidgetPlanning(wx.ScrolledWindow):
         if nbre != 0 :
             index, texte = 4, titre
             setattr(self, "popupID%s" % index, wx.Window.NewControlId())
-            menu.AppendMenu(getattr(self, "popupID%s" % index), texte, sm)
+            menu.AppendSubMenu(sm, texte)
                   
 
     def CreationImage(self, tailleImages, r, v, b, IDcategorie):
@@ -1742,7 +1728,7 @@ class WidgetPlanning(wx.ScrolledWindow):
             bmp = wx.Image(tailleImages[0], tailleImages[1], True)
             bmp.SetRGB((0, 0, 16, 16), r, v, b)
         else:
-            bmp = wx.EmptyImage(tailleImages[0], tailleImages[1], True)
+            bmp = wx.Image(tailleImages[0], tailleImages[1], True)
             bmp.SetRGBRect((0, 0, 16, 16), r, v, b)
         # Si c'est la couleur d j  s lectionn e :
         if self.dictPresences[self.Context[0]][5] == IDcategorie :

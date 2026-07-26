@@ -303,7 +303,7 @@ class ListCtrl_Diplomes(wx.ListCtrl):
             if 'phoenix' in wx.PlatformInfo:
                 self.InsertItem(index, nom_diplome)
             else:
-                self.InsertStringItem(index, nom_diplome)
+                self.InsertItem(index, nom_diplome)
             # Intégration du data ID
             self.SetItemData(index, key)
             index += 1
@@ -433,7 +433,7 @@ class ListCtrl_Pieces(wx.ListCtrl):
             if 'phoenix' in wx.PlatformInfo:
                 self.InsertItem(index, nomPiece)
             else:
-                self.InsertStringItem(index, nomPiece)
+                self.InsertItem(index, nomPiece)
             # Intégration de l'image
             if etat == "Ok":
                 self.SetItemImage(index, self.imgOk)
@@ -594,7 +594,7 @@ class ListCtrl_Dossier(wx.ListCtrl):
             if 'phoenix' in wx.PlatformInfo:
                 self.InsertItem(index, nomPiece)
             else:
-                self.InsertStringItem(index, nomPiece)
+                self.InsertItem(index, nomPiece)
             # ETat
             if etat == "Perim":
                 item = self.GetItem(index)

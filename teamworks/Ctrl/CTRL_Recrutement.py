@@ -527,7 +527,7 @@ class BarreAffichage(wx.Panel):
             smOptions.Check(IDitem, True)
         self.Bind(wx.EVT_MENU, self.Menu_220, id=IDitem)
         
-        menu.AppendMenu(20, _(u"Options d'affichage"), smOptions)
+        menu.AppendSubMenu(smOptions, _(u"Options d'affichage"))
         
         self.PopupMenu(menu)
         menu.Destroy()

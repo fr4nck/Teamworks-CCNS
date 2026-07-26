@@ -19,7 +19,7 @@ import shutil
 from Utils import UTILS_Config
 from Utils import UTILS_Fichiers
 
-if six.PY3:
+if True:
     import functools
 
 
@@ -33,7 +33,7 @@ def cmp(x, y):
 
 def SortItems(items, sorter):
     """ Adaptation py3 pour le tri des wx.listctrl """
-    if six.PY3:
+    if True:
         items.sort(key=functools.cmp_to_key(sorter))
     else:
         items = SortItems(items, sorter)
@@ -920,7 +920,7 @@ def CreationPhotoPersonne(IDpersonne=0, nomFichierPhoto="", tailleFinale = None,
     photo = wx.Bitmap(nomFichierPhoto, wx.BITMAP_TYPE_ANY)
     tailleInitiale = photo.GetSize()
     # Création du dc temporaire
-    bmp = wx.EmptyBitmap(tailleInitiale[0], tailleInitiale[1])
+    bmp = wx.Bitmap(tailleInitiale[0], tailleInitiale[1])
     dc = wx.MemoryDC()
     dc.SelectObject(bmp)
     dc.SetBackground(wx.Brush("black"))
@@ -1014,8 +1014,6 @@ def ListeImprimantes():
 def EnleveAccents(chaineUnicode):
     """ Enlève les accents d'une chaine unicode """
     import unicodedata
-    if six.PY2 and type(chaineUnicode) == str :
-        chaineUnicode = chaineUnicode.decode("iso-8859-15")
     resultat = unicodedata.normalize('NFKD', chaineUnicode).encode('ascii','ignore')
     return resultat
 

@@ -88,40 +88,40 @@ class CTRL_Donnees(CT.CustomTreeCtrl):
         listeFichiersLocaux = self.GetListeFichiersLocaux()
         if len(listeFichiersLocaux) > 0 :
             brancheType = self.AppendItem(self.root, _(u"Fichiers locaux"), ct_type=1)
-            self.SetPyData(brancheType, _(u"locaux"))
+            self.SetItemData(brancheType, _(u"locaux"))
             self.SetItemBold(brancheType)
             self.CheckItem(brancheType, True)
             
             for nomFichier in listeFichiersLocaux :
                 brancheNom = self.AppendItem(brancheType, nomFichier, ct_type=1)
-                self.SetPyData(brancheNom, nomFichier)
+                self.SetItemData(brancheNom, nomFichier)
                 self.CheckItem(brancheNom, True)
                 
                 for nomCategorie, codeCategorie in LISTE_CATEGORIES :
                     fichier = u"%s_%s.dat" % (nomFichier, codeCategorie)
                     if fichier in self.listeFichiers :
                         brancheFichier = self.AppendItem(brancheNom, nomCategorie, ct_type=1)
-                        self.SetPyData(brancheFichier, fichier)
+                        self.SetItemData(brancheFichier, fichier)
                         self.CheckItem(brancheFichier, True)
 
         # Fichiers réseaux
         listeFichiersReseau = self.GetListeFichiersReseau()
         if len(listeFichiersReseau) > 0 :
             brancheType = self.AppendItem(self.root, _(u"Fichiers réseau"), ct_type=1)
-            self.SetPyData(brancheType, _(u"reseau"))
+            self.SetItemData(brancheType, _(u"reseau"))
             self.SetItemBold(brancheType)
             self.CheckItem(brancheType, True)
             
             for nomFichier in listeFichiersReseau :
                 brancheNom = self.AppendItem(brancheType, nomFichier, ct_type=1)
-                self.SetPyData(brancheNom, nomFichier)
+                self.SetItemData(brancheNom, nomFichier)
                 self.CheckItem(brancheNom, True)
                 
                 for nomCategorie, codeCategorie in LISTE_CATEGORIES :
                     fichier = u"%s_%s.sql" % (nomFichier, codeCategorie.lower())
                     if fichier in self.listeFichiers :
                         brancheFichier = self.AppendItem(brancheNom, nomCategorie, ct_type=1)
-                        self.SetPyData(brancheFichier, fichier)
+                        self.SetItemData(brancheFichier, fichier)
                         self.CheckItem(brancheFichier, True)
 
         # Recherche si des modèles ou des éditions sont dans le ZIP
@@ -136,14 +136,14 @@ class CTRL_Donnees(CT.CustomTreeCtrl):
         # Modèles de documents
         if modeles == True:
             brancheType = self.AppendItem(self.root, _(u"Modèles de documents"), ct_type=1)
-            self.SetPyData(brancheType, _(u"modeles"))
+            self.SetItemData(brancheType, _(u"modeles"))
             self.SetItemBold(brancheType)
             self.CheckItem(brancheType, True)
 
         # Editions de documents
         if editions == True:
             brancheType = self.AppendItem(self.root, _(u"Editions de documents"), ct_type=1)
-            self.SetPyData(brancheType, _(u"editions"))
+            self.SetItemData(brancheType, _(u"editions"))
             self.SetItemBold(brancheType)
             self.CheckItem(brancheType, True)
 

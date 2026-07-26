@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -8,7 +8,6 @@
 
 from Utils.UTILS_Traduction import _
 import wx
-import six
 import FonctionsPerso
 import wx.lib.agw.customtreectrl as CT
 import sys
@@ -17,7 +16,7 @@ import sys
 class Panel(wx.Panel):
     def __init__(self, parent, ID=-1):
         wx.Panel.__init__(self, parent, ID, name="panel_gadget_pb_personnes", style=wx.TAB_TRAVERSAL)
-        self.barreTitre = FonctionsPerso.BarreTitre(self,  _(u"Problèmes des fiches"), u"")
+        self.barreTitre = FonctionsPerso.BarreTitre(self,  _(u"ProblÃ¨mes des fiches"), u"")
         self.treeCtrl = TreeCtrl(self)    
 
         # Layout
@@ -31,7 +30,7 @@ class Panel(wx.Panel):
 
 
 class PanelGadget(wx.Panel):
-    """ Version spéciale pour Gadget Page d'acccueil """
+    """ Version spÃ©ciale pour Gadget Page d'acccueil """
     def __init__(self, parent, ID=-1):
         wx.Panel.__init__(self, parent, ID, name="panel_gadget_pb_personnes", style=wx.TAB_TRAVERSAL)
         self.treeCtrl = TreeCtrl(self)    
@@ -84,7 +83,7 @@ class TreeCtrl(CT.CustomTreeCtrl):
         self.couleurProbleme = (0, 0, 0)
         self.couleurTraits = (179, 185, 231)
         
-        # Autres paramètres
+        # Autres paramÃ¨tres
         if self.parent.GetName() != "panel_gadget_dossiersincomplets" : 
             self.expandPersonnes = True
             self.expandTypes = True
@@ -108,36 +107,36 @@ class TreeCtrl(CT.CustomTreeCtrl):
         self.SetHilightNonFocusColour(self.couleurFond)
         pen = wx.Pen(self.couleurTraits, 2, style=wx.DOT)
         self.SetConnectionPen(pen)
-        # Récupération des données
+        # RÃ©cupÃ©ration des donnÃ©es
         self.listeDonnees = self.GetListeProblemes()
         # Racine
         self.root = self.AddRoot("Root")
-        self.SetPyData(self.root, None)
+        self.SetItemData(self.root, None)
         # Branches
         self.AddTreeNodes(self.root, self.listeDonnees)
 
     def AddTreeNodes(self, parentItem, items, img=None):
         for item in items:
-            if type(item) == str or type(item) == six.text_type:
-                # Label problème
+            if isinstance(item, str):
+                # Label problÃ¨me
                 newItem = self.AppendItem(parentItem, item)
-                self.SetPyData(newItem, None)
+                self.SetItemData(newItem, None)
                 font = self.GetFont()
                 font.SetPointSize(7)
                 self.SetItemFont(newItem, font)
                 self.SetItemTextColour(newItem, self.couleurProbleme)
             else:
-                # Tête de rubrique
+                # TÃªte de rubrique
                 texte = item[0]                
                 newItem = self.AppendItem(parentItem, texte)
-                self.SetPyData(newItem, None)
+                self.SetItemData(newItem, None)
                 if parentItem == self.root :
                     # Nom de la personne
                     self.SetItemTextColour(newItem, self.couleurPersonne)
                     self.SetItemBold(newItem, True)
                 else:
                     pass
-                    # Type de problème
+                    # Type de problÃ¨me
                     self.SetItemTextColour(newItem, self.couleurType)
                     # self.SetItemBold(newItem, True)
                     if self.expandPersonnes : self.Expand(parentItem) 

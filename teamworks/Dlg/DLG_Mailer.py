@@ -14,7 +14,6 @@ from Utils import UTILS_Adaptations
 from Utils.UTILS_Traduction import _
 import wx
 from Ctrl import CTRL_Bouton_image
-import six
 import re
 import traceback
 import copy
@@ -213,7 +212,7 @@ class Dialog(wx.Dialog):
             sousMenuMotscles.AppendItem(wx.MenuItem(menuPop, id, motcle))
             self.Bind(wx.EVT_MENU, self.InsererMotcle, id=id)
             index += 1
-        menuPop.AppendMenu(10, _(u"Insérer un mot-clé"), sousMenuMotscles)
+        menuPop.AppendSubMenu(sousMenuMotscles, _(u"Insérer un mot-clé"))
 
         # Aperçu de la fusion
         item = wx.MenuItem(menuPop, 60, _(u"Aperçu de la fusion"))
@@ -248,7 +247,7 @@ class Dialog(wx.Dialog):
             sousMenuModeles.AppendItem(item)
             self.Bind(wx.EVT_MENU, self.ChargerModeleMenu, id=id)
                         
-        item = menuPop.AppendMenu(20, _(u"Charger un modèle d'Email"), sousMenuModeles)
+        item = menuPop.AppendSubMenu(sousMenuModeles, _(u"Charger un modèle d'Email"))
         if len(listeDonnees) == 0 :
             if item != None :
                 item.Enable(False)

@@ -62,7 +62,7 @@ def GetValidite(identifiant="", code=""):
     except :
         return False
 
-    if six.PY3:
+    if True:
         html = html.decode("iso-8859-15")
 
     # Analyse l'état
@@ -231,9 +231,6 @@ class Dialog(wx.Dialog):
     def VerifieEtat(self, identifiant="", code=""):
         """ Vérifie la validité du code en ligne """
         dlgAttente = wx.BusyInfo(_(u"Vérification du code en cours..."), None)
-        if 'phoenix' not in wx.PlatformInfo:
-            wx.Yield()
-        
         try :
             url = "https://www.teamworks.ovh/aide/html/testcode.php?identifiant=%s&code=%s" % (identifiant, code)
             h = urlopen(url, timeout=5)
@@ -246,7 +243,7 @@ class Dialog(wx.Dialog):
             traceback.print_exc(file=sys.stdout)
             return False
 
-        if six.PY3:
+        if True:
             html = html.decode("iso-8859-15")
 
         # Analyse l'état

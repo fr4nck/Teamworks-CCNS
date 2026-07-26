@@ -850,7 +850,7 @@ class CTRL_Champs(wx.TreeCtrl):
                     if 'phoenix' in wx.PlatformInfo:
                         self.SetItemData(item, dictChamp)
                     else :
-                        self.SetPyData(item, dictChamp)
+                        self.SetItemData(item, dictChamp)
                     if dictChamp["typeDonnee"] != None :
                         self.SetItemImage(item, self.dictImages[dictChamp["typeDonnee"]], which=wx.TreeItemIcon_Normal)
                     self.dictItems[dictChamp["code"]] = item
@@ -866,7 +866,7 @@ class CTRL_Champs(wx.TreeCtrl):
         if 'phoenix' in wx.PlatformInfo:
             dictChamp = self.GetItemData(item)
         else:
-            dictChamp = self.GetPyData(item)
+            dictChamp = self.GetItemData(item)
         return dictChamp
     
     def GetCode(self):

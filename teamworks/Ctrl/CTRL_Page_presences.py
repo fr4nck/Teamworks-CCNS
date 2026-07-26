@@ -485,7 +485,7 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
             bmp.SetRGB((0, 0, tailleImages[0], tailleImages[1]), colFond[0], colFond[1], colFond[2])
             bmp.SetRGB((0, 5, 12, 12), r, v, b)
         else:
-            bmp = wx.EmptyImage(tailleImages[0], tailleImages[1], True)
+            bmp = wx.Image(tailleImages[0], tailleImages[1], True)
             bmp.SetRGBRect((0, 0, tailleImages[0], tailleImages[1]), colFond[0], colFond[1], colFond[2])
             bmp.SetRGBRect((0, 5, 12, 12), r, v, b)
         return bmp.ConvertToBitmap()

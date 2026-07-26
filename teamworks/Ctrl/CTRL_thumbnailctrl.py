@@ -137,10 +137,7 @@ import wx
 import os
 import six
 import zlib
-if six.PY3:
-    import _thread as thread
-else:
-    import thread
+import _thread as thread
 from math import pi
 
 import PIL.Image as Image
@@ -162,7 +159,7 @@ o\xda\x84pB2\x1f\x81Fa\x8c\x9c\x08\x04Z{\xcf\xa72\xbcv\xfa\xc5\x08 \x80r\x80\
 \x04\x10@\xf9X\xbe\x00\xc9 \x14K\xc1<={\x00\x00\x00\x00IEND\xaeB`\x82' 
 
 def GetMondrianBitmap():
-    return wx.BitmapFromImage(GetMondrianImage())
+    return wx.Bitmap(GetMondrianImage())
 
 def GetMondrianImage():
     stream = six.BytesIO(GetMondrianData())
@@ -369,7 +366,7 @@ class PILImageHandler(object):
         if 'phoenix' in wx.PlatformInfo:
             img = wx.Image(pil.size[0], pil.size[1])
         else:
-            img = wx.EmptyImage(pil.size[0], pil.size[1])
+            img = wx.Image(pil.size[0], pil.size[1])
         img.SetData(pil.convert("RGB").tobytes())
 
         alpha = False
@@ -428,8 +425,8 @@ class Thumb(object):
             self._bitmap = wx.Bitmap(1,1)
             self._image = wx.Image(1,1)
         else:
-            self._bitmap = wx.EmptyBitmap(1,1)
-            self._image = wx.EmptyImage(1,1)
+            self._bitmap = wx.Bitmap(1,1)
+            self._image = wx.Image(1,1)
         self._rotation = 0
         self._alpha = None
         
@@ -608,7 +605,7 @@ class Thumb(object):
         if 'phoenix' in wx.PlatformInfo:
             bmp = wx.Bitmap(10,10)
         else:
-            bmp = wx.EmptyBitmap(10,10)
+            bmp = wx.Bitmap(10,10)
         dc.SelectObject(bmp)
         
         while 1:
@@ -1688,9 +1685,6 @@ class ScrolledThumbnail(wx.ScrolledWindow):
 
         dc = wx.MemoryDC()
         dc.SelectObject(bmp)
-        if 'phoenix' not in wx.PlatformInfo:
-            dc.BeginDrawing()
-        
         x = self._tBorder//2
         y = self._tBorder//2
 
@@ -1776,10 +1770,7 @@ class ScrolledThumbnail(wx.ScrolledWindow):
             if selected:
 
                 dc.SetPen(self.grayPen)
-                if 'phoenix' in wx.PlatformInfo:
-                    dc.DrawRoundedRectangle(dotrect, 2)
-                else:
-                    dc.DrawRoundedRectangleRect(dotrect, 2)
+                dc.DrawRoundedRectangle(dotrect, 2)
                 dc.SetPen(wx.Pen(wx.WHITE))
                 dc.DrawRectangle(imgRect.x, imgRect.y,
                                  imgRect.width, imgRect.height)
@@ -1799,8 +1790,6 @@ class ScrolledThumbnail(wx.ScrolledWindow):
                 dc.DrawRectangle(imgRect.x - 1, imgRect.y - 1,
                                  imgRect.width + 2, imgRect.height + 2)
 
-        if 'phoenix' not in wx.PlatformInfo:
-            dc.EndDrawing()
         dc.SelectObject(wx.NullBitmap)
 
 
@@ -1845,7 +1834,7 @@ class ScrolledThumbnail(wx.ScrolledWindow):
             if 'phoenix' in wx.PlatformInfo:
                 thmb = wx.Bitmap(tw, th)
             else:
-                thmb = wx.EmptyBitmap(tw, th)
+                thmb = wx.Bitmap(tw, th)
             self.DrawThumbnail(thmb, self._items[ii], ii)
             dc.DrawBitmap(thmb, tx, ty)
   
@@ -2161,7 +2150,7 @@ class ScrolledThumbnail(wx.ScrolledWindow):
                 newangle = thumb.GetRotation()*180//pi + angle
                 fil = opj(thumb.GetFullFileName())
                 pil = Image.open(fil).rotate(newangle)
-                img = wx.EmptyImage(pil.size[0], pil.size[1])
+                img = wx.Image(pil.size[0], pil.size[1])
                 img.SetData(pil.convert('RGB').tobytes())
                 thumb.SetRotation(newangle*pi//180)
             else:

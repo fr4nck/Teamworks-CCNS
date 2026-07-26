@@ -1,0 +1,62 @@
+name: Frankenstein remove final Classic branches
+
+on:
+  push:
+    branches:
+      - frankenstein/python3-wxphoenix-lot2
+    paths:
+      - "tools/migrate_final_classic_branches.py"
+      - ".github/workflows/frankenstein-final-classic-branches.yml"
+      - "teamworks/Dlg/DLG_Publiposteur.py"
+      - "teamworks/Teamworks.py"
+      - "teamworks/Utils/UTILS_Printer.py"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout migration branch
+        uses: actions/checkout@v4
+        with:
+          ref: frankenstein/python3-wxphoenix-lot2
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Remove final Classic branches
+        run: python tools/migrate_final_classic_branches.py --write
+
+      - name: Verify migration idempotence
+        run: python tools/migrate_final_classic_branches.py --check
+
+      - name: Compile migrated sources
+        run: |
+          python -m compileall -q \
+            teamworks/Dlg/DLG_Publiposteur.py \
+            teamworks/Teamworks.py \
+            teamworks/Utils/UTILS_Printer.py
+
+      - name: Commit migrated sources
+        run: |
+          if git diff --quiet -- \
+            teamworks/Dlg/DLG_Publiposteur.py \
+            teamworks/Teamworks.py \
+            teamworks/Utils/UTILS_Printer.py; then
+            echo "No final Classic migration required"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            teamworks/Dlg/DLG_Publiposteur.py \
+            teamworks/Teamworks.py \
+            teamworks/Utils/UTILS_Printer.py
+          git commit -m "Frankenstein lot 2 — retirer les dernières branches Classic"
+          git pull --rebase origin frankenstein/python3-wxphoenix-lot2
+          git push origin HEAD:frankenstein/python3-wxphoenix-lot2

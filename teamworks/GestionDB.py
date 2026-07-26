@@ -237,31 +237,32 @@ class DB:
 
     def CreationTable(self, nomTable="", dicoDB={}):
         req = "CREATE TABLE %s (" % nomTable
-        pk = ""
         for descr in dicoDB[nomTable]:
             nomChamp = descr[0]
             typeChamp = descr[1]
-            with DiagnosticPerformance.mesurer("sql", "GestionDB.ExecuterReq", {"requete": req[:160]}):
-                self.cursor.execute(req)
-        with DiagnosticPerformance.mesurer("sql_fetch", "GestionDB.ResultatReq"):
-            resultat = self.cursor.fetchall()
-            if self.isNetwork == False and typeChamp == "BIGINT": typeChamp = "INTEGER"
-            # Adaptation Ã  MySQL :
-            if self.isNetwork == True and typeChamp == "INTEGER PRIMARY KEY AUTOINCREMENT" : typeChamp = "INTEGER PRIMARY KEY AUTO_INCREMENT"
-            if self.isNetwork == True and typeChamp == "FLOAT" : typeChamp = "REAL"
-            if self.isNetwork == True and typeChamp == "DATE" : typeChamp = "VARCHAR(10)"
-            if self.isNetwork == True and typeChamp.startswith("VARCHAR") :
-                nbreCaract = int(typeChamp[typeChamp.find("(")+1:typeChamp.find(")")])
-                if nbreCaract > 255 :
+            # Adaptation à SQLite
+            if self.isNetwork == False and typeChamp == "LONGBLOB":
+                typeChamp = "BLOB"
+            if self.isNetwork == False and typeChamp == "BIGINT":
+                typeChamp = "INTEGER"
+            # Adaptation à MySQL
+            if self.isNetwork == True and typeChamp == "INTEGER PRIMARY KEY AUTOINCREMENT":
+                typeChamp = "INTEGER PRIMARY KEY AUTO_INCREMENT"
+            if self.isNetwork == True and typeChamp == "FLOAT":
+                typeChamp = "REAL"
+            if self.isNetwork == True and typeChamp == "DATE":
+                typeChamp = "VARCHAR(10)"
+            if self.isNetwork == True and typeChamp.startswith("VARCHAR"):
+                nbreCaract = int(typeChamp[typeChamp.find("(") + 1:typeChamp.find(")")])
+                if nbreCaract > 255:
                     typeChamp = "TEXT(%d)" % nbreCaract
-                if nbreCaract > 20000 :
+                if nbreCaract > 20000:
                     typeChamp = "MEDIUMTEXT"
-
-            # ------------------------------
-            req = req + "%s %s, " % (nomChamp, typeChamp)
+            req += "%s %s, " % (nomChamp, typeChamp)
         req = req[:-2] + ")"
-        self.cursor.execute(req)
-            
+        with DiagnosticPerformance.mesurer("sql", "GestionDB.CreationTable", {"requete": req[:160]}):
+            self.cursor.execute(req)
+
     def ExecuterReq(self, req):
         if self.echec == 1 : return False
         # Pour parer le pb des () avec MySQL
@@ -1157,9 +1158,6 @@ def ImporterFichierDonnees() :
     index = 0
     for ligne in txt :
         ID, prenom, genre = ligne.split(";")
-        if six.PY2:
-            prenom = prenom.decode("iso-8859-15")
-            genre = genre.decode("iso-8859-15")
         listeDonnees = [("prenom", prenom), ("genre", genre),]
         IDprenom = db.ReqInsert("prenoms", listeDonnees)
         index += 1
@@ -1218,7 +1216,7 @@ def DecodeMdpReseau(mdp=None):
     if mdp not in (None, "") and mdp.startswith("#64#"):
         try:
             mdp = base64.b64decode(mdp[4:])
-            if six.PY3:
+            if True:
                 mdp = mdp.decode('utf-8')
         except:
             pass

@@ -242,7 +242,7 @@ class Date(masked.TextCtrl):
                 self.Bind(wx.EVT_MENU, self.OnActionMenu, id=id+1)
                 sousMenu.AppendItem(wx.MenuItem(menuPop, id+2, _(u"Date de fin")))
                 self.Bind(wx.EVT_MENU, self.OnActionMenu, id=id+2)
-                item = menuPop.AppendMenu(id, label, sousMenu)
+                item = menuPop.AppendSubMenu(sousMenu, label)
         
         menuPop.AppendSeparator()
         
