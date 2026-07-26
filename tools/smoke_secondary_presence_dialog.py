@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+import traceback
 
 ROOT = Path(__file__).resolve().parents[1]
 TEAMWORKS_DIR = ROOT / "teamworks"
@@ -58,11 +59,18 @@ INJECTION = r'''
 '''
 
 
-def build_patched_entrypoint() -> None:
+def build_patched_entrypoint() -> int:
     source = SOURCE.read_text(encoding="iso-8859-15")
-    if source.count(MARKER) != 1:
-        raise RuntimeError("marqueur du smoke principal introuvable ou ambigu")
-    PATCHED.write_text(source.replace(MARKER, INJECTION), encoding="iso-8859-15")
+    marker_count = source.count(MARKER)
+    if marker_count < 1:
+        raise RuntimeError(
+            f"marqueur du smoke principal introuvable: count={marker_count}"
+        )
+    PATCHED.write_text(
+        source.replace(MARKER, INJECTION, 1),
+        encoding="iso-8859-15",
+    )
+    return marker_count
 
 
 def decode_output(data: bytes) -> str:
@@ -81,15 +89,27 @@ def github_error_summary(output: str, max_lines: int = 24) -> None:
     print(f"::error title=Presence dialog smoke failed::{summary}")
 
 
+def write_diagnostic(*, return_code: int, marker_count: int | None, output: str) -> None:
+    diagnostic = (
+        f"return_code={return_code}\n"
+        f"entrypoint_marker_count={marker_count}\n"
+        f"secondary_marker={SECONDARY_MARKER in output}\n"
+        "--- output ---\n"
+        f"{output}"
+    )
+    REPORT.write_text(diagnostic, encoding="utf-8")
+    print(diagnostic)
+
+
 def main() -> int:
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
-    build_patched_entrypoint()
-    env = os.environ.copy()
-    env["TEAMWORKS_SMOKE_MODE"] = "1"
-    command = [sys.executable, str(PATCHED)]
+    marker_count: int | None = None
     try:
+        marker_count = build_patched_entrypoint()
+        env = os.environ.copy()
+        env["TEAMWORKS_SMOKE_MODE"] = "1"
         result = subprocess.run(
-            command,
+            [sys.executable, str(PATCHED)],
             cwd=TEAMWORKS_DIR,
             env=env,
             capture_output=True,
@@ -97,14 +117,11 @@ def main() -> int:
             check=False,
         )
         output = decode_output(result.stdout) + "\n" + decode_output(result.stderr)
-        diagnostic = (
-            f"return_code={result.returncode}\n"
-            f"secondary_marker={SECONDARY_MARKER in output}\n"
-            "--- output ---\n"
-            f"{output}"
+        write_diagnostic(
+            return_code=result.returncode,
+            marker_count=marker_count,
+            output=output,
         )
-        REPORT.write_text(diagnostic, encoding="utf-8")
-        print(diagnostic)
         if result.returncode != 0:
             github_error_summary(output)
             return result.returncode or 1
@@ -113,6 +130,11 @@ def main() -> int:
             print("marqueur du formulaire de présence absent", file=sys.stderr)
             return 2
         return 0
+    except Exception:
+        output = traceback.format_exc()
+        write_diagnostic(return_code=3, marker_count=marker_count, output=output)
+        github_error_summary(output)
+        return 3
     finally:
         PATCHED.unlink(missing_ok=True)
 
