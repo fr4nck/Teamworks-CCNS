@@ -29,27 +29,41 @@ jobs:
       - name: Apply idempotent correction
         run: python tools/fix_presence_maxsize.py
 
-      - name: Verify corrected source
+      - name: Verify corrected sources
         run: |
           python - <<'PY'
           from pathlib import Path
-          path = Path('teamworks/Dlg/DLG_Saisie_presence.py')
-          source = path.read_text(encoding='iso-8859-15')
-          assert 'InsertItem(sys.maxsize' not in source
-          assert 'InsertItem(six.MAXSIZE' not in source
-          assert source.count('self.InsertItem(self.GetItemCount(), "")') >= 1
-          compile(source, str(path), 'exec')
+
+          paths = (
+              Path('teamworks/Dlg/DLG_Saisie_presence.py'),
+              Path('teamworks/Ctrl/CTRL_Presences.py'),
+          )
+          forbidden = (
+              'InsertItem(six.MAXSIZE,',
+              'InsertItem(sys.maxsize,',
+              'InsertStringItem(six.MAXSIZE,',
+              'InsertStringItem(sys.maxsize,',
+          )
+          for path in paths:
+              source = path.read_text(encoding='iso-8859-15')
+              for token in forbidden:
+                  assert token not in source, (path, token)
+              compile(source, str(path), 'exec')
+          assert any(
+              'InsertItem(self.GetItemCount(),' in path.read_text(encoding='iso-8859-15')
+              for path in paths
+          )
           PY
 
-      - name: Commit corrected form
+      - name: Commit corrected presence lists
         shell: bash
         run: |
-          if git diff --quiet -- teamworks/Dlg/DLG_Saisie_presence.py; then
-            echo "Form already corrected"
+          if git diff --quiet -- teamworks/Dlg/DLG_Saisie_presence.py teamworks/Ctrl/CTRL_Presences.py; then
+            echo "Presence lists already corrected"
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add teamworks/Dlg/DLG_Saisie_presence.py
-          git commit -m "Stabilisation — utiliser un index valide dans la liste des présences"
+          git add teamworks/Dlg/DLG_Saisie_presence.py teamworks/Ctrl/CTRL_Presences.py
+          git commit -m "Stabilisation — insérer les présences à la fin des listes Phoenix"
           git push origin HEAD:stabilisation/recette-fonctionnelle-secondaire
