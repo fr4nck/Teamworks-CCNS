@@ -1459,10 +1459,6 @@ class ListCtrlCoords(wx.ListCtrl):
         self.popupIndex = -1       
 
         self.Bind(wx.EVT_SIZE, self.OnSize)
-        if 'phoenix' not in wx.PlatformInfo and "linux" not in sys.platform :
-            # Désactive la fenetre popup sous Linux
-            self.Bind(wx.EVT_MOTION, self.OnMouseMotion)
-       
         # ImageList
         self.il = wx.ImageList(16,16)
         self.imgMaison = self.il.Add(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Maison.png"), wx.BITMAP_TYPE_PNG))
