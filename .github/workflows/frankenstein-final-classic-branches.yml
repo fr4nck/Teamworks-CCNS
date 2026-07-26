@@ -7,6 +7,9 @@ on:
     paths:
       - "tools/migrate_final_classic_branches.py"
       - ".github/workflows/frankenstein-final-classic-branches.yml"
+      - "teamworks/Dlg/DLG_Publiposteur.py"
+      - "teamworks/Teamworks.py"
+      - "teamworks/Utils/UTILS_Printer.py"
   workflow_dispatch:
 
 permissions:
