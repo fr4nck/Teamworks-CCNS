@@ -42,6 +42,7 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 _smoke_person_id = _smoke_people[0][0]
 
                 _host = wx.Frame(frame, title="Smoke contrôles secondaires")
+                _host.label_rattachement = wx.StaticText(_host, -1, "")
                 _controls = []
                 _dialogs = []
 
