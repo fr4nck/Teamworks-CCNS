@@ -19,7 +19,11 @@ TEAMWORKS_DIR = ROOT / "teamworks"
 ENTRYPOINT = ROOT / "run_teamworks.py"
 STARTUP_WINDOW_SECONDS = 30
 READY_MARKER = "TEAMWORKS_SMOKE_MAIN_WINDOW_READY"
-TAB_MARKERS = tuple(f"TEAMWORKS_SMOKE_TAB_READY:{index}" for index in range(4))
+TAB_MARKERS = tuple(
+    f"TEAMWORKS_SMOKE_TAB_READY:{pass_name}:{index}"
+    for pass_name in ("forward", "backward")
+    for index in range(4)
+)
 REPORT_PATH = ROOT / "teamworks-startup-smoke.log"
 
 
@@ -134,13 +138,14 @@ def main() -> int:
                 ready = READY_MARKER in output
                 tabs_ready = all(marker in output for marker in TAB_MARKERS)
                 success = return_code == 0 and ready and tabs_ready and bool(observed_titles)
-                status = "main-tabs-ready" if success else "invalid-clean-exit"
+                status = "main-tabs-round-trip-ready" if success else "invalid-clean-exit"
                 write_report(output, return_code, status, observed_titles)
                 print(output)
                 if success:
                     print(
                         "Teamworks constructed its main window, activated all four "
-                        "main tabs, entered the wx event loop, and exited cleanly"
+                        "main tabs in both directions, entered the wx event loop, "
+                        "and exited cleanly"
                     )
                     return 0
 
