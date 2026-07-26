@@ -1,4 +1,4 @@
-name: Stabilisation fix contract listctrl
+name: Stabilisation fix contract controls
 
 on:
   pull_request:
@@ -24,33 +24,47 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Apply contract list correction
+      - name: Apply contract control corrections
         run: python tools/fix_contract_listctrl_phoenix.py
 
-      - name: Verify contract list correction
+      - name: Verify contract control corrections
         run: |
           python - <<'PY'
           from pathlib import Path
-          path = Path('teamworks/Ctrl/CTRL_Creation_contrat_p4.py')
-          source = path.read_text(encoding='iso-8859-15')
-          assert 'six.MAXSIZE' not in source
-          assert 'InsertItem(sys.maxsize,' not in source
-          assert 'InsertStringItem(sys.maxsize,' not in source
-          assert 'InsertItem(self.GetItemCount(),' in source
+
+          list_path = Path('teamworks/Ctrl/CTRL_Creation_contrat_p4.py')
+          list_source = list_path.read_text(encoding='iso-8859-15')
+          assert 'six.MAXSIZE' not in list_source
+          assert 'InsertItem(sys.maxsize,' not in list_source
+          assert 'InsertStringItem(sys.maxsize,' not in list_source
+          assert 'InsertItem(self.GetItemCount(),' in list_source
           marker = "if 'phoenix' in wx.PlatformInfo:\n            self.EnableCheckBoxes(True)"
-          assert source.count(marker) == 1
-          compile(source, str(path), 'exec')
+          assert list_source.count(marker) == 1
+          compile(list_source, str(list_path), 'exec')
+
+          for path in (
+              Path('teamworks/Ctrl/CTRL_Creation_contrat_p5.py'),
+              Path('teamworks/Ctrl/CTRL_Creation_modele_contrat_p2.py'),
+          ):
+              source = path.read_text(encoding='iso-8859-15')
+              assert 'wx.ALIGN_CENTER_VERTICAL|wx.EXPAND' not in source
+              compile(source, str(path), 'exec')
           PY
 
-      - name: Commit corrected contract page
+      - name: Commit corrected contract controls
         shell: bash
         run: |
-          if git diff --quiet -- teamworks/Ctrl/CTRL_Creation_contrat_p4.py; then
-            echo "Contract list already corrected"
+          paths=(
+            teamworks/Ctrl/CTRL_Creation_contrat_p4.py
+            teamworks/Ctrl/CTRL_Creation_contrat_p5.py
+            teamworks/Ctrl/CTRL_Creation_modele_contrat_p2.py
+          )
+          if git diff --quiet -- "${paths[@]}"; then
+            echo "Contract controls already corrected"
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add teamworks/Ctrl/CTRL_Creation_contrat_p4.py
-          git commit -m "Stabilisation — corriger la liste des champs contrat sous Phoenix"
+          git add "${paths[@]}"
+          git commit -m "Stabilisation — corriger les contrôles contrat sous Phoenix"
           git push origin HEAD:stabilisation/recette-fonctionnelle-secondaire
