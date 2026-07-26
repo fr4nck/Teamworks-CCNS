@@ -231,9 +231,6 @@ class Dialog(wx.Dialog):
     def VerifieEtat(self, identifiant="", code=""):
         """ Vérifie la validité du code en ligne """
         dlgAttente = wx.BusyInfo(_(u"Vérification du code en cours..."), None)
-        if 'phoenix' not in wx.PlatformInfo:
-            wx.Yield()
-        
         try :
             url = "https://www.teamworks.ovh/aide/html/testcode.php?identifiant=%s&code=%s" % (identifiant, code)
             h = urlopen(url, timeout=5)
