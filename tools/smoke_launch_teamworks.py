@@ -19,6 +19,7 @@ TEAMWORKS_DIR = ROOT / "teamworks"
 ENTRYPOINT = ROOT / "run_teamworks.py"
 STARTUP_WINDOW_SECONDS = 30
 READY_MARKER = "TEAMWORKS_SMOKE_MAIN_WINDOW_READY"
+EXAMPLE_MARKER = "TEAMWORKS_SMOKE_EXAMPLE_READY"
 TAB_MARKERS = tuple(
     f"TEAMWORKS_SMOKE_TAB_READY:{pass_name}:{index}"
     for pass_name in ("forward", "backward")
@@ -63,6 +64,7 @@ def write_report(
                 f"return_code={return_code}",
                 f"startup_window_seconds={STARTUP_WINDOW_SECONDS}",
                 f"ready_marker_present={READY_MARKER in output}",
+                f"example_marker_present={EXAMPLE_MARKER in output}",
                 *(f"tab_marker_{index}_present={marker in output}" for index, marker in enumerate(TAB_MARKERS)),
                 f"window_count={len(window_titles)}",
                 *(f"window={title}" for title in window_titles),
@@ -136,23 +138,31 @@ def main() -> int:
             if return_code is not None:
                 output, _ = process.communicate(timeout=5)
                 ready = READY_MARKER in output
+                example_ready = EXAMPLE_MARKER in output
                 tabs_ready = all(marker in output for marker in TAB_MARKERS)
-                success = return_code == 0 and ready and tabs_ready and bool(observed_titles)
-                status = "main-tabs-round-trip-ready" if success else "invalid-clean-exit"
+                success = (
+                    return_code == 0
+                    and ready
+                    and example_ready
+                    and tabs_ready
+                    and bool(observed_titles)
+                )
+                status = "example-data-tabs-round-trip-ready" if success else "invalid-clean-exit"
                 write_report(output, return_code, status, observed_titles)
                 print(output)
                 if success:
                     print(
-                        "Teamworks constructed its main window, activated all four "
-                        "main tabs in both directions, entered the wx event loop, "
-                        "and exited cleanly"
+                        "Teamworks opened the bundled example data, activated all four "
+                        "main tabs in both directions, entered the wx event loop, and "
+                        "exited cleanly"
                     )
                     return 0
 
                 print(
                     "Teamworks smoke mode did not satisfy all functional checks: "
                     f"return_code={return_code}, ready={ready}, "
-                    f"tabs_ready={tabs_ready}, windows={observed_titles}"
+                    f"example_ready={example_ready}, tabs_ready={tabs_ready}, "
+                    f"windows={observed_titles}"
                 )
                 return 1
 
