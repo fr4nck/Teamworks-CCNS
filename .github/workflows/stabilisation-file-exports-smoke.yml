@@ -1,0 +1,35 @@
+name: Stabilisation file exports smoke
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - "tools/smoke_file_exports.py"
+      - "teamworks/Utils/UTILS_Export.py"
+      - ".github/workflows/stabilisation-file-exports-smoke.yml"
+  workflow_dispatch:
+
+jobs:
+  exports:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || github.ref_name }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements/python311-core.txt
+
+      - name: Install dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --disable-pip-version-check --quiet -r requirements/python311-core.txt
+          python -m pip install --disable-pip-version-check --quiet xlsxwriter
+
+      - name: Exercise text and Excel exports
+        shell: pwsh
+        run: python tools/smoke_file_exports.py
