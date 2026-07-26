@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Remove candidate list popup bindings that only existed on wxPython Classic."""
+"""Remove popup bindings that only existed on wxPython Classic."""
 
 from __future__ import annotations
 
@@ -11,6 +11,7 @@ from pathlib import Path
 TARGETS = {
     Path("teamworks/Ol/OL_candidats.py"): """        if 'phoenix' not in wx.PlatformInfo and \"linux\" not in sys.platform and self.activePopup == True :\n            # Désactive la fenetre popup sous Linux\n            self.Bind(wx.EVT_MOTION, self.OnMouseMotion)\n        \n""",
     Path("teamworks/Ol/OL_candidatures.py"): """        if 'phoenix' not in wx.PlatformInfo and \"linux\" not in sys.platform and self.activePopup == True :\n            # Désactive la fenetre popup sous Linux\n            self.Bind(wx.EVT_MOTION, self.OnMouseMotion)\n        \n""",
+    Path("teamworks/Ctrl/CTRL_Page_generalites.py"): """        if 'phoenix' not in wx.PlatformInfo and \"linux\" not in sys.platform :\n            # Désactive la fenetre popup sous Linux\n            self.Bind(wx.EVT_MOTION, self.OnMouseMotion)\n       \n""",
 }
 
 
@@ -43,9 +44,9 @@ def main() -> int:
             print(f"{relative_path}: {count}")
             total += count
 
-    print(f"classic_candidate_popup_blocks={total}")
+    print(f"classic_popup_blocks={total}")
     if args.check and total:
-        raise SystemExit(f"{total} classic candidate popup blocks remain")
+        raise SystemExit(f"{total} classic popup blocks remain")
     return 0
 
 
