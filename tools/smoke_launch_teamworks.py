@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Launch Teamworks on Windows and verify that it creates a real top-level window."""
+"""Launch Teamworks on Windows and validate its deterministic main-window smoke mode."""
 
 from __future__ import annotations
 
@@ -18,6 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 TEAMWORKS_DIR = ROOT / "teamworks"
 ENTRYPOINT = ROOT / "run_teamworks.py"
 STARTUP_WINDOW_SECONDS = 20
+READY_MARKER = "TEAMWORKS_SMOKE_MAIN_WINDOW_READY"
 REPORT_PATH = ROOT / "teamworks-startup-smoke.log"
 
 
@@ -56,6 +57,7 @@ def write_report(
                 f"status={status}",
                 f"return_code={return_code}",
                 f"startup_window_seconds={STARTUP_WINDOW_SECONDS}",
+                f"ready_marker_present={READY_MARKER in output}",
                 f"window_count={len(window_titles)}",
                 *(f"window={title}" for title in window_titles),
                 "",
@@ -95,6 +97,7 @@ def main() -> int:
             "TEMP": str(sandbox / "Temp"),
             "TMP": str(sandbox / "Temp"),
             "PYTHONUNBUFFERED": "1",
+            "TEAMWORKS_SMOKE_MODE": "main-window",
         }
     )
     for key in ("APPDATA", "LOCALAPPDATA", "TEMP", "TMP"):
@@ -116,32 +119,42 @@ def main() -> int:
         )
 
         deadline = time.monotonic() + STARTUP_WINDOW_SECONDS
-        window_titles: list[str] = []
+        observed_titles: list[str] = []
         while time.monotonic() < deadline:
+            current_titles = visible_windows_for_process(process.pid)
+            for title in current_titles:
+                if title not in observed_titles:
+                    observed_titles.append(title)
+
             return_code = process.poll()
             if return_code is not None:
                 output, _ = process.communicate(timeout=5)
-                write_report(output, return_code, "early-exit")
+                ready = READY_MARKER in output
+                success = return_code == 0 and ready and bool(observed_titles)
+                status = "main-window-ready" if success else "invalid-clean-exit"
+                write_report(output, return_code, status, observed_titles)
                 print(output)
-                print(f"Teamworks exited before creating a stable window with code {return_code}")
+                if success:
+                    print(
+                        "Teamworks constructed and displayed its main window, "
+                        "entered the wx event loop, and exited cleanly"
+                    )
+                    return 0
+
+                print(
+                    "Teamworks smoke mode did not satisfy all functional checks: "
+                    f"return_code={return_code}, ready={ready}, windows={observed_titles}"
+                )
                 return 1
 
-            window_titles = visible_windows_for_process(process.pid)
-            if window_titles:
-                output = stop_process(process)
-                write_report(output, process.returncode, "window-created", window_titles)
-                print(output)
-                print(f"Teamworks created {len(window_titles)} visible top-level window(s): {window_titles}")
-                return 0
-
-            time.sleep(0.5)
+            time.sleep(0.25)
 
         output = stop_process(process)
-        write_report(output, process.returncode, "alive-without-window")
+        write_report(output, process.returncode, "timeout", observed_titles)
         print(output)
         print(
-            f"Teamworks remained alive for {STARTUP_WINDOW_SECONDS} seconds "
-            "but created no visible top-level window"
+            f"Teamworks did not finish its deterministic smoke mode within "
+            f"{STARTUP_WINDOW_SECONDS} seconds"
         )
         return 1
     finally:
