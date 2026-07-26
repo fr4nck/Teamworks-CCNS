@@ -1792,14 +1792,17 @@ class MyApp(wx.App):
         if os.environ.get("TEAMWORKS_SMOKE_MODE") == "main-window":
             print("TEAMWORKS_SMOKE_MAIN_WINDOW_READY", flush=True)
 
-            def smoke_activate_page(index):
+            def smoke_activate_page(index, pass_name):
                 frame.toolBook.SetSelection(index)
                 frame.toolBook.MAJ_panel(index)
-                print(f"TEAMWORKS_SMOKE_TAB_READY:{index}", flush=True)
+                print(f"TEAMWORKS_SMOKE_TAB_READY:{pass_name}:{index}", flush=True)
 
-            for delay, index in enumerate(range(frame.toolBook.GetPageCount()), start=1):
-                wx.CallLater(delay * 1000, smoke_activate_page, index)
-            wx.CallLater((frame.toolBook.GetPageCount() + 2) * 1000, self.ExitMainLoop)
+            page_count = frame.toolBook.GetPageCount()
+            route = [("forward", index) for index in range(page_count)]
+            route.extend(("backward", index) for index in reversed(range(page_count)))
+            for delay, (pass_name, index) in enumerate(route, start=1):
+                wx.CallLater(delay * 750, smoke_activate_page, index, pass_name)
+            wx.CallLater((len(route) + 2) * 750, self.ExitMainLoop)
             return True
 
         # Affiche une annonce si c'est un premier démarrage du logiciel
