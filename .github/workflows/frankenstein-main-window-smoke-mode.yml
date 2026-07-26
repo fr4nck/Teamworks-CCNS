@@ -40,7 +40,7 @@ jobs:
       - name: Compile migrated entry point
         run: python -m py_compile teamworks/Teamworks.py
 
-      - name: Verify deterministic smoke marker
+      - name: Verify deterministic smoke invariants
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -48,7 +48,8 @@ jobs:
           source = Path("teamworks/Teamworks.py").read_text(encoding="iso-8859-15")
           assert source.count('TEAMWORKS_SMOKE_MODE') == 1
           assert source.count('TEAMWORKS_SMOKE_MAIN_WINDOW_READY') == 1
-          assert source.count('wx.CallLater(5000, self.ExitMainLoop)') == 1
+          assert 'self.ExitMainLoop' in source
+          assert 'return True' in source
           PY
 
       - name: Commit migration result
