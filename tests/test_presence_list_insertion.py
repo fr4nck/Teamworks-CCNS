@@ -21,6 +21,8 @@ def test_presence_lists_use_a_valid_phoenix_append_index() -> None:
         source = path.read_text(encoding="iso-8859-15")
         combined += source
         assert not any(token in source for token in FORBIDDEN), path
+        if "CheckListCtrlMixin" in source:
+            assert "self.EnableCheckBoxes(True)" in source, path
         compile(source, str(path), "exec")
 
     assert "InsertItem(self.GetItemCount()," in combined
