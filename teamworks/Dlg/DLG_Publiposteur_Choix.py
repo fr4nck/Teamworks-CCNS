@@ -68,6 +68,8 @@ class CheckListCtrl(wx.ListCtrl, CheckListCtrlMixin):
     def __init__(self, parent, donnees):
         wx.ListCtrl.__init__(self, parent, -1, style=wx.LC_REPORT)
         CheckListCtrlMixin.__init__(self)
+        if 'phoenix' in wx.PlatformInfo:
+            self.EnableCheckBoxes(True)
         self.selectionsID = []
         self.listeColonnes, self.listeDonnees = donnees
         self.Remplissage() 
@@ -92,7 +94,7 @@ class CheckListCtrl(wx.ListCtrl, CheckListCtrlMixin):
             index += 1
         
         for donnees in self.listeDonnees :
-            index = self.InsertItem(sys.maxsize, str(donnees[0]))
+            index = self.InsertItem(self.GetItemCount(), str(donnees[0]))
             for x in range(1, len(donnees)) :
                 self.SetItem(index, x, str(donnees[x]))
             self.SetItemData(index, donnees[0])

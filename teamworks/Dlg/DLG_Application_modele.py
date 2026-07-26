@@ -721,6 +721,8 @@ class listCtrl_Personnes(wx.ListCtrl, CheckListCtrlMixin):
     def __init__(self, parent):
         wx.ListCtrl.__init__(self, parent, -1, style=wx.LC_REPORT|wx.LC_NO_HEADER)
         CheckListCtrlMixin.__init__(self)
+        if 'phoenix' in wx.PlatformInfo:
+            self.EnableCheckBoxes(True)
         self.parent = parent
         
         self.dictPersonnes = self.Import_Personnes()
@@ -737,9 +739,9 @@ class listCtrl_Personnes(wx.ListCtrl, CheckListCtrlMixin):
         # Remplissage avec les valeurs
         for key, valeurs in self.dictPersonnes.items():
             if 'phoenix' in wx.PlatformInfo:
-                index = self.InsertItem(sys.maxsize, valeurs[0] + " " + valeurs[1])
+                index = self.InsertItem(self.GetItemCount(), valeurs[0] + " " + valeurs[1])
             else:
-                index = self.InsertItem(sys.maxsize, valeurs[0] + " " + valeurs[1])
+                index = self.InsertItem(self.GetItemCount(), valeurs[0] + " " + valeurs[1])
             self.SetItemData(index, key)
             # Sélection
             if key in self.GetGrandParent().GetParent().selectionPersonnes :
@@ -806,6 +808,8 @@ class listCtrl_Modeles(wx.ListCtrl, CheckListCtrlMixin):
     def __init__(self, parent):
         wx.ListCtrl.__init__(self, parent, -1, style=wx.LC_REPORT|wx.LC_NO_HEADER|wx.LC_VRULES )
         CheckListCtrlMixin.__init__(self)
+        if 'phoenix' in wx.PlatformInfo:
+            self.EnableCheckBoxes(True)
         self.parent = parent
 
         self.selections = []
@@ -828,10 +832,10 @@ class listCtrl_Modeles(wx.ListCtrl, CheckListCtrlMixin):
         # Remplissage avec les valeurs
         for key, valeurs in self.dictModeles.items():
             if 'phoenix' in wx.PlatformInfo:
-                index = self.InsertItem(sys.maxsize, valeurs[0])
+                index = self.InsertItem(self.GetItemCount(), valeurs[0])
                 self.SetItem(index, 1, valeurs[1])
             else:
-                index = self.InsertItem(sys.maxsize, valeurs[0])
+                index = self.InsertItem(self.GetItemCount(), valeurs[0])
                 self.SetItem(index, 1, valeurs[1])
             self.SetItemData(index, key)
             # Sélection

@@ -495,6 +495,8 @@ class ListCtrl_deplacements(wx.ListCtrl, CheckListCtrlMixin):
     def __init__(self, parent, size=(-1, -1), IDremboursement=None, IDpersonne=None):
         wx.ListCtrl.__init__(self, parent, -1, size=(size), style=wx.LC_REPORT|wx.LC_SINGLE_SEL|wx.LC_HRULES|wx.LC_VRULES)
         CheckListCtrlMixin.__init__(self)
+        if 'phoenix' in wx.PlatformInfo:
+            self.EnableCheckBoxes(True)
         self.parent = parent
         self.IDpersonne = IDpersonne
         self.IDremboursement = IDremboursement
@@ -530,7 +532,7 @@ class ListCtrl_deplacements(wx.ListCtrl, CheckListCtrlMixin):
         
         for IDdeplacement, date, objet, trajet, dist, tarif_km, montant, remboursement in self.donnees :
             if 'phoenix' in wx.PlatformInfo:
-                index = self.InsertItem(sys.maxsize, str(IDdeplacement))
+                index = self.InsertItem(self.GetItemCount(), str(IDdeplacement))
                 self.SetItem(index, 1, date)
                 self.SetItem(index, 2, objet)
                 self.SetItem(index, 3, trajet)
@@ -538,7 +540,7 @@ class ListCtrl_deplacements(wx.ListCtrl, CheckListCtrlMixin):
                 self.SetItem(index, 5, tarif_km)
                 self.SetItem(index, 6, montant)
             else:
-                index = self.InsertItem(sys.maxsize, str(IDdeplacement))
+                index = self.InsertItem(self.GetItemCount(), str(IDdeplacement))
                 self.SetItem(index, 1, date)
                 self.SetItem(index, 2, objet)
                 self.SetItem(index, 3, trajet)
