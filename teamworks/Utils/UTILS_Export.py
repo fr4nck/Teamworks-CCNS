@@ -67,7 +67,7 @@ def GetValeursGrid(grid=None):
         valeursLigne = [labelLigne,]
         for numCol in range(0, grid.GetNumberCols()) :
             valeur = grid.GetCellValue(numLigne, numCol)
-            if type(valeur) not in ("str", "unicode") :
+            if not isinstance(valeur, str) :
                 valeur = six.text_type(valeur)
             valeursLigne.append(valeur)
         listeValeurs.append(valeursLigne)
