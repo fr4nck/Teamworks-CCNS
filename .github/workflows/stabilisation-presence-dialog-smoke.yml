@@ -17,12 +17,17 @@ on:
       - ".github/workflows/stabilisation-presence-dialog-smoke.yml"
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   smoke-presence-dialog:
     runs-on: windows-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'push' && github.ref_name || github.event.pull_request.head.ref }}
 
       - uses: actions/setup-python@v5
         with:
@@ -37,6 +42,8 @@ jobs:
           python -m pip install -r requirements/python311-core.txt
 
       - name: Build and exercise presence dialog
+        id: presence_smoke
+        continue-on-error: true
         shell: pwsh
         run: python tools/smoke_secondary_presence_dialog.py
 
@@ -48,6 +55,20 @@ jobs:
           path: artifacts/presence-dialog-smoke/diagnostic.txt
           if-no-files-found: warn
 
+      - name: Persist failing diagnostic on stabilisation branch
+        if: always() && steps.presence_smoke.outcome == 'failure' && github.event_name == 'push'
+        shell: bash
+        run: |
+          if [ ! -f artifacts/presence-dialog-smoke/diagnostic.txt ]; then
+            echo "diagnostic file missing"
+            exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f artifacts/presence-dialog-smoke/diagnostic.txt
+          git commit -m "Stabilisation — enregistrer le diagnostic du formulaire de présence" || exit 0
+          git push origin HEAD:stabilisation/recette-fonctionnelle-secondaire
+
       - name: Ensure temporary entry point was removed
         if: always()
         shell: pwsh
@@ -55,3 +76,8 @@ jobs:
           if (Test-Path teamworks/Teamworks_secondary_presence_smoke.py) {
             throw "Le point d'entrée temporaire n'a pas été supprimé"
           }
+
+      - name: Fail when presence dialog smoke failed
+        if: steps.presence_smoke.outcome == 'failure'
+        shell: pwsh
+        run: throw "Le smoke du formulaire de présence a échoué; diagnostic persisté."
