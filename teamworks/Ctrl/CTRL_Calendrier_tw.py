@@ -127,12 +127,8 @@ class Calendrier(wx.ScrolledWindow):
         
     def DoDrawing(self, dc):
         dc.RemoveAll()
-        if 'phoenix' not in wx.PlatformInfo:
-            dc.BeginDrawing()
         self.caseSurvol = None
         self.Calendrier(dc)
-        if 'phoenix' not in wx.PlatformInfo:
-            dc.EndDrawing()
 
     def MAJAffichage(self):
         self.DoDrawing(self.pdc)
@@ -150,10 +146,7 @@ class Calendrier(wx.ScrolledWindow):
         
         self.dictCases = {}
         self.listeCasesJours = []
-        if 'phoenix' in wx.PlatformInfo:
-            largeur, hauteur = self.GetClientSize()
-        else:
-            largeur, hauteur = self.GetClientSize()
+        largeur, hauteur = self.GetClientSize()
 
         annee = self.anneeCalendrier
 
