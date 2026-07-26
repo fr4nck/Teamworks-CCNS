@@ -7,9 +7,9 @@ on:
     paths:
       - "tools/smoke_secondary_person_dialog.py"
       - "teamworks/Dlg/DLG_Fiche_individuelle.py"
-      - "teamworks/Ctrl/CTRL_Page_generalites.py"
-      - "teamworks/Ctrl/CTRL_Page_contrats.py"
-      - "teamworks/Ctrl/CTRL_Page_presences.py"
+      - "teamworks/Ctrl/CTRL_Page_*.py"
+      - "teamworks/GestionDB.py"
+      - "tests/test_secondary_person_smoke_contract.py"
       - ".github/workflows/stabilisation-person-dialog-smoke.yml"
   workflow_dispatch:
 
@@ -23,7 +23,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.ref }}
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || 'stabilisation/recette-fonctionnelle-secondaire' }}
 
       - uses: actions/setup-python@v5
         with:
@@ -62,3 +62,25 @@ jobs:
         if: always() && steps.person_smoke.outcome == 'failure'
         shell: pwsh
         run: throw "Le smoke de la fiche individuelle a échoué."
+
+  expose-person-diagnostic:
+    needs: smoke-person-dialog
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download diagnostic
+        uses: actions/download-artifact@v4
+        with:
+          name: person-dialog-smoke-diagnostic
+          path: diagnostic
+
+      - name: Display complete diagnostic
+        shell: bash
+        run: |
+          echo "===== PERSON_DIALOG_DIAGNOSTIC ====="
+          cat diagnostic/diagnostic.txt
+          echo "===== END_PERSON_DIALOG_DIAGNOSTIC ====="
+
+      - name: Propagate smoke failure
+        if: needs.smoke-person-dialog.result != 'success'
+        run: exit 1
