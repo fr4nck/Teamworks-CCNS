@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Replace executable ``six.PY3`` checks with the definitive Python 3 value."""
+"""Replace executable ``six.PY3`` checks with the definitive Python 3 constant."""
 
 from __future__ import annotations
 
