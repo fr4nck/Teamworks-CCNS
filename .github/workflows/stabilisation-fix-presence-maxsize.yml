@@ -1,9 +1,9 @@
-name: Stabilisation fix presence maxsize
+name: Stabilisation fix presence list insertion
 
 on:
-  push:
+  pull_request:
     branches:
-      - stabilisation/recette-fonctionnelle-secondaire
+      - master
     paths:
       - "tools/fix_presence_maxsize.py"
       - ".github/workflows/stabilisation-fix-presence-maxsize.yml"
@@ -35,8 +35,9 @@ jobs:
           from pathlib import Path
           path = Path('teamworks/Dlg/DLG_Saisie_presence.py')
           source = path.read_text(encoding='iso-8859-15')
-          assert 'six.MAXSIZE' not in source
-          assert 'sys.maxsize' in source
+          assert 'InsertItem(sys.maxsize' not in source
+          assert 'InsertItem(six.MAXSIZE' not in source
+          assert source.count('self.InsertItem(self.GetItemCount(), "")') >= 1
           compile(source, str(path), 'exec')
           PY
 
@@ -50,5 +51,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add teamworks/Dlg/DLG_Saisie_presence.py
-          git commit -m "Stabilisation — remplacer six.MAXSIZE dans le formulaire de présence"
+          git commit -m "Stabilisation — utiliser un index valide dans la liste des présences"
           git push origin HEAD:stabilisation/recette-fonctionnelle-secondaire
