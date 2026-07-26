@@ -1,0 +1,12 @@
+# Intégrations optionnelles
+# Windows : automatisation Office, presse-papiers et impression
+pywin32>=306; platform_system == "Windows"
+
+# Capture vidéo / traitement d'image
+opencv-python>=4.10,<5
+
+# Ancien connecteur MySQLdb, uniquement si un fichier historique l'exige encore
+mysqlclient>=2.2,<3
+
+# Le module UNO est fourni par LibreOffice et ne s'installe pas avec pip.
+# pyExcelerator n'est plus maintenu : conserver la fonction désactivée ou la migrer vers XlsxWriter.
