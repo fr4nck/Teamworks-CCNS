@@ -1688,9 +1688,6 @@ class ScrolledThumbnail(wx.ScrolledWindow):
 
         dc = wx.MemoryDC()
         dc.SelectObject(bmp)
-        if 'phoenix' not in wx.PlatformInfo:
-            dc.BeginDrawing()
-        
         x = self._tBorder//2
         y = self._tBorder//2
 
@@ -1776,10 +1773,7 @@ class ScrolledThumbnail(wx.ScrolledWindow):
             if selected:
 
                 dc.SetPen(self.grayPen)
-                if 'phoenix' in wx.PlatformInfo:
-                    dc.DrawRoundedRectangle(dotrect, 2)
-                else:
-                    dc.DrawRoundedRectangleRect(dotrect, 2)
+                dc.DrawRoundedRectangle(dotrect, 2)
                 dc.SetPen(wx.Pen(wx.WHITE))
                 dc.DrawRectangle(imgRect.x, imgRect.y,
                                  imgRect.width, imgRect.height)
@@ -1799,8 +1793,6 @@ class ScrolledThumbnail(wx.ScrolledWindow):
                 dc.DrawRectangle(imgRect.x - 1, imgRect.y - 1,
                                  imgRect.width + 2, imgRect.height + 2)
 
-        if 'phoenix' not in wx.PlatformInfo:
-            dc.EndDrawing()
         dc.SelectObject(wx.NullBitmap)
 
 
