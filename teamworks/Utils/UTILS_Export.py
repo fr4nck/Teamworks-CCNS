@@ -154,9 +154,8 @@ def ExportTexte(listview=None, grid=None, titre=u"", listeColonnes=None, listeVa
     texte = texte[:-1]
 
     # Création du fichier texte
-    f = open(cheminFichier, "w")
-    f.write(texte.encode("utf8"))
-    f.close()
+    with open(cheminFichier, "w", encoding="utf-8", newline="") as fichier:
+        fichier.write(texte)
     
     # Confirmation de création du fichier et demande d'ouverture directe dans Excel
     txtMessage = _(u"Le fichier Texte a été créé avec succès. Souhaitez-vous l'ouvrir dès maintenant ?")
