@@ -137,10 +137,7 @@ import wx
 import os
 import six
 import zlib
-if True:
-    import _thread as thread
-else:
-    import thread
+import _thread as thread
 from math import pi
 
 import PIL.Image as Image

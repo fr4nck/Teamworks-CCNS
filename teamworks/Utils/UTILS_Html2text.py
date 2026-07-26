@@ -18,14 +18,9 @@ def has_key(x, y):
     if hasattr(x, 'has_key'): return y in x
     else: return y in x
 
-try:
-    import htmlentitydefs
-    import urlparse
-    import HTMLParser
-except ImportError: #Python3
-    import html.entities as htmlentitydefs
-    from six.moves.urllib import parse as urlparse
-    import html.parser as HTMLParser
+import html.entities as htmlentitydefs
+import urllib.parse as urlparse
+import html.parser as HTMLParser
 from six.moves import urllib
 import optparse, re, sys, codecs, types
 
