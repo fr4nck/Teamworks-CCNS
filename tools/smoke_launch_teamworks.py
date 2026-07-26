@@ -9,13 +9,29 @@ import shutil
 import subprocess
 import sys
 import tempfile
-import time
 
 
 ROOT = Path(__file__).resolve().parents[1]
 TEAMWORKS_DIR = ROOT / "teamworks"
 ENTRYPOINT = TEAMWORKS_DIR / "Teamworks.py"
 STARTUP_WINDOW_SECONDS = 15
+REPORT_PATH = ROOT / "teamworks-startup-smoke.log"
+
+
+def write_report(output: str, return_code: int | None, status: str) -> None:
+    REPORT_PATH.write_text(
+        "\n".join(
+            [
+                f"status={status}",
+                f"return_code={return_code}",
+                f"startup_window_seconds={STARTUP_WINDOW_SECONDS}",
+                "",
+                "--- process output ---",
+                output,
+            ]
+        ),
+        encoding="utf-8",
+    )
 
 
 def main() -> int:
@@ -23,6 +39,7 @@ def main() -> int:
         print("Windows-only smoke test skipped")
         return 0
 
+    REPORT_PATH.unlink(missing_ok=True)
     sandbox = Path(tempfile.mkdtemp(prefix="teamworks-smoke-"))
     nolog = TEAMWORKS_DIR / "nolog.txt"
     created_nolog = not nolog.exists()
@@ -65,6 +82,7 @@ def main() -> int:
                 process.kill()
                 output, _ = process.communicate(timeout=5)
 
+            write_report(output, process.returncode, "alive")
             print(output)
             print(
                 f"Teamworks remained alive for {STARTUP_WINDOW_SECONDS} seconds: "
@@ -72,6 +90,7 @@ def main() -> int:
             )
             return 0
 
+        write_report(output, process.returncode, "early-exit")
         print(output)
         print(
             "Teamworks exited before the startup observation window "
