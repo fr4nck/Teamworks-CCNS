@@ -37,14 +37,16 @@ jobs:
           python -m compileall -q \
             teamworks/Ol/OL_candidats.py \
             teamworks/Ol/OL_candidatures.py \
-            teamworks/Ctrl/CTRL_Page_generalites.py
+            teamworks/Ctrl/CTRL_Page_generalites.py \
+            teamworks/Dlg/DLG_Saisie_candidat.py
 
       - name: Commit migrated sources
         run: |
           if git diff --quiet -- \
             teamworks/Ol/OL_candidats.py \
             teamworks/Ol/OL_candidatures.py \
-            teamworks/Ctrl/CTRL_Page_generalites.py; then
+            teamworks/Ctrl/CTRL_Page_generalites.py \
+            teamworks/Dlg/DLG_Saisie_candidat.py; then
             echo "No candidate popup migration required"
             exit 0
           fi
@@ -53,7 +55,8 @@ jobs:
           git add \
             teamworks/Ol/OL_candidats.py \
             teamworks/Ol/OL_candidatures.py \
-            teamworks/Ctrl/CTRL_Page_generalites.py
+            teamworks/Ctrl/CTRL_Page_generalites.py \
+            teamworks/Dlg/DLG_Saisie_candidat.py
           git commit -m "Frankenstein lot 2 — retirer les popups Classic candidats"
           git pull --rebase origin frankenstein/python3-wxphoenix-lot2
           git push origin HEAD:frankenstein/python3-wxphoenix-lot2
