@@ -1,0 +1,54 @@
+name: Stabilisation fix presence maxsize
+
+on:
+  push:
+    branches:
+      - stabilisation/recette-fonctionnelle-secondaire
+    paths:
+      - "tools/fix_presence_maxsize.py"
+      - ".github/workflows/stabilisation-fix-presence-maxsize.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout stabilisation branch
+        uses: actions/checkout@v4
+        with:
+          ref: stabilisation/recette-fonctionnelle-secondaire
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Apply idempotent correction
+        run: python tools/fix_presence_maxsize.py
+
+      - name: Verify corrected source
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('teamworks/Dlg/DLG_Saisie_presence.py')
+          source = path.read_text(encoding='iso-8859-15')
+          assert 'six.MAXSIZE' not in source
+          assert 'sys.maxsize' in source
+          compile(source, str(path), 'exec')
+          PY
+
+      - name: Commit corrected form
+        shell: bash
+        run: |
+          if git diff --quiet -- teamworks/Dlg/DLG_Saisie_presence.py; then
+            echo "Form already corrected"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add teamworks/Dlg/DLG_Saisie_presence.py
+          git commit -m "Stabilisation — remplacer six.MAXSIZE dans le formulaire de présence"
+          git push origin HEAD:stabilisation/recette-fonctionnelle-secondaire
