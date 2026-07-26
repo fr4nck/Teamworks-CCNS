@@ -1784,7 +1784,15 @@ class MyApp(wx.App):
         # Création de la frame principale
         frame = MyFrame(None)
         self.SetTopWindow(frame)
-        frame.Show()   
+        frame.Show()
+
+        # Mode de validation fonctionnelle automatisée : la fenêtre principale
+        # est réellement construite et affichée, puis la boucle wx est arrêtée
+        # proprement sans ouvrir d'assistant ni de fichier utilisateur.
+        if os.environ.get("TEAMWORKS_SMOKE_MODE") == "main-window":
+            print("TEAMWORKS_SMOKE_MAIN_WINDOW_READY", flush=True)
+            wx.CallLater(5000, self.ExitMainLoop)
+            return True
 
         # Affiche une annonce si c'est un premier démarrage du logiciel
         frame.Annonce()
