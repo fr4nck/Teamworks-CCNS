@@ -1215,7 +1215,7 @@ def DecodeMdpReseau(mdp=None):
     if mdp not in (None, "") and mdp.startswith("#64#"):
         try:
             mdp = base64.b64decode(mdp[4:])
-            if six.PY3:
+            if True:
                 mdp = mdp.decode('utf-8')
         except:
             pass

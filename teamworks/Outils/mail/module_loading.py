@@ -63,7 +63,7 @@ def autodiscover_modules(*args, **kwargs):
                     raise
 
 
-if six.PY3:
+if True:
     from importlib.util import find_spec as importlib_find
 
     def module_has_submodule(package, module_name):

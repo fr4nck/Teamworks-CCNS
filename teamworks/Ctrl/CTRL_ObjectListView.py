@@ -211,7 +211,7 @@ class ObjectListView(OLV.ObjectListView):
             # Pour contrer bug sur comparaison datetime et NoneType
             if type(primary) == datetime.date :
                 primary = six.text_type(primary)
-            if six.PY3:
+            if True:
                 if primary == None:
                     primary = ""
                 if type(primary) in (int, float):

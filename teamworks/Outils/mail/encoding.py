@@ -17,7 +17,7 @@ class Promise(object):
     """
     pass
 
-if six.PY3:
+if True:
     from urllib.parse import unquote_to_bytes
 
 
@@ -76,7 +76,7 @@ def force_text(s, encoding='utf-8', strings_only=False, errors='strict'):
         return s
     try:
         if not issubclass(type(s), six.string_types):
-            if six.PY3:
+            if True:
                 if isinstance(s, bytes):
                     s = six.text_type(s, encoding, errors)
                 else:
@@ -137,7 +137,7 @@ def force_bytes(s, encoding='utf-8', strings_only=False, errors='strict'):
         return six.text_type(s).encode(encoding, errors)
     if not isinstance(s, six.string_types):
         try:
-            if six.PY3:
+            if True:
                 return six.text_type(s).encode(encoding)
             else:
                 return bytes(s)
@@ -153,7 +153,7 @@ def force_bytes(s, encoding='utf-8', strings_only=False, errors='strict'):
         return s.encode(encoding, errors)
 
 
-if six.PY3:
+if True:
     smart_str = smart_text
     force_str = force_text
 else:
@@ -217,7 +217,7 @@ def uri_to_iri(uri):
     if uri is None:
         return uri
     uri = force_bytes(uri)
-    iri = unquote_to_bytes(uri) if six.PY3 else unquote(uri)
+    iri = unquote_to_bytes(uri) if True else unquote(uri)
     return repercent_broken_unicode(iri).decode('utf-8')
 
 

@@ -19,7 +19,7 @@ import shutil
 from Utils import UTILS_Config
 from Utils import UTILS_Fichiers
 
-if six.PY3:
+if True:
     import functools
 
 
@@ -33,7 +33,7 @@ def cmp(x, y):
 
 def SortItems(items, sorter):
     """ Adaptation py3 pour le tri des wx.listctrl """
-    if six.PY3:
+    if True:
         items.sort(key=functools.cmp_to_key(sorter))
     else:
         items = SortItems(items, sorter)

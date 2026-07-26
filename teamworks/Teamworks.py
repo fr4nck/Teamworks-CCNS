@@ -1566,7 +1566,7 @@ Phillip Piper (ObjectListView), Armin Rigo (Psycho)...
                 fichierVersions = urlopen('http://www.teamworks.ovh/fichiers/windows/Versions.txt', timeout=5)
             texteNouveautes= fichierVersions.read()
             fichierVersions.close()
-            if six.PY3:
+            if True:
                 texteNouveautes = texteNouveautes.decode("utf-8")
             pos_debut_numVersion = texteNouveautes.find("n")
             if "(" in texteNouveautes[:50] :

@@ -63,7 +63,7 @@ def wxtopil(image):
     """Convert wx.Image to PIL Image."""
     pil = Image.new('RGB', (image.GetWidth(), image.GetHeight()))
     data = image.GetData()
-    if six.PY3:
+    if True:
         data = bytes(data)
     pil.frombytes(data)
     return pil

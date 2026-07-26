@@ -62,7 +62,7 @@ def GetValidite(identifiant="", code=""):
     except :
         return False
 
-    if six.PY3:
+    if True:
         html = html.decode("iso-8859-15")
 
     # Analyse l'état
@@ -246,7 +246,7 @@ class Dialog(wx.Dialog):
             traceback.print_exc(file=sys.stdout)
             return False
 
-        if six.PY3:
+        if True:
             html = html.decode("iso-8859-15")
 
         # Analyse l'état

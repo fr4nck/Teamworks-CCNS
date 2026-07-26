@@ -108,7 +108,7 @@ import unicodedata
 from . import CellEditor
 from . import OLVEvent
 
-if six.PY3:
+if True:
     # python 3 lacks cmp:
     def cmp(a, b):
         # protect for unorderable types in Py3

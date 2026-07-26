@@ -42,7 +42,7 @@ def AffichetailleFichier(fichierURL):
     tailleFichier = 0
     try :
         fichier = urlopen(fichierURL)
-        if six.PY3:
+        if True:
             tailleFichier = fichier.headers['Content-Length']
         else:
             infoFichier = (fichier.info().getheaders('Content-Length'))
@@ -306,7 +306,7 @@ class Page_recherche(wx.Panel):
             return
 
         # Recherche du numéro de version
-        if six.PY3:
+        if True:
             self.texteNouveautes = self.texteNouveautes.decode("utf-8")
         pos_debut_numVersion = self.texteNouveautes.find("n")
         if "(" in self.texteNouveautes[:50] :

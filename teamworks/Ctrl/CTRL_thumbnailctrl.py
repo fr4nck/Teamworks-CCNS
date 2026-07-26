@@ -137,7 +137,7 @@ import wx
 import os
 import six
 import zlib
-if six.PY3:
+if True:
     import _thread as thread
 else:
     import thread
