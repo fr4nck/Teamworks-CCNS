@@ -1,0 +1,49 @@
+name: Frankenstein remove Classic planning branches
+
+on:
+  push:
+    branches:
+      - frankenstein/python3-wxphoenix-lot2
+    paths:
+      - "tools/migrate_classic_planning_branches.py"
+      - ".github/workflows/frankenstein-classic-planning.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout migration branch
+        uses: actions/checkout@v4
+        with:
+          ref: frankenstein/python3-wxphoenix-lot2
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Remove Classic planning branches
+        run: python tools/migrate_classic_planning_branches.py --write
+
+      - name: Verify migration idempotence
+        run: python tools/migrate_classic_planning_branches.py --check
+
+      - name: Compile migrated source
+        run: python -m compileall -q teamworks/Ctrl/CTRL_Planning.py
+
+      - name: Commit migrated source
+        run: |
+          if git diff --quiet -- teamworks/Ctrl/CTRL_Planning.py; then
+            echo "No planning migration required"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add teamworks/Ctrl/CTRL_Planning.py
+          git commit -m "Frankenstein lot 2 — nettoyer le planning pour Phoenix"
+          git pull --rebase origin frankenstein/python3-wxphoenix-lot2
+          git push origin HEAD:frankenstein/python3-wxphoenix-lot2
