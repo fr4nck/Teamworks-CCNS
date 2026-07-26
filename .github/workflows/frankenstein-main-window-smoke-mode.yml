@@ -34,18 +34,22 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Apply main-window smoke mode
+      - name: Apply or verify main-window smoke mode
         run: python tools/migrate_teamworks_main_window_smoke_mode.py
 
       - name: Compile migrated entry point
         run: python -m py_compile teamworks/Teamworks.py
 
-      - name: Verify migration is idempotent
+      - name: Verify deterministic smoke marker
         run: |
-          if python tools/migrate_teamworks_main_window_smoke_mode.py; then
-            echo "migrator unexpectedly applied twice"
-            exit 1
-          fi
+          python - <<'PY'
+          from pathlib import Path
+
+          source = Path("teamworks/Teamworks.py").read_text(encoding="iso-8859-15")
+          assert source.count('TEAMWORKS_SMOKE_MODE') == 1
+          assert source.count('TEAMWORKS_SMOKE_MAIN_WINDOW_READY') == 1
+          assert source.count('wx.CallLater(5000, self.ExitMainLoop)') == 1
+          PY
 
       - name: Commit migration result
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
