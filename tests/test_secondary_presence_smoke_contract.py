@@ -14,6 +14,8 @@ def test_presence_smoke_targets_real_main_window_contract() -> None:
     assert marker in entrypoint_source
     assert f"MARKER = '{marker}'" in smoke_source
     assert 'env["TEAMWORKS_SMOKE_MODE"] = "main-window"' in smoke_source
+    assert 'search_paths = [str(ROOT), str(TEAMWORKS_DIR)]' in smoke_source
+    assert 'env["PYTHONPATH"] = os.pathsep.join(search_paths)' in smoke_source
     assert "TEAMWORKS_SMOKE_PRESENCE_DIALOG_READY" in smoke_source
 
 
