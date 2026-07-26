@@ -53,7 +53,7 @@ class PanelDefilant(scrolled.ScrolledPanel):
             sizer_champ = wx.StaticBoxSizer(self.sizer_champs, wx.VERTICAL)
             setattr(self, "text_%s" % nom, wx.TextCtrl(self, -1, six.text_type(valeur)))
             getattr(self, "text_%s" % nom).SetToolTip(wx.ToolTip(infoBulle))
-            sizer_champ.Add(getattr(self, "text_%s" % nom), 0, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, 0)
+            sizer_champ.Add(getattr(self, "text_%s" % nom), 0, wx.EXPAND, 0)
 
             # Exemple :
             if exemple != "" :
