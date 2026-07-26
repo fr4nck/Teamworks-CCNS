@@ -1793,13 +1793,13 @@ class MyApp(wx.App):
             print("TEAMWORKS_SMOKE_MAIN_WINDOW_READY", flush=True)
 
             def smoke_activate_page(index):
-                frame.toolbook.SetSelection(index)
-                frame.toolbook.MAJ_panel(index)
+                frame.toolBook.SetSelection(index)
+                frame.toolBook.MAJ_panel(index)
                 print(f"TEAMWORKS_SMOKE_TAB_READY:{index}", flush=True)
 
-            for delay, index in enumerate(range(frame.toolbook.GetPageCount()), start=1):
+            for delay, index in enumerate(range(frame.toolBook.GetPageCount()), start=1):
                 wx.CallLater(delay * 1000, smoke_activate_page, index)
-            wx.CallLater((frame.toolbook.GetPageCount() + 2) * 1000, self.ExitMainLoop)
+            wx.CallLater((frame.toolBook.GetPageCount() + 2) * 1000, self.ExitMainLoop)
             return True
 
         # Affiche une annonce si c'est un premier démarrage du logiciel
