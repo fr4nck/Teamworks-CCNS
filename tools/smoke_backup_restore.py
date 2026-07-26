@@ -54,6 +54,7 @@ def _integrity(path: Path) -> str:
 
 
 def run() -> None:
+    sys.path.insert(0, str(ROOT))
     sys.path.insert(0, str(TEAMWORKS_DIR))
     os.chdir(TEAMWORKS_DIR)
 
@@ -61,64 +62,68 @@ def run() -> None:
     from Utils import UTILS_Fichiers
     from Utils import UTILS_Sauvegarde
 
-    with tempfile.TemporaryDirectory(prefix="teamworks-backup-") as temp:
-        root = Path(temp)
-        source_dir = root / "source"
-        restore_dir = root / "restore"
-        temp_dir = root / "temp"
-        backup_dir = root / "backup"
-        for directory in (source_dir, restore_dir, temp_dir, backup_dir):
-            directory.mkdir(parents=True)
+    app = wx.App(False)
+    try:
+        with tempfile.TemporaryDirectory(prefix="teamworks-backup-") as temp:
+            root = Path(temp)
+            source_dir = root / "source"
+            restore_dir = root / "restore"
+            temp_dir = root / "temp"
+            backup_dir = root / "backup"
+            for directory in (source_dir, restore_dir, temp_dir, backup_dir):
+                directory.mkdir(parents=True)
 
-        for filename in FILES:
-            shutil.copy2(EXAMPLES / filename, source_dir / filename)
+            for filename in FILES:
+                shutil.copy2(EXAMPLES / filename, source_dir / filename)
 
-        original_hashes = {name: _digest(source_dir / name) for name in FILES}
-        current_data_dir = source_dir
+            original_hashes = {name: _digest(source_dir / name) for name in FILES}
+            current_data_dir = source_dir
 
-        def get_rep_data(fichier=None):
-            if fichier in (None, ""):
-                return str(current_data_dir)
-            return str(current_data_dir / fichier)
+            def get_rep_data(fichier=None):
+                if fichier in (None, ""):
+                    return str(current_data_dir)
+                return str(current_data_dir / fichier)
 
-        def get_rep_temp(fichier=None):
-            if fichier in (None, ""):
-                return str(temp_dir)
-            return str(temp_dir / fichier)
+            def get_rep_temp(fichier=None):
+                if fichier in (None, ""):
+                    return str(temp_dir)
+                return str(temp_dir / fichier)
 
-        UTILS_Fichiers.GetRepData = get_rep_data
-        UTILS_Fichiers.GetRepTemp = get_rep_temp
-        wx.ProgressDialog = _ProgressDialog
-        wx.MessageDialog = _MessageDialog
+            UTILS_Fichiers.GetRepData = get_rep_data
+            UTILS_Fichiers.GetRepTemp = get_rep_temp
+            wx.ProgressDialog = _ProgressDialog
+            wx.MessageDialog = _MessageDialog
 
-        print("TEAMWORKS_BACKUP_STAGE:create", flush=True)
-        saved = UTILS_Sauvegarde.Sauvegarde(
-            listeFichiersLocaux=FILES,
-            nom="recette_teamworks",
-            repertoire=str(backup_dir),
-        )
-        archive = backup_dir / "recette_teamworks.twd"
-        assert saved is True
-        assert archive.is_file()
-        assert UTILS_Sauvegarde.VerificationZip(str(archive)) is True
-        assert sorted(UTILS_Sauvegarde.GetListeFichiersZIP(str(archive))) == sorted(FILES)
+            print("TEAMWORKS_BACKUP_STAGE:create", flush=True)
+            saved = UTILS_Sauvegarde.Sauvegarde(
+                listeFichiersLocaux=FILES,
+                nom="recette_teamworks",
+                repertoire=str(backup_dir),
+            )
+            archive = backup_dir / "recette_teamworks.twd"
+            assert saved is True
+            assert archive.is_file()
+            assert UTILS_Sauvegarde.VerificationZip(str(archive)) is True
+            assert sorted(UTILS_Sauvegarde.GetListeFichiersZIP(str(archive))) == sorted(FILES)
 
-        print("TEAMWORKS_BACKUP_STAGE:restore", flush=True)
-        current_data_dir = restore_dir
-        restored = UTILS_Sauvegarde.Restauration(
-            fichier=str(archive),
-            listeFichiersLocaux=FILES,
-        )
-        assert sorted(restored) == sorted(name[:-4] for name in FILES)
+            print("TEAMWORKS_BACKUP_STAGE:restore", flush=True)
+            current_data_dir = restore_dir
+            restored = UTILS_Sauvegarde.Restauration(
+                fichier=str(archive),
+                listeFichiersLocaux=FILES,
+            )
+            assert sorted(restored) == sorted(name[:-4] for name in FILES)
 
-        print("TEAMWORKS_BACKUP_STAGE:verify", flush=True)
-        restored_hashes = {name: _digest(restore_dir / name) for name in FILES}
-        assert restored_hashes == original_hashes
-        assert {_integrity(restore_dir / name) for name in FILES} == {"ok"}
+            print("TEAMWORKS_BACKUP_STAGE:verify", flush=True)
+            restored_hashes = {name: _digest(restore_dir / name) for name in FILES}
+            assert restored_hashes == original_hashes
+            assert {_integrity(restore_dir / name) for name in FILES} == {"ok"}
 
-        print("TEAMWORKS_BACKUP_RESTORE_OK", flush=True)
-        print(f"archive={archive}", flush=True)
-        print(f"files={','.join(FILES)}", flush=True)
+            print("TEAMWORKS_BACKUP_RESTORE_OK", flush=True)
+            print(f"archive={archive}", flush=True)
+            print(f"files={','.join(FILES)}", flush=True)
+    finally:
+        app.Destroy()
 
 
 def main() -> int:
