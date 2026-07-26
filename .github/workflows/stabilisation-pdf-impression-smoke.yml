@@ -1,0 +1,33 @@
+name: Stabilisation PDF impression smoke
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - "tools/smoke_pdf_impression.py"
+      - "teamworks/Utils/UTILS_Impression_presences_graph.py"
+      - ".github/workflows/stabilisation-pdf-impression-smoke.yml"
+  workflow_dispatch:
+
+jobs:
+  pdf-impression:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || 'stabilisation/recette-fonctionnelle-secondaire' }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements/python311-core.txt
+
+      - name: Install dependencies
+        shell: pwsh
+        run: python -m pip install --disable-pip-version-check --quiet -r requirements/python311-core.txt
+
+      - name: Generate and validate PDF
+        shell: pwsh
+        run: python tools/smoke_pdf_impression.py
