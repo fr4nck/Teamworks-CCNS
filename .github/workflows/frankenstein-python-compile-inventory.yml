@@ -1,0 +1,49 @@
+name: Frankenstein Python compile inventory
+
+on:
+  push:
+    branches:
+      - frankenstein/python3-wxphoenix-lot2
+    paths:
+      - "teamworks/**/*.py"
+      - "tools/inventory_python_compile_errors.py"
+      - ".github/workflows/frankenstein-python-compile-inventory.yml"
+  pull_request:
+    branches:
+      - master
+    paths:
+      - "teamworks/**/*.py"
+      - "tools/inventory_python_compile_errors.py"
+      - ".github/workflows/frankenstein-python-compile-inventory.yml"
+  workflow_dispatch:
+
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Inventory compile errors
+        run: |
+          python tools/inventory_python_compile_errors.py --path teamworks \
+            --json python-compile-errors.json \
+            --markdown python-compile-errors.md
+          cat python-compile-errors.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload compile inventory
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-compile-errors
+          path: |
+            python-compile-errors.json
+            python-compile-errors.md
+          if-no-files-found: error
+
+      - name: Compile inventory tool
+        run: python -m py_compile tools/inventory_python_compile_errors.py
