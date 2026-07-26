@@ -50,3 +50,11 @@ jobs:
 
       - name: Launch Teamworks for a controlled startup window
         run: python tools/smoke_launch_teamworks.py
+
+      - name: Upload controlled startup diagnostic
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: teamworks-startup-smoke
+          path: teamworks-startup-smoke.log
+          if-no-files-found: warn
