@@ -1,0 +1,54 @@
+name: Stabilisation fix export text UTF-8
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - "tools/fix_export_text_utf8.py"
+      - "teamworks/Utils/UTILS_Export.py"
+      - "tests/test_export_text_utf8_contract.py"
+      - ".github/workflows/stabilisation-fix-export-text-utf8.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: stabilisation/recette-fonctionnelle-secondaire
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Apply UTF-8 export correction
+        run: python tools/fix_export_text_utf8.py
+
+      - name: Verify source contract
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('teamworks/Utils/UTILS_Export.py')
+          source = path.read_text(encoding='iso-8859-15')
+          assert 'f.write(texte.encode("utf8"))' not in source
+          assert 'open(cheminFichier, "w", encoding="utf-8", newline="")' in source
+          assert 'fichier.write(texte)' in source
+          compile(source, str(path), 'exec')
+          PY
+
+      - name: Commit application correction
+        shell: bash
+        run: |
+          if git diff --quiet -- teamworks/Utils/UTILS_Export.py; then
+            echo "Export already corrected"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add teamworks/Utils/UTILS_Export.py
+          git commit -m "Stabilisation — corriger l’export texte UTF-8 sous Python 3"
+          git push origin HEAD:stabilisation/recette-fonctionnelle-secondaire
