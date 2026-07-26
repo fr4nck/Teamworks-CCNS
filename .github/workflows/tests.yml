@@ -29,4 +29,16 @@ jobs:
         run: python -m compileall application domain infrastructure scripts teamworks/CcnsCore tests
 
       - name: Run tests
-        run: python -m pytest
+        shell: bash
+        run: |
+          set -o pipefail
+          python -m pytest 2>&1 | tee pytest-output.txt
+
+      - name: Upload pytest diagnostic
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-output
+          path: pytest-output.txt
+          if-no-files-found: error
+          retention-days: 1
