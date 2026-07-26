@@ -70,7 +70,10 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 assert _smoke_notebook.pagePresences is not None
                 assert _smoke_notebook.pageCandidatures is not None
                 assert _smoke_dialog.bitmap_button_Ok.IsEnabled()
-                assert _smoke_dialog.bitmap_button_annuler.IsEnabled()
+                # Quitter la page Généralités déclenche une sauvegarde automatique.
+                # L'annulation devient alors volontairement impossible.
+                assert _smoke_dialog.AnnulationImpossible is True
+                assert not _smoke_dialog.bitmap_button_annuler.IsEnabled()
                 print("TEAMWORKS_SMOKE_PERSON_DIALOG_READY", flush=True)
                 _smoke_dialog.Destroy()
             except Exception:
