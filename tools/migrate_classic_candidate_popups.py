@@ -12,6 +12,7 @@ TARGETS = {
     Path("teamworks/Ol/OL_candidats.py"): """        if 'phoenix' not in wx.PlatformInfo and \"linux\" not in sys.platform and self.activePopup == True :\n            # Désactive la fenetre popup sous Linux\n            self.Bind(wx.EVT_MOTION, self.OnMouseMotion)\n        \n""",
     Path("teamworks/Ol/OL_candidatures.py"): """        if 'phoenix' not in wx.PlatformInfo and \"linux\" not in sys.platform and self.activePopup == True :\n            # Désactive la fenetre popup sous Linux\n            self.Bind(wx.EVT_MOTION, self.OnMouseMotion)\n        \n""",
     Path("teamworks/Ctrl/CTRL_Page_generalites.py"): """        if 'phoenix' not in wx.PlatformInfo and \"linux\" not in sys.platform :\n            # Désactive la fenetre popup sous Linux\n            self.Bind(wx.EVT_MOTION, self.OnMouseMotion)\n       \n""",
+    Path("teamworks/Dlg/DLG_Saisie_candidat.py"): """        if 'phoenix' not in wx.PlatformInfo and \"linux\" not in sys.platform :\n            # Désactive la fenetre popup sous Linux\n            self.Bind(wx.EVT_MOTION, self.OnMouseMotion)\n       \n""",
 }
 
 
