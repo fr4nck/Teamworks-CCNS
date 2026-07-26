@@ -32,13 +32,22 @@ NEW = '''        frame.Show()
 
 def main() -> int:
     source = TARGET.read_text(encoding="iso-8859-15")
-    count = source.count(OLD)
-    if count != 1:
-        raise SystemExit(f"expected exactly one main-window startup block, found {count}")
+    old_count = source.count(OLD)
+    new_count = source.count(NEW)
 
-    TARGET.write_text(source.replace(OLD, NEW), encoding="iso-8859-15")
-    print(f"updated {TARGET.relative_to(ROOT)}")
-    return 0
+    if old_count == 1 and new_count == 0:
+        TARGET.write_text(source.replace(OLD, NEW), encoding="iso-8859-15")
+        print(f"updated {TARGET.relative_to(ROOT)}")
+        return 0
+
+    if old_count == 0 and new_count == 1:
+        print(f"already migrated {TARGET.relative_to(ROOT)}")
+        return 0
+
+    raise SystemExit(
+        "unexpected main-window startup state: "
+        f"legacy_blocks={old_count}, migrated_blocks={new_count}"
+    )
 
 
 if __name__ == "__main__":
