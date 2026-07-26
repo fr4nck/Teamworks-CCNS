@@ -10,12 +10,13 @@ def test_presence_smoke_targets_real_main_window_contract() -> None:
     smoke_source = SMOKE.read_text(encoding="utf-8")
     entrypoint_source = ENTRYPOINT.read_text(encoding="iso-8859-15")
 
-    marker = 'print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)'
+    marker = '            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)'
     assert marker in entrypoint_source
-    assert f"MARKER = '{marker}'" in smoke_source
+    assert f"MARKER_LINE = '{marker}'" in smoke_source
     assert 'env["TEAMWORKS_SMOKE_MODE"] = "main-window"' in smoke_source
     assert 'search_paths = [str(ROOT), str(TEAMWORKS_DIR)]' in smoke_source
     assert 'env["PYTHONPATH"] = os.pathsep.join(search_paths)' in smoke_source
+    assert 'compile(patched_source, str(PATCHED), "exec")' in smoke_source
     assert "TEAMWORKS_SMOKE_PRESENCE_DIALOG_READY" in smoke_source
 
 
