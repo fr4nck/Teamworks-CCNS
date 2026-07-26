@@ -101,17 +101,26 @@ def write_diagnostic(*, return_code: int, marker_count: int | None, output: str)
     print(diagnostic)
 
 
+def build_environment() -> dict[str, str]:
+    env = os.environ.copy()
+    env["TEAMWORKS_SMOKE_MODE"] = "main-window"
+    search_paths = [str(ROOT), str(TEAMWORKS_DIR)]
+    existing_pythonpath = env.get("PYTHONPATH")
+    if existing_pythonpath:
+        search_paths.append(existing_pythonpath)
+    env["PYTHONPATH"] = os.pathsep.join(search_paths)
+    return env
+
+
 def main() -> int:
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
     marker_count: int | None = None
     try:
         marker_count = build_patched_entrypoint()
-        env = os.environ.copy()
-        env["TEAMWORKS_SMOKE_MODE"] = "main-window"
         result = subprocess.run(
             [sys.executable, str(PATCHED)],
             cwd=TEAMWORKS_DIR,
-            env=env,
+            env=build_environment(),
             capture_output=True,
             timeout=120,
             check=False,
