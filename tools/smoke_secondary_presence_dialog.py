@@ -74,6 +74,13 @@ def decode_output(data: bytes) -> str:
     return data.decode("utf-8", errors="replace")
 
 
+def github_error_summary(output: str, max_lines: int = 24) -> None:
+    lines = [line.strip() for line in output.splitlines() if line.strip()]
+    tail = lines[-max_lines:]
+    summary = " | ".join(tail).replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+    print(f"::error title=Presence dialog smoke failed::{summary}")
+
+
 def main() -> int:
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
     build_patched_entrypoint()
@@ -99,8 +106,10 @@ def main() -> int:
         REPORT.write_text(diagnostic, encoding="utf-8")
         print(diagnostic)
         if result.returncode != 0:
+            github_error_summary(output)
             return result.returncode or 1
         if SECONDARY_MARKER not in output:
+            github_error_summary(output)
             print("marqueur du formulaire de présence absent", file=sys.stderr)
             return 2
         return 0
