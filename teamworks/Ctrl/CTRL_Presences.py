@@ -439,6 +439,8 @@ class listCtrl_Personnes(wx.ListCtrl, CheckListCtrlMixin):
     def __init__(self, parent):
         wx.ListCtrl.__init__(self, parent, -1, style=wx.LC_REPORT|wx.LC_NO_HEADER|wx.NO_BORDER)
         CheckListCtrlMixin.__init__(self)
+        if 'phoenix' in wx.PlatformInfo:
+            self.EnableCheckBoxes(True)
         self.parent = parent
         
         self.SetBackgroundColour(couleurFondWidgets)

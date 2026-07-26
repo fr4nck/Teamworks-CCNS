@@ -577,6 +577,8 @@ class ListCtrl_donnees(wx.ListCtrl, CheckListCtrlMixin):
     def __init__(self, parent):
         wx.ListCtrl.__init__(self, parent, -1, style=wx.LC_REPORT|wx.SUNKEN_BORDER|wx.LC_NO_HEADER|wx.LC_HRULES)
         CheckListCtrlMixin.__init__(self)
+        if 'phoenix' in wx.PlatformInfo:
+            self.EnableCheckBoxes(True)
         self.parent = parent
         
         if self.parent.GetParent().mode =="modele": 
