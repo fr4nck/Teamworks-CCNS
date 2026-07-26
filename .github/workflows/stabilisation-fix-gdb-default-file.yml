@@ -41,7 +41,7 @@ jobs:
           source = path.read_text(encoding='iso-8859-15')
           block = 'if self.nomFichier == "":\n            self.nomFichier = self.GetNomFichierDefaut()'
           assert source.count(block) == 1
-          assert source.index(block) < source.index("# On ajoute le préfixe")
+          assert source.index(block) < source.index('if MODE_TEAMWORKS == True')
           compile(source, str(path), 'exec')
           PY
 
