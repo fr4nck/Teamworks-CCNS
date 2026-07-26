@@ -18,20 +18,19 @@ def test_main_tabs_smoke_uses_real_toolbook_attribute():
 def test_main_tabs_smoke_runs_forward_and_backward():
     source = ENTRYPOINT.read_text(encoding="iso-8859-15")
 
-    assert "page_count = frame.toolBook.GetPageCount()" in source
-    assert "page_sequence = list(range(page_count))" in source
-    assert "page_sequence += list(range(page_count - 1, -1, -1))" in source
-    assert "enumerate(page_sequence, start=1)" in source
-    assert "TEAMWORKS_SMOKE_TAB_READY:{step}:{index}" in source
-    assert "len(page_sequence) + 2" in source
+    assert 'route = [("forward", index) for index in range(page_count)]' in source
+    assert 'route.extend(("backward", index) for index in reversed(range(page_count)))' in source
+    assert "enumerate(route, start=1)" in source
+    assert "TEAMWORKS_SMOKE_TAB_READY:{pass_name}:{index}" in source
+    assert "len(route) + 2" in source
 
 
 def test_tabs_smoke_migrator_generates_the_same_round_trip_contract():
     source = MIGRATOR.read_text(encoding="utf-8")
 
-    assert "page_sequence = list(range(page_count))" in source
-    assert "page_sequence += list(range(page_count - 1, -1, -1))" in source
-    assert "TEAMWORKS_SMOKE_TAB_READY:{step}:{index}" in source
+    assert 'route = [("forward", index) for index in range(page_count)]' in source
+    assert 'route.extend(("backward", index) for index in reversed(range(page_count)))' in source
+    assert "TEAMWORKS_SMOKE_TAB_READY:{pass_name}:{index}" in source
 
 
 def test_main_tabs_smoke_keeps_the_main_window_contract():
