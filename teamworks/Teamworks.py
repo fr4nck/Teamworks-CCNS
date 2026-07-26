@@ -1792,6 +1792,17 @@ class MyApp(wx.App):
         if os.environ.get("TEAMWORKS_SMOKE_MODE") == "main-window":
             print("TEAMWORKS_SMOKE_MAIN_WINDOW_READY", flush=True)
 
+            for suffix in ("TDATA", "TDOCUMENTS", "TPHOTOS"):
+                source = Chemins.GetStaticPath(f"Exemples/Exemple_{suffix}.dat")
+                destination = UTILS_Fichiers.GetRepData(f"Exemple_{suffix}.dat")
+                with open(source, "rb") as source_file, open(destination, "wb") as destination_file:
+                    destination_file.write(source_file.read())
+
+            opened = frame.OuvrirFichier("Exemple")
+            if opened is False or frame.userConfig.get("nomFichier") != "Exemple":
+                raise RuntimeError("unable to open bundled example data")
+            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
+
             def smoke_activate_page(index, pass_name):
                 frame.toolBook.SetSelection(index)
                 frame.toolBook.MAJ_panel(index)
