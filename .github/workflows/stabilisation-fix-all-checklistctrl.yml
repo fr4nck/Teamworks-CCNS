@@ -1,0 +1,70 @@
+name: Stabilisation fix all checklist controls
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - "tools/fix_all_checklistctrl_phoenix.py"
+      - ".github/workflows/stabilisation-fix-all-checklistctrl.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: stabilisation/recette-fonctionnelle-secondaire
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Correct all historical checklist controls
+        run: python tools/fix_all_checklistctrl_phoenix.py
+
+      - name: Verify complete checklist inventory
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          root = Path('teamworks')
+          pattern = re.compile(r'(?m)^[ \t]*CheckListCtrlMixin\.__init__\(self\)[ \t]*$')
+          forbidden = (
+              'InsertItem(six.MAXSIZE,',
+              'InsertItem(sys.maxsize,',
+              'InsertStringItem(six.MAXSIZE,',
+              'InsertStringItem(sys.maxsize,',
+          )
+          checked = 0
+          for path in root.rglob('*.py'):
+              source = path.read_text(encoding='iso-8859-15')
+              count = len(pattern.findall(source))
+              if not count:
+                  continue
+              checked += count
+              assert source.count('self.EnableCheckBoxes(True)') >= count, path
+              for token in forbidden:
+                  assert token not in source, (path, token)
+              compile(source, str(path), 'exec')
+          assert checked >= 10, checked
+          print(f'CheckListCtrlMixin initialisations vérifiées : {checked}')
+          PY
+
+      - name: Commit checklist corrections
+        shell: bash
+        run: |
+          changed=$(git diff --name-only -- teamworks | tr '\n' ' ')
+          if [ -z "$changed" ]; then
+            echo "All checklist controls already corrected"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add teamworks
+          git commit -m "Stabilisation — sécuriser toutes les listes à cases sous Phoenix"
+          git push origin HEAD:stabilisation/recette-fonctionnelle-secondaire
