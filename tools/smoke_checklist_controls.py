@@ -96,7 +96,10 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 _controls.append(_modeles.listCtrl_Modeles(_host))
 
                 print("TEAMWORKS_SMOKE_CHECKLIST_STAGE:modele-contrat", flush=True)
-                _modele_mid = wx.Panel(_host, -1)
+                # ListCtrl_champs lit dictChamps trois niveaux au-dessus de son parent.
+                # On reproduit donc la hiérarchie réelle de l'assistant de modèle.
+                _modele_context = wx.Panel(_host, -1)
+                _modele_mid = wx.Panel(_modele_context, -1)
                 _modele_page = wx.Panel(_modele_mid, -1)
                 _controls.append(_modele_contrat.ListCtrl_champs(_modele_page))
 
