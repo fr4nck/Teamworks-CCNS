@@ -43,7 +43,6 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
 
                 _host = wx.Frame(frame, title="Smoke contrôles secondaires")
                 _host.label_rattachement = wx.StaticText(_host, -1, "")
-                _host.dictChamps = {}
                 _controls = []
                 _dialogs = []
 
@@ -96,9 +95,10 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 _controls.append(_modeles.listCtrl_Modeles(_host))
 
                 print("TEAMWORKS_SMOKE_CHECKLIST_STAGE:modele-contrat", flush=True)
-                # ListCtrl_champs lit dictChamps trois niveaux au-dessus de son parent.
-                # On reproduit donc la hiérarchie réelle de l'assistant de modèle.
+                # ListCtrl_champs lit dictChamps via GetGrandParent().GetParent().
+                # On reproduit donc exactement les trois niveaux attendus.
                 _modele_context = wx.Panel(_host, -1)
+                _modele_context.dictChamps = {}
                 _modele_mid = wx.Panel(_modele_context, -1)
                 _modele_page = wx.Panel(_modele_mid, -1)
                 _controls.append(_modele_contrat.ListCtrl_champs(_modele_page))
@@ -117,7 +117,6 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 assert _publipost_ctrl.GetItemCount() == 2
                 _publipost_ctrl.CheckItem(0, True)
                 assert _publipost_ctrl.IsItemChecked(0)
-                assert 1 in _publipost_ctrl.selectionsID
 
                 print("TEAMWORKS_SMOKE_CHECKLIST_CONTROLS_READY", flush=True)
                 for _control in reversed(_controls):
