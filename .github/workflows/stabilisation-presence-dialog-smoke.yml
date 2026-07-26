@@ -56,7 +56,7 @@ jobs:
           if-no-files-found: warn
 
       - name: Persist failing diagnostic on stabilisation branch
-        if: always() && steps.presence_smoke.outcome == 'failure' && github.event_name == 'push'
+        if: always() && steps.presence_smoke.outcome == 'failure'
         shell: bash
         run: |
           if [ ! -f artifacts/presence-dialog-smoke/diagnostic.txt ]; then
