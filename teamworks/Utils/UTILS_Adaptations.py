@@ -43,10 +43,7 @@ class Menu(wx.Menu):
         wx.Menu.__init__(self, *args, **kwds)
 
     def AppendItem(self, item):
-        if 'phoenix' in wx.PlatformInfo:
-            super(Menu, self).Append(item)
-        else :
-            super(Menu, self).AppendItem(item)
+        super(Menu, self).Append(item)
 
     def AppendMenu(self, *args, **kwds):
         super(Menu, self).Append(*args, **kwds)
@@ -57,32 +54,23 @@ class ToolBar(wx.ToolBar):
         wx.ToolBar.__init__(self, *args, **kwds)
 
     def AddLabelTool(self, *args, **kw):
-        if 'phoenix' in wx.PlatformInfo:
-            if "longHelp" in kw:
-                kw.pop("longHelp")
-            super(ToolBar, self).AddTool(*args, **kw)
-        else :
-            super(ToolBar, self).AddLabelTool(*args, **kw)
+        if "longHelp" in kw:
+            kw.pop("longHelp")
+        super(ToolBar, self).AddTool(*args, **kw)
 
     def AddSimpleTool(self, *args, **kw):
-        if 'phoenix' in wx.PlatformInfo:
-            if "longHelp" in kw:
-                kw.pop("longHelp")
-            super(ToolBar, self).AddTool(*args, **kw)
-        else :
-            super(ToolBar, self).AddSimpleTool(*args, **kw)
+        if "longHelp" in kw:
+            kw.pop("longHelp")
+        super(ToolBar, self).AddTool(*args, **kw)
 
     def AddTool(self, *args, **kw):
-        if 'phoenix' in wx.PlatformInfo:
-            if "shortHelpString" in kw:
-                shortHelp = kw.pop("shortHelpString")
-            else:
-                shortHelp = ""
-            toolId = args[0]
-            bitmap = args[1]
-            super(ToolBar, self).AddTool(toolId=toolId, label="", bitmap=bitmap, shortHelp=shortHelp)
-        else :
-            super(ToolBar, self).AddTool(*args, **kw)
+        if "shortHelpString" in kw:
+            shortHelp = kw.pop("shortHelpString")
+        else:
+            shortHelp = ""
+        toolId = args[0]
+        bitmap = args[1]
+        super(ToolBar, self).AddTool(toolId=toolId, label="", bitmap=bitmap, shortHelp=shortHelp)
 
 
 if __name__ == "__main__":
