@@ -12,6 +12,8 @@ ROOT = Path(__file__).resolve().parents[1]
 TEAMWORKS_DIR = ROOT / "teamworks"
 SOURCE = TEAMWORKS_DIR / "Teamworks.py"
 PATCHED = TEAMWORKS_DIR / "Teamworks_secondary_presence_smoke.py"
+REPORT_DIR = ROOT / "artifacts" / "presence-dialog-smoke"
+REPORT = REPORT_DIR / "diagnostic.txt"
 MARKER = 'print("TEAMWORKS_SMOKE_EXAMPLE_READY")'
 SECONDARY_MARKER = "TEAMWORKS_SMOKE_PRESENCE_DIALOG_READY"
 
@@ -63,7 +65,17 @@ def build_patched_entrypoint() -> None:
     PATCHED.write_text(source.replace(MARKER, INJECTION), encoding="iso-8859-15")
 
 
+def decode_output(data: bytes) -> str:
+    for encoding in ("utf-8", "cp1252", "iso-8859-15"):
+        try:
+            return data.decode(encoding)
+        except UnicodeDecodeError:
+            pass
+    return data.decode("utf-8", errors="replace")
+
+
 def main() -> int:
+    REPORT_DIR.mkdir(parents=True, exist_ok=True)
     build_patched_entrypoint()
     env = os.environ.copy()
     env["TEAMWORKS_SMOKE_MODE"] = "1"
@@ -73,22 +85,27 @@ def main() -> int:
             command,
             cwd=TEAMWORKS_DIR,
             env=env,
-            text=True,
             capture_output=True,
             timeout=120,
             check=False,
         )
+        output = decode_output(result.stdout) + "\n" + decode_output(result.stderr)
+        diagnostic = (
+            f"return_code={result.returncode}\n"
+            f"secondary_marker={SECONDARY_MARKER in output}\n"
+            "--- output ---\n"
+            f"{output}"
+        )
+        REPORT.write_text(diagnostic, encoding="utf-8")
+        print(diagnostic)
+        if result.returncode != 0:
+            return result.returncode or 1
+        if SECONDARY_MARKER not in output:
+            print("marqueur du formulaire de présence absent", file=sys.stderr)
+            return 2
+        return 0
     finally:
         PATCHED.unlink(missing_ok=True)
-
-    output = result.stdout + "\n" + result.stderr
-    print(output)
-    if result.returncode != 0:
-        return result.returncode or 1
-    if SECONDARY_MARKER not in output:
-        print("marqueur du formulaire de présence absent", file=sys.stderr)
-        return 2
-    return 0
 
 
 if __name__ == "__main__":
