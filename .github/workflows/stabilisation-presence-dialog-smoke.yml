@@ -7,6 +7,8 @@ on:
     paths:
       - "tools/smoke_secondary_presence_dialog.py"
       - "teamworks/Dlg/DLG_Saisie_presence.py"
+      - "teamworks/GestionDB.py"
+      - "tests/test_gestiondb_default_filename.py"
       - ".github/workflows/stabilisation-presence-dialog-smoke.yml"
   pull_request:
     branches:
@@ -14,6 +16,8 @@ on:
     paths:
       - "tools/smoke_secondary_presence_dialog.py"
       - "teamworks/Dlg/DLG_Saisie_presence.py"
+      - "teamworks/GestionDB.py"
+      - "tests/test_gestiondb_default_filename.py"
       - ".github/workflows/stabilisation-presence-dialog-smoke.yml"
   workflow_dispatch:
 
