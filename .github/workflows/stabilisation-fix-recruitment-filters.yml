@@ -1,0 +1,53 @@
+name: Stabilisation fix recruitment filters
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - "tools/fix_recruitment_filter_intersection.py"
+      - "teamworks/Ol/OL_candidatures.py"
+      - "tests/test_recruitment_filter_intersection.py"
+      - ".github/workflows/stabilisation-fix-recruitment-filters.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: stabilisation/recette-fonctionnelle-secondaire
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Apply deterministic filter intersection
+        run: python tools/fix_recruitment_filter_intersection.py
+
+      - name: Verify source contract
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('teamworks/Ol/OL_candidatures.py')
+          source = path.read_text(encoding='iso-8859-15')
+          assert 'exec("listeID=%s" % texteFonction)' not in source
+          assert 'set.intersection(*(set(liste) for liste in listeListes))' in source
+          compile(source, str(path), 'exec')
+          PY
+
+      - name: Commit application correction
+        shell: bash
+        run: |
+          if git diff --quiet -- teamworks/Ol/OL_candidatures.py; then
+            echo "Recruitment filters already corrected"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add teamworks/Ol/OL_candidatures.py
+          git commit -m "Stabilisation — fiabiliser l'intersection des filtres Recrutement"
+          git push origin HEAD:stabilisation/recette-fonctionnelle-secondaire
