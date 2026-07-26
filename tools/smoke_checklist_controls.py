@@ -34,12 +34,19 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
 
                 _host = wx.Frame(frame, title="Smoke contrôles secondaires")
                 _controls = []
+                _dialogs = []
 
                 print("TEAMWORKS_SMOKE_CHECKLIST_STAGE:gadgets", flush=True)
                 _controls.append(_cfg_gadgets.ListCtrl(_host))
 
                 print("TEAMWORKS_SMOKE_CHECKLIST_STAGE:config-personnes", flush=True)
-                _controls.append(_cfg_people.ListCtrl(_host))
+                _cfg_people_columns = [
+                    ["Nom", "left", 140, "nom", "", "Nom de la personne", True, 1],
+                    ["Prénom", "left", 120, "prenom", "", "Prénom de la personne", True, 2],
+                ]
+                _cfg_people_dialog = _cfg_people.Dialog(_host, listeColonnes=_cfg_people_columns)
+                _dialogs.append(_cfg_people_dialog)
+                _controls.append(_cfg_people_dialog.panel_contenu.listCtrl)
 
                 print("TEAMWORKS_SMOKE_CHECKLIST_STAGE:selection", flush=True)
                 _selection_ctrl = _selection.ListCtrl(
@@ -86,6 +93,7 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                     assert hasattr(_control, "EnableCheckBoxes")
                     assert hasattr(_control, "IsItemChecked")
 
+                assert _cfg_people_dialog.panel_contenu.listCtrl.GetItemCount() == 2
                 assert _selection_ctrl.GetItemCount() == 2
                 assert _selection_ctrl.IsItemChecked(0)
                 assert _selection_ctrl.IsItemChecked(1)
@@ -97,7 +105,10 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
 
                 print("TEAMWORKS_SMOKE_CHECKLIST_CONTROLS_READY", flush=True)
                 for _control in reversed(_controls):
-                    _control.Destroy()
+                    if not any(_control is _dialog.panel_contenu.listCtrl for _dialog in _dialogs):
+                        _control.Destroy()
+                for _dialog in reversed(_dialogs):
+                    _dialog.Destroy()
                 _host.Destroy()
             except Exception:
                 import traceback as _smoke_traceback
