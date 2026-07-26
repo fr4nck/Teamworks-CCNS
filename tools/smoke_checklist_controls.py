@@ -22,6 +22,7 @@ FAILURE_MARKER = "TEAMWORKS_SMOKE_CHECKLIST_CONTROLS_FAILED"
 INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
             try:
                 print("TEAMWORKS_SMOKE_CHECKLIST_STAGE:imports", flush=True)
+                import GestionDB as _smoke_gestiondb
                 from Dlg import DLG_Config_gadgets as _cfg_gadgets
                 from Dlg import DLG_Config_liste_personnes as _cfg_people
                 from Dlg import DLG_Selection_liste as _selection
@@ -31,6 +32,14 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 from Dlg import DLG_Statistiques as _stats
                 from Dlg import DLG_Application_modele as _modeles
                 from Ctrl import CTRL_Creation_modele_contrat_p1 as _modele_contrat
+
+                _smoke_db = _smoke_gestiondb.DB()
+                _smoke_db.ExecuterReq("SELECT IDpersonne FROM personnes ORDER BY IDpersonne LIMIT 1")
+                _smoke_people = _smoke_db.ResultatReq()
+                _smoke_db.Close()
+                if not _smoke_people:
+                    raise RuntimeError("aucune personne disponible pour les contrôles secondaires")
+                _smoke_person_id = _smoke_people[0][0]
 
                 _host = wx.Frame(frame, title="Smoke contrôles secondaires")
                 _controls = []
@@ -67,14 +76,14 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 _controls.append(_publipost_ctrl)
 
                 print("TEAMWORKS_SMOKE_CHECKLIST_STAGE:frais", flush=True)
-                _controls.append(_frais.ListCtrl(_host, IDpersonne=None))
+                _controls.append(_frais.ListCtrl(_host, IDpersonne=_smoke_person_id))
 
                 print("TEAMWORKS_SMOKE_CHECKLIST_STAGE:remboursement", flush=True)
                 _controls.append(
                     _remboursement.ListCtrl_deplacements(
                         _host,
                         IDremboursement=None,
-                        IDpersonne=None,
+                        IDpersonne=_smoke_person_id,
                     )
                 )
 
