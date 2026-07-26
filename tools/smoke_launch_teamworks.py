@@ -13,7 +13,7 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 TEAMWORKS_DIR = ROOT / "teamworks"
-ENTRYPOINT = TEAMWORKS_DIR / "Teamworks.py"
+ENTRYPOINT = ROOT / "run_teamworks.py"
 STARTUP_WINDOW_SECONDS = 15
 REPORT_PATH = ROOT / "teamworks-startup-smoke.log"
 
@@ -63,7 +63,7 @@ def main() -> int:
     try:
         process = subprocess.Popen(
             [sys.executable, str(ENTRYPOINT)],
-            cwd=TEAMWORKS_DIR,
+            cwd=ROOT,
             env=env,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
