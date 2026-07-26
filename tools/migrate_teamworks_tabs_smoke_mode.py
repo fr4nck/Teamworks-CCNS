@@ -40,10 +40,17 @@ NEW = '''        if os.environ.get("TEAMWORKS_SMOKE_MODE") == "main-window":
             return True
 '''
 
+ROUND_TRIP_INVARIANTS = (
+    'route = [("forward", index) for index in range(page_count)]',
+    'route.extend(("backward", index) for index in reversed(range(page_count)))',
+    'TEAMWORKS_SMOKE_TAB_READY:{pass_name}:{index}',
+    'frame.toolBook.MAJ_panel(index)',
+)
+
 
 def main() -> int:
     source = TARGET.read_text(encoding="iso-8859-15")
-    if NEW in source:
+    if all(invariant in source for invariant in ROUND_TRIP_INVARIANTS):
         print("round-trip main tab smoke mode already present")
         return 0
     count = source.count(OLD)
