@@ -249,7 +249,9 @@ class Dialog(wx.Dialog):
     
 
 class MyBitmapComboBox(BitmapComboBox):
-    def __init__(self, parent, listeImages=[], size=(-1,  -1)):
+    def __init__(self, parent, listeImages=None, size=(-1,  -1)):
+        if listeImages is None:
+            listeImages = []
         BitmapComboBox.__init__(self, parent, size=size)
         # Remplissage des items avec les images
         for texte, nomImage in listeImages :

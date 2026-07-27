@@ -793,7 +793,9 @@ class Panel(wx.Panel):
 
 
 class MyBitmapComboBox(BitmapComboBox):
-    def __init__(self, parent, listeImages=[], size=(-1,  -1) ):
+    def __init__(self, parent, listeImages=None, size=(-1,  -1) ):
+        if listeImages is None:
+            listeImages = []
         BitmapComboBox.__init__(self, parent, size=size, style=wx.CB_READONLY)
         # Remplissage des items avec les images
         for texte, nomImage in listeImages :
@@ -810,8 +812,10 @@ class ListBoxDisponibilites(wx.ListBox):
         
         self.Bind(wx.EVT_RIGHT_DOWN, self.OnContextMenu)
         
-    def Remplissage(self, listeDisponibilites=[]) :
+    def Remplissage(self, listeDisponibilites=None) :
         # Remplissage
+        if listeDisponibilites is None:
+            listeDisponibilites = []
         self.dictIndexes = {}
         self.Clear()
         index = 0
@@ -879,8 +883,10 @@ class ChoiceEmploi(wx.Choice):
         
         self.Bind(wx.EVT_CHOICE, self.OnChoice)
         
-    def Remplissage(self, listeDonnees=[]) :
+    def Remplissage(self, listeDonnees=None) :
         # Remplissage
+        if listeDonnees is None:
+            listeDonnees = []
         self.dictIndexes = {}
         self.Clear()
         self.Append(_(u"Candidature spontanée"))
