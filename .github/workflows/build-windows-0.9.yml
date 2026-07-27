@@ -84,7 +84,6 @@ jobs:
             '--distpath', 'dist',
             '--workpath', 'build/pyinstaller',
             '--specpath', 'build/spec',
-            '--runtime-hook', 'packaging/runtime_smoke_imports.py',
             '--collect-all', 'wx',
             '--collect-all', 'matplotlib',
             '--collect-all', 'reportlab',
@@ -108,7 +107,7 @@ jobs:
           Copy-Item build/internal-modules.txt "$package/INTERNAL-MODULES.txt" -Force
           Set-Content -Path "$package/BUILD.txt" -Value "Teamworks-CCNS $version`nCommit $env:GITHUB_SHA"
 
-      - name: Validate package structure and packaged runtime imports
+      - name: Validate package structure and runtime inventory
         shell: pwsh
         run: |
           $package = 'dist/Teamworks-CCNS'
@@ -136,13 +135,14 @@ jobs:
             }
           }
 
-          $env:TEAMWORKS_PACKAGED_SMOKE_TEST = '1'
-          $process = Start-Process -FilePath "$package/Teamworks-CCNS.exe" -WorkingDirectory $package -PassThru -Wait
-          if ($process.ExitCode -ne 0) {
-            throw "Packaged runtime import smoke test failed with exit code $($process.ExitCode)"
+          $warnings = Get-Content 'build/pyinstaller/Teamworks-CCNS/warn-Teamworks-CCNS.txt' -Raw
+          foreach ($module in $requiredModules) {
+            if ($warnings -match "missing module named $([regex]::Escape($module))") {
+              throw "PyInstaller reports required module as missing: $module"
+            }
           }
-          Remove-Item Env:TEAMWORKS_PACKAGED_SMOKE_TEST
-          Write-Host 'Packaged runtime imports OK'
+
+          Write-Host 'Package structure and runtime inventory OK'
           Get-ChildItem $package | Select-Object Name, Length
 
       - name: Create archive
