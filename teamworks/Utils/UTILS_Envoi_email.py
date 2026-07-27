@@ -42,8 +42,10 @@ from Outils.mail import base, smtp
 
 
 
-def EnvoiEmailFamille(parent=None, IDfamille=None, nomDoc="", categorie="", listeAdresses=[], visible=True, log=None, CreationPDF=None, IDmodele=None):
+def EnvoiEmailFamille(parent=None, IDfamille=None, nomDoc="", categorie="", listeAdresses=None, visible=True, log=None, CreationPDF=None, IDmodele=None):
     # Création du PDF
+    if listeAdresses is None:
+        listeAdresses = []
     if CreationPDF != None :
         temp = CreationPDF
     else :
@@ -459,8 +461,10 @@ class SmtpV2(Base_messagerie):
     def Fermer(self):
         self.connection.close()
 
-    def Envoyer_lot(self, messages=[], dlg_progress=None, afficher_confirmation_envoi=True):
+    def Envoyer_lot(self, messages=None, dlg_progress=None, afficher_confirmation_envoi=True):
         """ Envoi des messages par lot """
+        if messages is None:
+            messages = []
         # Envoi des mails
         index = 1
         listeAnomalies = []
@@ -663,8 +667,10 @@ class Mailjet(Base_messagerie):
     def Fermer(self):
         self.connection.close()
 
-    def Envoyer_lot(self, messages=[], dlg_progress=None, afficher_confirmation_envoi=True):
+    def Envoyer_lot(self, messages=None, dlg_progress=None, afficher_confirmation_envoi=True):
         """ Envoi des messages par lot """
+        if messages is None:
+            messages = []
         # Envoi des mails
         index = 1
         listeAnomalies = []

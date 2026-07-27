@@ -24,8 +24,10 @@ NOMS_EDITION = {
     } # EXEMPLE -> "candidature" : "NOM_PRENOM*2_IDdocument_datedujour",
 
 
-def GetDictDonnees(categorie=None, listeID=[]):
+def GetDictDonnees(categorie=None, listeID=None):
     # Paramètres standards
+    if listeID is None:
+        listeID = []
     dict_donnees = {}
     dict_donnees["CATEGORIE"] = categorie
     dict_donnees["NBREDOCUMENTS"] = len(listeID)

@@ -129,7 +129,9 @@ def Lire(nom_fichier="", conversion_auto=False):
 
     return data
 
-def Ecrire(nom_fichier="", data={}):
+def Ecrire(nom_fichier="", data=None):
+    if data is None:
+        data = {}
     with open(nom_fichier, 'w') as outfile:
         json.dump(data, outfile, indent=4, cls=MyEncoder)
 

@@ -10,8 +10,12 @@
 
 import copy
 
-def DictionnaireImbrique(dictionnaire={}, cles=[], valeur=None):
+def DictionnaireImbrique(dictionnaire=None, cles=None, valeur=None):
     """ Création de dictionnaires imbriqués """
+    if dictionnaire is None:
+        dictionnaire = {}
+    if cles is None:
+        cles = []
     if len(cles) == 0 :
         return dictionnaire
     
@@ -63,7 +67,9 @@ def ConvertChaineEnListe(chaine=""):
     return liste2
 
 
-def ConvertListeEnChaine(liste=[]):
+def ConvertListeEnChaine(liste=None):
+    if liste is None:
+        liste = []
     if len(liste) == 0 :
         return None
     liste2 = []
