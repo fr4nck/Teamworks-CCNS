@@ -221,10 +221,7 @@ class Panel_Contrats(wx.Panel):
         DB.Close()
         
         # MAJ du listCtrl
-        if 'phoenix' in wx.PlatformInfo:
-            self.list_ctrl_contrats.SetItem(index, 4, etatSignature)
-        else:
-            self.list_ctrl_contrats.SetItem(index, 4, etatSignature)
+        self.list_ctrl_contrats.SetItem(index, 4, etatSignature)
         self.MAJ_barre_problemes()
 
     def OnBoutonDue(self, event):
@@ -252,10 +249,7 @@ class Panel_Contrats(wx.Panel):
         DB.Close()
         
         # MAJ du listCtrl
-        if 'phoenix' in wx.PlatformInfo:
-            self.list_ctrl_contrats.SetItem(index, 5, etatDue)
-        else:
-            self.list_ctrl_contrats.SetItem(index, 5, etatDue)
+        self.list_ctrl_contrats.SetItem(index, 5, etatDue)
         self.MAJ_barre_problemes()
         
     def OnBoutonImprimer(self, event):
@@ -359,10 +353,7 @@ class ListCtrl_contrats(wx.ListCtrl):
             signature= valeurs[5]
             due= valeurs[6]
             # Création de l'item
-            if 'phoenix' in wx.PlatformInfo:
-                self.InsertItem(index, str(IDcontrat))
-            else:
-                self.InsertItem(index, str(IDcontrat))
+            self.InsertItem(index, str(IDcontrat))
             # Etat
             if etat == "Perim":
                 item = self.GetItem(index)
@@ -370,30 +361,19 @@ class ListCtrl_contrats(wx.ListCtrl):
                 self.SetItem(item)
 
             # Autres colonnes
-            if 'phoenix' in wx.PlatformInfo:
-                self.SetItem(index, 1, DateEngFr(date_debut))
-            else:
-                self.SetItem(index, 1, DateEngFr(date_debut))
+            self.SetItem(index, 1, DateEngFr(date_debut))
             if date_fin == "2999-01-01" :
                 date_fin = _(u"Indétermin.")
             else:
                 date_fin = DateEngFr(date_fin)
             if date_rupture != "" :
                 date_fin = DateEngFr(date_rupture) + "-R"
-            if 'phoenix' in wx.PlatformInfo:
-                self.SetItem(index, 2, date_fin)
-                self.SetItem(index, 3, classification)
-                self.SetItem(index, 4, signature)
-            else:
-                self.SetItem(index, 2, date_fin)
-                self.SetItem(index, 3, classification)
-                self.SetItem(index, 4, signature)
+            self.SetItem(index, 2, date_fin)
+            self.SetItem(index, 3, classification)
+            self.SetItem(index, 4, signature)
             if due == None :
                 due = ""
-            if 'phoenix' in wx.PlatformInfo:
-                self.SetItem(index, 5, due)
-            else:
-                self.SetItem(index, 5, due)
+            self.SetItem(index, 5, due)
             # Intégration du data ID
             self.SetItemData(index, IDcontrat)
             index += 1
@@ -407,12 +387,8 @@ class ListCtrl_contrats(wx.ListCtrl):
             self.EnsureVisible(nbreItems-1) 
 
     def ColumnSorter(self, key1, key2):
-        if 'phoenix' in wx.PlatformInfo:
-            item1 = self.GetItem( self.FindItem(-1, key1), 1).GetText()
-            item2 = self.GetItem( self.FindItem(-1, key2), 1).GetText()
-        else:
-            item1 = self.GetItem( self.FindItem(-1, key1), 1).GetText()
-            item2 = self.GetItem( self.FindItem(-1, key2), 1).GetText()
+        item1 = self.GetItem( self.FindItem(-1, key1), 1).GetText()
+        item2 = self.GetItem( self.FindItem(-1, key2), 1).GetText()
         # Bascule les dates françaises en dates anglaises pour faire le tri
         item1 = DateFrEng(item1)
         item2 = DateFrEng(item2)
