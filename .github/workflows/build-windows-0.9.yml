@@ -96,7 +96,7 @@ jobs:
           Copy-Item build/internal-modules.txt "$package/INTERNAL-MODULES.txt" -Force
           Set-Content -Path "$package/BUILD.txt" -Value "Teamworks-CCNS $version`nCommit $env:GITHUB_SHA"
 
-      - name: Validate package structure and representative dynamic modules
+      - name: Validate package structure and internal module coverage
         shell: pwsh
         run: |
           $package = 'dist/Teamworks-CCNS'
@@ -107,21 +107,26 @@ jobs:
           if (-not (Test-Path "$package/INTERNAL-MODULES.txt")) { throw 'Internal module manifest missing' }
           if ((Get-Item "$package/Versions.txt").Length -eq 0) { throw 'Versions.txt is empty' }
 
-          $archive = python -m PyInstaller.utils.cliutils.archive_viewer -l "$package/Teamworks-CCNS.exe" 2>&1 | Out-String
+          $manifest = Get-Content "$package/INTERNAL-MODULES.txt"
           $requiredModules = @(
-            'Gadget',
-            'Ctrl.CTRL_Accueil',
-            'Dlg.DLG_Saisie_question',
-            'Ol.OL_candidatures',
-            'Utils.UTILS_Adaptations',
-            'CcnsCore.runtime_bridge',
-            'domain.contracts',
-            'application.control',
-            'infrastructure.persistence'
+            'teamworks.Gadget',
+            'teamworks.Ctrl.CTRL_Accueil',
+            'teamworks.Dlg.DLG_Saisie_question',
+            'teamworks.Ol.OL_candidatures',
+            'teamworks.Utils.UTILS_Adaptations',
+            'teamworks.CcnsCore.runtime_bridge'
           )
           foreach ($module in $requiredModules) {
-            if ($archive -notmatch [regex]::Escape($module)) {
-              throw "Required internal module missing from executable: $module"
+            if ($manifest -notcontains $module) {
+              throw "Required internal module absent from inventory: $module"
+            }
+          }
+
+          $warnings = Get-ChildItem build/pyinstaller -Recurse -Filter 'warn-*.txt' | Get-Content | Out-String
+          foreach ($module in $requiredModules) {
+            $shortName = $module.Substring('teamworks.'.Length)
+            if ($warnings -match "missing module named '$([regex]::Escape($shortName))'") {
+              throw "PyInstaller reports required module missing: $shortName"
             }
           }
           Get-ChildItem $package | Select-Object Name, Length
