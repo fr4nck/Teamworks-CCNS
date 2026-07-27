@@ -1,17 +1,15 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
 # Licence:      Licence GNU GPL
 #-----------------------------------------------------------
 
-import sys
 import Chemins
 from Utils.UTILS_Traduction import _
 import wx
 from Ctrl import CTRL_Bouton_image
-import FonctionsPerso
 import wx.lib.agw.hyperlink as hl
 from wx.lib.mixins.listctrl import CheckListCtrlMixin
 
@@ -19,13 +17,13 @@ from wx.lib.mixins.listctrl import CheckListCtrlMixin
 
 class Dialog(wx.Dialog):
     def __init__(self, parent, liste_labelsColonnes=[], listeValeurs=[], type=None):
-        wx.Dialog.__init__(self, parent, -1, title=_(u"Sélection d'éléments"), size=(800, 460))
+        wx.Dialog.__init__(self, parent, -1, title=_(u"SÃ©lection d'Ã©lÃ©ments"), size=(800, 460))
         self.parent = parent
         self.type = type
         self.liste_labelsColonnes = liste_labelsColonnes
         self.listeValeurs = listeValeurs
         
-        self.label_intro = wx.StaticText(self, -1, _(u"Veuillez sélectionner les éléments de votre choix :"))
+        self.label_intro = wx.StaticText(self, -1, _(u"Veuillez sÃ©lectionner les Ã©lÃ©ments de votre choix :"))
         
         # ListCtrl
         self.listCtrl = ListCtrl(self, self.liste_labelsColonnes, self.listeValeurs)
@@ -90,39 +88,39 @@ class Dialog(wx.Dialog):
     def Build_Hyperlink_select(self) :
         """ Construit un hyperlien """
         self.SetFont(wx.Font(8, wx.SWISS, wx.NORMAL, wx.NORMAL, False))
-        hyper = hl.HyperLinkCtrl(self, -1, _(u"Tout sélectionner"), URL="")
+        hyper = hl.HyperLinkCtrl(self, -1, _(u"Tout sÃ©lectionner"), URL="")
         hyper.Bind(hl.EVT_HYPERLINK_LEFT, self.OnLeftLink_select)
         hyper.AutoBrowse(False)
         hyper.SetColours("BLACK", "BLACK", "BLUE")
         hyper.EnableRollover(True)
         hyper.SetUnderlines(False, False, True)
         hyper.SetBold(False)
-        hyper.SetToolTip(wx.ToolTip(_(u"Tout sélectionner")))
+        hyper.SetToolTip(wx.ToolTip(_(u"Tout sÃ©lectionner")))
         hyper.UpdateLink()
         hyper.DoPopup(False)
         return hyper
         
     def OnLeftLink_select(self, event):
-        """ Sélectionner tout """
+        """ SÃ©lectionner tout """
         self.listCtrl.MAJListeCtrl(action="select")
 
     def Build_Hyperlink_deselect(self) :
         """ Construit un hyperlien """
         self.SetFont(wx.Font(8, wx.SWISS, wx.NORMAL, wx.NORMAL, False))
-        hyper = hl.HyperLinkCtrl(self, -1, _(u"Tout dé-sélectionner"), URL="")
+        hyper = hl.HyperLinkCtrl(self, -1, _(u"Tout dÃ©-sÃ©lectionner"), URL="")
         hyper.Bind(hl.EVT_HYPERLINK_LEFT, self.OnLeftLink_deselect)
         hyper.AutoBrowse(False)
         hyper.SetColours("BLACK", "BLACK", "BLUE")
         hyper.EnableRollover(True)
         hyper.SetUnderlines(False, False, True)
         hyper.SetBold(False)
-        hyper.SetToolTip(wx.ToolTip(_(u"Tout dé-sélectionner")))
+        hyper.SetToolTip(wx.ToolTip(_(u"Tout dÃ©-sÃ©lectionner")))
         hyper.UpdateLink()
         hyper.DoPopup(False)
         return hyper
         
     def OnLeftLink_deselect(self, event):
-        """ dé-Sélectionner tout """
+        """ dÃ©-SÃ©lectionner tout """
         self.listCtrl.MAJListeCtrl(action="deselect")
 
     def OnBoutonAide(self, event):
@@ -140,17 +138,17 @@ class Dialog(wx.Dialog):
         self.EndModal(wx.ID_CANCEL)
 
     def OnBoutonOk(self, event):
-        """ Validation des données saisies """
+        """ Validation des donnÃ©es saisies """
         selections = self.listCtrl.ListeItemsCoches()
         
-        # Validation de la sélection
+        # Validation de la sÃ©lection
         if len(selections) == 0 :
-            dlg = wx.MessageDialog(self, _(u"Vous n'avez fait aucune sélection"), _(u"Erreur de saisie"), wx.OK | wx.ICON_ERROR)
+            dlg = wx.MessageDialog(self, _(u"Vous n'avez fait aucune sÃ©lection"), _(u"Erreur de saisie"), wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
             dlg.Destroy()
             return
         
-        # Ferme la boîte de dialogue
+        # Ferme la boÃ®te de dialogue
         self.EndModal(wx.ID_OK)        
 
     def GetSelections(self):
@@ -175,7 +173,7 @@ class ListCtrl(wx.ListCtrl, CheckListCtrlMixin):
 
     def Remplissage(self, select=None, action=None):
 
-        # Création des colonnes
+        # CrÃ©ation des colonnes
         index = 0
         for labelCol, alignement, largeur, nomChamp in self.liste_labelsColonnes :
             self.InsertColumn(index, labelCol)
@@ -187,17 +185,11 @@ class ListCtrl(wx.ListCtrl, CheckListCtrlMixin):
         self.remplissage = True
         for valeurs in self.listeValeurs :
             ID = int(valeurs[0])
-            if 'phoenix' in wx.PlatformInfo:
-                index = self.InsertItem(self.GetItemCount(), str(ID))
-            else:
-                index = self.InsertItem(self.GetItemCount(), str(ID))
+            index = self.InsertItem(self.GetItemCount(), str(ID))
             x = 1
             for valeur in valeurs[1:] :
                 if x <= len(self.liste_labelsColonnes)-1:
-                    if 'phoenix' in wx.PlatformInfo:
-                        self.SetItem(index, x, valeur)
-                    else:
-                        self.SetItem(index, x, valeur)
+                    self.SetItem(index, x, valeur)
                     x += 1
 
             self.SetItemData(index, ID)
@@ -216,12 +208,12 @@ class ListCtrl(wx.ListCtrl, CheckListCtrlMixin):
         self.ToggleItem(evt.Index)
 
     def ListeItemsCoches(self):
-        """ Récupère la liste des IDdeplacements cochés """
+        """ RÃ©cupÃ¨re la liste des IDdeplacements cochÃ©s """
         listeIDcoches = []
         nbreItems = self.GetItemCount()
         for index in range(0, nbreItems) :
             ID = int(self.GetItem(index, 0).GetText())
-            # Vérifie si l'item est coché
+            # VÃ©rifie si l'item est cochÃ©
             if self.IsChecked(index) :
                 listeIDcoches.append(ID)
         return listeIDcoches
