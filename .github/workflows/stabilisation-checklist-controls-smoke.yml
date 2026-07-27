@@ -2,8 +2,11 @@ name: Stabilisation checklist controls smoke
 
 on:
   pull_request:
-    branches: [master]
+    branches:
+      - master
+      - stabilisation/recette-fonctionnelle-secondaire
     paths:
+      - "tools/smoke_runtime.py"
       - "tools/smoke_checklist_controls.py"
       - "teamworks/Ctrl/CTRL_Creation_modele_contrat_p1.py"
       - "teamworks/Dlg/DLG_Application_modele.py"
