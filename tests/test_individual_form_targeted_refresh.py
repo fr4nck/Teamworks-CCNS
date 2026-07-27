@@ -45,6 +45,13 @@ def test_problem_rules_are_recalculated_for_current_person_only():
     assert "Creation_liste_pb_personnes" not in source
 
 
+def test_problem_fast_path_preserves_contract_scope():
+    source = REFRESH.read_text(encoding="utf-8")
+    guard = "if IDpersonne not in cached_names:\n        return False"
+    assert guard in source
+    assert source.index(guard) < source.index("Recherche_problemes_personnes")
+
+
 def test_problem_cache_is_updated_before_tree_rebuild():
     source = REFRESH.read_text(encoding="utf-8")
     assert "cached_names.pop(IDpersonne, None)" in source
