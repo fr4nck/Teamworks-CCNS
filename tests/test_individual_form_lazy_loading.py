@@ -28,6 +28,16 @@ def test_secondary_tabs_are_declared_as_lazy_factories():
     assert "wx.CallAfter(self.EnsurePageLoaded, new_page)" in source
 
 
+def test_contract_header_is_loaded_without_building_contract_tab():
+    source = LAZY.read_text(encoding="utf-8")
+    assert "self._load_contract_summary()" in source
+    assert "def _load_contract_summary(self):" in source
+    assert "FROM contrats" in source
+    assert "LEFT JOIN contrats_class" in source
+    assert "dialog.contratEnCours" in source
+    assert "self.pageContrats = None" in source
+
+
 def test_unopened_questionnaire_is_not_saved():
     source = LAZY.read_text(encoding="utf-8")
     assert "if self.notebook.pageQuestionnaire is not None:" in source
