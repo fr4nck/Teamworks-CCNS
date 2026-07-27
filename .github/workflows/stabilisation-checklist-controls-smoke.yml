@@ -5,6 +5,7 @@ on:
     branches:
       - master
       - stabilisation/recette-fonctionnelle-secondaire
+      - refactor/smoke-infrastructure
     paths:
       - "tools/smoke_runtime.py"
       - "tools/smoke_checklist_controls.py"
