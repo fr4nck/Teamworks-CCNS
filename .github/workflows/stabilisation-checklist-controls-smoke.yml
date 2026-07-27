@@ -24,8 +24,6 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || 'stabilisation/recette-fonctionnelle-secondaire' }}
 
       - uses: actions/setup-python@v5
         with:
