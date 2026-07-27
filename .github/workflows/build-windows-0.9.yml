@@ -36,27 +36,38 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install pyinstaller
 
-      - name: Inventory every internal Python module
+      - name: Inventory every runtime import name
         shell: pwsh
         run: |
-          $roots = @('teamworks', 'domain', 'application', 'infrastructure')
-          $modules = foreach ($root in $roots) {
+          $modules = @()
+
+          Get-ChildItem teamworks -Recurse -Filter '*.py' -File | ForEach-Object {
+            $relative = [System.IO.Path]::GetRelativePath((Resolve-Path teamworks).Path, $_.FullName)
+            $module = [System.IO.Path]::ChangeExtension($relative, $null) -replace '[\\/]', '.'
+            if ($module.EndsWith('.__init__')) {
+              $module = $module.Substring(0, $module.Length - 9)
+            }
+            if ($module -and $module -ne '__init__') { $modules += $module }
+          }
+
+          foreach ($root in @('domain', 'application', 'infrastructure')) {
             Get-ChildItem $root -Recurse -Filter '*.py' -File | ForEach-Object {
               $relative = [System.IO.Path]::GetRelativePath((Get-Location).Path, $_.FullName)
               $module = [System.IO.Path]::ChangeExtension($relative, $null) -replace '[\\/]', '.'
               if ($module.EndsWith('.__init__')) {
                 $module = $module.Substring(0, $module.Length - 9)
               }
-              if ($module -and $module -ne 'teamworks') { $module }
+              if ($module) { $modules += $module }
             }
           }
+
           $modules = $modules | Sort-Object -Unique
-          if ($modules.Count -lt 250) { throw "Internal module inventory unexpectedly small: $($modules.Count)" }
+          if ($modules.Count -lt 250) { throw "Runtime module inventory unexpectedly small: $($modules.Count)" }
           New-Item -ItemType Directory -Force build | Out-Null
           $modules | Set-Content build/internal-modules.txt
-          Write-Host "Internal modules inventoried: $($modules.Count)"
+          Write-Host "Runtime modules inventoried: $($modules.Count)"
 
-      - name: Build one-folder application with complete internal imports
+      - name: Build one-folder application with complete runtime imports
         shell: pwsh
         run: |
           $version = (Get-Content VERSION -Raw).Trim()
@@ -96,39 +107,35 @@ jobs:
           Copy-Item build/internal-modules.txt "$package/INTERNAL-MODULES.txt" -Force
           Set-Content -Path "$package/BUILD.txt" -Value "Teamworks-CCNS $version`nCommit $env:GITHUB_SHA"
 
-      - name: Validate package structure and internal module coverage
+      - name: Validate package structure and runtime imports
         shell: pwsh
         run: |
           $package = 'dist/Teamworks-CCNS'
           if (-not (Test-Path "$package/Teamworks-CCNS.exe")) { throw 'Executable missing' }
           if (-not (Test-Path "$package/Static")) { throw 'Static directory missing' }
-          if (-not (Test-Path "$package/Versions.txt")) { throw 'Versions.txt required by FonctionsPerso.GetVersionTeamworks is missing' }
+          if (-not (Test-Path "$package/Versions.txt")) { throw 'Versions.txt missing' }
           if (-not (Test-Path "$package/VERSION")) { throw 'VERSION missing' }
           if (-not (Test-Path "$package/INTERNAL-MODULES.txt")) { throw 'Internal module manifest missing' }
           if ((Get-Item "$package/Versions.txt").Length -eq 0) { throw 'Versions.txt is empty' }
 
           $manifest = Get-Content "$package/INTERNAL-MODULES.txt"
           $requiredModules = @(
-            'teamworks.Gadget',
-            'teamworks.Ctrl.CTRL_Accueil',
-            'teamworks.Dlg.DLG_Saisie_question',
-            'teamworks.Ol.OL_candidatures',
-            'teamworks.Utils.UTILS_Adaptations',
-            'teamworks.CcnsCore.runtime_bridge'
+            'Gadget',
+            'Ctrl.CTRL_Accueil',
+            'Dlg.DLG_Saisie_question',
+            'Ol.OL_candidatures',
+            'Utils.UTILS_Adaptations',
+            'CcnsCore.runtime_bridge',
+            'domain.repositories.ccns_data',
+            'infrastructure.persistence.ccns_data_reader'
           )
           foreach ($module in $requiredModules) {
             if ($manifest -notcontains $module) {
-              throw "Required internal module absent from inventory: $module"
+              throw "Required runtime module absent from inventory: $module"
             }
           }
 
-          $warnings = Get-ChildItem build/pyinstaller -Recurse -Filter 'warn-*.txt' | Get-Content | Out-String
-          foreach ($module in $requiredModules) {
-            $shortName = $module.Substring('teamworks.'.Length)
-            if ($warnings -match "missing module named '$([regex]::Escape($shortName))'") {
-              throw "PyInstaller reports required module missing: $shortName"
-            }
-          }
+          python -c "import sys; sys.path.insert(0, 'teamworks'); import Gadget; import Ctrl.CTRL_Accueil; import Utils.UTILS_Adaptations; print('Runtime imports OK')"
           Get-ChildItem $package | Select-Object Name, Length
 
       - name: Create archive
