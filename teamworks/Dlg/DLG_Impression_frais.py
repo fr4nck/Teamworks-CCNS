@@ -283,8 +283,10 @@ class ListCtrl(wx.ListCtrl, CheckListCtrlMixin):
 
 
 class ImpressionFicheFrais():
-    def __init__(self, IDpersonne=None, listeSelections=[]):
+    def __init__(self, IDpersonne=None, listeSelections=None):
         """ Imprime une fiche de frais """
+        if listeSelections is None:
+            listeSelections = []
         from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
         from reportlab.rl_config import defaultPageSize
         from reportlab.lib.units import inch, cm

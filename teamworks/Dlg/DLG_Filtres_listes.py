@@ -25,8 +25,10 @@ class CTRL_profil_perso(CTRL_Profil.CTRL):
         CTRL_Profil.CTRL.__init__(self, parent, categorie=categorie)
         self.dlg = dlg
 
-    def Envoyer_parametres(self, dictParametres={}):
+    def Envoyer_parametres(self, dictParametres=None):
         """ Envoi des paramètres du profil sélectionné à la fenêtre """
+        if dictParametres is None:
+            dictParametres = {}
         listeFiltres = []
         if dictParametres != None :
             for index, dictFiltreStr in list(dictParametres.items()) :
@@ -169,7 +171,9 @@ class Dialog(wx.Dialog):
     def GetDonnees(self):
         return self.ctrl_filtres.GetDonnees()
 
-    def SetDonnees(self, listeFiltres=[]):
+    def SetDonnees(self, listeFiltres=None):
+        if listeFiltres is None:
+            listeFiltres = []
         self.ctrl_filtres.SetDonnees(listeFiltres)
     
 
