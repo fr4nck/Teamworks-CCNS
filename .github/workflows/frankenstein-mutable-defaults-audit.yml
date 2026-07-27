@@ -1,0 +1,23 @@
+name: Frankenstein mutable defaults audit
+
+on:
+  pull_request:
+    paths:
+      - 'teamworks/**/*.py'
+      - 'tools/find_mutable_defaults.py'
+      - '.github/workflows/frankenstein-mutable-defaults-audit.yml'
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Inventory mutable defaults
+        run: python tools/find_mutable_defaults.py teamworks > mutable-defaults.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mutable-defaults
+          path: mutable-defaults.txt
