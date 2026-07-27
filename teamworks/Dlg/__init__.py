@@ -11,7 +11,9 @@ def __getattr__(name):
     module = importlib.import_module("%s.DLG_Fiche_individuelle" % __name__)
     lazy = importlib.import_module("%s.DLG_Fiche_individuelle_lazy" % __name__)
     problems = importlib.import_module("%s.DLG_Fiche_individuelle_problems" % __name__)
+    refresh = importlib.import_module("%s.DLG_Fiche_individuelle_refresh" % __name__)
     lazy.install(module)
     problems.install(module)
+    refresh.install(module)
     globals()[name] = module
     return module
