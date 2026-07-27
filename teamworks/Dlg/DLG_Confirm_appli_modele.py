@@ -27,7 +27,11 @@ def DatetimeDateEnStr(date):
 
 
 class Dialog(wx.Dialog):
-    def __init__(self, parent, nbreTaches=0, dictTaches={}, listeCreationsTaches=[], inclureFeries=False):
+    def __init__(self, parent, nbreTaches=0, dictTaches=None, listeCreationsTaches=None, inclureFeries=False):
+        if dictTaches is None:
+            dictTaches = {}
+        if listeCreationsTaches is None:
+            listeCreationsTaches = []
         wx.Dialog.__init__(self, parent, -1, style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX)
         self.dictTaches = dictTaches
         self.listeCreationsTaches = listeCreationsTaches

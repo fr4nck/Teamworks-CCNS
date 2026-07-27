@@ -24,7 +24,11 @@ else :
 
 
 class Panel(wx.Panel):
-    def __init__(self, parent, selectionLignes=[], selectionPersonnes=[], selectionDates=(None, None) ):
+    def __init__(self, parent, selectionLignes=None, selectionPersonnes=None, selectionDates=(None, None) ):
+        if selectionLignes is None:
+            selectionLignes = []
+        if selectionPersonnes is None:
+            selectionPersonnes = []
         wx.Panel.__init__(self, parent, -1, name="panel_applicModele", style=wx.TAB_TRAVERSAL)
         self.parent = parent
 
@@ -961,7 +965,11 @@ class listCtrl_Modeles(wx.ListCtrl, CheckListCtrlMixin):
 # ------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 class Dialog(wx.Dialog):
-    def __init__(self, parent, selectionLignes=[], selectionPersonnes=[], selectionDates=(None, None)):
+    def __init__(self, parent, selectionLignes=None, selectionPersonnes=None, selectionDates=(None, None)):
+        if selectionLignes is None:
+            selectionLignes = []
+        if selectionPersonnes is None:
+            selectionPersonnes = []
         wx.Dialog.__init__(self, parent, -1, style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX)
         self.panel = Panel(self, selectionLignes=selectionLignes, selectionPersonnes=selectionPersonnes, selectionDates=selectionDates)
         self.SetTitle(_(u"Application d'un modèle"))

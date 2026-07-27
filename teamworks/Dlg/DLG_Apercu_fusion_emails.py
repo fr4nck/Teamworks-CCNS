@@ -22,7 +22,9 @@ from Utils import UTILS_Dates
 
 
 class Dialog(wx.Dialog):
-    def __init__(self, parent, donnees=[], texte_xml=None):
+    def __init__(self, parent, donnees=None, texte_xml=None):
+        if donnees is None:
+            donnees = []
         wx.Dialog.__init__(self, parent, -1, style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX)
         self.parent = parent  
         self.donnees = donnees 
