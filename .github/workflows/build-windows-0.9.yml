@@ -84,6 +84,7 @@ jobs:
             '--distpath', 'dist',
             '--workpath', 'build/pyinstaller',
             '--specpath', 'build/spec',
+            '--runtime-hook', 'packaging/runtime_smoke_imports.py',
             '--collect-all', 'wx',
             '--collect-all', 'matplotlib',
             '--collect-all', 'reportlab',
@@ -107,7 +108,7 @@ jobs:
           Copy-Item build/internal-modules.txt "$package/INTERNAL-MODULES.txt" -Force
           Set-Content -Path "$package/BUILD.txt" -Value "Teamworks-CCNS $version`nCommit $env:GITHUB_SHA"
 
-      - name: Validate package structure and runtime imports
+      - name: Validate package structure and packaged runtime imports
         shell: pwsh
         run: |
           $package = 'dist/Teamworks-CCNS'
@@ -135,7 +136,13 @@ jobs:
             }
           }
 
-          python -c "import sys; sys.path.insert(0, 'teamworks'); import Gadget; import Ctrl.CTRL_Accueil; import Utils.UTILS_Adaptations; print('Runtime imports OK')"
+          $env:TEAMWORKS_PACKAGED_SMOKE_TEST = '1'
+          $process = Start-Process -FilePath "$package/Teamworks-CCNS.exe" -WorkingDirectory $package -PassThru -Wait
+          if ($process.ExitCode -ne 0) {
+            throw "Packaged runtime import smoke test failed with exit code $($process.ExitCode)"
+          }
+          Remove-Item Env:TEAMWORKS_PACKAGED_SMOKE_TEST
+          Write-Host 'Packaged runtime imports OK'
           Get-ChildItem $package | Select-Object Name, Length
 
       - name: Create archive
