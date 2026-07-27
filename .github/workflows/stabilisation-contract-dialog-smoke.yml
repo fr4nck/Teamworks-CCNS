@@ -4,7 +4,9 @@ on:
   pull_request:
     branches:
       - master
+      - stabilisation/recette-fonctionnelle-secondaire
     paths:
+      - "tools/smoke_runtime.py"
       - "tools/smoke_secondary_contract_dialog.py"
       - "teamworks/Dlg/DLG_Creation_contrat.py"
       - "teamworks/Ctrl/CTRL_Creation_contrat_p*.py"
@@ -20,8 +22,6 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
 
       - uses: actions/setup-python@v5
         with:

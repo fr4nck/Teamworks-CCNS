@@ -3,11 +3,10 @@
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
-import subprocess
-import sys
 import traceback
+
+from smoke_runtime import github_error_summary, run_entrypoint, write_diagnostic
 
 ROOT = Path(__file__).resolve().parents[1]
 TEAMWORKS_DIR = ROOT / "teamworks"
@@ -50,7 +49,6 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 _smoke_panel.ctrl_entretiens.MAJ()
                 wx.Yield()
 
-                # Vérifie l'intersection déterministe de plusieurs filtres métier.
                 _smoke_candidates.DICT_DISPONIBILITES = {
                     1: [(1, __import__('datetime').date(2026, 1, 1), __import__('datetime').date(2026, 12, 31))],
                     2: [(2, __import__('datetime').date(2026, 1, 1), __import__('datetime').date(2026, 12, 31))],
@@ -66,7 +64,6 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 assert _smoke_ids == [1]
                 assert _smoke_sql == ""
 
-                # Le tri doit pouvoir être demandé sur une colonne réellement construite.
                 if _smoke_panel.ctrl_candidatures.GetColumnCount() > 1:
                     _smoke_panel.ctrl_candidatures.SortBy(1)
                     wx.Yield()
@@ -95,49 +92,40 @@ def build_patched_entrypoint() -> int:
     return marker_count
 
 
-def decode_output(data: bytes) -> str:
-    for encoding in ("utf-8", "cp1252", "iso-8859-15"):
-        try:
-            return data.decode(encoding)
-        except UnicodeDecodeError:
-            pass
-    return data.decode("utf-8", errors="replace")
-
-
-def build_environment() -> dict[str, str]:
-    env = os.environ.copy()
-    env["TEAMWORKS_SMOKE_MODE"] = "main-window"
-    paths = [str(ROOT), str(TEAMWORKS_DIR)]
-    if env.get("PYTHONPATH"):
-        paths.append(env["PYTHONPATH"])
-    env["PYTHONPATH"] = os.pathsep.join(paths)
-    return env
-
-
 def main() -> int:
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
-    marker_count = None
+    marker_count: int | None = None
     try:
         marker_count = build_patched_entrypoint()
-        result = subprocess.run(
-            [sys.executable, str(PATCHED)], cwd=TEAMWORKS_DIR,
-            env=build_environment(), capture_output=True, timeout=180, check=False,
+        return_code, output = run_entrypoint(
+            PATCHED,
+            root=ROOT,
+            teamworks_dir=TEAMWORKS_DIR,
+            timeout=180,
         )
-        output = decode_output(result.stdout) + "\n" + decode_output(result.stderr)
-        REPORT.write_text(
-            f"return_code={result.returncode}\nentrypoint_marker_count={marker_count}\n--- output ---\n{output}",
-            encoding="utf-8",
+        write_diagnostic(
+            REPORT,
+            return_code=return_code,
+            marker_count=marker_count,
+            ready_marker=READY_MARKER,
+            failure_marker=FAILURE_MARKER,
+            output=output,
         )
-        print(output)
-        if result.returncode != 0 or FAILURE_MARKER in output or READY_MARKER not in output:
-            summary = " | ".join(line.strip() for line in output.splitlines()[-40:] if line.strip())
-            print(f"::error title=Recruitment smoke failed::{summary}")
-            return result.returncode or 1
+        if return_code != 0 or FAILURE_MARKER in output or READY_MARKER not in output:
+            github_error_summary("Recruitment smoke failed", output)
+            return return_code or 1
         return 0
     except Exception:
-        diagnostic = traceback.format_exc()
-        REPORT.write_text(diagnostic, encoding="utf-8")
-        print(diagnostic)
+        output = traceback.format_exc()
+        write_diagnostic(
+            REPORT,
+            return_code=3,
+            marker_count=marker_count,
+            ready_marker=READY_MARKER,
+            failure_marker=FAILURE_MARKER,
+            output=output,
+        )
+        github_error_summary("Recruitment smoke failed", output)
         return 3
     finally:
         PATCHED.unlink(missing_ok=True)
