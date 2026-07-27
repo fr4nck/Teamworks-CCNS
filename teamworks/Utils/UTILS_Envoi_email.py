@@ -214,7 +214,15 @@ def GetAdresseFamille(IDfamille=None, choixMultiple=True, muet=False, nomTitulai
 
 
 class Message():
-    def __init__(self, destinataires=[], sujet="", texte_html="", fichiers=[], images=[], champs={}):
+    def __init__(self, destinataires=None, sujet="", texte_html="", fichiers=None, images=None, champs=None):
+        if destinataires is None:
+            destinataires = []
+        if fichiers is None:
+            fichiers = []
+        if images is None:
+            images = []
+        if champs is None:
+            champs = {}
         self.destinataires = destinataires
         self.sujet = sujet
         self.fichiers = fichiers
