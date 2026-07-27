@@ -15,5 +15,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: List redundant Phoenix branches
-        run: python tools/find_redundant_phoenix_branches.py teamworks/Ctrl --check
+      - name: Build redundant Phoenix inventory
+        run: python tools/find_redundant_phoenix_branches.py teamworks/Ctrl > phoenix-findings.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: phoenix-findings
+          path: phoenix-findings.txt
+          if-no-files-found: error
