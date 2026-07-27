@@ -1,0 +1,54 @@
+name: Stabilisation functional DB roundtrip
+
+on:
+  push:
+    branches:
+      - stabilisation/recette-fonctionnelle-secondaire
+    paths:
+      - "tools/functional_db_roundtrip.py"
+      - "tests/test_functional_db_roundtrip.py"
+      - ".github/workflows/stabilisation-functional-db-roundtrip.yml"
+      - "teamworks/Static/Exemples/*.dat"
+  pull_request:
+    branches:
+      - master
+    paths:
+      - "tools/functional_db_roundtrip.py"
+      - "tests/test_functional_db_roundtrip.py"
+      - ".github/workflows/stabilisation-functional-db-roundtrip.yml"
+      - "teamworks/Static/Exemples/*.dat"
+  workflow_dispatch:
+
+jobs:
+  functional-db-roundtrip:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install test runner
+        run: python -m pip install pytest
+
+      - name: Run focused test
+        run: python -m pytest -q tests/test_functional_db_roundtrip.py
+
+      - name: Produce functional report
+        run: python tools/functional_db_roundtrip.py --output-dir functional-report --json > functional-report.json
+
+      - name: Upload functional report
+        uses: actions/upload-artifact@v4
+        with:
+          name: functional-db-roundtrip-${{ matrix.os }}
+          path: |
+            functional-report.json
+            functional-report/Sauvegarde_Exemple_TDATA.dat
+          if-no-files-found: error

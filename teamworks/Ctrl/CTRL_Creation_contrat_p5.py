@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -19,7 +19,7 @@ class PanelDefilant(scrolled.ScrolledPanel):
         self.Creation_champs()
     
     def Creation_champs(self):       
-        # Récupération des données
+        # RÃ©cupÃ©ration des donnÃ©es
         self.dicoChampsTous = self.GetGrandParent().GetParent().page4.listCtrl_champs.dictChamps
         self.selections = self.GetGrandParent().GetParent().page4.listCtrl_champs.selections
         self.dicoChamps = {}
@@ -29,11 +29,11 @@ class PanelDefilant(scrolled.ScrolledPanel):
                 
         # Modification du texte d'intro du panel
         if len(self.dicoChamps) == 0 :
-            self.GetParent().label_intro.SetLabel(_(u"Vous n'avez aucun champ à remplir. Cliquez sur 'Suite'..."))
+            self.GetParent().label_intro.SetLabel(_(u"Vous n'avez aucun champ Ã  remplir. Cliquez sur 'Suite'..."))
         else:
-            self.GetParent().label_intro.SetLabel(_(u"Vous pouvez maintenant remplir vos champs personnalisés :"))
+            self.GetParent().label_intro.SetLabel(_(u"Vous pouvez maintenant remplir vos champs personnalisÃ©s :"))
         
-        # Création des champs dans l'interface
+        # CrÃ©ation des champs dans l'interface
         grid_sizer = wx.FlexGridSizer(rows=len(self.dicoChamps)+1, cols=1, vgap=10, hgap=10)
         
         for ID, valeurs in self.dicoChamps.items() : 
@@ -48,12 +48,12 @@ class PanelDefilant(scrolled.ScrolledPanel):
             d = self.GetGrandParent().GetParent().dictChamps
             if ID in list(d.keys()) : valeur = d[ID]
             
-            # TextCtrl pour réponse
+            # TextCtrl pour rÃ©ponse
             self.sizer_champs = wx.StaticBox(self, -1, label)
             sizer_champ = wx.StaticBoxSizer(self.sizer_champs, wx.VERTICAL)
             setattr(self, "text_%s" % nom, wx.TextCtrl(self, -1, six.text_type(valeur)))
             getattr(self, "text_%s" % nom).SetToolTip(wx.ToolTip(infoBulle))
-            sizer_champ.Add(getattr(self, "text_%s" % nom), 0, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, 0)
+            sizer_champ.Add(getattr(self, "text_%s" % nom), 0, wx.EXPAND, 0)
 
             # Exemple :
             if exemple != "" :
@@ -61,14 +61,14 @@ class PanelDefilant(scrolled.ScrolledPanel):
                 setattr(self, "label_%sEX" % nom, wx.StaticText(self, -1, txtExemple))
                 getattr(self, "label_%sEX" % nom).SetFont(wx.Font(7, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, ''))
                 getattr(self, "label_%sEX" % nom).SetForegroundColour((120, 120, 120))
-                sizer_champ.Add(getattr(self, "label_%sEX" % nom), 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL, 0)
+                sizer_champ.Add(getattr(self, "label_%sEX" % nom), 0, wx.ALIGN_RIGHT, 0)
 
             grid_sizer.Add(sizer_champ, 1, wx.RIGHT|wx.EXPAND, 10)
 
         grid_sizer.AddGrowableCol(0)
         self.SetSizer(grid_sizer)
         
-        # Initialisation des barres de défilement
+        # Initialisation des barres de dÃ©filement
         self.SetupScrolling()
         
         
@@ -76,8 +76,8 @@ class Page(wx.Panel):
     def __init__(self, *args, **kwds):
         kwds["style"] = wx.TAB_TRAVERSAL
         wx.Panel.__init__(self, *args, **kwds)
-        self.label_titre = wx.StaticText(self, -1, _(u"4. Remplissage des champs personnalisés"))
-        self.label_intro = wx.StaticText(self, -1, _(u"Vous pouvez maintenant remplir vos champs personnalisés :"))
+        self.label_titre = wx.StaticText(self, -1, _(u"4. Remplissage des champs personnalisÃ©s"))
+        self.label_intro = wx.StaticText(self, -1, _(u"Vous pouvez maintenant remplir vos champs personnalisÃ©s :"))
         self.panelDefilant = wx.Panel(self, -1)
 
         self.__set_properties()
@@ -102,7 +102,7 @@ class Page(wx.Panel):
     def MAJ_panelDefilant(self):
         # Destruction du panel actuel
         self.panelDefilant.Destroy()
-        # Recontruction avec les nouveaux contrôles
+        # Recontruction avec les nouveaux contrÃ´les
         self.panelDefilant = PanelDefilant(self)
         self.sizer_pages.Add(self.panelDefilant, 1, wx.LEFT|wx.EXPAND, 20)
         self.sizer_pages.Layout()
@@ -110,7 +110,7 @@ class Page(wx.Panel):
 
     def Validation(self):
         
-        # Vérifie que les champs ont été remplis
+        # VÃ©rifie que les champs ont Ã©tÃ© remplis
         listeInvalides = []
         dictChamps = {}
         for ID, valeurs in self.panelDefilant.dicoChamps.items() : 
@@ -118,16 +118,16 @@ class Page(wx.Panel):
             label = valeurs[1]
             texte = getattr(self.panelDefilant, "text_%s" % nom).GetValue()
                         
-            # Critères de validation
+            # CritÃ¨res de validation
             if texte == "" :
                 listeInvalides.append(label)
             else:
-                # Mémorisation pour enr. base de données (cf plus bas)
+                # MÃ©morisation pour enr. base de donnÃ©es (cf plus bas)
                 dictChamps[ID] = texte
 
         if len(listeInvalides) == 1 :
             txtMessage = _(u"Vous n'avez pas rempli le champ suivant : '") + listeInvalides[0]
-            txtMessage += _(u"'\n\nSouhaitez-vous continuer quand même ?")
+            txtMessage += _(u"'\n\nSouhaitez-vous continuer quand mÃªme ?")
             dlg = wx.MessageDialog(self, txtMessage, _(u"Demande de confirmation"), wx.ICON_QUESTION | wx.YES_NO | wx.NO_DEFAULT)
             if dlg.ShowModal() == wx.ID_NO :
                 dlg.Destroy() 
@@ -137,13 +137,13 @@ class Page(wx.Panel):
             txtMessage = _(u"Vous n'avez pas rempli les champs suivants : \n\n")
             for item in listeInvalides :
                 txtMessage += "      - " + item + "\n"
-            txtMessage += _(u"\nSouhaitez-vous continuer quand même ?")
+            txtMessage += _(u"\nSouhaitez-vous continuer quand mÃªme ?")
             dlg = wx.MessageDialog(self, txtMessage, _(u"Demande de confirmation"), wx.ICON_QUESTION | wx.YES_NO | wx.NO_DEFAULT)
             if dlg.ShowModal() == wx.ID_NO :
                 dlg.Destroy() 
                 return False
         
-        # Mémorisation des données pour l'enregistrement dans la base de données
+        # MÃ©morisation des donnÃ©es pour l'enregistrement dans la base de donnÃ©es
         self.GetGrandParent().dictChamps = dictChamps
             
         return True

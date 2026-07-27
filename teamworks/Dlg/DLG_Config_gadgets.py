@@ -181,6 +181,8 @@ class ListCtrl(wx.ListCtrl, CheckListCtrlMixin):
     def __init__(self, parent):
         wx.ListCtrl.__init__(self, parent, -1, style=wx.LC_REPORT|wx.LC_SINGLE_SEL|wx.LC_HRULES|wx.LC_VRULES)
         CheckListCtrlMixin.__init__(self)
+        if 'phoenix' in wx.PlatformInfo:
+            self.EnableCheckBoxes(True)
         self.parent = parent
         
         self.Remplissage()
@@ -206,11 +208,11 @@ class ListCtrl(wx.ListCtrl, CheckListCtrlMixin):
         self.remplissage = True
         for IDgadget, nom, label, description, taille, affichage, ordre, config, parametres in self.listeGadgets :
             if 'phoenix' in wx.PlatformInfo:
-                index = self.InsertItem(sys.maxsize, str(ordre))
+                index = self.InsertItem(self.GetItemCount(), str(ordre))
                 self.SetItem(index, 1, label)
                 self.SetItem(index, 2, description)
             else:
-                index = self.InsertItem(sys.maxsize, str(ordre))
+                index = self.InsertItem(self.GetItemCount(), str(ordre))
                 self.SetItem(index, 1, label)
                 self.SetItem(index, 2, description)
             self.SetItemData(index, IDgadget)

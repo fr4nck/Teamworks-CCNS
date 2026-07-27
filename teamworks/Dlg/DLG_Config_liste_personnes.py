@@ -126,6 +126,8 @@ class ListCtrl(wx.ListCtrl, CheckListCtrlMixin):
     def __init__(self, parent):
         wx.ListCtrl.__init__(self, parent, -1, style=wx.LC_REPORT|wx.LC_SINGLE_SEL|wx.LC_HRULES|wx.LC_VRULES)
         CheckListCtrlMixin.__init__(self)
+        if 'phoenix' in wx.PlatformInfo:
+            self.EnableCheckBoxes(True)
         self.parent = parent
         
         self.Importation()
@@ -149,11 +151,11 @@ class ListCtrl(wx.ListCtrl, CheckListCtrlMixin):
         self.listeColonnes.sort(key=operator.itemgetter(8))
         for ID, labelCol, alignement, largeur, nomChamp, args, description, affiche, ordre in self.listeColonnes :
             if 'phoenix' in wx.PlatformInfo:
-                index = self.InsertItem(sys.maxsize, str(ordre))
+                index = self.InsertItem(self.GetItemCount(), str(ordre))
                 self.SetItem(index, 1, labelCol)
                 self.SetItem(index, 2, description)
             else:
-                index = self.InsertItem(sys.maxsize, str(ordre))
+                index = self.InsertItem(self.GetItemCount(), str(ordre))
                 self.SetItem(index, 1, labelCol)
                 self.SetItem(index, 2, description)
             self.SetItemData(index, ID)

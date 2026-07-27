@@ -88,6 +88,10 @@ class DB:
             self.IDconnexion = IDconnexion
         DICT_CONNEXIONS[self.IDconnexion] = []
 
+        # Resolve the active Teamworks file when callers omit nomFichier.
+        if self.nomFichier == "":
+            self.nomFichier = self.GetNomFichierDefaut()
+
         # On ajoute le préfixe de type de fichier et l'extension du fichier
         if MODE_TEAMWORKS == True and suffixe not in ("", None):
             if suffixe[0] != "T":

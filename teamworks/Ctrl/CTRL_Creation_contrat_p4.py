@@ -88,6 +88,8 @@ class ListCtrl_champs(wx.ListCtrl, CheckListCtrlMixin):
     def __init__(self, parent):
         wx.ListCtrl.__init__(self, parent, -1, style=wx.LC_REPORT|wx.LC_NO_HEADER)
         CheckListCtrlMixin.__init__(self)
+        if 'phoenix' in wx.PlatformInfo:
+            self.EnableCheckBoxes(True)
         self.parent = parent
             
         self.Remplissage()
@@ -115,9 +117,9 @@ class ListCtrl_champs(wx.ListCtrl, CheckListCtrlMixin):
         # Remplissage avec les valeurs
         for key, valeurs in self.dictChamps.items():
             if 'phoenix' in wx.PlatformInfo:
-                index = self.InsertItem(sys.maxsize, valeurs[1])
+                index = self.InsertItem(self.GetItemCount(), valeurs[1])
             else:
-                index = self.InsertItem(sys.maxsize, valeurs[1])
+                index = self.InsertItem(self.GetItemCount(), valeurs[1])
             self.SetItemData(index, key)
             # Sélection
             if key in self.selections :

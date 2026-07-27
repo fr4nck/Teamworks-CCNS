@@ -171,6 +171,8 @@ class ListCtrl(wx.ListCtrl, CheckListCtrlMixin):
     def __init__(self, parent, nomBase = ""):
         wx.ListCtrl.__init__(self, parent, -1, style=wx.LC_REPORT|wx.LC_SINGLE_SEL|wx.LC_HRULES|wx.LC_VRULES)
         CheckListCtrlMixin.__init__(self)
+        if 'phoenix' in wx.PlatformInfo:
+            self.EnableCheckBoxes(True)
         self.parent = parent
         self.nomBase = nomBase
         self.Remplissage()
@@ -197,7 +199,7 @@ class ListCtrl(wx.ListCtrl, CheckListCtrlMixin):
                 autorisationStr = "Oui"
             else:
                 autorisationStr = "Non"
-            index = self.InsertItem(sys.maxsize, autorisationStr)
+            index = self.InsertItem(self.GetItemCount(), autorisationStr)
             
             if user == "root" :
                 user = _(u"root (Administrateur)")
