@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -32,7 +32,7 @@ class LibOutlook() :
             self.echec = True
         
     def Test(self):
-        """ Teste si Outlook n'est pas verrouillé """
+        """ Teste si Outlook n'est pas verrouillÃ© """
         try :
             # Test de lecture des contacts
             MAPI = self.Outlook.GetNamespace("MAPI")
@@ -67,7 +67,7 @@ class LibOutlook() :
             item = dossierContacts.Items.Item(i+1)
             contact = {}
             
-            # Généralités
+            # GÃ©nÃ©ralitÃ©s
             contact["civilite"] = item.Title
             contact["nom"] = item.LastName
             contact["prenom"] = item.FirstName
@@ -83,7 +83,7 @@ class LibOutlook() :
             contact["email2"] = item.Email2Address
             contact["email3"] = item.Email3Address
 
-            # Téléphones
+            # TÃ©lÃ©phones
             contact["fixe1"] = item.HomeTelephoneNumber
             contact["fixe2"] = item.Home2TelephoneNumber
             contact["fax"] = item.HomeFaxNumber
@@ -143,10 +143,10 @@ class PanelContacts(scrolled.ScrolledPanel):
         self.listeContacts = self.Import_Donnees()
         gridSizer = wx.FlexGridSizer(cols=6, vgap=2, hgap=2)
         
-        # Création des labels
-        label_nom = wx.StaticText(self, -1, _(u"Nom et prénom"))
+        # CrÃ©ation des labels
+        label_nom = wx.StaticText(self, -1, _(u"Nom et prÃ©nom"))
         label_adresse = wx.StaticText(self, -1, _(u"Adresse"))
-        label_coords = wx.StaticText(self, -1, _(u"Coordonnées"))
+        label_coords = wx.StaticText(self, -1, _(u"CoordonnÃ©es"))
         label_datenaiss = wx.StaticText(self, -1, _(u"Date de naiss."))
         
         font = wx.Font(7, wx.SWISS, wx.NORMAL, wx.NORMAL)
@@ -164,7 +164,7 @@ class PanelContacts(scrolled.ScrolledPanel):
 
         for IDpersonne, civilite, nom, prenom, date_naiss, adresse_resid, cp_resid, ville_resid, emails, fixes, fax, mobile in self.listeContacts:
             
-            # Création des contrôles
+            # CrÃ©ation des contrÃ´les
             exec("self.bouton_synchro_" + str(IDpersonne) + " = wx.BitmapButton(self, 10000+IDpersonne, wx.Bitmap('Images/16x16/Ok_2.png', wx.BITMAP_TYPE_ANY))")
             exec("self.bouton_synchro_" + str(IDpersonne) + ".SetBitmapDisabled(wx.Bitmap('Images/16x16/Ok_3.png', wx.BITMAP_TYPE_ANY))")
             exec("self.bouton_synchro_" + str(IDpersonne) + ".SetToolTip(wx.ToolTip(u'Cliquez ici pour synchroniser la fiche de ' + prenom + ' ' + nom + '.'))")
@@ -187,17 +187,17 @@ class PanelContacts(scrolled.ScrolledPanel):
             exec("self.text_coords_" + str(IDpersonne) + " = wx.TextCtrl(self, -1, texte_coords, size=(200,-1))")
             exec("self.text_datenaiss_" + str(IDpersonne) + " = wx.TextCtrl(self, -1, date_naiss, size=(75,-1))")
             
-            # Définition de l'état
+            # DÃ©finition de l'Ã©tat
             etat = "non synchro"
             for key, valeurs in self.dictContacts.items():
                 if valeurs["nom et prenom"] == nom + ", " + prenom :
-                    # Ce contact est déjà dans Outlook
+                    # Ce contact est dÃ©jÃ  dans Outlook
                     etat = "synchro"
             
-            # Etat des contrôles
+            # Etat des contrÃ´les
             self.Affiche_controles(IDpersonne, etat)
             
-            # Layout des contrôles
+            # Layout des contrÃ´les
             exec("gridSizer.Add(self.bouton_synchro_" + str(IDpersonne) + ", flag=wx.ALIGN_CENTER_VERTICAL, border=0)")
             exec("gridSizer.Add(self.bouton_suppr_" + str(IDpersonne) + ", flag=wx.ALIGN_CENTER_VERTICAL, border=0)")
             exec("gridSizer.Add(self.text_nom_" + str(IDpersonne) + ", flag=wx.ALIGN_CENTER_VERTICAL, border=0)")
@@ -253,7 +253,7 @@ class PanelContacts(scrolled.ScrolledPanel):
     def Synchro(self, IDpersonne) :
         for ID, civilite, nom, prenom, date_naiss, adresse, cp, ville, emails, fixes, fax, mobile in self.listeContacts:
             if ID == IDpersonne :
-                # Préparation des données
+                # PrÃ©paration des donnÃ©es
                 anniversaire = "25/06/1981"
                 pays = "France"
         
@@ -261,128 +261,111 @@ class PanelContacts(scrolled.ScrolledPanel):
                     email1 = ""
                     email2 = ""
                     email3 = ""
-                elif len(emails) == 1 :
+                if len(emails) == 1 :
                     email1 = emails[0]
                     email2 = ""
                     email3 = ""
-                elif len(emails) == 2 :
+                if len(emails) == 2 :
                     email1 = emails[0]
                     email2 = emails[1]
                     email3 = ""
-                else :
+                if len(emails) == 3 :
                     email1 = emails[0]
                     email2 = emails[1]
                     email3 = emails[2]
-                    
+        
                 if len(fixes) == 0 :
                     fixe1 = ""
                     fixe2 = ""
-                elif len(fixes) == 1 :
+                if len(fixes) == 1 :
                     fixe1 = fixes[0]
                     fixe2 = ""
-                else :
+                if len(fixes) == 2 :
                     fixe1 = fixes[0]
                     fixe2 = fixes[1]
                 
-                # Enregistrement des données
                 self.outlook.Enregistrement(civilite, nom, prenom, anniversaire, email1, email2, email3, fixe1, fixe2, fax, mobile, ville, pays, cp, adresse)
                 break
             
-    def SynchroTout(self):
-        for IDpersonne, civilite, nom, prenom, date_naiss, adresse, cp, ville, emails, fixes, fax, mobile in self.listeContacts:
-            exec("etat = self.bouton_synchro_" + str(IDpersonne) + ".IsEnabled()")
-            if etat == True :
-                self.Synchro(IDpersonne)
-                self.Affiche_controles(IDpersonne, "synchro")
-
-    def SupprTout(self):
-        for IDpersonne, civilite, nom, prenom, date_naiss, adresse, cp, ville, emails, fixes, fax, mobile in self.listeContacts:
-            exec("etat = self.bouton_synchro_" + str(IDpersonne) + ".IsEnabled()")
-            if etat == False :
-                self.outlook.Suppression(nom + ", " + prenom)
-                self.Affiche_controles(IDpersonne, "non synchro")
-            
     def Import_Donnees(self):
-        """ Importe les champs de la base de données """
-        DB = GestionDB.DB() 
-        
-        listeContacts = []
-       
-        # Base personnes
-        req = """
-            SELECT IDpersonne, civilite, nom, prenom, date_naiss, adresse_resid, cp_resid, ville_resid
-            FROM personnes;
-        """
+        DB = GestionDB.DB()
+        req = """SELECT IDindividu, IDcivilite, nom, prenom, date_naiss, adresse_auto, rue_resid, cp_resid, ville_resid
+        FROM individus
+        ORDER BY nom, prenom;"""
         DB.ExecuterReq(req)
-        listePersonnes = DB.ResultatReq()
-        
-        for personne in listePersonnes :
-        
-            IDpersonne = personne[0]
-            civilite = personne[1]
-            nom = personne[2]
-            prenom = personne[3]
-            date_naiss = personne[4]
-            if date_naiss == None : date_naiss = ""
-            if date_naiss != "" : date_naiss = FonctionsPerso.DateEngFr(date_naiss)
-            adresse_resid = personne[5]
-            cp_resid = str(personne[6])
-            ville_resid = personne[7]
+        listeDonnees = DB.ResultatReq()
+        DB.Close()
+        listeContacts = []
+        for IDindividu, IDcivilite, nom, prenom, date_naiss, adresse_auto, rue_resid, cp_resid, ville_resid in listeDonnees :
+            if IDcivilite == 1 : civilite = "Mr"
+            if IDcivilite == 2 : civilite = "Mme"
+            if IDcivilite == 3 : civilite = "Melle"
+            if IDcivilite == 4 : civilite = ""
+            if IDcivilite == 5 : civilite = ""
             
-            # Adaptation des données
-            if civilite == "Mr" : civilite = "M."
-            if civilite == "Mme" : civilite = "Mme"
-            if civilite == "Melle" : civilite = "Melle"
+            # Recherche de l'adresse automatique
+            if adresse_auto != None :
+                req = """SELECT rue_resid, cp_resid, ville_resid
+                FROM individus
+                WHERE IDindividu=%d;""" % adresse_auto
+                DB = GestionDB.DB()
+                DB.ExecuterReq(req)
+                listeDonnees = DB.ResultatReq()
+                DB.Close()
+                rue_resid, cp_resid, ville_resid = listeDonnees[0]
             
-            # Base coordonnées
-            req = """
-                SELECT categorie, texte
-                FROM coordonnees WHERE IDpersonne=%d;
-            """ % IDpersonne
+            # Recherche des coordonnÃ©es
+            req = """SELECT categorie, coordonnee
+            FROM coordonnees
+            WHERE IDindividu=%d;""" % IDindividu
+            DB = GestionDB.DB()
             DB.ExecuterReq(req)
-            listeCoords = DB.ResultatReq()
-            
+            listeDonnees = DB.ResultatReq()
+            DB.Close()
             emails = []
             fixes = []
             fax = ""
             mobile = ""
+            for categorie, coordonnee in listeDonnees :
+                if categorie == "Email" : emails.append(coordonnee)
+                if categorie == "Fixe" : fixes.append(coordonnee)
+                if categorie == "Fax" : fax = coordonnee
+                if categorie == "Mobile" : mobile = coordonnee
             
-            for categorie, texte in listeCoords :
-                if categorie == "Mobile" : 
-                    mobile = texte
-                if categorie == "Fixe" :
-                    fixes.append(texte)
-                if categorie == "Email" :
-                    emails.append(texte)
-                if categorie == "Fax" :
-                    fax = texte
-
-            # Création de la liste
-            listeContacts.append( [IDpersonne, civilite, nom, prenom, date_naiss, adresse_resid, cp_resid, ville_resid, emails, fixes, fax, mobile] )
-
-        DB.Close()
+            if date_naiss == None : date_naiss = ""
+            if nom == None : nom = ""
+            if prenom == None : prenom = ""
+            if rue_resid == None : rue_resid = ""
+            if cp_resid == None : cp_resid = ""
+            if ville_resid == None : ville_resid = ""
+            
+            listeContacts.append((IDindividu, civilite, nom, prenom, date_naiss, rue_resid, cp_resid, ville_resid, emails, fixes, fax, mobile))
         return listeContacts
-    
-    
+
+    def SynchroTout(self):
+        for IDpersonne, civilite, nom, prenom, date_naiss, adresse_resid, cp_resid, ville_resid, emails, fixes, fax, mobile in self.listeContacts:
+            self.Synchro(IDpersonne)
+            self.Affiche_controles(IDpersonne, "synchro")
+
+    def SupprTout(self):
+        for IDpersonne, civilite, nom, prenom, date_naiss, adresse_resid, cp_resid, ville_resid, emails, fixes, fax, mobile in self.listeContacts:
+            self.outlook.Suppression(nom + ", " + prenom)
+            self.Affiche_controles(IDpersonne, "non synchro")
 
 
-# ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-        
-        
 class Dialog(wx.Dialog):
-    def __init__(self, parent):
-        wx.Dialog.__init__(self, parent, -1, style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX)
+    def __init__(self, parent, ID=-1, title="", size=(280, 200), style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX):
+        wx.Dialog.__init__(self, parent, ID, title, size, style)
         self.parent = parent
         self.panel_base = wx.Panel(self, -1)
-        self.sizer_grid_staticbox = wx.StaticBox(self.panel_base, -1, "Champs")
-        self.label_intro = wx.StaticText(self.panel_base, -1, _(u"Synchronisez vos contacts Outlook en cliquant sur les boutons ci-dessous :"))
+        self.label_intro = wx.StaticText(self.panel_base, -1, _(u"Vous pouvez exporter ici les personnes de la base de donnÃ©es vers le carnet d'adresses de Outlook. La couleur vous indique l'Ã©tat de synchronisation des fiches."))
+        self.sizer_grid_staticbox = wx.StaticBox(self.panel_base, -1, _(u"Liste des personnes de la base de donnÃ©es"))
                
-        # Préparation de la grid
+        # PrÃ©paration de la grid
         self.gridChamps = PanelContacts(self.panel_base)
         
         self.label_synchro = wx.StaticText(self.panel_base, -1, _(u"Synchro."))
-        self.label_modif = wx.StaticText(self.panel_base, -1, _(u"Synchro mais modifié"))
+        self.label_modif = wx.StaticText(self.panel_base, -1, _(u"Synchro mais modifiÃ©"))
         self.label_non_synchro = wx.StaticText(self.panel_base, -1, _(u"Non synchro."))
         
         self.label_synchro.SetBackgroundColour(COULEUR_SYNCHRO)
@@ -390,7 +373,7 @@ class Dialog(wx.Dialog):
         self.label_non_synchro.SetBackgroundColour(COULEUR_NON_SYNCHRO)
         
         self.bouton_synchroTout = wx.Button(self.panel_base, -1, _(u"Tout synchroniser"))
-        self.bouton_supprTout = wx.Button(self.panel_base, -1, _(u"Tout désynchroniser"))
+        self.bouton_supprTout = wx.Button(self.panel_base, -1, _(u"Tout dÃ©synchroniser"))
 
         self.bouton_aide = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))
         self.bouton_annuler = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Fermer"), cheminImage=Chemins.GetStaticPath("Images/32x32/Fermer.png"))
@@ -464,6 +447,13 @@ class Dialog(wx.Dialog):
 
     def Onbouton_annuler(self, event):
         self.EndModal(wx.ID_CANCEL)
+
+    def OnClose(self, event):
+        """Ferme proprement la boÃ®te de dialogue depuis la croix Windows."""
+        if self.IsModal():
+            self.EndModal(wx.ID_CANCEL)
+        else:
+            self.Destroy()
 
     def OnSynchroTout(self, event):
         self.gridChamps.SynchroTout()
