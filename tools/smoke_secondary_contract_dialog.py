@@ -3,11 +3,11 @@
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
-import subprocess
 import sys
 import traceback
+
+from smoke_runtime import github_error_summary, run_entrypoint, write_diagnostic
 
 ROOT = Path(__file__).resolve().parents[1]
 TEAMWORKS_DIR = ROOT / "teamworks"
@@ -103,73 +103,44 @@ def build_patched_entrypoint() -> int:
     return marker_count
 
 
-def decode_output(data: bytes) -> str:
-    for encoding in ("utf-8", "cp1252", "iso-8859-15"):
-        try:
-            return data.decode(encoding)
-        except UnicodeDecodeError:
-            pass
-    return data.decode("utf-8", errors="replace")
-
-
-def github_error_summary(output: str, max_lines: int = 40) -> None:
-    lines = [line.strip() for line in output.splitlines() if line.strip()]
-    summary = " | ".join(lines[-max_lines:])
-    summary = summary.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
-    print(f"::error title=Contract dialog smoke failed::{summary}")
-
-
-def write_diagnostic(*, return_code: int, marker_count: int | None, output: str) -> None:
-    diagnostic = (
-        f"return_code={return_code}\n"
-        f"entrypoint_marker_count={marker_count}\n"
-        f"ready_marker={READY_MARKER in output}\n"
-        f"failure_marker={FAILURE_MARKER in output}\n"
-        "--- output ---\n"
-        f"{output}"
-    )
-    REPORT.write_text(diagnostic, encoding="utf-8")
-    print(diagnostic)
-
-
-def build_environment() -> dict[str, str]:
-    env = os.environ.copy()
-    env["TEAMWORKS_SMOKE_MODE"] = "main-window"
-    search_paths = [str(ROOT), str(TEAMWORKS_DIR)]
-    existing_pythonpath = env.get("PYTHONPATH")
-    if existing_pythonpath:
-        search_paths.append(existing_pythonpath)
-    env["PYTHONPATH"] = os.pathsep.join(search_paths)
-    return env
-
-
 def main() -> int:
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
     marker_count: int | None = None
     try:
         marker_count = build_patched_entrypoint()
-        result = subprocess.run(
-            [sys.executable, str(PATCHED)],
-            cwd=TEAMWORKS_DIR,
-            env=build_environment(),
-            capture_output=True,
+        return_code, output = run_entrypoint(
+            PATCHED,
+            root=ROOT,
+            teamworks_dir=TEAMWORKS_DIR,
             timeout=180,
-            check=False,
         )
-        output = decode_output(result.stdout) + "\n" + decode_output(result.stderr)
-        write_diagnostic(return_code=result.returncode, marker_count=marker_count, output=output)
-        if result.returncode != 0 or FAILURE_MARKER in output:
-            github_error_summary(output)
-            return result.returncode or 1
+        write_diagnostic(
+            REPORT,
+            return_code=return_code,
+            marker_count=marker_count,
+            ready_marker=READY_MARKER,
+            failure_marker=FAILURE_MARKER,
+            output=output,
+        )
+        if return_code != 0 or FAILURE_MARKER in output:
+            github_error_summary("Contract dialog smoke failed", output)
+            return return_code or 1
         if READY_MARKER not in output:
-            github_error_summary(output)
+            github_error_summary("Contract dialog smoke failed", output)
             print("marqueur du contrat absent", file=sys.stderr)
             return 2
         return 0
     except Exception:
         output = traceback.format_exc()
-        write_diagnostic(return_code=3, marker_count=marker_count, output=output)
-        github_error_summary(output)
+        write_diagnostic(
+            REPORT,
+            return_code=3,
+            marker_count=marker_count,
+            ready_marker=READY_MARKER,
+            failure_marker=FAILURE_MARKER,
+            output=output,
+        )
+        github_error_summary("Contract dialog smoke failed", output)
         return 3
     finally:
         PATCHED.unlink(missing_ok=True)
