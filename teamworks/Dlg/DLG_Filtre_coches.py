@@ -18,7 +18,9 @@ import datetime
 
 class MyDialog(wx.Dialog):
     """ Choix possibles : None pour 'sans importance' ou une LISTE de choix pour la checkListBox """
-    def __init__(self, parent, nom_filtre=u"", titre_frame = u"", listeSelection=None, listeChoix = []):
+    def __init__(self, parent, nom_filtre=u"", titre_frame = u"", listeSelection=None, listeChoix = None):
+        if listeChoix is None:
+            listeChoix = []
         wx.Dialog.__init__(self, parent, id=-1, title=u"", size=(350, 400))
         
         # Paramètres personnalisables

@@ -86,7 +86,9 @@ def GetListeChoix_diplomes():
 
 class MyDialog(wx.Dialog):
     """ On récupère les infos de cette boîte avec GetDates() ou avec GetPersonnesPresentes() """
-    def __init__(self, parent, id=-1, categorie="", listeValeursDefaut=[], title=_(u"Sélection de filtres de liste")):
+    def __init__(self, parent, id=-1, categorie="", listeValeursDefaut=None, title=_(u"Sélection de filtres de liste")):
+        if listeValeursDefaut is None:
+            listeValeursDefaut = []
         wx.Dialog.__init__(self, parent, id, title, size=(-1, -1))
         self.categorie = categorie
         
@@ -301,7 +303,9 @@ class hyperlink_date(Hyperlink):
 
 
 class hyperlink_choice(Hyperlink):
-    def __init__(self, parent, valeur=None, nomFiltre="", motSQL="", listeChoix=[], infobulle=_(u"Cliquez ici pour sélectionner un filtre")):
+    def __init__(self, parent, valeur=None, nomFiltre="", motSQL="", listeChoix=None, infobulle=_(u"Cliquez ici pour sélectionner un filtre")):
+        if listeChoix is None:
+            listeChoix = []
         self.valeur = valeur
         self.nomFiltre = nomFiltre
         self.listeChoix = listeChoix
@@ -340,7 +344,9 @@ class hyperlink_choice(Hyperlink):
 
 
 class hyperlink_liste(Hyperlink):
-    def __init__(self, parent, valeur=None, nomFiltre="", motSQL="", listeChoix=[], infobulle=_(u"Cliquez ici pour sélectionner un filtre")):
+    def __init__(self, parent, valeur=None, nomFiltre="", motSQL="", listeChoix=None, infobulle=_(u"Cliquez ici pour sélectionner un filtre")):
+        if listeChoix is None:
+            listeChoix = []
         self.valeur = valeur
         self.nomFiltre = nomFiltre
         self.listeChoix = listeChoix

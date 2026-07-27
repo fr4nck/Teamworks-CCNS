@@ -112,11 +112,15 @@ def ImportPersonnes(annee, mois):
 
         
 class Impression():
-    def __init__(self, annee=2009, mois=12, listeIDpersonnes = [], dictPersonnes = {},
+    def __init__(self, annee=2009, mois=12, listeIDpersonnes = None, dictPersonnes = None,
                             afficher_we=True, afficher_vacances=True, afficher_feries=True,
                             afficher_heures=True, afficher_couleurs_categories=True, 
                             afficher_legende=True, afficher_heures_mois=True):
         
+        if listeIDpersonnes is None:
+            listeIDpersonnes = []
+        if dictPersonnes is None:
+            dictPersonnes = {}
         self.annee = annee
         self.mois = mois
         self.listeIDpersonnes = listeIDpersonnes
@@ -422,7 +426,9 @@ class Impression():
 
 class CaseDate(Flowable) :
     """ Flowable Case d'une date """
-    def __init__(self, xoffset=0, hauteurCase=None, largeurCase=0, dateDD=None, dictBarres={}, labelDate="" ):
+    def __init__(self, xoffset=0, hauteurCase=None, largeurCase=0, dateDD=None, dictBarres=None, labelDate="" ):
+        if dictBarres is None:
+            dictBarres = {}
         self.xoffset = xoffset
         self.size = hauteurCase
         self.hauteurCase = hauteurCase

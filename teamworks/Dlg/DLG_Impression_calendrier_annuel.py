@@ -391,7 +391,9 @@ class Impression():
 
 class CaseDate(Flowable) :
     """ Flowable Case d'une date """
-    def __init__(self, xoffset=0, hauteurCase=None, largeurCase=0, dateDD=None, labelDate="", dictBarres={} ):
+    def __init__(self, xoffset=0, hauteurCase=None, largeurCase=0, dateDD=None, labelDate="", dictBarres=None ):
+        if dictBarres is None:
+            dictBarres = {}
         self.xoffset = xoffset
         self.size = hauteurCase
         self.hauteurCase = hauteurCase
