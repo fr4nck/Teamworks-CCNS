@@ -1,6 +1,13 @@
+import importlib.util
 from pathlib import Path
 
-from tools.rewrite_redundant_phoenix_branches import rewrite
+
+MODULE_PATH = Path("tools/rewrite_redundant_phoenix_branches.py")
+SPEC = importlib.util.spec_from_file_location("rewrite_redundant_phoenix_branches", MODULE_PATH)
+assert SPEC is not None and SPEC.loader is not None
+MODULE = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(MODULE)
+rewrite = MODULE.rewrite
 
 
 def test_rewrite_removes_identical_phoenix_branch(tmp_path: Path):
