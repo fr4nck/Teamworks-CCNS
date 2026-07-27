@@ -1,0 +1,58 @@
+name: Frankenstein email Message defaults
+
+on:
+  pull_request:
+    paths:
+      - 'teamworks/Utils/UTILS_Envoi_email.py'
+      - 'tools/rewrite_email_message_defaults.py'
+      - '.github/workflows/frankenstein-email-message-defaults.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  rewrite-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Rewrite mutable defaults
+        run: python tools/rewrite_email_message_defaults.py
+      - name: Compile email utility
+        run: python -m py_compile teamworks/Utils/UTILS_Envoi_email.py
+      - name: Verify Message defaults
+        run: |
+          python - <<'PY'
+          import ast
+          from pathlib import Path
+          raw = Path('teamworks/Utils/UTILS_Envoi_email.py').read_bytes()
+          for encoding in ('utf-8', 'iso-8859-15', 'cp1252'):
+              try:
+                  tree = ast.parse(raw.decode(encoding))
+                  break
+              except UnicodeDecodeError:
+                  pass
+          target = next(node for node in ast.walk(tree) if isinstance(node, ast.FunctionDef) and node.name == '__init__' and any(arg.arg == 'destinataires' for arg in node.args.args))
+          args = target.args.args
+          defaults = target.args.defaults
+          offset = len(args) - len(defaults)
+          for name in ('destinataires', 'fichiers', 'images', 'champs'):
+              index = next(i for i, arg in enumerate(args) if arg.arg == name)
+              default = defaults[index-offset]
+              assert isinstance(default, ast.Constant) and default.value is None
+          PY
+      - name: Commit mechanical cleanup
+        run: |
+          if git diff --quiet; then
+            echo "No cleanup required"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add teamworks/Utils/UTILS_Envoi_email.py
+          git commit -m "refactor: sécuriser les valeurs par défaut de Message"
+          git push origin HEAD:${{ github.head_ref }}
