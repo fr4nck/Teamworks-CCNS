@@ -222,7 +222,9 @@ class ListCtrl(wx.ListCtrl, CheckListCtrlMixin):
     
     
 class Dialog(wx.Dialog):
-    def __init__(self, parent, listeColonnes=[]):
+    def __init__(self, parent, listeColonnes=None):
+        if listeColonnes is None:
+            listeColonnes = []
         wx.Dialog.__init__(self, parent, -1, style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX)
         self.parent = parent
         self.listeColonnes = listeColonnes

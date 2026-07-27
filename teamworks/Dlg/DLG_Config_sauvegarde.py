@@ -170,8 +170,10 @@ def GetListeSourcesStr():
 
 class Sauvegarde():
     """ Creation d'un sauvegarde occasionnelle ou automatique """
-    def Save(self, fichierDest="", listeFichiers=[]) :
+    def Save(self, fichierDest="", listeFichiers=None) :
         """ listeFichiers = [ (extension, rep, nomFichier), ] """
+        if listeFichiers is None:
+            listeFichiers = []
         if len(listeFichiers) == 0 : return "Rien à sauvegarder !"
                 
         try :                                   
@@ -937,8 +939,10 @@ class Restauration(wx.Frame):
         # Lance la restauration
         self.Resto(listeFichiers)
     
-    def Resto(self, listeFichiers=[]):
+    def Resto(self, listeFichiers=None):
         # Créée un dictionnaire des répertoires :
+        if listeFichiers is None:
+            listeFichiers = []
         dictChemins = {}
         for nomSource, rep, ext in LISTE_SOURCES :
             dictChemins[ext] = rep
