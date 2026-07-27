@@ -545,9 +545,9 @@ class Dialog(wx.Dialog):
         # DB.Close()
 
     def VerifieFusion(self, texteHTML="", listeDestinataires=None):
+        """ Vérifie que tous les mots-clés ont été remplacés """
         if listeDestinataires is None:
             listeDestinataires = []
-        """ Vérifie que tous les mots-clés ont été remplacés """
         listeResultats = []
         for track in listeDestinataires :
             dictChamps = track.champs      
