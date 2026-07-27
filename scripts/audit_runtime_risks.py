@@ -53,6 +53,15 @@ def audit_text(root: Path, path: Path, lines: list[str]) -> list[Finding]:
             findings.append(Finding("gestiondb-open", rel, number, stripped))
         if "sqlite3.connect(" in line:
             findings.append(Finding("sqlite-direct", rel, number, stripped))
+            if re.search(r"sqlite3\.connect\([^\n]*\.encode\(\s*['\"]utf-8['\"]\s*\)", line):
+                findings.append(
+                    Finding(
+                        "sqlite-bytes-path",
+                        rel,
+                        number,
+                        "SQLite path encoded to bytes; keep filesystem paths as str on Python 3",
+                    )
+                )
         if re.search(r"\b(eval|exec)\s*\(", line) or "__import__(" in line:
             findings.append(Finding("dynamic-execution", rel, number, stripped))
         if re.search(r"open\([^\n]*[\"'](?:w|a|x)b?[\"']", line):
@@ -125,6 +134,7 @@ def main() -> int:
     parser.add_argument("root", nargs="?", default=".")
     parser.add_argument("--json", dest="json_path")
     parser.add_argument("--fail-on-missing-handlers", action="store_true")
+    parser.add_argument("--fail-on-sqlite-bytes-paths", action="store_true")
     args = parser.parse_args()
 
     result = run(Path(args.root).resolve())
@@ -141,7 +151,12 @@ def main() -> int:
         )
 
     missing = result["counts"].get("missing-bound-handler", 0)
-    return 1 if args.fail_on_missing_handlers and missing else 0
+    sqlite_bytes = result["counts"].get("sqlite-bytes-path", 0)
+    if args.fail_on_missing_handlers and missing:
+        return 1
+    if args.fail_on_sqlite_bytes_paths and sqlite_bytes:
+        return 1
+    return 0
 
 
 if __name__ == "__main__":
