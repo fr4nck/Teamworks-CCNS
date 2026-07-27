@@ -28,7 +28,7 @@ def rewrite(path: Path) -> int:
     source, encoding = read_source(path)
     tree = ast.parse(source)
     lines = source.splitlines(keepends=True)
-    changes = 0
+    edits: list[tuple[int, int, int, str, str]] = []
 
     for node in ast.walk(tree):
         if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
@@ -46,24 +46,21 @@ def rewrite(path: Path) -> int:
             default = defaults[index - default_offset]
             if not isinstance(default, ast.List) or default.elts:
                 continue
-
-            line_index = default.lineno - 1
-            segment = ast.get_source_segment(source, default)
-            if segment != "[]":
+            if ast.get_source_segment(source, default) != "[]":
                 continue
-            column = default.col_offset
-            lines[line_index] = lines[line_index][:column] + "None" + lines[line_index][column + 2 :]
 
-            body_line = node.body[0].lineno - 1
             indent = " " * (node.col_offset + 4)
             init = f"{indent}if {target} is None:\n{indent}    {target} = []\n"
-            lines[body_line:body_line] = [init]
-            changes += 1
+            edits.append((default.lineno - 1, default.col_offset, node.body[0].lineno - 1, target, init))
             break
 
-    if changes:
+    for default_line, column, body_line, _target, init in sorted(edits, reverse=True):
+        lines[default_line] = lines[default_line][:column] + "None" + lines[default_line][column + 2 :]
+        lines[body_line:body_line] = [init]
+
+    if edits:
         path.write_bytes("".join(lines).encode(encoding))
-    return changes
+    return len(edits)
 
 
 if __name__ == "__main__":
