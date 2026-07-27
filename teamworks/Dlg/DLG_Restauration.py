@@ -75,7 +75,9 @@ def SelectionFichier():
 
 
 class CTRL_Donnees(CT.CustomTreeCtrl):
-    def __init__(self, parent, listeFichiers=[], id=wx.ID_ANY, pos=wx.DefaultPosition, size=wx.DefaultSize, style=wx.SUNKEN_BORDER) :
+    def __init__(self, parent, listeFichiers=None, id=wx.ID_ANY, pos=wx.DefaultPosition, size=wx.DefaultSize, style=wx.SUNKEN_BORDER) :
+        if listeFichiers is None:
+            listeFichiers = []
         CT.CustomTreeCtrl.__init__(self, parent, id, pos, size, style)
         self.listeFichiers = listeFichiers
         

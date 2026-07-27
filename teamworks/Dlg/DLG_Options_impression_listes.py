@@ -382,7 +382,9 @@ class CTRL_Parametres(CTRL_Propertygrid.CTRL) :
 # --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 class CTRL(wx.Panel):
-    def __init__(self, parent, dictOptions={}):
+    def __init__(self, parent, dictOptions=None):
+        if dictOptions is None:
+            dictOptions = {}
         wx.Panel.__init__(self, parent, id=-1, style=wx.TAB_TRAVERSAL)
         self.parent = parent
         
@@ -531,7 +533,9 @@ class CTRL(wx.Panel):
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 class Dialog(wx.Dialog):
-    def __init__(self, parent, dictOptions={}):
+    def __init__(self, parent, dictOptions=None):
+        if dictOptions is None:
+            dictOptions = {}
         wx.Dialog.__init__(self, parent, -1, style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX)
         self.parent = parent   
 
