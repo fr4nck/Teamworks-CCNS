@@ -51,6 +51,7 @@ jobs:
             --collect-all matplotlib `
             --collect-all reportlab `
             --collect-all PIL `
+            --hidden-import Gadget `
             --hidden-import mysql.connector `
             --hidden-import win32com.client `
             teamworks/Teamworks.py
@@ -64,7 +65,7 @@ jobs:
           Copy-Item VERSION "$package/VERSION" -Force
           Set-Content -Path "$package/BUILD.txt" -Value "Teamworks-CCNS $version`nCommit $env:GITHUB_SHA"
 
-      - name: Validate package structure
+      - name: Validate package structure and dynamic modules
         shell: pwsh
         run: |
           $package = 'dist/Teamworks-CCNS'
@@ -73,17 +74,19 @@ jobs:
           if (-not (Test-Path "$package/Versions.txt")) { throw 'Versions.txt required by FonctionsPerso.GetVersionTeamworks is missing' }
           if (-not (Test-Path "$package/VERSION")) { throw 'VERSION missing' }
           if ((Get-Item "$package/Versions.txt").Length -eq 0) { throw 'Versions.txt is empty' }
+          $archive = python -m PyInstaller.utils.cliutils.archive_viewer -l "$package/Teamworks-CCNS.exe" 2>&1 | Out-String
+          if ($archive -notmatch 'Gadget') { throw 'Dynamic wxpTag module Gadget is missing from the executable' }
           Get-ChildItem $package | Select-Object Name, Length
 
       - name: Create archive
         shell: pwsh
         run: |
           $version = (Get-Content VERSION -Raw).Trim()
-          Compress-Archive -Path 'dist/Teamworks-CCNS/*' -DestinationPath "Teamworks-CCNS-$version-windows-x64-r2.zip" -Force
+          Compress-Archive -Path 'dist/Teamworks-CCNS/*' -DestinationPath "Teamworks-CCNS-$version-windows-x64-r3.zip" -Force
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Teamworks-CCNS-0.9.0-dev-windows-x64-r2
-          path: Teamworks-CCNS-*-windows-x64-r2.zip
+          name: Teamworks-CCNS-0.9.0-dev-windows-x64-r3
+          path: Teamworks-CCNS-*-windows-x64-r3.zip
           if-no-files-found: error
           retention-days: 14
