@@ -1,0 +1,47 @@
+name: Frankenstein grouped Phoenix rewrite
+
+on:
+  push:
+    branches:
+      - agent/frankenstein-phoenix-branch-audit
+
+permissions:
+  contents: write
+
+jobs:
+  rewrite:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/frankenstein-phoenix-branch-audit
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Rewrite redundant Phoenix branches
+        run: |
+          python tools/rewrite_redundant_phoenix_branches.py \
+            teamworks/Ctrl/CTRL_Page_contrats.py \
+            teamworks/Ctrl/CTRL_Page_qualifications.py
+
+      - name: Verify targeted files compile
+        run: |
+          python -m py_compile \
+            teamworks/Ctrl/CTRL_Page_contrats.py \
+            teamworks/Ctrl/CTRL_Page_qualifications.py
+
+      - name: Commit rewritten files
+        run: |
+          if git diff --quiet; then
+            echo 'Aucune modification à enregistrer.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add teamworks/Ctrl/CTRL_Page_contrats.py teamworks/Ctrl/CTRL_Page_qualifications.py
+          git commit -m 'Simplify grouped redundant Phoenix branches'
+          git push origin HEAD:agent/frankenstein-phoenix-branch-audit

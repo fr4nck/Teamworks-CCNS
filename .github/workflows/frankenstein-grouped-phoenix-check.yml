@@ -1,0 +1,22 @@
+name: Frankenstein grouped Phoenix cleanup
+
+on:
+  pull_request:
+    paths:
+      - 'teamworks/Ctrl/CTRL_Page_contrats.py'
+      - 'teamworks/Ctrl/CTRL_Page_qualifications.py'
+      - 'tools/rewrite_redundant_phoenix_branches.py'
+      - 'tests/test_rewrite_redundant_phoenix_branches.py'
+      - '.github/workflows/frankenstein-grouped-phoenix-check.yml'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install pytest
+      - run: python -m pytest -q tests/test_rewrite_redundant_phoenix_branches.py
+      - run: python -m py_compile teamworks/Ctrl/CTRL_Page_contrats.py teamworks/Ctrl/CTRL_Page_qualifications.py
