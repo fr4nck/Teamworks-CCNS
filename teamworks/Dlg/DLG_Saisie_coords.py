@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -10,13 +10,13 @@ import Chemins
 from Utils.UTILS_Traduction import _
 import wx
 from Ctrl import CTRL_Bouton_image
-import wx.lib.masked as masked
 import GestionDB
 import FonctionsPerso
+from Utils.UTILS_Coordonnees import normaliser_email, normaliser_telephone, normaliser_texte
 
 
 class Dialog(wx.Dialog):
-    def __init__(self, parent, ID=-1, title=_(u"Coordonnées"), size=(280, 290), IDcoord=0, IDpersonne=0):
+    def __init__(self, parent, ID=-1, title=_(u"CoordonnÃ©es"), size=(280, 290), IDcoord=0, IDpersonne=0):
         wx.Dialog.__init__(self, parent, -1, style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX)
         self.parent = parent
         self.IDpersonne = IDpersonne
@@ -28,7 +28,7 @@ class Dialog(wx.Dialog):
         
         self.panel_frame = wx.Panel(self, -1)
         self.sizer_infos_staticbox = wx.StaticBox(self.panel_frame, -1, _(u"2. Saisissez les informations"))
-        self.sizer_categories_staticbox = wx.StaticBox(self.panel_frame, -1, _(u"1. Sélectionnez une catégorie"))
+        self.sizer_categories_staticbox = wx.StaticBox(self.panel_frame, -1, _(u"1. SÃ©lectionnez une catÃ©gorie"))
         self.categorieSelect = ""
 
         # Boutons        
@@ -45,13 +45,13 @@ class Dialog(wx.Dialog):
         
         self.label_info_mail = wx.StaticText(self.panel_frame, -1, _(u"Email :"))
         self.text_info_mail = wx.TextCtrl(self.panel_frame, -1, "")
-        self.label_info_tel = wx.StaticText(self.panel_frame, -1, _(u"N° Fixe :"))
-        self.text_info_tel = masked.TextCtrl(self.panel_frame, -1, "", style=wx.TE_CENTRE, mask = "##.##.##.##.##.")
+        self.label_info_tel = wx.StaticText(self.panel_frame, -1, _(u"NÂ° Fixe :"))
+        self.text_info_tel = wx.TextCtrl(self.panel_frame, -1, "", style=wx.TE_CENTRE)
 
         self.label_info_mail.Hide()
         self.text_info_mail.Hide()
                 
-        self.label_intitule = wx.StaticText(self.panel_frame, -1, _(u"Intitulé :"))
+        self.label_intitule = wx.StaticText(self.panel_frame, -1, _(u"IntitulÃ© :"))
         self.text_intitule = wx.TextCtrl(self.panel_frame, -1, "")
         self.bouton_Ok = CTRL_Bouton_image.CTRL(self.panel_frame, texte=_(u"Ok"), cheminImage=Chemins.GetStaticPath("Images/32x32/Valider.png"))
         self.bouton_Annuler = CTRL_Bouton_image.CTRL(self.panel_frame, texte=_(u"Annuler"), cheminImage=Chemins.GetStaticPath("Images/32x32/Annuler.png"))
@@ -67,11 +67,11 @@ class Dialog(wx.Dialog):
         self.Bind(wx.EVT_BUTTON, self.OnBouton_Ok, self.bouton_Ok)
         self.Bind(wx.EVT_BUTTON, self.OnBouton_Annuler, self.bouton_Annuler)
 
-        # Si c'est une modification, on importe les données
+        # Si c'est une modification, on importe les donnÃ©es
         if self.IDcoord != 0:
             self.Importation()
         else:
-            # Désactivation des champs
+            # DÃ©sactivation des champs
             self.ActivationChamps(False)
 
 
@@ -91,9 +91,9 @@ class Dialog(wx.Dialog):
         self.bouton_Ok.SetSize(self.bouton_Ok.GetBestSize())
         self.bouton_Annuler.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour annuler")))
         self.bouton_Annuler.SetSize(self.bouton_Annuler.GetBestSize())
-        self.text_info_tel.SetToolTip(wx.ToolTip(_(u"Saisissez ici un numéro de téléphone")))
+        self.text_info_tel.SetToolTip(wx.ToolTip(_(u"Saisissez ici un numÃ©ro de tÃ©lÃ©phone")))
         self.text_info_mail.SetToolTip(wx.ToolTip(_(u"Saisissez ici une adresse Mail valide")))
-        self.text_intitule.SetToolTip(wx.ToolTip(_(u"Vous pouvez, si vous le souhaitez, saisir ici un intitulé. Ex : 'Contact à Rennes' ou 'Domicile des parents'...")))
+        self.text_intitule.SetToolTip(wx.ToolTip(_(u"Vous pouvez, si vous le souhaitez, saisir ici un intitulÃ©. Ex : 'Contact Ã  Rennes' ou 'Domicile des parents'...")))
         # end wxGlade
 
     def __do_layout(self):
@@ -121,10 +121,10 @@ class Dialog(wx.Dialog):
         grid_sizer_base.Add(sizer_categories, 1, wx.LEFT|wx.RIGHT|wx.TOP|wx.EXPAND, 10)
 
         grid_sizer_infos.Add(self.label_info_mail, 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL, 0)
-        grid_sizer_infos.Add(self.text_info_mail, 0, wx.EXPAND, 0) #######################
+        grid_sizer_infos.Add(self.text_info_mail, 0, wx.EXPAND, 0)
 
         grid_sizer_infos.Add(self.label_info_tel, 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL, 0)
-        grid_sizer_infos.Add(self.text_info_tel, 0, wx.EXPAND, 0) #######################
+        grid_sizer_infos.Add(self.text_info_tel, 0, wx.EXPAND, 0)
         
         grid_sizer_infos.Add(self.label_intitule, 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL, 0)
         grid_sizer_infos.Add(self.text_intitule, 0, wx.EXPAND, 0)
@@ -144,21 +144,15 @@ class Dialog(wx.Dialog):
         grid_sizer_base.Fit(self)
         self.Layout()
         self.CenterOnScreen()
-        # end wxGlade
         self.grid_sizer_infos = grid_sizer_infos
 
-# end of class FrameCoords
-
     def OnBouton_Fixe(self, event):
-        # Apparence des boutons
         self.bouton_fixe.SetBitmapLabel(wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Maison_Bleu.png"), wx.BITMAP_TYPE_ANY))
         self.bouton_mobile.SetBitmapLabel(wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Mobile_NB.png"), wx.BITMAP_TYPE_ANY))
         self.bouton_fax.SetBitmapLabel(wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Fax_NB.png"), wx.BITMAP_TYPE_ANY))
         self.bouton_email.SetBitmapLabel(wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Mail_NB.png"), wx.BITMAP_TYPE_ANY))
-
-        # Activation des champs
         self.ActivationChamps(True)
-        self.label_info_tel.SetLabel(_(u"N° Fixe :"))        
+        self.label_info_tel.SetLabel(_(u"NÂ° Fixe :"))
         self.text_info_tel.SetFocus()
         self.categorieSelect = "Fixe"
         self.label_info_mail.Hide()
@@ -166,18 +160,14 @@ class Dialog(wx.Dialog):
         self.label_info_tel.Show()
         self.text_info_tel.Show()
         self.grid_sizer_infos.Layout()
-        
-    
+
     def OnBouton_Mobile(self, event):
-        # Apparence des boutons
         self.bouton_fixe.SetBitmapLabel(wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Maison_NB.png"), wx.BITMAP_TYPE_ANY))
         self.bouton_mobile.SetBitmapLabel(wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Mobile_Bleu.png"), wx.BITMAP_TYPE_ANY))
         self.bouton_fax.SetBitmapLabel(wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Fax_NB.png"), wx.BITMAP_TYPE_ANY))
         self.bouton_email.SetBitmapLabel(wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Mail_NB.png"), wx.BITMAP_TYPE_ANY))
-
-        # Activation des champs
         self.ActivationChamps(True)
-        self.label_info_tel.SetLabel(_(u"N° Mobile :"))
+        self.label_info_tel.SetLabel(_(u"NÂ° Mobile :"))
         self.text_info_tel.SetFocus()
         self.categorieSelect = "Mobile"
         self.label_info_mail.Hide()
@@ -187,15 +177,12 @@ class Dialog(wx.Dialog):
         self.grid_sizer_infos.Layout()
 
     def OnBouton_Fax(self, event):
-        # Apparence des boutons
         self.bouton_fixe.SetBitmapLabel(wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Maison_NB.png"), wx.BITMAP_TYPE_ANY))
         self.bouton_mobile.SetBitmapLabel(wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Mobile_NB.png"), wx.BITMAP_TYPE_ANY))
         self.bouton_fax.SetBitmapLabel(wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Fax_Bleu.png"), wx.BITMAP_TYPE_ANY))
         self.bouton_email.SetBitmapLabel(wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Mail_NB.png"), wx.BITMAP_TYPE_ANY))
-
-        # Activation des champs
         self.ActivationChamps(True)
-        self.label_info_tel.SetLabel(_(u"N° Fax :"))
+        self.label_info_tel.SetLabel(_(u"NÂ° Fax :"))
         self.text_info_tel.SetFocus()
         self.categorieSelect = "Fax"
         self.label_info_mail.Hide()
@@ -205,13 +192,10 @@ class Dialog(wx.Dialog):
         self.grid_sizer_infos.Layout()
 
     def OnBouton_Email(self, event):
-        # Apparence des boutons
         self.bouton_fixe.SetBitmapLabel(wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Maison_NB.png"), wx.BITMAP_TYPE_ANY))
         self.bouton_mobile.SetBitmapLabel(wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Mobile_NB.png"), wx.BITMAP_TYPE_ANY))
         self.bouton_fax.SetBitmapLabel(wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Fax_NB.png"), wx.BITMAP_TYPE_ANY))
         self.bouton_email.SetBitmapLabel(wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Mail_Bleu.png"), wx.BITMAP_TYPE_ANY))
-
-        # Activation des champs
         self.ActivationChamps(True)
         self.text_info_mail.SetFocus()
         self.categorieSelect = "Email"
@@ -221,193 +205,107 @@ class Dialog(wx.Dialog):
         self.text_info_mail.Show()
         self.grid_sizer_infos.Layout()
 
-        
-
     def ActivationChamps(self, etat=False):
-        if etat == True :
-            self.label_info_tel.Enable(True)
-            self.text_info_tel.Enable(True)
-            self.label_info_mail.Enable(True)
-            self.text_info_mail.Enable(True)
-            self.label_intitule.Enable(True)
-            self.text_intitule.Enable(True)
-        else:
-            self.label_info_tel.Enable(False)
-            self.text_info_tel.Enable(False)
-            self.label_info_mail.Enable(False)
-            self.text_info_mail.Enable(False)
-            self.label_intitule.Enable(False)
-            self.text_intitule.Enable(False)
-        
-
-    def InitSaisieInfo(self):
-        """ Remplissage initial du contrôle text_info """
-        if self.categorieSelect == "Email" or self.categorieSelect == "":
-            self.text_info.SetValue("")
-        else:
-            self.text_info.SetValue("  .  .  .  .  .")
-
-    def OnSaisieInfo(self, event):
-        """ Formatages des numéros de téléphone """
-        text = event.GetString()
-        taille = len(text)
-        if taille == 0:
-            return
-        
-        if self.categorieSelect == "Email" :
-            return
-
-        lettre = text[-1]
-        pos = taille-1
-        chaineFormat = "  .  .  .  .  ."
-        print(text, lettre, pos)
-        
- 
-        # Validation du caractère
-        if lettre == "." and (pos==2 or pos ==5 or pos==8 or pos==11 or pos==14):
-            return
-        elif lettre == ".":
-            resultat = text[0:-1]
-            self.text_info.SetValue(resultat)
-            self.text_info.SetInsertionPoint(taille-1)
-        
-        if lettre.isdigit() == False and lettre != ".":
-            resultat = text[0:-1]
-            self.text_info.SetValue(resultat)
-            self.text_info.SetInsertionPoint(taille-1)
+        self.label_info_tel.Enable(etat)
+        self.text_info_tel.Enable(etat)
+        self.label_info_mail.Enable(etat)
+        self.text_info_mail.Enable(etat)
+        self.label_intitule.Enable(etat)
+        self.text_intitule.Enable(etat)
 
     def OnBouton_Annuler(self, event):
         self.EndModal(wx.ID_CANCEL)
 
     def OnBouton_Ok(self, event):
-        """ Validation de la saisie """
         if self.categorieSelect == "":
-            message = _(u"Vous devez commencer par sélectionner une catégorie.")
-            wx.MessageBox(message, "Erreur de saisie")
+            wx.MessageBox(_(u"Vous devez commencer par sÃ©lectionner une catÃ©gorie."), "Erreur de saisie")
             return
 
-        # Validation de l'email
-        if self.categorieSelect == "Email" :
-            text = self.text_info_mail.GetValue()
-            # Vérifie si Email vide
+        if self.categorieSelect == "Email":
+            try:
+                text = normaliser_email(self.text_info_mail.GetValue())
+            except ValueError:
+                text = ""
             if text == "":
-                message = _(u"Vous devez saisir une adresse Email valide.")
-                wx.MessageBox(message, "Erreur de saisie")
+                wx.MessageBox(_(u"L'adresse Email que vous avez saisie n'est pas valide."), "Erreur de saisie")
                 self.text_info_mail.SetFocus()
                 return
-            # Vérifie si Email valide
-            posAt = text.find("@")
-            if posAt == -1:
-                message = _(u"L'adresse Email que vous avez saisie n'est pas valide.")
-                wx.MessageBox(message, "Erreur de saisie")
-                self.text_info_mail.SetFocus()
-                return
-            posPoint = text.rfind(".")
-            if posPoint < posAt :
-                message = _(u"L'adresse Email que vous avez saisie n'est pas valide.")
-                wx.MessageBox(message, "Erreur de saisie")
-                self.text_info_mail.SetFocus()
-                return
-
-        # Validation du téléphone
-        if self.categorieSelect != "Email" :
-            text = self.text_info_tel.GetValue()
-            # Vérifie si Tél vide
-            if text == "" or text == "  .  .  .  .  .":
-                message = _(u"Vous devez saisir un numéro de téléphone valide.")
-                wx.MessageBox(message, "Erreur de saisie")
+            self.text_info_mail.SetValue(text)
+        else:
+            try:
+                text = normaliser_telephone(self.text_info_tel.GetValue())
+            except ValueError:
+                text = ""
+            if text == "":
+                wx.MessageBox(_(u"Le numÃ©ro de tÃ©lÃ©phone ne semble pas valide."), "Erreur de saisie")
                 self.text_info_tel.SetFocus()
                 return
-            # Vérifie si Téléphone valide
-            posChiffres = [0, 1, 3, 4, 6, 7, 9, 10, 12, 13]
-            for position in posChiffres:
-                if text[position].isdigit() == False:
-                    message = _(u"Le numéro de téléphone ne semble pas valide.")
-                    wx.MessageBox(message, "Erreur de saisie")
-                    self.text_info_tel.SetFocus()
-                    return
+            self.text_info_tel.SetValue(text)
 
-        # Si les test de validation sont positifs
         self.Sauvegarde()
-        
-        # MAJ du de la fiche candidat
-        if self.parent.GetName() == "panel_candidat" :
+
+        if self.parent.GetName() == "panel_candidat":
             self.parent.ctrl_coords.Remplissage()
-        
-        # MàJ du listCtrl Coords de la fiche individuelle
-        if self.parent.GetName() == "panel_generalites" :
+        if self.parent.GetName() == "panel_generalites":
             self.parent.list_ctrl_coords.Remplissage()
             self.parent.MAJ_barre_problemes()
 
-        # Fermeture du frame
         self.EndModal(wx.ID_OK)
 
     def Sauvegarde(self):
-        """ Sauvegarde des données dans la base de données """
         varIDpersonne = self.IDpersonne
         varCategorie = self.categorieSelect
         if varCategorie == "Email":
-            varTexte = self.text_info_mail.GetValue()
+            varTexte = normaliser_email(self.text_info_mail.GetValue())
         else:
-            varTexte = self.text_info_tel.GetValue()
-        varDIntitule = self.text_intitule.GetValue()
+            varTexte = normaliser_telephone(self.text_info_tel.GetValue())
+        varDIntitule = normaliser_texte(self.text_intitule.GetValue())
 
-        # Préparation des données
-        if self.nomTable == "coordonnees" : 
+        if self.nomTable == "coordonnees":
             texte = "IDpersonne"
-        else: 
+        else:
             texte = "IDcandidat"
-        listeDonnees = [    (texte,  varIDpersonne),
-                            ("categorie",   varCategorie),
-                            ("texte",       varTexte),
-                            ("intitule",    varDIntitule),
-                        ]
-        
-        # Initialisation de la connexion avec la Base de données
-        DB = GestionDB.DB()
+        listeDonnees = [
+            (texte, varIDpersonne),
+            ("categorie", varCategorie),
+            ("texte", varTexte),
+            ("intitule", varDIntitule),
+        ]
 
+        DB = GestionDB.DB()
         if self.IDcoord == 0:
-            # Enregistrement d'une nouvelle coordonnée
             DB.ReqInsert(self.nomTable, listeDonnees)
         else:
-            # Modification de la coordonnée
             DB.ReqMAJ(self.nomTable, listeDonnees, "IDcoord", self.IDcoord)
         DB.Close()
 
-    def Importation(self,):
-        """ Importation des donnees de la base """
-
-        # Initialisation de la connexion avec la Base de données
+    def Importation(self):
         DB = GestionDB.DB()
         req = "SELECT * FROM %s WHERE IDcoord = %d" % (self.nomTable, self.IDcoord)
         DB.ExecuterReq(req)
         donnees = DB.ResultatReq()[0]
         DB.Close()
-        
-        # Placement des données dans les contrôles
+
         self.categorieSelect = donnees[2]
-        self.text_intitule.SetValue(donnees[4])
+        self.text_intitule.SetValue(donnees[4] or "")
 
         if self.categorieSelect == "Fixe":
             self.OnBouton_Fixe("")
-            self.text_info_tel.SetValue(donnees[3])
+            self.text_info_tel.SetValue(donnees[3] or "")
         if self.categorieSelect == "Mobile":
             self.OnBouton_Mobile("")
-            self.text_info_tel.SetValue(donnees[3])
+            self.text_info_tel.SetValue(donnees[3] or "")
         if self.categorieSelect == "Fax":
             self.OnBouton_Fax("")
-            self.text_info_tel.SetValue(donnees[3])
+            self.text_info_tel.SetValue(donnees[3] or "")
         if self.categorieSelect == "Email":
             self.OnBouton_Email("")
-            self.text_info_mail.SetValue(donnees[3])
-            
-     
-            
+            self.text_info_mail.SetValue(donnees[3] or "")
+
 
 if __name__ == "__main__":
     app = wx.App(0)
-    #wx.InitAllImageHandlers()
-    dlg = Dialog(None, -1, _(u"Coordonnées"), size=(280, 290))
+    dlg = Dialog(None, -1, _(u"CoordonnÃ©es"), size=(280, 290))
     dlg.ShowModal()
     dlg.Destroy()
     app.MainLoop()

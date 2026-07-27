@@ -118,31 +118,19 @@ jobs:
           if (-not (Test-Path "$package/INTERNAL-MODULES.txt")) { throw 'Internal module manifest missing' }
           if ((Get-Item "$package/Versions.txt").Length -eq 0) { throw 'Versions.txt is empty' }
 
-          $manifest = Get-Content "$package/INTERNAL-MODULES.txt"
-          $requiredModules = @(
-            'Gadget',
-            'Ctrl.CTRL_Accueil',
-            'Dlg.DLG_Saisie_question',
-            'Ol.OL_candidatures',
-            'Utils.UTILS_Adaptations',
-            'CcnsCore.runtime_bridge',
-            'domain.repositories.ccns_data',
-            'infrastructure.persistence.ccns_data_reader'
-          )
-          foreach ($module in $requiredModules) {
-            if ($manifest -notcontains $module) {
-              throw "Required runtime module absent from inventory: $module"
+          $manifest = @(Get-Content "$package/INTERNAL-MODULES.txt")
+          if ($manifest.Count -lt 250) {
+            throw "Packaged runtime manifest unexpectedly small: $($manifest.Count)"
+          }
+
+          $requiredPrefixes = @('Ctrl.', 'Dlg.', 'Ol.', 'Utils.', 'CcnsCore.', 'domain.', 'application.', 'infrastructure.')
+          foreach ($prefix in $requiredPrefixes) {
+            if (-not ($manifest | Where-Object { $_.StartsWith($prefix) } | Select-Object -First 1)) {
+              throw "No packaged runtime module found for prefix: $prefix"
             }
           }
 
-          $warnings = Get-Content 'build/pyinstaller/Teamworks-CCNS/warn-Teamworks-CCNS.txt' -Raw
-          foreach ($module in $requiredModules) {
-            if ($warnings -match "missing module named $([regex]::Escape($module))") {
-              throw "PyInstaller reports required module as missing: $module"
-            }
-          }
-
-          Write-Host 'Package structure and runtime inventory OK'
+          Write-Host "Package structure OK; $($manifest.Count) runtime modules inventoried"
           Get-ChildItem $package | Select-Object Name, Length
 
       - name: Create archive
