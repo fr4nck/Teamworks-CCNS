@@ -162,7 +162,9 @@ class CTRL_Donnees(CT.CustomTreeCtrl):
                         
         return dictDonnees
 
-    def SetCoches(self, listeFichiers=[], etat=True):
+    def SetCoches(self, listeFichiers=None, etat=True):
+        if listeFichiers is None:
+            listeFichiers = []
         brancheType = self.GetFirstChild(self.root)[0]
         for index1 in range(self.GetChildrenCount(self.root, recursively=False)) :
             nomType = self.GetItemPyData(brancheType)
@@ -416,7 +418,9 @@ class CTRL_Parametres(wx.Panel) :
         # MAJ de la liste des données
         self.ctrl_donnees.MAJ() 
     
-    def SetDonnees(self, dictDonnees={}):
+    def SetDonnees(self, dictDonnees=None):
+        if dictDonnees is None:
+            dictDonnees = {}
         nom = dictDonnees["sauvegarde_nom"]
         if nom != None :
             self.ctrl_nom.SetValue(nom)

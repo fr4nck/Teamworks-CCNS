@@ -77,7 +77,9 @@ class CTRL_Utilisateurs(wx.CheckListBox):
             self.Check(index)
             index += 1
 
-    def SetIDcoches(self, listeIDcoches=[]):
+    def SetIDcoches(self, listeIDcoches=None):
+        if listeIDcoches is None:
+            listeIDcoches = []
         index = 0
         for index in range(0, len(self.listeDonnees)):
             ID = self.dictIndex[index]
@@ -467,8 +469,10 @@ class CTRL_Conditions(wx.Panel) :
         dictDonnees["condition_utilisateur"] = utilisateur
         return dictDonnees
     
-    def SetDonnees(self, dictDonnees={}):
+    def SetDonnees(self, dictDonnees=None):
         """ Importation des données dans les contrôles """
+        if dictDonnees is None:
+            dictDonnees = {}
         # Jours
         jours_scolaires = dictDonnees["condition_jours_scolaires"]
         if jours_scolaires != None :
@@ -605,8 +609,10 @@ class CTRL_Options(wx.Panel) :
             }
         return dictDonnees
 
-    def SetDonnees(self, dictDonnees={}):
+    def SetDonnees(self, dictDonnees=None):
         """ Importation des données dans les contrôles """
+        if dictDonnees is None:
+            dictDonnees = {}
         if dictDonnees["option_demander"] in (1, "1"):
             self.check_demander.SetValue(True)
         else :
