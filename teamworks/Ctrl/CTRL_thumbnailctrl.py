@@ -363,10 +363,7 @@ class PILImageHandler(object):
         originalsize = pil.size
         
         pil.thumbnail(thumbnailsize)
-        if 'phoenix' in wx.PlatformInfo:
-            img = wx.Image(pil.size[0], pil.size[1])
-        else:
-            img = wx.Image(pil.size[0], pil.size[1])
+        img = wx.Image(pil.size[0], pil.size[1])
         img.SetData(pil.convert("RGB").tobytes())
 
         alpha = False
@@ -421,12 +418,8 @@ class Thumb(object):
         self._filesize = None
         self._parent = parent
         self._captionbreaks = []
-        if 'phoenix' in wx.PlatformInfo:
-            self._bitmap = wx.Bitmap(1,1)
-            self._image = wx.Image(1,1)
-        else:
-            self._bitmap = wx.Bitmap(1,1)
-            self._image = wx.Image(1,1)
+        self._bitmap = wx.Bitmap(1,1)
+        self._image = wx.Image(1,1)
         self._rotation = 0
         self._alpha = None
         
@@ -602,10 +595,7 @@ class Thumb(object):
         end = 0
 
         dc = wx.MemoryDC()
-        if 'phoenix' in wx.PlatformInfo:
-            bmp = wx.Bitmap(10,10)
-        else:
-            bmp = wx.Bitmap(10,10)
+        bmp = wx.Bitmap(10,10)
         dc.SelectObject(bmp)
         
         while 1:
@@ -1831,10 +1821,7 @@ class ScrolledThumbnail(wx.ScrolledWindow):
             if not paintRect.Intersects(wx.Rect(tx, ty, tw, th)):
                 continue
 
-            if 'phoenix' in wx.PlatformInfo:
-                thmb = wx.Bitmap(tw, th)
-            else:
-                thmb = wx.Bitmap(tw, th)
+            thmb = wx.Bitmap(tw, th)
             self.DrawThumbnail(thmb, self._items[ii], ii)
             dc.DrawBitmap(thmb, tx, ty)
   

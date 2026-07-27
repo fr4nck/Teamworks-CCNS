@@ -185,12 +185,8 @@ class ListCtrl_Legendes(wx.ListCtrl):
                     duree = ""
                 
                 # Création de l'item
-                if 'phoenix' in wx.PlatformInfo:
-                    self.InsertItem(index, nomCategorie)
-                    self.SetItem(index, 1, duree)
-                else:
-                    self.InsertItem(index, nomCategorie)
-                    self.SetItem(index, 1, duree)
+                self.InsertItem(index, nomCategorie)
+                self.SetItem(index, 1, duree)
 
                 # Intégration de l'image
                 self.SetItemImage(index, getattr(self, "img%s" % key))
@@ -205,12 +201,8 @@ class ListCtrl_Legendes(wx.ListCtrl):
             nbreMinutes = totalMinutes-(nbreHeures*60)
             if len(str(nbreMinutes))==1 : nbreMinutes = str("0") + str(nbreMinutes)
             duree = str(nbreHeures) + "h" + str(nbreMinutes)
-            if 'phoenix' in wx.PlatformInfo:
-                self.InsertItem(index, "Total")
-                self.SetItem(index, 1, str(duree))
-            else:
-                self.InsertItem(index, "Total")
-                self.SetItem(index, 1, str(duree))
+            self.InsertItem(index, "Total")
+            self.SetItem(index, 1, str(duree))
             self.SetItemData(index, 0)
             item = self.GetItem(index)
             item.SetTextColour(couleurFondPanneau)
@@ -465,10 +457,7 @@ class listCtrl_Personnes(wx.ListCtrl, CheckListCtrlMixin):
                     txt = valeurs[1] + " " + valeurs[0]
                 else:
                     txt = valeurs[0] + " " + valeurs[1]
-                if 'phoenix' in wx.PlatformInfo:
-                    index = self.InsertItem(self.GetItemCount(), txt)
-                else:
-                    index = self.InsertItem(self.GetItemCount(), txt)
+                index = self.InsertItem(self.GetItemCount(), txt)
                 self.SetItemData(index, key)
                 # Sélection
                 if valeurs[4] == True :

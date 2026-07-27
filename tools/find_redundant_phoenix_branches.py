@@ -11,6 +11,7 @@ from typing import Iterable
 
 
 DEFAULT_ROOT = Path("teamworks")
+ENCODINGS = ("utf-8", "iso-8859-15", "cp1252")
 
 
 @dataclass(frozen=True)
@@ -35,12 +36,21 @@ def _same_body(left: list[ast.stmt], right: list[ast.stmt]) -> bool:
     )
 
 
+def _read_source(path: Path) -> str:
+    raw = path.read_bytes()
+    for encoding in ENCODINGS:
+        try:
+            return raw.decode(encoding)
+        except UnicodeDecodeError:
+            continue
+    raise UnicodeDecodeError("unknown", raw, 0, 1, f"Encodage non reconnu: {path}")
+
+
 def find_redundant_phoenix_branches(root: Path = DEFAULT_ROOT) -> list[Finding]:
     findings: list[Finding] = []
     for path in sorted(root.rglob("*.py")):
         try:
-            source = path.read_text(encoding="utf-8")
-            tree = ast.parse(source)
+            tree = ast.parse(_read_source(path))
         except (OSError, UnicodeDecodeError, SyntaxError):
             continue
 

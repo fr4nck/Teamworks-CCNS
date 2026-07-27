@@ -1493,10 +1493,7 @@ class ListCtrlCoords(wx.ListCtrl):
             categorie = valeurs[2]
             texte = valeurs[3]
             # Création de l'item
-            if 'phoenix' in wx.PlatformInfo:
-                self.InsertItem(index, texte)
-            else:
-                self.InsertItem(index, texte)
+            self.InsertItem(index, texte)
             # Intégration de l'image
             if categorie == "Fixe":
                 self.SetItemImage(index, self.imgMaison)

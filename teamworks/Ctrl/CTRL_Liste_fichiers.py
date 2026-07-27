@@ -87,10 +87,7 @@ class FirstColumnRenderer(object):
 
     def GetLineHeight(self):
         dc = wx.MemoryDC()
-        if 'phoenix' in wx.PlatformInfo:
-            bmp = wx.Bitmap(100, 20)
-        else :
-            bmp = wx.Bitmap(100, 20)
+        bmp = wx.Bitmap(100, 20)
         dc.SelectObject(bmp)
         
         if self.icon != None :
@@ -149,10 +146,7 @@ class SecondColumnRenderer(object):
 
     def GetLineHeight(self):
         dc = wx.MemoryDC()
-        if 'phoenix' in wx.PlatformInfo:
-            bmp = wx.Bitmap(100, 20)
-        else :
-            bmp = wx.Bitmap(100, 20)
+        bmp = wx.Bitmap(100, 20)
         dc.SelectObject(bmp)
         textWidth, textHeight, d1, d2 = dc.GetFullTextExtent("xx", self.smallerFont)
         dc.SelectObject(wx.NullBitmap)
@@ -161,10 +155,7 @@ class SecondColumnRenderer(object):
 
     def GetSubItemWidth(self):
         dc = wx.MemoryDC()
-        if 'phoenix' in wx.PlatformInfo:
-            bmp = wx.Bitmap(100, 20)
-        else :
-            bmp = wx.Bitmap(100, 20)
+        bmp = wx.Bitmap(100, 20)
         dc.SelectObject(bmp)
         
         if self.date != None :
