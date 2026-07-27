@@ -2,9 +2,12 @@
 # -*- coding: utf-8 -*-
 """Chargement différé des onglets lourds de la fiche individuelle."""
 
+import datetime
+
 import wx
 
 import Chemins
+import GestionDB
 from Utils.UTILS_Traduction import _
 from Ctrl import CTRL_Page_generalites
 from Ctrl import CTRL_Page_questionnaire
@@ -46,6 +49,10 @@ class LazyNotebook(wx.Notebook):
         else:
             self.GetGrandParent().nouvelleFiche = False
 
+        # Le dialogue historique affiche le contrat actif dans son bandeau.
+        # Cette information doit rester disponible sans construire l'onglet Contrats.
+        self._load_contract_summary()
+
         self.pageQuestionnaire = None
         self.pageStatut = None
         self.pageContrats = None
@@ -72,6 +79,36 @@ class LazyNotebook(wx.Notebook):
         ]
         self._add_secondary_pages()
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnPageChanged)
+
+    def _load_contract_summary(self):
+        dialog = self.GetGrandParent()
+        dialog.contratEnCours = None
+        if not self.IDpersonne:
+            return
+
+        db = GestionDB.DB()
+        try:
+            req = """
+            SELECT contrats_class.nom, contrats.date_debut, contrats.date_fin,
+                   contrats.date_rupture
+            FROM contrats
+            LEFT JOIN contrats_class
+                ON contrats_class.IDclassification = contrats.IDclassification
+            WHERE contrats.IDpersonne=%d
+            ORDER BY contrats.date_debut;
+            """ % self.IDpersonne
+            db.ExecuterReq(req)
+            today = datetime.date.today().isoformat()
+            for classification, date_debut, date_fin, date_rupture in db.ResultatReq():
+                if date_fin >= today:
+                    dialog.contratEnCours = (
+                        classification or "",
+                        date_debut,
+                        date_fin,
+                        date_rupture,
+                    )
+        finally:
+            db.Close()
 
     def _create_placeholder(self):
         panel = wx.Panel(self, -1)
