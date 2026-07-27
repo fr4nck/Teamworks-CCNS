@@ -4,6 +4,9 @@ on:
   pull_request:
     paths:
       - 'teamworks/**'
+      - 'domain/**'
+      - 'application/**'
+      - 'infrastructure/**'
       - 'requirements.txt'
       - 'VERSION'
       - 'packaging/**'
@@ -33,28 +36,55 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install pyinstaller
 
-      - name: Build one-folder application
+      - name: Inventory every internal Python module
+        shell: pwsh
+        run: |
+          $roots = @('teamworks', 'domain', 'application', 'infrastructure')
+          $modules = foreach ($root in $roots) {
+            Get-ChildItem $root -Recurse -Filter '*.py' -File | ForEach-Object {
+              $relative = [System.IO.Path]::GetRelativePath((Get-Location).Path, $_.FullName)
+              $module = [System.IO.Path]::ChangeExtension($relative, $null) -replace '[\\/]', '.'
+              if ($module.EndsWith('.__init__')) {
+                $module = $module.Substring(0, $module.Length - 9)
+              }
+              if ($module -and $module -ne 'teamworks') { $module }
+            }
+          }
+          $modules = $modules | Sort-Object -Unique
+          if ($modules.Count -lt 250) { throw "Internal module inventory unexpectedly small: $($modules.Count)" }
+          New-Item -ItemType Directory -Force build | Out-Null
+          $modules | Set-Content build/internal-modules.txt
+          Write-Host "Internal modules inventoried: $($modules.Count)"
+
+      - name: Build one-folder application with complete internal imports
         shell: pwsh
         run: |
           $version = (Get-Content VERSION -Raw).Trim()
-          python -m PyInstaller `
-            --noconfirm `
-            --clean `
-            --windowed `
-            --onedir `
-            --name Teamworks-CCNS `
-            --paths teamworks `
-            --distpath dist `
-            --workpath build/pyinstaller `
-            --specpath build/spec `
-            --collect-all wx `
-            --collect-all matplotlib `
-            --collect-all reportlab `
-            --collect-all PIL `
-            --hidden-import Gadget `
-            --hidden-import mysql.connector `
-            --hidden-import win32com.client `
-            teamworks/Teamworks.py
+          $modules = Get-Content build/internal-modules.txt
+          $pyinstallerArgs = @(
+            '-m', 'PyInstaller',
+            '--noconfirm',
+            '--clean',
+            '--windowed',
+            '--onedir',
+            '--name', 'Teamworks-CCNS',
+            '--paths', '.',
+            '--paths', 'teamworks',
+            '--distpath', 'dist',
+            '--workpath', 'build/pyinstaller',
+            '--specpath', 'build/spec',
+            '--collect-all', 'wx',
+            '--collect-all', 'matplotlib',
+            '--collect-all', 'reportlab',
+            '--collect-all', 'PIL',
+            '--hidden-import', 'mysql.connector',
+            '--hidden-import', 'win32com.client'
+          )
+          foreach ($module in $modules) {
+            $pyinstallerArgs += @('--hidden-import', $module)
+          }
+          $pyinstallerArgs += 'teamworks/Teamworks.py'
+          python @pyinstallerArgs
 
           $package = 'dist/Teamworks-CCNS'
           Copy-Item teamworks/Static "$package/Static" -Recurse -Force
@@ -63,9 +93,10 @@ jobs:
           }
           Copy-Item teamworks/Versions.txt "$package/Versions.txt" -Force
           Copy-Item VERSION "$package/VERSION" -Force
+          Copy-Item build/internal-modules.txt "$package/INTERNAL-MODULES.txt" -Force
           Set-Content -Path "$package/BUILD.txt" -Value "Teamworks-CCNS $version`nCommit $env:GITHUB_SHA"
 
-      - name: Validate package structure and dynamic modules
+      - name: Validate package structure and representative dynamic modules
         shell: pwsh
         run: |
           $package = 'dist/Teamworks-CCNS'
@@ -73,9 +104,26 @@ jobs:
           if (-not (Test-Path "$package/Static")) { throw 'Static directory missing' }
           if (-not (Test-Path "$package/Versions.txt")) { throw 'Versions.txt required by FonctionsPerso.GetVersionTeamworks is missing' }
           if (-not (Test-Path "$package/VERSION")) { throw 'VERSION missing' }
+          if (-not (Test-Path "$package/INTERNAL-MODULES.txt")) { throw 'Internal module manifest missing' }
           if ((Get-Item "$package/Versions.txt").Length -eq 0) { throw 'Versions.txt is empty' }
+
           $archive = python -m PyInstaller.utils.cliutils.archive_viewer -l "$package/Teamworks-CCNS.exe" 2>&1 | Out-String
-          if ($archive -notmatch 'Gadget') { throw 'Dynamic wxpTag module Gadget is missing from the executable' }
+          $requiredModules = @(
+            'Gadget',
+            'Ctrl.CTRL_Accueil',
+            'Dlg.DLG_Saisie_question',
+            'Ol.OL_candidatures',
+            'Utils.UTILS_Adaptations',
+            'CcnsCore.runtime_bridge',
+            'domain.contracts',
+            'application.control',
+            'infrastructure.persistence'
+          )
+          foreach ($module in $requiredModules) {
+            if ($archive -notmatch [regex]::Escape($module)) {
+              throw "Required internal module missing from executable: $module"
+            }
+          }
           Get-ChildItem $package | Select-Object Name, Length
 
       - name: Create archive
