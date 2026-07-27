@@ -16,8 +16,18 @@ def _secondary_pages_are_unloaded(notebook):
     return all(getattr(notebook, name, None) is None for name in names)
 
 
+def _reload_person_contacts(module, db, IDpersonne):
+    """Actualise uniquement le cache des coordonnées de la personne."""
+    req = """
+    SELECT IDcoord, IDpersonne, categorie, texte, intitule
+    FROM coordonnees WHERE IDpersonne=%d;
+    """ % IDpersonne
+    db.ExecuterReq(req)
+    module.DICT_COORDONNEES[IDpersonne] = list(db.ResultatReq())
+
+
 def _refresh_current_track(list_ctrl, IDpersonne):
-    """Recharge uniquement la personne modifiée et rafraîchit sa ligne."""
+    """Recharge uniquement la personne et reconstruit la projection visible."""
     try:
         from Ol import OL_personnes
 
@@ -31,6 +41,7 @@ def _refresh_current_track(list_ctrl, IDpersonne):
             """ % IDpersonne
             db.ExecuterReq(req)
             rows = db.ResultatReq()
+            _reload_person_contacts(OL_personnes, db, IDpersonne)
         finally:
             db.Close()
 
@@ -41,7 +52,7 @@ def _refresh_current_track(list_ctrl, IDpersonne):
         for track in list_ctrl.GetObjects():
             if getattr(track, "IDpersonne", None) == IDpersonne:
                 track.__dict__.update(replacement.__dict__)
-                list_ctrl.RefreshObject(track)
+                list_ctrl.RepopulateList()
                 list_ctrl.SelectObject(track, deselectOthers=True, ensureVisible=True)
                 return True
     except Exception:
