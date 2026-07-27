@@ -12,6 +12,8 @@ on:
       - "teamworks/Ctrl/CTRL_Page_*.py"
       - "teamworks/GestionDB.py"
       - "tests/test_secondary_person_smoke_contract.py"
+      - "tests/test_secondary_presence_smoke_contract.py"
+      - "tests/test_secondary_contract_smoke_contract.py"
       - ".github/workflows/stabilisation-person-dialog-smoke.yml"
   workflow_dispatch:
 
@@ -33,7 +35,17 @@ jobs:
 
       - name: Install dependencies
         shell: pwsh
-        run: python -m pip install --disable-pip-version-check --quiet -r requirements/python311-core.txt
+        run: |
+          python -m pip install --disable-pip-version-check --quiet -r requirements/python311-core.txt
+          python -m pip install --disable-pip-version-check --quiet pytest
+
+      - name: Validate shared smoke source contracts
+        shell: pwsh
+        run: |
+          python -m pytest -q `
+            tests/test_secondary_presence_smoke_contract.py `
+            tests/test_secondary_person_smoke_contract.py `
+            tests/test_secondary_contract_smoke_contract.py
 
       - name: Build and exercise person dialog
         id: person_smoke
