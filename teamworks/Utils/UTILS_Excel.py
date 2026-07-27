@@ -17,7 +17,11 @@ from Dlg import DLG_Selection_liste
 import FonctionsPerso
 
 
-def Excel(parent, labels_colonnes=[], liste_valeurs=[], tableau=None):
+def Excel(parent, labels_colonnes=None, liste_valeurs=None, tableau=None):
+    if labels_colonnes is None:
+        labels_colonnes = []
+    if liste_valeurs is None:
+        liste_valeurs = []
     if tableau == None:
         dlg = DLG_Selection_liste.Dialog(parent, labels_colonnes, liste_valeurs, type="exportExcel")
         if dlg.ShowModal() == wx.ID_OK:

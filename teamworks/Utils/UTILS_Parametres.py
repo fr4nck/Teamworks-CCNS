@@ -18,8 +18,10 @@ else:
     TYPE_COULEUR = wx._gdi.Colour
 
 
-def ParametresCategorie(mode="get", categorie="", dictParametres={}, nomFichier=""):
+def ParametresCategorie(mode="get", categorie="", dictParametres=None, nomFichier=""):
     """Pour mémoriser ou récupérer des paramètres dans la base de données."""
+    if dictParametres is None:
+        dictParametres = {}
     DB = GestionDB.DB(nomFichier=nomFichier)
 
     if DB.echec == 1:
