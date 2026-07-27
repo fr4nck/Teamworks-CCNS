@@ -16,7 +16,11 @@ from wx.lib.mixins.listctrl import CheckListCtrlMixin
 
 
 class Dialog(wx.Dialog):
-    def __init__(self, parent, liste_labelsColonnes=[], listeValeurs=[], type=None):
+    def __init__(self, parent, liste_labelsColonnes=None, listeValeurs=None, type=None):
+        if liste_labelsColonnes is None:
+            liste_labelsColonnes = []
+        if listeValeurs is None:
+            listeValeurs = []
         wx.Dialog.__init__(self, parent, -1, title=_(u"Sélection d'éléments"), size=(800, 460))
         self.parent = parent
         self.type = type

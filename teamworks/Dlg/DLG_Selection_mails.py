@@ -88,7 +88,9 @@ class Page_Saisie_manuelle(wx.Panel):
             }
         return dictDonnees
     
-    def SetDonnees(self, dictDonnees={}):
+    def SetDonnees(self, dictDonnees=None):
+        if dictDonnees is None:
+            dictDonnees = {}
         self.ctrl.SetValue(dictDonnees["texte"])
         self.OnCheck(None)
         
@@ -102,7 +104,9 @@ class OL_personnes_surcharge(OL_personnes.ListView):
     def OnCheck(self, track=None):
         self.GetParent().OnCheck(track)
 
-    def SetIDcoches(self, listeID=[]):
+    def SetIDcoches(self, listeID=None):
+        if listeID is None:
+            listeID = []
         for track in self.donnees :
             if track.IDpersonne in listeID :
                 self.Check(track)
@@ -197,7 +201,9 @@ class Page_Individus(wx.Panel):
             }
         return dictDonnees
     
-    def SetDonnees(self, dictDonnees={}):
+    def SetDonnees(self, dictDonnees=None):
+        if dictDonnees is None:
+            dictDonnees = {}
         if self.maj_done == False :
             self.MAJ()
         self.barre_recherche.SetFiltres(dictDonnees["liste_filtres"])
@@ -317,7 +323,9 @@ class CTRL_Pages(wx.Notebook):
         self.imageList.Replace(index, bmp)
         self.SetPageImage(index, index)
     
-    def SetInfos(self, code="", dictDonnees={}):
+    def SetInfos(self, code="", dictDonnees=None):
+        if dictDonnees is None:
+            dictDonnees = {}
         self.donnees[code] = dictDonnees
         # MAJ de l'image de la page
         nbreAdresses = len(dictDonnees["liste_adresses"])
@@ -349,7 +357,9 @@ class CTRL_Pages(wx.Notebook):
     def GetDonnees(self):
         return self.donnees, self.GetListeAdressesUniques()
     
-    def SetDonnees(self, donnees={}):
+    def SetDonnees(self, donnees=None):
+        if donnees is None:
+            donnees = {}
         for code, dictDonnees in donnees.items() :
             page = self.GetPageByCode(code)
             page.SetDonnees(dictDonnees)
@@ -447,7 +457,9 @@ class Dialog(wx.Dialog):
     def GetDonnees(self):
         return self.ctrl_pages.GetDonnees()
     
-    def SetDonnees(self, donnees={}):
+    def SetDonnees(self, donnees=None):
+        if donnees is None:
+            donnees = {}
         self.ctrl_pages.SetDonnees(donnees)
         
 

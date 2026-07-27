@@ -17,7 +17,11 @@ import wx.lib.agw.customtreectrl as CT
 
 class MyDialog(wx.Dialog):
     """ Sélection de catégories pour un scénario """
-    def __init__(self, parent, listeSelections=[], listeDisabledItems = []):
+    def __init__(self, parent, listeSelections=None, listeDisabledItems = None):
+        if listeSelections is None:
+            listeSelections = []
+        if listeDisabledItems is None:
+            listeDisabledItems = []
         wx.Dialog.__init__(self, parent, id=-1, title=_(u"Sélection de catégories"), size=(450, 600))
         self.listeSelections = listeSelections
         self.listeDisabledItems = listeDisabledItems
@@ -83,7 +87,11 @@ class MyDialog(wx.Dialog):
 
         
 class TreeCtrl(CT.CustomTreeCtrl):
-    def __init__(self, parent, listeSelections=[], listeDisabledItems=[], id=wx.ID_ANY, pos=wx.DefaultPosition, size=wx.DefaultSize, style=wx.SIMPLE_BORDER) :
+    def __init__(self, parent, listeSelections=None, listeDisabledItems=None, id=wx.ID_ANY, pos=wx.DefaultPosition, size=wx.DefaultSize, style=wx.SIMPLE_BORDER) :
+        if listeSelections is None:
+            listeSelections = []
+        if listeDisabledItems is None:
+            listeDisabledItems = []
         CT.CustomTreeCtrl.__init__(self, parent, id, pos, size, style)
         
         self.SetBackgroundColour(wx.WHITE)

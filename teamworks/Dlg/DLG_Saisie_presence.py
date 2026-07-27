@@ -44,7 +44,9 @@ def StrEnDatetimeDate(texteDate):
 
 
 class Panel(wx.Panel):
-    def __init__(self, parent, id=-1, listeDonnees=[], IDmodif=0, mode="planning", panelPlanning=None):
+    def __init__(self, parent, id=-1, listeDonnees=None, IDmodif=0, mode="planning", panelPlanning=None):
+        if listeDonnees is None:
+            listeDonnees = []
         wx.Panel.__init__(self, parent, id=id, name="panel_saisiePresences", style=wx.TAB_TRAVERSAL)       
         self.parent = parent
         self.mode = mode
@@ -177,8 +179,10 @@ class Panel(wx.Panel):
         self.grid_sizer_base = grid_sizer_base
 
 
-    def CreationDictDonnees(self, listeDonnees=[]):
+    def CreationDictDonnees(self, listeDonnees=None):
         # Création du dictionnaire de données (date, IDpersonne)
+        if listeDonnees is None:
+            listeDonnees = []
         self.dictDonnees = {}
         ID = 1
         for IDpersonne, date in listeDonnees :
@@ -796,7 +800,9 @@ class TreeCtrlCategories(wx.TreeCtrl):
 
         
 class Dialog(wx.Dialog):
-    def __init__(self, parent, listeDonnees=[], IDmodif=0, mode="planning", panelPlanning=None):
+    def __init__(self, parent, listeDonnees=None, IDmodif=0, mode="planning", panelPlanning=None):
+        if listeDonnees is None:
+            listeDonnees = []
         wx.Dialog.__init__(self, parent, -1, style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX)
         self.panelPlanning = panelPlanning
         self.panel = Panel(self, listeDonnees=listeDonnees, IDmodif=IDmodif, mode=mode, panelPlanning=self.panelPlanning)

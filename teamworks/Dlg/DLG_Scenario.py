@@ -1755,7 +1755,9 @@ class PanelLegende(scrolled.ScrolledPanel):
         
         self.MAJ()
         
-    def MAJ(self, listeControlesSupp = []):
+    def MAJ(self, listeControlesSupp = None):
+        if listeControlesSupp is None:
+            listeControlesSupp = []
         self.DestroyChildren()
         self.listeControles = []
         grid_sizer = wx.FlexGridSizer(rows=20, cols=2, vgap=5, hgap=5)

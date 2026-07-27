@@ -250,7 +250,9 @@ class CTRL_Categorie(wx.Choice):
             self.SetSelection(0)
         self.Bind(wx.EVT_CHOICE, self.OnChoix)
     
-    def MAJ(self, listeActivites=[] ):
+    def MAJ(self, listeActivites=None ):
+        if listeActivites is None:
+            listeActivites = []
         listeItems = self.GetListeDonnees()
         self.SetItems(listeItems)
                                         

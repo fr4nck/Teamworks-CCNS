@@ -18,7 +18,9 @@ import datetime
 
 
 class Dialog(wx.Dialog):
-    def __init__(self, parent, size=(550, 335), listeBoutons=[], type=None):
+    def __init__(self, parent, size=(550, 335), listeBoutons=None, type=None):
+        if listeBoutons is None:
+            listeBoutons = []
         wx.Dialog.__init__(self, parent, -1, title=_(u"Sélection du type de document"))
         self.parent = parent
         self.choix = None
