@@ -172,7 +172,9 @@ class ListBookPhotos(wx.Listbook):
 # ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 class Dialog(wx.Dialog):
-    def __init__(self, parent, listePersonnes=[]):
+    def __init__(self, parent, listePersonnes=None):
+        if listePersonnes is None:
+            listePersonnes = []
         wx.Dialog.__init__(self, parent, -1, style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX)
         self.parent = parent
         self.panel_base = wx.Panel(self, -1)
@@ -601,8 +603,12 @@ class DialogSelectionPersonnes(wx.Dialog):
 
 
 class CreationPDF():
-    def __init__(self, listePersonnes=[], dictAffichage={}):
+    def __init__(self, listePersonnes=None, dictAffichage=None):
         """ Imprime les photos """
+        if listePersonnes is None:
+            listePersonnes = []
+        if dictAffichage is None:
+            dictAffichage = {}
         self.listePersonnes = listePersonnes
         
         from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image

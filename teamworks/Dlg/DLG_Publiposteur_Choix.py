@@ -24,7 +24,9 @@ from Ol import OL_candidatures
 
 
 class TreeCtrl(CT.CustomTreeCtrl):
-    def __init__(self, parent, listeDonnees=[], id=wx.ID_ANY, pos=wx.DefaultPosition, size=wx.DefaultSize, style=wx.SIMPLE_BORDER) :
+    def __init__(self, parent, listeDonnees=None, id=wx.ID_ANY, pos=wx.DefaultPosition, size=wx.DefaultSize, style=wx.SIMPLE_BORDER) :
+        if listeDonnees is None:
+            listeDonnees = []
         CT.CustomTreeCtrl.__init__(self, parent, id, pos, size, style)
         self.root = self.AddRoot("Root")
         self.listeDonnees = listeDonnees

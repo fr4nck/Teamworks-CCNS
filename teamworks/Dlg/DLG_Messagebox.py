@@ -19,7 +19,9 @@ import GestionDB
 
 
 class Dialog(wx.Dialog):
-    def __init__(self, parent, titre=None, introduction=None, detail=None, conclusion=None, icone=None, boutons=[], defaut=None):
+    def __init__(self, parent, titre=None, introduction=None, detail=None, conclusion=None, icone=None, boutons=None, defaut=None):
+        if boutons is None:
+            boutons = []
         wx.Dialog.__init__(self, parent, -1, style = wx.DEFAULT_DIALOG_STYLE | wx.STAY_ON_TOP | wx.DIALOG_NO_PARENT)
         self.parent = parent   
 

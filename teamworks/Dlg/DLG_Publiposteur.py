@@ -36,7 +36,9 @@ DICT_DONNEES = {}
 
 
 class Dialog(wx.Dialog):
-    def __init__(self, parent, title="", dictDonnees={}):
+    def __init__(self, parent, title="", dictDonnees=None):
+        if dictDonnees is None:
+            dictDonnees = {}
         wx.Dialog.__init__(self, parent, -1, style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX)
 
         global DICT_DONNEES
@@ -2028,7 +2030,9 @@ class Grid_noms_fichiers(gridlib.Grid):
         self.dict_noms_fichiers = {}
         self.CreateGrid(0, 0)
         
-    def Remplissage(self, dict_noms_fichiers={} ):
+    def Remplissage(self, dict_noms_fichiers=None ):
+        if dict_noms_fichiers is None:
+            dict_noms_fichiers = {}
         self.dict_noms_fichiers = dict_noms_fichiers
         
         # Recherche du nbre de colonnes
@@ -2589,8 +2593,10 @@ class Publipostage_Word():
             self.erreur = _(u"Impossible de créer un nouveau du document")
             self.QuitterLogiciel()
     
-    def RemplacementValeurs(self, listeValeurs=[]):
+    def RemplacementValeurs(self, listeValeurs=None):
         """ Remplacements des mots-clés par les valeurs """
+        if listeValeurs is None:
+            listeValeurs = []
         try :
             find = self.doc.Content.Find
             w = win32com.client.constants
@@ -2698,8 +2704,10 @@ class Publipostage_Writer_Windows():
             self.erreur = _(u"Impossible de créer un nouveau du document")
             self.QuitterLogiciel()
             
-    def RemplacementValeurs(self, listeValeurs=[]):
+    def RemplacementValeurs(self, listeValeurs=None):
         """ Remplacements des mots-clés par les valeurs """
+        if listeValeurs is None:
+            listeValeurs = []
         try :
             for motCle, valeur in listeValeurs :
                 orempl = self.objDocument.createReplaceDescriptor()
@@ -2814,8 +2822,10 @@ class Publipostage_Writer_Linux():
             self.erreur = _(u"Impossible de créer un nouveau du document")
             self.QuitterLogiciel()
 
-    def RemplacementValeurs(self, listeValeurs=[]):
+    def RemplacementValeurs(self, listeValeurs=None):
         """ Remplacements des mots-clés par les valeurs """
+        if listeValeurs is None:
+            listeValeurs = []
         try :
             txtPublipostage = self.ooo.Remplacer_valeurs(listeValeurs)
         except Exception as err :
@@ -2898,8 +2908,10 @@ class Publipostage_Teamword():
             self.erreur = _(u"Impossible de créer un nouveau du document")
             self.QuitterLogiciel()
     
-    def RemplacementValeurs(self, listeValeurs=[]):
+    def RemplacementValeurs(self, listeValeurs=None):
         """ Remplacements des mots-clés par les valeurs """
+        if listeValeurs is None:
+            listeValeurs = []
         try :
             listeValeurs2 = []
             for motcle, valeur in listeValeurs :

@@ -1,0 +1,60 @@
+name: Frankenstein mutable defaults dialogs batch 3
+
+on:
+  pull_request:
+    paths:
+      - 'teamworks/Dlg/**/*.py'
+      - 'tools/find_mutable_defaults.py'
+      - 'tools/rewrite_mutable_defaults.py'
+      - '.github/workflows/frankenstein-mutable-defaults-dialogs-3.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  rewrite-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Select bounded dialog batch
+        run: |
+          python tools/find_mutable_defaults.py teamworks/Dlg > mutable-defaults-dialogs-before.txt
+          grep '^teamworks/Dlg/' mutable-defaults-dialogs-before.txt \
+            | cut -d: -f1 \
+            | awk '!seen[$0]++' \
+            | head -n 6 > mutable-default-dialog-files.txt
+          cat mutable-default-dialog-files.txt
+      - name: Rewrite selected dialog files
+        run: |
+          mapfile -t files < mutable-default-dialog-files.txt
+          if [ ${#files[@]} -eq 0 ]; then
+            echo 'No dialog files to rewrite'
+            exit 0
+          fi
+          python tools/rewrite_mutable_defaults.py "${files[@]}"
+          python -m py_compile "${files[@]}"
+      - name: Inventory after cleanup
+        run: python tools/find_mutable_defaults.py teamworks/Dlg > mutable-defaults-dialogs-after.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mutable-defaults-dialogs-batch-3
+          path: |
+            mutable-defaults-dialogs-before.txt
+            mutable-defaults-dialogs-after.txt
+            mutable-default-dialog-files.txt
+      - name: Commit bounded dialog cleanup
+        run: |
+          if git diff --quiet; then
+            echo 'No cleanup required'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add teamworks/Dlg
+          git commit -m 'refactor: sécuriser un troisième lot de dialogues'
+          git push origin HEAD:${{ github.head_ref }}
