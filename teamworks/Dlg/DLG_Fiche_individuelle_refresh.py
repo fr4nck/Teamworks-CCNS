@@ -82,6 +82,12 @@ def _refresh_current_problem_tree(module, tree_ctrl, IDpersonne):
     except (AttributeError, RuntimeError):
         return False
 
+    # Le cache historique ne contient que les personnes ayant un contrat en
+    # cours ou à venir. Une personne absente de ce périmètre doit conserver le
+    # chemin intégral afin de ne jamais être ajoutée à tort dans l'arbre.
+    if IDpersonne not in cached_names:
+        return False
+
     try:
         names, problems = module.FonctionsPerso.Recherche_problemes_personnes(
             listeIDpersonnes=(IDpersonne,)
