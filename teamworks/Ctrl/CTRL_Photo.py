@@ -38,10 +38,7 @@ def GetPhoto(IDindividu=None, nomFichier=None, taillePhoto=(128, 128), qualite=w
             IDphoto, bufferPhoto = listeDonnees[0]
             # Transformation du buffer en wx.bitmap
             io = six.BytesIO(bufferPhoto)
-            if 'phoenix' in wx.PlatformInfo:
-                img = wx.Image(io, wx.BITMAP_TYPE_JPEG)
-            else:
-                img = wx.Image(io, wx.BITMAP_TYPE_JPEG)
+            img = wx.Image(io, wx.BITMAP_TYPE_JPEG)
             bmp = img.ConvertToBitmap()
             
             # Récupération du cadre de décoration
@@ -51,10 +48,7 @@ def GetPhoto(IDindividu=None, nomFichier=None, taillePhoto=(128, 128), qualite=w
                 # Application du masque
                 tailleInitiale = bmp.GetSize()
                 # Création du dc temporaire
-                if 'phoenix' in wx.PlatformInfo:
-                    bmp = wx.Bitmap(tailleInitiale[0], tailleInitiale[1])
-                else:
-                    bmp = wx.Bitmap(tailleInitiale[0], tailleInitiale[1])
+                bmp = wx.Bitmap(tailleInitiale[0], tailleInitiale[1])
                 dc = wx.MemoryDC()
                 dc.SelectObject(bmp)
 

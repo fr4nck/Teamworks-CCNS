@@ -266,10 +266,7 @@ class ListCtrl_champs(wx.ListCtrl, CheckListCtrlMixin):
 
         # Remplissage avec les valeurs
         for key, valeurs in self.dictChamps.items():
-            if 'phoenix' in wx.PlatformInfo:
-                index = self.InsertItem(self.GetItemCount(), valeurs[1])
-            else:
-                index = self.InsertItem(self.GetItemCount(), valeurs[1])
+            index = self.InsertItem(self.GetItemCount(), valeurs[1])
             self.SetItemData(index, key)
             # Sélection
             if key in self.selections :
