@@ -295,8 +295,10 @@ class Dialog(wx.Dialog):
         dlg.ShowModal() 
         dlg.Destroy()
         
-    def SetDonnees(self, donnees=[], modificationAutorisee=True):
+    def SetDonnees(self, donnees=None, modificationAutorisee=True):
         # MAJ contrôles Adresses
+        if donnees is None:
+            donnees = []
         self.ctrl_destinataires.SetDonneesManuelles(listeDonnees=donnees, modificationAutorisee=modificationAutorisee)
         self.bouton_modifier_dest.Enable(modificationAutorisee)
         
@@ -376,8 +378,10 @@ class Dialog(wx.Dialog):
         self.Envoyer(listeDestinataires = self.ctrl_destinataires.GetDonnees())    
     
     
-    def Envoyer(self, listeDestinataires=[], adresseTest=None):
+    def Envoyer(self, listeDestinataires=None, adresseTest=None):
         # Expéditeur
+        if listeDestinataires is None:
+            listeDestinataires = []
         dictExp = self.ctrl_exp.GetDonnees()
         if dictExp == None :
             dlg = wx.MessageDialog(self, _(u"Vous n'avez sélectionné aucune adresse d'expéditeur !"), _(u"Erreur de saisie"), wx.OK | wx.ICON_EXCLAMATION)
@@ -540,7 +544,9 @@ class Dialog(wx.Dialog):
         #         },])
         # DB.Close()
 
-    def VerifieFusion(self, texteHTML="", listeDestinataires=[]):
+    def VerifieFusion(self, texteHTML="", listeDestinataires=None):
+        if listeDestinataires is None:
+            listeDestinataires = []
         """ Vérifie que tous les mots-clés ont été remplacés """
         listeResultats = []
         for track in listeDestinataires :
@@ -582,7 +588,9 @@ class Dialog(wx.Dialog):
         else :
             return True
 
-    def SetPiecesJointes(self, listeFichiers=[]):
+    def SetPiecesJointes(self, listeFichiers=None):
+        if listeFichiers is None:
+            listeFichiers = []
         self.ctrl_pieces.SetFichiers(listeFichiers)
 
 
