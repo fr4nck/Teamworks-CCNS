@@ -2,8 +2,11 @@ name: Stabilisation recruitment smoke
 
 on:
   pull_request:
-    branches: [master]
+    branches:
+      - master
+      - stabilisation/recette-fonctionnelle-secondaire
     paths:
+      - "tools/smoke_runtime.py"
       - "tools/smoke_secondary_recruitment.py"
       - "teamworks/Ctrl/CTRL_Page_candidatures.py"
       - "teamworks/Ol/OL_candidatures.py"
@@ -17,8 +20,6 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || github.ref_name }}
 
       - uses: actions/setup-python@v5
         with:
