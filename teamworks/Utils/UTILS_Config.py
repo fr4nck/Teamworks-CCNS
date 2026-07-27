@@ -22,9 +22,11 @@ from Utils import UTILS_Json
 def GetNomFichierConfig(nomFichier="Config.json"):
     return UTILS_Fichiers.GetRepUtilisateur(nomFichier)
 
+
 def IsFichierExists() :
     nomFichier = GetNomFichierConfig()
     return os.path.isfile(nomFichier)
+
 
 def GenerationFichierConfig():
     dictDonnees = {}
@@ -49,9 +51,11 @@ def GenerationFichierConfig():
     print(("nouveau_fichier = %s" % nouveau_fichier))
     return nouveau_fichier
 
+
 def SupprimerFichier():
     nomFichier = GetNomFichierConfig()
     os.remove(nomFichier)
+
 
 
 
@@ -71,8 +75,10 @@ class FichierConfig():
                 data = UTILS_Json.Lire(nom_fichier_bak)
         return data
 
-    def SetDictConfig(self, dictConfig={}):
+    def SetDictConfig(self, dictConfig=None):
         """ Remplace le fichier de config présent sur le disque dur par le dict donné """
+        if dictConfig is None:
+            dictConfig = {}
         UTILS_Json.Ecrire(nom_fichier=self.nomFichier, data=dictConfig)
         # Création d'une copie de sauvegarde du config
         shutil.copyfile(self.nomFichier, self.nomFichier + ".bak")
@@ -92,9 +98,11 @@ class FichierConfig():
         data[key] = valeur
         self.SetDictConfig(data)
 
-    def SetItemsConfig(self, dictParametres={}):
+    def SetItemsConfig(self, dictParametres=None):
         """ Remplace plusieurs valeur dans le fichier de config """
         """ dictParametres = {nom : valeur, nom : valeur...} """
+        if dictParametres is None:
+            dictParametres = {}
         data = self.GetDictConfig()
         for key, valeur in list(dictParametres.items()):
             data[key] = valeur
@@ -105,6 +113,7 @@ class FichierConfig():
         data = self.GetDictConfig()
         del data[key]
         self.SetDictConfig(data)
+
 
 
 
@@ -127,6 +136,7 @@ def GetParametre(nomParametre="", defaut=None):
         parametre = cfg.GetItemConfig(nomParametre, defaut)
     return parametre
 
+
 def SetParametre(nomParametre="", parametre=None):
     try :
         topWindow = wx.GetApp().GetTopWindow()
@@ -143,10 +153,14 @@ def SetParametre(nomParametre="", parametre=None):
 
 
 
+
 # --------------Traitement par lot ------------------------------------------------------------------------------------------
 
-def GetParametres(dictParametres={}):
+
+def GetParametres(dictParametres=None):
     """ dictParametres = {nom : valeur, nom: valeur...} """
+    if dictParametres is None:
+        dictParametres = {}
     dictFinal = {}
     try :
         topWindow = wx.GetApp().GetTopWindow()
@@ -171,8 +185,11 @@ def GetParametres(dictParametres={}):
 
 
 
-def SetParametres(dictParametres={}):
+
+def SetParametres(dictParametres=None):
     """ dictParametres = {nom : valeur, nom: valeur...} """
+    if dictParametres is None:
+        dictParametres = {}
     try :
         topWindow = wx.GetApp().GetTopWindow()
         nomWindow = topWindow.GetName()
@@ -187,6 +204,7 @@ def SetParametres(dictParametres={}):
         cfg = FichierConfig()
         cfg.SetItemsConfig(dictParametres)
     return dictParametres
+
 
 
 
