@@ -698,7 +698,9 @@ class SaisieDeplacement(wx.Dialog):
 
 class AdvancedComboBox(wx.ComboBox) :
     """ Crée un comboBox avec auto-complete limité à la liste donnée """
-    def __init__(self, parent, value, choices=[], style=0, **par):
+    def __init__(self, parent, value, choices=None, style=0, **par):
+        if choices is None:
+            choices = []
         wx.ComboBox.__init__(self, parent, wx.ID_ANY, value, style=style|wx.CB_DROPDOWN, choices=choices, **par)
         self.parent = parent
         self.choices = choices

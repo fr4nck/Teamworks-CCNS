@@ -266,7 +266,9 @@ class Page_SMTP(wx.Panel):
             "auth": auth, "startTLS": startTLS, "utilisateur": utilisateur, "parametres":None}
         return dict_donnees
 
-    def SetDonnees(self, dictDonnees={}):
+    def SetDonnees(self, dictDonnees=None):
+        if dictDonnees is None:
+            dictDonnees = {}
         self.ctrl_adresse.SetValue(dictDonnees["adresse"])
         if dictDonnees["nom_adresse"] != None:
             self.ctrl_nom_adresse.SetValue(dictDonnees["nom_adresse"])
@@ -440,7 +442,9 @@ class Page_MAILJET(wx.Panel):
             "auth": None, "startTLS": None, "utilisateur": None, "parametres":parametres}
         return dict_donnees
 
-    def SetDonnees(self, dictDonnees={}):
+    def SetDonnees(self, dictDonnees=None):
+        if dictDonnees is None:
+            dictDonnees = {}
         adresse = self.ctrl_adresse.SetValue(dictDonnees.get("adresse", ""))
         nom_adresse = self.ctrl_nom_adresse.SetValue(dictDonnees.get("nom_adresse", ""))
         parametres = dictDonnees.get("parametres", None)
