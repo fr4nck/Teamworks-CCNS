@@ -23,8 +23,20 @@ def test_fast_path_only_applies_to_existing_general_form_edits():
 def test_targeted_refresh_reads_one_person_only():
     source = REFRESH.read_text(encoding="utf-8")
     assert "FROM personnes WHERE IDpersonne=%d" in source
-    assert "list_ctrl.RefreshObject(track)" in source
     assert "track.__dict__.update(replacement.__dict__)" in source
+
+
+def test_person_contacts_are_reloaded_before_track_creation():
+    source = REFRESH.read_text(encoding="utf-8")
+    assert "FROM coordonnees WHERE IDpersonne=%d" in source
+    assert "_reload_person_contacts(OL_personnes, db, IDpersonne)" in source
+    assert source.index("_reload_person_contacts") < source.index("replacement = OL_personnes.Track")
+
+
+def test_sorting_and_filters_are_reapplied():
+    source = REFRESH.read_text(encoding="utf-8")
+    assert "list_ctrl.RepopulateList()" in source
+    assert "list_ctrl.RefreshObject(track)" not in source
 
 
 def test_full_refresh_remains_as_fallback():
