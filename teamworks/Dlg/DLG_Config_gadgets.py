@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -50,13 +50,13 @@ class Panel(wx.Panel):
 
         
     def __set_properties(self):
-        self.bouton_options.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier les options du gadget sélectionné")))
+        self.bouton_options.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier les options du gadget sÃ©lectionnÃ©")))
         self.bouton_options.SetSize(self.bouton_options.GetBestSize())
-        self.bouton_reinit.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour réinitialiser les paramètres par défaut de tous les gadgets")))
+        self.bouton_reinit.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour rÃ©initialiser les paramÃ¨tres par dÃ©faut de tous les gadgets")))
         self.bouton_reinit.SetSize(self.bouton_reinit.GetBestSize())
-        self.bouton_haut.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour déplacer le gadget sélectionné vers le haut")))
+        self.bouton_haut.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour dÃ©placer le gadget sÃ©lectionnÃ© vers le haut")))
         self.bouton_haut.SetSize(self.bouton_haut.GetBestSize())
-        self.bouton_bas.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour déplacer le gadget sélectionné vers le bas")))
+        self.bouton_bas.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour dÃ©placer le gadget sÃ©lectionnÃ© vers le bas")))
         self.bouton_bas.SetSize(self.bouton_bas.GetBestSize())
         self.bouton_aide.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour obtenir de l'aide")))
 
@@ -94,7 +94,7 @@ class Panel(wx.Panel):
         IDgadget = self.listCtrl.GetItemData(index)
         
         if index == -1:
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sélectionner un gadget dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÃ©lectionner un gadget dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -128,7 +128,7 @@ class Panel(wx.Panel):
 
     def Reinit(self):
         # Avertissement
-        dlg = wx.MessageDialog(self, _(u"Souhaitez-vous vraiment réinitialiser les paramètres de tous les gadgets de la page d'accueil ?"), "Confirmation", wx.YES_NO | wx.CANCEL | wx.ICON_EXCLAMATION)
+        dlg = wx.MessageDialog(self, _(u"Souhaitez-vous vraiment rÃ©initialiser les paramÃ¨tres de tous les gadgets de la page d'accueil ?"), "Confirmation", wx.YES_NO | wx.CANCEL | wx.ICON_EXCLAMATION)
         if dlg.ShowModal() == wx.ID_YES:
             print("REINIT !")
             dlg.Destroy()
@@ -196,7 +196,7 @@ class ListCtrl(wx.ListCtrl, CheckListCtrlMixin):
 
         self.Importation()
 
-        # Création des colonnes
+        # CrÃ©ation des colonnes
         self.InsertColumn(0, "Ordre")
         self.SetColumnWidth(0, 50)
         self.InsertColumn(1, "Nom du gadget")
@@ -207,21 +207,16 @@ class ListCtrl(wx.ListCtrl, CheckListCtrlMixin):
         # Remplissage avec les valeurs
         self.remplissage = True
         for IDgadget, nom, label, description, taille, affichage, ordre, config, parametres in self.listeGadgets :
-            if 'phoenix' in wx.PlatformInfo:
-                index = self.InsertItem(self.GetItemCount(), str(ordre))
-                self.SetItem(index, 1, label)
-                self.SetItem(index, 2, description)
-            else:
-                index = self.InsertItem(self.GetItemCount(), str(ordre))
-                self.SetItem(index, 1, label)
-                self.SetItem(index, 2, description)
+            index = self.InsertItem(self.GetItemCount(), str(ordre))
+            self.SetItem(index, 1, label)
+            self.SetItem(index, 2, description)
             self.SetItemData(index, IDgadget)
 
             # Check
             if affichage == "True":
                 self.CheckItem(index)
 
-            # Sélection
+            # SÃ©lection
             if IDgadget == select :
                 self.Select(index)
         
@@ -248,12 +243,12 @@ class ListCtrl(wx.ListCtrl, CheckListCtrlMixin):
 
     def OnItemSelected(self, event):
         index = self.GetFirstSelected()
-        # Règle bouton haut
+        # RÃ¨gle bouton haut
         if index == 0 :
             self.parent.bouton_haut.Enable(False)
         else:
             self.parent.bouton_haut.Enable(True)
-        # Règle bouton bas
+        # RÃ¨gle bouton bas
         if index == self.GetItemCount()-1 :
             self.parent.bouton_bas.Enable(False)
         else:
@@ -271,14 +266,14 @@ class ListCtrl(wx.ListCtrl, CheckListCtrlMixin):
 
     def Importation(self):
       
-        # Récupération des données de la table GADGETS
+        # RÃ©cupÃ©ration des donnÃ©es de la table GADGETS
         DB = GestionDB.DB()     
         req = "SELECT * FROM gadgets ORDER BY ordre;"
         DB.ExecuterReq(req)
         liste = DB.ResultatReq()
         DB.Close()
         self.nbreLignes = len(liste)
-        # Création du dictionnaire de données
+        # CrÃ©ation du dictionnaire de donnÃ©es
         self.listeGadgets = liste
 
     def Menu_Options(self, event):
