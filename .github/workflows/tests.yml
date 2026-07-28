@@ -28,6 +28,12 @@ jobs:
       - name: Compile Python sources
         run: python -m compileall application domain infrastructure scripts teamworks/CcnsCore tests
 
+      - name: Reject removed Python 2 builtins
+        run: >-
+          python scripts/audit_runtime_risks.py .
+          --fail-on-python2-builtins
+          --json python2-builtins-audit.json
+
       - name: Run tests
         shell: bash
         run: |
@@ -40,5 +46,14 @@ jobs:
         with:
           name: pytest-output
           path: pytest-output.txt
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Upload Python 2 builtins audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: python2-builtins-audit
+          path: python2-builtins-audit.json
           if-no-files-found: error
           retention-days: 1
