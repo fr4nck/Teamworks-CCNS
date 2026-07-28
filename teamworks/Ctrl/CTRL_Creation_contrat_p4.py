@@ -1,15 +1,15 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
 # Licence:      Licence GNU GPL
 #-----------------------------------------------------------
 
-import sys
 import Chemins
 from Utils.UTILS_Traduction import _
 import wx
+import six
 from wx.lib.mixins.listctrl import CheckListCtrlMixin
 import GestionDB
 from Utils import UTILS_Adaptations
@@ -21,8 +21,8 @@ class Page(wx.Panel):
         kwds["style"] = wx.TAB_TRAVERSAL
         wx.Panel.__init__(self, *args, **kwds)
         self.sizer_champs_staticbox = wx.StaticBox(self, -1, _(u"Champs"))
-        self.label_titre = wx.StaticText(self, -1, _(u"3. Choix des champs personnalisés"))
-        self.label_intro = wx.StaticText(self, -1, _(u"Sélectionnez les données personnalisées que vous souhaitez ajouter aux\ncaractérististiques de ce contrat :"))
+        self.label_titre = wx.StaticText(self, -1, _(u"3. Choix des champs personnalisÃ©s"))
+        self.label_intro = wx.StaticText(self, -1, _(u"SÃ©lectionnez les donnÃ©es personnalisÃ©es que vous souhaitez ajouter aux\ncaractÃ©rististiques de ce contrat :"))
         self.listCtrl_champs = ListCtrl_champs(self)
         self.bouton_champs = wx.Button(self, -1, "...", style=wx.BU_EXACTFIT)
 
@@ -33,7 +33,7 @@ class Page(wx.Panel):
 
     def __set_properties(self):
         self.label_titre.SetFont(wx.Font(8, wx.DEFAULT, wx.NORMAL, wx.BOLD, 0, ""))
-        self.bouton_champs.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour créer, modifier ou supprimer des champs personnalisés.")))
+        self.bouton_champs.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour crÃ©er, modifier ou supprimer des champs personnalisÃ©s.")))
         self.bouton_champs.SetMinSize((20, 20))
 
     def __do_layout(self):
@@ -66,15 +66,15 @@ class Page(wx.Panel):
                 
     def Validation(self):
         
-        # Vérifie qu'un champ a été coché   
+        # VÃ©rifie qu'un champ a Ã©tÃ© cochÃ©   
         if len(self.listCtrl_champs.selections) == 0 :
-            dlg = wx.MessageDialog(self, _(u"Vous n'avez sélectionné aucun champ. \n\nVoulez-vous tout de même continuer ?"),  _(u"Vérification"), wx.ICON_QUESTION | wx.YES_NO | wx.NO_DEFAULT)
+            dlg = wx.MessageDialog(self, _(u"Vous n'avez sÃ©lectionnÃ© aucun champ. \n\nVoulez-vous tout de mÃªme continuer ?"),  _(u"VÃ©rification"), wx.ICON_QUESTION | wx.YES_NO | wx.NO_DEFAULT)
             if dlg.ShowModal() == wx.ID_NO :
                 dlg.Destroy() 
                 return False
             dlg.Destroy()
         
-        # Mise à jour du listCtrl_Champs de la page suivante
+        # Mise Ã  jour du listCtrl_Champs de la page suivante
         self.GetGrandParent().page5.MAJ_panelDefilant()
         
         return True
@@ -88,8 +88,6 @@ class ListCtrl_champs(wx.ListCtrl, CheckListCtrlMixin):
     def __init__(self, parent):
         wx.ListCtrl.__init__(self, parent, -1, style=wx.LC_REPORT|wx.LC_NO_HEADER)
         CheckListCtrlMixin.__init__(self)
-        if 'phoenix' in wx.PlatformInfo:
-            self.EnableCheckBoxes(True)
         self.parent = parent
             
         self.Remplissage()
@@ -111,14 +109,14 @@ class ListCtrl_champs(wx.ListCtrl, CheckListCtrlMixin):
         """ Remplissage du listCtrl """
         self.dictChamps = self.Import_Donnees()
         self.ClearAll()
-        # Création des colonnes
+        # CrÃ©ation des colonnes
         self.InsertColumn(0, "Nom")
 
         # Remplissage avec les valeurs
         for key, valeurs in self.dictChamps.items():
-            index = self.InsertItem(self.GetItemCount(), valeurs[1])
+            index = self.InsertItem(six.MAXSIZE, valeurs[1])
             self.SetItemData(index, key)
-            # Sélection
+            # SÃ©lection
             if key in self.selections :
                 self.CheckItem(index)
 
@@ -133,7 +131,7 @@ class ListCtrl_champs(wx.ListCtrl, CheckListCtrlMixin):
         self.Remplissage()
         
     def Import_Donnees(self):
-        """ Importe les champs de la base de données """
+        """ Importe les champs de la base de donnÃ©es """
         
         req = """
             SELECT IDchamp, nom, description, mot_cle, defaut, exemple
@@ -178,18 +176,18 @@ class ListCtrl_champs(wx.ListCtrl, CheckListCtrlMixin):
     def OnContextMenu(self, event):
         """Ouverture du menu contextuel """
 
-        # Recherche et sélection de l'item pointé avec la souris
+        # Recherche et sÃ©lection de l'item pointÃ© avec la souris
         index = self.GetFirstSelected()
         if index == -1 :
             mode = "selected"
         else:
             mode = "deselected"
         
-        # Création du menu contextuel
+        # CrÃ©ation du menu contextuel
         menuPop = UTILS_Adaptations.Menu()
         
         # Item Ajouter
-        item = wx.MenuItem(menuPop, 10, _(u"Créer un nouveau champ"))
+        item = wx.MenuItem(menuPop, 10, _(u"CrÃ©er un nouveau champ"))
         bmp = wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_PNG)
         item.SetBitmap(bmp)
         menuPop.AppendItem(item)
