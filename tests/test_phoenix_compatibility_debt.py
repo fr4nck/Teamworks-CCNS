@@ -4,8 +4,8 @@ from pathlib import Path
 
 INVENTORY_PATH = Path("tools/inventory_legacy_compatibility_branches.py")
 TEAMWORKS_PATH = Path("teamworks")
-PHOENIX_DEBT_CEILING = 211
-PHOENIX_FILE_CEILING = 91
+PHOENIX_DEBT_CEILING = 206
+PHOENIX_FILE_CEILING = 86
 
 
 def load_inventory_module():
