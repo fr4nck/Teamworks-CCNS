@@ -50,15 +50,14 @@ def install(module):
         def __init__(self, parent, titre=module._(u"Fiche individuelle"), IDpersonne=0):
             original_contract_search = module.FonctionsPerso.Recherche_ContratsEnCoursOuAVenir
             try:
-                has_contract = _has_current_or_future_contract(module, IDpersonne)
+                try:
+                    has_contract = _has_current_or_future_contract(module, IDpersonne)
+                except Exception:
+                    has_contract = IDpersonne in original_contract_search()
+
                 module.FonctionsPerso.Recherche_ContratsEnCoursOuAVenir = (
                     lambda: [IDpersonne] if has_contract else []
                 )
-                super(ScopedProblemsDialog, self).__init__(
-                    parent, titre=titre, IDpersonne=IDpersonne
-                )
-            except Exception:
-                module.FonctionsPerso.Recherche_ContratsEnCoursOuAVenir = original_contract_search
                 super(ScopedProblemsDialog, self).__init__(
                     parent, titre=titre, IDpersonne=IDpersonne
                 )
