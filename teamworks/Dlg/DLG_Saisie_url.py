@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -34,10 +34,7 @@ class MyDialog(wx.Dialog):
         
     def __set_properties(self):
         self.SetTitle(_(u"Saisie d'une URL"))
-        if 'phoenix' in wx.PlatformInfo:
-            _icon = wx.Icon()
-        else :
-            _icon = wx.EmptyIcon()
+        _icon = wx.Icon()
         _icon.CopyFromBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Logo.png"), wx.BITMAP_TYPE_ANY))
         self.SetIcon(_icon)
         self.ctrl_label.SetToolTip(wx.ToolTip(_(u"Saisissez ici le label")))
@@ -71,11 +68,11 @@ class MyDialog(wx.Dialog):
         self.CentreOnScreen()
 
     def GetLabel(self):
-        """ Récupération ds valeurs saisies """
+        """ RÃ©cupÃ©ration ds valeurs saisies """
         return self.ctrl_label.GetValue()
     
     def GetURL(self):
-        """ Récupération ds valeurs saisies """
+        """ RÃ©cupÃ©ration ds valeurs saisies """
         return self.ctrl_url.GetValue()
         
     def OnBoutonAide(self, event):
@@ -83,7 +80,7 @@ class MyDialog(wx.Dialog):
         UTILS_Aide.Aide("")
 
     def OnBoutonOk(self, event):
-        """ Validation des données saisies """
+        """ Validation des donnÃ©es saisies """
         
         label = self.ctrl_label.GetValue()
         if label == "" :
