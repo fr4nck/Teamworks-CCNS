@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #------------------------------------------------------------------------
-# Application :    Noethys, gestion multi-activités
+# Application :    Noethys, gestion multi-activitÃ©s
 # Site internet :  www.noethys.com
 # Auteur:          Ivan LUCAS
 # Copyright:       (c) 2010-19 Ivan LUCAS
@@ -85,20 +85,11 @@ def Lire(nom_fichier="", conversion_auto=False):
     is_json = True
 
     # Essaye d'ouvrir un fichier Json
-    if 'phoenix' in wx.PlatformInfo:
-        try:
-            with open(nom_fichier) as json_file:
-                data = json.load(json_file, object_hook=MyDecoder)
-        except json.decoder.JSONDecodeError:
-            is_json = False
-    else :
-        try:
-            with open(nom_fichier) as json_file:
-                data = json.load(json_file, object_hook=MyDecoder)
-        except Exception as err:
-            print("Impossible d'ouvrir le fichier Json")
-            print(err,)
-            is_json = False
+    try:
+        with open(nom_fichier) as json_file:
+            data = json.load(json_file, object_hook=MyDecoder)
+    except json.decoder.JSONDecodeError:
+        is_json = False
 
     if is_json == False :
         print("Ce n'est pas un fichier Json")
@@ -123,7 +114,7 @@ def Lire(nom_fichier="", conversion_auto=False):
             print("Conversion du shelve en Json impossible :")
             print(err,)
 
-    # Si aucune donnée trouvée, on lève une erreur
+    # Si aucune donnÃ©e trouvÃ©e, on lÃ¨ve une erreur
     if data == None :
         raise
 
@@ -149,4 +140,3 @@ if __name__ == u"__main__":
         dictDonnees[key] = db[key]
     db.close()
     Ecrire(nom_fichier=UTILS_Fichiers.GetRepUtilisateur("Config_test.json"), data=dictDonnees)
-
