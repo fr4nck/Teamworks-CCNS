@@ -12,10 +12,7 @@ import Chemins
 import wx
 import GestionDB
 
-if 'phoenix' in wx.PlatformInfo:
-    TYPE_COULEUR = wx._core.Colour
-else:
-    TYPE_COULEUR = wx._gdi.Colour
+TYPE_COULEUR = wx.Colour
 
 
 def ParametresCategorie(mode="get", categorie="", dictParametres=None, nomFichier=""):
