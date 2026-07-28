@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 import importlib
-import importlib.util
 import sqlite3
 import sys
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-CHEMINS = ROOT / "teamworks" / "Chemins.py"
-GESTION_DB = ROOT / "teamworks" / "GestionDB.py"
-FONCTIONS_PERSO = ROOT / "teamworks" / "FonctionsPerso.py"
+TEAMWORKS = ROOT / "teamworks"
+CHEMINS = TEAMWORKS / "Chemins.py"
+GESTION_DB = TEAMWORKS / "GestionDB.py"
+FONCTIONS_PERSO = TEAMWORKS / "FonctionsPerso.py"
 
 
 def test_sqlite_compatibility_decodes_only_byte_paths():
@@ -28,18 +28,18 @@ def test_sqlite_compatibility_is_idempotent():
 
 def test_sqlite_compatibility_survives_module_reload():
     original_connect = sqlite3.connect
-    module_name = "_teamworks_test_chemins_reload"
-    spec = importlib.util.spec_from_file_location(module_name, CHEMINS)
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[module_name] = module
+    sys.path.insert(0, str(TEAMWORKS))
+    sys.modules.pop("Chemins", None)
     try:
-        spec.loader.exec_module(module)
+        module = importlib.import_module("Chemins")
         importlib.reload(module)
         connection = sqlite3.connect(":memory:")
         connection.close()
     finally:
         sqlite3.connect = original_connect
-        sys.modules.pop(module_name, None)
+        sys.modules.pop("Chemins", None)
+        if sys.path and sys.path[0] == str(TEAMWORKS):
+            sys.path.pop(0)
 
 
 def test_legacy_byte_path_calls_are_covered_by_early_chemins_import():
