@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -22,7 +22,7 @@ class Dialog(wx.Dialog):
         self.sizer_contenu_staticbox = wx.StaticBox(self.panel_base, -1, "")
         self.label_nom = wx.StaticText(self.panel_base, -1, _(u"Nom du pays :"))
         self.text_nom = wx.TextCtrl(self.panel_base, -1, "")
-        self.label_nation = wx.StaticText(self.panel_base, -1, _(u"Nationalité :"))
+        self.label_nation = wx.StaticText(self.panel_base, -1, _(u"NationalitÃ© :"))
         self.text_nation = wx.TextCtrl(self.panel_base, -1, "")
         self.bouton_aide = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))
         self.bouton_ok = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Ok"), cheminImage=Chemins.GetStaticPath("Images/32x32/Valider.png"))
@@ -41,14 +41,11 @@ class Dialog(wx.Dialog):
 
     def __set_properties(self):
         self.SetTitle(_(u"Gestion des pays"))
-        if 'phoenix' in wx.PlatformInfo:
-            _icon = wx.Icon()
-        else :
-            _icon = wx.EmptyIcon()
+        _icon = wx.Icon()
         _icon.CopyFromBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Logo.png"), wx.BITMAP_TYPE_ANY))
         self.SetIcon(_icon)
         self.text_nom.SetToolTip(wx.ToolTip(_(u"Saisissez ici le nom du pays")))
-        self.text_nation.SetToolTip(wx.ToolTip(_(u"Saisissez ici la nationalité du pays")))
+        self.text_nation.SetToolTip(wx.ToolTip(_(u"Saisissez ici la nationalitÃ© du pays")))
         self.bouton_aide.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour obtenir de l'aide")))
         self.bouton_aide.SetSize(self.bouton_aide.GetBestSize())
         self.bouton_ok.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour valider")))
@@ -98,22 +95,22 @@ class Dialog(wx.Dialog):
         self.text_nation.SetValue(donnees[1])
 
     def Sauvegarde(self):
-        """ Sauvegarde des données dans la base de données """
+        """ Sauvegarde des donnÃ©es dans la base de donnÃ©es """
         
-        # Récupération ds valeurs saisies
+        # RÃ©cupÃ©ration ds valeurs saisies
         varNom = self.text_nom.GetValue()
         varNation = self.text_nation.GetValue()
 
         DB = GestionDB.DB()       
         if self.IDpays == 0:
-            # Enregistrement d'une nouvelle coordonnée
+            # Enregistrement d'une nouvelle coordonnÃ©e
             listeDonnees = [ ("code_drapeau",   "autre"),  
                                     ("nom",    varNom),
                                     ("nationalite",    varNation), ]
             newID = DB.ReqInsert("pays", listeDonnees)
             ID = newID
         else:
-            # Modification de la coordonnée
+            # Modification de la coordonnÃ©e
             listeDonnees = [("nom",    varNom),
                                     ("nationalite",    varNation), ]
             DB.ReqMAJ("pays", listeDonnees, "IDpays", self.IDpays)
@@ -130,8 +127,8 @@ class Dialog(wx.Dialog):
         self.EndModal(wx.ID_CANCEL)
 
     def OnBoutonOk(self, event):
-        """ Validation des données saisies """
-        # Vérifie que une valeur a été saisie
+        """ Validation des donnÃ©es saisies """
+        # VÃ©rifie que une valeur a Ã©tÃ© saisie
         valeur = self.text_nom.GetValue()
         if valeur == "" :
             dlg = wx.MessageDialog(self, _(u"Vous devez saisir au moins un nom de pays !"), "Erreur", wx.OK)  
