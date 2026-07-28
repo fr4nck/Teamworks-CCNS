@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #------------------------------------------------------------------------
-# Application :    Teamworks, gestion d'équipes
+# Application :    Teamworks, gestion d'Ã©quipes
 # Site internet :  www.noethys.com
 # Auteur:           Ivan LUCAS
 # Copyright:       (c) 2010-11 Ivan LUCAS
@@ -15,8 +15,8 @@ import wx
 ID_PLUS = 100
 ID_MOINS = 101
 
-phrase1 = _(u"Ramener l'image à sa taille d'origine")
-phrase2 = _(u"Opération interdite")
+phrase1 = _(u"Ramener l'image Ã  sa taille d'origine")
+phrase2 = _(u"OpÃ©ration interdite")
 
 if not wx.USE_UNICODE:
     phrase1 = phrase1.encode("iso8859-15", "replace")
@@ -67,10 +67,7 @@ class Visu(wx.ScrolledWindow):
 class MyFrame(wx.Frame):
     def __init__(self, parent, imgPIL=None, imgWX=None):
         wx.Frame.__init__(self, parent, -1, size = (800, 600))
-        if 'phoenix' in wx.PlatformInfo:
-            _icon = wx.Icon()
-        else :
-            _icon = wx.EmptyIcon()
+        _icon = wx.Icon()
         _icon.CopyFromBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Logo.png"), wx.BITMAP_TYPE_ANY))
         self.SetIcon(_icon)
         self.SetTitle(_(u"Visualisateur d'image"))
