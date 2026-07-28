@@ -16,6 +16,16 @@
 An ObjectListView provides a more convienent and powerful interface to a ListCtrl.
 """
 
+import time
+
+
+# ObjectListView 1.3.2 utilise encore time.clock(), supprimé de Python 3.8.
+# Une horloge monotone conserve la sémantique attendue pour les temporisations
+# de rafraîchissement sans dépendre de l'heure système.
+if not hasattr(time, "clock"):
+    time.clock = time.monotonic
+
+
 __version__ = '1.3.2'
 __copyright__ = "Copyright (c) 2008 Phillip Piper (phillip_piper@bigfoot.com)"
 
