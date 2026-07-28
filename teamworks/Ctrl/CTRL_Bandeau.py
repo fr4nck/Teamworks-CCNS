@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
-# Application :    Noethys, gestion multi-activités
+# Application :    Noethys, gestion multi-activitÃ©s
 # Site internet :  www.noethys.com
 # Auteur:           Ivan LUCAS
 # Copyright:       (c) 2010-11 Ivan LUCAS
@@ -17,8 +17,6 @@ import wx.html as html
 class MyHtml(html.HtmlWindow):
     def __init__(self, parent, texte="", hauteur=25):
         html.HtmlWindow.__init__(self, parent, -1, style=wx.html.HW_NO_SELECTION | wx.html.HW_SCROLLBAR_NEVER | wx.NO_FULL_REPAINT_ON_RESIZE)
-        if "gtk2" in wx.PlatformInfo:
-            self.SetStandardFonts()
         self.SetBorders(0)
         self.SetMinSize((-1, hauteur))
         self.SetPage(u"<FONT SIZE=-2>%s</FONT>" % texte)
@@ -27,7 +25,7 @@ class MyHtml(html.HtmlWindow):
 class Bandeau(wx.Panel):
     def __init__(self, parent, titre="", texte="", hauteurHtml=25, nomImage=None):
         wx.Panel.__init__(self, parent, id=-1, style=wx.TAB_TRAVERSAL)
-        # Vérifie que l'image est bien dans le dossier static
+        # VÃ©rifie que l'image est bien dans le dossier static
         if "Static" not in nomImage:
             nomImage = Chemins.GetStaticPath(nomImage)
 
