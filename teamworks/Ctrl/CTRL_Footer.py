@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #------------------------------------------------------------------------
 # Application :    Noethys, gestion multi-activités
 # Site internet :  www.noethys.com
@@ -8,13 +8,10 @@
 # Licence:         Licence GNU GPL
 #------------------------------------------------------------------------
 
-import wx
 import datetime
 
-if 'phoenix' in wx.PlatformInfo:
-    from wx import Control
-else :
-    from wx import PyControl as Control
+import wx
+from wx import Control
 
 
 class Footer(Control):
@@ -197,5 +194,3 @@ if __name__ == '__main__':
     p.SetSizer(s)
     f.Show()
     app.MainLoop()
-    
-    
