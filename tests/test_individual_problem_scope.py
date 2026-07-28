@@ -40,6 +40,21 @@ def test_fallback_does_not_retry_dialog_initialization():
     assert source.count("super(ScopedProblemsDialog, self).__init__") == 1
 
 
+def test_contract_page_refresh_reuses_scoped_lookup():
+    source = PROBLEMS.read_text(encoding="utf-8")
+    assert "module.CTRL_Page_contrats.Panel_Contrats" in source
+    assert "has_contract = _has_current_or_future_contract(module, self.IDpersonne)" in source
+    assert "grand_parent.barre_problemes = has_contract" in source
+    assert "grand_parent.MAJ_barre_problemes()" in source
+
+
+def test_contract_page_refresh_keeps_historical_fallback():
+    source = PROBLEMS.read_text(encoding="utf-8")
+    assert "original_refresh = panel_class.MAJ_barre_problemes" in source
+    assert "return original_refresh(self)" in source
+    assert "_SCOPED_CONTRACT_REFRESH_INSTALLED" in source
+
+
 def test_problem_fallback_is_scoped_to_current_person():
     source = PROBLEMS.read_text(encoding="utf-8")
     assert "listeIDpersonnes=(self.IDpersonne,)" in source
