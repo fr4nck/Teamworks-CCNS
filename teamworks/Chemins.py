@@ -12,7 +12,10 @@ import os, sys
 import sqlite3
 
 
-_SQLITE_CONNECT_ORIGINAL = sqlite3.connect
+_SQLITE_CONNECT_CURRENT = sqlite3.connect
+_SQLITE_CONNECT_ORIGINAL = getattr(
+    _SQLITE_CONNECT_CURRENT, "_teamworks_original_connect", _SQLITE_CONNECT_CURRENT
+)
 
 
 def _sqlite_connect_text_path(database, *args, **kwargs):
@@ -28,8 +31,9 @@ def _sqlite_connect_text_path(database, *args, **kwargs):
     return _SQLITE_CONNECT_ORIGINAL(database, *args, **kwargs)
 
 
-if not getattr(sqlite3.connect, "_teamworks_text_paths", False):
+if not getattr(_SQLITE_CONNECT_CURRENT, "_teamworks_text_paths", False):
     _sqlite_connect_text_path._teamworks_text_paths = True
+    _sqlite_connect_text_path._teamworks_original_connect = _SQLITE_CONNECT_ORIGINAL
     sqlite3.connect = _sqlite_connect_text_path
 
 
