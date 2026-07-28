@@ -39,8 +39,30 @@ def _has_current_or_future_contract(module, IDpersonne):
         db.Close()
 
 
+def _install_contract_page_refresh(module):
+    """Remplace le recalcul global du bandeau après une action sur un contrat."""
+    panel_class = module.CTRL_Page_contrats.Panel_Contrats
+    if getattr(panel_class, "_SCOPED_CONTRACT_REFRESH_INSTALLED", False):
+        return
+
+    original_refresh = panel_class.MAJ_barre_problemes
+
+    def scoped_refresh(self):
+        try:
+            has_contract = _has_current_or_future_contract(module, self.IDpersonne)
+        except Exception:
+            return original_refresh(self)
+
+        grand_parent = self.parent.GetGrandParent()
+        grand_parent.barre_problemes = has_contract
+        grand_parent.MAJ_barre_problemes()
+
+    panel_class.MAJ_barre_problemes = scoped_refresh
+    panel_class._SCOPED_CONTRACT_REFRESH_INSTALLED = True
+
+
 def install(module):
-    """Évite les recalculs globaux à l'ouverture d'une fiche individuelle."""
+    """Évite les recalculs globaux dans la fiche individuelle."""
     if getattr(module, "_SCOPED_INDIVIDUAL_PROBLEMS_INSTALLED", False):
         return module
 
@@ -83,5 +105,6 @@ def install(module):
     ScopedProblemsDialog.__name__ = "Dialog"
     ScopedProblemsDialog.__module__ = module.__name__
     module.Dialog = ScopedProblemsDialog
+    _install_contract_page_refresh(module)
     module._SCOPED_INDIVIDUAL_PROBLEMS_INSTALLED = True
     return module
