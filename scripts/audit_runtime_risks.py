@@ -72,26 +72,95 @@ def audit_text(root: Path, path: Path, lines: list[str]) -> list[Finding]:
     return findings
 
 
-def module_bound_names(tree: ast.AST) -> set[str]:
-    """Return names explicitly provided by the module itself.
+def assigned_names(node: ast.AST) -> set[str]:
+    names: set[str] = set()
+    targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+    for target in targets:
+        for child in ast.walk(target):
+            if isinstance(child, ast.Name) and isinstance(child.ctx, ast.Store):
+                names.add(child.id)
+    return names
 
-    Compatibility aliases such as ``basestring = str`` are therefore not
-    reported as missing Python 2 builtins when they are later referenced.
+
+def module_binding_lines(tree: ast.Module) -> dict[str, int]:
+    """Return the first module-scope binding line for each name.
+
+    Module-level control-flow blocks are traversed, but function and class bodies
+    are excluded because their assignments are local to those scopes.
     """
-    bound: set[str] = set()
-    for node in getattr(tree, "body", []):
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
-            bound.add(node.name)
-        elif isinstance(node, (ast.Import, ast.ImportFrom)):
-            for alias in node.names:
-                bound.add(alias.asname or alias.name.split(".", 1)[0])
-        elif isinstance(node, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
-            targets = node.targets if isinstance(node, ast.Assign) else [node.target]
-            for target in targets:
-                for child in ast.walk(target):
-                    if isinstance(child, ast.Name) and isinstance(child.ctx, ast.Store):
-                        bound.add(child.id)
-    return bound
+    bindings: dict[str, int] = {}
+
+    def record(name: str, line: int) -> None:
+        bindings[name] = min(bindings.get(name, line), line)
+
+    def visit_statements(statements: list[ast.stmt]) -> None:
+        for node in statements:
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                record(node.name, node.lineno)
+                continue
+            if isinstance(node, (ast.Import, ast.ImportFrom)):
+                for alias in node.names:
+                    record(alias.asname or alias.name.split(".", 1)[0], node.lineno)
+            elif isinstance(node, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
+                for name in assigned_names(node):
+                    record(name, node.lineno)
+
+            nested_blocks = []
+            for field in ("body", "orelse", "finalbody"):
+                value = getattr(node, field, None)
+                if isinstance(value, list):
+                    nested_blocks.append(value)
+            if isinstance(node, ast.Try):
+                nested_blocks.extend(handler.body for handler in node.handlers)
+            if isinstance(node, ast.Match):
+                nested_blocks.extend(case.body for case in node.cases)
+            for block in nested_blocks:
+                visit_statements(block)
+
+    visit_statements(tree.body)
+    return bindings
+
+
+def guarded_compatibility_loads(tree: ast.Module) -> set[tuple[str, int]]:
+    """Identify ``try/name except NameError/name = replacement`` probes."""
+    guarded: set[tuple[str, int]] = set()
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Try):
+            continue
+        fallback_names: set[str] = set()
+        for handler in node.handlers:
+            catches_name_error = (
+                isinstance(handler.type, ast.Name) and handler.type.id == "NameError"
+            ) or (
+                isinstance(handler.type, ast.Tuple)
+                and any(
+                    isinstance(item, ast.Name) and item.id == "NameError"
+                    for item in handler.type.elts
+                )
+            )
+            if not catches_name_error:
+                continue
+            for statement in handler.body:
+                if isinstance(statement, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
+                    fallback_names.update(assigned_names(statement))
+        for statement in node.body:
+            for child in ast.walk(statement):
+                if (
+                    isinstance(child, ast.Name)
+                    and isinstance(child.ctx, ast.Load)
+                    and child.id in fallback_names
+                ):
+                    guarded.add((child.id, child.lineno))
+    return guarded
+
+
+def is_nested_scope(node: ast.AST, parents: dict[ast.AST, ast.AST]) -> bool:
+    parent = parents.get(node)
+    while parent is not None:
+        if isinstance(parent, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda, ast.ClassDef)):
+            return True
+        parent = parents.get(parent)
+    return False
 
 
 def audit_ast(root: Path, path: Path, lines: list[str]) -> list[Finding]:
@@ -103,22 +172,35 @@ def audit_ast(root: Path, path: Path, lines: list[str]) -> list[Finding]:
         return [Finding("syntax-unparsed", rel, exc.lineno or 0, exc.msg)]
 
     findings: list[Finding] = []
-    provided_names = module_bound_names(tree)
+    parents = {
+        child: parent
+        for parent in ast.walk(tree)
+        for child in ast.iter_child_nodes(parent)
+    }
+    binding_lines = module_binding_lines(tree)
+    guarded_loads = guarded_compatibility_loads(tree)
     for node in ast.walk(tree):
-        if (
+        if not (
             isinstance(node, ast.Name)
             and isinstance(node.ctx, ast.Load)
             and node.id in PYTHON2_REMOVED_BUILTINS
-            and node.id not in provided_names
         ):
-            findings.append(
-                Finding(
-                    "python2-removed-builtin",
-                    rel,
-                    node.lineno,
-                    f"{node.id} is unavailable on Python 3",
-                )
+            continue
+        if (node.id, node.lineno) in guarded_loads:
+            continue
+        binding_line = binding_lines.get(node.id)
+        if binding_line is not None and (
+            is_nested_scope(node, parents) or binding_line <= node.lineno
+        ):
+            continue
+        findings.append(
+            Finding(
+                "python2-removed-builtin",
+                rel,
+                node.lineno,
+                f"{node.id} is unavailable on Python 3",
             )
+        )
 
     for class_node in (node for node in ast.walk(tree) if isinstance(node, ast.ClassDef)):
         methods = {
