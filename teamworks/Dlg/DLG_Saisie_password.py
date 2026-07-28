@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 
 import Chemins
 from Utils.UTILS_Traduction import _
@@ -35,14 +35,11 @@ class Dialog(wx.Dialog):
 
     def __set_properties(self):
         self.SetTitle(_(u"Saisie d'un mot de passe"))
-        if 'phoenix' in wx.PlatformInfo:
-            _icon = wx.Icon()
-        else :
-            _icon = wx.EmptyIcon()
+        _icon = wx.Icon()
         _icon.CopyFromBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Cadenas.png"), wx.BITMAP_TYPE_ANY))
         self.SetIcon(_icon)
         self.text_password1.SetToolTip(wx.ToolTip(_(u"Saisissez ici votre mot de passe")))
-        self.text_password2.SetToolTip(wx.ToolTip(_(u"Saisissez ici une deuxième fois votre mot de passe pour confirmation")))
+        self.text_password2.SetToolTip(wx.ToolTip(_(u"Saisissez ici une deuxiÃ¨me fois votre mot de passe pour confirmation")))
         self.bouton_aide.SetToolTip(wx.ToolTip("Cliquez ici pour obtenir de l'aide"))
         self.bouton_aide.SetSize(self.bouton_aide.GetBestSize())
         self.bouton_ok.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour valider")))
@@ -82,9 +79,9 @@ class Dialog(wx.Dialog):
         self.CenterOnScreen()
 
     def Sauvegarde(self):
-        """ Sauvegarde des données dans la base de données """
+        """ Sauvegarde des donnÃ©es dans la base de donnÃ©es """
         
-        # Récupération ds valeurs saisies
+        # RÃ©cupÃ©ration ds valeurs saisies
         varPassword = self.text_password1.GetValue()
         
         # Enregistrement dans la base
@@ -103,7 +100,7 @@ class Dialog(wx.Dialog):
         self.EndModal(wx.ID_CANCEL)
 
     def OnBoutonOk(self, event):
-        """ Validation des données saisies """
+        """ Validation des donnÃ©es saisies """
         
         varPassword1 = self.text_password1.GetValue()
         if varPassword1 == "" :
@@ -122,7 +119,7 @@ class Dialog(wx.Dialog):
             return
         
         if varPassword1 != varPassword2 :
-            dlg = wx.MessageDialog(self, _(u"Vous avez saisi deux mots de passe différents ! \n\nVeuillez recommencer votre saisie."), "Erreur", wx.OK)  
+            dlg = wx.MessageDialog(self, _(u"Vous avez saisi deux mots de passe diffÃ©rents ! \n\nVeuillez recommencer votre saisie."), "Erreur", wx.OK)  
             dlg.ShowModal()
             dlg.Destroy()
             self.text_password1.SetFocus()
