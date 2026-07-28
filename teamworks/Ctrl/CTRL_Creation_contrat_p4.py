@@ -9,7 +9,6 @@
 import Chemins
 from Utils.UTILS_Traduction import _
 import wx
-import six
 from wx.lib.mixins.listctrl import CheckListCtrlMixin
 import GestionDB
 from Utils import UTILS_Adaptations
@@ -88,6 +87,7 @@ class ListCtrl_champs(wx.ListCtrl, CheckListCtrlMixin):
     def __init__(self, parent):
         wx.ListCtrl.__init__(self, parent, -1, style=wx.LC_REPORT|wx.LC_NO_HEADER)
         CheckListCtrlMixin.__init__(self)
+        self.EnableCheckBoxes(True)
         self.parent = parent
             
         self.Remplissage()
@@ -114,7 +114,7 @@ class ListCtrl_champs(wx.ListCtrl, CheckListCtrlMixin):
 
         # Remplissage avec les valeurs
         for key, valeurs in self.dictChamps.items():
-            index = self.InsertItem(six.MAXSIZE, valeurs[1])
+            index = self.InsertItem(self.GetItemCount(), valeurs[1])
             self.SetItemData(index, key)
             # Sélection
             if key in self.selections :
