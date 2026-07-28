@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #------------------------------------------------------------------------
-# Application :    Noethys, gestion multi-activités
+# Application :    Noethys, gestion multi-activitÃ©s
 # Site internet :  www.noethys.com
 # Auteur:           Ivan LUCAS
 # Copyright:       (c) 2010-14 Ivan LUCAS
@@ -23,16 +23,16 @@ class Dialog(wx.Dialog):
         if boutons is None:
             boutons = []
         wx.Dialog.__init__(self, parent, -1, style = wx.DEFAULT_DIALOG_STYLE | wx.STAY_ON_TOP | wx.DIALOG_NO_PARENT)
-        self.parent = parent   
+        self.parent = parent
 
         self.largeur_max = 550
         self.hauteur_max= 350
         self.taille_icone = (32, 32)
-        
+
         # Titre
         if titre :
             self.SetTitle(titre)
-        
+
         # Image
         if icone :
             if not isinstance(icone, wx.Bitmap) :
@@ -48,32 +48,29 @@ class Dialog(wx.Dialog):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         sizer.Add(image, 0, wx.TOP|wx.LEFT, 12)
         sizer.Add( (10,10) )
-        
+
         messageSizer = wx.BoxSizer(wx.VERTICAL)
-        
+
         # Introduction
         if introduction :
             t = wx.StaticText(self, -1, introduction)
             t.Wrap(self.largeur_max)
             messageSizer.Add(t, 0, wx.BOTTOM, 10)
             t.SetFont(wx.Font(8, wx.SWISS, wx.NORMAL, wx.BOLD))
-        
-        # Détail
+
+        # DÃ©tail
         if detail :
             t = wx.TextCtrl(self, style=wx.TE_MULTILINE|wx.TE_READONLY|wx.TE_RICH|wx.TE_DONTWRAP)
             t.SetValue(detail)
 
             dc = wx.ClientDC(t)
             dc.SetFont(t.GetFont())
-            if 'phoenix' in wx.PlatformInfo:
-                w,h,lh = dc.GetFullMultiLineTextExtent(detail)
-            else :
-                w,h,lh = dc.GetMultiLineTextExtent(detail)
+            w,h,lh = dc.GetFullMultiLineTextExtent(detail)
             w = min(self.largeur_max, 10 + w + wx.SystemSettings.GetMetric(wx.SYS_VSCROLL_X))
             h = min(self.hauteur_max, 10 + h) + 20
             t.SetMinSize((w,h))
             messageSizer.Add(t, 0, wx.EXPAND | wx.BOTTOM, 10)
-        
+
         # Conclusion
         if conclusion :
             t = wx.StaticText(self, -1, conclusion)
@@ -82,16 +79,16 @@ class Dialog(wx.Dialog):
 
         # Boutons
         boutonsSizer = wx.BoxSizer(wx.HORIZONTAL)
-        
+
         id = 100
         for label in boutons :
             bouton = wx.Button(self, id=id, label=label)
             self.Bind(wx.EVT_BUTTON, self.OnBouton, bouton)
             boutonsSizer.Add(bouton, 0, wx.LEFT, 10)
             id += 1
-        
+
         messageSizer.Add(boutonsSizer, 0, wx.TOP | wx.ALIGN_RIGHT, 5)
-        
+
         # Finalisation
         sizer.Add(messageSizer, 0, wx.ALL, 12)
         self.SetSizer(sizer)
@@ -100,19 +97,18 @@ class Dialog(wx.Dialog):
             self.CenterOnParent()
         else:
             self.CenterOnScreen()
-        
+
         if defaut == None :
             defaut = 0
         bouton = self.FindWindowById(defaut+100)
-        bouton.SetFocus() 
-            
+        bouton.SetFocus()
+
 
     def OnBouton(self, evt):
         if self.IsModal():
             self.EndModal(evt.EventObject.Id-100)
         else:
             self.Close()
-        
 
 
 
@@ -121,11 +117,11 @@ class Dialog(wx.Dialog):
 
 if __name__ == u"__main__":
     app = wx.App(0)
-    
+
 ##    icone = wx.Bitmap(Chemins.GetStaticPath(u"Images/32x32/Absenti.png"), wx.BITMAP_TYPE_ANY)
     icone = wx.ICON_INFORMATION
     dlg = Dialog(None, titre=_(u"Avertissement"), introduction=_(u"Introduction ici !"), detail="detail", conclusion=_(u"Conclusion ici"), icone=icone, boutons=[_(u"Oui"), _(u"Oui pour tout"), _(u"Non"), _(u"Annuler")])
-    reponse = dlg.ShowModal() 
-    dlg.Destroy() 
+    reponse = dlg.ShowModal()
+    dlg.Destroy()
     print(reponse)
     app.MainLoop()
