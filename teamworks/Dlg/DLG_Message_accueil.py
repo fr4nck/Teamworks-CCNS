@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #------------------------------------------------------------------------
 # Application :    Teamworks
 # Auteur:           Ivan LUCAS
@@ -24,18 +24,18 @@ TEXTE_ACCUEIL = u"""
 <B>Bienvenue dans Teamworks</B><BR>
 <B>Version %s</B>
 <BR><BR>
-Teamworks est un logiciel libre de gestion d'équipes destiné spécialement
-aux structures éducatives telles que les Centres de Loisirs, les crèches, 
-les garderies périscolaires, etc...
+Teamworks est un logiciel libre de gestion d'Ã©quipes destinÃ© spÃ©cialement
+aux structures Ã©ducatives telles que les Centres de Loisirs, les crÃ¨ches, 
+les garderies pÃ©riscolaires, etc...
 <BR><BR>
-Si vous jugez que ce logiciel vous apporte un service appréciable au quotidien et 
-que vous souhaitez participez au développement du logiciel, vous pouvez apporter 
+Si vous jugez que ce logiciel vous apporte un service apprÃ©ciable au quotidien et 
+que vous souhaitez participez au dÃ©veloppement du logiciel, vous pouvez apporter 
 votre soutien financier au projet en contactant l'auteur.
 <BR><BR>
-Merci de bien vouloir signaler tous les bugs rencontrés ou exposer vos suggestions
-sur le forum dédié :
+Merci de bien vouloir signaler tous les bugs rencontrÃ©s ou exposer vos suggestions
+sur le forum dÃ©diÃ© :
 <BR>
-<A HREF="Saisie">Cliquez ici pour accéder au forum</A>.
+<A HREF="Saisie">Cliquez ici pour accÃ©der au forum</A>.
 </FONT>
 </CENTER>
 """ % (Chemins.GetStaticPath(u"Images/80x80/Logo_tw.png"), VERSION_LOGICIEL)
@@ -46,8 +46,6 @@ class MyHtml(html.HtmlWindow):
     def __init__(self, parent, texte="", hauteur=25):
         html.HtmlWindow.__init__(self, parent, -1, style=wx.html.HW_NO_SELECTION | wx.html.HW_SCROLLBAR_NEVER | wx.NO_FULL_REPAINT_ON_RESIZE)
         self.parent = parent
-        if "gtk2" in wx.PlatformInfo:
-            self.SetStandardFonts()
         self.SetBorders(0)
         self.SetMinSize((-1, hauteur))
         self.SetPage(texte)
@@ -78,7 +76,7 @@ class Dialog(wx.Dialog):
 
     def __set_properties(self):
         self.SetTitle(_(u"Bienvenue"))
-        self.bouton_ok.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour fermer cette fenêtre et utiliser Teamworks")))
+        self.bouton_ok.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour fermer cette fenÃªtre et utiliser Teamworks")))
         self.SetMinSize((310, 450))
 
     def __do_layout(self):
