@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import importlib.util
+import sys
 from pathlib import Path
 
 
@@ -8,9 +9,15 @@ AUDIT_PATH = ROOT / "scripts" / "audit_runtime_risks.py"
 
 
 def load_audit_module():
-    spec = importlib.util.spec_from_file_location("audit_runtime_risks", AUDIT_PATH)
+    module_name = "audit_runtime_risks"
+    spec = importlib.util.spec_from_file_location(module_name, AUDIT_PATH)
     module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    sys.modules[module_name] = module
+    try:
+        spec.loader.exec_module(module)
+    except Exception:
+        sys.modules.pop(module_name, None)
+        raise
     return module
 
 
@@ -22,17 +29,20 @@ def write_module(root, source):
     return path
 
 
-def test_reports_removed_python2_builtin(tmp_path):
-    audit = load_audit_module()
-    write_module(tmp_path, "def values():\n    return xrange(3)\n")
-
-    result = audit.run(tmp_path)
-
-    findings = [
+def python2_findings(result):
+    return [
         finding
         for finding in result["findings"]
         if finding["category"] == "python2-removed-builtin"
     ]
+
+
+def test_reports_removed_python2_builtin(tmp_path):
+    audit = load_audit_module()
+    write_module(tmp_path, "def values():\n    return xrange(3)\n")
+
+    findings = python2_findings(audit.run(tmp_path))
+
     assert len(findings) == 1
     assert findings[0]["detail"] == "xrange is unavailable on Python 3"
     assert findings[0]["line"] == 2
@@ -51,9 +61,25 @@ def test_ignores_explicit_compatibility_alias(tmp_path):
         "    return isinstance(value, basestring)\n",
     )
 
-    result = audit.run(tmp_path)
+    assert python2_findings(audit.run(tmp_path)) == []
 
-    assert result["counts"].get("python2-removed-builtin", 0) == 0
+
+def test_reports_module_use_before_later_binding(tmp_path):
+    audit = load_audit_module()
+    write_module(tmp_path, "print(xrange)\nxrange = range\n")
+
+    findings = python2_findings(audit.run(tmp_path))
+
+    assert len(findings) == 1
+    assert findings[0]["line"] == 1
+    assert findings[0]["detail"] == "xrange is unavailable on Python 3"
+
+
+def test_accepts_module_use_after_binding(tmp_path):
+    audit = load_audit_module()
+    write_module(tmp_path, "xrange = range\nprint(xrange)\n")
+
+    assert python2_findings(audit.run(tmp_path)) == []
 
 
 def test_audit_declares_blocking_cli_option():
