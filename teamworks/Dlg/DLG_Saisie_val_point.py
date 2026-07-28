@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -13,10 +13,7 @@ from Ctrl import CTRL_Bouton_image
 import GestionDB
 import datetime
 import FonctionsPerso
-if 'phoenix' in wx.PlatformInfo:
-    from wx.adv import DatePickerCtrl, DP_DROPDOWN
-else :
-    from wx import DatePickerCtrl, DP_DROPDOWN
+from wx.adv import DatePickerCtrl, DP_DROPDOWN
 
 
 class Dialog(wx.Dialog):
@@ -27,7 +24,7 @@ class Dialog(wx.Dialog):
         self.sizer_contenu_staticbox = wx.StaticBox(self.panel_base, -1, "")
         self.label_valeur = wx.StaticText(self.panel_base, -1, _(u"Valeur :"))
         self.text_valeur = wx.TextCtrl(self.panel_base, -1, "", style=wx.TE_CENTRE)
-        self.label_euro = wx.StaticText(self.panel_base, -1, u"¤")
+        self.label_euro = wx.StaticText(self.panel_base, -1, u"â‚¬")
         self.label_dateDebut = wx.StaticText(self.panel_base, -1, _(u"A partir du :"))
         self.datepicker_dateDebut = DatePickerCtrl(self.panel_base, -1, style=DP_DROPDOWN)
         self.bouton_aide = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))
@@ -47,10 +44,7 @@ class Dialog(wx.Dialog):
 
     def __set_properties(self):
         self.SetTitle(_(u"Gestion de la valeur du point"))
-        if 'phoenix' in wx.PlatformInfo:
-            _icon = wx.Icon()
-        else :
-            _icon = wx.EmptyIcon()
+        _icon = wx.Icon()
         _icon.CopyFromBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Logo.png"), wx.BITMAP_TYPE_ANY))
         self.SetIcon(_icon)
         self.text_valeur.SetMinSize((60, -1))
@@ -107,23 +101,23 @@ class Dialog(wx.Dialog):
         self.datepicker_dateDebut.SetValue(date)
 
     def Sauvegarde(self):
-        """ Sauvegarde des données dans la base de données """
+        """ Sauvegarde des donnÃ©es dans la base de donnÃ©es """
         
-        # Récupération ds valeurs saisies
+        # RÃ©cupÃ©ration ds valeurs saisies
         varValeur = self.text_valeur.GetValue()
         date_tmp = self.datepicker_dateDebut.GetValue()
         varDate = str(datetime.date(date_tmp.GetYear(), date_tmp.GetMonth()+1, date_tmp.GetDay()))
 
         DB = GestionDB.DB()
-        # Création de la liste des données
+        # CrÃ©ation de la liste des donnÃ©es
         listeDonnees = [    ("valeur",   varValeur),  
                                     ("date_debut",    varDate), ]
         if self.IDvaleur == 0:
-            # Enregistrement d'une nouvelle coordonnée
+            # Enregistrement d'une nouvelle coordonnÃ©e
             newID = DB.ReqInsert("valeurs_point", listeDonnees)
             ID = newID
         else:
-            # Modification de la coordonnée
+            # Modification de la coordonnÃ©e
             DB.ReqMAJ("valeurs_point", listeDonnees, "IDvaleur_point", self.IDvaleur)
             ID = self.IDvaleur
         DB.Commit()
@@ -138,8 +132,8 @@ class Dialog(wx.Dialog):
         self.EndModal(wx.ID_CANCEL)
 
     def OnBoutonOk(self, event):
-        """ Validation des données saisies """
-        # Vérifie que une valeur a été saisie
+        """ Validation des donnÃ©es saisies """
+        # VÃ©rifie que une valeur a Ã©tÃ© saisie
         valeur = self.text_valeur.GetValue()
         if valeur == "" :
             dlg = wx.MessageDialog(self, _(u"Vous devez saisir une valeur de point."), "Erreur", wx.OK)  
@@ -147,12 +141,12 @@ class Dialog(wx.Dialog):
             dlg.Destroy()
             self.text_valeur.SetFocus()
             return
-        # Vérifie que la valeur est bien constituée de chiffres uniquement
+        # VÃ©rifie que la valeur est bien constituÃ©e de chiffres uniquement
         incoherences = ""
         for lettre in valeur :
             if lettre not in "0123456789." : incoherences += "'"+ lettre + "', "
         if len(incoherences) != 0 :
-            txt = _(u"Caractères incorrects : ") + incoherences[:-2]
+            txt = _(u"CaractÃ¨res incorrects : ") + incoherences[:-2]
             dlg = wx.MessageDialog(self, _(u"La valeur de point que vous avez saisie n'est pas correcte.\n\n") + txt, "Erreur", wx.OK)  
             dlg.ShowModal()
             dlg.Destroy()
