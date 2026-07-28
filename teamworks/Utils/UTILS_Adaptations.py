@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #------------------------------------------------------------------------
 # Application :    Noethys, gestion multi-activités
 # Site internet :  www.noethys.com
@@ -8,34 +8,29 @@
 # Licence:         Licence GNU GPL
 #------------------------------------------------------------------------
 
-import wx
 import sys
 from importlib import import_module
+
+import wx
 
 
 def Import(nom_module=""):
     # Essaye d'importer
-    try :
-        module = import_module(nom_module)
-        return module
+    try:
+        return import_module(nom_module)
     except ImportError:
         pass
 
     # Recherche si le module est déjà chargé
     if nom_module in sys.modules:
-        module = sys.modules[nom_module]
-        return module
+        return sys.modules[nom_module]
 
     # Essaye d'importer sans le module_path
-    module_path, class_name = nom_module.rsplit('.', 1)
-    try :
-        module = import_module(class_name)
-        return module
+    _, class_name = nom_module.rsplit('.', 1)
+    try:
+        return import_module(class_name)
     except ImportError:
-        pass
-
-    return None
-
+        return None
 
 
 class Menu(wx.Menu):
@@ -54,23 +49,23 @@ class ToolBar(wx.ToolBar):
         wx.ToolBar.__init__(self, *args, **kwds)
 
     def AddLabelTool(self, *args, **kw):
-        if "longHelp" in kw:
-            kw.pop("longHelp")
+        kw.pop("longHelp", None)
         super(ToolBar, self).AddTool(*args, **kw)
 
     def AddSimpleTool(self, *args, **kw):
-        if "longHelp" in kw:
-            kw.pop("longHelp")
+        kw.pop("longHelp", None)
         super(ToolBar, self).AddTool(*args, **kw)
 
     def AddTool(self, *args, **kw):
-        if "shortHelpString" in kw:
-            shortHelp = kw.pop("shortHelpString")
-        else:
-            shortHelp = ""
+        shortHelp = kw.pop("shortHelpString", "")
         toolId = args[0]
         bitmap = args[1]
-        super(ToolBar, self).AddTool(toolId=toolId, label="", bitmap=bitmap, shortHelp=shortHelp)
+        super(ToolBar, self).AddTool(
+            toolId=toolId,
+            label="",
+            bitmap=bitmap,
+            shortHelp=shortHelp,
+        )
 
 
 if __name__ == "__main__":
