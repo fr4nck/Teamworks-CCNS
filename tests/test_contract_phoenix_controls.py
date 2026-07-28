@@ -10,7 +10,7 @@ SIZER_TARGETS = (
 
 
 def test_contract_fields_list_uses_valid_phoenix_insertion() -> None:
-    source = LIST_TARGET.read_text(encoding="iso-8859-15")
+    source = LIST_TARGET.read_text(encoding="utf-8")
 
     assert "six.MAXSIZE" not in source
     assert "InsertItem(sys.maxsize," not in source
@@ -20,13 +20,11 @@ def test_contract_fields_list_uses_valid_phoenix_insertion() -> None:
 
 
 def test_contract_fields_list_enables_phoenix_checkboxes() -> None:
-    source = LIST_TARGET.read_text(encoding="iso-8859-15")
-    marker = (
-        "if 'phoenix' in wx.PlatformInfo:\n"
-        "            self.EnableCheckBoxes(True)"
-    )
+    source = LIST_TARGET.read_text(encoding="utf-8")
 
-    assert source.count(marker) == 1
+    assert source.count("self.EnableCheckBoxes(True)") == 1
+    assert "'phoenix' in wx.PlatformInfo" not in source
+    assert '"phoenix" in wx.PlatformInfo' not in source
     assert "CheckListCtrlMixin.__init__(self)" in source
 
 
