@@ -19,16 +19,11 @@ import PIL.ImageOps as ImageOps
 
 
 def PILtoWx(image):
-    """Convert a PIL image to wx image format"""
+    """Convert a PIL image to wx image format."""
     largeur, hauteur = image.size
-    if 'phoenix' in wx.PlatformInfo:
-        imagewx = wx.Image(largeur, hauteur)
-        imagewx.SetData(image.tobytes('raw', 'RGB'))
-        imagewx.SetAlpha(image.convert("RGBA").tobytes()[3::4])
-    else:
-        imagewx = wx.Image(largeur, hauteur)
-        imagewx.SetData(image.tobytes('raw', 'RGB'))
-        imagewx.SetAlphaData(image.convert("RGBA").tobytes()[3::4])
+    imagewx = wx.Image(largeur, hauteur)
+    imagewx.SetData(image.tobytes("raw", "RGB"))
+    imagewx.SetAlpha(image.convert("RGBA").tobytes()[3::4])
     return imagewx
 
 
@@ -142,24 +137,24 @@ class Dialog(wx.Dialog):
 
 def ModifieFichiers():
     listeTextes = [
-        ("""wx.BitmapButton(self.panel_base, -1, wx.Bitmap("Images/BoutonsImages/Aide_L72.png", wx.BITMAP_TYPE_ANY))""", """CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))"""),
-        ("""wx.BitmapButton(self.panel_base, -1, wx.Bitmap("Images/BoutonsImages/Ok_L72.png", wx.BITMAP_TYPE_ANY))""", """CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Ok"), cheminImage=Chemins.GetStaticPath("Images/32x32/Valider.png"))"""),
-        ("""wx.BitmapButton(self.panel_base, -1, wx.Bitmap("Images/BoutonsImages/Annuler_L72.png", wx.BITMAP_TYPE_ANY))""", """CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Annuler"), cheminImage=Chemins.GetStaticPath("Images/32x32/Annuler.png"))"""),
-        ("""wx.BitmapButton(self.panel_base, -1, wx.Bitmap("Images/BoutonsImages/Fermer_L72.png", wx.BITMAP_TYPE_ANY))""", """CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Fermer"), cheminImage=Chemins.GetStaticPath("Images/32x32/Fermer.png"))"""),
-        ("""wx.BitmapButton(self.panel_base, wx.ID_CANCEL, wx.Bitmap("Images/BoutonsImages/Annuler_L72.png", wx.BITMAP_TYPE_ANY))""", """CTRL_Bouton_image.CTRL(self.panel_base, id=wx.ID_CANCEL, texte=_(u"Annuler"), cheminImage=Chemins.GetStaticPath("Images/32x32/Annuler.png"))"""),
-        ("""wx.BitmapButton(self.panel_base, wx.ID_CANCEL, wx.Bitmap("Images/BoutonsImages/Fermer_L72.png", wx.BITMAP_TYPE_ANY))""", """CTRL_Bouton_image.CTRL(self.panel_base, id=wx.ID_CANCEL, texte=_(u"Fermer"), cheminImage=Chemins.GetStaticPath("Images/32x32/Fermer.png"))"""),
+        ('''wx.BitmapButton(self.panel_base, -1, wx.Bitmap("Images/BoutonsImages/Aide_L72.png", wx.BITMAP_TYPE_ANY))''', '''CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))'''),
+        ('''wx.BitmapButton(self.panel_base, -1, wx.Bitmap("Images/BoutonsImages/Ok_L72.png", wx.BITMAP_TYPE_ANY))''', '''CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Ok"), cheminImage=Chemins.GetStaticPath("Images/32x32/Valider.png"))'''),
+        ('''wx.BitmapButton(self.panel_base, -1, wx.Bitmap("Images/BoutonsImages/Annuler_L72.png", wx.BITMAP_TYPE_ANY))''', '''CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Annuler"), cheminImage=Chemins.GetStaticPath("Images/32x32/Annuler.png"))'''),
+        ('''wx.BitmapButton(self.panel_base, -1, wx.Bitmap("Images/BoutonsImages/Fermer_L72.png", wx.BITMAP_TYPE_ANY))''', '''CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Fermer"), cheminImage=Chemins.GetStaticPath("Images/32x32/Fermer.png"))'''),
+        ('''wx.BitmapButton(self.panel_base, wx.ID_CANCEL, wx.Bitmap("Images/BoutonsImages/Annuler_L72.png", wx.BITMAP_TYPE_ANY))''', '''CTRL_Bouton_image.CTRL(self.panel_base, id=wx.ID_CANCEL, texte=_(u"Annuler"), cheminImage=Chemins.GetStaticPath("Images/32x32/Annuler.png"))'''),
+        ('''wx.BitmapButton(self.panel_base, wx.ID_CANCEL, wx.Bitmap("Images/BoutonsImages/Fermer_L72.png", wx.BITMAP_TYPE_ANY))''', '''CTRL_Bouton_image.CTRL(self.panel_base, id=wx.ID_CANCEL, texte=_(u"Fermer"), cheminImage=Chemins.GetStaticPath("Images/32x32/Fermer.png"))'''),
 
-        ("""wx.BitmapButton(self.panel_frame, -1, wx.Bitmap("Images/BoutonsImages/Imprimer_L72.png", wx.BITMAP_TYPE_ANY))""", """CTRL_Bouton_image.CTRL(self.panel_frame, texte=_(u"Imprimer"), cheminImage="Images/32x32/Imprimante.png")"""),
-        ("""wx.BitmapButton(self.panel_frame, -1, wx.Bitmap("Images/BoutonsImages/Apercu_L72.png", wx.BITMAP_TYPE_ANY))""", """CTRL_Bouton_image.CTRL(self.panel_frame, texte=_(u"Aperçu"), cheminImage="Images/32x32/Apercu.png")"""),
+        ('''wx.BitmapButton(self.panel_frame, -1, wx.Bitmap("Images/BoutonsImages/Imprimer_L72.png", wx.BITMAP_TYPE_ANY))''', '''CTRL_Bouton_image.CTRL(self.panel_frame, texte=_(u"Imprimer"), cheminImage="Images/32x32/Imprimante.png")'''),
+        ('''wx.BitmapButton(self.panel_frame, -1, wx.Bitmap("Images/BoutonsImages/Apercu_L72.png", wx.BITMAP_TYPE_ANY))''', '''CTRL_Bouton_image.CTRL(self.panel_frame, texte=_(u"Aperçu"), cheminImage="Images/32x32/Apercu.png")'''),
 
-        ("""wx.BitmapButton(self, -1, wx.Bitmap("Images/BoutonsImages/Envoyer_par_email.png", wx.BITMAP_TYPE_ANY))""", """CTRL_Bouton_image.CTRL(self, texte=_(u"Envoyer par Email"), cheminImage="Images/32x32/Emails_exp.png")"""),
-        ("""wx.BitmapButton(self, -1, wx.Bitmap("Images/BoutonsImages/Envoyer_mail.png", wx.BITMAP_TYPE_ANY))""", """CTRL_Bouton_image.CTRL(self, texte=_(u"Envoyer l'Email"), cheminImage="Images/32x32/Emails_exp.png")"""),
+        ('''wx.BitmapButton(self, -1, wx.Bitmap("Images/BoutonsImages/Envoyer_par_email.png", wx.BITMAP_TYPE_ANY))''', '''CTRL_Bouton_image.CTRL(self, texte=_(u"Envoyer par Email"), cheminImage="Images/32x32/Emails_exp.png")'''),
+        ('''wx.BitmapButton(self, -1, wx.Bitmap("Images/BoutonsImages/Envoyer_mail.png", wx.BITMAP_TYPE_ANY))''', '''CTRL_Bouton_image.CTRL(self, texte=_(u"Envoyer l'Email"), cheminImage="Images/32x32/Emails_exp.png")'''),
 
-        ("""wx.BitmapButton(self, -1, wx.Bitmap("Images/BoutonsImages/Rafraichir_liste.png", wx.BITMAP_TYPE_ANY))""", """CTRL_Bouton_image.CTRL(self, texte=_(u"Rafraîchir la liste"), cheminImage="Images/32x32/Actualiser.png")"""),
+        ('''wx.BitmapButton(self, -1, wx.Bitmap("Images/BoutonsImages/Rafraichir_liste.png", wx.BITMAP_TYPE_ANY))''', '''CTRL_Bouton_image.CTRL(self, texte=_(u"Rafraîchir la liste"), cheminImage="Images/32x32/Actualiser.png")'''),
 
-        ("""wx.BitmapButton(self, -1, wx.Bitmap("Images/BoutonsImages/Options_L72.png", wx.BITMAP_TYPE_ANY))""", """CTRL_Bouton_image.CTRL(self, texte=_(u"Options"), cheminImage="Images/32x32/Configuration.png")"""),
-        ("""wx.BitmapButton(self, -1, wx.Bitmap("Images/BoutonsImages/Options.png", wx.BITMAP_TYPE_ANY))""", """CTRL_Bouton_image.CTRL(self, texte=_(u"Options"), cheminImage="Images/32x32/Configuration2.png")"""),
-        ("""wx.BitmapButton(self, -1, wx.Bitmap("Images/BoutonsImages/Outils.png", wx.BITMAP_TYPE_ANY))""", """CTRL_Bouton_image.CTRL(self, texte=_(u"Outils"), cheminImage="Images/32x32/Configuration.png")"""),
+        ('''wx.BitmapButton(self, -1, wx.Bitmap("Images/BoutonsImages/Options_L72.png", wx.BITMAP_TYPE_ANY))''', '''CTRL_Bouton_image.CTRL(self, texte=_(u"Options"), cheminImage="Images/32x32/Configuration.png")'''),
+        ('''wx.BitmapButton(self, -1, wx.Bitmap("Images/BoutonsImages/Options.png", wx.BITMAP_TYPE_ANY))''', '''CTRL_Bouton_image.CTRL(self, texte=_(u"Options"), cheminImage="Images/32x32/Configuration2.png")'''),
+        ('''wx.BitmapButton(self, -1, wx.Bitmap("Images/BoutonsImages/Outils.png", wx.BITMAP_TYPE_ANY))''', '''CTRL_Bouton_image.CTRL(self, texte=_(u"Outils"), cheminImage="Images/32x32/Configuration.png")'''),
     ]
 
     # Get fichiers
@@ -181,8 +176,8 @@ def ModifieFichiers():
                     if "wx.ID_ANY" in ligne:
                         ligne = ligne.replace("wx.ID_ANY", "-1")
                         dirty = True
-                    if """u"Images/BoutonsImages""" in ligne:
-                        ligne = ligne.replace("""(u"Images/BoutonsImages""", """("Images/BoutonsImages""")
+                    if '''u"Images/BoutonsImages''' in ligne:
+                        ligne = ligne.replace('''(u"Images/BoutonsImages''', '''("Images/BoutonsImages''')
                         dirty = True
 
                 # Remplacement des chaines
