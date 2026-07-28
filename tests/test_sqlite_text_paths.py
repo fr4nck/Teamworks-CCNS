@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+import importlib
+import importlib.util
+import sqlite3
+import sys
 from pathlib import Path
 
 
@@ -17,8 +21,25 @@ def test_sqlite_compatibility_decodes_only_byte_paths():
 
 def test_sqlite_compatibility_is_idempotent():
     source = CHEMINS.read_text(encoding="utf-8")
-    assert 'getattr(sqlite3.connect, "_teamworks_text_paths", False)' in source
+    assert 'getattr(_SQLITE_CONNECT_CURRENT, "_teamworks_text_paths", False)' in source
     assert "_sqlite_connect_text_path._teamworks_text_paths = True" in source
+    assert "_teamworks_original_connect" in source
+
+
+def test_sqlite_compatibility_survives_module_reload():
+    original_connect = sqlite3.connect
+    module_name = "_teamworks_test_chemins_reload"
+    spec = importlib.util.spec_from_file_location(module_name, CHEMINS)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    try:
+        spec.loader.exec_module(module)
+        importlib.reload(module)
+        connection = sqlite3.connect(":memory:")
+        connection.close()
+    finally:
+        sqlite3.connect = original_connect
+        sys.modules.pop(module_name, None)
 
 
 def test_legacy_byte_path_calls_are_covered_by_early_chemins_import():
