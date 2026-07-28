@@ -34,6 +34,12 @@ def test_global_contract_function_is_temporarily_replaced_and_restored():
     assert "Recherche_ContratsEnCoursOuAVenir = original_contract_search" in source
 
 
+def test_fallback_does_not_retry_dialog_initialization():
+    source = PROBLEMS.read_text(encoding="utf-8")
+    assert "has_contract = IDpersonne in original_contract_search()" in source
+    assert source.count("super(ScopedProblemsDialog, self).__init__") == 1
+
+
 def test_problem_fallback_is_scoped_to_current_person():
     source = PROBLEMS.read_text(encoding="utf-8")
     assert "listeIDpersonnes=(self.IDpersonne,)" in source
