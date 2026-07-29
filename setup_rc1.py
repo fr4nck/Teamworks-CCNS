@@ -41,8 +41,16 @@ include_files = [
 build_options = {
     "build_exe": str(BUILD_DIR),
     "include_files": include_files,
+    # Le paquet Dlg utilise plusieurs imports dynamiques via __getattr__ et
+    # importlib. L'inclure intégralement évite qu'un dialogue présent dans les
+    # sources soit absent du portable cx_Freeze.
+    "packages": ["Dlg"],
     "includes": [
         "Gadget",
+        "Dlg.DLG_Fiche_individuelle",
+        "Dlg.DLG_Fiche_individuelle_lazy",
+        "Dlg.DLG_Fiche_individuelle_problems",
+        "Dlg.DLG_Fiche_individuelle_refresh",
         "email.mime.image",
         "idna.idnadata",
         "mailjet_rest",
