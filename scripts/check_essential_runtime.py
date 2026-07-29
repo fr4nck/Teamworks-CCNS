@@ -26,10 +26,10 @@ ESSENTIAL_PYTHON_FILES = (
 )
 
 ESSENTIAL_RESOURCES = (
-    "teamworks/Images/32x32/Maison.png",
-    "teamworks/Images/32x32/Personnes.png",
-    "teamworks/Images/32x32/Horloge.png",
-    "teamworks/Images/32x32/Recrutement.png",
+    "teamworks/Static/Images/32x32/Maison.png",
+    "teamworks/Static/Images/32x32/Personnes.png",
+    "teamworks/Static/Images/32x32/Horloge.png",
+    "teamworks/Static/Images/32x32/Recrutement.png",
 )
 
 
