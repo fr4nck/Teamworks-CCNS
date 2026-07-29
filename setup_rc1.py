@@ -46,7 +46,7 @@ build_options = {
         "email.mime.image",
         "idna.idnadata",
         "mailjet_rest",
-        "numpy.core._methods",
+        "numpy._core._methods",
         "numpy.lib.format",
     ],
     "excludes": [
