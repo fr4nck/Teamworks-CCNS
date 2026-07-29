@@ -45,8 +45,11 @@ def test_database_preflight_reads_valid_database_without_modifying_it(tmp_path: 
     with sqlite3.connect(database) as connection:
         connection.execute("CREATE TABLE personnes (id INTEGER PRIMARY KEY, nom TEXT)")
         connection.execute("INSERT INTO personnes (nom) VALUES ('Test')")
+        connection.execute("PRAGMA journal_mode=WAL")
+        connection.execute("PRAGMA wal_checkpoint(TRUNCATE)")
 
-    before = database.read_bytes()
+    before_bytes = database.read_bytes()
+    before_entries = sorted(path.name for path in tmp_path.iterdir())
     report, success = diagnostic_installation.build_report(
         root,
         tmp_path / "user",
@@ -56,7 +59,10 @@ def test_database_preflight_reads_valid_database_without_modifying_it(tmp_path: 
     assert success is True
     assert "[OK] Base SQLite" in report
     assert "lecture seule OK, intégrité OK, 1 table(s)" in report
-    assert database.read_bytes() == before
+    assert database.read_bytes() == before_bytes
+    assert sorted(path.name for path in tmp_path.iterdir()) == sorted(before_entries + ["user"])
+    assert not Path(f"{database}-wal").exists()
+    assert not Path(f"{database}-shm").exists()
 
 
 def test_database_preflight_rejects_missing_or_invalid_file(tmp_path: Path) -> None:
@@ -69,3 +75,17 @@ def test_database_preflight_rejects_missing_or_invalid_file(tmp_path: Path) -> N
     result = diagnostic_installation.check_database(invalid)
     assert result.ok is False
     assert "lecture seule impossible" in result.detail
+
+
+def test_main_rejects_report_path_aliasing_database(tmp_path: Path) -> None:
+    database = tmp_path / "donnees.sqlite"
+    with sqlite3.connect(database) as connection:
+        connection.execute("CREATE TABLE test (id INTEGER PRIMARY KEY)")
+
+    before = database.read_bytes()
+    result = diagnostic_installation.main(
+        ["--database", str(database), "--output", str(database)]
+    )
+
+    assert result == 2
+    assert database.read_bytes() == before
