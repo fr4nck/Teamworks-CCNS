@@ -21,6 +21,7 @@ jobs:
         shell: python
         run: |
           from pathlib import Path
+          import re
 
           replacements = {
               Path("teamworks/Ctrl/CTRL_Planning.py"): (
@@ -39,20 +40,35 @@ jobs:
                   raise SystemExit(f"Motif inattendu dans {path}: {data.count(old)} occurrence(s)")
               path.write_bytes(data.replace(old, new))
 
-          test = Path("tests/test_wx_classic_api.py")
-          source = test.read_text(encoding="utf-8")
-          marker = "KNOWN_CLASSIC_REFERENCES"
-          if marker not in source:
-              raise SystemExit("Baseline TW-107 introuvable")
-          start = source.index(marker)
-          source = source[:start] + "def test_no_known_wx_classic_references_remain() -> None:\n    assert audit(Path(\"teamworks\")) == []\n"
-          test.write_text(source, encoding="utf-8")
+          audit_path = Path("scripts/audit_wx_classic_api.py")
+          audit_source = audit_path.read_text(encoding="utf-8")
+          audit_source, count = re.subn(
+              r"KNOWN_LEGACY_REFERENCES = \{.*?\}\n\n",
+              "KNOWN_LEGACY_REFERENCES: set[tuple[str, str]] = set()\n\n",
+              audit_source,
+              count=1,
+              flags=re.S,
+          )
+          if count != 1:
+              raise SystemExit("Baseline de l'audit introuvable")
+          audit_path.write_text(audit_source, encoding="utf-8")
+
+          test_path = Path("tests/test_wx_classic_api_audit.py")
+          test_path.write_text(
+              'from pathlib import Path\n\n'
+              'from scripts.audit_wx_classic_api import audit, unexpected_findings\n\n\n'
+              'def test_no_wx_classic_references_remain() -> None:\n'
+              '    findings = audit(Path("teamworks"))\n'
+              '    assert findings == [], f"API wxPython Classic restantes : {findings}"\n'
+              '    assert unexpected_findings(findings) == []\n',
+              encoding="utf-8",
+          )
 
           Path(".github/workflows/tw108-remove-stockcursor.yml").unlink()
       - name: Commit migration
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add teamworks/Ctrl/CTRL_Planning.py teamworks/Dlg/DLG_Editeur_photo.py tests/test_wx_classic_api.py .github/workflows/tw108-remove-stockcursor.yml
+          git add teamworks/Ctrl/CTRL_Planning.py teamworks/Dlg/DLG_Editeur_photo.py scripts/audit_wx_classic_api.py tests/test_wx_classic_api_audit.py .github/workflows/tw108-remove-stockcursor.yml
           git commit -m "TW-108 — supprimer les derniers StockCursor"
           git push origin HEAD:agent/tw-108-remove-stockcursor
