@@ -9,6 +9,7 @@ on:
       - '.github/workflows/windows-build.yml'
       - 'scripts/build_windows.ps1'
       - 'scripts/test_windows_executable.ps1'
+      - 'scripts/check_essential_runtime.py'
   push:
     branches:
       - master
@@ -37,6 +38,10 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
           python -m pip install pyinstaller
+
+      - name: Check essential runtime components
+        shell: pwsh
+        run: python scripts/check_essential_runtime.py
 
       - name: Build Teamworks-CCNS
         shell: pwsh
