@@ -64,7 +64,12 @@ class Dialog(wx.Dialog):
         )
         main.AddStretchSpacer()
 
-        buttons = self.CreateStdDialogButtonSizer(wx.OK | wx.CANCEL)
+        buttons = wx.StdDialogButtonSizer()
+        ok_button = wx.Button(panel, wx.ID_OK)
+        cancel_button = wx.Button(panel, wx.ID_CANCEL)
+        buttons.AddButton(ok_button)
+        buttons.AddButton(cancel_button)
+        buttons.Realize()
         main.Add(buttons, 0, wx.EXPAND | wx.ALL, 12)
         panel.SetSizer(main)
 
