@@ -14,8 +14,8 @@ Ce document est la **référence centrale du projet** pour :
 Les documents spécialisés restent valables, mais ne doivent plus porter une roadmap concurrente. Ils détaillent un domaine et renvoient ici pour la planification.
 
 **Dernière consolidation : 29 juillet 2026**  
-**Progression globale estimée : 69 %**  
-**Migration Python 3 / wxPython Phoenix estimée : 88 %**
+**Progression globale estimée : 70 %**  
+**Migration Python 3 / wxPython Phoenix estimée : 89 %**
 
 > Les pourcentages sont des indicateurs de pilotage, pas une mesure automatique. Ils doivent être révisés après chaque lot significatif et justifiés par des éléments intégrés et testés.
 
@@ -70,8 +70,8 @@ Les numéros déjà utilisés dans les branches, commits, issues ou PR ne doiven
 | TW | Objet | État | Référence | Critère de sortie |
 | --- | --- | --- | --- | --- |
 | TW-100 | Remplacer les fallbacks Classic de `getShadow()` par `wx.Image(...)` | Terminé | PR #171 | code Phoenix direct et test ciblé intégrés |
-| TW-101 | Remplacer le fallback `SetAlphaData()` de `ThumbnailCtrl` par `wx.Image.SetAlpha()` | En cours | PR #172 | correctif appliqué, test ciblé vert, workflow temporaire retiré |
-| TW-102 | Recenser et remplacer les usages résiduels de `wx.BitmapFromImage` | À cadrer | — | inventaire exact, remplacement testé, aucune régression visuelle connue |
+| TW-101 | Remplacer le fallback `SetAlphaData()` de `ThumbnailCtrl` par `wx.Image.SetAlpha()` | Terminé | PR #172, merge `1ba77fc0` | correctif appliqué, test ciblé vert, workflow temporaire retiré |
+| TW-102 | Vérifier et verrouiller l’absence de `wx.BitmapFromImage` | En cours | PR #173 | absence confirmée dans le dépôt courant, test permanent vert, CI propre |
 | TW-103 | Recenser et remplacer les usages résiduels de `wx.ImageFromBitmap` | À cadrer | — | inventaire exact et API Phoenix directe |
 | TW-104 | Recenser et remplacer les usages résiduels de `wx.EmptyBitmap` | À cadrer | — | API Phoenix directe et compilation verte |
 | TW-105 | Recenser et remplacer les usages résiduels de `wx.EmptyImage` | À cadrer | — | API Phoenix directe et compilation verte |
@@ -83,8 +83,11 @@ Les numéros déjà utilisés dans les branches, commits, issues ou PR ne doiven
 | TW-111 | Stabiliser la CI de migration | À cadrer | — | workflows pérennes, temporaires supprimés, checks fiables |
 | TW-112 | Renforcer la couverture des chemins critiques | À cadrer | — | seuil défini sur les modules ciblés, pas de pourcentage global arbitraire |
 | TW-113 | Geler la migration Python 3 / Phoenix | À cadrer | — | matrice de compatibilité et documentation mises à jour |
+| TW-114 | Produire une version Windows installable intermédiaire | Prêt | — | exécutable reproductible, démarrage vérifié, procédure d’installation et retour arrière |
+| TW-115 | Stabiliser les parcours essentiels de la version intermédiaire | Prêt | — | ouverture BDD, accueil, fiche salarié, contrôles CCNS et exports essentiels vérifiés |
+| TW-116 | Introduire un thème sombre pragmatique | Prêt | — | fenêtre principale, menus, tableaux et écrans prioritaires lisibles sans bloquer l’installable |
 
-Les lots TW-102 à TW-113 sont des **lots prévisionnels**. Leur périmètre doit être confirmé par recherche dans le dépôt avant création d'une branche ou d'une PR. Ils ne constituent pas la preuve qu'un usage obsolète existe encore.
+Les lots TW-103 à TW-113 sont des **lots prévisionnels**. Leur périmètre doit être confirmé par recherche dans le dépôt avant création d'une branche ou d'une PR. Ils ne constituent pas la preuve qu'un usage obsolète existe encore.
 
 ---
 
@@ -92,23 +95,23 @@ Les lots TW-102 à TW-113 sont des **lots prévisionnels**. Leur périmètre doi
 
 | Domaine | Progression indicative | Prochain résultat attendu |
 | --- | ---: | --- |
-| Migration Python 3 / Phoenix | 88 % | terminer TW-101 puis produire l'inventaire réel des API Classic restantes |
-| Couverture de tests automatiques | 62 % | protéger les chemins migrés et les API publiques critiques |
-| Audit de compatibilité | 83 % | transformer les constats restants en lots TW vérifiables |
+| Migration Python 3 / Phoenix | 89 % | clôturer TW-102 puis inventorier les API Classic restantes |
+| Couverture de tests automatiques | 63 % | protéger les chemins migrés et les API publiques critiques |
+| Audit de compatibilité | 84 % | transformer les constats restants en lots TW vérifiables |
 | Couche SQLite / encodages | 90 % | empêcher toute régression sur chemins bytes et encodages |
-| Widgets wxPython | 80 % | stabiliser les composants réellement utilisés |
+| Widgets wxPython | 81 % | stabiliser les composants réellement utilisés |
 | Contrôles CCNS | 75 % | renforcer les cas métier spécifiques et leur traçabilité documentaire |
 | Calculs de paie | 70 % | consolider les règles et exports sans prétendre remplacer un logiciel de paie |
 | Exports | 72 % | fiabiliser les formats paie/comptabilité et les contrôles avant export |
 | Imports | 58 % | consolider les correspondances et rejets explicites |
 | Gestion du personnel | 72 % | terminer les raccords avec les écrans Teamworks existants |
-| Refonte UI | 30 % | définir le lot après stabilisation technique |
-| Thème sombre | 0 % | cadrer après gel Phoenix et audit des widgets |
+| Refonte UI | 30 % | différer la refonte large après la version intermédiaire |
+| Thème sombre | 5 % | réaliser TW-116 sur le socle installable stable |
 | Performances | 20 % | mesurer avant/après sur des parcours représentatifs |
-| Documentation développeur | 55 % | maintenir cette roadmap et réduire les documents contradictoires |
-| Packaging Windows | 45 % | fixer la version Python cible et produire un paquet reproductible |
-| Installation simplifiée | 35 % | procédure testée sur poste vierge |
-| Qualité / CI | 78 % | supprimer les workflows d'application temporaires et conserver les gardes pérennes |
+| Documentation développeur | 58 % | maintenir cette roadmap et réduire les documents contradictoires |
+| Packaging Windows | 50 % | exécuter TW-114 et valider un paquet reproductible |
+| Installation simplifiée | 40 % | procédure testée sur poste vierge |
+| Qualité / CI | 80 % | conserver uniquement des gardes pérennes et des checks fiables |
 
 ---
 
@@ -116,27 +119,35 @@ Les lots TW-102 à TW-113 sont des **lots prévisionnels**. Leur périmètre doi
 
 ### Phase 1 — Fin de migration et stabilisation
 
-1. terminer TW-101 ;
+1. clôturer TW-102 ;
 2. inventorier réellement les API Classic restantes ;
-3. créer uniquement les lots confirmés par cet inventaire ;
+3. exécuter TW-103 à TW-105 uniquement si les usages sont confirmés ;
 4. retirer les workflows temporaires ;
 5. maintenir une CI verte et reproductible.
 
-### Phase 2 — Consolidation métier CCNS
+### Phase 2 — Version intermédiaire utilisable
 
-1. stabiliser les raccords aux écrans Teamworks existants ;
-2. consolider l'audit par individu et par contrat ;
-3. renforcer les règles CCNS, alternance, CEE, mineurs et temps de travail ;
-4. fiabiliser imports et exports ;
-5. documenter chaque règle avec sa source et sa date d'effet.
+1. exécuter TW-115 sur les parcours essentiels ;
+2. produire TW-114, version Windows installable reproductible ;
+3. masquer ou signaler explicitement les fonctions non stabilisées ;
+4. documenter l’installation, la mise à jour et le retour arrière ;
+5. livrer une version de travail avant la refonte fonctionnelle complète.
 
-### Phase 3 — Produit utilisable et diffusable
+### Phase 3 — Confort et consolidation métier
+
+1. réaliser TW-116, thème sombre pragmatique ;
+2. stabiliser les raccords aux écrans Teamworks existants ;
+3. consolider l'audit par individu et par contrat ;
+4. renforcer les règles CCNS, alternance, CEE, mineurs et temps de travail ;
+5. fiabiliser imports et exports.
+
+### Phase 4 — Produit diffusable
 
 1. modernisation mesurée de l'interface ;
-2. thème sombre ;
-3. packaging Windows reproductible ;
-4. installation simplifiée ;
-5. documentation utilisateur et procédure de migration des bases.
+2. installation simplifiée sur poste vierge ;
+3. documentation utilisateur complète ;
+4. procédure de migration des anciennes bases ;
+5. gel Phoenix et version 1.0.
 
 ---
 
