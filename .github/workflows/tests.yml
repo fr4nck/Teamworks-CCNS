@@ -47,6 +47,55 @@ jobs:
           git commit -m "TW-100 — Moderniser le chargement des ombres ThumbnailCtrl"
           git push origin HEAD:agent/tw-100-thumbnailctrl-image-phoenix
 
+  apply-tw-101:
+    if: github.event_name == 'pull_request' && github.head_ref == 'agent/tw-101-thumbnailctrl-setalpha-phoenix'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout TW-101 branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/tw-101-thumbnailctrl-setalpha-phoenix
+      - name: Apply direct SetAlpha loading
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('teamworks/Ctrl/CTRL_thumbnailctrl.py')
+          text = path.read_text(encoding='utf-8')
+          old = """        if \"A\" in pil.getbands():\n            if 'phoenix' in wx.PlatformInfo:\n                img.SetAlpha(pil.convert(\"RGBA\").tobytes()[3::4])\n            else:\n                img.SetAlphaData(pil.convert(\"RGBA\").tobytes()[3::4])\n            alpha = True\n"""
+          new = """        if \"A\" in pil.getbands():\n            img.SetAlpha(pil.convert(\"RGBA\").tobytes()[3::4])\n            alpha = True\n"""
+          if old not in text:
+              raise SystemExit('Expected TW-101 SetAlpha block not found')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          test = Path('tests/test_thumbnailctrl_setalpha_phoenix.py')
+          test.write_text(
+              "from pathlib import Path\n\n\n"
+              "SOURCE_PATH = Path('teamworks/Ctrl/CTRL_thumbnailctrl.py')\n\n\n"
+              "def test_thumbnailctrl_uses_setalpha_directly():\n"
+              "    source = SOURCE_PATH.read_text(encoding='utf-8')\n"
+              "    start = source.index('def PILtoWx')\n"
+              "    end = source.index('def', start + len('def PILtoWx'))\n"
+              "    function_source = source[start:end]\n\n"
+              "    assert \"'phoenix' in wx.PlatformInfo\" not in function_source\n"
+              "    assert 'SetAlphaData' not in function_source\n"
+              "    assert 'img.SetAlpha(' in function_source\n",
+              encoding='utf-8',
+          )
+          PY
+      - name: Validate TW-101
+        run: |
+          python -m py_compile teamworks/Ctrl/CTRL_thumbnailctrl.py
+          python -m pytest -q tests/test_thumbnailctrl_setalpha_phoenix.py
+          git diff --check
+      - name: Commit TW-101 patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add teamworks/Ctrl/CTRL_thumbnailctrl.py tests/test_thumbnailctrl_setalpha_phoenix.py
+          git commit -m "TW-101 — Utiliser directement wx.Image.SetAlpha dans ThumbnailCtrl"
+          git push origin HEAD:agent/tw-101-thumbnailctrl-setalpha-phoenix
+
   tests:
     runs-on: ubuntu-latest
 
