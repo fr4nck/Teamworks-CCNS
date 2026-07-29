@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   build-windows:
-    runs-on: windows-latest
+    runs-on: windows-2022
     timeout-minutes: 45
 
     steps:
@@ -25,13 +25,16 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            .github/requirements-windows-build.txt
 
       - name: Install dependencies
         shell: pwsh
         run: |
-          python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
-          python -m pip install pyinstaller
+          python -m pip install -r .github/requirements-windows-build.txt
+          python -m pip freeze | Set-Content build-requirements.txt
 
       - name: Inventory every runtime import name
         shell: pwsh
@@ -102,13 +105,14 @@ jobs:
           Copy-Item VERSION "$package/VERSION" -Force
           Copy-Item ROADMAP.md "$package/ROADMAP.md" -Force
           Copy-Item build/internal-modules.txt "$package/INTERNAL-MODULES.txt" -Force
+          Copy-Item build-requirements.txt "$package/BUILD-REQUIREMENTS.txt" -Force
           Set-Content -Path "$package/BUILD.txt" -Value "Teamworks-CCNS $version`nCommit $env:GITHUB_SHA"
 
       - name: Validate package structure
         shell: pwsh
         run: |
           $package = 'dist/Teamworks-CCNS'
-          foreach ($required in @('Teamworks-CCNS.exe', 'Static', 'Versions.txt', 'VERSION', 'ROADMAP.md', 'INTERNAL-MODULES.txt')) {
+          foreach ($required in @('Teamworks-CCNS.exe', 'Static', 'Versions.txt', 'VERSION', 'ROADMAP.md', 'INTERNAL-MODULES.txt', 'BUILD-REQUIREMENTS.txt')) {
             if (-not (Test-Path "$package/$required")) { throw "$required missing" }
           }
           if ((Get-Item "$package/Versions.txt").Length -eq 0) { throw 'Versions.txt is empty' }
@@ -137,15 +141,36 @@ jobs:
           if-no-files-found: ignore
           retention-days: 3
 
+      - name: Create package integrity manifests
+        shell: pwsh
+        run: |
+          $package = Resolve-Path 'dist/Teamworks-CCNS'
+          Get-ChildItem $package -Recurse -File |
+            Sort-Object FullName |
+            ForEach-Object {
+              $relative = [System.IO.Path]::GetRelativePath($package.Path, $_.FullName).Replace('\\', '/')
+              $hash = (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+              "$hash  $relative"
+            } | Set-Content "$package/PACKAGE-SHA256SUMS.txt" -Encoding ascii
+
+          if ((Get-Item "$package/PACKAGE-SHA256SUMS.txt").Length -eq 0) {
+            throw 'Package integrity manifest is empty'
+          }
+
       - name: Create portable archive
         shell: pwsh
         run: |
           $version = (Get-Content VERSION -Raw).Trim()
-          Compress-Archive -Path 'dist/Teamworks-CCNS/*' -DestinationPath "Teamworks-CCNS-$version-windows-x64.zip" -Force
+          $archive = "Teamworks-CCNS-$version-windows-x64.zip"
+          Compress-Archive -Path 'dist/Teamworks-CCNS/*' -DestinationPath $archive -Force
+          $hash = (Get-FileHash $archive -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  $archive" | Set-Content SHA256SUMS.txt -Encoding ascii
 
       - uses: actions/upload-artifact@v4
         with:
           name: Teamworks-CCNS-Windows-portable
-          path: Teamworks-CCNS-*-windows-x64.zip
+          path: |
+            Teamworks-CCNS-*-windows-x64.zip
+            SHA256SUMS.txt
           if-no-files-found: error
           retention-days: 3
