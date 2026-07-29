@@ -9,27 +9,33 @@ on:
       - master
   workflow_dispatch:
 
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
 jobs:
   tests:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: "3.11"
+          cache: pip
 
       - name: Install test dependencies
         run: python -m pip install --upgrade pip pytest six
 
-      - name: Compile Python sources
-        run: python -m compileall application domain infrastructure scripts teamworks/CcnsCore tests
+      - name: Compile complete Python source tree
+        run: python -m compileall -q application domain infrastructure scripts tools teamworks tests
 
       - name: Check essential runtime components
         run: python scripts/check_essential_runtime.py
@@ -58,26 +64,32 @@ jobs:
           print(f"SQLite bytes paths: {current}/{historical_ceiling}")
           PY
 
-      - name: Run tests
+      - name: Run focused migration audits
+        shell: bash
+        run: |
+          python tools/find_redundant_phoenix_branches.py teamworks/Ctrl --check
+          python tools/find_mutable_defaults.py teamworks > mutable-defaults.txt
+          python tools/inventory_external_imports.py --path teamworks --json external-imports.json --markdown external-imports.md
+          python tools/inventory_python_compile_errors.py --path teamworks --json python-compile-errors.json --markdown python-compile-errors.md
+
+      - name: Run test suite
         shell: bash
         run: |
           set -o pipefail
-          python -m pytest 2>&1 | tee pytest-output.txt
+          python -m pytest -q 2>&1 | tee pytest-output.txt
 
-      - name: Upload pytest diagnostic
+      - name: Upload consolidated diagnostics
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: pytest-output
-          path: pytest-output.txt
+          name: test-diagnostics
+          path: |
+            pytest-output.txt
+            runtime-risk-audit.json
+            mutable-defaults.txt
+            external-imports.json
+            external-imports.md
+            python-compile-errors.json
+            python-compile-errors.md
           if-no-files-found: warn
-          retention-days: 1
-
-      - name: Upload runtime risk audit
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: runtime-risk-audit
-          path: runtime-risk-audit.json
-          if-no-files-found: error
           retention-days: 1
