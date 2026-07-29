@@ -26,7 +26,6 @@ THEMES = {
 }
 MIN_SCALE = 80
 MAX_SCALE = 200
-SUPPORTED_ENCODINGS = ("utf-8-sig", "cp1252")
 
 
 def normalize_theme(value: str) -> str:
@@ -55,22 +54,27 @@ def backup_file(path: Path) -> Path | None:
     return backup
 
 
+def _decode_config(raw: bytes) -> tuple[str, str]:
+    if raw.startswith(b"\xef\xbb\xbf"):
+        return raw.decode("utf-8-sig"), "utf-8-sig"
+
+    try:
+        return raw.decode("utf-8"), "utf-8"
+    except UnicodeDecodeError:
+        return raw.decode("cp1252"), "cp1252"
+
+
 def _load_config(path: Path) -> tuple[configparser.ConfigParser, str]:
     if not path.is_file():
         raise ValueError(f"Configuration introuvable : {path}")
 
-    raw = path.read_bytes()
-    last_error: Exception | None = None
-    for encoding in SUPPORTED_ENCODINGS:
-        try:
-            text = raw.decode(encoding)
-            parser = configparser.ConfigParser()
-            parser.read_string(text)
-            return parser, encoding
-        except (UnicodeError, configparser.Error) as exc:
-            last_error = exc
-
-    raise ValueError(f"Configuration illisible : {path}") from last_error
+    try:
+        text, encoding = _decode_config(path.read_bytes())
+        parser = configparser.ConfigParser()
+        parser.read_string(text)
+        return parser, encoding
+    except (OSError, UnicodeError, configparser.Error) as exc:
+        raise ValueError(f"Configuration illisible : {path}") from exc
 
 
 def read_profile(path: Path) -> tuple[str, int]:
