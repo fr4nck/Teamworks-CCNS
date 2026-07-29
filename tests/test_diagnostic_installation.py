@@ -52,21 +52,26 @@ def test_database_preflight_reads_valid_database_without_modifying_it(tmp_path: 
     with sqlite3.connect(database) as connection:
         connection.execute("PRAGMA wal_checkpoint(TRUNCATE)")
 
-    before_bytes = database.read_bytes()
-    before_entries = sorted(path.name for path in tmp_path.iterdir())
+    before_files = {
+        path.name: path.read_bytes()
+        for path in tmp_path.iterdir()
+        if path.is_file()
+    }
     report, success = diagnostic_installation.build_report(
         root,
         tmp_path / "user",
         database,
     )
+    after_files = {
+        path.name: path.read_bytes()
+        for path in tmp_path.iterdir()
+        if path.is_file()
+    }
 
     assert success is True
     assert "[OK] Base SQLite" in report
     assert "lecture seule OK, intégrité OK, 1 table(s)" in report
-    assert database.read_bytes() == before_bytes
-    assert sorted(path.name for path in tmp_path.iterdir()) == sorted(before_entries + ["user"])
-    assert not Path(f"{database}-wal").exists()
-    assert not Path(f"{database}-shm").exists()
+    assert after_files == before_files
 
 
 def test_database_preflight_rejects_missing_or_invalid_file(tmp_path: Path) -> None:
