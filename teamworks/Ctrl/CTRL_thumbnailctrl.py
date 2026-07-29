@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 
 # THUMBNAILCTRL Control wxPython IMPLEMENTATION
 # Python Code By:
@@ -204,13 +204,9 @@ b'x\xda\xeb\x0c\xf0s\xe7\xe5\x92\xe2b``\xe0\xf5\xf4p\t\x02\xd2\xac \xcc\xc1\
 \xce)\xa1\t\x00"\xf9$\x83' )
 
 def getShadow():
-    if 'phoenix' in wx.PlatformInfo:
-        fonction = wx.Image
-    else :
-        fonction = wx.ImageFromStream
-    sh_tr = fonction(six.BytesIO(getDataTR())).ConvertToBitmap()
-    sh_bl = fonction(six.BytesIO(getDataBL())).ConvertToBitmap()
-    sh_sh = fonction(six.BytesIO(getDataSH())).Rescale(500, 500, wx.IMAGE_QUALITY_HIGH)
+    sh_tr = wx.Image(six.BytesIO(getDataTR())).ConvertToBitmap()
+    sh_bl = wx.Image(six.BytesIO(getDataBL())).ConvertToBitmap()
+    sh_sh = wx.Image(six.BytesIO(getDataSH())).Rescale(500, 500, wx.IMAGE_QUALITY_HIGH)
     return (sh_tr, sh_bl, sh_sh.ConvertToBitmap())
 
 #-----------------------------------------------------------------------------
