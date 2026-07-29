@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
-"""Inventorie les appels wxPython Classic encore présents dans les sources actives."""
+"""Inventorie les références wxPython Classic encore présentes dans les sources actives."""
 
 from __future__ import annotations
 
 import ast
 import json
+import tokenize
 from pathlib import Path
 from typing import Iterable
 
-CLASSIC_CALLS = {
+CLASSIC_APIS = {
     "BitmapFromImage",
     "EmptyBitmap",
     "EmptyImage",
@@ -17,6 +18,11 @@ CLASSIC_CALLS = {
     "NewId",
     "PySimpleApp",
     "StockCursor",
+}
+
+KNOWN_LEGACY_REFERENCES = {
+    ("teamworks/Ctrl/CTRL_Planning.py", "wx.StockCursor"),
+    ("teamworks/Dlg/DLG_Editeur_photo.py", "wx.StockCursor"),
 }
 
 
@@ -28,13 +34,9 @@ def iter_python_files(root: Path) -> Iterable[Path]:
 
 
 def decode_source(path: Path) -> str:
-    data = path.read_bytes()
-    for encoding in ("utf-8", "iso-8859-15", "cp1252"):
-        try:
-            return data.decode(encoding)
-        except UnicodeDecodeError:
-            pass
-    return data.decode("utf-8", errors="ignore")
+    with path.open("rb") as stream:
+        encoding, _ = tokenize.detect_encoding(stream.readline)
+    return path.read_bytes().decode(encoding)
 
 
 def audit(root: Path) -> list[dict[str, object]]:
@@ -43,33 +45,60 @@ def audit(root: Path) -> list[dict[str, object]]:
         source = decode_source(path)
         try:
             tree = ast.parse(source, filename=str(path))
-        except SyntaxError:
+        except SyntaxError as exc:
+            findings.append(
+                {
+                    "path": str(path),
+                    "line": exc.lineno or 0,
+                    "api": "parse-error",
+                    "detail": exc.msg,
+                }
+            )
             continue
+
         for node in ast.walk(tree):
-            if not isinstance(node, ast.Call):
-                continue
-            func = node.func
             if not (
-                isinstance(func, ast.Attribute)
-                and isinstance(func.value, ast.Name)
-                and func.value.id == "wx"
-                and func.attr in CLASSIC_CALLS
+                isinstance(node, ast.Attribute)
+                and isinstance(node.value, ast.Name)
+                and node.value.id == "wx"
+                and node.attr in CLASSIC_APIS
             ):
                 continue
             findings.append(
                 {
                     "path": str(path),
                     "line": node.lineno,
-                    "api": f"wx.{func.attr}",
+                    "api": f"wx.{node.attr}",
                 }
             )
     return findings
 
 
+def unexpected_findings(findings: list[dict[str, object]]) -> list[dict[str, object]]:
+    unexpected: list[dict[str, object]] = []
+    for finding in findings:
+        key = (str(finding["path"]), str(finding["api"]))
+        if key not in KNOWN_LEGACY_REFERENCES:
+            unexpected.append(finding)
+    return unexpected
+
+
 def main() -> int:
     findings = audit(Path("teamworks"))
-    print(json.dumps({"count": len(findings), "findings": findings}, indent=2, ensure_ascii=False))
-    return 1 if findings else 0
+    unexpected = unexpected_findings(findings)
+    print(
+        json.dumps(
+            {
+                "count": len(findings),
+                "unexpected_count": len(unexpected),
+                "findings": findings,
+                "unexpected": unexpected,
+            },
+            indent=2,
+            ensure_ascii=False,
+        )
+    )
+    return 1 if unexpected else 0
 
 
 if __name__ == "__main__":
