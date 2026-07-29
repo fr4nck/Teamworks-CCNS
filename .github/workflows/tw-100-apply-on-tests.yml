@@ -25,14 +25,20 @@ jobs:
 
           path = Path('teamworks/Ctrl/CTRL_thumbnailctrl.py')
           data = path.read_bytes()
-          text = data.decode('iso-8859-15')
+          try:
+              text = data.decode('utf-8')
+          except UnicodeDecodeError:
+              text = data.decode('iso-8859-15')
           old = """def getShadow():\n    if 'phoenix' in wx.PlatformInfo:\n        fonction = wx.Image\n    else :\n        fonction = wx.ImageFromStream\n    sh_tr = fonction(six.BytesIO(getDataTR())).ConvertToBitmap()\n    sh_bl = fonction(six.BytesIO(getDataBL())).ConvertToBitmap()\n    sh_sh = fonction(six.BytesIO(getDataSH())).Rescale(500, 500, wx.IMAGE_QUALITY_HIGH)\n"""
           new = """def getShadow():\n    sh_tr = wx.Image(six.BytesIO(getDataTR())).ConvertToBitmap()\n    sh_bl = wx.Image(six.BytesIO(getDataBL())).ConvertToBitmap()\n    sh_sh = wx.Image(six.BytesIO(getDataSH())).Rescale(500, 500, wx.IMAGE_QUALITY_HIGH)\n"""
-          if old not in text:
-              raise SystemExit('Expected getShadow block not found')
-          text = text.replace(old, new, 1)
-          text = text.replace('# -*- coding: iso-8859-15 -*-', '# -*- coding: utf-8 -*-', 1)
-          path.write_text(text, encoding='utf-8')
+          if old in text:
+              text = text.replace(old, new, 1)
+              text = text.replace('# -*- coding: iso-8859-15 -*-', '# -*- coding: utf-8 -*-', 1)
+              path.write_text(text, encoding='utf-8')
+          elif 'wx.Image(six.BytesIO(getDataTR()))' in text:
+              print('Transformation already applied, skipping.')
+          else:
+              raise SystemExit('Expected getShadow block not found in old or new form')
           PY
       - name: Validate and push
         run: |
@@ -42,5 +48,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add teamworks/Ctrl/CTRL_thumbnailctrl.py
-          git commit -m "TW-100 — Moderniser le chargement des ombres ThumbnailCtrl"
+          git diff --cached --quiet && echo "Nothing to commit, transformation already applied." || git commit -m "TW-100 — Moderniser le chargement des ombres ThumbnailCtrl"
           git push origin HEAD:agent/tw-100-thumbnailctrl-image-phoenix
