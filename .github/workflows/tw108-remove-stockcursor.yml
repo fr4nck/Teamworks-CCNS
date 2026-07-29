@@ -1,0 +1,57 @@
+name: TW-108 remove StockCursor
+
+on:
+  push:
+    branches:
+      - agent/tw-108-remove-stockcursor
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/tw-108-remove-stockcursor
+      - name: Remove legacy StockCursor branches
+        shell: python
+        run: |
+          from pathlib import Path
+
+          replacements = {
+              Path("teamworks/Ctrl/CTRL_Planning.py"): (
+                  b"if 'phoenix' in wx.PlatformInfo:\n    CURSOR = wx.Cursor\nelse :\n    CURSOR = wx.StockCursor\n",
+                  b"CURSOR = wx.Cursor\n",
+              ),
+              Path("teamworks/Dlg/DLG_Editeur_photo.py"): (
+                  b"        if 'phoenix' in wx.PlatformInfo:\n            cursor = wx.Cursor\n        else :\n            cursor = wx.StockCursor\n",
+                  b"        cursor = wx.Cursor\n",
+              ),
+          }
+
+          for path, (old, new) in replacements.items():
+              data = path.read_bytes()
+              if data.count(old) != 1:
+                  raise SystemExit(f"Motif inattendu dans {path}: {data.count(old)} occurrence(s)")
+              path.write_bytes(data.replace(old, new))
+
+          test = Path("tests/test_wx_classic_api.py")
+          source = test.read_text(encoding="utf-8")
+          marker = "KNOWN_CLASSIC_REFERENCES"
+          if marker not in source:
+              raise SystemExit("Baseline TW-107 introuvable")
+          start = source.index(marker)
+          source = source[:start] + "def test_no_known_wx_classic_references_remain() -> None:\n    assert audit(Path(\"teamworks\")) == []\n"
+          test.write_text(source, encoding="utf-8")
+
+          Path(".github/workflows/tw108-remove-stockcursor.yml").unlink()
+      - name: Commit migration
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add teamworks/Ctrl/CTRL_Planning.py teamworks/Dlg/DLG_Editeur_photo.py tests/test_wx_classic_api.py .github/workflows/tw108-remove-stockcursor.yml
+          git commit -m "TW-108 — supprimer les derniers StockCursor"
+          git push origin HEAD:agent/tw-108-remove-stockcursor
