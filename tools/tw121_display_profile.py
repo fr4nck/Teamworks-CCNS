@@ -16,10 +16,13 @@ THEMES = {
     "systeme": "Systeme",
     "système": "Systeme",
     "system": "Systeme",
+    "auto": "Systeme",
     "clair": "Clair",
     "light": "Clair",
+    "blanc": "Clair",
     "sombre": "Sombre",
     "dark": "Sombre",
+    "noir": "Sombre",
 }
 MIN_SCALE = 80
 MAX_SCALE = 200
@@ -51,16 +54,32 @@ def backup_file(path: Path) -> Path | None:
     return backup
 
 
-def read_profile(path: Path) -> tuple[str, int]:
+def _decode_config(raw: bytes) -> tuple[str, str]:
+    if raw.startswith(b"\xef\xbb\xbf"):
+        return raw.decode("utf-8-sig"), "utf-8-sig"
+
+    try:
+        return raw.decode("utf-8"), "utf-8"
+    except UnicodeDecodeError:
+        return raw.decode("cp1252"), "cp1252"
+
+
+def _load_config(path: Path) -> tuple[configparser.ConfigParser, str]:
     if not path.is_file():
         raise ValueError(f"Configuration introuvable : {path}")
 
-    parser = configparser.ConfigParser()
     try:
-        loaded = parser.read(path, encoding="utf-8")
+        text, encoding = _decode_config(path.read_bytes())
+        parser = configparser.ConfigParser()
+        parser.read_string(text)
+        return parser, encoding
     except (OSError, UnicodeError, configparser.Error) as exc:
         raise ValueError(f"Configuration illisible : {path}") from exc
-    if not loaded or not parser.has_section("interface"):
+
+
+def read_profile(path: Path) -> tuple[str, int]:
+    parser, _encoding = _load_config(path)
+    if not parser.has_section("interface"):
         raise ValueError("Section [interface] absente de la configuration")
 
     try:
@@ -99,14 +118,16 @@ def _replace_atomic(path: Path, source: Path) -> None:
         raise
 
 
-def _write_atomic(path: Path, parser: configparser.ConfigParser) -> None:
+def _write_atomic(
+    path: Path, parser: configparser.ConfigParser, encoding: str = "utf-8"
+) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     descriptor, temporary_name = tempfile.mkstemp(
         prefix=f".{path.name}.", suffix=".tmp", dir=path.parent
     )
     temporary = Path(temporary_name)
     try:
-        with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+        with os.fdopen(descriptor, "w", encoding=encoding) as stream:
             parser.write(stream)
             stream.flush()
             os.fsync(stream.fileno())
@@ -120,19 +141,19 @@ def apply_profile(path: Path, theme: str, scale: int) -> Path | None:
     theme = normalize_theme(theme)
     scale = normalize_scale(scale)
 
-    parser = configparser.ConfigParser()
     if path.exists():
-        try:
-            parser.read(path, encoding="utf-8")
-        except (OSError, UnicodeError, configparser.Error) as exc:
-            raise ValueError(f"Configuration existante illisible : {path}") from exc
+        parser, encoding = _load_config(path)
+    else:
+        parser = configparser.ConfigParser()
+        encoding = "utf-8"
+
     if not parser.has_section("interface"):
         parser.add_section("interface")
 
     backup = backup_file(path)
     parser.set("interface", "theme", theme)
     parser.set("interface", "echelle_police", str(scale))
-    _write_atomic(path, parser)
+    _write_atomic(path, parser, encoding)
     verify_profile(path, theme, scale)
     return backup
 
@@ -140,6 +161,7 @@ def apply_profile(path: Path, theme: str, scale: int) -> Path | None:
 def restore_backup(path: Path, backup: Path) -> tuple[str, int]:
     if not backup.is_file():
         raise ValueError(f"Sauvegarde introuvable : {backup}")
+
     expected = read_profile(backup)
     _replace_atomic(path, backup)
     actual = read_profile(path)
@@ -150,7 +172,7 @@ def restore_backup(path: Path, backup: Path) -> tuple[str, int]:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Prépare, vérifie ou restaure Customize.ini pour TW-122."
+        description="Prépare, vérifie ou restaure Customize.ini pour TW-123."
     )
     parser.add_argument("config", type=Path, help="Chemin explicite vers Customize.ini")
     parser.add_argument("--theme", help="Système, Clair ou Sombre")

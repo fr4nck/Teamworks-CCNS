@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import configparser
 import os
 from pathlib import Path
 from configparser import ConfigParser
@@ -13,6 +14,7 @@ import wx
 DARK_THEME_NAMES = {"sombre", "dark", "noir"}
 LIGHT_THEME_NAMES = {"clair", "light", "blanc"}
 SYSTEM_THEME_NAMES = {"systeme", "système", "system", "auto"}
+CONFIG_ENCODINGS = ("utf-8-sig", "utf-8", "cp1252")
 
 DARK_PALETTE = {
     "window": wx.Colour(30, 30, 30),
@@ -26,22 +28,35 @@ _PATCHED = False
 _MENU_INSTALLED = False
 
 
+def _read_config(path):
+    raw = Path(path).read_bytes()
+    last_error = None
+    for encoding in CONFIG_ENCODINGS:
+        try:
+            text = raw.decode(encoding)
+            parser = ConfigParser()
+            parser.read_string(text)
+            return parser
+        except (UnicodeError, configparser.Error) as exc:
+            last_error = exc
+    raise ValueError(f"Configuration illisible : {path}") from last_error
+
+
 def _config_values():
     theme = os.environ.get("TEAMWORKS_THEME", "").strip()
     scale = os.environ.get("TEAMWORKS_FONT_SCALE", "").strip()
     appdata = os.environ.get("APPDATA")
     candidates = list(Path(appdata).rglob("Customize.ini")) if appdata else []
     for path in candidates:
-        parser = ConfigParser()
         try:
-            parser.read(path, encoding="utf-8")
+            parser = _read_config(path)
             if not theme and parser.has_option("interface", "theme"):
                 theme = parser.get("interface", "theme")
             if not scale and parser.has_option("interface", "echelle_police"):
                 scale = parser.get("interface", "echelle_police")
             if theme and scale:
                 break
-        except (OSError, UnicodeError):
+        except (OSError, ValueError):
             continue
     try:
         font_scale = max(80, min(200, int(scale or "100")))

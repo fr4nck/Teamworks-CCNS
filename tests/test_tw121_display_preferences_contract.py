@@ -49,6 +49,14 @@ def test_theme_service_supports_system_light_dark_and_scale_clamping():
     assert "wx.SystemSettings.GetAppearance()" in source
 
 
+def test_theme_service_reads_utf8_bom_and_legacy_windows_profiles():
+    source = _read(THEME)
+    assert 'CONFIG_ENCODINGS = ("utf-8-sig", "utf-8", "cp1252")' in source
+    assert "raw.decode(encoding)" in source
+    assert "parser.read_string(text)" in source
+    assert "except (OSError, ValueError)" in source
+
+
 def test_preferences_are_reachable_from_settings_menu():
     source = _read(THEME)
     assert "wx.ID_PREFERENCES" in source
