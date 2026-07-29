@@ -38,6 +38,53 @@ from . ListCtrlPrinter import ListCtrlPrinter, ReportFormat, BlockFormat, LineDe
 
 from . import Filter
 
+
+def _resize_space_filling_columns_int(self):
+    """Redimensionne les colonnes extensibles avec des largeurs wxPython entières."""
+    if True not in set(column.isSpaceFilling for column in self.columns):
+        return
+
+    total_fixed_width = sum(
+        self.GetColumnWidth(index)
+        for index, column in enumerate(self.columns)
+        if not column.isSpaceFilling
+    )
+    free_space = max(0, self.GetClientSize()[0] - total_fixed_width)
+    total_proportion = sum(
+        column.freeSpaceProportion
+        for column in self.columns
+        if column.isSpaceFilling
+    )
+    if not total_proportion:
+        return
+
+    columns_to_resize = []
+    for index, column in enumerate(self.columns):
+        if not column.isSpaceFilling:
+            continue
+        new_width = free_space * column.freeSpaceProportion / total_proportion
+        bounded_width = int(round(column.CalcBoundedWidth(new_width)))
+        if int(round(new_width)) == bounded_width:
+            columns_to_resize.append((index, column))
+        else:
+            free_space -= bounded_width
+            total_proportion -= column.freeSpaceProportion
+            if self.GetColumnWidth(index) != bounded_width:
+                self.SetColumnWidth(index, bounded_width)
+
+    if not total_proportion:
+        return
+    for index, column in columns_to_resize:
+        new_width = free_space * column.freeSpaceProportion / total_proportion
+        bounded_width = int(round(column.CalcBoundedWidth(new_width)))
+        if self.GetColumnWidth(index) != bounded_width:
+            self.SetColumnWidth(index, bounded_width)
+
+
+for _list_class in (ObjectListView, VirtualObjectListView, FastObjectListView, GroupListView):
+    _list_class._ResizeSpaceFillingColumns = _resize_space_filling_columns_int
+
+
 __all__ = [
     "BatchedUpdate",
     "BlockFormat",
