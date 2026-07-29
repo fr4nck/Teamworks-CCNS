@@ -80,7 +80,9 @@ def check_database(path: Path) -> CheckResult:
     if not database_path.is_file():
         return CheckResult("Base SQLite", False, f"fichier introuvable: {database_path}")
 
-    uri = f"{database_path.as_uri()}?mode=ro"
+    # immutable=1 interdit à SQLite de créer ou modifier les fichiers -wal/-shm.
+    # Le diagnostic porte donc sur l'état matériel présent dans le fichier principal.
+    uri = f"{database_path.as_uri()}?mode=ro&immutable=1"
     try:
         with sqlite3.connect(uri, uri=True, timeout=2.0) as connection:
             integrity = connection.execute("PRAGMA quick_check").fetchone()
@@ -150,8 +152,27 @@ def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
+def paths_alias(first: Path, second: Path) -> bool:
+    """Indique si deux chemins désignent le même fichier, y compris par lien."""
+    first_resolved = first.expanduser().resolve(strict=False)
+    second_resolved = second.expanduser().resolve(strict=False)
+    if first_resolved == second_resolved:
+        return True
+    try:
+        return first.exists() and second.exists() and first.samefile(second)
+    except OSError:
+        return False
+
+
 def main(argv: Iterable[str] | None = None) -> int:
     args = parse_args(argv)
+    if args.database and args.output and paths_alias(args.database, args.output):
+        print(
+            "ERREUR: le fichier de rapport ne peut pas être la base contrôlée.",
+            file=sys.stderr,
+        )
+        return 2
+
     report, success = build_report(
         args.root.resolve(),
         database=args.database,
