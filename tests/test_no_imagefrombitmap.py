@@ -1,4 +1,15 @@
+import ast
 from pathlib import Path
+
+
+def _read_source(path: Path) -> str:
+    data = path.read_bytes()
+    for encoding in ("utf-8", "iso-8859-15", "cp1252"):
+        try:
+            return data.decode(encoding)
+        except UnicodeDecodeError:
+            continue
+    return data.decode("utf-8", errors="ignore")
 
 
 def test_no_wx_imagefrombitmap_remains() -> None:
@@ -6,8 +17,15 @@ def test_no_wx_imagefrombitmap_remains() -> None:
     offenders: list[str] = []
 
     for path in Path("teamworks").rglob("*.py"):
-        text = path.read_text(encoding="utf-8", errors="ignore")
-        if "wx.ImageFromBitmap(" in text:
-            offenders.append(str(path))
+        tree = ast.parse(_read_source(path), filename=str(path))
+        for node in ast.walk(tree):
+            func = node.func if isinstance(node, ast.Call) else None
+            if (
+                isinstance(func, ast.Attribute)
+                and func.attr == "ImageFromBitmap"
+                and isinstance(func.value, ast.Name)
+                and func.value.id == "wx"
+            ):
+                offenders.append(f"{path}:{node.lineno}")
 
     assert offenders == [], f"wx.ImageFromBitmap reste présent dans : {offenders}"
