@@ -10,9 +10,10 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-THEME = ROOT / "Utils" / "UTILS_Theme.py"
-CUSTOMIZE = ROOT / "Utils" / "UTILS_Customize.py"
-PREFERENCES = ROOT / "Dlg" / "DLG_Preferences.py"
+SOURCES = ROOT / "teamworks"
+THEME = SOURCES / "Utils" / "UTILS_Theme.py"
+CUSTOMIZE = SOURCES / "Utils" / "UTILS_Customize.py"
+PREFERENCES = SOURCES / "Dlg" / "DLG_Preferences.py"
 
 
 def _read(path: Path) -> str:
