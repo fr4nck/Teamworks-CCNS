@@ -22,6 +22,7 @@ UTILS_Fichiers = UTILS_Adaptations.Import("Utils.UTILS_Fichiers")
 
 # Le rendu sombre natif doit être demandé avant la construction des fenêtres.
 UTILS_Theme.enable_native_dark_mode()
+UTILS_Theme.install_auto_theming()
 
 
 LISTE_DONNEES = [
