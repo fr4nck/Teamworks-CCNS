@@ -48,6 +48,10 @@ def test_database_preflight_reads_valid_database_without_modifying_it(tmp_path: 
         connection.execute("INSERT INTO personnes (nom) VALUES ('Test')")
         connection.commit()
 
+    # Une copie exploitable doit avoir son WAL consolidé dans le fichier principal.
+    with sqlite3.connect(database) as connection:
+        connection.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+
     before_bytes = database.read_bytes()
     before_entries = sorted(path.name for path in tmp_path.iterdir())
     report, success = diagnostic_installation.build_report(
