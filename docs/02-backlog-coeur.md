@@ -1,4 +1,8 @@
-# Backlog initiale du cœur
+# Backlog initial du cœur
+
+> Document historique de cadrage initial. Il ne constitue plus la roadmap active du projet.
+>
+> La planification, les statuts des lots `TW-*`, les critères de sortie et la progression consolidée sont maintenus dans `docs/FEUILLE_ROUTE_MAINTENANCE.md`.
 
 Priorités de départ :
 
