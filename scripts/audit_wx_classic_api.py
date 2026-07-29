@@ -20,10 +20,7 @@ CLASSIC_APIS = {
     "StockCursor",
 }
 
-KNOWN_LEGACY_REFERENCES = {
-    ("teamworks/Ctrl/CTRL_Planning.py", "wx.StockCursor"),
-    ("teamworks/Dlg/DLG_Editeur_photo.py", "wx.StockCursor"),
-}
+KNOWN_LEGACY_REFERENCES: set[tuple[str, str]] = set()
 
 
 def iter_python_files(root: Path) -> Iterable[Path]:
