@@ -31,6 +31,9 @@ jobs:
       - name: Compile Python sources
         run: python -m compileall application domain infrastructure scripts teamworks/CcnsCore tests
 
+      - name: Check essential runtime components
+        run: python scripts/check_essential_runtime.py
+
       - name: Audit known runtime compatibility risks
         run: >-
           python scripts/audit_runtime_risks.py .
