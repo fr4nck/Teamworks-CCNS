@@ -239,10 +239,7 @@ class ImgBox(wx.Window):
         eventType=event.GetEventType()
         posx, posy = event.GetPosition()
 
-        if 'phoenix' in wx.PlatformInfo:
-            cursor = wx.Cursor
-        else :
-            cursor = wx.StockCursor
+        cursor = wx.Cursor
 
         # Left Down
         if eventType == wx.wxEVT_LEFT_DOWN:

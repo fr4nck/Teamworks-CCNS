@@ -22,10 +22,7 @@ import sys
 from Utils import UTILS_Fichiers
 from Utils import UTILS_Adaptations
 
-if 'phoenix' in wx.PlatformInfo:
-    CURSOR = wx.Cursor
-else :
-    CURSOR = wx.StockCursor
+CURSOR = wx.Cursor
 
 # D claration de variables   modifier au choix
 
