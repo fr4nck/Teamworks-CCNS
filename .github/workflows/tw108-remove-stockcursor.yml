@@ -1,21 +1,22 @@
 name: TW-108 remove StockCursor
 
 on:
-  push:
+  pull_request:
     branches:
-      - agent/tw-108-remove-stockcursor
+      - master
 
 permissions:
   contents: write
 
 jobs:
   migrate:
-    if: github.actor != 'github-actions[bot]'
+    if: github.event.pull_request.number == 179 && github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: agent/tw-108-remove-stockcursor
+          token: ${{ secrets.GITHUB_TOKEN }}
       - name: Remove legacy StockCursor branches
         shell: python
         run: |
