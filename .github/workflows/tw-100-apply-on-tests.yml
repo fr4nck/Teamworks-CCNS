@@ -10,7 +10,6 @@ permissions:
 
 jobs:
   apply:
-    if: github.event.workflow_run.head_branch == 'agent/tw-100-thumbnailctrl-image-phoenix'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
