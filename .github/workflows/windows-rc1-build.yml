@@ -1,0 +1,91 @@
+name: Windows RC1 build
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "setup.py"
+      - "requirements.txt"
+      - "teamworks/**"
+      - ".github/workflows/windows-rc1-build.yml"
+  push:
+    tags:
+      - "v*-rc*"
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows-portable:
+    runs-on: windows-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure Python 3.11 x64
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          architecture: "x64"
+          cache: pip
+
+      - name: Install build dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip wheel setuptools
+          python -m pip install -r requirements.txt
+          python -m pip install "cx-Freeze>=7,<8"
+          python -m pip freeze | Out-File -Encoding utf8 build-requirements.txt
+
+      - name: Build executable
+        shell: pwsh
+        run: |
+          python setup.py build
+          if (-not (Test-Path "build/Teamworks-CCNS")) {
+            throw "Le dossier build/Teamworks-CCNS n'a pas été produit."
+          }
+          if (-not (Test-Path "build/Teamworks-CCNS/Teamworks.exe")) {
+            throw "Teamworks.exe est absent du build."
+          }
+
+      - name: Prepare portable package
+        shell: pwsh
+        run: |
+          $version = "v0.9.0-rc1"
+          if ($env:GITHUB_REF_TYPE -eq "tag") {
+            $version = $env:GITHUB_REF_NAME
+          }
+
+          $packageName = "Teamworks-CCNS-$version-Windows-x64-Portable"
+          $releaseDir = Join-Path "release" $packageName
+          New-Item -ItemType Directory -Force -Path $releaseDir | Out-Null
+          Copy-Item "build/Teamworks-CCNS/*" $releaseDir -Recurse -Force
+          Copy-Item "build-requirements.txt" $releaseDir -Force
+          Copy-Item "docs/ROADMAP_RC1.md" $releaseDir -Force
+
+          @"
+          Teamworks CCNS $version
+
+          Pré-release Windows x64 portable.
+          Décompresser entièrement l'archive avant de lancer Teamworks.exe.
+          Les fichiers de données utilisateur ne doivent pas être placés dans le dossier de l'application.
+          "@ | Out-File -Encoding utf8 (Join-Path $releaseDir "LISEZ-MOI.txt")
+
+          $zipPath = Join-Path "release" "$packageName.zip"
+          Compress-Archive -Path "$releaseDir/*" -DestinationPath $zipPath -CompressionLevel Optimal -Force
+          $hash = (Get-FileHash $zipPath -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  $packageName.zip" | Out-File -Encoding ascii "release/SHA256SUMS.txt"
+
+          "PACKAGE_NAME=$packageName" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Upload portable artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.PACKAGE_NAME }}
+          path: |
+            release/*.zip
+            release/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 14
