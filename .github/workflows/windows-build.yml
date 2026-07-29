@@ -1,18 +1,14 @@
-name: Windows executable
+name: Windows build
 
 on:
   workflow_dispatch:
-  pull_request:
-    paths:
-      - 'teamworks/**'
-      - 'requirements.txt'
-      - '.github/workflows/windows-build.yml'
-      - 'scripts/build_windows.ps1'
-      - 'scripts/test_windows_executable.ps1'
-      - 'scripts/check_essential_runtime.py'
   push:
-    branches:
-      - master
+    tags:
+      - "v*"
+
+concurrency:
+  group: windows-build-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -29,7 +25,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
           cache: pip
 
       - name: Install dependencies
@@ -50,8 +46,8 @@ jobs:
       - name: Validate executable output
         shell: pwsh
         run: |
-          if (-not (Test-Path 'dist/Teamworks-CCNS/Teamworks-CCNS.exe')) {
-            throw 'Executable Teamworks-CCNS.exe absent du dossier dist.'
+          if (-not (Test-Path "dist/Teamworks-CCNS/Teamworks-CCNS.exe")) {
+            throw "Executable Teamworks-CCNS.exe absent du dossier dist."
           }
 
       - name: Smoke test Windows executable
@@ -67,12 +63,12 @@ jobs:
             teamworks-smoke.stdout.log
             teamworks-smoke.stderr.log
           if-no-files-found: ignore
-          retention-days: 14
+          retention-days: 3
 
       - name: Create portable ZIP
         shell: pwsh
         run: |
-          Compress-Archive -Path 'dist/Teamworks-CCNS/*' -DestinationPath 'Teamworks-CCNS-Windows-portable.zip' -Force
+          Compress-Archive -Path "dist/Teamworks-CCNS/*" -DestinationPath "Teamworks-CCNS-Windows-portable.zip" -Force
 
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
@@ -80,4 +76,4 @@ jobs:
           name: Teamworks-CCNS-Windows-portable
           path: Teamworks-CCNS-Windows-portable.zip
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 3
