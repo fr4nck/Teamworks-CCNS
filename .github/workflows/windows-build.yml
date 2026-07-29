@@ -8,6 +8,7 @@ on:
       - 'requirements.txt'
       - '.github/workflows/windows-build.yml'
       - 'scripts/build_windows.ps1'
+      - 'scripts/test_windows_executable.ps1'
   push:
     branches:
       - master
@@ -47,6 +48,21 @@ jobs:
           if (-not (Test-Path 'dist/Teamworks-CCNS/Teamworks-CCNS.exe')) {
             throw 'Executable Teamworks-CCNS.exe absent du dossier dist.'
           }
+
+      - name: Smoke test Windows executable
+        shell: pwsh
+        run: ./scripts/test_windows_executable.ps1
+
+      - name: Upload smoke-test logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Teamworks-CCNS-Windows-smoke-logs
+          path: |
+            teamworks-smoke.stdout.log
+            teamworks-smoke.stderr.log
+          if-no-files-found: ignore
+          retention-days: 14
 
       - name: Create portable ZIP
         shell: pwsh
