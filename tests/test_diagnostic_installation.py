@@ -43,10 +43,10 @@ def test_database_preflight_reads_valid_database_without_modifying_it(tmp_path: 
     _complete_package(root)
     database = tmp_path / "copie_test.sqlite"
     with sqlite3.connect(database) as connection:
+        connection.execute("PRAGMA journal_mode=WAL")
         connection.execute("CREATE TABLE personnes (id INTEGER PRIMARY KEY, nom TEXT)")
         connection.execute("INSERT INTO personnes (nom) VALUES ('Test')")
-        connection.execute("PRAGMA journal_mode=WAL")
-        connection.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+        connection.commit()
 
     before_bytes = database.read_bytes()
     before_entries = sorted(path.name for path in tmp_path.iterdir())
