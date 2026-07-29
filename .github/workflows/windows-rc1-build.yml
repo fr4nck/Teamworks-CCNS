@@ -50,6 +50,42 @@ jobs:
             throw "Teamworks.exe est absent du build."
           }
 
+      - name: Verify frozen package contents
+        shell: pwsh
+        run: |
+          @'
+          from pathlib import Path
+          import zipfile
+
+          build = Path("build/Teamworks-CCNS")
+          required = {
+              "Dlg/DLG_Fiche_individuelle.pyc",
+              "Dlg/DLG_Fiche_individuelle_lazy.pyc",
+              "Dlg/DLG_Fiche_individuelle_problems.pyc",
+              "Dlg/DLG_Fiche_individuelle_refresh.pyc",
+          }
+
+          available = set()
+          for path in build.rglob("*"):
+              if path.is_file():
+                  available.add(path.relative_to(build).as_posix())
+                  if path.suffix == ".zip":
+                      with zipfile.ZipFile(path) as archive:
+                          available.update(name.replace("\\", "/") for name in archive.namelist())
+
+          missing = sorted(
+              expected
+              for expected in required
+              if not any(name.endswith(expected) for name in available)
+          )
+          if missing:
+              raise SystemExit(
+                  "Modules essentiels absents du portable cx_Freeze : " + ", ".join(missing)
+              )
+
+          print("Modules dynamiques essentiels présents dans le portable.")
+          '@ | python -
+
       - name: Prepare portable package
         shell: pwsh
         run: |
