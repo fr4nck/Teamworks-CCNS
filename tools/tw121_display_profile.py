@@ -11,7 +11,9 @@ from __future__ import annotations
 
 import argparse
 import configparser
+import os
 import shutil
+import tempfile
 from datetime import datetime
 from pathlib import Path
 
@@ -45,10 +47,58 @@ def normalize_scale(value: int) -> int:
 def backup_file(path: Path) -> Path | None:
     if not path.exists():
         return None
-    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
     backup = path.with_name(f"{path.name}.tw121-{timestamp}.bak")
     shutil.copy2(path, backup)
     return backup
+
+
+def read_profile(path: Path) -> tuple[str, int]:
+    if not path.is_file():
+        raise ValueError(f"Configuration introuvable : {path}")
+
+    parser = configparser.ConfigParser()
+    try:
+        loaded = parser.read(path, encoding="utf-8")
+    except (OSError, UnicodeError, configparser.Error) as exc:
+        raise ValueError(f"Configuration illisible : {path}") from exc
+    if not loaded or not parser.has_section("interface"):
+        raise ValueError("Section [interface] absente de la configuration")
+
+    try:
+        theme = normalize_theme(parser.get("interface", "theme"))
+        scale = normalize_scale(parser.getint("interface", "echelle_police"))
+    except (configparser.Error, ValueError) as exc:
+        raise ValueError("Profil d'affichage incomplet ou invalide") from exc
+    return theme, scale
+
+
+def verify_profile(path: Path, expected_theme: str, expected_scale: int) -> None:
+    expected = (normalize_theme(expected_theme), normalize_scale(expected_scale))
+    actual = read_profile(path)
+    if actual != expected:
+        raise ValueError(
+            "Persistance invalide : "
+            f"attendu {expected[0]} / {expected[1]} %, "
+            f"relu {actual[0]} / {actual[1]} %"
+        )
+
+
+def _write_atomic(path: Path, parser: configparser.ConfigParser) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    descriptor, temporary_name = tempfile.mkstemp(
+        prefix=f".{path.name}.", suffix=".tmp", dir=path.parent
+    )
+    temporary = Path(temporary_name)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+            parser.write(stream)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, path)
+    except Exception:
+        temporary.unlink(missing_ok=True)
+        raise
 
 
 def apply_profile(path: Path, theme: str, scale: int) -> Path | None:
@@ -57,7 +107,10 @@ def apply_profile(path: Path, theme: str, scale: int) -> Path | None:
 
     parser = configparser.ConfigParser()
     if path.exists():
-        parser.read(path, encoding="utf-8")
+        try:
+            parser.read(path, encoding="utf-8")
+        except (OSError, UnicodeError, configparser.Error) as exc:
+            raise ValueError(f"Configuration existante illisible : {path}") from exc
     if not parser.has_section("interface"):
         parser.add_section("interface")
 
@@ -65,9 +118,8 @@ def apply_profile(path: Path, theme: str, scale: int) -> Path | None:
     parser.set("interface", "theme", theme)
     parser.set("interface", "echelle_police", str(scale))
 
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8") as stream:
-        parser.write(stream)
+    _write_atomic(path, parser)
+    verify_profile(path, theme, scale)
     return backup
 
 
@@ -78,18 +130,29 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("config", type=Path, help="Chemin explicite vers Customize.ini")
     parser.add_argument("--theme", required=True, help="Système, Clair ou Sombre")
     parser.add_argument("--scale", required=True, type=int, help="Échelle de police entre 80 et 200")
+    parser.add_argument(
+        "--check-only",
+        action="store_true",
+        help="Vérifie le profil attendu sans modifier le fichier",
+    )
     return parser
 
 
 def main() -> int:
     args = build_parser().parse_args()
     try:
+        if args.check_only:
+            verify_profile(args.config, args.theme, args.scale)
+            print(f"Profil confirmé : {normalize_theme(args.theme)} / {args.scale} %")
+            print(f"Configuration : {args.config}")
+            return 0
+
         backup = apply_profile(args.config, args.theme, args.scale)
     except (OSError, ValueError) as exc:
         print(f"ERREUR : {exc}")
         return 2
 
-    print(f"Profil appliqué : {normalize_theme(args.theme)} / {args.scale} %")
+    print(f"Profil appliqué et relu : {normalize_theme(args.theme)} / {args.scale} %")
     print(f"Configuration : {args.config}")
     if backup:
         print(f"Sauvegarde : {backup}")
