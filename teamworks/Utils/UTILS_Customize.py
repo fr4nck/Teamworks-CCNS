@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: iso-8859-15 -*-
 #------------------------------------------------------------------------
-# Application :    Noethys, gestion multi-activités
+# Application :    Noethys, gestion multi-activitÃ©s
 # Site internet :  www.noethys.com
 # Auteur:           Ivan LUCAS
 # Copyright:       (c) 2010-16 Ivan LUCAS
@@ -14,15 +14,19 @@ import os
 from six.moves import configparser
 try :
     from Utils import UTILS_Adaptations
+    from Utils import UTILS_Theme
 except:
     import UTILS_Adaptations
+    import UTILS_Theme
 UTILS_Fichiers = UTILS_Adaptations.Import("Utils.UTILS_Fichiers")
 
+# Le rendu sombre natif doit Ãªtre demandÃ© avant la construction des fenÃªtres.
+UTILS_Theme.enable_native_dark_mode()
 
 
 LISTE_DONNEES = [
     ("interface", [
-        ("theme", "Bleu"),
+        ("theme", "Sombre"),
     ]),
     ("journal", [
         ("actif", "1"),
@@ -46,14 +50,12 @@ class Customize():
 
 
     def InitFichier(self):
-        """ Création d'un nouveau fichier ou vérification du fichier existant """
-        # Lit le fichier s'il existe
+        """ CrÃ©ation d'un nouveau fichier ou vÃ©rification du fichier existant """
         if os.path.isfile(self.nomFichier) :
             self.cfg.read(self.nomFichier)
 
         dirty = False
 
-        # Remplissage du cfg
         for section, valeurs in LISTE_DONNEES :
             if section not in self.cfg.sections() :
                 self.cfg.add_section(section)
@@ -64,7 +66,6 @@ class Customize():
                     self.cfg.set(section, cle, valeur)
                     dirty = True
 
-        # Enregistrement du fichier
         if dirty :
             self.Enregistrement()
 
@@ -73,7 +74,6 @@ class Customize():
 
     def GetValeur(self, section="", cle="", defaut="", type_valeur=str, ajouter_si_manquant=True):
         if self.cfg.has_section(section) and self.cfg.has_option(section, cle) :
-            # Si la clé existe
             if type_valeur == int :
                 return self.cfg.getint(section, cle)
             elif type_valeur == float :
@@ -83,7 +83,6 @@ class Customize():
             else :
                 return self.cfg.get(section, cle)
         else:
-            # Si la clé n'existe pas
             if ajouter_si_manquant == True :
                 self.cfg.set(section, cle, defaut)
                 self.Enregistrement()
@@ -125,10 +124,6 @@ def SetValeur(section="", cle="", valeur=""):
     customize.Enregistrement()
 
 
-
-
 # --------------- TESTS ----------------------------------------------------------------------------------------------------------
 if __name__ == u"__main__":
-    print(("GET :", GetValeur("interface", "theme", "Vert")))
-    #print "SET :", GetValeur("interface", "theme", "Rouge")
-
+    print(("GET :", GetValeur("interface", "theme", "Sombre")))
