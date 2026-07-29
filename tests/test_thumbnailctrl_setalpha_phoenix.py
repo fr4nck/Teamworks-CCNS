@@ -5,6 +5,7 @@ SOURCE_PATH = Path('teamworks/Ctrl/CTRL_thumbnailctrl.py')
 
 
 def test_thumbnailctrl_uses_setalpha_directly():
+    """Lock the Phoenix-only alpha path used by ThumbnailCtrl."""
     source = SOURCE_PATH.read_text(encoding='utf-8')
     start = source.index('    def LoadThumbnail(')
     end = source.index('class ThumbnailEvent', start)
