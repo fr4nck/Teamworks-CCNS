@@ -20,7 +20,10 @@ DARK_PALETTE = {
     "text": wx.Colour(235, 235, 235),
     "muted_text": wx.Colour(190, 190, 190),
     "accent": wx.Colour(75, 150, 220),
+    "selection": wx.Colour(55, 95, 135),
 }
+
+_PATCHED = False
 
 
 def _read_requested_theme() -> str:
@@ -60,32 +63,102 @@ def enable_native_dark_mode(theme: str | None = None) -> bool:
     except Exception:
         pass
 
-    try:
-        appearance = wx.SystemSettings.GetAppearance()
-        if hasattr(appearance, "IsDark") and appearance.IsDark():
-            return True
-    except Exception:
-        pass
-
     return True
 
 
+def _is_input_control(window: wx.Window) -> bool:
+    classes = (
+        wx.TextCtrl,
+        wx.ComboBox,
+        wx.Choice,
+        wx.ListBox,
+        wx.CheckListBox,
+        wx.ListCtrl,
+        wx.TreeCtrl,
+        wx.SpinCtrl,
+    )
+    return isinstance(window, classes)
+
+
+def _apply_control_palette(window: wx.Window) -> None:
+    background = DARK_PALETTE["panel"]
+    foreground = DARK_PALETTE["text"]
+
+    if isinstance(window, (wx.Frame, wx.Dialog)):
+        background = DARK_PALETTE["window"]
+    elif _is_input_control(window):
+        background = DARK_PALETTE["control"]
+    elif isinstance(window, wx.StaticText):
+        foreground = DARK_PALETTE["text"]
+
+    window.SetBackgroundColour(background)
+    window.SetForegroundColour(foreground)
+
+    if isinstance(window, wx.ListCtrl):
+        try:
+            window.SetTextColour(foreground)
+        except Exception:
+            pass
+
+    # Plusieurs contrôles AGW/HTML historiques ne dérivent pas d'une classe
+    # wx standard identifiable mais exposent les mêmes méthodes de couleur.
+    class_name = window.__class__.__name__.lower()
+    if "html" in class_name or "ultimatelist" in class_name:
+        try:
+            window.SetBackgroundColour(DARK_PALETTE["control"])
+            window.SetForegroundColour(DARK_PALETTE["text"])
+        except Exception:
+            pass
+
+
 def apply_to_window(window: wx.Window, recursive: bool = True) -> None:
-    """Applique une palette sombre lisible aux contrôles déjà construits."""
-    if not is_dark_theme():
+    """Applique une palette sombre lisible à une fenêtre et ses contrôles."""
+    if not is_dark_theme() or window is None:
         return
 
     try:
-        window.SetBackgroundColour(DARK_PALETTE["panel"])
-        window.SetForegroundColour(DARK_PALETTE["text"])
+        _apply_control_palette(window)
     except Exception:
         return
 
     if recursive:
-        for child in window.GetChildren():
+        try:
+            children = window.GetChildren()
+        except Exception:
+            children = []
+        for child in children:
             apply_to_window(child, recursive=True)
 
     try:
         window.Refresh()
     except Exception:
         pass
+
+
+def install_auto_theming() -> None:
+    """Thème automatiquement les fenêtres juste avant leur affichage.
+
+    Le code historique crée de nombreux dialogues dans des modules séparés.
+    Centraliser l'interception de ``Show`` et ``ShowModal`` évite d'ajouter un
+    appel manuel dans chaque écran tout en conservant le comportement wx natif.
+    """
+    global _PATCHED
+    if _PATCHED:
+        return
+    _PATCHED = True
+
+    original_show = wx.Window.Show
+
+    def themed_show(window, *args, **kwargs):
+        apply_to_window(window, recursive=True)
+        return original_show(window, *args, **kwargs)
+
+    wx.Window.Show = themed_show
+
+    original_show_modal = wx.Dialog.ShowModal
+
+    def themed_show_modal(dialog, *args, **kwargs):
+        apply_to_window(dialog, recursive=True)
+        return original_show_modal(dialog, *args, **kwargs)
+
+    wx.Dialog.ShowModal = themed_show_modal
