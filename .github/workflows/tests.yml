@@ -48,7 +48,7 @@ jobs:
           git push origin HEAD:agent/tw-100-thumbnailctrl-image-phoenix
 
   apply-tw-101:
-    if: github.event_name == 'pull_request' && github.head_ref == 'agent/tw-101-thumbnailctrl-setalpha-phoenix'
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.head_ref == 'agent/tw-101-thumbnailctrl-setalpha-phoenix')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout TW-101 branch
