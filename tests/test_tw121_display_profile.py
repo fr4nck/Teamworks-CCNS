@@ -13,16 +13,19 @@ assert SPEC.loader is not None
 SPEC.loader.exec_module(MODULE)
 
 
-def read_config(path: Path) -> configparser.ConfigParser:
+def read_config(path: Path, encoding: str = "utf-8") -> configparser.ConfigParser:
     parser = configparser.ConfigParser()
-    parser.read(path, encoding="utf-8")
+    parser.read(path, encoding=encoding)
     return parser
 
 
-def test_normalize_theme_accepts_french_and_english_names():
+def test_normalize_theme_accepts_french_english_and_legacy_names():
     assert MODULE.normalize_theme("Système") == "Systeme"
     assert MODULE.normalize_theme("clair") == "Clair"
     assert MODULE.normalize_theme("DARK") == "Sombre"
+    assert MODULE.normalize_theme("Noir") == "Sombre"
+    assert MODULE.normalize_theme("Blanc") == "Clair"
+    assert MODULE.normalize_theme("auto") == "Systeme"
 
 
 def test_normalize_theme_rejects_unknown_value():
@@ -117,3 +120,50 @@ def test_restore_backup_rejects_missing_file(tmp_path):
         assert "Sauvegarde introuvable" in str(exc)
     else:
         raise AssertionError("Une sauvegarde absente doit être refusée")
+
+
+def test_restore_validates_backup_before_replacing_active_file(tmp_path):
+    path = tmp_path / "Customize.ini"
+    original = "[interface]\ntheme = Clair\nechelle_police = 125\n"
+    path.write_text(original, encoding="utf-8")
+    invalid = tmp_path / "invalid.bak"
+    invalid.write_text("[journal]\nactif = 1\n", encoding="utf-8")
+
+    try:
+        MODULE.restore_backup(path, invalid)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("Une sauvegarde sans profil doit être refusée")
+
+    assert path.read_text(encoding="utf-8") == original
+
+
+def test_apply_profile_preserves_cp1252_configuration(tmp_path):
+    path = tmp_path / "Customize.ini"
+    path.write_bytes(
+        (
+            "[interface]\ntheme = Systeme\nechelle_police = 100\n\n"
+            "[repertoire_donnees]\nchemin = C:\\Données\n"
+        ).encode("cp1252")
+    )
+
+    MODULE.apply_profile(path, "Sombre", 150)
+
+    raw = path.read_bytes()
+    assert "Données" in raw.decode("cp1252")
+    parser = read_config(path, encoding="cp1252")
+    assert parser.get("repertoire_donnees", "chemin") == "C:\\Données"
+    assert MODULE.read_profile(path) == ("Sombre", 150)
+
+
+def test_restore_accepts_legacy_noir_profile(tmp_path):
+    path = tmp_path / "Customize.ini"
+    path.write_text("[interface]\ntheme = Clair\nechelle_police = 125\n", encoding="utf-8")
+    backup = tmp_path / "legacy.bak"
+    backup.write_text("[interface]\ntheme = Noir\nechelle_police = 100\n", encoding="utf-8")
+
+    restored = MODULE.restore_backup(path, backup)
+
+    assert restored == ("Sombre", 100)
+    assert "theme = Noir" in path.read_text(encoding="utf-8")
