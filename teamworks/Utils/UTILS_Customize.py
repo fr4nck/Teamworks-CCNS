@@ -3,7 +3,7 @@
 #------------------------------------------------------------------------
 # Application :    Noethys, gestion multi-activités
 # Site internet :  www.noethys.com
-# Auteur:           Ivan LUCAS
+# Auteur:          Ivan LUCAS
 # Copyright:       (c) 2010-16 Ivan LUCAS
 # Licence:         Licence GNU GPL
 #------------------------------------------------------------------------
@@ -20,13 +20,15 @@ except:
     import UTILS_Theme
 UTILS_Fichiers = UTILS_Adaptations.Import("Utils.UTILS_Fichiers")
 
-# Le rendu sombre natif doit être demandé avant la construction des fenêtres.
+# Le rendu natif doit être demandé avant la construction des fenêtres.
 UTILS_Theme.enable_native_dark_mode()
+UTILS_Theme.install_auto_theming()
 
 
 LISTE_DONNEES = [
     ("interface", [
-        ("theme", "Sombre"),
+        ("theme", "Systeme"),
+        ("echelle_police", "100"),
     ]),
     ("journal", [
         ("actif", "1"),
@@ -48,24 +50,20 @@ class Customize():
         self.cfg = configparser.ConfigParser()
         self.InitFichier()
 
-
     def InitFichier(self):
         """ Création d'un nouveau fichier ou vérification du fichier existant """
         if os.path.isfile(self.nomFichier) :
             self.cfg.read(self.nomFichier)
 
         dirty = False
-
         for section, valeurs in LISTE_DONNEES :
             if section not in self.cfg.sections() :
                 self.cfg.add_section(section)
                 dirty = True
-
             for cle, valeur in valeurs :
                 if cle not in self.cfg.options(section) :
                     self.cfg.set(section, cle, valeur)
                     dirty = True
-
         if dirty :
             self.Enregistrement()
 
@@ -84,22 +82,20 @@ class Customize():
                 return self.cfg.get(section, cle)
         else:
             if ajouter_si_manquant == True :
-                self.cfg.set(section, cle, defaut)
+                self.cfg.set(section, cle, str(defaut))
                 self.Enregistrement()
                 return defaut
-            else :
-                return None
+            return None
 
     def SetValeur(self, section="", cle="", valeur=""):
         if self.cfg.has_section(section) == False :
             self.cfg.add_section(section)
-        self.cfg.set(section, cle, valeur)
+        self.cfg.set(section, cle, str(valeur))
 
     def Enregistrement(self):
         """ Enregistrement du fichier sur le disque dur """
-        fichier = open(self.nomFichier, "w")
-        self.cfg.write(fichier)
-        fichier.close()
+        with open(self.nomFichier, "w") as fichier:
+            self.cfg.write(fichier)
 
 
 def GetCustomize():
@@ -110,13 +106,13 @@ def GetCustomize():
         nomWindow = None
     if nomWindow == "general" :
         return topWindow.GetCustomize()
-    else:
-        return Customize()
+    return Customize()
 
 
 def GetValeur(section="", cle="", defaut="", type_valeur=str, ajouter_si_manquant=True):
     customize = GetCustomize()
     return customize.GetValeur(section, cle, defaut, type_valeur, ajouter_si_manquant)
+
 
 def SetValeur(section="", cle="", valeur=""):
     customize = GetCustomize()
@@ -124,6 +120,5 @@ def SetValeur(section="", cle="", valeur=""):
     customize.Enregistrement()
 
 
-# --------------- TESTS ----------------------------------------------------------------------------------------------------------
 if __name__ == u"__main__":
-    print(("GET :", GetValeur("interface", "theme", "Sombre")))
+    print(("GET :", GetValeur("interface", "theme", "Systeme")))
