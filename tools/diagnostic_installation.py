@@ -3,8 +3,8 @@
 """Diagnostic reproductible d'une installation Teamworks-CCNS.
 
 Le script ne modifie pas les données métier. Il vérifie les ressources minimales,
-la possibilité d'écrire dans le dossier utilisateur et produit un rapport texte
-facile à joindre à une demande d'assistance.
+la possibilité d'écrire dans le dossier utilisateur et, sur demande, la lisibilité
+d'une base SQLite ouverte strictement en lecture seule.
 """
 
 from __future__ import annotations
@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import os
 import platform
+import sqlite3
 import sys
 import tempfile
 from dataclasses import dataclass
@@ -73,11 +74,45 @@ def check_user_directory(path: Path) -> CheckResult:
         return CheckResult("Dossier utilisateur", False, f"écriture impossible dans {path}: {exc}")
 
 
-def build_report(root: Path, user_directory: Path | None = None) -> tuple[str, bool]:
+def check_database(path: Path) -> CheckResult:
+    """Contrôle une base SQLite sans autoriser aucune création ni écriture."""
+    database_path = path.expanduser().resolve()
+    if not database_path.is_file():
+        return CheckResult("Base SQLite", False, f"fichier introuvable: {database_path}")
+
+    # immutable=1 interdit à SQLite de créer ou modifier les fichiers -wal/-shm.
+    # Le diagnostic porte donc sur l'état matériel présent dans le fichier principal.
+    uri = f"{database_path.as_uri()}?mode=ro&immutable=1"
+    try:
+        with sqlite3.connect(uri, uri=True, timeout=2.0) as connection:
+            integrity = connection.execute("PRAGMA quick_check").fetchone()
+            if not integrity or integrity[0] != "ok":
+                detail = integrity[0] if integrity else "résultat absent"
+                return CheckResult("Base SQLite", False, f"quick_check: {detail}")
+            table_count = connection.execute(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table'"
+            ).fetchone()[0]
+    except sqlite3.Error as exc:
+        return CheckResult("Base SQLite", False, f"ouverture en lecture seule impossible: {exc}")
+
+    return CheckResult(
+        "Base SQLite",
+        True,
+        f"lecture seule OK, intégrité OK, {table_count} table(s): {database_path}",
+    )
+
+
+def build_report(
+    root: Path,
+    user_directory: Path | None = None,
+    database: Path | None = None,
+) -> tuple[str, bool]:
     user_directory = user_directory or resolve_user_directory()
     checks: list[CheckResult] = []
     checks.extend(check_resources(root))
     checks.append(check_user_directory(user_directory))
+    if database is not None:
+        checks.append(check_database(database))
 
     lines = [
         "Diagnostic d'installation Teamworks-CCNS",
@@ -87,6 +122,7 @@ def build_report(root: Path, user_directory: Path | None = None) -> tuple[str, b
         f"Architecture: {platform.machine()}",
         f"Racine contrôlée: {root}",
         f"Dossier utilisateur: {user_directory}",
+        f"Base contrôlée: {database.expanduser().resolve() if database else 'non demandée'}",
         "",
     ]
     lines.extend(result.render() for result in checks)
@@ -104,6 +140,11 @@ def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
         help="Racine du dépôt ou du paquet portable à contrôler.",
     )
     parser.add_argument(
+        "--database",
+        type=Path,
+        help="Base SQLite à contrôler strictement en lecture seule.",
+    )
+    parser.add_argument(
         "--output",
         type=Path,
         help="Fichier de rapport. Par défaut, affichage dans la console.",
@@ -111,9 +152,31 @@ def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
+def paths_alias(first: Path, second: Path) -> bool:
+    """Indique si deux chemins désignent le même fichier, y compris par lien."""
+    first_resolved = first.expanduser().resolve(strict=False)
+    second_resolved = second.expanduser().resolve(strict=False)
+    if first_resolved == second_resolved:
+        return True
+    try:
+        return first.exists() and second.exists() and first.samefile(second)
+    except OSError:
+        return False
+
+
 def main(argv: Iterable[str] | None = None) -> int:
     args = parse_args(argv)
-    report, success = build_report(args.root.resolve())
+    if args.database and args.output and paths_alias(args.database, args.output):
+        print(
+            "ERREUR: le fichier de rapport ne peut pas être la base contrôlée.",
+            file=sys.stderr,
+        )
+        return 2
+
+    report, success = build_report(
+        args.root.resolve(),
+        database=args.database,
+    )
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(report, encoding="utf-8")
