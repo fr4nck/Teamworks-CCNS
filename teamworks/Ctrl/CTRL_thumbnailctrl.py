@@ -364,10 +364,7 @@ class PILImageHandler(object):
 
         alpha = False
         if "A" in pil.getbands():
-            if 'phoenix' in wx.PlatformInfo:
-                img.SetAlpha(pil.convert("RGBA").tobytes()[3::4])
-            else:
-                img.SetAlphaData(pil.convert("RGBA").tobytes()[3::4])
+            img.SetAlpha(pil.convert("RGBA").tobytes()[3::4])
             alpha = True
 
         return img, originalsize, alpha
