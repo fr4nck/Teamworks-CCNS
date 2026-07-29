@@ -1,0 +1,75 @@
+name: TW-101 apply ThumbnailCtrl SetAlpha
+
+on:
+  push:
+    branches:
+      - agent/tw-101-thumbnailctrl-setalpha-phoenix
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/tw-101-thumbnailctrl-setalpha-phoenix
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install test dependencies
+        run: python -m pip install --upgrade pip pytest
+      - name: Apply Phoenix-only SetAlpha
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          source_path = Path('teamworks/Ctrl/CTRL_thumbnailctrl.py')
+          source = source_path.read_text(encoding='utf-8')
+          old = '''        if "A" in pil.getbands():
+            if 'phoenix' in wx.PlatformInfo:
+                img.SetAlpha(pil.convert("RGBA").tobytes()[3::4])
+            else:
+                img.SetAlphaData(pil.convert("RGBA").tobytes()[3::4])
+            alpha = True
+'''
+          new = '''        if "A" in pil.getbands():
+            img.SetAlpha(pil.convert("RGBA").tobytes()[3::4])
+            alpha = True
+'''
+          if old not in source:
+              raise SystemExit('Expected SetAlpha compatibility block not found')
+          source_path.write_text(source.replace(old, new, 1), encoding='utf-8')
+
+          test_path = Path('tests/test_thumbnailctrl_setalpha_phoenix.py')
+          test_path.write_text('''from pathlib import Path
+
+
+SOURCE_PATH = Path("teamworks/Ctrl/CTRL_thumbnailctrl.py")
+
+
+def test_thumbnailctrl_uses_setalpha_directly():
+    source = SOURCE_PATH.read_text(encoding="utf-8")
+    start = source.index("def PILtoWx")
+    end = source.index("class Thumb", start)
+    function_source = source[start:end]
+
+    assert "SetAlphaData" not in function_source
+    assert "'phoenix' in wx.PlatformInfo" not in function_source
+    assert 'img.SetAlpha(pil.convert("RGBA").tobytes()[3::4])' in function_source
+''', encoding='utf-8')
+          PY
+      - name: Validate
+        run: |
+          python -m py_compile teamworks/Ctrl/CTRL_thumbnailctrl.py
+          python -m pytest -q tests/test_thumbnailctrl_setalpha_phoenix.py
+          git diff --check
+      - name: Commit TW-101
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add teamworks/Ctrl/CTRL_thumbnailctrl.py tests/test_thumbnailctrl_setalpha_phoenix.py
+          git commit -m "TW-101 — Utiliser directement wx.Image.SetAlpha dans ThumbnailCtrl"
+          git push origin HEAD:agent/tw-101-thumbnailctrl-setalpha-phoenix
