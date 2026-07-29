@@ -1,11 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Prépare un profil d'affichage pour les validations manuelles TW-121.
-
-L'outil ne recherche pas arbitrairement la configuration : le chemin du fichier
-Customize.ini doit être fourni explicitement afin d'éviter de modifier une autre
-installation Teamworks/Noethys présente sur le poste.
-"""
+"""Prépare, vérifie ou restaure un profil d'affichage Teamworks-CCNS."""
 
 from __future__ import annotations
 
@@ -34,13 +29,16 @@ def normalize_theme(value: str) -> str:
     try:
         return THEMES[value.strip().lower()]
     except KeyError as exc:
-        choices = "Système, Clair ou Sombre"
-        raise ValueError(f"Thème invalide : {value!r}. Valeurs admises : {choices}.") from exc
+        raise ValueError(
+            f"Thème invalide : {value!r}. Valeurs admises : Système, Clair ou Sombre."
+        ) from exc
 
 
 def normalize_scale(value: int) -> int:
     if not MIN_SCALE <= value <= MAX_SCALE:
-        raise ValueError(f"Échelle invalide : {value}. Valeurs admises : {MIN_SCALE} à {MAX_SCALE} %.")
+        raise ValueError(
+            f"Échelle invalide : {value}. Valeurs admises : {MIN_SCALE} à {MAX_SCALE} %."
+        )
     return value
 
 
@@ -84,6 +82,23 @@ def verify_profile(path: Path, expected_theme: str, expected_scale: int) -> None
         )
 
 
+def _replace_atomic(path: Path, source: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    descriptor, temporary_name = tempfile.mkstemp(
+        prefix=f".{path.name}.", suffix=".tmp", dir=path.parent
+    )
+    temporary = Path(temporary_name)
+    try:
+        with os.fdopen(descriptor, "wb") as stream, source.open("rb") as origin:
+            shutil.copyfileobj(origin, stream)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, path)
+    except Exception:
+        temporary.unlink(missing_ok=True)
+        raise
+
+
 def _write_atomic(path: Path, parser: configparser.ConfigParser) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     descriptor, temporary_name = tempfile.mkstemp(
@@ -117,30 +132,48 @@ def apply_profile(path: Path, theme: str, scale: int) -> Path | None:
     backup = backup_file(path)
     parser.set("interface", "theme", theme)
     parser.set("interface", "echelle_police", str(scale))
-
     _write_atomic(path, parser)
     verify_profile(path, theme, scale)
     return backup
 
 
+def restore_backup(path: Path, backup: Path) -> tuple[str, int]:
+    if not backup.is_file():
+        raise ValueError(f"Sauvegarde introuvable : {backup}")
+    expected = read_profile(backup)
+    _replace_atomic(path, backup)
+    actual = read_profile(path)
+    if actual != expected:
+        raise ValueError("Restauration invalide : le profil relu diffère de la sauvegarde")
+    return actual
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Prépare Customize.ini pour une validation d'affichage TW-121."
+        description="Prépare, vérifie ou restaure Customize.ini pour TW-122."
     )
     parser.add_argument("config", type=Path, help="Chemin explicite vers Customize.ini")
-    parser.add_argument("--theme", required=True, help="Système, Clair ou Sombre")
-    parser.add_argument("--scale", required=True, type=int, help="Échelle de police entre 80 et 200")
-    parser.add_argument(
-        "--check-only",
-        action="store_true",
-        help="Vérifie le profil attendu sans modifier le fichier",
-    )
+    parser.add_argument("--theme", help="Système, Clair ou Sombre")
+    parser.add_argument("--scale", type=int, help="Échelle de police entre 80 et 200")
+    parser.add_argument("--check-only", action="store_true", help="Vérifie sans modifier")
+    parser.add_argument("--restore", type=Path, help="Restaure une sauvegarde .bak explicite")
     return parser
 
 
 def main() -> int:
     args = build_parser().parse_args()
     try:
+        if args.restore:
+            if args.check_only or args.theme is not None or args.scale is not None:
+                raise ValueError("--restore ne peut pas être combiné avec un profil ou --check-only")
+            theme, scale = restore_backup(args.config, args.restore)
+            print(f"Profil restauré et relu : {theme} / {scale} %")
+            print(f"Configuration : {args.config}")
+            return 0
+
+        if args.theme is None or args.scale is None:
+            raise ValueError("--theme et --scale sont requis hors restauration")
+
         if args.check_only:
             verify_profile(args.config, args.theme, args.scale)
             print(f"Profil confirmé : {normalize_theme(args.theme)} / {args.scale} %")
