@@ -11,7 +11,6 @@ from Utils.UTILS_Traduction import _
 import wx
 from Ctrl import CTRL_Bouton_image
 import wx.lib.agw.hyperlink as hl
-from wx.lib.mixins.listctrl import CheckListCtrlMixin
 
 
 
@@ -161,12 +160,10 @@ class Dialog(wx.Dialog):
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-class ListCtrl(wx.ListCtrl, CheckListCtrlMixin):
+class ListCtrl(wx.ListCtrl):
     def __init__(self, parent, liste_labelsColonnes, listeValeurs):
         wx.ListCtrl.__init__(self, parent, -1, style=wx.LC_REPORT|wx.LC_SINGLE_SEL|wx.LC_HRULES|wx.LC_VRULES)
-        CheckListCtrlMixin.__init__(self)
-        if 'phoenix' in wx.PlatformInfo:
-            self.EnableCheckBoxes(True)
+        self.EnableCheckBoxes(True)
         self.parent = parent
         self.liste_labelsColonnes = liste_labelsColonnes
         self.listeValeurs = listeValeurs
@@ -209,7 +206,7 @@ class ListCtrl(wx.ListCtrl, CheckListCtrlMixin):
         self.Remplissage(select, action)
         
     def OnItemActivated(self, evt):
-        self.ToggleItem(evt.Index)
+        self.CheckItem(evt.Index, not self.IsItemChecked(evt.Index))
 
     def ListeItemsCoches(self):
         """ Récupère la liste des IDdeplacements cochés """
@@ -218,7 +215,7 @@ class ListCtrl(wx.ListCtrl, CheckListCtrlMixin):
         for index in range(0, nbreItems) :
             ID = int(self.GetItem(index, 0).GetText())
             # Vérifie si l'item est coché
-            if self.IsChecked(index) :
+            if self.IsItemChecked(index) :
                 listeIDcoches.append(ID)
         return listeIDcoches
         
