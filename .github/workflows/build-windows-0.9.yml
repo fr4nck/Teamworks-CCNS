@@ -43,7 +43,7 @@ jobs:
 
           Get-ChildItem teamworks -Recurse -Filter '*.py' -File | ForEach-Object {
             $relative = [System.IO.Path]::GetRelativePath((Resolve-Path teamworks).Path, $_.FullName)
-            $module = [System.IO.Path]::ChangeExtension($relative, $null) -replace '[\\/]', '.'
+            $module = [System.IO.Path]::ChangeExtension($relative, $null) -replace '[\/]', '.'
             if ($module.EndsWith('.__init__')) {
               $module = $module.Substring(0, $module.Length - 9)
             }
@@ -53,7 +53,7 @@ jobs:
           foreach ($root in @('domain', 'application', 'infrastructure')) {
             Get-ChildItem $root -Recurse -Filter '*.py' -File | ForEach-Object {
               $relative = [System.IO.Path]::GetRelativePath((Get-Location).Path, $_.FullName)
-              $module = [System.IO.Path]::ChangeExtension($relative, $null) -replace '[\\/]', '.'
+              $module = [System.IO.Path]::ChangeExtension($relative, $null) -replace '[\/]', '.'
               if ($module.EndsWith('.__init__')) {
                 $module = $module.Substring(0, $module.Length - 9)
               }
@@ -141,20 +141,32 @@ jobs:
           if-no-files-found: ignore
           retention-days: 3
 
-      - name: Create package integrity manifests
+      - name: Create and verify package integrity manifest
         shell: pwsh
         run: |
           $package = Resolve-Path 'dist/Teamworks-CCNS'
+          $manifestPath = Join-Path $package.Path 'PACKAGE-SHA256SUMS.txt'
+
           Get-ChildItem $package -Recurse -File |
+            Where-Object { $_.FullName -ne $manifestPath } |
             Sort-Object FullName |
             ForEach-Object {
               $relative = [System.IO.Path]::GetRelativePath($package.Path, $_.FullName).Replace('\', '/')
               $hash = (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
               "$hash  $relative"
-            } | Set-Content "$package/PACKAGE-SHA256SUMS.txt" -Encoding ascii
+            } | Set-Content $manifestPath -Encoding utf8
 
-          if ((Get-Item "$package/PACKAGE-SHA256SUMS.txt").Length -eq 0) {
-            throw 'Package integrity manifest is empty'
+          $entries = @(Get-Content $manifestPath -Encoding utf8)
+          if ($entries.Count -eq 0) { throw 'Package integrity manifest is empty' }
+
+          foreach ($entry in $entries) {
+            if ($entry -notmatch '^([0-9a-f]{64})  (.+)$') { throw "Invalid manifest entry: $entry" }
+            $expected = $Matches[1]
+            $relative = $Matches[2]
+            $target = Join-Path $package.Path ($relative.Replace('/', [System.IO.Path]::DirectorySeparatorChar))
+            if (-not (Test-Path -LiteralPath $target -PathType Leaf)) { throw "Manifest target missing: $relative" }
+            $actual = (Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash.ToLowerInvariant()
+            if ($actual -ne $expected) { throw "Manifest hash mismatch: $relative" }
           }
 
       - name: Create portable archive
