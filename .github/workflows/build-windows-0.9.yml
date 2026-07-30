@@ -43,7 +43,7 @@ jobs:
 
           Get-ChildItem teamworks -Recurse -Filter '*.py' -File | ForEach-Object {
             $relative = [System.IO.Path]::GetRelativePath((Resolve-Path teamworks).Path, $_.FullName)
-            $module = [System.IO.Path]::ChangeExtension($relative, $null) -replace '[\/]', '.'
+            $module = [System.IO.Path]::ChangeExtension($relative, $null) -replace '[\\/]', '.'
             if ($module.EndsWith('.__init__')) {
               $module = $module.Substring(0, $module.Length - 9)
             }
@@ -53,7 +53,7 @@ jobs:
           foreach ($root in @('domain', 'application', 'infrastructure')) {
             Get-ChildItem $root -Recurse -Filter '*.py' -File | ForEach-Object {
               $relative = [System.IO.Path]::GetRelativePath((Get-Location).Path, $_.FullName)
-              $module = [System.IO.Path]::ChangeExtension($relative, $null) -replace '[\/]', '.'
+              $module = [System.IO.Path]::ChangeExtension($relative, $null) -replace '[\\/]', '.'
               if ($module.EndsWith('.__init__')) {
                 $module = $module.Substring(0, $module.Length - 9)
               }
