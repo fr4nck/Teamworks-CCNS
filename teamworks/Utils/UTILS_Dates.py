@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #------------------------------------------------------------------------
-# Application :    Noethys, gestion multi-activitÈs
+# Application :    Noethys, gestion multi-activit√©s
 # Site internet :  www.noethys.com
 # Auteur:           Ivan LUCAS
 # Copyright:       (c) 2010-13 Ivan LUCAS
@@ -15,32 +15,79 @@ import time
 import six
 
 
+def DateEnDateDD(value, default=None):
+    """Normalise une date h√©t√©rog√®ne en ``datetime.date`` sans lever d'exception.
+
+    Formats historiques accept√©s : objets date/datetime, ISO ``AAAA-MM-JJ``
+    (mois/jour sur un ou deux chiffres), ``JJ/MM/AAAA`` et ``JJ-MM-AAAA``.
+    Les valeurs absentes ou invalides retournent ``default``.
+    """
+    if value in (None, ""):
+        return default
+    if isinstance(value, datetime.datetime):
+        return value.date()
+    if isinstance(value, datetime.date):
+        return value
+
+    text = six.text_type(value).strip()
+    if not text:
+        return default
+    if "T" in text:
+        text = text.split("T", 1)[0]
+    elif " " in text:
+        text = text.split(" ", 1)[0]
+
+    for separator, order in (("-", "ymd"), ("/", "dmy"), ("-", "dmy")):
+        parts = text.split(separator)
+        if len(parts) != 3:
+            continue
+        try:
+            if order == "ymd" and len(parts[0]) == 4:
+                year, month, day = (int(part) for part in parts)
+            elif order == "dmy" and len(parts[2]) == 4:
+                day, month, year = (int(part) for part in parts)
+            else:
+                continue
+            return datetime.date(year, month, day)
+        except (TypeError, ValueError):
+            continue
+    return default
+
+
 def DateEngFr(textDate):
-    if textDate in (None, "") : return ""
-    if type(textDate) == datetime.date : return DateDDEnFr(textDate)
-    text = str(textDate[8:10]) + "/" + str(textDate[5:7]) + "/" + str(textDate[:4])
-    return text
+    date_dd = DateEnDateDD(textDate)
+    if date_dd is None:
+        return ""
+    return "%02d/%02d/%04d" % (date_dd.day, date_dd.month, date_dd.year)
+
 
 def DateDDEnFr(date):
-    if date == None : return ""
-    return DateEngFr(str(date))
-    
+    return DateEngFr(date)
+
+
+def DateFrEng(textDate):
+    date_dd = DateEnDateDD(textDate)
+    if date_dd is None:
+        return ""
+    return "%04d-%02d-%02d" % (date_dd.year, date_dd.month, date_dd.day)
+
+
 def DateComplete(dateDD):
-    """ Transforme une date DD en date complËte : Ex : lundi 15 janvier 2008 """
-    if dateDD == None : return u""
+    """Transforme une date en date compl√®te : ex. lundi 15 janvier 2008."""
+    dateDD = DateEnDateDD(dateDD)
+    if dateDD is None:
+        return u""
     listeJours = (_(_(u"Lundi")), _(_(u"Mardi")), _(_(u"Mercredi")), _(_(u"Jeudi")), _(_(u"Vendredi")), _(_(u"Samedi")), _(_(u"Dimanche")))
-    listeMois = (_(_(u"janvier")), _(_(u"fÈvrier")), _(_(u"mars")), _(_(u"avril")), _(_(u"mai")), _(_(u"juin")), _(_(u"juillet")), _(_(u"ao˚t")), _(_(u"septembre")), _(_(u"octobre")), _(_(u"novembre")), _(_(u"dÈcembre")))
-    dateComplete = listeJours[dateDD.weekday()] + " " + str(dateDD.day) + " " + listeMois[dateDD.month-1] + " " + str(dateDD.year)
-    return dateComplete
+    listeMois = (_(_(u"janvier")), _(_(u"f√©vrier")), _(_(u"mars")), _(_(u"avril")), _(_(u"mai")), _(_(u"juin")), _(_(u"juillet")), _(_(u"ao√ªt")), _(_(u"septembre")), _(_(u"octobre")), _(_(u"novembre")), _(_(u"d√©cembre")))
+    return listeJours[dateDD.weekday()] + " " + str(dateDD.day) + " " + listeMois[dateDD.month - 1] + " " + str(dateDD.year)
+
 
 def DateEngEnDateDD(dateEng):
-    if dateEng == None or dateEng == "" : return None
-    if type(dateEng) == datetime.date : return dateEng
-    return datetime.date(int(dateEng[:4]), int(dateEng[5:7]), int(dateEng[8:10]))
+    return DateEnDateDD(dateEng)
 
 
 def PeriodeComplete(mois, annee):
-    listeMois = (_(_(u"Janvier")), _(_(u"FÈvrier")), _(_(u"Mars")), _(_(u"Avril")), _(_(u"Mai")), _(_(u"Juin")), _(_(u"Juillet")), _(_(u"Ao˚t")), _(_(u"Septembre")), _(_(u"Octobre")), _(_(u"Novembre")), _(_(u"DÈcembre")))
+    listeMois = (_(_(u"Janvier")), _(_(u"F√©vrier")), _(_(u"Mars")), _(_(u"Avril")), _(_(u"Mai")), _(_(u"Juin")), _(_(u"Juillet")), _(_(u"Ao√ªt")), _(_(u"Septembre")), _(_(u"Octobre")), _(_(u"Novembre")), _(_(u"D√©cembre")))
     periodeComplete = u"%s %d" % (listeMois[mois-1], annee)
     return periodeComplete
 
@@ -70,13 +117,13 @@ def HeuresEnDecimal(texteHeure="07:00"):
     return int(heure)
 
 def SoustractionHeures(heure_max, heure_min):
-    """ Effectue l'opÈration heure_max - heure_min. Renvoi un timedelta """
+    """ Effectue l'op√©ration heure_max - heure_min. Renvoi un timedelta """
     if type(heure_max) != datetime.timedelta : heure_max = datetime.timedelta(hours=heure_max.hour, minutes=heure_max.minute)
     if type(heure_min) != datetime.timedelta : heure_min =  datetime.timedelta(hours=heure_min.hour, minutes=heure_min.minute)
     return heure_max - heure_min
 
 def AdditionHeures(heure1, heure2):
-    """ Effectue l'opÈration heure_max - heure_min. Renvoi un timedelta """
+    """ Effectue l'op√©ration heure_max - heure_min. Renvoi un timedelta """
     if type(heure1) != datetime.timedelta : heure1 = datetime.timedelta(hours=heure1.hour, minutes=heure1.minute)
     if type(heure2) != datetime.timedelta : heure2 =  datetime.timedelta(hours=heure2.hour, minutes=heure2.minute)
     return heure1 + heure2
