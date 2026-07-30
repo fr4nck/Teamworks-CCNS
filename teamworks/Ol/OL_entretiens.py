@@ -20,7 +20,7 @@ import sys
 from Dlg import DLG_Saisie_entretien
 from Dlg import DLG_Selection_candidat
 from Utils import UTILS_Fichiers
-from Utils import UTILS_Adaptations
+from Utils import UTILS_Adaptations, UTILS_Dates
 from ObjectListView import ObjectListView, ColumnDefn
 import six
 
@@ -382,10 +382,7 @@ class ListView(ObjectListView):
             else: return ""
             
         def FormateDate(dateStr):
-            if dateStr == "" or dateStr == None : return ""
-            date = str(datetime.date(year=int(dateStr[:4]), month=int(dateStr[5:7]), day=int(dateStr[8:10])))
-            text = str(date[8:10]) + "/" + str(date[5:7]) + "/" + str(date[:4])
-            return text
+            return UTILS_Dates.DateEngFr(dateStr)
         
         def FormateHeure(dateStr):
             text = dateStr.replace(":", "h")

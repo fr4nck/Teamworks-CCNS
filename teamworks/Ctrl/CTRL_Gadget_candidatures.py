@@ -12,6 +12,7 @@ from Ctrl import CTRL_Bouton_image
 import GestionDB
 import FonctionsPerso
 import datetime
+from Utils import UTILS_Dates
 import wx.lib.agw.customtreectrl as CT
 import sys
 
@@ -187,10 +188,7 @@ class TreeCtrl(CT.CustomTreeCtrl):
             return ""
 
     def FormateDate(self, dateStr):
-        if dateStr == "" or dateStr == None : return ""
-        date = str(datetime.date(year=int(dateStr[:4]), month=int(dateStr[5:7]), day=int(dateStr[8:10])))
-        text = str(date[8:10]) + "/" + str(date[5:7]) + "/" + str(date[:4])
-        return text
+        return UTILS_Dates.DateEngFr(dateStr)
     
     def GetListeDonnees(self):
         """ Recup des données """

@@ -13,6 +13,7 @@ from wx.lib.splitter import MultiSplitterWindow
 import GestionDB
 import datetime
 import FonctionsPerso
+from Utils import UTILS_Dates
 import sys
 from Ctrl import CTRL_Gadget_candidatures
 from Ol import OL_candidatures
@@ -236,8 +237,9 @@ class Panelidentite(wx.Panel):
 ##        self.resume_L6.SetLabel(detailContrat)
             
     def RetourneAge(self, dateStr):
-        if dateStr == "" or dateStr == None : return ""
-        bday = datetime.date(year=int(dateStr[:4]), month=int(dateStr[5:7]), day=int(dateStr[8:10]))
+        bday = UTILS_Dates.DateEnDateDD(dateStr)
+        if bday is None:
+            return ""
         datedujour = datetime.date.today()
         age = (datedujour.year - bday.year) - int((datedujour.month, datedujour.day) < (bday.month, bday.day))
         texteAge = str(age) + " ans"

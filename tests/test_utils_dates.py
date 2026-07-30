@@ -39,3 +39,16 @@ def test_invalid_date_never_crashes():
 def test_formatters_are_canonical():
     assert UTILS_Dates.DateEngFr("2020-5-12") == "12/05/2020"
     assert UTILS_Dates.DateFrEng("12/05/2020") == "2020-05-12"
+
+
+def test_manual_date_string_slicing_cannot_return():
+    forbidden_fragments = ("dateStr[:4]", "dateStr[5:7]", "dateStr[8:10]")
+    offenders = []
+
+    for path in (ROOT / "teamworks").rglob("*.py"):
+        source = path.read_text(encoding="utf-8")
+        for fragment in forbidden_fragments:
+            if fragment in source:
+                offenders.append(f"{path.relative_to(ROOT)}: {fragment}")
+
+    assert offenders == []

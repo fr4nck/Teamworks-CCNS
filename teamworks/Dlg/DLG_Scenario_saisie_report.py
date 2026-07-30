@@ -18,7 +18,7 @@ if 'phoenix' in wx.PlatformInfo:
     from wx.adv import BitmapComboBox
 else :
     from wx.combo import BitmapComboBox
-from Utils import UTILS_Adaptations
+from Utils import UTILS_Adaptations, UTILS_Dates
 DLG_Scenario = UTILS_Adaptations.Import("Dlg.DLG_Scenario")
 
 class MyDialog(wx.Dialog):
@@ -544,10 +544,7 @@ class Track(object):
         
         
     def FormateDate(self, dateStr):
-            if dateStr == "" : return ""
-            date = str(datetime.date(year=int(dateStr[:4]), month=int(dateStr[5:7]), day=int(dateStr[8:10])))
-            text = str(date[8:10]) + "/" + str(date[5:7]) + "/" + str(date[:4])
-            return text
+            return UTILS_Dates.DateEngFr(dateStr)
         
 
 
@@ -624,10 +621,7 @@ class ListView(ObjectListView):
     def InitObjectListView(self):
                     
         def FormateDate(dateStr):
-            if dateStr == "" : return ""
-            date = str(datetime.date(year=int(dateStr[:4]), month=int(dateStr[5:7]), day=int(dateStr[8:10])))
-            text = str(date[8:10]) + "/" + str(date[5:7]) + "/" + str(date[:4])
-            return text
+            return UTILS_Dates.DateEngFr(dateStr)
                 
         self.useAlternateBackColors = False
         

@@ -16,6 +16,7 @@ import GestionDB
 import re
 import datetime
 import FonctionsPerso
+from Utils import UTILS_Dates
 from Ctrl import CTRL_Gadget_pb_personnes
 import os
 import sys
@@ -261,8 +262,9 @@ class PanelResume(wx.Panel):
         self.Refresh()
 
     def RetourneAge(self, dateStr):
-        if dateStr == "" or dateStr == None : return ""
-        bday = datetime.date(year=int(dateStr[:4]), month=int(dateStr[5:7]), day=int(dateStr[8:10]))
+        bday = UTILS_Dates.DateEnDateDD(dateStr)
+        if bday is None:
+            return ""
         datedujour = datetime.date.today()
         age = (datedujour.year - bday.year) - int((datedujour.month, datedujour.day) < (bday.month, bday.day))
         texteAge = str(age) + " ans"

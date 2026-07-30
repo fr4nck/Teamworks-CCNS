@@ -12,6 +12,7 @@ import wx
 from Ctrl import CTRL_Bouton_image
 import FonctionsPerso
 from Utils import UTILS_Fichiers
+from Utils import UTILS_Dates
 import wx.lib.agw.hyperlink as hl
 import GestionDB
 from wx.lib.mixins.listctrl import CheckListCtrlMixin
@@ -407,7 +408,7 @@ class ImpressionFicheFrais():
         FonctionsPerso.LanceFichierExterne(nomDoc)
         
     def RetourneDatetime(self, dateStr):
-        return datetime.date(year=int(dateStr[:4]), month=int(dateStr[5:7]), day=int(dateStr[8:10]))
+        return UTILS_Dates.DateEnDateDD(dateStr)
     
     def DateComplete(self, date):
         listeJours = ("Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche")
