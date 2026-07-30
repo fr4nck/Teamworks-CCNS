@@ -10,7 +10,7 @@ import Chemins
 from Utils.UTILS_Traduction import _
 import datetime
 import wx
-from Utils import UTILS_Adaptations
+from Utils import UTILS_Adaptations, UTILS_Dates
 import GestionDB
 import operator
 import FonctionsPerso
@@ -93,8 +93,9 @@ class Track(object):
 
             
     def RetourneAge(self, dateStr):
-        if dateStr == "" or dateStr == None : return ""
-        bday = datetime.date(year=int(dateStr[:4]), month=int(dateStr[5:7]), day=int(dateStr[8:10]))
+        bday = UTILS_Dates.DateEnDateDD(dateStr)
+        if bday is None:
+            return ""
         datedujour = datetime.date.today()
         age = (datedujour.year - bday.year) - int((datedujour.month, datedujour.day) < (bday.month, bday.day))
         texteAge = str(age) + " ans"
@@ -311,10 +312,7 @@ class ListView(FastObjectListView):
         self.useExpansionColumn = True
         
         def FormateDate(dateStr):
-            if dateStr == "" or dateStr == None : return ""
-            date = str(datetime.date(year=int(dateStr[:4]), month=int(dateStr[5:7]), day=int(dateStr[8:10])))
-            text = str(date[8:10]) + "/" + str(date[5:7]) + "/" + str(date[:4])
-            return text
+            return UTILS_Dates.DateEngFr(dateStr)
         
         # Création des colonnes
         liste_ColonnesTmp = self.listeColonnesTemp

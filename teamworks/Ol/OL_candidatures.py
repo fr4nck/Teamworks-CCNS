@@ -11,7 +11,7 @@ from Utils.UTILS_Traduction import _
 import datetime
 import wx
 import six
-from Utils import UTILS_Adaptations
+from Utils import UTILS_Adaptations, UTILS_Dates
 import GestionDB
 import operator
 import FonctionsPerso
@@ -524,10 +524,7 @@ class ListView(ObjectListView):
         self.useExpansionColumn = True
         
         def FormateDate(dateStr):
-            if dateStr == "" or dateStr == None : return ""
-            date = str(datetime.date(year=int(dateStr[:4]), month=int(dateStr[5:7]), day=int(dateStr[8:10])))
-            text = str(date[8:10]) + "/" + str(date[5:7]) + "/" + str(date[:4])
-            return text
+            return UTILS_Dates.DateEngFr(dateStr)
         
         def rowFormatter(listItem, track):
             if track.IDpersonne != None and track.IDpersonne != 0 :
