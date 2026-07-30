@@ -11,7 +11,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build-windows:
@@ -35,6 +35,16 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install -r .github/requirements-windows-build.txt
           python -m pip freeze | Set-Content build-requirements.txt
+
+      - name: Validate release tag
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        run: |
+          $version = (Get-Content VERSION -Raw).Trim()
+          $expectedTag = "v$version"
+          if ($env:GITHUB_REF_NAME -ne $expectedTag) {
+            throw "Release tag $env:GITHUB_REF_NAME does not match VERSION ($expectedTag)"
+          }
 
       - name: Inventory every runtime import name
         shell: pwsh
@@ -186,3 +196,18 @@ jobs:
             SHA256SUMS.txt
           if-no-files-found: error
           retention-days: 3
+
+      - name: Publish GitHub release
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $archive = Get-ChildItem 'Teamworks-CCNS-*-windows-x64.zip' | Select-Object -First 1
+          if (-not $archive) { throw 'Portable archive missing before release publication' }
+          gh release create $env:GITHUB_REF_NAME `
+            $archive.FullName `
+            SHA256SUMS.txt `
+            --title "Teamworks-CCNS $env:GITHUB_REF_NAME" `
+            --generate-notes `
+            --verify-tag
