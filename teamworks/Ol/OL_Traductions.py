@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #------------------------------------------------------------------------
-# Application :    Noethys, gestion multi-activités
+# Application :    Noethys, gestion multi-activitÃ©s
 # Site internet :  www.noethys.com
 # Auteur:           Ivan LUCAS
 # Copyright:       (c) 2010-15 Ivan LUCAS
@@ -59,7 +59,7 @@ class ListView(FastObjectListView):
         self.donnees = self.GetTracks()
     
     def GetTraductionsExistantes(self):
-        """ Recherche le fichier de langage par défaut ".lang" puis un éventuel fichier perso ".xlang" """
+        """ Recherche le fichier de langage par dÃ©faut ".lang" puis un Ã©ventuel fichier perso ".xlang" """
         if self.code == None : return {}, {}
         dictTraductionsInitiales = {}
         dictTraductionsPerso = {}
@@ -73,15 +73,15 @@ class ListView(FastObjectListView):
         return dictTraductionsInitiales, dictTraductionsPerso
 
     def GetTracks(self):
-        """ Récupération des données """
-        # Récupération des textes originaux
+        """ RÃ©cupÃ©ration des donnÃ©es """
+        # RÃ©cupÃ©ration des textes originaux
         dictTextes = {}
         fichier = shelve.open(Chemins.GetStaticPath("Databases/Textes.dat"), "r")
         for texte, listeFichiers in fichier.items() :
             dictTextes[texte] = listeFichiers
         fichier.close()
         
-        # Récupération des traductions existantes
+        # RÃ©cupÃ©ration des traductions existantes
         dictTraductionsInitiales, dictTraductionsPerso = self.GetTraductionsExistantes() 
         
         # Regroupement des prestations par label
@@ -115,7 +115,7 @@ class ListView(FastObjectListView):
             ColumnDefn(_(_(u"Texte original")), "left", 200, "texte", typeDonnee="texte", isSpaceFilling=True), 
             ColumnDefn(_(_(u"Traduction")), "left", 200, "traduction", typeDonnee="texte", imageGetter=GetImageDirty, isSpaceFilling=True), 
             ColumnDefn(_(_(u"Nbre Fichiers")), "left", 85, "nbreFichiers", typeDonnee="entier"), 
-            ColumnDefn(_(_(u"Fichiers associés")), "left", 200, "listeFichiersStr", typeDonnee="texte"),
+            ColumnDefn(_(_(u"Fichiers associÃ©s")), "left", 200, "listeFichiersStr", typeDonnee="texte"),
             ]
         self.SetColumns(liste_Colonnes)
         self.SetEmptyListMsg(_(_(u"Aucun texte")))
@@ -133,7 +133,7 @@ class ListView(FastObjectListView):
             
     def OnContextMenu(self, event):
         """Ouverture du menu contextuel """            
-        # Création du menu contextuel
+        # CrÃ©ation du menu contextuel
         menuPop = UTILS_Adaptations.Menu()
                 
         # Modifier
@@ -146,7 +146,7 @@ class ListView(FastObjectListView):
         menuPop.AppendSeparator()
         
         # Apercu avant impression
-        item = wx.MenuItem(menuPop, 40, _(_(u"Aperçu avant impression")))
+        item = wx.MenuItem(menuPop, 40, _(_(u"AperÃ§u avant impression")))
         bmp = wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Apercu.png"), wx.BITMAP_TYPE_PNG)
         item.SetBitmap(bmp)
         menuPop.AppendItem(item)
@@ -180,7 +180,7 @@ class ListView(FastObjectListView):
 
     def Impression(self, mode="preview"):
         if self.donnees == None or len(self.donnees) == 0 :
-            dlg = wx.MessageDialog(self, _(_(u"Il n'y a aucune donnée à imprimer !")), _(_(u"Erreur")), wx.OK | wx.ICON_EXCLAMATION)
+            dlg = wx.MessageDialog(self, _(_(u"Il n'y a aucune donnÃ©e Ã  imprimer !")), _(_(u"Erreur")), wx.OK | wx.ICON_EXCLAMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -207,7 +207,7 @@ class ListView(FastObjectListView):
     
     def Modifier(self, event=None):
         if len(self.Selection()) == 0 :
-            dlg = wx.MessageDialog(self, _(_(u"Vous n'avez sélectionné aucune ligne dans la liste")), _(_(u"Erreur de saisie")), wx.OK | wx.ICON_EXCLAMATION)
+            dlg = wx.MessageDialog(self, _(_(u"Vous n'avez sÃ©lectionnÃ© aucune ligne dans la liste")), _(_(u"Erreur de saisie")), wx.OK | wx.ICON_EXCLAMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -278,7 +278,7 @@ class MyFrame(wx.Frame):
                 # Ecriture du nouveau fichier
                 nouveauFichier.write(ligne)
                                     
-            # Clôture des fichiers
+            # ClÃ´ture des fichiers
             fichier.close()
             nouveauFichier.close()
             
@@ -314,7 +314,7 @@ def AjoutImport():
                 indexLigne += 1
                 
                 
-            # Clôture des fichiers
+            # ClÃ´ture des fichiers
             fichier.close()
             nouveauFichier.close()
             

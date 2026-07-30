@@ -10,7 +10,7 @@ ENTRYPOINT = ROOT / "teamworks" / "Teamworks.py"
 def test_presence_smoke_targets_real_main_window_contract() -> None:
     smoke_source = SMOKE.read_text(encoding="utf-8")
     runtime_source = RUNTIME.read_text(encoding="utf-8")
-    entrypoint_source = ENTRYPOINT.read_text(encoding="iso-8859-15")
+    entrypoint_source = ENTRYPOINT.read_text(encoding="utf-8")
 
     marker = '            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)'
     assert marker in entrypoint_source

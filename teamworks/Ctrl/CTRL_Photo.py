@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
-# Application :    Noethys, gestion multi-activités
+# Application :    Noethys, gestion multi-activitÃ©s
 # Site internet :  www.noethys.com
 # Auteur:           Ivan LUCAS
 # Copyright:       (c) 2010-11 Ivan LUCAS
@@ -28,7 +28,7 @@ def GetPhoto(IDindividu=None, nomFichier=None, taillePhoto=(128, 128), qualite=w
     bmp = None
     
     if IDindividu != None :
-        # Recherche d'une image dans la base de données
+        # Recherche d'une image dans la base de donnÃ©es
         db = GestionDB.DB(suffixe="PHOTOS")
         req = "SELECT IDphoto, photo FROM photos WHERE IDindividu=%d;" % IDindividu 
         db.ExecuterReq(req)
@@ -41,13 +41,13 @@ def GetPhoto(IDindividu=None, nomFichier=None, taillePhoto=(128, 128), qualite=w
             img = wx.Image(io, wx.BITMAP_TYPE_JPEG)
             bmp = img.ConvertToBitmap()
             
-            # Récupération du cadre de décoration
+            # RÃ©cupÃ©ration du cadre de dÃ©coration
             cadrePhoto, textePhoto = GetCadreEtTexte(IDindividu)
             if cadrePhoto != None and cadrePhoto != "" :
                 photo = bmp
                 # Application du masque
                 tailleInitiale = bmp.GetSize()
-                # Création du dc temporaire
+                # CrÃ©ation du dc temporaire
                 bmp = wx.Bitmap(tailleInitiale[0], tailleInitiale[1])
                 dc = wx.MemoryDC()
                 dc.SelectObject(bmp)
@@ -59,7 +59,7 @@ def GetPhoto(IDindividu=None, nomFichier=None, taillePhoto=(128, 128), qualite=w
                 l, h = photo.GetSize() 
                 dc.DrawBitmap(photo, 0, 0, l, h)
                 
-                # Dessin du cadre de décoration
+                # Dessin du cadre de dÃ©coration
                 fichierCadre = Chemins.GetStaticPath(u"Images/CadresPhotos/%s.png" % cadrePhoto)
                 if os.path.isfile(fichierCadre):
                     masque = wx.Bitmap(fichierCadre, wx.BITMAP_TYPE_PNG)
@@ -83,7 +83,7 @@ def GetPhoto(IDindividu=None, nomFichier=None, taillePhoto=(128, 128), qualite=w
         
 
 def GetCadreEtTexte(IDindividu=None):
-    """ Récupère le nom du cadre de déco + le texte de la photo """
+    """ RÃ©cupÃ¨re le nom du cadre de dÃ©co + le texte de la photo """
     if IDindividu == None :
         return "", ""
     DB = GestionDB.DB()
@@ -112,7 +112,7 @@ class CTRL_Photo(wx.StaticBitmap):
         self.taillePhoto = (128, 128)
         
         self.SetBackgroundColour(wx.Colour(0, 0, 0))
-        self.SetToolTip(wx.ToolTip(_(u"Cliquez sur le bouton droit de votre souris\npour accéder aux fonctions photo")))
+        self.SetToolTip(wx.ToolTip(_(u"Cliquez sur le bouton droit de votre souris\npour accÃ©der aux fonctions photo")))
         
         self.Bind(wx.EVT_LEFT_DOWN, self.MenuPhoto)
         self.Bind(wx.EVT_RIGHT_DOWN, self.MenuPhoto)
@@ -124,7 +124,7 @@ class CTRL_Photo(wx.StaticBitmap):
         self.nomFichier = nomFichier
         self.taillePhoto = taillePhoto
         
-        # Récupération de la photo
+        # RÃ©cupÃ©ration de la photo
         IDphoto, bmp = GetPhoto(IDindividu, nomFichier, taillePhoto, qualite)
         if bmp != None :
             self.SetBitmap(bmp)
@@ -136,7 +136,7 @@ class CTRL_Photo(wx.StaticBitmap):
     def MenuPhoto(self, event):
         """Ouverture du menu contextuel de la photo """
         
-        # Création du menu contextuel
+        # CrÃ©ation du menu contextuel
         menuPop = UTILS_Adaptations.Menu()
 
         # Item Ajouter
@@ -146,8 +146,8 @@ class CTRL_Photo(wx.StaticBitmap):
         menuPop.AppendItem(item)
         self.Bind(wx.EVT_MENU, self.Menu_Ajouter, id=10)
         
-        # Item Capturer à partir d'une caméra
-        item = wx.MenuItem(menuPop, 20, _(u"Capturer une photo à partir d'une webcam"))
+        # Item Capturer Ã  partir d'une camÃ©ra
+        item = wx.MenuItem(menuPop, 20, _(u"Capturer une photo Ã  partir d'une webcam"))
         bmp = wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Webcam.png"), wx.BITMAP_TYPE_PNG)
         item.SetBitmap(bmp)
         menuPop.AppendItem(item)
@@ -173,17 +173,17 @@ class CTRL_Photo(wx.StaticBitmap):
         
         menuPop.AppendSeparator()
         
-        # Choix d'un cadre de décoration
+        # Choix d'un cadre de dÃ©coration
         nomCadrePersonne, textePhoto = GetCadreEtTexte(self.IDindividu)
         sousmenu1 = UTILS_Adaptations.Menu()
         indexID = 500
         for nomCadre in FonctionsPerso.GetListeCadresPhotos() :
-            sousmenu1.Append(indexID, nomCadre, _(u"Choisir le cadre de décoration '") + nomCadre + _(u"' pour cette personne"), wx.ITEM_RADIO)
+            sousmenu1.Append(indexID, nomCadre, _(u"Choisir le cadre de dÃ©coration '") + nomCadre + _(u"' pour cette personne"), wx.ITEM_RADIO)
             if nomCadre == nomCadrePersonne :
                 sousmenu1.Check(indexID, True)
             self.Bind(wx.EVT_MENU, self.Menu_ChoixCadre, id=indexID)
             indexID += 1
-        menuPop.AppendSubMenu(sousmenu1, _(u"Choisir un cadre de décoration"))
+        menuPop.AppendSubMenu(sousmenu1, _(u"Choisir un cadre de dÃ©coration"))
 
         self.PopupMenu(menuPop)
         menuPop.Destroy()
@@ -192,16 +192,16 @@ class CTRL_Photo(wx.StaticBitmap):
         self.Ajoute_image()
 
     def Ajoute_image(self):
-        """ Permet la sélection et le retouchage d'une photo pour la personne """
-        # Sélection d'une image
+        """ Permet la sÃ©lection et le retouchage d'une photo pour la personne """
+        # SÃ©lection d'une image
         self.repCourant = os.getcwd()
 
         wildcard = "Toutes les images (*.bmp; *.gif; *.jpg; *.png)|*.bmp; *.gif; *.jpg; *.png|Image JPEG (*.jpg)|*.jpg|Image PNG (*.png)|*.png|Image GIF (*.gif)|*.gif|Tous les fichiers (*.*)|*.*"
                 
-        # Récupération du chemin des documents
+        # RÃ©cupÃ©ration du chemin des documents
         sp = wx.StandardPaths.Get()
         cheminDefaut = sp.GetDocumentsDir()
-        # Ouverture dela fenêtre de dialogue
+        # Ouverture dela fenÃªtre de dialogue
         dlg = wx.FileDialog(
             self, message=_(u"Choisissez une photo"),
             defaultDir=cheminDefaut, 
@@ -220,7 +220,7 @@ class CTRL_Photo(wx.StaticBitmap):
     
     def ChargeEditeurPhoto(self, nomFichierLong=""):
         """ Editeur de photo """
-        # Récupératon du cadre et du texte
+        # RÃ©cupÃ©raton du cadre et du texte
         cadrePhoto, textePhoto = GetCadreEtTexte(self.IDindividu)
         
         # Recadre la photo
@@ -235,7 +235,7 @@ class CTRL_Photo(wx.StaticBitmap):
             cadrePhoto = dlg.GetCadre()
             textePhoto = dlg.GetTexte() 
             dlg.Destroy()
-            # Recherche si une photo existe déjà pour cet individu
+            # Recherche si une photo existe dÃ©jÃ  pour cet individu
             DB = GestionDB.DB(suffixe="PHOTOS")
             req = "SELECT IDphoto, photo FROM photos WHERE IDindividu=%d;" % self.IDindividu 
             DB.ExecuterReq(req)
@@ -247,7 +247,7 @@ class CTRL_Photo(wx.StaticBitmap):
             DB.Close()
             # Applique la photo
             self.SetPhoto(self.IDindividu)
-            # Sauvegarde du cadre de décoration et du texte personnalisé
+            # Sauvegarde du cadre de dÃ©coration et du texte personnalisÃ©
             DB = GestionDB.DB()
             listeDonnees = [("cadre_photo", cadrePhoto), ("texte_photo", textePhoto)]
             DB.ReqMAJ("personnes", listeDonnees, "IDpersonne", self.IDindividu)
@@ -260,7 +260,7 @@ class CTRL_Photo(wx.StaticBitmap):
         self.Capture_image()
 
     def Capture_image(self):
-        """ Capture la photo à partir d'une caméra """
+        """ Capture la photo Ã  partir d'une camÃ©ra """
         from Dlg import DLG_Capture_video_opencv_2 as dlg
         image = None
         dlg = dlg.Dialog(self)
@@ -285,7 +285,7 @@ class CTRL_Photo(wx.StaticBitmap):
         DB = GestionDB.DB(suffixe="PHOTOS")
         DB.ReqDEL("photos", "IDindividu", self.IDindividu)
         DB.Close()
-        # Recherche la civilité de l'individu
+        # Recherche la civilitÃ© de l'individu
         DB = GestionDB.DB()
         req = "SELECT civilite FROM personnes WHERE IDpersonne=%d;" % self.IDindividu 
         DB.ExecuterReq(req)
@@ -299,12 +299,12 @@ class CTRL_Photo(wx.StaticBitmap):
         else :
             img = "Personne.png"
         nomFichier=u"Images/128x128/%s" % img
-        # Applique l'image par défaut
+        # Applique l'image par dÃ©faut
         self.SetPhoto(self.IDindividu, nomFichier)
         
     def Menu_Imprimer(self, event):
         """ Impression de la photo de la personne """
-        # Récupération de la liste des personnes
+        # RÃ©cupÃ©ration de la liste des personnes
         DB = GestionDB.DB()        
         req = """SELECT IDpersonne, nom, prenom FROM personnes WHERE IDpersonne=%d; """ % self.IDindividu
         DB.ExecuterReq(req)
@@ -326,7 +326,7 @@ class CTRL_Photo(wx.StaticBitmap):
         DB = GestionDB.DB()
         DB.ReqMAJ("personnes", [("cadre_photo", nomCadre),], "IDpersonne", self.IDindividu)
         DB.Close()
-        # MAJ de la photo affichée
+        # MAJ de la photo affichÃ©e
         self.SetPhoto(IDindividu=self.IDindividu, nomFichier=self.nomFichier, taillePhoto=self.taillePhoto)
 
     def wxtopil(self, image):

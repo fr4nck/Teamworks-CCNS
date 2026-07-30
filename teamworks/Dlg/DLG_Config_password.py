@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -23,7 +23,7 @@ class Panel(wx.Panel):
         wx.Panel.__init__(self, parent, ID, name="panel_config_password", style=wx.TAB_TRAVERSAL)
         
         self.barreTitre = FonctionsPerso.BarreTitre(self,  _(u"Protection par mot de passe"), u"")
-        texteIntro = _(u"Vous pouvez protÈger l'accËs ‡ ce fichier par un mot de passe. L'utilisateur de ce fichier devra\nainsi saisir le mot de passe ‡ son ouverture. Cochez la case et saisissez le mot de passe souhaitÈ\n‡ deux reprises. Pour dÈsactiver la protection, il vous suffit de dÈcocher cette case.")
+        texteIntro = _(u"Vous pouvez prot√©ger l'acc√®s √† ce fichier par un mot de passe. L'utilisateur de ce fichier devra\nainsi saisir le mot de passe √† son ouverture. Cochez la case et saisissez le mot de passe souhait√©\n√† deux reprises. Pour d√©sactiver la protection, il vous suffit de d√©cocher cette case.")
         self.label_introduction = FonctionsPerso.StaticWrapText(self, -1, texteIntro)
         
         self.staticbox = wx.StaticBox(self, -1, _(u"Protection"))
@@ -75,7 +75,7 @@ class Panel(wx.Panel):
         if len(donnees) == 0 : return
         password = donnees[0][0]
 
-        # CrÈation du dictionnaire de donnÈes
+        # Cr√©ation du dictionnaire de donn√©es
         if password == "" or password == None :
             self.checkBox.SetValue(False)
         else:
@@ -100,7 +100,7 @@ class Panel(wx.Panel):
                 self.checkBox.SetValue(True)
                 dlg.Destroy()
         
-        # On demande la crÈation d'un mot de passe
+        # On demande la cr√©ation d'un mot de passe
         else:
             dlg = DLG_Saisie_password.Dialog(self)
             dlg.ShowModal()

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -15,27 +15,27 @@ import FonctionsPerso
 
 
 class Dialog(wx.Dialog):
-    def __init__(self, parent, ID=-1, title=_(u"Saisie d'un type de pièce"), IDtype_piece=0):
+    def __init__(self, parent, ID=-1, title=_(u"Saisie d'un type de piÃ¨ce"), IDtype_piece=0):
         wx.Dialog.__init__(self, parent, -1, style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX)
         self.parent = parent
         self.IDtype_piece = IDtype_piece
         
         self.panel_base = wx.Panel(self, -1)
-        self.sizer_duree_staticbox = wx.StaticBox(self.panel_base, -1, _(u"2. Durée de validité"))
-        self.sizer_diplomes_staticbox = wx.StaticBox(self.panel_base, -1, _(u"3. Qualifications associés"))
-        self.sizer_nom_staticbox = wx.StaticBox(self.panel_base, -1, _(u"1. Nom du type de pièce (ex : Diplôme BAFA ou Certificat médical)"))
+        self.sizer_duree_staticbox = wx.StaticBox(self.panel_base, -1, _(u"2. DurÃ©e de validitÃ©"))
+        self.sizer_diplomes_staticbox = wx.StaticBox(self.panel_base, -1, _(u"3. Qualifications associÃ©s"))
+        self.sizer_nom_staticbox = wx.StaticBox(self.panel_base, -1, _(u"1. Nom du type de piÃ¨ce (ex : DiplÃ´me BAFA ou Certificat mÃ©dical)"))
         self.label_nom = wx.StaticText(self.panel_base, -1, "Nom :")
         self.text_nom = wx.TextCtrl(self.panel_base, -1, "")
-        self.radio_duree_1 = wx.RadioButton(self.panel_base, -1, _(u"Validité illimitée"), style=wx.RB_GROUP)
-        self.radio_duree_2 = wx.RadioButton(self.panel_base, -1, _(u"Validité limitée : "))
+        self.radio_duree_1 = wx.RadioButton(self.panel_base, -1, _(u"ValiditÃ© illimitÃ©e"), style=wx.RB_GROUP)
+        self.radio_duree_2 = wx.RadioButton(self.panel_base, -1, _(u"ValiditÃ© limitÃ©e : "))
         self.label_jours = wx.StaticText(self.panel_base, -1, "Jours :")
         self.spin_jours = wx.SpinCtrl(self.panel_base, -1, "", min=0, max=100)
         self.label_mois = wx.StaticText(self.panel_base, -1, "Mois :")
         self.spin_mois = wx.SpinCtrl(self.panel_base, -1, "", min=0, max=100)
-        self.label_annees = wx.StaticText(self.panel_base, -1, _(u"Années :"))
+        self.label_annees = wx.StaticText(self.panel_base, -1, _(u"AnnÃ©es :"))
         self.spin_annees = wx.SpinCtrl(self.panel_base, -1, "", min=0, max=100)
-        self.radio_diplomes_1 = wx.RadioButton(self.panel_base, -1, _(u"Pour tous les employés"), style=wx.RB_GROUP)
-        self.radio_diplomes_2 = wx.RadioButton(self.panel_base, -1, _(u"Pour les employés possédant la ou les qualifications suivantes :"))
+        self.radio_diplomes_1 = wx.RadioButton(self.panel_base, -1, _(u"Pour tous les employÃ©s"), style=wx.RB_GROUP)
+        self.radio_diplomes_2 = wx.RadioButton(self.panel_base, -1, _(u"Pour les employÃ©s possÃ©dant la ou les qualifications suivantes :"))
         
         #self.list_diplomes = wx.ListCtrl(self.panel_base, -1, style=wx.LC_REPORT|wx.SUNKEN_BORDER)
         self.ImportationDiplomes()
@@ -58,34 +58,34 @@ class Dialog(wx.Dialog):
         self.Bind(wx.EVT_BUTTON, self.OnBoutonOk, self.bouton_ok)
         self.Bind(wx.EVT_BUTTON, self.OnBoutonAnnuler, self.bouton_annuler)
 
-        # Règle les RadioBox à l'ouverture de la fenêtre
+        # RÃ¨gle les RadioBox Ã  l'ouverture de la fenÃªtre
         self.OnRadioDuree("")
         self.OnRadioDiplomes("")
 
-        # Si Modification -> importation des données
+        # Si Modification -> importation des donnÃ©es
         if IDtype_piece == 0 :
-            self.SetTitle(_(u"Saisie d'un nouveau type de pièce"))
+            self.SetTitle(_(u"Saisie d'un nouveau type de piÃ¨ce"))
         else:
-            self.SetTitle(_(u"Modification d'un type de pièce"))
+            self.SetTitle(_(u"Modification d'un type de piÃ¨ce"))
             self.Importation()
 
     def __set_properties(self):
-        self.SetTitle(_(u"Saisie d'un type de pièce"))
+        self.SetTitle(_(u"Saisie d'un type de piÃ¨ce"))
         if 'phoenix' in wx.PlatformInfo:
             _icon = wx.Icon()
         else :
             _icon = wx.EmptyIcon()
         _icon.CopyFromBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Logo.png"), wx.BITMAP_TYPE_ANY))
         self.SetIcon(_icon)
-        self.text_nom.SetToolTip(wx.ToolTip(_(u"Saisissez ici un nom de type de pièce. Par exemple : 'Diplôme B.A.F.A.'...")))
-        self.radio_duree_1.SetToolTip(wx.ToolTip(_(u"Sélectionnez 'Illimitée' si le type de pièce est valable à vie. Comme le diplôme du BAFA par exemple...")))
-        self.radio_duree_2.SetToolTip(wx.ToolTip(_(u"Sélectionnez 'Limitée' si vous pouvez définir une durée pour le type de pièce. \nCette durée peut être approximative. Par exemple, pour un certificat valable \n1 an et 6 mois en général, vous devez saisir '1' dans la case Années et '6' dans la case mois")))
+        self.text_nom.SetToolTip(wx.ToolTip(_(u"Saisissez ici un nom de type de piÃ¨ce. Par exemple : 'DiplÃ´me B.A.F.A.'...")))
+        self.radio_duree_1.SetToolTip(wx.ToolTip(_(u"SÃ©lectionnez 'IllimitÃ©e' si le type de piÃ¨ce est valable Ã  vie. Comme le diplÃ´me du BAFA par exemple...")))
+        self.radio_duree_2.SetToolTip(wx.ToolTip(_(u"SÃ©lectionnez 'LimitÃ©e' si vous pouvez dÃ©finir une durÃ©e pour le type de piÃ¨ce. \nCette durÃ©e peut Ãªtre approximative. Par exemple, pour un certificat valable \n1 an et 6 mois en gÃ©nÃ©ral, vous devez saisir '1' dans la case AnnÃ©es et '6' dans la case mois")))
         self.spin_jours.SetMinSize((60, -1))
         self.spin_mois.SetMinSize((60, -1))
         self.spin_annees.SetMinSize((60, -1))
-        self.radio_diplomes_1.SetToolTip(wx.ToolTip(_(u"Avec cette option, toutes les personnes employées devront fournir ce type de pièce quelque soit leur poste et leurs diplômes.")))
-        self.radio_diplomes_2.SetToolTip(wx.ToolTip(_(u"Sélectionnez les diplômes que vous souhaitez associer avec cette pièce")))
-        self.bouton_aide.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour obtenir de l'aide sur cette fenêtre")))
+        self.radio_diplomes_1.SetToolTip(wx.ToolTip(_(u"Avec cette option, toutes les personnes employÃ©es devront fournir ce type de piÃ¨ce quelque soit leur poste et leurs diplÃ´mes.")))
+        self.radio_diplomes_2.SetToolTip(wx.ToolTip(_(u"SÃ©lectionnez les diplÃ´mes que vous souhaitez associer avec cette piÃ¨ce")))
+        self.bouton_aide.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour obtenir de l'aide sur cette fenÃªtre")))
         self.bouton_aide.SetSize(self.bouton_aide.GetBestSize())
         self.bouton_ok.SetSize(self.bouton_ok.GetBestSize())
         self.bouton_annuler.SetSize(self.bouton_annuler.GetBestSize())
@@ -177,7 +177,7 @@ class Dialog(wx.Dialog):
             key = typeDiplome[0]
             nom = typeDiplome[1]
 
-            # Création d'une liste pour remplir le listBox
+            # CrÃ©ation d'une liste pour remplir le listBox
             self.ListeDiplomesData.append((key, nom))
             self.ListeDiplomesPourLBox.append(nom)
 
@@ -190,10 +190,10 @@ class Dialog(wx.Dialog):
 
     def OnBoutonOk(self, event):
 
-        # Vérification des données saisies
+        # VÃ©rification des donnÃ©es saisies
         textNom = self.text_nom.GetValue()
         if textNom == "" :
-            dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement donner un nom à ce nouveau type de pièce."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement donner un nom Ã  ce nouveau type de piÃ¨ce."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             self.text_nom.SetFocus()
@@ -204,7 +204,7 @@ class Dialog(wx.Dialog):
         annees = int(self.spin_annees.GetValue())
 
         if jours == 0 and mois == 0 and annees == 0 and self.radio_duree_2.GetValue() == True:
-            dlg = wx.MessageDialog(self, _(u"Vous avez sélectionné une durée de validité limitée. \nVous devez donc saisir un nombre de jours et/ou de mois et/ou d'années."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous avez sÃ©lectionnÃ© une durÃ©e de validitÃ© limitÃ©e. \nVous devez donc saisir un nombre de jours et/ou de mois et/ou d'annÃ©es."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             self.spin_jours.SetFocus()
@@ -217,19 +217,19 @@ class Dialog(wx.Dialog):
                 if self.list_diplomes.IsChecked(index):
                     NbreCoches += 1
             if NbreCoches == 0:
-                dlg = wx.MessageDialog(self, _(u"Vous avez sélectionné d'associer des diplômes. Vous devez donc sélectionner un ou plusieurs diplômes dans la liste proposée."), "Information", wx.OK | wx.ICON_INFORMATION)
+                dlg = wx.MessageDialog(self, _(u"Vous avez sÃ©lectionnÃ© d'associer des diplÃ´mes. Vous devez donc sÃ©lectionner un ou plusieurs diplÃ´mes dans la liste proposÃ©e."), "Information", wx.OK | wx.ICON_INFORMATION)
                 dlg.ShowModal()
                 dlg.Destroy()
                 self.spin_jours.SetFocus()
                 return
             
-        # Procédure d'enregistrement des données
+        # ProcÃ©dure d'enregistrement des donnÃ©es
         self.Sauvegarde()
 
-        # MàJ du listCtrl du panel de configuration
+        # MÃ J du listCtrl du panel de configuration
         self.parent.listCtrl_TypesPieces.MAJListeCtrl()
 
-        # Fermeture de la fenêtre
+        # Fermeture de la fenÃªtre
         self.EndModal(wx.ID_OK)
         
         
@@ -237,12 +237,12 @@ class Dialog(wx.Dialog):
         # ------------------------- SAUVEGARDE ET IMPORTATION ----------------------------------
 
     def Sauvegarde(self):
-        """ Sauvegarde des données dans la base de données """
+        """ Sauvegarde des donnÃ©es dans la base de donnÃ©es """
         
         varIDtype_piece = self.IDtype_piece
         varNom_Piece = self.text_nom.GetValue()
 
-        # Durée validité
+        # DurÃ©e validitÃ©
         if self.radio_duree_1.GetValue() == True:
             VarDureeValidite = "j0-m0-a0"
         else:
@@ -253,34 +253,34 @@ class Dialog(wx.Dialog):
         if self.radio_diplomes_1.GetValue() == True:
             VarIDtypesDiplomes.append(0)
         else:
-            # Recherche des diplomes cochés
+            # Recherche des diplomes cochÃ©s
             NbreItems = len(self.ListeDiplomesData)
             for index in range(0, NbreItems):
                 if self.list_diplomes.IsChecked(index):
                     VarIDtypesDiplomes.append(self.ListeDiplomesData[index][0])
 
 
-        # Enregistrement des données de la table TYPES_PIECES ----------------------------
+        # Enregistrement des donnÃ©es de la table TYPES_PIECES ----------------------------
         listeDonnees = [    ("nom_piece",       varNom_Piece),
                             ("duree_validite",  VarDureeValidite),
                         ]
         
-        # Initialisation de la connexion avec la Base de données
+        # Initialisation de la connexion avec la Base de donnÃ©es
         DB = GestionDB.DB()
 
         if varIDtype_piece == 0:
-            # Enregistrement d'une nouvelle coordonnée
+            # Enregistrement d'une nouvelle coordonnÃ©e
             newID = DB.ReqInsert("types_pieces", listeDonnees)
             varIDtype_piece = newID
         else:
-            # Modification de la coordonnée
+            # Modification de la coordonnÃ©e
             DB.ReqMAJ("types_pieces", listeDonnees, "IDtype_piece", varIDtype_piece)
 
 
-        # Enregistrement des données de la table DIPLOMES_PIECES --------------------------
+        # Enregistrement des donnÃ©es de la table DIPLOMES_PIECES --------------------------
         for IDtype_diplome in VarIDtypesDiplomes:
 
-            # Recherche d'abord si cette association existe déjà dans la base de données
+            # Recherche d'abord si cette association existe dÃ©jÃ  dans la base de donnÃ©es
             req = "SELECT * FROM diplomes_pieces WHERE IDtype_diplome=%d AND IDtype_piece=%d" % (IDtype_diplome, varIDtype_piece)
             DB.ExecuterReq(req)
             resultat = DB.ResultatReq()
@@ -295,7 +295,7 @@ class Dialog(wx.Dialog):
                 DB.ReqInsert("diplomes_pieces", listeDonnees)
 
 
-        # Suppression des associations déjà existantes de la table DIPLOMES_PIECES qui ont été décochées
+        # Suppression des associations dÃ©jÃ  existantes de la table DIPLOMES_PIECES qui ont Ã©tÃ© dÃ©cochÃ©es
         req = "SELECT * FROM diplomes_pieces WHERE IDtype_piece=%d" % varIDtype_piece
         DB.ExecuterReq(req)
         resultat = DB.ResultatReq()
@@ -313,7 +313,7 @@ class Dialog(wx.Dialog):
     def Importation(self,):
         """ Importation des donnees de la base """
 
-        # Initialisation de la connexion avec la Base de données
+        # Initialisation de la connexion avec la Base de donnÃ©es
         DB = GestionDB.DB()
         req = "SELECT * FROM types_pieces WHERE IDtype_piece = %d" % self.IDtype_piece
         DB.ExecuterReq(req)
@@ -324,7 +324,7 @@ class Dialog(wx.Dialog):
             DB.Close()
             return
         
-        # Placement des données dans les contrôles
+        # Placement des donnÃ©es dans les contrÃ´les
         varNomPiece = donnees[1]
         self.text_nom.SetValue(varNomPiece)
         
@@ -345,10 +345,10 @@ class Dialog(wx.Dialog):
             self.spin_mois.SetValue(mois)
             self.spin_annees.SetValue(annees)
 
-        # Réglages des radioBox pour la durée de validité
+        # RÃ©glages des radioBox pour la durÃ©e de validitÃ©
         self.OnRadioDuree("")
 
-        # Recherche des associations dans la base de données
+        # Recherche des associations dans la base de donnÃ©es
         listeDiplomes = []
         req = "SELECT * FROM diplomes_pieces WHERE IDtype_piece = %d" % self.IDtype_piece
         DB.ExecuterReq(req)
@@ -374,7 +374,7 @@ class Dialog(wx.Dialog):
                     self.list_diplomes.Check(index)
                 index += 1
 
-        # Réglages des radioBox pour les diplomes associés
+        # RÃ©glages des radioBox pour les diplomes associÃ©s
         self.OnRadioDiplomes("")
 
 

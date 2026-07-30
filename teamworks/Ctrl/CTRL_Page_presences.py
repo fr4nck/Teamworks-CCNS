@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -29,7 +29,7 @@ class Panel(wx.Panel):
         self.IDpersonne = IDpersonne
 
         # Widgets
-        self.staticBox_staticbox = wx.StaticBox(self, -1, _(u"PrÈsences"))
+        self.staticBox_staticbox = wx.StaticBox(self, -1, _(u"Pr√©sences"))
         self.listCtrl = ListCtrl(self, IDpersonne=self.IDpersonne)
         self.listCtrl.SetMinSize((20, 20)) 
         
@@ -49,21 +49,21 @@ class Panel(wx.Panel):
 
     def __set_properties(self):
 
-        self.bouton_ajouter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour saisir une t‚che")))
+        self.bouton_ajouter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour saisir une t√¢che")))
         self.bouton_ajouter.SetSize(self.bouton_ajouter.GetBestSize())
-        self.bouton_modifier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier la t‚che sÈlectionnÈe")))
+        self.bouton_modifier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier la t√¢che s√©lectionn√©e")))
         self.bouton_modifier.SetSize(self.bouton_modifier.GetBestSize())
-        self.bouton_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer la t‚che sÈlectionnÈe")))
+        self.bouton_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer la t√¢che s√©lectionn√©e")))
         self.bouton_supprimer.SetSize(self.bouton_supprimer.GetBestSize())
         self.bouton_imprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour imprimer une feuille d'heures")))
         self.bouton_imprimer.SetSize(self.bouton_imprimer.GetBestSize())
-        self.bouton_stats.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour afficher les statistiques de prÈsences")))
+        self.bouton_stats.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour afficher les statistiques de pr√©sences")))
         self.bouton_stats.SetSize(self.bouton_stats.GetBestSize())
-        self.bouton_modele.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour appliquer un modËle de prÈsences")))
+        self.bouton_modele.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour appliquer un mod√®le de pr√©sences")))
         self.bouton_modele.SetSize(self.bouton_modele.GetBestSize())
-        self.bouton_recherche.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour faire apparaÓtre ou disparaÓtre la barre de recherche")))
+        self.bouton_recherche.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour faire appara√Ætre ou dispara√Ætre la barre de recherche")))
         self.bouton_recherche.SetSize(self.bouton_recherche.GetBestSize())
-        self.barreRecherche.SetToolTip(wx.ToolTip(_(u"Saisissez ici '2008', 'Toussaint 2008', 'Samedi 15 dÈcembre 2008', etc...")))
+        self.barreRecherche.SetToolTip(wx.ToolTip(_(u"Saisissez ici '2008', 'Toussaint 2008', 'Samedi 15 d√©cembre 2008', etc...")))
         
         # Binds
         self.Bind(wx.EVT_BUTTON, self.OnBoutonAjout, self.bouton_ajouter)
@@ -126,15 +126,15 @@ class Panel(wx.Panel):
         event.Skip()
 
     def Modifier(self):
-        """ Modification de d'une prÈsence """
+        """ Modification de d'une pr√©sence """
         index = self.listCtrl.GetFirstSelected()
         if index == -1:
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÈlectionner une t‚che ‡ modifier dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord s√©lectionner une t√¢che √† modifier dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
         IDpresence = int(self.listCtrl.getColumnText(index, 0))
-        # Ouverture de la frame saisie de prÈsences
+        # Ouverture de la frame saisie de pr√©sences
         from Dlg import DLG_Saisie_presence
         dlg = DLG_Saisie_presence.Dialog(self, IDmodif=IDpresence)
         dlg.panel.sizer_1.Hide(False)
@@ -152,12 +152,12 @@ class Panel(wx.Panel):
         pass
         
     def Supprimer(self):
-        """ Suppression d'une t‚che """
+        """ Suppression d'une t√¢che """
         index = self.listCtrl.GetFirstSelected()
 
-        # VÈrifie qu'un item a bien ÈtÈ sÈlectionnÈ
+        # V√©rifie qu'un item a bien √©t√© s√©lectionn√©
         if index == -1:
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÈlectionner une t‚che ‡ supprimer dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord s√©lectionner une t√¢che √† supprimer dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -174,7 +174,7 @@ class Panel(wx.Panel):
                         date = self.listCtrl.GetItem(index-4, 3).GetText()
         horaires = self.listCtrl.GetItem(index, 5).GetText()
         textePresence = date + " : " + horaires
-        txtMessage = six.text_type((_(u"Voulez-vous vraiment supprimer cette t‚che ? \n\n> ") + textePresence))
+        txtMessage = six.text_type((_(u"Voulez-vous vraiment supprimer cette t√¢che ? \n\n> ") + textePresence))
         dlgConfirm = wx.MessageDialog(self, txtMessage, _(u"Confirmation de suppression"), wx.YES_NO|wx.NO_DEFAULT|wx.ICON_QUESTION)
         reponse = dlgConfirm.ShowModal()
         dlgConfirm.Destroy()
@@ -188,7 +188,7 @@ class Panel(wx.Panel):
         DB.ReqDEL("presences", "IDpresence", IDpresence)
         DB.Close()
 
-        # M‡J du listCtrl de la fiche individuelle
+        # M√†J du listCtrl de la fiche individuelle
         if index > 0 : self.listCtrl.indexEnCours = index - 1
         else: self.listCtrl.indexEnCours = 0
         self.MAJpanel()
@@ -199,7 +199,7 @@ class Panel(wx.Panel):
         dlg.ShowModal()
     
     def OnBoutonStats(self, event):
-        """ Afficher les stats de prÈsences de la personne """
+        """ Afficher les stats de pr√©sences de la personne """
         topWindow = wx.GetApp().GetTopWindow() 
         try : topWindow.SetStatusText(_(u"Chargement du module des statistiques en cours. Veuillez patientez..."))
         except : pass
@@ -218,7 +218,7 @@ class Panel(wx.Panel):
         event.Skip()
     
     def AppliquerModele(self):
-        """ Appliquer un modËle de prÈsence """
+        """ Appliquer un mod√®le de pr√©sence """
         dlg = Dialog_application_modele(self, IDpersonne=self.IDpersonne)
         dlg.ShowModal()
         dlg.Destroy()
@@ -229,7 +229,7 @@ class Panel(wx.Panel):
         event.Skip()
     
     def Rechercher(self):
-        """ Rechercher une date, une pÈriode, un mois ou une annÈe """
+        """ Rechercher une date, une p√©riode, un mois ou une ann√©e """
         if self.barreRecherche.IsShown() :
             self.barreRecherche.Show(False)
             self.bouton_recherche.SetBitmapLabel(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Loupe_plus.png"), wx.BITMAP_TYPE_PNG))
@@ -254,7 +254,7 @@ class BarreRecherche(wx.SearchCtrl):
         wx.SearchCtrl.__init__(self, parent, size=(-1,-1), style=wx.TE_PROCESS_ENTER)
         self.parent = parent
 
-        self.SetDescriptiveText(_(u"Rechercher une date, une pÈriode de vacances, un mois ou une annÈe..."))
+        self.SetDescriptiveText(_(u"Rechercher une date, une p√©riode de vacances, un mois ou une ann√©e..."))
         self.ShowSearchButton(True)
         self.ShowCancelButton(True)
 
@@ -282,7 +282,7 @@ class BarreRecherche(wx.SearchCtrl):
 # ------------------------------------        SAISIE PRESENCE             --------------------------------------------------------------------------
 
 class Dialog_saisie(wx.Dialog):
-    def __init__(self, parent, title=_(u"Saisie de prÈsences"), IDpersonne=0):
+    def __init__(self, parent, title=_(u"Saisie de pr√©sences"), IDpersonne=0):
         wx.Dialog.__init__(self, parent, -1, style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX)
         self.parent = parent
         self.IDpersonne = IDpersonne
@@ -294,19 +294,19 @@ class Dialog_saisie(wx.Dialog):
         self.staticbox_calendrier = wx.StaticBox(self.panel_calendrier, -1, _(u"Dates"))
         sizer_calendrier = wx.StaticBoxSizer(self.staticbox_calendrier, wx.VERTICAL)
         sizer_calendrier.Add(self.calendrier, 1, wx.ALL|wx.EXPAND, 5)
-        self.label_dates = wx.StaticText(self.panel_calendrier, -1, _(u"> Aucune date sÈlectionnÈe"))
+        self.label_dates = wx.StaticText(self.panel_calendrier, -1, _(u"> Aucune date s√©lectionn√©e"))
         self.label_dates.SetForegroundColour((150, 150, 150))
         sizer_calendrier.Add(self.label_dates, 0, wx.ALL, 5)
         self.panel_calendrier.SetSizer(sizer_calendrier)
         self.calendrier.calendrier.SelectJours( [] )
 
-        # Saisie PrÈsences
+        # Saisie Pr√©sences
         self.panel_saisiePresences = DLG_Saisie_presence.Panel(self.panel_base)
         self.panel_saisiePresences.sizer_1.Hide(False)
         self.panel_saisiePresences.sizer_donnees_staticbox.Hide()
         self.panel_saisiePresences.grid_sizer_base.Layout()
         
-        # Layout gÈnÈral
+        # Layout g√©n√©ral
         sizer_base = wx.FlexGridSizer(rows=1, cols=2, vgap=0, hgap=0)
         sizer_base.Add(self.panel_calendrier, 1, wx.EXPAND|wx.TOP|wx.BOTTOM|wx.LEFT, 10)
         sizer_base.Add(self.panel_saisiePresences, 1, wx.EXPAND, 0)
@@ -330,16 +330,16 @@ class Dialog_saisie(wx.Dialog):
         self.EndModal(wx.ID_OK)
 
     def SendDates(self, listeDates=[]):
-        # Envoie des dates au panel de saisie des prÈsences
+        # Envoie des dates au panel de saisie des pr√©sences
         listeDonnees = []
         for date in listeDates :
             listeDonnees.append( (self.IDpersonne, date) )
         self.panel_saisiePresences.CreationDictDonnees(listeDonnees)
-        # Met ‡ jour le label_dates
+        # Met √† jour le label_dates
         nbreDates = len(listeDates)
-        if nbreDates == 0 : texte = _(u"> Aucune date sÈlectionnÈe")
-        if nbreDates == 1 : texte = _(u"> 1 date sÈlectionnÈe")
-        if nbreDates > 1 : texte = u"> " + str(nbreDates) + _(u" dates sÈlectionnÈes")
+        if nbreDates == 0 : texte = _(u"> Aucune date s√©lectionn√©e")
+        if nbreDates == 1 : texte = _(u"> 1 date s√©lectionn√©e")
+        if nbreDates > 1 : texte = u"> " + str(nbreDates) + _(u" dates s√©lectionn√©es")
         self.label_dates.SetLabel(texte)
 
 
@@ -354,7 +354,7 @@ class Dialog_application_modele(wx.Dialog):
         self.parent = parent
         self.IDpersonne = IDpersonne
         self.panel_base = wx.Panel(self, -1, name="panel_applicModele_FicheInd")
-        self.SetTitle((u"Application d'un modËle"))
+        self.SetTitle((u"Application d'un mod√®le"))
 
         self.selectionLignes = []
         self.selectionPersonnes = [IDpersonne,]
@@ -363,23 +363,23 @@ class Dialog_application_modele(wx.Dialog):
         # Panel Calendrier
         self.panel_calendrier = wx.Panel(self.panel_base, -1)
         self.calendrier = CTRL_Calendrier_tw.Panel(self.panel_calendrier, afficheBoutonAnnuel=True, callbacksenddates=self.SendDates)
-        self.staticbox_calendrier = wx.StaticBox(self.panel_calendrier, -1, _(u"Veuillez sÈlectionner une ou plusieurs dates"))
+        self.staticbox_calendrier = wx.StaticBox(self.panel_calendrier, -1, _(u"Veuillez s√©lectionner une ou plusieurs dates"))
         sizer_calendrier = wx.StaticBoxSizer(self.staticbox_calendrier, wx.VERTICAL)
         sizer_calendrier.Add(self.calendrier, 1, wx.ALL|wx.EXPAND, 5)
-        self.label_dates = wx.StaticText(self.panel_calendrier, -1, _(u"> Aucune date sÈlectionnÈe"))
+        self.label_dates = wx.StaticText(self.panel_calendrier, -1, _(u"> Aucune date s√©lectionn√©e"))
         self.label_dates.SetForegroundColour((150, 150, 150))
         sizer_calendrier.Add(self.label_dates, 0, wx.ALL, 5)
         self.panel_calendrier.SetSizer(sizer_calendrier)
         self.calendrier.calendrier.SelectJours( [] )
 
-        # Saisie PrÈsences
+        # Saisie Pr√©sences
         self.panel_applicModele = DLG_Application_modele.Panel(self.panel_base, selectionPersonnes=self.selectionPersonnes)
         self.panel_applicModele.list_ctrl_personnes.Show(False)
         self.panel_applicModele.label_personnes.Show(False)
         self.panel_applicModele.grid_sizer_manuel.Layout()
-        self.panel_applicModele.sizer_parametres_staticbox.SetLabel(_(u"Choix de la pÈriode"))
+        self.panel_applicModele.sizer_parametres_staticbox.SetLabel(_(u"Choix de la p√©riode"))
         
-        # Layout gÈnÈral
+        # Layout g√©n√©ral
         sizer_base = wx.FlexGridSizer(rows=1, cols=2, vgap=0, hgap=0)
         sizer_base.Add(self.panel_calendrier, 1, wx.EXPAND|wx.TOP|wx.BOTTOM|wx.LEFT, 10)
         sizer_base.Add(self.panel_applicModele, 1, wx.EXPAND, 0)
@@ -395,7 +395,7 @@ class Dialog_application_modele(wx.Dialog):
         self.EndModal(wx.ID_CANCEL)
 
     def SendDates(self, listeDates=[]):
-        # Envoie des dates au panel d'application des modËles
+        # Envoie des dates au panel d'application des mod√®les
         selectionLignes = []
         for date in listeDates :
             selectionLignes.append( (self.IDpersonne, date) )
@@ -407,20 +407,20 @@ class Dialog_application_modele(wx.Dialog):
         elif len(selectionLignes) > 1 :
             self.selectionDates = (listeDates[0], listeDates[-1])
         
-        # Envoi des donnÈes
+        # Envoi des donn√©es
         self.panel_applicModele.selectionLignes = self.selectionLignes
         self.panel_applicModele.selectionPersonnes = self.selectionPersonnes
         self.panel_applicModele.selectionDates = self.selectionDates
 
-        # RÈglages du panel application des Modeles
+        # R√©glages du panel application des Modeles
         self.panel_applicModele.SetLabelRadio1()
 
             
-        # Met ‡ jour le label_dates
+        # Met √† jour le label_dates
         nbreDates = len(listeDates)
-        if nbreDates == 0 : texte = _(u"> Aucune date sÈlectionnÈe")
-        if nbreDates == 1 : texte = _(u"> 1 date sÈlectionnÈe")
-        if nbreDates > 1 : texte = u"> " + str(nbreDates) + _(u" dates sÈlectionnÈes")
+        if nbreDates == 0 : texte = _(u"> Aucune date s√©lectionn√©e")
+        if nbreDates == 1 : texte = _(u"> 1 date s√©lectionn√©e")
+        if nbreDates > 1 : texte = u"> " + str(nbreDates) + _(u" dates s√©lectionn√©es")
         self.label_dates.SetLabel(texte)
 
 
@@ -448,7 +448,7 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
         # Images AZ et ZA
         self.imgTriAz= self.il.Add(wx.Bitmap(Chemins.GetStaticPath("Images/22x22/Tri_az.png"), wx.BITMAP_TYPE_PNG))
         self.imgTriZa= self.il.Add(wx.Bitmap(Chemins.GetStaticPath("Images/22x22/Tri_za.png"), wx.BITMAP_TYPE_PNG))
-        # Images des couleurs de CatÈgories
+        # Images des couleurs de Cat√©gories
         for key, valeurs in self.dictCategories.items() :
             r, v, b = self.FormateCouleur(valeurs[1])
             setattr(self, "img%s" % key, self.il.Add(self.CreationImage((22, 22), r, v, b, key)))
@@ -478,7 +478,7 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
         return (r, v, b)
     
     def CreationImage(self, tailleImages, r, v, b, IDcategorie):
-        """ CrÈation des images pour le TreeCtrl """
+        """ Cr√©ation des images pour le TreeCtrl """
         colFond = (255, 255, 255)
         if 'phoenix' in wx.PlatformInfo:
             bmp = wx.Image(tailleImages[0], tailleImages[1], True)
@@ -496,10 +496,10 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
 
     def Remplissage(self):
         
-        # RÈcupÈration des donnÈes dans la base de donnÈes
+        # R√©cup√©ration des donn√©es dans la base de donn√©es
         self.Importation()
         
-        # CrÈation des colonnes
+        # Cr√©ation des colonnes
         self.nbreColonnes = 7
         self.InsertColumn(0, u"")
         self.SetColumnWidth(0, 22)
@@ -513,9 +513,9 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
         self.SetColumnWidth(4, 65)
         self.InsertColumn(5, _(u"Horaires"))
         self.SetColumnWidth(5, 85)
-        self.InsertColumn(6, _(u"DurÈe"))
+        self.InsertColumn(6, _(u"Dur√©e"))
         self.SetColumnWidth(6, 45)
-        self.InsertColumn(7, _(u"IntitulÈ"))
+        self.InsertColumn(7, _(u"Intitul√©"))
         self.SetColumnWidth(7, 300)
 
         #These two should probably be passed to init more cleanly
@@ -557,19 +557,19 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
 
     def Importation_categories(self):
         DB = GestionDB.DB() 
-        # RÈcupÈration des catÈgorie de prÈsences
+        # R√©cup√©ration des cat√©gorie de pr√©sences
         req = """SELECT IDcategorie, nom_categorie, couleur FROM cat_presences;"""
         DB.ExecuterReq(req)
         listeCategories = DB.ResultatReq()
         DB.Close()
-        # Transformation de la liste des catÈgories en dictionnaire
+        # Transformation de la liste des cat√©gories en dictionnaire
         self.dictCategories = {}
         for IDcategorie, nom_categorie, couleur in listeCategories :
             self.dictCategories[IDcategorie] = (nom_categorie, couleur)
 
     def Importation_vacances(self):
         DB = GestionDB.DB() 
-        # RÈcupÈration des pÈriodes de vacances
+        # R√©cup√©ration des p√©riodes de vacances
         req = """SELECT IDperiode, nom, annee, date_debut, date_fin FROM periodes_vacances;"""
         DB.ExecuterReq(req)
         self.listeVacances = DB.ResultatReq()
@@ -577,20 +577,20 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
             
     def Importation(self):
         DB = GestionDB.DB() 
-        # RÈcupÈration des prÈsences
+        # R√©cup√©ration des pr√©sences
         req = """SELECT IDpresence, date, heure_debut, heure_fin, IDcategorie, intitule
         FROM presences WHERE IDpersonne=%d ORDER BY date, heure_debut ; """ % self.IDpersonne
         DB.ExecuterReq(req)
         listePresences = DB.ResultatReq()
         DB.Close()
-        # Formatage de la liste des prÈsences
+        # Formatage de la liste des pr√©sences
         self.donnees = {}
         attribut = 0
         datePrecedente = None
         index = 1
         
         for IDpresence, date, heure_debut, heure_fin, IDcategorie, intitule in listePresences :
-            # DonnÈes
+            # Donn√©es
             horaires = self.FormateHeure(heure_debut) + "-" + self.FormateHeure(heure_fin)
             duree = self.CalculeDuree(heure_debut, heure_fin)
             texte = self.dictCategories[IDcategorie][0]
@@ -602,7 +602,7 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
             else : 
                 dateComplete = ""
             
-            # Date en pÈriode de vacances ?
+            # Date en p√©riode de vacances ?
             vacances = ""
             for IDperiode, nom, annee, date_debut, date_fin in self.listeVacances :
                 if date_debut <= date <= date_fin :
@@ -615,7 +615,7 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
                 else : 
                     attribut = 0
                     
-            # Si une recherche est en cours : filtrage des donnÈes...
+            # Si une recherche est en cours : filtrage des donn√©es...
             if self.txtSearch != "" :
                 if FonctionsPerso.EnleveAccents(self.txtSearch).upper() in FonctionsPerso.EnleveAccents(dateFrancaise).upper() : valide = True
                 elif FonctionsPerso.EnleveAccents(self.txtSearch).upper() in FonctionsPerso.EnleveAccents(dateComplete).upper() : valide = True
@@ -634,13 +634,13 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
         
         # Label du staticBox
         if self.txtSearch == "" : 
-            if self.nbreLignes == 0 : texteLabel = _(u"Aucune prÈsence")
-            if self.nbreLignes == 1 : texteLabel = _(u"1 prÈsence")
-            if self.nbreLignes > 1 : texteLabel = str(self.nbreLignes) + _(u" prÈsences")
+            if self.nbreLignes == 0 : texteLabel = _(u"Aucune pr√©sence")
+            if self.nbreLignes == 1 : texteLabel = _(u"1 pr√©sence")
+            if self.nbreLignes > 1 : texteLabel = str(self.nbreLignes) + _(u" pr√©sences")
         else:
-            if self.nbreLignes == 0 : texteLabel = _(u"Aucune prÈsence trouvÈe avec le filtre '") + self.txtSearch + "'"
-            if self.nbreLignes == 1 : texteLabel = _(u"Un prÈsence trouvÈe avec le filtre '") + self.txtSearch + "'"
-            if self.nbreLignes > 1 : texteLabel = str(self.nbreLignes) + _(u" prÈsences trouvÈes avec le filtre '") + self.txtSearch + "'"
+            if self.nbreLignes == 0 : texteLabel = _(u"Aucune pr√©sence trouv√©e avec le filtre '") + self.txtSearch + "'"
+            if self.nbreLignes == 1 : texteLabel = _(u"Un pr√©sence trouv√©e avec le filtre '") + self.txtSearch + "'"
+            if self.nbreLignes > 1 : texteLabel = str(self.nbreLignes) + _(u" pr√©sences trouv√©es avec le filtre '") + self.txtSearch + "'"
         self.parent.staticBox_staticbox.SetLabel(texteLabel)
         
         
@@ -652,13 +652,13 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
         return texte
         
     def FormateDate(self, dateCourte):
-        """ Transforme une date de type str '2008/12/04' en date complËte de type Lundi 4 dÈcembre 2008 """
+        """ Transforme une date de type str '2008/12/04' en date compl√®te de type Lundi 4 d√©cembre 2008 """
         annee = dateCourte[:4]
         mois = dateCourte[5:7]
         jour = dateCourte[8:10]
         date = datetime.date(int(annee), int(mois), int(jour))
         listeJours = ("Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche")
-        listeMois = ("janvier", _(u"fÈvrier"), "mars", "avril", "mai", "juin", "juillet", _(u"ao˚t"), "septembre", "octobre", "novembre", _(u"dÈcembre"))
+        listeMois = ("janvier", _(u"f√©vrier"), "mars", "avril", "mai", "juin", "juillet", _(u"ao√ªt"), "septembre", "octobre", "novembre", _(u"d√©cembre"))
         dateStr = listeJours[date.weekday()] + " " + str(date.day) + " " + listeMois[date.month-1] + " " + str(date.year)
         return dateStr
 
@@ -707,16 +707,16 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
         if col == 3 :
             dateStr = self.FormateDate(valeur)
             if index > 1 :
-                # Texte de la ligne prÈcÈdente
+                # Texte de la ligne pr√©c√©dente
                 datePrecedente = six.text_type(self.itemDataMap[index-1][col])
                 if valeur == datePrecedente : return ""
             if type(dateStr) != six.text_type :
-                dateStr = dateStr.decode("iso-8859-15")
+                dateStr = dateStr.decode("utf-8")
             return dateStr
         return valeur
 
     def OnGetItemImage(self, item):
-        """ Affichage des images en dÈbut de ligne """
+        """ Affichage des images en d√©but de ligne """
         index=self.itemIndexMap[item]
         IDcategorie = self.itemDataMap[index][2]
         img = eval("self.img" + str(IDcategorie))
@@ -762,7 +762,7 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
         index = self.GetFirstSelected()
         key = int(self.getColumnText(index, 0))
         
-        # CrÈation du menu contextuel
+        # Cr√©ation du menu contextuel
         menuPop = UTILS_Adaptations.Menu()
 
         # Item Modifier
@@ -809,7 +809,7 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
         
         
 class Dialog(wx.Dialog):
-    def __init__(self, parent, title=_(u"Liste de prÈsences"), IDpersonne=1):
+    def __init__(self, parent, title=_(u"Liste de pr√©sences"), IDpersonne=1):
         wx.Dialog.__init__(self, parent, -1, style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX)
         self.parent = parent
         self.IDpersonne = IDpersonne
@@ -826,16 +826,16 @@ class Dialog(wx.Dialog):
         self.Bind(wx.EVT_BUTTON, self.Onbouton_annuler, self.bouton_annuler)
 
     def __set_properties(self):
-        # RÈcupÈration de l'identitÈ de la personne
+        # R√©cup√©ration de l'identit√© de la personne
         try :
             DB = GestionDB.DB() 
             req = """SELECT nom, prenom FROM personnes WHERE IDpersonne=%d; """ % self.IDpersonne
             DB.ExecuterReq(req)
             identite = DB.ResultatReq()[0]
             DB.Close()
-            self.SetTitle(_(u"Liste des prÈsences de ") + identite[1] + " " + identite[0])
+            self.SetTitle(_(u"Liste des pr√©sences de ") + identite[1] + " " + identite[0])
         except :
-            self.SetTitle(_(u"Liste des prÈsences"))
+            self.SetTitle(_(u"Liste des pr√©sences"))
         self.bouton_aide.SetToolTip(wx.ToolTip("Cliquez ici pour obtenir de l'aide"))
         self.bouton_aide.SetSize(self.bouton_aide.GetBestSize())
         self.bouton_ok.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour valider")))
@@ -876,7 +876,7 @@ class Dialog(wx.Dialog):
         self.EndModal(wx.ID_CANCEL)
         
     def Onbouton_ok(self, event):
-        # Met ‡ jour le panel prÈsences
+        # Met √† jour le panel pr√©sences
         try :
             if self.GetGrandParent().GetGrandParent().GetName() == "panel_presences" :
                 self.GetGrandParent().GetGrandParent().MAJpanel(reinitSelectionPersonnes=True)

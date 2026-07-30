@@ -13,71 +13,9 @@ import shelve
 import os
 import re
 from Utils import UTILS_Fichiers
+from Utils import UTILS_Encodage
 
 DICT_TRADUCTIONS = None
-
-# Certains modules historiques ont été enregistrés avec un encodage ancien,
-# puis relus ou convertis en UTF-8. Lorsque l'information d'origine est encore
-# récupérable, on corrige ici les séquences de mojibake. Pour les chaînes où le
-# caractère de remplacement Unicode a déjà détruit l'octet d'origine, seules
-# des corrections explicites et non ambiguës sont appliquées.
-_MOJIBAKE_REPLACEMENTS = (
-    ("Ã©", "é"),
-    ("Ã¨", "è"),
-    ("Ãª", "ê"),
-    ("Ã«", "ë"),
-    ("Ã€", "À"),
-    ("Ã ", "à"),
-    ("Ã¢", "â"),
-    ("Ã®", "î"),
-    ("Ã¯", "ï"),
-    ("Ã´", "ô"),
-    ("Ã¶", "ö"),
-    ("Ã¹", "ù"),
-    ("Ã»", "û"),
-    ("Ã¼", "ü"),
-    ("Ã§", "ç"),
-    ("Å“", "œ"),
-    ("â€™", "’"),
-    ("â€“", "–"),
-    ("â€”", "—"),
-    ("Â°", "°"),
-    ("Â ", " "),
-)
-
-_REPLACEMENT_CHARACTER_FIXES = {
-    # Mois complets et abrégés utilisés par les calendriers Teamworks.
-    "F�vrier": "Février",
-    "f�vrier": "février",
-    "F�v.": "Fév.",
-    "f�v.": "fév.",
-    "Ao�t": "Août",
-    "ao�t": "août",
-    "D�cembre": "Décembre",
-    "d�cembre": "décembre",
-    "D�c.": "Déc.",
-    "d�c.": "déc.",
-}
-
-
-def CorrigeMojibake(chaine):
-    """Répare les séquences d'encodage cassées encore identifiables.
-
-    La fonction est volontairement conservative : elle ne tente pas de deviner
-    une lettre lorsque le caractère d'origine est perdu, sauf pour les libellés
-    français explicitement recensés dans ``_REPLACEMENT_CHARACTER_FIXES``.
-    """
-    if not isinstance(chaine, str):
-        return chaine
-
-    resultat = chaine
-    for valeur_incorrecte, valeur_correcte in _MOJIBAKE_REPLACEMENTS:
-        resultat = resultat.replace(valeur_incorrecte, valeur_correcte)
-
-    for valeur_incorrecte, valeur_correcte in _REPLACEMENT_CHARACTER_FIXES.items():
-        resultat = resultat.replace(valeur_incorrecte, valeur_correcte)
-
-    return resultat
 
 
 def ChargeTraduction(nom=""):
@@ -91,9 +29,9 @@ def ChargeTraduction(nom=""):
         if os.path.isfile(nomFichier):
             fichier = shelve.open(nomFichier, "r")
             for key, valeur in fichier.items():
-                if isinstance(key, bytes):
-                    key = key.decode("iso-8859-15")
-                dictTraductions[CorrigeMojibake(key)] = CorrigeMojibake(valeur)
+                key = UTILS_Encodage.DecodeTexteExterne(key)
+                valeur = UTILS_Encodage.DecodeTexteExterne(valeur)
+                dictTraductions[key] = valeur
             fichier.close()
 
     # Mémorise les traductions
@@ -101,19 +39,10 @@ def ChargeTraduction(nom=""):
 
 
 def _(chaine):
-    """ Traduit une chaîne et normalise les libellés historiques cassés. """
-    chaine_corrigee = CorrigeMojibake(chaine)
-
-    # Recherche si une traduction existe. On conserve aussi la recherche avec
-    # la clé historique pour ne pas casser d'anciens fichiers de langue.
-    if DICT_TRADUCTIONS is not None:
-        if chaine_corrigee in DICT_TRADUCTIONS:
-            return CorrigeMojibake(DICT_TRADUCTIONS[chaine_corrigee])
-        if chaine in DICT_TRADUCTIONS:
-            return CorrigeMojibake(DICT_TRADUCTIONS[chaine])
-
-    # Sinon renvoie la chaîne par défaut corrigée.
-    return chaine_corrigee
+    """Traduit une chaîne Unicode déjà valide."""
+    if DICT_TRADUCTIONS is not None and chaine in DICT_TRADUCTIONS:
+        return DICT_TRADUCTIONS[chaine]
+    return chaine
 
 
 def GenerationFichierTextes():
@@ -128,7 +57,7 @@ def GenerationFichierTextes():
 
         if nomFichier.endswith("py") and nomFichier.startswith("DATA_") is False and nomFichier not in ("CreateurMAJ.py", "CreateurANNONCES.py"):
             # Ouverture du fichier
-            fichier = open(nomFichier, "r")
+            fichier = open(nomFichier, "r", encoding="utf-8")
             texte = "\n".join(fichier.readlines())
             fichier.close()
 
@@ -175,7 +104,7 @@ def ConvertShelveEnTexte():
     listeTextes.sort()
 
     # Enregistrement du fichier texte
-    fichier = open(UTILS_Fichiers.GetRepTemp("Textes.txt"), "w")
+    fichier = open(UTILS_Fichiers.GetRepTemp("Textes.txt"), "w", encoding="utf-8")
     for texte in listeTextes:
         fichier.write(texte + "\n")
     fichier.close()

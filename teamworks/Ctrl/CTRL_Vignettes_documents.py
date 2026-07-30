@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
-# Application :    Teamworks, gestion d'équipe
+# Application :    Teamworks, gestion d'Ã©quipe
 # Auteur:           Ivan LUCAS
 # Copyright:       (c) 2010-11 Ivan LUCAS
 # Licence:         Licence GNU GPL
@@ -134,7 +134,7 @@ class CTRL(TC.ThumbnailCtrl):
         self.listePages = []
         self.listePagesInitiale = []
         
-        # Paramètres du Ctrl
+        # ParamÃ¨tres du Ctrl
         self.ShowFileNames(afficheLabels)
         self.EnableToolTips(True)
         contextMenu = self.ContextMenu()
@@ -159,7 +159,7 @@ class CTRL(TC.ThumbnailCtrl):
     def ImportationImages(self):
         self.listePages = []
         listeDonnees = []
-        # Recherche des images dans la base de données
+        # Recherche des images dans la base de donnÃ©es
         if self.IDpiece != None :
             req = "SELECT IDdocument, IDpiece, IDreponse, document, type, label FROM documents WHERE IDpiece=%s AND document IS NOT NULL;" % self.IDpiece
         elif self.IDreponse != None :
@@ -206,7 +206,7 @@ class CTRL(TC.ThumbnailCtrl):
         return None
 
     def ImportationDossier(self):
-        # Sélection des documents
+        # SÃ©lection des documents
         self.repCourant = os.getcwd()
         wildcard = "Tous les documents|*.bmp; *.gif; *.jpg; *.png; *.pdf; *.zip, *.txt; *.doc; *.docx; *.xls; *.xlsx| \
 Images JPEG (*.jpg)|*.jpg| \
@@ -219,13 +219,13 @@ Archives ZIP (*.zip)|*.zip| \
 Fichiers Texte (*.txt)|*.txt| \
 Tous les fichiers (*.*)|*.*"
 
-        # Récupération du chemin des documents
+        # RÃ©cupÃ©ration du chemin des documents
         sp = wx.StandardPaths.Get()
         cheminDefaut = sp.GetDocumentsDir()
         
-        # Ouverture de la fenêtre de dialogue
+        # Ouverture de la fenÃªtre de dialogue
         dlg = wx.FileDialog(
-            self, message=_(u"Sélectionnez un ou plusieurs documents"),
+            self, message=_(u"SÃ©lectionnez un ou plusieurs documents"),
             defaultDir=cheminDefaut, 
             defaultFile="", 
             wildcard=wildcard,
@@ -261,7 +261,7 @@ Tous les fichiers (*.*)|*.*"
             # Demande le titre du document
             label = self.SaisirLabel(nomFichier=nomFichierCourt)
             
-            # Conserve l'image en mémoire
+            # Conserve l'image en mÃ©moire
             track = Track(IDdocument=0, IDpiece=self.IDpiece, buffer=blob, type=extension, label=label)
             self.listePages.append(track)
         
@@ -296,11 +296,11 @@ Tous les fichiers (*.*)|*.*"
         if len(self.listePages) == 0 and len(self.listePagesInitiale) == 0 : 
             return nbreDocuments
         
-        # Insère les nouvelles images dans la base de données
+        # InsÃ¨re les nouvelles images dans la base de donnÃ©es
         DB = GestionDB.DB(suffixe="DOCUMENTS")
         for track in self.listePages :
             if track.IDdocument == 0 :
-                # Crée un document
+                # CrÃ©e un document
                 if IDpieceFinal != None :
                     listeDonnees = [("IDpiece", IDpieceFinal), ("type", track.type), ("label", track.label)]
                 else:
@@ -308,7 +308,7 @@ Tous les fichiers (*.*)|*.*"
                 IDdocument = DB.ReqInsert("documents", listeDonnees)
                 DB.MAJimage(table="documents", key="IDdocument", IDkey=IDdocument, blobImage=track.buffer, nomChampBlob="document")
         
-        # Suppression dans la base de données
+        # Suppression dans la base de donnÃ©es
         for track in self.listePagesInitiale :
             if track not in self.listePages :
                 DB.ReqDEL("documents", "IDdocument", track.IDdocument)
@@ -317,14 +317,14 @@ Tous les fichiers (*.*)|*.*"
         return nbreDocuments
     
     def ImportationScanner(self):
-        dlg = wx.MessageDialog(self, _(u"Désolé, cette fonction n'est pas encore disponible !"), _(u"Fonction indisponible"), wx.OK | wx.ICON_EXCLAMATION)
+        dlg = wx.MessageDialog(self, _(u"DÃ©solÃ©, cette fonction n'est pas encore disponible !"), _(u"Fonction indisponible"), wx.OK | wx.ICON_EXCLAMATION)
         dlg.ShowModal()
         dlg.Destroy()
     
     def SupprimerPage(self, event):
         index = self.GetSelection()
         if index == -1 : 
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sélectionner un document !"), _(u"Erreur"), wx.OK | wx.ICON_EXCLAMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÃ©lectionner un document !"), _(u"Erreur"), wx.OK | wx.ICON_EXCLAMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -358,12 +358,12 @@ Tous les fichiers (*.*)|*.*"
         
         menu.AppendSeparator()
         
-        item = wx.MenuItem(menu, ID_ROTATION_GAUCHE, _(u"Pivoter à gauche"))
+        item = wx.MenuItem(menu, ID_ROTATION_GAUCHE, _(u"Pivoter Ã  gauche"))
         item.SetBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/Teamword/annuler.png"), wx.BITMAP_TYPE_PNG))
         menu.AppendItem(item)
         self.Bind(wx.EVT_MENU, self.RotationGauche, id=ID_ROTATION_GAUCHE)
         
-        item = wx.MenuItem(menu, ID_ROTATION_DROITE, _(u"Pivoter à droite"))
+        item = wx.MenuItem(menu, ID_ROTATION_DROITE, _(u"Pivoter Ã  droite"))
         item.SetBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/Teamword/repeter.png"), wx.BITMAP_TYPE_PNG))
         menu.AppendItem(item)
         self.Bind(wx.EVT_MENU, self.RotationDroite, id=ID_ROTATION_DROITE)
@@ -397,7 +397,7 @@ Tous les fichiers (*.*)|*.*"
     def RotationGauche(self, event):
         index = self.GetSelection()
         if index == -1 : 
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sélectionner une image !"), _(u"Erreur"), wx.OK | wx.ICON_EXCLAMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÃ©lectionner une image !"), _(u"Erreur"), wx.OK | wx.ICON_EXCLAMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -413,7 +413,7 @@ Tous les fichiers (*.*)|*.*"
     def RotationDroite(self, event):
         index = self.GetSelection()
         if index == -1 : 
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sélectionner une image !"), _(u"Erreur"), wx.OK | wx.ICON_EXCLAMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÃ©lectionner une image !"), _(u"Erreur"), wx.OK | wx.ICON_EXCLAMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -429,7 +429,7 @@ Tous les fichiers (*.*)|*.*"
     def ModifierLabel(self, event):
         index = self.GetSelection()
         if index == -1 : 
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sélectionner un document !"), _(u"Erreur"), wx.OK | wx.ICON_EXCLAMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÃ©lectionner un document !"), _(u"Erreur"), wx.OK | wx.ICON_EXCLAMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -446,7 +446,7 @@ Tous les fichiers (*.*)|*.*"
         index = self.GetSelection()
         print(index)
         if index == -1 :
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sélectionner un document !"), _(u"Erreur"), wx.OK | wx.ICON_EXCLAMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÃ©lectionner un document !"), _(u"Erreur"), wx.OK | wx.ICON_EXCLAMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -460,7 +460,7 @@ Tous les fichiers (*.*)|*.*"
             dlg.ShowModal()
             dlg.Destroy()
         else:
-            # Création du doc dans le répertoire Temp et ouverture
+            # CrÃ©ation du doc dans le rÃ©pertoire Temp et ouverture
             nomFichier = UTILS_Fichiers.GetRepTemp("document.%s" % track.type)
             buffer = track.buffer
             file = open(nomFichier,"wb")

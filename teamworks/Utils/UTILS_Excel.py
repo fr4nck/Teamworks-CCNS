@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #------------------------------------------------------------------------
-# Application :    Noethys, gestion multi-activitÈs
+# Application :    Noethys, gestion multi-activit√©s
 # Site internet :  www.noethys.com
 # Auteur:          Ivan LUCAS
 # Copyright:       (c) 2010-19 Ivan LUCAS
@@ -33,12 +33,12 @@ def Excel(parent, labels_colonnes=None, liste_valeurs=None, tableau=None):
 
     nomFichier = "ExportExcel.xlsx"
 
-    # Demande ‡ l'utilisateur le nom de fichier et le rÈpertoire de destination
+    # Demande √† l'utilisateur le nom de fichier et le r√©pertoire de destination
     wildcard = "Fichiers Excel (*.xlsx)|*.xlsx|Tous les fichiers (*.*)|*.*"
     sp = wx.StandardPaths.Get()
     cheminDefaut = sp.GetDocumentsDir()
     dlg = wx.FileDialog(
-        parent, message=_(u"Veuillez sÈlectionner le rÈpertoire de destination et le nom du fichier"),
+        parent, message=_(u"Veuillez s√©lectionner le r√©pertoire de destination et le nom du fichier"),
         defaultDir=cheminDefaut,
         defaultFile=nomFichier,
         wildcard=wildcard,
@@ -52,21 +52,21 @@ def Excel(parent, labels_colonnes=None, liste_valeurs=None, tableau=None):
         dlg.Destroy()
         return
 
-    # Le fichier de destination existe dÈj‡ :
+    # Le fichier de destination existe d√©j√† :
     if os.path.isfile(cheminFichier) == True:
-        dlg = wx.MessageDialog(None, _(u"Un fichier portant ce nom existe dÈj‡. \n\nVoulez-vous le remplacer ?"), "Attention !", wx.YES_NO | wx.NO_DEFAULT | wx.ICON_EXCLAMATION)
+        dlg = wx.MessageDialog(None, _(u"Un fichier portant ce nom existe d√©j√†. \n\nVoulez-vous le remplacer ?"), "Attention !", wx.YES_NO | wx.NO_DEFAULT | wx.ICON_EXCLAMATION)
         reponse = dlg.ShowModal()
         dlg.Destroy()
         if reponse == wx.ID_NO:
             return False
 
-    # CrÈation d'un classeur et d'une feuille
+    # Cr√©ation d'un classeur et d'une feuille
     workbook = xlsxwriter.Workbook(cheminFichier)
     worksheet = workbook.add_worksheet()
 
-    # Depuis une liste de sÈlections
+    # Depuis une liste de s√©lections
     if tableau == None:
-        # CrÈation des labels de colonnes
+        # Cr√©ation des labels de colonnes
         x = 0
         y = 0
         for labelCol, alignement, largeur, nomChamp in labels_colonnes:
@@ -98,8 +98,8 @@ def Excel(parent, labels_colonnes=None, liste_valeurs=None, tableau=None):
     # Finalisation du fichier xlsx
     workbook.close()
 
-    # Confirmation de crÈation du fichier et demande d'ouverture directe dans Excel
-    txtMessage = _(u"Le fichier Excel a ÈtÈ crÈÈ avec succËs. Souhaitez-vous l'ouvrir dËs maintenant ?")
+    # Confirmation de cr√©ation du fichier et demande d'ouverture directe dans Excel
+    txtMessage = _(u"Le fichier Excel a √©t√© cr√©√© avec succ√®s. Souhaitez-vous l'ouvrir d√®s maintenant ?")
     dlgConfirm = wx.MessageDialog(parent, txtMessage, _(u"Confirmation"), wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
     reponse = dlgConfirm.ShowModal()
     dlgConfirm.Destroy()

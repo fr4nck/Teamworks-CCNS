@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -16,12 +16,12 @@ OL_personnes = UTILS_Adaptations.Import("Ol.OL_personnes")
 
 
 class MyDialog(wx.Dialog):
-    """ Sélection d'un candidat """
+    """ SÃ©lection d'un candidat """
     def __init__(self, parent):
-        wx.Dialog.__init__(self, parent, id=-1, title=_(u"Sélectionner un candidat ou un salarié"), size=(450, 600))
+        wx.Dialog.__init__(self, parent, id=-1, title=_(u"SÃ©lectionner un candidat ou un salariÃ©"), size=(450, 600))
 
         # Label
-        self.label = wx.StaticText(self, -1, _(u"Veuillez sélectionner un candidat ou un salarié :"))
+        self.label = wx.StaticText(self, -1, _(u"Veuillez sÃ©lectionner un candidat ou un salariÃ© :"))
         
         self.noteBook = wx.Notebook(self, -1, size=(-1, 150), style=wx.BK_TOP)
         self.listCtrl_candidats = OL_candidats.ListView(self.noteBook, id=-1, activeDoubleClic=False, name="OL_candidats", style=wx.LC_REPORT|wx.SUNKEN_BORDER|wx.LC_SINGLE_SEL|wx.LC_HRULES|wx.LC_VRULES)
@@ -30,7 +30,7 @@ class MyDialog(wx.Dialog):
         self.noteBook.AddPage(self.listCtrl_candidats, _(u"Liste des candidats"))
         self.listCtrl_personnes = OL_personnes.ListView(self.noteBook, id=-1, activeDoubleClic=False, name="OL_personnes", style=wx.LC_REPORT|wx.SUNKEN_BORDER|wx.LC_SINGLE_SEL|wx.LC_HRULES|wx.LC_VRULES)
 ##        self.barreRecherche_personnes = BarreRecherche_personnes(self, listview=self.listCtrl_personnes)
-        self.noteBook.AddPage(self.listCtrl_personnes, _(u"Liste des salariés"))
+        self.noteBook.AddPage(self.listCtrl_personnes, _(u"Liste des salariÃ©s"))
         
         # Boutons
         self.bouton_ok = CTRL_Bouton_image.CTRL(self, texte=_(u"Ok"), cheminImage=Chemins.GetStaticPath("Images/32x32/Valider.png"))
@@ -67,19 +67,19 @@ class MyDialog(wx.Dialog):
 
         
     def OnBoutonOk(self, event):
-        """ Validation des données saisies """
+        """ Validation des donnÃ©es saisies """
         selection_candidat = self.listCtrl_candidats.Selection()
         selection_personne = self.listCtrl_personnes.Selection()
         numPage = self.noteBook.GetSelection()
         
         if numPage== 0 and len(selection_candidat) == 0 :
-            dlg = wx.MessageDialog(self, _(u"Vous n'avez sélectionné aucun candidat !"), _(u"Aucune sélection"), wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous n'avez sÃ©lectionnÃ© aucun candidat !"), _(u"Aucune sÃ©lection"), wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
         
         if numPage== 1 and len(selection_personne) == 0 :
-            dlg = wx.MessageDialog(self, _(u"Vous n'avez sélectionné aucun salarié !"), _(u"Aucune sélection"), wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous n'avez sÃ©lectionnÃ© aucun salariÃ© !"), _(u"Aucune sÃ©lection"), wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return

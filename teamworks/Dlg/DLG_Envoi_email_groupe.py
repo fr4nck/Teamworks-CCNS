@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -23,16 +23,16 @@ class MyDialog(wx.Dialog):
         self.parent = parent
         self.listeAdresses = []
         
-        self.label_intro = wx.StaticText(self, -1, _(u"Veuillez sélectionner les destinataires :"))
+        self.label_intro = wx.StaticText(self, -1, _(u"Veuillez sÃ©lectionner les destinataires :"))
         
-        self.staticbox = wx.StaticBox(self, -1, _(u"Catégorie de destinataires"))
-        self.radio_salaries = wx.RadioButton(self, -1, _(u"Salariés"))
+        self.staticbox = wx.StaticBox(self, -1, _(u"CatÃ©gorie de destinataires"))
+        self.radio_salaries = wx.RadioButton(self, -1, _(u"SalariÃ©s"))
         self.radio_candidats = wx.RadioButton(self, -1, _(u"Candidats"))
         
         # CheckListBox
         self.checkListBox = wx.CheckListBox(self,  choices=[], size=(50, 50))
         
-        # Hyperlink cocher les présents
+        # Hyperlink cocher les prÃ©sents
         self.hyperlink_presents = self.Build_Hyperlink()
         
         self.bouton_aide = CTRL_Bouton_image.CTRL(self, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))
@@ -50,7 +50,7 @@ class MyDialog(wx.Dialog):
         self.MAJ_liste()
         
     def __set_properties(self):
-        self.SetTitle(_(u"Envoi d'un mail groupé"))
+        self.SetTitle(_(u"Envoi d'un mail groupÃ©"))
         if 'phoenix' in wx.PlatformInfo:
             _icon = wx.Icon()
         else :
@@ -100,16 +100,16 @@ class MyDialog(wx.Dialog):
         self.hyperlink_presents.Enable(self.radio_salaries.GetValue())
         
     def MAJ_liste(self):
-        """ Importation de la liste des personnes ou de salariés"""
+        """ Importation de la liste des personnes ou de salariÃ©s"""
         if self.radio_salaries.GetValue() == True :
             
-            # Récupération de la liste des salariés
+            # RÃ©cupÃ©ration de la liste des salariÃ©s
             DB = GestionDB.DB()        
             req = """SELECT IDpersonne, nom, prenom FROM personnes ORDER BY nom, prenom; """
             DB.ExecuterReq(req)
             listePersonnes = DB.ResultatReq()
             DB.Close()
-            # Récupération des adresses Emails
+            # RÃ©cupÃ©ration des adresses Emails
             DB = GestionDB.DB()        
             req = """SELECT texte, IDpersonne FROM coordonnees WHERE categorie='Email'; """
             DB.ExecuterReq(req)
@@ -118,13 +118,13 @@ class MyDialog(wx.Dialog):
         
         else:
             
-            # Récupération de la liste des candidats
+            # RÃ©cupÃ©ration de la liste des candidats
             DB = GestionDB.DB()        
             req = """SELECT IDcandidat, nom, prenom FROM candidats ORDER BY nom, prenom; """
             DB.ExecuterReq(req)
             listePersonnes = DB.ResultatReq()
             DB.Close()
-            # Récupération des adresses Emails
+            # RÃ©cupÃ©ration des adresses Emails
             DB = GestionDB.DB()        
             req = """SELECT texte, IDcandidat FROM coords_candidats WHERE categorie='Email'; """
             DB.ExecuterReq(req)
@@ -132,7 +132,7 @@ class MyDialog(wx.Dialog):
             DB.Close()
         
         
-        # Création de la liste pour le listBox et du dict de données
+        # CrÃ©ation de la liste pour le listBox et du dict de donnÃ©es
         self.listeDonnees = []
         self.dictDonnees = {}
         self.checkListBox.Clear()
@@ -162,20 +162,20 @@ class MyDialog(wx.Dialog):
     def Build_Hyperlink(self) :
         """ Construit un hyperlien """
         self.SetFont(wx.Font(8, wx.SWISS, wx.NORMAL, wx.NORMAL, False))
-        hyper = hl.HyperLinkCtrl(self, -1, _(u"Sélectionner les présents sur une période donnée"), URL="")
+        hyper = hl.HyperLinkCtrl(self, -1, _(u"SÃ©lectionner les prÃ©sents sur une pÃ©riode donnÃ©e"), URL="")
         hyper.Bind(hl.EVT_HYPERLINK_LEFT, self.OnLeftLink)
         hyper.AutoBrowse(False)
         hyper.SetColours("BLACK", "BLACK", "BLUE")
         hyper.EnableRollover(True)
         hyper.SetUnderlines(False, False, True)
         hyper.SetBold(False)
-        hyper.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour sélectionner les personnes présentes sur une période donnée")))
+        hyper.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour sÃ©lectionner les personnes prÃ©sentes sur une pÃ©riode donnÃ©e")))
         hyper.UpdateLink()
         hyper.DoPopup(False)
         return hyper
         
     def OnLeftLink(self, event):
-        """ Sélectionner les personnes présentes sur une période donnée """
+        """ SÃ©lectionner les personnes prÃ©sentes sur une pÃ©riode donnÃ©e """
         dlg = DLG_Selection_periode.SelectionPeriode(self)
         if dlg.ShowModal() == wx.ID_OK:
             listePersonnesPresentes = dlg.GetPersonnesPresentes()
@@ -183,16 +183,16 @@ class MyDialog(wx.Dialog):
         else:
             dlg.Destroy()
             return False
-        # Sélection dans la listBox
+        # SÃ©lection dans la listBox
         for index, valeurs in self.dictDonnees.items():
             IDpersonne = valeurs[0]
             if IDpersonne in listePersonnesPresentes :
                 self.checkListBox.Check(index, True)
             else:
                 self.checkListBox.Check(index, False)
-        # S'il n'y a aucune personne présente sur la période sélectionnée
+        # S'il n'y a aucune personne prÃ©sente sur la pÃ©riode sÃ©lectionnÃ©e
         if len(listePersonnesPresentes) == 0 :
-            dlg = wx.MessageDialog(self, _(u"Il n'y a aucune personne présente sur la période que vous avez sélectionné."), _(u"Erreur de saisie"), wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Il n'y a aucune personne prÃ©sente sur la pÃ©riode que vous avez sÃ©lectionnÃ©."), _(u"Erreur de saisie"), wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -202,20 +202,20 @@ class MyDialog(wx.Dialog):
         UTILS_Aide.Aide("Envoyerunmailgroup")
 
     def OnBoutonOk(self, event):
-        """ Validation des données saisies """
+        """ Validation des donnÃ©es saisies """
         if 'phoenix' in wx.PlatformInfo:
             selections = self.checkListBox.GetCheckedItems()
         else:
             selections = self.checkListBox.GetChecked()
         
-        # Validation de la sélection
+        # Validation de la sÃ©lection
         if len(selections) == 0 :
-            dlg = wx.MessageDialog(self, _(u"Vous n'avez fait aucune sélection"), _(u"Erreur de saisie"), wx.OK | wx.ICON_ERROR)
+            dlg = wx.MessageDialog(self, _(u"Vous n'avez fait aucune sÃ©lection"), _(u"Erreur de saisie"), wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
             dlg.Destroy()
             return
         
-        # Création de la liste des adresses mail
+        # CrÃ©ation de la liste des adresses mail
         self.listeAdresses = []
         listeAdresses = []
         listeSansAdresses = []
@@ -226,20 +226,20 @@ class MyDialog(wx.Dialog):
             else :
                 listeAdresses.append(mail)
         
-        # Si aucune des personnes sélectionnées n'a d'adresse
+        # Si aucune des personnes sÃ©lectionnÃ©es n'a d'adresse
         if len(selections) == len(listeSansAdresses) :
-            dlg = wx.MessageDialog(self, _(u"Aucune des personnes sélectionnées ne possède d'adresse internet !"), _(u"Erreur de saisie"), wx.OK | wx.ICON_ERROR)
+            dlg = wx.MessageDialog(self, _(u"Aucune des personnes sÃ©lectionnÃ©es ne possÃ¨de d'adresse internet !"), _(u"Erreur de saisie"), wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
             dlg.Destroy()
             return
         
         # Avertit qu'il y a des personnes sans adresse
         if len(listeSansAdresses) != 0 :
-            # Création du texte du messageBox
-            message = _(u"Parmi les ") + str(len(selections)) + _(u" personnes sélectionnées, ") + str(len(listeSansAdresses)) + _(u" ne possèdent pas d'adresse internet : \n")
+            # CrÃ©ation du texte du messageBox
+            message = _(u"Parmi les ") + str(len(selections)) + _(u" personnes sÃ©lectionnÃ©es, ") + str(len(listeSansAdresses)) + _(u" ne possÃ¨dent pas d'adresse internet : \n")
             for texteNom in listeSansAdresses :
                 message += "\n    - " + texteNom
-            message += _(u"\n\nSouhaitez-vous quand même continuer pour les ") + str(len(listeAdresses)) + _(u" personne(s) possédant une adresse ?")
+            message += _(u"\n\nSouhaitez-vous quand mÃªme continuer pour les ") + str(len(listeAdresses)) + _(u" personne(s) possÃ©dant une adresse ?")
             # Affiche de la messageBox
             dlg = wx.MessageDialog(self, message, _(u"Adresses internet manquantes"), wx.YES_NO|wx.NO_DEFAULT|wx.CANCEL|wx.ICON_INFORMATION)
             reponse = dlg.ShowModal()
@@ -250,7 +250,7 @@ class MyDialog(wx.Dialog):
         
         self.listeAdresses = listeAdresses
         
-        # Ferme la boîte de dialogue
+        # Ferme la boÃ®te de dialogue
         self.EndModal(wx.ID_OK)  
 
     def GetAdresses(self):

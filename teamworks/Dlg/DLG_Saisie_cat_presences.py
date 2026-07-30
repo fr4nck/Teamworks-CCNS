@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -25,24 +25,24 @@ def FormateCouleur(texte):
 
 
 class Dialog(wx.Dialog):
-    def __init__(self, parent, ID=-1, title=_(u"Saisie d'une nouvelle catégorie"), IDcategorie=0, IDcat_parent=0):
+    def __init__(self, parent, ID=-1, title=_(u"Saisie d'une nouvelle catÃ©gorie"), IDcategorie=0, IDcat_parent=0):
         wx.Dialog.__init__(self, parent, -1, style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX)
 
-        # Valeurs par défaut à appliquer
+        # Valeurs par dÃ©faut Ã  appliquer
         self.IDcategorie = IDcategorie
         self.IDcat_parent = IDcat_parent
         self.couleur = (255, 255, 255)
         self.nom_categorie = ""
 
-        # Importation des données
+        # Importation des donnÃ©es
         if self.IDcategorie != 0 :
             self.Importation()
-            self.SetTitle(_(u"Modification d'une catégorie"))
+            self.SetTitle(_(u"Modification d'une catÃ©gorie"))
         
         self.panel_base = wx.Panel(self, -1)
-        self.sizer_nom_staticbox = wx.StaticBox(self.panel_base, -1, _(u"Nom de la catégorie"))
+        self.sizer_nom_staticbox = wx.StaticBox(self.panel_base, -1, _(u"Nom de la catÃ©gorie"))
         self.sizer_couleur_staticbox = wx.StaticBox(self.panel_base, -1, _(u"Couleur"))
-        self.sizer_tree_staticbox = wx.StaticBox(self.panel_base, -1, _(u"Sélection de la catégorie parente"))
+        self.sizer_tree_staticbox = wx.StaticBox(self.panel_base, -1, _(u"SÃ©lection de la catÃ©gorie parente"))
         self.treeCtrl_categories = TreeCtrlCategories(self.panel_base, self.IDcat_parent)
         self.text_nom = wx.TextCtrl(self.panel_base, -1, self.nom_categorie)
         self.bouton_aide = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))
@@ -67,7 +67,7 @@ class Dialog(wx.Dialog):
             _icon = wx.EmptyIcon()
         _icon.CopyFromBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Logo.png"), wx.BITMAP_TYPE_ANY))
         self.SetIcon(_icon)
-        self.treeCtrl_categories.SetToolTip(wx.ToolTip(_(u"Sélectionnez une catégorie PARENTE. Votre nouvelle catégorie sera placée comment enfant de cette catégorie.")))
+        self.treeCtrl_categories.SetToolTip(wx.ToolTip(_(u"SÃ©lectionnez une catÃ©gorie PARENTE. Votre nouvelle catÃ©gorie sera placÃ©e comment enfant de cette catÃ©gorie.")))
         self.bouton_aide.SetToolTip(wx.ToolTip("Bouton Aide"))
         self.bouton_aide.SetSize(self.bouton_aide.GetBestSize())
         self.bouton_ok.SetToolTip(wx.ToolTip("Bouton Ok"))
@@ -111,9 +111,9 @@ class Dialog(wx.Dialog):
         self.CenterOnScreen()
 
     def Importation(self):
-        """ Récupération des données à modifier dans la base """
+        """ RÃ©cupÃ©ration des donnÃ©es Ã  modifier dans la base """
 
-        # Initialisation de la connexion avec la Base de données
+        # Initialisation de la connexion avec la Base de donnÃ©es
         DB = GestionDB.DB()
         req = "SELECT * FROM cat_presences WHERE IDcategorie=%d" % self.IDcategorie
         DB.ExecuterReq(req)
@@ -123,18 +123,18 @@ class Dialog(wx.Dialog):
         if len(donnees) == 0:
             return
 
-        # Création des variables
+        # CrÃ©ation des variables
         self.IDcat_parent = donnees[2]
         self.couleur = FormateCouleur(donnees[4])
         self.nom_categorie = donnees[1]
 
     def Sauvegarde(self):
-        """ Sauvegarde des données dans la base de données """
+        """ Sauvegarde des donnÃ©es dans la base de donnÃ©es """
 
-        # Initialisation de la connexion avec la Base de données
+        # Initialisation de la connexion avec la Base de donnÃ©es
         DB = GestionDB.DB()
 
-        # Récupération de l'ordre
+        # RÃ©cupÃ©ration de l'ordre
         req = """
         SELECT Max(cat_presences.ordre)
         FROM cat_presences
@@ -146,7 +146,7 @@ class Dialog(wx.Dialog):
         if ordreMax == None:
             ordreMax = 0
 
-        # Création de la liste des données
+        # CrÃ©ation de la liste des donnÃ©es
         listeDonnees = [    ("nom_categorie",   self.nom_categorie),
                             ("IDcat_parent",    self.IDcat_parent),
                             ("ordre",           ordreMax+1),
@@ -154,11 +154,11 @@ class Dialog(wx.Dialog):
                         ]
 
         if self.IDcategorie == 0:
-            # Enregistrement d'une nouvelle coordonnée
+            # Enregistrement d'une nouvelle coordonnÃ©e
             newID = DB.ReqInsert("cat_presences", listeDonnees)
             ID = newID
         else:
-            # Modification de la coordonnée
+            # Modification de la coordonnÃ©e
             DB.ReqMAJ("cat_presences", listeDonnees, "IDcategorie", self.IDcategorie)
             ID = self.IDcategorie
 
@@ -179,16 +179,16 @@ class Dialog(wx.Dialog):
 
     def OnBouton_ok(self, event):
 
-        # Vérification des données
+        # VÃ©rification des donnÃ©es
         if self.couleur == (255, 255, 255):
-            dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement sélectionner une couleur en cliquant sur le bouton couleur."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement sÃ©lectionner une couleur en cliquant sur le bouton couleur."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             self.bouton_couleur.SetFocus()
             return
 
         if self.text_nom.GetValue() == "" :
-            dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement saisir un nom de catégorie"), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement saisir un nom de catÃ©gorie"), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             self.text_nom.SetFocus()
@@ -196,10 +196,10 @@ class Dialog(wx.Dialog):
         else:
             self.nom_categorie = self.text_nom.GetValue()
 
-        # Demande de confirmation de création de catégorie
+        # Demande de confirmation de crÃ©ation de catÃ©gorie
         """
         if int(self.IDcat_parent) == 0:
-            dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement sélectionner une catégorie parente dans la liste proposée."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement sÃ©lectionner une catÃ©gorie parente dans la liste proposÃ©e."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return"""
@@ -212,7 +212,7 @@ class Dialog(wx.Dialog):
         self.GetParent().treeCtrl_categories.MAJtree()
         self.GetParent().treeCtrl_categories.SetFocus()
 
-        # Fermeture de la fenêtre
+        # Fermeture de la fenÃªtre
         self.EndModal(wx.ID_OK)
         
 
@@ -241,7 +241,7 @@ class TreeCtrlCategories(wx.TreeCtrl):
 
         self.SetImageList(il)
         self.il = il
-        self.root = self.AddRoot(_(u"Catégories"))
+        self.root = self.AddRoot(_(u"CatÃ©gories"))
         if 'phoenix' in wx.PlatformInfo:
             self.SetItemData(self.root, 0)
         else:
@@ -254,7 +254,7 @@ class TreeCtrlCategories(wx.TreeCtrl):
 
     
     def CreationImage(self, tailleImages, r, v, b):
-        """ Création des images pour le TreeCtrl """
+        """ CrÃ©ation des images pour le TreeCtrl """
         if 'phoenix' in wx.PlatformInfo:
             bmp = wx.Image(tailleImages[0], tailleImages[1], True)
             bmp.SetRGB((0, 0, 16, 16), 255, 255, 255)
@@ -278,7 +278,7 @@ class TreeCtrlCategories(wx.TreeCtrl):
         for item in self.listeCategories :
             if item[2] == IDparent:
 
-                # Création de la branche
+                # CrÃ©ation de la branche
                 newItem = self.AppendItem(itemParent, item[1])
                 if 'phoenix' in wx.PlatformInfo:
                     self.SetItemData(newItem, item[0])
@@ -286,7 +286,7 @@ class TreeCtrlCategories(wx.TreeCtrl):
                     self.SetItemData(newItem, item[0])
                 exec("self.SetItemImage(newItem, self.img" + str(item[0]) + ", wx.TreeItemIcon_Normal)")
 
-                # Sélection de l'item s'il sélectionné est par défaut
+                # SÃ©lection de l'item s'il sÃ©lectionnÃ© est par dÃ©faut
                 if int(item[0]) == self.IDcat_parent :
                     self.EnsureVisible(newItem)
                     self.SelectItem(newItem)
@@ -297,8 +297,8 @@ class TreeCtrlCategories(wx.TreeCtrl):
                 self.Boucle(item[0], newItem)
 
     def Importation(self):
-        """ Récupération de la liste des catégories dans la base """
-        # Initialisation de la connexion avec la Base de données
+        """ RÃ©cupÃ©ration de la liste des catÃ©gories dans la base """
+        # Initialisation de la connexion avec la Base de donnÃ©es
         DB = GestionDB.DB()
         req = "SELECT * FROM cat_presences"
         DB.ExecuterReq(req)

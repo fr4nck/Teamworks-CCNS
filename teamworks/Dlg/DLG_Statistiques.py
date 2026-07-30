@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -45,9 +45,9 @@ def DateEngEnDateDD(dateEng):
     return datetime.date(int(dateEng[:4]), int(dateEng[5:7]), int(dateEng[8:10]))
 
 def DatetimeDateEnStr(date):
-    """ Transforme un datetime.date en date complète : Ex : lundi 15 janvier 2008 """
+    """ Transforme un datetime.date en date complÃ¨te : Ex : lundi 15 janvier 2008 """
     listeJours = ("Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche")
-    listeMois = (_(u"janvier"), _(u"février"), _(u"mars"), _(u"avril"), _(u"mai"), _(u"juin"), _(u"juillet"), _(u"août"), _(u"septembre"), _(u"octobre"), _(u"novembre"), _(u"décembre"))
+    listeMois = (_(u"janvier"), _(u"fÃ©vrier"), _(u"mars"), _(u"avril"), _(u"mai"), _(u"juin"), _(u"juillet"), _(u"aoÃ»t"), _(u"septembre"), _(u"octobre"), _(u"novembre"), _(u"dÃ©cembre"))
     dateStr = listeJours[date.weekday()] + " " + str(date.day) + " " + listeMois[date.month-1] + " " + str(date.year)
     return dateStr
 
@@ -85,7 +85,7 @@ class PanelGraph(wx.Panel):
             self.canvas.print_figure(path,dpi=300)
             if (path.find(save_destination) ==  0):
                 path = path[len(save_destination)+1:]
-            message = _(u"Le graphe a été sauvegardé avec succès dans le répertoire \n%s") % path
+            message = _(u"Le graphe a Ã©tÃ© sauvegardÃ© avec succÃ¨s dans le rÃ©pertoire \n%s") % path
             dlg = wx.MessageDialog(self, message, _(u"Sauvegarde"), wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
@@ -95,7 +95,7 @@ class PanelGraph(wx.Panel):
     
     def Clipboard_image(self):
         self.canvas.Copy_to_Clipboard()
-        message = _(u"Le graphe a été envoyé dans le presse-papiers.")
+        message = _(u"Le graphe a Ã©tÃ© envoyÃ© dans le presse-papiers.")
         dlg = wx.MessageDialog(self, message, _(u"Presse-papiers"), wx.OK | wx.ICON_INFORMATION)
         dlg.ShowModal()
         dlg.Destroy()
@@ -116,7 +116,7 @@ class PanelGraph(wx.Panel):
         self.canvas.SetBackgroundColour(wx.Colour(*rgbtuple))
 
     def FormateHeure(self, valeur, mode=None):
-        # Si mode == None : récupère la valeur du ctrl ctrl_modeHeure de la frame
+        # Si mode == None : rÃ©cupÃ¨re la valeur du ctrl ctrl_modeHeure de la frame
         if mode == None : 
             modeTmp = self.GetGrandParent().ctrl_modeHeure.GetSelection()
             if modeTmp == 0 :
@@ -127,7 +127,7 @@ class PanelGraph(wx.Panel):
         if valeur == None or valeur == "" and mode != "decimal" : return "0h00"
         hr, mn = valeur[1:].split(":")
         if mode == "decimal" :
-            # Mode décimal
+            # Mode dÃ©cimal
             minDecimal = int(float(mn))*100//60
             texte = "%s.%s" % (int(float(hr)), minDecimal)
             resultat = float(texte)
@@ -139,7 +139,7 @@ class PanelGraph(wx.Panel):
     
     def MAJ(self) :
         self.figure.clear()
-        # Choisit le graph demandé
+        # Choisit le graph demandÃ©
         numGraph = self.GetGrandParent().ctrl_choix_graph.GetSelection() + 1
         if numGraph == 1 : 
             self.GetGrandParent().ctrl_tableau.InitDonnees(mode_detail=0)
@@ -165,7 +165,7 @@ class PanelGraph(wx.Panel):
 
         
     def CreateGraph1(self, afficheTableau=False, polaire=False) :
-        """ Création des barres avec ou sans table de données """
+        """ CrÃ©ation des barres avec ou sans table de donnÃ©es """
         
         ctrlTableau = self.GetGrandParent().ctrl_tableau
 
@@ -221,7 +221,7 @@ class PanelGraph(wx.Panel):
         
         ax = self.figure.add_subplot(1, 1, 1, polar=polaire)
         
-        # Création du graph
+        # CrÃ©ation du graph
         rows = len(data)
         ind = arange(len(colLabels)) + 0.25  # the x locations for the groups
         cellText = []
@@ -239,7 +239,7 @@ class PanelGraph(wx.Panel):
             yoff = yoff + data[row]
             cellText.append(['%1.1f' % (x/1000.0) for x in yoff])
 
-        # Création du tableau de valeurs sous le graph
+        # CrÃ©ation du tableau de valeurs sous le graph
         if afficheTableau == True :
             listeCouleurs.reverse()
             data.reverse()
@@ -286,18 +286,18 @@ class PanelGraph(wx.Panel):
                 self.figure.subplots_adjust(left=0.125, bottom=0.22, right=None, wspace=None, hspace=None)
             else:
                 self.figure.subplots_adjust(left=0.1, bottom=0.1, right=None, wspace=None, hspace=None)
-        # Légende, titre et axes
+        # LÃ©gende, titre et axes
         if polaire == False :
             ax.set_ylabel("Heures")
             labels = ax.get_yticklabels()
             setp(labels, rotation=0, fontsize=9) 
-            titreGraph = _(u"Répartition des heures par personne et par catégorie")
+            titreGraph = _(u"RÃ©partition des heures par personne et par catÃ©gorie")
 ##            ax.set_title(titreGraph)
         else:
-            titreGraph = _(u"Répartition des heures par\npersonne et par catégorie")
+            titreGraph = _(u"RÃ©partition des heures par\npersonne et par catÃ©gorie")
 ##            self.figure.suptitle(titreGraph, fontsize=13, x=0.09, y=0.94, horizontalalignment = 'left')
 
-        # Légende
+        # LÃ©gende
         if polaire == True :
             localisationLegende = (1.2, 0.2)
         else:
@@ -317,7 +317,7 @@ class PanelGraph(wx.Panel):
         
     
     def CreateGraph3(self) :
-        """ Création des camemberts """
+        """ CrÃ©ation des camemberts """
         
         ctrlTableau = self.GetGrandParent().ctrl_tableau
 
@@ -359,7 +359,7 @@ class PanelGraph(wx.Panel):
                             listeLabels.append(labelCategorie)
                             listeHeures.append(self.FormateHeure(valeur, "decimal"))
         
-            # Création du graphique
+            # CrÃ©ation du graphique
             ax = self.figure.add_subplot(quadrillageX, quadrillageY, indexSubPlot)
             cam = ax.pie(listeHeures, labels=listeLabels, colors=listeCouleurs, autopct='%1.1f%%', shadow=False)
             title = ax.set_title(u"%s" % nomPersonne, weight="bold", horizontalalignment = 'center', position=(0.5, 0.97))
@@ -385,7 +385,7 @@ class PanelGraph(wx.Panel):
         dictColonnes = ctrlTableau.dictColonnes
         dictCategories = ctrlTableau.dictCategories
         
-        # Si aucune donnée :
+        # Si aucune donnÃ©e :
         if len(dictDetails) == 0 :
             self.figure.canvas.draw()
             return
@@ -432,7 +432,7 @@ class PanelGraph(wx.Panel):
 
         else :
             
-            # Heures par catégorie
+            # Heures par catÃ©gorie
             for IDcategorie in list(dictColonnes.keys()) :
                 if IDcategorie != "total" :
                     listeDonneesTmp = []
@@ -466,7 +466,7 @@ class PanelGraph(wx.Panel):
         labels = ax.get_yticklabels()
         setp(labels, rotation=0, fontsize=9) 
             
-        # Légende
+        # LÃ©gende
         props = matplotlib.font_manager.FontProperties(size=10)
         leg = ax.legend(loc='best', shadow=False, fancybox=True, prop=props)
         leg.get_frame().set_alpha(0.5)
@@ -498,7 +498,7 @@ class Dialog(wx.Dialog):
         
         # StaticBox
         self.staticbox_mode = wx.StaticBox(self.panel, -1, _(u"Mode d'affichage"))
-        self.staticbox_periode = wx.StaticBox(self.panel, -1, _(u"Période"))
+        self.staticbox_periode = wx.StaticBox(self.panel, -1, _(u"PÃ©riode"))
         self.staticbox_options = wx.StaticBox(self.panel, -1, _(u"Options d'affichage"))
         self.staticbox_personnes = wx.StaticBox(self.panel, -1, _(u"Individus"))
         self.staticbox_tableau = wx.StaticBox(self.panel, -1, _(u"Statistiques"))
@@ -507,18 +507,18 @@ class Dialog(wx.Dialog):
         self.bouton_mode_tableau = wx.BitmapButton(self.panel, -1, wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Tableau.png"), wx.BITMAP_TYPE_ANY))
         self.bouton_mode_graph = wx.BitmapButton(self.panel, -1, wx.Bitmap(Chemins.GetStaticPath("Images/32x32/GraphNB.png"), wx.BITMAP_TYPE_ANY))
         
-        # Période
-        self.radio_dates = wx.RadioButton(self.panel, -1, _(u"Dates sélectionnées"), size=(300, -1), style = wx.RB_GROUP)
-        self.radio_periode = wx.RadioButton(self.panel, -1, _(u"Une période :"))
+        # PÃ©riode
+        self.radio_dates = wx.RadioButton(self.panel, -1, _(u"Dates sÃ©lectionnÃ©es"), size=(300, -1), style = wx.RB_GROUP)
+        self.radio_periode = wx.RadioButton(self.panel, -1, _(u"Une pÃ©riode :"))
         date_debut, date_fin = self.periode
         self.hyperlink_periode = self.Build_Hyperlink_periode(date_debut, date_fin)
         
         if len(self.listeDates) > 0 :
             self.radio_dates.SetValue(True)
             if len(self.listeDates) == 1 :
-                self.radio_dates.SetLabel(_(u"La date sélectionnée dans le planning"))
+                self.radio_dates.SetLabel(_(u"La date sÃ©lectionnÃ©e dans le planning"))
             else:
-                self.radio_dates.SetLabel(_(u"Les %d dates sélectionnées dans le planning") % len(self.listeDates))
+                self.radio_dates.SetLabel(_(u"Les %d dates sÃ©lectionnÃ©es dans le planning") % len(self.listeDates))
             self.hyperlink_periode.Enable(False)
         else:
             self.radio_periode.SetValue(True)
@@ -530,18 +530,18 @@ class Dialog(wx.Dialog):
         # Choix graph
         self.label_choix_graph = wx.StaticText(self.panel, -1, _(u"Graphe :"))
         self.ctrl_choix_graph = wx.Choice(self.panel, -1, size=(490, -1), choices = [
-            _(u"1. Répartition des heures par personne et par catégorie (Histogramme)"), 
-            _(u"2. Répartition des heures par personne et par catégorie (Histogramme + tableau de données)"), 
-            _(u"3. Répartition des heures par personne et par catégorie (Histogramme polaire)"), 
-            _(u"4. Répartition des heures par personne et par catégorie (Secteurs)"), 
-            _(u"5. Evolution annuelle du total des heures des personnes sélectionnées (Courbes)"), 
-            _(u"6. Evolution annuelle des heures des personnes sélectionnées par catégorie (Courbes)"), 
+            _(u"1. RÃ©partition des heures par personne et par catÃ©gorie (Histogramme)"), 
+            _(u"2. RÃ©partition des heures par personne et par catÃ©gorie (Histogramme + tableau de donnÃ©es)"), 
+            _(u"3. RÃ©partition des heures par personne et par catÃ©gorie (Histogramme polaire)"), 
+            _(u"4. RÃ©partition des heures par personne et par catÃ©gorie (Secteurs)"), 
+            _(u"5. Evolution annuelle du total des heures des personnes sÃ©lectionnÃ©es (Courbes)"), 
+            _(u"6. Evolution annuelle des heures des personnes sÃ©lectionnÃ©es par catÃ©gorie (Courbes)"), 
             ])
         self.ctrl_choix_graph.SetSelection(0)
         
-        # Choix affichage détail
-        self.label_detail = wx.StaticText(self.panel, -1, _(u"Détail :"))
-        self.ctrl_detail = wx.Choice(self.panel, -1, choices = [_(u"Aucun"), _(u"Jour"), _(u"Mois"), _(u"Année")])
+        # Choix affichage dÃ©tail
+        self.label_detail = wx.StaticText(self.panel, -1, _(u"DÃ©tail :"))
+        self.ctrl_detail = wx.Choice(self.panel, -1, choices = [_(u"Aucun"), _(u"Jour"), _(u"Mois"), _(u"AnnÃ©e")])
         self.ctrl_detail.SetSelection(0)
         
         # Choix Groupement
@@ -550,9 +550,9 @@ class Dialog(wx.Dialog):
         self.ctrl_groupement.SetSelection(0)
         self.ctrl_groupement.Enable(False)
         
-        # Choix affichage heure/décimal
+        # Choix affichage heure/dÃ©cimal
         self.label_modeHeure = wx.StaticText(self.panel, -1, _(u"Mode minutes :"))
-        self.ctrl_modeHeure = wx.Choice(self.panel, -1, choices = [_(u"Normal"), _(u"Décimal")])
+        self.ctrl_modeHeure = wx.Choice(self.panel, -1, choices = [_(u"Normal"), _(u"DÃ©cimal")])
         self.ctrl_modeHeure.SetSelection(0)
         
         # Personnes
@@ -617,7 +617,7 @@ class Dialog(wx.Dialog):
         self.SetIcon(_icon)
         self.bouton_aide.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour obtenir de l'aide")))
         self.bouton_fermer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour fermer")))
-        self.bouton_excel.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour exporter les données des statistiques au format Excel")))
+        self.bouton_excel.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour exporter les donnÃ©es des statistiques au format Excel")))
         self.bouton_save_image.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour enregistrer le graphe au format image")))
         self.bouton_clipboard_image.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour envoyer le graphe dans le presse-papiers")))
         self.bouton_imprimer_image.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour publier le graphe au format PDF")))
@@ -638,7 +638,7 @@ class Dialog(wx.Dialog):
         sizerStaticBox_mode.Add(self.bouton_mode_graph, 1, wx.EXPAND|wx.ALL, 5)
         grid_sizer_haut_gauche.Add(sizerStaticBox_mode, 1, wx.EXPAND|wx.ALL, 0)
                 
-        # Période
+        # PÃ©riode
         sizerStaticBox_periode = wx.StaticBoxSizer(self.staticbox_periode, wx.VERTICAL)
         grid_sizer_periode1 = wx.FlexGridSizer(rows=1, cols=3, vgap=0, hgap=0)
         grid_sizer_periode1.Add(self.radio_dates, 0, wx.ALIGN_CENTER_VERTICAL, 0)
@@ -750,13 +750,13 @@ class Dialog(wx.Dialog):
         hyper.EnableRollover(True)
         hyper.SetUnderlines(False, False, True)
         hyper.SetBold(False)
-        hyper.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour sélectionner une autre période")))
+        hyper.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour sÃ©lectionner une autre pÃ©riode")))
         hyper.UpdateLink()
         hyper.DoPopup(False)
         return hyper
         
     def OnLeftLink_periode(self, event):
-        """ Sélectionner les personnes présentes sur une période donnée """
+        """ SÃ©lectionner les personnes prÃ©sentes sur une pÃ©riode donnÃ©e """
         dlg = DLG_Selection_periode.SelectionPeriode(self)
         if dlg.ShowModal() == wx.ID_OK:
             date_min, date_max = dlg.GetDates()
@@ -776,59 +776,59 @@ class Dialog(wx.Dialog):
     def Build_Hyperlink_select_all(self) :
         """ Construit un hyperlien """
         self.SetFont(wx.Font(8, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, 'Arial'))
-        hyper = hl.HyperLinkCtrl(self.panel, -1, _(u"Tout sélect."), URL="")
+        hyper = hl.HyperLinkCtrl(self.panel, -1, _(u"Tout sÃ©lect."), URL="")
         hyper.Bind(hl.EVT_HYPERLINK_LEFT, self.OnLeftLink_select_all)
         hyper.AutoBrowse(False)
         hyper.SetColours("BLUE", "BLUE", "RED")
         hyper.EnableRollover(True)
         hyper.SetUnderlines(False, False, True)
         hyper.SetBold(False)
-        hyper.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour sélectionner toutes les personnes de la liste")))
+        hyper.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour sÃ©lectionner toutes les personnes de la liste")))
         hyper.UpdateLink()
         hyper.DoPopup(False)
         return hyper
         
     def OnLeftLink_select_all(self, event):
-        """ Sélectionner toutes les personnes de la liste """
+        """ SÃ©lectionner toutes les personnes de la liste """
         self.ctrl_personnes.SelectAll()
 
     def Build_Hyperlink_deselect_all(self) :
         """ Construit un hyperlien """
         self.SetFont(wx.Font(8, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, 'Arial'))
-        hyper = hl.HyperLinkCtrl(self.panel, -1, _(u"Tout désélect."), URL="")
+        hyper = hl.HyperLinkCtrl(self.panel, -1, _(u"Tout dÃ©sÃ©lect."), URL="")
         hyper.Bind(hl.EVT_HYPERLINK_LEFT, self.OnLeftLink_deselect_all)
         hyper.AutoBrowse(False)
         hyper.SetColours("BLUE", "BLUE", "RED")
         hyper.EnableRollover(True)
         hyper.SetUnderlines(False, False, True)
         hyper.SetBold(False)
-        hyper.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour désélectionner toutes les personnes de la liste")))
+        hyper.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour dÃ©sÃ©lectionner toutes les personnes de la liste")))
         hyper.UpdateLink()
         hyper.DoPopup(False)
         return hyper
         
     def OnLeftLink_deselect_all(self, event):
-        """ Désélectionner toutes les personnes de la liste """
+        """ DÃ©sÃ©lectionner toutes les personnes de la liste """
         self.ctrl_personnes.DeselectAll()
         
 
     def Build_Hyperlink_presents(self) :
         """ Construit un hyperlien """
         self.SetFont(wx.Font(8, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, 'Arial'))
-        hyper = hl.HyperLinkCtrl(self.panel, -1, _(u"Sélectionner les présents"), URL="")
+        hyper = hl.HyperLinkCtrl(self.panel, -1, _(u"SÃ©lectionner les prÃ©sents"), URL="")
         hyper.Bind(hl.EVT_HYPERLINK_LEFT, self.OnLeftLink_presents)
         hyper.AutoBrowse(False)
         hyper.SetColours("BLUE", "BLUE", "RED")
         hyper.EnableRollover(True)
         hyper.SetUnderlines(False, False, True)
         hyper.SetBold(False)
-        hyper.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour sélectionner uniquement les personnes présentes sur la période")))
+        hyper.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour sÃ©lectionner uniquement les personnes prÃ©sentes sur la pÃ©riode")))
         hyper.UpdateLink()
         hyper.DoPopup(False)
         return hyper
         
     def OnLeftLink_presents(self, event):
-        """ Désélectionner toutes les personnes présentes """
+        """ DÃ©sÃ©lectionner toutes les personnes prÃ©sentes """
         self.ctrl_personnes.GetPresents()
         
     def OnBoutonModeTableau(self, event):
@@ -939,7 +939,7 @@ class Dialog(wx.Dialog):
         return listePersonnes, dictPersonnes
                 
     def SetDatePicker(self, controle, date) :
-        """ Met une date au format datetime dans un datePicker donné """
+        """ Met une date au format datetime dans un datePicker donnÃ© """
         annee = int(date.year)
         mois = int(date.month)-1
         jour = int(date.day)
@@ -965,7 +965,7 @@ class Dialog(wx.Dialog):
         return IDpersonne
 
     def SetPersonne(self, IDpersonne=None):
-        """ Sélectionne une personne à partir de son ID dans la liste des personnes """
+        """ SÃ©lectionne une personne Ã  partir de son ID dans la liste des personnes """
         if IDpersonne == None : return
         for index, valeurs in self.dictPersonnes.items() :
             ID = valeurs[0]
@@ -993,7 +993,7 @@ class Dialog(wx.Dialog):
         # -----------------------------------------------------------------------------------------------------
         
         def CreationGraph() :
-            # Création du graph
+            # CrÃ©ation du graph
             rows = len(data)
             ind = arange(len(colLabels)) + 0.3  # the x locations for the groups
             cellText = []
@@ -1005,7 +1005,7 @@ class Dialog(wx.Dialog):
                 yoff = yoff + data[row]
     ##            cellText.append(['%1.1f' % (x/1000.0) for x in yoff])
 
-            # Création du tableau de valeurs sous le graph
+            # CrÃ©ation du tableau de valeurs sous le graph
             if afficheTableau == True :
                 listeCouleurs.reverse()
                 data.reverse()
@@ -1022,7 +1022,7 @@ class Dialog(wx.Dialog):
                 labels = ax.get_xticklabels()
                 plt.setp(labels, rotation=45, fontsize=9, horizontalalignment='right')
             
-            # Légende, titre et axes
+            # LÃ©gende, titre et axes
             ax.set_ylabel("Heures")
             labels = ax.get_yticklabels()
             plt.setp(labels, rotation=0, fontsize=9)        
@@ -1053,7 +1053,7 @@ class Dialog(wx.Dialog):
         listeCouleurs = []
         nbreGraphs = 1
         
-        # Mode : Sans détail
+        # Mode : Sans dÃ©tail
         if self.ctrl_detail.GetSelection() == 0 :
                 
             for IDcategorie in listeCategories :
@@ -1083,10 +1083,10 @@ class Dialog(wx.Dialog):
                     
                 data.append(dataTemp)
             
-            titreGraph = _(u"Répartition des heures par personne et par catégorie")
+            titreGraph = _(u"RÃ©partition des heures par personne et par catÃ©gorie")
             
         
-        # Mode : Avec détail et Groupement par période :
+        # Mode : Avec dÃ©tail et Groupement par pÃ©riode :
         if self.ctrl_detail.GetSelection() > 0 and self.ctrl_groupement.GetSelection() == 0 :
             
             listeGroupes = list(dictDetails.keys())
@@ -1099,7 +1099,7 @@ class Dialog(wx.Dialog):
             else:
                 valQuadrillage = int(racine)
             
-            # Création du graph
+            # CrÃ©ation du graph
             fig = plt.figure()
             
             index = 1
@@ -1152,7 +1152,7 @@ class Dialog(wx.Dialog):
 ##        else:
 ##            valQuadrillage = int(racine)
 ##        
-##        # Création du graph
+##        # CrÃ©ation du graph
 ##        fig = plt.figure()
 ##        
 ##        # Espaces autour du graph pour afficher le tableau correctement
@@ -1169,7 +1169,7 @@ class Dialog(wx.Dialog):
 
     def OnBoutonExcel(self, event):
         if "linux" in sys.platform :
-            dlg = wx.MessageDialog(self, _(u"Désolé, cette fonction n'est pas disponible sous Linux."), _(u"Fonction indisponible"), wx.OK | wx.ICON_ERROR)
+            dlg = wx.MessageDialog(self, _(u"DÃ©solÃ©, cette fonction n'est pas disponible sous Linux."), _(u"Fonction indisponible"), wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -1184,7 +1184,7 @@ class Dialog(wx.Dialog):
     def OnBoutonImprimerImage(self, event):
         # Enregistrement de l'image dans repertoire Temp
         self.ctrl_graph.Save_image_temp()
-        # Création du PDF
+        # CrÃ©ation du PDF
         from reportlab.pdfgen import canvas as canvasPDF
         from reportlab.lib.pagesizes import A4
         hauteur, largeur = A4
@@ -1196,7 +1196,7 @@ class Dialog(wx.Dialog):
         FonctionsPerso.LanceFichierExterne(cheminFichier)
 
     def OnBoutonImprimerTableau(self, event):
-        """ Impression tableau de données """
+        """ Impression tableau de donnÃ©es """
         avecCouleurs = True
         
         from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
@@ -1211,7 +1211,7 @@ class Dialog(wx.Dialog):
         doc = SimpleDocTemplate(nomDoc, pagesize=(largeur, hauteur), leftMargin=tailleMarge, rightMargin=tailleMarge, topMargin=tailleMarge, bottomMargin=tailleMarge, )
         story = []
         
-        # Récupération des données du tableau
+        # RÃ©cupÃ©ration des donnÃ©es du tableau
         tableau = self.ctrl_tableau
         nbreColonnes = tableau.GetNumberCols()
         nbreLignes = tableau.GetNumberRows()
@@ -1220,7 +1220,7 @@ class Dialog(wx.Dialog):
         dataTableau = []
         listeCouleurs = []
         
-        # Création des colonnes
+        # CrÃ©ation des colonnes
         largeursColonnes = []
         largeurColonne = 55
         largeurColonneLabel = 140
@@ -1229,15 +1229,15 @@ class Dialog(wx.Dialog):
             else: largeursColonnes.append(largeurColonne)
         
         listeStyles = [
-                            ('GRID', (0,0), (-1,-1), 0.25, colors.black), # Crée la bordure noire pour tout le tableau
+                            ('GRID', (0,0), (-1,-1), 0.25, colors.black), # CrÃ©e la bordure noire pour tout le tableau
                             ('VALIGN', (0, 0), (-1,-1), 'MIDDLE'), # Centre verticalement toutes les cases
                             ('ALIGN', (0, 0), (-1, 0), 'CENTRE'), # Centre les labels de colonne
-                            ('ALIGN', (1, 1), (-1,- 1), 'RIGHT'), # Valeurs à gauche
-                            ('ALIGN', (0, 1), (0, -1), 'CENTRE'), # Colonne Label Ligne centrée
+                            ('ALIGN', (1, 1), (-1,- 1), 'RIGHT'), # Valeurs Ã  gauche
+                            ('ALIGN', (0, 1), (0, -1), 'CENTRE'), # Colonne Label Ligne centrÃ©e
                             ('FONT',(0, 0),(-1,-1), "Helvetica", 8), # Donne la police de caract. + taille de police de la ligne de total
                             ]
                             
-        # Création des lignes
+        # CrÃ©ation des lignes
         for numLigne in range(0, nbreLignes) :
             valeursLigne = []
             for numCol in range(0, nbreColonnes) :
@@ -1254,7 +1254,7 @@ class Dialog(wx.Dialog):
         # Style du tableau
         style = TableStyle(listeStyles)
         
-        # Création du tableau
+        # CrÃ©ation du tableau
         tableau = Table(dataTableau, largeursColonnes,  hAlign='LEFT')
         tableau.setStyle(style)
         story.append(tableau)
@@ -1292,10 +1292,10 @@ class Tableau(gridlib.Grid):
         self.moveTo = None
         self.Bind(wx.EVT_IDLE, self.OnIdle)
         
-        # Importation des catégories de présences
+        # Importation des catÃ©gories de prÃ©sences
         self.dictCategories = self.Importation_categories()
         
-        # Création Grid
+        # CrÃ©ation Grid
         self.CreateGrid(0, 0)
         
         # Init Tableau
@@ -1356,11 +1356,11 @@ class Tableau(gridlib.Grid):
         listeCategories = []
         
         for IDpresence, IDpersonne, IDcategorie, date, heure_debut, heure_fin in listePresences :
-            # liste des personnes présentes
+            # liste des personnes prÃ©sentes
             if IDpersonne not in listePersonnes : listePersonnes.append(IDpersonne)
-            # liste des catégories
+            # liste des catÃ©gories
             if IDcategorie not in listeCategories : listeCategories.append(IDcategorie)
-            # dict des présences
+            # dict des prÃ©sences
             listePresences = (IDpresence, IDcategorie, date, heure_debut, heure_fin)
             if IDpersonne in dictPresences :
                 dictPresences[IDpersonne].append(listePresences)
@@ -1371,7 +1371,7 @@ class Tableau(gridlib.Grid):
         
 
     def OperationHeures(self, heureA=None, heureB=None, operation="addition"):
-        # Préparation heure A
+        # PrÃ©paration heure A
         if heureA == None :
             totalMinutesA = 0
         else:
@@ -1380,7 +1380,7 @@ class Tableau(gridlib.Grid):
             hrA, mnA = int(hrA), int(mnA)
             totalMinutesA = (hrA*60) + mnA
             if signeA == "-" : totalMinutesA = -totalMinutesA
-        # Préparation heure B
+        # PrÃ©paration heure B
         if heureB == None :
             totalMinutesB = 0
         else:
@@ -1389,10 +1389,10 @@ class Tableau(gridlib.Grid):
             hrB, mnB = int(float(hrB)), int(float(mnB))
             totalMinutesB = (hrB*60) + mnB
             if signeB == "-" : totalMinutesB = -totalMinutesB
-        # Opération
+        # OpÃ©ration
         if operation == "addition" : totalMinutes = totalMinutesA + totalMinutesB
         if operation == "soustraction" : totalMinutes = totalMinutesA - totalMinutesB
-        # Formatage du résultat
+        # Formatage du rÃ©sultat
         if totalMinutes >= 0 :
             nbreHeures = totalMinutes//60
             nbreMinutes = totalMinutes-(nbreHeures*60)
@@ -1405,7 +1405,7 @@ class Tableau(gridlib.Grid):
         return duree
     
     def InitDonnees(self, mode_detail):
-        # Récupération des dates ou périodes
+        # RÃ©cupÃ©ration des dates ou pÃ©riodes
         self.listeDates = self.parent.listeDates
         self.periode = self.parent.periode
         if self.parent.radio_dates.GetValue() == True :
@@ -1413,17 +1413,17 @@ class Tableau(gridlib.Grid):
         else:
             self.modePeriode = "periode"
         
-        # Récupération des options
+        # RÃ©cupÃ©ration des options
         self.mode_groupement = self.parent.ctrl_groupement.GetSelection()
         self.mode_heure = self.parent.ctrl_modeHeure.GetSelection()
         
-        # Récupération de la liste des personnes
+        # RÃ©cupÃ©ration de la liste des personnes
         self.listePersonnes = self.parent.ctrl_personnes.GetSelections()
 
         # Importation
         self.listePersonnesPresentes, self.listeCategories, dictPresences = self.GetPresences()
 
-        # Création des lignes
+        # CrÃ©ation des lignes
         dictLignes = {}
         dictColonnes = {}
         dictDetails = {}
@@ -1436,7 +1436,7 @@ class Tableau(gridlib.Grid):
             dictLignes[IDpersonne]["labelsDetails"] = []
             
             if IDpersonne not in self.listePersonnesPresentes :
-                # Si pas de présence pour la personne :
+                # Si pas de prÃ©sence pour la personne :
                 dictLignes[IDpersonne]["total"] = {}
                 dictLignes[IDpersonne]["total"]["total"] = "+00:00"
                     
@@ -1447,7 +1447,7 @@ class Tableau(gridlib.Grid):
                     dateDD = DateEngEnDateDD(date)
                     duree = self.OperationHeures("+" + heure_fin, "+" + heure_debut, "soustraction")
                     
-                    # Création de la ligne de groupe
+                    # CrÃ©ation de la ligne de groupe
                     codeLigne = "total"
                     if (codeLigne in dictLignes[IDpersonne]) == False :
                         dictLignes[IDpersonne][codeLigne] = {}
@@ -1457,16 +1457,16 @@ class Tableau(gridlib.Grid):
                     else:
                         dictLignes[IDpersonne][codeLigne][IDcategorie] = duree
                     
-                    # Création du total de la ligne de total
+                    # CrÃ©ation du total de la ligne de total
                     if ("total" in dictLignes[IDpersonne][codeLigne]) == False :
                         dictLignes[IDpersonne][codeLigne]["total"] = duree
                     else:
                         dictLignes[IDpersonne][codeLigne]["total"] = self.OperationHeures(dictLignes[IDpersonne][codeLigne]["total"], duree, "addition")
                     
-                    # Création des lignes de détail
-                    if mode_detail == 1 : codeLigne = str(dateDD) # Détail par jour
-                    if mode_detail == 2 : codeLigne = "%d-%02d" % (dateDD.year, dateDD.month) # Détail par mois
-                    if mode_detail == 3 : codeLigne = str(dateDD.year) # Détail par année
+                    # CrÃ©ation des lignes de dÃ©tail
+                    if mode_detail == 1 : codeLigne = str(dateDD) # DÃ©tail par jour
+                    if mode_detail == 2 : codeLigne = "%d-%02d" % (dateDD.year, dateDD.month) # DÃ©tail par mois
+                    if mode_detail == 3 : codeLigne = str(dateDD.year) # DÃ©tail par annÃ©e
                     if mode_detail > 0 :
                         if (codeLigne in dictLignes[IDpersonne]) == False :
                             dictLignes[IDpersonne][codeLigne] = {}
@@ -1478,13 +1478,13 @@ class Tableau(gridlib.Grid):
                             dictLignes[IDpersonne]["labelsDetails"].append(codeLigne)
                             nbreLabelsDetails += 1
                     
-                        # Création du total de la ligne de détail
+                        # CrÃ©ation du total de la ligne de dÃ©tail
                         if ("total" in dictLignes[IDpersonne][codeLigne]) == False :
                             dictLignes[IDpersonne][codeLigne]["total"] = duree
                         else:
                             dictLignes[IDpersonne][codeLigne]["total"] = self.OperationHeures(dictLignes[IDpersonne][codeLigne]["total"], duree, "addition")
                         
-                        # Pour le groupement par détail :
+                        # Pour le groupement par dÃ©tail :
                         if (codeLigne in dictDetails) == False :
                             dictDetails[codeLigne] = {}
                             dictDetails[codeLigne]["listePersonnes"] = [IDpersonne,]
@@ -1498,7 +1498,7 @@ class Tableau(gridlib.Grid):
                         else:
                             dictDetails[codeLigne][IDcategorie] = duree
                             
-                    # Création du total de la colonne
+                    # CrÃ©ation du total de la colonne
                     if (IDcategorie in dictColonnes) == False :
                         dictColonnes[IDcategorie] = { "total" : duree }
                     else:
@@ -1521,7 +1521,7 @@ class Tableau(gridlib.Grid):
         mode_detail = self.parent.ctrl_detail.GetSelection()
         self.InitDonnees(mode_detail)
 
-        # Création de la grille
+        # CrÃ©ation de la grille
         if self.mode_groupement == 0 :
             # Mode personnes
             if mode_detail == 0 :
@@ -1548,10 +1548,10 @@ class Tableau(gridlib.Grid):
         nbreColonnes = len(self.listeCategories) + 2 
 
         if self.GetNumberRows() == 0 : 
-            # Création des lignes du tableau
+            # CrÃ©ation des lignes du tableau
             self.AppendRows(nbreLignes)
         if self.GetNumberCols() == 0 : 
-            # Création des colonnes du tableau
+            # CrÃ©ation des colonnes du tableau
             self.AppendCols(nbreColonnes)
             
         self.SetColSize(0, 170)
@@ -1604,15 +1604,15 @@ class Tableau(gridlib.Grid):
                 
                 if mode_detail == 0 :
                     
-                    # >>>>>>  Pas de détail
+                    # >>>>>>  Pas de dÃ©tail
                     
-                    # Création de la ligne de groupe
+                    # CrÃ©ation de la ligne de groupe
                     self.SetCellValue(indexLigne, 0, nomPersonne)
                     self.SetCellAlignment(indexLigne, 0, wx.ALIGN_CENTRE, wx.ALIGN_CENTRE)
                     self.SetReadOnly(indexLigne, 0, True)
                     self.SetRowSize(indexLigne, 30)
                     
-                    # Remplissage des totaux de catégories pour chaque personne
+                    # Remplissage des totaux de catÃ©gories pour chaque personne
                     indexColonne = 1
                     for IDcategorie in self.listeCategories :
                         self.SetCellAlignment(indexLigne, indexColonne, wx.ALIGN_RIGHT, wx.ALIGN_CENTRE)
@@ -1633,9 +1633,9 @@ class Tableau(gridlib.Grid):
                 
                 else:
                     
-                    # >>>>>>  Avec détail
+                    # >>>>>>  Avec dÃ©tail
                     
-                    # Création de la ligne de groupe
+                    # CrÃ©ation de la ligne de groupe
                     self.SetCellValue(indexLigne, 0, nomPersonne)
                     self.SetRowSize(indexLigne, 8)
                     self.SetCellAlignment(indexLigne, 0, wx.ALIGN_CENTRE, wx.ALIGN_CENTRE)
@@ -1648,7 +1648,7 @@ class Tableau(gridlib.Grid):
                         self.SetCellBackgroundColour(indexLigne, x, couleur_fond_groupe)
                         self.SetReadOnly(indexLigne, x, True)
                     
-                    # Création de la ligne de total de groupe
+                    # CrÃ©ation de la ligne de total de groupe
                     indexLigneTotal = indexLigne + len(listeCodesDetails) + 1
 
                     self.SetCellValue(indexLigneTotal, 0, "Total")
@@ -1657,7 +1657,7 @@ class Tableau(gridlib.Grid):
                     self.SetRowSize(indexLigneTotal, 30)
                     
                     
-                    # Remplissage des totaux de catégories pour chaque personne
+                    # Remplissage des totaux de catÃ©gories pour chaque personne
                     indexColonne = 1
                     for IDcategorie in self.listeCategories :
                         self.SetCellAlignment(indexLigneTotal, indexColonne, wx.ALIGN_RIGHT, wx.ALIGN_CENTRE)
@@ -1678,19 +1678,19 @@ class Tableau(gridlib.Grid):
                     font = wx.Font(8, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, 'Arial')
                     self.SetCellFont(indexLigneTotal, indexColonne, font) 
                 
-                # Création du détail
+                # CrÃ©ation du dÃ©tail
                 if mode_detail > 0 :
                     indexLigne += 1
                     
                 for codeLigne in listeCodesDetails :
                     
-                    # Entete de ligne détail
+                    # Entete de ligne dÃ©tail
                     self.SetCellValue(indexLigne, 0, self.FormateLabelDetail(codeLigne))
                     self.SetCellAlignment(indexLigne, 0, wx.ALIGN_CENTRE, wx.ALIGN_CENTRE)
                     self.SetReadOnly(indexLigne, 0, True)
                     self.SetRowSize(indexLigne, 30)
                     
-                    # Valeurs de chaque catégorie
+                    # Valeurs de chaque catÃ©gorie
                     indexColonne = 1
                     for IDcategorie in self.listeCategories :
                         self.SetCellAlignment(indexLigne, indexColonne, wx.ALIGN_RIGHT, wx.ALIGN_CENTRE)
@@ -1717,14 +1717,14 @@ class Tableau(gridlib.Grid):
        
         else:
             
-            # Test de groupement par détail : <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+            # Test de groupement par dÃ©tail : <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
             listeDetails = list(self.dictDetails.keys())
             listeDetails.sort()
             
 ##            print "-------------------------------------------------------------------------------------"
 ##            print "listeDetails:", listeDetails
 ##            for codeDetail in listeDetails :
-##                print "Code détail : ", codeDetail, " -> ", self.dictDetails[codeDetail]
+##                print "Code dÃ©tail : ", codeDetail, " -> ", self.dictDetails[codeDetail]
 ##                listePersonnes = self.dictDetails[codeDetail]["listePersonnes"]
 ##                for IDpersonne in listePersonnes :
 ##                    print "    IDpersonne=", IDpersonne, "| donnees =", self.dictLignes[IDpersonne][codeDetail]
@@ -1737,15 +1737,15 @@ class Tableau(gridlib.Grid):
 
                 if mode_detail == 0 :
                     
-                    # >>>>>>  Pas de détail
+                    # >>>>>>  Pas de dÃ©tail
                     
-                    # Création de la ligne de groupe
+                    # CrÃ©ation de la ligne de groupe
                     self.SetCellValue(indexLigne, 0, self.FormateLabelDetail(codeDetail))
                     self.SetCellAlignment(indexLigne, 0, wx.ALIGN_CENTRE, wx.ALIGN_CENTRE)
                     self.SetReadOnly(indexLigne, 0, True)
                     self.SetRowSize(indexLigne, 30)
                     
-                    # Remplissage des totaux de catégories pour chaque personne
+                    # Remplissage des totaux de catÃ©gories pour chaque personne
                     indexColonne = 1
                     for IDcategorie in self.listeCategories :
                         self.SetCellAlignment(indexLigne, indexColonne, wx.ALIGN_RIGHT, wx.ALIGN_CENTRE)
@@ -1768,9 +1768,9 @@ class Tableau(gridlib.Grid):
                 
                 else:
                     
-                    # >>>>>>  Avec détail
+                    # >>>>>>  Avec dÃ©tail
                     
-                    # Création de la ligne de groupe
+                    # CrÃ©ation de la ligne de groupe
                     self.SetCellValue(indexLigne, 0, self.FormateLabelDetail(codeDetail))
                     self.SetRowSize(indexLigne, 8)
                     self.SetCellAlignment(indexLigne, 0, wx.ALIGN_CENTRE, wx.ALIGN_CENTRE)
@@ -1783,7 +1783,7 @@ class Tableau(gridlib.Grid):
                         self.SetCellBackgroundColour(indexLigne, x, couleur_fond_groupe)
                         self.SetReadOnly(indexLigne, x, True)
                     
-                    # Création de la ligne de total de groupe
+                    # CrÃ©ation de la ligne de total de groupe
                     indexLigneTotal = indexLigne + len(listePersonnes) + 1
                     
                     self.SetCellValue(indexLigneTotal, 0, "Total")
@@ -1791,7 +1791,7 @@ class Tableau(gridlib.Grid):
                     self.SetReadOnly(indexLigneTotal, 0, True)
                     self.SetRowSize(indexLigneTotal, 30)
                     
-                    # Remplissage des totaux de catégories pour chaque personne
+                    # Remplissage des totaux de catÃ©gories pour chaque personne
                     indexColonne = 1
                     totalLigne = "+00:00"
                     for IDcategorie in self.listeCategories :
@@ -1814,7 +1814,7 @@ class Tableau(gridlib.Grid):
                     font = wx.Font(8, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, 'Arial')
                     self.SetCellFont(indexLigneTotal, indexColonne, font) 
                     
-                # Création du détail
+                # CrÃ©ation du dÃ©tail
                 if mode_detail > 0 :
                     indexLigne += 1
                 
@@ -1828,13 +1828,13 @@ class Tableau(gridlib.Grid):
                 
                 for nomPersonne, IDpersonne in listeNomsPersonnes :
                     
-                    # Entete de ligne détail
+                    # Entete de ligne dÃ©tail
                     self.SetCellValue(indexLigne, 0, nomPersonne)
                     self.SetCellAlignment(indexLigne, 0, wx.ALIGN_CENTRE, wx.ALIGN_CENTRE)
                     self.SetReadOnly(indexLigne, 0, True)
                     self.SetRowSize(indexLigne, 30)
                     
-                    # Valeurs de chaque catégorie
+                    # Valeurs de chaque catÃ©gorie
                     indexColonne = 1
                     for IDcategorie in self.listeCategories :
                         self.SetCellAlignment(indexLigne, indexColonne, wx.ALIGN_RIGHT, wx.ALIGN_CENTRE)
@@ -1864,17 +1864,17 @@ class Tableau(gridlib.Grid):
         # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         
         
-        # Création du total de chaque colonne
+        # CrÃ©ation du total de chaque colonne
         
-        # Création de la ligne de groupe
+        # CrÃ©ation de la ligne de groupe
         if mode_detail == 0 :
-            # >>>> Sans détail
+            # >>>> Sans dÃ©tail
             self.SetCellValue(indexLigne, 0, "Total")
             self.SetCellAlignment(indexLigne, 0, wx.ALIGN_CENTRE, wx.ALIGN_CENTRE)
             self.SetReadOnly(indexLigne, 0, True)
             self.SetRowSize(indexLigne, 30)
         else:
-            # >>>> Avec détail
+            # >>>> Avec dÃ©tail
             self.SetCellValue(indexLigne, 0, "Total")
             self.SetRowSize(indexLigne, 8)
             self.SetCellAlignment(indexLigne, 0, wx.ALIGN_CENTRE, wx.ALIGN_CENTRE)
@@ -1932,7 +1932,7 @@ class Tableau(gridlib.Grid):
             # Mode Heure
             texte = _(u"%s%sh%s") % (signe, hr, mn)
         else:
-            # Mode décimal
+            # Mode dÃ©cimal
             minDecimal = int(mn)*100//60
             texte = u"%s%s.%s" % (signe, hr, minDecimal)
         return texte
@@ -1941,7 +1941,7 @@ class Tableau(gridlib.Grid):
         # Formate noms de mois :
         if len(label) == 6 or len(label) == 7 :
             numAnnee, numMois = label.split("-")
-            listeMois = ("Janvier", _(u"Février"), "Mars", "Avril", "Mai", "Juin", "Juillet", _(u"Août"), "Septembre", "Octobre", "Novembre", _(u"Décembre"))
+            listeMois = ("Janvier", _(u"FÃ©vrier"), "Mars", "Avril", "Mai", "Juin", "Juillet", _(u"AoÃ»t"), "Septembre", "Octobre", "Novembre", _(u"DÃ©cembre"))
             texte = u"%s %s" % (listeMois[int(numMois)-1], numAnnee)
             return texte
         
@@ -1952,7 +1952,7 @@ class Tableau(gridlib.Grid):
             return dateStrFr
         
         else :
-            # Année
+            # AnnÃ©e
             return label
         
 
@@ -2011,7 +2011,7 @@ class listCtrl_Personnes(wx.ListCtrl, CheckListCtrlMixin):
 
     def Remplissage(self):
         self.ClearAll()
-        # Création des colonnes
+        # CrÃ©ation des colonnes
         self.InsertColumn(0, "Individus")
 
         # Remplissage avec les valeurs
@@ -2022,7 +2022,7 @@ class listCtrl_Personnes(wx.ListCtrl, CheckListCtrlMixin):
             else:
                 index = self.InsertItem(self.GetItemCount(), valeurs[0] + " " + valeurs[1])
             self.SetItemData(index, key)
-            # Sélection
+            # SÃ©lection
             if key in self.listePersonnes :
                 self.CheckItem(index)
                     
@@ -2071,7 +2071,7 @@ class listCtrl_Personnes(wx.ListCtrl, CheckListCtrlMixin):
         # Transformation de la liste en dict
         dictPersonnes = {}
         for personne in listeDonnees :
-            dictPersonnes[personne[0]] = [personne[1], personne[2]] # Nom, prénom
+            dictPersonnes[personne[0]] = [personne[1], personne[2]] # Nom, prÃ©nom
         return dictPersonnes
 
     def GetSelections(self):
@@ -2095,8 +2095,8 @@ class listCtrl_Personnes(wx.ListCtrl, CheckListCtrlMixin):
     def GetPresents(self):
         listePresents = self.GetGrandParent().ctrl_tableau.GetPresents()
         if len(listePresents) == 0 :
-            texte = _(u"Aucune personne n'est présente pour la période donnée.")
-            dlg = wx.MessageDialog(self, texte, _(u"Sélection des présents"), wx.OK|wx.ICON_INFORMATION)  
+            texte = _(u"Aucune personne n'est prÃ©sente pour la pÃ©riode donnÃ©e.")
+            dlg = wx.MessageDialog(self, texte, _(u"SÃ©lection des prÃ©sents"), wx.OK|wx.ICON_INFORMATION)  
             dlg.ShowModal()
             dlg.Destroy()
         else:

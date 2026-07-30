@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -23,14 +23,14 @@ def DateEngEnDateDD(dateEng):
 
 
 class MyDialog(wx.Dialog):
-    """ Sélection d'une période pour un scénario """
+    """ SÃ©lection d'une pÃ©riode pour un scÃ©nario """
     def __init__(self, parent, date_debut=None, date_fin=None):
-        wx.Dialog.__init__(self, parent, id=-1, title=_(u"Sélection d'une période de référence"))
+        wx.Dialog.__init__(self, parent, id=-1, title=_(u"SÃ©lection d'une pÃ©riode de rÃ©fÃ©rence"))
         self.date_debut = date_debut
         self.date_fin = date_fin
 
         # Label
-        self.label = wx.StaticText(self, -1, _(u"Sélectionnez une période :"))
+        self.label = wx.StaticText(self, -1, _(u"SÃ©lectionnez une pÃ©riode :"))
         
         self.staticbox_periode = wx.StaticBox(self, -1, u"")
         
@@ -40,7 +40,7 @@ class MyDialog(wx.Dialog):
         self.radio_4 = wx.RadioButton(self, -1, u"", size=(-1, 20))
         self.radio_5 = wx.RadioButton(self, -1, u"", size=(-1, 20))
         
-        # Période : Début et Fin
+        # PÃ©riode : DÃ©but et Fin
         self.label_date_debut = wx.StaticText(self, -1, u"Du")
         self.ctrl_date_debut = DatePickerCtrl(self, -1, style=DP_DROPDOWN)
         self.label_date_fin = wx.StaticText(self, -1, "au")
@@ -48,20 +48,20 @@ class MyDialog(wx.Dialog):
         self.ctrl_date_debut.Enable(False)
         self.ctrl_date_fin.Enable(False)
         
-        # Période : A partir
+        # PÃ©riode : A partir
         self.label_date_aPartir = wx.StaticText(self, -1, _(u"A partir du"))
         self.ctrl_date_aPartir = DatePickerCtrl(self, -1, style=DP_DROPDOWN)
         self.ctrl_date_aPartir.Enable(False)
         
-        # Période : Jusq'au
+        # PÃ©riode : Jusq'au
         self.label_date_jusque = wx.StaticText(self, -1, _(u"Jusqu'au"))
         self.ctrl_date_jusque = DatePickerCtrl(self, -1, style=DP_DROPDOWN)
         self.ctrl_date_jusque.Enable(False)
         
-        # Période : Tout
+        # PÃ©riode : Tout
         self.label_date_tout= wx.StaticText(self, -1, _(u"Tout"))
         
-        # Période : Rien
+        # PÃ©riode : Rien
         self.label_date_rien= wx.StaticText(self, -1, _(u"Rien"))
         
         # Boutons
@@ -184,7 +184,7 @@ class MyDialog(wx.Dialog):
         
 
     def SetDatePicker(self, controle, date) :
-        """ Met une date au format datetime dans un datePicker donné """
+        """ Met une date au format datetime dans un datePicker donnÃ© """
         annee = int(date.year)
         mois = int(date.month)-1
         jour = int(date.day)
@@ -217,12 +217,12 @@ class MyDialog(wx.Dialog):
         return (date_debut, date_fin)
     
     def OnBoutonOk(self, event):
-        """ Validation des données saisies """
+        """ Validation des donnÃ©es saisies """
         if self.radio_1.GetValue() == True :
             date_debut = self.GetDatePickerValue(self.ctrl_date_debut)
             date_fin = self.GetDatePickerValue(self.ctrl_date_fin)
             if date_debut > date_fin :
-                dlg = wx.MessageDialog(self, _(u"La date de début ne peut pas être supérieure à la date de fin !"), _(u"Erreur de saisie"), wx.OK | wx.ICON_EXCLAMATION)
+                dlg = wx.MessageDialog(self, _(u"La date de dÃ©but ne peut pas Ãªtre supÃ©rieure Ã  la date de fin !"), _(u"Erreur de saisie"), wx.OK | wx.ICON_EXCLAMATION)
                 dlg.ShowModal()
                 dlg.Destroy()
                 return

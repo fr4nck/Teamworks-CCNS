@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #------------------------------------------------------------------------
-# Application :    Noethys, gestion multi-activités
+# Application :    Noethys, gestion multi-activitÃ©s
 # Site internet :  www.noethys.com
 # Auteur:           Ivan LUCAS
 # Copyright:       (c) 2010-12 Ivan LUCAS
@@ -30,7 +30,7 @@ CATEGORIES = [
 MOTSCLES_STANDARDS = [
                 # ( "{UTILISATEUR_NOM_COMPLET}", _(u"Nom complet de l'utilisateur") ),
                 # ( "{UTILISATEUR_NOM}", _(u"Nom de famille de l'utilisateur") ),
-                # ( "{UTILISATEUR_PRENOM}", _(u"Prénom de l'utilisateur") ),
+                # ( "{UTILISATEUR_PRENOM}", _(u"PrÃ©nom de l'utilisateur") ),
                 ( "{DATE_COURTE}", _(u"Date du jour courte") ),
                 ( "{DATE_LONGUE}", _(u"Date du jour longue") ),
                 ]
@@ -41,8 +41,8 @@ MOTSCLES = {
                 ],
     
     # "releve_prestations" : [
-    #             ( "{DATE_EDITION_RELEVE}", _(u"Date de l'édition du relevé") ),
-    #             ( "{RESTE_DU}", _(u"Reste dû indiqué par le relevé") ),
+    #             ( "{DATE_EDITION_RELEVE}", _(u"Date de l'Ã©dition du relevÃ©") ),
+    #             ( "{RESTE_DU}", _(u"Reste dÃ» indiquÃ© par le relevÃ©") ),
     #             ],
 
 }
@@ -126,7 +126,7 @@ class Hyperlien_inserer_modele(Hyperlien):
         self.editeur = editeur
 
     def OnLeftLink(self, event):
-        # Récupération des modèles
+        # RÃ©cupÃ©ration des modÃ¨les
         DB = GestionDB.DB()
         req = """SELECT IDmodele, categorie, nom, description, objet, texte_xml, IDadresse, defaut
         FROM modeles_emails
@@ -135,7 +135,7 @@ class Hyperlien_inserer_modele(Hyperlien):
         DB.ExecuterReq(req)
         listeDonnees = DB.ResultatReq()
         DB.Close()
-        # Création du menu contextuel
+        # CrÃ©ation du menu contextuel
         menuPop = UTILS_Adaptations.Menu()
         id = 10000
         for IDmodele, categorie, nom, description, objet, texte_xml, IDadresse, defaut in self.listeMotscles :
@@ -164,9 +164,9 @@ def DateEngFr(textDate):
     return text
 
 def DateComplete(dateDD):
-    """ Transforme une date DD en date complète : Ex : lundi 15 janvier 2008 """
+    """ Transforme une date DD en date complÃ¨te : Ex : lundi 15 janvier 2008 """
     listeJours = (_(u"Lundi"), _(u"Mardi"), _(u"Mercredi"), _(u"Jeudi"), _(u"Vendredi"), _(u"Samedi"), _(u"Dimanche"))
-    listeMois = (_(u"janvier"), _(u"février"), _(u"mars"), _(u"avril"), _(u"mai"), _(u"juin"), _(u"juillet"), _(u"août"), _(u"septembre"), _(u"octobre"), _(u"novembre"), _(u"décembre"))
+    listeMois = (_(u"janvier"), _(u"fÃ©vrier"), _(u"mars"), _(u"avril"), _(u"mai"), _(u"juin"), _(u"juillet"), _(u"aoÃ»t"), _(u"septembre"), _(u"octobre"), _(u"novembre"), _(u"dÃ©cembre"))
     dateComplete = listeJours[dateDD.weekday()] + " " + str(dateDD.day) + " " + listeMois[dateDD.month-1] + " " + str(dateDD.year)
     return dateComplete
 
@@ -204,7 +204,7 @@ class CTRL_Expediteur(wx.Choice):
         selectionActuelle = self.GetID() 
         self.listeAdresses = []
         self.dictAdresses = {}
-        # Récupération des données
+        # RÃ©cupÃ©ration des donnÃ©es
         DB = GestionDB.DB()        
         req = """SELECT IDadresse, adresse, nom_adresse, motdepasse, smtp, port, defaut, connexionAuthentifiee, startTLS, utilisateur, moteur, parametres
         FROM adresses_mail ORDER BY adresse; """
@@ -252,13 +252,13 @@ class Panel_Expediteur(wx.Panel):
     def __init__(self, parent, size=(-1, -1)):
         wx.Panel.__init__(self, parent, id=-1, size=size, style=wx.TAB_TRAVERSAL)
         
-        # Contrôles
+        # ContrÃ´les
         self.ctrl_exp = CTRL_Expediteur(self)
         self.bouton_exp = self.bouton_exp = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Mecanisme.png"), wx.BITMAP_TYPE_ANY))
         
-        # Propriétés
-        self.ctrl_exp.SetToolTip(wx.ToolTip(_(u"Sélectionnez l'adresse d'expéditeur")))
-        self.bouton_exp.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour accéder à la gestion des adresses d'expédition")))
+        # PropriÃ©tÃ©s
+        self.ctrl_exp.SetToolTip(wx.ToolTip(_(u"SÃ©lectionnez l'adresse d'expÃ©diteur")))
+        self.bouton_exp.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour accÃ©der Ã  la gestion des adresses d'expÃ©dition")))
         
         # Layout
         grid_sizer = wx.FlexGridSizer(rows=1, cols=2, vgap=5, hgap=5)
@@ -317,23 +317,23 @@ class BarreOutils1(wx.ToolBar):
         self.parent = parent
 
         AddTool(self, ID_SAUVEGARDER, "Images/Teamword/sauvegarder.png", label=_(u"Sauvegarder le texte"), handler=self.parent.OnFileSave)
-        AddTool(self, ID_OUVRIR, "Images/Teamword/ouvrir.png", label=_(u"Ouvrir un texte sauvegardé"), handler=self.parent.OnFileOpen)
+        AddTool(self, ID_OUVRIR, "Images/Teamword/ouvrir.png", label=_(u"Ouvrir un texte sauvegardÃ©"), handler=self.parent.OnFileOpen)
         self.AddSeparator()
         AddTool(self, ID_IMPRIMER, "Images/Teamword/imprimer.png", label=_(u"Imprimer ce texte"), handler=self.parent.OnPrint)
-        AddTool(self, ID_APERCU, "Images/Teamword/Apercu.png", label=_(u"Aperçu avant impression de ce texte"), handler=self.parent.OnPreview)
+        AddTool(self, ID_APERCU, "Images/Teamword/Apercu.png", label=_(u"AperÃ§u avant impression de ce texte"), handler=self.parent.OnPreview)
         self.AddSeparator()
-        AddTool(self, ID_ALIGNER_GAUCHE, "Images/Teamword/aligner_gauche.png", kind=wx.ITEM_CHECK, label=_(u"Aligner à gauche"), handler=self.parent.OnAlignLeft, updateUI=self.parent.OnUpdateAlignLeft)
+        AddTool(self, ID_ALIGNER_GAUCHE, "Images/Teamword/aligner_gauche.png", kind=wx.ITEM_CHECK, label=_(u"Aligner Ã  gauche"), handler=self.parent.OnAlignLeft, updateUI=self.parent.OnUpdateAlignLeft)
         AddTool(self, ID_ALIGNER_CENTRE, "Images/Teamword/aligner_centre.png", kind=wx.ITEM_CHECK, label=_(u"Centrer"), handler=self.parent.OnAlignCenter, updateUI=self.parent.OnUpdateAlignCenter)
-        AddTool(self, ID_ALIGNER_DROIT, "Images/Teamword/aligner_droit.png", kind=wx.ITEM_CHECK, label=_(u"Aligner à droite"), handler=self.parent.OnAlignRight, updateUI=self.parent.OnUpdateAlignRight)
+        AddTool(self, ID_ALIGNER_DROIT, "Images/Teamword/aligner_droit.png", kind=wx.ITEM_CHECK, label=_(u"Aligner Ã  droite"), handler=self.parent.OnAlignRight, updateUI=self.parent.OnUpdateAlignRight)
         self.AddSeparator()
         AddTool(self, ID_GRAS, "Images/Teamword/gras.png", kind=wx.ITEM_CHECK, label=_(u"Gras"), handler=self.parent.OnBold, updateUI=self.parent.OnUpdateBold)
         AddTool(self, ID_ITALIQUE, "Images/Teamword/italique.png", kind=wx.ITEM_CHECK, label=_(u"Italique"), handler=self.parent.OnItalic, updateUI=self.parent.OnUpdateItalic)
-        AddTool(self, ID_SOULIGNE, "Images/Teamword/souligne.png", kind=wx.ITEM_CHECK, label=_(u"Souligné"), handler=self.parent.OnUnderline, updateUI=self.parent.OnUpdateUnderline)
+        AddTool(self, ID_SOULIGNE, "Images/Teamword/souligne.png", kind=wx.ITEM_CHECK, label=_(u"SoulignÃ©"), handler=self.parent.OnUnderline, updateUI=self.parent.OnUpdateUnderline)
         self.AddSeparator()
         AddTool(self, ID_COULEUR_POLICE, "Images/Teamword/police_couleur.png", label=_(u"Couleur de la police"), handler=self.parent.OnColour)
         self.AddSeparator()
         AddTool(self, wx.ID_UNDO, "Images/Teamword/annuler.png", label=_(u"Annuler"), handler=self.parent.ForwardEvent, updateUI=self.parent.ForwardEvent)
-        AddTool(self, wx.ID_REDO, "Images/Teamword/repeter.png", label=_(u"Répéter"), handler=self.parent.ForwardEvent, updateUI=self.parent.ForwardEvent)
+        AddTool(self, wx.ID_REDO, "Images/Teamword/repeter.png", label=_(u"RÃ©pÃ©ter"), handler=self.parent.ForwardEvent, updateUI=self.parent.ForwardEvent)
         self.AddSeparator()
         AddTool(self, ID_GOMME, "Images/16x16/Gomme.png", label=_(u"Effacer tout le texte"), handler=self.parent.OnGomme)
 
@@ -361,8 +361,8 @@ class BarreOutils2(wx.ToolBar):
         AddTool(self, ID_INTER_DOUBLE, "Images/Teamword/interligne_double.png", label=_(u"Interligne double"), handler=self.parent.OnLineSpacingDouble)
         
         self.AddSeparator()
-        AddTool(self, ID_URL, "Images/Teamword/url.png", label=_(u"Insérer une url"), handler=self.parent.OnInsererURL)
-        AddTool(self, ID_IMAGE, "Images/Teamword/importer_image.png", label=_(u"Insérer une image"), handler=self.parent.OnImporterImage)
+        AddTool(self, ID_URL, "Images/Teamword/url.png", label=_(u"InsÃ©rer une url"), handler=self.parent.OnInsererURL)
+        AddTool(self, ID_IMAGE, "Images/Teamword/importer_image.png", label=_(u"InsÃ©rer une image"), handler=self.parent.OnImporterImage)
 
         self.SetToolBitmapSize((16, 16))
         self.Realize()
@@ -408,7 +408,7 @@ class CTRL(wx.Panel):
     def __init__(self, parent, size=(-1, -1)):
         wx.Panel.__init__(self, parent, id=-1, size=size, style=wx.TAB_TRAVERSAL)
         
-        # Contrôles
+        # ContrÃ´les
         self.barre_outils1 = BarreOutils1(self)
         self.barre_outils2 = BarreOutils2(self)
         self.AddRTCHandlers()
@@ -429,7 +429,7 @@ class CTRL(wx.Panel):
     def OnFileOpen(self, evt):
         """ Ouvrir un texte """
         wildcard, types = rt.RichTextBuffer.GetExtWildcard(save=False)
-        dlg = wx.FileDialog(self, _(u"Choisissez un fichier à ouvrir"), wildcard=wildcard, style=wx.FD_OPEN)
+        dlg = wx.FileDialog(self, _(u"Choisissez un fichier Ã  ouvrir"), wildcard=wildcard, style=wx.FD_OPEN)
         dlg.SetFilterIndex(2)
         if dlg.ShowModal() == wx.ID_OK:
             path = dlg.GetPath()
@@ -466,7 +466,7 @@ class CTRL(wx.Panel):
         data = wx.PrintDialogData() 
         data.SetAllPages(True)
         data.SetCollate(True) # Pour assembler les pages
-        # définit les paramètres de l'impression
+        # dÃ©finit les paramÃ¨tres de l'impression
         datapr = wx.PrintData()
         data.SetPrintData(datapr)
         # Impression
@@ -476,11 +476,11 @@ class CTRL(wx.Panel):
             return
         
         from Utils import UTILS_Printer
-        pfrm = UTILS_Printer.FramePreview(self, _(u"Aperçu avant impression"), preview)
+        pfrm = UTILS_Printer.FramePreview(self, _(u"AperÃ§u avant impression"), preview)
         pfrm.SetPosition(self.GetPosition())
         pfrm.SetSize(self.GetSize())
         pfrm.Show(True)     
-        # Pour éviter le bug des marges qui se rajoutent après l'aperçu
+        # Pour Ã©viter le bug des marges qui se rajoutent aprÃ¨s l'aperÃ§u
         self.SetXML(xml)  
             
     def OnPrint(self, event):
@@ -490,13 +490,13 @@ class CTRL(wx.Panel):
         data = wx.PrintDialogData() 
         data.SetAllPages(True)
         data.SetCollate(True) # Pour assembler les pages
-        # définit les paramètres de l'impression
+        # dÃ©finit les paramÃ¨tres de l'impression
         datapr = wx.PrintData()
         data.SetPrintData(datapr)
         # Impression
         printer = wx.Printer(data) 
         printer.Print(self, printout, True) 
-        # Pour éviter le bug des marges qui se rajoutent après l'aperçu
+        # Pour Ã©viter le bug des marges qui se rajoutent aprÃ¨s l'aperÃ§u
         self.SetXML(xml)  
 
     def OnBold(self, evt):
@@ -612,7 +612,7 @@ class CTRL(wx.Panel):
 
     def OnFont(self, evt):
         if not self.ctrl_editeur.HasSelection():
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sélectionner un texte."), _(u"Police"), wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÃ©lectionner un texte."), _(u"Police"), wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -708,17 +708,17 @@ class CTRL(wx.Panel):
         self.ctrl_editeur.EndStyle()
 
     def OnImporterImage(self, event):
-        # Sélection d'une image
+        # SÃ©lection d'une image
         self.repCourant = os.getcwd()
         wildcard = "Toutes les images|*.jpg;*.png;*.gif|" \
                         "Images JPEG (*.jpg)|*.jpg|"     \
                         "Images PNG (*.png)|*.png|"     \
                         "Images GIF (*.gif)|*.gif|"     \
                         "Tous les fichiers (*.*)|*.*"
-        # Récupération du chemin des documents
+        # RÃ©cupÃ©ration du chemin des documents
         sp = wx.StandardPaths.Get()
         cheminDefaut = sp.GetDocumentsDir()
-        # Ouverture de la fenêtre de dialogue
+        # Ouverture de la fenÃªtre de dialogue
         dlg = wx.FileDialog(
             self, message=_(u"Choisissez une image"),
             defaultDir=cheminDefaut, 
@@ -743,7 +743,7 @@ class CTRL(wx.Panel):
 ##        else:
 ##            dlg.Destroy()
 ##            return 
-        # Insère l'image dans l'éditeur
+        # InsÃ¨re l'image dans l'Ã©diteur
         if nomFichierLong.lower().endswith(".jpg") : typeBMP = wx.BITMAP_TYPE_JPEG
         if nomFichierLong.lower().endswith(".png") : typeBMP = wx.BITMAP_TYPE_PNG
         if nomFichierLong.lower().endswith(".gif") : typeBMP = wx.BITMAP_TYPE_GIF
@@ -804,7 +804,7 @@ class CTRL(wx.Panel):
         handler.DeleteTemporaryImages()
 
     def GetHTML(self, imagesIncluses=True, base64=False):
-        # Récupération de la source HTML
+        # RÃ©cupÃ©ration de la source HTML
         handler = rt.RichTextHTMLHandler()
         if imagesIncluses == True :
             if base64 == True :
@@ -827,7 +827,7 @@ class CTRL(wx.Panel):
         return source, listeImages, handler
 
     def GetHTML_base64(self):
-        # Récupération de la source HTML
+        # RÃ©cupÃ©ration de la source HTML
         handler = rt.RichTextHTMLHandler()
         handler.SetFlags(rt.RICHTEXT_HANDLER_SAVE_IMAGES_TO_BASE64)
         handler.SetFontSizeMapping([7, 9, 11, 12, 14, 22, 100])
@@ -849,7 +849,7 @@ class CTRL(wx.Panel):
         self.ctrl_editeur.SetXML(texteXml)
         
     def EcritTexte(self, texte=""):
-        """ Ecrit un texte à l'emplacement du focus """
+        """ Ecrit un texte Ã  l'emplacement du focus """
         self.ctrl_editeur.WriteText(texte)
         self.ctrl_editeur.SetFocus()
 

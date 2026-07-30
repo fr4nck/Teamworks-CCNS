@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:       Ivan LUCAS
 # Copyright:    (c) 2008-19 Ivan LUCAS
@@ -75,13 +75,13 @@ class Toolbook(wx.Toolbook):
         self.img_recrutement  = il.Add(wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Recrutement.png"), wx.BITMAP_TYPE_PNG))
         self.AssignImageList(il)
         
-        # CrÈation des pages
+        # Cr√©ation des pages
         self.AddPage(CTRL_Accueil.Panel(self), _(u"Accueil"), imageId=self.img_accueil)
         self.AddPage(CTRL_Personnes.PanelPersonnes(self), _(u"Individus"), imageId=self.img_personnes)
-        self.AddPage(CTRL_Presences.PanelPresences(self), _(u"PrÈsences"), imageId=self.img_presences)
+        self.AddPage(CTRL_Presences.PanelPresences(self), _(u"Pr√©sences"), imageId=self.img_presences)
         self.AddPage(CTRL_Recrutement.Panel(self), _(u"Recrutement"), imageId=self.img_recrutement)
 
-        # MÈmorise les index des pages
+        # M√©morise les index des pages
         self.dict_pages_by_index = {
             "accueil" : 0,
             "individus" : 1,
@@ -90,7 +90,7 @@ class Toolbook(wx.Toolbook):
             "recrutement" : 3,
             }
 
-        # Met le texte ‡ droite dans la toolbar
+        # Met le texte √† droite dans la toolbar
         tb = self.GetToolBar()        
         tb.SetWindowStyleFlag(wx.TB_HORZ_TEXT)
         # self.SetInternalBorder(0)
@@ -105,22 +105,22 @@ class Toolbook(wx.Toolbook):
 
     def MAJ_panel(self, numPage=0):
         """ Test de MAJ des panels lors d'un changement d'onglet """
-        self.Freeze() # GËle l'affichage pour Èviter des clignements
+        self.Freeze() # G√®le l'affichage pour √©viter des clignements
         self.GetPage(numPage).MAJpanel()
-        self.Thaw() # DÈgËle l'affichage
+        self.Thaw() # D√©g√®le l'affichage
 
     def ActiveToolBook(self, etat=True):
-        """ Active ou dÈsactive les items du toolBook - en cas de fermeture d'un fichier par exemple """
+        """ Active ou d√©sactive les items du toolBook - en cas de fermeture d'un fichier par exemple """
         self.Freeze()
         # On se positionne sur la page d'accueil
         self.SetSelection(0)
         # On rend vierge la page d'accueil
         if etat == False : self.GetPage(0).html.Efface()
 
-        # On dÈsactive les autres pages du toolbook
+        # On d√©sactive les autres pages du toolbook
         toolBar = self.GetToolBar()
         toolBar.EnableTool(2, etat) # Personnes
-        toolBar.EnableTool(3, etat) # PrÈsences
+        toolBar.EnableTool(3, etat) # Pr√©sences
         toolBar.EnableTool(4, etat) # Recrutement
 
         self.Thaw()
@@ -162,23 +162,23 @@ class MyFrame(wx.Frame):
             defaultFont.SetPointSize(8)
             self.SetFont(defaultFont)
         
-        # Recherche si une mise ‡ jour internet existe
+        # Recherche si une mise √† jour internet existe
         self.MAJexiste = self.RechercheMAJinternet()
 
-        # VÈrifie que le fichier de configuration existe bien
+        # V√©rifie que le fichier de configuration existe bien
         self.nouveauFichierConfig = False
         if UTILS_Config.IsFichierExists() == False :
             print("Generation d'un nouveau fichier de config")
             self.nouveauFichierConfig = UTILS_Config.GenerationFichierConfig()
 
-        # RÈcupÈration des fichiers de configuration
+        # R√©cup√©ration des fichiers de configuration
         self.userConfig = self.GetFichierConfig()
 
         # Suppression du fichier Exemple ancien de TW1
         if os.path.isfile("Data/Exemple.twk") :
             os.remove("Data/Exemple.twk")
 
-        # RÈcupÈration du nom du dernier fichier chargÈ
+        # R√©cup√©ration du nom du dernier fichier charg√©
         self.nomDernierFichier = ""
         if "nomFichier" in self.userConfig:
             self.nomDernierFichier = self.userConfig["nomFichier"]
@@ -191,7 +191,7 @@ class MyFrame(wx.Frame):
         else:
             self.afficherAssistant = True
 
-        # SÈlection de l'interface MySQL
+        # S√©lection de l'interface MySQL
         if "interface_mysql" in self.userConfig:
             interface_mysql = self.userConfig["interface_mysql"]
             GestionDB.SetInterfaceMySQL(interface_mysql)
@@ -203,7 +203,7 @@ class MyFrame(wx.Frame):
         # Affiche le titre du fichier en haut de la frame
         self.SetTitleFrame(nomFichier="")
         
-        # CrÈation de la barre des menus
+        # Cr√©ation de la barre des menus
         self.CreationBarreMenus()
 
         # Construit la barre de status
@@ -217,7 +217,7 @@ class MyFrame(wx.Frame):
 
         self.__do_layout()
         
-        # DÈsactive les commandes
+        # D√©sactive les commandes
         self.ActiveBarreMenus(False)
         self.toolBook.ActiveToolBook(False)
 
@@ -235,7 +235,7 @@ class MyFrame(wx.Frame):
         self.Layout()
         self.SetSize((800, 600))
 
-        # DÈtermine la taille de la fenÍtre
+        # D√©termine la taille de la fen√™tre
         if ("taille_fenetre" in self.userConfig) == False :
             self.userConfig["taille_fenetre"] = [0, 0]
         
@@ -250,7 +250,7 @@ class MyFrame(wx.Frame):
         return CUSTOMIZE
 
     def Verif_Password(self, nomFichier):
-        """ VÈrifie s'il n'y a pas un mot de passe ‡ saisir """
+        """ V√©rifie s'il n'y a pas un mot de passe √† saisir """
         # Recherche le mot de passe dans la base
         DB = GestionDB.DB(nomFichier = nomFichier)        
         req = "SELECT motdepasse FROM divers WHERE IDdivers=1;"
@@ -270,7 +270,7 @@ class MyFrame(wx.Frame):
                 if pwd == password :
                     valide = True
                 else:
-                    dlg2 = wx.MessageDialog(self, _(u"Votre mot de passe est erronÈ."), _(u"Mot de passe erronÈ"), wx.OK | wx.ICON_ERROR)
+                    dlg2 = wx.MessageDialog(self, _(u"Votre mot de passe est erron√©."), _(u"Mot de passe erron√©"), wx.OK | wx.ICON_ERROR)
                     dlg2.ShowModal()
                     dlg2.Destroy()
                 dlg.Destroy()
@@ -283,7 +283,7 @@ class MyFrame(wx.Frame):
         if "[RESEAU]" in nomFichier :
             port, hote, user, mdp = nomFichier.split(";")
             nomFichier = nomFichier[nomFichier.index("[RESEAU]") + 8:]
-            nomFichier = _(u"Fichier rÈseau : %s | Utilisateur : %s") % (nomFichier, user)
+            nomFichier = _(u"Fichier r√©seau : %s | Utilisateur : %s") % (nomFichier, user)
         if nomFichier != "" :
             nomFichier = " - [" + nomFichier + "]"
         titreFrame = "Teamworks" + " v" + VERSION_APPLICATION + nomFichier
@@ -295,67 +295,67 @@ class MyFrame(wx.Frame):
 
             # Fichier
             {"code": "menu_fichier", "label": _(u"Fichier"), "items": [
-                {"code": "assistant_demarrage", "label": _(u"Assistant DÈmarrage"), "infobulle": _(u"Ouvrir l'assistant dÈmarrage"), "image": "Images/16x16/Assistant.png", "action": self.On_fichier_assistant},
+                {"code": "assistant_demarrage", "label": _(u"Assistant D√©marrage"), "infobulle": _(u"Ouvrir l'assistant d√©marrage"), "image": "Images/16x16/Assistant.png", "action": self.On_fichier_assistant},
                 "-",
-                {"code": "nouveau_fichier", "label": _(u"CrÈer un nouveau fichier"), "infobulle": _(u"CrÈer un nouveau fichier"), "image": "Images/16x16/Fichier_nouveau.png", "action": self.On_fichier_nouveau},
+                {"code": "nouveau_fichier", "label": _(u"Cr√©er un nouveau fichier"), "infobulle": _(u"Cr√©er un nouveau fichier"), "image": "Images/16x16/Fichier_nouveau.png", "action": self.On_fichier_nouveau},
                 {"code": "ouvrir_fichier", "label": _(u"Ouvrir un fichier"), "infobulle": _(u"Ouvrir un fichier existant"), "image": "Images/16x16/Fichier_ouvrir.png", "action": self.On_fichier_ouvrir},
                 {"code": "fermer_fichier", "label": _(u"Fermer le fichier"), "infobulle": _(u"Fermer le fichier ouvert"), "image": "Images/16x16/Fichier_fermer.png", "action": self.On_fichier_fermer, "actif": False},
                 "-",
-                {"code": "creer_sauvegarde", "label": _(u"CrÈer une sauvegarde"), "infobulle": _(u"CrÈer une sauvegarde"), "image": "Images/16x16/Sauvegarder.png", "action": self.On_fichier_sauvegarder},
+                {"code": "creer_sauvegarde", "label": _(u"Cr√©er une sauvegarde"), "infobulle": _(u"Cr√©er une sauvegarde"), "image": "Images/16x16/Sauvegarder.png", "action": self.On_fichier_sauvegarder},
                 {"code": "restaurer_sauvegarde", "label": _(u"Restaurer une sauvegarde"), "infobulle": _(u"Restaurer une sauvegarde"), "image": "Images/16x16/Restaurer.png", "action": self.On_fichier_restaurer},
-                {"code": "sauvegardes_auto", "label": _(u"Sauvegardes automatiques"), "infobulle": _(u"ParamÈtrage des sauvegardes automatiques"), "image": "Images/16x16/Sauvegarder_param.png", "action": self.On_fichier_Sauvegardes_auto},
+                {"code": "sauvegardes_auto", "label": _(u"Sauvegardes automatiques"), "infobulle": _(u"Param√©trage des sauvegardes automatiques"), "image": "Images/16x16/Sauvegarder_param.png", "action": self.On_fichier_Sauvegardes_auto},
 
                 "-",
-                {"code": "convertir_fichier_reseau", "label": _(u"Convertir en fichier rÈseau"), "infobulle": _(u"Convertir le fichier en mode rÈseau"), "image": "Images/16x16/Conversion_reseau.png", "action": self.On_fichier_convertir_reseau, "actif": False},
+                {"code": "convertir_fichier_reseau", "label": _(u"Convertir en fichier r√©seau"), "infobulle": _(u"Convertir le fichier en mode r√©seau"), "image": "Images/16x16/Conversion_reseau.png", "action": self.On_fichier_convertir_reseau, "actif": False},
                 {"code": "convertir_fichier_local", "label": _(u"Convertir en fichier local"), "infobulle": _(u"Convertir le fichier en mode local"), "image": "Images/16x16/Conversion_local.png", "action": self.On_fichier_convertir_local, "actif": False},
                 "-",
                 {"code": "quitter", "label": _(u"Quitter"), "infobulle": _(u"Quitter Noethys"), "image": "Images/16x16/Quitter.png", "action": self.On_fichier_quitter},
             ],
              },
 
-            # ParamÈtrage
-            {"code": "menu_parametrage", "label": _(u"ParamÈtrage"), "items": [
-                #{"code": "preferences", "label": _(u"PrÈfÈrences"), "infobulle": _(u"PrÈfÈrences"), "image": "Images/16x16/Mecanisme.png", "action": self.On_param_preferences},
+            # Param√©trage
+            {"code": "menu_parametrage", "label": _(u"Param√©trage"), "items": [
+                #{"code": "preferences", "label": _(u"Pr√©f√©rences"), "infobulle": _(u"Pr√©f√©rences"), "image": "Images/16x16/Mecanisme.png", "action": self.On_param_preferences},
                 {"code": "enregistrement", "label": _(u"Enregistrement"), "infobulle": _(u"Enregistrement"), "image": "Images/16x16/Cle.png", "action": self.On_param_enregistrement},
                 "-",
                 {"code": "gadgets", "label": _(u"Gestion des Gadgets de la page d'accueil"), "infobulle": _(u"Gestion des Gadgets de la page d'accueil"), "image": "Images/16x16/Calendrier_ajout.png", "action": self.On_param_gadgets},
                 "-",
-                {"code": "acces_reseau", "label": _(u"AccËs rÈseau"), "infobulle": _(u"ParamÈtrage des accËs rÈseau"), "image": "Images/16x16/Utilisateur_reseau.png", "action": self.On_param_utilisateurs_reseau},
-                {"code": "adresses_exp_mails", "label": _(u"Adresses d'expÈdition d'Emails"), "infobulle": _(u"ParamÈtrage des adresses d'expÈdition d'Emails"), "image": "Images/16x16/Emails_exp.png", "action": self.On_param_emails_exp},
-                {"code": "protection_mdp", "label": _(u"Protection par mot de passe"), "infobulle": _(u"ParamÈtrage de la protection par mot de passe"), "image": "Images/16x16/Cadenas.png", "action": self.On_protection_mdp},
+                {"code": "acces_reseau", "label": _(u"Acc√®s r√©seau"), "infobulle": _(u"Param√©trage des acc√®s r√©seau"), "image": "Images/16x16/Utilisateur_reseau.png", "action": self.On_param_utilisateurs_reseau},
+                {"code": "adresses_exp_mails", "label": _(u"Adresses d'exp√©dition d'Emails"), "infobulle": _(u"Param√©trage des adresses d'exp√©dition d'Emails"), "image": "Images/16x16/Emails_exp.png", "action": self.On_param_emails_exp},
+                {"code": "protection_mdp", "label": _(u"Protection par mot de passe"), "infobulle": _(u"Param√©trage de la protection par mot de passe"), "image": "Images/16x16/Cadenas.png", "action": self.On_protection_mdp},
                 "-",
                 {"code": "menu_parametrage_individus", "label": _(u"Individus"), "items": [
-                    {"code": "individus_questionnaire", "label": _(u"Le questionnaire"), "infobulle": _(u"ParamÈtrage des questionnaires"), "image": "Images/16x16/Questionnaire.png", "action": self.On_param_questionnaire},
-                    {"code": "individus_qualifications", "label": _(u"Les types de qualifications"), "infobulle": _(u"ParamÈtrage des types de qualifications"), "image": "Images/16x16/Personnes.png", "action": self.On_param_qualifications},
-                    {"code": "individus_pieces", "label": _(u"Les types de piËces"), "infobulle": _(u"ParamÈtrage des types de piËces"), "image": "Images/16x16/Personnes.png", "action": self.On_param_pieces},
-                    {"code": "individus_situations", "label": _(u"Les types de situations"), "infobulle": _(u"ParamÈtrage des types de situations"), "image": "Images/16x16/Personnes.png", "action": self.On_param_situations},
-                    {"code": "individus_pays", "label": _(u"Les pays et nationalitÈs"), "infobulle": _(u"ParamÈtrage des pays et nationalitÈs"), "image": "Images/16x16/Drapeau.png", "action": self.On_param_pays},
+                    {"code": "individus_questionnaire", "label": _(u"Le questionnaire"), "infobulle": _(u"Param√©trage des questionnaires"), "image": "Images/16x16/Questionnaire.png", "action": self.On_param_questionnaire},
+                    {"code": "individus_qualifications", "label": _(u"Les types de qualifications"), "infobulle": _(u"Param√©trage des types de qualifications"), "image": "Images/16x16/Personnes.png", "action": self.On_param_qualifications},
+                    {"code": "individus_pieces", "label": _(u"Les types de pi√®ces"), "infobulle": _(u"Param√©trage des types de pi√®ces"), "image": "Images/16x16/Personnes.png", "action": self.On_param_pieces},
+                    {"code": "individus_situations", "label": _(u"Les types de situations"), "infobulle": _(u"Param√©trage des types de situations"), "image": "Images/16x16/Personnes.png", "action": self.On_param_situations},
+                    {"code": "individus_pays", "label": _(u"Les pays et nationalit√©s"), "infobulle": _(u"Param√©trage des pays et nationalit√©s"), "image": "Images/16x16/Drapeau.png", "action": self.On_param_pays},
                     ],
                 },
                 {"code": "menu_parametrage_presences", "label": _(u"Planning"), "items": [
-                    {"code": "individus_categories_presences", "label": _(u"Les catÈgories de prÈsences"), "infobulle": _(u"ParamÈtrage des catÈgories de prÈsence"), "image": "Images/16x16/Presences.png", "action": self.On_param_categories_presence},
+                    {"code": "individus_categories_presences", "label": _(u"Les cat√©gories de pr√©sences"), "infobulle": _(u"Param√©trage des cat√©gories de pr√©sence"), "image": "Images/16x16/Presences.png", "action": self.On_param_categories_presence},
                     ],
                 },
                 {"code": "menu_parametrage_contrats", "label": _(u"Contrats"), "items": [
-                    {"code": "contrats_classifications", "label": _(u"Classifications"), "infobulle": _(u"ParamÈtrage des classifications"), "image": "Images/16x16/Document.png", "action": self.On_param_classifications},
-                    {"code": "contrats_champs_", "label": _(u"Les champs de contrats"), "infobulle": _(u"ParamÈtrage des champs des contrats"), "image": "Images/16x16/Document.png", "action": self.On_param_champs_contrats},
-                    {"code": "contrats_modeles", "label": _(u"Les modËles de contrats"), "infobulle": _(u"ParamÈtrage des modËles des contrats"), "image": "Images/16x16/Document.png", "action": self.On_param_modeles_contrats},
-                    {"code": "contrats_types", "label": _(u"Les types de contrats"), "infobulle": _(u"ParamÈtrage des types de contrats"), "image": "Images/16x16/Document.png", "action": self.On_param_types_contrats},
-                    {"code": "contrats_valeurs_points", "label": _(u"Les valeurs de points"), "infobulle": _(u"ParamÈtrage des valeurs de points"), "image": "Images/16x16/Document.png", "action": self.On_param_val_points},
+                    {"code": "contrats_classifications", "label": _(u"Classifications"), "infobulle": _(u"Param√©trage des classifications"), "image": "Images/16x16/Document.png", "action": self.On_param_classifications},
+                    {"code": "contrats_champs_", "label": _(u"Les champs de contrats"), "infobulle": _(u"Param√©trage des champs des contrats"), "image": "Images/16x16/Document.png", "action": self.On_param_champs_contrats},
+                    {"code": "contrats_modeles", "label": _(u"Les mod√®les de contrats"), "infobulle": _(u"Param√©trage des mod√®les des contrats"), "image": "Images/16x16/Document.png", "action": self.On_param_modeles_contrats},
+                    {"code": "contrats_types", "label": _(u"Les types de contrats"), "infobulle": _(u"Param√©trage des types de contrats"), "image": "Images/16x16/Document.png", "action": self.On_param_types_contrats},
+                    {"code": "contrats_valeurs_points", "label": _(u"Les valeurs de points"), "infobulle": _(u"Param√©trage des valeurs de points"), "image": "Images/16x16/Document.png", "action": self.On_param_val_points},
                     ],
                  },
                 {"code": "menu_parametrage_recrutement", "label": _(u"Recrutement"), "items": [
-                    {"code": "recrutement_entretiens", "label": _(u"Protection des entretiens"), "infobulle": _(u"ParamÈtrage de la protection des entretiens"), "image": "Images/16x16/Mail.png", "action": self.On_param_entretiens},
-                    {"code": "recrutement_fonctions", "label": _(u"Les fonctions"), "infobulle": _(u"ParamÈtrage fonctions"), "image": "Images/16x16/Mail.png", "action": self.On_param_fonctions},
-                    {"code": "recrutement_affectations", "label": _(u"Les affectations"), "infobulle": _(u"ParamÈtrage des affectations"), "image": "Images/16x16/Mail.png", "action": self.On_param_affectations},
-                    {"code": "recrutement_diffuseurs", "label": _(u"Les diffuseurs"), "infobulle": _(u"ParamÈtrage des diffuseurs"), "image": "Images/16x16/Mail.png", "action": self.On_param_diffuseurs},
-                    {"code": "recrutement_offres", "label": _(u"Les offres d'emploi"), "infobulle": _(u"ParamÈtrage des offres d'emploi"), "image": "Images/16x16/Mail.png", "action": self.On_param_offres},
+                    {"code": "recrutement_entretiens", "label": _(u"Protection des entretiens"), "infobulle": _(u"Param√©trage de la protection des entretiens"), "image": "Images/16x16/Mail.png", "action": self.On_param_entretiens},
+                    {"code": "recrutement_fonctions", "label": _(u"Les fonctions"), "infobulle": _(u"Param√©trage fonctions"), "image": "Images/16x16/Mail.png", "action": self.On_param_fonctions},
+                    {"code": "recrutement_affectations", "label": _(u"Les affectations"), "infobulle": _(u"Param√©trage des affectations"), "image": "Images/16x16/Mail.png", "action": self.On_param_affectations},
+                    {"code": "recrutement_diffuseurs", "label": _(u"Les diffuseurs"), "infobulle": _(u"Param√©trage des diffuseurs"), "image": "Images/16x16/Mail.png", "action": self.On_param_diffuseurs},
+                    {"code": "recrutement_offres", "label": _(u"Les offres d'emploi"), "infobulle": _(u"Param√©trage des offres d'emploi"), "image": "Images/16x16/Mail.png", "action": self.On_param_offres},
                     ],
                  },
                 "-",
                 {"code": "menu_parametrage_calendrier", "label": _(u"Calendrier"), "items": [
-                    {"code": "vacances", "label": _(u"Vacances"), "infobulle": _(u"ParamÈtrage des vacances"), "image": "Images/16x16/Calendrier.png", "action": self.On_param_vacances},
-                    {"code": "feries", "label": _(u"Jours fÈriÈs"), "infobulle": _(u"ParamÈtrage des jours fÈriÈs"), "image": "Images/16x16/Jour.png", "action": self.On_param_feries},
+                    {"code": "vacances", "label": _(u"Vacances"), "infobulle": _(u"Param√©trage des vacances"), "image": "Images/16x16/Calendrier.png", "action": self.On_param_vacances},
+                    {"code": "feries", "label": _(u"Jours f√©ri√©s"), "infobulle": _(u"Param√©trage des jours f√©ri√©s"), "image": "Images/16x16/Jour.png", "action": self.On_param_feries},
                     ],
                 },
             ],
@@ -364,37 +364,37 @@ class MyFrame(wx.Frame):
             # Outils
             {"code": "menu_outils", "label": _(u"Outils"), "items": [
                 {"code": "photos", "label": _(u"Imprimer des photos individuelles"), "infobulle": _(u"Imprimer des photos individuelles"), "image": "Images/16x16/Importer_photo.png", "action": self.On_outils_photos},
-                {"code": "frais", "label": _(u"Gestion des frais de dÈplacements"), "infobulle": _(u"Gestion des frais de dÈplacements"), "image": "Images/16x16/Calculatrice.png", "action": self.On_outils_frais},
+                {"code": "frais", "label": _(u"Gestion des frais de d√©placements"), "infobulle": _(u"Gestion des frais de d√©placements"), "image": "Images/16x16/Calculatrice.png", "action": self.On_outils_frais},
                 "-",
                 {"code": "registre", "label": _(u"Registre unique du personnel"), "infobulle": _(u"Registre unique du personnel"), "image": "Images/16x16/Contrat.png", "action": self.On_outils_registre},
                 "-",
                 {"code": "outlook", "label": _(u"Exporter les individus vers MS Outlook"), "infobulle": _(u"Exporter les individus vers MS Outlook"), "image": "Images/16x16/Outlook.png", "action": self.On_outils_outlook},
-                {"code": "publipostage", "label": _(u"CrÈer des courriers ou des emails par publipostage"), "infobulle": _(u"CrÈer des courriers ou des emails par publipostage"), "image": "Images/16x16/Mail.png", "action": self.On_outils_publipostage},
+                {"code": "publipostage", "label": _(u"Cr√©er des courriers ou des emails par publipostage"), "infobulle": _(u"Cr√©er des courriers ou des emails par publipostage"), "image": "Images/16x16/Mail.png", "action": self.On_outils_publipostage},
                 "-",
                 {"code": "editeur_emails", "label": _(u"Editeur d'Emails"), "infobulle": _(u"Editeur d'Emails"), "image": "Images/16x16/Editeur_email.png", "action": self.On_outils_emails},
-                {"code": "teamword", "label": _(u"Teamword, l'Èditeur de texte"), "infobulle": _(u"Teamword, l'Èditeur de texte"), "image": "Images/16x16/Document.png", "action": self.On_outils_teamword},
+                {"code": "teamword", "label": _(u"Teamword, l'√©diteur de texte"), "infobulle": _(u"Teamword, l'√©diteur de texte"), "image": "Images/16x16/Document.png", "action": self.On_outils_teamword},
                 "-",
                 {"code": "menu_outils_utilitaires", "label": _(u"Utilitaires administrateur"), "items": [
-                    {"code": "ouvrir_rep_utilisateur", "label": _(u"Ouvrir le rÈpertoire utilisateur"), "infobulle": _(u"Ouvrir le rÈpertoire utilisateur"), "image": "Images/16x16/Dossier.png", "action": self.On_outils_ouvrir_rep_utilisateur},
-                    {"code": "ouvrir_rep_donnees", "label": _(u"Ouvrir le rÈpertoire des donnÈes"), "infobulle": _(u"Ouvrir le rÈpertoire des donnÈes"), "image": "Images/16x16/Dossier.png", "action": self.On_outils_ouvrir_rep_donnees},
-                    {"code": "ouvrir_rep_modeles", "label": _(u"Ouvrir le rÈpertoire des modËles de documents"), "infobulle": _(u"Ouvrir le rÈpertoire des modËles de documents"), "image": "Images/16x16/Dossier.png", "action": self.On_outils_ouvrir_rep_modeles},
-                    {"code": "ouvrir_rep_documents", "label": _(u"Ouvrir le rÈpertoire des documents ÈditÈs"), "infobulle": _(u"Ouvrir le rÈpertoire des documents ÈditÈs"), "image": "Images/16x16/Dossier.png", "action": self.On_outils_ouvrir_rep_editions},
+                    {"code": "ouvrir_rep_utilisateur", "label": _(u"Ouvrir le r√©pertoire utilisateur"), "infobulle": _(u"Ouvrir le r√©pertoire utilisateur"), "image": "Images/16x16/Dossier.png", "action": self.On_outils_ouvrir_rep_utilisateur},
+                    {"code": "ouvrir_rep_donnees", "label": _(u"Ouvrir le r√©pertoire des donn√©es"), "infobulle": _(u"Ouvrir le r√©pertoire des donn√©es"), "image": "Images/16x16/Dossier.png", "action": self.On_outils_ouvrir_rep_donnees},
+                    {"code": "ouvrir_rep_modeles", "label": _(u"Ouvrir le r√©pertoire des mod√®les de documents"), "infobulle": _(u"Ouvrir le r√©pertoire des mod√®les de documents"), "image": "Images/16x16/Dossier.png", "action": self.On_outils_ouvrir_rep_modeles},
+                    {"code": "ouvrir_rep_documents", "label": _(u"Ouvrir le r√©pertoire des documents √©dit√©s"), "infobulle": _(u"Ouvrir le r√©pertoire des documents √©dit√©s"), "image": "Images/16x16/Dossier.png", "action": self.On_outils_ouvrir_rep_editions},
                     "-",
-                    {"code": "procedures", "label": _(u"ProcÈdures"), "infobulle": _(u"ProcÈdures"), "image": "Images/16x16/Outils.png", "action": self.On_outils_procedures}, ]},
+                    {"code": "procedures", "label": _(u"Proc√©dures"), "infobulle": _(u"Proc√©dures"), "image": "Images/16x16/Outils.png", "action": self.On_outils_procedures}, ]},
                 "-",
-                {"code": "updater", "label": _(u"Rechercher une mise ‡ jour du logiciel"), "infobulle": _(u"Rechercher une mise ‡ jour du logiciel"), "image": "Images/16x16/Updater.png", "action": self.On_outils_updater},
+                {"code": "updater", "label": _(u"Rechercher une mise √† jour du logiciel"), "infobulle": _(u"Rechercher une mise √† jour du logiciel"), "image": "Images/16x16/Updater.png", "action": self.On_outils_updater},
             ],
                  },
 
             # Aide
             {"code": "menu_aide", "label": _(u"Aide"), "items": [
                 {"code": "aide", "label": _(u"Consulter l'aide"), "infobulle": _(u"Consulter l'aide de Teamworks"), "image": "Images/16x16/Aide.png", "action": self.On_aide_aide},
-                {"code": "acheter_licence", "label": _(u"Acheter une licence pour accÈder au manuel de rÈfÈrence"), "infobulle": _(u"Acheter une licence"), "image": "Images/16x16/Acheter_licence.png", "action": self.On_propos_soutenir},
+                {"code": "acheter_licence", "label": _(u"Acheter une licence pour acc√©der au manuel de r√©f√©rence"), "infobulle": _(u"Acheter une licence"), "image": "Images/16x16/Acheter_licence.png", "action": self.On_propos_soutenir},
                 "-",
-                {"code": "forum", "label": _(u"AccÈder au forum d'entraide"), "infobulle": _(u"AccÈder au forum d'entraide"), "image": "Images/16x16/Dialogue.png", "action": self.On_aide_forum},
-                {"code": "tutoriels_videos", "label": _(u"Visionner des tutoriels vidÈos"), "infobulle": _(u"Visionner des tutoriels vidÈos"), "image": "Images/16x16/Film.png", "action": self.On_aide_videos},
+                {"code": "forum", "label": _(u"Acc√©der au forum d'entraide"), "infobulle": _(u"Acc√©der au forum d'entraide"), "image": "Images/16x16/Dialogue.png", "action": self.On_aide_forum},
+                {"code": "tutoriels_videos", "label": _(u"Visionner des tutoriels vid√©os"), "infobulle": _(u"Visionner des tutoriels vid√©os"), "image": "Images/16x16/Film.png", "action": self.On_aide_videos},
                 #"-",
-                #{"code": "email_auteur", "label": _(u"Envoyer un Email ‡ l'auteur"), "infobulle": _(u"Envoyer un Email ‡ l'auteur"), "image": "Images/16x16/Mail.png", "action": self.On_aide_auteur},
+                #{"code": "email_auteur", "label": _(u"Envoyer un Email √† l'auteur"), "infobulle": _(u"Envoyer un Email √† l'auteur"), "image": "Images/16x16/Mail.png", "action": self.On_aide_auteur},
             ],
              },
 
@@ -411,7 +411,7 @@ class MyFrame(wx.Frame):
 
         ]
 
-        # CrÈation du menu
+        # Cr√©ation du menu
         def CreationItem(menuParent, item):
             id = wx.Window.NewControlId()
             if "genre" in item:
@@ -457,7 +457,7 @@ class MyFrame(wx.Frame):
         # -------------------------- AJOUT DES DERNIERS FICHIERS OUVERTS -----------------------------
         menu_fichier = self.dictInfosMenu["menu_fichier"]["ctrl"]
 
-        # IntÈgration des derniers fichiers ouverts :
+        # Int√©gration des derniers fichiers ouverts :
         if "derniersFichiers" in self.userConfig:
             listeDerniersFichiersTmp = self.userConfig["derniersFichiers"]
         else:
@@ -465,7 +465,7 @@ class MyFrame(wx.Frame):
         if len(listeDerniersFichiersTmp) > 0:
             menu_fichier.AppendSeparator()
 
-        # VÈrification de la liste
+        # V√©rification de la liste
         listeDerniersFichiers = []
         for nomFichier in listeDerniersFichiersTmp:
             if "[RESEAU]" in nomFichier:
@@ -527,7 +527,7 @@ class MyFrame(wx.Frame):
         event.Skip()
 
     def GetFichierConfig(self):
-        """ RÈcupËre le dictionnaire du fichier de config """
+        """ R√©cup√®re le dictionnaire du fichier de config """
         cfg = UTILS_Config.FichierConfig()
         return cfg.GetDictConfig()
 
@@ -543,14 +543,14 @@ class MyFrame(wx.Frame):
         
     def Quitter(self, videRepertoiresTemp=True, sauvegarde_auto=True):
         """ Fin de l'application """
-        # MÈmorisation du paramËtre de la taille d'Ècran
+        # M√©morisation du param√®tre de la taille d'√©cran
         if self.IsMaximized() == True :
             taille_fenetre = [0, 0]
         else:
             taille_fenetre = list(self.GetSize())
         self.userConfig["taille_fenetre"] = taille_fenetre
 
-        # Codage du mdp rÈseau si besoin
+        # Codage du mdp r√©seau si besoin
         if "[RESEAU]" in self.userConfig["nomFichier"] and "#64#" not in self.userConfig["nomFichier"]:
             nom = GestionDB.EncodeNomFichierReseau(self.userConfig["nomFichier"])
             self.userConfig["nomFichier"] = nom
@@ -564,14 +564,14 @@ class MyFrame(wx.Frame):
             if resultat == wx.ID_CANCEL :
                 return False
 
-        # Vidage du rÈpertoire Temp
+        # Vidage du r√©pertoire Temp
         if videRepertoiresTemp == True :
             FonctionsPerso.VideRepertoireTemp()
         
-        # Vidage du rÈpertoire Updates
+        # Vidage du r√©pertoire Updates
         FonctionsPerso.VideRepertoireUpdates()
 
-        # Affiche les connexions restÈes ouvertes
+        # Affiche les connexions rest√©es ouvertes
         GestionDB.AfficheConnexionOuvertes()
 
     def SauvegardeAutomatique(self):
@@ -580,7 +580,7 @@ class MyFrame(wx.Frame):
         return resultat
 
     def OuvrirDernierFichier(self):
-        # Chargement du dernier fichier chargÈ si assistant non affichÈ
+        # Chargement du dernier fichier charg√© si assistant non affich√©
         if "assistant_demarrage" in self.userConfig:
             nePasAfficherAssistant = self.userConfig["assistant_demarrage"]
             if nePasAfficherAssistant == True:
@@ -591,14 +591,14 @@ class MyFrame(wx.Frame):
         """ Suite de la commande menu Ouvrir """
         self.SetStatusText(_(u"Ouverture d'un fichier en cours..."))
 
-        # VÈrifie que le fichier n'est pas dÈj‡ ouvert
+        # V√©rifie que le fichier n'est pas d√©j√† ouvert
         if self.userConfig["nomFichier"] == nomFichier:
             if "[RESEAU]" in nomFichier:
                 nomFichier = nomFichier[nomFichier.index("[RESEAU]"):]
-            dlg = wx.MessageDialog(self, _(u"Le fichier '") + nomFichier + _(u"' est dÈj‡ ouvert !"), _(u"Ouverture de fichier"), wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Le fichier '") + nomFichier + _(u"' est d√©j√† ouvert !"), _(u"Ouverture de fichier"), wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
-            self.SetStatusText(_(u"Le fichier '%s' est dÈj‡ ouvert.") % nomFichier)
+            self.SetStatusText(_(u"Le fichier '%s' est d√©j√† ouvert.") % nomFichier)
             return False
 
         # Teste l'existence du fichier :
@@ -608,7 +608,7 @@ class MyFrame(wx.Frame):
             self.SetStatusText(_(u"Impossible d'ouvrir le fichier '%s'.") % nomFichier)
             return False
 
-        # VÈrification du mot de passe
+        # V√©rification du mot de passe
         if nomFichier != "":
             if self.Verif_Password(nomFichier) == False:
                 if "[RESEAU]" in nomFichier:
@@ -616,7 +616,7 @@ class MyFrame(wx.Frame):
                 self.SetStatusText(_(u"Echec de l'ouverture du fichier '%s' : Mot de passe incorrect.") % nomFichier)
                 return False
 
-        # VÈrifie si la version du fichier est ‡ jour
+        # V√©rifie si la version du fichier est √† jour
         if nomFichier != "":
             if self.ValidationVersionFichier(nomFichier) == False:
                 if "[RESEAU]" in nomFichier:
@@ -627,7 +627,7 @@ class MyFrame(wx.Frame):
         # Applique le changement de fichier en cours
         self.userConfig["nomFichier"] = nomFichier
 
-        # Remplissage de la table DIVERS pour la date de derniËre ouverture
+        # Remplissage de la table DIVERS pour la date de derni√®re ouverture
         if nomFichier != "":
             date_jour = str(datetime.date.today())
             listeDonnees = [("date_derniere_ouverture", date_jour), ]
@@ -635,21 +635,21 @@ class MyFrame(wx.Frame):
             db.ReqMAJ("divers", listeDonnees, "IDdivers", 1)
             db.Close()
 
-        # VÈrifie que le rÈpertoire de destination de sauvegarde auto existe vraiment
+        # V√©rifie que le r√©pertoire de destination de sauvegarde auto existe vraiment
         if nomFichier != "":
             self.VerifDestinationSaveAuto()
 
-        # Met ‡ jour l'affichage
+        # Met √† jour l'affichage
         self.MAJAffichage()
         self.SetTitleFrame(nomFichier=nomFichier)
 
-        # Met ‡ jour la liste des derniers fichiers ouverts dans le CONFIG de la page
+        # Met √† jour la liste des derniers fichiers ouverts dans le CONFIG de la page
         self.MAJlisteDerniersFichiers(nomFichier)
 
-        # Met ‡ jour le menu
+        # Met √† jour le menu
         self.MAJmenuDerniersFichiers()
 
-        # DÈsactive le menu Conversion RÈseau s'il s'agit dÈj‡ d'un fichier rÈseau
+        # D√©sactive le menu Conversion R√©seau s'il s'agit d√©j√† d'un fichier r√©seau
         self.dictInfosMenu["fermer_fichier"]["ctrl"].Enable(True)
         if "[RESEAU]" in nomFichier:
             self.dictInfosMenu["convertir_fichier_reseau"]["ctrl"].Enable(False)
@@ -661,17 +661,17 @@ class MyFrame(wx.Frame):
         # Sauvegarde du fichier de configuration
         self.SaveFichierConfig()
 
-        # Active les items du toolbook et sÈlectionne la page accueil
+        # Active les items du toolbook et s√©lectionne la page accueil
         self.toolBook.ActiveToolBook(True)
         self.ActiveBarreMenus(True)
 
-        # Confirmation de succËs
+        # Confirmation de succ√®s
         if "[RESEAU]" in nomFichier:
             nomFichier = nomFichier[nomFichier.index("[RESEAU]"):]
-        self.SetStatusText(_(u"Le fichier '%s' a ÈtÈ ouvert avec succËs.") % nomFichier)
+        self.SetStatusText(_(u"Le fichier '%s' a √©t√© ouvert avec succ√®s.") % nomFichier)
 
     def VerifDestinationSaveAuto(self):
-        """ VÈrifie que le rÈpertoire de destination existe vraiment """
+        """ V√©rifie que le r√©pertoire de destination existe vraiment """
         try:
             DB = GestionDB.DB()
             req = "SELECT save_destination FROM divers WHERE IDdivers=1;"
@@ -697,7 +697,7 @@ class MyFrame(wx.Frame):
         self.OuvrirFichier(nomFichier)
 
     def MAJmenuDerniersFichiers(self):
-        """ Met ‡ jour la liste des derniers fichiers dans le menu """
+        """ Met √† jour la liste des derniers fichiers dans le menu """
         # Suppression de la liste existante
         menuFichier = self.dictInfosMenu["menu_fichier"]["ctrl"]
         for index in range(ID_DERNIER_FICHIER, ID_DERNIER_FICHIER + 10):
@@ -711,7 +711,7 @@ class MyFrame(wx.Frame):
                     menuFichier.RemoveItem(self.menu.FindItemById(index))
                 self.Disconnect(index, -1, 10014)  # Annule le Bind
 
-        # RÈ-intÈgration des derniers fichiers ouverts :
+        # R√©-int√©gration des derniers fichiers ouverts :
         listeDerniersFichiers = self.userConfig["derniersFichiers"]
         if len(listeDerniersFichiers) > 0:
             index = 0
@@ -732,9 +732,9 @@ class MyFrame(wx.Frame):
 
         # MAJ de la liste des derniers fichiers ouverts :
         listeFichiers = self.userConfig["derniersFichiers"]
-        nbreFichiersMax = 5  # Valeur ‡ changer en fonction des souhaits
+        nbreFichiersMax = 5  # Valeur √† changer en fonction des souhaits
 
-        # Si le nom est dÈj‡ dans la liste, on le supprime :
+        # Si le nom est d√©j√† dans la liste, on le supprime :
         if nomFichier in listeFichiers: listeFichiers.remove(nomFichier)
 
         # On ajoute le nom du fichier en premier dans la liste :
@@ -771,12 +771,12 @@ class MyFrame(wx.Frame):
             # Si c'est une ancienne version de fichier
             dictResultats = GestionDB.TestConnexionMySQL(typeTest='fichier', nomFichier=nomFichier)
             if dictResultats["connexion"][0] == True and dictResultats["fichier"][0] == True:
-                # CrÈation de la nouvelle base
-                self.SetStatusText(_(u"Conversion pour Teamworks 2 : CrÈation de la nouvelle base..."))
+                # Cr√©ation de la nouvelle base
+                self.SetStatusText(_(u"Conversion pour Teamworks 2 : Cr√©ation de la nouvelle base..."))
                 DB = GestionDB.DB(nomFichier=nomFichier, modeCreation=True)
                 DB.Close()
 
-                # Importation des anciennes tables de donnÈes
+                # Importation des anciennes tables de donn√©es
                 DB = GestionDB.DB(suffixe="", nomFichier=nomFichier)
                 listeTables = DB.GetListeTables()
                 for (nomTable,) in listeTables:
@@ -806,10 +806,10 @@ class MyFrame(wx.Frame):
                 return False
 
             if fichierValide == False:
-                # Ouverture impossible du fichier MySQL demandÈ
+                # Ouverture impossible du fichier MySQL demand√©
                 erreur = dictResultats["fichier"][1]
                 dlg = wx.MessageDialog(self, _(
-                    u"La connexion avec le serveur MySQL fonctionne mais il est impossible d'ouvrir le fichier MySQL demandÈ.\n\nErreur : %s") % erreur,
+                    u"La connexion avec le serveur MySQL fonctionne mais il est impossible d'ouvrir le fichier MySQL demand√©.\n\nErreur : %s") % erreur,
                                        "Erreur d'ouverture de fichier", wx.OK | wx.ICON_ERROR)
                 dlg.ShowModal()
                 dlg.Destroy()
@@ -819,7 +819,7 @@ class MyFrame(wx.Frame):
 
         # SQLITE
         else:
-            # Test de validitÈ du fichier SQLITE :
+            # Test de validit√© du fichier SQLITE :
             valide = False
             if os.path.isfile(UTILS_Fichiers.GetRepData(u"%s_TDATA.dat" % nomFichier)):
                 valide = True
@@ -831,7 +831,7 @@ class MyFrame(wx.Frame):
                     os.rename(cheminFichier, UTILS_Fichiers.GetRepData(u"%s_TDATA.dat" % nomFichier))
 
             if valide == False:
-                dlg = wx.MessageDialog(self, _(u"Il est impossible d'ouvrir le fichier demandÈ !"),
+                dlg = wx.MessageDialog(self, _(u"Il est impossible d'ouvrir le fichier demand√© !"),
                                        "Erreur d'ouverture de fichier", wx.OK | wx.ICON_ERROR)
                 dlg.ShowModal()
                 dlg.Destroy()
@@ -840,7 +840,7 @@ class MyFrame(wx.Frame):
                 return True
 
     def ConvertVersionTuple(self, texteVersion=""):
-        """ Convertit un numÈro de version texte en tuple """
+        """ Convertit un num√©ro de version texte en tuple """
         if type(texteVersion) == list:
             return tuple(texteVersion)
         if type(texteVersion) == tuple:
@@ -851,48 +851,48 @@ class MyFrame(wx.Frame):
         return tuple(tupleTemp)
 
     def ValidationVersionFichier(self, nomFichier):
-        """ VÈrifie que la version du fichier est ‡ jour avec le logiciel """
-        # RÈcupËre le numÈro de version du logiciel
+        """ V√©rifie que la version du fichier est √† jour avec le logiciel """
+        # R√©cup√®re le num√©ro de version du logiciel
         versionLogiciel = self.ConvertVersionTuple(VERSION_APPLICATION)
 
-        # RÈcupËre le numÈro de version du fichier
+        # R√©cup√®re le num√©ro de version du fichier
         if UTILS_Parametres.TestParametre(categorie="fichier", nom="version", nomFichier=nomFichier) == True:
             versionFichier = self.ConvertVersionTuple(
                 UTILS_Parametres.Parametres(mode="get", categorie="fichier", nom="version", valeur=VERSION_APPLICATION,
                                             nomFichier=nomFichier))
         else:
-            # Pour compatibilitÈ avec version 1 de Teamworks
+            # Pour compatibilit√© avec version 1 de Teamworks
             versionFichier = (1, 0, 5, 2)
 
         # Compare les deux versions
         if versionFichier < versionLogiciel:
-            # Fait la conversion ‡ la nouvelle version
+            # Fait la conversion √† la nouvelle version
             info = "Lancement de la conversion %s -> %s..." % (
             ".".join([str(x) for x in versionFichier]), ".".join([str(x) for x in versionLogiciel]))
             self.SetStatusText(info)
             print(info)
 
-            # Affiche d'une fenÍtre d'attente
-            message = _(u"Mise ‡ jour de la base de donnÈes en cours... Veuillez patientez...")
-            dlgAttente = PBI.PyBusyInfo(message, parent=None, title=_(u"Mise ‡ jour"), icon=wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Logo.png"), wx.BITMAP_TYPE_ANY))
+            # Affiche d'une fen√™tre d'attente
+            message = _(u"Mise √† jour de la base de donn√©es en cours... Veuillez patientez...")
+            dlgAttente = PBI.PyBusyInfo(message, parent=None, title=_(u"Mise √† jour"), icon=wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Logo.png"), wx.BITMAP_TYPE_ANY))
 
             DB = UpgradeDB.DB(nomFichier=nomFichier)
             resultat = DB.Upgrade(versionFichier)
             DB.Close()
 
-            # Fermeture de la fenÍtre d'attente
+            # Fermeture de la fen√™tre d'attente
             del dlgAttente
 
             if resultat != True:
                 print(resultat)
-                dlg = wx.MessageDialog(self, _(u"Le logiciel n'arrive pas ‡ convertir le fichier '") + nomFichier + _(
-                    u":\n\nErreur : ") + resultat + _(u"\n\nVeuillez contacter le dÈveloppeur du logiciel..."),
+                dlg = wx.MessageDialog(self, _(u"Le logiciel n'arrive pas √† convertir le fichier '") + nomFichier + _(
+                    u":\n\nErreur : ") + resultat + _(u"\n\nVeuillez contacter le d√©veloppeur du logiciel..."),
                                        _(u"Erreur de conversion de fichier"), wx.OK | wx.ICON_ERROR)
                 dlg.ShowModal()
                 dlg.Destroy()
                 return False
 
-            # MÈmorisation de la version actuelle du fichier
+            # M√©morisation de la version actuelle du fichier
             UTILS_Parametres.Parametres(mode="set", categorie="fichier", nom="version",
                                         valeur=".".join([str(x) for x in versionLogiciel]), nomFichier=nomFichier)
             info = "Conversion %s -> %s reussie." % (
@@ -904,9 +904,9 @@ class MyFrame(wx.Frame):
 
     def On_fichier_fermer(self, event):
         """ Fermer le fichier ouvert """
-        # VÈrifie qu'un fichier est chargÈ
+        # V√©rifie qu'un fichier est charg√©
         if self.userConfig["nomFichier"] == "":
-            dlg = wx.MessageDialog(self, _(u"Il n'y a aucun fichier ‡ fermer !"), _(u"Erreur"), wx.OK | wx.ICON_ERROR)
+            dlg = wx.MessageDialog(self, _(u"Il n'y a aucun fichier √† fermer !"), _(u"Erreur"), wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -920,13 +920,13 @@ class MyFrame(wx.Frame):
         self.userConfig["nomFichier"] = ""
         self.SetTitleFrame()
 
-        # DÈsactive les items du toolbook et sÈlectionne la page accueil
+        # D√©sactive les items du toolbook et s√©lectionne la page accueil
         self.toolBook.ActiveToolBook(False)
 
-        # DÈsactive certains menus
+        # D√©sactive certains menus
         self.ActiveBarreMenus(False)
 
-        # DÈsactive la commande FERMER du menu Fichier
+        # D√©sactive la commande FERMER du menu Fichier
         self.dictInfosMenu["fermer_fichier"]["ctrl"].Enable(False)
         self.dictInfosMenu["convertir_fichier_reseau"]["ctrl"].Enable(False)
         self.dictInfosMenu["convertir_fichier_local"]["ctrl"].Enable(False)
@@ -948,7 +948,7 @@ class MyFrame(wx.Frame):
         self.Assistant_demarrage(mode="menu")
 
     def On_fichier_nouveau(self, event):
-        """ CrÈÈ une nouvelle base de donnÈes """
+        """ Cr√©√© une nouvelle base de donn√©es """
         from Data import DATA_Tables as Tables
         
         # Demande le nom du fichier
@@ -962,16 +962,16 @@ class MyFrame(wx.Frame):
             dlg.Destroy()
             return False
         
-        # Affiche d'une fenÍtre d'attente
-        message = _(u"CrÈation du nouveau fichier en cours... Veuillez patientez...")
-        dlgAttente = PBI.PyBusyInfo(message, parent=None, title=_(u"CrÈation d'un fichier"), icon=wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Logo.png"), wx.BITMAP_TYPE_ANY))
+        # Affiche d'une fen√™tre d'attente
+        message = _(u"Cr√©ation du nouveau fichier en cours... Veuillez patientez...")
+        dlgAttente = PBI.PyBusyInfo(message, parent=None, title=_(u"Cr√©ation d'un fichier"), icon=wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Logo.png"), wx.BITMAP_TYPE_ANY))
             
         if "[RESEAU]" in nomFichier :
-            self.SetStatusText(_(u"CrÈation du fichier '%s' en cours...") % nomFichier[nomFichier.index("[RESEAU]"):])
+            self.SetStatusText(_(u"Cr√©ation du fichier '%s' en cours...") % nomFichier[nomFichier.index("[RESEAU]"):])
         else:
-            self.SetStatusText(_(u"CrÈation du fichier '%s' en cours...") % nomFichier)
+            self.SetStatusText(_(u"Cr√©ation du fichier '%s' en cours...") % nomFichier)
         
-        # VÈrification de validitÈ du fichier
+        # V√©rification de validit√© du fichier
         if nomFichier == "" :
             del dlgAttente
             dlg = wx.MessageDialog(self, _(u"Le nom que vous avez saisi n'est pas valide !"), "Erreur", wx.OK | wx.ICON_ERROR)
@@ -979,39 +979,39 @@ class MyFrame(wx.Frame):
             dlg.Destroy()
             if "[RESEAU]" in nomFichier :
                 nomFichier = nomFichier[nomFichier.index("[RESEAU]"):]
-            self.SetStatusText(_(u"Echec de la crÈation du fichier '%s' : nom du fichier non valide.") % nomFichier)
+            self.SetStatusText(_(u"Echec de la cr√©ation du fichier '%s' : nom du fichier non valide.") % nomFichier)
             return False
 
         if "[RESEAU]" not in nomFichier :
             # Version LOCAL
             
-            # VÈrifie si un fichier ne porte pas dÈj‡ ce nom :
+            # V√©rifie si un fichier ne porte pas d√©j√† ce nom :
             fichier = UTILS_Fichiers.GetRepData(nomFichier + "_TDATA.dat")
             test = os.path.isfile(fichier) 
             if test == True :
                 del dlgAttente
-                dlg = wx.MessageDialog(self, _(u"Vous possÈdez dÈj‡ un fichier qui porte le nom '") + nomFichier + _(u"'.\n\nVeuillez saisir un autre nom."), "Erreur", wx.OK | wx.ICON_ERROR)
+                dlg = wx.MessageDialog(self, _(u"Vous poss√©dez d√©j√† un fichier qui porte le nom '") + nomFichier + _(u"'.\n\nVeuillez saisir un autre nom."), "Erreur", wx.OK | wx.ICON_ERROR)
                 dlg.ShowModal()
                 dlg.Destroy()
-                self.SetStatusText(_(u"Echec de la crÈation du fichier '%s' : Le nom existe dÈj‡.") % nomFichier)
+                self.SetStatusText(_(u"Echec de la cr√©ation du fichier '%s' : Le nom existe d√©j√†.") % nomFichier)
                 return False
         
         else:
             # Version RESEAU
             dictResultats = GestionDB.TestConnexionMySQL(typeTest="fichier", nomFichier=_(u"%s_TDATA") % nomFichier)
             
-            # VÈrifie la connexion au rÈseau
+            # V√©rifie la connexion au r√©seau
             if dictResultats["connexion"][0] == False :
                 erreur = dictResultats["connexion"][1]
-                dlg = wx.MessageDialog(self, _(u"La connexion au rÈseau MySQL est impossible. \n\nErreur : %s") % erreur, _(u"Erreur de connexion"), wx.OK | wx.ICON_ERROR)
+                dlg = wx.MessageDialog(self, _(u"La connexion au r√©seau MySQL est impossible. \n\nErreur : %s") % erreur, _(u"Erreur de connexion"), wx.OK | wx.ICON_ERROR)
                 dlg.ShowModal()
                 dlg.Destroy()
                 del dlgAttente
                 return False
             
-            # VÈrifie que le fichier n'est pas dÈj‡ utilisÈ
+            # V√©rifie que le fichier n'est pas d√©j√† utilis√©
             if dictResultats["fichier"][0] == True :
-                dlg = wx.MessageDialog(self, _(u"Le fichier existe dÈj‡."), _(u"Erreur de crÈation de fichier"), wx.OK | wx.ICON_ERROR)
+                dlg = wx.MessageDialog(self, _(u"Le fichier existe d√©j√†."), _(u"Erreur de cr√©ation de fichier"), wx.OK | wx.ICON_ERROR)
                 dlg.ShowModal()
                 dlg.Destroy()
                 del dlgAttente
@@ -1020,57 +1020,57 @@ class MyFrame(wx.Frame):
         ancienFichier = self.userConfig["nomFichier"]
         self.userConfig["nomFichier"] = nomFichier 
         
-        # CrÈation de la base DATA
+        # Cr√©ation de la base DATA
         DB = GestionDB.DB(suffixe="DATA", modeCreation=True)
         if DB.echec == 1 :
             del dlgAttente
             erreur = DB.erreur
-            dlg = wx.MessageDialog(self, _(u"Erreur dans la crÈation du fichier de donnÈes.\n\nErreur : %s") % erreur, _(u"Erreur de crÈation de fichier"), wx.OK | wx.ICON_ERROR)
+            dlg = wx.MessageDialog(self, _(u"Erreur dans la cr√©ation du fichier de donn√©es.\n\nErreur : %s") % erreur, _(u"Erreur de cr√©ation de fichier"), wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
             dlg.Destroy()
             self.userConfig["nomFichier"] = ancienFichier 
             return False
-        self.SetStatusText(_(u"CrÈation des tables de donnÈes..."))
+        self.SetStatusText(_(u"Cr√©ation des tables de donn√©es..."))
         DB.CreationTables(Tables.DB_DATA, fenetreParente=self)
-        self.SetStatusText(_(u"Importation des donnÈes par dÈfaut..."))
+        self.SetStatusText(_(u"Importation des donn√©es par d√©faut..."))
         DB.Importation_valeurs_defaut(listeTables)
         DB.Close()
         
-        # CrÈation de la base PHOTOS
+        # Cr√©ation de la base PHOTOS
         DB = GestionDB.DB(suffixe="PHOTOS", modeCreation=True)
         if DB.echec == 1 :
             del dlgAttente
             erreur = DB.erreur
-            dlg = wx.MessageDialog(self, _(u"Erreur dans la crÈation du fichier de photos.\n\nErreur : %s") % erreur, _(u"Erreur de crÈation de fichier"), wx.OK | wx.ICON_ERROR)
+            dlg = wx.MessageDialog(self, _(u"Erreur dans la cr√©ation du fichier de photos.\n\nErreur : %s") % erreur, _(u"Erreur de cr√©ation de fichier"), wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
             dlg.Destroy()
             self.userConfig["nomFichier"] = ancienFichier 
             return False
-        self.SetStatusText(_(u"CrÈation de la table de donnÈes des photos..."))
+        self.SetStatusText(_(u"Cr√©ation de la table de donn√©es des photos..."))
         DB.CreationTables(Tables.DB_PHOTOS)
         DB.Close()
         
-        # CrÈation de la base DOCUMENTS
+        # Cr√©ation de la base DOCUMENTS
         DB = GestionDB.DB(suffixe="DOCUMENTS", modeCreation=True)
         if DB.echec == 1 :
             del dlgAttente
             erreur = DB.erreur
-            dlg = wx.MessageDialog(self, _(u"Erreur dans la crÈation du fichier de documents.\n\nErreur : %s") % erreur, _(u"Erreur de crÈation de fichier"), wx.OK | wx.ICON_ERROR)
+            dlg = wx.MessageDialog(self, _(u"Erreur dans la cr√©ation du fichier de documents.\n\nErreur : %s") % erreur, _(u"Erreur de cr√©ation de fichier"), wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
             dlg.Destroy()
             self.userConfig["nomFichier"] = ancienFichier 
             return False
-        self.SetStatusText(_(u"CrÈation de la table de donnÈes des documents..."))
+        self.SetStatusText(_(u"Cr√©ation de la table de donn√©es des documents..."))
         DB.CreationTables(Tables.DB_DOCUMENTS)
         DB.Close()
 
-        # CrÈÈ un identifiant unique pour ce fichier
+        # Cr√©√© un identifiant unique pour ce fichier
         d = datetime.datetime.now()
         IDfichier = d.strftime("%Y%m%d%H%M%S")
         for x in range(0, 3) :
             IDfichier += random.choice("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
-        # MÈmorisation des informations sur le fichier
+        # M√©morisation des informations sur le fichier
         listeDonnees = [
             ( "date_creation", str(datetime.date.today()) ),
             ( "version", VERSION_APPLICATION ),
@@ -1106,21 +1106,21 @@ class MyFrame(wx.Frame):
         newID = DB.ReqInsert("divers", listeDonnees)
         DB.Close()
         
-        # Met ‡ jour l'affichage des panels
+        # Met √† jour l'affichage des panels
         self.MAJAffichage()
         self.SetTitleFrame(nomFichier=nomFichier)
         
-        # Met ‡ jour la liste des derniers fichiers de la barre des menus
+        # Met √† jour la liste des derniers fichiers de la barre des menus
         self.MAJlisteDerniersFichiers(nomFichier)
         
-        # Met ‡ jour le menu
+        # Met √† jour le menu
         self.MAJmenuDerniersFichiers()
         
-        # Active les items du toolbook et sÈlectionne la page accueil
+        # Active les items du toolbook et s√©lectionne la page accueil
         self.toolBook.ActiveToolBook(True)
         self.ActiveBarreMenus(True)
 
-        # DÈsactive le menu Conversion RÈseau s'il s'agit dÈj‡ d'un fichier rÈseau
+        # D√©sactive le menu Conversion R√©seau s'il s'agit d√©j√† d'un fichier r√©seau
         if "[RESEAU]" in nomFichier:
             self.dictInfosMenu["convertir_fichier_reseau"]["ctrl"].Enable(False)
             self.dictInfosMenu["convertir_fichier_local"]["ctrl"].Enable(True)
@@ -1131,28 +1131,28 @@ class MyFrame(wx.Frame):
         # Sauvegarde du fichier de configuration
         self.SaveFichierConfig()
         
-        # BoÓte de dialogue pour confirmer la crÈation
+        # Bo√Æte de dialogue pour confirmer la cr√©ation
         if "[RESEAU]" in nomFichier :
                 nomFichier = nomFichier[nomFichier.index("[RESEAU]"):]
         
         del dlgAttente
         
-        dlg = wx.MessageDialog(self, _(u"Le fichier '") + nomFichier + _(u"' a ÈtÈ crÈÈ avec succËs."), _(u"CrÈation d'un fichier"), wx.OK | wx.ICON_INFORMATION)
+        dlg = wx.MessageDialog(self, _(u"Le fichier '") + nomFichier + _(u"' a √©t√© cr√©√© avec succ√®s."), _(u"Cr√©ation d'un fichier"), wx.OK | wx.ICON_INFORMATION)
         dlg.ShowModal()
         dlg.Destroy()
         
-        self.SetStatusText(_(u"Le fichier '%s' a ÈtÈ crÈÈ avec succËs.") % nomFichier)
+        self.SetStatusText(_(u"Le fichier '%s' a √©t√© cr√©√© avec succ√®s.") % nomFichier)
         
-        # Rappel de la nÈcessitÈ de crÈer des utilisateurs rÈseau
+        # Rappel de la n√©cessit√© de cr√©er des utilisateurs r√©seau
         if "[RESEAU]" in nomFichier :
-            dlg = wx.MessageDialog(self, _(u"Pour l'instant, vous Ítes le seul, en tant qu'administrateur, ‡ pouvoir accÈder ‡ ce fichier. Vous devez donc crÈer des utilisateurs rÈseau ou accorder des autorisations d'accËs aux utilisateurs dÈj‡ enregistrÈs.\n\nPour gÈrer les comptes utilisateurs rÈseau, rendez-vous sur le panneau 'Configuration' puis sur la page 'Utilisateurs rÈseau'."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Pour l'instant, vous √™tes le seul, en tant qu'administrateur, √† pouvoir acc√©der √† ce fichier. Vous devez donc cr√©er des utilisateurs r√©seau ou accorder des autorisations d'acc√®s aux utilisateurs d√©j√† enregistr√©s.\n\nPour g√©rer les comptes utilisateurs r√©seau, rendez-vous sur le panneau 'Configuration' puis sur la page 'Utilisateurs r√©seau'."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
 
 
     def On_fichier_ouvrir(self, event):
-        """ Ouvrir un fichier prÈsent dur le disque dur """    
-        # BoÓte de dialogue pour demander le nom du fichier ‡ ouvrir
+        """ Ouvrir un fichier pr√©sent dur le disque dur """    
+        # Bo√Æte de dialogue pour demander le nom du fichier √† ouvrir
         from Dlg import DLG_Ouvrir_fichier
         dlg = DLG_Ouvrir_fichier.MyDialog(self)
         if dlg.ShowModal() == wx.ID_OK:
@@ -1211,9 +1211,9 @@ class MyFrame(wx.Frame):
 
     def On_param_gadgets(self, event):
         """ Configuration des gadgets de la page d'accueil """
-        # VÈrifie qu'un fichier est chargÈ
+        # V√©rifie qu'un fichier est charg√©
         if self.userConfig["nomFichier"] == "":
-            dlg = wx.MessageDialog(self, _(u"Vous n'avez chargÈ aucun fichier."), _(u"Erreur"), wx.OK | wx.ICON_ERROR)
+            dlg = wx.MessageDialog(self, _(u"Vous n'avez charg√© aucun fichier."), _(u"Erreur"), wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -1225,7 +1225,7 @@ class MyFrame(wx.Frame):
 
     def On_param_utilisateurs_reseau(self, event):
         if "[RESEAU]" not in self.userConfig["nomFichier"] :
-            dlg = wx.MessageDialog(self, _(u"Cette fonction n'est accessible que si vous utilisez un fichier rÈseau !"), _(u"AccËs non autorisÈ"), wx.OK | wx.ICON_ERROR)
+            dlg = wx.MessageDialog(self, _(u"Cette fonction n'est accessible que si vous utilisez un fichier r√©seau !"), _(u"Acc√®s non autoris√©"), wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -1365,30 +1365,30 @@ class MyFrame(wx.Frame):
         self.toolBook.MAJ_page_si_affichee("presences")
 
     def On_outils_outlook(self ,event):
-        # VÈrifie qu'un fichier est chargÈ
+        # V√©rifie qu'un fichier est charg√©
         if self.userConfig["nomFichier"] == "" :
-            dlg = wx.MessageDialog(self, _(u"Vous n'avez chargÈ aucun fichier."), _(u"Erreur"), wx.OK | wx.ICON_ERROR)
+            dlg = wx.MessageDialog(self, _(u"Vous n'avez charg√© aucun fichier."), _(u"Erreur"), wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
             dlg.Destroy()
             return
     
         from Dlg import DLG_Export_outlook
         outlook = DLG_Export_outlook.LibOutlook()
-        # Recherche si Outlook peut Ítre ouvert
-        dlg = wx.MessageDialog(self, _(u"Un test va Ítre effectuÈ pour vÈrifier que Outlook est bien accessible sur votre ordinateur.\n\nSi c'est bien le cas, Outlook va vous demander si vous acceptez que cet accËs ait bien lieu.\n\nCochez la case 'Autoriser l'accËs' et sÈlectionnez un temps de 10 minutes..."), _(u"Information"), wx.OK | wx.ICON_INFORMATION)
+        # Recherche si Outlook peut √™tre ouvert
+        dlg = wx.MessageDialog(self, _(u"Un test va √™tre effectu√© pour v√©rifier que Outlook est bien accessible sur votre ordinateur.\n\nSi c'est bien le cas, Outlook va vous demander si vous acceptez que cet acc√®s ait bien lieu.\n\nCochez la case 'Autoriser l'acc√®s' et s√©lectionnez un temps de 10 minutes..."), _(u"Information"), wx.OK | wx.ICON_INFORMATION)
         dlg.ShowModal()
         dlg.Destroy()
             
         if outlook.echec == True :
             # Pas de outlook accessible :
-            dlg = wx.MessageDialog(self, _(u"Microsoft Outlook ne peut pas Ítre ouvert..."), _(u"Erreur"), wx.OK | wx.ICON_ERROR)
+            dlg = wx.MessageDialog(self, _(u"Microsoft Outlook ne peut pas √™tre ouvert..."), _(u"Erreur"), wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
             dlg.Destroy()
             return
         
         if outlook.Test() == False :
-            # Outlook est verrouillÈ:
-            dlg = wx.MessageDialog(self, _(u"Microsoft Outlook ne peut pas Ítre ouvert.\nIl semble verrouillÈ..."), _(u"Erreur"), wx.OK | wx.ICON_ERROR)
+            # Outlook est verrouill√©:
+            dlg = wx.MessageDialog(self, _(u"Microsoft Outlook ne peut pas √™tre ouvert.\nIl semble verrouill√©..."), _(u"Erreur"), wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -1399,7 +1399,7 @@ class MyFrame(wx.Frame):
         dlg.Destroy()
 
     def On_outils_updater(self, event):
-        """Mises ‡ jour internet """
+        """Mises √† jour internet """
         from Dlg import DLG_Updater
         dlg = DLG_Updater.Dialog(self)
         dlg.ShowModal() 
@@ -1410,7 +1410,7 @@ class MyFrame(wx.Frame):
             self.Destroy()
 
     def On_outils_frais(self, event):
-        """ Gestion globale des frais de dÈplacements """
+        """ Gestion globale des frais de d√©placements """
         from Dlg import DLG_Gestion_frais
         dlg = DLG_Gestion_frais.Dialog(self)
         dlg.ShowModal()
@@ -1451,25 +1451,25 @@ class MyFrame(wx.Frame):
         frame.Show()
 
     def On_outils_ouvrir_rep_utilisateur(self, event):
-        """ Ouvrir le rÈpertoire Utilisateur """
+        """ Ouvrir le r√©pertoire Utilisateur """
         UTILS_Fichiers.OuvrirRepertoire(UTILS_Fichiers.GetRepUtilisateur())
 
     def On_outils_ouvrir_rep_donnees(self, event):
-        """ Ouvrir le rÈpertoire Utilisateur """
+        """ Ouvrir le r√©pertoire Utilisateur """
         UTILS_Fichiers.OuvrirRepertoire(UTILS_Fichiers.GetRepData())
 
     def On_outils_ouvrir_rep_modeles(self, event):
-        """ Ouvrir le rÈpertoire des modËles de documents """
+        """ Ouvrir le r√©pertoire des mod√®les de documents """
         UTILS_Fichiers.OuvrirRepertoire(UTILS_Fichiers.GetRepModeles())
 
     def On_outils_ouvrir_rep_editions(self, event):
-        """ Ouvrir le rÈpertoire des Èditions de documents """
+        """ Ouvrir le r√©pertoire des √©ditions de documents """
         UTILS_Fichiers.OuvrirRepertoire(UTILS_Fichiers.GetRepEditions())
 
     def On_outils_procedures(self, event):
-        """ Commande spÈciale """
+        """ Commande sp√©ciale """
         from Utils import UTILS_Procedures
-        dlg = wx.TextEntryDialog(self, _(u"Entrez le code de procÈdure qui vous a ÈtÈ communiquÈ :"), _(u"ProcÈdure"), "")
+        dlg = wx.TextEntryDialog(self, _(u"Entrez le code de proc√©dure qui vous a √©t√© communiqu√© :"), _(u"Proc√©dure"), "")
         if dlg.ShowModal() == wx.ID_OK:
             code = dlg.GetValue()
             UTILS_Procedures.Procedure(code)
@@ -1480,11 +1480,11 @@ class MyFrame(wx.Frame):
         UTILS_Aide.Aide(None)
 
     def On_aide_forum(self, event):
-        """ AccÈder au forum d'entraide """
+        """ Acc√©der au forum d'entraide """
         FonctionsPerso.LanceFichierExterne("https://teamworks.ovh/index.php/assistance/le-forum")
 
     def On_aide_videos(self, event):
-        """ AccÈder au tutoriels vidÈos """
+        """ Acc√©der au tutoriels vid√©os """
         FonctionsPerso.LanceFichierExterne("https://teamworks.ovh/index.php/assistance/les-tutoriels-videos")
 
     def On_propos_versions(self, event):
@@ -1518,19 +1518,19 @@ class MyFrame(wx.Frame):
     def On_propos_propos(self, event):
         """ A propos : A propos """
         texte = u"""
-"Teamworks - gestion d'Èquipe
-Copyright © 2008-2019 Ivan LUCAS
+"Teamworks - gestion d'√©quipe
+Copyright ¬© 2008-2019 Ivan LUCAS
 
 Remerciements :
 
-- AurÈlie, pour son soutien et son aide technique
+- Aur√©lie, pour son soutien et son aide technique
 - Jacques Delage pour les beta-tests et les suggestions
-- Pacificator et toute la communautÈ Python de developpez.com
+- Pacificator et toute la communaut√© Python de developpez.com
 - Robin Dunn, pour ses travaux et son aide sur wxPython
 - Tous les beta-testeurs pour leur suggestions et leurs remarques
 
 Et en vrac : 
-Guido van Rossum (Python), Gerhard H‰ring (pysqlite), 
+Guido van Rossum (Python), Gerhard H√§ring (pysqlite), 
 reportLab team (reportlab), Mark Hammond (pywin32), 
 Phillip Piper (ObjectListView), Armin Rigo (Psycho)...
 
@@ -1541,7 +1541,7 @@ Phillip Piper (ObjectListView), Armin Rigo (Psycho)...
 
 
     def MAJAffichage(self):
-        # Mise ‡ jour des panels :
+        # Mise √† jour des panels :
         self.toolBook.GetPage(0).MAJpanel() 
 
     
@@ -1549,10 +1549,10 @@ Phillip Piper (ObjectListView), Armin Rigo (Psycho)...
         return VERSION_APPLICATION
 
     def RechercheMAJinternet(self):
-        """ Recherche une mise ‡ jour sur internet """
-        # RÈcupËre la version de l'application
+        """ Recherche une mise √† jour sur internet """
+        # R√©cup√®re la version de l'application
         versionApplication = VERSION_APPLICATION
-        # RÈcupËre la version de la MAJ sur internet
+        # R√©cup√®re la version de la MAJ sur internet
         try :
             if "linux" in sys.platform :
                 # Version Debian
@@ -1574,7 +1574,7 @@ Phillip Piper (ObjectListView), Armin Rigo (Psycho)...
             print(err)
             print("Recuperation du num de version de la MAJ sur internet impossible.")
             versionMaj = "0.0.0.0"
-        # Compare les deux versions et renvois le rÈsultat
+        # Compare les deux versions et renvois le r√©sultat
         try :
             if self.ConvertVersionTuple(versionMaj) > self.ConvertVersionTuple(VERSION_APPLICATION) :
                 self.versionMAJ = versionMaj
@@ -1593,13 +1593,13 @@ Phillip Piper (ObjectListView), Armin Rigo (Psycho)...
         return (0, 0, 0, 0)
 
     def Annonce(self):
-        """ CrÈation une annonce au premier dÈmarrage du logiciel """
+        """ Cr√©ation une annonce au premier d√©marrage du logiciel """
         nomFichier = sys.executable
         if nomFichier.endswith("python.exe") == False :
             versionAnnonce = self.ConvertVersionTuple(self.GetVersionAnnonce())
             versionLogiciel = self.ConvertVersionTuple(VERSION_APPLICATION)
             if versionAnnonce < versionLogiciel :
-                # DÈplace les fichiers exemples vers le rÈpertoire des fichiers de donnÈes
+                # D√©place les fichiers exemples vers le r√©pertoire des fichiers de donn√©es
                 try :
                     UTILS_Fichiers.DeplaceExemples()
                 except Exception as err:
@@ -1610,17 +1610,17 @@ Phillip Piper (ObjectListView), Armin Rigo (Psycho)...
                 dlg = DLG_Message_accueil.Dialog(self)
                 dlg.ShowModal()
                 dlg.Destroy()
-                # MÈmorise le numÈro de version actuel
+                # M√©morise le num√©ro de version actuel
                 self.userConfig["annonce"] = versionLogiciel
 
     def Assistant_demarrage(self, mode="ouverture"):
-        """ Charge l'assistant dÈmarrage """
-        # RÈcupËre l'Ètat du checkBox affichage
+        """ Charge l'assistant d√©marrage """
+        # R√©cup√®re l'√©tat du checkBox affichage
         if "assistant_demarrage" in self.userConfig :
             checkAffichage = self.userConfig["assistant_demarrage"]
         else:
             checkAffichage = False
-        # Si on est en mode "menu" :VÈrifie s'il faut afficher l'assistant ou non
+        # Si on est en mode "menu" :V√©rifie s'il faut afficher l'assistant ou non
         if mode == "ouverture" :
             if checkAffichage == True :
                 return False
@@ -1630,16 +1630,16 @@ Phillip Piper (ObjectListView), Armin Rigo (Psycho)...
         else:
             afficherDernierFichier = True
         
-        # Charge la boÓte de dialogue
+        # Charge la bo√Æte de dialogue
         from Dlg import DLG_Assistant_demarrage
         dlg = DLG_Assistant_demarrage.Dialog(None, checkAffichage=checkAffichage, afficherDernierFichier=afficherDernierFichier, nomDernierFichier=self.nomDernierFichier)
         dlg.ShowModal()
         choix = dlg.GetChoix()
         checkAffichage = dlg.GetCheckAffichage()
         dlg.Destroy()
-        # MÈmorise l'Ètat du checkBox affichage
+        # M√©morise l'√©tat du checkBox affichage
         self.userConfig["assistant_demarrage"] = checkAffichage
-        # Charge la commande demandÈe
+        # Charge la commande demand√©e
         if choix != None :
             if choix == 1 : FonctionsPerso.LanceFichierExterne(_(u"https://www.teamworks.ovh"))
             if choix == 2 : self.On_fichier_nouveau(None)
@@ -1654,17 +1654,17 @@ Phillip Piper (ObjectListView), Armin Rigo (Psycho)...
         return True
     
     def EstFichierExemple(self):
-        """ VÈrifie si c'est un fichier EXEMPLE qui est ouvert actuellement """
+        """ V√©rifie si c'est un fichier EXEMPLE qui est ouvert actuellement """
         if self.userConfig["nomFichier"] != None :
             if "EXEMPLE_" in self.userConfig["nomFichier"] :
                 return True
         return False
 
     def AnnonceFinancement(self):
-        # VÈrifie si identifiant saisi et valide
+        # V√©rifie si identifiant saisi et valide
         identifiant = UTILS_Config.GetParametre("enregistrement_identifiant", defaut=None)
         if identifiant != None:
-            # VÈrifie nbre jours restants
+            # V√©rifie nbre jours restants
             code = UTILS_Config.GetParametre("enregistrement_code", defaut=None)
             validite = DLG_Enregistrement.GetValidite(identifiant, code)
             if validite != False:
@@ -1672,12 +1672,12 @@ Phillip Piper (ObjectListView), Armin Rigo (Psycho)...
                 dateDernierRappel = UTILS_Config.GetParametre("enregistrement_dernier_rappel", defaut=None)
 
                 if nbreJoursRestants < 0:
-                    # Licence pÈrimÈe
+                    # Licence p√©rim√©e
                     if dateDernierRappel != None:
                         UTILS_Config.SetParametre("enregistrement_dernier_rappel", None)
 
                 elif nbreJoursRestants <= 30:
-                    # Licence bientÙt pÈrimÈe
+                    # Licence bient√¥t p√©rim√©e
                     UTILS_Config.SetParametre("enregistrement_dernier_rappel", datetime.date.today())
                     if dateDernierRappel != None:
                         nbreJoursDepuisRappel = (dateDernierRappel - datetime.date.today()).days
@@ -1686,7 +1686,7 @@ Phillip Piper (ObjectListView), Armin Rigo (Psycho)...
                     if nbreJoursDepuisRappel == None or nbreJoursDepuisRappel >= 10:
                         from Dlg import DLG_Messagebox
                         image = wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Cle.png"), wx.BITMAP_TYPE_ANY)
-                        introduction = _(u"Votre licence d'accËs au manuel de rÈfÈrence en ligne se termine dans %d jours. \n\nSi vous le souhaitez, vous pouvez continuer ‡ bÈnÈficier de cet accËs et prolonger votre soutien financier au projet Teamworks en renouvelant votre abonnement Classic ou Premium.") % nbreJoursRestants
+                        introduction = _(u"Votre licence d'acc√®s au manuel de r√©f√©rence en ligne se termine dans %d jours. \n\nSi vous le souhaitez, vous pouvez continuer √† b√©n√©ficier de cet acc√®s et prolonger votre soutien financier au projet Teamworks en renouvelant votre abonnement Classic ou Premium.") % nbreJoursRestants
                         dlg = DLG_Messagebox.Dialog(self, titre=_(u"Enregistrement"),
                                                     introduction=introduction, detail=None,
                                                     icone=image, boutons=[(u"Renouveler mon abonnement"), _(u"Fermer")], defaut=0)
@@ -1720,7 +1720,7 @@ class SaisiePassword(wx.Dialog):
             nomFichierTmp = nomFichier[nomFichier.index("[RESEAU]"):]
         else:
             nomFichierTmp = nomFichier
-        self.label_2 = wx.StaticText(self, -1, _(u"Le fichier '") + self.FormateNomFichier(nomFichierTmp) + _(u"' est protÈgÈ."))
+        self.label_2 = wx.StaticText(self, -1, _(u"Le fichier '") + self.FormateNomFichier(nomFichierTmp) + _(u"' est prot√©g√©."))
         self.label_password = wx.StaticText(self, -1, "Mot de passe :")
         self.text_password = wx.TextCtrl(self, -1, "", size=(200, -1), style=wx.TE_PASSWORD)
         self.bouton_ok = CTRL_Bouton_image.CTRL(self, id=wx.ID_OK, texte=_(u"Ok"), cheminImage=Chemins.GetStaticPath("Images/32x32/Valider.png"))
@@ -1781,13 +1781,13 @@ class MyApp(wx.App):
         frame.Refresh()
         frame.Update()
 
-        # CrÈation de la frame principale
+        # Cr√©ation de la frame principale
         frame = MyFrame(None)
         self.SetTopWindow(frame)
         frame.Show()
 
-        # Mode de validation fonctionnelle automatisÈe : la fenÍtre principale
-        # est rÈellement construite et affichÈe, puis la boucle wx est arrÍtÈe
+        # Mode de validation fonctionnelle automatis√©e : la fen√™tre principale
+        # est r√©ellement construite et affich√©e, puis la boucle wx est arr√™t√©e
         # proprement sans ouvrir d'assistant ni de fichier utilisateur.
         if os.environ.get("TEAMWORKS_SMOKE_MODE") == "main-window":
             print("TEAMWORKS_SMOKE_MAIN_WINDOW_READY", flush=True)
@@ -1816,7 +1816,7 @@ class MyApp(wx.App):
             wx.CallLater((len(route) + 2) * 750, self.ExitMainLoop)
             return True
 
-        # Affiche une annonce si c'est un premier dÈmarrage du logiciel
+        # Affiche une annonce si c'est un premier d√©marrage du logiciel
         frame.Annonce()
 
         # Charge l'assistant ou dernier fichier
@@ -1825,11 +1825,11 @@ class MyApp(wx.App):
         else:
             frame.OuvrirDernierFichier()
 
-        # AprËs ouverture d'un fichier :
+        # Apr√®s ouverture d'un fichier :
         if frame.EstFichierExemple() == False:
             financement = frame.AnnonceFinancement()
 
-        # Affiche le temps de dÈmarrage de TW
+        # Affiche le temps de d√©marrage de TW
         duree = time.time()-heure_debut
 
         return True
@@ -1850,13 +1850,13 @@ class Redirect(object):
 
 
 if __name__ == "__main__":
-    # VÈrifie l'existence des rÈpertoires dans le rÈpertoire Utilisateur
+    # V√©rifie l'existence des r√©pertoires dans le r√©pertoire Utilisateur
     for rep in ("Temp", "Updates", "Sync", "Lang", "Modeles", "Editions") :
         rep = UTILS_Fichiers.GetRepUtilisateur(rep)
         if os.path.isdir(rep) == False :
             os.makedirs(rep)
 
-    # VÈrifie si des fichiers du rÈpertoire Data sont ‡ dÈplacer vers le rÈpertoire Utilisateur
+    # V√©rifie si des fichiers du r√©pertoire Data sont √† d√©placer vers le r√©pertoire Utilisateur
     UTILS_Fichiers.DeplaceFichiers()
 
     # Initialisation du fichier de customisation
@@ -1868,7 +1868,7 @@ if __name__ == "__main__":
     # Log
     nomJournal = UTILS_Fichiers.GetRepUtilisateur(CUSTOMIZE.GetValeur("journal", "nom", "journal.log"))
 
-    # Supprime le journal.log si supÈrieur ‡ 10 Mo
+    # Supprime le journal.log si sup√©rieur √† 10 Mo
     if os.path.isfile(nomJournal) :
         taille = os.path.getsize(nomJournal)
         if taille > 5000000 :

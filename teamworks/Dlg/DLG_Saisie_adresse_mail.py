@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -21,7 +21,7 @@ class MyDialog(wx.Dialog):
         self.IDadresse = adresse
         self.defaut = False
         
-        # RÈcupÈration des serveurs prÈdÈfinis
+        # R√©cup√©ration des serveurs pr√©d√©finis
         self.listeServeurs = DATA_Serveurs_fai.LISTE_SERVEURS_FAI
         listeServeursChoices = []
         for fai, smtp, port, ssl in self.listeServeurs :
@@ -29,15 +29,15 @@ class MyDialog(wx.Dialog):
         
         self.static_sizer_adresse_staticbox = wx.StaticBox(self, -1, _(u"Adresse de messagerie"))
         self.static_sizer_serveur_staticbox = wx.StaticBox(self, -1, _(u"Serveur de messagerie"))
-        self.label_intro = wx.StaticText(self, -1, _(u"Choisissez le serveur de messagerie dans la liste qui correspond ‡ votre\nadresse de messagerie."))
+        self.label_intro = wx.StaticText(self, -1, _(u"Choisissez le serveur de messagerie dans la liste qui correspond √† votre\nadresse de messagerie."))
         self.radio_predefini = wx.RadioButton(self, -1, "")
-        self.label_predefini = wx.StaticText(self, -1, _(u"Serveur prÈdÈfini :"))
+        self.label_predefini = wx.StaticText(self, -1, _(u"Serveur pr√©d√©fini :"))
         self.ctrl_predefinis = wx.Choice(self, -1, choices=listeServeursChoices)
         self.radio_personnalise = wx.RadioButton(self, -1, "")
-        self.label_personnalise = wx.StaticText(self, -1, _(u"Serveur personnalisÈ :"))
+        self.label_personnalise = wx.StaticText(self, -1, _(u"Serveur personnalis√© :"))
         self.label_smtp = wx.StaticText(self, -1, _(u"Serveur SMTP :"))
         self.ctrl_smtp = wx.TextCtrl(self, -1, "")
-        self.label_port = wx.StaticText(self, -1, _(u"NumÈro de port :"))
+        self.label_port = wx.StaticText(self, -1, _(u"Num√©ro de port :"))
         self.ctrl_port = wx.TextCtrl(self, -1, "")
         self.label_ssl = wx.StaticText(self, -1, _(u"Connexion SSL :"))
         self.ctrl_ssl = wx.CheckBox(self, -1, "")
@@ -66,16 +66,16 @@ class MyDialog(wx.Dialog):
             
 
     def __set_properties(self):
-        self.radio_predefini.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour sÈlectionner un serveur prÈdÈfini dans la liste")))
+        self.radio_predefini.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour s√©lectionner un serveur pr√©d√©fini dans la liste")))
         self.ctrl_predefinis.SetMinSize((200, -1))
-        self.radio_personnalise.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour saisir manuellement les caractÈristiques du serveur de messagerie")))
+        self.radio_personnalise.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour saisir manuellement les caract√©ristiques du serveur de messagerie")))
         self.ctrl_smtp.SetToolTip(wx.ToolTip(_(u"Saisissez ici le nom du serveur SMPT (exemple : smtp.orange.fr)")))
         self.ctrl_port.SetMinSize((60, -1))
-        self.ctrl_port.SetToolTip(wx.ToolTip(_(u"Saisissez ici le numero de port (laissez la case vide pour utiliser le numÈro de port par dÈfaut)")))
-        self.ctrl_ssl.SetToolTip(wx.ToolTip(_(u"Cliquez ici sur le serveur de messagerie utilise une connexion securisÈe SSL")))
+        self.ctrl_port.SetToolTip(wx.ToolTip(_(u"Saisissez ici le numero de port (laissez la case vide pour utiliser le num√©ro de port par d√©faut)")))
+        self.ctrl_ssl.SetToolTip(wx.ToolTip(_(u"Cliquez ici sur le serveur de messagerie utilise une connexion securis√©e SSL")))
         self.ctrl_adresse.SetToolTip(wx.ToolTip(_(u"Saisissez ici votre adresse mail")))
         self.ctrl_mdp.SetToolTip(wx.ToolTip(_(u"Saisissez ici le mot de passe s'il s'agit d'une connexion SSL")))
-        self.bouton_aide.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour accÈder ‡ l'aide")))
+        self.bouton_aide.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour acc√©der √† l'aide")))
         self.bouton_ok.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour valider")))
         self.bouton_annuler.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour annuler la saisie")))
 
@@ -155,14 +155,14 @@ class MyDialog(wx.Dialog):
     def ActiveCtrlMdp(self):
         etat = False
         if self.radio_predefini.GetValue() == True :
-            # Si serveur prÈdÈfini
+            # Si serveur pr√©d√©fini
             selection = self.ctrl_predefinis.GetSelection()
             if selection != -1 :
                 ssl = self.listeServeurs[selection][3]
                 if ssl == True :
                     etat = True
         else:
-            # Si serveur personnalisÈ
+            # Si serveur personnalis√©
             if self.ctrl_ssl.GetValue() == True :
                 etat = True
         self.ctrl_mdp.Enable(etat)
@@ -181,7 +181,7 @@ class MyDialog(wx.Dialog):
         if motdepasse != None :
             self.ctrl_mdp.SetValue(motdepasse)
         
-        # Recherche si les paramËtres correspondent ‡ un serveur prÈdÈfini
+        # Recherche si les param√®tres correspondent √† un serveur pr√©d√©fini
         index = 0
         indexPredefini = None
         for fai, smtpTmp, portTmp, sslTmp in self.listeServeurs :
@@ -190,11 +190,11 @@ class MyDialog(wx.Dialog):
             index += 1
         
         if indexPredefini != None :
-            # PrÈdÈfini :
+            # Pr√©d√©fini :
             self.ctrl_predefinis.SetSelection(indexPredefini)
             self.radio_predefini.SetValue(True)
         else:
-            # Serveur personnalisÈ :
+            # Serveur personnalis√© :
             if smtp != None :
                 self.ctrl_smtp.SetValue(smtp)
             if port != None :
@@ -210,7 +210,7 @@ class MyDialog(wx.Dialog):
         return listeDonnees
     
     def GetNbreAdresses(self):
-        """ RÈcupËre le nbre d'adresses dÈj‡ saisies """
+        """ R√©cup√®re le nbre d'adresses d√©j√† saisies """
         DB = GestionDB.DB()        
         req = """SELECT IDadresse, adresse, motdepasse, smtp, port, defaut, connexionssl
         FROM adresses_mail ORDER BY adresse; """
@@ -224,17 +224,17 @@ class MyDialog(wx.Dialog):
         UTILS_Aide.Aide("Lesvaleursdepoints")
         
     def OnBoutonOk(self, event):
-        """ Validation des donnÈes saisies """
+        """ Validation des donn√©es saisies """
         if self.radio_predefini.GetValue() == True :
         
-            # Validation du serveur prÈdÈfini
+            # Validation du serveur pr√©d√©fini
             if self.ctrl_predefinis.GetSelection() == -1 :
-                dlg = wx.MessageDialog(self, _(u"Vous n'avez sÈlectionnÈ aucun serveur de messagerie dans la liste"), _(u"Erreur de saisie"), wx.OK | wx.ICON_ERROR)
+                dlg = wx.MessageDialog(self, _(u"Vous n'avez s√©lectionn√© aucun serveur de messagerie dans la liste"), _(u"Erreur de saisie"), wx.OK | wx.ICON_ERROR)
                 dlg.ShowModal()
                 dlg.Destroy()
                 return
             
-            # Validation du serveur prÈdÈfini
+            # Validation du serveur pr√©d√©fini
             if self.ctrl_adresse.GetValue() == "" :
                 dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement saisir une adresse de messagerie."), _(u"Erreur de saisie"), wx.OK | wx.ICON_ERROR)
                 dlg.ShowModal()
@@ -261,7 +261,7 @@ class MyDialog(wx.Dialog):
                 try :
                     test = int(self.ctrl_port.GetValue())
                 except :
-                    dlg = wx.MessageDialog(self, _(u"Le numÈro de port que vous avez saisi n'est pas valide."), _(u"Erreur de saisie"), wx.OK | wx.ICON_ERROR)
+                    dlg = wx.MessageDialog(self, _(u"Le num√©ro de port que vous avez saisi n'est pas valide."), _(u"Erreur de saisie"), wx.OK | wx.ICON_ERROR)
                     dlg.ShowModal()
                     dlg.Destroy()
                     return
@@ -277,12 +277,12 @@ class MyDialog(wx.Dialog):
         # Sauvegarde
         self.Sauvegarde()
                 
-        # Ferme la boÓte de dialogue
+        # Ferme la bo√Æte de dialogue
         self.EndModal(wx.ID_OK)  
 
     def Sauvegarde(self):
-        """ Sauvegarde des donnÈes """
-        # RÈcupÈration des valeurs saisies
+        """ Sauvegarde des donn√©es """
+        # R√©cup√©ration des valeurs saisies
         if self.radio_predefini.GetValue() == True :
             
             adresse = self.ctrl_adresse.GetValue()
@@ -315,12 +315,12 @@ class MyDialog(wx.Dialog):
             else:
                 ssl = 0
         
-        # Si c'est la premiËre adresse saisie, on la met comme defaut
+        # Si c'est la premi√®re adresse saisie, on la met comme defaut
         nbreAdresses = self.GetNbreAdresses() 
         if nbreAdresses == 0 :
             self.defaut = True
 
-        # Enregistrement des donnÈes
+        # Enregistrement des donn√©es
         DB = GestionDB.DB()
         listeDonnees = [
             ("adresse", adresse),

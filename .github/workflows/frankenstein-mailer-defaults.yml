@@ -29,7 +29,7 @@ jobs:
           python - <<'PY'
           import ast
           from pathlib import Path
-          source = Path('teamworks/Dlg/DLG_Mailer.py').read_bytes().decode('iso-8859-15')
+          source = Path('teamworks/Dlg/DLG_Mailer.py').read_bytes().decode('utf-8')
           tree = ast.parse(source)
           targets = {'SetDonnees': 'donnees', 'Envoyer': 'listeDestinataires', 'VerifieFusion': 'listeDestinataires', 'SetPiecesJointes': 'listeFichiers'}
           for node in ast.walk(tree):

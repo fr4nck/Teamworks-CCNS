@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -22,8 +22,8 @@ class Panel(wx.Panel):
     def __init__(self, parent, ID=-1):
         wx.Panel.__init__(self, parent, ID, style=wx.TAB_TRAVERSAL, name="panel_config_pays")
         
-        self.barreTitre = FonctionsPerso.BarreTitre(self,  _(u"Les pays et nationalitÈs"), u"")
-        texteIntro = _(u"Vous pouvez ici ajouter, modifier ou supprimer des pays et les nationalitÈs correspondantes :")
+        self.barreTitre = FonctionsPerso.BarreTitre(self,  _(u"Les pays et nationalit√©s"), u"")
+        texteIntro = _(u"Vous pouvez ici ajouter, modifier ou supprimer des pays et les nationalit√©s correspondantes :")
         self.label_introduction = FonctionsPerso.StaticWrapText(self, -1, texteIntro)
         
         self.listCtrl = ListCtrl(self)
@@ -50,11 +50,11 @@ class Panel(wx.Panel):
         self.bouton_supprimer.Enable(False)
         
     def __set_properties(self):
-        self.bouton_ajouter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour crÈer un nouveau pays")))
+        self.bouton_ajouter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour cr√©er un nouveau pays")))
         self.bouton_ajouter.SetSize(self.bouton_ajouter.GetBestSize())
-        self.bouton_modifier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier un pays sÈlectionnÈ dans la liste")))
+        self.bouton_modifier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier un pays s√©lectionn√© dans la liste")))
         self.bouton_modifier.SetSize(self.bouton_modifier.GetBestSize())
-        self.bouton_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer le pays sÈlectionnÈ dans la liste")))
+        self.bouton_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer le pays s√©lectionn√© dans la liste")))
         self.bouton_supprimer.SetSize(self.bouton_supprimer.GetBestSize())
         self.bouton_aide.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour obtenir de l'aide")))
         
@@ -97,7 +97,7 @@ class Panel(wx.Panel):
     def Modifier(self):
         index = self.listCtrl.GetFirstSelected()
         if index == -1:
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÈlectionner un pays ‡ modifier dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord s√©lectionner un pays √† modifier dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -113,17 +113,17 @@ class Panel(wx.Panel):
     def Supprimer(self):
         index = self.listCtrl.GetFirstSelected()
         
-        # VÈrifie qu'un item a bien ÈtÈ sÈlectionnÈ
+        # V√©rifie qu'un item a bien √©t√© s√©lectionn√©
         if index == -1:
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÈlectionner un pays ‡ supprimer dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord s√©lectionner un pays √† supprimer dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
 
-        # VÈrifie que cet item n'est attribuÈe ‡ aucune personne
+        # V√©rifie que cet item n'est attribu√©e √† aucune personne
         nbreTitulaires = int(self.listCtrl.GetItem(index, 4).GetText())
         if nbreTitulaires != 0:
-            dlg = wx.MessageDialog(self, _(u"Pour des raisons de sÈcuritÈ des donnÈes, vous ne pouvez pas supprimer un pays qui a dÈj‡ ÈtÈ attribuÈ ‡ des personnes.\n\nSi vous voulez vraiment le supprimer, vous devez d'abord supprimer ce pays sur chaque fiche individuelle concernÈe."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Pour des raisons de s√©curit√© des donn√©es, vous ne pouvez pas supprimer un pays qui a d√©j√† √©t√© attribu√© √† des personnes.\n\nSi vous voulez vraiment le supprimer, vous devez d'abord supprimer ce pays sur chaque fiche individuelle concern√©e."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -131,9 +131,9 @@ class Panel(wx.Panel):
         
         ID = int(self.listCtrl.GetItem(index, 0).GetText())
 
-        # VÈrifie que ce n'est pas un pays prÈdÈfini
+        # V√©rifie que ce n'est pas un pays pr√©d√©fini
         if ID <= 230 :
-            dlg = wx.MessageDialog(self, _(u"Vous ne pouvez pas supprimer un pays prÈ-enregistrÈ."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous ne pouvez pas supprimer un pays pr√©-enregistr√©."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return      
@@ -147,12 +147,12 @@ class Panel(wx.Panel):
         if reponse == wx.ID_NO:
             return
 
-        # Suppression du type de piËce
+        # Suppression du type de pi√®ce
         DB = GestionDB.DB()
         DB.ReqDEL("pays", "IDpays", ID)
         DB.Close()
 
-        # M‡J du ListCtrl
+        # M√†J du ListCtrl
         self.listCtrl.MAJListeCtrl()
         
     def MAJ_ListCtrl(self):
@@ -213,11 +213,11 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
         # Initialisation des images
         self.InitImageList()
         
-        # RÈcupÈration des donnÈes dans la base de donnÈes
+        # R√©cup√©ration des donn√©es dans la base de donn√©es
         self.dictNbTitulaires = self.GetNbTitulaires()
         self.Importation()
         
-        # CrÈation des colonnes
+        # Cr√©ation des colonnes
         self.nbreColonnes = 4
         self.InsertColumn(0, u"")
         self.SetColumnWidth(0, 29)
@@ -225,7 +225,7 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
         self.SetColumnWidth(1, 0)
         self.InsertColumn(2, _(u"Nom"))
         self.SetColumnWidth(2, 180)
-        self.InsertColumn(3, _(u"NationalitÈ"))
+        self.InsertColumn(3, _(u"Nationalit√©"))
         self.SetColumnWidth(3, 120)
         self.InsertColumn(4, _(u"Nb titulaires"))
         self.SetColumnWidth(4, 80)   
@@ -267,7 +267,7 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
                 return
         
     def Importation(self):
-        # RÈcupÈration des donnÈes
+        # R√©cup√©ration des donn√©es
         DB = GestionDB.DB()        
         req = """SELECT IDpays, code_drapeau, nom, nationalite
         FROM pays ORDER BY nom; """
@@ -275,11 +275,11 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
         liste = DB.ResultatReq()
         DB.Close()
         self.nbreLignes = len(liste)
-        # CrÈation du dictionnaire de donnÈes
+        # Cr√©ation du dictionnaire de donn√©es
         self.donnees = self.listeEnDict(liste)
 
     def Importation_drapeaux(self):
-        # RÈcupÈration des donnÈes
+        # R√©cup√©ration des donn√©es
         DB = GestionDB.DB()        
         req = """SELECT IDpays, code_drapeau
         FROM pays ORDER BY nom; """
@@ -314,7 +314,7 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
         dictio = {}
         x = 1
         for ligne in liste:
-            index = x # Donne un entier comme clÈ
+            index = x # Donne un entier comme cl√©
             # Rajoute le nb de titulaires
             ligne = list(ligne)
             ID = ligne[0]
@@ -344,7 +344,7 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
         return valeur
 
     def OnGetItemImage(self, item):
-        """ Affichage des images en dÈbut de ligne """
+        """ Affichage des images en d√©but de ligne """
         index=self.itemIndexMap[item]
         IDvaleur =self.itemDataMap[index][0]
         try :
@@ -355,7 +355,7 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
 
     def OnGetItemAttr(self, item):
         """ Application d'une couleur de fond pour une ligne sur deux """
-        # CrÈation d'une ligne de couleur 1 ligne sur 2
+        # Cr√©ation d'une ligne de couleur 1 ligne sur 2
         if item % 2 == 1:
             return self.attr1
         else:
@@ -392,7 +392,7 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
         index = self.GetFirstSelected()
         key = int(self.getColumnText(index, 0))
         
-        # CrÈation du menu contextuel
+        # Cr√©ation du menu contextuel
         menuPop = UTILS_Adaptations.Menu()
 
         # Item Modifier
@@ -453,9 +453,9 @@ class Dialog(wx.Dialog):
         if IDpays != 0 : 
             self.panel_contenu.listCtrl.SetSelection(IDpays=IDpays)
         if self.saisie == "FicheIndiv_pays_naiss" : 
-            self.panel_contenu.label_introduction.SetLabel(_(u"SÈlectionnez un pays de naissance dans la liste :"))
+            self.panel_contenu.label_introduction.SetLabel(_(u"S√©lectionnez un pays de naissance dans la liste :"))
         if self.saisie == "FicheIndiv_nationalite" : 
-            self.panel_contenu.label_introduction.SetLabel(_(u"SÈlectionnez une nationalitÈ dans la liste :"))
+            self.panel_contenu.label_introduction.SetLabel(_(u"S√©lectionnez une nationalit√© dans la liste :"))
 
     def __set_properties(self):
         self.SetTitle(_(u"Gestion des pays"))
@@ -495,24 +495,24 @@ class Dialog(wx.Dialog):
         self.EndModal(wx.ID_CANCEL)
         
     def Onbouton_ok(self, event):
-        # On vÈrifie qu'un pays a ÈtÈ sÈlectionnÈ
+        # On v√©rifie qu'un pays a √©t√© s√©lectionn√©
         if self.saisie == "FicheIndiv_nationalite" or self.saisie == "FicheIndiv_nationalite" :
             if self.panel_contenu.listCtrl.selection == None :
-                dlg = wx.MessageDialog(self, _(u"Vous devez sÈlectionner un pays dans la liste."), "Erreur", wx.OK)  
+                dlg = wx.MessageDialog(self, _(u"Vous devez s√©lectionner un pays dans la liste."), "Erreur", wx.OK)  
                 dlg.ShowModal()
                 dlg.Destroy()
                 return
-        # Si c'est un sÈlection de nationalitÈ, on vÈrifie qu'elle existe bien pour le pays sÈlectionnÈ
+        # Si c'est un s√©lection de nationalit√©, on v√©rifie qu'elle existe bien pour le pays s√©lectionn√©
         if self.saisie == "FicheIndiv_nationalite" :
             listCtrl = self.panel_contenu.listCtrl
             index = listCtrl.GetFirstSelected()
             nationalite = listCtrl.getColumnText(index, 3)
             if nationalite == "" :
-                dlg = wx.MessageDialog(self, _(u"Vous avez sÈlectionnÈ un pays dont la nationalitÈ n'a pas encore ÈtÈ prÈcisÈe. \nCliquez sur le bouton 'Modifier' pour saisir le nom de la nationalitÈ."), "Erreur", wx.OK)  
+                dlg = wx.MessageDialog(self, _(u"Vous avez s√©lectionn√© un pays dont la nationalit√© n'a pas encore √©t√© pr√©cis√©e. \nCliquez sur le bouton 'Modifier' pour saisir le nom de la nationalit√©."), "Erreur", wx.OK)  
                 dlg.ShowModal()
                 dlg.Destroy()
                 return
-        # Si frame Creation_contrats ouverte, on met ‡ jour le listCtrl Valeurs de points
+        # Si frame Creation_contrats ouverte, on met √† jour le listCtrl Valeurs de points
         if self.saisie == "FicheIndiv_pays_naiss" : 
             self.parent.SetPaysNaiss(IDpays=self.panel_contenu.listCtrl.selection)
         if self.saisie == "FicheIndiv_nationalite" :

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -41,9 +41,9 @@ def DateEngEnDateDD(dateEng):
     return datetime.date(int(dateEng[:4]), int(dateEng[5:7]), int(dateEng[8:10]))
 
 def DatetimeDateEnStr(date):
-    """ Transforme un datetime.date en date complète : Ex : lundi 15 janvier 2008 """
+    """ Transforme un datetime.date en date complÃ¨te : Ex : lundi 15 janvier 2008 """
     listeJours = ("Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche")
-    listeMois = (_(u"janvier"), _(u"février"), _(u"mars"), _(u"avril"), _(u"mai"), "juin", _(u"juillet"), _(u"août"), _(u"septembre"), _(u"octobre"), _(u"novembre"), _(u"décembre"))
+    listeMois = (_(u"janvier"), _(u"fÃ©vrier"), _(u"mars"), _(u"avril"), _(u"mai"), "juin", _(u"juillet"), _(u"aoÃ»t"), _(u"septembre"), _(u"octobre"), _(u"novembre"), _(u"dÃ©cembre"))
     dateStr = listeJours[date.weekday()] + " " + str(date.day) + " " + listeMois[date.month-1] + " " + str(date.year)
     return dateStr
 
@@ -56,9 +56,9 @@ class Dialog(wx.Dialog):
         self.panel = wx.Panel(self, -1)
         
         # StaticBox
-        self.staticbox_param = wx.StaticBox(self.panel, -1, _(u"Paramètres du scénario"))
-        self.staticbox_legende = wx.StaticBox(self.panel, -1, _(u"Légende"))
-        self.staticbox_detail = wx.StaticBox(self.panel, -1, _(u"Détail du scénario"))
+        self.staticbox_param = wx.StaticBox(self.panel, -1, _(u"ParamÃ¨tres du scÃ©nario"))
+        self.staticbox_legende = wx.StaticBox(self.panel, -1, _(u"LÃ©gende"))
+        self.staticbox_detail = wx.StaticBox(self.panel, -1, _(u"DÃ©tail du scÃ©nario"))
         
         # Nom
         self.label_nom = wx.StaticText(self.panel, -1, _(u"Nom :"))
@@ -76,30 +76,30 @@ class Dialog(wx.Dialog):
             self.SetPersonne(IDpersonne)
             self.ctrl_personne.Enable(False)
             
-        # Période
-        self.label_date_debut = wx.StaticText(self.panel, -1, _(u"Période du :"))
+        # PÃ©riode
+        self.label_date_debut = wx.StaticText(self.panel, -1, _(u"PÃ©riode du :"))
         self.ctrl_date_debut = DatePickerCtrl(self.panel, -1, style=DP_DROPDOWN)
         self.label_date_fin = wx.StaticText(self.panel, -1, "au")
         self.ctrl_date_fin = DatePickerCtrl(self.panel, -1, style=DP_DROPDOWN)
         
-        # Coche toutes catégories
-        self.ctrl_toutes_categories = wx.CheckBox(self.panel, -1, _(u"Inclure toutes les catégories utilisées"))
+        # Coche toutes catÃ©gories
+        self.ctrl_toutes_categories = wx.CheckBox(self.panel, -1, _(u"Inclure toutes les catÃ©gories utilisÃ©es"))
         self.ctrl_toutes_categories.SetValue(True)
         
-        # Hyperlink Sélection des catégories
+        # Hyperlink SÃ©lection des catÃ©gories
         self.hyperlink_categories = self.Build_Hyperlink()
         
-        # Panel Légende
+        # Panel LÃ©gende
         self.panelLegende = PanelLegende(self.panel)
         
-        # Choix affichage détail
-        self.label_detail = wx.StaticText(self.panel, -1, _(u"Détail :"))
-        self.ctrl_detail = wx.Choice(self.panel, -1, choices = [_(u"Aucun"), _(u"Jour"), _(u"Mois"), _(u"Année")])
+        # Choix affichage dÃ©tail
+        self.label_detail = wx.StaticText(self.panel, -1, _(u"DÃ©tail :"))
+        self.ctrl_detail = wx.Choice(self.panel, -1, choices = [_(u"Aucun"), _(u"Jour"), _(u"Mois"), _(u"AnnÃ©e")])
         self.ctrl_detail.SetSelection(0)
         
-        # Choix affichage heure/décimal
+        # Choix affichage heure/dÃ©cimal
         self.label_modeHeure = wx.StaticText(self.panel, -1, _(u"Mode minutes :"))
-        self.ctrl_modeHeure = wx.Choice(self.panel, -1, choices = [_(u"Normal"), _(u"Décimal")])
+        self.ctrl_modeHeure = wx.Choice(self.panel, -1, choices = [_(u"Normal"), _(u"DÃ©cimal")])
         self.ctrl_modeHeure.SetSelection(0)
         
         if IDscenario != None : 
@@ -142,23 +142,23 @@ class Dialog(wx.Dialog):
         
     def __set_properties(self):
         if self.IDscenario == 0 :
-            self.SetTitle(_(u"Création d'un scénario"))
+            self.SetTitle(_(u"CrÃ©ation d'un scÃ©nario"))
         else:
-            self.SetTitle(_(u"Modification d'un scénario"))
+            self.SetTitle(_(u"Modification d'un scÃ©nario"))
         if 'phoenix' in wx.PlatformInfo:
             _icon = wx.Icon()
         else :
             _icon = wx.EmptyIcon()
         _icon.CopyFromBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Logo.png"), wx.BITMAP_TYPE_ANY))
         self.SetIcon(_icon)
-        self.ctrl_nom.SetToolTip(wx.ToolTip(_(u"Saisissez ici un nom pour le scénario")))
-        self.ctrl_description.SetToolTip(wx.ToolTip(_(u"Saisissez ici une description claire du scénario (optionnel)")))
-        self.ctrl_personne.SetToolTip(wx.ToolTip(_(u"Sélectionnez un individu dans la liste proposée")))
-        self.ctrl_date_debut.SetToolTip(wx.ToolTip(_(u"Saisissez la date de début de période")))
-        self.ctrl_date_fin.SetToolTip(wx.ToolTip(_(u"Saisissez la date de fin de période")))
-        self.ctrl_toutes_categories.SetToolTip(wx.ToolTip(_(u"Cochez cette option pour inclure dans le scénario \ntoutes les catégories pour lesquelles des présences \nont été enregistrées sur la période du scénario.")))
-        self.ctrl_detail.SetToolTip(wx.ToolTip(_(u"Cette option vous permet de sélectionner le niveau de détail souhaité dans l'affichage des heure réalisées")))
-        self.ctrl_modeHeure.SetToolTip(wx.ToolTip(_(u"Sélectionnez le mode d'affichage des minutes : normal ou décimal")))
+        self.ctrl_nom.SetToolTip(wx.ToolTip(_(u"Saisissez ici un nom pour le scÃ©nario")))
+        self.ctrl_description.SetToolTip(wx.ToolTip(_(u"Saisissez ici une description claire du scÃ©nario (optionnel)")))
+        self.ctrl_personne.SetToolTip(wx.ToolTip(_(u"SÃ©lectionnez un individu dans la liste proposÃ©e")))
+        self.ctrl_date_debut.SetToolTip(wx.ToolTip(_(u"Saisissez la date de dÃ©but de pÃ©riode")))
+        self.ctrl_date_fin.SetToolTip(wx.ToolTip(_(u"Saisissez la date de fin de pÃ©riode")))
+        self.ctrl_toutes_categories.SetToolTip(wx.ToolTip(_(u"Cochez cette option pour inclure dans le scÃ©nario \ntoutes les catÃ©gories pour lesquelles des prÃ©sences \nont Ã©tÃ© enregistrÃ©es sur la pÃ©riode du scÃ©nario.")))
+        self.ctrl_detail.SetToolTip(wx.ToolTip(_(u"Cette option vous permet de sÃ©lectionner le niveau de dÃ©tail souhaitÃ© dans l'affichage des heure rÃ©alisÃ©es")))
+        self.ctrl_modeHeure.SetToolTip(wx.ToolTip(_(u"SÃ©lectionnez le mode d'affichage des minutes : normal ou dÃ©cimal")))
         
         self.bouton_aide.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour obtenir de l'aide")))
         self.bouton_aide.SetSize(self.bouton_aide.GetBestSize())
@@ -166,7 +166,7 @@ class Dialog(wx.Dialog):
         self.bouton_ok.SetSize(self.bouton_ok.GetBestSize())
         self.bouton_annuler.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour annuler")))
         self.bouton_annuler.SetSize(self.bouton_annuler.GetBestSize())
-        self.bouton_excel.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour exporter les données des scénarios au format Excel")))
+        self.bouton_excel.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour exporter les donnÃ©es des scÃ©narios au format Excel")))
         self.bouton_imprimer_tableau.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour publier le tableau au format PDF")))
 
     def __do_layout(self):
@@ -174,7 +174,7 @@ class Dialog(wx.Dialog):
         
         grid_sizer_haut = wx.FlexGridSizer(rows=1, cols=2, vgap=10, hgap=10)
         
-        # Paramètres
+        # ParamÃ¨tres
         sizerStaticBox_param = wx.StaticBoxSizer(self.staticbox_param, wx.HORIZONTAL)
         grid_sizer_param = wx.FlexGridSizer(rows=4, cols=2, vgap=10, hgap=10)
         
@@ -199,7 +199,7 @@ class Dialog(wx.Dialog):
         sizerStaticBox_param.Add(grid_sizer_param, 1, wx.EXPAND|wx.ALL, 5)
         grid_sizer_haut.Add(sizerStaticBox_param, 1, wx.EXPAND|wx.LEFT|wx.RIGHT|wx.TOP, 0)
         
-        # Légende
+        # LÃ©gende
         sizerStaticBox_legende = wx.StaticBoxSizer(self.staticbox_legende, wx.HORIZONTAL)
         sizerStaticBox_legende.Add(self.panelLegende, 1, wx.EXPAND|wx.ALL, 5)
         grid_sizer_haut.Add(sizerStaticBox_legende, 0, wx.EXPAND|wx.LEFT, 5)
@@ -207,7 +207,7 @@ class Dialog(wx.Dialog):
         
         grid_sizer_base.Add(grid_sizer_haut, 0, wx.EXPAND|wx.LEFT|wx.RIGHT|wx.TOP, 10)
         
-        # Détail du scénario
+        # DÃ©tail du scÃ©nario
         sizerStaticBox_detail = wx.StaticBoxSizer(self.staticbox_detail, wx.HORIZONTAL)
         grid_sizer_detail = wx.FlexGridSizer(rows=4, cols=1, vgap=10, hgap=10)
         
@@ -271,20 +271,20 @@ class Dialog(wx.Dialog):
     def Build_Hyperlink(self) :
         """ Construit un hyperlien """
         self.SetFont(wx.Font(10, wx.SWISS, wx.NORMAL, wx.NORMAL, False))
-        hyper = hl.HyperLinkCtrl(self.panel, -1, _(u"Ajouter ou supprimer des catégories"), URL="")
+        hyper = hl.HyperLinkCtrl(self.panel, -1, _(u"Ajouter ou supprimer des catÃ©gories"), URL="")
         hyper.Bind(hl.EVT_HYPERLINK_LEFT, self.OnLeftLink)
         hyper.AutoBrowse(False)
         hyper.SetColours("BLUE", "BLUE", "RED")
         hyper.EnableRollover(True)
         hyper.SetUnderlines(True, True, True)
         hyper.SetBold(False)
-        hyper.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour sélectionner les catégories à inclure dans votre scénario")))
+        hyper.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour sÃ©lectionner les catÃ©gories Ã  inclure dans votre scÃ©nario")))
         hyper.UpdateLink()
         hyper.DoPopup(False)
         return hyper
         
     def OnLeftLink(self, event):
-        """ Sélectionner catégories à inclure """
+        """ SÃ©lectionner catÃ©gories Ã  inclure """
         listeSelectionsDefaut = self.ctrl_tableau.listeCategoriesPrevues
         listeDisabledItems = [999,] 
         dlg = DLG_Scenario_select_categories.MyDialog(self, listeSelectionsDefaut, listeDisabledItems)
@@ -295,12 +295,12 @@ class Dialog(wx.Dialog):
             dlg.Destroy()
             return False
         
-        # Suppression d'une catégorie
+        # Suppression d'une catÃ©gorie
         for IDcategorie in listeSelectionsDefaut :
             if IDcategorie not in listeSelections :
                 del self.ctrl_tableau.dictVirtualDB[IDcategorie]
 
-        # Ajout d'une catégorie
+        # Ajout d'une catÃ©gorie
         for IDcategorie in listeSelections :
             if IDcategorie not in listeSelectionsDefaut :
                 self.ctrl_tableau.dictVirtualDB[IDcategorie] = self.ctrl_tableau.CreateNewCategorie(IDcategorie)
@@ -326,7 +326,7 @@ class Dialog(wx.Dialog):
         return listePersonnes, dictPersonnes
                 
     def SetDatePicker(self, controle, date) :
-        """ Met une date au format datetime dans un datePicker donné """
+        """ Met une date au format datetime dans un datePicker donnÃ© """
         annee = int(date.year)
         mois = int(date.month)-1
         jour = int(date.day)
@@ -352,7 +352,7 @@ class Dialog(wx.Dialog):
         return IDpersonne
 
     def SetPersonne(self, IDpersonne=None):
-        """ Sélectionne une personne à partir de son ID dans la liste des personnes """
+        """ SÃ©lectionne une personne Ã  partir de son ID dans la liste des personnes """
         if IDpersonne == None : return
         for index, valeurs in self.dictPersonnes.items() :
             ID = valeurs[0]
@@ -375,12 +375,12 @@ class Dialog(wx.Dialog):
             self.ctrl_description.SetLabel(str(description))
             # Personne
             self.SetPersonne(IDpersonne)
-            # Période
+            # PÃ©riode
             date_debut_DD = DateEngEnDateDD(date_debut)
             self.SetDatePicker(self.ctrl_date_debut, date_debut_DD)
             date_fin_DD = DateEngEnDateDD(date_fin)
             self.SetDatePicker(self.ctrl_date_fin, date_fin_DD)
-            # Coche toutes catégories
+            # Coche toutes catÃ©gories
             self.ctrl_toutes_categories.SetValue(toutes_categories)
             # Mode_detail
             self.ctrl_detail.SetSelection(detail_mois)
@@ -395,7 +395,7 @@ class Dialog(wx.Dialog):
         UTILS_Aide.Aide("Lagestiondesscnarios")
 
     def OnBoutonAnnuler(self, event):
-        txtMessage = six.text_type((_(u"Voulez-vous vraiment annuler ? \n\nSi vous avez effectué des modifications dans ce scénario, elles seront annulées.")))
+        txtMessage = six.text_type((_(u"Voulez-vous vraiment annuler ? \n\nSi vous avez effectuÃ© des modifications dans ce scÃ©nario, elles seront annulÃ©es.")))
         dlgConfirm = wx.MessageDialog(self, txtMessage, _(u"Confirmation d'annulation"), wx.YES_NO|wx.NO_DEFAULT|wx.ICON_QUESTION)
         reponse = dlgConfirm.ShowModal()
         dlgConfirm.Destroy()
@@ -404,10 +404,10 @@ class Dialog(wx.Dialog):
         self.EndModal(wx.ID_CANCEL)
         
     def OnBoutonOk(self, event) :
-        # Vérifie que des valeurs ont été saisies
+        # VÃ©rifie que des valeurs ont Ã©tÃ© saisies
         valeur = self.ctrl_nom.GetValue()
         if valeur == None or valeur == "" :
-            dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement saisir un nom pour ce scénario !"), "Erreur", wx.OK|wx.ICON_ERROR)  
+            dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement saisir un nom pour ce scÃ©nario !"), "Erreur", wx.OK|wx.ICON_ERROR)  
             dlg.ShowModal()
             dlg.Destroy()
             self.ctrl_nom.SetFocus()
@@ -415,18 +415,18 @@ class Dialog(wx.Dialog):
         
         valeur = self.GetIDpersonne()
         if valeur == None :
-            dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement sélectionner un individu dans la liste proposée !"), "Erreur", wx.OK|wx.ICON_ERROR)
+            dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement sÃ©lectionner un individu dans la liste proposÃ©e !"), "Erreur", wx.OK|wx.ICON_ERROR)
             dlg.ShowModal()
             dlg.Destroy()
             self.ctrl_personne.SetFocus()
             return
         
-        # Vérifie qu'il n'y a aucune erreur de report
+        # VÃ©rifie qu'il n'y a aucune erreur de report
         if self.ctrl_tableau.nbreErreursReport > 0 :
             if self.ctrl_tableau.nbreErreursReport == 1 :
-                texte = _(u"Une erreur de report a été trouvée. \n\nVeuillez modifier le report en question avant de sauvegarder ce scénario.")
+                texte = _(u"Une erreur de report a Ã©tÃ© trouvÃ©e. \n\nVeuillez modifier le report en question avant de sauvegarder ce scÃ©nario.")
             else:
-                texte = _(u"%d erreurs de report ont été trouvées. \n\nVeuillez modifier les reports en question avant de sauvegarder ce scénario.") % nbreErreursReport
+                texte = _(u"%d erreurs de report ont Ã©tÃ© trouvÃ©es. \n\nVeuillez modifier les reports en question avant de sauvegarder ce scÃ©nario.") % nbreErreursReport
             dlg = wx.MessageDialog(self, texte, "Erreur de report", wx.OK|wx.ICON_ERROR)  
             dlg.ShowModal()
             dlg.Destroy()
@@ -445,7 +445,7 @@ class Dialog(wx.Dialog):
     def Sauvegarde(self):
         DB = GestionDB.DB()     
         
-        # Sauvegarde des paramètres du scénario
+        # Sauvegarde des paramÃ¨tres du scÃ©nario
         IDpersonne = self.GetIDpersonne()
         nom = self.ctrl_nom.GetValue()
         description = self.ctrl_description.GetValue()
@@ -471,14 +471,14 @@ class Dialog(wx.Dialog):
             IDscenario = self.IDscenario
         DB.Commit()
 
-        # Sauvegarde des catégories de scénarios
+        # Sauvegarde des catÃ©gories de scÃ©narios
         req = "SELECT IDscenario_cat, IDscenario, IDcategorie, prevision, report, date_debut_realise, date_fin_realise FROM scenarios_cat WHERE IDscenario=%d;" % IDscenario
         DB.ExecuterReq(req)
         listeCategoriesDB = DB.ResultatReq()
 
         dictVirtualDB = self.ctrl_tableau.dictVirtualDB
         
-        # Ajout ou modification de catégories
+        # Ajout ou modification de catÃ©gories
         listeIDTraites = []
         for IDcategorie, valeurs in dictVirtualDB.items() :
             etat = valeurs["etat"]
@@ -503,7 +503,7 @@ class Dialog(wx.Dialog):
                 IDscenario_cat = IDscenario_cat
             DB.Commit()
             
-            # Créée une liste des IDscenario_cat traités :
+            # CrÃ©Ã©e une liste des IDscenario_cat traitÃ©s :
             listeIDTraites.append(IDscenario_cat)
         
         # Suppression de scenarios_cat :
@@ -519,14 +519,14 @@ class Dialog(wx.Dialog):
 
     def OnBoutonExcel(self, event):
         if "linux" in sys.platform :
-            dlg = wx.MessageDialog(self, _(u"Désolé, cette fonction n'est pas disponible sous Linux."), _(u"Fonction indisponible"), wx.OK | wx.ICON_ERROR)
+            dlg = wx.MessageDialog(self, _(u"DÃ©solÃ©, cette fonction n'est pas disponible sous Linux."), _(u"Fonction indisponible"), wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
             dlg.Destroy()
             return
         self.ExportExcel()
 
     def OnBoutonImprimerTableau(self, event):
-        """ Impression tableau de données """
+        """ Impression tableau de donnÃ©es """
         avecCouleurs = True
         
         from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
@@ -541,7 +541,7 @@ class Dialog(wx.Dialog):
         doc = SimpleDocTemplate(nomDoc, pagesize=(largeur, hauteur), leftMargin=tailleMarge, rightMargin=tailleMarge, topMargin=tailleMarge, bottomMargin=tailleMarge, )
         story = []
         
-        # Récupération des données du tableau
+        # RÃ©cupÃ©ration des donnÃ©es du tableau
         tableau = self.ctrl_tableau
         nbreColonnes = tableau.GetNumberCols()
         nbreLignes = tableau.GetNumberRows()
@@ -550,7 +550,7 @@ class Dialog(wx.Dialog):
         dataTableau = []
         listeCouleurs = []
         
-        # Création des colonnes
+        # CrÃ©ation des colonnes
         largeursColonnes = []
         largeurColonne = 60
         largeurColonneLabel = 140
@@ -559,15 +559,15 @@ class Dialog(wx.Dialog):
             else: largeursColonnes.append(largeurColonne)
         
         listeStyles = [
-                            ('GRID', (0,0), (-1,-1), 0.25, colors.black), # Crée la bordure noire pour tout le tableau
+                            ('GRID', (0,0), (-1,-1), 0.25, colors.black), # CrÃ©e la bordure noire pour tout le tableau
                             ('VALIGN', (0, 0), (-1,-1), 'MIDDLE'), # Centre verticalement toutes les cases
                             ('ALIGN', (0, 0), (-1, 0), 'CENTRE'), # Centre les labels de colonne
-                            ('ALIGN', (1, 1), (-1,- 1), 'RIGHT'), # Valeurs à gauche
-                            ('ALIGN', (0, 1), (0, -1), 'CENTRE'), # Colonne Label Ligne centrée
+                            ('ALIGN', (1, 1), (-1,- 1), 'RIGHT'), # Valeurs Ã  gauche
+                            ('ALIGN', (0, 1), (0, -1), 'CENTRE'), # Colonne Label Ligne centrÃ©e
                             ('FONT',(0, 0),(-1,-1), "Helvetica", 8), # Donne la police de caract. + taille de police de la ligne de total
                             ]
                             
-        # Création des lignes
+        # CrÃ©ation des lignes
         for numLigne in range(0, nbreLignes) :
             valeursLigne = []
             for numCol in range(0, nbreColonnes) :
@@ -584,7 +584,7 @@ class Dialog(wx.Dialog):
         # Style du tableau
         style = TableStyle(listeStyles)
         
-        # Création du tableau
+        # CrÃ©ation du tableau
         tableau = Table(dataTableau, largeursColonnes,  hAlign='LEFT')
         tableau.setStyle(style)
         story.append(tableau)
@@ -618,13 +618,13 @@ class Tableau(gridlib.Grid):
         self.Bind(wx.EVT_IDLE, self.OnIdle)
         self.Bind(gridlib.EVT_GRID_CELL_LEFT_DCLICK, self.OnCellLeftDClick)
         
-        # Importation des catégories de présences
+        # Importation des catÃ©gories de prÃ©sences
         self.dictCategories = self.Importation_categories()
         
-        # Création du VirtualDB (table scenarios_cat)
+        # CrÃ©ation du VirtualDB (table scenarios_cat)
         self.dictVirtualDB = self.GetVirtualDB(self.IDscenario)
 
-        # Création Grid
+        # CrÃ©ation Grid
         self.CreateGrid(0, 0)
         
         # Init Tableau
@@ -645,31 +645,31 @@ class Tableau(gridlib.Grid):
 
         
     def InitTableau(self):
-        # Paramètres
+        # ParamÃ¨tres
         self.inclure_toutes_categories = self.parent.ctrl_toutes_categories.GetValue()
         self.mode_detail = self.parent.ctrl_detail.GetSelection()
         self.mode_heure = self.parent.ctrl_modeHeure.GetSelection()
         IDpersonne = self.parent.GetIDpersonne()
         date_debut, date_fin = self.parent.GetDatesPeriode()
         
-        # Init liste légende
+        # Init liste lÃ©gende
         self.listeLegendes = []
         self.listeReports = []
         
-        # Importation des catégories du scénarios
+        # Importation des catÃ©gories du scÃ©narios
         self.listeCategoriesPrevues = self.GetCategoriesPrevues()
         
-        # Crée liste des mois
+        # CrÃ©e liste des mois
         date_debut, date_fin = self.parent.GetDatesPeriode()
         
-        # Inclure les catégories non scénarisées
+        # Inclure les catÃ©gories non scÃ©narisÃ©es
         if IDpersonne != None :
             self.listeCategoriesUtilisees = self.GetCategoriesUtilisees(IDpersonne, str(date_debut), str(date_fin))
         else:
             self.listeCategoriesUtilisees = []
         
         if len(self.listeCategoriesUtilisees) > 0 and self.inclure_toutes_categories == True :
-            self.listeLegendes.append( ( ("texte", "*"), ("texte", _(u"Catégories utilisées mais non scénarisées")), _(u"Ces catégories ne sont pas scénarisées mais apparaissent puisque des présences correspondantes ont été enregistrées sur la période du scénario en cours")) )
+            self.listeLegendes.append( ( ("texte", "*"), ("texte", _(u"CatÃ©gories utilisÃ©es mais non scÃ©narisÃ©es")), _(u"Ces catÃ©gories ne sont pas scÃ©narisÃ©es mais apparaissent puisque des prÃ©sences correspondantes ont Ã©tÃ© enregistrÃ©es sur la pÃ©riode du scÃ©nario en cours")) )
                     
         self.listeCategoriesNonPrevues = []
         if self.inclure_toutes_categories == True :
@@ -684,10 +684,10 @@ class Tableau(gridlib.Grid):
             self.listeCategories = self.listeCategoriesPrevues
         self.listeCategories.sort()
 
-        # Crée labels des lignes
+        # CrÃ©e labels des lignes
         self.listeLabelsLigne = self.GetListeLabelsLignes()
 
-        # Récupération des données de chaque colonne
+        # RÃ©cupÃ©ration des donnÃ©es de chaque colonne
         dictColonnes = {}
         for IDcategorie in self.listeCategories :
             if IDcategorie in self.listeCategoriesPrevues :
@@ -699,7 +699,7 @@ class Tableau(gridlib.Grid):
         # Ajout de la colonne TOTAL
         dictColonneTotal= self.GetColonneTotal(dictColonnes)
 
-        # Récupération des labels des lignes de détail
+        # RÃ©cupÃ©ration des labels des lignes de dÃ©tail
         listeLabelsDetails = []
         for IDscenario_cat, dictDonneesColonne in dictColonnes.items() :
             listeLabels = dictDonneesColonne["listeLabelsDetails"]
@@ -708,7 +708,7 @@ class Tableau(gridlib.Grid):
                     listeLabelsDetails.append(label)
         listeLabelsDetails.sort()
         
-        # Rajout des labels de détail dans la liste des labels
+        # Rajout des labels de dÃ©tail dans la liste des labels
         index = 0
         for label in listeLabelsDetails :
             nomFormate = self.FormateLabelDetail(label)
@@ -716,15 +716,15 @@ class Tableau(gridlib.Grid):
             self.listeLabelsLigne.insert(6 + index, infoLigne)
             index += 1
                                
-        # Création de la grille
+        # CrÃ©ation de la grille
         nbreLignes =  len(self.listeLabelsLigne) + 1 # +1 = entete de colonnes
         nbreColonnes = len(self.listeCategories) + 2 # +1 : Colonne des labels + Colonne Total
         
         if self.GetNumberRows() == 0 : 
-            # Création des lignes du tableau
+            # CrÃ©ation des lignes du tableau
             self.AppendRows(nbreLignes)
         if self.GetNumberCols() == 0 : 
-            # Création des colonnes du tableau
+            # CrÃ©ation des colonnes du tableau
             self.AppendCols(nbreColonnes)
             
         self.SetColSize(0, 170)
@@ -741,7 +741,7 @@ class Tableau(gridlib.Grid):
         index_col = 1
         for IDcategorie in self.listeCategories :
             if IDcategorie == 999 :
-                nom_colonne = _(u"Sans catégorie")
+                nom_colonne = _(u"Sans catÃ©gorie")
                 self.SetCellBackgroundColour(0, index_col, "#FFFFFF")
             else:
                 nom_colonne = self.dictCategories[IDcategorie][0]
@@ -778,7 +778,7 @@ class Tableau(gridlib.Grid):
             
             if type == "groupe" :
             
-                # Création du nom de groupe
+                # CrÃ©ation du nom de groupe
                 self.SetCellValue(index_ligne, 0, label)
                 self.SetRowSize(index_ligne, 8)
                 self.SetCellAlignment(index_ligne, 0, wx.ALIGN_CENTRE, wx.ALIGN_CENTRE)
@@ -794,7 +794,7 @@ class Tableau(gridlib.Grid):
             
             else :
                 
-                # Création de chaque ligne du groupe
+                # CrÃ©ation de chaque ligne du groupe
                 self.SetCellValue(index_ligne, 0, label)
                 self.SetCellAlignment(index_ligne, 0, wx.ALIGN_CENTRE, wx.ALIGN_CENTRE)
                 self.SetCellBackgroundColour(index_ligne, 0, couleur_fond_label)
@@ -836,8 +836,8 @@ class Tableau(gridlib.Grid):
                                     a, b, c, label, d = report.split(";")
                                     if label.startswith("ERREUR") :
                                         self.SetCellBackgroundColour(index_ligne, index_col, (255, 0, 0))
-                                        if label[6:] == "1" : texteErreur = _(u"Un report ne peut pas provenir du scénario d'une autre personne !")
-                                        elif label[6:] == "2" : texteErreur = _(u"Le report fait référence à un scénario supprimé !")
+                                        if label[6:] == "1" : texteErreur = _(u"Un report ne peut pas provenir du scÃ©nario d'une autre personne !")
+                                        elif label[6:] == "2" : texteErreur = _(u"Le report fait rÃ©fÃ©rence Ã  un scÃ©nario supprimÃ© !")
                                         else : texteErreur = _(u"Erreur inconnue !")
                                         self.listeLegendes.append( ( ("couleur", (255, 0, 0)), ("texte", _(u"Erreur de report : %s") % texteErreur), u"") )
                                         self.nbreErreursReport += 1
@@ -877,13 +877,13 @@ class Tableau(gridlib.Grid):
                     self.SetCellAlignment(index_ligne, index_col, wx.ALIGN_RIGHT, wx.ALIGN_CENTRE)
             index_ligne += 1
         
-        # Légende
+        # LÃ©gende
         for lettre, report_IDscenario, IDcategorie, report_heures, nomScenario, descriptionScenario in self.listeReports :
             IDcategorie = int(IDcategorie)
-            if IDcategorie == 999 : nomCategorie = _(u"Sans catégorie")
+            if IDcategorie == 999 : nomCategorie = _(u"Sans catÃ©gorie")
             elif IDcategorie == 1000 : nomCategorie = _(u"Total")
             else : nomCategorie = self.dictCategories[int(IDcategorie)][0]
-            self.listeLegendes.append( ( ("texte", "(%s)" % lettre), ("lien", _(u"Report depuis '%s' (%s)") % (nomScenario, nomCategorie), report_IDscenario, IDcategorie), _(u"Description de ce scénario : %s") % descriptionScenario) )
+            self.listeLegendes.append( ( ("texte", "(%s)" % lettre), ("lien", _(u"Report depuis '%s' (%s)") % (nomScenario, nomCategorie), report_IDscenario, IDcategorie), _(u"Description de ce scÃ©nario : %s") % descriptionScenario) )
         self.parent.panelLegende.MAJ(self.listeLegendes)
         
         self.moveTo = (self.GetNumberRows()-1, self.GetNumberCols()-1)
@@ -891,7 +891,7 @@ class Tableau(gridlib.Grid):
     def FormateLabelCase(self, label, code):
         """ Formate le label pour chaque case """
         if code == "periode_realise" :
-            # Formate les cases périodes
+            # Formate les cases pÃ©riodes
             date_debut, date_fin = label.split(";")
             if date_debut == "None" and date_fin == "None" : 
                 return _(u"Tout")
@@ -935,7 +935,7 @@ class Tableau(gridlib.Grid):
             # Mode Heure
             texte = _(u"%s%sh%s") % (signe, hr, mn)
         else:
-            # Mode décimal
+            # Mode dÃ©cimal
             minDecimal = int(mn)*100//60
             texte = u"%s%s.%s" % (signe, hr, minDecimal)
         return texte
@@ -944,7 +944,7 @@ class Tableau(gridlib.Grid):
         # Formate noms de mois :
         if len(label) == 6 or len(label) == 7 :
             numAnnee, numMois = label.split("-")
-            listeMois = ("Janvier", _(u"Février"), "Mars", "Avril", "Mai", "Juin", "Juillet", _(u"Août"), "Septembre", "Octobre", "Novembre", _(u"Décembre"))
+            listeMois = ("Janvier", _(u"FÃ©vrier"), "Mars", "Avril", "Mai", "Juin", "Juillet", _(u"AoÃ»t"), "Septembre", "Octobre", "Novembre", _(u"DÃ©cembre"))
             texte = u"%s %s" % (listeMois[int(numMois)-1], numAnnee)
             return texte
         
@@ -1004,11 +1004,11 @@ class Tableau(gridlib.Grid):
         if date_debut != None : date_debut = str(date_debut)
         if date_fin != None : date_fin = str(date_fin)
         if IDcategorie in self.dictVirtualDB :
-            # Modification d'une catégorie
+            # Modification d'une catÃ©gorie
             self.dictVirtualDB[IDcategorie]["date_debut_realise"] = date_debut
             self.dictVirtualDB[IDcategorie]["date_fin_realise"] = date_fin
         else:
-            # Ajout d'une catégorie
+            # Ajout d'une catÃ©gorie
             self.dictVirtualDB[IDcategorie] = self.CreateNewCategorie(IDcategorie)
             self.dictVirtualDB[IDcategorie]["date_debut_realise"] = date_debut
             self.dictVirtualDB[IDcategorie]["date_fin_realise"] = date_fin
@@ -1028,10 +1028,10 @@ class Tableau(gridlib.Grid):
             dlg.Destroy()
             return False
         if IDcategorie in self.dictVirtualDB :
-            # Modification d'une catégorie
+            # Modification d'une catÃ©gorie
             self.dictVirtualDB[IDcategorie]["prevision"] = prevision
         else:
-            # Ajout d'une catégorie
+            # Ajout d'une catÃ©gorie
             self.dictVirtualDB[IDcategorie] = self.CreateNewCategorie(IDcategorie)
             self.dictVirtualDB[IDcategorie]["prevision"] = prevision
         # MAJ tableau
@@ -1050,10 +1050,10 @@ class Tableau(gridlib.Grid):
             dlg.Destroy()
             return False
         if IDcategorie in self.dictVirtualDB :
-            # Modification d'une catégorie
+            # Modification d'une catÃ©gorie
             self.dictVirtualDB[IDcategorie]["report"] = report
         else:
-            # Ajout d'une catégorie
+            # Ajout d'une catÃ©gorie
             self.dictVirtualDB[IDcategorie] = self.CreateNewCategorie(IDcategorie)
             self.dictVirtualDB[IDcategorie]["report"] = report
         # MAJ tableau
@@ -1065,7 +1065,7 @@ class Tableau(gridlib.Grid):
         for IDcategorie, dictDonneesColonne in dictColonnes.items() :
             for codeLigne, valeur in dictDonneesColonne.items() :
                 if codeLigne not in listeLignesExceptions :
-                    # Particularité de la ligne report
+                    # ParticularitÃ© de la ligne report
                     if codeLigne == "report" :
                         if valeur == None or valeur == "" : valeur = u"+00:00"
                         if valeur[0] == "M" :
@@ -1082,7 +1082,7 @@ class Tableau(gridlib.Grid):
         return dictTotauxLignes
         
     def GetCategoriesPrevues(self):
-        """ Recherche des catégories incluses dans le scénario chargé """
+        """ Recherche des catÃ©gories incluses dans le scÃ©nario chargÃ© """
         self.IDscenario = self.parent.IDscenario    
         listeCategories = list(self.dictVirtualDB.keys())
         listeCategories.sort()
@@ -1108,16 +1108,16 @@ class Tableau(gridlib.Grid):
         # Labels de lignes de base :
         listeLignes = [
             
-            { "type" : "groupe", "label" : _(u"Heures prévues"), "code" : "", "couleur_fond_label" : "#C0C0C0", "couleur_police_label" : "#FFFFFF", "couleur_fond_case" : "#C0C0C0"},
-            { "type" : "ligne", "label" : _(u"Prévisions"), "code" : "prevision", "couleur_fond_label" : "#FFFFFF", "couleur_police_label" : "#000000", "couleur_fond_case" : "#F0F0EE"},
+            { "type" : "groupe", "label" : _(u"Heures prÃ©vues"), "code" : "", "couleur_fond_label" : "#C0C0C0", "couleur_police_label" : "#FFFFFF", "couleur_fond_case" : "#C0C0C0"},
+            { "type" : "ligne", "label" : _(u"PrÃ©visions"), "code" : "prevision", "couleur_fond_label" : "#FFFFFF", "couleur_police_label" : "#000000", "couleur_fond_case" : "#F0F0EE"},
             { "type" : "ligne", "label" : _(u"Report"), "code" : "report", "couleur_fond_label" : "#FFFFFF", "couleur_police_label" : "#000000", "couleur_fond_case" : "#F0F0EE"},
             { "type" : "ligne", "label" : _(u"Total"), "code" : "total_heures_prevues", "couleur_fond_label" : "#FFFFFF", "couleur_police_label" : "#000000", "couleur_fond_case" : "#FFFFFF"},
             
-            { "type" : "groupe", "label" : _(u"Heures réalisées"), "code" : "", "couleur_fond_label" : "#C0C0C0", "couleur_police_label" : "#FFFFFF", "couleur_fond_case" : "#C0C0C0"},
-            { "type" : "ligne", "label" : _(u"Périodes de référence"), "code" : "periode_realise", "couleur_fond_label" : "#FFFFFF", "couleur_police_label" : "#000000", "couleur_fond_case" : "#F0F0EE"},
+            { "type" : "groupe", "label" : _(u"Heures rÃ©alisÃ©es"), "code" : "", "couleur_fond_label" : "#C0C0C0", "couleur_police_label" : "#FFFFFF", "couleur_fond_case" : "#C0C0C0"},
+            { "type" : "ligne", "label" : _(u"PÃ©riodes de rÃ©fÃ©rence"), "code" : "periode_realise", "couleur_fond_label" : "#FFFFFF", "couleur_police_label" : "#000000", "couleur_fond_case" : "#F0F0EE"},
             { "type" : "ligne", "label" : _(u"Total"), "code" : "total_heures_realisees", "couleur_fond_label" : "#FFFFFF", "couleur_police_label" : "#000000", "couleur_fond_case" : "#FFFFFF"},
             
-            { "type" : "groupe", "label" : _(u"Reste heures à réaliser"), "code" : "", "couleur_fond_label" : "#C0C0C0", "couleur_police_label" : "#FFFFFF", "couleur_fond_case" : "#C0C0C0"},
+            { "type" : "groupe", "label" : _(u"Reste heures Ã  rÃ©aliser"), "code" : "", "couleur_fond_label" : "#C0C0C0", "couleur_police_label" : "#FFFFFF", "couleur_fond_case" : "#C0C0C0"},
             { "type" : "ligne", "label" : _(u"Total"), "code" : "total_reste_heures", "couleur_fond_label" : "#FFFFFF", "couleur_police_label" : "#000000", "couleur_fond_case" : "#FFFFFF"},
         
         ]
@@ -1125,7 +1125,7 @@ class Tableau(gridlib.Grid):
     
     
     def GetVirtualDB(self, IDscenario=None):
-        """ Mémorise la table scenarios_cat pour permettre l'annulation après modifications """
+        """ MÃ©morise la table scenarios_cat pour permettre l'annulation aprÃ¨s modifications """
         dictVirtualDB = {}
         if IDscenario != None :
             DB = GestionDB.DB()
@@ -1134,7 +1134,7 @@ class Tableau(gridlib.Grid):
             listeDonnees = DB.ResultatReq()
             DB.Close()
             if len(listeDonnees) == 0 : return dictVirtualDB
-            # Importation des données de base de la colonne
+            # Importation des donnÃ©es de base de la colonne
             for IDscenario_cat, IDscenario, IDcategorie, prevision, report, date_debut_realise, date_fin_realise in listeDonnees :
                 dictDonnees = {}
                 dictDonnees["IDscenario_cat"] = IDscenario_cat
@@ -1148,7 +1148,7 @@ class Tableau(gridlib.Grid):
                 dictDonnees["etat"] = "initial" # initial, modif, suppr, ajout
                 dictVirtualDB[IDcategorie] = dictDonnees
         else:
-            # S'il s'agit d'une création de scénarios
+            # S'il s'agit d'une crÃ©ation de scÃ©narios
             dictVirtualDB[999] = self.CreateNewCategorie(999)
             
         return dictVirtualDB
@@ -1168,12 +1168,12 @@ class Tableau(gridlib.Grid):
     def GetValeursColonne(self, IDscenario=None, IDcategorie=None, IDpersonne=None, mode_detail=0, modeReport=False) :
         dictDonnees = {}
 
-        # Récupération des données scénarisées
+        # RÃ©cupÃ©ration des donnÃ©es scÃ©narisÃ©es
         if IDscenario != None :
             
-            # Si c'est pour un report, on cherche dans la base de données directement
+            # Si c'est pour un report, on cherche dans la base de donnÃ©es directement
             if modeReport == True :
-                # Si c'est une catégorie prévue
+                # Si c'est une catÃ©gorie prÃ©vue
                 DB = GestionDB.DB()
                 req = "SELECT IDscenario_cat, IDscenario, IDcategorie, prevision, report, date_debut_realise, date_fin_realise FROM scenarios_cat WHERE IDscenario=%d AND IDcategorie=%d;" % (IDscenario, IDcategorie)
                 DB.ExecuterReq(req)
@@ -1188,7 +1188,7 @@ class Tableau(gridlib.Grid):
                     dictDonnees["date_debut_realise"] = str(date_debut)
                     dictDonnees["date_fin_realise"] = str(date_fin) 
                      
-                # Importation des données de base de la colonne
+                # Importation des donnÃ©es de base de la colonne
                 for IDscenario_cat, IDscenario, IDcategorie, prevision, report, date_debut_realise, date_fin_realise in listeDonnees :
                     dictDonnees["IDscenario_cat"] = IDscenario_cat
                     dictDonnees["IDcategorie"] = IDcategorie
@@ -1229,7 +1229,7 @@ class Tableau(gridlib.Grid):
                 if date_fin_realise == "" : date_fin_realise = None
                 dictDonnees["date_fin_realise"] = date_fin_realise
             else :
-                # Si c'est une catégorie NON prévue
+                # Si c'est une catÃ©gorie NON prÃ©vue
                 dictDonnees["IDscenario_cat"] = None
                 dictDonnees["IDcategorie"] = IDcategorie
                 dictDonnees["prevision"] = None
@@ -1239,7 +1239,7 @@ class Tableau(gridlib.Grid):
                 dictDonnees["date_fin_realise"] = str(date_fin)      
         
             
-        # Calcul du total des heures prévues
+        # Calcul du total des heures prÃ©vues
         prevision = dictDonnees["prevision"]
         report = dictDonnees["report"]
         heures_report = "+00:00"
@@ -1253,19 +1253,19 @@ class Tableau(gridlib.Grid):
         total_heures_prevues = self.OperationHeures(prevision, heures_report, "addition")
         dictDonnees["total_heures_prevues"] = total_heures_prevues
         
-        # Formatage da la période du réalisé
+        # Formatage da la pÃ©riode du rÃ©alisÃ©
         dictDonnees["periode_realise"] = "%s;%s" % (dictDonnees["date_debut_realise"], dictDonnees["date_fin_realise"])
         
-        # Récupération des heures réalisées
+        # RÃ©cupÃ©ration des heures rÃ©alisÃ©es
         date_debut_realise = dictDonnees["date_debut_realise"]
         date_fin_realise = dictDonnees["date_fin_realise"]
         IDcategorie = dictDonnees["IDcategorie"]
 
         dictHeuresRealisees, listeLabelsDetails = self.GetHeuresRealisees(IDpersonne, date_debut_realise, date_fin_realise, IDcategorie, mode_detail)
-        # Total heures réalisées
+        # Total heures rÃ©alisÃ©es
         total_heures_realisees = dictHeuresRealisees["total_heures_realisees"]
         dictDonnees["total_heures_realisees"] = total_heures_realisees
-        # Détail Jour ou Mois des heures réalisées :
+        # DÃ©tail Jour ou Mois des heures rÃ©alisÃ©es :
         dictDonnees["listeLabelsDetails"] = listeLabelsDetails
         for label in listeLabelsDetails :
             dictDonnees[label] = dictHeuresRealisees[label]
@@ -1277,7 +1277,7 @@ class Tableau(gridlib.Grid):
         return dictDonnees
     
     def OperationHeures(self, heureA=None, heureB=None, operation="addition"):
-        # Préparation heure A
+        # PrÃ©paration heure A
         if heureA == None :
             totalMinutesA = 0
         else:
@@ -1286,7 +1286,7 @@ class Tableau(gridlib.Grid):
             hrA, mnA = int(float(hrA)), int(float(mnA))
             totalMinutesA = (hrA*60) + mnA
             if signeA == "-" : totalMinutesA = -totalMinutesA
-        # Préparation heure B
+        # PrÃ©paration heure B
         if heureB == None :
             totalMinutesB = 0
         else:
@@ -1295,10 +1295,10 @@ class Tableau(gridlib.Grid):
             hrB, mnB = int(float(hrB)), int(float(mnB))
             totalMinutesB = (hrB*60) + mnB
             if signeB == "-" : totalMinutesB = -totalMinutesB
-        # Opération
+        # OpÃ©ration
         if operation == "addition" : totalMinutes = totalMinutesA + totalMinutesB
         if operation == "soustraction" : totalMinutes = totalMinutesA - totalMinutesB
-        # Formatage du résultat
+        # Formatage du rÃ©sultat
         if totalMinutes >= 0 :
             nbreHeures = totalMinutes//60
             nbreMinutes = totalMinutes-(nbreHeures*60)
@@ -1313,7 +1313,7 @@ class Tableau(gridlib.Grid):
         
     def GetReportColonne(self, IDcategorie, IDpersonne, IDscenario) :
         """ Report d'une colonne """
-        # Récupère le nom du scénario
+        # RÃ©cupÃ¨re le nom du scÃ©nario
         DB = GestionDB.DB()
         req = "SELECT IDscenario, nom, description, detail_mois, date_debut, date_fin, toutes_categories, IDpersonne FROM scenarios WHERE IDscenario=%d" % IDscenario
         DB.ExecuterReq(req)
@@ -1321,7 +1321,7 @@ class Tableau(gridlib.Grid):
         DB.Close()
 
         if len(listePresences) == 0 :
-            # Le scénario a été supprimé
+            # Le scÃ©nario a Ã©tÃ© supprimÃ©
             totalResteColonne, nomScenario, descriptionScenario = "+00:00", "ERREUR2", ""
             return totalResteColonne, nomScenario, descriptionScenario
         
@@ -1334,11 +1334,11 @@ class Tableau(gridlib.Grid):
         reportIDpersonne = listePresences[0][7]
         
         if IDpersonne != reportIDpersonne :
-            # Le report provient du scénario d'une autre personne
+            # Le report provient du scÃ©nario d'une autre personne
             totalResteColonne, nomScenario, descriptionScenario = "+00:00", "ERREUR1", ""
             return totalResteColonne, nomScenario, descriptionScenario
         
-        # Récupère le nbre d'heures pour le report
+        # RÃ©cupÃ¨re le nbre d'heures pour le report
         if IDcategorie == 1000 :
             valeurs = GetDictColonnes(IDscenario, IDpersonne, detail_mois, date_debut, date_fin, toutes_categories)
             dictDonneesColonne = valeurs.GetDictColonneTotal()
@@ -1367,11 +1367,11 @@ class Tableau(gridlib.Grid):
         
         for IDpresence, date, heure_debut, heure_fin in listePresences :
             dateDD = DateEngEnDateDD(date)
-            # Addition pour le total de la catégorie
+            # Addition pour le total de la catÃ©gorie
             duree = self.OperationHeures("+" + heure_fin, "+" + heure_debut, "soustraction")
             total_heure_realisees = self.OperationHeures(total_heure_realisees, duree, "addition")
             dictHeuresRealisees["total_heures_realisees"] = total_heure_realisees
-            # Détail
+            # DÃ©tail
             if mode_detail == 1 :
                 codeJour = str(dateDD)
                 if codeJour in dictHeuresRealisees :
@@ -1418,11 +1418,11 @@ class GetDictColonnes():
         self.date_fin = date_fin
         self.toutes_categories = toutes_categories
         
-        # Importation des catégories prévues
+        # Importation des catÃ©gories prÃ©vues
         if self.IDscenario != None : self.listeCategoriesPrevues = self.GetCategoriesPrevues()
         else: self.listeCategoriesPrevues = []
     
-        # Inclure les catégories non scénarisées
+        # Inclure les catÃ©gories non scÃ©narisÃ©es
         if IDpersonne != None : self.listeCategoriesUtilisees = self.GetCategoriesUtilisees()
         else: self.listeCategoriesUtilisees = []
 
@@ -1439,10 +1439,10 @@ class GetDictColonnes():
             self.listeCategories = self.listeCategoriesPrevues
         self.listeCategories.sort()
         
-        # Crée labels des lignes
+        # CrÃ©e labels des lignes
         self.listeLabelsLigne = self.GetListeLabelsLignes()
 
-        # Récupération des données de chaque colonne
+        # RÃ©cupÃ©ration des donnÃ©es de chaque colonne
         self.dictColonnes = {}
         for IDcategorie in self.listeCategories :
             if IDcategorie in self.listeCategoriesPrevues :
@@ -1488,16 +1488,16 @@ class GetDictColonnes():
     def GetListeLabelsLignes(self):
         listeLignes = [
             
-            { "type" : "groupe", "label" : _(u"Heures prévues"), "code" : "", "couleur_fond_label" : "#C0C0C0", "couleur_police_label" : "#FFFFFF", "couleur_fond_case" : "#C0C0C0"},
-            { "type" : "ligne", "label" : _(u"Prévisions"), "code" : "prevision", "couleur_fond_label" : "#FFFFFF", "couleur_police_label" : "#000000", "couleur_fond_case" : "#ECE9D8"},
+            { "type" : "groupe", "label" : _(u"Heures prÃ©vues"), "code" : "", "couleur_fond_label" : "#C0C0C0", "couleur_police_label" : "#FFFFFF", "couleur_fond_case" : "#C0C0C0"},
+            { "type" : "ligne", "label" : _(u"PrÃ©visions"), "code" : "prevision", "couleur_fond_label" : "#FFFFFF", "couleur_police_label" : "#000000", "couleur_fond_case" : "#ECE9D8"},
             { "type" : "ligne", "label" : _(u"Report"), "code" : "report", "couleur_fond_label" : "#FFFFFF", "couleur_police_label" : "#000000", "couleur_fond_case" : "#ECE9D8"},
             { "type" : "ligne", "label" : _(u"Total"), "code" : "total_heures_prevues", "couleur_fond_label" : "#FFFFFF", "couleur_police_label" : "#000000", "couleur_fond_case" : "#FFFFFF"},
             
-            { "type" : "groupe", "label" : _(u"Heures réalisées"), "code" : "", "couleur_fond_label" : "#C0C0C0", "couleur_police_label" : "#FFFFFF", "couleur_fond_case" : "#C0C0C0"},
-            { "type" : "ligne", "label" : _(u"Périodes de référence"), "code" : "periode_realise", "couleur_fond_label" : "#FFFFFF", "couleur_police_label" : "#000000", "couleur_fond_case" : "#ECE9D8"},
+            { "type" : "groupe", "label" : _(u"Heures rÃ©alisÃ©es"), "code" : "", "couleur_fond_label" : "#C0C0C0", "couleur_police_label" : "#FFFFFF", "couleur_fond_case" : "#C0C0C0"},
+            { "type" : "ligne", "label" : _(u"PÃ©riodes de rÃ©fÃ©rence"), "code" : "periode_realise", "couleur_fond_label" : "#FFFFFF", "couleur_police_label" : "#000000", "couleur_fond_case" : "#ECE9D8"},
             { "type" : "ligne", "label" : _(u"Total"), "code" : "total_heures_realisees", "couleur_fond_label" : "#FFFFFF", "couleur_police_label" : "#000000", "couleur_fond_case" : "#FFFFFF"},
             
-            { "type" : "groupe", "label" : _(u"Reste heures à réaliser"), "code" : "", "couleur_fond_label" : "#C0C0C0", "couleur_police_label" : "#FFFFFF", "couleur_fond_case" : "#C0C0C0"},
+            { "type" : "groupe", "label" : _(u"Reste heures Ã  rÃ©aliser"), "code" : "", "couleur_fond_label" : "#C0C0C0", "couleur_police_label" : "#FFFFFF", "couleur_fond_case" : "#C0C0C0"},
             { "type" : "ligne", "label" : _(u"Total"), "code" : "total_reste_heures", "couleur_fond_label" : "#FFFFFF", "couleur_police_label" : "#000000", "couleur_fond_case" : "#FFFFFF"},
         
         ]
@@ -1505,11 +1505,11 @@ class GetDictColonnes():
 
     def GetValeursColonne(self, IDscenario, IDcategorie, detail_mois, modeReport=False) :
         dictDonnees = {}
-        # Récupération des données scénarisées
+        # RÃ©cupÃ©ration des donnÃ©es scÃ©narisÃ©es
         if self.IDscenario != None :
-            # Si c'est pour un report, on cherche dans la base de données directement
+            # Si c'est pour un report, on cherche dans la base de donnÃ©es directement
             if modeReport == True or modeReport == False :
-                # Si c'est une catégorie prévue
+                # Si c'est une catÃ©gorie prÃ©vue
                 DB = GestionDB.DB()
                 req = "SELECT IDscenario_cat, IDscenario, IDcategorie, prevision, report, date_debut_realise, date_fin_realise FROM scenarios_cat WHERE IDscenario=%d AND IDcategorie=%d;" % (IDscenario, IDcategorie)
                 DB.ExecuterReq(req)
@@ -1523,7 +1523,7 @@ class GetDictColonnes():
                     dictDonnees["date_debut_realise"] = str(self.date_debut)
                     dictDonnees["date_fin_realise"] = str(self.date_fin) 
                      
-                # Importation des données de base de la colonne
+                # Importation des donnÃ©es de base de la colonne
                 for IDscenario_cat, IDscenario, IDcategorie, prevision, report, date_debut_realise, date_fin_realise in listeDonnees :
                     dictDonnees["IDscenario_cat"] = IDscenario_cat
                     dictDonnees["IDcategorie"] = IDcategorie
@@ -1550,7 +1550,7 @@ class GetDictColonnes():
                     dictDonnees["date_fin_realise"] = date_fin_realise
             
         else:
-            # Si c'est une catégorie NON prévue
+            # Si c'est une catÃ©gorie NON prÃ©vue
             dictDonnees["IDscenario_cat"] = None
             dictDonnees["IDcategorie"] = IDcategorie
             dictDonnees["prevision"] = None
@@ -1559,7 +1559,7 @@ class GetDictColonnes():
             dictDonnees["date_fin_realise"] = str(self.date_fin)      
         
             
-        # Calcul du total des heures prévues
+        # Calcul du total des heures prÃ©vues
         prevision = dictDonnees["prevision"]
         report = dictDonnees["report"]
         heures_report = "+00:00"
@@ -1573,19 +1573,19 @@ class GetDictColonnes():
         total_heures_prevues = self.OperationHeures(prevision, heures_report, "addition")
         dictDonnees["total_heures_prevues"] = total_heures_prevues
         
-        # Formatage da la période du réalisé
+        # Formatage da la pÃ©riode du rÃ©alisÃ©
         dictDonnees["periode_realise"] = "%s;%s" % (dictDonnees["date_debut_realise"], dictDonnees["date_fin_realise"])
         
-        # Récupération des heures réalisées
+        # RÃ©cupÃ©ration des heures rÃ©alisÃ©es
         date_debut_realise = dictDonnees["date_debut_realise"]
         date_fin_realise = dictDonnees["date_fin_realise"]
         IDcategorie = dictDonnees["IDcategorie"]
 
         dictHeuresRealisees, listeLabelsDetails = self.GetHeuresRealisees(self.IDpersonne, date_debut_realise, date_fin_realise, IDcategorie, detail_mois)
-        # Total heures réalisées
+        # Total heures rÃ©alisÃ©es
         total_heures_realisees = dictHeuresRealisees["total_heures_realisees"]
         dictDonnees["total_heures_realisees"] = total_heures_realisees
-        # Détail Jour ou Mois des heures réalisées :
+        # DÃ©tail Jour ou Mois des heures rÃ©alisÃ©es :
         dictDonnees["listeLabelsDetails"] = listeLabelsDetails
         for label in listeLabelsDetails :
             dictDonnees[label] = dictHeuresRealisees[label]
@@ -1602,7 +1602,7 @@ class GetDictColonnes():
         for IDcategorie, dictDonneesColonne in dictColonnes.items() :
             for codeLigne, valeur in dictDonneesColonne.items() :
                 if codeLigne not in listeLignesExceptions :
-                    # Particularité de la ligne report
+                    # ParticularitÃ© de la ligne report
                     if codeLigne == "report" :
                         if valeur == None or valeur == "" : valeur = u"+00:00"
                         if valeur[0] == "M" :
@@ -1619,7 +1619,7 @@ class GetDictColonnes():
         return dictTotauxLignes
 
     def OperationHeures(self, heureA=None, heureB=None, operation="addition"):
-        # Préparation heure A
+        # PrÃ©paration heure A
         if heureA == None :
             totalMinutesA = 0
         else:
@@ -1628,7 +1628,7 @@ class GetDictColonnes():
             hrA, mnA = int(hrA), int(mnA)
             totalMinutesA = (hrA*60) + mnA
             if signeA == "-" : totalMinutesA = -totalMinutesA
-        # Préparation heure B
+        # PrÃ©paration heure B
         if heureB == None :
             totalMinutesB = 0
         else:
@@ -1637,10 +1637,10 @@ class GetDictColonnes():
             hrB, mnB = int(hrB), int(mnB)
             totalMinutesB = (hrB*60) + mnB
             if signeB == "-" : totalMinutesB = -totalMinutesB
-        # Opération
+        # OpÃ©ration
         if operation == "addition" : totalMinutes = totalMinutesA + totalMinutesB
         if operation == "soustraction" : totalMinutes = totalMinutesA - totalMinutesB
-        # Formatage du résultat
+        # Formatage du rÃ©sultat
         if totalMinutes >= 0 :
             nbreHeures = totalMinutes//60
             nbreMinutes = totalMinutes-(nbreHeures*60)
@@ -1654,18 +1654,18 @@ class GetDictColonnes():
         
         
     def GetReportColonne(self, IDcategorie, IDpersonne, IDscenario) :
-        """ Ici programmer la récupération du report d'une colonne """
-        # Récupère le nbre d'heures pour le report
+        """ Ici programmer la rÃ©cupÃ©ration du report d'une colonne """
+        # RÃ©cupÃ¨re le nbre d'heures pour le report
         dictDonneesColonne = self.GetValeursColonne(IDscenario, IDcategorie, detail_mois=0, modeReport=True)
         totalResteColonne = dictDonneesColonne["total_reste_heures"]
-        # Récupère le nom du scénario
+        # RÃ©cupÃ¨re le nom du scÃ©nario
         DB = GestionDB.DB()
         req = "SELECT IDscenario, nom, description FROM scenarios WHERE IDscenario=%d" % IDscenario
         DB.ExecuterReq(req)
         listeDonnees = DB.ResultatReq()
         DB.Close()
         if len(listeDonnees) == 0 :
-            return "+00:00", _(u"Report supprimé"), u""
+            return "+00:00", _(u"Report supprimÃ©"), u""
         listePresences = listeDonnees[0]
         nomScenario = listePresences[1]
         descriptionScenario = listePresences[2]
@@ -1689,11 +1689,11 @@ class GetDictColonnes():
         
         for IDpresence, date, heure_debut, heure_fin in listePresences :
             dateDD = DateEngEnDateDD(date)
-            # Addition pour le total de la catégorie
+            # Addition pour le total de la catÃ©gorie
             duree = self.OperationHeures("+" + heure_fin, "+" + heure_debut, "soustraction")
             total_heure_realisees = self.OperationHeures(total_heure_realisees, duree, "addition")
             dictHeuresRealisees["total_heures_realisees"] = total_heure_realisees
-            # Détail
+            # DÃ©tail
             if mode_detail == 1 :
                 codeMois = "%s-%s" % (dateDD.year, dateDD.month)
                 if codeMois in dictHeuresRealisees :
@@ -1713,7 +1713,7 @@ class GetDictColonnes():
 
 
     def GetVirtualDB(self, IDscenario=None):
-        """ Mémorise la table scenarios_cat pour permettre l'annulation après modifications """
+        """ MÃ©morise la table scenarios_cat pour permettre l'annulation aprÃ¨s modifications """
         dictVirtualDB = {}
         if IDscenario != None :
             DB = GestionDB.DB()
@@ -1722,7 +1722,7 @@ class GetDictColonnes():
             listeDonnees = DB.ResultatReq()
             DB.Close()
             if len(listeDonnees) == 0 : return dictVirtualDB
-            # Importation des données de base de la colonne
+            # Importation des donnÃ©es de base de la colonne
             for IDscenario_cat, IDscenario, IDcategorie, prevision, report, date_debut_realise, date_fin_realise in listeDonnees :
                 dictDonnees = {}
                 dictDonnees["IDscenario_cat"] = IDscenario_cat
@@ -1736,7 +1736,7 @@ class GetDictColonnes():
                 dictDonnees["etat"] = "initial" # initial, modif, suppr, ajout
                 dictVirtualDB[IDcategorie] = dictDonnees
         else:
-            # S'il s'agit d'une création de scénarios
+            # S'il s'agit d'une crÃ©ation de scÃ©narios
             pass
         return dictVirtualDB
 
@@ -1773,7 +1773,7 @@ class PanelLegende(scrolled.ScrolledPanel):
             # Symbole
             if symbole[0] == "texte" : controle1 = wx.StaticText(self, -1, symbole[1])
             if symbole[0] == "couleur" : controle1 = wx.StaticBitmap(self, -1, self.CreationImage(symbole[1]))
-            # Légende
+            # LÃ©gende
             if legende[0] == "texte" : controle2 = wx.StaticText(self, index, legende[1])
             if legende[0] == "lien" : controle2 = self.Build_Hyperlink(index, legende[1], infobulle)
             grid_sizer.Add(controle1, 0, wx.ALIGN_CENTRE|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 0)
@@ -1788,7 +1788,7 @@ class PanelLegende(scrolled.ScrolledPanel):
         self.SetupScrolling()
         
     def CreationImage(self, couleur):
-        """ Création des images pour le TreeCtrl """
+        """ CrÃ©ation des images pour le TreeCtrl """
         l, h = (8, 8)
         r, v, b = couleur
         if 'phoenix' in wx.PlatformInfo:
@@ -1817,11 +1817,11 @@ class PanelLegende(scrolled.ScrolledPanel):
         return hyper
         
     def OnLeftLink(self, event):
-        """ Ouvre le scénario du report """
+        """ Ouvre le scÃ©nario du report """
         index = event.GetId()
         IDscenario = int(self.listeControles[index][1][2][1:])
         IDcategorie = int(self.listeControles[index][1][3])
-        # Ouvre le scénario
+        # Ouvre le scÃ©nario
         frm = MyFrame(self, IDscenario)
         frm.Show()
 

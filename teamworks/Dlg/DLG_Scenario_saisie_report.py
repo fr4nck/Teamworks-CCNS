@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -22,7 +22,7 @@ from Utils import UTILS_Adaptations
 DLG_Scenario = UTILS_Adaptations.Import("Dlg.DLG_Scenario")
 
 class MyDialog(wx.Dialog):
-    """ Saisie d'une prévision pour un scénario """
+    """ Saisie d'une prÃ©vision pour un scÃ©nario """
     def __init__(self, parent, IDscenario=None, IDpersonne=0, IDcategorie=0, report=None, mode_heure=0):
         wx.Dialog.__init__(self, parent, id=-1, title=_(u"Saisie d'un report"), size=(440, 420), style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX)
         self.IDscenario = IDscenario
@@ -42,7 +42,7 @@ class MyDialog(wx.Dialog):
                 
         # Type
         self.label_type = wx.StaticText(self, -1, _(u"Type :"))
-        self.ctrl_type = wx.Choice(self, -1, choices = [_(u"Heures à réaliser (+)"), _(u"Heures déjà réalisées (-)")])
+        self.ctrl_type = wx.Choice(self, -1, choices = [_(u"Heures Ã  rÃ©aliser (+)"), _(u"Heures dÃ©jÃ  rÃ©alisÃ©es (-)")])
         self.ctrl_type.SetSelection(0)
         
         # Temps
@@ -51,23 +51,23 @@ class MyDialog(wx.Dialog):
         self.label_temps_signe = wx.StaticText(self, -1, u"h")
         self.ctrl_temps_minutes = wx.TextCtrl(self, -1, u"00", size=(30, -1))
         
-        # Mode Heure/décimal
+        # Mode Heure/dÃ©cimal
         self.label_mode = wx.StaticText(self, -1, _(u"Mode :"))
-        self.ctrl_modeHeure = wx.Choice(self, -1, choices = [_(u"Heure"), _(u"Décimal")])
+        self.ctrl_modeHeure = wx.Choice(self, -1, choices = [_(u"Heure"), _(u"DÃ©cimal")])
         self.ctrl_modeHeure.SetSelection(self.mode_heure)
         
         # Automatique
         self.radio_2 = wx.RadioButton(self, -1, _(u"Automatique"))
         
         # ListView Scenarios
-        self.label_scenario = wx.StaticText(self, -1, _(u"Scénario :"))
+        self.label_scenario = wx.StaticText(self, -1, _(u"ScÃ©nario :"))
         self.listview_scenarios = ListView(self, -1, IDscenario=self.IDscenario, IDpersonne=self.IDpersonne, style=wx.LC_REPORT|wx.SUNKEN_BORDER)
         self.bouton_apercu = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Loupe.png"), wx.BITMAP_TYPE_ANY))
         self.bouton_apercu.Enable(False)
         self.listview_scenarios.SetMinSize((50, 50))
         
-        # Choix catégorie
-        self.label_categorie = wx.StaticText(self, -1, _(u"Catégorie :"))
+        # Choix catÃ©gorie
+        self.label_categorie = wx.StaticText(self, -1, _(u"CatÃ©gorie :"))
         self.ctrl_categorie = BitmapComboBox(self, style=wx.CB_READONLY)
         self.InitCombo(IDscenario=None)
         
@@ -106,7 +106,7 @@ class MyDialog(wx.Dialog):
         if self.mode_heure == 1 :
             self.ConvertModeHeure(self.ctrl_temps_minutes.GetValue(), 1)
             self.ctrl_modeHeure.SetSelection(1)
-            self.ctrl_temps_minutes.SetToolTip(wx.ToolTip(_(u"Saisissez un nombre de minutes au format décimal (entre 0 et 99)")))
+            self.ctrl_temps_minutes.SetToolTip(wx.ToolTip(_(u"Saisissez un nombre de minutes au format dÃ©cimal (entre 0 et 99)")))
         
         if self.IDpersonne == None :
             self.radio_2.Enable(False)
@@ -200,7 +200,7 @@ class MyDialog(wx.Dialog):
         return (r, v, b)
 
     def CreationImage(self, tailleImages, r, v, b):
-        """ Création des images pour le TreeCtrl """
+        """ CrÃ©ation des images pour le TreeCtrl """
         if 'phoenix' in wx.PlatformInfo:
             bmp = wx.Image(tailleImages[0], tailleImages[1], True)
             bmp.SetRGB((0, 0, 16, 16), r, v, b)
@@ -210,7 +210,7 @@ class MyDialog(wx.Dialog):
         return bmp.ConvertToBitmap()
     
     def InitCombo(self, IDscenario=None, IDcategorieSelection=None):
-        # Get catégories
+        # Get catÃ©gories
         DB = GestionDB.DB()
         req = "SELECT IDcategorie, nom_categorie, IDcat_parent, ordre, couleur FROM cat_presences ORDER BY IDcategorie"
         DB.ExecuterReq(req)
@@ -225,11 +225,11 @@ class MyDialog(wx.Dialog):
             if len(dictColonnes) == 0 and len(dictColonneTotal) == 0 :
                 return
             
-        # Catégories prévues dans le scénario
+        # CatÃ©gories prÃ©vues dans le scÃ©nario
         if IDscenario != None : listeCategoriesPrevues = self.GetCategoriesPrevues(IDscenario)
         else: listeCategoriesPrevues = []
 
-        # Catégories utilisées dans le scénario
+        # CatÃ©gories utilisÃ©es dans le scÃ©nario
         if IDscenario != None : 
             listeCategoriesUtilisees = []
             listeCategoriesUtiliseesTmp = self.GetCategoriesUtilisees(IDscenario)
@@ -238,7 +238,7 @@ class MyDialog(wx.Dialog):
                     listeCategoriesUtilisees.append(ID)
         else: listeCategoriesUtilisees = []
         
-        # Autres catégories
+        # Autres catÃ©gories
         listeAutresCategories = []
         for valeurs in listeCategories :
             ID = valeurs[0]
@@ -246,11 +246,11 @@ class MyDialog(wx.Dialog):
                 listeAutresCategories.append(ID)
         listeAutresCategories.sort()
         
-        # Liste de groupes de catégories
+        # Liste de groupes de catÃ©gories
         listeGroupes = [ 
-            (10000, _(u"Catégories scénarisées"), listeCategoriesPrevues),
-            (10001, _(u"Catégories utilisées"), listeCategoriesUtilisees),
-            (10002, _(u"Autres catégories"), listeAutresCategories),
+            (10000, _(u"CatÃ©gories scÃ©narisÃ©es"), listeCategoriesPrevues),
+            (10001, _(u"CatÃ©gories utilisÃ©es"), listeCategoriesUtilisees),
+            (10002, _(u"Autres catÃ©gories"), listeAutresCategories),
             ]
         
         # Images pour le bitmapComboBox
@@ -264,7 +264,7 @@ class MyDialog(wx.Dialog):
             
             for IDcategorie in listeCatGroupe :
                 if IDcategorie == 999 :
-                    IDcategorie, nom_categorie, IDcat_parent, ordre, couleur = 999, _(u"Sans catégorie"), 0, 0, "(255, 255, 255)"
+                    IDcategorie, nom_categorie, IDcat_parent, ordre, couleur = 999, _(u"Sans catÃ©gorie"), 0, 0, "(255, 255, 255)"
                 elif IDcategorie == 1000 :
                     IDcategorie, nom_categorie, IDcat_parent, ordre, couleur = 1000, _(u"Total"), 0, 0, "(255, 255, 255)"
                 else:
@@ -297,7 +297,7 @@ class MyDialog(wx.Dialog):
             # Mode Heure
             texte = _(u"%s%sh%s") % (signe, hr, mn)
         else:
-            # Mode décimal
+            # Mode dÃ©cimal
             minDecimal = int(mn)*100//60
             texte = u"%s%s.%s" % (signe, hr, minDecimal)
         return texte
@@ -403,7 +403,7 @@ class MyDialog(wx.Dialog):
         
         if erreur == True :
             self.ctrl_temps_heures.SetValue("0")
-##            dlg = wx.MessageDialog(self, _(u"Le nombre d'heures semble inexact. Veuillez vérifier votre saisie."), _(u"Erreur de saisie"), wx.OK | wx.ICON_ERROR)
+##            dlg = wx.MessageDialog(self, _(u"Le nombre d'heures semble inexact. Veuillez vÃ©rifier votre saisie."), _(u"Erreur de saisie"), wx.OK | wx.ICON_ERROR)
 ##            dlg.ShowModal()
 ##            dlg.Destroy()
 ##            self.ctrl_temps_heures.SetFocus()
@@ -429,7 +429,7 @@ class MyDialog(wx.Dialog):
         if erreur == True :
             self.ctrl_temps_minutes.SetValue("00")
             minutes = 0
-##            dlg = wx.MessageDialog(self, _(u"Le nombre de minutes semble inexact. Veuillez vérifier votre saisie."), _(u"Erreur de saisie"), wx.OK | wx.ICON_ERROR)
+##            dlg = wx.MessageDialog(self, _(u"Le nombre de minutes semble inexact. Veuillez vÃ©rifier votre saisie."), _(u"Erreur de saisie"), wx.OK | wx.ICON_ERROR)
 ##            dlg.ShowModal()
 ##            dlg.Destroy()
 ##            self.ctrl_temps_minutes.SetFocus()
@@ -440,7 +440,7 @@ class MyDialog(wx.Dialog):
 
 
     def SetReport(self, report):
-        """ Renvoie la prévision """
+        """ Renvoie la prÃ©vision """
         if report[1] == "+" :
             self.ctrl_type.SetSelection(0)
         else:
@@ -467,7 +467,7 @@ class MyDialog(wx.Dialog):
             resultat = min * 100 // 60
             self.label_temps_signe.SetLabel(u".")
             self.ctrl_temps_minutes.SetValue(str(resultat))
-            self.ctrl_temps_minutes.SetToolTip(wx.ToolTip(_(u"Saisissez un nombre de minutes au format décimal (entre 0 et 99)")))
+            self.ctrl_temps_minutes.SetToolTip(wx.ToolTip(_(u"Saisissez un nombre de minutes au format dÃ©cimal (entre 0 et 99)")))
         self.mode_heure = mode
 
     def GetReport(self):
@@ -494,7 +494,7 @@ class MyDialog(wx.Dialog):
         return report
     
     def OnBoutonOk(self, event):
-        """ Validation des données saisies """
+        """ Validation des donnÃ©es saisies """
         if self.radio_1.GetValue() == True :
             # Mode manuel
             pass
@@ -503,21 +503,21 @@ class MyDialog(wx.Dialog):
             # Mode Auto
             IDscenario = self.listview_scenarios.GetSelection()
             if IDscenario == None :
-                dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement sélectionner un scénario dans la liste proposée"), _(u"Erreur de saisie"), wx.OK | wx.ICON_ERROR)
+                dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement sÃ©lectionner un scÃ©nario dans la liste proposÃ©e"), _(u"Erreur de saisie"), wx.OK | wx.ICON_ERROR)
                 dlg.ShowModal()
                 dlg.Destroy()
                 return
             
             index = self.ctrl_categorie.GetSelection()
             if index == -1 :
-                dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement sélectionner une catégorie dans la liste proposée"), _(u"Erreur de saisie"), wx.OK | wx.ICON_ERROR)
+                dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement sÃ©lectionner une catÃ©gorie dans la liste proposÃ©e"), _(u"Erreur de saisie"), wx.OK | wx.ICON_ERROR)
                 dlg.ShowModal()
                 dlg.Destroy()
                 return
             
             IDCategorie = self.ctrl_categorie.GetClientData(index)
             if IDCategorie >= 10000:
-                dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement sélectionner une catégorie dans la liste proposée"), _(u"Erreur de saisie"), wx.OK | wx.ICON_ERROR)
+                dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement sÃ©lectionner une catÃ©gorie dans la liste proposÃ©e"), _(u"Erreur de saisie"), wx.OK | wx.ICON_ERROR)
                 dlg.ShowModal()
                 dlg.Destroy()
                 return
@@ -553,7 +553,7 @@ class Track(object):
 
 class ListView(ObjectListView):
     def __init__(self, *args, **kwds):
-        # Récupération des paramètres perso
+        # RÃ©cupÃ©ration des paramÃ¨tres perso
         self.IDscenario = kwds.pop("IDscenario", None)
         self.IDpersonne = kwds.pop("IDpersonne", None)
         selectionID = kwds.pop("selectionID", None)
@@ -631,18 +631,18 @@ class ListView(ObjectListView):
                 
         self.useAlternateBackColors = False
         
-        # Paramètres ListView
+        # ParamÃ¨tres ListView
         self.useExpansionColumn = True
         self.SetColumns([
             ColumnDefn(u"", "left", 0, ""),
             ColumnDefn(_(u"ID"), "center", 0, "IDscenario"),
             ColumnDefn(_(u"Nom"), "left", 80, "nom"),
             ColumnDefn(_(u"Description"), "left", 60, "description"),
-            ColumnDefn(_(u"Date début"), "left", 70, "date_debut", stringConverter=FormateDate),
+            ColumnDefn(_(u"Date dÃ©but"), "left", 70, "date_debut", stringConverter=FormateDate),
             ColumnDefn(_(u"Date fin"), "left", 90, "date_fin", stringConverter=FormateDate),
         ])
         self.SetSortColumn(self.columns[4])
-        self.SetEmptyListMsg(_(u"Aucun scénario enregistré"))
+        self.SetEmptyListMsg(_(u"Aucun scÃ©nario enregistrÃ©"))
         self.SetEmptyListMsgFont(wx.FFont(11, wx.DEFAULT, False, "Tekton"))
         self.SetObjects(self.donnees)
         self.useAlternateBackColors = False
@@ -657,7 +657,7 @@ class ListView(ObjectListView):
             self.selectionTrack = None
         self.InitModel()
         self.InitObjectListView()
-        # Sélection d'un item
+        # SÃ©lection d'un item
         if self.selectionTrack != None :
             self.desactiveMAJ = True
             self.SelectObject(self.selectionTrack, deselectOthers=True, ensureVisible=True)

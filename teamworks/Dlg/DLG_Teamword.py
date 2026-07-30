@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -9,7 +9,7 @@
 import Chemins
 from Utils.UTILS_Traduction import _
 """
-        listeValeurs = [ ("{NOM}", _(u"DUPOND")), ("{PRENOM}", _(u"Noémie")), ]
+        listeValeurs = [ ("{NOM}", _(u"DUPOND")), ("{PRENOM}", _(u"NoÃ©mie")), ]
         
         POUR FAIRE UN APERCU AVEC VALEURS :
         self.Publipostage_preview(listeValeurs)
@@ -83,7 +83,7 @@ class PanelMotsCles(wx.Panel):
         self.SetBackgroundColour((122, 161, 230))
         self.listeMotsCles = listeMotsCles
         
-        texteIntro = _(u"Double-cliquez sur les mot-clés disponibles dans la liste ci-dessous pour les incorporer directement dans votre document.")
+        texteIntro = _(u"Double-cliquez sur les mot-clÃ©s disponibles dans la liste ci-dessous pour les incorporer directement dans votre document.")
         self.label_introduction = FonctionsPerso.StaticWrapText(self, -1, texteIntro)
         
         self.ctrl_motscles = wx.ListBox(self, -1, choices=self.listeMotsCles, style=wx.SIMPLE_BORDER)
@@ -141,33 +141,33 @@ class MyFrame(wx.Frame):
         self.ActiveOutils(False)
         
         self.CreateStatusBar()
-        self.SetStatusText(_(u"Bienvenue dans l'éditeur de texte de Teamworks"))
+        self.SetStatusText(_(u"Bienvenue dans l'Ã©diteur de texte de Teamworks"))
         
-        # Création du notebook
+        # CrÃ©ation du notebook
         self.nb = wx.aui.AuiNotebook(self, style=wx.aui.AUI_NB_BOTTOM | wx.aui.AUI_NB_DEFAULT_STYLE)
         self.pages = []
         self.rtc = None
 
         self.positionDepartRecherche = 0
         
-        # Création des panels détachables
+        # CrÃ©ation des panels dÃ©tachables
         self.panelMotscles = PanelMotsCles(self, listeMotsCles=self.motsCles)
         self.panelMail = DLG_Parametres_mail.Panel(self)
         
-        # Création des panels amovibles
+        # CrÃ©ation des panels amovibles
         self._mgr.AddPane(self.panelMotscles, wx.aui.AuiPaneInfo().
-                          Name("motscles").Caption(_(u"Liste des mots-clés")).
+                          Name("motscles").Caption(_(u"Liste des mots-clÃ©s")).
                           Left().Layer(1).Position(1).CloseButton(True).MaximizeButton(True).MinSize((160, -1)))
         
         self._mgr.AddPane(self.panelMail, wx.aui.AuiPaneInfo().
-                          Name("mail").Caption(_(u"Paramètres d'envoi par mail")).
+                          Name("mail").Caption(_(u"ParamÃ¨tres d'envoi par mail")).
                           Right().Layer(1).Position(1).CloseButton(True).MaximizeButton(True).MinSize((250, -1)))
         
-        # Création du panel central
+        # CrÃ©ation du panel central
         self._mgr.AddPane(self.nb, wx.aui.AuiPaneInfo().Name("editor").
                           CenterPane())
         
-        # Création des barres d'outils
+        # CrÃ©ation des barres d'outils
         self._mgr.AddPane(self.toolbar1, wx.aui.AuiPaneInfo().
                           Name("toolbar1").Caption("barre d'outils 1").
                           ToolbarPane().Top().
@@ -189,7 +189,7 @@ class MyFrame(wx.Frame):
         self._mgr.Update()
         
         self.Bind(wx.EVT_CLOSE, self.OnClose)
-        # Boîte de dialogue Rechercher
+        # BoÃ®te de dialogue Rechercher
         self.Bind(wx.EVT_FIND, self.OnFind)
         self.Bind(wx.EVT_FIND_NEXT, self.OnFind)
         self.Bind(wx.EVT_FIND_REPLACE, self.OnFind)
@@ -220,13 +220,13 @@ class MyFrame(wx.Frame):
         self.CreateNewFile()
 
     def CreateNewFile(self, cheminModele=None):
-        # Création du richTextCtrl
+        # CrÃ©ation du richTextCtrl
         rtc = MyRichTextCtrl(self)
-        # Ouverture d'un modèle
+        # Ouverture d'un modÃ¨le
         if cheminModele != None :
             rtc.LoadFile(cheminModele, type=wx.richtext.RICHTEXT_TYPE_ANY)
             rtc.SetFilename("")
-        # Création de la page notebook
+        # CrÃ©ation de la page notebook
         self.nb.AddPage(rtc, rtc.GetNomFichier())
         self.nb.SetSelection(self.nb.GetPageCount()-1)
         wx.CallAfter(rtc.SetFocus)
@@ -246,7 +246,7 @@ class MyFrame(wx.Frame):
         if rtc == None :
             rtc = self.rtc
         if enregistrer==True and rtc.IsModified() and rtc.IsEmpty() == False :
-            dlg = wx.MessageDialog(self, _(u"Le document n'a pas été sauvegardé depuis la dernière modification.\n\nSouhaitez-vous le sauvegarder maintenant ?"),  _(u"Fermeture du document"), wx.ICON_QUESTION | wx.YES_NO | wx.CANCEL | wx.YES_DEFAULT)
+            dlg = wx.MessageDialog(self, _(u"Le document n'a pas Ã©tÃ© sauvegardÃ© depuis la derniÃ¨re modification.\n\nSouhaitez-vous le sauvegarder maintenant ?"),  _(u"Fermeture du document"), wx.ICON_QUESTION | wx.YES_NO | wx.CANCEL | wx.YES_DEFAULT)
             resultat = dlg.ShowModal()
             dlg.Destroy() 
             if resultat == wx.ID_YES :
@@ -264,7 +264,7 @@ class MyFrame(wx.Frame):
 
     def OnFileOpen(self, evt):
         wildcard, types = rt.RichTextBuffer.GetExtWildcard(save=False)
-        dlg = wx.FileDialog(self, _(u"Choisissez un fichier à ouvrir"), wildcard=wildcard, style=wx.FD_OPEN)
+        dlg = wx.FileDialog(self, _(u"Choisissez un fichier Ã  ouvrir"), wildcard=wildcard, style=wx.FD_OPEN)
         dlg.SetFilterIndex(2)
         if dlg.ShowModal() == wx.ID_OK:
             path = dlg.GetPath()
@@ -274,10 +274,10 @@ class MyFrame(wx.Frame):
         dlg.Destroy()
     
     def OpenFile(self, cheminFichier=""):
-        # Création du richTextCtrl
+        # CrÃ©ation du richTextCtrl
         rtc = MyRichTextCtrl(self)
         rtc.LoadFile(cheminFichier, type=wx.richtext.RICHTEXT_TYPE_ANY)
-        # Création de la page notebook
+        # CrÃ©ation de la page notebook
         self.nb.AddPage(rtc, rtc.GetNomFichier())
         self.nb.SetSelection(self.nb.GetPageCount()-1)
         wx.CallAfter(rtc.SetFocus)
@@ -331,7 +331,7 @@ class MyFrame(wx.Frame):
         self.Destroy()
         
     def OnAide(self, event):
-        dlg = wx.MessageDialog(self, _(u"L'aide pour ce nouveau module est en cours de rédaction."), _(u"Aide indisponible"), wx.OK | wx.ICON_INFORMATION)
+        dlg = wx.MessageDialog(self, _(u"L'aide pour ce nouveau module est en cours de rÃ©daction."), _(u"Aide indisponible"), wx.OK | wx.ICON_INFORMATION)
         dlg.ShowModal()
         dlg.Destroy()
         return
@@ -375,7 +375,7 @@ class MyFrame(wx.Frame):
         handler.DeleteTemporaryImages()
     
     def GetHtmlText(self, imagesIncluses=True):
-        # Récupération de la source HTML
+        # RÃ©cupÃ©ration de la source HTML
         handler = rt.RichTextHTMLHandler()
         if imagesIncluses == True : 
             handler.SetFlags(rt.RICHTEXT_HANDLER_SAVE_IMAGES_TO_BASE64)
@@ -402,7 +402,7 @@ class MyFrame(wx.Frame):
         self._mgr.Update()
                 
     def Mailer(self, listeValeurs=[], adresseExpediteur="", listeDestinataires=[], listeDestinairesCC=[], objet="", listePiecesJointes=[], nomServeur="") :
-        # Récupération de la source HTML
+        # RÃ©cupÃ©ration de la source HTML
         handler = rt.RichTextHTMLHandler()
         handler.SetFlags(rt.RICHTEXT_HANDLER_SAVE_IMAGES_TO_BASE64)
         handler.SetFontSizeMapping([7,9,11,12,14,22,100])
@@ -418,15 +418,15 @@ class MyFrame(wx.Frame):
         """
         texteHtml = texteHtml.replace("<head></head>", head)
         
-        # Intégration de la couleur de fond de page
+        # IntÃ©gration de la couleur de fond de page
         couleurFond = "#000000"
         texteHtml = texteHtml.replace("<body>", """<body bgcolor="%s">""" % couleurFond)
         
-        # Intégration des valeurs si mots-clés
+        # IntÃ©gration des valeurs si mots-clÃ©s
         if len(listeValeurs) != 0 :
             texteHtml = self.RemplacementMotscles(texteHtml, listeValeurs)
 
-        # Crée le mail
+        # CrÃ©e le mail
         FonctionsPerso.Envoi_mail_smtp(adresseExpediteur, listeDestinataires, listeDestinairesCC, objet, texteHtml, listePiecesJointes, nomServeur)
         
         # Efface les images temporaires
@@ -438,13 +438,13 @@ class MyFrame(wx.Frame):
         return texteHtml
     
     def Publipostage_impression(self, nbre_exemplaires=1, nom_imprimante=None):
-        """ Fonction d'impression sans boîte de dialogue pour le publipostage """
+        """ Fonction d'impression sans boÃ®te de dialogue pour le publipostage """
         # Initialisation de l'impression
         printout = wx.richtext.RichTextPrintout()
         printout.SetRichTextBuffer(self.rtc.GetBuffer()) 
         data = wx.PrintDialogData() 
         data.SetCollate(True) # Pour assembler les pages
-        # définit les paramètres de l'impression
+        # dÃ©finit les paramÃ¨tres de l'impression
         datapr = wx.PrintData()
         datapr.SetNoCopies(nbre_exemplaires)
         if nom_imprimante != None :
@@ -467,7 +467,7 @@ class MyFrame(wx.Frame):
         printout2.SetRichTextBuffer(self.rtc.GetBuffer()) 
         data = wx.PrintDialogData() 
         data.SetCollate(True) # Pour assembler les pages
-        # définit les paramètres de l'impression
+        # dÃ©finit les paramÃ¨tres de l'impression
         datapr = wx.PrintData()
         data.SetPrintData(datapr)
         # Impression
@@ -475,7 +475,7 @@ class MyFrame(wx.Frame):
         if not preview.IsOk():
             print("Probleme dans le preview du richTextCtrl.")
             return
-        pfrm = wx.PreviewFrame(preview, self, _(u"Aperçu avant impression"))
+        pfrm = wx.PreviewFrame(preview, self, _(u"AperÃ§u avant impression"))
         pfrm.Initialize()
         pfrm.SetPosition(self.GetPosition())
         pfrm.SetSize(self.GetSize())
@@ -486,7 +486,7 @@ class MyFrame(wx.Frame):
         printout.SetRichTextBuffer(self.rtc.GetBuffer()) 
         data = wx.PrintDialogData() 
         data.SetCollate(True) # Pour assembler les pages
-        # définit les paramètres de l'impression
+        # dÃ©finit les paramÃ¨tres de l'impression
         datapr = wx.PrintData()
         data.SetPrintData(datapr)
         # Impression
@@ -527,14 +527,14 @@ class MyFrame(wx.Frame):
                         mot = motComplet
                         actualRange = rt.RichTextRange(actualRange.GetStart()-1, actualRange.GetEnd()+1)
                 if mot == texteRecherche :
-                    # Le mot a été trouvé :
+                    # Le mot a Ã©tÃ© trouvÃ© :
                     self.rtc.ShowPosition(actualRange.GetEnd())
                     return actualRange
                 precedentRange = actualRange
         return None
     
     def RemplaceMotscles(self, listeValeurs=[]) :
-        # Remplacement durant édition
+        # Remplacement durant Ã©dition
         for motCle, valeur in listeValeurs :
             actualRange = ""
             nbreRemplacements = 0
@@ -579,7 +579,7 @@ class MyFrame(wx.Frame):
             if actualRange != None :
                 self.positionDepartRecherche = actualRange.GetEnd() + 1
             else:
-                dlg = wx.MessageDialog(self, _(u"Aucun résultat n'a été trouvé."), _(u"Recherche"), wx.OK | wx.ICON_INFORMATION)
+                dlg = wx.MessageDialog(self, _(u"Aucun rÃ©sultat n'a Ã©tÃ© trouvÃ©."), _(u"Recherche"), wx.OK | wx.ICON_INFORMATION)
                 dlg.ShowModal()
                 dlg.Destroy()
             
@@ -606,10 +606,10 @@ class MyFrame(wx.Frame):
                     self.rtc.Replace(actualRange.GetStart(), actualRange.GetEnd(), texteRemplacement)
                     nbreRemplacements += 1
             if nbreRemplacements == 0 :
-                texteInfo = _(u"Aucun remplacement n'a été effectué.")
+                texteInfo = _(u"Aucun remplacement n'a Ã©tÃ© effectuÃ©.")
             else:
-                texteInfo = _(u"%d remplacements ont été effectués.") % nbreRemplacements
-            dlg = wx.MessageDialog(self, texteInfo, _(u"Remplacement terminé"), wx.OK | wx.ICON_INFORMATION)
+                texteInfo = _(u"%d remplacements ont Ã©tÃ© effectuÃ©s.") % nbreRemplacements
+            dlg = wx.MessageDialog(self, texteInfo, _(u"Remplacement terminÃ©"), wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
 
@@ -740,7 +740,7 @@ class MyFrame(wx.Frame):
 
     def OnFont(self, evt):
         if not self.rtc.HasSelection():
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sélectionner un texte."), _(u"Police"), wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÃ©lectionner un texte."), _(u"Police"), wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -834,16 +834,16 @@ class MyFrame(wx.Frame):
         self.rtc.EndStyle()
 
     def OnImporterImage(self, event):
-        # Sélection d'une image
+        # SÃ©lection d'une image
         self.repCourant = os.getcwd()
         wildcard = "Image JPEG (*.jpg)|*.jpg|"     \
                         "Image PNG (*.png)|*.png|"     \
                         "Image GIF (*.gif)|*.gif|"     \
            "All files (*.*)|*.*"
-        # Récupération du chemin des documents
+        # RÃ©cupÃ©ration du chemin des documents
         sp = wx.StandardPaths.Get()
         cheminDefaut = sp.GetDocumentsDir()
-        # Ouverture de la fenêtre de dialogue
+        # Ouverture de la fenÃªtre de dialogue
         dlg = wx.FileDialog(
             self, message=_(u"Choisissez une image"),
             defaultDir=cheminDefaut, 
@@ -907,7 +907,7 @@ class MyFrame(wx.Frame):
                 self.Bind(wx.EVT_UPDATE_UI, updateUI, item)
         
         fileMenu = UTILS_Adaptations.Menu()
-        doBind( fileMenu.Append(400, _(u"Nouveau\tCtrl+N"), _(u"Créer un nouveau document")), self.OnFileCreate )
+        doBind( fileMenu.Append(400, _(u"Nouveau\tCtrl+N"), _(u"CrÃ©er un nouveau document")), self.OnFileCreate )
         doBind( fileMenu.Append(401, _(u"Ouvrir\tCtrl+O"), _(u"Ouvrir un document")), self.OnFileOpen )
         doBind( fileMenu.Append(322, _(u"Fermer"), _(u"Fermer le document")), self.OnFileClose )
         doBind( fileMenu.Append(300, _(u"Sauvegarder\tCtrl+S"), _(u"Sauvegarder")), self.OnFileSave )
@@ -915,14 +915,14 @@ class MyFrame(wx.Frame):
         fileMenu.AppendSeparator()
         doBind( fileMenu.Append(323, _(u"Envoyer par Email"), _(u"Envoyer par Email...")), self.OnMail )
         fileMenu.AppendSeparator()
-        doBind( fileMenu.Append(302, _(u"Aperçu avant impression"), _(u"Aperçu avant impression")), self.OnPreview)
+        doBind( fileMenu.Append(302, _(u"AperÃ§u avant impression"), _(u"AperÃ§u avant impression")), self.OnPreview)
         doBind( fileMenu.Append(303, _(u"Imprimer"), _(u"Imprimer")), self.OnPrint)
         fileMenu.AppendSeparator()
         doBind( fileMenu.Append(403, _(u"Quitter\tCtrl+Q"), _(u"Quitter Teamword")), self.OnFileExit )
 
         editMenu = UTILS_Adaptations.Menu()
         doBind( editMenu.Append(wx.ID_UNDO, _(u"Annuler\tCtrl+Z")), self.ForwardEvent, self.ForwardEvent)
-        doBind( editMenu.Append(wx.ID_REDO, _(u"Répéter\tCtrl+Y")), self.ForwardEvent, self.ForwardEvent )
+        doBind( editMenu.Append(wx.ID_REDO, _(u"RÃ©pÃ©ter\tCtrl+Y")), self.ForwardEvent, self.ForwardEvent )
         editMenu.AppendSeparator()
         doBind( editMenu.Append(wx.ID_CUT, _(u"Couper\tCtrl+X")), self.ForwardEvent, self.ForwardEvent )
         doBind( editMenu.Append(wx.ID_COPY, _(u"Copier\tCtrl+C")), self.ForwardEvent, self.ForwardEvent)
@@ -932,7 +932,7 @@ class MyFrame(wx.Frame):
         doBind( editMenu.Append(304, _(u"Rechercher\tCtrl+F"), _(u"Rechercher")), self.OnRechercher )
         doBind( editMenu.Append(305, _(u"Remplacer\tCtrl+H"), _(u"Remplacer")), self.OnRemplacer )
         editMenu.AppendSeparator()
-        doBind( editMenu.Append(wx.ID_SELECTALL, _(u"Tout sélectionner\tCtrl+A")), self.ForwardEvent, self.ForwardEvent )
+        doBind( editMenu.Append(wx.ID_SELECTALL, _(u"Tout sÃ©lectionner\tCtrl+A")), self.ForwardEvent, self.ForwardEvent )
 
         #doBind( editMenu.AppendSeparator(),  )
         #doBind( editMenu.Append(-1, "&Find...\tCtrl+F"),  )
@@ -943,11 +943,11 @@ class MyFrame(wx.Frame):
         formatMenu.AppendSeparator()
         doBind( formatMenu.AppendCheckItem(307, _(u"Gras\tCtrl+B")), self.OnBold, self.OnUpdateBold)
         doBind( formatMenu.AppendCheckItem(308, _(u"Italique\tCtrl+I")), self.OnItalic, self.OnUpdateItalic)
-        doBind( formatMenu.AppendCheckItem(309, _(u"Souligné\tCtrl+U")), self.OnUnderline, self.OnUpdateUnderline)
+        doBind( formatMenu.AppendCheckItem(309, _(u"SoulignÃ©\tCtrl+U")), self.OnUnderline, self.OnUpdateUnderline)
         formatMenu.AppendSeparator()
-        doBind( formatMenu.AppendCheckItem(310, _(u"Aligner à gauche")), self.OnAlignLeft, self.OnUpdateAlignLeft)
+        doBind( formatMenu.AppendCheckItem(310, _(u"Aligner Ã  gauche")), self.OnAlignLeft, self.OnUpdateAlignLeft)
         doBind( formatMenu.AppendCheckItem(311, _(u"Centrer")), self.OnAlignCenter, self.OnUpdateAlignCenter)
-        doBind( formatMenu.AppendCheckItem(312, _(u"Aligner à droite")), self.OnAlignRight, self.OnUpdateAlignRight)
+        doBind( formatMenu.AppendCheckItem(312, _(u"Aligner Ã  droite")), self.OnAlignRight, self.OnUpdateAlignRight)
         formatMenu.AppendSeparator()
         doBind( formatMenu.Append(313, _(u"Diminuer le retrait")), self.OnIndentMore)
         doBind( formatMenu.Append(314, _(u"Augmenter le retrait")), self.OnIndentLess)
@@ -960,8 +960,8 @@ class MyFrame(wx.Frame):
         doBind( formatMenu.Append(319, _(u"Interligne double")), self.OnLineSpacingDouble)
 
         insertionMenu = UTILS_Adaptations.Menu()
-        doBind( insertionMenu.Append(320, _(u"Insérer une URL")), self.OnInsererURL)
-        doBind( insertionMenu.Append(321, _(u"Insérer une image")), self.OnImporterImage)
+        doBind( insertionMenu.Append(320, _(u"InsÃ©rer une URL")), self.OnInsererURL)
+        doBind( insertionMenu.Append(321, _(u"InsÃ©rer une image")), self.OnImporterImage)
 
         aideMenu = UTILS_Adaptations.Menu()
         doBind( aideMenu.Append(404, _(u"Aide\tF1")), self.OnAide)
@@ -996,21 +996,21 @@ class MyFrame(wx.Frame):
         tbar = wx.ToolBar(self, -1, style= wx.TB_FLAT | wx.TB_NODIVIDER) #UTILS_Adaptations.ToolBar(self, -1, wx.DefaultPosition, wx.DefaultSize, wx.TB_FLAT | wx.TB_NODIVIDER)
         tbar.SetToolBitmapSize(wx.Size(16,16))
 
-        self.AddTool(tbar, ID_NOUVEAU, "Images/Teamword/nouveau.png", label=_(u"Créer un nouveau document"), handler=self.OnFileCreate)
+        self.AddTool(tbar, ID_NOUVEAU, "Images/Teamword/nouveau.png", label=_(u"CrÃ©er un nouveau document"), handler=self.OnFileCreate)
         self.AddTool(tbar, ID_OUVRIR, "Images/Teamword/ouvrir.png", label=_(u"Ouvrir un document"), handler=self.OnFileOpen)
         self.AddTool(tbar, ID_SAUVEGARDER, "Images/Teamword/sauvegarder.png", label=_(u"Sauvegarder le document"), handler=self.OnFileSave)
         tbar.AddSeparator()
         self.AddTool(tbar, ID_MAIL, "Images/Teamword/mail.png", label=_(u"Envoyer par mail"), handler=self.OnMail)
         tbar.AddSeparator()
         self.AddTool(tbar, ID_IMPRIMER, "Images/Teamword/imprimer.png", label=_(u"Imprimer le document"), handler=self.OnPrint)
-        self.AddTool(tbar, ID_APERCU, "Images/Teamword/apercu.png", label=_(u"Aperçu avant impression"), handler=self.OnPreview)
+        self.AddTool(tbar, ID_APERCU, "Images/Teamword/apercu.png", label=_(u"AperÃ§u avant impression"), handler=self.OnPreview)
         tbar.AddSeparator()
         self.AddTool(tbar, wx.ID_CUT, "Images/Teamword/couper.png", label=_(u"Couper"), handler=self.ForwardEvent, updateUI=self.ForwardEvent)
         self.AddTool(tbar, wx.ID_COPY, "Images/Teamword/copier.png", label=_(u"Copier"), handler=self.ForwardEvent, updateUI=self.ForwardEvent)
         self.AddTool(tbar, wx.ID_PASTE, "Images/Teamword/coller.png", label=_(u"Coller"), handler=self.ForwardEvent, updateUI=self.ForwardEvent)
         tbar.AddSeparator()
         self.AddTool(tbar, wx.ID_UNDO, "Images/Teamword/annuler.png", label=_(u"Annuler"), handler=self.ForwardEvent, updateUI=self.ForwardEvent)
-        self.AddTool(tbar, wx.ID_REDO, "Images/Teamword/repeter.png", label=_(u"Répéter"), handler=self.ForwardEvent, updateUI=self.ForwardEvent)
+        self.AddTool(tbar, wx.ID_REDO, "Images/Teamword/repeter.png", label=_(u"RÃ©pÃ©ter"), handler=self.ForwardEvent, updateUI=self.ForwardEvent)
         tbar.AddSeparator()
         self.AddTool(tbar, ID_RECHERCHER, "Images/Teamword/rechercher.png", label=_(u"Rechercher dans ce document"), handler=self.OnRechercher)
         self.AddTool(tbar, ID_REMPLACER, "Images/Teamword/remplacer.png", label=_(u"Rechercher et remplacer"), handler=self.OnRemplacer)
@@ -1026,16 +1026,16 @@ class MyFrame(wx.Frame):
         tbar = wx.ToolBar(self, -1, style= wx.TB_FLAT | wx.TB_NODIVIDER) #UTILS_Adaptations.ToolBar(self, -1, wx.DefaultPosition, wx.DefaultSize, wx.TB_FLAT | wx.TB_NODIVIDER)
         tbar.SetToolBitmapSize(wx.Size(16,16))
 
-        self.AddTool(tbar, ID_POLICE, "Images/Teamword/police.png", label=_(u"Police de caractère"), handler=self.OnFont)
+        self.AddTool(tbar, ID_POLICE, "Images/Teamword/police.png", label=_(u"Police de caractÃ¨re"), handler=self.OnFont)
         self.AddTool(tbar, ID_COULEUR_POLICE, "Images/Teamword/police_couleur.png", label=_(u"Couleur de la police"), handler=self.OnColour)
         tbar.AddSeparator()
         self.AddTool(tbar, ID_GRAS, "Images/Teamword/gras.png", kind=wx.ITEM_CHECK, label=_(u"Gras"), handler=self.OnBold, updateUI=self.OnUpdateBold)
         self.AddTool(tbar, ID_ITALIQUE, "Images/Teamword/italique.png", kind=wx.ITEM_CHECK, label=_(u"Italique"), handler=self.OnItalic, updateUI=self.OnUpdateItalic)
-        self.AddTool(tbar, ID_SOULIGNE, "Images/Teamword/souligne.png", kind=wx.ITEM_CHECK, label=_(u"Souligné"), handler=self.OnUnderline, updateUI=self.OnUpdateUnderline)
+        self.AddTool(tbar, ID_SOULIGNE, "Images/Teamword/souligne.png", kind=wx.ITEM_CHECK, label=_(u"SoulignÃ©"), handler=self.OnUnderline, updateUI=self.OnUpdateUnderline)
         tbar.AddSeparator()
-        self.AddTool(tbar, ID_ALIGNER_GAUCHE, "Images/Teamword/aligner_gauche.png", kind=wx.ITEM_CHECK, label=_(u"Aligner à gauche"), handler=self.OnAlignLeft, updateUI=self.OnUpdateAlignLeft)
+        self.AddTool(tbar, ID_ALIGNER_GAUCHE, "Images/Teamword/aligner_gauche.png", kind=wx.ITEM_CHECK, label=_(u"Aligner Ã  gauche"), handler=self.OnAlignLeft, updateUI=self.OnUpdateAlignLeft)
         self.AddTool(tbar, ID_ALIGNER_CENTRE, "Images/Teamword/aligner_centre.png", kind=wx.ITEM_CHECK, label=_(u"Centrer"), handler=self.OnAlignCenter, updateUI=self.OnUpdateAlignCenter)
-        self.AddTool(tbar, ID_ALIGNER_DROIT, "Images/Teamword/aligner_droit.png", kind=wx.ITEM_CHECK, label=_(u"Aligner à droite"), handler=self.OnAlignRight, updateUI=self.OnUpdateAlignRight)
+        self.AddTool(tbar, ID_ALIGNER_DROIT, "Images/Teamword/aligner_droit.png", kind=wx.ITEM_CHECK, label=_(u"Aligner Ã  droite"), handler=self.OnAlignRight, updateUI=self.OnUpdateAlignRight)
         tbar.AddSeparator()
         self.AddTool(tbar, ID_RETRAIT_GAUCHE, "Images/Teamword/retrait_gauche.png", label=_(u"Diminuer le retrait"), handler=self.OnIndentLess)
         self.AddTool(tbar, ID_RETRAIT_DROIT, "Images/Teamword/retrait_droit.png", label=_(u"Augmenter le retrait"), handler=self.OnIndentMore)
@@ -1047,8 +1047,8 @@ class MyFrame(wx.Frame):
         self.AddTool(tbar, ID_INTER_DEMI, "Images/Teamword/interligne_demi.png", label=_(u"Interligne 1.5"), handler=self.OnLineSpacingHalf)
         self.AddTool(tbar, ID_INTER_DOUBLE, "Images/Teamword/interligne_double.png", label=_(u"Interligne double"), handler=self.OnLineSpacingDouble)
         tbar.AddSeparator()
-        self.AddTool(tbar, ID_URL, "Images/Teamword/url.png", label=_(u"Insérer une url"), handler=self.OnInsererURL)
-        self.AddTool(tbar, ID_IMAGE, "Images/Teamword/importer_image.png", label=_(u"Insérer une image"), handler=self.OnImporterImage)
+        self.AddTool(tbar, ID_URL, "Images/Teamword/url.png", label=_(u"InsÃ©rer une url"), handler=self.OnInsererURL)
+        self.AddTool(tbar, ID_IMAGE, "Images/Teamword/importer_image.png", label=_(u"InsÃ©rer une image"), handler=self.OnImporterImage)
         tbar.Realize()
         return tbar
 
@@ -1072,7 +1072,7 @@ class MyFrame(wx.Frame):
 
 
 class Publipostage_Teamword():
-    """ Procédure de publipostage TEAMWORD """
+    """ ProcÃ©dure de publipostage TEAMWORD """
     def __init__(self, parent): 
         # Chargement
         self.erreur = None
@@ -1087,18 +1087,18 @@ class Publipostage_Teamword():
             self.QuitterLogiciel()
         
     def CreationDocument(self, cheminModele=None):
-        """ Création d'un nouveau document """
+        """ CrÃ©ation d'un nouveau document """
         try :
-            # Création d'un nouveau document
+            # CrÃ©ation d'un nouveau document
             self.Twd.CreateNewFile(cheminModele)
             #self.doc = self.Word.ActiveDocument
         except Exception as err :
             print("Erreur dans creation du nouveau du document : %s" % err)
-            self.erreur = _(u"Impossible de créer un nouveau du document")
+            self.erreur = _(u"Impossible de crÃ©er un nouveau du document")
             self.QuitterLogiciel()
     
     def RemplacementValeurs(self, listeValeurs=[]):
-        """ Remplacements des mots-clés par les valeurs """
+        """ Remplacements des mots-clÃ©s par les valeurs """
         try :
             self.Twd.RemplaceMotscles(listeValeurs)
         except Exception as err :
@@ -1132,7 +1132,7 @@ class Publipostage_Teamword():
             pass
         except Exception as err :
             print("Erreur dans la creation de l'apercu du document : %s" % err)
-            self.erreur = _(u"Impossible de créer un aperçu du document")
+            self.erreur = _(u"Impossible de crÃ©er un aperÃ§u du document")
             self.QuitterLogiciel()
     
     def FermerDocument(self):

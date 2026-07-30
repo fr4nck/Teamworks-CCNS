@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #------------------------------------------------------------------------
-# Application :    Noethys, gestion multi-activités
+# Application :    Noethys, gestion multi-activitÃ©s
 # Site internet :  www.noethys.com
 # Auteur:           Ivan LUCAS
 # Copyright:       (c) 2010-14 Ivan LUCAS
@@ -16,13 +16,13 @@ import os
 
 
 def ConvertirImagePNG(fichier="") :
-    # Chargement de l'image à convertir
+    # Chargement de l'image Ã  convertir
     image = Image.open(fichier)
     image.load() 
     profile = image.info.get("icc_profile")
 
     if profile != None :
-        # Créée une image sans icc_profile
+        # CrÃ©Ã©e une image sans icc_profile
         nouvelleImage = Image.new("RGBA", image.size)
         nouvelleImage.paste(image) 
         
@@ -38,9 +38,9 @@ def ConvertirImagePNG(fichier="") :
 
 
 def ConvertirToutesImagesPNG():
-    """ Convertit toutes les images PNG du répertoire Noethys """
+    """ Convertit toutes les images PNG du rÃ©pertoire Noethys """
     racine = "Images"
-    # Recherche les PNG présents
+    # Recherche les PNG prÃ©sents
     tree = os.walk(Chemins.GetStaticPath("Images"))
     listeFichiersPNG = []
     for repertoire, listeRepertoires, listeFichiers in tree :

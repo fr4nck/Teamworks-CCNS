@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #------------------------------------------------------------------------
 # Application :    Teamworks
 # Site internet :  www.noethys.com
@@ -22,7 +22,7 @@ class Dialog(wx.Dialog):
         self.parent = parent      
         self.type = type
         
-        intro = _(u"Vous pouvez ici concevoir des questionnaires personnalisés pour les fiches individuelles. Commencez par créer des catégories puis paramétrez des questions basées sur les contrôles de votre choix en fonction des données à saisir : texte, liste, entier, etc...")
+        intro = _(u"Vous pouvez ici concevoir des questionnaires personnalisÃ©s pour les fiches individuelles. Commencez par crÃ©er des catÃ©gories puis paramÃ©trez des questions basÃ©es sur les contrÃ´les de votre choix en fonction des donnÃ©es Ã  saisir : texte, liste, entier, etc...")
         titre = _(u"Questionnaires")
         self.SetTitle(titre)
         self.ctrl_bandeau = CTRL_Bandeau.Bandeau(self, titre=titre, texte=intro, hauteurHtml=30, nomImage=Chemins.GetStaticPath("Images/32x32/Questionnaire.png"))
@@ -52,16 +52,16 @@ class Dialog(wx.Dialog):
         self.Bind(wx.EVT_BUTTON, self.OnBoutonAide, self.bouton_aide)
         self.Bind(wx.EVT_BUTTON, self.OnBoutonFermer, self.bouton_fermer)
         
-        # Init contrôles
+        # Init contrÃ´les
         self.ctrl_questionnaire.MAJ() 
         
 
     def __set_properties(self):
-        self.bouton_ajouter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour ajouter une catégorie ou une question")))
-        self.bouton_modifier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier la catégorie ou la question sélectionnée")))
-        self.bouton_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer la catégorie ou la question sélectionnée")))
-        self.bouton_monter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour monter la catégorie ou la question sélectionnée")))
-        self.bouton_descendre.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour descendre la catégorie ou la question sélectionnée")))
+        self.bouton_ajouter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour ajouter une catÃ©gorie ou une question")))
+        self.bouton_modifier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier la catÃ©gorie ou la question sÃ©lectionnÃ©e")))
+        self.bouton_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer la catÃ©gorie ou la question sÃ©lectionnÃ©e")))
+        self.bouton_monter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour monter la catÃ©gorie ou la question sÃ©lectionnÃ©e")))
+        self.bouton_descendre.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour descendre la catÃ©gorie ou la question sÃ©lectionnÃ©e")))
         self.bouton_aide.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour obtenir de l'aide")))
         self.bouton_fermer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour fermer")))
         self.SetMinSize((690, 700))

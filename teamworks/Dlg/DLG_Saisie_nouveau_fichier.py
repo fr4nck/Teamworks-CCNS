@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -23,7 +23,7 @@ class PanelReseau(wx.Panel):
         self.label_port = wx.StaticText(self, -1, _(u"Port :"), size=(-1, -1), style=wx.ALIGN_RIGHT)
         self.ctrl_port = wx.TextCtrl(self, -1, "3306", size=(45, -1))
         
-        self.label_hote = wx.StaticText(self, -1, _(u"Hôte :"), size=(-1, -1), style=wx.ALIGN_RIGHT)
+        self.label_hote = wx.StaticText(self, -1, _(u"HÃ´te :"), size=(-1, -1), style=wx.ALIGN_RIGHT)
         self.ctrl_hote = wx.TextCtrl(self, -1, "", size=(-1, -1))
         
         self.label_user = wx.StaticText(self, -1, _(u"Utilisateur :"), size=(-1, -1), style=wx.ALIGN_RIGHT)
@@ -58,15 +58,15 @@ class PanelReseau(wx.Panel):
         grid_sizer_base.Fit(self)
         self.Layout()
         
-        self.ctrl_port.SetToolTip(wx.ToolTip(_(u"Le numéro de port est 3306 par défaut.")))
-        self.ctrl_hote.SetToolTip(wx.ToolTip(_(u"Indiquez ici le nom du serveur hôte.")))
-        self.ctrl_user.SetToolTip(wx.ToolTip(_(u"Indiquez ici le nom de l'utilisateur. Ce nom doit avoir été validé par le créateur du fichier.")))
-        self.ctrl_mdp.SetToolTip(wx.ToolTip(_(u"Indiquez ici le mot de passe nécessaire à la connexion à MySQL")))
+        self.ctrl_port.SetToolTip(wx.ToolTip(_(u"Le numÃ©ro de port est 3306 par dÃ©faut.")))
+        self.ctrl_hote.SetToolTip(wx.ToolTip(_(u"Indiquez ici le nom du serveur hÃ´te.")))
+        self.ctrl_user.SetToolTip(wx.ToolTip(_(u"Indiquez ici le nom de l'utilisateur. Ce nom doit avoir Ã©tÃ© validÃ© par le crÃ©ateur du fichier.")))
+        self.ctrl_mdp.SetToolTip(wx.ToolTip(_(u"Indiquez ici le mot de passe nÃ©cessaire Ã  la connexion Ã  MySQL")))
 
 
 class MyDialog(wx.Dialog):
     def __init__(self, parent):
-        wx.Dialog.__init__(self, parent, -1, title=_(u"Création d'un fichier"))       
+        wx.Dialog.__init__(self, parent, -1, title=_(u"CrÃ©ation d'un fichier"))       
         self.parent = parent
         
         import locale
@@ -78,20 +78,20 @@ class MyDialog(wx.Dialog):
         self.label_intro = wx.StaticText(self, -1, _(u"Veuillez saisir un nom pour votre nouveau fichier :"))
         self.sizer_type_staticbox = wx.StaticBox(self, -1, _(u"Type de fichier"))
         self.sizer_contenu_staticbox = wx.StaticBox(self, -1, _(u"Nom du fichier"))
-        self.sizer_reseau_staticbox = wx.StaticBox(self, -1, _(u"Connexion au réseau"))
+        self.sizer_reseau_staticbox = wx.StaticBox(self, -1, _(u"Connexion au rÃ©seau"))
         
         self.listeTablesImportation = DATA_Tables.TABLES_IMPORTATION_OPTIONNELLES
         
-        # Radio Local/Réseau
+        # Radio Local/RÃ©seau
         self.radio_local = wx.RadioButton(self, -1, _(u"Local"), style = wx.RB_GROUP )
-        self.radio_reseau = wx.RadioButton(self, -1, _(u"Réseau") )
+        self.radio_reseau = wx.RadioButton(self, -1, _(u"RÃ©seau") )
         
-        # Nom à saisir
+        # Nom Ã  saisir
         self.label_nom = wx.StaticText(self, -1, _(u"Nom de fichier :"))
         self.text_nom = wx.TextCtrl(self, -1, "")
         
-        # Sélection des tables à importer
-        self.checkbox_details = wx.CheckBox(self, -1, _(u"Importer les données par défaut"))
+        # SÃ©lection des tables Ã  importer
+        self.checkbox_details = wx.CheckBox(self, -1, _(u"Importer les donnÃ©es par dÃ©faut"))
         self.checkbox_details.SetValue(True)
         self.hyperlink_details = self.Build_Hyperlink()
         
@@ -118,16 +118,16 @@ class MyDialog(wx.Dialog):
             _icon = wx.EmptyIcon()
         _icon.CopyFromBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Logo.png"), wx.BITMAP_TYPE_ANY))
         self.SetIcon(_icon)
-        self.checkbox_details.SetToolTip(wx.ToolTip(_(u"Il est recommandé de conserver cette case\n cochée afin d'importer les données par défaut")))
-        self.text_nom.SetToolTip(wx.ToolTip(_(u"Saisissez ici le nom de votre nouveau fichier.\nExemples : 'CLSH Lannilis', 'Colo Auvergne' ou 'Mon fichier à moi'...")))
+        self.checkbox_details.SetToolTip(wx.ToolTip(_(u"Il est recommandÃ© de conserver cette case\n cochÃ©e afin d'importer les donnÃ©es par dÃ©faut")))
+        self.text_nom.SetToolTip(wx.ToolTip(_(u"Saisissez ici le nom de votre nouveau fichier.\nExemples : 'CLSH Lannilis', 'Colo Auvergne' ou 'Mon fichier Ã  moi'...")))
         self.bouton_aide.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour obtenir de l'aide")))
         self.bouton_aide.SetSize(self.bouton_aide.GetBestSize())
         self.bouton_ok.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour valider")))
         self.bouton_ok.SetSize(self.bouton_ok.GetBestSize())
         self.bouton_annuler.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour annuler la saisie")))
         self.bouton_annuler.SetSize(self.bouton_annuler.GetBestSize())
-        self.radio_local.SetToolTip(wx.ToolTip(_(u"Le mode local est utilisé pour une utilisation mono-poste")))
-        self.radio_reseau.SetToolTip(wx.ToolTip(_(u"Le mode réseau est utilisateur pour une utilisation multipostes. \nMySQL doit être obligatoirement installé et configuré avant utilisation.")))
+        self.radio_local.SetToolTip(wx.ToolTip(_(u"Le mode local est utilisÃ© pour une utilisation mono-poste")))
+        self.radio_reseau.SetToolTip(wx.ToolTip(_(u"Le mode rÃ©seau est utilisateur pour une utilisation multipostes. \nMySQL doit Ãªtre obligatoirement installÃ© et configurÃ© avant utilisation.")))
 
     def __do_layout(self):
         sizer_base = wx.BoxSizer(wx.VERTICAL)
@@ -135,7 +135,7 @@ class MyDialog(wx.Dialog):
         grid_sizer_boutons = wx.FlexGridSizer(rows=1, cols=4, vgap=10, hgap=10)
         grid_sizer_base.Add(self.label_intro, 1, wx.LEFT|wx.TOP|wx.RIGHT|wx.EXPAND, 10)
         
-        # Radios Local/réseau
+        # Radios Local/rÃ©seau
         sizer_type = wx.StaticBoxSizer(self.sizer_type_staticbox, wx.VERTICAL)
         grid_sizer_radio = wx.FlexGridSizer(rows=1, cols=2, vgap=10, hgap=10)
         grid_sizer_radio.Add(self.radio_local, 1, wx.EXPAND | wx.TOP|wx.BOTTOM, 5)
@@ -159,7 +159,7 @@ class MyDialog(wx.Dialog):
         sizer_contenu.Add(grid_sizer_contenu, 1, wx.ALL|wx.EXPAND, 10)
         grid_sizer_base.Add(sizer_contenu, 1, wx.LEFT|wx.RIGHT|wx.BOTTOM|wx.EXPAND, 10)
         
-        # Réseau
+        # RÃ©seau
         sizer_reseau = wx.StaticBoxSizer(self.sizer_reseau_staticbox, wx.VERTICAL)
         sizer_reseau.Add(self.panelReseau, 1, wx.ALL|wx.EXPAND, 10)
         grid_sizer_base.Add(sizer_reseau, 1, wx.RIGHT|wx.LEFT|wx.BOTTOM|wx.EXPAND, 10)
@@ -190,21 +190,21 @@ class MyDialog(wx.Dialog):
     def Build_Hyperlink(self) :
         """ Construit un hyperlien """
         self.SetFont(wx.Font(8, wx.SWISS, wx.NORMAL, wx.NORMAL, False))
-        hyper = hl.HyperLinkCtrl(self, -1, _(u"(Détails)"), URL="")
+        hyper = hl.HyperLinkCtrl(self, -1, _(u"(DÃ©tails)"), URL="")
         hyper.Bind(hl.EVT_HYPERLINK_LEFT, self.OnLeftLink)
         hyper.AutoBrowse(False)
         hyper.SetColours("BLUE", "BLUE", "BLUE")
         hyper.EnableRollover(True)
         hyper.SetUnderlines(False, False, True)
         hyper.SetBold(False)
-        hyper.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour sélectionner les données à importer")))
+        hyper.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour sÃ©lectionner les donnÃ©es Ã  importer")))
         hyper.UpdateLink()
         hyper.DoPopup(False)
         return hyper
     
     def OnLeftLink(self, event):
-        """ Sélectionner les données à importer """
-        # Préparation de la liste des données
+        """ SÃ©lectionner les donnÃ©es Ã  importer """
+        # PrÃ©paration de la liste des donnÃ©es
         listeDonnees = []
         listePreSelections = []
         index = 0
@@ -214,14 +214,14 @@ class MyDialog(wx.Dialog):
                 listePreSelections.append(index)
             index += 1
                                           
-        # Boîte de dialogue sélections multiples
-        titre = _(u"Importation des données")
-        message = _(u"Sélectionnez les données que vous souhaitez importer :")
+        # BoÃ®te de dialogue sÃ©lections multiples
+        titre = _(u"Importation des donnÃ©es")
+        message = _(u"SÃ©lectionnez les donnÃ©es que vous souhaitez importer :")
         dlg = wx.MultiChoiceDialog(self, message, titre, listeDonnees, wx.CHOICEDLG_STYLE)
-        # Coche ceux qui doivent être déjà sélectionnés dans la liste
+        # Coche ceux qui doivent Ãªtre dÃ©jÃ  sÃ©lectionnÃ©s dans la liste
         dlg.SetSelections(listePreSelections)
         
-        # Résultats
+        # RÃ©sultats
         if dlg.ShowModal() == wx.ID_OK:
             listeSelections = dlg.GetSelections()
             index = 0
@@ -245,7 +245,7 @@ class MyDialog(wx.Dialog):
         UTILS_Aide.Aide("Creerunnouveaufichier")
 
     def OnBoutonOk(self, event):
-        """ Validation des données saisies """
+        """ Validation des donnÃ©es saisies """
         
         # Validation du nom saisi
         if self.text_nom.GetValue() == "" :
@@ -258,15 +258,15 @@ class MyDialog(wx.Dialog):
         # Traitement du checkbox
         if self.checkbox_details.GetValue() == False :
             
-            # Demande de confirmation pour le refus d'importer les données par défaut
-            dlg = wx.MessageDialog(self, _(u"Etes-vous sûr de ne pas vouloir importer les données par défaut ?"), _(u"Importation des données"), wx.YES_NO | wx.CANCEL | wx.ICON_QUESTION)
+            # Demande de confirmation pour le refus d'importer les donnÃ©es par dÃ©faut
+            dlg = wx.MessageDialog(self, _(u"Etes-vous sÃ»r de ne pas vouloir importer les donnÃ©es par dÃ©faut ?"), _(u"Importation des donnÃ©es"), wx.YES_NO | wx.CANCEL | wx.ICON_QUESTION)
             if dlg.ShowModal() == wx.ID_YES :
                 dlg.Destroy()
             else:
                 dlg.Destroy()
                 return
             
-            # Désactivation des données importées par défaut
+            # DÃ©sactivation des donnÃ©es importÃ©es par dÃ©faut
             index = 0
             for categorie in self.listeTablesImportation :
                 self.listeTablesImportation[index][2] = False
@@ -282,14 +282,14 @@ class MyDialog(wx.Dialog):
             try :
                 port = int(port)
             except Exception as err:
-                dlg = wx.MessageDialog(self, _(u"Le numéro de port n'est pas valide. \n\nErreur : %s") % err, _(u"Erreur de saisie"), wx.OK | wx.ICON_ERROR)
+                dlg = wx.MessageDialog(self, _(u"Le numÃ©ro de port n'est pas valide. \n\nErreur : %s") % err, _(u"Erreur de saisie"), wx.OK | wx.ICON_ERROR)
                 dlg.ShowModal()
                 dlg.Destroy()
                 self.panelReseau.ctrl_port.SetFocus()
                 return
             
             if hote == "" :
-                dlg = wx.MessageDialog(self, _(u"Vous devez saisir un nom pour le serveur hôte."), _(u"Erreur de saisie"), wx.OK | wx.ICON_ERROR)
+                dlg = wx.MessageDialog(self, _(u"Vous devez saisir un nom pour le serveur hÃ´te."), _(u"Erreur de saisie"), wx.OK | wx.ICON_ERROR)
                 dlg.ShowModal()
                 dlg.Destroy()
                 self.panelReseau.ctrl_hote.SetFocus()
@@ -309,11 +309,11 @@ class MyDialog(wx.Dialog):
                 self.panelReseau.ctrl_mdp.SetFocus()
                 return
             
-            # Teste la connexion Réseau
+            # Teste la connexion RÃ©seau
             dictResultats = GestionDB.TestConnexionMySQL(typeTest="connexion", nomFichier=self.GetNomFichier() )
             if dictResultats["connexion"][0] == False :
                 erreur = dictResultats["connexion"][1]
-                dlg = wx.MessageDialog(self, _(u"La connexion au réseau MySQL est impossible. \n\nErreur : %s") % erreur, "Erreur de connexion", wx.OK | wx.ICON_ERROR)
+                dlg = wx.MessageDialog(self, _(u"La connexion au rÃ©seau MySQL est impossible. \n\nErreur : %s") % erreur, "Erreur de connexion", wx.OK | wx.ICON_ERROR)
                 dlg.ShowModal()
                 dlg.Destroy()
                 return False

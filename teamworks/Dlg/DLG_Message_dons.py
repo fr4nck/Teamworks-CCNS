@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -20,11 +20,11 @@ TEXTE_ACCUEIL = u"""
 <FONT SIZE=2>
 <B>Bienvenue dans TeamWorks</B>
 <BR><BR>
-Teamworks est un logiciel libre et gratuit de gestion d'équipes qui a nécessité 3 ans 
-de développement pour un résultat de 80 000 lignes de code !
+Teamworks est un logiciel libre et gratuit de gestion d'Ã©quipes qui a nÃ©cessitÃ© 3 ans 
+de dÃ©veloppement pour un rÃ©sultat de 80 000 lignes de code !
 <BR><BR>
-Si vous jugez que ce logiciel vous apporte un service appréciable au quotidien et 
-que vous souhaitez participez au développement du logiciel, vous pouvez apporter 
+Si vous jugez que ce logiciel vous apporte un service apprÃ©ciable au quotidien et 
+que vous souhaitez participez au dÃ©veloppement du logiciel, vous pouvez apporter 
 votre soutien financier au projet : 
 <BR>
 <A HREF="Saisie">Cliquez ici pour en savoir plus sur les dons</A>.
@@ -68,7 +68,7 @@ class Dialog(wx.Dialog):
 
     def __set_properties(self):
         self.SetTitle(_(u"Bienvenue"))
-        self.bouton_ok.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour fermer cette fenêtre et utiliser Teamworks")))
+        self.bouton_ok.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour fermer cette fenÃªtre et utiliser Teamworks")))
         self.SetMinSize((300, 370))
 
     def __do_layout(self):

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #------------------------------------------------------------------------
 # Application :    Teamworks
 # Auteur:           Ivan LUCAS
@@ -26,13 +26,13 @@ class MyDialog(wx.Dialog):
         # Mode
         self.box_mode_staticbox = wx.StaticBox(self, -1, _(u"Mode"))
         self.radio_local = wx.RadioButton(self, -1, _(u"Local"), style=wx.RB_GROUP)
-        self.radio_reseau = wx.RadioButton(self, -1, _(u"RÈseau"))
+        self.radio_reseau = wx.RadioButton(self, -1, _(u"R√©seau"))
         
-        # Codes d'accËs
-        self.box_codes_staticbox = wx.StaticBox(self, -1, _(u"Codes d'accËs rÈseau"))
+        # Codes d'acc√®s
+        self.box_codes_staticbox = wx.StaticBox(self, -1, _(u"Codes d'acc√®s r√©seau"))
         self.label_port = wx.StaticText(self, -1, _(u"Port :"))
         self.ctrl_port = wx.TextCtrl(self, -1, u"3306", style=wx.TE_CENTRE)
-        self.label_hote = wx.StaticText(self, -1, _(u"HÙte :"))
+        self.label_hote = wx.StaticText(self, -1, _(u"H√¥te :"))
         self.ctrl_hote = wx.TextCtrl(self, -1, u"")
         self.label_utilisateur = wx.StaticText(self, -1, _(u"Utilisateur :"))
         self.ctrl_utilisateur = wx.TextCtrl(self, -1, u"")
@@ -65,7 +65,7 @@ class MyDialog(wx.Dialog):
         self.Bind(wx.EVT_BUTTON, self.OnBoutonAnnuler, self.bouton_annuler)
         self.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.OnBoutonOk, self.ctrl_fichiers)
         
-        # Init contrÙles
+        # Init contr√¥les
         self.OnChoixMode(None) 
         
 
@@ -78,19 +78,19 @@ class MyDialog(wx.Dialog):
         self.SetIcon(_icon)
         self.SetTitle(_(u"Ouverture d'un fichier"))
         self.radio_local.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour afficher les fichiers disponibles en mode local")))
-        self.radio_reseau.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour afficher les fichiers disponibles en mode rÈseau")))
+        self.radio_reseau.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour afficher les fichiers disponibles en mode r√©seau")))
         self.ctrl_port.SetMinSize((40, -1))
-        self.ctrl_port.SetToolTip(wx.ToolTip(_(u"Le numÈro de port est 3306 par dÈfaut")))
+        self.ctrl_port.SetToolTip(wx.ToolTip(_(u"Le num√©ro de port est 3306 par d√©faut")))
         self.ctrl_hote.SetMinSize((90,-1))
-        self.ctrl_hote.SetToolTip(wx.ToolTip(_(u"Indiquez ici le nom du serveur hÙte")))
+        self.ctrl_hote.SetToolTip(wx.ToolTip(_(u"Indiquez ici le nom du serveur h√¥te")))
         self.ctrl_utilisateur.SetMinSize((90,-1))
         self.ctrl_utilisateur.SetToolTip(wx.ToolTip(_(u"Indiquez ici le nom de l'utilisateur")))
-        self.ctrl_motdepasse.SetToolTip(wx.ToolTip(_(u"Indiquez ici le mot de passe nÈcessaire ‡ la connexion ‡ MySQL")))
-        self.bouton_valider_codes.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour valider les codes rÈseau et afficher la liste des fichiers disponibles")))
-        self.bouton_modifier_fichier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier le nom du fichier sÈlectionnÈ dans la liste")))
-        self.bouton_supprimer_fichier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer le fichier sÈlectionnÈ dans la liste")))
+        self.ctrl_motdepasse.SetToolTip(wx.ToolTip(_(u"Indiquez ici le mot de passe n√©cessaire √† la connexion √† MySQL")))
+        self.bouton_valider_codes.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour valider les codes r√©seau et afficher la liste des fichiers disponibles")))
+        self.bouton_modifier_fichier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier le nom du fichier s√©lectionn√© dans la liste")))
+        self.bouton_supprimer_fichier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer le fichier s√©lectionn√© dans la liste")))
         self.bouton_aide.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour obtenir de l'aide")))
-        self.bouton_ok.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour ouvrir le fichier sÈlectionnÈ dans la liste")))
+        self.bouton_ok.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour ouvrir le fichier s√©lectionn√© dans la liste")))
         self.bouton_annuler.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour annuler")))
 
     def __do_layout(self):
@@ -156,18 +156,18 @@ class MyDialog(wx.Dialog):
         self.MAJliste() 
     
     def MAJliste(self):
-        """ Met ‡ jour la liste des fichiers """
+        """ Met √† jour la liste des fichiers """
         modeLocal = self.radio_local.GetValue()
         if modeLocal == True :
             # Mode local
             self.ctrl_fichiers.SetMode(mode="local")
         else :
-            # Mode rÈseau
+            # Mode r√©seau
             dictCodes = self.GetCodesReseau() 
             self.ctrl_fichiers.SetMode(mode="reseau", codesReseau=dictCodes)
     
     def GetCodesReseau(self):
-        """ RÈcupÈration des codes rÈseau saisis """
+        """ R√©cup√©ration des codes r√©seau saisis """
         try :
             port = int(self.ctrl_port.GetValue())
         except Exception as err:
@@ -181,14 +181,14 @@ class MyDialog(wx.Dialog):
         dictCodes = self.GetCodesReseau() 
         
         if dictCodes["port"] == "" :
-            dlg = wx.MessageDialog(self, _(u"Le numÈro de port n'est pas valide !"), _(u"Erreur de saisie"), wx.OK | wx.ICON_ERROR)
+            dlg = wx.MessageDialog(self, _(u"Le num√©ro de port n'est pas valide !"), _(u"Erreur de saisie"), wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
             dlg.Destroy()
             self.ctrl_port.SetFocus()
             return
         
         if dictCodes["hote"] == "" :
-            dlg = wx.MessageDialog(self, _(u"Vous devez saisir un nom pour le serveur hÙte !"), _(u"Erreur de saisie"), wx.OK | wx.ICON_ERROR)
+            dlg = wx.MessageDialog(self, _(u"Vous devez saisir un nom pour le serveur h√¥te !"), _(u"Erreur de saisie"), wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
             dlg.Destroy()
             self.ctrl_hote.SetFocus()
@@ -220,13 +220,13 @@ class MyDialog(wx.Dialog):
     def OnBoutonModifierFichier(self, event): 
         index = self.ctrl_fichiers.GetFirstSelected()
         if index == -1 :
-            dlg = wx.MessageDialog(self, _(u"Vous devez sÈlectionner un fichier ‡ modifier dans la liste !"), _(u"Erreur de saisie"), wx.OK | wx.ICON_EXCLAMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez s√©lectionner un fichier √† modifier dans la liste !"), _(u"Erreur de saisie"), wx.OK | wx.ICON_EXCLAMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return 
         titre = self.ctrl_fichiers.GetItemPyData(index)["titre"]
         if self.fichierOuvert == titre :
-            dlg = wx.MessageDialog(self, _(u"Vous ne pouvez pas modifier un fichier dÈj‡ ouvert !"), _(u"Erreur"), wx.OK | wx.ICON_EXCLAMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous ne pouvez pas modifier un fichier d√©j√† ouvert !"), _(u"Erreur"), wx.OK | wx.ICON_EXCLAMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return 
@@ -236,13 +236,13 @@ class MyDialog(wx.Dialog):
     def OnBoutonSupprimerFichier(self, event): 
         index = self.ctrl_fichiers.GetFirstSelected()
         if index == -1 :
-            dlg = wx.MessageDialog(self, _(u"Vous devez sÈlectionner un fichier ‡ supprimer dans la liste !"), _(u"Erreur de saisie"), wx.OK | wx.ICON_EXCLAMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez s√©lectionner un fichier √† supprimer dans la liste !"), _(u"Erreur de saisie"), wx.OK | wx.ICON_EXCLAMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return 
         titre = self.ctrl_fichiers.GetItemPyData(index)["titre"]
         if self.fichierOuvert == titre :
-            dlg = wx.MessageDialog(self, _(u"Vous ne pouvez pas supprimer un fichier dÈj‡ ouvert !"), _(u"Erreur"), wx.OK | wx.ICON_EXCLAMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous ne pouvez pas supprimer un fichier d√©j√† ouvert !"), _(u"Erreur"), wx.OK | wx.ICON_EXCLAMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return 
@@ -281,14 +281,14 @@ class MyDialog(wx.Dialog):
     def OnBoutonOk(self, event): 
         index = self.ctrl_fichiers.GetFirstSelected()
         if index == -1 :
-            dlg = wx.MessageDialog(self, _(u"Vous devez sÈlectionner un fichier dans la liste !"), _(u"Erreur de saisie"), wx.OK | wx.ICON_EXCLAMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez s√©lectionner un fichier dans la liste !"), _(u"Erreur de saisie"), wx.OK | wx.ICON_EXCLAMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return 
 
         titre = self.ctrl_fichiers.GetItemPyData(index)["titre"]
         if self.fichierOuvert == titre :
-            dlg = wx.MessageDialog(self, _(u"Vous ne pouvez pas ouvrir un fichier dÈj‡ ouvert !"), _(u"Erreur"), wx.OK | wx.ICON_EXCLAMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous ne pouvez pas ouvrir un fichier d√©j√† ouvert !"), _(u"Erreur"), wx.OK | wx.ICON_EXCLAMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return 

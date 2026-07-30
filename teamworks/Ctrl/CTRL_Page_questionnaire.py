@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -52,7 +52,7 @@ class Panel(wx.Panel):
         self.majEffectuee = True
         
     def ValidationData(self):
-        """ Return True si les données sont valides et pretes à être sauvegardées """
+        """ Return True si les donnÃ©es sont valides et pretes Ã  Ãªtre sauvegardÃ©es """
         return True
     
     def Sauvegarde(self):
@@ -63,7 +63,7 @@ class Panel(wx.Panel):
         # Sauvegarde
         DB = GestionDB.DB()
         for IDquestion, reponse in valeurs.items() :            
-            # Si la réponse est différente de la réponse initiale
+            # Si la rÃ©ponse est diffÃ©rente de la rÃ©ponse initiale
             if reponse != dictValeursInitiales[IDquestion] or reponse == "##DOCUMENTS##" :
 
                 if IDquestion in dictReponses:
@@ -71,14 +71,14 @@ class Panel(wx.Panel):
                 else:
                     IDreponse = None
                 
-                # Si c'est un document, on regarde s'il y a des docs à sauver
+                # Si c'est un document, on regarde s'il y a des docs Ã  sauver
                 sauvegarder = True
                 if reponse == "##DOCUMENTS##" :
                     nbreDocuments = self.ctrl_questionnaire.GetNbreDocuments(IDquestion)
                     if nbreDocuments == 0 :
                         sauvegarder = False
                 
-                # Sauvegarde la réponse
+                # Sauvegarde la rÃ©ponse
                 if sauvegarder == True :
                     listeDonnees = [    
                         ("IDquestion", IDquestion),
@@ -90,7 +90,7 @@ class Panel(wx.Panel):
                     else:
                         DB.ReqMAJ("questionnaire_reponses", listeDonnees, "IDreponse", IDreponse)
                 
-                # Sauvegarde du contrôle Porte-documents
+                # Sauvegarde du contrÃ´le Porte-documents
                 if reponse == "##DOCUMENTS##" :
                     nbreDocuments = self.ctrl_questionnaire.SauvegardeDocuments(IDquestion, IDreponse)
                     if nbreDocuments == 0 and IDreponse != None :

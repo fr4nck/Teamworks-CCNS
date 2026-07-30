@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -23,12 +23,12 @@ class PanelGadget(wx.Panel):
         self.index = index
         self.couleurFondPanel = couleurFondPanel
         
-        # Données gadgets
+        # DonnÃ©es gadgets
         self.nomGadget = parent.listeGadgets[index][0]
         self.paramGadget = parent.listeGadgets[index][1]
         self.texteTitre = self.paramGadget["label"]
 
-        # Paramètres Cadre Gadget
+        # ParamÃ¨tres Cadre Gadget
         self.espaceBord = 5
         self.coinArrondi = 5
         self.hauteurTitre = 17
@@ -47,7 +47,7 @@ class PanelGadget(wx.Panel):
         # Boutons
         self.img_config = wx.StaticBitmap(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Gadget_config.png"), wx.BITMAP_TYPE_ANY))
         self.img_fermer = wx.StaticBitmap(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Gadget_fermer.png"), wx.BITMAP_TYPE_ANY))
-        self.img_config.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour accéder aux options de ce gadget")))
+        self.img_config.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour accÃ©der aux options de ce gadget")))
         self.img_fermer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour fermer ce gadget")))
         if self.paramGadget["config"] == False : self.img_config.Show(False)
         
@@ -111,13 +111,13 @@ class PanelGadget(wx.Panel):
 ##        dc.SetBrush(wx.Brush(self.couleurFondTitre))
 ##        dc.DrawRoundedRectangle(0+self.espaceBord, 0+self.espaceBord, largeurDC-(self.espaceBord*2), self.hauteurTitre, self.coinArrondi)
 ##        pen = wx.Pen(self.couleurFondTitre, 5)
-##        pen.SetCap(wx.CAP_BUTT) # Enlève l'arrondi aux bouts de la ligne
+##        pen.SetCap(wx.CAP_BUTT) # EnlÃ¨ve l'arrondi aux bouts de la ligne
 ##        dc.SetPen(pen)
 ##        dc.DrawLine(1+self.espaceBord, self.hauteurTitre+2, largeurDC-self.espaceBord-1, self.hauteurTitre+2)
         
-        # Dégradé
+        # DÃ©gradÃ©
         dc.GradientFillLinear((self.espaceBord+1, self.espaceBord+7, largeurDC-(self.espaceBord*2)-2, self.hauteurTitre-2), (214, 223, 247), (0, 0, 0), wx.NORTH)
-        # Cache pour enlever l'arrondi inférieur de la barre de titre
+        # Cache pour enlever l'arrondi infÃ©rieur de la barre de titre
         dc.SetBrush(wx.Brush(self.couleurFondCadre))
         dc.SetPen(wx.Pen(self.couleurFondCadre, 0))
         dc.DrawRectangle(self.espaceBord+1, self.espaceBord+self.hauteurTitre+1, largeurDC-(self.espaceBord*2)-2, self.coinArrondi+5)
@@ -159,27 +159,27 @@ class PanelGadget(wx.Panel):
         dictGadget = self.GetParent().listeGadgets[self.index][1]
 
         for key, valeur in dictGadget.items() :
-            # Paramètres de base
+            # ParamÃ¨tres de base
             if key == "label" : listeDonnees.append( ("label", valeur) )
             elif key == "taille" : listeDonnees.append( ("taille", str(valeur)) )
             elif key == "affichage" : listeDonnees.append( ("affichage", str(valeur)) )
             elif key == "ordre" : listeDonnees.append( ("ordre", valeur) )
             elif key == "config" : listeDonnees.append( ("config", str(valeur)) )
             else:
-                # Autres paramètres :
+                # Autres paramÃ¨tres :
                 dictParametres[key] = valeur
         
         if len(dictParametres) > 0 :
             listeDonnees.append( ("parametres", str(dictParametres)) )
         
-        # Initialisation de la connexion avec la Base de données
+        # Initialisation de la connexion avec la Base de donnÃ©es
         DB = GestionDB.DB()
         DB.ReqMAJ("gadgets", listeDonnees, "nom", nomGadget, IDestChaine=True)
         DB.Close()
        
 
     def GetContenu(self, nomGadget) :
-        """ Le contenu peut être un panel ou un controle """
+        """ Le contenu peut Ãªtre un panel ou un controle """
         
         if nomGadget == "dossiers_incomplets" :
             self.contenu = Gadget_DossiersIncomplets(self)  # Dossiers incomplets
@@ -226,7 +226,7 @@ class Gadget_BlocNotes(wx.Panel):
         # Bind
         self.texte.Bind(wx.EVT_KILL_FOCUS, self.OnKillFocus)
         
-        # Archive des paramètres : {"texte" : _(u"Hello !"), "taillePolice" : 10, "familyPolice" : 74, "stylePolice" : 90, "weightPolice" : 90 , "nomPolice" : "Segoe Print", "multipages" : False, "couleur_fond" : (255, 255, 187), "couleur_police" : (255, 0, 0) }
+        # Archive des paramÃ¨tres : {"texte" : _(u"Hello !"), "taillePolice" : 10, "familyPolice" : 74, "stylePolice" : 90, "weightPolice" : 90 , "nomPolice" : "Segoe Print", "multipages" : False, "couleur_fond" : (255, 255, 187), "couleur_police" : (255, 0, 0) }
 
     def OnKillFocus(self, event):
         """ Sauvegarde du texte """
@@ -253,7 +253,7 @@ class Gadget_DossiersIncomplets(wx.Panel):
         # Widgets
         self.tree = pbPersonnes.TreeCtrl(self)
 
-        # Paramètres
+        # ParamÃ¨tres
         self.tree.couleurFond = dictParam["couleur_fond"]
         self.tree.couleurPersonne = dictParam["couleurPersonne"]
         self.tree.couleurType = dictParam["couleurType"]
@@ -290,7 +290,7 @@ class Gadget_Horloge(wx.Panel):
         # Import
         import wx.lib.analogclock as clock
         
-        # Données
+        # DonnÃ©es
         couleurFace = dictParam["couleur_face"]
         couleurFond = dictParam["couleur_fond"]
         
@@ -325,11 +325,11 @@ class Gadget_Updater(wx.Panel):
         self.parent.couleurFondCadre = couleurFondUpdater
         
         # Widgets
-        self.texte = wx.StaticText(self, -1, _(u"Une nouvelle version du logiciel est disponible !\n\nCliquez ci-dessous pour la télécharger et l'installer dès maintenant."))
+        self.texte = wx.StaticText(self, -1, _(u"Une nouvelle version du logiciel est disponible !\n\nCliquez ci-dessous pour la tÃ©lÃ©charger et l'installer dÃ¨s maintenant."))
         self.SetBackgroundColour(couleurFondUpdater)
         
         self.bouton_telecharger = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Telecharger_L140.png"), wx.BITMAP_TYPE_ANY), size=(-1, 60))
-        self.bouton_telecharger.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour télécharger et installer\nla nouvelle version de TeamWorks")))
+        self.bouton_telecharger.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour tÃ©lÃ©charger et installer\nla nouvelle version de TeamWorks")))
 
         #font = wx.Font(7, wx.DEFAULT, wx.NORMAL, wx.NORMAL) 
         #self.contenu.SetFont(font)
@@ -367,7 +367,7 @@ class Gadget_Calendrier(CTRL_Calendrier_tw.Panel):
         self.calendrier.SetBackgroundColour(dictParam["colFond"])
         self.SetBackgroundColour(dictParam["colFond"])
         self.parent.couleurFondCadre = dictParam["colFond"]
-        # Couleurs des éléments du calendrier
+        # Couleurs des Ã©lÃ©ments du calendrier
         self.calendrier.couleurFond = dictParam["colFond"]
         self.calendrier.couleurNormal = dictParam["colNormal"]
         self.calendrier.couleurWE = dictParam["colWE"]

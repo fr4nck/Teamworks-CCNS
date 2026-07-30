@@ -43,8 +43,8 @@ def test_sqlite_compatibility_survives_module_reload():
 
 
 def test_legacy_byte_path_calls_are_covered_by_early_chemins_import():
-    gestion = GESTION_DB.read_text(encoding="iso-8859-15")
-    fonctions = FONCTIONS_PERSO.read_text(encoding="iso-8859-15")
+    gestion = GESTION_DB.read_text(encoding="utf-8")
+    fonctions = FONCTIONS_PERSO.read_text(encoding="utf-8")
 
     assert gestion.index("import Chemins") < gestion.index("import sqlite3")
     assert fonctions.index("import Chemins") < fonctions.index("import sqlite3")

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -30,7 +30,7 @@ class Panel_general(wx.Panel):
         self.IDpersonne = IDpersonne
         self.remplissageEnCours = True
         
-        # Pays de naissance et nationalité
+        # Pays de naissance et nationalitÃ©
         self.IDpays_naiss = 0
         self.IDpays_nation = 0
         IDfrance = self.Recherche_Pays(nomPays="France")[0]
@@ -40,37 +40,37 @@ class Panel_general(wx.Panel):
 
         # Sizers avec titre
         self.sizer_situation_sociale_staticbox = wx.StaticBox(self, -1, _(u"Situation sociale"))
-        self.sizer_coords_staticbox = wx.StaticBox(self, -1, _(u"Coordonnées"))
+        self.sizer_coords_staticbox = wx.StaticBox(self, -1, _(u"CoordonnÃ©es"))
         self.sizer_adresse_staticbox = wx.StaticBox(self, -1, "Adresse")
-        self.sizer_memo_staticbox = wx.StaticBox(self, -1, _(u"Mémo"))
-        self.sizer_identite_staticbox = wx.StaticBox(self, -1, _(u"Identité"))
+        self.sizer_memo_staticbox = wx.StaticBox(self, -1, _(u"MÃ©mo"))
+        self.sizer_identite_staticbox = wx.StaticBox(self, -1, _(u"IdentitÃ©"))
 
         # Controles
-        self.label_civilite = wx.StaticText(self, -1, _(u"Civilité :"))
+        self.label_civilite = wx.StaticText(self, -1, _(u"CivilitÃ© :"))
         self.combo_box_civilite = wx.Choice(self, -1, choices=["Mr", "Melle", "Mme"])
         self.label_nomjf = wx.StaticText(self, -1, "Nom de jeune fille :")
         self.text_ctrl_nomjf = wx.TextCtrl(self, -1, "")
         self.label_nom = wx.StaticText(self, -1, "Nom :")
         self.text_nom = wx.TextCtrl(self, -1, "")
-        self.label_prenom = wx.StaticText(self, -1, _(u"Prénom :"))
+        self.label_prenom = wx.StaticText(self, -1, _(u"PrÃ©nom :"))
         self.text_prenom = wx.TextCtrl(self, -1, "")
-        self.label_date_naiss = wx.StaticText(self, -1, _(u"Né(e) le :"))
+        self.label_date_naiss = wx.StaticText(self, -1, _(u"NÃ©(e) le :"))
         self.text_date_naiss = masked.TextCtrl(self, -1, "", style=wx.TE_CENTRE, mask = "##/##/####") 
         self.text_age = wx.TextCtrl(self, -1, "", style=wx.TE_CENTRE, size=(46,-1))
         self.label_pays = wx.StaticText(self, -1, _(u"Pays de naissance :"))
         self.bouton_pays = wx.Button(self, -1, "...", size=(20, 20))
         self.image_pays = wx.StaticBitmap(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/Drapeaux/france.png"), wx.BITMAP_TYPE_PNG), size=(22, 10))
         
-        self.label_cp_naiss = wx.StaticText(self, -1, _(u"à | C.P. :"))
+        self.label_cp_naiss = wx.StaticText(self, -1, _(u"Ã  | C.P. :"))
         self.text_cp_naiss = masked.TextCtrl(self, 100, "", style=wx.TE_CENTRE, mask = "#####") 
         self.label_ville_naiss = wx.StaticText(self, -1, _(u"Ville :"))
         self.text_ville_naiss = wx.TextCtrl(self, 200)
         self.bouton_options_ville_naiss = wx.Button(self, -1, "...", size=(20, 20))
-        self.label_numsecu = wx.StaticText(self, -1, _(u"Num Sécu :"))
+        self.label_numsecu = wx.StaticText(self, -1, _(u"Num SÃ©cu :"))
         self.text_numsecu = masked.TextCtrl(self, -1, "", style=wx.TE_CENTRE, mask = "# ## ## ## ### ### ##") 
         self.image_numsecu = wx.StaticBitmap(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Interdit.png"), wx.BITMAP_TYPE_PNG), size=(16, 16))
         
-        self.label_nation = wx.StaticText(self, -1, _(u"Nationalité :"))
+        self.label_nation = wx.StaticText(self, -1, _(u"NationalitÃ© :"))
         self.bouton_nation = wx.Button(self, -1, "...", size=(20, 20))
         self.image_nation = wx.StaticBitmap(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/Drapeaux/france.png"), wx.BITMAP_TYPE_PNG), size=(22, 10))
 
@@ -97,7 +97,7 @@ class Panel_general(wx.Panel):
         
         
         ##############################################################
-        # Pour désactiver l'autocomplete du controle VILLE qui ne fonctionne pas sous Linux
+        # Pour dÃ©sactiver l'autocomplete du controle VILLE qui ne fonctionne pas sous Linux
         if "linux" in sys.platform :
             self.text_ville_naiss.Enable(False)
             self.text_ville.Enable(False)       
@@ -146,7 +146,7 @@ class Panel_general(wx.Panel):
         self.text_ville.ignoreEvtText = False # Initialisation de variable
         self.autoComplete = True
 
-        # Appel de la base de données des villes et codes postaux
+        # Appel de la base de donnÃ©es des villes et codes postaux
         con = sqlite3.connect(Chemins.GetStaticPath("Databases/Villes.db3"))
         cur = con.cursor()
         cur.execute("SELECT ville, cp FROM villes")
@@ -171,7 +171,7 @@ class Panel_general(wx.Panel):
         for num_dep, num_region, departement in listeDepartements :
             self.dictDepartements[num_dep] = (departement, num_region)
         
-        # Binds spéciaux pour l'autocomplete
+        # Binds spÃ©ciaux pour l'autocomplete
         self.text_ville_naiss.Bind(wx.EVT_TEXT, self.VilleText1)
         self.text_ville_naiss.Bind(wx.EVT_CHAR, self.VilleChar1)
         self.text_ville_naiss.Bind(wx.EVT_KILL_FOCUS, self.Ville_KillFocus1)
@@ -184,11 +184,11 @@ class Panel_general(wx.Panel):
 
         # ---------------------------------------------------------------------
 
-        # Appel de l'importation des données
+        # Appel de l'importation des donnÃ©es
         if self.IDpersonne != 0:
             self.Importation()
         
-        # MAJ de l'image de l'état du num de sécu
+        # MAJ de l'image de l'Ã©tat du num de sÃ©cu
         self.SetEtatNumSecu()
 
         # MAJ du header de la fiche
@@ -202,12 +202,12 @@ class Panel_general(wx.Panel):
         
     def __set_properties(self):
         self.SetSize((962, 660))
-        self.combo_box_civilite.SetToolTip(wx.ToolTip(_(u"Choisissez la civilité")))
+        self.combo_box_civilite.SetToolTip(wx.ToolTip(_(u"Choisissez la civilitÃ©")))
         self.label_nomjf.Enable(False)
         self.text_ctrl_nomjf.SetToolTip(wx.ToolTip("Saisissez un nom de jeune fille"))
         self.text_ctrl_nomjf.Enable(False)
         self.text_nom.SetToolTip(wx.ToolTip("Saisissez le nom de famille"))
-        self.text_prenom.SetToolTip(wx.ToolTip(_(u"Saisissez le prénom")))
+        self.text_prenom.SetToolTip(wx.ToolTip(_(u"Saisissez le prÃ©nom")))
         self.text_date_naiss.SetMinSize((95, -1))
         self.text_date_naiss.SetToolTip(wx.ToolTip("Saissez la date de naissance"))       
         self.text_numsecu.SetMinSize((170, -1))
@@ -218,35 +218,35 @@ class Panel_general(wx.Panel):
         self.text_cp_naiss.SetToolTip(wx.ToolTip("Saisissez le code postal"))
         self.text_cp.SetMinSize((50, -1))
         self.text_cp.SetToolTip(wx.ToolTip("Saisissez le code postal"))
-        self.text_ville_naiss.SetToolTip(wx.ToolTip(_(u"Choisissez une ville dans la liste proposée")))
-        self.text_ville.SetToolTip(wx.ToolTip(_(u"Choisissez une ville dans la liste proposée")))
+        self.text_ville_naiss.SetToolTip(wx.ToolTip(_(u"Choisissez une ville dans la liste proposÃ©e")))
+        self.text_ville.SetToolTip(wx.ToolTip(_(u"Choisissez une ville dans la liste proposÃ©e")))
         self.bouton_options_ville_naiss.SetToolTip(wx.ToolTip("Cliquez ici pour configurer la liste des villes"))
         self.bouton_options_ville.SetToolTip(wx.ToolTip("Cliquez ici pour configurer la liste des villes"))
-        self.button_coords_ajout.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour créer un numéro de téléphone")))
+        self.button_coords_ajout.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour crÃ©er un numÃ©ro de tÃ©lÃ©phone")))
         self.button_coords_ajout.SetSize(self.button_coords_ajout.GetBestSize())
-        self.button_coords_modif.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier un numéro de téléphone")))
+        self.button_coords_modif.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier un numÃ©ro de tÃ©lÃ©phone")))
         self.button_coords_modif.SetSize(self.button_coords_modif.GetBestSize())
-        self.button_coords_suppr.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer le numéro de téléphone sélectionné")))
+        self.button_coords_suppr.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer le numÃ©ro de tÃ©lÃ©phone sÃ©lectionnÃ©")))
         self.button_coords_suppr.SetSize(self.button_coords_suppr.GetBestSize())
-        self.bouton_situations.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour créer, modifier ou supprimer une situation sociale")))
+        self.bouton_situations.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour crÃ©er, modifier ou supprimer une situation sociale")))
         self.bouton_pays.SetSize(self.bouton_pays.GetBestSize())
-        self.bouton_pays.SetToolTip(wx.ToolTip(_(u"Cliquez ici sélectionner un autre pays de naissance")))
+        self.bouton_pays.SetToolTip(wx.ToolTip(_(u"Cliquez ici sÃ©lectionner un autre pays de naissance")))
         self.bouton_nation.SetSize(self.bouton_nation.GetBestSize())
-        self.bouton_nation.SetToolTip(wx.ToolTip(_(u"Cliquez ici sélectionner une autre nationalité")))
+        self.bouton_nation.SetToolTip(wx.ToolTip(_(u"Cliquez ici sÃ©lectionner une autre nationalitÃ©")))
         self.image_pays.SetToolTip(wx.ToolTip(_(u"Pays de naissance : France")))
-        self.image_nation.SetToolTip(wx.ToolTip(_(u"Nationalité : Française")))
-        self.image_numsecu.SetToolTip(wx.ToolTip(_(u"Etat du numéro de sécurité sociale\n\nCliquez sur cette image pour obtenir des informations \nsur la constitution d'un numéro de sécurité sociale")))
+        self.image_nation.SetToolTip(wx.ToolTip(_(u"NationalitÃ© : FranÃ§aise")))
+        self.image_numsecu.SetToolTip(wx.ToolTip(_(u"Etat du numÃ©ro de sÃ©curitÃ© sociale\n\nCliquez sur cette image pour obtenir des informations \nsur la constitution d'un numÃ©ro de sÃ©curitÃ© sociale")))
         
         texteNumSecu = u"""
-        Numéro de sécurité sociale : A BB CC DD EEE FFF GG
+        NumÃ©ro de sÃ©curitÃ© sociale : A BB CC DD EEE FFF GG
         
         A : Sexe (1=homme | 2=femme)
-        BB : Année de naissance
+        BB : AnnÃ©e de naissance
         CC : Mois de naissance
-        DD : Département de naissance (99 si né à l'étranger)
-        EEE : Code INSEE de la commune de naissance ou du pays si né à l'étranger
-        FFF : Numéro d'ordre INSEE
-        GG : Clé
+        DD : DÃ©partement de naissance (99 si nÃ© Ã  l'Ã©tranger)
+        EEE : Code INSEE de la commune de naissance ou du pays si nÃ© Ã  l'Ã©tranger
+        FFF : NumÃ©ro d'ordre INSEE
+        GG : ClÃ©
         """
         self.text_numsecu.SetToolTip(wx.ToolTip(texteNumSecu))
         
@@ -281,7 +281,7 @@ class Panel_general(wx.Panel):
         grid_sizer_adresse = wx.FlexGridSizer(rows=2, cols=2, vgap=5, hgap=5)
         grid_sizer_ville = wx.FlexGridSizer(rows=1, cols=5, vgap=0, hgap=0)
         
-        # Sizer Identité
+        # Sizer IdentitÃ©
         sizer_identite = wx.StaticBoxSizer(self.sizer_identite_staticbox, wx.VERTICAL)
         grid_sizer_identite = wx.FlexGridSizer(rows=6, cols=2, vgap=5, hgap=5)
         sizer_naiss1 = wx.FlexGridSizer(rows=1, cols=6, vgap=0, hgap=0)
@@ -368,7 +368,7 @@ class Panel_general(wx.Panel):
         sizer_adresse.Add(grid_sizer_adresse, 1, wx.ALL|wx.EXPAND, 5)
         grid_sizer_1.Add(sizer_adresse, 1, wx.LEFT|wx.BOTTOM|wx.EXPAND, 5)
 
-        # Sizer Mémo
+        # Sizer MÃ©mo
         grid_sizer_memo.Add(self.text_memo, 0, wx.ALL|wx.EXPAND, 5)
         grid_sizer_memo.AddGrowableRow(0)
         grid_sizer_memo.AddGrowableCol(0)
@@ -388,19 +388,19 @@ class Panel_general(wx.Panel):
         self.parent.GetGrandParent().MAJ_barre_problemes()
     
     def OnImageNumSecu(self, event):
-        """ Si on clique sur l'image d'état du num sécu """
+        """ Si on clique sur l'image d'Ã©tat du num sÃ©cu """
         message = u"""
-        Numéro de sécurité sociale : A BB CC DD EEE FFF GG
+        NumÃ©ro de sÃ©curitÃ© sociale : A BB CC DD EEE FFF GG
         
         A : Sexe (1=homme | 2=femme)
-        BB : Année de naissance
+        BB : AnnÃ©e de naissance
         CC : Mois de naissance
-        DD : Département de naissance (99 si né à l'étranger)
-        EEE : Code INSEE de la commune de naissance ou du pays si né à l'étranger
-        FFF : Numéro d'ordre INSEE
-        GG : Clé
+        DD : DÃ©partement de naissance (99 si nÃ© Ã  l'Ã©tranger)
+        EEE : Code INSEE de la commune de naissance ou du pays si nÃ© Ã  l'Ã©tranger
+        FFF : NumÃ©ro d'ordre INSEE
+        GG : ClÃ©
         """
-        dlg = wx.MessageDialog(self, message, _(u"Constitution d'un numéro de sécurité sociale"), wx.OK | wx.ICON_INFORMATION)
+        dlg = wx.MessageDialog(self, message, _(u"Constitution d'un numÃ©ro de sÃ©curitÃ© sociale"), wx.OK | wx.ICON_INFORMATION)
         dlg.ShowModal()
         dlg.Destroy()
         
@@ -428,11 +428,11 @@ class Panel_general(wx.Panel):
         event.Skip()
 
     def OnOptionsVille(self, event): 
-        self.AppelGestionVilles("text_cp", "text_ville", _(u"Lieu de résidence"))
+        self.AppelGestionVilles("text_cp", "text_ville", _(u"Lieu de rÃ©sidence"))
         event.Skip()
 
     def AppelGestionVilles(self, controleCP, controleVille, nomChamp):
-        # Ouverture de la fenêtre Gestion des villes
+        # Ouverture de la fenÃªtre Gestion des villes
         from Dlg import DLG_Gestion_villes
         dlg = DLG_Gestion_villes.Dialog(self, "Titre", exportCP=controleCP, exportVille=controleVille, exportChamp=nomChamp)
         dlg.ShowModal()
@@ -452,10 +452,10 @@ class Panel_general(wx.Panel):
         event.Skip()
 
     def ModifierCoord(self):
-        """ Modification de coordonnées """
+        """ Modification de coordonnÃ©es """
         index = self.list_ctrl_coords.GetFirstSelected()
         if index == -1:
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sélectionner un item à modifier dans la liste des coordonnées"), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÃ©lectionner un item Ã  modifier dans la liste des coordonnÃ©es"), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -470,19 +470,19 @@ class Panel_general(wx.Panel):
         event.Skip()
 
     def SupprimerCoord(self):
-        """ Suppression d'une coordonnée """
+        """ Suppression d'une coordonnÃ©e """
         index = self.list_ctrl_coords.GetFirstSelected()
 
-        # Vérifie qu'un item a bien été sélectionné
+        # VÃ©rifie qu'un item a bien Ã©tÃ© sÃ©lectionnÃ©
         if index == -1:
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sélectionner un item à supprimer dans la liste des coordonnées"), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÃ©lectionner un item Ã  supprimer dans la liste des coordonnÃ©es"), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
 
         # Demande de confirmation
         texteCoord = self.list_ctrl_coords.GetItemText(index)
-        txtMessage = six.text_type((_(u"Voulez-vous vraiment supprimer cette coordonnée ? \n\n> ") + texteCoord))
+        txtMessage = six.text_type((_(u"Voulez-vous vraiment supprimer cette coordonnÃ©e ? \n\n> ") + texteCoord))
         dlgConfirm = wx.MessageDialog(self, txtMessage, _(u"Confirmation de suppression"), wx.YES_NO|wx.NO_DEFAULT|wx.ICON_QUESTION)
         reponse = dlgConfirm.ShowModal()
         dlgConfirm.Destroy()
@@ -496,7 +496,7 @@ class Panel_general(wx.Panel):
         DB.ReqDEL("coordonnees", "IDcoord", varIDcoord)
         DB.Close()
 
-        # MàJ du listCtrl Coords de la fiche individuelle
+        # MÃ J du listCtrl Coords de la fiche individuelle
         self.list_ctrl_coords.Remplissage()
         self.MAJ_barre_problemes()
         
@@ -644,7 +644,7 @@ class Panel_general(wx.Panel):
             return True
         
     def AfficheAutresPages(self):
-        """ Affiches les autres page que Généralités si les contrôles sont remplis """
+        """ Affiches les autres page que GÃ©nÃ©ralitÃ©s si les contrÃ´les sont remplis """
         try :
             if self.combo_box_civilite.GetStringSelection() != "" and self.text_nom.GetValue() != "" and self.text_prenom.GetValue() != "" :
                 self.GetParent().AfficheAutresPages(True)
@@ -704,17 +704,17 @@ class Panel_general(wx.Panel):
     def SetEtatNumSecu(self):
         validation, message = ValideNumSecu(self.text_numsecu.GetValue(), self.combo_box_civilite.GetStringSelection(), self.text_date_naiss.GetValue(), self.text_cp_naiss.GetValue())
         
-        # Message si numéro de sécu erroné
+        # Message si numÃ©ro de sÃ©cu erronÃ©
         if validation == False :
             self.image_numsecu.SetBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Interdit.png"), wx.BITMAP_TYPE_PNG))
             if self.remplissageEnCours == False :
-                wx.MessageBox(message, _(u"Numéro de sécurité sociale erroné"))
+                wx.MessageBox(message, _(u"NumÃ©ro de sÃ©curitÃ© sociale erronÃ©"))
             
-        # Pas de num sécu saisi
+        # Pas de num sÃ©cu saisi
         if validation == None : 
             self.image_numsecu.SetBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Interdit.png"), wx.BITMAP_TYPE_PNG))
         
-        #Le numéro de sécu est bon
+        #Le numÃ©ro de sÃ©cu est bon
         if validation == True :
             self.image_numsecu.SetBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ok.png"), wx.BITMAP_TYPE_PNG))
         
@@ -722,7 +722,7 @@ class Panel_general(wx.Panel):
         
         
     def OnKillFocusAdresse(self, event):
-        # Vérifie qu'il n'y a pas un saut de ligne à la fin de l'adresse
+        # VÃ©rifie qu'il n'y a pas un saut de ligne Ã  la fin de l'adresse
         txtAdresse = self.text_adresse.GetValue()
         if txtAdresse != "" :
             if txtAdresse.endswith("\n") :
@@ -735,7 +735,7 @@ class Panel_general(wx.Panel):
         event.Skip()
 
     def SetInfobulleVille(self, controle, nomControle):
-        """ Créé une info-bulle pour les cp et villes pour indiquer les régions et départements """
+        """ CrÃ©Ã© une info-bulle pour les cp et villes pour indiquer les rÃ©gions et dÃ©partements """
         if nomControle == "cp" or nomControle == "cp_naiss" :
             cp = controle.GetValue()
         if nomControle == "ville" :
@@ -753,26 +753,26 @@ class Panel_general(wx.Panel):
                 num_dep = cp[:2]
                 nomDepartement, num_region = self.dictDepartements[num_dep]
                 nomRegion = self.dictRegions[num_region]
-                texte = _(u"Département : %s (%s)\nRégion : %s") % (nomDepartement, num_dep, nomRegion)
+                texte = _(u"DÃ©partement : %s (%s)\nRÃ©gion : %s") % (nomDepartement, num_dep, nomRegion)
                 controle.SetToolTip(wx.ToolTip(texte))
             except :
                 if nomControle == "cp" or nomControle == "cp_naiss" :
-                    controle.SetToolTip(wx.ToolTip(_(u"Le code postal saisi ne figure pas dans la base de données de TeamWorks")))
+                    controle.SetToolTip(wx.ToolTip(_(u"Le code postal saisi ne figure pas dans la base de donnÃ©es de TeamWorks")))
                 else :
-                    controle.SetToolTip(wx.ToolTip(_(u"Le nom de ville saisi ne figure pas dans la base de données de TeamWorks")))
+                    controle.SetToolTip(wx.ToolTip(_(u"Le nom de ville saisi ne figure pas dans la base de donnÃ©es de TeamWorks")))
         
         
 # Fonctions pour l'autocomplete des cp et villes NAISS---------------------------------------------------------------
 
     def Code_KillFocus1(self, event):
-        """ Quand le contrôle Code perd le focus """
+        """ Quand le contrÃ´le Code perd le focus """
         self.MAJ_barre_problemes()
         
         if self.autoComplete == False :
             return
         
         textCode = self.text_cp_naiss.GetValue()
-        # On vérifie que la ville n'est pas déjà dans la case ville
+        # On vÃ©rifie que la ville n'est pas dÃ©jÃ  dans la case ville
         villeSelect = self.text_ville_naiss.GetValue()
         if villeSelect != '':
             for ville, cp in self.listeVilles:
@@ -780,7 +780,7 @@ class Panel_general(wx.Panel):
                     self.SetInfobulleVille(self.text_cp_naiss, "cp_naiss")
                     return
                 
-        # On recherche si plusieurs villes ont ce même code postal
+        # On recherche si plusieurs villes ont ce mÃªme code postal
         ReponsesVilles = []
         for ville, cp in self.listeVilles:
             if cp == textCode :
@@ -790,7 +790,7 @@ class Panel_general(wx.Panel):
         # Code postal introuvable
         if nbreReponses == 0:
             if textCode.strip() != '':
-                dlg = wx.MessageDialog(self, _(u"Ce code postal n'est pas répertorié dans la base de données. \nVérifiez que vous n'avez pas fait d'erreur de saisie."), "Information", wx.OK | wx.ICON_INFORMATION)
+                dlg = wx.MessageDialog(self, _(u"Ce code postal n'est pas rÃ©pertoriÃ© dans la base de donnÃ©es. \nVÃ©rifiez que vous n'avez pas fait d'erreur de saisie."), "Information", wx.OK | wx.ICON_INFORMATION)
                 dlg.ShowModal()
                 dlg.Destroy()
             self.SetInfobulleVille(self.text_cp_naiss, "cp_naiss")
@@ -800,13 +800,13 @@ class Panel_general(wx.Panel):
             resultat = ReponsesVilles[0]
             self.text_ville_naiss.SetValue(resultat)
 
-        # Fenêtre de choix entre plusieurs codes postau
+        # FenÃªtre de choix entre plusieurs codes postau
         if nbreReponses > 1:
             resultat = self.ChoixVilles(textCode, ReponsesVilles)
             if resultat != '':
                 self.text_ville_naiss.SetValue(resultat)
 
-        # Sélection du texte de la case ville pour l'autocomplete
+        # SÃ©lection du texte de la case ville pour l'autocomplete
         self.text_ville_naiss.SetSelection(0, len(resultat))
         
         self.MaJ_DateNaiss_Fiche()
@@ -814,7 +814,7 @@ class Panel_general(wx.Panel):
         event.Skip()
 
     def Ville_KillFocus1(self, event):
-        """ Quand le contrôle ville perd le focus """
+        """ Quand le contrÃ´le ville perd le focus """
         self.MAJ_barre_problemes()
         
         if self.autoComplete == False :
@@ -836,14 +836,14 @@ class Panel_general(wx.Panel):
                 if villeSelect == ville:
                     listeCodes.append(cp)
                     
-            # Chargement de la fenêtre de choix des codes
+            # Chargement de la fenÃªtre de choix des codes
             resultat = self.ChoixCodes(villeSelect, listeCodes)
             if resultat != '':
                 self.text_cp_naiss.SetValue(resultat)
 
         # Si la ville saisie n'existe pas
         if nbreCodes == 0:
-            dlg = wx.MessageDialog(self, _(u"Cette ville n'est pas répertoriée dans la base de données. \nVérifiez que vous n'avez pas fait d'erreur de saisie."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Cette ville n'est pas rÃ©pertoriÃ©e dans la base de donnÃ©es. \nVÃ©rifiez que vous n'avez pas fait d'erreur de saisie."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
         
@@ -895,7 +895,7 @@ class Panel_general(wx.Panel):
         # Fonctions pour l'autocomplete des cp et villes ---------------------------------------------------------------
 
     def Code_KillFocus2(self, event):
-        """ Quand le contrôle Code perd le focus """
+        """ Quand le contrÃ´le Code perd le focus """
         self.MAJ_barre_problemes()
         
         if self.autoComplete == False :
@@ -903,7 +903,7 @@ class Panel_general(wx.Panel):
         
         textCode = self.text_cp.GetValue()
         self.MaJ_Adresse_Fiche()
-        # On vérifie que la ville n'est pas déjà dans la case ville
+        # On vÃ©rifie que la ville n'est pas dÃ©jÃ  dans la case ville
         villeSelect = self.text_ville.GetValue()
         if villeSelect != '':
             for ville, cp in self.listeVilles:
@@ -911,7 +911,7 @@ class Panel_general(wx.Panel):
                     self.SetInfobulleVille(self.text_cp, "cp")
                     return
                 
-        # On recherche si plusieurs villes ont ce même code postal
+        # On recherche si plusieurs villes ont ce mÃªme code postal
         ReponsesVilles = []
         for ville, cp in self.listeVilles:
             if str(cp) == str(textCode):
@@ -921,7 +921,7 @@ class Panel_general(wx.Panel):
         # Code postal introuvable
         if nbreReponses == 0:
             if textCode.strip() != '':
-                dlg = wx.MessageDialog(self, _(u"Ce code postal n'est pas répertorié dans la base de données. \nVérifiez que vous n'avez pas fait d'erreur de saisie."), "Information", wx.OK | wx.ICON_INFORMATION)
+                dlg = wx.MessageDialog(self, _(u"Ce code postal n'est pas rÃ©pertoriÃ© dans la base de donnÃ©es. \nVÃ©rifiez que vous n'avez pas fait d'erreur de saisie."), "Information", wx.OK | wx.ICON_INFORMATION)
                 dlg.ShowModal()
                 dlg.Destroy()
             self.SetInfobulleVille(self.text_cp, "cp")
@@ -931,13 +931,13 @@ class Panel_general(wx.Panel):
             resultat = ReponsesVilles[0]
             self.text_ville.SetValue(resultat)
 
-        # Fenêtre de choix entre plusieurs codes postau
+        # FenÃªtre de choix entre plusieurs codes postau
         if nbreReponses > 1:
             resultat = self.ChoixVilles(textCode, ReponsesVilles)
             if resultat != '':
                 self.text_ville.SetValue(resultat)
 
-        # Sélection du texte de la case ville pour l'autocomplete
+        # SÃ©lection du texte de la case ville pour l'autocomplete
         self.text_ville.SetSelection(0, len(resultat))
         
         self.MaJ_Adresse_Fiche()
@@ -945,7 +945,7 @@ class Panel_general(wx.Panel):
         event.Skip()
 
     def Ville_KillFocus2(self, event):
-        """ Quand le contrôle ville perd le focus """
+        """ Quand le contrÃ´le ville perd le focus """
         self.MAJ_barre_problemes()
         
         if self.autoComplete == False :
@@ -967,14 +967,14 @@ class Panel_general(wx.Panel):
                 if villeSelect == ville:
                     listeCodes.append(cp)
                     
-            # Chargement de la fenêtre de choix des codes
+            # Chargement de la fenÃªtre de choix des codes
             resultat = self.ChoixCodes(villeSelect, listeCodes)
             if resultat != '':
                 self.text_cp.SetValue(resultat)
 
         # Si la ville saisie n'existe pas
         if nbreCodes == 0:
-            dlg = wx.MessageDialog(self, _(u"Cette ville n'est pas répertoriée dans la base de données. \nVérifiez que vous n'avez pas fait d'erreur de saisie."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Cette ville n'est pas rÃ©pertoriÃ©e dans la base de donnÃ©es. \nVÃ©rifiez que vous n'avez pas fait d'erreur de saisie."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
         
@@ -1025,12 +1025,12 @@ class Panel_general(wx.Panel):
             event.Skip()
 
     def ChoixVilles(self, cp, listeReponses):
-        """ Boîte de dialogue pour donner le choix entre plusieurs villes possédant un code postal identique """
+        """ BoÃ®te de dialogue pour donner le choix entre plusieurs villes possÃ©dant un code postal identique """
         resultat = ""
-        titre = _(u"Sélection d'une ville")
+        titre = _(u"SÃ©lection d'une ville")
         nbreReponses = len(listeReponses)
         listeReponses.sort()
-        message = str(nbreReponses) + _(u" villes possèdent le code postal ") + str(cp) + _(u". Double-cliquez sur\nle nom d'une ville pour la sélectionner :")
+        message = str(nbreReponses) + _(u" villes possÃ¨dent le code postal ") + str(cp) + _(u". Double-cliquez sur\nle nom d'une ville pour la sÃ©lectionner :")
         dlg = wx.SingleChoiceDialog(self, message, titre, listeReponses, wx.CHOICEDLG_STYLE)
         if dlg.ShowModal() == wx.ID_OK:
             resultat = dlg.GetStringSelection()
@@ -1038,12 +1038,12 @@ class Panel_general(wx.Panel):
         return resultat
 
     def ChoixCodes(self, ville, listeReponses):
-        """ Boîte de dialogue pour donner le choix entre plusieurs villes possédant le même nom """
+        """ BoÃ®te de dialogue pour donner le choix entre plusieurs villes possÃ©dant le mÃªme nom """
         resultat = ""
-        titre = _(u"Sélection d'une ville")
+        titre = _(u"SÃ©lection d'une ville")
         nbreReponses = len(listeReponses)
         listeReponses.sort()
-        message = str(nbreReponses) + _(u" villes portent le nom ") + str(ville) + _(u". Double-cliquez sur\nle code postal d'une ville pour la sélectionner :")
+        message = str(nbreReponses) + _(u" villes portent le nom ") + str(ville) + _(u". Double-cliquez sur\nle code postal d'une ville pour la sÃ©lectionner :")
         dlg = wx.SingleChoiceDialog(self, message, titre, listeReponses, wx.CHOICEDLG_STYLE)
         if dlg.ShowModal() == wx.ID_OK:
             resultat = dlg.GetStringSelection()
@@ -1117,11 +1117,11 @@ class Panel_general(wx.Panel):
 
                         ]
 
-        # Initialisation de la connexion avec la Base de données
+        # Initialisation de la connexion avec la Base de donnÃ©es
         DB = GestionDB.DB()
         
         if self.IDpersonne == 0:
-            # Si IDpersonne = 0, on créée un nouvel enregistrement
+            # Si IDpersonne = 0, on crÃ©Ã©e un nouvel enregistrement
             newID = DB.ReqInsert("personnes", listeDonnees)
             self.IDpersonne = newID
             self.GetGrandParent().GetParent().IDpersonne = newID
@@ -1132,42 +1132,42 @@ class Panel_general(wx.Panel):
         DB.Close()
 
     def MaJ_Header_Fiche(self):
-        """ MàJ de la fiche individuelle """
+        """ MÃ J de la fiche individuelle """
         self.parent.GetGrandParent().label_hd_nomPrenom
         self.parent.GetGrandParent().MaJ_header()
 
     def MaJ_NomPrenom_Fiche(self):
-        """ MàJ de la fiche individuelle """
+        """ MÃ J de la fiche individuelle """
         nom = self.text_nom.GetValue()
         prenom = self.text_prenom.GetValue()
         if nom == "":
             nom = "NOM"
         if prenom == "":
-            prenom = _(u"Prénom")
+            prenom = _(u"PrÃ©nom")
         texte = nom + ", " + prenom
         self.GetParent().GetGrandParent().label_hd_nomPrenom.SetLabel(texte)
 
     def MaJ_Adresse_Fiche(self):
-        """ MàJ de la fiche individuelle """
+        """ MÃ J de la fiche individuelle """
         adresse = self.text_adresse.GetValue()
         cp = self.text_cp.GetValue()
         ville = self.text_ville.GetValue()
         if adresse == "" and cp == "     " and ville == "" : 
             texte = _(u"Adresse inconnue")
         else :
-            texte = _(u"Résidant ") + adresse + " " + cp + " " + ville
+            texte = _(u"RÃ©sidant ") + adresse + " " + cp + " " + ville
         self.GetParent().GetGrandParent().label_hd_adresse.SetLabel(texte)
 
     def MaJ_DateNaiss_Fiche(self):
-        """ MàJ de la fiche individuelle """
+        """ MÃ J de la fiche individuelle """
         dateNaiss = self.text_date_naiss.GetValue()
         villeNaiss = self.text_ville_naiss.GetValue()
         civilite = self.combo_box_civilite.GetStringSelection()
         age = self.text_age.GetValue()
         if civilite == "Mr" : 
-            txtCivilite = u"Né"
+            txtCivilite = u"NÃ©"
         elif civilite == "Mme" or civilite == "Melle" :
-            txtCivilite = _(u"Née")
+            txtCivilite = _(u"NÃ©e")
         else:
             return
         if dateNaiss == "  /  /    " and villeNaiss == "" : 
@@ -1175,15 +1175,15 @@ class Panel_general(wx.Panel):
         elif dateNaiss != "  /  /    " and villeNaiss == "" : 
             texte = txtCivilite + " le " + dateNaiss + ", " + age
         elif dateNaiss == "  /  /    " and villeNaiss != "" : 
-            texte = txtCivilite + u" à " + villeNaiss + _(u" (date inconnue)")
+            texte = txtCivilite + u" Ã  " + villeNaiss + _(u" (date inconnue)")
         elif dateNaiss != "  /  /    " and villeNaiss != "" : 
-            texte = txtCivilite + " le " + dateNaiss + u" à " + villeNaiss + ", " + age
+            texte = txtCivilite + " le " + dateNaiss + u" Ã  " + villeNaiss + ", " + age
         self.GetParent().GetGrandParent().label_hd_naiss.SetLabel(texte)        
 
     def Importation(self,):
         """ Importation des donnees de la base """
 
-        # Initialisation de la connexion avec la Base de données
+        # Initialisation de la connexion avec la Base de donnÃ©es
         DB = GestionDB.DB()
         req = "SELECT civilite, nom, nom_jfille, prenom, date_naiss, cp_naiss, ville_naiss, pays_naiss, nationalite, num_secu, adresse_resid, cp_resid, ville_resid, memo, IDsituation FROM personnes WHERE IDpersonne = %d" % self.IDpersonne
         DB.ExecuterReq(req)
@@ -1206,7 +1206,7 @@ class Panel_general(wx.Panel):
         memo = donnees[13]
         IDsituation = donnees[14]
         
-        # Placement des données dans les contrôles
+        # Placement des donnÃ©es dans les contrÃ´les
         self.autoComplete = False
         
         # TextCtrl
@@ -1218,7 +1218,7 @@ class Panel_general(wx.Panel):
         self.text_ville.SetValue(ville_resid)
         self.text_memo.SetValue(memo)
 
-        # Champs spéciaux
+        # Champs spÃ©ciaux
         self.text_numsecu.SetValue(num_secu)
         try :
             if cp_resid != "" and cp_resid != None and cp_resid != "     " :
@@ -1243,7 +1243,7 @@ class Panel_general(wx.Panel):
             temp = jour + "/" + mois + "/" + annee
         self.text_date_naiss.SetValue(temp)
 
-        # Civilité
+        # CivilitÃ©
         self.combo_box_civilite.SetStringSelection(civilite)
 
         # Situation sociale
@@ -1251,7 +1251,7 @@ class Panel_general(wx.Panel):
             if int(IDsitu) == int(IDsituation) :
                 self.combo_box_situation.SetStringSelection(situation)
                 
-        # Pays de naissance et nationalité
+        # Pays de naissance et nationalitÃ©
         self.SetPaysNaiss(IDpays=pays_naiss)
         self.SetNationalite(IDpays=nationalite)
 
@@ -1260,7 +1260,7 @@ class Panel_general(wx.Panel):
         self.MaJ_Civilite()
         self.MaJ_DateNaiss()
         
-        # Règlages des info-bulles
+        # RÃ¨glages des info-bulles
         self.SetInfobulleVille(self.text_cp_naiss, "cp_naiss")
         self.SetInfobulleVille(self.text_cp, "cp")
         self.SetInfobulleVille(self.text_ville_naiss, "ville_naiss")
@@ -1275,13 +1275,13 @@ class Panel_general(wx.Panel):
     def SetNationalite(self, IDpays) :
         pays = self.Recherche_Pays(IDpays=IDpays)
         self.image_nation.SetBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/Drapeaux/" + pays[1] + ".png"), wx.BITMAP_TYPE_PNG))
-        self.image_nation.SetToolTip(wx.ToolTip(_(u"Nationalité : %s" % pays[3])))
+        self.image_nation.SetToolTip(wx.ToolTip(_(u"NationalitÃ© : %s" % pays[3])))
         self.IDpays_nation = IDpays
 
     def ImportListeSituations(self):
-        """ Récupération de la liste des situations dans la base """
+        """ RÃ©cupÃ©ration de la liste des situations dans la base """
         
-        # Récupération du IDSituation actuel
+        # RÃ©cupÃ©ration du IDSituation actuel
         try:
             temp = self.combo_box_situation.GetClientData(self.combo_box_situation.GetSelection())
             if temp == None or temp == '':
@@ -1291,7 +1291,7 @@ class Panel_general(wx.Panel):
         except:
             IDSituation = 0
 
-        # Initialisation de la connexion avec la Base de données
+        # Initialisation de la connexion avec la Base de donnÃ©es
         DB = GestionDB.DB()
         req = "SELECT * FROM situations"
         DB.ExecuterReq(req)
@@ -1313,8 +1313,8 @@ class Panel_general(wx.Panel):
             
 
     def Recherche_Pays(self, IDpays=0, nomPays=""):
-        """ Récupération de la liste des pays dans la base """
-        # Initialisation de la connexion avec la Base de données
+        """ RÃ©cupÃ©ration de la liste des pays dans la base """
+        # Initialisation de la connexion avec la Base de donnÃ©es
         DB = GestionDB.DB()
         if nomPays == "" :
             req = "SELECT IDpays, code_drapeau, nom, nationalite FROM pays WHERE IDpays=%d" % IDpays
@@ -1327,11 +1327,11 @@ class Panel_general(wx.Panel):
         return listePays[0]
        
 
-# Fonctions à mettre dans un module séparé
+# Fonctions Ã  mettre dans un module sÃ©parÃ©
 
 def ValideNumSecu(texte, civilite, date_naiss, dep_naiss):
 
-    # On vérifie que tous les chiffres ont été donnés
+    # On vÃ©rifie que tous les chiffres ont Ã©tÃ© donnÃ©s
     texteSansEsp = ""
     for lettre in texte:
         if lettre != " ":
@@ -1343,67 +1343,67 @@ def ValideNumSecu(texte, civilite, date_naiss, dep_naiss):
         return None, ""
 
     if nbreChiffres < 15 :
-        message = _(u"Il manque ") + str(15 - nbreChiffres) + _(u" chiffre(s) au numéro de sécurité sociale que vous venez de saisir. Veuillez le vérifier.")
+        message = _(u"Il manque ") + str(15 - nbreChiffres) + _(u" chiffre(s) au numÃ©ro de sÃ©curitÃ© sociale que vous venez de saisir. Veuillez le vÃ©rifier.")
         return False, message
 
     if nbreChiffres == 15:
 
-        # Vérification avec la civilite
+        # VÃ©rification avec la civilite
         if civilite == "Mr":
             if int(texteSansEsp[0]) != 1:
-                message = _(u"Le numéro de sécurité sociale ne correspond pas à la civilité de la personne (le premier chiffre devrait être 1).")
+                message = _(u"Le numÃ©ro de sÃ©curitÃ© sociale ne correspond pas Ã  la civilitÃ© de la personne (le premier chiffre devrait Ãªtre 1).")
                 return False, message
 
         if civilite == "Melle" or civilite == "Mme":
             if int(texteSansEsp[0]) != 2:
-                message = _(u"Le numéro de sécurité sociale ne correspond pas à la civilité de la personne (le premier chiffre devrait être 2).")
-                wx.MessageBox(message, _(u"Erreur de numéro de sécurité"))
+                message = _(u"Le numÃ©ro de sÃ©curitÃ© sociale ne correspond pas Ã  la civilitÃ© de la personne (le premier chiffre devrait Ãªtre 2).")
+                wx.MessageBox(message, _(u"Erreur de numÃ©ro de sÃ©curitÃ©"))
                 return False, message
                 
-        # Vérification avec la date de naissance
+        # VÃ©rification avec la date de naissance
         if date_naiss != "  /  /    ":
             mois = str(date_naiss[3:5])
             annee = str(date_naiss[8:10])
 
             if annee != str(texteSansEsp[1:3]):
-                message = _(u"Le numéro de sécurité sociale ne correspond pas à la date de naissance de la personne.")
+                message = _(u"Le numÃ©ro de sÃ©curitÃ© sociale ne correspond pas Ã  la date de naissance de la personne.")
                 return False, message
             elif mois != str(texteSansEsp[3:5]):
-                message = _(u"Le numéro de sécurité sociale ne correspond pas à la date de naissance de la personne.")
+                message = _(u"Le numÃ©ro de sÃ©curitÃ© sociale ne correspond pas Ã  la date de naissance de la personne.")
                 return False, message
                     
-        # Vérification avec le département de naissance
+        # VÃ©rification avec le dÃ©partement de naissance
         if dep_naiss != "":
             dep = dep_naiss[0:2]
             if str(dep) != str(texteSansEsp[5:7]):
-                message = _(u"Le numéro de sécurité sociale ne correspond pas au lieu de naissance de la personne.")
+                message = _(u"Le numÃ©ro de sÃ©curitÃ© sociale ne correspond pas au lieu de naissance de la personne.")
                 return False, message
         
-        # Vérification de la clé
+        # VÃ©rification de la clÃ©
         cle = int((texteSansEsp[13:15]))
         cle_calculee = 97 - (int(texteSansEsp[:13]) % 97)
         if cle != cle_calculee :
-            message = _(u"La clé du numéro de sécurité sociale ne semble pas cohérente. \nD'après mes calculs, la bonne clé devrait être %02d. \n\nVeuillez vérifier votre saisie...") % cle_calculee
+            message = _(u"La clÃ© du numÃ©ro de sÃ©curitÃ© sociale ne semble pas cohÃ©rente. \nD'aprÃ¨s mes calculs, la bonne clÃ© devrait Ãªtre %02d. \n\nVeuillez vÃ©rifier votre saisie...") % cle_calculee
             return False, message
         
-        # Le num de sécu est ok
+        # Le num de sÃ©cu est ok
         return True, ""
         
 
 def ValideDate(texte, date_min="01/01/1900", date_max="01/01/2090"):
     """ Verificateur de validite de date """
     listeErreurs = []
-    # On vérifie si les cases ne sont pas vides
+    # On vÃ©rifie si les cases ne sont pas vides
     if texte[0] == " " or texte[1] == " ":
         listeErreurs.append(_(u"le jour"))
     if texte[3] == " " or texte[4] == " ":
         listeErreurs.append(_(u"le mois"))
     if texte[6] == " " or texte[7] == " " or texte[8] == " " or texte[9] == " ":
-        listeErreurs.append(_(u"l'année"))
+        listeErreurs.append(_(u"l'annÃ©e"))
     
     if texte != "  /  /    ":
 
-        # On vérifie que les chiffres existent
+        # On vÃ©rifie que les chiffres existent
         if _(u"le jour") not in listeErreurs:
             jour = int(texte[:2])
             if jour == 0 or jour > 31:
@@ -1414,37 +1414,37 @@ def ValideDate(texte, date_min="01/01/1900", date_max="01/01/2090"):
             if mois == 0 or mois > 12:
                 listeErreurs.append(_(u"le mois"))
                 
-        if _(u"l'année") not in listeErreurs:
+        if _(u"l'annÃ©e") not in listeErreurs:
             annee = int(texte[6:10])
             if annee < 1900 or annee > 2999:
-                listeErreurs.append(_(u"l'année"))
+                listeErreurs.append(_(u"l'annÃ©e"))
               
         # Affichage du message d'erreur
         
         if len(listeErreurs) != 0:
-            # Message en cas de date incomplète
+            # Message en cas de date incomplÃ¨te
             if len(listeErreurs) == 1:
-                message = _(u"Une incohérence a été détectée dans ") + listeErreurs[0]
+                message = _(u"Une incohÃ©rence a Ã©tÃ© dÃ©tectÃ©e dans ") + listeErreurs[0]
             if len(listeErreurs) == 2:
-                message = _(u"Des incohérences ont été détectées dans ") + listeErreurs[0] + " et " + listeErreurs[1]
+                message = _(u"Des incohÃ©rences ont Ã©tÃ© dÃ©tectÃ©es dans ") + listeErreurs[0] + " et " + listeErreurs[1]
             if len(listeErreurs) == 3:
-                message = _(u"Des incohérences ont été détectées dans ") + listeErreurs[0]  + ", " + listeErreurs[1]  + " et " + listeErreurs[2]
-            message = message + _(u" de la date que vous venez de saisir. Veuillez la vérifier.")
+                message = _(u"Des incohÃ©rences ont Ã©tÃ© dÃ©tectÃ©es dans ") + listeErreurs[0]  + ", " + listeErreurs[1]  + " et " + listeErreurs[2]
+            message = message + _(u" de la date que vous venez de saisir. Veuillez la vÃ©rifier.")
 
             wx.MessageBox(message, "Erreur de date")
             return False
         else:
-            # On vérifie que les dates sont comprises dans l'intervalle donné en paramètre
+            # On vÃ©rifie que les dates sont comprises dans l'intervalle donnÃ© en paramÃ¨tre
             date_min = int(str(date_min[6:10]) + str(date_min[3:5]) + str(date_min[:2]))
             date_max = int(str(date_max[6:10]) + str(date_max[3:5]) + str(date_max[:2]))
             date_sel = int(str(texte[6:10]) + str(texte[3:5]) + str(texte[:2]))
 
             if date_sel < date_min:
-                message = _(u"La date que vous venez de saisir semble trop ancienne. Veuillez la vérifier.")
+                message = _(u"La date que vous venez de saisir semble trop ancienne. Veuillez la vÃ©rifier.")
                 wx.MessageBox(message, "Erreur de date")
                 return False
             if date_sel > date_max:
-                message = _(u"La date que vous venez de saisir semble trop élevée. Veuillez la vérifier.")
+                message = _(u"La date que vous venez de saisir semble trop Ã©levÃ©e. Veuillez la vÃ©rifier.")
                 wx.MessageBox(message, "Erreur de date")
                 return False
             
@@ -1470,7 +1470,7 @@ class ListCtrlCoords(wx.ListCtrl):
         self.InsertColumn(0, "")
         self.SetColumnWidth(0, 135)
 
-        # Création des items
+        # CrÃ©ation des items
         self.Remplissage()
 
         # Binds
@@ -1480,21 +1480,21 @@ class ListCtrlCoords(wx.ListCtrl):
 
     def Remplissage(self):
         """ Remplissage du ListCtrl """
-        # Importation des données
+        # Importation des donnÃ©es
         self.Importation()
 
         # S'il existe des items, on les efface d'abord
         if self.GetItemCount() != 0:
             self.DeleteAllItems()
             
-        # Création des items
+        # CrÃ©ation des items
         index = 0
         for key, valeurs in self.DictCoords.items():
             categorie = valeurs[2]
             texte = valeurs[3]
-            # Création de l'item
+            # CrÃ©ation de l'item
             self.InsertItem(index, texte)
-            # Intégration de l'image
+            # IntÃ©gration de l'image
             if categorie == "Fixe":
                 self.SetItemImage(index, self.imgMaison)
             if categorie == "Mobile":
@@ -1503,14 +1503,14 @@ class ListCtrlCoords(wx.ListCtrl):
                 self.SetItemImage(index, self.imgFax)
             if categorie == "Email":
                 self.SetItemImage(index, self.imgMail)
-            # Intégration du data ID
+            # IntÃ©gration du data ID
             self.SetItemData(index, key)
             index += 1
             
     def Importation(self):
-        """ Importation des données depuis la base de données """
+        """ Importation des donnÃ©es depuis la base de donnÃ©es """
        
-        # Initialisation de la connexion avec la Base de données
+        # Initialisation de la connexion avec la Base de donnÃ©es
         DB = GestionDB.DB()
         req = "SELECT * FROM coordonnees WHERE IDpersonne = %d" % self.parent.IDpersonne
         DB.ExecuterReq(req)
@@ -1527,20 +1527,20 @@ class ListCtrlCoords(wx.ListCtrl):
         return dictio
         
     def OnItemSelected(self, event):
-        """ Item cliqué """
-        # Désactivation de la capture de la souris pour le popup
+        """ Item cliquÃ© """
+        # DÃ©sactivation de la capture de la souris pour le popup
         if self.HasCapture():
             self.ReleaseMouse()
         event.Skip()
 
     def OnItemActivated(self, event):
-        """ Item double-cliqué """
+        """ Item double-cliquÃ© """
         self.DestroyPopup()
         self.parent.ModifierCoord()
         event.Skip()
         
     def OnSize(self, event):
-        # La largeur de la colonne s'adapte à la largeur du listCtrl
+        # La largeur de la colonne s'adapte Ã  la largeur du listCtrl
         size = self.GetSize()
         self.SetColumnWidth(0, size.x-5)
         event.Skip()
@@ -1552,7 +1552,7 @@ class ListCtrlCoords(wx.ListCtrl):
                 self.DestroyPopup()
             return
         item = self.GetItem(index, 0)
-        pos = self.ClientToScreen(event.GetPosition()) # Position du curseur sur l'écran
+        pos = self.ClientToScreen(event.GetPosition()) # Position du curseur sur l'Ã©cran
         decalage = (-130, -70)
         tailleCtrl = self.GetSize()
 
@@ -1563,14 +1563,14 @@ class ListCtrlCoords(wx.ListCtrl):
                 self.DestroyPopup()
                 return
 
-        # Si on était déjà sur l'item , on ne fait que bouger le popup 
+        # Si on Ã©tait dÃ©jÃ  sur l'item , on ne fait que bouger le popup 
         if self.popupIndex == index :
             self.Popup.Position(pos, decalage)
 
         if self.popupIndex != index and self.popupIndex != -1:
             self.DestroyPopup()
 
-        # Sinon, création d'un popup
+        # Sinon, crÃ©ation d'un popup
         if self.popupIndex != index and posInListCtrl[0] > 3 and posInListCtrl[1] > 3:
             key = self.GetItemData(index)
             self.popupIndex = index
@@ -1582,7 +1582,7 @@ class ListCtrlCoords(wx.ListCtrl):
             
 
     def DestroyPopup(self):
-        """ Destruction de la fenêtre Popup """
+        """ Destruction de la fenÃªtre Popup """
         if self.HasCapture():
             self.ReleaseMouse()
 
@@ -1605,7 +1605,7 @@ class ListCtrlCoords(wx.ListCtrl):
         index = self.GetFirstSelected()
         key = self.GetItemData(index)
         
-        # Création du menu contextuel
+        # CrÃ©ation du menu contextuel
         menuPop = UTILS_Adaptations.Menu()
 
         # Item Modifier
@@ -1667,14 +1667,14 @@ class TestPopup(wx.PopupWindow):
     def __init__(self, parent, style=wx.SIMPLE_BORDER, key=0):
         wx.PopupWindow.__init__(self, parent, style)
 
-        # Récupération des données
+        # RÃ©cupÃ©ration des donnÃ©es
         self.parent = parent
         valeurs = self.parent.DictCoords[key]
         categorie = valeurs[2]
         texte = valeurs[3]
         intitule = valeurs[4]
         
-        # Intégration de l'image
+        # IntÃ©gration de l'image
         if categorie == "Fixe":
             img = wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Maison.png"), wx.BITMAP_TYPE_PNG)
         if categorie == "Mobile":
@@ -1684,7 +1684,7 @@ class TestPopup(wx.PopupWindow):
         if categorie == "Email":
             img = wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Mail.png"), wx.BITMAP_TYPE_PNG)
 
-        # Création des widgets
+        # CrÃ©ation des widgets
         self.panel_base = wx.Panel(self, -1)
         self.bitmap_1 = wx.StaticBitmap(self.panel_base, -1, img)
         self.label_coords = wx.StaticText(self.panel_base, -1, texte)

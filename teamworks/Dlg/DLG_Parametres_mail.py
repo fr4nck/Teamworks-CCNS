@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -63,16 +63,16 @@ class Panel(wx.Panel):
         self.Bind(wx.EVT_BUTTON, self.OnboutonEnvoyer, self.bouton_envoyer)
 
     def __set_properties(self):
-        self.ctrl_exp.SetToolTip(wx.ToolTip(_(u"Selectionnez votre adresse mail d'expéditeur")))
-        self.bouton_exp.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour acceder à la gestion des adresses d'expéditeur")))
-        self.ctrl_a.SetToolTip(wx.ToolTip(_(u"Saisissez ici les adresses des destinataires espacées par des points-virgules")))
-        self.bouton_a.SetToolTip(wx.ToolTip(_(u"Cliquez ici sélectionner des adresses mail de salariés ou de candidats")))
-        self.ctrl_cci.SetToolTip(wx.ToolTip(_(u"Saisissez ici les adresses des destinataires CCi (les destinataires n'ont pas connaissance des adresses des autres destinataires) espacées par des points-virgules")))
-        self.bouton_cci.SetToolTip(wx.ToolTip(_(u"Cliquez ici sélectionner des adresses mail de salariés ou de candidats")))
+        self.ctrl_exp.SetToolTip(wx.ToolTip(_(u"Selectionnez votre adresse mail d'expÃ©diteur")))
+        self.bouton_exp.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour acceder Ã  la gestion des adresses d'expÃ©diteur")))
+        self.ctrl_a.SetToolTip(wx.ToolTip(_(u"Saisissez ici les adresses des destinataires espacÃ©es par des points-virgules")))
+        self.bouton_a.SetToolTip(wx.ToolTip(_(u"Cliquez ici sÃ©lectionner des adresses mail de salariÃ©s ou de candidats")))
+        self.ctrl_cci.SetToolTip(wx.ToolTip(_(u"Saisissez ici les adresses des destinataires CCi (les destinataires n'ont pas connaissance des adresses des autres destinataires) espacÃ©es par des points-virgules")))
+        self.bouton_cci.SetToolTip(wx.ToolTip(_(u"Cliquez ici sÃ©lectionner des adresses mail de salariÃ©s ou de candidats")))
         self.ctrl_objet.SetToolTip(wx.ToolTip(_(u"Saisissez l'objet du message")))
-        self.ctrl_joindre.SetToolTip(wx.ToolTip(_(u"Liste des pièces à joindre")))
-        self.bouton_joindre_ajouter.SetToolTip(wx.ToolTip(_(u"Cliquez sur pour ajouter une pièce jointe")))
-        self.bouton_joindre_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer la piece jointe sélectionnée dans la liste")))
+        self.ctrl_joindre.SetToolTip(wx.ToolTip(_(u"Liste des piÃ¨ces Ã  joindre")))
+        self.bouton_joindre_ajouter.SetToolTip(wx.ToolTip(_(u"Cliquez sur pour ajouter une piÃ¨ce jointe")))
+        self.bouton_joindre_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer la piece jointe sÃ©lectionnÃ©e dans la liste")))
         self.bouton_envoyer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour envoyer le mail")))
 
 
@@ -127,7 +127,7 @@ class Panel(wx.Panel):
     def MAJ_ctrl_expediteur(self):
         self.listeAdresses = []
         self.dictAdresses = {}
-        # Récupération des données
+        # RÃ©cupÃ©ration des donnÃ©es
         DB = GestionDB.DB()        
         req = """SELECT IDadresse, adresse, smtp, port, defaut, connexionssl
         FROM adresses_mail ORDER BY adresse; """
@@ -146,10 +146,10 @@ class Panel(wx.Panel):
         if sel != None : self.ctrl_exp.SetSelection(sel)
     
     def OnboutonJoindre(self, event):
-        # Demande l'emplacement du fichier à joindre
+        # Demande l'emplacement du fichier Ã  joindre
         standardPath = wx.StandardPaths.Get()
         rep = standardPath.GetDocumentsDir()
-        dlg = wx.FileDialog(self, message=_(u"Veuillez sélectionner le ou les fichiers à joindre"), defaultDir=rep, defaultFile="", style=wx.FD_OPEN|wx.FD_MULTIPLE)
+        dlg = wx.FileDialog(self, message=_(u"Veuillez sÃ©lectionner le ou les fichiers Ã  joindre"), defaultDir=rep, defaultFile="", style=wx.FD_OPEN|wx.FD_MULTIPLE)
         if dlg.ShowModal() == wx.ID_OK:
             chemins = dlg.GetPaths()
         else:
@@ -168,7 +168,7 @@ class Panel(wx.Panel):
     def OnboutonSupprPiece(self, event):
         selections = self.ctrl_joindre.GetSelections()
         if len(selections) == 0 :
-            dlg = wx.MessageDialog(self, _(u"Vous n'avez sélectionné aucune pièce jointe à enlever de la liste !"), "Erreur", wx.OK| wx.ICON_ERROR)  
+            dlg = wx.MessageDialog(self, _(u"Vous n'avez sÃ©lectionnÃ© aucune piÃ¨ce jointe Ã  enlever de la liste !"), "Erreur", wx.OK| wx.ICON_ERROR)  
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -199,7 +199,7 @@ class Panel(wx.Panel):
         self.ctrl_cci.SetValue(u";".join(listeAdresses))
         
     def GetParametresPourPublipostage(self):
-        """ Permet de récupérer les paramètres pour le publiposteur """
+        """ Permet de rÃ©cupÃ©rer les paramÃ¨tres pour le publiposteur """
         indexExpediteur = self.ctrl_exp.GetSelection()
         adresseExpediteur = self.dictAdresses[indexExpediteur][1]
         serveur = self.dictAdresses[indexExpediteur][2]
@@ -218,7 +218,7 @@ class Panel(wx.Panel):
         return dictParam
     
     def GetParametresPourEnvoi(self):
-        """ Permet de récupérer les paramètres pour l'envoi direct """
+        """ Permet de rÃ©cupÃ©rer les paramÃ¨tres pour l'envoi direct """
         indexExpediteur = self.ctrl_exp.GetSelection()
         adresseExpediteur = self.dictAdresses[indexExpediteur][1]
         serveur = self.dictAdresses[indexExpediteur][2]
@@ -266,11 +266,11 @@ class Panel(wx.Panel):
         
         
     def ValidationDonnees(self):
-        """ Validation des données """
+        """ Validation des donnÃ©es """
         
         # Adresse et serveur SMTP
         if self.ctrl_exp.GetSelection() == -1 :
-            dlg = wx.MessageDialog(self, _(u"Vous n'avez sélectionné aucune adresse d'expéditeur !"), "Erreur", wx.OK| wx.ICON_ERROR)  
+            dlg = wx.MessageDialog(self, _(u"Vous n'avez sÃ©lectionnÃ© aucune adresse d'expÃ©diteur !"), "Erreur", wx.OK| wx.ICON_ERROR)  
             dlg.ShowModal()
             dlg.Destroy()
             self.ctrl_exp.SetFocus()
@@ -279,7 +279,7 @@ class Panel(wx.Panel):
         # Destinataires
         if self.activer_a == True :
             if self.ctrl_a.GetValue() == "" :
-                dlg = wx.MessageDialog(self, _(u"Vous n'avez sélectionné aucune adresse de destinataire !"), "Erreur", wx.OK| wx.ICON_ERROR)  
+                dlg = wx.MessageDialog(self, _(u"Vous n'avez sÃ©lectionnÃ© aucune adresse de destinataire !"), "Erreur", wx.OK| wx.ICON_ERROR)  
                 dlg.ShowModal()
                 dlg.Destroy()
                 self.ctrl_a.SetFocus()

@@ -15,6 +15,7 @@ import datetime
 import decimal
 import json
 import shelve
+from Utils import UTILS_Encodage
 
 
 def DateEngEnDateDD(dateEng):
@@ -100,10 +101,8 @@ def Lire(nom_fichier="", conversion_auto=False):
             fichier = shelve.open(nom_fichier, "r")
             data = {}
             for key, valeur in fichier.items():
-                if type(key) == str:
-                    key = key.decode("iso-8859-15")
-                if type(valeur) == str:
-                    valeur = valeur.decode("iso-8859-15")
+                key = UTILS_Encodage.DecodeTexteExterne(key)
+                valeur = UTILS_Encodage.DecodeTexteExterne(valeur)
                 data[key] = valeur
             fichier.close()
 

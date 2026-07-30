@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -32,8 +32,8 @@ class Panel_Statut(wx.Panel):
         self.IDpersonne = IDpersonne
 
         # Widgets
-        self.staticBox_pieces_staticbox = wx.StaticBox(self, -1, _(u"Pièces à fournir"))
-        self.staticBox_dossier_staticbox = wx.StaticBox(self, -1, _(u"Pièces reçues"))
+        self.staticBox_pieces_staticbox = wx.StaticBox(self, -1, _(u"PiÃ¨ces Ã  fournir"))
+        self.staticBox_dossier_staticbox = wx.StaticBox(self, -1, _(u"PiÃ¨ces reÃ§ues"))
         self.staticBox_diplomes_staticbox = wx.StaticBox(self, -1, _(u"Qualifications"))
 
         self.list_ctrl_diplomes = ListCtrl_Diplomes(self, -1)
@@ -59,13 +59,13 @@ class Panel_Statut(wx.Panel):
     def __set_properties(self):
         self.bouton_diplomes_modifier.SetToolTip(wx.ToolTip("Cliquez ici pour modifier cette liste"))
         self.bouton_diplomes_modifier.SetSize(self.bouton_diplomes_modifier.GetBestSize())
-        self.list_ctrl_pieces.SetToolTip(wx.ToolTip(_(u"Liste des pièces que la personne doit fournir. \n\nAstuce : Double-cliquez sur une ligne pour créer directement \nune pièce du type sélectionné dans la liste")))
+        self.list_ctrl_pieces.SetToolTip(wx.ToolTip(_(u"Liste des piÃ¨ces que la personne doit fournir. \n\nAstuce : Double-cliquez sur une ligne pour crÃ©er directement \nune piÃ¨ce du type sÃ©lectionnÃ© dans la liste")))
         self.list_ctrl_diplomes.SetToolTip(wx.ToolTip(_(u"Cliquez sur le bouton 'Modifier' pour modifier cette liste")))
-        self.bouton_dossier_ajouter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour saisir une nouvelle pièce")))
+        self.bouton_dossier_ajouter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour saisir une nouvelle piÃ¨ce")))
         self.bouton_dossier_ajouter.SetSize(self.bouton_dossier_ajouter.GetBestSize())
-        self.bouton_dossier_modifier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier la pièce sélectionnée dans la liste")))
+        self.bouton_dossier_modifier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier la piÃ¨ce sÃ©lectionnÃ©e dans la liste")))
         self.bouton_dossier_modifier.SetSize(self.bouton_dossier_modifier.GetBestSize())
-        self.bouton_dossier_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer la pièce sélectionnée")))
+        self.bouton_dossier_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer la piÃ¨ce sÃ©lectionnÃ©e")))
         self.bouton_dossier_supprimer.SetSize(self.bouton_dossier_supprimer.GetBestSize())
 
         # Evenements
@@ -81,7 +81,7 @@ class Panel_Statut(wx.Panel):
         grid_sizer_boutons_dossier = wx.FlexGridSizer(rows=4, cols=1, vgap=5, hgap=5)
         grid_sizer_haut = wx.FlexGridSizer(rows=1, cols=2, vgap=10, hgap=10)
         
-        # Pièces
+        # PiÃ¨ces
         staticBox_pieces = wx.StaticBoxSizer(self.staticBox_pieces_staticbox, wx.VERTICAL)
         grid_sizer_pieces = wx.FlexGridSizer(rows=2, cols=2, vgap=5, hgap=5)
         grid_sizer_pieces.Add(self.list_ctrl_pieces, 1, wx.EXPAND, 0)
@@ -90,7 +90,7 @@ class Panel_Statut(wx.Panel):
         staticBox_pieces.Add(grid_sizer_pieces, 1, wx.ALL|wx.EXPAND, 5)
         grid_sizer_haut.Add(staticBox_pieces, 1, wx.LEFT|wx.TOP|wx.EXPAND, 5)
         
-        # Diplômes
+        # DiplÃ´mes
         staticBox_diplomes = wx.StaticBoxSizer(self.staticBox_diplomes_staticbox, wx.VERTICAL)
         grid_sizer_diplomes = wx.FlexGridSizer(rows=2, cols=2, vgap=5, hgap=5)
         grid_sizer_boutons_diplomes = wx.FlexGridSizer(rows=4, cols=1, vgap=5, hgap=5)
@@ -127,18 +127,18 @@ class Panel_Statut(wx.Panel):
         self.parent.GetGrandParent().MAJ_barre_problemes()
         
     def OnBouton_Diplomes(self, event):
-        """ Boîte de dialogue pour choisir les diplômes """
+        """ BoÃ®te de dialogue pour choisir les diplÃ´mes """
         resultat = ""
-        titre = _(u"Sélection des qualifications")
+        titre = _(u"SÃ©lection des qualifications")
 
-        # Récupération de la liste de tous les diplomes
+        # RÃ©cupÃ©ration de la liste de tous les diplomes
         DB = GestionDB.DB()
         req = "SELECT IDtype_diplome, nom_diplome FROM types_diplomes ORDER BY nom_diplome"
         DB.ExecuterReq(req)
         donnees = DB.ResultatReq()
         DB.Close()
 
-        # Création d'un dictionnaire diplomes et d'une liste pour la boîte de dialogue
+        # CrÃ©ation d'un dictionnaire diplomes et d'une liste pour la boÃ®te de dialogue
         dictDiplomes = {}
         listeNoms = []
         preSelection = []
@@ -154,13 +154,13 @@ class Panel_Statut(wx.Panel):
                 preSelection.append(index)
                 TypesDiplomesPerso.append(ID)
             index += 1
-        message = _(u"Sélectionnez les qualifications que possède la personne dans la liste proposée :")
+        message = _(u"SÃ©lectionnez les qualifications que possÃ¨de la personne dans la liste proposÃ©e :")
         dlg = wx.MultiChoiceDialog(self, message, titre, listeNoms, wx.CHOICEDLG_STYLE)
         
-        # Coche ceux qui doivent être déjà sélectionnés dans la liste
+        # Coche ceux qui doivent Ãªtre dÃ©jÃ  sÃ©lectionnÃ©s dans la liste
         dlg.SetSelections(preSelection)
         
-        # Résultats
+        # RÃ©sultats
         if dlg.ShowModal() == wx.ID_OK:
             resultat = dlg.GetSelections()
         else:
@@ -172,7 +172,7 @@ class Panel_Statut(wx.Panel):
         for diplome in resultat:
             IDtype_diplome = dictDiplomes[diplome]
             
-            # On regarde si l'ID est déjà dans la liste des diplomes de la personne
+            # On regarde si l'ID est dÃ©jÃ  dans la liste des diplomes de la personne
             if IDtype_diplome in TypesDiplomesPerso:
                 # On passe et on l'efface de la liste
                 TypesDiplomesPerso.remove(IDtype_diplome)
@@ -187,7 +187,7 @@ class Panel_Statut(wx.Panel):
             DB.Commit()
             DB.Close()
 
-        # On voit si certains ont été enlevés de la liste
+        # On voit si certains ont Ã©tÃ© enlevÃ©s de la liste
         if len(TypesDiplomesPerso) != 0:
             DB = GestionDB.DB()
             for IDtype in TypesDiplomesPerso:
@@ -214,10 +214,10 @@ class Panel_Statut(wx.Panel):
         event.Skip()
 
     def ModifierPiece(self):
-        """ Modification de coordonnées """
+        """ Modification de coordonnÃ©es """
         index = self.list_ctrl_dossier.GetFirstSelected()
         if index == -1:
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sélectionner une pièce à modifier dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÃ©lectionner une piÃ¨ce Ã  modifier dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -231,19 +231,19 @@ class Panel_Statut(wx.Panel):
         event.Skip()
         
     def SupprimerPiece(self):
-        """ Suppression d'une coordonnée """
+        """ Suppression d'une coordonnÃ©e """
         index = self.list_ctrl_dossier.GetFirstSelected()
 
-        # Vérifie qu'un item a bien été sélectionné
+        # VÃ©rifie qu'un item a bien Ã©tÃ© sÃ©lectionnÃ©
         if index == -1:
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sélectionner une pièce à supprimer dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÃ©lectionner une piÃ¨ce Ã  supprimer dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
 
         # Demande de confirmation
         textePiece = self.list_ctrl_dossier.GetItemText(index)
-        txtMessage = six.text_type((_(u"Voulez-vous vraiment supprimer cette pièce ? \n\n> ") + textePiece))
+        txtMessage = six.text_type((_(u"Voulez-vous vraiment supprimer cette piÃ¨ce ? \n\n> ") + textePiece))
         dlgConfirm = wx.MessageDialog(self, txtMessage, _(u"Confirmation de suppression"), wx.YES_NO|wx.NO_DEFAULT|wx.ICON_QUESTION)
         reponse = dlgConfirm.ShowModal()
         dlgConfirm.Destroy()
@@ -257,7 +257,7 @@ class Panel_Statut(wx.Panel):
         DB.ReqDEL("pieces", "IDpiece", varIDpiece)
         DB.Close()
 
-        # MàJ du listCtrl Coords de la fiche individuelle
+        # MÃ J du listCtrl Coords de la fiche individuelle
         self.list_ctrl_dossier.Remplissage()
         self.list_ctrl_pieces.Remplissage()
         self.MAJ_barre_problemes()
@@ -273,11 +273,11 @@ class ListCtrl_Diplomes(wx.ListCtrl):
         self.IDpersonne = self.GetParent().IDpersonne
 
         
-        # Création de la Colonne
+        # CrÃ©ation de la Colonne
         self.InsertColumn(0, "Qualification")
         self.SetColumnWidth(0, 75)
 
-        # Création des items
+        # CrÃ©ation des items
         self.Remplissage()
         
         # Binds
@@ -285,27 +285,27 @@ class ListCtrl_Diplomes(wx.ListCtrl):
 
     def Remplissage(self):
         """ Remplissage du ListCtrl """
-        # Importation des données
+        # Importation des donnÃ©es
         self.Importation()
 
         # S'il existe des items, on les efface d'abord
         if self.GetItemCount() != 0:
             self.DeleteAllItems()
             
-        # Création des items
+        # CrÃ©ation des items
         index = 0
         for key, valeurs in self.DictDiplomes.items():
             IDdiplome = key
             IDtype_diplome = valeurs[0]
             self.listeDiplomes.append(IDtype_diplome)
             nom_diplome = valeurs[1]
-            # Création de l'item
+            # CrÃ©ation de l'item
             self.InsertItem(index, nom_diplome)
-            # Intégration du data ID
+            # IntÃ©gration du data ID
             self.SetItemData(index, key)
             index += 1
 
-        # Tri dans l'ordre alphabétique
+        # Tri dans l'ordre alphabÃ©tique
         self.SortItems(self.ColumnSorter)
 
     def ColumnSorter(self, key1, key2):
@@ -318,12 +318,12 @@ class ListCtrl_Diplomes(wx.ListCtrl):
 
 
     def Importation(self):
-        """ Importe les données des diplomes """
+        """ Importe les donnÃ©es des diplomes """
 
         self.DictDiplomes = {}
-        self.listeDiplomes = [] # Pour la boîte de dialogue de choix des diplomes
+        self.listeDiplomes = [] # Pour la boÃ®te de dialogue de choix des diplomes
 
-        # Initialisation de la connexion avec la Base de données
+        # Initialisation de la connexion avec la Base de donnÃ©es
         DB = GestionDB.DB()
         req = "SELECT IDdiplome, diplomes.IDtype_diplome, nom_diplome FROM diplomes, types_diplomes WHERE diplomes.IDtype_diplome=types_diplomes.IDtype_diplome and IDpersonne=%d" % self.IDpersonne
         DB.ExecuterReq(req)
@@ -335,21 +335,21 @@ class ListCtrl_Diplomes(wx.ListCtrl):
             self.DictDiplomes[index] = (ligne[1], ligne[2])
         
     def OnItemSelected(self, event):
-        """ Item cliqué """
+        """ Item cliquÃ© """
         index = self.GetFirstSelected()
         key = self.GetItemData(index)
         print(_(u"Click sur l'item ID : "), key)
         event.Skip()
 
     def OnItemActivated(self, event):
-        """ Item double-cliqué """
+        """ Item double-cliquÃ© """
         index = self.GetFirstSelected()
         key = self.GetItemData(index)
         print(_(u"Double-click sur l'item ID : "), key)
         event.Skip()
         
     def OnSize(self, event):
-        # La largeur de la colonne s'adapte à la largeur du listCtrl
+        # La largeur de la colonne s'adapte Ã  la largeur du listCtrl
         size = self.GetSize()
         self.SetColumnWidth(0, size.x-25)
         event.Skip()
@@ -362,7 +362,7 @@ class ListCtrl_Diplomes(wx.ListCtrl):
         index = self.GetFirstSelected()
         key = self.GetItemData(index)
         
-        # Création du menu contextuel
+        # CrÃ©ation du menu contextuel
         menuPop = UTILS_Adaptations.Menu()
 
         # Item Modifier
@@ -405,7 +405,7 @@ class ListCtrl_Pieces(wx.ListCtrl):
         self.InsertColumn(0, "")
         self.SetColumnWidth(0, 175)
 
-        # Création des items
+        # CrÃ©ation des items
         self.Remplissage()
 
         # Binds
@@ -414,32 +414,32 @@ class ListCtrl_Pieces(wx.ListCtrl):
 
     def Remplissage(self):
         """ Remplissage du ListCtrl """
-        # Importation des données
+        # Importation des donnÃ©es
         self.Importation()
 
         # S'il existe des items, on les efface d'abord
         if self.GetItemCount() != 0:
             self.DeleteAllItems()
             
-        # Création des items
+        # CrÃ©ation des items
         index = 0
         for key, valeurs in self.DictPieces.items():
             etat = valeurs[0]
             nomPiece = valeurs[1]
-            # Création de l'item
+            # CrÃ©ation de l'item
             self.InsertItem(index, nomPiece)
-            # Intégration de l'image
+            # IntÃ©gration de l'image
             if etat == "Ok":
                 self.SetItemImage(index, self.imgOk)
             if etat == "Attention":
                 self.SetItemImage(index, self.imgAttention)
             if etat == "PasOk":
                 self.SetItemImage(index, self.imgPasOk)
-            # Intégration du data ID
+            # IntÃ©gration du data ID
             self.SetItemData(index, key)
             index += 1
 
-        # Tri dans l'ordre alphabétique
+        # Tri dans l'ordre alphabÃ©tique
         self.SortItems(self.ColumnSorter)
 
 
@@ -452,14 +452,14 @@ class ListCtrl_Pieces(wx.ListCtrl):
                return 1
 
     def Importation(self):
-        """ Importe les données """
+        """ Importe les donnÃ©es """
 
         date_jour = datetime.date.today()
 
-        # Initialisation de la base de données
+        # Initialisation de la base de donnÃ©es
         DB = GestionDB.DB()
         
-        # Recherche des pièces SPECIFIQUES que la personne doit fournir...
+        # Recherche des piÃ¨ces SPECIFIQUES que la personne doit fournir...
         req = """
         SELECT types_pieces.IDtype_piece, types_pieces.nom_piece
         FROM diplomes INNER JOIN diplomes_pieces ON diplomes.IDtype_diplome = diplomes_pieces.IDtype_diplome INNER JOIN types_pieces ON diplomes_pieces.IDtype_piece = types_pieces.IDtype_piece
@@ -472,7 +472,7 @@ class ListCtrl_Pieces(wx.ListCtrl):
         if type( listePiecesAFournir) != list :
             listePiecesAFournir = list(listePiecesAFournir)
         
-        # Recherche des pièces BASIQUES que la personne doit fournir...
+        # Recherche des piÃ¨ces BASIQUES que la personne doit fournir...
         req = """
         SELECT diplomes_pieces.IDtype_piece, types_pieces.nom_piece
         FROM diplomes_pieces INNER JOIN types_pieces ON diplomes_pieces.IDtype_piece = types_pieces.IDtype_piece
@@ -483,7 +483,7 @@ class ListCtrl_Pieces(wx.ListCtrl):
         
         listePiecesAFournir.extend(listePiecesBasiquesAFournir)
         
-        # Recherche des pièces que la personne possède
+        # Recherche des piÃ¨ces que la personne possÃ¨de
         req = """
         SELECT types_pieces.IDtype_piece, pieces.date_debut, pieces.date_fin
         FROM types_pieces LEFT JOIN pieces ON types_pieces.IDtype_piece = pieces.IDtype_piece
@@ -496,13 +496,13 @@ class ListCtrl_Pieces(wx.ListCtrl):
         for IDtype_piece, date_debut, date_fin in listePieces :
             dictTmpPieces[IDtype_piece] = (date_debut, date_fin)
         
-        # Passe en revue toutes les pièces à fournir et regarde si la personne possède les pièces correspondantes
+        # Passe en revue toutes les piÃ¨ces Ã  fournir et regarde si la personne possÃ¨de les piÃ¨ces correspondantes
         self.DictPieces = {}
         for IDtype_piece, nom_piece in listePiecesAFournir :
             if (IDtype_piece in dictTmpPieces) == True :
                 date_debut = dictTmpPieces[IDtype_piece][0]
                 date_fin = dictTmpPieces[IDtype_piece][1]
-                # Recherche la validité
+                # Recherche la validitÃ©
                 date_fin = datetime.date(int(date_fin[:4]), int(date_fin[5:7]), int(date_fin[8:10]))
                 reste = str(date_fin - date_jour)
                 if reste != "0:00:00":
@@ -519,17 +519,17 @@ class ListCtrl_Pieces(wx.ListCtrl):
                 etat = "PasOk"
             self.DictPieces[IDtype_piece] = (etat, nom_piece)
 
-        # Fermeture de la base de données
+        # Fermeture de la base de donnÃ©es
         DB.Close()
 
     def OnSize(self, event):
-        # La largeur de la colonne s'adapte à la largeur du listCtrl
+        # La largeur de la colonne s'adapte Ã  la largeur du listCtrl
         size = self.GetSize()
         self.SetColumnWidth(0, size.x-25)
         event.Skip()        
 
     def OnItemActivated(self, event):
-        """ Saisie d'une pièce du type double-cliqué """
+        """ Saisie d'une piÃ¨ce du type double-cliquÃ© """
         index = self.GetFirstSelected()
         IDtypePiece = self.GetItemData(index)
         
@@ -548,7 +548,7 @@ class ListCtrl_Dossier(wx.ListCtrl):
         self.IDpersonne = self.GetParent().IDpersonne
 
         # Colonnes
-        self.InsertColumn(0, _(u"Type de pièce"))
+        self.InsertColumn(0, _(u"Type de piÃ¨ce"))
         self.SetColumnWidth(0, 260)
         self.InsertColumn(1, _(u"Obtention"))
         self.SetColumnWidth(1, 80)
@@ -561,7 +561,7 @@ class ListCtrl_Dossier(wx.ListCtrl):
         self.image_document = self.il.Add(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Document2.png"), wx.BITMAP_TYPE_PNG))
         self.SetImageList(self.il, wx.IMAGE_LIST_SMALL)
                 
-        # Création des items
+        # CrÃ©ation des items
         self.Remplissage()
 
         # Binds
@@ -570,21 +570,21 @@ class ListCtrl_Dossier(wx.ListCtrl):
 
     def Remplissage(self):
         """ Remplissage du ListCtrl """
-        # Importation des données
+        # Importation des donnÃ©es
         self.Importation()
 
         # S'il existe des items, on les efface d'abord
         if self.GetItemCount() != 0:
             self.DeleteAllItems()
             
-        # Création des items
+        # CrÃ©ation des items
         index = 0
         for key, valeurs in self.DictDossier.items():
             etat = valeurs[0]
             nomPiece = valeurs[1]
             dateDebut = DateEngFr(valeurs[2])
             dateFin = DateEngFr(valeurs[3])
-            # Création de l'item
+            # CrÃ©ation de l'item
             self.InsertItem(index, nomPiece)
             # ETat
             if etat == "Perim":
@@ -592,7 +592,7 @@ class ListCtrl_Dossier(wx.ListCtrl):
                 item.SetTextColour("GREY")
                 self.SetItem(item)
             
-            # Image si document associé
+            # Image si document associÃ©
             if key in self.dict_docs :
                 self.nbre_documents = self.dict_docs[key]
             else:
@@ -602,25 +602,25 @@ class ListCtrl_Dossier(wx.ListCtrl):
 
             # Autres colonnes
             if dateFin == "01/01/2999":
-                dateFin = _(u"Illimitée")
+                dateFin = _(u"IllimitÃ©e")
             self.SetItemImage(index, self.image_document)
             self.SetItem(index, 1, dateDebut)
             self.SetItem(index, 2, dateFin)
             self.SetItem(index, 3, self.etatExpiration(valeurs[2], valeurs[3]))
-            # Intégration du data ID
+            # IntÃ©gration du data ID
             self.SetItemData(index, key)
             index += 1
 
-        # Tri dans l'ordre alphabétique
+        # Tri dans l'ordre alphabÃ©tique
         self.SortItems(self.ColumnSorter)
 
-        # Fait dérouler la liste
+        # Fait dÃ©rouler la liste
         nbreItems = self.GetItemCount()
         if nbreItems > 0:
             self.EnsureVisible(nbreItems-1) 
 
     def GetDocumentsScan(self):
-        """ Retourne le nbre de documents scannés pour chaque pièce """
+        """ Retourne le nbre de documents scannÃ©s pour chaque piÃ¨ce """
         DB = GestionDB.DB(suffixe="DOCUMENTS")
         req = "SELECT IDdocument, IDpiece FROM documents;"
         DB.ExecuterReq(req)
@@ -635,13 +635,13 @@ class ListCtrl_Dossier(wx.ListCtrl):
         return dictDocuments
 
     def etatExpiration(self, dateDebut, dateFin):
-        """ Recherche l'état de l'expiration """
+        """ Recherche l'Ã©tat de l'expiration """
 
-        # Si illimité
+        # Si illimitÃ©
         if dateFin == "2999-01-01":
             return ""
 
-        # Si non illimité
+        # Si non illimitÃ©
         dateJour = datetime.date.today()
         dateFin = datetime.date(int(dateFin[:4]), int(dateFin[5:7]), int(dateFin[8:10]))
 
@@ -649,7 +649,7 @@ class ListCtrl_Dossier(wx.ListCtrl):
         if reste != "0:00:00":
             jours = int(reste[:reste.index("day")])
             if jours < 0:
-                return _(u"Pièce expirée")
+                return _(u"PiÃ¨ce expirÃ©e")
             elif jours == 1:
                 return _(u"Expire demain !")
             else:
@@ -665,12 +665,12 @@ class ListCtrl_Dossier(wx.ListCtrl):
         else:
             item1 = self.GetItem( self.FindItemData(-1, key1), 2).GetText()
             item2 = self.GetItem( self.FindItemData(-1, key2), 2).GetText()
-        # Intercepte les illimités et les transforme en date très lointaine
-        if item1 == _(u"Illimitée"):
+        # Intercepte les illimitÃ©s et les transforme en date trÃ¨s lointaine
+        if item1 == _(u"IllimitÃ©e"):
             item1 = "01/01/2999"
-        if item2 == _(u"Illimitée"):
+        if item2 == _(u"IllimitÃ©e"):
             item2 = "01/01/2999"
-        # Bascule les dates françaises en dates anglaises pour faire le tri
+        # Bascule les dates franÃ§aises en dates anglaises pour faire le tri
         item1 = DateFrEng(item1)
         item2 = DateFrEng(item2)
         
@@ -680,17 +680,17 @@ class ListCtrl_Dossier(wx.ListCtrl):
                return 1
 
     def Importation(self):
-        """ Importe les données """
+        """ Importe les donnÃ©es """
         date_jour = datetime.date.today()
 
         # Get dict documents
         self.dict_docs = self.GetDocumentsScan() 
 
-        # Initialisation de la base de données
+        # Initialisation de la base de donnÃ©es
         DB = GestionDB.DB()
         self.DictDossier = {}
         
-        # Recherche des pièces
+        # Recherche des piÃ¨ces
         req = """
         SELECT pieces.IDpiece, types_pieces.nom_piece, pieces.date_debut, pieces.date_fin, pieces.IDpersonne
         FROM pieces INNER JOIN types_pieces ON pieces.IDtype_piece = types_pieces.IDtype_piece
@@ -699,13 +699,13 @@ class ListCtrl_Dossier(wx.ListCtrl):
         DB.ExecuterReq(req)
         listePieces = DB.ResultatReq()
 
-        # Création du dictionnaire de données des pièces du dossier
+        # CrÃ©ation du dictionnaire de donnÃ©es des piÃ¨ces du dossier
         for piece in listePieces:
             IDpiece = piece[0]
             nom_piece = piece[1]
             date_debut = piece[2]
             date_fin = piece[3]
-            # Recherche la validité
+            # Recherche la validitÃ©
             date_fin_2 = datetime.date(int(date_fin[:4]), int(date_fin[5:7]), int(date_fin[8:10]))
             reste = str(date_fin_2 - date_jour)
             if reste != "0:00:00":
@@ -718,11 +718,11 @@ class ListCtrl_Dossier(wx.ListCtrl):
                 etat = "Ok"
             self.DictDossier[IDpiece] = (etat, nom_piece, date_debut, date_fin)
         
-        # Fermeture de la base de données
+        # Fermeture de la base de donnÃ©es
         DB.Close()       
 
     def OnItemActivated(self, event):
-        """ Item double-cliqué """
+        """ Item double-cliquÃ© """
         self.parent.ModifierPiece()
 
     def OnContextMenu(self, event):
@@ -733,7 +733,7 @@ class ListCtrl_Dossier(wx.ListCtrl):
         index = self.GetFirstSelected()
         key = self.GetItemData(index)
         
-        # Création du menu contextuel
+        # CrÃ©ation du menu contextuel
         menuPop = UTILS_Adaptations.Menu()
 
         # Item Modifier

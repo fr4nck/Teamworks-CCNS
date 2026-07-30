@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -33,7 +33,7 @@ class Dialog(wx.Dialog):
         for x in range(1, 32) : choices.append(str(x))
         self.choice_jour_fixe = wx.Choice(self.panel_base, -1, choices=choices)
         self.label_mois_fixe = wx.StaticText(self.panel_base, -1, "Mois :")
-        self.choice_mois_fixe = wx.Choice(self.panel_base, -1, choices=["Janvier", _(u"Février"), "Mars", "Avril", "Mai", "Juin", "Juillet", _(u"Août"), "Septembre", "Octobre", "Novembre", _(u"Décembre")])
+        self.choice_mois_fixe = wx.Choice(self.panel_base, -1, choices=["Janvier", _(u"FÃ©vrier"), "Mars", "Avril", "Mai", "Juin", "Juillet", _(u"AoÃ»t"), "Septembre", "Octobre", "Novembre", _(u"DÃ©cembre")])
         self.label_date_variable = wx.StaticText(self.panel_base, -1, "Date :")
         self.datepicker_date_variable = DatePickerCtrl(self.panel_base, -1, style=DP_DROPDOWN)
         
@@ -53,7 +53,7 @@ class Dialog(wx.Dialog):
         self.Bind(wx.EVT_BUTTON, self.OnBoutonAnnuler, self.bouton_annuler)
 
     def __set_properties(self):
-        self.SetTitle(_(u"Saisie d'un jour férié"))
+        self.SetTitle(_(u"Saisie d'un jour fÃ©riÃ©"))
         if 'phoenix' in wx.PlatformInfo:
             _icon = wx.Icon()
         else :
@@ -106,7 +106,7 @@ class Dialog(wx.Dialog):
         sizer_base.Add(self.panel_base, 1, wx.EXPAND, 0)
         self.SetSizer(sizer_base)
         
-        # Affiche en fonction du type de de jour férié
+        # Affiche en fonction du type de de jour fÃ©riÃ©
         if self.typeJour == "fixe" :
             self.label_date_variable.Show(False)
             self.datepicker_date_variable.Show(False)
@@ -127,7 +127,7 @@ class Dialog(wx.Dialog):
         donnees = DB.ResultatReq()[0]
         DB.Close()
         if len(donnees) == 0: return
-        # Récupération des données
+        # RÃ©cupÃ©ration des donnÃ©es
         type = donnees[1]
         nom = donnees[2]
         jour = donnees[3]
@@ -148,9 +148,9 @@ class Dialog(wx.Dialog):
             self.datepicker_date_variable.SetValue(date)
 
     def Sauvegarde(self):
-        """ Sauvegarde des données dans la base de données """
+        """ Sauvegarde des donnÃ©es dans la base de donnÃ©es """
         
-        # Récupération ds valeurs saisies
+        # RÃ©cupÃ©ration ds valeurs saisies
         varNom = self.text_ctrl_nom.GetValue()
         if self.typeJour == "fixe" :
             varJour = self.choice_jour_fixe.GetSelection()+1
@@ -163,7 +163,7 @@ class Dialog(wx.Dialog):
             varAnnee = date_tmp.GetYear()
 
         DB = GestionDB.DB()
-        # Création de la liste des données
+        # CrÃ©ation de la liste des donnÃ©es
         listeDonnees = [    ("type",   self.typeJour),  
                                     ("nom",   varNom),
                                     ("jour",   varJour),
@@ -189,11 +189,11 @@ class Dialog(wx.Dialog):
         self.EndModal(wx.ID_CANCEL)
 
     def OnBoutonOk(self, event):
-        """ Validation des données saisies """
+        """ Validation des donnÃ©es saisies """
         
         varNom = self.text_ctrl_nom.GetValue()
         if varNom == "" :
-            dlg = wx.MessageDialog(self, _(u"Vous devez saisir un nom pour ce jour férié. Par exemple : 'Lundi de Pâques'..."), "Erreur", wx.OK)  
+            dlg = wx.MessageDialog(self, _(u"Vous devez saisir un nom pour ce jour fÃ©riÃ©. Par exemple : 'Lundi de PÃ¢ques'..."), "Erreur", wx.OK)  
             dlg.ShowModal()
             dlg.Destroy()
             self.text_ctrl_nom.SetFocus()
@@ -202,14 +202,14 @@ class Dialog(wx.Dialog):
         if self.typeJour == "fixe" :
             varJour = self.choice_jour_fixe.GetSelection()
             if varJour == -1 or varJour == None :
-                dlg = wx.MessageDialog(self, _(u"Vous devez sélectionner un jour pour ce jour férié !"), "Erreur", wx.OK)  
+                dlg = wx.MessageDialog(self, _(u"Vous devez sÃ©lectionner un jour pour ce jour fÃ©riÃ© !"), "Erreur", wx.OK)  
                 dlg.ShowModal()
                 dlg.Destroy()
                 self.choice_jour_fixe.SetFocus()
                 return
             varMois = self.choice_mois_fixe.GetSelection()
             if varMois == -1 or varMois == None :
-                dlg = wx.MessageDialog(self, _(u"Vous devez sélectionner un mois pour ce jour férié !"), "Erreur", wx.OK)  
+                dlg = wx.MessageDialog(self, _(u"Vous devez sÃ©lectionner un mois pour ce jour fÃ©riÃ© !"), "Erreur", wx.OK)  
                 dlg.ShowModal()
                 dlg.Destroy()
                 self.choice_mois_fixe.SetFocus()

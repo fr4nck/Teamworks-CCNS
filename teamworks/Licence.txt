@@ -1,27 +1,27 @@
 LICENCE ET CONDITIONS D'UTILISATION
 
-"TeamWorks - Gestion d'équipes", logiciel de gestion d'équipes pour 
+"TeamWorks - Gestion d'Ã©quipes", logiciel de gestion d'Ã©quipes pour 
 les centres de loisirs et de vacances.
 
-Copyright © 2008-2020 Ivan LUCAS
+Copyright Â© 2008-2020 Ivan LUCAS
 
 Ce programme est un logiciel libre ; vous pouvez le redistribuer 
-et/ou le modifier conformément aux dispositions de la Licence Publique
-Générale GNU, telle que publiée par la Free Software Foundation  ; 
-version 2 de la licence, ou encore toute version ultérieure.
+et/ou le modifier conformÃ©ment aux dispositions de la Licence Publique
+GÃ©nÃ©rale GNU, telle que publiÃ©e par la Free Software Foundation  ; 
+version 2 de la licence, ou encore toute version ultÃ©rieure.
 
-Ce programme est distribué dans l'espoir qu'il sera utile, mais SANS 
-AUCUNE GARANTIE ; sans même la garantie implicite de COMMERCIALISATION
-ou D'ADAPTATION A UN OBJET PARTICULIER. Pour plus de détails, voir la
-Licence Publique Générale GNU.
+Ce programme est distribuÃ© dans l'espoir qu'il sera utile, mais SANS 
+AUCUNE GARANTIE ; sans mÃªme la garantie implicite de COMMERCIALISATION
+ou D'ADAPTATION A UN OBJET PARTICULIER. Pour plus de dÃ©tails, voir la
+Licence Publique GÃ©nÃ©rale GNU.
 
-Un exemplaire de la Licence Publique Générale GNU doit être fourni avec
-ce programme ; si ce n'est pas le cas, écrivez à la Free Software 
+Un exemplaire de la Licence Publique GÃ©nÃ©rale GNU doit Ãªtre fourni avec
+ce programme ; si ce n'est pas le cas, Ã©crivez Ã  la Free Software 
 Foundation Inc., 675 Mass Ave, Cambridge, MA 02139, Etats-Unis.
 
 
-La licence GNU GPL est présentée ci-dessous en version anglaise. Vous
-pouvez également trouver une version française non officielle à
+La licence GNU GPL est prÃ©sentÃ©e ci-dessous en version anglaise. Vous
+pouvez Ã©galement trouver une version franÃ§aise non officielle Ã 
 l'adresse suivante : http://www.april.org/gnu/gpl_french2.html.
 
 
@@ -660,7 +660,7 @@ to attach them to the start of each source file to most effectively
 state the exclusion of warranty; and each file should have at least
 the "copyright" line and a pointer to where the full notice is found.
 
-    TeamWorks - Gestion d'équipes
+    TeamWorks - Gestion d'Ã©quipes
     Copyright (C) 2008-2009 Ivan LUCAS
 
     This program is free software: you can redistribute it and/or modify
@@ -681,7 +681,7 @@ Also add information on how to contact you by electronic and paper mail.
   If the program does terminal interaction, make it output a short
 notice like this when it starts in an interactive mode:
 
-    TeamWorks - Gestion d'équipes
+    TeamWorks - Gestion d'Ã©quipes
     Copyright (C) 2008-2009 Ivan LUCAS
 
     This program comes with ABSOLUTELY NO WARRANTY; for details type `show w'.
@@ -707,5 +707,5 @@ Public License instead of this License.  But first, please read
 
 Fichier Exemple :
 
-Ce logiciel est livré avec un fichier Exemple qui comporte des identités inventées
+Ce logiciel est livrÃ© avec un fichier Exemple qui comporte des identitÃ©s inventÃ©es
 et des photos libres provenant du site www.photo-libre.fr

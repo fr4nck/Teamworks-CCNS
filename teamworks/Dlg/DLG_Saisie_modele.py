@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -32,8 +32,8 @@ class Dialog(wx.Dialog):
             self.Importation_parametres()
         
         self.panel_base = wx.Panel(self, -1)
-        self.sizer_planning_staticbox = wx.StaticBox(self.panel_base, -1, _(u"Constitution du modËle"))
-        self.sizer_param_staticbox = wx.StaticBox(self.panel_base, -1, _(u"ParamËtres du modËle"))
+        self.sizer_planning_staticbox = wx.StaticBox(self.panel_base, -1, _(u"Constitution du mod√®le"))
+        self.sizer_param_staticbox = wx.StaticBox(self.panel_base, -1, _(u"Param√®tres du mod√®le"))
         self.label_nom = wx.StaticText(self.panel_base, -1, _(u"Nom :"))
         self.text_nom = wx.TextCtrl(self.panel_base, -1, self.nom)
         self.label_type = wx.StaticText(self.panel_base, -1, "Type :")
@@ -41,12 +41,12 @@ class Dialog(wx.Dialog):
         self.radio_type_2 = wx.RadioButton(self.panel_base, -1, "Hebdomadaire")
         self.label_description = wx.StaticText(self.panel_base, -1, "Description :")
         self.text_description = wx.TextCtrl(self.panel_base, -1, self.description, style=wx.TE_MULTILINE)
-        self.label_periodes = wx.StaticText(self.panel_base, -1, _(u"PÈriodes :"))
+        self.label_periodes = wx.StaticText(self.panel_base, -1, _(u"P√©riodes :"))
         self.checkbox_periodes_1 = wx.CheckBox(self.panel_base, -1, "Toutes")
-        self.checkbox_periodes_2 = wx.CheckBox(self.panel_base, -1, _(u"PÈriodes scolaires"))
+        self.checkbox_periodes_2 = wx.CheckBox(self.panel_base, -1, _(u"P√©riodes scolaires"))
         self.checkbox_periodes_3 = wx.CheckBox(self.panel_base, -1, "Vacances scolaires")
         self.tree_planning = TreeCtrlPlanning(self.panel_base)
-        self.checkbox_inclureferies = wx.CheckBox(self.panel_base, -1, _(u"Inclure les jours fÈriÈs"))
+        self.checkbox_inclureferies = wx.CheckBox(self.panel_base, -1, _(u"Inclure les jours f√©ri√©s"))
         self.checkbox_inclureferies.SetValue(self.inclureFeries)
         self.bouton_ajouter = wx.BitmapButton(self.panel_base, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_ANY))
         self.bouton_modifier = wx.BitmapButton(self.panel_base, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Modifier.png"), wx.BITMAP_TYPE_ANY))
@@ -76,28 +76,28 @@ class Dialog(wx.Dialog):
         
     def __set_properties(self):
         if self.IDmodele == 0 :
-            self.SetTitle(_(u"CrÈation d'un modËle"))
+            self.SetTitle(_(u"Cr√©ation d'un mod√®le"))
         else:
-            self.SetTitle(_(u"Modification d'un modËle"))
+            self.SetTitle(_(u"Modification d'un mod√®le"))
         if 'phoenix' in wx.PlatformInfo:
             _icon = wx.Icon()
         else :
             _icon = wx.EmptyIcon()
         _icon.CopyFromBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Logo.png"), wx.BITMAP_TYPE_ANY))
         self.SetIcon(_icon)
-        self.text_nom.SetToolTip(wx.ToolTip(_(u"Saisissez ici le nom de votre choix pour ce modËle")))
-        self.radio_type_1.SetToolTip(wx.ToolTip(_(u"SÈlectionnez 'Journalier' di vous ne souhaitez crÈer qu'un modËle comportant une journÈe-type")))
-        self.radio_type_2.SetToolTip(wx.ToolTip(_(u"SÈlectionnez 'Hebdomadaire' si vous souhaitez crÈer un modËle qui comporte une semaine-type")))
-        self.text_description.SetToolTip(wx.ToolTip(_(u"Vous pouvez donner ici une description de ce modËle")))
-        self.checkbox_periodes_1.SetToolTip(wx.ToolTip(_(u"Les t‚ches saisies dans cette catÈgorie de pÈriode seront crÈÈes sur des pÈriodes de vacances et des pÈriodes de vacances")))
-        self.checkbox_periodes_2.SetToolTip(wx.ToolTip(_(u"Les t‚ches crÈÈes dans cette catÈgorie seront appliquÈes uniquement sur des pÈriodes scolaires")))
-        self.checkbox_periodes_3.SetToolTip(wx.ToolTip(_(u"Les t‚ches saisies dans cette catÈgorie de pÈriode seront appliquÈes uniquement sur des vacances scolaires")))
+        self.text_nom.SetToolTip(wx.ToolTip(_(u"Saisissez ici le nom de votre choix pour ce mod√®le")))
+        self.radio_type_1.SetToolTip(wx.ToolTip(_(u"S√©lectionnez 'Journalier' di vous ne souhaitez cr√©er qu'un mod√®le comportant une journ√©e-type")))
+        self.radio_type_2.SetToolTip(wx.ToolTip(_(u"S√©lectionnez 'Hebdomadaire' si vous souhaitez cr√©er un mod√®le qui comporte une semaine-type")))
+        self.text_description.SetToolTip(wx.ToolTip(_(u"Vous pouvez donner ici une description de ce mod√®le")))
+        self.checkbox_periodes_1.SetToolTip(wx.ToolTip(_(u"Les t√¢ches saisies dans cette cat√©gorie de p√©riode seront cr√©√©es sur des p√©riodes de vacances et des p√©riodes de vacances")))
+        self.checkbox_periodes_2.SetToolTip(wx.ToolTip(_(u"Les t√¢ches cr√©√©es dans cette cat√©gorie seront appliqu√©es uniquement sur des p√©riodes scolaires")))
+        self.checkbox_periodes_3.SetToolTip(wx.ToolTip(_(u"Les t√¢ches saisies dans cette cat√©gorie de p√©riode seront appliqu√©es uniquement sur des vacances scolaires")))
         self.tree_planning.SetMinSize((500, 250))
-        self.bouton_ajouter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour ajouter une t‚che")))
+        self.bouton_ajouter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour ajouter une t√¢che")))
         self.bouton_ajouter.SetSize(self.bouton_ajouter.GetBestSize())
-        self.bouton_modifier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier la t‚che sÈlectionnÈe")))
+        self.bouton_modifier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier la t√¢che s√©lectionn√©e")))
         self.bouton_modifier.SetSize(self.bouton_modifier.GetBestSize())
-        self.bouton_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer la t‚che sÈlectionnÈe")))
+        self.bouton_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer la t√¢che s√©lectionn√©e")))
         self.bouton_supprimer.SetSize(self.bouton_supprimer.GetBestSize())
         self.bouton_aide.SetToolTip(wx.ToolTip("Cliquez ici pour obtenir de l'aide"))
         self.bouton_aide.SetSize(self.bouton_aide.GetBestSize())
@@ -105,7 +105,7 @@ class Dialog(wx.Dialog):
         self.bouton_ok.SetSize(self.bouton_ok.GetBestSize())
         self.bouton_annuler.SetToolTip(wx.ToolTip("Cliquez ici pour annuler"))
         self.bouton_annuler.SetSize(self.bouton_annuler.GetBestSize())
-        self.checkbox_inclureferies.SetToolTip(wx.ToolTip(_(u"Cochez cette case si vous souhaitez que le modËle soit Ègalement appliquÈ les jours fÈriÈs.")))
+        self.checkbox_inclureferies.SetToolTip(wx.ToolTip(_(u"Cochez cette case si vous souhaitez que le mod√®le soit √©galement appliqu√© les jours f√©ri√©s.")))
         
         self.checkbox_periodes_1.SetValue(self.periodes[0] )
         self.checkbox_periodes_2.SetValue(self.periodes[1] )
@@ -227,7 +227,7 @@ class Dialog(wx.Dialog):
                 modif = True
         
         if modif == True :
-            dlg = wx.MessageDialog(self, _(u"Vous avez fait des modifications sur ce modËle. Souhaitez-vous vraiment toutes les annuler ?"), _(u"Annulation"), wx.ICON_QUESTION | wx.YES_NO | wx.NO_DEFAULT)
+            dlg = wx.MessageDialog(self, _(u"Vous avez fait des modifications sur ce mod√®le. Souhaitez-vous vraiment toutes les annuler ?"), _(u"Annulation"), wx.ICON_QUESTION | wx.YES_NO | wx.NO_DEFAULT)
             if dlg.ShowModal() == wx.ID_NO :
                 dlg.Destroy() 
                 return
@@ -237,7 +237,7 @@ class Dialog(wx.Dialog):
         
     def OnBoutonOk(self, event):
         """ Bouton Ok """
-        # Validation des paramËtres
+        # Validation des param√®tres
         IDmodele = self.IDmodele
         nom = self.nom
         type = self.type
@@ -251,14 +251,14 @@ class Dialog(wx.Dialog):
                 periodes += "0"
                 
         if nom == "" :
-            dlg = wx.MessageDialog(self, _(u"Vous devez saisir un nom pour le modËle."), "Erreur de saisie", wx.OK)  
+            dlg = wx.MessageDialog(self, _(u"Vous devez saisir un nom pour le mod√®le."), "Erreur de saisie", wx.OK)  
             dlg.ShowModal()
             dlg.Destroy() 
             self.text_nom.SetFocus()
             return
         
         if periodes == "000" :
-            dlg = wx.MessageDialog(self, _(u"Vous devez cocher au moins une pÈriode."), "Erreur de saisie", wx.OK)  
+            dlg = wx.MessageDialog(self, _(u"Vous devez cocher au moins une p√©riode."), "Erreur de saisie", wx.OK)  
             dlg.ShowModal()
             dlg.Destroy() 
             return
@@ -266,7 +266,7 @@ class Dialog(wx.Dialog):
         # Validation des taches
         listeTaches = self.tree_planning.listeTaches
         if len(listeTaches) == 0 :
-            dlg = wx.MessageDialog(self, _(u"Vous n'avez enregistrÈ aucune t‚che pour ce modËle. Souhaitez-vous vraiment quitter l'Èdition de ce modËle ?"),  _(u"Quitter l'Èdition d'un modËle"), wx.ICON_QUESTION | wx.YES_NO | wx.NO_DEFAULT)
+            dlg = wx.MessageDialog(self, _(u"Vous n'avez enregistr√© aucune t√¢che pour ce mod√®le. Souhaitez-vous vraiment quitter l'√©dition de ce mod√®le ?"),  _(u"Quitter l'√©dition d'un mod√®le"), wx.ICON_QUESTION | wx.YES_NO | wx.NO_DEFAULT)
             if dlg.ShowModal() == wx.ID_NO :
                 dlg.Destroy() 
                 return
@@ -274,7 +274,7 @@ class Dialog(wx.Dialog):
         
         DB = GestionDB.DB()
         
-        # Enregistrement des paramËtres
+        # Enregistrement des param√®tres
         listeDonnees = [    ("nom",  nom),
                                     ("type",  type),
                                     ("description",   description),
@@ -310,7 +310,7 @@ class Dialog(wx.Dialog):
 
         DB.Close()
         
-        # MAJ formulaire Application d'un modËle s'il est ouvert
+        # MAJ formulaire Application d'un mod√®le s'il est ouvert
         try :
             listCtrl_modeles = self.GetParent().list_ctrl_modeles
             listCtrl_modeles.Remplissage()
@@ -328,17 +328,17 @@ class Dialog(wx.Dialog):
         self.EndModal(wx.ID_OK)
             
     def OnBoutonAjouter(self, event):
-        """ Ajouter une t‚che """
+        """ Ajouter une t√¢che """
         treeSelection = self.tree_planning.selection
         
         if treeSelection < 100000 :
-            dlg = wx.MessageDialog(self, _(u"Vous devez sÈlectionner un jour dans la liste proposÈe"), "Erreur", wx.OK)  
+            dlg = wx.MessageDialog(self, _(u"Vous devez s√©lectionner un jour dans la liste propos√©e"), "Erreur", wx.OK)  
             dlg.ShowModal()
             dlg.Destroy() 
             return
         
         if str(treeSelection)[1] == "0" :
-            dlg = wx.MessageDialog(self, _(u"Vous devez sÈlectionner un jour dans la liste proposÈe"), "Erreur", wx.OK)  
+            dlg = wx.MessageDialog(self, _(u"Vous devez s√©lectionner un jour dans la liste propos√©e"), "Erreur", wx.OK)  
             dlg.ShowModal()
             dlg.Destroy() 
             return
@@ -352,7 +352,7 @@ class Dialog(wx.Dialog):
         if dlg.ShowModal() == wx.ID_OK:
             valide = self.Sauvegarde(dlg.panel.GetDonneesModele())
             if valide == False :
-                dlg2 = wx.MessageDialog(self, _(u"Les horaires que vous avez saisis chevauchent dÈj‡ une autre t‚che sur la mÍme journÈe."), "Erreur de saisie", wx.OK)
+                dlg2 = wx.MessageDialog(self, _(u"Les horaires que vous avez saisis chevauchent d√©j√† une autre t√¢che sur la m√™me journ√©e."), "Erreur de saisie", wx.OK)
                 dlg2.ShowModal()
                 dlg2.Destroy()
                 return False
@@ -376,14 +376,14 @@ class Dialog(wx.Dialog):
             periode = donnees[3]
             jour = donnees[4]
         
-        # Validation des donnÈes
+        # Validation des donn√©es
         listeTaches = self.tree_planning.listeTaches
         for tache in listeTaches :
             if tache[2] == type and tache[3] == periode and tache[4] == jour and tache[0] != ID :
                 if tache[5] < heure_debut < tache[6] : return False
                 if tache[5] < heure_fin < tache[6] : return False
         
-        # MÈmorisation des donnÈes
+        # M√©morisation des donn√©es
         if ID == 0 :
             tache = [IDtache, IDmodele, type, periode, jour, heure_debut, heure_fin, IDcategorie, intitule, "new"]
             listeTaches.append(tache)
@@ -409,7 +409,7 @@ class Dialog(wx.Dialog):
   
     
     def GetNumID(self):
-        """ Recherche le prochain numÈro ID de la liste des taches """
+        """ Recherche le prochain num√©ro ID de la liste des taches """
         num = 0
         for tache in self.tree_planning.listeTaches :
             if tache[0]>num : num = tache[0]
@@ -423,13 +423,13 @@ class Dialog(wx.Dialog):
         return periode, jour
         
     def OnBoutonModifier(self, event):
-        """ Modifier une t‚che """
+        """ Modifier une t√¢che """
         IDmodif = self.tree_planning.selection
         
         if IDmodif == None : return
         if IDmodif >= 100000 :  return
         
-        # Recherche des donnÈes ‡ mettre dans le formulaire de saisie
+        # Recherche des donn√©es √† mettre dans le formulaire de saisie
         listeTaches = self.tree_planning.listeTaches
         for tache in listeTaches :
             if tache[0] == IDmodif :
@@ -445,7 +445,7 @@ class Dialog(wx.Dialog):
         if dlg.ShowModal() == wx.ID_OK:
             valide = self.Sauvegarde(dlg.panel.GetDonneesModele())
             if valide == False :
-                dlg2 = wx.MessageDialog(self, _(u"Les horaires que vous avez saisis chevauchent dÈj‡ une autre t‚che sur la mÍme journÈe."), "Erreur de saisie", wx.OK)
+                dlg2 = wx.MessageDialog(self, _(u"Les horaires que vous avez saisis chevauchent d√©j√† une autre t√¢che sur la m√™me journ√©e."), "Erreur de saisie", wx.OK)
                 dlg2.ShowModal()
                 dlg2.Destroy()
                 return False
@@ -453,22 +453,22 @@ class Dialog(wx.Dialog):
 
 
     def OnBoutonSupprimer(self, event):
-        """ Supprimer une t‚che """
+        """ Supprimer une t√¢che """
         IDmodif = self.tree_planning.selection
         
         if IDmodif >= 100000 or IDmodif==None :
-            dlg = wx.MessageDialog(self, _(u"Vous n'avez pas sÈlectionnÈ de t‚che ‡ supprimer dans la liste"), "Erreur de saisie", wx.OK)  
+            dlg = wx.MessageDialog(self, _(u"Vous n'avez pas s√©lectionn√© de t√¢che √† supprimer dans la liste"), "Erreur de saisie", wx.OK)  
             dlg.ShowModal()
             dlg.Destroy() 
             return
         
-        dlg = wx.MessageDialog(self, _(u"Souhaitez-vous vraiment supprimer cette t‚che ?"),  _(u"Suppression d'une t‚che"), wx.ICON_QUESTION | wx.YES_NO | wx.NO_DEFAULT)
+        dlg = wx.MessageDialog(self, _(u"Souhaitez-vous vraiment supprimer cette t√¢che ?"),  _(u"Suppression d'une t√¢che"), wx.ICON_QUESTION | wx.YES_NO | wx.NO_DEFAULT)
         if dlg.ShowModal() == wx.ID_NO :
             dlg.Destroy() 
             return
         dlg.Destroy()
         
-        # Recherche des donnÈes ‡ mettre dans le formulaire de saisie
+        # Recherche des donn√©es √† mettre dans le formulaire de saisie
         listeTaches = self.tree_planning.listeTaches
         x = 0
         for tache in listeTaches :
@@ -516,9 +516,9 @@ class TreeCtrlPlanning(wx.TreeCtrl):
     def Remplissage(self):
         self.DeleteAllItems()
         
-        # CrÈation de la racine
+        # Cr√©ation de la racine
         if self.GetGrandParent().nom == "" :
-            nomModele = _(u"Nouveau modËle")
+            nomModele = _(u"Nouveau mod√®le")
         else:
             nomModele = self.GetGrandParent().nom
         self.root = self.AddRoot(nomModele)
@@ -527,9 +527,9 @@ class TreeCtrlPlanning(wx.TreeCtrl):
         else:
             self.SetItemData(self.root, None)
         
-        # CrÈation des pÈriodes
+        # Cr√©ation des p√©riodes
         if self.GetGrandParent().periodes[0] == True :
-            self.P1 = self.AppendItem(self.root, _(u"Toutes les pÈriodes"))
+            self.P1 = self.AppendItem(self.root, _(u"Toutes les p√©riodes"))
             if 'phoenix' in wx.PlatformInfo:
                 self.SetItemData(self.P1, 100000)
             else:
@@ -537,7 +537,7 @@ class TreeCtrlPlanning(wx.TreeCtrl):
             self.CreationJours(self.P1, 1)
         
         if self.GetGrandParent().periodes[1] == True :
-            self.P2 = self.AppendItem(self.root, _(u"PÈriodes scolaires"))
+            self.P2 = self.AppendItem(self.root, _(u"P√©riodes scolaires"))
             if 'phoenix' in wx.PlatformInfo:
                 self.SetItemData(self.P2, 200000)
             else:
@@ -591,8 +591,8 @@ class TreeCtrlPlanning(wx.TreeCtrl):
                 self.SetItemData(getattr(self, nom_ctrl), ID)
 
     def Importation_taches(self, IDmodele=0):
-        """ RÈcupÈration de la liste des catÈgories dans la base """
-        # Initialisation de la connexion avec la Base de donnÈes
+        """ R√©cup√©ration de la liste des cat√©gories dans la base """
+        # Initialisation de la connexion avec la Base de donn√©es
         DB = GestionDB.DB()
         req = "SELECT * FROM modeles_taches WHERE IDmodele=%d" % IDmodele
         DB.ExecuterReq(req)
@@ -670,7 +670,7 @@ class TreeCtrlPlanning(wx.TreeCtrl):
     def OnContextMenu(self, event):
         """Ouverture du menu contextuel """
 
-        # Recherche et sÈlection de l'item pointÈ avec la souris
+        # Recherche et s√©lection de l'item point√© avec la souris
         item = self.FindTreeItem(event.GetPosition())
         if item == None : return
         if 'phoenix' in wx.PlatformInfo:
@@ -684,7 +684,7 @@ class TreeCtrlPlanning(wx.TreeCtrl):
         if 0 < data < 100000 : mode = "tache"
         self.SelectItem(item, True)
         
-        # CrÈation du menu contextuel
+        # Cr√©ation du menu contextuel
         menuPop = UTILS_Adaptations.Menu()
         
         if mode == "jour" :
@@ -714,7 +714,7 @@ class TreeCtrlPlanning(wx.TreeCtrl):
         menuPop.Destroy()
 
     def FindTreeItem(self, position):
-        """ Permet de retrouver l'item pointÈ dans le TreeCtrl """
+        """ Permet de retrouver l'item point√© dans le TreeCtrl """
         item, flags = self.HitTest(position)
         if item and flags & (wx.TREE_HITTEST_ONITEMLABEL |
                              wx.TREE_HITTEST_ONITEMICON):

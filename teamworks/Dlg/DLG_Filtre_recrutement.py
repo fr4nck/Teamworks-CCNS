@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -28,7 +28,7 @@ def GetListeChoix_emplois():
     DB.ExecuterReq(req)
     listeDonnees = DB.ResultatReq()
     DB.Close()
-    listeDonnees.insert(0, (0, _(u"Candidature spontanée")))
+    listeDonnees.insert(0, (0, _(u"Candidature spontanÃ©e")))
     return listeDonnees
 
 def GetListeChoix_fonctions():
@@ -50,7 +50,7 @@ def GetListeChoix_affectations():
     return listeDonnees
 
 def GetListeChoix_decisions():
-    listeDonnees = [ (0, _(u"Décision non prise")), (1, _(u"Oui")), (2, _(u"Non")) ]
+    listeDonnees = [ (0, _(u"DÃ©cision non prise")), (1, _(u"Oui")), (2, _(u"Non")) ]
     return listeDonnees
 
 def GetListeChoix_reponses():
@@ -62,7 +62,7 @@ def GetListeChoix_civilites():
     return listeDonnees
 
 def GetListeChoix_avis():
-    listeDonnees = [ (0, _(u"Avis inconnu")), (1, _(u"Pas convaincant")), (2, _(u"Mitigé")), (3, _(u"Bien")), (4, _(u"Très bien")) ]
+    listeDonnees = [ (0, _(u"Avis inconnu")), (1, _(u"Pas convaincant")), (2, _(u"MitigÃ©")), (3, _(u"Bien")), (4, _(u"TrÃ¨s bien")) ]
     return listeDonnees
 
 def GetListeChoix_diffuseurs():
@@ -85,8 +85,8 @@ def GetListeChoix_diplomes():
 
 
 class MyDialog(wx.Dialog):
-    """ On récupère les infos de cette boîte avec GetDates() ou avec GetPersonnesPresentes() """
-    def __init__(self, parent, id=-1, categorie="", listeValeursDefaut=None, title=_(u"Sélection de filtres de liste")):
+    """ On rÃ©cupÃ¨re les infos de cette boÃ®te avec GetDates() ou avec GetPersonnesPresentes() """
+    def __init__(self, parent, id=-1, categorie="", listeValeursDefaut=None, title=_(u"SÃ©lection de filtres de liste")):
         if listeValeursDefaut is None:
             listeValeursDefaut = []
         wx.Dialog.__init__(self, parent, id, title, size=(-1, -1))
@@ -95,25 +95,25 @@ class MyDialog(wx.Dialog):
         self.dictControles = {
         
             "candidats" : [
-                    #[ _(u"Civilité"), "candidats_civilite", "hyperlink_liste", "civilites", "civilite", None],
+                    #[ _(u"CivilitÃ©"), "candidats_civilite", "hyperlink_liste", "civilites", "civilite", None],
                     [ _(u"Nom"), "candidats_nom", "hyperlink_texte", None, "nom", None],
-                    [ _(u"Prénom"), "candidats_prenom", "hyperlink_texte", None, "prenom", None],
+                    [ _(u"PrÃ©nom"), "candidats_prenom", "hyperlink_texte", None, "prenom", None],
                     [ _(u"Adresse"), "candidats_adresse_resid", "hyperlink_texte", None, "adresse_resid", None],
                     [ _(u"Code postal"), "candidats_cp_resid", "hyperlink_texte", None, "cp_resid", None],
                     [ _(u"Ville"), "candidats_ville_resid", "hyperlink_texte", None, "ville_resid", None],
-                    [ _(u"Mémo"), "candidats_memo", "hyperlink_texte", None, "memo", None],
+                    [ _(u"MÃ©mo"), "candidats_memo", "hyperlink_texte", None, "memo", None],
                     [ _(u"Qualifications"), "candidats_qualifications", "hyperlink_liste", "diplomes", "IDdiplome", None],
                     ], # Label, nomControle, typeControle, listeChoix, motSQL, valeur
                                     
             "candidatures" : [
-                    [ _(u"Date de dépôt"), "candidature_date", "hyperlink_date", None, "date_depot", None],
+                    [ _(u"Date de dÃ©pÃ´t"), "candidature_date", "hyperlink_date", None, "date_depot", None],
                     [ _(u"Offre d'emploi"), "candidature_emploi", "hyperlink_liste", "emplois", "IDemploi", None],
                     [ _(u"Disponibilites"), "candidature_dispo", "hyperlink_date", None, ("date_debut", "date_fin"), None],
                     [ _(u"Fonctions"), "candidature_fonctions", "hyperlink_liste", "fonctions", "IDfonction", None],
                     [ _(u"Affectations"), "candidature_affectations", "hyperlink_liste", "affectations", "IDaffectation", None],
-                    [ _(u"Décision"), "candidature_decision", "hyperlink_liste", "decisions", "IDdecision", None],
-                    [ _(u"Réponse envoyée"), "candidature_reponse", "hyperlink_liste", "reponses", "reponse", None],
-                    [ _(u"Date de réponse"), "candidature_date_reponse", "hyperlink_date", None, "date_reponse", None],
+                    [ _(u"DÃ©cision"), "candidature_decision", "hyperlink_liste", "decisions", "IDdecision", None],
+                    [ _(u"RÃ©ponse envoyÃ©e"), "candidature_reponse", "hyperlink_liste", "reponses", "reponse", None],
+                    [ _(u"Date de rÃ©ponse"), "candidature_date_reponse", "hyperlink_date", None, "date_reponse", None],
                     ], # Label, nomControle, typeControle, listeChoix, motSQL, valeur
             
             "entretiens" : [
@@ -124,7 +124,7 @@ class MyDialog(wx.Dialog):
         
             "emplois" : [
                     [ _(u"Date de lancement"), "emplois_date_debut", "hyperlink_date", None, "date_debut", None],
-                    [ _(u"Date de clôture"), "emplois_date_fin", "hyperlink_date", None, "date_fin", None],
+                    [ _(u"Date de clÃ´ture"), "emplois_date_fin", "hyperlink_date", None, "date_fin", None],
                     [ _(u"Disponibilites"), "emplois_dispo", "hyperlink_date", None, ("date_debut", "date_fin"), None],
                     [ _(u"Fonctions"), "emplois_fonctions", "hyperlink_liste", "fonctions", "IDfonction", None],
                     [ _(u"Affectations"), "emplois_affectations", "hyperlink_liste", "affectations", "IDaffectation", None],
@@ -133,17 +133,17 @@ class MyDialog(wx.Dialog):
                                     
         }
         
-        # Récupération des valeurs par défaut
+        # RÃ©cupÃ©ration des valeurs par dÃ©faut
         if len(listeValeursDefaut) > 0 :
             self.SetValeursDefaut(listeValeursDefaut)
 
         grid_sizer_base = wx.FlexGridSizer(rows=3, cols=1, vgap=0, hgap=0)
         
         # Label
-        self.label = wx.StaticText(self, -1, _(u"Veuillez définir les filtres de votre choix :"))
+        self.label = wx.StaticText(self, -1, _(u"Veuillez dÃ©finir les filtres de votre choix :"))
         grid_sizer_base.Add(self.label, 0, wx.ALL, 10)
         
-        # Contrôles       
+        # ContrÃ´les       
         self.listeControles = self.dictControles[self.categorie]
         self.staticbox = wx.StaticBox(self, -1, self.categorie.capitalize())
         sizerStaticBox = wx.StaticBoxSizer(self.staticbox, wx.HORIZONTAL)
@@ -192,7 +192,7 @@ class MyDialog(wx.Dialog):
         self.EndModal(wx.ID_OK)
     
     def OnBoutonReinit(self, event):
-        """ Réinitialiser les paramètres """
+        """ RÃ©initialiser les paramÃ¨tres """
         index = 0
         for item in self.dictControles[self.categorie] :
             nomControle = item[1]
@@ -219,11 +219,11 @@ class MyDialog(wx.Dialog):
         return listeFiltres
     
     def SetValeursDefaut(self, listeFiltres):
-        """ Récupère les valeurs par défaut des contrôles """
+        """ RÃ©cupÃ¨re les valeurs par dÃ©faut des contrÃ´les """
         for dict in listeFiltres :
             nomControle = dict["nomControle"]
             valeur = dict["valeur"]
-            # Intègre la valeur par défaut dans le dictionnaire des contrôles
+            # IntÃ¨gre la valeur par dÃ©faut dans le dictionnaire des contrÃ´les
             index = 0
             for item in self.dictControles[self.categorie] :
                 if item[1] == nomControle :
@@ -249,7 +249,7 @@ class Hyperlink(hl.HyperLinkCtrl):
         self.Bind(hl.EVT_HYPERLINK_LEFT, self.OnLeftLink)
     
     def OnLeftLink(self, event):
-        """ Sélectionner les données à importer """        
+        """ SÃ©lectionner les donnÃ©es Ã  importer """        
         self.ChangeValeur()
 
 
@@ -257,7 +257,7 @@ class Hyperlink(hl.HyperLinkCtrl):
 
 
 class hyperlink_date(Hyperlink):
-    def __init__(self, parent, valeur=None, nomFiltre="", motSQL="", infobulle=_(u"Cliquez ici pour sélectionner un filtre")):
+    def __init__(self, parent, valeur=None, nomFiltre="", motSQL="", infobulle=_(u"Cliquez ici pour sÃ©lectionner un filtre")):
         self.valeur = valeur
         self.nomFiltre = nomFiltre
         self.motSQL = motSQL
@@ -292,7 +292,7 @@ class hyperlink_date(Hyperlink):
         if self.valeur == None : return ""
         date_debut, date_fin = self.valeur
         if type(self.motSQL) == tuple :
-            # Période
+            # PÃ©riode
             return "(%s>='%s' AND %s<='%s')" % (self.motSQL[1], date_debut, self.motSQL[0], date_fin)
         else:
             # Dates
@@ -303,7 +303,7 @@ class hyperlink_date(Hyperlink):
 
 
 class hyperlink_choice(Hyperlink):
-    def __init__(self, parent, valeur=None, nomFiltre="", motSQL="", listeChoix=None, infobulle=_(u"Cliquez ici pour sélectionner un filtre")):
+    def __init__(self, parent, valeur=None, nomFiltre="", motSQL="", listeChoix=None, infobulle=_(u"Cliquez ici pour sÃ©lectionner un filtre")):
         if listeChoix is None:
             listeChoix = []
         self.valeur = valeur
@@ -344,7 +344,7 @@ class hyperlink_choice(Hyperlink):
 
 
 class hyperlink_liste(Hyperlink):
-    def __init__(self, parent, valeur=None, nomFiltre="", motSQL="", listeChoix=None, infobulle=_(u"Cliquez ici pour sélectionner un filtre")):
+    def __init__(self, parent, valeur=None, nomFiltre="", motSQL="", listeChoix=None, infobulle=_(u"Cliquez ici pour sÃ©lectionner un filtre")):
         if listeChoix is None:
             listeChoix = []
         self.valeur = valeur
@@ -359,7 +359,7 @@ class hyperlink_liste(Hyperlink):
             label = _(u"Sans importance")
         else:
             if len(self.valeur) == 0 :
-                label = _(u"Aucun élément")
+                label = _(u"Aucun Ã©lÃ©ment")
             else:
                 label = ""
                 for ID, texte in self.valeur : 
@@ -403,7 +403,7 @@ class hyperlink_liste(Hyperlink):
 
 
 class hyperlink_texte(Hyperlink):
-    def __init__(self, parent, valeur=None, nomFiltre="", motSQL="", infobulle=_(u"Cliquez ici pour sélectionner un filtre")):
+    def __init__(self, parent, valeur=None, nomFiltre="", motSQL="", infobulle=_(u"Cliquez ici pour sÃ©lectionner un filtre")):
         self.valeur = valeur
         self.nomFiltre = nomFiltre
         self.motSQL = motSQL

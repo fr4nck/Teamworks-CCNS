@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -24,7 +24,7 @@ class Panel(wx.Panel):
     def __init__(self, parent, ID=-1, IDpersonne=None):
         wx.Panel.__init__(self, parent, ID, name="gestion_scenarios", style=wx.TAB_TRAVERSAL)
         self.IDpersonne = IDpersonne
-        texteIntro = _(u"Vous pouvez ici créer, modifier ou supprimer des scénarios.")
+        texteIntro = _(u"Vous pouvez ici crÃ©er, modifier ou supprimer des scÃ©narios.")
         self.label_introduction = FonctionsPerso.StaticWrapText(self, -1, texteIntro)
 
         self.listCtrl = TreeListCtrl(self, -1, IDpersonne=IDpersonne)
@@ -44,13 +44,13 @@ class Panel(wx.Panel):
         self.Bind(wx.EVT_BUTTON, self.OnBoutonDupliquer, self.bouton_dupliquer)
 
     def __set_properties(self):
-        self.bouton_ajouter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour créer un nouveau scénario")))
+        self.bouton_ajouter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour crÃ©er un nouveau scÃ©nario")))
         self.bouton_ajouter.SetSize(self.bouton_ajouter.GetBestSize())
-        self.bouton_modifier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier le scénario sélectionné dans la liste")))
+        self.bouton_modifier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier le scÃ©nario sÃ©lectionnÃ© dans la liste")))
         self.bouton_modifier.SetSize(self.bouton_modifier.GetBestSize())
-        self.bouton_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer le scénario sélectionné dans la liste")))
+        self.bouton_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer le scÃ©nario sÃ©lectionnÃ© dans la liste")))
         self.bouton_supprimer.SetSize(self.bouton_supprimer.GetBestSize())
-        self.bouton_dupliquer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour dupliquer le scénario sélectionné")))
+        self.bouton_dupliquer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour dupliquer le scÃ©nario sÃ©lectionnÃ©")))
 
     def __do_layout(self):
         grid_sizer_base = wx.FlexGridSizer(rows=5, cols=1, vgap=10, hgap=10)
@@ -96,9 +96,9 @@ class Panel(wx.Panel):
         item = self.listCtrl.GetSelection()
         IDscenario = self.listCtrl.GetItemData(item)
 
-        # Vérifie qu'un item a bien été sélectionné
+        # VÃ©rifie qu'un item a bien Ã©tÃ© sÃ©lectionnÃ©
         if IDscenario > 100000 or IDscenario == None or IDscenario == -1 :
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sélectionner un scénario à modifier dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÃ©lectionner un scÃ©nario Ã  modifier dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -114,14 +114,14 @@ class Panel(wx.Panel):
         item = self.listCtrl.GetSelection()
         IDscenario = self.listCtrl.GetItemData(item)
 
-        # Vérifie qu'un item a bien été sélectionné
+        # VÃ©rifie qu'un item a bien Ã©tÃ© sÃ©lectionnÃ©
         if IDscenario > 100000 or IDscenario == None or IDscenario == -1 :
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sélectionner un scénario à supprimer dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÃ©lectionner un scÃ©nario Ã  supprimer dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
         
-        # Vérifie si un report utilise ce scénario
+        # VÃ©rifie si un report utilise ce scÃ©nario
         DB = GestionDB.DB()
         req = "SELECT IDscenario_cat, IDscenario, IDcategorie, prevision, report, date_debut_realise, date_fin_realise FROM scenarios_cat;"
         DB.ExecuterReq(req)
@@ -136,8 +136,8 @@ class Panel(wx.Panel):
                         nbreReports += 1
         
         if nbreReports > 0 :
-            if nbreReports == 1 : txtMessage = six.text_type(_(u"Un report utilise ce scénario.\n\nSouhaitez-vous tout de même le supprimer ?"))
-            else : txtMessage = six.text_type(_(u"%d reports utilisent ce scénario.\n\nSouhaitez-vous tout de même le supprimer ?") % nbreReports)
+            if nbreReports == 1 : txtMessage = six.text_type(_(u"Un report utilise ce scÃ©nario.\n\nSouhaitez-vous tout de mÃªme le supprimer ?"))
+            else : txtMessage = six.text_type(_(u"%d reports utilisent ce scÃ©nario.\n\nSouhaitez-vous tout de mÃªme le supprimer ?") % nbreReports)
             dlgConfirm = wx.MessageDialog(self, txtMessage, _(u"Confirmation de suppression"), wx.YES_NO|wx.NO_DEFAULT|wx.ICON_QUESTION)
             reponse = dlgConfirm.ShowModal()
             dlgConfirm.Destroy()
@@ -146,20 +146,20 @@ class Panel(wx.Panel):
         
         # Demande de confirmation
         Nom = self.listCtrl.GetItemText(item)
-        txtMessage = six.text_type((_(u"Voulez-vous vraiment supprimer ce scénario ? \n\n> ") + Nom))
+        txtMessage = six.text_type((_(u"Voulez-vous vraiment supprimer ce scÃ©nario ? \n\n> ") + Nom))
         dlgConfirm = wx.MessageDialog(self, txtMessage, _(u"Confirmation de suppression"), wx.YES_NO|wx.NO_DEFAULT|wx.ICON_QUESTION)
         reponse = dlgConfirm.ShowModal()
         dlgConfirm.Destroy()
         if reponse == wx.ID_NO:
             return
         
-        # Suppression du type de pièce
+        # Suppression du type de piÃ¨ce
         DB = GestionDB.DB()
         DB.ReqDEL("scenarios", "IDscenario", IDscenario)
         DB.ReqDEL("scenarios_cat", "IDscenario", IDscenario)
         DB.Close()
         
-        # MàJ du ListCtrl
+        # MÃ J du ListCtrl
         self.listCtrl.MAJ()
     
     def OnBoutonDupliquer(self, event):
@@ -168,29 +168,29 @@ class Panel(wx.Panel):
         if IDscenario == None:
             return False
 
-        # Vérifie qu'un item a bien été sélectionné
+        # VÃ©rifie qu'un item a bien Ã©tÃ© sÃ©lectionnÃ©
         if IDscenario > 100000 or IDscenario == None or IDscenario == -1 :
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sélectionner un scénario à dupliquer dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÃ©lectionner un scÃ©nario Ã  dupliquer dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
         
         # Demande de confirmation
         Nom = self.listCtrl.GetItemText(item)
-        txtMessage = six.text_type((_(u"Voulez-vous vraiment dupliquer ce scénario ? \n\n> ") + Nom))
+        txtMessage = six.text_type((_(u"Voulez-vous vraiment dupliquer ce scÃ©nario ? \n\n> ") + Nom))
         dlgConfirm = wx.MessageDialog(self, txtMessage, _(u"Confirmation de duplication"), wx.YES_NO|wx.NO_DEFAULT|wx.ICON_QUESTION)
         reponse = dlgConfirm.ShowModal()
         dlgConfirm.Destroy()
         if reponse == wx.ID_NO:
             return
         
-        # Récupération des données du scénario à dupliquer
+        # RÃ©cupÃ©ration des donnÃ©es du scÃ©nario Ã  dupliquer
         DB = GestionDB.DB()
         req = "SELECT IDpersonne, nom, description, mode_heure, detail_mois, date_debut, date_fin, toutes_categories FROM scenarios WHERE IDscenario=%d ;" % IDscenario
         DB.ExecuterReq(req)
         listeDonnees = DB.ResultatReq()
         
-        # Enregistrement du scénario
+        # Enregistrement du scÃ©nario
         for IDpersonne, nom, description, mode_heure, detail_mois, date_debut, date_fin, toutes_categories in listeDonnees :
             listeDonnees = [ ("IDpersonne",   IDpersonne),  
                                         ("nom",   _(u"Copie de %s") % nom),  
@@ -204,7 +204,7 @@ class Panel(wx.Panel):
             newIDscenario = DB.ReqInsert("scenarios", listeDonnees) 
             DB.Commit()
 
-        # Enregistrement des catégories de scénarios
+        # Enregistrement des catÃ©gories de scÃ©narios
         req = "SELECT IDscenario_cat, IDscenario, IDcategorie, prevision, report, date_debut_realise, date_fin_realise FROM scenarios_cat WHERE IDscenario=%d;" % IDscenario
         DB.ExecuterReq(req)
         listeDonnees = DB.ResultatReq()
@@ -223,7 +223,7 @@ class Panel(wx.Panel):
         
         DB.Close()
         
-        # Ouverture du scénario dans l'éditeur
+        # Ouverture du scÃ©nario dans l'Ã©diteur
         dlg = DLG_Scenario.Dialog(self, IDscenario=newIDscenario, IDpersonne=self.IDpersonne)
         dlg.ShowModal()
         dlg.Destroy()
@@ -243,7 +243,7 @@ class Panel(wx.Panel):
 
 class TreeListCtrl(HTL.HyperTreeList):
     def __init__(self, *args, **kwds):
-        # Récupération des paramètres perso
+        # RÃ©cupÃ©ration des paramÃ¨tres perso
         self.IDpersonne = kwds.pop("IDpersonne", None)
         self.selectionID = kwds.pop("selectionID", None)
         # Initialisation du listCtrl
@@ -260,14 +260,14 @@ class TreeListCtrl(HTL.HyperTreeList):
         self.dict_personnes = self.GetDictPersonnes()
         self.dictScenarios = self.GetDictScenarios()
         
-        # Création des colonnes
+        # CrÃ©ation des colonnes
         if self.IDpersonne == None :
-            self.AddColumn(_(u"Nom personne / nom scénario"))
+            self.AddColumn(_(u"Nom personne / nom scÃ©nario"))
             self.SetColumnWidth(0, 250)
         else:
-            self.AddColumn(_(u"Nom du scénario"))
+            self.AddColumn(_(u"Nom du scÃ©nario"))
             self.SetColumnWidth(0, 200)
-        self.AddColumn(_(u"Période"))
+        self.AddColumn(_(u"PÃ©riode"))
         self.SetColumnWidth(1, 160)
         self.AddColumn(_(u"Description"))
         self.SetColumnWidth(2, 400)
@@ -281,12 +281,12 @@ class TreeListCtrl(HTL.HyperTreeList):
         self.SetImageList(il)
         self.il = il
         
-        # Création de la racine
+        # CrÃ©ation de la racine
         self.root = self.AddRoot("Racine")
         self.SetItemText(self.root, u"", 1)
         self.SetItemText(self.root, u"", 2)
 
-        # Création des branches
+        # CrÃ©ation des branches
         if self.IDpersonne == None :
             listeIDPersonnes = list(self.dictScenarios.keys())
             listeNomsPersonnes = []
@@ -398,14 +398,14 @@ class TreeListCtrl(HTL.HyperTreeList):
     
     def OnContextMenu(self, event):
         """Ouverture du menu contextuel """
-        # Recherche et sélection de l'item pointé avec la souris
+        # Recherche et sÃ©lection de l'item pointÃ© avec la souris
         item = event.GetItem()
         data = self.GetItemData(item)
         if data == None or data > 100000 :
             return
         self.SelectItem(item, item)
         
-        # Création du menu contextuel
+        # CrÃ©ation du menu contextuel
         menuPop = UTILS_Adaptations.Menu()
 
         # Item Ajouter
@@ -466,7 +466,7 @@ class Dialog(wx.Dialog):
         self.Bind(wx.EVT_BUTTON, self.Onbouton_fermer, self.bouton_fermer)
 
     def __set_properties(self):
-        self.SetTitle(_(u"Gestion des scénarios"))
+        self.SetTitle(_(u"Gestion des scÃ©narios"))
         if 'phoenix' in wx.PlatformInfo:
             _icon = wx.Icon()
         else :

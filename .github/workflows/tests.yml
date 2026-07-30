@@ -38,6 +38,9 @@ jobs:
       - name: Compile complete Python source tree
         run: python -m compileall -q application domain infrastructure scripts tools teamworks tests
 
+      - name: Enforce UTF-8 source and resource policy
+        run: python scripts/check_utf8.py
+
       - name: Check essential runtime components
         run: python scripts/check_essential_runtime.py
 

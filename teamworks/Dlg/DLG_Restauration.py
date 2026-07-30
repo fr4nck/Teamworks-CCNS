@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #------------------------------------------------------------------------
-# Application :    Noethys, gestion multi-activités
+# Application :    Noethys, gestion multi-activitÃ©s
 # Site internet :  www.noethys.com
 # Auteur:           Ivan LUCAS
 # Copyright:       (c) 2010-11 Ivan LUCAS
@@ -33,21 +33,21 @@ LISTE_CATEGORIES = UTILS_Sauvegarde.LISTE_CATEGORIES
 
 
 def SelectionFichier():
-    """ Sélectionner le fichier à restaurer """
+    """ SÃ©lectionner le fichier Ã  restaurer """
     # Demande l'emplacement du fichier
     wildcard = _(u"Sauvegarde Teamworks (*.twd; *.twc)|*.twd;*.twc")
     standardPath = wx.StandardPaths.Get()
     rep = standardPath.GetDocumentsDir()
-    dlg = wx.FileDialog(None, message=_(u"Veuillez sélectionner le fichier de sauvegarde à restaurer"), defaultDir=rep, defaultFile="", wildcard=wildcard, style=wx.FD_OPEN)
+    dlg = wx.FileDialog(None, message=_(u"Veuillez sÃ©lectionner le fichier de sauvegarde Ã  restaurer"), defaultDir=rep, defaultFile="", wildcard=wildcard, style=wx.FD_OPEN)
     if dlg.ShowModal() == wx.ID_OK:
         fichier = dlg.GetPath()
     else:
         return None
     dlg.Destroy()
     
-    # Décryptage du fichier
+    # DÃ©cryptage du fichier
     if fichier.endswith(".twc") == True :
-        dlg = wx.PasswordEntryDialog(None, _(u"Veuillez saisir le mot de passe :"), _(u"Ouverture d'une sauvegarde cryptée"))
+        dlg = wx.PasswordEntryDialog(None, _(u"Veuillez saisir le mot de passe :"), _(u"Ouverture d'une sauvegarde cryptÃ©e"))
         if dlg.ShowModal() == wx.ID_OK:
             motdepasse = dlg.GetValue()
         else:
@@ -57,11 +57,11 @@ def SelectionFichier():
         fichierTemp = UTILS_Fichiers.GetRepTemp(fichier="savedecrypte.zip")
         resultat = UTILS_Cryptage_fichier.DecrypterFichier(fichier, fichierTemp, motdepasse)
         fichier = fichierTemp
-        messageErreur = _(u"Le mot de passe que vous avez saisi semble erroné !")
+        messageErreur = _(u"Le mot de passe que vous avez saisi semble erronÃ© !")
     else:
         messageErreur = _(u"Le fichier de sauvegarde semble corrompu !")
                 
-    # Vérifie que le ZIP est ok
+    # VÃ©rifie que le ZIP est ok
     valide = UTILS_Sauvegarde.VerificationZip(fichier)
     if valide == False :
         dlg = wx.MessageDialog(None, messageErreur, _(u"Erreur"), wx.OK | wx.ICON_ERROR)
@@ -81,7 +81,7 @@ class CTRL_Donnees(CT.CustomTreeCtrl):
         CT.CustomTreeCtrl.__init__(self, parent, id, pos, size, style)
         self.listeFichiers = listeFichiers
         
-        self.root = self.AddRoot(_(u"Données"))
+        self.root = self.AddRoot(_(u"DonnÃ©es"))
         self.SetBackgroundColour(wx.WHITE)
         self.SetAGWWindowStyleFlag(wx.TR_HIDE_ROOT | wx.TR_HAS_BUTTONS | wx.TR_HAS_VARIABLE_ROW_HEIGHT | CT.TR_AUTO_CHECK_CHILD)
         self.EnableSelectionVista(True)
@@ -106,10 +106,10 @@ class CTRL_Donnees(CT.CustomTreeCtrl):
                         self.SetItemData(brancheFichier, fichier)
                         self.CheckItem(brancheFichier, True)
 
-        # Fichiers réseaux
+        # Fichiers rÃ©seaux
         listeFichiersReseau = self.GetListeFichiersReseau()
         if len(listeFichiersReseau) > 0 :
-            brancheType = self.AppendItem(self.root, _(u"Fichiers réseau"), ct_type=1)
+            brancheType = self.AppendItem(self.root, _(u"Fichiers rÃ©seau"), ct_type=1)
             self.SetItemData(brancheType, _(u"reseau"))
             self.SetItemBold(brancheType)
             self.CheckItem(brancheType, True)
@@ -126,7 +126,7 @@ class CTRL_Donnees(CT.CustomTreeCtrl):
                         self.SetItemData(brancheFichier, fichier)
                         self.CheckItem(brancheFichier, True)
 
-        # Recherche si des modèles ou des éditions sont dans le ZIP
+        # Recherche si des modÃ¨les ou des Ã©ditions sont dans le ZIP
         modeles = False
         editions = False
         for fichier in self.listeFichiers:
@@ -135,9 +135,9 @@ class CTRL_Donnees(CT.CustomTreeCtrl):
             if fichier.startswith("editions/"):
                 editions = True
 
-        # Modèles de documents
+        # ModÃ¨les de documents
         if modeles == True:
-            brancheType = self.AppendItem(self.root, _(u"Modèles de documents"), ct_type=1)
+            brancheType = self.AppendItem(self.root, _(u"ModÃ¨les de documents"), ct_type=1)
             self.SetItemData(brancheType, _(u"modeles"))
             self.SetItemBold(brancheType)
             self.CheckItem(brancheType, True)
@@ -152,7 +152,7 @@ class CTRL_Donnees(CT.CustomTreeCtrl):
         self.ExpandAll()
 
     def GetListeFichiersLocaux(self):
-        """ Trouver les fichiers locaux présents dans le ZIP """
+        """ Trouver les fichiers locaux prÃ©sents dans le ZIP """
         listeLocaux = []
         for fichier in self.listeFichiers :
             if fichier[-10:] == "_TDATA.dat" :
@@ -162,7 +162,7 @@ class CTRL_Donnees(CT.CustomTreeCtrl):
         return listeLocaux
 
     def GetListeFichiersReseau(self):
-        """ Trouver les fichiers MySQL présents dans le ZIP """
+        """ Trouver les fichiers MySQL prÃ©sents dans le ZIP """
         listeReseau = []
         for fichier in self.listeFichiers :
             if fichier[-10:] == "_tdata.sql" :
@@ -172,7 +172,7 @@ class CTRL_Donnees(CT.CustomTreeCtrl):
         return listeReseau
 
     def GetCoches(self):
-        """ Obtient la liste des éléments cochés """
+        """ Obtient la liste des Ã©lÃ©ments cochÃ©s """
         dictDonnees = {}
         
         brancheType = self.GetFirstChild(self.root)[0]
@@ -212,16 +212,16 @@ class Dialog(wx.Dialog):
         self.fichier = fichier
         self.listeFichiersRestaures = []
         
-        # Récupération du contenu du ZIP
+        # RÃ©cupÃ©ration du contenu du ZIP
         self.listeFichiers = UTILS_Sauvegarde.GetListeFichiersZIP(fichier)
 
-        intro = _(u"Vous pouvez ici restaurer une sauvegarde. Vous devez sélectionner dans la liste des données présentes dans la sauvegarde celles que vous souhaitez restaurer.")
+        intro = _(u"Vous pouvez ici restaurer une sauvegarde. Vous devez sÃ©lectionner dans la liste des donnÃ©es prÃ©sentes dans la sauvegarde celles que vous souhaitez restaurer.")
         titre = _(u"Restauration")
         self.SetTitle(titre)
         self.ctrl_bandeau = CTRL_Bandeau.Bandeau(self, titre=titre, texte=intro, hauteurHtml=30, nomImage=Chemins.GetStaticPath("Images/32x32/Restaurer.png"))
                 
-        # Données
-        self.box_donnees_staticbox = wx.StaticBox(self, -1, _(u"Données à restaurer"))
+        # DonnÃ©es
+        self.box_donnees_staticbox = wx.StaticBox(self, -1, _(u"DonnÃ©es Ã  restaurer"))
         self.ctrl_donnees = CTRL_Donnees(self, listeFichiers=self.listeFichiers)
         self.ctrl_donnees.SetMinSize((250, -1))
         
@@ -274,7 +274,7 @@ class Dialog(wx.Dialog):
         self.EndModal(wx.ID_CANCEL)
 
     def OnBoutonOk(self, event):         
-        # Données à sauver
+        # DonnÃ©es Ã  sauver
         dictDonnees = self.ctrl_donnees.GetCoches() 
         if "locaux" in dictDonnees :
             listeFichiersLocaux = dictDonnees["locaux"]
@@ -289,27 +289,27 @@ class Dialog(wx.Dialog):
         inclure_editions = "editions" in dictDonnees
 
         if len(listeFichiersLocaux) == 0 and len(listeFichiersReseau) == 0 and inclure_modeles == False and inclure_editions == False:
-            dlg = wx.MessageDialog(self, _(u"Vous devez sélectionner au moins un élément à restaurer !"), _(u"Erreur"), wx.OK | wx.ICON_EXCLAMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez sÃ©lectionner au moins un Ã©lÃ©ment Ã  restaurer !"), _(u"Erreur"), wx.OK | wx.ICON_EXCLAMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
         
-        # Récupération des paramètres de connexion réseau
+        # RÃ©cupÃ©ration des paramÃ¨tres de connexion rÃ©seau
         dictConnexion = None
         
         if len(listeFichiersReseau) > 0 :
-            # Récupère les paramètres chargés
+            # RÃ©cupÃ¨re les paramÃ¨tres chargÃ©s
             DB = GestionDB.DB() 
             if DB.echec != 1 :
                 if DB.isNetwork == True :
                     dictConnexion = DB.GetParamConnexionReseau() 
             DB.Close() 
             
-            # Demande les paramètres de connexion réseau
+            # Demande les paramÃ¨tres de connexion rÃ©seau
             if dictConnexion == None :
                 
-                # Demande les paramètres de connexion
-                intro = _(u"Les fichiers que vos souhaitez restaurer nécessite une connexion réseau.\nVeuillez saisir vos paramètres de connexion MySQL:")
+                # Demande les paramÃ¨tres de connexion
+                intro = _(u"Les fichiers que vos souhaitez restaurer nÃ©cessite une connexion rÃ©seau.\nVeuillez saisir vos paramÃ¨tres de connexion MySQL:")
                 dlg = DLG_Saisie_param_reseau.Dialog(self, intro=intro)
                 if dlg.ShowModal() == wx.ID_OK:
                     dictConnexion = dlg.GetDictValeurs()
@@ -318,10 +318,10 @@ class Dialog(wx.Dialog):
                     dlg.Destroy()
                     return
                 
-                # Vérifie si la connexion est bonne
+                # VÃ©rifie si la connexion est bonne
                 resultat = DLG_Saisie_param_reseau.TestConnexion(dictConnexion)
                 if resultat == False :
-                    dlg = wx.MessageDialog(self, _(u"Echec du test de connexion.\n\nLes paramètres ne semblent pas exacts !"), _(u"Erreur"), wx.OK | wx.ICON_ERROR)
+                    dlg = wx.MessageDialog(self, _(u"Echec du test de connexion.\n\nLes paramÃ¨tres ne semblent pas exacts !"), _(u"Erreur"), wx.OK | wx.ICON_ERROR)
                     dlg.ShowModal()
                     dlg.Destroy()
                     return
@@ -333,7 +333,7 @@ class Dialog(wx.Dialog):
         self.listeFichiersRestaures = resultat
         
         # Fin du processus
-        dlg = wx.MessageDialog(self, _(u"Le processus de restauration est terminé."), _(u"Restauration"), wx.OK | wx.ICON_INFORMATION)
+        dlg = wx.MessageDialog(self, _(u"Le processus de restauration est terminÃ©."), _(u"Restauration"), wx.OK | wx.ICON_INFORMATION)
         dlg.ShowModal()
         dlg.Destroy()
 
@@ -341,7 +341,7 @@ class Dialog(wx.Dialog):
         self.EndModal(wx.ID_OK)
     
     def GetFichiersRestaures(self):
-        """ Récupère la liste des fichiers restaurés """
+        """ RÃ©cupÃ¨re la liste des fichiers restaurÃ©s """
         listeTemp = []
         for fichier in self.listeFichiersRestaures :
             if fichier[-6:] in ("_TDATA", "_tdata") :

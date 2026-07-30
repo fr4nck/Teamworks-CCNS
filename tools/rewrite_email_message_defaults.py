@@ -11,7 +11,7 @@ TARGETS = ("destinataires", "fichiers", "images", "champs")
 
 def read_source(path: Path) -> tuple[str, str]:
     raw = path.read_bytes()
-    for encoding in ("utf-8", "iso-8859-15", "cp1252"):
+    for encoding in ("utf-8",):
         try:
             return raw.decode(encoding), encoding
         except UnicodeDecodeError:

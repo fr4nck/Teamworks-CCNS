@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
-# Application :    Teamworks, gestion d'équipes
+# Application :    Teamworks, gestion d'Ã©quipes
 # Auteur:           Ivan LUCAS
 # Copyright:       (c) 2010-11 Ivan LUCAS
 # Licence:         Licence GNU GPL
@@ -27,13 +27,13 @@ LISTE_CONTROLES = [
     {"code" : "ligne_texte", "label" : _(u"Ligne de texte"), "image" : "Texte_ligne.png"},
     {"code" : "bloc_texte", "label" : _(u"Bloc de texte multiligne"), "image" : "Texte_bloc.png", "options" : {"hauteur":60} },
     {"code" : "entier", "label" : _(u"Nombre entier"), "image" : "Ctrl_nombre.png", "options" : {"min":0, "max":100} },
-    {"code" : "liste_deroulante", "label" : _(u"Liste déroulante"), "image" : "Ctrl_choice.png", "options":{"choix":None} },
-    {"code" : "liste_coches", "label" : _(u"Liste à cocher"), "image" : "Coches.png", "options" : {"hauteur":-1, "choix":None}},
-    {"code" : "case_coche", "label" : _(u"Case à cocher"), "image" : "Ctrl_coche.png"},
+    {"code" : "liste_deroulante", "label" : _(u"Liste dÃ©roulante"), "image" : "Ctrl_choice.png", "options":{"choix":None} },
+    {"code" : "liste_coches", "label" : _(u"Liste Ã  cocher"), "image" : "Coches.png", "options" : {"hauteur":-1, "choix":None}},
+    {"code" : "case_coche", "label" : _(u"Case Ã  cocher"), "image" : "Ctrl_coche.png"},
     {"code" : "date", "label" : _(u"Date"), "image" : "jour.png"},
-    {"code" : "slider", "label" : _(u"Réglette"), "image" : "Reglette.png", "options" : {"hauteur":-1, "min":0, "max":100} },
+    {"code" : "slider", "label" : _(u"RÃ©glette"), "image" : "Reglette.png", "options" : {"hauteur":-1, "min":0, "max":100} },
     {"code" : "couleur", "label" : _(u"Couleur"), "image" : "Ctrl_couleur.png", "options" : {"hauteur":20}},
-##    {"code" : "potentiometre", "label" : _(u"Potentiomère"), "image" : "Potentiometre.png", "options" : {"hauteur":100, "min":0, "max":100} },
+##    {"code" : "potentiometre", "label" : _(u"PotentiomÃ¨re"), "image" : "Potentiometre.png", "options" : {"hauteur":100, "min":0, "max":100} },
     {"code" : "documents", "label" : _(u"Porte-documents"), "image" : "Document.png", "options" : {"hauteur":60}},
     ] 
 
@@ -70,9 +70,9 @@ class DLG_Choix_creation(wx.Dialog):
         self.Bind(wx.EVT_BUTTON, self.OnBoutonAide, self.bouton_aide)
 
     def __set_properties(self):
-        self.SetTitle(_(u"Choix de l'élément à créer"))
-        self.bouton_categorie.SetToolTip(wx.ToolTip(_(u"Créer une nouvelle catégorie")))
-        self.bouton_question.SetToolTip(wx.ToolTip(_(u"Créer une nouvelle question")))
+        self.SetTitle(_(u"Choix de l'Ã©lÃ©ment Ã  crÃ©er"))
+        self.bouton_categorie.SetToolTip(wx.ToolTip(_(u"CrÃ©er une nouvelle catÃ©gorie")))
+        self.bouton_question.SetToolTip(wx.ToolTip(_(u"CrÃ©er une nouvelle question")))
         self.bouton_aide.SetToolTip(wx.ToolTip(_(u"Obtenir de l'aide")))
         self.bouton_annuler.SetToolTip(wx.ToolTip(_(u"Annuler")))
         self.SetMinSize((340, 230))
@@ -403,7 +403,7 @@ class CTRL_slider(wx.Panel):
         self.track = track
         self.SetBackgroundColour(wx.Colour(255, 255, 255))
         
-        # Contrôles
+        # ContrÃ´les
         self.label_valeur = wx.StaticText(self, -1, "0")
         self.label_valeur.SetMinSize((25, -1))
         
@@ -420,7 +420,7 @@ class CTRL_slider(wx.Panel):
         self.ctrl_slider.SetValue(0)
         self.Bind(wx.EVT_COMMAND_SCROLL, self.OnSlider, self.ctrl_slider)
         self.ctrl_slider.SetBackgroundColour(wx.Colour(255, 255, 255))
-        self.ctrl_slider.SetToolTip(wx.ToolTip(_(u"Faites glisser la glissière sur la valeur de votre choix")))
+        self.ctrl_slider.SetToolTip(wx.ToolTip(_(u"Faites glisser la glissiÃ¨re sur la valeur de votre choix")))
 
         # Layout
         grid_sizer_base = wx.FlexGridSizer(rows=1, cols=2, vgap=0, hgap=0)
@@ -469,7 +469,7 @@ class CTRL_couleur(wx.lib.colourselect.ColourSelect):
         self.item = item
         self.track = track
         self.SetBackgroundColour((255, 255, 255))
-        self.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour sélectionner une couleur")))
+        self.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour sÃ©lectionner une couleur")))
 
     def SetValeur(self, valeur=None):
         if valeur == None : valeur = u""
@@ -505,7 +505,7 @@ class CTRL_couleur(wx.lib.colourselect.ColourSelect):
 ##        self.item = item
 ##        self.track = track
 ##        
-##        # Contrôles
+##        # ContrÃ´les
 ##        self.label_valeur = wx.StaticText(self, -1, "0")
 ##        self.label_valeur.SetMinSize((25, -1))
 ##        self.SetBackgroundColour((255, 255, 255))
@@ -574,13 +574,13 @@ class CTRL_documents(wx.Panel):
         self.track = track
         self.SetBackgroundColour(wx.Colour(255, 255, 255))
         
-        # Contrôles
+        # ContrÃ´les
         if hauteur < 30 : 
             hauteur = 30
         self.ctrl_vignettes = CTRL_Vignettes_documents.CTRL(self, IDreponse=None, afficheLabels=False, tailleVignette=hauteur-20, style=wx.BORDER_SUNKEN)
         
         self.bouton_outils = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Outils.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_outils.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour accéder aux commandes disponibles")))
+        self.bouton_outils.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour accÃ©der aux commandes disponibles")))
         self.Bind(wx.EVT_BUTTON, self.OnBoutonOutils, self.bouton_outils)
         
         # Layout
@@ -694,10 +694,10 @@ class CTRL(HTL.HyperTreeList):
         
         self.SetBackgroundColour(wx.WHITE)
         
-        # Création des colonnes
+        # CrÃ©ation des colonnes
         listeColonnes = [
             ( _(u"Question"), self.largeurQuestion, wx.ALIGN_LEFT),
-            ( _(u"Réponse"), self.largeurReponse, wx.ALIGN_LEFT),
+            ( _(u"RÃ©ponse"), self.largeurReponse, wx.ALIGN_LEFT),
             ]
         numColonne = 0
         for label, largeur, alignement in listeColonnes :
@@ -710,7 +710,7 @@ class CTRL(HTL.HyperTreeList):
         if mode == "apercu" : self.SetAGWWindowStyleFlag(wx.TR_ROW_LINES |wx.TR_HIDE_ROOT | wx.TR_HAS_VARIABLE_ROW_HEIGHT | wx.TR_FULL_ROW_HIGHLIGHT | HTL.TR_NO_HEADER)
         self.EnableSelectionVista(True)
         
-        # Création de l'ImageList
+        # CrÃ©ation de l'ImageList
         il = wx.ImageList(16, 16)
         self.img_invisible = il.Add(wx.Bitmap(Chemins.GetStaticPath('Images/16x16/Interdit2.png'), wx.BITMAP_TYPE_PNG))
         self.AssignImageList(il)
@@ -737,16 +737,16 @@ class CTRL(HTL.HyperTreeList):
         self.Initialisation()
 
     def MAJ(self, importation=True, selection=None):
-        """ Met à jour (redessine) tout le contrôle """
+        """ Met Ã  jour (redessine) tout le contrÃ´le """
         self.Freeze()
         self.DeleteAllItems()
-        # Création de la racine
+        # CrÃ©ation de la racine
         self.root = self.AddRoot(_(u"Racine"))
         if importation == True :
             self.Importation() 
-        # Création des contrôles
+        # CrÃ©ation des contrÃ´les
         self.Remplissage(selection=selection)
-        # Mémorisation des valeurs initiales
+        # MÃ©morisation des valeurs initiales
         if importation == True :
             self.dictValeursInitiales = self.GetValeurs() 
         self.Thaw() 
@@ -757,7 +757,7 @@ class CTRL(HTL.HyperTreeList):
         self.dictValeursInitiales = {}
         self.dictReponses = {}
 
-        # Importation des catégories
+        # Importation des catÃ©gories
         DB = GestionDB.DB()
         req = """SELECT IDcategorie, ordre, visible, type, couleur, label
         FROM questionnaire_categories
@@ -803,7 +803,7 @@ class CTRL(HTL.HyperTreeList):
             track = Track(item, dictChoix)
             self.dictCategories[track.IDcategorie]["questions"].append(track)
 
-        # Importation des réponses
+        # Importation des rÃ©ponses
         if self.IDindividu != None or self.IDfamille != None :
             if self.IDindividu != None : conditionReponses = "IDindividu=%d" % self.IDindividu
             if self.IDfamille != None : conditionReponses = "IDfamille=%d" % self.IDfamille
@@ -820,7 +820,7 @@ class CTRL(HTL.HyperTreeList):
         
             
     def Remplissage(self, selection=None):
-        # Création des branches
+        # CrÃ©ation des branches
         self.dictBranches = {}
         indexCategorie = 0
         for IDcategorie in self.listeIDcategorie :
@@ -832,7 +832,7 @@ class CTRL(HTL.HyperTreeList):
             
             if categorieVisible == 1 or self.afficherInvisibles == True :
             
-                # Niveau Catégorie
+                # Niveau CatÃ©gorie
                 brancheCategorie = self.AppendItem(self.root, label)
                 self.SetItemData(brancheCategorie, IDcategorie)
                 self.SetItemBold(brancheCategorie, True)
@@ -868,7 +868,7 @@ class CTRL(HTL.HyperTreeList):
                             if selection[0] == "question" and selection[1] == IDquestion :
                                 self.SelectItem(brancheQuestion)
 
-                        # Mémorisation des items dans le track
+                        # MÃ©morisation des items dans le track
                         track.item = brancheQuestion
                         track.itemParent = brancheCategorie
                         track.largeur = self.largeurReponse - 7                
@@ -890,7 +890,7 @@ class CTRL(HTL.HyperTreeList):
                             self.SetItemWindow(brancheQuestion, ctrl, 1)        
                             track.ctrl = ctrl      
                         
-                        # Insère la valeur
+                        # InsÃ¨re la valeur
                         if IDquestion in self.dictReponses :
                             valeur = self.dictReponses[IDquestion]["reponse"]
                         else:
@@ -903,7 +903,7 @@ class CTRL(HTL.HyperTreeList):
                                     
         self.ExpandAllChildren(self.root)
         
-        # Pour éviter le bus de positionnement des contrôles
+        # Pour Ã©viter le bus de positionnement des contrÃ´les
         self.GetMainWindow().CalculatePositions() 
     
     def IdentificationBranche(self, branche):
@@ -919,7 +919,7 @@ class CTRL(HTL.HyperTreeList):
         return self.dictValeursInitiales
     
     def GetValeurs(self):
-        # Récupère les valeurs du contrôle """
+        # RÃ©cupÃ¨re les valeurs du contrÃ´le """
         dictValeurs = {}
         for IDcategorie in self.listeIDcategorie :
             for track in self.dictCategories[IDcategorie]["questions"] :
@@ -928,7 +928,7 @@ class CTRL(HTL.HyperTreeList):
         return dictValeurs
 
     def SetValeurs(self, dictValeurs={}):
-        # Remplit le ctrl avec les valeurs données. Ex : {IDquestion : valeur} """
+        # Remplit le ctrl avec les valeurs donnÃ©es. Ex : {IDquestion : valeur} """
         for track in self.dictCategories[IDcategorie]["questions"] :
             if track.IDquestion in dictValeurs :
                 track.SetValeurStr(dictValeurs[track.IDquestion])
@@ -942,7 +942,7 @@ class CTRL(HTL.HyperTreeList):
         else:
             noSelection = False
           
-        # Création du menu contextuel
+        # CrÃ©ation du menu contextuel
         menuPop = UTILS_Adaptations.Menu()
 
         # Item Modifier
@@ -997,18 +997,18 @@ class CTRL(HTL.HyperTreeList):
             dlg.bouton_question.Enable(False)
         reponse = dlg.ShowModal() 
         dlg.Destroy()
-        # Création d'un catégorie
+        # CrÃ©ation d'un catÃ©gorie
         if reponse == 100 : 
             dlg = DLG_Saisie_categorie_question.Dialog(self, type=self.type, IDcategorie=None)
             if dlg.ShowModal() == wx.ID_OK :
                 IDcategorie = dlg.GetIDcategorie() 
                 self.MAJ(selection=("categorie", IDcategorie))
             dlg.Destroy()
-        # Création d'une question
+        # CrÃ©ation d'une question
         if reponse == 200 : 
-            # Vérifie avant qu'une catégorie existe bien
+            # VÃ©rifie avant qu'une catÃ©gorie existe bien
             if len(self.dictCategories) == 0 :
-                dlg = wx.MessageDialog(self, _(u"Vous devez d'abord créer au moins une catégorie !"), _(u"Erreur"), wx.OK | wx.ICON_EXCLAMATION)
+                dlg = wx.MessageDialog(self, _(u"Vous devez d'abord crÃ©er au moins une catÃ©gorie !"), _(u"Erreur"), wx.OK | wx.ICON_EXCLAMATION)
                 dlg.ShowModal()
                 dlg.Destroy()
                 return
@@ -1022,11 +1022,11 @@ class CTRL(HTL.HyperTreeList):
         item = self.GetSelection() 
         resultat = self.IdentificationBranche(item) 
         if resultat == None :
-            dlg = wx.MessageDialog(self, _(u"Vous n'avez sélectionné aucune ligne !"), _(u"Erreur"), wx.OK | wx.ICON_EXCLAMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous n'avez sÃ©lectionnÃ© aucune ligne !"), _(u"Erreur"), wx.OK | wx.ICON_EXCLAMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
-        # Catégorie
+        # CatÃ©gorie
         if resultat["type"] == "categorie" :
             dlg = DLG_Saisie_categorie_question.Dialog(self, type=self.type, IDcategorie=resultat["ID"])
             if dlg.ShowModal() == wx.ID_OK :
@@ -1043,26 +1043,26 @@ class CTRL(HTL.HyperTreeList):
         item = self.GetSelection() 
         resultat = self.IdentificationBranche(item) 
         if resultat == None :
-            dlg = wx.MessageDialog(self, _(u"Vous n'avez sélectionné aucune ligne !"), _(u"Erreur"), wx.OK | wx.ICON_EXCLAMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous n'avez sÃ©lectionnÃ© aucune ligne !"), _(u"Erreur"), wx.OK | wx.ICON_EXCLAMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
-        # Catégorie
+        # CatÃ©gorie
         if resultat["type"] == "categorie" :
             IDcategorie = resultat["ID"]
             listeQuestionRattachees = self.dictCategories[IDcategorie]["questions"]
             if len(listeQuestionRattachees) > 0 :
-                dlg = wx.MessageDialog(self, _(u"Cette catégorie comporte déjà %d question(s).\n\nVous devez déjà les supprimer avant de supprimer la catégorie.") % len(listeQuestionRattachees), _(u"Suppression impossible"), wx.OK | wx.ICON_EXCLAMATION)
+                dlg = wx.MessageDialog(self, _(u"Cette catÃ©gorie comporte dÃ©jÃ  %d question(s).\n\nVous devez dÃ©jÃ  les supprimer avant de supprimer la catÃ©gorie.") % len(listeQuestionRattachees), _(u"Suppression impossible"), wx.OK | wx.ICON_EXCLAMATION)
                 dlg.ShowModal()
                 dlg.Destroy()
                 return
             # Confirmation
-            dlg = wx.MessageDialog(self, _(u"Souhaitez-vous vraiment supprimer cette catégorie ?"), _(u"Suppression"), wx.YES_NO|wx.NO_DEFAULT|wx.CANCEL|wx.ICON_QUESTION)
+            dlg = wx.MessageDialog(self, _(u"Souhaitez-vous vraiment supprimer cette catÃ©gorie ?"), _(u"Suppression"), wx.YES_NO|wx.NO_DEFAULT|wx.CANCEL|wx.ICON_QUESTION)
             reponse = dlg.ShowModal()
             dlg.Destroy()
             if reponse != wx.ID_YES :
                 return 
-            # Supprime la catégorie
+            # Supprime la catÃ©gorie
             DB = GestionDB.DB()
             DB.ReqDEL("questionnaire_categories", "IDcategorie", IDcategorie)
             DB.Close() 
@@ -1072,7 +1072,7 @@ class CTRL(HTL.HyperTreeList):
             IDquestion = resultat["ID"]
             index = resultat["index"]
             IDcategorie = resultat["IDcategorie"]
-            # Vérifie si cette question a des réponses
+            # VÃ©rifie si cette question a des rÃ©ponses
             DB = GestionDB.DB()
             req = """SELECT IDindividu
             FROM questionnaire_reponses
@@ -1082,7 +1082,7 @@ class CTRL(HTL.HyperTreeList):
             listeReponses = DB.ResultatReq()     
             DB.Close() 
             if len(listeReponses) > 0 :
-                dlg = wx.MessageDialog(self, _(u"%d fiches comportent une réponse à cette question.\nSi vous supprimez cette question, les réponses le seront également.\n\nSouhaitez-vous vraiment supprimer cette question ?") % len(listeReponses), _(u"Suppression"), wx.YES_NO|wx.NO_DEFAULT|wx.CANCEL|wx.ICON_INFORMATION)
+                dlg = wx.MessageDialog(self, _(u"%d fiches comportent une rÃ©ponse Ã  cette question.\nSi vous supprimez cette question, les rÃ©ponses le seront Ã©galement.\n\nSouhaitez-vous vraiment supprimer cette question ?") % len(listeReponses), _(u"Suppression"), wx.YES_NO|wx.NO_DEFAULT|wx.CANCEL|wx.ICON_INFORMATION)
                 reponse = dlg.ShowModal()
                 dlg.Destroy()
                 if reponse != wx.ID_YES :
@@ -1105,11 +1105,11 @@ class CTRL(HTL.HyperTreeList):
         item = self.GetSelection() 
         resultat = self.IdentificationBranche(item) 
         if resultat == None :
-            dlg = wx.MessageDialog(self, _(u"Vous n'avez sélectionné aucune ligne !"), _(u"Erreur"), wx.OK | wx.ICON_EXCLAMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous n'avez sÃ©lectionnÃ© aucune ligne !"), _(u"Erreur"), wx.OK | wx.ICON_EXCLAMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
-        # Catégorie
+        # CatÃ©gorie
         if resultat["type"] == "categorie" :
             IDcategorie = resultat["ID"]
             index = resultat["index"]
@@ -1129,11 +1129,11 @@ class CTRL(HTL.HyperTreeList):
         item = self.GetSelection() 
         resultat = self.IdentificationBranche(item) 
         if resultat == None :
-            dlg = wx.MessageDialog(self, _(u"Vous n'avez sélectionné aucune ligne !"), _(u"Erreur"), wx.OK | wx.ICON_EXCLAMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous n'avez sÃ©lectionnÃ© aucune ligne !"), _(u"Erreur"), wx.OK | wx.ICON_EXCLAMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
-        # Catégorie
+        # CatÃ©gorie
         if resultat["type"] == "categorie" :
             IDcategorie = resultat["ID"]
             index = resultat["index"]

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -16,15 +16,15 @@ import datetime
 
 class MyDialog(wx.Dialog):
     def __init__(self, parent, heureMin=None, heureMax=None):
-        wx.Dialog.__init__(self, parent, -1, title=_(u"Amplitude horaire affichée"))
+        wx.Dialog.__init__(self, parent, -1, title=_(u"Amplitude horaire affichÃ©e"))
         self.heureMin = heureMin
         self.heureMax = heureMax
         
         self.static_sizer_staticbox = wx.StaticBox(self, -1, _(u"Amplitude horaire"))
-        self.label_intro = wx.StaticText(self, -1, _(u"Veuillez saisir l'amplitude horaire à afficher par défaut\ndans le planning (Min=0:00 / max=23:55) :"))
+        self.label_intro = wx.StaticText(self, -1, _(u"Veuillez saisir l'amplitude horaire Ã  afficher par dÃ©faut\ndans le planning (Min=0:00 / max=23:55) :"))
         self.label_de = wx.StaticText(self, -1, _(u"De"))
         self.ctrl_heure_min = masked.TextCtrl(self, -1, "", style=wx.TE_CENTRE, mask = "##:##", validRegex   = "[0-2][0-9]:[0-5][0-9]")
-        self.label_a = wx.StaticText(self, -1, u"à")
+        self.label_a = wx.StaticText(self, -1, u"Ã ")
         self.ctrl_heure_max = masked.TextCtrl(self, -1, "", style=wx.TE_CENTRE, mask = "##:##", validRegex   = "[0-2][0-9]:[0-5][0-9]")
         
         self.bouton_ok = CTRL_Bouton_image.CTRL(self, texte=_(u"Ok"), cheminImage=Chemins.GetStaticPath("Images/32x32/Valider.png"))
@@ -37,7 +37,7 @@ class MyDialog(wx.Dialog):
         self.Bind(wx.EVT_TEXT, self.OnTextHeureDebutText, self.ctrl_heure_min)
         self.Bind(wx.EVT_TEXT, self.OnTextHeureFinText, self.ctrl_heure_max)
         
-        # Données par défaut
+        # DonnÃ©es par dÃ©faut
         if heureMin != None :
             heureMinStr = "%02d:%02d" % (self.heureMin.hour, self.heureMin.minute)
             self.ctrl_heure_min.SetValue(heureMinStr)
@@ -91,7 +91,7 @@ class MyDialog(wx.Dialog):
         if texteBrut == "":
             validation = False
 
-        # Vérifie chaque chiffre
+        # VÃ©rifie chaque chiffre
         for chiffre in texteBrut:
             if chiffre != " ":
                 if not (0 <= int(chiffre) <=9):
@@ -99,24 +99,24 @@ class MyDialog(wx.Dialog):
             else:
                 validation = False
 
-        # Vérification de l'ensemble de la date
+        # VÃ©rification de l'ensemble de la date
         if validation == True and len(texteBrut)==4:
             if not (0<= int(texteBrut[:2]) <=24):
                 validation = False
             if not (0<= int(texteBrut[2:]) <=59):
                 validation = False
 
-            # Vérifie que heure_Fin est supérieure à Heure_Debut    
+            # VÃ©rifie que heure_Fin est supÃ©rieure Ã  Heure_Debut    
             if self.ctrl_heure_min.GetPlainValue() != "" and self.ctrl_heure_max.GetPlainValue() != "":
                 delta = int(self.ctrl_heure_max.GetPlainValue()) - int(self.ctrl_heure_min.GetPlainValue())
                 if delta < 1:
                     validation = False
-                    dlg = wx.MessageDialog(self, _(u"L'heure de fin doit être supérieure à l'heure de début !"), "Information", wx.OK | wx.ICON_INFORMATION)
+                    dlg = wx.MessageDialog(self, _(u"L'heure de fin doit Ãªtre supÃ©rieure Ã  l'heure de dÃ©but !"), "Information", wx.OK | wx.ICON_INFORMATION)
                     dlg.ShowModal()
                     dlg.Destroy()
                     return
         
-        # Si l'heure est valide, on passe à DATE_FIN
+        # Si l'heure est valide, on passe Ã  DATE_FIN
         if len(texteBrut)==4 and validation == True:
             self.ctrl_heure_max.SetFocus()
 
@@ -130,7 +130,7 @@ class MyDialog(wx.Dialog):
         if texteBrut == "":
             validation = False
 
-        # Vérifie chaque chiffre
+        # VÃ©rifie chaque chiffre
         for chiffre in texteBrut:
             if chiffre != " ":
                 if not (0 <= int(chiffre) <=9):
@@ -138,39 +138,39 @@ class MyDialog(wx.Dialog):
             else:
                 validation = False
 
-        # Vérification de l'ensemble de la date
+        # VÃ©rification de l'ensemble de la date
         if validation == True and len(texteBrut)==4:
             if not (0<= int(texteBrut[:2]) <=24):
                 validation = False
             if not (0<= int(texteBrut[2:]) <=59):
                 validation = False
                 
-            # Vérifie que heure_Fin est supérieure à Heure_Debut    
+            # VÃ©rifie que heure_Fin est supÃ©rieure Ã  Heure_Debut    
             if self.ctrl_heure_min.GetPlainValue() != "" and self.ctrl_heure_max.GetPlainValue() != "":
                 delta = int(self.ctrl_heure_max.GetPlainValue()) - int(self.ctrl_heure_min.GetPlainValue())
                 if delta < 1:
                     validation = False
-                    dlg = wx.MessageDialog(self, _(u"L'heure de fin doit être supérieure à l'heure de début !"), "Information", wx.OK | wx.ICON_INFORMATION)
+                    dlg = wx.MessageDialog(self, _(u"L'heure de fin doit Ãªtre supÃ©rieure Ã  l'heure de dÃ©but !"), "Information", wx.OK | wx.ICON_INFORMATION)
                     dlg.ShowModal()
                     dlg.Destroy()
                     return
                 
-        # Si l'heure est valide, on passe à DATE_FIN
+        # Si l'heure est valide, on passe Ã  DATE_FIN
         if len(texteBrut)==4 and validation == True:
             self.bouton_ok.SetFocus()
             
     def ValidationDonnees(self):
-        """ Validation des données """
-        # Vérifie la validité des heures
+        """ Validation des donnÃ©es """
+        # VÃ©rifie la validitÃ© des heures
         heureDebut = self.ctrl_heure_min.GetValue()
         heureFin = self.ctrl_heure_max.GetValue()
         if heureDebut == "  :  " :
-            message = _(u"Vous devez saisir une heure de début.")
+            message = _(u"Vous devez saisir une heure de dÃ©but.")
             wx.MessageBox(message, "Erreur de saisie")
             self.ctrl_heure_min.SetFocus()
             return False
         if heureDebut[3:] >= "60" or heureDebut[3] == " " or heureDebut[4] == " ":
-            message = _(u"L'heure de début n'est pas valide.")
+            message = _(u"L'heure de dÃ©but n'est pas valide.")
             wx.MessageBox(message, "Erreur de saisie")
             self.ctrl_heure_min.SetFocus()
             return False
@@ -185,7 +185,7 @@ class MyDialog(wx.Dialog):
             self.ctrl_heure_max.SetFocus()
             return False
         if heureDebut < "00:00" or heureDebut > "24:00" :
-            message = _(u"L'heure de début n'est pas valide")
+            message = _(u"L'heure de dÃ©but n'est pas valide")
             wx.MessageBox(message, "Erreur de saisie")
             self.ctrl_heure_min.SetFocus()
             return False
@@ -205,28 +205,28 @@ class MyDialog(wx.Dialog):
             self.ctrl_heure_max.SetFocus()
             return False
         if heureDebut > heureFin :
-            message = _(u"L'heure de fin doit être supérieure à l'heure de début !")
+            message = _(u"L'heure de fin doit Ãªtre supÃ©rieure Ã  l'heure de dÃ©but !")
             wx.MessageBox(message, "Erreur de saisie")
             self.ctrl_heure_min.SetFocus()
             return False
 
-        # Vérifie qu'il y a un delta de 15min entre l'heure de début et de fin
+        # VÃ©rifie qu'il y a un delta de 15min entre l'heure de dÃ©but et de fin
         HMin = datetime.timedelta(hours=int(heureDebut[:2]), minutes=int(heureDebut[3:]))
         HMax = datetime.timedelta(hours=int(heureFin[:2]), minutes=int(heureFin[3:]))
         delta = ((HMax - HMin).seconds)//60.0
         if delta < 60 :
-            message = _(u"L'amplitude horaire doit être au minimum de 1 heure !")
+            message = _(u"L'amplitude horaire doit Ãªtre au minimum de 1 heure !")
             wx.MessageBox(message, "Erreur de saisie")
             self.ctrl_heure_min.SetFocus()
             return False
         
     def OnBoutonOk(self, event):
-        """ Validation des données saisies """
-        # Validation des données
+        """ Validation des donnÃ©es saisies """
+        # Validation des donnÃ©es
         validation = self.ValidationDonnees()
         if validation == False : return
         
-        # Ferme la boîte de dialogue
+        # Ferme la boÃ®te de dialogue
         self.EndModal(wx.ID_OK) 
     
     def GetHeureMin(self):

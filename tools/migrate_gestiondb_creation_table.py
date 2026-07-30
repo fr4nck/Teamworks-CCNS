@@ -46,7 +46,7 @@ PATTERN = re.compile(
 
 
 def main() -> int:
-    source = TARGET.read_text(encoding="iso-8859-15")
+    source = TARGET.read_text(encoding="utf-8")
     if FIXED in source:
         print("GestionDB.CreationTable already repaired")
         return 0
@@ -58,7 +58,7 @@ def main() -> int:
         )
 
     repaired = PATTERN.sub(FIXED, source, count=1)
-    TARGET.write_text(repaired, encoding="iso-8859-15")
+    TARGET.write_text(repaired, encoding="utf-8")
     print(f"updated {TARGET.relative_to(ROOT)}")
     return 0
 

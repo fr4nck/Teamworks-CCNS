@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -37,19 +37,19 @@ class Panel(wx.Panel):
         self.listeDisponibilites = []
         
         # Acte
-        self.sizer_acte_staticbox = wx.StaticBox(self, -1, _(u"1. Dépôt de candidature"))
-        self.label_introduction = wx.StaticText(self, -1, _(u"Vous pouvez ici saisir les informations concernant le dépôt de candidature."))
+        self.sizer_acte_staticbox = wx.StaticBox(self, -1, _(u"1. DÃ©pÃ´t de candidature"))
+        self.label_introduction = wx.StaticText(self, -1, _(u"Vous pouvez ici saisir les informations concernant le dÃ©pÃ´t de candidature."))
         self.label_date = wx.StaticText(self, -1, _(u"Date :"))
         self.ctrl_date = DatePickerCtrl(self, -1, style=DP_DROPDOWN)
         self.label_type = wx.StaticText(self, -1, _(u"Type :"))
         listeImages = [ (_(u"De vive voix"), "Dialogue.png"),
                                 (_(u"Courrier"), "Mail.png"), 
-                                (_(u"Téléphone"), "Mobile.png"),
-                                (_(u"Main à main"), "Mainamain.png"),
+                                (_(u"TÃ©lÃ©phone"), "Mobile.png"),
+                                (_(u"Main Ã  main"), "Mainamain.png"),
                                 (_(u"Email"), "Mail2.png"),
-                                (_(u"Pôle Emploi"), "Pole_emploi.png"),
+                                (_(u"PÃ´le Emploi"), "Pole_emploi.png"),
                                 (_(u"Organisateur"), "Etoile.png"),
-                                (_(u"Fédération"), "Etoile.png"),
+                                (_(u"FÃ©dÃ©ration"), "Etoile.png"),
                                 (_(u"Autre"), "Etoile.png"),
                                 ] 
         self.ctrl_type = MyBitmapComboBox(self, listeImages)
@@ -64,9 +64,9 @@ class Panel(wx.Panel):
         self.ctrl_emploi.Remplissage(self.Importation_emplois())
         self.bouton_emplois = wx.Button(self, -1, "...", size=(20, 20))
         
-        # Disponibilités
-        self.sizer_disponibilites_staticbox = wx.StaticBox(self, -1, _(u"3. Disponibilités"))
-        self.label_periodes = wx.StaticText(self, -1, _(u"Périodes :"))
+        # DisponibilitÃ©s
+        self.sizer_disponibilites_staticbox = wx.StaticBox(self, -1, _(u"3. DisponibilitÃ©s"))
+        self.label_periodes = wx.StaticText(self, -1, _(u"PÃ©riodes :"))
         self.ctrl_periodes = ListBoxDisponibilites(self)
         self.ctrl_periodes.SetMinSize((200, -1))
         self.bouton_ajouter_periode = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_ANY))
@@ -76,7 +76,7 @@ class Panel(wx.Panel):
         self.ctrl_periodes_remarques = wx.TextCtrl(self, -1, u"")
         
         # Poste
-        self.sizer_poste_staticbox = wx.StaticBox(self, -1, _(u"4. Poste souhaité"))
+        self.sizer_poste_staticbox = wx.StaticBox(self, -1, _(u"4. Poste souhaitÃ©"))
         self.label_fonction = wx.StaticText(self, -1, _(u"Fonction :"))
         self.ctrl_fonction = CheckListBox(self)
         self.ctrl_fonction.Remplissage(self.Importation_fonctions())
@@ -88,23 +88,23 @@ class Panel(wx.Panel):
         self.label_poste_remarques = wx.StaticText(self, -1, _(u"Remarques :"))
         self.ctrl_poste_remarques = wx.TextCtrl(self, -1, "")
         
-        # Réponse
-        self.sizer_reponse_staticbox = wx.StaticBox(self, -1, _(u"5. Réponse"))
-        self.label_decision = wx.StaticText(self, -1, _(u"Décision :"))
-        listeImages = [ (_(u"Décision non prise"), "Question.png"), (_(u"Oui"), "Ok_2.png"), (_(u"Non"), "Supprimer_2.png") ]
+        # RÃ©ponse
+        self.sizer_reponse_staticbox = wx.StaticBox(self, -1, _(u"5. RÃ©ponse"))
+        self.label_decision = wx.StaticText(self, -1, _(u"DÃ©cision :"))
+        listeImages = [ (_(u"DÃ©cision non prise"), "Question.png"), (_(u"Oui"), "Ok_2.png"), (_(u"Non"), "Supprimer_2.png") ]
         self.ctrl_decision = MyBitmapComboBox(self, listeImages=listeImages)
         self.label_reponse_remarques = wx.StaticText(self, -1, _(u"Remarques :"))
         self.ctrl_reponse_remarques = wx.TextCtrl(self, -1, "")
-        self.label_reponse = wx.StaticText(self, -1, _(u"Réponse :"))
-        self.ctrl_reponse_obligatoire = wx.CheckBox(self, -1, _(u"Réponse obligatoire"))
-        self.ctrl_reponse_communiquee = wx.CheckBox(self, -1, _(u"Réponse communiquée au candidat"))
+        self.label_reponse = wx.StaticText(self, -1, _(u"RÃ©ponse :"))
+        self.ctrl_reponse_obligatoire = wx.CheckBox(self, -1, _(u"RÃ©ponse obligatoire"))
+        self.ctrl_reponse_communiquee = wx.CheckBox(self, -1, _(u"RÃ©ponse communiquÃ©e au candidat"))
         self.label_reponse1 = wx.StaticText(self, -1, _(u"le"))
         self.date_envoi_reponse = DatePickerCtrl(self, -1, style=DP_DROPDOWN)
         self.label_reponse2 = wx.StaticText(self, -1, _(u"par"))
         listeImages = [ (_(u"De vive voix"), "Dialogue.png"),
                                 (_(u"Courrier"), "Mail.png"), 
-                                (_(u"Téléphone"), "Mobile.png"),
-                                (_(u"Main à main"), "Mainamain.png"),
+                                (_(u"TÃ©lÃ©phone"), "Mobile.png"),
+                                (_(u"Main Ã  main"), "Mainamain.png"),
                                 (_(u"Email"), "Mail2.png"),
                                 (_(u"Autre"), "Etoile.png"),
                                 ] 
@@ -143,32 +143,32 @@ class Panel(wx.Panel):
         self.Bind(wx.EVT_CHECKBOX, self.OnCheckReponseCommuniquee, self.ctrl_reponse_communiquee)
         self.Bind(wx.EVT_CONTEXT_MENU, self.OnContextMenu)
         
-        # Importation des données
+        # Importation des donnÃ©es
         if self.IDcandidature != None :
             self.Importation()
         
-        # Désactive la réponse si besoin
+        # DÃ©sactive la rÃ©ponse si besoin
         self.OnCheckReponse(None)
         
     def __set_properties(self):
         self.ctrl_date.SetToolTip(wx.ToolTip(_(u"Saisissez la date de l'acte de candidature")))
-        self.ctrl_type.SetToolTip(wx.ToolTip(_(u"Sélectionnez un type d'acte dans la liste proposée")))
+        self.ctrl_type.SetToolTip(wx.ToolTip(_(u"SÃ©lectionnez un type d'acte dans la liste proposÃ©e")))
         self.ctrl_acte_remarques.SetToolTip(wx.ToolTip(_(u"Saisissez des remarques sur l'acte de candidature")))
-        self.ctrl_emploi.SetToolTip(wx.ToolTip(_(u"Sélectionnez une offre d'emploi dans la liste proposée")))
-        self.ctrl_periodes.SetToolTip(wx.ToolTip(_(u"Sélectionnez un ou plusieurs périodes de disponibilités")))
-        self.ctrl_periodes_remarques.SetToolTip(wx.ToolTip(_(u"Saisissez un complement d'information sur les disponibilités")))
-        self.ctrl_fonction.SetToolTip(wx.ToolTip(_(u"Cochez la ou les fonctions recherchées par le candidat")))
-        self.ctrl_affectations.SetToolTip(wx.ToolTip(_(u"Cochez la ou les affectations recherchées par le candidat")))
-        self.ctrl_poste_remarques.SetToolTip(wx.ToolTip(_(u"Saisissez un complément d'information sur le poste souhaité")))
+        self.ctrl_emploi.SetToolTip(wx.ToolTip(_(u"SÃ©lectionnez une offre d'emploi dans la liste proposÃ©e")))
+        self.ctrl_periodes.SetToolTip(wx.ToolTip(_(u"SÃ©lectionnez un ou plusieurs pÃ©riodes de disponibilitÃ©s")))
+        self.ctrl_periodes_remarques.SetToolTip(wx.ToolTip(_(u"Saisissez un complement d'information sur les disponibilitÃ©s")))
+        self.ctrl_fonction.SetToolTip(wx.ToolTip(_(u"Cochez la ou les fonctions recherchÃ©es par le candidat")))
+        self.ctrl_affectations.SetToolTip(wx.ToolTip(_(u"Cochez la ou les affectations recherchÃ©es par le candidat")))
+        self.ctrl_poste_remarques.SetToolTip(wx.ToolTip(_(u"Saisissez un complÃ©ment d'information sur le poste souhaitÃ©")))
         self.ctrl_decision.SetToolTip(wx.ToolTip(_(u"Selectionnez votre decision concernant cet acte de candidature dans la liste proposee")))
-        self.ctrl_reponse_remarques.SetToolTip(wx.ToolTip(_(u"Vous pouvez saisir un complément d'information à propos de la décision")))
-        self.ctrl_reponse_obligatoire.SetToolTip(wx.ToolTip(_(u"Cochez cette case si une réponse doit être communiqué au candidat")))
-        self.ctrl_reponse_communiquee.SetToolTip(wx.ToolTip(_(u"Cochez cette case si vous avez communiqué votre réponse au candidat")))
-        self.date_envoi_reponse.SetToolTip(wx.ToolTip(_(u"Saisissez la date à laquelle vous avez informé le candidat de la réponse")))
-        self.ctrl_type_reponse.SetToolTip(wx.ToolTip(_(u"Sélectionnez le type de communication utilisé")))
-        self.bouton_ajouter_periode.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour ajouter une période")))
-        self.bouton_modifier_periode.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier la période sélectionnée")))
-        self.bouton_supprimer_periode.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer la période sélectionnée")))
+        self.ctrl_reponse_remarques.SetToolTip(wx.ToolTip(_(u"Vous pouvez saisir un complÃ©ment d'information Ã  propos de la dÃ©cision")))
+        self.ctrl_reponse_obligatoire.SetToolTip(wx.ToolTip(_(u"Cochez cette case si une rÃ©ponse doit Ãªtre communiquÃ© au candidat")))
+        self.ctrl_reponse_communiquee.SetToolTip(wx.ToolTip(_(u"Cochez cette case si vous avez communiquÃ© votre rÃ©ponse au candidat")))
+        self.date_envoi_reponse.SetToolTip(wx.ToolTip(_(u"Saisissez la date Ã  laquelle vous avez informÃ© le candidat de la rÃ©ponse")))
+        self.ctrl_type_reponse.SetToolTip(wx.ToolTip(_(u"SÃ©lectionnez le type de communication utilisÃ©")))
+        self.bouton_ajouter_periode.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour ajouter une pÃ©riode")))
+        self.bouton_modifier_periode.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier la pÃ©riode sÃ©lectionnÃ©e")))
+        self.bouton_supprimer_periode.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer la pÃ©riode sÃ©lectionnÃ©e")))
         self.bouton_fonctions.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour ajouter, modifier ou supprimer des fonctions")))
         self.bouton_affectations.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour ajouter, modifier ou supprimer des affectations")))
         self.bouton_emplois.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour ajouter, modifier ou supprimer des offres d'emploi")))
@@ -307,27 +307,27 @@ class Panel(wx.Panel):
     def Onbouton_courrier(self, event):
         """ Imprime un document par publipostage """
         
-        # Type du dépôt
+        # Type du dÃ©pÃ´t
         valeur = self.ctrl_type.GetSelection()
         if valeur == -1 :
-            dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement sélectionner un type de dépôt de candidature"), "Erreur", wx.OK | wx.ICON_EXCLAMATION)  
+            dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement sÃ©lectionner un type de dÃ©pÃ´t de candidature"), "Erreur", wx.OK | wx.ICON_EXCLAMATION)  
             dlg.ShowModal()
             dlg.Destroy()
             self.ctrl_type.SetFocus()
             return False
 
-        # Mode envoi de la réponse
+        # Mode envoi de la rÃ©ponse
         if self.ctrl_reponse_communiquee.GetValue() == True :
             valeur = self.ctrl_type_reponse.GetSelection()
             if valeur == -1 :
-                dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement sélectionner un mode d'envoi pour la réponse"), "Erreur", wx.OK | wx.ICON_EXCLAMATION)  
+                dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement sÃ©lectionner un mode d'envoi pour la rÃ©ponse"), "Erreur", wx.OK | wx.ICON_EXCLAMATION)  
                 dlg.ShowModal()
                 dlg.Destroy()
                 self.ctrl_type_reponse.SetFocus()
                 return False
         
         # Confirmation de la sauvegarde
-        dlg = wx.MessageDialog(self, _(u"Avant d'ouvrir l'assistant publipostage, il est nécessaire\nde sauvegarder les données de cette fiche. Confirmez-vous ?"), "Confirmation", wx.YES_NO|wx.NO_DEFAULT|wx.ICON_QUESTION)
+        dlg = wx.MessageDialog(self, _(u"Avant d'ouvrir l'assistant publipostage, il est nÃ©cessaire\nde sauvegarder les donnÃ©es de cette fiche. Confirmez-vous ?"), "Confirmation", wx.YES_NO|wx.NO_DEFAULT|wx.ICON_QUESTION)
         reponse = dlg.ShowModal()
         if reponse == wx.ID_NO:
             dlg.Destroy()
@@ -340,7 +340,7 @@ class Panel(wx.Panel):
         self.bouton_annuler.Enable(False)
         self.GetParent().EnableCloseButton(False)
         
-        # Récupère les données pour le publipostage
+        # RÃ©cupÃ¨re les donnÃ©es pour le publipostage
         from Utils import UTILS_Publipostage_donnees
         dictDonnees = UTILS_Publipostage_donnees.GetDictDonnees(categorie="candidature", listeID=[self.IDcandidature,])
         # Ouvre le publiposteur
@@ -372,7 +372,7 @@ class Panel(wx.Panel):
         self.ctrl_type_reponse.Enable(etat)
         
     def SetDatePicker(self, controle, date) :
-        """ Met une date au format datetime dans un datePicker donné """
+        """ Met une date au format datetime dans un datePicker donnÃ© """
         annee = int(date.year)
         mois = int(date.month)-1
         jour = int(date.day)
@@ -416,7 +416,7 @@ class Panel(wx.Panel):
         return listeDonnees
     
     def Importation(self):
-        # Importation des données de la candidature
+        # Importation des donnÃ©es de la candidature
         DB = GestionDB.DB()        
         req = """SELECT IDcandidat, IDpersonne, date_depot, IDtype, acte_remarques, IDemploi, periodes_remarques, poste_remarques, 
         IDdecision, decision_remarques, reponse_obligatoire, reponse, date_reponse, IDtype_reponse 
@@ -443,7 +443,7 @@ class Panel(wx.Panel):
         self.OnCheckReponse(None)
         self.OnCheckReponseCommuniquee(None)
         
-        # Importation des disponibilités
+        # Importation des disponibilitÃ©s
         DB = GestionDB.DB()        
         req = """SELECT IDdisponibilite, date_debut, date_fin
         FROM disponibilites WHERE IDcandidature=%d ORDER BY date_debut; """ % self.IDcandidature
@@ -482,23 +482,23 @@ class Panel(wx.Panel):
         self.ctrl_affectations.CocheListe(listeAffectations)
 
     def MAJ_emplois(self) :
-        # Récupère liste des fonctions disponibles
+        # RÃ©cupÃ¨re liste des fonctions disponibles
         self.ctrl_emploi.Remplissage(self.Importation_emplois())
         self.MAJ_fonctions()
         self.MAJ_affectations()
         
     def MAJ_fonctions(self) :
-        # Récupère liste des fonctions disponibles
+        # RÃ©cupÃ¨re liste des fonctions disponibles
         self.ctrl_fonction.Remplissage(self.Importation_fonctions())
         self.ctrl_fonction.CocheListe()
         
     def MAJ_affectations(self):
-        # Récupère liste des fonctions disponibles
+        # RÃ©cupÃ¨re liste des fonctions disponibles
         self.ctrl_affectations.Remplissage(self.Importation_affectations())
         self.ctrl_affectations.CocheListe()
         
     def OnAjouterPeriode(self, event):
-        # Ajout d'une période de disponibilités
+        # Ajout d'une pÃ©riode de disponibilitÃ©s
         dlg = DLG_Selection_periode.SelectionPeriode(self)
         if dlg.ShowModal() == wx.ID_OK:
             date_debut, date_fin = dlg.GetDates()
@@ -511,10 +511,10 @@ class Panel(wx.Panel):
         self.ctrl_periodes.Remplissage(self.listeDisponibilites)
         
     def OnModifierPeriode(self, event):
-        # Modification d'une période de disponibilité
+        # Modification d'une pÃ©riode de disponibilitÃ©
         index = self.ctrl_periodes.GetSelection()
         if index == -1 : 
-            dlg = wx.MessageDialog(self, _(u"Vous devez déjà sélectionner une période dans la liste"), _(u"Erreur"), wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez dÃ©jÃ  sÃ©lectionner une pÃ©riode dans la liste"), _(u"Erreur"), wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -532,10 +532,10 @@ class Panel(wx.Panel):
         self.ctrl_periodes.Remplissage(self.listeDisponibilites)
         
     def OnSupprimerPeriode(self, event):
-        # Suppression d'une période de disponibilité
+        # Suppression d'une pÃ©riode de disponibilitÃ©
         index = self.ctrl_periodes.GetSelection()
         if index == -1 : 
-            dlg = wx.MessageDialog(self, _(u"Vous devez déjà sélectionner une période dans la liste"), _(u"Erreur"), wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez dÃ©jÃ  sÃ©lectionner une pÃ©riode dans la liste"), _(u"Erreur"), wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -544,7 +544,7 @@ class Panel(wx.Panel):
         # Demande de confirmation
         formatDate = "%d/%m/%Y"
         texteDates = _(u"Du %s au %s") % (date_debut.strftime(formatDate), date_fin.strftime(formatDate))
-        txtMessage = six.text_type((_(u"Voulez-vous vraiment supprimer cette période de disponibilité ? \n\n> %s") % texteDates))
+        txtMessage = six.text_type((_(u"Voulez-vous vraiment supprimer cette pÃ©riode de disponibilitÃ© ? \n\n> %s") % texteDates))
         dlgConfirm = wx.MessageDialog(self, txtMessage, _(u"Confirmation de suppression"), wx.YES_NO|wx.NO_DEFAULT|wx.ICON_QUESTION)
         reponse = dlgConfirm.ShowModal()
         dlgConfirm.Destroy()
@@ -577,7 +577,7 @@ class Panel(wx.Panel):
         self.GetParent().Fermer()
         
     def Onbouton_aide(self, event):
-        dlg = wx.MessageDialog(self, _(u"L'aide du module Recrutement est en cours de rédaction.\nElle sera disponible lors d'une mise à jour ultérieure."), "Aide indisponible", wx.OK | wx.ICON_INFORMATION)
+        dlg = wx.MessageDialog(self, _(u"L'aide du module Recrutement est en cours de rÃ©daction.\nElle sera disponible lors d'une mise Ã  jour ultÃ©rieure."), "Aide indisponible", wx.OK | wx.ICON_INFORMATION)
         dlg.ShowModal()
         dlg.Destroy()
             
@@ -586,20 +586,20 @@ class Panel(wx.Panel):
         self.GetParent().Fermer()
         
     def Onbouton_ok(self, event):
-        """ Validation des données saisies """
+        """ Validation des donnÃ©es saisies """
         
-        # Type du dépôt
+        # Type du dÃ©pÃ´t
         valeur = self.ctrl_type.GetSelection()
         if valeur == -1 :
-            dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement sélectionner un type de dépôt de candidature"), "Erreur", wx.OK | wx.ICON_EXCLAMATION)  
+            dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement sÃ©lectionner un type de dÃ©pÃ´t de candidature"), "Erreur", wx.OK | wx.ICON_EXCLAMATION)  
             dlg.ShowModal()
             dlg.Destroy()
             self.ctrl_type.SetFocus()
             return False
 
-        # Disponibilités
+        # DisponibilitÃ©s
         if len(self.listeDisponibilites) == 0 :
-            dlgConfirm = wx.MessageDialog(self, _(u"Vous n'avez saisi aucune période de disponibilité. Confirmez-vous ce choix ?"), _(u"Confirmation"), wx.YES_NO|wx.NO_DEFAULT|wx.ICON_QUESTION)
+            dlgConfirm = wx.MessageDialog(self, _(u"Vous n'avez saisi aucune pÃ©riode de disponibilitÃ©. Confirmez-vous ce choix ?"), _(u"Confirmation"), wx.YES_NO|wx.NO_DEFAULT|wx.ICON_QUESTION)
             reponse = dlgConfirm.ShowModal()
             dlgConfirm.Destroy()
             if reponse == wx.ID_NO:
@@ -621,17 +621,17 @@ class Panel(wx.Panel):
             if reponse == wx.ID_NO:
                 return False
         
-        # Mode envoi de la réponse
+        # Mode envoi de la rÃ©ponse
         if self.ctrl_reponse_communiquee.GetValue() == True :
             valeur = self.ctrl_type_reponse.GetSelection()
             if valeur == -1 :
-                dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement sélectionner un mode d'envoi pour la réponse"), "Erreur", wx.OK | wx.ICON_EXCLAMATION)  
+                dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement sÃ©lectionner un mode d'envoi pour la rÃ©ponse"), "Erreur", wx.OK | wx.ICON_EXCLAMATION)  
                 dlg.ShowModal()
                 dlg.Destroy()
                 self.ctrl_type_reponse.SetFocus()
                 return False
         
-        # Sauvegarde des données
+        # Sauvegarde des donnÃ©es
         self.Sauvegarde()
         
         # MAJ du listView
@@ -651,9 +651,9 @@ class Panel(wx.Panel):
         self.GetParent().Fermer()
     
     def Sauvegarde(self):
-        # Sauvegarde des données
+        # Sauvegarde des donnÃ©es
         
-        # Dépôt
+        # DÃ©pÃ´t
         date = str(self.GetDatePickerValue(self.ctrl_date))
         type_depot = self.ctrl_type.GetSelection()
         remarques_depot = self.ctrl_acte_remarques.GetValue()
@@ -661,7 +661,7 @@ class Panel(wx.Panel):
         # Offre d'emploi
         emploi = self.ctrl_emploi.GetIDselection()
         
-        # Disponibilités
+        # DisponibilitÃ©s
         listeDisponibilites = self.listeDisponibilites
         remarques_periodes = self.ctrl_periodes_remarques.GetValue()
         
@@ -705,7 +705,7 @@ class Panel(wx.Panel):
             nouvelleCandidature = False
         DB.Commit()
         
-        # Sauvegarde des disponibilités
+        # Sauvegarde des disponibilitÃ©s
         listeID = []
         for IDdisponibilite, date_debut, date_fin in listeDisponibilites :
             listeDonnees = [    ("IDcandidature",   self.IDcandidature),  
@@ -720,7 +720,7 @@ class Panel(wx.Panel):
             DB.Commit()
             listeID.append(IDdisponibilite)
             
-        # Effacement des disponibilités supprimées
+        # Effacement des disponibilitÃ©s supprimÃ©es
         if nouvelleCandidature == False :
             req = """SELECT IDdisponibilite, date_debut, date_fin
             FROM disponibilites WHERE IDcandidature=%d; """ % self.IDcandidature
@@ -750,7 +750,7 @@ class Panel(wx.Panel):
                 newID = DB.ReqInsert("cand_fonctions", listeDonnees)
                 DB.Commit()
             
-        # Effacement des fonctions supprimées
+        # Effacement des fonctions supprimÃ©es
         if nouvelleCandidature == False :
             for IDcand_fonction, IDfonction in listeIDcand_fonction :
                 if IDfonction not in listeFonctions :
@@ -776,7 +776,7 @@ class Panel(wx.Panel):
                 newID = DB.ReqInsert("cand_affectations", listeDonnees)
                 DB.Commit()
             
-        # Effacement des affectations supprimées
+        # Effacement des affectations supprimÃ©es
         if nouvelleCandidature == False :
             for IDcand_affectation, IDaffectation in listeIDcand_affectation :
                 if IDaffectation not in listeAffectations :
@@ -801,7 +801,7 @@ class MyBitmapComboBox(BitmapComboBox):
         for texte, nomImage in listeImages :
             img = wx.Bitmap(Chemins.GetStaticPath("Images/16x16/%s" % nomImage), wx.BITMAP_TYPE_ANY)
             self.Append(texte, img, texte)
-        # Sélection par défaut
+        # SÃ©lection par dÃ©faut
         self.Select(0)
 
 
@@ -835,7 +835,7 @@ class ListBoxDisponibilites(wx.ListBox):
         if index != -1 :
             self.SetSelection(index)
         
-        # Création du menu contextuel
+        # CrÃ©ation du menu contextuel
         menuPop = UTILS_Adaptations.Menu()
 
         # Item Modifier
@@ -877,7 +877,7 @@ class ListBoxDisponibilites(wx.ListBox):
 
 class ChoiceEmploi(wx.Choice):
     def __init__(self, parent):
-        wx.Choice.__init__(self, parent, size=(100, -1), choices=[_(u"Candidature spontanée"),])
+        wx.Choice.__init__(self, parent, size=(100, -1), choices=[_(u"Candidature spontanÃ©e"),])
         self.dictIndexes = {}
         self.Select(0)
         
@@ -889,7 +889,7 @@ class ChoiceEmploi(wx.Choice):
             listeDonnees = []
         self.dictIndexes = {}
         self.Clear()
-        self.Append(_(u"Candidature spontanée"))
+        self.Append(_(u"Candidature spontanÃ©e"))
         index = 1
         for IDemploi, intitule, date_debut, date_fin in listeDonnees :
             date_debut = datetime.date(year=int(date_debut[:4]), month=int(date_debut[5:7]), day=int(date_debut[8:10]))
@@ -917,10 +917,10 @@ class ChoiceEmploi(wx.Choice):
         index = self.GetSelection() 
         if index == -1 or index == 0 : return
         
-        # récupération IDemploi
+        # rÃ©cupÃ©ration IDemploi
         IDemploi = self.dictIndexes[index]
 
-        # Récupération des disponibilités
+        # RÃ©cupÃ©ration des disponibilitÃ©s
         DB = GestionDB.DB()        
         req = """SELECT IDdisponibilite, date_debut, date_fin
         FROM emplois_dispo WHERE IDemploi=%d ORDER BY date_debut, date_fin; """ % IDemploi
@@ -933,7 +933,7 @@ class ChoiceEmploi(wx.Choice):
             self.GetParent().listeDisponibilites.append((None, date_debut, date_fin))
         self.GetParent().ctrl_periodes.Remplissage(self.GetParent().listeDisponibilites)
 
-        # Récupération FONCTIONS
+        # RÃ©cupÃ©ration FONCTIONS
         DB = GestionDB.DB()        
         req = """SELECT IDemploi_fonction, IDfonction
         FROM emplois_fonctions WHERE IDemploi=%d; """ % IDemploi
@@ -945,7 +945,7 @@ class ChoiceEmploi(wx.Choice):
             listeIDfonction.append(IDfonction)
         self.GetParent().ctrl_fonction.CocheListe(listeIDfonction)
         
-        # Récupération AFFECTATIONS
+        # RÃ©cupÃ©ration AFFECTATIONS
         DB = GestionDB.DB()        
         req = """SELECT IDemploi_affectation, IDaffectation
         FROM emplois_affectations WHERE IDemploi=%d; """ % IDemploi
@@ -980,7 +980,7 @@ class CheckListBox(wx.CheckListBox):
     def CocheListe(self, liste=None):
         if liste != None :
             self.listeIDcoches = liste
-        # Coche les ID donnés
+        # Coche les ID donnÃ©s
         for index in range(0, self.GetCount()) :
             if self.dictIndexes[index] in self.listeIDcoches :
                 self.Check(index, True)
@@ -988,7 +988,7 @@ class CheckListBox(wx.CheckListBox):
                 self.Check(index, False)
     
     def GetIDcoches(self):
-        # Récupère la liste des ID cochés :
+        # RÃ©cupÃ¨re la liste des ID cochÃ©s :
         listeIDcoches = []
         for index in range(0, self.GetCount()) :
             if self.IsChecked(index) == True :
@@ -1006,7 +1006,7 @@ class Dialog(wx.Dialog):
         self.parent = parent
         self.panel = Panel(self, IDcandidat=IDcandidat, IDpersonne=IDpersonne, IDcandidature=IDcandidature)
 
-        # Propriétés
+        # PropriÃ©tÃ©s
         nom_complet = self.GetNomCandidat(IDcandidat, IDpersonne)
         if IDcandidature == None :
             type = _(u"Saisie")
@@ -1045,7 +1045,7 @@ class Dialog(wx.Dialog):
         self.EndModal(wx.ID_CANCEL)
 
     def GetNomCandidat(self, IDcandidat=None, IDpersonne=None):
-        # Récupération des données
+        # RÃ©cupÃ©ration des donnÃ©es
         DB = GestionDB.DB()
         if IDpersonne == None or IDpersonne == 0 : 
             req = """SELECT civilite, nom, prenom

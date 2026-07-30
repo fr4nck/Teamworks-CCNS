@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -25,7 +25,7 @@ NOMS_EDITION = {
 
 
 def GetDictDonnees(categorie=None, listeID=None):
-    # Paramètres standards
+    # ParamÃ¨tres standards
     if listeID is None:
         listeID = []
     dict_donnees = {}
@@ -33,14 +33,14 @@ def GetDictDonnees(categorie=None, listeID=None):
     dict_donnees["NBREDOCUMENTS"] = len(listeID)
     dict_donnees["NOMEDITION"] = NOMS_EDITION[categorie]
     
-    # Importe les données uniques pour chaque document
+    # Importe les donnÃ©es uniques pour chaque document
     numDoc = 1
     for ID in listeID :
         listeMotscles, dictDonneesDocument = GetDonneesDocument(categorie, ID)
         dict_donnees[numDoc] = dictDonneesDocument
         numDoc += 1
     
-    # Préparation de la liste des mots-clés
+    # PrÃ©paration de la liste des mots-clÃ©s
     listeMotsclesTemp = []
     for motcle in listeMotscles :
         listeMotsclesTemp.append( (motcle, "base") )
@@ -117,7 +117,7 @@ def GetDonneesDocument(categorie=None, ID=None):
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------
 
 def Importation_candidat(IDcandidat=None):
-    # Données CANDIDAT
+    # DonnÃ©es CANDIDAT
     dictDonnees = {}
     
     DB = GestionDB.DB()        
@@ -138,7 +138,7 @@ def Importation_candidat(IDcandidat=None):
     dictDonnees["VILLERESID"] = ville_resid
     dictDonnees["MEMO"] = memo
     
-    # Champs spéciaux
+    # Champs spÃ©ciaux
     dictDonnees["CPRESID"] = ""
     try :
         if cp_resid != "" and cp_resid != None and cp_resid != "     " :
@@ -192,7 +192,7 @@ def Importation_candidat(IDcandidat=None):
             texteTemp += nom_diplome + "; "
         dictDonnees["QUALIFICATIONS"] = texteTemp[:-2]
     
-    # Coordonnées
+    # CoordonnÃ©es
     dictDonnees["TELEPHONES"] = ""
     dictDonnees["FAX"] = ""
     dictDonnees["EMAILS"] = ""
@@ -224,14 +224,14 @@ def Importation_candidat(IDcandidat=None):
         if nbreEmails > 0 : dictDonnees["EMAILS"] = texteEmails[:-2]
         if nbreFax > 0 : dictDonnees["FAX"] = texteFax[:-2]
     
-    # Liste des mots-clés
+    # Liste des mots-clÃ©s
     listeMotscles = [ "CIVILITE", "NOM", "PRENOM", "DATENAISS", "AGE", "ADRESSERESID", "CPRESID", "VILLERESID", "QUALIFICATIONS", "TELEPHONES", "FAX", "EMAILS", "MEMO"]
     
     return listeMotscles, dictDonnees
     
 
 def Importation_candidature(IDcandidature=None):
-    # Importation des données de la candidature
+    # Importation des donnÃ©es de la candidature
     dictDonnees = {}
     
     DB = GestionDB.DB()        
@@ -247,22 +247,22 @@ def Importation_candidature(IDcandidature=None):
     dictDonnees["_IDCANDIDAT"] = IDcandidat
     dictDonnees["_IDPERSONNE"] = IDpersonne
     
-    # Date de dépôt
+    # Date de dÃ©pÃ´t
     dictDonnees["DATEDEPOT"] = FonctionsPerso.DateEngFr(date_depot)
     
-    # Type dépôt
-    listeTypes = [_(u"De vive voix"), _(u"Courrier"), _(u"Téléphone"), _(u"Main à main"), _(u"Email"), _(u"Pôle Emploi"), _(u"Organisateur"), _(u"Fédération"), _(u"Autre")]
+    # Type dÃ©pÃ´t
+    listeTypes = [_(u"De vive voix"), _(u"Courrier"), _(u"TÃ©lÃ©phone"), _(u"Main Ã  main"), _(u"Email"), _(u"PÃ´le Emploi"), _(u"Organisateur"), _(u"FÃ©dÃ©ration"), _(u"Autre")]
     dictDonnees["TYPEDEPOT"] = listeTypes[IDtype]
     
     # Offre d'emploi
     dictDonnees["OFFREDEMPLOI"] = ""
     if IDemploi == 0 :
-        dictDonnees["OFFREDEMPLOI"] = _(u"Candidature spontanée")
+        dictDonnees["OFFREDEMPLOI"] = _(u"Candidature spontanÃ©e")
     else:
         listeMotsclesEmmplois, dictDonneesEmplois = Importation_offre_emploi(IDemploi=IDemploi)
         dictDonnees["OFFREDEMPLOI"] = dictDonneesEmplois["OFFRE_INTITULE"]
     
-    # Disponibilités
+    # DisponibilitÃ©s
     dictDonnees["DISPONIBILITES"] = ""
     DB = GestionDB.DB()        
     req = """SELECT IDdisponibilite, date_debut, date_fin
@@ -310,24 +310,24 @@ def Importation_candidature(IDcandidature=None):
             texteTemp += nomAffectation + "; "
         dictDonnees["AFFECTATIONS"] = texteTemp[:-2]
     
-    # Décision
-    typesDecision = [_(u"Décision non prise"), _(u"Oui"), _(u"Non")]
+    # DÃ©cision
+    typesDecision = [_(u"DÃ©cision non prise"), _(u"Oui"), _(u"Non")]
     dictDonnees["DECISION"] = typesDecision[IDdecision]
     
-    # Réponse
-    listeTypesReponses = [_(u"De vive voix"), _(u"Courrier"), _(u"Téléphone"), _(u"Main à main"), _(u"Email"), _(u"Autre")] 
+    # RÃ©ponse
+    listeTypesReponses = [_(u"De vive voix"), _(u"Courrier"), _(u"TÃ©lÃ©phone"), _(u"Main Ã  main"), _(u"Email"), _(u"Autre")] 
     if reponse == 1 :
         dictDonnees["DATEREPONSE"] = FonctionsPerso.DateEngFr(date_reponse)
         dictDonnees["TYPEREPONSE"] = listeTypesReponses(IDtype_reponse)
     
-    # Liste des mots-clés
+    # Liste des mots-clÃ©s
     listeMotscles = [ "DATEDEPOT", "TYPEDEPOT", "OFFREDEMPLOI",  "DISPONIBILITES", "FONCTIONS", "AFFECTATIONS", "DECISION", "DATEREPONSE", "TYPEREPONSE"]
     
     return listeMotscles, dictDonnees
 
 
 def Importation_offre_emploi(IDemploi=None):
-    # Importation des données d'une offre d'emploi
+    # Importation des donnÃ©es d'une offre d'emploi
     dictDonnees = {}
 
     dictDonnees["OFFREDEMPLOI"] = ""
@@ -349,14 +349,14 @@ def Importation_offre_emploi(IDemploi=None):
     dictDonnees["OFFRE_DETAIL"] = detail
     dictDonnees["OFFRE_REFERENCE_ANPE"] = reference_anpe
     
-    # Liste des mots-clés
+    # Liste des mots-clÃ©s
     listeMotscles = [ "OFFRE_INTITULE", "OFFRE_DETAIL", "OFFRE_DATEDEBUT", "OFFRE_DATEFIN", "OFFRE_REFERENCE_ANPE"]
     
     return listeMotscles, dictDonnees
                                         
                                     
 def Importation_personne(IDpersonne=None):
-    # Importation des données d'une personne
+    # Importation des donnÃ©es d'une personne
     dictDonnees = {}
     
     DB = GestionDB.DB()
@@ -408,7 +408,7 @@ def Importation_personne(IDpersonne=None):
     # Ville de naissance
     dictDonnees["VILLENAISS"] = ville_naiss
     
-    # Nationalité
+    # NationalitÃ©
     DB = GestionDB.DB()
     req = """
     SELECT nationalite
@@ -430,7 +430,7 @@ def Importation_personne(IDpersonne=None):
     DB.Close()
     dictDonnees["PAYSNAISS"] = listePays[0][0]
     
-    # Num sécu
+    # Num sÃ©cu
     dictDonnees["NUMSECU"] = num_secu
     
     # Adresse
@@ -465,7 +465,7 @@ def Importation_personne(IDpersonne=None):
         dictDonnees["SITUATION"] = listeSituations[0][0]
 
     
-    # Coordonnées
+    # CoordonnÃ©es
     dictDonnees["TELEPHONES"] = ""
     dictDonnees["FAX"] = ""
     dictDonnees["EMAILS"] = ""
@@ -497,7 +497,7 @@ def Importation_personne(IDpersonne=None):
         if nbreEmails > 0 : dictDonnees["EMAILS"] = texteEmails[:-2]
         if nbreFax > 0 : dictDonnees["FAX"] = texteFax[:-2]
 
-    # Liste des mots-clés
+    # Liste des mots-clÃ©s
     listeMotscles = [ "CIVILITE", "NOM", "NOMJFILLE", "PRENOM", "DATENAISS", "AGE", "CPNAISS", "VILLENAISS",
     "PAYSNAISS", "NATIONALITE", "NUMSECU", "ADRESSERESID", "CPRESID", "VILLERESID", "SITUATION",
     "TELEPHONES", "EMAILS", "FAX"]
@@ -505,7 +505,7 @@ def Importation_personne(IDpersonne=None):
     return listeMotscles, dictDonnees
 
 def Importation_contrat(IDcontrat=None):
-    # Importation des données d'un contrat
+    # Importation des donnÃ©es d'un contrat
     dictDonnees = {}
     
     DB = GestionDB.DB()
@@ -554,12 +554,12 @@ def Importation_contrat(IDcontrat=None):
     FROM valeurs_point WHERE IDvaleur_point=%d;
     """ % valeur_point
     DB.ExecuterReq(req)
-    dictDonnees["VALEURPOINT"] = u"%s ¤" % DB.ResultatReq()[0][0]
+    dictDonnees["VALEURPOINT"] = u"%s â‚¬" % DB.ResultatReq()[0][0]
     
-    # Liste des mots-clés
+    # Liste des mots-clÃ©s
     listeMotscles = [ "DATEDEBUT", "DATEFIN", "CLASSIFICATION", "TYPECONTRAT", "VALEURPOINT", "ESSAI"]
     
-    # Champs personnalisés des contrats
+    # Champs personnalisÃ©s des contrats
     req = """
     SELECT IDchamp, mot_cle
     FROM contrats_champs;
@@ -571,7 +571,7 @@ def Importation_contrat(IDcontrat=None):
         dictChamps[IDchamp] = mot_cle
         listeMotscles.append(mot_cle)
     
-    # Valeurs des champs personnalisés
+    # Valeurs des champs personnalisÃ©s
     req = """
     SELECT IDchamp, valeur
     FROM contrats_valchamps WHERE IDcontrat=%d AND type='contrat';

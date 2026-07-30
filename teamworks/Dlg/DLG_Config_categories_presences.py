@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -21,8 +21,8 @@ class Panel(wx.Panel):
     def __init__(self, parent, ID=-1):
         wx.Panel.__init__(self, parent, ID, style=wx.TAB_TRAVERSAL)
         
-        self.barreTitre = FonctionsPerso.BarreTitre(self,  _(u"Les catégories de présence"), u"")
-        texteIntro = _(u"Vous pouvez ici ajouter, modifier ou supprimer des catégories de présence. Vous pouvez utiliser autant de\ncatégories et sous-catégories que vous souhaitez. Exemples : 'Réunion', 'Congés payés', 'Formation'...")
+        self.barreTitre = FonctionsPerso.BarreTitre(self,  _(u"Les catÃ©gories de prÃ©sence"), u"")
+        texteIntro = _(u"Vous pouvez ici ajouter, modifier ou supprimer des catÃ©gories de prÃ©sence. Vous pouvez utiliser autant de\ncatÃ©gories et sous-catÃ©gories que vous souhaitez. Exemples : 'RÃ©union', 'CongÃ©s payÃ©s', 'Formation'...")
         self.label_introduction = FonctionsPerso.StaticWrapText(self, -1, texteIntro)
 
         self.treeSelection = 0
@@ -52,15 +52,15 @@ class Panel(wx.Panel):
         self.Bind(wx.EVT_SIZE, self.OnSize)
         
     def __set_properties(self):
-        self.bouton_ajouter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour créer une nouvelle catégorie de présences")))
+        self.bouton_ajouter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour crÃ©er une nouvelle catÃ©gorie de prÃ©sences")))
         self.bouton_ajouter.SetSize(self.bouton_ajouter.GetBestSize())
-        self.bouton_modifier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier une catégorie de présences")))
+        self.bouton_modifier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier une catÃ©gorie de prÃ©sences")))
         self.bouton_modifier.SetSize(self.bouton_modifier.GetBestSize())
-        self.bouton_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer une catégorie de présences")))
+        self.bouton_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer une catÃ©gorie de prÃ©sences")))
         self.bouton_supprimer.SetSize(self.bouton_supprimer.GetBestSize())
-        self.bouton_haut.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour déplacer la catégorie sélectionnée vers le haut")))
+        self.bouton_haut.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour dÃ©placer la catÃ©gorie sÃ©lectionnÃ©e vers le haut")))
         self.bouton_haut.SetSize(self.bouton_haut.GetBestSize())
-        self.bouton_bas.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour déplacer la catégorie sélectionnée vers le bas")))
+        self.bouton_bas.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour dÃ©placer la catÃ©gorie sÃ©lectionnÃ©e vers le bas")))
         self.bouton_bas.SetSize(self.bouton_bas.GetBestSize())
         self.bouton_aide.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour obtenir de l'aide")))
 
@@ -103,7 +103,7 @@ class Panel(wx.Panel):
         self.Ajouter()
 
     def Ajouter(self):
-        """ Créer une nouvelle catégorie """
+        """ CrÃ©er une nouvelle catÃ©gorie """
         dlg = DLG_Saisie_cat_presences.Dialog(self, -1, IDcat_parent=self.treeSelection)
         dlg.ShowModal()
         dlg.Destroy()
@@ -112,24 +112,24 @@ class Panel(wx.Panel):
         self.Modifier()
 
     def Modifier(self):
-        """ Modification d'une catégorie """
+        """ Modification d'une catÃ©gorie """
         IDcategorie = self.treeSelection
 
-        # Vérifie qu'un item a bien été sélectionné
+        # VÃ©rifie qu'un item a bien Ã©tÃ© sÃ©lectionnÃ©
         if IDcategorie == 0:
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sélectionner une catégorie à modifier dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÃ©lectionner une catÃ©gorie Ã  modifier dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
         
-        # Vérifie que cette catégorie n'est pas attribuée à une présence
+        # VÃ©rifie que cette catÃ©gorie n'est pas attribuÃ©e Ã  une prÃ©sence
         DB = GestionDB.DB()
         req = "SELECT IDpresence FROM presences WHERE IDcategorie=%d" % IDcategorie
         DB.ExecuterReq(req)
         listeDonnees = DB.ResultatReq()
         DB.Close()
         if len(listeDonnees) != 0 :
-            dlg = wx.MessageDialog(self, _(u"Cette catégorie a déjà été attribuée à ") + str(len(listeDonnees)) + _(u" présences.\nEtes-vous sûr de vouloir la modifier ?"), "Confirmation", wx.YES_NO|wx.NO_DEFAULT|wx.ICON_EXCLAMATION)
+            dlg = wx.MessageDialog(self, _(u"Cette catÃ©gorie a dÃ©jÃ  Ã©tÃ© attribuÃ©e Ã  ") + str(len(listeDonnees)) + _(u" prÃ©sences.\nEtes-vous sÃ»r de vouloir la modifier ?"), "Confirmation", wx.YES_NO|wx.NO_DEFAULT|wx.ICON_EXCLAMATION)
             reponse = dlg.ShowModal()
             if reponse == wx.ID_NO:
                 dlg.Destroy()
@@ -137,14 +137,14 @@ class Panel(wx.Panel):
             else: dlg.Destroy()
 
         
-        # Vérifie que cette catégorie n'est pas attribuée à un modèle de présences
+        # VÃ©rifie que cette catÃ©gorie n'est pas attribuÃ©e Ã  un modÃ¨le de prÃ©sences
         DB = GestionDB.DB()
         req = "SELECT IDtache FROM modeles_taches WHERE IDcategorie=%d" % IDcategorie
         DB.ExecuterReq(req)
         listeDonnees = DB.ResultatReq()
         DB.Close()
         if len(listeDonnees) != 0 :
-            dlg = wx.MessageDialog(self, _(u"Cette catégorie a déjà été attribuée à ") + str(len(listeDonnees)) + _(u" modèle(s) de présences.\nEtes-vous sûr de vouloir la modifier ?"), "Confirmation", wx.YES_NO|wx.NO_DEFAULT|wx.ICON_EXCLAMATION)
+            dlg = wx.MessageDialog(self, _(u"Cette catÃ©gorie a dÃ©jÃ  Ã©tÃ© attribuÃ©e Ã  ") + str(len(listeDonnees)) + _(u" modÃ¨le(s) de prÃ©sences.\nEtes-vous sÃ»r de vouloir la modifier ?"), "Confirmation", wx.YES_NO|wx.NO_DEFAULT|wx.ICON_EXCLAMATION)
             reponse = dlg.ShowModal()
             if reponse == wx.ID_NO:
                 dlg.Destroy()
@@ -159,67 +159,67 @@ class Panel(wx.Panel):
         self.Supprimer()
 
     def Supprimer(self):
-        """ Suppression d'une coordonnée """
+        """ Suppression d'une coordonnÃ©e """
         IDcategorie = self.treeSelection
 
-        # Vérifie qu'un item a bien été sélectionné
+        # VÃ©rifie qu'un item a bien Ã©tÃ© sÃ©lectionnÃ©
         if IDcategorie == 0:
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sélectionner une catégorie à supprimer dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÃ©lectionner une catÃ©gorie Ã  supprimer dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
 
 
-        # Vérifie que cette catégorie n'a pas de sous-catégorie
+        # VÃ©rifie que cette catÃ©gorie n'a pas de sous-catÃ©gorie
         DB = GestionDB.DB()
         req = "SELECT IDcategorie FROM cat_presences WHERE IDcat_parent=%d" % IDcategorie
         DB.ExecuterReq(req)
         listeDonnees = DB.ResultatReq()
         DB.Close()
         if len(listeDonnees) != 0 :
-            dlg = wx.MessageDialog(self, _(u"Vous ne pouvez pas supprimer une catégorie sans en avoir supprimé au préalable toutes les sous-catégories."), "Information", wx.OK | wx.ICON_ERROR)
+            dlg = wx.MessageDialog(self, _(u"Vous ne pouvez pas supprimer une catÃ©gorie sans en avoir supprimÃ© au prÃ©alable toutes les sous-catÃ©gories."), "Information", wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
             dlg.Destroy()
             return
         
-        # Vérifie que cette catégorie n'est pas attribuée à une présence
+        # VÃ©rifie que cette catÃ©gorie n'est pas attribuÃ©e Ã  une prÃ©sence
         DB = GestionDB.DB()
         req = "SELECT IDpresence FROM presences WHERE IDcategorie=%d" % IDcategorie
         DB.ExecuterReq(req)
         listeDonnees = DB.ResultatReq()
         DB.Close()
         if len(listeDonnees) != 0 :
-            dlg = wx.MessageDialog(self, _(u"Vous avez déjà enregistré ") + str(len(listeDonnees)) + _(u" présences avec cette catégorie. \nVous ne pouvez donc pas la supprimer."), "Information", wx.OK | wx.ICON_ERROR)
+            dlg = wx.MessageDialog(self, _(u"Vous avez dÃ©jÃ  enregistrÃ© ") + str(len(listeDonnees)) + _(u" prÃ©sences avec cette catÃ©gorie. \nVous ne pouvez donc pas la supprimer."), "Information", wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
             dlg.Destroy()
             return
         
-        # Vérifie que cette catégorie n'est pas attribuée à un modèle de présences
+        # VÃ©rifie que cette catÃ©gorie n'est pas attribuÃ©e Ã  un modÃ¨le de prÃ©sences
         DB = GestionDB.DB()
         req = "SELECT IDtache FROM modeles_taches WHERE IDcategorie=%d" % IDcategorie
         DB.ExecuterReq(req)
         listeDonnees = DB.ResultatReq()
         DB.Close()
         if len(listeDonnees) != 0 :
-            dlg = wx.MessageDialog(self, _(u"Vous avez déjà créé ") + str(len(listeDonnees)) + _(u" modèle(s) de planning avec cette catégorie. \nVous ne pouvez donc pas la supprimer."), "Information", wx.OK | wx.ICON_ERROR)
+            dlg = wx.MessageDialog(self, _(u"Vous avez dÃ©jÃ  crÃ©Ã© ") + str(len(listeDonnees)) + _(u" modÃ¨le(s) de planning avec cette catÃ©gorie. \nVous ne pouvez donc pas la supprimer."), "Information", wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
             dlg.Destroy()
             return
 
         # Demande de confirmation
         NomCategorie = self.treeCtrl_categories.treeSelection[1]
-        txtMessage = six.text_type((_(u"Voulez-vous vraiment supprimer cette catégorie ? \n\n> ") + NomCategorie))
+        txtMessage = six.text_type((_(u"Voulez-vous vraiment supprimer cette catÃ©gorie ? \n\n> ") + NomCategorie))
         dlgConfirm = wx.MessageDialog(self, txtMessage, _(u"Confirmation de suppression"), wx.YES_NO|wx.NO_DEFAULT|wx.ICON_QUESTION)
         reponse = dlgConfirm.ShowModal()
         dlgConfirm.Destroy()
         if reponse == wx.ID_NO:
             return
         
-        # Suppression de la catégorie
+        # Suppression de la catÃ©gorie
         self.DB = GestionDB.DB()
         self.DB.ReqDEL("cat_presences", "IDcategorie", IDcategorie)
 
-        # Suppression des enfants de cette catégorie
+        # Suppression des enfants de cette catÃ©gorie
         self.boucleSuppression(IDcategorie)
         
         # Fermeture de la DB
@@ -278,7 +278,7 @@ class TreeCtrlCategories(wx.TreeCtrl):
         return (r, v, b)
 
     def CreationImage(self, tailleImages, r, v, b):
-        """ Création des images pour le TreeCtrl """
+        """ CrÃ©ation des images pour le TreeCtrl """
         if 'phoenix' in wx.PlatformInfo:
             bmp = wx.Image(tailleImages[0], tailleImages[1], True)
             bmp.SetRGB((0, 0, 16, 16), 255, 255, 255)
@@ -309,7 +309,7 @@ class TreeCtrlCategories(wx.TreeCtrl):
         self.SetImageList(il)
         self.il = il
 
-        self.root = self.AddRoot(_(u"Catégories"))
+        self.root = self.AddRoot(_(u"CatÃ©gories"))
         if 'phoenix' in wx.PlatformInfo:
             self.SetItemData(self.root, 0)
         else:
@@ -329,7 +329,7 @@ class TreeCtrlCategories(wx.TreeCtrl):
         for item in self.listeCategories :
             if item[2] == IDparent:
 
-                # Création de la branche
+                # CrÃ©ation de la branche
                 newItem = self.AppendItem(itemParent, item[1])
                 if 'phoenix' in wx.PlatformInfo:
                     self.SetItemData(newItem, item[0])
@@ -337,7 +337,7 @@ class TreeCtrlCategories(wx.TreeCtrl):
                     self.SetItemData(newItem, item[0])
                 exec("self.SetItemImage(newItem, self.img" + str(item[0]) + ", wx.TreeItemIcon_Normal)")
 
-                # Sélection de l'item s'il sélectionné est par défaut
+                # SÃ©lection de l'item s'il sÃ©lectionnÃ© est par dÃ©faut
                 if self.select2 != None:
                     if int(item[0]) == self.select2 :
                         self.EnsureVisible(newItem)
@@ -358,9 +358,9 @@ class TreeCtrlCategories(wx.TreeCtrl):
         self.Remplissage()
 
     def Importation(self):
-        """ Récupération de la liste des catégories dans la base """
+        """ RÃ©cupÃ©ration de la liste des catÃ©gories dans la base """
 
-        # Initialisation de la connexion avec la Base de données
+        # Initialisation de la connexion avec la Base de donnÃ©es
         DB = GestionDB.DB()
         req = "SELECT * FROM cat_presences ORDER BY IDcat_parent, ordre"
         DB.ExecuterReq(req)
@@ -384,13 +384,13 @@ class TreeCtrlCategories(wx.TreeCtrl):
     def OnContextMenu(self, event):
         """Ouverture du menu contextuel """
 
-        # Recherche et sélection de l'item pointé avec la souris
+        # Recherche et sÃ©lection de l'item pointÃ© avec la souris
         item = self.FindTreeItem(event.GetPosition())
         if item == None:
             return
         self.SelectItem(item, True)
         
-        # Création du menu contextuel
+        # CrÃ©ation du menu contextuel
         menuPop = UTILS_Adaptations.Menu()
 
         # Item Ajouter
@@ -419,14 +419,14 @@ class TreeCtrlCategories(wx.TreeCtrl):
         menuPop.AppendSeparator()
 
         # Item Deplacer vers le haut
-        item = wx.MenuItem(menuPop, 40, _(u"Déplacer vers le haut"))
+        item = wx.MenuItem(menuPop, 40, _(u"DÃ©placer vers le haut"))
         bmp = wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Fleche_haut.png"), wx.BITMAP_TYPE_PNG)
         item.SetBitmap(bmp)
         menuPop.AppendItem(item)
         self.Bind(wx.EVT_MENU, self.Menu_Haut, id=40)
 
-        # Item Déplacer vers le bas
-        item = wx.MenuItem(menuPop, 50, _(u"Déplacer vers le bas"))
+        # Item DÃ©placer vers le bas
+        item = wx.MenuItem(menuPop, 50, _(u"DÃ©placer vers le bas"))
         bmp = wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Fleche_bas.png"), wx.BITMAP_TYPE_PNG)
         item.SetBitmap(bmp)
         menuPop.AppendItem(item)
@@ -436,7 +436,7 @@ class TreeCtrlCategories(wx.TreeCtrl):
         menuPop.Destroy()
 
     def FindTreeItem(self, position):
-        """ Permet de retrouver l'item pointé dans le TreeCtrl """
+        """ Permet de retrouver l'item pointÃ© dans le TreeCtrl """
         item, flags = self.HitTest(position)
         if item and flags & (wx.TREE_HITTEST_ONITEMLABEL |
                              wx.TREE_HITTEST_ONITEMICON):
@@ -462,16 +462,16 @@ class TreeCtrlCategories(wx.TreeCtrl):
         IDitemParent = self.GetItemData(itemParent)
         nbreEnfants = self.GetChildrenCount(itemParent, False)
         if nbreEnfants < 2:
-            dlg = wx.MessageDialog(self, _(u"Cet item est la seule dans sa catégorie. Vous ne pouvez donc pas le déplacer."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Cet item est la seule dans sa catÃ©gorie. Vous ne pouvez donc pas le dÃ©placer."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
 
-        # On le déplace vers le haut
+        # On le dÃ©place vers le haut
         IDcategorie = self.GetItemData(self.treeSelection[0])        
         DB = GestionDB.DB()
 
-        # Récupération de l'ordre
+        # RÃ©cupÃ©ration de l'ordre
         req = """
         SELECT IDcategorie, nom_categorie, ordre
         FROM cat_presences
@@ -484,9 +484,9 @@ class TreeCtrlCategories(wx.TreeCtrl):
         ordreTemp = None
         for categorie in listeCategories :
 
-            # Si c'est déjà le premier, on laisse tomber
+            # Si c'est dÃ©jÃ  le premier, on laisse tomber
             if categorie[0] == IDcategorie and categorie[2] == 1:
-                dlg = wx.MessageDialog(self, _(u"Cet item est le premier de sa catégorie. Vous ne pouvez donc pas le déplacer vers le haut."), "Information", wx.OK | wx.ICON_INFORMATION)
+                dlg = wx.MessageDialog(self, _(u"Cet item est le premier de sa catÃ©gorie. Vous ne pouvez donc pas le dÃ©placer vers le haut."), "Information", wx.OK | wx.ICON_INFORMATION)
                 dlg.ShowModal()
                 dlg.Destroy()
                 return
@@ -507,7 +507,7 @@ class TreeCtrlCategories(wx.TreeCtrl):
         DB.Commit()
         DB.Close()
 
-        # MàJ du treeCtrl
+        # MÃ J du treeCtrl
         self.select2 = IDcategorie
         self.MAJtree()
         self.SetFocus()
@@ -523,16 +523,16 @@ class TreeCtrlCategories(wx.TreeCtrl):
         IDitemParent = self.GetItemData(itemParent)
         nbreEnfants = self.GetChildrenCount(itemParent, False)
         if nbreEnfants < 2:
-            dlg = wx.MessageDialog(self, _(u"Cet item est la seule dans sa catégorie. Vous ne pouvez donc pas le déplacer."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Cet item est la seule dans sa catÃ©gorie. Vous ne pouvez donc pas le dÃ©placer."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
 
-        # On le déplace vers le haut
+        # On le dÃ©place vers le haut
         IDcategorie = self.GetItemData(self.treeSelection[0])        
         DB = GestionDB.DB()
 
-        # Récupération de l'ordre
+        # RÃ©cupÃ©ration de l'ordre
         req = """
         SELECT IDcategorie, nom_categorie, ordre
         FROM cat_presences
@@ -545,9 +545,9 @@ class TreeCtrlCategories(wx.TreeCtrl):
         ordreTemp = None
         for categorie in listeCategories :
 
-            # Si c'est déjà le premier, on laisse tomber
+            # Si c'est dÃ©jÃ  le premier, on laisse tomber
             if categorie[0] == IDcategorie and categorie[2] == len(listeCategories):
-                dlg = wx.MessageDialog(self, _(u"Cet item est le dernier de sa catégorie. Vous ne pouvez donc pas le déplacer vers le bas."), "Information", wx.OK | wx.ICON_INFORMATION)
+                dlg = wx.MessageDialog(self, _(u"Cet item est le dernier de sa catÃ©gorie. Vous ne pouvez donc pas le dÃ©placer vers le bas."), "Information", wx.OK | wx.ICON_INFORMATION)
                 dlg.ShowModal()
                 dlg.Destroy()
                 return
@@ -568,7 +568,7 @@ class TreeCtrlCategories(wx.TreeCtrl):
         DB.Commit()
         DB.Close()
 
-        # MàJ du treeCtrl
+        # MÃ J du treeCtrl
         self.select2 = IDcategorie
         self.MAJtree()
         self.SetFocus()
@@ -591,7 +591,7 @@ class Dialog(wx.Dialog):
         self.Bind(wx.EVT_BUTTON, self.Onbouton_annuler, self.bouton_fermer)
 
     def __set_properties(self):
-        self.SetTitle(_(u"Gestion des catégories de présences"))
+        self.SetTitle(_(u"Gestion des catÃ©gories de prÃ©sences"))
         self.bouton_aide.SetToolTip(wx.ToolTip("Cliquez ici pour obtenir de l'aide"))
         self.bouton_fermer.SetToolTip(wx.ToolTip(_(u"Cliquez pour annuler et fermer")))
         self.SetMinSize((600, 500))

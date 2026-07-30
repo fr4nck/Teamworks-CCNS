@@ -1,7 +1,7 @@
 #!/bin/python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 
-#Origine : Algorithme Phonex de FrÈdÈric BROUARD (31/3/99)
+#Origine : Algorithme Phonex de Fr√©d√©ric BROUARD (31/3/99)
 #Source : http://sqlpro.developpez.com/cours/soundex
 #Version Python : Christian Pennaforte - 5 avril 2005
 #Suite : Florent Carlier
@@ -11,8 +11,8 @@ import re
 
 def phonex(chaine):
 
-    #0 On met la chaÓne en majuscules, on vire les caractËres parasites
-##trans = string.maketrans(u'‡‚‰„ÈËÍÎÏÓÔÚÙˆı˘˚¸Ò¿¬ƒ√…» ÀÃŒœ“‘÷’Ÿ€‹—', 'AAAAEEEEIIIOOOOUUUNAAAAEEEEIIIOOOOUUUN');
+    #0 On met la cha√Æne en majuscules, on vire les caract√®res parasites
+##trans = string.maketrans(u'√†√¢√§√£√©√®√™√´√¨√Æ√Ø√≤√¥√∂√µ√π√ª√º√±√Ä√Ç√Ñ√É√â√à√ä√ã√å√é√è√í√î√ñ√ï√ô√õ√ú√ë', 'AAAAEEEEIIIOOOOUUUNAAAAEEEEIIIOOOOUUUN');
 ##print (trans,)
 ##    chaine = string.translate(chaine," 0123456789-.+*/,:;_'()")
     chaine = chaine.upper()
@@ -20,7 +20,7 @@ def phonex(chaine):
     #1 remplacer les y par des i
     r = chaine.replace('Y','I')
 
-    #2 supprimer les h qui ne sont pas prÈcÈdÈes de c ou de s ou de p
+    #2 supprimer les h qui ne sont pas pr√©c√©d√©es de c ou de s ou de p
     r = re.sub(r'([^P|C|S])H', r'\1', r)
 
     #3 remplacement du ph par f
@@ -40,18 +40,18 @@ def phonex(chaine):
     r = r.replace('EIM','4')
     r = r.replace('AIM','4')
 
-    #7 remplacement du son …:
-    r = r.replace(u'…','Y') #CP : dÈj‡ fait en Ètape 0
-    r = r.replace(u'»','Y') #CP : dÈj‡ fait en Ètape 0
-    r = r.replace(u' ','Y') #CP : dÈj‡ fait en Ètape 0
+    #7 remplacement du son √â:
+    r = r.replace(u'√â','Y') #CP : d√©j√† fait en √©tape 0
+    r = r.replace(u'√à','Y') #CP : d√©j√† fait en √©tape 0
+    r = r.replace(u'√ä','Y') #CP : d√©j√† fait en √©tape 0
     r = r.replace('AI','Y')
     r = r.replace('EI','Y')
     r = r.replace('ER','YR')
     r = r.replace('ESS','YS')
-    r = r.replace('ET','YT') #CP : diffÈrence entre la version Delphi et l'algo
+    r = r.replace('ET','YT') #CP : diff√©rence entre la version Delphi et l'algo
     r = r.replace('EZ','YZ')
 
-    #8 remplacer les groupes de 2 lettres suivantes (son ‚..an‚.. et ‚..in‚..), sauf s‚..il sont suivi par une lettre a, e, i o, u ou un son 1 √  4 :
+    #8 remplacer les groupes de 2 lettres suivantes (sons "an" et "in"), sauf s'ils sont suivis par une lettre a, e, i, o, u ou un son 1 √† 4 :
     r = re.sub(r'AN([^A|E|I|O|U|1|2|3|4])',r'1\1',r)
     r = re.sub(r'ON([^A|E|I|O|U|1|2|3|4])',r'1\1',r)
     r = re.sub(r'AM([^A|E|I|O|U|1|2|3|4])',r'1\1',r)
@@ -59,9 +59,9 @@ def phonex(chaine):
     r = re.sub(r'EM([^A|E|I|O|U|1|2|3|4])',r'1\1',r)
     r = re.sub(r'IN([^A|E|I|O|U|1|2|3|4])',r'4\1',r)
 
-    #9 remplacer les s par des z s‚..ils sont suivi et pr√©c√©d√©s des lettres a, e, i, o,u ou d‚..un son 1 √  4
+    #9 remplacer les s par des z s'ils sont suivis et pr√©c√©d√©s des lettres a, e, i, o, u ou d'un son 1 √† 4
     r = re.sub(r'([A|E|I|O|U|Y|1|2|3|4])S([A|E|I|O|U|Y|1|2|3|4])',r'\1Z\2',r)
-    #CP : ajout du Y √  la liste
+    #CP : ajout du Y √† la liste
 
     #10 remplacer les groupes de 2 lettres suivants :
     r = r.replace('OE','E')
@@ -76,10 +76,10 @@ def phonex(chaine):
     r = r.replace('SCH','5')
     r = r.replace('SH','5')
     r = r.replace('SS','S')
-    r = r.replace('SC','S') #CP : problËme pour PASCAL, mais pas pour PISCINE ?
+    r = r.replace('SC','S') #CP : probl√®me pour PASCAL, mais pas pour PISCINE ?
 
     #12 remplacer le c par un s s'il est suivi d'un e ou d'un i
-    #CP : ‡ mon avis, il faut inverser 11 et 12 et ne pas faire la derniËre ligne du 11
+    #CP : √† mon avis, il faut inverser 11 et 12 et ne pas faire la derni√®re ligne du 11
     r = re.sub(r'C([E|I])',r'S\1',r)
 
     #13 remplacer les lettres ou groupe de lettres suivants :
@@ -100,7 +100,7 @@ def phonex(chaine):
     r = r.replace('V','F')
     r = r.replace('M','N')
 
-    #15 Supprimer les lettres dupliquÈes
+    #15 Supprimer les lettres dupliqu√©es
     oldc='#'
     newr=''
     for c in r:
@@ -111,13 +111,13 @@ def phonex(chaine):
     #16 Supprimer les terminaisons suivantes : t, x
     r = re.sub(r'(.*)[T|X]$',r'\1',r)
 
-    #17 Affecter ‡ chaque lettre le code numÈrique correspondant en partant de la derniËre lettre
+    #17 Affecter √† chaque lettre le code num√©rique correspondant en partant de la derni√®re lettre
     num = ['1','2','3','4','5','E','F','G','H','I','K','L','N','O','R','S','T','U','W','X','Y','Z']
     l = []
     for c in r:
         l.append(num.index(c))
 
-    #18 Convertissez les codes numÈriques ainsi obtenu en un nombre de base 22 exprimÈ en virgule flottante.
+    #18 Convertissez les codes num√©riques ainsi obtenu en un nombre de base 22 exprim√© en virgule flottante.
     res=0.
     i=1
     for n in l:
@@ -127,6 +127,6 @@ def phonex(chaine):
     return res
 
 if __name__ == '__main__':
-    listeTest = (_(u"NoÈmie"), _(u"Noemie"), "Nomie", "Mathis")
+    listeTest = (_(u"No√©mie"), _(u"Noemie"), "Nomie", "Mathis")
     for texte in listeTest :
         print((texte, phonex(texte)))

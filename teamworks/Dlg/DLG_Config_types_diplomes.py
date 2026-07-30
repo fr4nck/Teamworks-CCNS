@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -23,7 +23,7 @@ class Panel(wx.Panel):
         wx.Panel.__init__(self, parent, ID, style=wx.TAB_TRAVERSAL)
         
         self.barreTitre = FonctionsPerso.BarreTitre(self,  _(u"Les types de qualifications"), u"")
-        texteIntro = _(u"Vous pouvez ici ajouter, modifier ou supprimer des types de qualifications. Exemples : 'B.A.F.A', 'A.F.P.S.', etc... N'oubliez pas de\ncrÈer ensuite crÈer le type de piËces correspondants.")
+        texteIntro = _(u"Vous pouvez ici ajouter, modifier ou supprimer des types de qualifications. Exemples : 'B.A.F.A', 'A.F.P.S.', etc... N'oubliez pas de\ncr√©er ensuite cr√©er le type de pi√®ces correspondants.")
         self.label_introduction = FonctionsPerso.StaticWrapText(self, -1, texteIntro)
         
         self.listCtrl_TypesDiplomes = ListCtrlTypesDiplomes(self)
@@ -40,9 +40,9 @@ class Panel(wx.Panel):
         self.Bind(wx.EVT_BUTTON, self.OnBoutonSupprimer, self.bouton_supprimer)
 
     def __set_properties(self):
-        self.bouton_ajouter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour crÈer un nouveau type de qualification")))
-        self.bouton_modifier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier un type de qualification sÈlectionnÈ dans la liste")))
-        self.bouton_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer un type de qualification sÈlectionnÈ dans la liste")))
+        self.bouton_ajouter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour cr√©er un nouveau type de qualification")))
+        self.bouton_modifier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier un type de qualification s√©lectionn√© dans la liste")))
+        self.bouton_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer un type de qualification s√©lectionn√© dans la liste")))
 
     def __do_layout(self):
         grid_sizer_base = wx.FlexGridSizer(rows=5, cols=1, vgap=10, hgap=10)
@@ -71,7 +71,7 @@ class Panel(wx.Panel):
         self.Ajouter()
 
     def Ajouter(self):
-        """ CrÈer un nouveau type de piËce """
+        """ Cr√©er un nouveau type de pi√®ce """
         dlg = wx.TextEntryDialog(self, _(u"Saisissez le nom du nouveau type de qualification (ex : B.A.F.A.) :"), _(u"Saisie d'un nouveau type de qualification"), u"")
         if dlg.ShowModal() == wx.ID_OK:
             varNom_Diplome = dlg.GetValue()
@@ -89,12 +89,12 @@ class Panel(wx.Panel):
         # Sauvegarde
         listeDonnees = [("nom_diplome",  varNom_Diplome),]
         
-        # Initialisation de la connexion avec la Base de donnÈes
+        # Initialisation de la connexion avec la Base de donn√©es
         DB = GestionDB.DB()
         newID = DB.ReqInsert("types_diplomes", listeDonnees)
         DB.Close()
 
-        # M‡J du ListCtrl
+        # M√†J du ListCtrl
         self.listCtrl_TypesDiplomes.MAJListeCtrl()
 
         #DB.ReqMAJ("types_pieces", listeDonnees, "IDtype_piece", varIDtype_piece)
@@ -103,18 +103,18 @@ class Panel(wx.Panel):
         self.Modifier()
 
     def Modifier(self):
-        """ Modification d'un type de piËce """
+        """ Modification d'un type de pi√®ce """
         index = self.listCtrl_TypesDiplomes.GetFirstSelected()
         if index == -1:
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÈlectionner un type de qualification ‡ modifier dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord s√©lectionner un type de qualification √† modifier dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
 
-        # Avertissement si ce type de diplome a dÈj‡ ÈtÈ attribuÈ ‡ une personne
+        # Avertissement si ce type de diplome a d√©j√† √©t√© attribu√© √† une personne
         nbreTitulaires = int(self.listCtrl_TypesDiplomes.GetItem(index, 2).GetText())
         if nbreTitulaires != 0:
-            message =_(u"Avertissement : Ce type de qualification a dÈj‡ ÈtÈ attribuÈ a ") + str(nbreTitulaires) + _(u" personne(s). Toute modification sera donc rÈpercutÈe en cascade sur toutes les fiches des personnes ‡ qui ce type de qualification a ÈtÈ attribuÈ. \n\nSouhaitez-vous quand mÍme modifier ce type de qualification ?")
+            message =_(u"Avertissement : Ce type de qualification a d√©j√† √©t√© attribu√© a ") + str(nbreTitulaires) + _(u" personne(s). Toute modification sera donc r√©percut√©e en cascade sur toutes les fiches des personnes √† qui ce type de qualification a √©t√© attribu√©. \n\nSouhaitez-vous quand m√™me modifier ce type de qualification ?")
             dlg = wx.MessageDialog(self, message, "Information", wx.YES_NO|wx.NO_DEFAULT|wx.ICON_INFORMATION)
             reponse = dlg.ShowModal()
             if reponse == wx.ID_NO:
@@ -143,12 +143,12 @@ class Panel(wx.Panel):
         # Sauvegarde
         listeDonnees = [("nom_diplome",  varNom_Diplome),]
         
-        # Initialisation de la connexion avec la Base de donnÈes
+        # Initialisation de la connexion avec la Base de donn√©es
         DB = GestionDB.DB()
         DB.ReqMAJ("types_diplomes", listeDonnees, "IDtype_diplome", varIDtype_diplome)
         DB.Close()
 
-        # M‡J du ListCtrl
+        # M√†J du ListCtrl
         self.listCtrl_TypesDiplomes.MAJListeCtrl()
 
         
@@ -156,20 +156,20 @@ class Panel(wx.Panel):
         self.Supprimer()
 
     def Supprimer(self):
-        """ Suppression d'une coordonnÈe """
+        """ Suppression d'une coordonn√©e """
         index = self.listCtrl_TypesDiplomes.GetFirstSelected()
 
-        # VÈrifie qu'un item a bien ÈtÈ sÈlectionnÈ
+        # V√©rifie qu'un item a bien √©t√© s√©lectionn√©
         if index == -1:
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÈlectionner un type de qualification ‡ supprimer dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord s√©lectionner un type de qualification √† supprimer dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
 
-        # VÈrifie que cette piËce n'est attribuÈe ‡ aucune personne
+        # V√©rifie que cette pi√®ce n'est attribu√©e √† aucune personne
         nbreTitulaires = int(self.listCtrl_TypesDiplomes.GetItem(index, 2).GetText())
         if nbreTitulaires != 0:
-            dlg = wx.MessageDialog(self, _(u"Pour des raisons de sÈcuritÈ des donnÈes, vous ne pouvez pas supprimer un type de qualification qui a dÈj‡ ÈtÈ attribuÈ ‡ des personnes.\n\nSi vous voulez vraiment le supprimer, vous devez d'abord supprimer les qualifications ayant ce nom sur chaque fiche individuelle concernÈe."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Pour des raisons de s√©curit√© des donn√©es, vous ne pouvez pas supprimer un type de qualification qui a d√©j√† √©t√© attribu√© √† des personnes.\n\nSi vous voulez vraiment le supprimer, vous devez d'abord supprimer les qualifications ayant ce nom sur chaque fiche individuelle concern√©e."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -184,12 +184,12 @@ class Panel(wx.Panel):
         if reponse == wx.ID_NO:
             return
         
-        # Suppression du type de piËce
+        # Suppression du type de pi√®ce
         DB = GestionDB.DB()
         DB.ReqDEL("types_diplomes", "IDtype_diplome", IDtype_diplome)
         DB.Close()
 
-        # M‡J du ListCtrl
+        # M√†J du ListCtrl
         self.listCtrl_TypesDiplomes.MAJListeCtrl()
     
     def MAJpanel(self):
@@ -225,10 +225,10 @@ class ListCtrlTypesDiplomes(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix
 
     def Remplissage(self):
         
-        # RÈcupÈration des donnÈes dans la base de donnÈes
+        # R√©cup√©ration des donn√©es dans la base de donn√©es
         self.Importation()
         
-        # CrÈation des colonnes
+        # Cr√©ation des colonnes
         self.nbreColonnes = 3
         self.InsertColumn(0, _(u"     ID"))
         self.SetColumnWidth(0, 0)
@@ -257,7 +257,7 @@ class ListCtrlTypesDiplomes(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix
 
     def Importation(self):
       
-        # RÈcupÈration des donnÈes de la table TYPES_PIECES
+        # R√©cup√©ration des donn√©es de la table TYPES_PIECES
         DB = GestionDB.DB()
         req = """SELECT types_diplomes.IDtype_diplome, types_diplomes.nom_diplome, Count(diplomes.IDdiplome) AS CompteDeIDdiplome
         FROM types_diplomes LEFT JOIN diplomes ON types_diplomes.IDtype_diplome = diplomes.IDtype_diplome
@@ -269,7 +269,7 @@ class ListCtrlTypesDiplomes(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix
 
         self.nbreLignes = len(listeTypesDiplomes)
 
-        # CrÈation du dictionnaire de donnÈes
+        # Cr√©ation du dictionnaire de donn√©es
         self.donnees = self.listeEnDict(listeTypesDiplomes)
 
 
@@ -283,7 +283,7 @@ class ListCtrlTypesDiplomes(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix
         dictio = {}
         x = 1
         for ligne in liste:
-            index = x # Donne un entier comme clÈ
+            index = x # Donne un entier comme cl√©
             dictio[index] = ligne
             x += 1
         return dictio
@@ -307,12 +307,12 @@ class ListCtrlTypesDiplomes(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix
         return valeur
 
     def OnGetItemImage(self, item):
-        """ Affichage des images en dÈbut de ligne """
+        """ Affichage des images en d√©but de ligne """
         return -1
 
     def OnGetItemAttr(self, item):
         """ Application d'une couleur de fond pour une ligne sur deux """
-        # CrÈation d'une ligne de couleur 1 ligne sur 2
+        # Cr√©ation d'une ligne de couleur 1 ligne sur 2
         if item % 2 == 1:
             return self.attr1
         else:
@@ -349,7 +349,7 @@ class ListCtrlTypesDiplomes(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix
         index = self.GetFirstSelected()
         key = int(self.getColumnText(index, 0))
         
-        # CrÈation du menu contextuel
+        # Cr√©ation du menu contextuel
         menuPop = UTILS_Adaptations.Menu()
 
         # Item Modifier

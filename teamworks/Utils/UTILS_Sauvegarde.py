@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #------------------------------------------------------------------------
-# Application :    Noethys, gestion multi-activités
+# Application :    Noethys, gestion multi-activitÃ©s
 # Site internet :  www.noethys.com
 # Auteur:          Ivan LUCAS
 # Copyright:       (c) 2010-19 Ivan LUCAS
@@ -29,9 +29,9 @@ from Utils import UTILS_Envoi_email
 
 
 LISTE_CATEGORIES = [
-    (_(u"Données de base"), "TDATA"),
+    (_(u"DonnÃ©es de base"), "TDATA"),
     (_(u"Photos individuelles"), "TPHOTOS"),
-    (_(u"Documents numérisés"), "TDOCUMENTS"),
+    (_(u"Documents numÃ©risÃ©s"), "TDOCUMENTS"),
     ]
 
 EXTENSIONS = {
@@ -43,8 +43,8 @@ EXTENSIONS = {
 
 
 def Sauvegarde(listeFichiersLocaux=[], listeFichiersReseau=[], nom="", repertoire=None, motdepasse=None, listeEmails=None, dictConnexion=None, inclure_modeles=False, inclure_editions=False):
-    """ Processus de de création du ZIP """
-    # Si aucun fichier à sauvegarder
+    """ Processus de de crÃ©ation du ZIP """
+    # Si aucun fichier Ã  sauvegarder
     if len(listeFichiersLocaux) == 0 and len(listeFichiersReseau) == 0 : 
         return False
     
@@ -56,41 +56,41 @@ def Sauvegarde(listeFichiersLocaux=[], listeFichiersReseau=[], nom="", repertoir
     if repertoire != None : nbreEtapes += 1
     if listeEmails != None : nbreEtapes += 1
     
-    # Création du nom du fichier de destination
+    # CrÃ©ation du nom du fichier de destination
     if motdepasse != None :
         extension = EXTENSIONS["crypte"]
     else:
         extension = EXTENSIONS["decrypte"]
 
-    # Vérifie si fichier de destination existe déjà
+    # VÃ©rifie si fichier de destination existe dÃ©jÃ 
     if repertoire != None :
         fichierDest = u"%s/%s.%s" % (repertoire, nom, extension)
         if os.path.isfile(fichierDest) == True :
-            dlg = wx.MessageDialog(None, _(u"Un fichier de sauvegarde portant ce nom existe déjà. \n\nVoulez-vous le remplacer ?"), "Attention !", wx.YES_NO | wx.NO_DEFAULT | wx.ICON_EXCLAMATION)
+            dlg = wx.MessageDialog(None, _(u"Un fichier de sauvegarde portant ce nom existe dÃ©jÃ . \n\nVoulez-vous le remplacer ?"), "Attention !", wx.YES_NO | wx.NO_DEFAULT | wx.ICON_EXCLAMATION)
             reponse = dlg.ShowModal()
             dlg.Destroy()
             if reponse != wx.ID_YES :
                 return False
 
-    # Récupération des paramètres de l'adresse d'expéditeur par défaut
+    # RÃ©cupÃ©ration des paramÃ¨tres de l'adresse d'expÃ©diteur par dÃ©faut
     if listeEmails != None :
         dictAdresse = UTILS_Envoi_email.GetAdresseExpDefaut()
         if dictAdresse == None :
-            dlgErreur = wx.MessageDialog(None, _(u"Envoi par Email impossible :\n\nAucune adresse d'expéditeur n'a été définie. Veuillez la saisir dans le menu Paramétrage du logiciel..."), _(u"Erreur"), wx.OK | wx.ICON_ERROR)
+            dlgErreur = wx.MessageDialog(None, _(u"Envoi par Email impossible :\n\nAucune adresse d'expÃ©diteur n'a Ã©tÃ© dÃ©finie. Veuillez la saisir dans le menu ParamÃ©trage du logiciel..."), _(u"Erreur"), wx.OK | wx.ICON_ERROR)
             dlgErreur.ShowModal() 
             dlgErreur.Destroy()
             return False
 
-    # Fenêtre de progression
+    # FenÃªtre de progression
     dlgprogress = wx.ProgressDialog(_(u"Sauvegarde"), _(u"Lancement de la sauvegarde..."), maximum=nbreEtapes, parent=None, style= wx.PD_SMOOTH | wx.PD_AUTO_HIDE | wx.PD_APP_MODAL)
     
-    # Création du fichier ZIP temporaire
+    # CrÃ©ation du fichier ZIP temporaire
     nomFichierTemp = u"%s.%s" % (nom, EXTENSIONS["decrypte"])
     fichierZip = zipfile.ZipFile(UTILS_Fichiers.GetRepTemp(fichier=nomFichierTemp), "w", compression=zipfile.ZIP_DEFLATED)
     numEtape = 1
-    dlgprogress.Update(numEtape, _(u"Création du fichier de compression..."));numEtape += 1
+    dlgprogress.Update(numEtape, _(u"CrÃ©ation du fichier de compression..."));numEtape += 1
     
-    # Intégration des fichiers locaux
+    # IntÃ©gration des fichiers locaux
     for nomFichier in listeFichiersLocaux :
         dlgprogress.Update(numEtape, _(u"Compression du fichier %s...") % nomFichier);numEtape += 1
         fichier = UTILS_Fichiers.GetRepData(nomFichier)
@@ -98,34 +98,34 @@ def Sauvegarde(listeFichiersLocaux=[], listeFichiersReseau=[], nom="", repertoir
             fichierZip.write(fichier, nomFichier)
         else :
             dlgprogress.Destroy()
-            dlgErreur = wx.MessageDialog(None, _(u"Le fichier '%s' n'existe plus sur cet ordinateur. \n\nVeuillez ôter ce fichier de la procédure de sauvegarde automatique (Menu Fichier > Sauvegardes automatiques)") % nomFichier, _(u"Erreur"), wx.OK | wx.ICON_ERROR)
+            dlgErreur = wx.MessageDialog(None, _(u"Le fichier '%s' n'existe plus sur cet ordinateur. \n\nVeuillez Ã´ter ce fichier de la procÃ©dure de sauvegarde automatique (Menu Fichier > Sauvegardes automatiques)") % nomFichier, _(u"Erreur"), wx.OK | wx.ICON_ERROR)
             dlgErreur.ShowModal() 
             dlgErreur.Destroy()
             return False
         
-    # Intégration des fichiers réseau
+    # IntÃ©gration des fichiers rÃ©seau
     if len(listeFichiersReseau) > 0 and dictConnexion != None :
         
-        # Création du répertoire temporaire
+        # CrÃ©ation du rÃ©pertoire temporaire
         repTemp = UTILS_Fichiers.GetRepTemp(fichier="savetemp")
         if os.path.isdir(repTemp) == True :
             shutil.rmtree(repTemp)
         os.mkdir(repTemp)
         
-        # Recherche du répertoire d'installation de MySQL
+        # Recherche du rÃ©pertoire d'installation de MySQL
         repMySQL = GetRepertoireMySQL(dictConnexion) 
         if repMySQL == None :
             dlgprogress.Destroy()
-            dlgErreur = wx.MessageDialog(None, _(u"Teamworks n'a pas réussi à localiser MySQL sur votre ordinateur.\n\nNotez bien que MySQL doit être installé obligatoirement pour créer une sauvegarde réseau."), _(u"Erreur"), wx.OK | wx.ICON_ERROR)
+            dlgErreur = wx.MessageDialog(None, _(u"Teamworks n'a pas rÃ©ussi Ã  localiser MySQL sur votre ordinateur.\n\nNotez bien que MySQL doit Ãªtre installÃ© obligatoirement pour crÃ©er une sauvegarde rÃ©seau."), _(u"Erreur"), wx.OK | wx.ICON_ERROR)
             dlgErreur.ShowModal() 
             dlgErreur.Destroy()
             return False
         
-        # Création du fichier de login
+        # CrÃ©ation du fichier de login
         nomFichierLoginTemp = repTemp + "/logintemp.cnf" #os.path.abspath(os.curdir) + "/" + repTemp + "/logintemp.cnf"
         CreationFichierLoginTemp(host=dictConnexion["host"], port=dictConnexion["port"], user=dictConnexion["user"], password=dictConnexion["password"], nomFichier=nomFichierLoginTemp)
         
-        # Création du backup pour chaque fichier MySQL
+        # CrÃ©ation du backup pour chaque fichier MySQL
         for nomFichier in listeFichiersReseau :
             dlgprogress.Update(numEtape, _(u"Compression du fichier %s...") % nomFichier);numEtape += 1
             fichierSave = u"%s/%s.sql" % (repTemp, nomFichier)
@@ -138,12 +138,12 @@ def Sauvegarde(listeFichiersLocaux=[], listeFichiersReseau=[], nom="", repertoir
             if out not in ("", b""):
                 print((out,))
                 dlgprogress.Destroy()
-                dlgErreur = wx.MessageDialog(None, _(u"Une erreur a été détectée dans la procédure de sauvegarde !\n\nErreur : %s") % out, _(u"Erreur"), wx.OK | wx.ICON_ERROR)
+                dlgErreur = wx.MessageDialog(None, _(u"Une erreur a Ã©tÃ© dÃ©tectÃ©e dans la procÃ©dure de sauvegarde !\n\nErreur : %s") % out, _(u"Erreur"), wx.OK | wx.ICON_ERROR)
                 dlgErreur.ShowModal() 
                 dlgErreur.Destroy()
                 return False
 
-            # Insère le fichier Sql dans le ZIP
+            # InsÃ¨re le fichier Sql dans le ZIP
             try :
                 fichierZip.write(fichierSave, u"%s.sql" % nomFichier)
             except Exception as err :
@@ -154,16 +154,16 @@ def Sauvegarde(listeFichiersLocaux=[], listeFichiersReseau=[], nom="", repertoir
                 dlgErreur.Destroy()
                 return False
 
-        # Supprime le répertoire temp
+        # Supprime le rÃ©pertoire temp
         shutil.rmtree(repTemp)
 
-    # Intégration des modèles de documents
+    # IntÃ©gration des modÃ¨les de documents
     if inclure_modeles == True:
         rep = UTILS_Fichiers.GetRepModeles()
         for nomFichier in os.listdir(rep):
             fichierZip.write(rep + "/" + nomFichier, u"modeles/" + nomFichier)
 
-    # Intégration des éditions de documents
+    # IntÃ©gration des Ã©ditions de documents
     if inclure_editions == True:
         rep = UTILS_Fichiers.GetRepEditions()
         for nomFichier in os.listdir(rep):
@@ -184,9 +184,9 @@ def Sauvegarde(listeFichiersLocaux=[], listeFichiersReseau=[], nom="", repertoir
     else:
         extension = EXTENSIONS["decrypte"]
     
-    # Copie le fichier obtenu dans le répertoire donné
+    # Copie le fichier obtenu dans le rÃ©pertoire donnÃ©
     if repertoire != None :
-        dlgprogress.Update(numEtape, _(u"Création du fichier dans le répertoire cible..."));numEtape += 1
+        dlgprogress.Update(numEtape, _(u"CrÃ©ation du fichier dans le rÃ©pertoire cible..."));numEtape += 1
         try :
             shutil.copy2(UTILS_Fichiers.GetRepTemp(fichier=nomFichierTemp), fichierDest)
         except :
@@ -194,9 +194,9 @@ def Sauvegarde(listeFichiersLocaux=[], listeFichiersReseau=[], nom="", repertoir
 
     # Envoi par Email
     if listeEmails != None :
-        dlgprogress.Update(numEtape, _(u"Expédition de la sauvegarde par Email..."));numEtape += 1
+        dlgprogress.Update(numEtape, _(u"ExpÃ©dition de la sauvegarde par Email..."));numEtape += 1
 
-        # Préparation du message
+        # PrÃ©paration du message
         message = UTILS_Envoi_email.Message(destinataires=listeEmails, sujet=_(u"Sauvegarde Teamworks : %s") % nom,
                                             texte_html=_(u"Envoi de la sauvegarde de Teamworks"),
                                             fichiers=[UTILS_Fichiers.GetRepTemp(fichier=nomFichierTemp), ])
@@ -212,12 +212,12 @@ def Sauvegarde(listeFichiersLocaux=[], listeFichiersReseau=[], nom="", repertoir
             dlgprogress.Destroy()
             print((err,))
             err = str(err)
-            dlgErreur = wx.MessageDialog(None, _(u"Une erreur a été détectée dans l'envoi par Email !\n\nErreur : %s") % err, _(u"Erreur"), wx.OK | wx.ICON_ERROR)
+            dlgErreur = wx.MessageDialog(None, _(u"Une erreur a Ã©tÃ© dÃ©tectÃ©e dans l'envoi par Email !\n\nErreur : %s") % err, _(u"Erreur"), wx.OK | wx.ICON_ERROR)
             dlgErreur.ShowModal() 
             dlgErreur.Destroy()
             return False
     
-    # Suppression des répertoires et fichiers temporaires
+    # Suppression des rÃ©pertoires et fichiers temporaires
     dlgprogress.Update(numEtape, _(u"Suppression des fichiers temporaires..."));numEtape += 1
     fichier = UTILS_Fichiers.GetRepTemp(fichier=u"%s.%s" % (nom, EXTENSIONS["decrypte"]))
     if os.path.isfile(fichier) == True :
@@ -227,17 +227,17 @@ def Sauvegarde(listeFichiersLocaux=[], listeFichiersReseau=[], nom="", repertoir
         os.remove(fichier)
     
     # Fin du processus
-    dlgprogress.Update(numEtape, _(u"Sauvegarde terminée avec succès !"))
+    dlgprogress.Update(numEtape, _(u"Sauvegarde terminÃ©e avec succÃ¨s !"))
     dlgprogress.Destroy()
     
     return True
 
 def VerificationZip(fichier=""):
-    """ Vérifie que le fichier est une archive zip valide """
+    """ VÃ©rifie que le fichier est une archive zip valide """
     return zipfile.is_zipfile(fichier)
     
 def GetListeFichiersZIP(fichier):
-    """ Récupère la liste des fichiers du ZIP """
+    """ RÃ©cupÃ¨re la liste des fichiers du ZIP """
     listeFichiers = []
     fichierZip = zipfile.ZipFile(fichier, "r")
     for fichier in fichierZip.namelist() :
@@ -245,7 +245,7 @@ def GetListeFichiersZIP(fichier):
     return listeFichiers
     
 def Restauration(parent=None, fichier="", listeFichiersLocaux=[], listeFichiersReseau=[], dictConnexion=None, inclure_modeles=False, inclure_editions=False):
-    """ Restauration à partir des listes de fichiers locaux et réseau """
+    """ Restauration Ã  partir des listes de fichiers locaux et rÃ©seau """
     listeFichiersRestaures = [] 
     
     # Initialisation de la barre de progression
@@ -254,7 +254,7 @@ def Restauration(parent=None, fichier="", listeFichiersLocaux=[], listeFichiersR
     # Restauration des fichiers locaux Sqlite ---------------------------------------------------------------------
     if len(listeFichiersLocaux) > 0 :
 
-        # Vérifie qu'on les remplace bien
+        # VÃ©rifie qu'on les remplace bien
         listeExistantsTemp = []
         for fichier_temp in listeFichiersLocaux :
             if os.path.isfile(UTILS_Fichiers.GetRepData(fichier_temp)) == True :
@@ -262,9 +262,9 @@ def Restauration(parent=None, fichier="", listeFichiersLocaux=[], listeFichiersR
                 
         if len(listeExistantsTemp) > 0 :
             if len(listeExistantsTemp) == 1 :
-                message = _(u"Le fichier '%s' existe déjà.\n\nSouhaitez-vous vraiment le remplacer ?") % listeExistantsTemp[0]
+                message = _(u"Le fichier '%s' existe dÃ©jÃ .\n\nSouhaitez-vous vraiment le remplacer ?") % listeExistantsTemp[0]
             else :
-                message = _(u"Les fichiers suivants existent déjà :\n\n   - %s\n\nSouhaitez-vous vraiment les remplacer ?") % "\n   - ".join(listeExistantsTemp)
+                message = _(u"Les fichiers suivants existent dÃ©jÃ  :\n\n   - %s\n\nSouhaitez-vous vraiment les remplacer ?") % "\n   - ".join(listeExistantsTemp)
             dlg = wx.MessageDialog(parent, message, "Attention !", wx.YES_NO | wx.CANCEL |wx.NO_DEFAULT | wx.ICON_EXCLAMATION)
             reponse = dlg.ShowModal()
             dlg.Destroy()
@@ -283,28 +283,28 @@ def Restauration(parent=None, fichier="", listeFichiersLocaux=[], listeFichiersR
             except Exception as err:
                 dlgprogress.Destroy()
                 print(err)
-                dlg = wx.MessageDialog(None, _(u"La restauration du fichier '%s' a rencontré l'erreur suivante : \n%s") % (fichier_temp, err), "Erreur", wx.OK| wx.ICON_ERROR)
+                dlg = wx.MessageDialog(None, _(u"La restauration du fichier '%s' a rencontrÃ© l'erreur suivante : \n%s") % (fichier_temp, err), "Erreur", wx.OK| wx.ICON_ERROR)
                 dlg.ShowModal()
                 dlg.Destroy()
                 return False
             
             listeFichiersRestaures.append(fichier_temp[:-4])
 
-    # Restauration des fichiers réseau MySQL ---------------------------------------------------------------------------
+    # Restauration des fichiers rÃ©seau MySQL ---------------------------------------------------------------------------
     if len(listeFichiersReseau) > 0 :
                         
-        # Récupération de la liste des fichiers MySQL de l'ordinateur
+        # RÃ©cupÃ©ration de la liste des fichiers MySQL de l'ordinateur
         listeFichiersExistants = GetListeFichiersReseau(dictConnexion)
 
-        # Recherche du répertoire d'installation de MySQL
+        # Recherche du rÃ©pertoire d'installation de MySQL
         repMySQL = GetRepertoireMySQL(dictConnexion) 
         if repMySQL == None :
-            dlgErreur = wx.MessageDialog(None, _(u"Teamworks n'a pas réussi à localiser MySQL sur votre ordinateur.\nNotez bien que MySQL doit être installé obligatoirement pour créer une restauration réseau."), _(u"Erreur"), wx.OK | wx.ICON_ERROR)
+            dlgErreur = wx.MessageDialog(None, _(u"Teamworks n'a pas rÃ©ussi Ã  localiser MySQL sur votre ordinateur.\nNotez bien que MySQL doit Ãªtre installÃ© obligatoirement pour crÃ©er une restauration rÃ©seau."), _(u"Erreur"), wx.OK | wx.ICON_ERROR)
             dlgErreur.ShowModal() 
             dlgErreur.Destroy()
             return False
 
-        # Vérifie qu'on les remplace bien
+        # VÃ©rifie qu'on les remplace bien
         listeExistantsTemp = []
         for fichier_temp in listeFichiersReseau :
             fichier_temp = fichier_temp[:-4]
@@ -313,22 +313,22 @@ def Restauration(parent=None, fichier="", listeFichiersLocaux=[], listeFichiersR
                 
         if len(listeExistantsTemp) > 0 :
             if len(listeExistantsTemp) == 1 :
-                message = _(u"Le fichier '%s' existe déjà.\n\nSouhaitez-vous vraiment le remplacer ?") % listeExistantsTemp[0]
+                message = _(u"Le fichier '%s' existe dÃ©jÃ .\n\nSouhaitez-vous vraiment le remplacer ?") % listeExistantsTemp[0]
             else :
-                message = _(u"Les fichiers suivants existent déjà :\n\n   - %s\n\nSouhaitez-vous vraiment les remplacer ?") % "\n   - ".join(listeExistantsTemp)
+                message = _(u"Les fichiers suivants existent dÃ©jÃ  :\n\n   - %s\n\nSouhaitez-vous vraiment les remplacer ?") % "\n   - ".join(listeExistantsTemp)
             dlg = wx.MessageDialog(parent, message, "Attention !", wx.YES_NO | wx.CANCEL |wx.NO_DEFAULT | wx.ICON_EXCLAMATION)
             reponse = dlg.ShowModal()
             dlg.Destroy()
             if reponse != wx.ID_YES :
                 return False
 
-        # Création du répertoire temporaire
+        # CrÃ©ation du rÃ©pertoire temporaire
         repTemp = UTILS_Fichiers.GetRepTemp(fichier="restoretemp")
         if os.path.isdir(repTemp) == True :
             shutil.rmtree(repTemp)
         os.mkdir(repTemp)
 
-        # Création du fichier de login
+        # CrÃ©ation du fichier de login
         nomFichierLoginTemp = repTemp + "/logintemp.cnf" #os.path.abspath(os.curdir) + "/" + repTemp + "/logintemp.cnf"
         CreationFichierLoginTemp(host=dictConnexion["host"], port=dictConnexion["port"], user=dictConnexion["user"], password=dictConnexion["password"], nomFichier=nomFichierLoginTemp)
 
@@ -340,13 +340,13 @@ def Restauration(parent=None, fichier="", listeFichiersLocaux=[], listeFichiersR
         for fichier_temp in listeFichiersReseau :
             fichier_temp = fichier_temp[:-4]
             
-            # Création de la base si elle n'existe pas
+            # CrÃ©ation de la base si elle n'existe pas
             if fichier_temp not in listeFichiersExistants :
                 nomFichier = u"%s;%s;%s;%s[RESEAU]%s" % (dictConnexion["port"], dictConnexion["host"], dictConnexion["user"], dictConnexion["password"], fichier_temp)
                 DB = GestionDB.DB(suffixe=None, nomFichier=nomFichier, modeCreation=True)
                 DB.Close()
 
-            # Copie du fichier SQL dans le répertoire Temp / restoretemp
+            # Copie du fichier SQL dans le rÃ©pertoire Temp / restoretemp
             # buffer = fichierZip.read(u"%s.sql" % fichier)
             # f = open(fichierRestore, "wb")
             # f.write(buffer)
@@ -365,39 +365,39 @@ def Restauration(parent=None, fichier="", listeFichiersLocaux=[], listeFichiersR
             if out not in ("", b"") :
                 print(("subprocess de restauration mysql :", out))
                 dlgprogress.Destroy()
-                dlgErreur = wx.MessageDialog(None, _(u"Une erreur a été détectée dans la procédure de restauration !\n\nErreur : %s") % out, _(u"Erreur"), wx.OK | wx.ICON_ERROR)
+                dlgErreur = wx.MessageDialog(None, _(u"Une erreur a Ã©tÃ© dÃ©tectÃ©e dans la procÃ©dure de restauration !\n\nErreur : %s") % out, _(u"Erreur"), wx.OK | wx.ICON_ERROR)
                 dlgErreur.ShowModal()
                 dlgErreur.Destroy()
                 return False
 
             listeFichiersRestaures.append(fichier_temp)
             
-        # Supprime le répertoire temp
+        # Supprime le rÃ©pertoire temp
         shutil.rmtree(repTemp)
 
-    # Restauration des modèles de documents
+    # Restauration des modÃ¨les de documents
     if inclure_modeles == True:
         for modele in GetListeFichiersZIP(fichier):
             if modele.startswith("modeles/"):
                 fichierZip.extract(modele, UTILS_Fichiers.GetRepModeles())
-        # Déplacement vers le bon répertoire
+        # DÃ©placement vers le bon rÃ©pertoire
         for modele in os.listdir(UTILS_Fichiers.GetRepModeles("Modeles")):
             shutil.move(UTILS_Fichiers.GetRepModeles(u"Modeles/%s" % modele), UTILS_Fichiers.GetRepModeles(modele))
-        # Suppression du répertoire temporaire
+        # Suppression du rÃ©pertoire temporaire
         shutil.rmtree(UTILS_Fichiers.GetRepModeles("Modeles"))
 
-    # Restauration des éditions de documents
+    # Restauration des Ã©ditions de documents
     if inclure_editions == True:
         for edition in GetListeFichiersZIP(fichier):
             if edition.startswith("editions/"):
                 fichierZip.extract(edition, UTILS_Fichiers.GetRepEditions())
-        # Déplacement vers le bon répertoire
+        # DÃ©placement vers le bon rÃ©pertoire
         for edition in os.listdir(UTILS_Fichiers.GetRepEditions("Editions")):
             shutil.move(UTILS_Fichiers.GetRepEditions(u"Editions/%s" % edition), UTILS_Fichiers.GetRepEditions(edition))
-        # Suppression du répertoire temporaire
+        # Suppression du rÃ©pertoire temporaire
         shutil.rmtree(UTILS_Fichiers.GetRepEditions("Editions"))
 
-    # Fin de la procédure
+    # Fin de la procÃ©dure
     try:
         dlgprogress.Destroy()
     except:
@@ -407,7 +407,7 @@ def Restauration(parent=None, fichier="", listeFichiersLocaux=[], listeFichiersR
     
 
 def GetListeFichiersReseau(dictValeurs={}):
-    """ Récupère la liste des fichiers MySQL existants 
+    """ RÃ©cupÃ¨re la liste des fichiers MySQL existants 
          dictValeurs = valeurs de connexion
     """
     hote = dictValeurs["hote"]
@@ -431,10 +431,10 @@ def GetListeFichiersReseau(dictValeurs={}):
     return listeDatabases
 
 def GetRepertoireMySQL(dictValeurs={}):
-    """ Récupère le répertoire d'installation MySQL 
+    """ RÃ©cupÃ¨re le rÃ©pertoire d'installation MySQL 
          dictValeurs = valeurs de connexion
     """
-    # Récupération du chemin de MySQL à partir de la base de données
+    # RÃ©cupÃ©ration du chemin de MySQL Ã  partir de la base de donnÃ©es
 ##    import MySQLdb
 ##    connexion = MySQLdb.connect(host=dictValeurs["hote"],user=dictValeurs["utilisateur"], passwd=dictValeurs["mdp"], port=dictValeurs["port"], use_unicode=True)
 ##    connexion.set_character_set('utf8')
@@ -451,17 +451,17 @@ def GetRepertoireMySQL(dictValeurs={}):
             return u"/usr/"
     else :
         
-        # Vérifie le chemin Canon (x86)
+        # VÃ©rifie le chemin Canon (x86)
         chemin = "C:/Program Files (x86)/Canon/Easy-WebPrint EX/"
         if os.path.isfile(chemin + "bin/mysql.exe") :
             return chemin
         
-        # Vérifie le chemin Canon
+        # VÃ©rifie le chemin Canon
         chemin = "C:/Program Files/Canon/Easy-WebPrint EX/"
         if os.path.isfile(chemin + "bin/mysql.exe") :
             return chemin
         
-        # Vérifie le chemin MySQL classique
+        # VÃ©rifie le chemin MySQL classique
         try :
             listeFichiers1 = os.listdir(u"C:/")
             for fichier1 in listeFichiers1 :
@@ -489,12 +489,12 @@ def GetRepertoireMySQL(dictValeurs={}):
     except :
         pass
         
-    # 3- Demande le chemin à l'utilisateur
+    # 3- Demande le chemin Ã  l'utilisateur
     try :
         if "linux" in sys.platform :
-            message = _(u"Pour effectuer la sauvegarde de fichiers réseau, mysqlclient doit être installé. Sélectionnez ici le répertoire où se trouve 'mysqldump' sur votre ordinateur.")
+            message = _(u"Pour effectuer la sauvegarde de fichiers rÃ©seau, mysqlclient doit Ãªtre installÃ©. SÃ©lectionnez ici le rÃ©pertoire oÃ¹ se trouve 'mysqldump' sur votre ordinateur.")
         else :
-            message = _(u"Pour effectuer la sauvegarde de fichiers réseau, Teamworks \ndoit utiliser les outils de MySQL. Sélectionnez ici le répertoire qui se nomme 'MySQL Server...' sur votre ordinateur.")
+            message = _(u"Pour effectuer la sauvegarde de fichiers rÃ©seau, Teamworks \ndoit utiliser les outils de MySQL. SÃ©lectionnez ici le rÃ©pertoire qui se nomme 'MySQL Server...' sur votre ordinateur.")
         dlg = wx.DirDialog(None, message, style=wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
         if dlg.ShowModal() == wx.ID_OK:
             chemin = dlg.GetPath() + u"/"

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -19,9 +19,9 @@ import FonctionsPerso
 
 
 def DatetimeDateEnStr(date):
-    """ Transforme un datetime.date en date complËte : Ex : lundi 15 janvier 2008 """
+    """ Transforme un datetime.date en date compl√®te : Ex : lundi 15 janvier 2008 """
     listeJours = ("Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche")
-    listeMois = ("janvier", _(u"fÈvrier"), "mars", "avril", "mai", "juin", "juillet", _(u"ao˚t"), "septembre", "octobre", "novembre", _(u"dÈcembre"))
+    listeMois = ("janvier", _(u"f√©vrier"), "mars", "avril", "mai", "juin", "juillet", _(u"ao√ªt"), "septembre", "octobre", "novembre", _(u"d√©cembre"))
     dateStr = listeJours[date.weekday()] + " " + str(date.day) + " " + listeMois[date.month-1] + " " + str(date.year)
     return dateStr
 
@@ -41,9 +41,9 @@ class Dialog(wx.Dialog):
         self.panel_base_1 = wx.Panel(self, -1)
         self.panel_base_2 = wx.Panel(self.panel_base_1, -1)
         if nbreTaches == 1 :
-            txt = _(u"Confirmez-vous la crÈation de la t‚che suivante ?")
+            txt = _(u"Confirmez-vous la cr√©ation de la t√¢che suivante ?")
         else:
-            txt = _(u"Confirmez-vous la crÈation des ") + str(nbreTaches) + _(u" t‚ches suivantes ?")
+            txt = _(u"Confirmez-vous la cr√©ation des ") + str(nbreTaches) + _(u" t√¢ches suivantes ?")
         self.label_confirmation = wx.StaticText(self.panel_base_2, -1, txt)
         self.tree_taches = TreeCtrlTaches(self.panel_base_2)
         self.gauge = wx.Gauge(self.panel_base_2, -1, nbreTaches, size=(-1, 10))
@@ -102,13 +102,13 @@ class Dialog(wx.Dialog):
         self.thread1.start()
         
     def EnregistrementTaches(self, listeCreationsTaches) :
-        """ Enregistrement des taches dans la base de donnÈes """        
+        """ Enregistrement des taches dans la base de donn√©es """        
         listeExceptions = []
         
-        # RÈcupÈration des dates de jours fÈriÈs
+        # R√©cup√©ration des dates de jours f√©ri√©s
         self.listeFeriesFixes, self.listeFeriesVariables = self.Importation_Feries()
         
-        # Initialisation de la connexion avec la Base de donnÈes
+        # Initialisation de la connexion avec la Base de donn√©es
         DB = GestionDB.DB()
         
         self.bouton_annuler.SetFocus()
@@ -130,7 +130,7 @@ class Dialog(wx.Dialog):
             
             valide = True
 
-            # VÈrifie qu'aucune t‚che n'existe dÈj‡ ‡ ce moment dans la base de donnÈes
+            # V√©rifie qu'aucune t√¢che n'existe d√©j√† √† ce moment dans la base de donn√©es
             req = """
             SELECT IDpresence, date, heure_debut, heure_fin
             FROM presences
@@ -141,14 +141,14 @@ class Dialog(wx.Dialog):
             listePresences = DB.ResultatReq()
             nbreResultats = len(listePresences)
             
-            # RÈcupÈration de l'itemTache correspondant pour actualiser le treeCtrl
+            # R√©cup√©ration de l'itemTache correspondant pour actualiser le treeCtrl
             itemTache = self.tree_taches.dictItemsTree[ (IDpersonne, date, heure_debut, heure_fin) ]
 
-            # Un ou des prÈsences existent ‡ ce moment, donc pas d'enregistrement
+            # Un ou des pr√©sences existent √† ce moment, donc pas d'enregistrement
             if nbreResultats != 0 :
                 valide = False
             
-            # VÈrifie que ce n'est pas un jour fÈriÈ
+            # V√©rifie que ce n'est pas un jour f√©ri√©
             if self.inclureFeries == False :
                 if (date.day, date.month) in self.listeFeriesFixes :
                     valide = False
@@ -172,7 +172,7 @@ class Dialog(wx.Dialog):
                 self.tree_taches.ChangeImage(itemTache, True)
             
             else:
-                # Si date non valide : on crÈe un rapport
+                # Si date non valide : on cr√©e un rapport
                 dictPersonnes = self.GetParent().list_ctrl_personnes.dictPersonnes
                 nomPersonne = dictPersonnes[IDpersonne][0] + " " + dictPersonnes[IDpersonne][1]
                 listeExceptions.append((nomPersonne, DatetimeDateEnStr(date), (heure_debut, heure_fin)))
@@ -183,9 +183,9 @@ class Dialog(wx.Dialog):
                 
             # Avance la gauge de 1
             self.gauge.SetValue(x)
-            # Met ‡ jour le label d'information
+            # Met √† jour le label d'information
             pourcentage = (x * 100) // nbreTaches
-            message =  str(pourcentage) + _(u" % - Veuillez patienter durant la crÈation des t‚ches... ")
+            message =  str(pourcentage) + _(u" % - Veuillez patienter durant la cr√©ation des t√¢ches... ")
             self.label_confirmation.SetLabel(message)
             
             if self.thread1.stop == True:
@@ -195,10 +195,10 @@ class Dialog(wx.Dialog):
             x += 1
                 
         self.listeExceptions = listeExceptions
-        # Fermeture de la base de donnÈes
+        # Fermeture de la base de donn√©es
         DB.Close()
         
-        # ArrÍt du thread
+        # Arr√™t du thread
         self.thread1.abort()
         
         if interrompu == True :
@@ -219,15 +219,15 @@ class Dialog(wx.Dialog):
         
         if nbreInvalides != 0 :
             if nbreInvalides == 1 :
-                message = _(u"1 t‚che n'a pas pu Ítre enregistrÈe.")
+                message = _(u"1 t√¢che n'a pas pu √™tre enregistr√©e.")
             else:
-                message = str(nbreInvalides) + _(u" t‚ches n'ont pas pu Ítre enregistrÈes.")
+                message = str(nbreInvalides) + _(u" t√¢ches n'ont pas pu √™tre enregistr√©es.")
         else:
-            message = _(u"Toutes les t‚ches ont ÈtÈ crÈÈes avec succËs.")
+            message = _(u"Toutes les t√¢ches ont √©t√© cr√©√©es avec succ√®s.")
         self.label_confirmation.SetLabel(message)
         
     def Importation_Feries(self):
-        """ Importation des dates des jours fÈriÈs """
+        """ Importation des dates des jours f√©ri√©s """
 
         req = "SELECT * FROM jours_feries;"
         DB = GestionDB.DB()
@@ -304,8 +304,8 @@ class TreeCtrlTaches(wx.TreeCtrl):
     def Remplissage(self):
         self.DeleteAllItems()
         
-        # CrÈation de la racine
-        self.root = self.AddRoot(_(u"T‚ches ‡ crÈer :"))
+        # Cr√©ation de la racine
+        self.root = self.AddRoot(_(u"T√¢ches √† cr√©er :"))
         if 'phoenix' in wx.PlatformInfo:
             self.SetItemData(self.root, None)
         else:
@@ -313,7 +313,7 @@ class TreeCtrlTaches(wx.TreeCtrl):
         # Image
         self.SetItemImage(self.root, self.imgRacine, wx.TreeItemIcon_Normal)
         
-        # CrÈation des noeux noms de personnes
+        # Cr√©ation des noeux noms de personnes
         for key in list(self.dictTaches.keys()):
             IDpersonne = key[0]
             nomPersonne = key[1]
@@ -333,7 +333,7 @@ class TreeCtrlTaches(wx.TreeCtrl):
                     self.SetItemData(itemDate, None)
                 # Image
                 self.SetItemImage(itemDate, self.imgDate, wx.TreeItemIcon_Normal)
-                # MÈmorisation de l'item Date du TreeCtrl
+                # M√©morisation de l'item Date du TreeCtrl
                 self.dictDatesTree[ (IDpersonne, date) ] = itemDate
                 
                 index = 0
@@ -350,7 +350,7 @@ class TreeCtrlTaches(wx.TreeCtrl):
                     else:
                         self.SetItemData(itemTache, None)
 
-                    # MÈmorisation de l'item TreeCtrl
+                    # M√©morisation de l'item TreeCtrl
                     self.dictItemsTree[ (IDpersonne, date, tache[0][0], tache[0][1]) ] = itemTache
                     
                     index += 1
@@ -371,7 +371,7 @@ class TreeCtrlTaches(wx.TreeCtrl):
         self.SetMinSize((300, 250))
     
     def ChangeImage(self, itemTache, etat):
-        """ Change l'image des t‚ches dans le TreeCtrl """
+        """ Change l'image des t√¢ches dans le TreeCtrl """
         if etat == True : 
             img = self.imgOk
         else:

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -21,21 +21,21 @@ import sys
 styles = {
     1 : (_(u"Texte normal"), 11.35, 20, 0),
     2 : (_(u"Grande case"), 11.35, 20, 2.25),
-    3 : (_(u"Petite case ‡ cocher"), 6, 6, 0),
-    4 : (_(u"Case ‡ cocher ombrÈe"), 10, 20, 0),
+    3 : (_(u"Petite case √† cocher"), 6, 6, 0),
+    4 : (_(u"Case √† cocher ombr√©e"), 10, 20, 0),
     5 : (_(u"Texte normal 2"), 12, 20, 2.25),
     }#  (Label du style, largeur, hauteur, espacement
     
     
 categories = {
     1 : (_(u"Etablissement employeur")),
-    2 : (_(u"Futur salariÈ")),
-    3 : (_(u"Autres ÈlÈments")),
-    }#  (Label de la catÈgorie)
+    2 : (_(u"Futur salari√©")),
+    3 : (_(u"Autres √©l√©ments")),
+    }#  (Label de la cat√©gorie)
     
     
 champs = [
-    ["NUM_SIRET", _(u"NumÈro Siret"), "texte", 1, u"", True,  
+    ["NUM_SIRET", _(u"Num√©ro Siret"), "texte", 1, u"", True,  
      (
         (1, 14, "num", 2, (115.8, 119)),
         )
@@ -45,30 +45,30 @@ champs = [
         (1, 4, "alpha", 2, (400.5, 119)),
         )
     ],
-    ["CIVILITE_EMPLOYEUR", _(u"CivilitÈ de l'employeur"), "radio", 1, u"", True, 
+    ["CIVILITE_EMPLOYEUR", _(u"Civilit√© de l'employeur"), "radio", 1, u"", True, 
      (
          (_(u"M."), "x", 3, (116.5, 136)),
          (_(u"Mme"), "x", 3, (135.5, 136)),
          (_(u"Melle"), "x", 3, (162, 136)),
-        (_(u"Non renseignÈ"), " ", 3, (162, 136)),
+        (_(u"Non renseign√©"), " ", 3, (162, 136)),
          )
     ],
-    ["DENOMINATION", _(u"DÈnomination de l'employeur"), "texte", 1, u"", True, 
+    ["DENOMINATION", _(u"D√©nomination de l'employeur"), "texte", 1, u"", True, 
      (
          (1, 32, "alpha", 1, (189.4, 144.3)),
          )
     ],
-    ["ADRESSE_ETABLISS", _(u"Adresse de l'Ètablissement"), "texte", 1, u"", True, 
+    ["ADRESSE_ETABLISS", _(u"Adresse de l'√©tablissement"), "texte", 1, u"", True, 
      (
          (1, 39, "alpha", 1, (110, 165)),
          )
     ],
-    ["CP_ETABLISS", _(u"Code postal de l'Ètablissement"), "texte", 1, u"", True, 
+    ["CP_ETABLISS", _(u"Code postal de l'√©tablissement"), "texte", 1, u"", True, 
      (
          (1, 5, "alpha", 2, (110, 184)),
          )
     ],
-    ["VILLE_ETABLISS", _(u"Ville de l'Ètablissement"), "texte", 1, u"", True, 
+    ["VILLE_ETABLISS", _(u"Ville de l'√©tablissement"), "texte", 1, u"", True, 
      (
          (1, 32, "alpha", 1, (189.4, 184)),
          )
@@ -88,17 +88,17 @@ champs = [
          (1, 32, "alpha", 1, (189.4, 224)),
          )
     ],
-    ["TEL_EMPLOYEUR", _(u"NumÈro de tÈlÈphone Employeur"), "texte", 1, u"", True, 
+    ["TEL_EMPLOYEUR", _(u"Num√©ro de t√©l√©phone Employeur"), "texte", 1, u"", True, 
      (
          (1, 10, "num", 2, (185.6, 250)),
          )
     ],
-    ["FAX_EMPLOYEUR", _(u"NumÈro de fax Employeur"), "texte", 1, u"", True, 
+    ["FAX_EMPLOYEUR", _(u"Num√©ro de fax Employeur"), "texte", 1, u"", True, 
      (
          (1, 10, "num", 2, (418.6, 250)),
          )
     ],
-    ["CIVILITE_SALARIE", _(u"CivilitÈ du salariÈ"), "radio", 2, u"", False, 
+    ["CIVILITE_SALARIE", _(u"Civilit√© du salari√©"), "radio", 2, u"", False, 
      (
          (_(u"M."), "x", 3, (116.5, 294)),
          (_(u"Mme"), "x", 3, (135.5, 294)),
@@ -115,7 +115,7 @@ champs = [
          (1, 13, "alpha", 1, (405, 296)),
          )
     ],
-    ["PRENOM_SALARIE", _(u"PrÈnoms (dans l'ordre de l'Ètat civil)"), "texte", 2, u"", False, 
+    ["PRENOM_SALARIE", _(u"Pr√©noms (dans l'ordre de l'√©tat civil)"), "texte", 2, u"", False, 
      (
          (1, 31, "alpha", 1, (116, 316)),
          )
@@ -123,10 +123,10 @@ champs = [
     ["SEXE_SALARIE", _(u"Sexe"), "radio", 2, u"", False, 
      (
         (_(u"Masculin"), "M", 2, (511, 319)),
-        (_(u"FÈminin"), "F", 2, (511, 319)),
+        (_(u"F√©minin"), "F", 2, (511, 319)),
          )
     ],
-    ["NUMSECU_SALARIE", _(u"NumÈro de sÈcuritÈ sociale"), "texte", 2, u"", False, 
+    ["NUMSECU_SALARIE", _(u"Num√©ro de s√©curit√© sociale"), "texte", 2, u"", False, 
      (
          (1, 1, "num", 2, (115, 341)),
          (2, 3, "num", 2, (132.5, 341)),
@@ -144,18 +144,18 @@ champs = [
          (5, 8, "num", 2, (500.5, 341)),
          )
     ],
-    ["NATIONALITE1_SALARIE", _(u"NationalitÈ"), "radio", 2, u"", False, 
+    ["NATIONALITE1_SALARIE", _(u"Nationalit√©"), "radio", 2, u"", False, 
      (
-         (_(u"FranÁaise"), "x", 4, (116, 366)),
-         (_(u"EtrangËre"), "x", 4, (176.5, 366)),
+         (_(u"Fran√ßaise"), "x", 4, (116, 366)),
+         (_(u"Etrang√®re"), "x", 4, (176.5, 366)),
          )
     ],
-    ["NATIONALITE2_SALARIE", _(u"Si ÈtrangËre, quelle nationalitÈ ?"), "texte", 2, u"", False, 
+    ["NATIONALITE2_SALARIE", _(u"Si √©trang√®re, quelle nationalit√© ?"), "texte", 2, u"", False, 
      (
          (1, 24, "alpha", 1, (280.5, 365)),
          )
     ],
-    ["DEPARTNAISS_SALARIE", _(u"NumÈro de dÈpartement de naissance"), "texte", 2, u"", False, 
+    ["DEPARTNAISS_SALARIE", _(u"Num√©ro de d√©partement de naissance"), "texte", 2, u"", False, 
      (
          (1, 3, "alpha", 2, (110, 387)),
          )
@@ -198,29 +198,29 @@ champs = [
          (3, 4, "num", 2, (528, 460.5)),
          )
     ],
-    ["SANTE_CODE", _(u"Service de santÈ au travail (Code)"), "texte", 3, u"", True, 
+    ["SANTE_CODE", _(u"Service de sant√© au travail (Code)"), "texte", 3, u"", True, 
      (
          (1, 3, "alpha", 2, (103.5, 514)),
          )
     ],
-    ["SANTE_NOM", _(u"Service de santÈ (Nom et adresse)"), "texte", 3, u"", True, 
+    ["SANTE_NOM", _(u"Service de sant√© (Nom et adresse)"), "texte", 3, u"", True, 
      (
          (1, 28, "alpha", 1, (147.5, 514)),
          (29, 56, "alpha", 1, (147.5, 534)),
          )
     ],
-    ["SANTE_ENTREPRISE", _(u"Service de santÈ au travail de l'entreprise ?"), "radio", 3, _(u"Non"), True, 
+    ["SANTE_ENTREPRISE", _(u"Service de sant√© au travail de l'entreprise ?"), "radio", 3, _(u"Non"), True, 
      (
          (_(u"Oui"), "x", 4, (480.5, 524)),
          (_(u"Non"), " ", 4, (480.5, 524)),
          )
     ],
-    ["EFFECTIF_AVANT_1", _(u"Effectif de l'Ètablissement avant embauche"), "texte", 3, u"", True, 
+    ["EFFECTIF_AVANT_1", _(u"Effectif de l'√©tablissement avant embauche"), "texte", 3, u"", True, 
      (
          (1, 4, "num", 2, (194, 557)),
          )
     ],
-    ["PREMIER_SALARIE", _(u"S'agit-il du premier salariÈ avant l'embauche"), "radio", 3, _(u"Non"), True, 
+    ["PREMIER_SALARIE", _(u"S'agit-il du premier salari√© avant l'embauche"), "radio", 3, _(u"Non"), True, 
      (
          (_(u"Oui"), "x", 4, (264, 577)),
          (_(u"Non"), "x", 4, (301, 576)),
@@ -231,7 +231,7 @@ champs = [
          (1, 5, "num", 2, (203, 598)),
          )
     ],
-    ["ACTIVITE_PRINCIPALE", _(u"ActivitÈ exercÈe dans l'Ètablissement"), "texte", 3, u"", True, 
+    ["ACTIVITE_PRINCIPALE", _(u"Activit√© exerc√©e dans l'√©tablissement"), "texte", 3, u"", True, 
      (
          (1, 36, "alpha", 5, (42, 614)),
          )
@@ -241,27 +241,27 @@ champs = [
          (1, 2, "alpha", 2, (159, 632)),
          )
     ],
-    ["PERIODE_ESSAI", _(u"DurÈe de la pÈriode d'essai (en jours)"), "texte", 3, u"", False, 
+    ["PERIODE_ESSAI", _(u"Dur√©e de la p√©riode d'essai (en jours)"), "texte", 3, u"", False, 
      (
          (1, 2, "num", 2, (403, 633)),
          )
     ],
-    ["SITUATION_SALARIE", _(u"Situation du salariÈ avant l'embauche"), "texte", 3, u"", True, 
+    ["SITUATION_SALARIE", _(u"Situation du salari√© avant l'embauche"), "texte", 3, u"", True, 
      (
          (1, 1, "alpha", 2, (180, 654)),
          )
     ],
-    ["DUREE_TRAVAIL_HEBDO", _(u"DurÈe du travail hebdomadaire (en heures)"), "texte", 3, u"", True, 
+    ["DUREE_TRAVAIL_HEBDO", _(u"Dur√©e du travail hebdomadaire (en heures)"), "texte", 3, u"", True, 
      (
          (1, 2, "num", 2, (218, 674)),
          )
     ],
-    ["DUREE_TRAVAIL_MENS", _(u"OU durÈe du travail mensuel (en heures)"), "texte", 3, u"", True, 
+    ["DUREE_TRAVAIL_MENS", _(u"OU dur√©e du travail mensuel (en heures)"), "texte", 3, u"", True, 
      (
          (1, 3, "num", 2, (330, 674)),
          )
     ],
-    ["DUREE_TRAVAIL_ANNU", _(u"OU durÈe du travail annuelle (en heures)"), "texte", 3, u"", True, 
+    ["DUREE_TRAVAIL_ANNU", _(u"OU dur√©e du travail annuelle (en heures)"), "texte", 3, u"", True, 
      (
          (1, 4, "num", 2, (469.5, 674)),
          )
@@ -274,8 +274,8 @@ champs = [
     ],
     ["CONTRAT_TYPE", _(u"Type de contrat"), "radio", 3, u"", False, 
      (
-         (_(u"Contrat ‡ durÈe indÈterminÈe"), "x", 4, (35, 716)),
-         (_(u"Contrat ‡ durÈe dÈterminÈe"), "x", 4, (171, 716)),
+         (_(u"Contrat √† dur√©e ind√©termin√©e"), "x", 4, (35, 716)),
+         (_(u"Contrat √† dur√©e d√©termin√©e"), "x", 4, (171, 716)),
          )
     ],
     ["DATE_FIN_CONTRAT", _(u"Si CDD, date de fin de contrat"), "texte", 3, u"", False, 
@@ -291,8 +291,8 @@ champs = [
          (_(u"Non"), "x", 4, (523, 760.5)),
          )
     ],
-    ]#  (Code, Label, type de contrÙle, IDcategorie, valeur, Sauvegarder ?,
-            # (caractDebut, caractFin, type de donnÈes, IDstyle, (x, y))
+    ]#  (Code, Label, type de contr√¥le, IDcategorie, valeur, Sauvegarder ?,
+            # (caractDebut, caractFin, type de donn√©es, IDstyle, (x, y))
             
             
 
@@ -310,13 +310,13 @@ class CreationPDF(threading.Thread) :
     def Dessin_texte(self, c, valeur, controles) :
         """ Dessine les textes """
         for caractDebut, caractFin, typeDonnee, IDstyle, position in controles :
-            # RÈcupÈration des donnÈes
+            # R√©cup√©ration des donn√©es
             labelStyle, tailleX, tailleY, espacement = styles[IDstyle]
             x, y = position
-            y = 842-y # Ajustement pour changement de systËme de coordonnÈes
-            # DÈcoupage du texte
+            y = 842-y # Ajustement pour changement de syst√®me de coordonn√©es
+            # D√©coupage du texte
             texte = valeur[caractDebut-1:caractFin]
-            # CrÈation du message
+            # Cr√©ation du message
             taillePolice = tailleX
             c.setFont("Helvetica", taillePolice)
             xTemp = 0
@@ -327,15 +327,15 @@ class CreationPDF(threading.Thread) :
                 numLettre += 1
                     
     def Dessin_radio(self, c, valeur, controles) :
-        """ Dessine des contrÙles radio """
+        """ Dessine des contr√¥les radio """
         for label, txtValeur, IDstyle, position in controles :
             if valeur == label :
-                # RÈcupÈration des donnÈes
+                # R√©cup√©ration des donn√©es
                 labelStyle, tailleX, tailleY, espacement = styles[IDstyle]
                 x, y = position
-                y = 842-y # Ajustement pour changement de systËme de coordonnÈes
+                y = 842-y # Ajustement pour changement de syst√®me de coordonn√©es
                 texte = txtValeur
-                # CrÈation du message
+                # Cr√©ation du message
                 taillePolice = tailleX
                 c.setFont("Helvetica", taillePolice)
                 xTemp = 0
@@ -346,13 +346,13 @@ class CreationPDF(threading.Thread) :
                     numLettre += 1
 
     def run(self) :
-        """ Processus de crÈation du PDF """  
+        """ Processus de cr√©ation du PDF """  
         # Initialisation
         cheminFichier = self.nomDocument + ".pdf"
         c = canvas.Canvas(cheminFichier, pageCompression = 1)
-        # CrÈation du fond
+        # Cr√©ation du fond
         img = c.drawImage(Chemins.GetStaticPath("Images/Special/Form_due_ursaff.jpg"), -10, 0, 595, 842, preserveAspectRatio=True)
-        # Dessin ‡ partir de la liste de donnÈes :
+        # Dessin √† partir de la liste de donn√©es :
         for code, label, typeControle, IDcategorie, valeur, sauvegarder, controles in self.listeChamps :
             # Si typeControle = "texte"
             if typeControle == "texte" :
@@ -377,7 +377,7 @@ class Grid(gridlib.Grid):
 
         self.Bind(wx.EVT_IDLE, self.OnIdle)
         
-        # CrÈation de la grille
+        # Cr√©ation de la grille
         nbreLignes = len(self.listeValeurs) + len(self.dictCategories)
         self.CreateGrid(nbreLignes, 2)
         self.SetColSize(0, 240)
@@ -387,12 +387,12 @@ class Grid(gridlib.Grid):
         self.SetRowLabelSize(1)
         self.SetColLabelSize(1)
         
-        # Remplissage avec les donnÈes
+        # Remplissage avec les donn√©es
         IDcategorieEnCours = 0
         key = 0
         for valeurs in self.listeValeurs :
             
-            # RÈcupÈration des valeurs
+            # R√©cup√©ration des valeurs
             code = valeurs[0]
             label = valeurs[1] + " :"
             type = valeurs[2]
@@ -401,11 +401,11 @@ class Grid(gridlib.Grid):
             sauvegarde = valeurs[5]
             controles = valeurs[6]
             
-            # Indique que la valeur sera sauvegardÈe
+            # Indique que la valeur sera sauvegard√©e
             if sauvegarde == True : label = label[:-2] + " * :"
             
             if IDcategorieEnCours != IDcategorie :
-                # CrÈation d'une ligne CATEGORIE
+                # Cr√©ation d'une ligne CATEGORIE
                 IDcategorieEnCours = IDcategorie
                 self.SetRowLabelValue(key, "")
                 self.SetCellValue(key, 0, self.dictCategories[IDcategorie])
@@ -416,22 +416,22 @@ class Grid(gridlib.Grid):
                 self.SetCellValue(key, 1, "")
                 self.SetCellBackgroundColour(key, 1, "#C5DDFA")
                 self.SetReadOnly(key, 1, True)
-                # MÈmorisation dans le dictionnaire des donnÈes
+                # M√©morisation dans le dictionnaire des donn√©es
                 self.dictValeurs[key] = valeurs
                 key += 1
                 
-            # CrÈation d'une ligne de donnÈes
+            # Cr√©ation d'une ligne de donn√©es
             
             # Entete de ligne
             self.SetRowLabelValue(key, "")
             
-            # CrÈation de la cellule LABEL
+            # Cr√©ation de la cellule LABEL
             self.SetCellValue(key, 0, label)
             self.SetCellBackgroundColour(key, 0, "#EEF4FB")
             self.SetReadOnly(key, 0, True)
             self.SetCellAlignment(key, 0, wx.ALIGN_RIGHT, wx.ALIGN_CENTRE)
             
-            # CrÈation de la cellule VALEUR
+            # Cr√©ation de la cellule VALEUR
             if type == "texte" :
                 nbreCaract = controles[-1][1]
                 editor = gridlib.GridCellTextEditor()
@@ -447,7 +447,7 @@ class Grid(gridlib.Grid):
                 self.SetCellEditor(key, 1, editor)
                 self.SetCellValue(key, 1, valeur)
             
-            # MÈmorisation dans le dictionnaire des donnÈes
+            # M√©morisation dans le dictionnaire des donn√©es
             self.dictValeurs[key] = valeurs
             key += 1
             
@@ -461,7 +461,7 @@ class Grid(gridlib.Grid):
 
     def OnCellChange(self, evt):
        
-        # Modification de la valeur dans le dict de donnÈes
+        # Modification de la valeur dans le dict de donn√©es
         numRow = evt.GetRow()
         valeur = self.GetCellValue(numRow, 1)
         self.dictValeurs[numRow][4] = valeur
@@ -470,16 +470,16 @@ class Grid(gridlib.Grid):
         
         if save == False : return
         
-##        # VÈrification de la valeur
+##        # V√©rification de la valeur
 ##        if valeur == "" :
 ##            self.moveTo = evt.GetRow(), evt.GetCol()
-##            dlg = wx.MessageDialog(self, _(u"Vous n'avez saisi aucune donnÈe. \n\nVoulez-vous laisser ce champ vide ?"),  _(u"VÈrification"), wx.ICON_QUESTION | wx.YES_NO | wx.NO_DEFAULT)
+##            dlg = wx.MessageDialog(self, _(u"Vous n'avez saisi aucune donn√©e. \n\nVoulez-vous laisser ce champ vide ?"),  _(u"V√©rification"), wx.ICON_QUESTION | wx.YES_NO | wx.NO_DEFAULT)
 ##            if dlg.ShowModal() == wx.ID_NO :
 ##                pass
         
         DB = GestionDB.DB()
         
-        # VÈrifie si le code existe dÈj‡ dans la base
+        # V√©rifie si le code existe d√©j√† dans la base
         req = """SELECT IDvaleur, code, valeur FROM due_valeurs WHERE code='%s';""" % code
         DB.ExecuterReq(req)
         listeDonnees = DB.ResultatReq()
@@ -517,17 +517,17 @@ class Dialog(wx.Dialog):
         
         self.panel_base = wx.Panel(self, -1)
         self.sizer_grid_staticbox = wx.StaticBox(self.panel_base, -1, "Champs")
-        self.label_intro = wx.StaticText(self.panel_base, -1, _(u"VÈrifiez, modifiez ou ajoutez les donnÈes puis cliquez sur 'Ok'."))
-        self.label_info = wx.StaticText(self.panel_base, -1, _(u"Remarque : Les champs marquÈs d'un astÈrique * sont mÈmorisÈs."))
+        self.label_intro = wx.StaticText(self.panel_base, -1, _(u"V√©rifiez, modifiez ou ajoutez les donn√©es puis cliquez sur 'Ok'."))
+        self.label_info = wx.StaticText(self.panel_base, -1, _(u"Remarque : Les champs marqu√©s d'un ast√©rique * sont m√©moris√©s."))
         font = wx.Font(7, wx.SWISS, wx.NORMAL, wx.NORMAL)
         self.label_info.SetFont(font)
                
-        # PrÈparation de la grid
+        # Pr√©paration de la grid
         self.Import_Donnees()
         self.gridChamps = Grid(self.panel_base)
 
         self.bouton_aide = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))
-        self.bouton_ok = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"AperÁu"), cheminImage=Chemins.GetStaticPath("Images/32x32/Apercu.png"))
+        self.bouton_ok = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Aper√ßu"), cheminImage=Chemins.GetStaticPath("Images/32x32/Apercu.png"))
         self.bouton_annuler = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Fermer"), cheminImage=Chemins.GetStaticPath("Images/32x32/Fermer.png"))
 
         self.__set_properties()
@@ -538,7 +538,7 @@ class Dialog(wx.Dialog):
         self.Bind(wx.EVT_BUTTON, self.Onbouton_annuler, self.bouton_annuler)
 
     def __set_properties(self):
-        self.SetTitle(_(u"Edition d'une dÈclaration prÈalable ‡ l'embauche"))
+        self.SetTitle(_(u"Edition d'une d√©claration pr√©alable √† l'embauche"))
         if 'phoenix' in wx.PlatformInfo:
             _icon = wx.Icon()
         else :
@@ -592,12 +592,12 @@ class Dialog(wx.Dialog):
             
         
     def Import_Donnees(self):
-        """ Importe les champs de la base de donnÈes """
+        """ Importe les champs de la base de donn√©es """
         
         IDcontrat = self.IDcontrat
         DB = GestionDB.DB()   
         
-        # Import des donnÈes enregistrÈes dans la base
+        # Import des donn√©es enregistr√©es dans la base
         req = """
             SELECT IDvaleur, code, valeur
             FROM due_valeurs;
@@ -605,7 +605,7 @@ class Dialog(wx.Dialog):
         DB.ExecuterReq(req)
         listeDonnees = DB.ResultatReq()
         
-        # IntÈgration des donnÈes ‡ la liste des champs
+        # Int√©gration des donn√©es √† la liste des champs
         index = 0
         global champs
         for IDvaleur, code, valeur in listeDonnees :
@@ -657,9 +657,9 @@ class Dialog(wx.Dialog):
         type_CDI = listeType[2]
         
         if type_CDI == "non" :
-            type_contrat = _(u"Contrat ‡ durÈe dÈterminÈe")
+            type_contrat = _(u"Contrat √† dur√©e d√©termin√©e")
         else:
-            type_contrat = "" #_(u"Contrat ‡ durÈe indÈterminÈe")
+            type_contrat = "" #_(u"Contrat √† dur√©e ind√©termin√©e")
                 
         # Base valeurs_point
         req = """
@@ -704,7 +704,7 @@ class Dialog(wx.Dialog):
         IDsituation = listePersonne[12]
         IDpays_naiss = listePersonne[13]
         
-        # Adaptation des donnÈes
+        # Adaptation des donn√©es
         if civilite == "Mr" : 
             civilite = "M."
             sexe = _(u"Masculin")
@@ -712,19 +712,19 @@ class Dialog(wx.Dialog):
             nomMarital = ""
         if civilite == "Mme" : 
             civilite = "Mme"
-            sexe = _(u"FÈminin")
+            sexe = _(u"F√©minin")
             nomNaiss = nom_jfille
             nomMarital = nom
         if civilite == "Melle" : 
             civilite = "Melle"
-            sexe = _(u"FÈminin")
+            sexe = _(u"F√©minin")
             nomNaiss = nom
             nomMarital = ""
         num_secu = num_secu.replace(" ", "")
         date_naiss = date_naiss.replace("/", "")
         depart_naiss = cp_naiss[:2]
         
-        # Base coordonnÈes
+        # Base coordonn√©es
         req = """
             SELECT categorie, texte
             FROM coordonnees WHERE IDpersonne=%d AND (categorie='Fixe' or categorie='Mobile');
@@ -738,7 +738,7 @@ class Dialog(wx.Dialog):
             listeCoords.sort()
             telephone = listeCoords[0][1]
             
-        # NationalitÈ
+        # Nationalit√©
         req = """
             SELECT nationalite
             FROM pays WHERE IDpays=%d;
@@ -746,11 +746,11 @@ class Dialog(wx.Dialog):
         DB.ExecuterReq(req)
         listePays = DB.ResultatReq()
         nationalite = listePays[0][0]
-        if nationalite == _(u"FranÁaise") :
-            nationalite1 = _(u"FranÁaise")
+        if nationalite == _(u"Fran√ßaise") :
+            nationalite1 = _(u"Fran√ßaise")
             nationalite2 = ""
         else:
-            nationalite1 = _(u"EtrangËre")
+            nationalite1 = _(u"Etrang√®re")
             nationalite2 = nationalite
         
         # Pays de naissance
@@ -762,7 +762,7 @@ class Dialog(wx.Dialog):
         listePays = DB.ResultatReq()
         pays_naiss = listePays[0][0]
                 
-        # IntÈgration des donnÈes ‡ la liste des valeurs
+        # Int√©gration des donn√©es √† la liste des valeurs
         listeDonnees = {}
         
         listeDonnees["CIVILITE_SALARIE"] = civilite

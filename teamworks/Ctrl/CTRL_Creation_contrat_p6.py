@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -25,13 +25,13 @@ class Page(wx.Panel):
         wx.Panel.__init__(self, *args, **kwds)
         self.parent = self.GetGrandParent()
         
-        self.label_titre = wx.StaticText(self, -1, _(u"Fin de l'assistant de crÈation de contrat"))
+        self.label_titre = wx.StaticText(self, -1, _(u"Fin de l'assistant de cr√©ation de contrat"))
         
         # Label Html
         txtIntro = u"""
         <FONT face="Arial" color="#000000" size=2>
-        <P>Vous avez saisi toutes les donnÈes du contrat. Cliquez sur le bouton 'Valider' pour terminer l'assistant.</P>
-        <p>Vous pouvez ensuite par exemple imprimer ce contrat ou la dÈclaration unique d'embauche correspondante.</p>
+        <P>Vous avez saisi toutes les donn√©es du contrat. Cliquez sur le bouton 'Valider' pour terminer l'assistant.</P>
+        <p>Vous pouvez ensuite par exemple imprimer ce contrat ou la d√©claration unique d'embauche correspondante.</p>
         </FONT>
         """ 
         self.label_intro = FonctionsPerso.TexteHtml(self, texte=txtIntro, Enabled=False)
@@ -54,12 +54,12 @@ class Page(wx.Panel):
 
     def Validation(self):
         
-        # Enregistrement des donnÈes
+        # Enregistrement des donn√©es
         dictContrats = self.GetGrandParent().dictContrats
         dictChamps = self.GetGrandParent().dictChamps
         DB = GestionDB.DB()
 
-        # Enregistrement des donnÈes du CONTRAT 
+        # Enregistrement des donn√©es du CONTRAT 
         listeDonnees = [    ("IDpersonne",     dictContrats["IDpersonne"]),
                                     ("IDclassification",dictContrats["IDclassification"]),
                                     ("IDtype",    dictContrats["IDtype"]),
@@ -82,9 +82,9 @@ class Page(wx.Panel):
             DB.Commit()
             IDcontrat = dictContrats["IDcontrat"]
 
-        # Enregistrement des donnÈes des CHAMPS 
+        # Enregistrement des donn√©es des CHAMPS 
         
-        # CrÈe une liste des champs existants dÈj‡ pour ce contrat
+        # Cr√©e une liste des champs existants d√©j√† pour ce contrat
         req = "SELECT IDval_champ, IDchamp FROM contrats_valchamps WHERE (IDcontrat=%d AND type='contrat')  ;" % IDcontrat
         DB.ExecuterReq(req)
         listeChampsDB = DB.ResultatReq()
@@ -100,21 +100,21 @@ class Page(wx.Panel):
                                     ("IDmodele",     0),
                                 ]
             
-            # Recherche si le champ existe dÈj‡ dans la base
+            # Recherche si le champ existe d√©j√† dans la base
             modif = False
             for IDval_champDB, IDchampDB in listeChampsDB :
                 if IDchampDB == IDchamp :
-                    # Le champ existe dÈj‡, alors on le modifie :
+                    # Le champ existe d√©j√†, alors on le modifie :
                     DB.ReqMAJ("contrats_valchamps", listeDonnees, "IDval_champ", IDval_champDB)
                     DB.Commit()
                     modif = True
                     
             if modif == False :
-                # Le champ n'existe pas dans la base, alors on le crÈÈe :
+                # Le champ n'existe pas dans la base, alors on le cr√©√©e :
                 ID = DB.ReqInsert("contrats_valchamps", listeDonnees)
                 DB.Commit()
         
-        # On efface les champs dÈj‡ crÈÈs qui ne sont plus utilisÈs :
+        # On efface les champs d√©j√† cr√©√©s qui ne sont plus utilis√©s :
         for IDval_champDB, IDchampDB in listeChampsDB :
             
             trouve = False
@@ -128,7 +128,7 @@ class Page(wx.Panel):
         # Fermeture de la DB
         DB.Close()
         
-        # Recherche si un parent est ‡ mettre ‡ jour
+        # Recherche si un parent est √† mettre √† jour
         if FonctionsPerso.FrameOuverte("FicheIndividuelle") != None :
             self.GetGrandParent().GetParent().list_ctrl_contrats.Remplissage()
             self.GetGrandParent().GetParent().MAJ_barre_problemes() 

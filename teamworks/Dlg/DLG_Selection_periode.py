@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -23,24 +23,24 @@ import calendar
 
 
 class SelectionPeriode(wx.Dialog):
-    """ On récupère les infos de cette boîte avec GetDates() ou avec GetPersonnesPresentes() """
-    def __init__(self, parent, id=-1, title=_(u"Sélection d'une période"), nomFichier=""):
+    """ On rÃ©cupÃ¨re les infos de cette boÃ®te avec GetDates() ou avec GetPersonnesPresentes() """
+    def __init__(self, parent, id=-1, title=_(u"SÃ©lection d'une pÃ©riode"), nomFichier=""):
         wx.Dialog.__init__(self, parent, id, title, size=(350, 400))
 
         # Label
-        self.label = wx.StaticText(self, -1, _(u"Veuillez sélectionner ou saisir une période :"))
+        self.label = wx.StaticText(self, -1, _(u"Veuillez sÃ©lectionner ou saisir une pÃ©riode :"))
         
         # listCtrl vacances
-        self.staticbox_vacances = wx.StaticBox(self, -1, _(u"Périodes de vacances"))
+        self.staticbox_vacances = wx.StaticBox(self, -1, _(u"PÃ©riodes de vacances"))
         self.ctrl_vacances = ListCtrl_vacances(self)
         self.ctrl_vacances.SetMinSize((20, 20)) 
         
-        # Mois et Année
-        self.staticbox_moisAnnee = wx.StaticBox(self, -1, _(u"Mois et année"))
+        # Mois et AnnÃ©e
+        self.staticbox_moisAnnee = wx.StaticBox(self, -1, _(u"Mois et annÃ©e"))
         self.label_mois = wx.StaticText(self, -1, "Mois :", size=(50, -1), style=wx.ALIGN_RIGHT)
-        self.listeMois = [u"", _(u"Janvier"), _(u"Février"), _(u"Mars"), _(u"Avril"), _(u"Mai"), _(u"Juin"), _(u"Juillet"), _(u"Août"), _(u"Septembre"), _(u"Octobre"), _(u"Novembre"), _(u"Décembre")]
+        self.listeMois = [u"", _(u"Janvier"), _(u"FÃ©vrier"), _(u"Mars"), _(u"Avril"), _(u"Mai"), _(u"Juin"), _(u"Juillet"), _(u"AoÃ»t"), _(u"Septembre"), _(u"Octobre"), _(u"Novembre"), _(u"DÃ©cembre")]
         self.ctrl_mois = wx.Choice(self, -1, choices = self.listeMois) #AdvancedComboBox( self, "", size=(100, -1), choices = self.listeMois)
-        self.label_annee = wx.StaticText(self, -1, _(u"Année :"), style=wx.ALIGN_RIGHT)
+        self.label_annee = wx.StaticText(self, -1, _(u"AnnÃ©e :"), style=wx.ALIGN_RIGHT)
         
         self.listeAnnees = ["",]
         for annee in range(2000, 2050) :
@@ -77,7 +77,7 @@ class SelectionPeriode(wx.Dialog):
         sizerStaticBox_vacances = wx.StaticBoxSizer(self.staticbox_vacances, wx.HORIZONTAL)
         sizerStaticBox_vacances.Add(self.ctrl_vacances, 1, wx.EXPAND|wx.ALL, 5)
         grid_sizer_base.Add(sizerStaticBox_vacances, 0, wx.EXPAND|wx.LEFT|wx.RIGHT, 10)
-        # Mois et Année
+        # Mois et AnnÃ©e
         sizerStaticBox_moisAnnee = wx.StaticBoxSizer(self.staticbox_moisAnnee, wx.HORIZONTAL)
         sizerStaticBox_moisAnnee.Add(self.label_mois, 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
         sizerStaticBox_moisAnnee.Add(self.ctrl_mois, 0, wx.EXPAND|wx.ALL, 5)
@@ -113,12 +113,12 @@ class SelectionPeriode(wx.Dialog):
         return (date_debut, date_fin)
 
     def SetDates(self, date_debut=None, date_fin=None):
-        """ Ecrit les dates de début et fin dans les deux datepickers """
+        """ Ecrit les dates de dÃ©but et fin dans les deux datepickers """
         if date_debut != None : self.SetDatePicker(self.ctrl_date_debut, date_debut)
         if date_fin != None : self.SetDatePicker(self.ctrl_date_fin, date_fin)
     
     def SetDatePicker(self, controle, date) :
-        """ Met une date au format datetime dans un datePicker donné """
+        """ Met une date au format datetime dans un datePicker donnÃ© """
         annee = int(date.year)
         mois = int(date.month)-1
         jour = int(date.day)
@@ -132,25 +132,25 @@ class SelectionPeriode(wx.Dialog):
         return datetime.date(date_tmp.GetYear(), date_tmp.GetMonth()+1, date_tmp.GetDay())
         
     def OnBoutonOk(self, event):
-        """ Validation des données saisies """
+        """ Validation des donnÃ©es saisies """
         self.EndModal(wx.ID_OK)
         
     def ctrl_mois_EvtComboBox(self, event):
         self.On_maj_mois()
         
     def On_maj_mois(self, event):
-        """ Quand un item est sélectionné dans le combobox mois """
+        """ Quand un item est sÃ©lectionnÃ© dans le combobox mois """
         index = self.ctrl_mois.GetSelection()
         if index > 0 :
             mois = index
-            # Si pas d'année saisie, sélectionne l'année en cours
+            # Si pas d'annÃ©e saisie, sÃ©lectionne l'annÃ©e en cours
             indexAnnee = self.ctrl_annee.GetSelection()
             if indexAnnee < 2 :
                 annee = datetime.datetime.now().year
                 self.ctrl_annee.SetStringSelection(str(annee))
             else:
                 annee = int(self.listeAnnees[self.ctrl_annee.GetSelection()])
-            # Si mois et année valide, on saisi les dates dans les datepickers
+            # Si mois et annÃ©e valide, on saisi les dates dans les datepickers
             date_debut = datetime.date(annee, mois, 1)
             date_fin = datetime.date(annee, mois, calendar.monthrange(annee, mois)[1])
             self.SetDates(date_debut, date_fin)
@@ -159,26 +159,26 @@ class SelectionPeriode(wx.Dialog):
         self.On_maj_annee()
         
     def On_maj_annee(self, event):
-        """ Quand un item est sélectionné dans le combobox annee """
+        """ Quand un item est sÃ©lectionnÃ© dans le combobox annee """
         index = self.ctrl_annee.GetSelection()
         if index != -1 :
             annee = int(self.listeAnnees[index])
-            # Si un mois a déjà été saisi, on saisie les dates extrêmes du mois sélectionné dans les datespickers
+            # Si un mois a dÃ©jÃ  Ã©tÃ© saisi, on saisie les dates extrÃªmes du mois sÃ©lectionnÃ© dans les datespickers
             if self.ctrl_mois.GetSelection() != -1 :
                 mois = self.ctrl_mois.GetSelection() + 1
                 date_debut = datetime.date(annee, mois, 1)
                 date_fin = datetime.date(annee,mois, calendar.monthrange(annee, mois)[1])
                 self.SetDates(date_debut, date_fin)
             else:
-                # Sinon, on saisie les dates extrêmes de l'année dans les datepickers
+                # Sinon, on saisie les dates extrÃªmes de l'annÃ©e dans les datepickers
                 date_debut = datetime.date(annee, 1, 1)
                 date_fin = datetime.date(annee, 12, 31)
                 self.SetDates(date_debut, date_fin)
 
     def GetPersonnesPresentes(self):
-        """ Permet de récupérer la liste des personnes présentes sur la période sélectionnée """
+        """ Permet de rÃ©cupÃ©rer la liste des personnes prÃ©sentes sur la pÃ©riode sÃ©lectionnÃ©e """
         date_debut, date_fin = self.GetDates()
-        # Récupération des presences des personnes
+        # RÃ©cupÃ©ration des presences des personnes
         DB = GestionDB.DB()        
         req = """SELECT IDpersonne FROM presences WHERE date>='%s' AND date<='%s' GROUP BY IDpersonne""" % (date_debut, date_fin)
         DB.ExecuterReq(req)
@@ -194,7 +194,7 @@ class SelectionPeriode(wx.Dialog):
         
         
 ##class AdvancedComboBox(wx.ComboBox) :
-##    """ Crée un comboBox avec auto-complete limité à la liste donnée """
+##    """ CrÃ©e un comboBox avec auto-complete limitÃ© Ã  la liste donnÃ©e """
 ##    def __init__(self, parent, value, choices=[], style=0, **par):
 ##        wx.ComboBox.__init__(self, parent, wx.ID_ANY, value, style=style|wx.CB_DROPDOWN, choices=choices, **par)
 ##        self.parent = parent
@@ -243,13 +243,13 @@ class SelectionPeriode(wx.Dialog):
 ##        event.Skip()
 ##    
 ##    def EvtKillFocus(self, event):
-##        # Si la valeur n'est pas correcte dans le champ, remet la valeur précédente
+##        # Si la valeur n'est pas correcte dans le champ, remet la valeur prÃ©cÃ©dente
 ##        if self.GetValue() not in self.choices and self.GetValue() != u"" :
 ##            self.Undo()
-##        # Fait la sélection dans la liste
+##        # Fait la sÃ©lection dans la liste
 ##        if self.GetValue() in self.choices :
 ##            self.SetStringSelection(self.GetValue())
-##        # Met à jour les contrôles mois et annee
+##        # Met Ã  jour les contrÃ´les mois et annee
 ##        self.parent.On_maj_mois()
 ##        self.parent.On_maj_annee()
 ##        event.Skip()
@@ -274,10 +274,10 @@ class ListCtrl_vacances(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.Col
 
     def Remplissage(self):
         
-        # Récupération des données dans la base de données
+        # RÃ©cupÃ©ration des donnÃ©es dans la base de donnÃ©es
         self.Importation()
         
-        # Création des colonnes
+        # CrÃ©ation des colonnes
         self.nbreColonnes = 2
         self.InsertColumn(0, _(u"Nom"))
         self.SetColumnWidth(0, 100)
@@ -302,7 +302,7 @@ class ListCtrl_vacances(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.Col
         return text
 
     def Importation(self):
-        # Récupération des données
+        # RÃ©cupÃ©ration des donnÃ©es
         DB = GestionDB.DB()        
         req = """SELECT IDperiode, nom, annee, date_debut, date_fin
         FROM periodes_vacances ORDER BY date_debut DESC; """
@@ -310,7 +310,7 @@ class ListCtrl_vacances(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.Col
         listeVacances = DB.ResultatReq()
         DB.Close()
         self.nbreLignes = len(listeVacances)
-        # Création du dictionnaire de données
+        # CrÃ©ation du dictionnaire de donnÃ©es
         self.donnees = {}
         index = 0
         for IDperiode, nom, annee, date_debut, date_fin in listeVacances :
@@ -342,12 +342,12 @@ class ListCtrl_vacances(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.Col
         return valeur
 
     def OnGetItemImage(self, item):
-        """ Affichage des images en début de ligne """
+        """ Affichage des images en dÃ©but de ligne """
         return -1
 
     def OnGetItemAttr(self, item):
         """ Application d'une couleur de fond pour une ligne sur deux """
-        # Création d'une ligne de couleur 1 ligne sur 2
+        # CrÃ©ation d'une ligne de couleur 1 ligne sur 2
         if item % 2 == 1:
             return self.attr1
         else:
@@ -374,13 +374,13 @@ class ListCtrl_vacances(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.Col
         pass
 
     def OnItemSelected(self, event):
-        """ Item selectionné """
+        """ Item selectionnÃ© """
         index = self.GetFirstSelected()
         valeur = six.text_type(self.itemDataMap[index][1])
         date_debut, date_fin = valeur.split("_")
         date_debut = datetime.date(year=int(date_debut[:4]), month=int(date_debut[5:7]), day=int(date_debut[8:10]))
         date_fin = datetime.date(year=int(date_fin[:4]), month=int(date_fin[5:7]), day=int(date_fin[8:10]))
-        # Efface les contenus des contrôles mois et annee
+        # Efface les contenus des contrÃ´les mois et annee
         self.parent.ctrl_mois.SetStringSelection("")
         self.parent.ctrl_annee.SetStringSelection("")
         # Set les dates dans les datepickers

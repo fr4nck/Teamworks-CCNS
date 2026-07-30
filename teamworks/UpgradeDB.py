@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #------------------------------------------------------------------------
-# Application :    Noethys, gestion multi-activités
+# Application :    Noethys, gestion multi-activitÃ©s
 # Site internet :  www.noethys.com
 # Auteur:          Ivan LUCAS
 # Copyright:       (c) 2010-19 Ivan LUCAS
@@ -22,13 +22,13 @@ class DB(GestionDB.DB):
         GestionDB.DB.__init__(self, *args, **kwds)
 
     def Upgrade(self, versionFichier=(0, 0, 0, 0) ) :
-        """ Adapte un fichier obsolète à la version actuelle du logiciel """
+        """ Adapte un fichier obsolÃ¨te Ã  la version actuelle du logiciel """
 
         # Filtres de conversion
 
         # =============================================================
 
-        # Filtre pour passer de la version 1 à la version 2 de Teamworks
+        # Filtre pour passer de la version 1 Ã  la version 2 de Teamworks
         versionFiltre = (2, 0, 0, 0)
         if versionFichier < versionFiltre:
             try:

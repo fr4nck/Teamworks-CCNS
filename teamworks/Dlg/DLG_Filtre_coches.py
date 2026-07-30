@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -23,19 +23,19 @@ class MyDialog(wx.Dialog):
             listeChoix = []
         wx.Dialog.__init__(self, parent, id=-1, title=u"", size=(350, 400))
         
-        # Paramètres personnalisables
+        # ParamÃ¨tres personnalisables
         self.nom_filtre = nom_filtre # _(u"les fonctions")
         self.titre_frame = titre_frame # _(u"Filtre des fonctions")
         self.listeSelection = listeSelection #None
         self.listeChoix = listeChoix # [ (1, "BAFA"), (2, _(u"BAFD")), (3, _(u"BEATEP")) ]
         
         # Label
-        self.label = wx.StaticText(self, -1, _(u"Veuillez définir un filtre pour le champ '%s' :") % self.nom_filtre)
+        self.label = wx.StaticText(self, -1, _(u"Veuillez dÃ©finir un filtre pour le champ '%s' :") % self.nom_filtre)
         
         # Controles
         self.staticbox = wx.StaticBox(self, -1, self.nom_filtre.capitalize())
         self.radio1 = wx.RadioButton(self, -1, _(u"Sans importance"), style = wx.RB_GROUP )
-        self.radio2 = wx.RadioButton(self, -1, _(u"Uniquement les éléments sélectionnés :"))
+        self.radio2 = wx.RadioButton(self, -1, _(u"Uniquement les Ã©lÃ©ments sÃ©lectionnÃ©s :"))
         self.checkListBox = CheckListBox(self)
         self.checkListBox.Remplissage(self.listeChoix)
                 
@@ -96,14 +96,14 @@ class MyDialog(wx.Dialog):
             self.checkListBox.Enable(True)
 
     def GetListeSelections(self):
-        """ Renvoie les sélection """
+        """ Renvoie les sÃ©lection """
         if self.radio1.GetValue() == True :
             return None
         else:
             return self.checkListBox.GetIDetLabels()
         
     def OnBoutonOk(self, event):
-        """ Validation des données saisies """
+        """ Validation des donnÃ©es saisies """
         self.EndModal(wx.ID_OK)
         
         
@@ -131,7 +131,7 @@ class CheckListBox(wx.CheckListBox):
     def CocheListe(self, liste=None):
         if liste != None :
             self.listeIDcoches = liste
-        # Coche les ID donnés
+        # Coche les ID donnÃ©s
         for index in range(0, self.GetCount()) :
             if self.dictIndexes[index] in self.listeIDcoches :
                 self.Check(index, True)
@@ -139,7 +139,7 @@ class CheckListBox(wx.CheckListBox):
                 self.Check(index, False)
     
     def GetIDcoches(self):
-        # Récupère la liste des ID cochés :
+        # RÃ©cupÃ¨re la liste des ID cochÃ©s :
         listeIDcoches = []
         for index in range(0, self.GetCount()) :
             if self.IsChecked(index) == True :
@@ -147,7 +147,7 @@ class CheckListBox(wx.CheckListBox):
         return listeIDcoches
     
     def GetIDetLabels(self):  	
-        # Récupère la liste des ID et des labels cochés :
+        # RÃ©cupÃ¨re la liste des ID et des labels cochÃ©s :
         liste = []
         for index in range(0, self.GetCount()) :
             if self.IsChecked(index) == True :

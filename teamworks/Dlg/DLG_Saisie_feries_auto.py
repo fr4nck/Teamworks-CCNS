@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #------------------------------------------------------------------------
 # Application :    Teamworks
 # Auteur:           Ivan LUCAS
@@ -22,11 +22,11 @@ class MyDialog(wx.Dialog):
     def __init__(self, parent, fichierOuvert=None):
         wx.Dialog.__init__(self, parent, id=-1, style=wx.DEFAULT_DIALOG_STYLE)
 
-        self.label_intro = wx.StaticText(self, -1, _(u"Cette fonctionnalitÈ vous permet de laisser Teamworks crÈer les jours fÈriÈs variables \nd'une ou plusieurs annÈes selon des algorithmes de calcul intÈgrÈs. Saisissez une \nou plusieurs annÈes sÈparÈes d'un point-virgule, cochez les jours ‡ crÈer puis \ncliquez sur le bouton OK."))
-        self.label_annees = wx.StaticText(self, -1, _(u"AnnÈes :"))
+        self.label_intro = wx.StaticText(self, -1, _(u"Cette fonctionnalit√© vous permet de laisser Teamworks cr√©er les jours f√©ri√©s variables \nd'une ou plusieurs ann√©es selon des algorithmes de calcul int√©gr√©s. Saisissez une \nou plusieurs ann√©es s√©par√©es d'un point-virgule, cochez les jours √† cr√©er puis \ncliquez sur le bouton OK."))
+        self.label_annees = wx.StaticText(self, -1, _(u"Ann√©es :"))
         self.ctrl_annees = wx.TextCtrl(self, -1, u"")
-        self.label_jours = wx.StaticText(self, -1, _(u"Jours fÈriÈs :"))
-        listeJours = [_(u"Lundi de P‚ques"), _(u"Jeudi de l'ascension"), _(u"Lundi de PentecÙte")]
+        self.label_jours = wx.StaticText(self, -1, _(u"Jours f√©ri√©s :"))
+        listeJours = [_(u"Lundi de P√¢ques"), _(u"Jeudi de l'ascension"), _(u"Lundi de Pentec√¥te")]
         self.ctrl_jours = wx.CheckListBox(self, -1, (-1, -1), wx.DefaultSize, listeJours)
         self.ctrl_jours.SetMinSize((-1, 80))
         self.bouton_aide = CTRL_Bouton_image.CTRL(self, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))
@@ -41,11 +41,11 @@ class MyDialog(wx.Dialog):
         self.Bind(wx.EVT_BUTTON, self.OnBoutonAnnuler, self.bouton_annuler)
 
     def __set_properties(self):
-        self.SetTitle(_(u"Saisie automatique des jours fÈriÈs variables"))
-        self.ctrl_annees.SetToolTip(wx.ToolTip(_(u"Saisissez une annÈe ou plusieurs annÈes sÈparÈes de points-virgules (;). Exemple : '2011;2012;2013' ")))
-        self.ctrl_jours.SetToolTip(wx.ToolTip(_(u"Cochez les jours fÈriÈs ‡ crÈer")))
+        self.SetTitle(_(u"Saisie automatique des jours f√©ri√©s variables"))
+        self.ctrl_annees.SetToolTip(wx.ToolTip(_(u"Saisissez une ann√©e ou plusieurs ann√©es s√©par√©es de points-virgules (;). Exemple : '2011;2012;2013' ")))
+        self.ctrl_jours.SetToolTip(wx.ToolTip(_(u"Cochez les jours f√©ri√©s √† cr√©er")))
         self.bouton_aide.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour obtenir de l'aide")))
-        self.bouton_ok.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour crÈer les jours fÈriÈs")))
+        self.bouton_ok.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour cr√©er les jours f√©ri√©s")))
         self.bouton_annuler.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour annuler")))
 
     def __do_layout(self):
@@ -79,9 +79,9 @@ class MyDialog(wx.Dialog):
         self.EndModal(wx.ID_CANCEL)
 
     def OnBoutonOk(self, event): 
-        # RÈcupÈration des annÈes
+        # R√©cup√©ration des ann√©es
         if self.ctrl_annees.GetValue() == "" :
-            dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement saisir une annÈe !"), _(u"Erreur"), wx.OK | wx.ICON_EXCLAMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement saisir une ann√©e !"), _(u"Erreur"), wx.OK | wx.ICON_EXCLAMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return False
@@ -93,24 +93,24 @@ class MyDialog(wx.Dialog):
                 if int(annee) < 1900 or int(annee) > 3000 :
                     raise Exception()
             except :
-                dlg = wx.MessageDialog(self, _(u"Les annÈes saisies ne semblent pas valides !"), _(u"Erreur"), wx.OK | wx.ICON_EXCLAMATION)
+                dlg = wx.MessageDialog(self, _(u"Les ann√©es saisies ne semblent pas valides !"), _(u"Erreur"), wx.OK | wx.ICON_EXCLAMATION)
                 dlg.ShowModal()
                 dlg.Destroy()
                 return False
 
-        # RÈcupÈration jours fÈriÈs ‡ crÈer
+        # R√©cup√©ration jours f√©ri√©s √† cr√©er
         listeCoches = []
         for index in range(0, self.ctrl_jours.GetCount()):
             if self.ctrl_jours.IsChecked(index):
                 listeCoches.append(index)
 
         if len(listeCoches) == 0 :
-            dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement cocher au moins un jour fÈriÈ ‡ crÈer !"), _(u"Erreur"), wx.OK | wx.ICON_EXCLAMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement cocher au moins un jour f√©ri√© √† cr√©er !"), _(u"Erreur"), wx.OK | wx.ICON_EXCLAMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return False
         
-        # RÈcupÈration des jours dÈj‡ prÈsents dans la base de donnÈes
+        # R√©cup√©ration des jours d√©j√† pr√©sents dans la base de donn√©es
         DB = GestionDB.DB() 
         req = """SELECT IDferie, nom, jour, mois, annee
         FROM jours_feries
@@ -129,15 +129,15 @@ class MyDialog(wx.Dialog):
                 IDferie = DB.ReqInsert("jours_feries", [("type", "variable"), ("nom", nom), ("annee", date.year), ("mois", date.month), ("jour", date.day)])
 
 
-        # Calcul des jours fÈriÈs
+        # Calcul des jours f√©ri√©s
         for annee in listeAnnees :
             
             # Dimanche de Paques
             dimanche_paques = easter(annee)
             
-            # Lundi de P‚ques
+            # Lundi de P√¢ques
             lundi_paques = dimanche_paques + relativedelta(days=+1)
-            if 0 in listeCoches : SauvegarderDate(_(u"Lundi de P‚ques"), lundi_paques)
+            if 0 in listeCoches : SauvegarderDate(_(u"Lundi de P√¢ques"), lundi_paques)
             
             # Ascension
             ascension = dimanche_paques + relativedelta(days=+39)
@@ -145,7 +145,7 @@ class MyDialog(wx.Dialog):
 
             # Pentecote
             pentecote = dimanche_paques + relativedelta(days=+50)
-            if 2 in listeCoches : SauvegarderDate(_(u"Lundi de PentecÙte"), pentecote)
+            if 2 in listeCoches : SauvegarderDate(_(u"Lundi de Pentec√¥te"), pentecote)
         
         DB.Close()
         

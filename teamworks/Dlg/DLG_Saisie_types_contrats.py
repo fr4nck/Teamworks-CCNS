@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -21,12 +21,12 @@ class Dialog(wx.Dialog):
         self.parent = parent
         self.panel_base = wx.Panel(self, -1)
         self.sizer_contenu_staticbox = wx.StaticBox(self.panel_base, -1, "")
-        self.label_nom_abrege = wx.StaticText(self.panel_base, -1, _(u"Nom abrégé :"))
+        self.label_nom_abrege = wx.StaticText(self.panel_base, -1, _(u"Nom abrÃ©gÃ© :"))
         self.text_nom_abrege = wx.TextCtrl(self.panel_base, -1, "")
         self.label_nom_abrege_aide = wx.StaticText(self.panel_base, -1, "(5 lettres maximum)")
         self.label_nom = wx.StaticText(self.panel_base, -1, "Nom complet :")
         self.text_nom = wx.TextCtrl(self.panel_base, -1, "")
-        self.label_duree = wx.StaticText(self.panel_base, -1, _(u"A durée \nindéterminée ?"), style=wx.ALIGN_RIGHT)
+        self.label_duree = wx.StaticText(self.panel_base, -1, _(u"A durÃ©e \nindÃ©terminÃ©e ?"), style=wx.ALIGN_RIGHT)
         self.radio_oui = wx.RadioButton(self.panel_base, -1, "Oui", style=wx.RB_GROUP)
         self.radio_non = wx.RadioButton(self.panel_base, -1, "Non")
         self.bouton_aide = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))
@@ -55,11 +55,11 @@ class Dialog(wx.Dialog):
         _icon.CopyFromBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Logo.png"), wx.BITMAP_TYPE_ANY))
         self.SetIcon(_icon)
         self.text_nom_abrege.SetMinSize((50, -1))
-        self.text_nom_abrege.SetToolTip(wx.ToolTip(_(u"Saisissez un nom abrégé. Par ex: 'CDD', 'CDI'...")))
+        self.text_nom_abrege.SetToolTip(wx.ToolTip(_(u"Saisissez un nom abrÃ©gÃ©. Par ex: 'CDD', 'CDI'...")))
         self.label_nom_abrege_aide.SetFont(wx.Font(7, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, ""))
-        self.text_nom.SetToolTip(wx.ToolTip(_(u"Saisissez le nom complet. Par ex: 'Contrat à durée indéterminée'...")))
-        self.radio_oui.SetToolTip(wx.ToolTip(_(u"Cochez 'Oui' si le type de contrat est à durée indéterminée.")))
-        self.radio_non.SetToolTip(wx.ToolTip(_(u"Cochez 'Oui' si le type de contrat est à durée déterminée.")))
+        self.text_nom.SetToolTip(wx.ToolTip(_(u"Saisissez le nom complet. Par ex: 'Contrat Ã  durÃ©e indÃ©terminÃ©e'...")))
+        self.radio_oui.SetToolTip(wx.ToolTip(_(u"Cochez 'Oui' si le type de contrat est Ã  durÃ©e indÃ©terminÃ©e.")))
+        self.radio_non.SetToolTip(wx.ToolTip(_(u"Cochez 'Oui' si le type de contrat est Ã  durÃ©e dÃ©terminÃ©e.")))
         self.bouton_aide.SetToolTip(wx.ToolTip("Cliquez ici pour obtenir de l'aide"))
         self.bouton_aide.SetSize(self.bouton_aide.GetBestSize())
         self.bouton_ok.SetToolTip(wx.ToolTip("Cliquez ici pour valider"))
@@ -121,9 +121,9 @@ class Dialog(wx.Dialog):
             self.radio_non.SetValue(True)
 
     def Sauvegarde(self):
-        """ Sauvegarde des données dans la base de données """
+        """ Sauvegarde des donnÃ©es dans la base de donnÃ©es """
 
-        # Récupération ds valeurs saisies
+        # RÃ©cupÃ©ration ds valeurs saisies
         nom_abrege = self.text_nom_abrege.GetValue()
         nom = self.text_nom.GetValue()
         if self.radio_oui.GetValue() == True :
@@ -132,17 +132,17 @@ class Dialog(wx.Dialog):
             duree = "non"
 
         DB = GestionDB.DB()
-        # Création de la liste des données
+        # CrÃ©ation de la liste des donnÃ©es
         listeDonnees = [    ("nom",   nom),  
                                     ("nom_abrege",    nom_abrege), 
                                     ("duree_indeterminee",    duree),
                                     ]
         if self.IDtype == 0:
-            # Enregistrement d'une nouvelle coordonnée
+            # Enregistrement d'une nouvelle coordonnÃ©e
             newID = DB.ReqInsert("contrats_types", listeDonnees)
             ID = newID
         else:
-            # Modification de la coordonnée
+            # Modification de la coordonnÃ©e
             DB.ReqMAJ("contrats_types", listeDonnees, "IDtype", self.IDtype)
             ID = self.IDtype
         DB.Commit()
@@ -157,7 +157,7 @@ class Dialog(wx.Dialog):
         self.EndModal(wx.ID_CANCEL)
 
     def OnBoutonOk(self, event):
-        """ Validation des données saisies """
+        """ Validation des donnÃ©es saisies """
         nom_abrege = self.text_nom_abrege.GetValue()
         nom = self.text_nom.GetValue()
         if self.radio_oui.GetValue() == True :
@@ -165,23 +165,23 @@ class Dialog(wx.Dialog):
         else:
             duree = "non"
             
-        # Vérifie que un nom abrégé a été saisi
+        # VÃ©rifie que un nom abrÃ©gÃ© a Ã©tÃ© saisi
         if nom_abrege == "" :
-            dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement saisir un nom abrégé."), "Erreur", wx.OK)  
+            dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement saisir un nom abrÃ©gÃ©."), "Erreur", wx.OK)  
             dlg.ShowModal()
             dlg.Destroy()
             self.text_nom_abrege.SetFocus()
             return
         
-        # Vérifie que un nom abrégé ne dépasse pas 5 caractéres
+        # VÃ©rifie que un nom abrÃ©gÃ© ne dÃ©passe pas 5 caractÃ©res
         if len(nom_abrege) > 5 :
-            dlg = wx.MessageDialog(self, _(u"Le nom abrégé ne doit pas dépasser 5 caractères !"), "Erreur", wx.OK)  
+            dlg = wx.MessageDialog(self, _(u"Le nom abrÃ©gÃ© ne doit pas dÃ©passer 5 caractÃ¨res !"), "Erreur", wx.OK)  
             dlg.ShowModal()
             dlg.Destroy()
             self.text_nom_abrege.SetFocus()
             return
         
-        # Vérifie que un nom abrégé a été saisi
+        # VÃ©rifie que un nom abrÃ©gÃ© a Ã©tÃ© saisi
         if nom == "" :
             dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement saisir un nom complet."), "Erreur", wx.OK)  
             dlg.ShowModal()

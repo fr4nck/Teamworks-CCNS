@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -23,19 +23,19 @@ class MyDialog(wx.Dialog):
             listeChoix = []
         wx.Dialog.__init__(self, parent, id=-1, title=u"", size=(350, 250))
         
-        # Paramètres personnalisables
+        # ParamÃ¨tres personnalisables
         self.nom_filtre = nom_filtre # _(u"les fonctions")
         self.titre_frame = titre_frame # _(u"Filtre des fonctions")
         self.selection = selection #None
         self.listeChoix = listeChoix # [ (1, "BAFA"), (2, _(u"BAFD")), (3, _(u"BEATEP")) ]
         
         # Label
-        self.label = wx.StaticText(self, -1, _(u"Veuillez définir un filtre pour %s :") % self.nom_filtre)
+        self.label = wx.StaticText(self, -1, _(u"Veuillez dÃ©finir un filtre pour %s :") % self.nom_filtre)
         
         # Controles
         self.staticbox = wx.StaticBox(self, -1, self.nom_filtre.capitalize())
         self.radio1 = wx.RadioButton(self, -1, _(u"Sans importance"), style = wx.RB_GROUP )
-        self.radio2 = wx.RadioButton(self, -1, _(u"Uniquement l'élément sélectionné :"))
+        self.radio2 = wx.RadioButton(self, -1, _(u"Uniquement l'Ã©lÃ©ment sÃ©lectionnÃ© :"))
         self.myChoice = MyChoice(self)
         self.myChoice.Remplissage(self.listeChoix)
                 
@@ -93,14 +93,14 @@ class MyDialog(wx.Dialog):
             self.myChoice.Enable(True)
 
     def GetSelection(self):
-        """ Renvoie les sélection """
+        """ Renvoie les sÃ©lection """
         if self.radio1.GetValue() == True :
             return None
         else:
             return self.myChoice.GetIDselection()
         
     def OnBoutonOk(self, event):
-        """ Validation des données saisies """
+        """ Validation des donnÃ©es saisies """
         self.EndModal(wx.ID_OK)
         
 

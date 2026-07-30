@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -42,11 +42,11 @@ class Panel(wx.Panel):
 
         
     def __set_properties(self):
-        self.bouton_reinit.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour réinitialiser les paramètres par défaut de l'affichage")))
+        self.bouton_reinit.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour rÃ©initialiser les paramÃ¨tres par dÃ©faut de l'affichage")))
         self.bouton_reinit.SetSize(self.bouton_reinit.GetBestSize())
-        self.bouton_haut.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour déplacer la colonne sélectionnée vers le haut")))
+        self.bouton_haut.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour dÃ©placer la colonne sÃ©lectionnÃ©e vers le haut")))
         self.bouton_haut.SetSize(self.bouton_haut.GetBestSize())
-        self.bouton_bas.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour déplacer la colonne sélectionnée vers le bas")))
+        self.bouton_bas.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour dÃ©placer la colonne sÃ©lectionnÃ©e vers le bas")))
         self.bouton_bas.SetSize(self.bouton_bas.GetBestSize())
         
     def __do_layout(self):
@@ -78,7 +78,7 @@ class Panel(wx.Panel):
 
     def Reinit(self):
         # Avertissement
-        dlg = wx.MessageDialog(self, _(u"Souhaitez-vous rétablir l'affichage par défaut ?"), "Confirmation", wx.YES_NO | wx.CANCEL | wx.ICON_EXCLAMATION)
+        dlg = wx.MessageDialog(self, _(u"Souhaitez-vous rÃ©tablir l'affichage par dÃ©faut ?"), "Confirmation", wx.YES_NO | wx.CANCEL | wx.ICON_EXCLAMATION)
         if dlg.ShowModal() == wx.ID_YES:
             
             OL = self.GetParent().GetGrandParent() 
@@ -138,7 +138,7 @@ class ListCtrl(wx.ListCtrl, CheckListCtrlMixin):
         self.Bind(wx.EVT_LIST_ITEM_DESELECTED, self.OnItemDeselected)
 
     def Remplissage(self, select=None):
-        # Création des colonnes
+        # CrÃ©ation des colonnes
         self.InsertColumn(0, "Ordre")
         self.SetColumnWidth(0, 50)
         self.InsertColumn(1, "Label de la colonne")
@@ -164,7 +164,7 @@ class ListCtrl(wx.ListCtrl, CheckListCtrlMixin):
             if affiche == True :
                 self.CheckItem(index)
 
-            # Sélection
+            # SÃ©lection
             if ID == select :
                 self.Select(index)
         
@@ -188,12 +188,12 @@ class ListCtrl(wx.ListCtrl, CheckListCtrlMixin):
 
     def OnItemSelected(self, event):
         index = self.GetFirstSelected()
-        # Règle bouton haut
+        # RÃ¨gle bouton haut
         if index == 0 :
             self.parent.bouton_haut.Enable(False)
         else:
             self.parent.bouton_haut.Enable(True)
-        # Règle bouton bas
+        # RÃ¨gle bouton bas
         if index == self.GetItemCount()-1 :
             self.parent.bouton_bas.Enable(False)
         else:
@@ -204,7 +204,7 @@ class ListCtrl(wx.ListCtrl, CheckListCtrlMixin):
         self.parent.bouton_bas.Enable(False)
 
     def Importation(self):
-        # Récupération des données
+        # RÃ©cupÃ©ration des donnÃ©es
         listeCols = self.GetGrandParent().GetParent().listeColonnes
         self.listeColonnes = []
         x = 0

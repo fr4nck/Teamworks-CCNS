@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -20,7 +20,7 @@ class Panel(wx.Panel):
         wx.Panel.__init__(self, parent, ID, name="panel_config_verrouillage_entretien", style=wx.TAB_TRAVERSAL)
         
         self.barreTitre = FonctionsPerso.BarreTitre(self,  _(u"Verrouillage des informations des entretiens"), u"")
-        texteIntro = _(u"Vous pouvez protÈger l'accËs aux informations liÈes aux entretiens d'embauche (avis et commentaires).\nL'utilisateur devra ainsi saisir un mot de passe pour les afficher. Cochez la case et saisissez le mot de passe\nsouhaitÈ ‡ deux reprises. Pour dÈsactiver la protection, il vous suffit de dÈcocher cette case.")
+        texteIntro = _(u"Vous pouvez prot√©ger l'acc√®s aux informations li√©es aux entretiens d'embauche (avis et commentaires).\nL'utilisateur devra ainsi saisir un mot de passe pour les afficher. Cochez la case et saisissez le mot de passe\nsouhait√© √† deux reprises. Pour d√©sactiver la protection, il vous suffit de d√©cocher cette case.")
         self.label_introduction = FonctionsPerso.StaticWrapText(self, -1, texteIntro)
         
         self.staticbox = wx.StaticBox(self, -1, _(u"Protection"))
@@ -72,13 +72,13 @@ class Panel(wx.Panel):
             dlg = wx.MessageDialog(self, _(u"Voulez-vous vraiment annuler la protection par mot de passe ?"), "Confirmation", wx.YES_NO | wx.ICON_QUESTION)
             if dlg.ShowModal() == wx.ID_YES:
                 dlg.Destroy()
-                # On vÈrifie que le mot de passe est connu de l'utilisateur
+                # On v√©rifie que le mot de passe est connu de l'utilisateur
                 password = FonctionsPerso.Parametres(mode="get", categorie="recrutement", nom="password_entretien", valeur="")
                 dlg = SaisiePassword(self)  
                 if dlg.ShowModal() == wx.ID_OK:
                     pwd = dlg.GetPassword()
                     if pwd != password :
-                        dlg2 = wx.MessageDialog(self, _(u"Votre mot de passe est erronÈ."), _(u"Mot de passe erronÈ"), wx.OK | wx.ICON_ERROR)
+                        dlg2 = wx.MessageDialog(self, _(u"Votre mot de passe est erron√©."), _(u"Mot de passe erron√©"), wx.OK | wx.ICON_ERROR)
                         dlg2.ShowModal()
                         dlg2.Destroy()
                         self.checkBox.SetValue(True)
@@ -95,7 +95,7 @@ class Panel(wx.Panel):
                 self.checkBox.SetValue(True)
                 dlg.Destroy()
         
-        # On demande la crÈation d'un mot de passe
+        # On demande la cr√©ation d'un mot de passe
         else:
             dlg = DLG_Saisie_password_dialog.MyDialog(self)
             if dlg.ShowModal() == wx.ID_OK:
@@ -113,11 +113,11 @@ class Panel(wx.Panel):
 
         
 class SaisiePassword(wx.Dialog):
-    def __init__(self, parent, id=-1, title=_(u"Saisie du code de dÈverrouillage")):
+    def __init__(self, parent, id=-1, title=_(u"Saisie du code de d√©verrouillage")):
         wx.Dialog.__init__(self, parent, id, title)
             
         self.sizer_3_staticbox = wx.StaticBox(self, -1, "")
-        self.label_2 = wx.StaticText(self, -1, _(u"Pour dÈsactiver le mot de passe, vous devez dÈj‡ le saisir :"))
+        self.label_2 = wx.StaticText(self, -1, _(u"Pour d√©sactiver le mot de passe, vous devez d√©j√† le saisir :"))
         self.label_password = wx.StaticText(self, -1, "Mot de passe :")
         self.text_password = wx.TextCtrl(self, -1, "", size=(200, -1), style=wx.TE_PASSWORD)
 
