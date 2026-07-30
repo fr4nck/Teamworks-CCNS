@@ -148,7 +148,7 @@ jobs:
           Get-ChildItem $package -Recurse -File |
             Sort-Object FullName |
             ForEach-Object {
-              $relative = [System.IO.Path]::GetRelativePath($package.Path, $_.FullName).Replace('\\', '/')
+              $relative = [System.IO.Path]::GetRelativePath($package.Path, $_.FullName).Replace('\', '/')
               $hash = (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
               "$hash  $relative"
             } | Set-Content "$package/PACKAGE-SHA256SUMS.txt" -Encoding ascii
