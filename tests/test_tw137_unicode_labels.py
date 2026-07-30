@@ -1,6 +1,17 @@
 # -*- coding: utf-8 -*-
 
-from Utils import UTILS_Traduction
+import importlib
+import sys
+import types
+
+
+# UTILS_Traduction dépend de modules applicatifs lourds qui ne sont pas utiles
+# à ces tests unitaires. On fournit uniquement les deux dépendances requises à
+# l'import afin de tester la normalisation Unicode de façon isolée.
+sys.modules.setdefault("Chemins", types.SimpleNamespace())
+sys.modules.setdefault("Utils.UTILS_Fichiers", types.SimpleNamespace())
+
+UTILS_Traduction = importlib.import_module("Utils.UTILS_Traduction")
 
 
 def test_calendar_month_names_with_replacement_character_are_repaired():
