@@ -17,7 +17,7 @@ def test_all_checklist_mixins_enable_native_phoenix_checkboxes() -> None:
     initialisations = 0
     files = []
     for path in sorted(TEAMWORKS.rglob("*.py")):
-        source = path.read_text(encoding="iso-8859-15")
+        source = path.read_text(encoding="utf-8")
         count = len(MIXIN.findall(source))
         if not count:
             continue

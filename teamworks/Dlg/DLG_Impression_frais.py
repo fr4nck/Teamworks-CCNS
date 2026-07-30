@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -35,12 +35,12 @@ class Dialog(wx.Dialog):
         self.IDpersonne = IDpersonne
         
         self.panel_base = wx.Panel(self, -1)
-        self.label_intro = wx.StaticText(self.panel_base, -1, _(u"Veuillez cocher les déplacements que vous souhaitez inclure dans la fiche de frais :"))
+        self.label_intro = wx.StaticText(self.panel_base, -1, _(u"Veuillez cocher les dÃ©placements que vous souhaitez inclure dans la fiche de frais :"))
         
         # ListCtrl
         self.ctrl_deplacements = ListCtrl(self.panel_base,  IDpersonne=IDpersonne)
         
-        # Hyperlink cocher les non remboursés
+        # Hyperlink cocher les non remboursÃ©s
         self.hyperlink_nonRembourses = self.Build_Hyperlink()
         
         self.bouton_aide = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))
@@ -55,7 +55,7 @@ class Dialog(wx.Dialog):
         self.Bind(wx.EVT_BUTTON, self.OnBoutonAnnuler, self.bouton_annuler)
 
     def __set_properties(self):
-        self.SetTitle(_(u"Imprimer une fiche de frais de déplacements"))
+        self.SetTitle(_(u"Imprimer une fiche de frais de dÃ©placements"))
         if 'phoenix' in wx.PlatformInfo:
             _icon = wx.Icon()
         else :
@@ -98,20 +98,20 @@ class Dialog(wx.Dialog):
     def Build_Hyperlink(self) :
         """ Construit un hyperlien """
         self.SetFont(wx.Font(10, wx.SWISS, wx.NORMAL, wx.NORMAL, False))
-        hyper = hl.HyperLinkCtrl(self.panel_base, -1, _(u"Sélectionner uniquement les déplacements non-remboursés"), URL="")
+        hyper = hl.HyperLinkCtrl(self.panel_base, -1, _(u"SÃ©lectionner uniquement les dÃ©placements non-remboursÃ©s"), URL="")
         hyper.Bind(hl.EVT_HYPERLINK_LEFT, self.OnLeftLink)
         hyper.AutoBrowse(False)
         hyper.SetColours("BLACK", "BLACK", "BLUE")
         hyper.EnableRollover(True)
         hyper.SetUnderlines(False, False, True)
         hyper.SetBold(False)
-        hyper.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour sélectionner uniquement \nles déplacements non-remboursés")))
+        hyper.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour sÃ©lectionner uniquement \nles dÃ©placements non-remboursÃ©s")))
         hyper.UpdateLink()
         hyper.DoPopup(False)
         return hyper
         
     def OnLeftLink(self, event):
-        """ Sélectionner les déplacements non remboursés """
+        """ SÃ©lectionner les dÃ©placements non remboursÃ©s """
         self.ctrl_deplacements.MAJListeCtrl()
 
     def OnBoutonAide(self, event):
@@ -122,12 +122,12 @@ class Dialog(wx.Dialog):
         self.EndModal(wx.ID_CANCEL)
 
     def OnBoutonOk(self, event):
-        """ Validation des données saisies """
+        """ Validation des donnÃ©es saisies """
         selections = self.ctrl_deplacements.ListeItemsCoches()
         
-        # Validation de la sélection
+        # Validation de la sÃ©lection
         if len(selections) == 0 :
-            dlg = wx.MessageDialog(self, _(u"Vous n'avez fait aucune sélection"), _(u"Erreur de saisie"), wx.OK | wx.ICON_ERROR)
+            dlg = wx.MessageDialog(self, _(u"Vous n'avez fait aucune sÃ©lection"), _(u"Erreur de saisie"), wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -159,8 +159,8 @@ class ListCtrl(wx.ListCtrl, CheckListCtrlMixin):
 
         self.Importation()
 
-        # Création des colonnes
-        self.InsertColumn(0, u"N°")
+        # CrÃ©ation des colonnes
+        self.InsertColumn(0, u"NÂ°")
         self.SetColumnWidth(0, 50)
         self.InsertColumn(1, _(u"Date"))
         self.SetColumnWidth(1, 80)
@@ -205,7 +205,7 @@ class ListCtrl(wx.ListCtrl, CheckListCtrlMixin):
             if remboursement == "":
                 self.CheckItem(index)
 
-            # On sélectionne le dernier
+            # On sÃ©lectionne le dernier
             if index == self.nbreLignes-1 :
                 self.EnsureVisible(index)
 
@@ -232,14 +232,14 @@ class ListCtrl(wx.ListCtrl, CheckListCtrlMixin):
 
       
     def Importation(self):
-        # Récupération des données
+        # RÃ©cupÃ©ration des donnÃ©es
         DB = GestionDB.DB()        
         req = """SELECT IDdeplacement, date, objet, ville_depart, ville_arrivee, distance, aller_retour, tarif_km, IDremboursement FROM deplacements WHERE IDpersonne=%d ORDER BY date; """ % self.IDpersonne
         DB.ExecuterReq(req)
         donnees = DB.ResultatReq()
         DB.Close()
         self.nbreLignes = len(donnees)
-        # Création du dictionnaire de données
+        # CrÃ©ation du dictionnaire de donnÃ©es
         self.listeDonnees = []
         index = 0
         for IDdeplacement, date, objet, ville_depart, ville_arrivee, distance, aller_retour, tarif_km, IDremboursement in donnees :
@@ -252,26 +252,26 @@ class ListCtrl(wx.ListCtrl, CheckListCtrlMixin):
                 trajet = ville_depart + " -> " + ville_arrivee
             # Formatage Remboursement
             if IDremboursement != None and IDremboursement != 0 and IDremboursement != "" :
-                remboursement = u"N°" + str(IDremboursement)
+                remboursement = u"NÂ°" + str(IDremboursement)
             else :
                 remboursement = ""
             # Formatage distance
             dist = str(distance) + _(u" Km")
             # Formatage montant
             montant = float(distance) * float(tarif_km)
-            montantStr = u"%.2f ¤" % montant
+            montantStr = u"%.2f â‚¬" % montant
             # Formatage tarif/Km
-            tarif_km = str(tarif_km) + _(u" ¤/km")
+            tarif_km = str(tarif_km) + _(u" â‚¬/km")
             self.listeDonnees.append( (IDdeplacement, dateTmp, objet, trajet, dist, tarif_km, montantStr, remboursement) )
             index += 1
 
     def ListeItemsCoches(self):
-        """ Récupère la liste des IDdeplacements cochés """
+        """ RÃ©cupÃ¨re la liste des IDdeplacements cochÃ©s """
         listeIDcoches = []
         nbreItems = self.GetItemCount()
         for index in range(0, nbreItems) :
             ID = int(self.GetItem(index, 0).GetText())
-            # Vérifie si l'item est coché
+            # VÃ©rifie si l'item est cochÃ©
             if self.IsChecked(index) :
                 listeIDcoches.append(ID)
         return listeIDcoches
@@ -298,7 +298,7 @@ class ImpressionFicheFrais():
         if len(listeSelections) == 1 : listeSelectionsTmp = "(%d)" % listeSelections[0]
         else : listeSelectionsTmp = str(tuple(listeSelections))
         
-        # Récupération des données
+        # RÃ©cupÃ©ration des donnÃ©es
         DB = GestionDB.DB()        
         req = """
         SELECT IDdeplacement, date, objet, ville_depart, ville_arrivee, distance, aller_retour, tarif_km, IDremboursement, nom, prenom
@@ -320,11 +320,11 @@ class ImpressionFicheFrais():
         doc = SimpleDocTemplate(nomDoc)
         story = []
 
-        # Création du titre du document
+        # CrÃ©ation du titre du document
         dataTableau = []
         largeursColonnes = ( (420, 100) )
         dateDuJour = DateEngFr(str(datetime.date.today()))
-        dataTableau.append( (_(u"Frais de déplacement"), _(u"Edité le %s") % dateDuJour )  )
+        dataTableau.append( (_(u"Frais de dÃ©placement"), _(u"EditÃ© le %s") % dateDuJour )  )
         style = TableStyle([
                             ('BOX', (0,0), (-1,-1), 0.25, colors.black), 
                             ('VALIGN', (0,0), (-1,-1), 'TOP'), 
@@ -338,20 +338,20 @@ class ImpressionFicheFrais():
         story.append(tableau)
         story.append(Spacer(0,20))       
         
-        # Tableau de données
+        # Tableau de donnÃ©es
         dataTableau = []
         largeursColonnes = (20, 100, 140, 140, 40, 40, 40)
         
-        # Création de l'entete de groupe
+        # CrÃ©ation de l'entete de groupe
         titreGroupe = listeDonnees[0][9] + " " + listeDonnees[0][10]
         valeurs = (titreGroupe, "", "", "", "", "", "")
         dataTableau.append( valeurs )
         
-        # Création des labels des colonnes
+        # CrÃ©ation des labels des colonnes
         valeurs = (_(u"ID"), _(u"Date"), _(u"Objet"), _(u"Trajet"), _(u"Distance"), _(u"Tarif/Km"), _(u"Montant"))
         dataTableau.append( valeurs )
         
-        # Création des groupes
+        # CrÃ©ation des groupes
         montant_total = 0
         for IDdeplacement, date, objet, ville_depart, ville_arrivee, distance, aller_retour, tarif_km, IDremboursement, nom, prenom in listeDonnees :
             varIDdeplacement = IDdeplacement
@@ -362,26 +362,26 @@ class ImpressionFicheFrais():
             else:
                 varTrajet = ville_depart + " -> " + ville_arrivee
             varDistance = str(distance) + " Km"
-            varTarif_km = str(tarif_km) + _(u" ¤/Km")
+            varTarif_km = str(tarif_km) + _(u" â‚¬/Km")
 ##            varIDremboursement = IDremboursement
             montant = distance * tarif_km
             montant_total += montant
-            varMontant = u"%.2f ¤" % montant
+            varMontant = u"%.2f â‚¬" % montant
             valeurs = (varIDdeplacement, varDate, varObjet, varTrajet, varDistance, varTarif_km, varMontant)
             dataTableau.append( valeurs )
             
-        # Création de la ligne de total
-        dataTableau.append( ( "", "", "", "", "", "Total :", u"%.2f ¤" % montant_total ) )
+        # CrÃ©ation de la ligne de total
+        dataTableau.append( ( "", "", "", "", "", "Total :", u"%.2f â‚¬" % montant_total ) )
     
         # Style du tableau
         style = TableStyle([
-                            ('GRID', (0,0), (-1,-2), 0.25, colors.black), # Crée la bordure noire pour tout le tableau
-                            ('GRID', (6,-1), (-1,-1), 0.25, colors.black), # Crée la bordure noire pour tout le tableau
+                            ('GRID', (0,0), (-1,-2), 0.25, colors.black), # CrÃ©e la bordure noire pour tout le tableau
+                            ('GRID', (6,-1), (-1,-1), 0.25, colors.black), # CrÃ©e la bordure noire pour tout le tableau
                             ('VALIGN', (0,0), (-1,-1), 'TOP'), # Centre verticalement toutes les cases
-##                            ('ALIGN', (0,0), (-1,-1), 'LEFT'), # Titre du groupe à gauche
-                            ('ALIGN', (4,2), (-1,-1), 'RIGHT'), # 3 dernières Colonnes alignée à droite
-                            ('ALIGN', (0,1), (0,-1), 'CENTRE'), # Colonne ID centrée
-                            ('ALIGN', (0,1), (-1,1), 'CENTRE'), # Ligne de labels colonne alignée au centre
+##                            ('ALIGN', (0,0), (-1,-1), 'LEFT'), # Titre du groupe Ã  gauche
+                            ('ALIGN', (4,2), (-1,-1), 'RIGHT'), # 3 derniÃ¨res Colonnes alignÃ©e Ã  droite
+                            ('ALIGN', (0,1), (0,-1), 'CENTRE'), # Colonne ID centrÃ©e
+                            ('ALIGN', (0,1), (-1,1), 'CENTRE'), # Ligne de labels colonne alignÃ©e au centre
 ##                            ('SPAN',(0,-1),(1,-1)), # Fusionne les 2 lignes du bas pour faire case Total
                             ('SPAN',(0,0),(-1,0)), # Fusionne les lignes du haut pour faire le titre du groupe
                             ('FONT',(0,0),(-1,-1), "Helvetica", 6), # Donne la police de caract. + taille de police 
@@ -393,7 +393,7 @@ class ImpressionFicheFrais():
                             ])
             
            
-        # Création du tableau
+        # CrÃ©ation du tableau
         tableau = Table(dataTableau, largeursColonnes)
         tableau.setStyle(style)
         story.append(tableau)
@@ -411,7 +411,7 @@ class ImpressionFicheFrais():
     
     def DateComplete(self, date):
         listeJours = ("Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche")
-        listeMois = (_(u"janvier"), _(u"février"), _(u"mars"), _(u"avril"), _(u"mai"), _(u"juin"), "juillet", _(u"août"), _(u"septembre"), _(u"octobre"), _(u"novembre"), _(u"décembre"))
+        listeMois = (_(u"janvier"), _(u"fÃ©vrier"), _(u"mars"), _(u"avril"), _(u"mai"), _(u"juin"), "juillet", _(u"aoÃ»t"), _(u"septembre"), _(u"octobre"), _(u"novembre"), _(u"dÃ©cembre"))
         dateStr = listeJours[date.weekday()] + " " + str(date.day) + " " + listeMois[date.month-1] + " " + str(date.year)
         return dateStr
     

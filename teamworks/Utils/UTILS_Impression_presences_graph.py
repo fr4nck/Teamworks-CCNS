@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -55,7 +55,7 @@ def minutesEnHeures(dureeMinutes) :
 
 class Impression():
     def __init__(self, nom_doc, orientation, dictCategories, dictGroupes, dictLignes, listePresences, dictPresences, coordLigne, hauteur_barre, ecart_lignes, mode_texte):
-        # Paramètres du PDF
+        # ParamÃ¨tres du PDF
         self.nom_doc = nom_doc
         if "win" in sys.platform : self.nom_doc = self.nom_doc.replace("/", "\\")
         
@@ -81,32 +81,32 @@ class Impression():
         doc = SimpleDocTemplate(self.nom_doc, pagesize=taillePage)
         story = []
         
-        # Création des lignes        
+        # CrÃ©ation des lignes        
         for IDgroupe, valeurs in dictGroupes.items() :
             titreGroupe, posY_debut, posY_fin, nbreLignes, listeLignes = valeurs
             
-            # Création du titre du groupe
+            # CrÃ©ation du titre du groupe
             styleSheet = getSampleStyleSheet()
             labelGroupe = LabelGroupe(0, 30, titreGroupe)
             story.append(labelGroupe)
             story.append(Spacer(0,10))
             
-            # Création des lignes du groupe
+            # CrÃ©ation des lignes du groupe
             for IDpersonneLigne, dateLigne, xxx, labelLigne in listeLignes :
                 # Recherche des barres de la ligne
                 listeBarresLigne = []
                 for IDpresence, IDpersonne, date, heureDebut, heureFin, IDcategorie, intitule, posG, posD, posYhaut, posYbas in listePresences :
                     if (IDpersonne == IDpersonneLigne) and (date == dateLigne) :
-                        # Création de la barre
+                        # CrÃ©ation de la barre
                         listeBarresLigne.append((IDpresence, IDpersonne, date, heureDebut, heureFin, IDcategorie, intitule, posG, posD, posYhaut, posYbas))
                 
                 ligne = Ligne(0, HAUTEUR_BARRE -3 + ECART_LIGNES, labelLigne, listeBarresLigne)
                 story.append(ligne)
             
-            # Espace après le groupe
+            # Espace aprÃ¨s le groupe
             story.append(Spacer(0,20))
             
-        # Légendes des catégories
+        # LÃ©gendes des catÃ©gories
         story.append(Spacer(0,10))
         nbre_legendes = 0
         total_heures = 0
@@ -145,7 +145,7 @@ class Ligne(Flowable) :
     def draw(self):
         canvas = self.canv
         if type(self.labelLigne) != six.text_type :
-            self.labelLigne = self.labelLigne.decode("iso-8859-15")
+            self.labelLigne = self.labelLigne.decode("utf-8")
         canvas.setFont("Helvetica", 9)
         # Dessin du label de la ligne
         xRightLabel = COORD_LIGNE[0] - 10
@@ -191,13 +191,13 @@ class Ligne(Flowable) :
         canvas.drawString(x + paddingTexte, y + paddingTexte, heureDebut)
         heureFin = str(heureFin)[0:2] + "h" + str(heureFin)[3:5]
         canvas.drawRightString(largeur + x - paddingTexte, y + paddingTexte, heureFin)
-        # Dessin de l'intitulé
+        # Dessin de l'intitulÃ©
         if MODE_TEXTE == 2 and label != "" :
             canvas.drawString(x + paddingTexte, y + paddingTexte - 10, label)
 
 
 class Legende(Flowable) :
-    """ Flowable Ligne de légende """
+    """ Flowable Ligne de lÃ©gende """
     def __init__(self, xoffset=0, size=None, label="", couleur=None, totalHeures=0):
         self.xoffset = xoffset
         self.size = size
@@ -212,7 +212,7 @@ class Legende(Flowable) :
         canvas.setFillColorRGB(0, 0, 0)
         canvas.setFont("Helvetica", 9)
         canvas.drawString(15, 1, "%s : %s" % (self.label, minutesEnHeures(self.totalHeures)))
-        # Carré de couleur
+        # CarrÃ© de couleur
         if self.couleur != None :
             r, g, b = ConvertCouleur(FormateCouleur(self.couleur))
             canvas.setFillColorRGB(r, g, b)
@@ -230,7 +230,7 @@ class LabelGroupe(Flowable) :
     def draw(self):
         canvas = self.canv
         if type(self.label) != six.text_type :
-            self.label = self.label.decode("iso-8859-15")
+            self.label = self.label.decode("utf-8")
         # Texte label
         canvas.setFillColorRGB(0, 0, 0)
         canvas.setFont("Helvetica-Bold", 11)

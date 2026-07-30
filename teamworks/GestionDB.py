@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #------------------------------------------------------------------------
 from Utils import UTILS_Diagnostic_performance as DiagnosticPerformance
 # Application :    Noethys, gestion multi-activités
@@ -218,7 +218,7 @@ class DB:
             for descr in dicoDB[table]:
                 nomChamp = descr[0]
                 typeChamp = descr[1]
-                # Adaptation à Sqlite
+                # Adaptation à SQLite
                 if self.isNetwork == False and typeChamp == "LONGBLOB" : typeChamp = "BLOB"
                 if self.isNetwork == False and typeChamp == "BIGINT": typeChamp = "INTEGER"
                 # Adaptation à MySQL :
@@ -244,12 +244,12 @@ class DB:
         for descr in dicoDB[nomTable]:
             nomChamp = descr[0]
             typeChamp = descr[1]
-            # Adaptation � SQLite
+            # Adaptation à SQLite
             if self.isNetwork == False and typeChamp == "LONGBLOB":
                 typeChamp = "BLOB"
             if self.isNetwork == False and typeChamp == "BIGINT":
                 typeChamp = "INTEGER"
-            # Adaptation � MySQL
+            # Adaptation à MySQL
             if self.isNetwork == True and typeChamp == "INTEGER PRIMARY KEY AUTOINCREMENT":
                 typeChamp = "INTEGER PRIMARY KEY AUTO_INCREMENT"
             if self.isNetwork == True and typeChamp == "FLOAT":
@@ -999,7 +999,7 @@ def GetChampsTable(nomTable=""):
 
 
 def ConvertConditionChaine(liste=[]):
-    """ Transforme une liste de valeurs en une condition chaine pour requête SQL """
+    """ Transforme une liste de valeurs en une condition chaîne pour requête SQL """
     if len(liste) == 0 : condition = "()"
     elif len(liste) == 1 : condition = "(%d)" % liste[0]
     else : condition = str(tuple(liste))

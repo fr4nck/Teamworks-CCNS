@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -63,9 +63,9 @@ def HeureStrEnDatetime(texteHeure):
     return heure
 
 def DatetimeDateEnStr(date):
-    """ Transforme un datetime.date en date complËte : Ex : lundi 15 janvier 2008 """
+    """ Transforme un datetime.date en date compl√®te : Ex : lundi 15 janvier 2008 """
     listeJours = ("Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche")
-    listeMois = (_(u"janvier"), _(u"fÈvrier"), _(u"mars"), _(u"avril"), _(u"mai"), _(u"juin"), _(u"juillet"), _(u"ao˚t"), _(u"septembre"), _(u"octobre"), _(u"novembre"), _(u"dÈcembre"))
+    listeMois = (_(u"janvier"), _(u"f√©vrier"), _(u"mars"), _(u"avril"), _(u"mai"), _(u"juin"), _(u"juillet"), _(u"ao√ªt"), _(u"septembre"), _(u"octobre"), _(u"novembre"), _(u"d√©cembre"))
     dateStr = listeJours[date.weekday()] + " " + str(date.day) + " " + listeMois[date.month-1] + " " + str(date.year)
     return dateStr
 
@@ -126,7 +126,7 @@ class Impression():
         self.listeIDpersonnes = listeIDpersonnes
         self.dictPersonnes = dictPersonnes
 
-        listeMois = (_(u"Janvier"), _(u"FÈvrier"), _(u"Mars"), _(u"Avril"), _(u"Mai"), _(u"Juin"), _(u"Juillet"), _(u"Ao˚t"), _(u"Septembre"), _(u"Octobre"), _(u"Novembre"), _(u"DÈcembre"))
+        listeMois = (_(u"Janvier"), _(u"F√©vrier"), _(u"Mars"), _(u"Avril"), _(u"Mai"), _(u"Juin"), _(u"Juillet"), _(u"Ao√ªt"), _(u"Septembre"), _(u"Octobre"), _(u"Novembre"), _(u"D√©cembre"))
         listeJours = (u"L", u"M", u"M", u"J", u"V", u"S", u"D")
         
         global AFFICHER_WE, AFFICHER_VACANCES, AFFICHER_FERIES, AFFICHER_HEURES, AFFICHER_COULEUR_CATEGORIES, AFFICHER_LEGENDE, AFFICHER_HEURES_MOIS
@@ -138,7 +138,7 @@ class Impression():
         AFFICHER_LEGENDE = afficher_legende
         AFFICHER_HEURES_MOIS = afficher_heures_mois
         
-        # ParamËtres du PDF
+        # Param√®tres du PDF
         nomDoc = UTILS_Fichiers.GetRepTemp("Impression_calendrier_mensuel.pdf")
         if "win" in sys.platform : nomDoc = nomDoc.replace("/", "\\")        
         taillePage = landscape(A4)
@@ -148,10 +148,10 @@ class Impression():
         doc = SimpleDocTemplate(nomDoc, pagesize=taillePage, leftMargin=40, rightMargin=40, topMargin=40, bottomMargin=40)
         story = []
         
-        # CrÈation du titre du document
+        # Cr√©ation du titre du document
         largeursColonnesTitre = ( (630, 100) )
         dateDuJour = DatetimeDateEnStr(datetime.date.today())
-        dataTableauTitre = [(_(u"Planning de %s %d") % (listeMois[self.mois-1], self.annee), _(u"EditÈ le %s") % dateDuJour ),]
+        dataTableauTitre = [(_(u"Planning de %s %d") % (listeMois[self.mois-1], self.annee), _(u"Edit√© le %s") % dateDuJour ),]
         styleTitre = TableStyle([
                             ('BOX', (0,0), (-1,-1), 0.25, colors.black), 
                             ('VALIGN', (0,0), (-1,-1), 'TOP'), 
@@ -165,7 +165,7 @@ class Impression():
         story.append(tableauTitre)
         story.append(Spacer(0,20))  
         
-        # RÈcupÈration des donnÈes
+        # R√©cup√©ration des donn√©es
 ##        self.dictPersonnes = ImportPersonnes(annee, mois)
         self.dictPresences, self.dictTotauxCategories = self.ImportPresences(self.annee, self.mois) 
         nbrePersonnes = len(self.listeIDpersonnes)
@@ -175,13 +175,13 @@ class Impression():
         LISTE_VACANCES = self.Importation_Vacances()
         LISTE_FERIES = self.Importation_Feries()
         
-        # CrÈation du tableau
+        # Cr√©ation du tableau
         dataTableau = []
         enteteTableau = []
         largeursColonnes = []
         styleTableau = []
         
-        # CrÈation de l'entete du tableau
+        # Cr√©ation de l'entete du tableau
         numWeekDay, nbreJoursMois = calendar.monthrange(self.annee, self.mois)
         numJourSemaine = numWeekDay
         
@@ -210,7 +210,7 @@ class Impression():
         styleTableau.append(('ALIGN', (0, 0), (-1, 0), 'CENTRE')) 
         styleTableau.append(('FONT', (0, 0), (-1, 0), "Helvetica-Bold", 8))
         
-        # CrÈation des lignes vides
+        # Cr√©ation des lignes vides
         for IDpersonne in self.listeIDpersonnes :
             # Entete ligne
             nom = self.dictPersonnes[IDpersonne]["nom"]
@@ -234,7 +234,7 @@ class Impression():
                 ligne.append(total)
             dataTableau.append(ligne)
         
-        # Style gÈnÈral du tableau
+        # Style g√©n√©ral du tableau
         styleTableau.append(('FONT', (0, 1), (-1, -1), "Helvetica", 6))
         styleTableau.append(('LEFTPADDING', (0, 0), (-1, -1), 0))
         styleTableau.append(('RIGHTPADDING', (0, 0), (-1, -1), 0))
@@ -257,12 +257,12 @@ class Impression():
 
         #------------------LEGENDE-------------------
         
-        # LÈgendes des catÈgories
+        # L√©gendes des cat√©gories
         dataTableauLegende = []
         largeursColonnesLegende = []
         styleTableauLegende = []
         
-        # CrÈation des lignes vides du tableau des lÈgendes
+        # Cr√©ation des lignes vides du tableau des l√©gendes
         nbreLignesLegendes = 12
         nbreColonnesLegendes = 4
         largeurColonneLegende = 178.75
@@ -273,11 +273,11 @@ class Impression():
                 ligne.append(None)
             dataTableauLegende.append(ligne)
         
-        # CrÈation de la liste des largeurs des colonnes
+        # Cr√©ation de la liste des largeurs des colonnes
         for x in range(0, nbreColonnesLegendes):
             largeursColonnesLegende.append(largeurColonneLegende)
             
-        # Remplissage du tableau des lÈgendes
+        # Remplissage du tableau des l√©gendes
         nbre_legendes = 0
         total_heures = 0
         numLigne = 0
@@ -290,7 +290,7 @@ class Impression():
             dataTableauLegende[numLigne][numCol] = CaseLegende(0, 10, _(u"Week-ends"), COULEUR_WE, None)
             numLigne += 1
         if AFFICHER_FERIES == True :
-            dataTableauLegende[numLigne][numCol] = CaseLegende(0, 10, _(u"Jours fÈriÈs"), COULEUR_FERIES, None)
+            dataTableauLegende[numLigne][numCol] = CaseLegende(0, 10, _(u"Jours f√©ri√©s"), COULEUR_FERIES, None)
             numLigne += 1
         
         for IDcategorie, nbreHeures in self.dictTotauxCategories.items() :
@@ -307,7 +307,7 @@ class Impression():
                     numCol += 1
 
         if nbre_legendes > 1 :
-            # Ajoute un total d'heures pour l'annÈe
+            # Ajoute un total d'heures pour l'ann√©e
             legende = CaseLegende(0, 10, _(u"Total pour le mois"), None, total_heures)
             dataTableauLegende[numLigne][numCol] = legende
         
@@ -343,18 +343,18 @@ class Impression():
         DB.ExecuterReq(req)
         listePresences = DB.ResultatReq()
         DB.Close()
-        # CrÈation des dict de donnÈes
+        # Cr√©ation des dict de donn√©es
         dictPresences = {}
         dictTotalHeures = {}
         for IDpersonne, IDpresence, date, heure_debut, heure_fin, IDcategorie in listePresences :
-            # Formatage des donnÈes
+            # Formatage des donn√©es
             dateDD = StrEnDatetimeDate(date)
             heure_debut = HeureStrEnDatetime(heure_debut)
             heure_fin = HeureStrEnDatetime(heure_fin)
             HMin = datetime.timedelta(hours=heure_debut.hour, minutes=heure_debut.minute)
             HMax = datetime.timedelta(hours=heure_fin.hour, minutes=heure_fin.minute)
             duree = ((HMax - HMin).seconds)//60
-            # CrÈation du dict des prÈsences
+            # Cr√©ation du dict des pr√©sences
             if (IDpersonne in dictPresences) == False :
                 dictPresences[IDpersonne] = {}
             if (dateDD in dictPresences[IDpersonne]) == False :
@@ -365,7 +365,7 @@ class Impression():
                 dictPresences[IDpersonne][dateDD][IDcategorie] = duree
             dictPresences[IDpersonne][dateDD]["totalJour"] = dictPresences[IDpersonne][dateDD]["totalJour"] + duree
 
-            # CrÈation du dict des totaux par categories
+            # Cr√©ation du dict des totaux par categories
             if IDcategorie in dictTotalHeures:
                 dictTotalHeures[IDcategorie] = dictTotalHeures[IDcategorie] + duree
             else:
@@ -445,7 +445,7 @@ class CaseDate(Flowable) :
         couleurDate = None
         
         if self.dateDD != None :
-            # Couleur de la case Date de la journÈe
+            # Couleur de la case Date de la journ√©e
             if AFFICHER_VACANCES == True and self.dateDD in LISTE_VACANCES : couleurDate = COULEUR_VACANCES
             if AFFICHER_WE == True and (self.dateDD.weekday() == 5 or self.dateDD.weekday() == 6) : couleurDate = COULEUR_WE
             if AFFICHER_FERIES == True and self.dateDD in LISTE_FERIES : couleurDate = COULEUR_FERIES
@@ -460,13 +460,13 @@ class CaseDate(Flowable) :
             canvas.setFont("Helvetica", 7)
             canvas.drawCentredString( 0, 3, self.labelDate)
                 
-        # Si aucune prÈsence ce jour -l‡
+        # Si aucune pr√©sence ce jour -l√†
         if len(self.dictBarres) == 0 : return
 
-        # RÈcup du nbre total d'heure de la journÈe
+        # R√©cup du nbre total d'heure de la journ√©e
         totalJour = self.dictBarres["totalJour"]
         
-        # Transformation du nombre d'heures par catÈgorie en pourcentage
+        # Transformation du nombre d'heures par cat√©gorie en pourcentage
         listeCategories = []
         for IDcategorie, nbreHeures in self.dictBarres.items():
             if IDcategorie != "totalJour" :
@@ -474,7 +474,7 @@ class CaseDate(Flowable) :
                 listeCategories.append( (largeurBarre, IDcategorie) )
         listeCategories.sort()
         
-        # CrÈation des graphes
+        # Cr√©ation des graphes
         if AFFICHER_COULEUR_CATEGORIES == True :
             positionTemp = 0
             for largeurBarre, IDcategorie in listeCategories :
@@ -483,7 +483,7 @@ class CaseDate(Flowable) :
                 canvas.rect(positionTemp, 0, largeurBarre, self.hauteurCase, fill=1, stroke=False)
                 positionTemp += largeurBarre
         
-        # Label Total Heure de la journÈe
+        # Label Total Heure de la journ√©e
         if AFFICHER_HEURES == True :
             canvas.setFillColorRGB(0, 0, 0)
             canvas.setFont("Helvetica", 5)
@@ -491,7 +491,7 @@ class CaseDate(Flowable) :
 
 
 class CaseLegende(Flowable) :
-    """ Flowable Ligne de lÈgende """
+    """ Flowable Ligne de l√©gende """
     def __init__(self, xoffset=0, hauteurCase=None, label="", couleur=None, totalHeures=0):
         self.xoffset = xoffset
         self.size = hauteurCase
@@ -510,7 +510,7 @@ class CaseLegende(Flowable) :
             canvas.drawString(15, 2, self.label)
         else:
             canvas.drawString(15, 2, "%s : %s" % (self.label, minutesEnHeures(self.totalHeures)))
-        # CarrÈ de couleur
+        # Carr√© de couleur
         if self.couleur != None :
             if type(self.couleur) == tuple :
                 r, g, b = ConvertCouleur(self.couleur)
@@ -525,20 +525,20 @@ class CaseLegende(Flowable) :
 
 
 class MyDialog(wx.Dialog):
-    """ Permet de sÈlectionner les paramËtres d'affichage du calendrier mensuel """
+    """ Permet de s√©lectionner les param√®tres d'affichage du calendrier mensuel """
     def __init__(self, parent, IDpersonne=None, annee=None, mois=None, autoriser_choix_personne=True):
         wx.Dialog.__init__(self, parent, id=-1, title=_(u"Edition d'un planning mensuel"), size=(350, 300))
                 
         # Label
-        self.label = wx.StaticText(self, -1, _(u"Veuillez renseigner les paramËtres de votre choix :"))
+        self.label = wx.StaticText(self, -1, _(u"Veuillez renseigner les param√®tres de votre choix :"))
         
         # Controles
-        self.staticbox1 = wx.StaticBox(self, -1, _(u"ParamËtres principaux"))
+        self.staticbox1 = wx.StaticBox(self, -1, _(u"Param√®tres principaux"))
         self.label_nom = wx.StaticText(self, -1, _(u"Mois :"))
         self.ctrl_mois = MyChoice(self)
         if mois == None : mois = datetime.date.today().month
         self.ctrl_mois.SetSelection(mois-1)
-        self.label_annee = wx.StaticText(self, -1, _(u"AnnÈe :"))
+        self.label_annee = wx.StaticText(self, -1, _(u"Ann√©e :"))
         self.ctrl_annee = wx.SpinCtrl(self, -1, "", size=(60, -1))
         self.ctrl_annee.SetRange(1970, 2099)
         if annee == None : annee = datetime.date.today().year
@@ -548,11 +548,11 @@ class MyDialog(wx.Dialog):
         self.staticbox2 = wx.StaticBox(self, -1, _(u"Options d'affichage"))
         self.ctrl_afficher_we = wx.CheckBox(self, -1, _(u"Activer la coloration des week-ends"))
         self.ctrl_afficher_vacances = wx.CheckBox(self, -1, _(u"Activer la coloration des vacances"))
-        self.ctrl_afficher_feries = wx.CheckBox(self, -1, _(u"Activer la coloration des jours fÈriÈs"))
+        self.ctrl_afficher_feries = wx.CheckBox(self, -1, _(u"Activer la coloration des jours f√©ri√©s"))
         self.ctrl_afficher_heures = wx.CheckBox(self, -1, _(u"Afficher le total d'heures journalier"))
         self.ctrl_afficher_heures_mois = wx.CheckBox(self, -1, _(u"Afficher le total d'heures mensuel"))
-        self.ctrl_afficher_couleurs_categories = wx.CheckBox(self, -1, _(u"Activer la coloration des catÈgories de prÈsence"))
-        self.ctrl_afficher_legende = wx.CheckBox(self, -1, _(u"Afficher la lÈgende des couleurs"))
+        self.ctrl_afficher_couleurs_categories = wx.CheckBox(self, -1, _(u"Activer la coloration des cat√©gories de pr√©sence"))
+        self.ctrl_afficher_legende = wx.CheckBox(self, -1, _(u"Afficher la l√©gende des couleurs"))
         self.ctrl_afficher_we.SetValue(True)
         self.ctrl_afficher_vacances.SetValue(True)
         self.ctrl_afficher_feries.SetValue(True)
@@ -562,7 +562,7 @@ class MyDialog(wx.Dialog):
         self.ctrl_afficher_legende.SetValue(True)
         
         # Boutons
-        self.bouton_ok = CTRL_Bouton_image.CTRL(self, texte=_(u"AperÁu"), cheminImage=Chemins.GetStaticPath("Images/32x32/Apercu.png"))
+        self.bouton_ok = CTRL_Bouton_image.CTRL(self, texte=_(u"Aper√ßu"), cheminImage=Chemins.GetStaticPath("Images/32x32/Apercu.png"))
         self.bouton_annuler = CTRL_Bouton_image.CTRL(self, id=wx.ID_CANCEL, texte=_(u"Annuler"), cheminImage=Chemins.GetStaticPath("Images/32x32/Annuler.png"))
         self.__set_properties()
         self.__do_layout()
@@ -577,15 +577,15 @@ class MyDialog(wx.Dialog):
     def __set_properties(self):
         self.bouton_ok.SetSize(self.bouton_ok.GetBestSize())
         self.bouton_annuler.SetSize(self.bouton_annuler.GetBestSize())
-        self.ctrl_mois.SetToolTip(wx.ToolTip(_(u"SÈlectionnez un mois de rÈfÈrence dans cette liste")))
-        self.ctrl_annee.SetToolTip(wx.ToolTip(_(u"Saisissez une annÈe de rÈfÈrence")))
+        self.ctrl_mois.SetToolTip(wx.ToolTip(_(u"S√©lectionnez un mois de r√©f√©rence dans cette liste")))
+        self.ctrl_annee.SetToolTip(wx.ToolTip(_(u"Saisissez une ann√©e de r√©f√©rence")))
         self.ctrl_afficher_we.SetToolTip(wx.ToolTip(_(u"Cette option colore les week-ends")))
-        self.ctrl_afficher_vacances.SetToolTip(wx.ToolTip(_(u"Cette option colore les pÈriodes de vacances")))
-        self.ctrl_afficher_feries.SetToolTip(wx.ToolTip(_(u"Cette option colore les jours fÈriÈs")))
+        self.ctrl_afficher_vacances.SetToolTip(wx.ToolTip(_(u"Cette option colore les p√©riodes de vacances")))
+        self.ctrl_afficher_feries.SetToolTip(wx.ToolTip(_(u"Cette option colore les jours f√©ri√©s")))
         self.ctrl_afficher_heures.SetToolTip(wx.ToolTip(_(u"Cette option affiche le total d'heures journalier")))
         self.ctrl_afficher_heures_mois.SetToolTip(wx.ToolTip(_(u"Cette option affiche le total d'heures mensuel")))
-        self.ctrl_afficher_couleurs_categories.SetToolTip(wx.ToolTip(_(u"Cette option affiche les catÈgories de t‚ches")))
-        self.ctrl_afficher_legende.SetToolTip(wx.ToolTip(_(u"Cette option affiche la lÈgende des couleurs")))
+        self.ctrl_afficher_couleurs_categories.SetToolTip(wx.ToolTip(_(u"Cette option affiche les cat√©gories de t√¢ches")))
+        self.ctrl_afficher_legende.SetToolTip(wx.ToolTip(_(u"Cette option affiche la l√©gende des couleurs")))
 
     def __do_layout(self):
         grid_sizer_base = wx.FlexGridSizer(rows=4, cols=1, vgap=10, hgap=10)
@@ -655,13 +655,13 @@ class MyDialog(wx.Dialog):
         return self.ctrl_annee.GetValue()
         
     def OnBoutonOk(self, event):
-        """ Validation des donnÈes saisies """
+        """ Validation des donn√©es saisies """
         annee = self.GetAnnee()
         mois = self.GetMois()
         listeIDpersonnes = self.ctrl_personnes.GetListIDpersonnes()
         dictPersonnes = self.ctrl_personnes.dictPersonnes
         if len(listeIDpersonnes) == 0 :
-            dlg = wx.MessageDialog(self, _(u"Vous devez sÈlectionner au moins une personne prÈsente durant ce mois !"), _(u"Erreur de saisie"), wx.OK | wx.ICON_EXCLAMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez s√©lectionner au moins une personne pr√©sente durant ce mois !"), _(u"Erreur de saisie"), wx.OK | wx.ICON_EXCLAMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return   
@@ -681,7 +681,7 @@ class MyDialog(wx.Dialog):
 
 class MyChoice(wx.Choice):
     def __init__(self, parent):
-        wx.Choice.__init__(self, parent, size=(-1, -1), choices=(_(u"Janvier"), _(u"FÈvrier"), _(u"Mars"), _(u"Avril"), _(u"Mai"), _(u"Juin"), _(u"Juillet"), _(u"Ao˚t"), _(u"Septembre"), _(u"Octobre"), _(u"Novembre"), _(u"DÈcembre")))
+        wx.Choice.__init__(self, parent, size=(-1, -1), choices=(_(u"Janvier"), _(u"F√©vrier"), _(u"Mars"), _(u"Avril"), _(u"Mai"), _(u"Juin"), _(u"Juillet"), _(u"Ao√ªt"), _(u"Septembre"), _(u"Octobre"), _(u"Novembre"), _(u"D√©cembre")))
         self.dictIndexes = {}
         self.Select(0)
         

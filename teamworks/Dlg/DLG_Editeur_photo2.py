@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -127,7 +127,7 @@ class ImgBox(wx.Window):
         """ Rotation de la photo """
         # Rotation
         self.source = self.source.Rotate90(VersDroite)
-        # Réduction de l'image
+        # RÃ©duction de l'image
         largeurImg, hauteurImg = self.source.GetSize()
         source = self.source.Scale(largeurImg * self.ratio, hauteurImg * self.ratio)
         self.bmp=wx.Bitmap(source)
@@ -135,16 +135,16 @@ class ImgBox(wx.Window):
         self.UpdateDrawing()
 
     def SaveImage(self):
-        # Paramètres de sauvegarde
+        # ParamÃ¨tres de sauvegarde
         jpeg_quality = 90
         
-        # Création du nom de fichier
+        # CrÃ©ation du nom de fichier
         nomFichier = "Photos/"
         codeIDfichier = self.RecupIDfichier()
         IDpersonne = self.GetGrandParent().IDpersonne
         nomFichier += codeIDfichier + str(IDpersonne) + ".jpg"
         
-        # Récupération de l'image dans le cadre de sélection
+        # RÃ©cupÃ©ration de l'image dans le cadre de sÃ©lection
         tailleImg = self.selection.GetSize()
         imgTemp = self.selection.GetSubBitmap( (0, 0, tailleImg[0], tailleImg[1]) ) 
         imgFinale = wxtopil(imgTemp.ConvertToImage())
@@ -183,7 +183,7 @@ class MyDialog(wx.Dialog):
         self.img_loupe_plus = wx.StaticBitmap(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/22x22/zoomPlus.png"), wx.BITMAP_TYPE_ANY))
         self.img_loupe_moins = wx.StaticBitmap(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/22x22/zoomMoins.png"), wx.BITMAP_TYPE_ANY))
                 
-        self.staticBox_reinit = wx.StaticBox(self, -1, _(u"Réinitialisation"))
+        self.staticBox_reinit = wx.StaticBox(self, -1, _(u"RÃ©initialisation"))
         self.bouton_reinit = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/22x22/Photo.png"), wx.BITMAP_TYPE_ANY), size=(70, -1))
         
         # Boutons
@@ -213,10 +213,10 @@ class MyDialog(wx.Dialog):
         self.bouton_ok.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour valider l'image")))
         self.bouton_annuler.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour annuler")))
         
-        self.bouton_rotation_gauche.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour effectuer une rotation de 90°\n dans le sens inverse des aiguilles d'une montre")))
-        self.bouton_rotation_droite.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour effectuer une rotation de 90°\n dans le sens des aiguilles d'une montre")))
+        self.bouton_rotation_gauche.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour effectuer une rotation de 90Â°\n dans le sens inverse des aiguilles d'une montre")))
+        self.bouton_rotation_droite.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour effectuer une rotation de 90Â°\n dans le sens des aiguilles d'une montre")))
         self.slider_ratio.SetToolTip(wx.ToolTip(_(u"Ajustez avec cette fonction ratio\nla taille de la photo")))
-        self.bouton_reinit.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour réinitialiser la position\net la taille de la photo initiale")))
+        self.bouton_reinit.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour rÃ©initialiser la position\net la taille de la photo initiale")))
         
     def __do_layout(self):
         sizer_base = wx.BoxSizer(wx.VERTICAL)
@@ -225,7 +225,7 @@ class MyDialog(wx.Dialog):
         # DC
         grid_sizer_base.Add(self.imgbox, 1, wx.LEFT|wx.TOP|wx.RIGHT|wx.EXPAND, 10)
         
-        # Panneau de contrôle
+        # Panneau de contrÃ´le
         sizer_commandes = wx.FlexGridSizer(rows=1, cols=5, vgap=5, hgap=5)
         
         # Rotation
@@ -278,7 +278,7 @@ class MyDialog(wx.Dialog):
         UTILS_Aide.Aide("")
 
     def OnBoutonOk(self, event): 
-        # Ferme la boîte de dialogue
+        # Ferme la boÃ®te de dialogue
         self.EndModal(wx.ID_OK)        
         
     def OnBoutonRotationGauche(self, event):

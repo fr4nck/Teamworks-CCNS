@@ -49,14 +49,14 @@ ROUND_TRIP_INVARIANTS = (
 
 
 def main() -> int:
-    source = TARGET.read_text(encoding="iso-8859-15")
+    source = TARGET.read_text(encoding="utf-8")
     if all(invariant in source for invariant in ROUND_TRIP_INVARIANTS):
         print("round-trip main tab smoke mode already present")
         return 0
     count = source.count(OLD)
     if count != 1:
         raise SystemExit(f"expected exactly one single-pass tabs smoke block, found {count}")
-    TARGET.write_text(source.replace(OLD, NEW), encoding="iso-8859-15")
+    TARGET.write_text(source.replace(OLD, NEW), encoding="utf-8")
     print(f"updated {TARGET.relative_to(ROOT)}")
     return 0
 

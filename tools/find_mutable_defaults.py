@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
 
-ENCODINGS = ("utf-8", "iso-8859-15", "cp1252")
+ENCODINGS = ("utf-8",)
 MUTABLE_NODES = (ast.List, ast.Dict, ast.Set)
 
 

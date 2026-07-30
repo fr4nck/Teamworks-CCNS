@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -34,7 +34,7 @@ class Panel(wx.Panel):
 
 
 class PanelGadget(wx.Panel):
-    """ Version spéciale pour Gadget Page d'acccueil """
+    """ Version spÃ©ciale pour Gadget Page d'acccueil """
     def __init__(self, parent, ID=-1):
         wx.Panel.__init__(self, parent, ID, name="panel_gadget_candidatures", style=wx.TAB_TRAVERSAL)
         self.treeCtrl = TreeCtrl(self)    
@@ -87,7 +87,7 @@ class TreeCtrl(CT.CustomTreeCtrl):
 ##        self.couleurProbleme = (0, 0, 0)
 ##        self.couleurTraits = (179, 185, 231)
         
-##        # Autres paramètres
+##        # Autres paramÃ¨tres
 ##        if self.parent.GetName() != "panel_gadget_candidatures" : 
 ##            self.expandPersonnes = True
 ##            self.expandTypes = True
@@ -122,7 +122,7 @@ class TreeCtrl(CT.CustomTreeCtrl):
 ##        self.SetHilightNonFocusColour(self.couleurFond)
 ##        pen = wx.Pen(self.couleurTraits, 2, style=wx.DOT)
 ##        self.SetConnectionPen(pen)
-        # Récupération des données
+        # RÃ©cupÃ©ration des donnÃ©es
         self.listeDonnees = self.GetListeDonnees()
         if len(self.listeDonnees) > 0 :
             self.ctrl_vide.Show(False)
@@ -146,7 +146,7 @@ class TreeCtrl(CT.CustomTreeCtrl):
                 self.SetItemFont(newItem, font)
 ##                self.SetItemTextColour(newItem, self.couleurProbleme)
             else:
-                # Tête de rubrique
+                # TÃªte de rubrique
                 texte = item[0][1]                
                 newItem = self.AppendItem(parentItem, texte)
                 self.SetItemData(newItem, None)
@@ -156,7 +156,7 @@ class TreeCtrl(CT.CustomTreeCtrl):
 ##                    self.SetItemBold(newItem, True)
 ##                else:
 ##                    pass
-##                    # Type de problème
+##                    # Type de problÃ¨me
 ##                    self.SetItemTextColour(newItem, self.couleurType)
 ##                    # self.SetItemBold(newItem, True)
 ##                    self.Expand(parentItem) 
@@ -193,10 +193,10 @@ class TreeCtrl(CT.CustomTreeCtrl):
         return text
     
     def GetListeDonnees(self):
-        """ Recup des données """
+        """ Recup des donnÃ©es """
         listeInfos = []
         
-        # Récupération des entretiens sans avis
+        # RÃ©cupÃ©ration des entretiens sans avis
         DB = GestionDB.DB()
         dateDuJour = datetime.date.today()
         req = """SELECT IDentretien, IDcandidat, date, heure, avis, remarques, IDpersonne 
@@ -218,7 +218,7 @@ class TreeCtrl(CT.CustomTreeCtrl):
                 listeItems.append(item)
             listeInfos.append( [groupe, listeItems] )
 
-        # Récupération des candidatures sans réponse
+        # RÃ©cupÃ©ration des candidatures sans rÃ©ponse
         DB = GestionDB.DB()
         req = """SELECT IDcandidature, IDcandidat, IDpersonne, date_depot
         FROM candidatures WHERE (reponse_obligatoire=1 AND reponse=0) ORDER BY date_depot; """
@@ -228,9 +228,9 @@ class TreeCtrl(CT.CustomTreeCtrl):
         if len(listeDonnees) > 0 :
             listeItems = []
             if len(listeDonnees) == 1 :
-                groupe = (0, _(u"1 candidature sans réponse"))
+                groupe = (0, _(u"1 candidature sans rÃ©ponse"))
             else:
-                groupe = (0, _(u"%d candidatures sans réponse") % len(listeDonnees))
+                groupe = (0, _(u"%d candidatures sans rÃ©ponse") % len(listeDonnees))
             for IDcandidature, IDcandidat, IDpersonne, date_depot in listeDonnees :
                 nom = self.GetNom(IDcandidat, IDpersonne)
                 dateStr = self.FormateDate(date_depot)

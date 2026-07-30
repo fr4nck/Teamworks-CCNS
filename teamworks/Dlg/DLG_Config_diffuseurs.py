@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -22,7 +22,7 @@ class Panel(wx.Panel):
         wx.Panel.__init__(self, parent, ID, style=wx.TAB_TRAVERSAL)
         
         self.barreTitre = FonctionsPerso.BarreTitre(self,  _(u"Les diffuseurs d'offres d'emploi"), u"")
-        texteIntro = _(u"Vous pouvez ici crÈer, modifier ou supprimer des diffuseurs d'offres d'emploi.\nExemples : 'PÙle Emploi.', 'Presse', 'FÈdÈration', etc...")
+        texteIntro = _(u"Vous pouvez ici cr√©er, modifier ou supprimer des diffuseurs d'offres d'emploi.\nExemples : 'P√¥le Emploi.', 'Presse', 'F√©d√©ration', etc...")
         self.label_introduction = FonctionsPerso.StaticWrapText(self, -1, texteIntro)
         self.listCtrl = ListCtrl(self)
         self.listCtrl.SetMinSize((20, 20)) 
@@ -48,11 +48,11 @@ class Panel(wx.Panel):
         self.bouton_supprimer.Enable(False)
         
     def __set_properties(self):
-        self.bouton_ajouter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour crÈer un nouveau diffuseur")))
+        self.bouton_ajouter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour cr√©er un nouveau diffuseur")))
         self.bouton_ajouter.SetSize(self.bouton_ajouter.GetBestSize())
-        self.bouton_modifier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier le diffuseur sÈlectionnÈ dans la liste")))
+        self.bouton_modifier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier le diffuseur s√©lectionn√© dans la liste")))
         self.bouton_modifier.SetSize(self.bouton_modifier.GetBestSize())
-        self.bouton_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer le diffuseur sÈlectionnÈ dans la liste")))
+        self.bouton_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer le diffuseur s√©lectionn√© dans la liste")))
         self.bouton_supprimer.SetSize(self.bouton_supprimer.GetBestSize())
         self.bouton_aide.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour obtenir de l'aide")))
 
@@ -101,12 +101,12 @@ class Panel(wx.Panel):
         # Sauvegarde
         listeDonnees = [("diffuseur",  varNom),]
         
-        # Initialisation de la connexion avec la Base de donnÈes
+        # Initialisation de la connexion avec la Base de donn√©es
         DB = GestionDB.DB()
         newID = DB.ReqInsert("diffuseurs", listeDonnees)
         DB.Close()
 
-        # M‡J du ListCtrl
+        # M√†J du ListCtrl
         self.listCtrl.MAJListeCtrl()
 
 
@@ -116,7 +116,7 @@ class Panel(wx.Panel):
     def Modifier(self):
         index = self.listCtrl.GetFirstSelected()
         if index == -1:
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÈlectionner un diffuseur ‡ modifier dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord s√©lectionner un diffuseur √† modifier dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -124,14 +124,14 @@ class Panel(wx.Panel):
         varID = int(self.listCtrl.GetItem(index, 0).GetText())
         varNom = self.listCtrl.GetItem(index, 1).GetText()
 
-        # VÈrifie que ce diffuseur n'est pas attribuÈ ‡ une offre d'emploi
+        # V√©rifie que ce diffuseur n'est pas attribu√© √† une offre d'emploi
         DB = GestionDB.DB()
         req = "SELECT IDemploi_diffuseur FROM emplois_diffuseurs WHERE IDdiffuseur=%d;" % varID
         DB.ExecuterReq(req)
         listeDonnees = DB.ResultatReq()
         DB.Close()
         if len(listeDonnees) != 0 :
-            dlg = wx.MessageDialog(self, _(u"Ce diffuseur a dÈj‡ ÈtÈ attribuÈ ‡ ") + str(len(listeDonnees)) + _(u" offre(s) d'emploi.\nEtes-vous s˚r de vouloir le modifier ?"), "Confirmation", wx.YES_NO|wx.NO_DEFAULT|wx.ICON_EXCLAMATION)
+            dlg = wx.MessageDialog(self, _(u"Ce diffuseur a d√©j√† √©t√© attribu√© √† ") + str(len(listeDonnees)) + _(u" offre(s) d'emploi.\nEtes-vous s√ªr de vouloir le modifier ?"), "Confirmation", wx.YES_NO|wx.NO_DEFAULT|wx.ICON_EXCLAMATION)
             reponse = dlg.ShowModal()
             if reponse == wx.ID_NO:
                 dlg.Destroy()
@@ -155,12 +155,12 @@ class Panel(wx.Panel):
         # Sauvegarde
         listeDonnees = [("diffuseur",  varNom),]
         
-        # Initialisation de la connexion avec la Base de donnÈes
+        # Initialisation de la connexion avec la Base de donn√©es
         DB = GestionDB.DB()
         DB.ReqMAJ("diffuseurs", listeDonnees, "IDdiffuseur", varID)
         DB.Close()
 
-        # M‡J du ListCtrl
+        # M√†J du ListCtrl
         self.listCtrl.MAJListeCtrl()
         
     def OnBoutonSupprimer(self, event):
@@ -169,9 +169,9 @@ class Panel(wx.Panel):
     def Supprimer(self):
         index = self.listCtrl.GetFirstSelected()
 
-        # VÈrifie qu'un item a bien ÈtÈ sÈlectionnÈ
+        # V√©rifie qu'un item a bien √©t√© s√©lectionn√©
         if index == -1:
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÈlectionner un diffuseur ‡ supprimer dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord s√©lectionner un diffuseur √† supprimer dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -179,14 +179,14 @@ class Panel(wx.Panel):
         ID = int(self.listCtrl.GetItem(index, 0).GetText())
         Nom = self.listCtrl.GetItem(index, 1).GetText()
         
-        # VÈrifie que cette affectation n'est pas attribuÈe ‡ un contrat
+        # V√©rifie que cette affectation n'est pas attribu√©e √† un contrat
         DB = GestionDB.DB()
         req = "SELECT IDemploi_diffuseur FROM emplois_diffuseurs WHERE IDdiffuseur=%d;" % ID
         DB.ExecuterReq(req)
         listeDonnees = DB.ResultatReq()
         DB.Close()
         if len(listeDonnees) != 0 :
-            dlg = wx.MessageDialog(self, _(u"Vous avez dÈj‡ enregistrÈ ") + str(len(listeDonnees)) + _(u" offres(s) d'emploi avec cette affectation \nVous ne pouvez donc pas la supprimer."), "Information", wx.OK | wx.ICON_ERROR)
+            dlg = wx.MessageDialog(self, _(u"Vous avez d√©j√† enregistr√© ") + str(len(listeDonnees)) + _(u" offres(s) d'emploi avec cette affectation \nVous ne pouvez donc pas la supprimer."), "Information", wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -199,12 +199,12 @@ class Panel(wx.Panel):
         if reponse == wx.ID_NO:
             return
         
-        # Suppression du type de piËce
+        # Suppression du type de pi√®ce
         DB = GestionDB.DB()
         DB.ReqDEL("diffuseurs", "IDdiffuseur", ID)
         DB.Close()
 
-        # M‡J du ListCtrl
+        # M√†J du ListCtrl
         self.listCtrl.MAJListeCtrl()
 
     def MAJpanel(self):
@@ -250,17 +250,17 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
 
     def Remplissage(self):
         
-        # RÈcupÈration des donnÈes dans la base de donnÈes
+        # R√©cup√©ration des donn√©es dans la base de donn√©es
         self.dictNbTitulaires = self.GetNbTitulaires()
         self.Importation()
         
-        # CrÈation des colonnes
+        # Cr√©ation des colonnes
         self.nbreColonnes = 3
         self.InsertColumn(0, _(u"     ID"))
         self.SetColumnWidth(0, 0)
         self.InsertColumn(1, _(u"Diffuseur"))
         self.SetColumnWidth(1, 230)
-        self.InsertColumn(2, _(u"Nb offres d'emploi diffusÈes"))
+        self.InsertColumn(2, _(u"Nb offres d'emploi diffus√©es"))
         self.SetColumnWidth(2, 120)        
 
         #These two should probably be passed to init more cleanly
@@ -286,7 +286,7 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
         
     def Importation(self):
       
-        # RÈcupÈration des donnÈes de la table TYPES_PIECES
+        # R√©cup√©ration des donn√©es de la table TYPES_PIECES
         DB = GestionDB.DB()
         req = """SELECT IDdiffuseur, diffuseur
         FROM diffuseurs %s;
@@ -297,7 +297,7 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
 
         self.nbreLignes = len(liste)
 
-        # CrÈation du dictionnaire de donnÈes
+        # Cr√©ation du dictionnaire de donn√©es
         self.donnees = self.listeEnDict(liste)
 
     def GetNbTitulaires(self):
@@ -326,7 +326,7 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
         dictio = {}
         x = 1
         for ligne in liste:
-            index = x # Donne un entier comme clÈ
+            index = x # Donne un entier comme cl√©
             # Rajoute le nb de titulaires
             ligne = list(ligne)
             ID = ligne[0]
@@ -356,12 +356,12 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
         return valeur
 
     def OnGetItemImage(self, item):
-        """ Affichage des images en dÈbut de ligne """
+        """ Affichage des images en d√©but de ligne """
         return -1
 
     def OnGetItemAttr(self, item):
         """ Application d'une couleur de fond pour une ligne sur deux """
-        # CrÈation d'une ligne de couleur 1 ligne sur 2
+        # Cr√©ation d'une ligne de couleur 1 ligne sur 2
         if item % 2 == 1:
             return self.attr1
         else:
@@ -398,7 +398,7 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
         index = self.GetFirstSelected()
         key = int(self.getColumnText(index, 0))
         
-        # CrÈation du menu contextuel
+        # Cr√©ation du menu contextuel
         menuPop = UTILS_Adaptations.Menu()
 
         # Item Modifier

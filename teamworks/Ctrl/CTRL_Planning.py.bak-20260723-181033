@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -27,7 +27,7 @@ if 'phoenix' in wx.PlatformInfo:
 else :
     CURSOR = wx.StockCursor
 
-# D�claration de variables � modifier au choix
+# Déclaration de variables à modifier au choix
 
 heureMin = datetime.time(7, 00)
 heureMax = datetime.time(20, 00)
@@ -39,27 +39,27 @@ hauteurTitreGroupe = 30             # Hauteur en pixels du titre d'un cadre Grou
 pasScroll = 20                          # Pas de Scroll
 
 tailleFontHeure = 7                 # Taille de font du texte heures debut et fin d'une barre
-tailleFontIntitule = 7              # Taille de font du texte intitul� d'une barre
+tailleFontIntitule = 7              # Taille de font du texte intitulé d'une barre
 
 couleurFontHeures = (0, 0, 0)       # Couleur de la font des heures
-couleurFontIntitule = (0, 0, 0)   # Couleur de la font des intitul�s
-     # Couleur du texte d'un entete de ligne s�lectionn�
+couleurFontIntitule = (0, 0, 0)   # Couleur de la font des intitulés
+     # Couleur du texte d'un entete de ligne sélectionné
 
-couleurBordDefaut = (0, 0, 0)       # Couleur par d�faut du bord d'une barre
+couleurBordDefaut = (0, 0, 0)       # Couleur par défaut du bord d'une barre
 couleurBackground = (255, 255, 255) # Couleur du background du DC
 
 modeAffichage = 2   # Mode d'affichage : Dates / personnes / etc...
 
-# Valeurs � ne pas changer :
+# Valeurs à ne pas changer :
 varScroll = 0
 largeurEnteteLigne = 0              # Largeur de l'entete de lignes
 afficher_temps_ligne = True
 afficher_temps_groupe = True
 afficher_nbre_presents = True
 hauteurBarreNbrePresents = 4
-largeurFinLigne = 38                # Largeur de l'espace laiss� � la fin de chaque ligne pour le temps de la journ�e
-coordLigne = (0, 0)                 # Coordonn�es XG et XD d'une ligne
-selectionsLignes = []                         # Liste des s�lections d'entetes de lignes
+largeurFinLigne = 38                # Largeur de l'espace laissé à la fin de chaque ligne pour le temps de la journée
+coordLigne = (0, 0)                 # Coordonnées XG et XD d'une ligne
+selectionsLignes = []                         # Liste des sélections d'entetes de lignes
 
 couleurFondSem = (255, 255, 255)    # Couleur d'un jour normal du lundi au vendredi
 couleurFondWE = (220, 223, 227)     # Couleur des samedis et dimanche
@@ -67,8 +67,8 @@ couleurVacances = (255, 255, 220)   # Couleur des cases dates d'ouverture de la 
 couleurFeries = (200, 200, 200)
 
 couleurBordNormal = (255, 255, 255)       # Couleur des bords des barres
-couleurBordSelect = (55, 228, 9)    # Couleur du bord de la case si celle-ci est s�lectionn�e
-couleurBordSurvol = (30, 60, 255)   # Couleur du bord de la case si celle-ci est survol�e
+couleurBordSelect = (55, 228, 9)    # Couleur du bord de la case si celle-ci est sélectionnée
+couleurBordSurvol = (30, 60, 255)   # Couleur du bord de la case si celle-ci est survolée
 
 # Couleurs
 couleurTxtGroupe = (255, 255, 255)                      # Couleur du txt de titre d'un groupe
@@ -78,8 +78,8 @@ couleurBordGroupe = (122, 161, 230)                     # Couleur du bord d'un g
 couleurLineGroupe = (122, 161, 230)                              # Couleur de la ligne de la barre de titre de groupe
 couleurTxtLigne = (87,126,224)                          # Couleur du txt de l'entete de ligne
 couleurLigne = (228, 233, 246)                          # Couleur d'une ligne
-couleurLigneSelect = (255, 162, 0)                         # Couleur d'une ligne s�lectionn�e
-couleurTxtLigneSelect = (255, 162, 0)                     # Couleur de txt d'un entete de ligne s�lectionn�
+couleurLigneSelect = (255, 162, 0)                         # Couleur d'une ligne sélectionnée
+couleurTxtLigneSelect = (255, 162, 0)                     # Couleur de txt d'un entete de ligne sélectionné
 
 afficher_contrats = False
 
@@ -89,11 +89,11 @@ afficher_contrats = False
 
 
 def HeuresEnCoords(heure):
-    """ Transforme une heure donn�e en coordonn�es pixels """
+    """ Transforme une heure donnée en coordonnées pixels """
     global heureMin, heureMax
     HMin = datetime.timedelta(hours=heureMin.hour, minutes=heureMin.minute)
     HMax = datetime.timedelta(hours=heureMax.hour, minutes=heureMax.minute)
-    n = ((HMax - HMin).seconds)/60.0/5.0 # Soit n cr�neaux de 5 minutes
+    n = ((HMax - HMin).seconds)/60.0/5.0 # Soit n créneaux de 5 minutes
     gradMin = coordLigne[0] 
     gradMax = coordLigne[1] 
     EcartGrad = gradMax - gradMin
@@ -106,11 +106,11 @@ def HeuresEnCoords(heure):
     return z2
 
 def CoordEnHeures(coordX):
-    """ Transforme des coordonn�es pixels en Heures """
+    """ Transforme des coordonnées pixels en Heures """
     global heureMin, heureMax
     HMin = datetime.timedelta(hours=heureMin.hour, minutes=heureMin.minute)
     HMax = datetime.timedelta(hours=heureMax.hour, minutes=heureMax.minute)
-    n = ((HMax - HMin).seconds)/60.0/5 # Soit n cr�neaux de 5 minutes
+    n = ((HMax - HMin).seconds)/60.0/5 # Soit n créneaux de 5 minutes
     gradMin = coordLigne[0] 
     gradMax = coordLigne[1]
     EcartGrad = gradMax - gradMin
@@ -121,7 +121,7 @@ def CoordEnHeures(coordX):
     return resultatH
 
 def AroundHeure(heure):
-    """ Arrondit une heure datetime.time donn�e aux 5 minutes inf�rieures ou sup�rieures """
+    """ Arrondit une heure datetime.time donnée aux 5 minutes inférieures ou supérieures """
     minutes = heure.minute
     newMinutes = round((minutes//5)*5, 2)
     resultatH = datetime.time(heure.hour, int(newMinutes))
@@ -149,9 +149,9 @@ def StrEnDatetimeDate(texteDate):
     return date
 
 def DatetimeDateEnStr(date):
-    """ Transforme un datetime.date en date compl�te : Ex : lundi 15 janvier 2008 """
+    """ Transforme un datetime.date en date complète : Ex : lundi 15 janvier 2008 """
     listeJours = ("Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche")
-    listeMois = (_(u"janvier"), _(u"f�vrier"), _(u"mars"), _(u"avril"), _(u"mai"), _(u"juin"), _(u"juillet"), _(u"ao�t"), _(u"septembre"), _(u"octobre"), _(u"novembre"), _(u"d�cembre"))
+    listeMois = (_(u"janvier"), _(u"février"), _(u"mars"), _(u"avril"), _(u"mai"), _(u"juin"), _(u"juillet"), _(u"août"), _(u"septembre"), _(u"octobre"), _(u"novembre"), _(u"décembre"))
     dateStr = listeJours[date.weekday()] + " " + str(date.day) + " " + listeMois[date.month-1] + " " + str(date.year)
     return dateStr
 
@@ -222,7 +222,7 @@ class Graduations(wx.ScrolledWindow):
         
     def DrawGraduations(self, dc, heureMi="7:00", heureMa="23:30", posY=0):
         """ Dessin des graduations """
-        # param�tres Graduations
+        # paramètres Graduations
         graduationMin = self.HeuresEnEntier(heureMi) 
         graduationMax = self.HeuresEnEntier(heureMa) 
         graduationStep = 25
@@ -239,7 +239,7 @@ class Graduations(wx.ScrolledWindow):
         largeurDc = coordLigne[1] - coordLigne[0] #dc.GetSizeTuple()[0]
         step = largeurDc / round(nbreGraduations-1,1)
 
-        # Cr�ation de la graduation
+        # Création de la graduation
         j = k = etape = 0
         i=coordLigne[0]
 
@@ -335,13 +335,13 @@ class WidgetPlanning(wx.ScrolledWindow):
         self.selectModif = False
         
                 
-        # Initialise les valeurs par d�faut
+        # Initialise les valeurs par défaut
         self.Init_valeurs_defaut()
         
-        # Initialisation des donn�es
+        # Initialisation des données
         self.InitPlanning(listePresences, dictCategories, dictGroupes, dictLignes)
         
-        # R�cup�ration des p�riodes de vacances et des jours f�ri�s
+        # Récupération des périodes de vacances et des jours fériés
         self.joursVacances, self.listePeriodesVacs = self.Importation_Vacances()
         self.listeFeriesFixes, self.listeFeriesVariables = self.Importation_Feries()
         self.dictContrats = self.Importation_Contrats()
@@ -365,8 +365,8 @@ class WidgetPlanning(wx.ScrolledWindow):
         self.Bind(wx.EVT_SIZE, self.OnSize)
     
     def Init_valeurs_defaut(self):
-        """ Initialise les valeurs par d�faut """
-        # Afficher les l�gendes
+        """ Initialise les valeurs par défaut """
+        # Afficher les légendes
         global hauteurBarre
         afficher_legendes = FonctionsPerso.Parametres(mode="get", categorie="planning", nom="afficher_legendes", valeur=False)
         if afficher_legendes == True :
@@ -386,11 +386,11 @@ class WidgetPlanning(wx.ScrolledWindow):
         global afficher_temps_groupe
         afficher_temps_groupe = FonctionsPerso.Parametres(mode="get", categorie="planning", nom="afficher_temps_groupe", valeur=True)       
 
-        # Afficher les nbre de pr�sents
+        # Afficher les nbre de présents
         global afficher_nbre_presents
         afficher_nbre_presents = FonctionsPerso.Parametres(mode="get", categorie="planning", nom="afficher_nbre_presents", valeur=True)       
         
-        # D�finir amplitude horaire affich�e par d�faut
+        # Définir amplitude horaire affichée par défaut
         global heureMin, heureMax
         heureMinStr = FonctionsPerso.Parametres(mode="get", categorie="planning", nom="heureMin", valeur="7:00")
         heureMaxStr = FonctionsPerso.Parametres(mode="get", categorie="planning", nom="heureMax", valeur="20:00")
@@ -470,14 +470,14 @@ class WidgetPlanning(wx.ScrolledWindow):
         # Dessin des groupes
         self.DrawGroupes(dc, tailleDC)
         
-        # Dessin des pr�sences
+        # Dessin des présences
         # dc, heureDebut, heureFin, IDcategorie, intitule, posG, posD, posYhaut, posYbas
         for IDpresence, valeurs in self.dictPresences.items() :
             self.dictPresences[IDpresence][7]  = HeuresEnCoords(valeurs[3]) 
             self.dictPresences[IDpresence][8] = HeuresEnCoords(valeurs[4])
             self.DrawBarre(dc, IDpresence, valeurs[3], valeurs[4], valeurs[5], valeurs[6], valeurs[7], valeurs[8], valeurs[9], valeurs[10])
 
-        # Dessine le Nbre de pr�sents par tranche d'heures
+        # Dessine le Nbre de présents par tranche d'heures
         if afficher_nbre_presents == True :
             for keyGroupe, valeurs in self.dictGroupes.items() :
                 self.DessineNbrePresents(dc, IDobjet=None, keyGroupe=keyGroupe)
@@ -498,7 +498,7 @@ class WidgetPlanning(wx.ScrolledWindow):
                 IDobjet = self.CreateID()
             dc.SetId(IDobjet)
 
-        # Param�tres du dessin
+        # Paramètres du dessin
         couleurFondBarre = self.FormateCouleur(self.dictCategories[IDcategorie][3])
         dc.SetBrush(wx.Brush(couleurFondBarre))
         dc.SetPen(wx.Pen(couleurBordDefaut, 1))
@@ -524,7 +524,7 @@ class WidgetPlanning(wx.ScrolledWindow):
         texteFin = self.AdapteTexteHeure(dc, texteFin, posD-posG-8)
         largTexte, hautTexte = self.GetTextExtent(texteFin)
         dc.DrawText(texteFin, posD - largTexte , y + 2)
-        # Dessin L�gende
+        # Dessin Légende
         if hauteurBarre > 25 :
             dc.SetTextForeground(couleurFontIntitule)
             font = self.GetFont()
@@ -542,7 +542,7 @@ class WidgetPlanning(wx.ScrolledWindow):
             intitule2 = self.AdapteTexteIntitule(dc, intitule, posD - posG-4)
             dc.DrawText(intitule2, xIntitule, yIntitule)
         
-        # Petit dessin dans le coin gauche sup�rieure pour signaler une l�gende existante
+        # Petit dessin dans le coin gauche supérieure pour signaler une légende existante
         if intitule != "" :
             dc.SetBrush(wx.Brush((255, 0, 0)))
             dc.SetPen(wx.Pen((0, 0, 0), 1))
@@ -552,20 +552,20 @@ class WidgetPlanning(wx.ScrolledWindow):
             # Traitement pour le PseudoDC
             r = wx.Rect(posG, y, posD-posG, h)
             dc.SetIdBounds(IDobjet,r) 
-            # M�morisation dans le dict de IDs
+            # Mémorisation dans le dict de IDs
             self.dictIDs[IDobjet] = ("tache", IDpresence)
     
     def Impression(self, afficher=True):
         if len(self.listePresences) == 0 :
-            dlg = wx.MessageDialog(self, _(u"Vous n'avez s�lectionn� aucune pr�sence � imprimer !"), _(u"Erreur"), wx.OK | wx.ICON_ERROR)
+            dlg = wx.MessageDialog(self, _(u"Vous n'avez sélectionné aucune présence à imprimer !"), _(u"Erreur"), wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
             dlg.Destroy()
             return False
         
-        # Met � jour les donn�es du planning � partir du panel pr�sences
+        # Met à jour les données du planning à partir du panel présences
         self.GetGrandParent().GetParent().MAJpanelPlanning()
         
-        # Demande le type d'impression � l'utilisateur
+        # Demande le type d'impression à l'utilisateur
         from Dlg import DLG_Selection_type_document
         listeBoutons = [
             (Chemins.GetStaticPath("Images/BoutonsImages/Imprimer_presences_texteB.png"), _(u"Cliquez ici pour imprimer au format texte")),
@@ -604,13 +604,13 @@ class WidgetPlanning(wx.ScrolledWindow):
         self.dictLignes = dictLignes
         self.listePresences = self.InitListePresences(listePresences)
         
-        # Cr�ation du dictPresences
+        # Création du dictPresences
         self.dictPresences = {}
         self.dictInfosLignes = {}
         self.dictInfosGroupes = {}
         for item in self.listePresences :
             self.dictPresences[item[0]] = [item[0], item[1], item[2], item[3], item[4], item[5], item[6], item[7], item[8], item[9], item[10]]
-            # Cr�ation du dict des IDpr�sences par ligne
+            # Création du dict des IDprésences par ligne
             keyLigne = (item[1], item[2])
             if keyLigne in self.dictInfosLignes:
                 self.dictInfosLignes[keyLigne]["presencesLigne"].append(item[0])
@@ -637,11 +637,11 @@ class WidgetPlanning(wx.ScrolledWindow):
         self.SetVirtualSize((self.maxWidth ,self.maxHeight))
 
     def InitListePresences(self, listePresences):
-        """ Cr�e une liste des pr�sences avec leurs coordonn�es X """
+        """ Crée une liste des présences avec leurs coordonnées X """
         global heureMin, heureMax
         newListe = []
         for item in listePresences :
-            # Cr�ation de la liste initiale
+            # Création de la liste initiale
             try:
                 date = StrEnDatetimeDate(item[2])
                 heureDebut = StrEnDatetime(item[3])
@@ -653,7 +653,7 @@ class WidgetPlanning(wx.ScrolledWindow):
                 valeur = [item[0], item[1], date, heureDebut, heureFin, item[5], item[6], posG, posD, posH, posB]
                 newListe.append(valeur)
 
-                # Ajuste les graduations en fonction des horaires donn�s
+                # Ajuste les graduations en fonction des horaires donnés
                 if heureDebut < heureMin : heureMin = datetime.time(heureDebut.hour, 00)
                 if heureFin > heureMax : heureMax = heureFin
             except:
@@ -672,7 +672,7 @@ class WidgetPlanning(wx.ScrolledWindow):
                 IDobjet = self.CreateID()
                 dc.SetId(IDobjet)
         
-            # D�termine la couleur de fond du groupe
+            # Détermine la couleur de fond du groupe
             couleurFond = couleurFondGroupe
 
             # Dessine le groupe
@@ -711,12 +711,12 @@ class WidgetPlanning(wx.ScrolledWindow):
             if afficher_temps_ligne == True :
                 largeur = largeur - largeurFinLigne
             hauteur = hauteurBarre
-            # D�finit la brush de la ligne
+            # Définit la brush de la ligne
             if key in selectionsLignes : 
                 couleurLigneTmp = couleurLigneSelect
             else:
                 couleurLigneTmp = couleurFondSem
-                # Recherche de quelle couleur doit �tre la ligne
+                # Recherche de quelle couleur doit être la ligne
                 texteDate = key[1]
                 # Si c'est un jour de vacances
                 if texteDate in self.joursVacances:
@@ -725,7 +725,7 @@ class WidgetPlanning(wx.ScrolledWindow):
                 jourSemaine = texteDate.isoweekday()
                 if jourSemaine == 6 or jourSemaine == 7: 
                     couleurLigneTmp = couleurFondWE
-                # Si c'est un jour f�ri�
+                # Si c'est un jour férié
                 if (texteDate.day, texteDate.month) in self.listeFeriesFixes :
                     couleurLigneTmp = couleurFeries
                 else:
@@ -750,7 +750,7 @@ class WidgetPlanning(wx.ScrolledWindow):
                         dc.SetBrush(wx.Brush( (200, 200, 200) , wx.BDIAGONAL_HATCH))
                         dc.DrawRectangle(posX, posY, largeur, hauteur)
 
-            # Cr�ation du texte d'entete de ligne
+            # Création du texte d'entete de ligne
             texteLigne = valeurs[2]
             largeurTexte, hauteurTexte = self.GetTextExtent(texteLigne)
             posYTxt = (hauteurBarre/2) - (hauteurTexte/2) + posY
@@ -807,7 +807,7 @@ class WidgetPlanning(wx.ScrolledWindow):
             dc.SetFont(wx.Font(7, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, 'Arial'))
             self.pdc.DrawText(labelTempsLigne, posX, posY)
             
-            # M�morisation dans le dict de IDs
+            # Mémorisation dans le dict de IDs
             if mode =="screen": 
                 r = (posX, posY, 30, 15)
                 dc.SetIdBounds(IDobjet, r) 
@@ -857,7 +857,7 @@ class WidgetPlanning(wx.ScrolledWindow):
         dc.SetFont(wx.Font(7, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, 'Arial'))        
         self.pdc.DrawText(labelTempsGroupe, posX, posY)
         
-        # M�morisation dans le dict de IDs
+        # Mémorisation dans le dict de IDs
         if mode =="screen": 
             r = (posX, posY, 30, 15)
             dc.SetIdBounds(IDobjet, r) 
@@ -870,7 +870,7 @@ class WidgetPlanning(wx.ScrolledWindow):
             self.RefreshRect(r, False)
 
     def DessineNbrePresents(self, dc, keyGroupe, IDobjet=None, refresh=False, mode="screen"):
-        # Calcul du nbre de pr�sents durant la journ�e
+        # Calcul du nbre de présents durant la journée
         listeBarres = []
         listePositions = []
         for ligne in self.dictGroupes[keyGroupe][4] :
@@ -886,7 +886,7 @@ class WidgetPlanning(wx.ScrolledWindow):
                     
         if len(listeBarres) == 0 : return        
         
-        # Traitement de la liste pour trouver les nbre de pr�sents par tranche horaire
+        # Traitement de la liste pour trouver les nbre de présents par tranche horaire
         listePositions.sort()
         for posG, posD in listeBarres :
             index = 0
@@ -930,7 +930,7 @@ class WidgetPlanning(wx.ScrolledWindow):
         premierePosition = listePositions[0][0]
         dernierePosition = listePositions[-1][0]
         
-        # M�morisation dans le dict de IDs
+        # Mémorisation dans le dict de IDs
         if mode =="screen": 
             r = (premierePosition, posY-7, dernierePosition-premierePosition+5, 15)
             dc.SetIdBounds(IDobjet, r) 
@@ -961,7 +961,7 @@ class WidgetPlanning(wx.ScrolledWindow):
                 IDpresence = self.dictIDs[IDobjet][1]
                 self.selectBarre = self.HitTestBarre(x, IDpresence, IDobjet)
                 self.selectLigne = self.HitTestLigne(x, y)
-                # Recherche des contraintes de la barre s�lectionn�e
+                # Recherche des contraintes de la barre sélectionnée
                 index = self.selectBarre[1]
                 self.contraintes = self.ContraintesBarre(IDpresence)
                 # Change la forme du curseur
@@ -971,24 +971,24 @@ class WidgetPlanning(wx.ScrolledWindow):
                 event.Skip()
                 return
         
-        # Recherche si titre de groupe touch� :
+        # Recherche si titre de groupe touché :
         resultat = self.HitTestTitreGroupe(x, y)
         if resultat == True : event.Skip() ; return
         
-        # Recherche si entete de ligne touch� :
+        # Recherche si entete de ligne touché :
         self.HitTestEnteteLigne(x, y)
         event.Skip()
 
     def HitTestBarre(self, x, IDpresence, IDobjet):
-        """ Recherche la barre cliqu�e """
-        # R�cup�re les caract�ristiques de la barre
+        """ Recherche la barre cliquée """
+        # Récupère les caractéristiques de la barre
         barre = self.dictPresences[IDpresence]
         posG = barre[7]
         posD = barre[8]
         posH = barre[9]
         posB = barre[10]
 
-        # Recherche la position cliqu�e dans la barre
+        # Recherche la position cliquée dans la barre
         tailleBarre = posD - posG
         tailleRegion = tailleBarre /4
         regionGauche = posG + tailleRegion
@@ -1025,7 +1025,7 @@ class WidgetPlanning(wx.ScrolledWindow):
         return None
     
     def HitTestTitreGroupe(self, x, y) :
-        """ Pour s�lectionner toutes les lignes d'un groupe """
+        """ Pour sélectionner toutes les lignes d'un groupe """
         # Recherche d'un titre de groupe
         if 'phoenix' in wx.PlatformInfo:
             val = self.GetSize()[0]-30
@@ -1060,7 +1060,7 @@ class WidgetPlanning(wx.ScrolledWindow):
         self.MAJAffichage()        
         
     def OnDLeftDown(self, event):
-        """ Double-click bouton gauche -> ajout d'une pr�sence """
+        """ Double-click bouton gauche -> ajout d'une présence """
         x,y = self.ConvertEventCoords(event)
 
         # Recherche d'une barre
@@ -1091,7 +1091,7 @@ class WidgetPlanning(wx.ScrolledWindow):
     def OnLeftUp(self, event):
         if self.selectModif == True :
             ID = self.SauvegardeModif()
-            # MAJ du listCtrl des dur�es par cat�gorie
+            # MAJ du listCtrl des durées par catégorie
             self.MAJ_listCtrl_Categories()
         self.selectModif = False
         self.selectBarre = None
@@ -1135,10 +1135,10 @@ class WidgetPlanning(wx.ScrolledWindow):
         event.Skip()
  
     def CreateTexteStatusBar(self):
-        """ Ecrit du texte dans la barre de status de la fen�tre parente """
+        """ Ecrit du texte dans la barre de status de la fenêtre parente """
         if self.selectBarre != None :
             IDpresence = self.selectBarre[0]
-            # Calcul de la dur�e
+            # Calcul de la durée
             valeurs = self.dictPresences[IDpresence]
             HMin = datetime.timedelta(hours=valeurs[3].hour, minutes=valeurs[3].minute)
             HMax = datetime.timedelta(hours=valeurs[4].hour, minutes=valeurs[4].minute)
@@ -1158,7 +1158,7 @@ class WidgetPlanning(wx.ScrolledWindow):
             texteStatusBar = ""
         try : 
             wx.GetApp().GetTopWindow().SetStatusText(texteStatusBar, 0)
-            txtAide = _(u"Acc�dez aux fonctions de gestion des t�ches en cliquant sur le bouton droit de votre souris")
+            txtAide = _(u"Accédez aux fonctions de gestion des tâches en cliquant sur le bouton droit de votre souris")
             wx.GetApp().GetTopWindow().SetStatusText(txtAide, 1)
         except : pass
         
@@ -1168,7 +1168,7 @@ class WidgetPlanning(wx.ScrolledWindow):
 ##        self.SetFocus()
         x, y = event.GetPosition()
         if event.Dragging() and event.LeftIsDown() and self.selectBarre != None:
-            # D�placement de la barre
+            # Déplacement de la barre
             self.MoveBarre(x)
             self.selectModif = True
             # Texte dans StatusBar
@@ -1183,12 +1183,12 @@ class WidgetPlanning(wx.ScrolledWindow):
             # MAJ du label temps en fin de entete de groupe
             if afficher_temps_groupe == True :
                 self.DessineLabelTempsGroupe(self.pdc, keyGroupe, IDobjet=self.dictInfosGroupes[keyGroupe]["IDobjetTempsGroupe"], refresh=True)
-            # MAJ de la barre du nbre de pr�sents
+            # MAJ de la barre du nbre de présents
             if afficher_nbre_presents == True :
                 self.DessineNbrePresents(self.pdc, keyGroupe, IDobjet=self.dictInfosGroupes[keyGroupe]["IDobjetNbrePresents"], refresh=True)
             event.Skip()
         elif event.LeftIsDown()==False:
-            """ Affiche dans la statusBar de la barre survol�e """
+            """ Affiche dans la statusBar de la barre survolée """
             x,y = self.ConvertEventCoords(event)
             listeObjets = self.pdc.FindObjectsByBBox(x, y)
             if len(listeObjets) != 0 :
@@ -1221,13 +1221,13 @@ class WidgetPlanning(wx.ScrolledWindow):
         # Redessine la barre
         self.DrawBarre(dc, IDpresence, valeurs[3], valeurs[4], valeurs[5], valeurs[6], valeurs[7], valeurs[8], valeurs[9], valeurs[10], IDobjet)
         r2 = dc.GetIdBounds(IDobjet)
-        # Redessine uniquement la zone modifi�e
+        # Redessine uniquement la zone modifiée
         r = r1.Union(r2)
         self.OffsetRect(r)
         self.RefreshRect(r, False)
 
     def MoveBarre(self, x):
-        """ Fonction de d�placement d'une barre """
+        """ Fonction de déplacement d'une barre """
         IDpresence = self.selectBarre[0]
         region = self.selectBarre[1]
 
@@ -1267,7 +1267,7 @@ class WidgetPlanning(wx.ScrolledWindow):
         if region == "milieu" :
             if self.selectEcart == None :
                 self.selectEcart = (x-self.dictPresences[IDpresence][7], self.dictPresences[IDpresence][8]-x)
-            # Calcul de la dur�e
+            # Calcul de la durée
             heureDbis = self.dictPresences[IDpresence][4] 
             heureGbis = self.dictPresences[IDpresence][3]           
             duree = datetime.datetime(1,1,1, heureDbis.hour, heureDbis.minute, 00) - datetime.datetime(1,1,1, heureGbis.hour, heureGbis.minute, 00) 
@@ -1296,22 +1296,22 @@ class WidgetPlanning(wx.ScrolledWindow):
                     yMouse = self.ScreenToClientXY(xMouse, wx.GetMousePosition()[1])[1]
                 self.WarpPointer(xMouse, yMouse)
                 return
-            # M�morisation des nouvelles valeurs
+            # Mémorisation des nouvelles valeurs
             self.dictPresences[IDpresence][3] = heureG
             self.dictPresences[IDpresence][7] = coordG
             self.dictPresences[IDpresence][4] = heureD
             self.dictPresences[IDpresence][8] = coordD
 
     def ContraintesBarre(self, IDpresence):
-        """ D�finit les contraintes de d�placement de la barre d�plac�e quand elle est cliqu�e pour la 1ere fois"""
+        """ Définit les contraintes de déplacement de la barre déplacée quand elle est cliquée pour la 1ere fois"""
         
-        # R�cup�re les caract�ristiques de la barre
+        # Récupère les caractéristiques de la barre
         IDpersonne = self.dictPresences[IDpresence][1]
         date = self.dictPresences[IDpresence][2]
         heureDebut = self.dictPresences[IDpresence][3]
         heureFin = self.dictPresences[IDpresence][4]
         
-        # Cr�ation d'une liste des pr�sences du m�me jour et du m�me animateur
+        # Création d'une liste des présences du même jour et du même animateur
         listeHeuresDebut = []
         listeHeuresFin = []
         for key, valeurs in self.dictPresences.items() :
@@ -1321,7 +1321,7 @@ class WidgetPlanning(wx.ScrolledWindow):
         listeHeuresDebut.sort()
         listeHeuresFin.sort()
                 
-        # Recherche de l'heure Max du cot� droit
+        # Recherche de l'heure Max du coté droit
         heureDMax = heureMax
         for item in listeHeuresDebut :
             if item >= heureFin :
@@ -1358,19 +1358,19 @@ class WidgetPlanning(wx.ScrolledWindow):
  
 
     def AdapteTexteHeure(self, dc, texte, tailleBarre):
-        """ Raccourcit le texte de l'heure en fonction de la taille donn�e """
+        """ Raccourcit le texte de l'heure en fonction de la taille donnée """
         if (self.GetTextExtent(texte)[0]*2) < tailleBarre : return texte
         return ""
 
     def AdapteTexteIntitule(self, dc, texte, tailleMaxi):
-        """ Raccourcit le texte de l'intitul� en fonction de la taille donn�e """
-        # Pas de retouche n�cessaire
+        """ Raccourcit le texte de l'intitulé en fonction de la taille donnée """
+        # Pas de retouche nécessaire
         if self.GetTextExtent(texte)[0] < tailleMaxi : return texte
 
         # Renvoie aucun texte si tailleMaxi trop petite
         if tailleMaxi <= self.GetTextExtent("W...")[0] : return ""
 
-        # Retouche n�cessaire
+        # Retouche nécessaire
         tailleTexte = self.GetTextExtent(texte)[0]
         texteTemp = ""
         texteTemp2 = ""
@@ -1405,11 +1405,11 @@ class WidgetPlanning(wx.ScrolledWindow):
 
 
     def SauvegardeModif(self):
-        """ Sauvegarde des donn�es modifi�es dans la base de donn�es """
+        """ Sauvegarde des données modifiées dans la base de données """
         if self.selectBarre == None : return
-        # Initialisation de la connexion avec la Base de donn�es
+        # Initialisation de la connexion avec la Base de données
         DB = GestionDB.DB()
-        # Cr�ation de la liste des donn�es
+        # Création de la liste des données
         IDpresence = self.selectBarre[0]
         item = self.dictPresences[IDpresence]
         listeDonnees = [    ("heure_debut",     str(item[3])[:5]),
@@ -1417,18 +1417,18 @@ class WidgetPlanning(wx.ScrolledWindow):
                             ("IDcategorie",     item[5]),
                             ("intitule",        item[6]),
                         ]
-        # Modification de la pr�sence
+        # Modification de la présence
         DB.ReqMAJ("presences", listeDonnees, "IDpresence", IDpresence)
         DB.Commit()
         DB.Close()
         return item[0]
 
     def SauvegardeNouveau(self):
-        """ Sauvegarde des donn�es dans la base de donn�es """
+        """ Sauvegarde des données dans la base de données """
 
-        # Initialisation de la connexion avec la Base de donn�es
+        # Initialisation de la connexion avec la Base de données
         DB = GestionDB.DB()
-        # Cr�ation de la liste des donn�es
+        # Création de la liste des données
         item = self.selectBarre
         listeDonnees = [    ("IDpersonne",      item[1]),
                             ("date",            item[2]),
@@ -1437,35 +1437,35 @@ class WidgetPlanning(wx.ScrolledWindow):
                             ("IDcategorie",     item[5]),
                             ("intitule",        item[6]),
                         ]
-        # Enregistrement d'une nouvelle pr�sence
+        # Enregistrement d'une nouvelle présence
         ID = DB.ReqInsert("presences", listeDonnees)
         DB.Commit()
         DB.Close()
         return ID
 
     def Ajouter(self, selection):
-        """ Ajouter une pr�sence avec le form de saisie des pr�sences """
+        """ Ajouter une présence avec le form de saisie des présences """
         dlg = DLG_Saisie_presence.Dialog(None, selection, panelPlanning=self)
         dlg.ShowModal()
         dlg.Destroy()
         self.MAJafterModif()
 
     def Modifier(self, IDpresence):
-        """ Modifier une pr�sence avec le form de saisie des pr�sences """
+        """ Modifier une présence avec le form de saisie des présences """
         dlg = DLG_Saisie_presence.Dialog(None, IDmodif=IDpresence, panelPlanning=self)
         dlg.ShowModal()
         dlg.Destroy()
         self.MAJafterModif()
 
     def Supprimer(self, IDpresence, txt):
-        """ Supprimer une t�che """
-        dlg = wx.MessageDialog(self, txt,  _(u"Suppression d'une t�che"), wx.ICON_QUESTION | wx.YES_NO | wx.NO_DEFAULT)
+        """ Supprimer une tâche """
+        dlg = wx.MessageDialog(self, txt,  _(u"Suppression d'une tâche"), wx.ICON_QUESTION | wx.YES_NO | wx.NO_DEFAULT)
         if dlg.ShowModal() == wx.ID_NO :
             print("suppression annulee")
             dlg.Destroy() 
             return
         dlg.Destroy()
-        # Suppression du type de pi�ce
+        # Suppression du type de pièce
         DB = GestionDB.DB()
         DB.ReqDEL("presences", "IDpresence", IDpresence)
         DB.Close()
@@ -1506,7 +1506,7 @@ class WidgetPlanning(wx.ScrolledWindow):
                 # Menu Ajouter
                 id = wx.Window.NewControlId()
                 self.Bind(wx.EVT_MENU, self.OnMenuAjouter, id=id)
-                menu.Append(id, _(u"Enregistrer une t�che unique ici"))
+                menu.Append(id, _(u"Enregistrer une tâche unique ici"))
 
             else:
 
@@ -1520,63 +1520,63 @@ class WidgetPlanning(wx.ScrolledWindow):
                 self.Bind(wx.EVT_MENU, self.OnMenuSupprimer, id=id)
                 menu.Append(id, _(u"Supprimer"))
 
-                # Menu Modifier la l�gende
+                # Menu Modifier la légende
                 if self.dictPresences[IDpresence][6] == "" :
-                    texte3 = _(u"Ajouter une l�gende")
+                    texte3 = _(u"Ajouter une légende")
                 else:
-                    texte3 = _(u"Modifier la l�gende")
+                    texte3 = _(u"Modifier la légende")
                 id = wx.Window.NewControlId()
                 self.Bind(wx.EVT_MENU, self.OnMenuModifLegende, id=id)
                 menu.Append(id, texte3)
            
-                # Cr�ation du sous-menu Cat�gories
-                self.SousMenuCategories(0, menu, _(u"Changer de cat�gorie"), None)
+                # Création du sous-menu Catégories
+                self.SousMenuCategories(0, menu, _(u"Changer de catégorie"), None)
                 
             menu.AppendSeparator()
             
-        # Gestion des saisie de pr�sences et des s�lections
+        # Gestion des saisie de présences et des sélections
         if len(selectionsLignes) != 0 :
             
-            # Menu Saisir une t�che pour les lignes s�lectionn�es
+            # Menu Saisir une tâche pour les lignes sélectionnées
             id = wx.Window.NewControlId()
             self.Bind(wx.EVT_MENU, self.OnMenuSaisie, id=id)
             if len(selectionsLignes) == 1:
-                txt = _(u"Enregistrer une t�che pour la ligne s�lectionn�e")
+                txt = _(u"Enregistrer une tâche pour la ligne sélectionnée")
             else:
-                txt = _(u"Enregistrer une t�che pour les ") + str(len(selectionsLignes)) + _(u" lignes s�lectionn�es")
+                txt = _(u"Enregistrer une tâche pour les ") + str(len(selectionsLignes)) + _(u" lignes sélectionnées")
             menu.Append(id, txt)
             
-            # Menu Supprimer toutes les t�ches des des lignes s�lectionn�es
+            # Menu Supprimer toutes les tâches des des lignes sélectionnées
             id = wx.Window.NewControlId()
             self.Bind(wx.EVT_MENU, self.OnMenuSupprimerLignes, id=id)
             if len(selectionsLignes) == 1:
-                txt = _(u"Supprimer toutes les t�ches de la ligne s�lectionn�e")
+                txt = _(u"Supprimer toutes les tâches de la ligne sélectionnée")
             else:
-                txt = _(u"Supprimer toutes les t�ches des ") + str(len(selectionsLignes)) + _(u" lignes s�lectionn�es")
+                txt = _(u"Supprimer toutes les tâches des ") + str(len(selectionsLignes)) + _(u" lignes sélectionnées")
             menu.Append(id, txt)
             
             menu.AppendSeparator()
             
-            # Menu Appliquer un mod�le
+            # Menu Appliquer un modèle
             id = wx.Window.NewControlId()
             self.Bind(wx.EVT_MENU, self.OnMenuAppliquerModele, id=id)
             if len(selectionsLignes) == 1:
-                txt = _(u"Appliquer un mod�le � la ligne s�lectionn�e")
+                txt = _(u"Appliquer un modèle à la ligne sélectionnée")
             else:
-                txt = _(u"Appliquer un mod�le aux ") + str(len(selectionsLignes)) + _(u" lignes s�lectionn�es")
+                txt = _(u"Appliquer un modèle aux ") + str(len(selectionsLignes)) + _(u" lignes sélectionnées")
             menu.Append(id, txt)
             
             menu.AppendSeparator()
         
-        # Menu Tout s�lectionner
+        # Menu Tout sélectionner
         id = wx.Window.NewControlId()
         self.Bind(wx.EVT_MENU, self.OnMenuSelectAll, id=id)
-        menu.Append(id, _(u"S�lectionner toutes les lignes"))
+        menu.Append(id, _(u"Sélectionner toutes les lignes"))
             
-        # Menu Tout d�s�lectionner
+        # Menu Tout désélectionner
         id = wx.Window.NewControlId()
         self.Bind(wx.EVT_MENU, self.OnMenuDeselectAll, id=id)
-        menu.Append(id, _(u"D�s�lectionner toutes les lignes"))
+        menu.Append(id, _(u"Désélectionner toutes les lignes"))
         
        
         # Finalisation du menu
@@ -1613,19 +1613,19 @@ class WidgetPlanning(wx.ScrolledWindow):
         heureDebut = str(self.dictPresences[IDpresence][3])[:5]
         heureFin = str(self.dictPresences[IDpresence][4])[:5]
         date = DatetimeDateEnStr(self.dictPresences[IDpresence][2])
-        txt = _(u"Souhaitez-vous vraiment supprimer la t�che du %s de %s � %s ?") % (date, heureDebut, heureFin)
+        txt = _(u"Souhaitez-vous vraiment supprimer la tâche du %s de %s à %s ?") % (date, heureDebut, heureFin)
         self.Supprimer(IDpresence, txt)
 
     def OnMenuModifLegende(self, event):
-        """ Ajouter ou modifier une l�gende """
+        """ Ajouter ou modifier une légende """
         IDpresence = self.Context[0]
         legendeDefaut = self.dictPresences[IDpresence][6]
         heureDebut = str(self.dictPresences[IDpresence][3])[:5]
         heureFin = str(self.dictPresences[IDpresence][4])[:5]
         date = DatetimeDateEnStr(self.dictPresences[IDpresence][2])
-        intro = _(u"Saisissez une l�gende pour la t�che du %s de %s � %s :") % (date, heureDebut, heureFin)
+        intro = _(u"Saisissez une légende pour la tâche du %s de %s à %s :") % (date, heureDebut, heureFin)
 
-        dlg = wx.TextEntryDialog(self, intro, _(u"Saisie d'une l�gende"), legendeDefaut)
+        dlg = wx.TextEntryDialog(self, intro, _(u"Saisie d'une légende"), legendeDefaut)
         if dlg.ShowModal() == wx.ID_OK:
             varLegende = dlg.GetValue()
             dlg.Destroy()
@@ -1636,7 +1636,7 @@ class WidgetPlanning(wx.ScrolledWindow):
         # Sauvegarde
         listeDonnees = [("intitule",  varLegende),]
         DB = GestionDB.DB()
-        # Modification de la pr�sence
+        # Modification de la présence
         DB.ReqMAJ("presences", listeDonnees, "IDpresence", IDpresence)
         DB.Commit()
         DB.Close()
@@ -1654,7 +1654,7 @@ class WidgetPlanning(wx.ScrolledWindow):
         # Sauvegarde
         listeDonnees = [("IDcategorie",  IDcategorie),]
         DB = GestionDB.DB()
-        # Modification de la pr�sence
+        # Modification de la présence
         DB.ReqMAJ("presences", listeDonnees, "IDpresence", IDpresence)
         DB.Commit()
         DB.Close()
@@ -1666,7 +1666,7 @@ class WidgetPlanning(wx.ScrolledWindow):
         
 
     def OnMenuAppliquerModele(self, event):
-        """ Appliquer un mod�le aux lignes s�lectionn�es """
+        """ Appliquer un modèle aux lignes sélectionnées """
         selectionPersonnes = []
         selectionDates = []
         for ligne in selectionsLignes :
@@ -1713,7 +1713,7 @@ class WidgetPlanning(wx.ScrolledWindow):
                     if valeurs2[1] == key : enfantsExists = True
 
                 if enfantsExists == False :
-                    # Si pas d'enfants, on cr�e un item dans le menu
+                    # Si pas d'enfants, on crée un item dans le menu
                     nbre += 1
                     index, texte = key, valeurs[0]
                     setattr(self, "popupID%s" % index, index)
@@ -1725,7 +1725,7 @@ class WidgetPlanning(wx.ScrolledWindow):
                     sm.AppendItem(item)
                     self.Bind(wx.EVT_MENU, self.OnMenuChoixCategorie, id=getattr(self, "popupID%s" % index))
                 else:
-                    # Si un ou plusieurs enfants existente, on cr�e un sous-menu
+                    # Si un ou plusieurs enfants existente, on crée un sous-menu
                     self.SousMenuCategories(key, sm, valeurs[0], valeurs[3])
 
             
@@ -1737,14 +1737,14 @@ class WidgetPlanning(wx.ScrolledWindow):
                   
 
     def CreationImage(self, tailleImages, r, v, b, IDcategorie):
-        """ Cr�ation des images pour le TreeCtrl """
+        """ Création des images pour le TreeCtrl """
         if 'phoenix' in wx.PlatformInfo:
             bmp = wx.Image(tailleImages[0], tailleImages[1], True)
             bmp.SetRGB((0, 0, 16, 16), r, v, b)
         else:
             bmp = wx.EmptyImage(tailleImages[0], tailleImages[1], True)
             bmp.SetRGBRect((0, 0, 16, 16), r, v, b)
-        # Si c'est la couleur d�j� s�lectionn�e :
+        # Si c'est la couleur déjà sélectionnée :
         if self.dictPresences[self.Context[0]][5] == IDcategorie :
             if 'phoenix' in wx.PlatformInfo:
                 bmp.SetRGB((4, 4, 8, 8), 0, 0, 0)
@@ -1753,17 +1753,17 @@ class WidgetPlanning(wx.ScrolledWindow):
         return bmp.ConvertToBitmap()
     
     def SaisiePresences(self):
-        """ Saisie de pr�sences � partir des lignes s�lectionn�es """ 
+        """ Saisie de présences à partir des lignes sélectionnées """ 
         dlg = DLG_Saisie_presence.Dialog(self, selectionsLignes)
         dlg.ShowModal()
         dlg.Destroy()
         self.MAJafterModif()
 
     def SupprimerPresencesLignes(self):
-        """ Supprime toutes les t�ches des lignes s�lectionn�es """
+        """ Supprime toutes les tâches des lignes sélectionnées """
         nbreLignes = len(selectionsLignes)
         
-        # Recherche des ID des pr�sences contenues dans les lignes s�lectionn�es
+        # Recherche des ID des présences contenues dans les lignes sélectionnées
         listeIDpresences = []
         for ligne in selectionsLignes :
             IDpersonne1 = ligne[0]
@@ -1779,16 +1779,16 @@ class WidgetPlanning(wx.ScrolledWindow):
                             listeIDpresences.append(IDpresence)
         
         if len(listeIDpresences) == 0 : 
-            dlg = wx.MessageDialog(self, _(u"Il n'existe aucune t�che � supprimer sur la ou les lignes s�lectionn�es !"), "Erreur", wx.OK)  
+            dlg = wx.MessageDialog(self, _(u"Il n'existe aucune tâche à supprimer sur la ou les lignes sélectionnées !"), "Erreur", wx.OK)  
             dlg.ShowModal()
             dlg.Destroy() 
             return
         
         if nbreLignes == 1 :
-            txt = _(u"Souhaitez-vous vraiment supprimer toutes les t�ches de la ligne s�lectionn�e ?")
+            txt = _(u"Souhaitez-vous vraiment supprimer toutes les tâches de la ligne sélectionnée ?")
         else:
-            txt = _(u"Souhaitez-vous vraiment supprimer toutes les t�ches des ") + str(nbreLignes) + _(u" lignes s�lectionn�es ?")
-        dlg = wx.MessageDialog(self, txt ,  _(u"Suppression de toutes les t�ches"), wx.ICON_QUESTION | wx.YES_NO | wx.NO_DEFAULT)
+            txt = _(u"Souhaitez-vous vraiment supprimer toutes les tâches des ") + str(nbreLignes) + _(u" lignes sélectionnées ?")
+        dlg = wx.MessageDialog(self, txt ,  _(u"Suppression de toutes les tâches"), wx.ICON_QUESTION | wx.YES_NO | wx.NO_DEFAULT)
         if dlg.ShowModal() == wx.ID_NO :
             print("suppression annulle")
             dlg.Destroy() 
@@ -1813,7 +1813,7 @@ class WidgetPlanning(wx.ScrolledWindow):
         selectionsLignes = []
         
     def MAJafterModif(self):
-        """ Met � jour l'affichage du DC suite � une MODIF ou un AJOUT de pr�sences """
+        """ Met à jour l'affichage du DC suite à une MODIF ou un AJOUT de présences """
         self.ClearSelectionsLignes()
         self.GetParent().GetGrandParent().MAJpanelPlanning(reinitSelectionPersonnes=False)
         self.GetParent().GetGrandParent().panelPersonnes.listCtrlPersonnes.CreateCouleurs(cocheAussi = False)
@@ -1836,11 +1836,11 @@ class WidgetPlanning(wx.ScrolledWindow):
             listeVacances2.append(datedebut)
             listeTemp = []
             for x in range((datefin-datedebut).days) :
-                # Ajout � la liste des jours de vacances (qui sert au coloriage de la case)
+                # Ajout à la liste des jours de vacances (qui sert au coloriage de la case)
                 datedebut = datedebut + datetime.timedelta(days=1)        
                 listeVacances2.append(datedebut)
                 listeTemp.append(datedebut)
-            # Ajout au dictionnaire des vacances (qui sert � s�lectionner une p�riode de vacs dans le calendrier)
+            # Ajout au dictionnaire des vacances (qui sert à sélectionner une période de vacs dans le calendrier)
             listePeriodesVacs.append( (annee, nom, tuple(listeTemp)) )
         
         return listeVacances2, listePeriodesVacs
@@ -2006,19 +2006,19 @@ class BarreOptions(wx.Panel):
     def Menu_Outils(self, event):
         """Ouverture du menu contextuel des outils du planning """
         
-        # Cr�ation du menu contextuel
+        # Création du menu contextuel
         menu = UTILS_Adaptations.Menu()
         
-        # Commande Imprimer le planning affich�
+        # Commande Imprimer le planning affiché
         IDitem = 10
-        item = wx.MenuItem(menu, IDitem, _(u"Imprimer le planning affich�"), _(u"Imprimer le planning affich�"))
+        item = wx.MenuItem(menu, IDitem, _(u"Imprimer le planning affiché"), _(u"Imprimer le planning affiché"))
         item.SetBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Imprimante.png"), wx.BITMAP_TYPE_PNG))
         menu.AppendItem(item)
         self.Bind(wx.EVT_MENU, self.Menu_10, id=IDitem)
 
-        # Commande Envoyer par email le planning affich�
+        # Commande Envoyer par email le planning affiché
         IDitem = 11
-        item = wx.MenuItem(menu, IDitem, _(u"Envoyer par Email le planning affich�"), _(u"Envoyer par Email le planning affich�"))
+        item = wx.MenuItem(menu, IDitem, _(u"Envoyer par Email le planning affiché"), _(u"Envoyer par Email le planning affiché"))
         item.SetBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Mail.png"), wx.BITMAP_TYPE_PNG))
         menu.AppendItem(item)
         self.Bind(wx.EVT_MENU, self.Menu_Mail_planning_affiche, id=IDitem)
@@ -2036,14 +2036,14 @@ class BarreOptions(wx.Panel):
         
         # Commande Stats simples
         IDitem = 20
-        item = wx.MenuItem(menu, IDitem, _(u"Statistiques"), _(u"Afficher les statistiques des pr�sences"))
+        item = wx.MenuItem(menu, IDitem, _(u"Statistiques"), _(u"Afficher les statistiques des présences"))
         item.SetBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Stats.png"), wx.BITMAP_TYPE_PNG))
         menu.AppendItem(item)
         self.Bind(wx.EVT_MENU, self.Menu_20, id=IDitem)
         
-        # Commande Sc�narios
+        # Commande Scénarios
         IDitem = 30
-        item = wx.MenuItem(menu, IDitem, _(u"Gestion des sc�narios"), _(u"Gestion des sc�narios"))
+        item = wx.MenuItem(menu, IDitem, _(u"Gestion des scénarios"), _(u"Gestion des scénarios"))
         item.SetBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Scenario.png"), wx.BITMAP_TYPE_PNG))
         menu.AppendItem(item)
         self.Bind(wx.EVT_MENU, self.Menu_30, id=IDitem)
@@ -2055,19 +2055,19 @@ class BarreOptions(wx.Panel):
     def Menu_Options(self, event):
         """Ouverture du menu contextuel des options d'affichage du planning """
         
-        # Cr�ation du menu contextuel
+        # Création du menu contextuel
         menu = UTILS_Adaptations.Menu()
         
-        # Affichage des l�gendes
+        # Affichage des légendes
         IDitem = 210
-        menu.Append(IDitem, _(u"Afficher les l�gendes"), _(u"Affiche ou non les l�gendes des pr�sences"), wx.ITEM_CHECK)
+        menu.Append(IDitem, _(u"Afficher les légendes"), _(u"Affiche ou non les légendes des présences"), wx.ITEM_CHECK)
         if hauteurBarre == 26 :
             menu.Check(IDitem, True)
         self.Bind(wx.EVT_MENU, self.Menu_210, id=IDitem)
         
-        # Affichage des p�riodes de contrats
+        # Affichage des périodes de contrats
         IDitem = 220
-        menu.Append(IDitem, _(u"Afficher les p�riodes de contrats"), _(u"Affiche ou non les p�riodes des contrats des personnes s�lectionn�es"), wx.ITEM_CHECK)
+        menu.Append(IDitem, _(u"Afficher les périodes de contrats"), _(u"Affiche ou non les périodes des contrats des personnes sélectionnées"), wx.ITEM_CHECK)
         if afficher_contrats == True :
             menu.Check(IDitem, True)
         self.Bind(wx.EVT_MENU, self.Menu_220, id=IDitem)
@@ -2081,12 +2081,12 @@ class BarreOptions(wx.Panel):
         
         # Affichage des temps en tete de groupe
         IDitem = 240
-        menu.Append(IDitem, _(u"Afficher les temps en t�te de groupe"), _(u"Affiche ou non les temps en t�te de groupe"), wx.ITEM_CHECK)
+        menu.Append(IDitem, _(u"Afficher les temps en tête de groupe"), _(u"Affiche ou non les temps en tête de groupe"), wx.ITEM_CHECK)
         if afficher_temps_groupe == True :
             menu.Check(IDitem, True)
         self.Bind(wx.EVT_MENU, self.Menu_240, id=IDitem)
         
-        # Affichage du nbre de pr�sents
+        # Affichage du nbre de présents
         IDitem = 250
         menu.Append(IDitem, _(u"Afficher la barre quantitative"), _(u"Affiche ou non la barre quantitative"), wx.ITEM_CHECK)
         if afficher_nbre_presents == True :
@@ -2097,7 +2097,7 @@ class BarreOptions(wx.Panel):
         
         # Commande Imprimer
         IDitem = 260
-        item = wx.MenuItem(menu, IDitem, _(u"D�finir l'amplitude horaire affich�e par d�faut"), _(u"D�finir l'amplitude horaire affich�e par d�faut"))
+        item = wx.MenuItem(menu, IDitem, _(u"Définir l'amplitude horaire affichée par défaut"), _(u"Définir l'amplitude horaire affichée par défaut"))
         menu.AppendItem(item)
         self.Bind(wx.EVT_MENU, self.Menu_260, id=IDitem)
         
@@ -2137,19 +2137,19 @@ class BarreOptions(wx.Panel):
                 liste_anomalies.append(nom_individu)
 
         if len(liste_anomalies) > 0:
-            message = _(u"Les individus suivants n'ont pas d'adresse email : \n%s\n\n Faut-il quand m�me continuer ?") % (u"\n- " + u"\n- ".join(liste_anomalies))
+            message = _(u"Les individus suivants n'ont pas d'adresse email : \n%s\n\n Faut-il quand même continuer ?") % (u"\n- " + u"\n- ".join(liste_anomalies))
             dlg = wx.MessageDialog(None, message, _(u"Avertissement"), wx.YES_NO | wx.NO_DEFAULT | wx.CANCEL | wx.ICON_EXCLAMATION)
             reponse = dlg.ShowModal()
             dlg.Destroy()
             if reponse != wx.ID_YES:
                 return False
 
-        # G�n�ration du PDF
+        # Génération du PDF
         nom_doc = self.GetParent().DCplanning.Impression(afficher=False)
         if nom_doc == False:
             return False
 
-        # Envoyer donn�es vers l'�diteur d'emails
+        # Envoyer données vers l'éditeur d'emails
         from Dlg import DLG_Mailer
         dlg = DLG_Mailer.Dialog(self)
         dlg.SetDonnees(listeDonnees, modificationAutorisee=False)
@@ -2159,7 +2159,7 @@ class BarreOptions(wx.Panel):
 
     def Menu_40(self, event):
         """ Autres types de planning """
-        # Demande le type d'impression � l'utilisateur
+        # Demande le type d'impression à l'utilisateur
         from Dlg import DLG_Selection_type_document
         listeBoutons = [
             (Chemins.GetStaticPath("Images/BoutonsImages/Imprimer_planning_mensuel.png"), _(u"Cliquez ici pour imprimer un planning mensuel")),
@@ -2190,12 +2190,12 @@ class BarreOptions(wx.Panel):
         try : topWindow.SetStatusText(_(u"Chargement du module des statistiques en cours. Veuillez patientez..."))
         except : pass
         panelPresences = self.GetGrandParent().GetParent()
-        # R�cup�ration des dates du calendrier
+        # Récupération des dates du calendrier
         listeDatesCalendrier = panelPresences.panelCalendrier.GetSelectionDates()
         listeDates = []
         for dateDD in listeDatesCalendrier :
             listeDates.append(str(dateDD))
-        # R�cup�ration des personnes de la liste de personnes
+        # Récupération des personnes de la liste de personnes
         listePersonnes = panelPresences.panelPersonnes.listCtrlPersonnes.GetListePersonnes()
         from Dlg import DLG_Statistiques
         dlg = DLG_Statistiques.Dialog(self, listeDates=listeDates, listePersonnes=listePersonnes)
@@ -2206,14 +2206,14 @@ class BarreOptions(wx.Panel):
         except : pass
 
     def Menu_30(self, event):
-        """ Gestion des sc�narios """
+        """ Gestion des scénarios """
         from Dlg import DLG_Scenario_gestion
         dlg = DLG_Scenario_gestion.Dialog(self)
         dlg.ShowModal()
         dlg.Destroy()
 
     def Menu_210(self, event):
-        """ Afficher l�gendes """
+        """ Afficher légendes """
         global hauteurBarre, modeTexte
         if hauteurBarre == 26 :
             hauteurBarre = 15
@@ -2225,7 +2225,7 @@ class BarreOptions(wx.Panel):
             etat = True
         # MAJ du planning
         self.GetGrandParent().GetParent().MAJpanelPlanning()
-        # M�morisation du param�tre
+        # Mémorisation du paramètre
         FonctionsPerso.Parametres(mode="set", categorie="planning", nom="afficher_legendes", valeur=etat)
 
     def Menu_220(self, event):
@@ -2237,7 +2237,7 @@ class BarreOptions(wx.Panel):
             afficher_contrats = True
         # MAJ du planning
         self.GetGrandParent().GetParent().MAJpanelPlanning()
-        # M�morisation du param�tre
+        # Mémorisation du paramètre
         FonctionsPerso.Parametres(mode="set", categorie="planning", nom="afficher_contrats", valeur=afficher_contrats)
 
     def Menu_230(self, event):
@@ -2249,7 +2249,7 @@ class BarreOptions(wx.Panel):
             afficher_temps_ligne = True
         # MAJ du planning
         self.GetGrandParent().GetParent().MAJpanelPlanning()
-        # M�morisation du param�tre
+        # Mémorisation du paramètre
         FonctionsPerso.Parametres(mode="set", categorie="planning", nom="afficher_temps_ligne", valeur=afficher_temps_ligne)
 
     def Menu_240(self, event):
@@ -2261,11 +2261,11 @@ class BarreOptions(wx.Panel):
             afficher_temps_groupe = True
         # MAJ du planning
         self.GetGrandParent().GetParent().MAJpanelPlanning()
-        # M�morisation du param�tre
+        # Mémorisation du paramètre
         FonctionsPerso.Parametres(mode="set", categorie="planning", nom="afficher_temps_groupe", valeur=afficher_temps_groupe)
 
     def Menu_250(self, event):
-        """ Afficher le nbre de pr�sents """
+        """ Afficher le nbre de présents """
         global afficher_nbre_presents
         if afficher_nbre_presents == True :
             afficher_nbre_presents = False
@@ -2273,11 +2273,11 @@ class BarreOptions(wx.Panel):
             afficher_nbre_presents = True
         # MAJ du planning
         self.GetGrandParent().GetParent().MAJpanelPlanning()
-        # M�morisation du param�tre
+        # Mémorisation du paramètre
         FonctionsPerso.Parametres(mode="set", categorie="planning", nom="afficher_nbre_presents", valeur=afficher_nbre_presents)
 
     def Menu_260(self, event):
-        """ Afficher le nbre de pr�sents """
+        """ Afficher le nbre de présents """
         global heureMin, heureMax
         from Dlg import DLG_Saisie_heures
         dlg = DLG_Saisie_heures.MyDialog(self, heureMin, heureMax)
@@ -2296,7 +2296,7 @@ class BarreOptions(wx.Panel):
         heureMinStr = "%s:%s" % (heureMin.hour, heureMin.minute)
         heureMaxStr = "%s:%s" % (heureMax.hour, heureMax.minute)
         
-        # M�morisation du param�tre
+        # Mémorisation du paramètre
         FonctionsPerso.Parametres(mode="set", categorie="planning", nom="heureMin", valeur=heureMinStr)
         FonctionsPerso.Parametres(mode="set", categorie="planning", nom="heureMax", valeur=heureMaxStr)
 
@@ -2307,10 +2307,10 @@ class PanelPlanning(wx.Panel):
     def __init__(self, parent, ID=-1):
         wx.Panel.__init__(self, parent, ID)
         
-        # Cr�ation du DC des graduations
+        # Création du DC des graduations
         self.DCgraduations = Graduations(self)
 
-        # Cr�ation du DC Planning
+        # Création du DC Planning
         self.dictCategories = self.ImportCategories()
         # >>>>>>>> A changer <<<<<<< :
         listeDates = []     # datetime.date(2008, 01, 19), datetime.date(2008, 01, 20)
@@ -2358,7 +2358,7 @@ class PanelPlanning(wx.Panel):
         if modeAffich == 3 : return self.ImportGroupes_Mode3(listeIDPersonne, listeDates)
         
     def ReInitPlanning(self, modeAffich, listeIDPersonne, listeDates) :
-        # Initialisation des donn�es
+        # Initialisation des données
         dictGroupes, dictLignes, listePresences = self.InitPlanning(modeAffichage, listeIDPersonne, listeDates)
         self.listePresents = self.RecherchePresents(listeDates)
 
@@ -2366,7 +2366,7 @@ class PanelPlanning(wx.Panel):
             YFinDessin = dictGroupes[len(dictGroupes)][2]
             self.DCplanning.SetSizeDC(h=YFinDessin)
         
-        # R�cup�ration des p�riodes de vacances et des jours f�ri�s
+        # Récupération des périodes de vacances et des jours fériés
         self.DCplanning.joursVacances, self.DCplanning.listePeriodesVacs = self.DCplanning.Importation_Vacances()
         self.DCplanning.listeFeriesFixes, self.DCplanning.listeFeriesVariables = self.DCplanning.Importation_Feries()
         self.DCplanning.dictContrats = self.DCplanning.Importation_Contrats()
@@ -2378,19 +2378,19 @@ class PanelPlanning(wx.Panel):
 
 
     def ImportPresences(self, listeDates, listePersonnes):
-        """ R�cup�ration des pr�sences dans la base """
+        """ Récupération des présences dans la base """
 
-        # Cr�ation de la liste des conditions de dates
+        # Création de la liste des conditions de dates
         strDates = ""
         for date in listeDates :
             strDates += "date='" + date + "' Or "
         strDates = strDates[:-4]
-        # Cr�ation de la liste des conditions de IDpersonne
+        # Création de la liste des conditions de IDpersonne
         strPersonnes = ""
         for IDpersonne in listePersonnes :
             strPersonnes += "IDpersonne=" + str(IDpersonne) + " Or "
         strPersonnes = strPersonnes[:-4]
-        # Cr�ation du str final de conditions
+        # Création du str final de conditions
         if len(strDates)!=0 and len(strPersonnes)!=0 :
             conditions = "WHERE (" + strDates + ") AND (" + strPersonnes + ")"
         if len(strDates)!=0 and len(strPersonnes)==0 :
@@ -2412,7 +2412,7 @@ class PanelPlanning(wx.Panel):
         return listeValeurs
 
     def RecherchePresents(self, listeDates):
-        """ Recherche les ID des personnes pr�sentes sur la p�riode de dates donn�es """
+        """ Recherche les ID des personnes présentes sur la période de dates données """
 
         listeConditions = [str(date) for date in listeDates] 
         if len(listeConditions) == 0 : listeConditions = "('3000-10-10')"
@@ -2438,9 +2438,9 @@ class PanelPlanning(wx.Panel):
         return listeIDpersonnes
 
     def ImportGroupes_Mode1(self, listeIDPersonne, listeDates):
-        """ R�cup�ration des pr�sences dans la base
+        """ Récupération des présences dans la base
         > MODE 1
-        > Groupe = DATES | Lignes = PERSONNES | Uniquement les pr�sents chaque jour
+        > Groupe = DATES | Lignes = PERSONNES | Uniquement les présents chaque jour
         """
         print("mode 1")
         listeConditions = [str(date) for date in listeDates] 
@@ -2478,13 +2478,13 @@ class PanelPlanning(wx.Panel):
             datetimeDate = StrEnDatetimeDate(date)
 
             if datetimeDate != prevDate :
-                # Cl�ture du pr�c�dent groupe
+                # Clôture du précédent groupe
                 if IDGroupe != 0 :
                     dictGroupes[IDGroupe][2] = posY
                     dictGroupes[IDGroupe][3] = nbreLignesGroupe
                     posY += 22
                 
-                # Cr�ation d'un nouveau groupe
+                # Création d'un nouveau groupe
                 IDGroupe += 1
                 prevDate = datetimeDate
                 posYEnteteGroupe = posY
@@ -2493,7 +2493,7 @@ class PanelPlanning(wx.Panel):
                 dictGroupes[IDGroupe] = [titreGroupe, posYEnteteGroupe, None, 0, [] ] # [titreGroupe, posY_debut, posY_fin, nbreLignes, listeLignes]
                 nbreLignesGroupe = 0
 
-            # Cr�ation d'une ligne
+            # Création d'une ligne
             prevIDpersonne = IDpersonne
             nbreLignesGroupe += 1
 
@@ -2504,19 +2504,19 @@ class PanelPlanning(wx.Panel):
             texteLigne = self.dictPersonnes[IDpersonne][0] + " " + self.dictPersonnes[IDpersonne][1]
             dictGroupes[IDGroupe][4].append((IDpersonne, datetimeDate, posYLigne, texteLigne))
 
-        # Cl�ture le dernier groupe
+        # Clôture le dernier groupe
         dictGroupes[IDGroupe][2] = posY
         dictGroupes[IDGroupe][3] = nbreLignesGroupe
 
-        # Cr�ation du dictionnaire des lignes
+        # Création du dictionnaire des lignes
         dictLignes = self.CreationDictLignes(dictGroupes)
 
-        # Cr�ation d'une liste temporaire des dates au format "2008-01-15"
+        # Création d'une liste temporaire des dates au format "2008-01-15"
         listeDatesTemp = []
         for date in listeDates :
             listeDatesTemp.append(str(date))
 
-        # Cr�ation de la liste des pr�sences
+        # Création de la liste des présences
         listePresences = []
         if len(dictLignes) != 0 :
             listePresences = self.ImportPresences(listeDatesTemp, listeIDPersonne)
@@ -2526,15 +2526,15 @@ class PanelPlanning(wx.Panel):
 
 
     def ImportGroupes_Mode2(self, listeIDPersonne, listeDates):
-        """ R�cup�ration des pr�sences dans la base
+        """ Récupération des présences dans la base
         > MODE 2
-        > Groupe = DATES | Lignes = PERSONNES | Toutes les personnes demand�es chaque jour demand�
+        > Groupe = DATES | Lignes = PERSONNES | Toutes les personnes demandées chaque jour demandé
         """
 
         # Importation des noms des personnes pour les entetes de lignes
         self.dictPersonnes = self.ImportPersonnes()
 
-        # Cr�ation de la liste des personnes
+        # Création de la liste des personnes
         listePersonnes = []
         for IDpersonne in listeIDPersonne :
             nomPersonne = self.dictPersonnes[IDpersonne][0] + " " + self.dictPersonnes[IDpersonne][1]
@@ -2553,26 +2553,26 @@ class PanelPlanning(wx.Panel):
             dictGroupes[IDgroupe] = [DatetimeDateEnStr(date), posY, posY+hauteurGroupeTemp+(nbreLignes*(hauteurBarre+ecartLignes)), nbreLignes, [] ] # [titreGroupe, posY_debut, posY_fin, nbreLignes]
             posY += hauteurGroupeTemp
 
-            # Cr�ation des lignes du groupe            
+            # Création des lignes du groupe            
             for personne in listePersonnes :
                 IDpersonne = personne[1]
                 texteLigne = personne[0]
                 dictGroupes[IDgroupe][4].append((IDpersonne, date, posY, texteLigne))
                 posY += hauteurBarre+ecartLignes
 
-            # Cl�ture du groupe
+            # Clôture du groupe
             IDgroupe += 1
             posY += 22
 
-        # Cr�ation du dictionnaire des lignes
+        # Création du dictionnaire des lignes
         dictLignes = self.CreationDictLignes(dictGroupes)
 
-        # Cr�ation d'une liste temporaire des dates au format "2008-01-15"
+        # Création d'une liste temporaire des dates au format "2008-01-15"
         listeDatesTemp = []
         for date in listeDates :
             listeDatesTemp.append(str(date))
 
-        # Cr�ation de la liste des pr�sences
+        # Création de la liste des présences
         listePresences = []
         if len(dictLignes) != 0 :
             listePresences = self.ImportPresences(listeDatesTemp, listeIDPersonne)
@@ -2583,15 +2583,15 @@ class PanelPlanning(wx.Panel):
 
     
     def ImportGroupes_Mode3(self, listeIDPersonne, listeDates):
-        """ R�cup�ration des pr�sences dans la base
+        """ Récupération des présences dans la base
         > MODE 3
-        > Groupe = PERSONNES | Lignes = DATES | Toutes les personnes demand�es chaque jour demand�
+        > Groupe = PERSONNES | Lignes = DATES | Toutes les personnes demandées chaque jour demandé
         """
 
         # Importation des noms des personnes pour les entetes de lignes
         self.dictPersonnes = self.ImportPersonnes()
 
-        # Cr�ation de la liste des personnes
+        # Création de la liste des personnes
         listePersonnes = []
         for IDpersonne in listeIDPersonne :
             nomPersonne = self.dictPersonnes[IDpersonne][0] + " " + self.dictPersonnes[IDpersonne][1]
@@ -2611,24 +2611,24 @@ class PanelPlanning(wx.Panel):
             dictGroupes[IDgroupe] = [nomPersonne, posY, posY+hauteurGroupeTemp+(nbreLignes*(hauteurBarre+ecartLignes)), nbreLignes, [] ] # [titreGroupe, posY_debut, posY_fin, nbreLignes, listeLignes]
             posY += hauteurGroupeTemp
 
-            # Cr�ation des lignes du groupe            
+            # Création des lignes du groupe            
             for date in listeDates :
                 dictGroupes[IDgroupe][4].append((IDpersonne, date, posY, DatetimeDateEnStr(date)))
                 posY += hauteurBarre+ecartLignes
 
-            # Cl�ture du groupe
+            # Clôture du groupe
             IDgroupe += 1
             posY += 22
         
-        # Cr�ation du dictionnaire des lignes
+        # Création du dictionnaire des lignes
         dictLignes = self.CreationDictLignes(dictGroupes)
 
-        # Cr�ation d'une liste temporaire des dates au format "2008-01-15"
+        # Création d'une liste temporaire des dates au format "2008-01-15"
         listeDatesTemp = []
         for date in listeDates :
             listeDatesTemp.append(str(date))
 
-        # Cr�ation de la liste des pr�sences
+        # Création de la liste des présences
         listePresences = []
         if len(dictLignes) != 0 :
             listePresences = self.ImportPresences(listeDatesTemp, listeIDPersonne)
@@ -2639,7 +2639,7 @@ class PanelPlanning(wx.Panel):
 
 
     def CreationDictLignes(self, dictGroupes):
-        """ Cr��e un dict des lignes � partir du dictGroupes """
+        """ Créée un dict des lignes à partir du dictGroupes """
         dictLignes = {}
         for IDgroupe, groupe in dictGroupes.items() :
             for ligne in groupe[4] :
@@ -2647,7 +2647,7 @@ class PanelPlanning(wx.Panel):
                 datetimeDate = ligne[1]
                 posYLigne = ligne[2]
                 texteLigne = ligne[3]
-                dictLignes[(IDpersonne, datetimeDate)] = [IDgroupe, posYLigne, texteLigne, False]       # [IDgroupe, posYligne, texte, S�lectionn�]
+                dictLignes[(IDpersonne, datetimeDate)] = [IDgroupe, posYLigne, texteLigne, False]       # [IDgroupe, posYligne, texte, Sélectionné]
                 
         return dictLignes
 
@@ -2661,7 +2661,7 @@ class PanelPlanning(wx.Panel):
        
 
     def ImportPersonnes(self):
-        """ R�cup�ration des noms des personnes """
+        """ Récupération des noms des personnes """
         DB = GestionDB.DB()
         req = "SELECT IDpersonne, nom, prenom FROM personnes"
         DB.ExecuterReq(req)
@@ -2678,7 +2678,7 @@ class PanelPlanning(wx.Panel):
         self.dictCategories = self.ImportCategories()
 
     def ImportCategories(self):
-        """ R�cup�ration des cat�gories de pr�sences dans la base """
+        """ Récupération des catégories de présences dans la base """
         DB = GestionDB.DB()
         req = "SELECT * FROM cat_presences"
         DB.ExecuterReq(req)
@@ -2748,18 +2748,18 @@ class ImpressionPDFvGraph():
 class ImpressionPDFvTexte():
     def __init__(self, nom_doc, dictCategories, dictGroupes, dictLignes, listePresences, dictPresences, maxWidth, maxHeight) :
         if len(dictGroupes) == 0 :
-            dlg = wx.MessageDialog(None, _(u"Vous devez s�lectionner au moins une date dans le calendrier !"), "Erreur", wx.OK)  
+            dlg = wx.MessageDialog(None, _(u"Vous devez sélectionner au moins une date dans le calendrier !"), "Erreur", wx.OK)  
             dlg.ShowModal()
             dlg.Destroy() 
             return
 
         self.nom_doc = nom_doc
 
-        # Tri de la liste des pr�sences par heure de d�but
+        # Tri de la liste des présences par heure de début
         if len(listePresences) != 0 :
             listePresences = sorted(listePresences, key=operator.itemgetter(3))
         
-        # Cr�ation du PDF
+        # Création du PDF
         from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
         from reportlab.rl_config import defaultPageSize
         from reportlab.lib import colors
@@ -2773,11 +2773,11 @@ class ImpressionPDFvTexte():
         # Style du tableau
         style = TableStyle([('GRID', (0,0), (-1,-2), 0.25, colors.black),
                             ('VALIGN', (0,0), (-1,-1), 'TOP'), # Centre verticalement toutes les cases
-                            ('ALIGN', (0,0), (-1,-1), 'LEFT'), # Titre du groupe � gauche
-                            ('ALIGN', (0,1), (0,-1), 'RIGHT'), # Colonne dates align�e � droite
-                            ('ALIGN', (1,1), (1,-2), 'LEFT'), # Colonne t�ches align�e � gauche
-                            ('ALIGN', (2,1), (2,-1), 'CENTRE'), # Colonne temps align�e au centre
-                            ('ALIGN', (0,-1), (1,-1), 'RIGHT'), # Met � droite le mot 'Total :'
+                            ('ALIGN', (0,0), (-1,-1), 'LEFT'), # Titre du groupe à gauche
+                            ('ALIGN', (0,1), (0,-1), 'RIGHT'), # Colonne dates alignée à droite
+                            ('ALIGN', (1,1), (1,-2), 'LEFT'), # Colonne tâches alignée à gauche
+                            ('ALIGN', (2,1), (2,-1), 'CENTRE'), # Colonne temps alignée au centre
+                            ('ALIGN', (0,-1), (1,-1), 'RIGHT'), # Met à droite le mot 'Total :'
                             ('SPAN',(0,0),(2,0)), # Fusionne les 3 lignes du haut pour faire le titre du groupe
                             ('FONT',(0,0),(-1,-1), "Helvetica", 8), # Donne la police de caract. + taille de police 
                             ('FONT',(0,0),(0,0), "Helvetica-Bold", 8), # Donne la police de caract. + taille de police du titre de groupe
@@ -2787,20 +2787,20 @@ class ImpressionPDFvTexte():
             
         largeursColonnes = (150, 320, 50)
 
-        # Cr�ation des groupes
+        # Création des groupes
         for index in range(1, len(dictGroupes)+1) :
             titreGroupe, posY_debut, posY_fin, nbreLignes, listeLignes = dictGroupes[index]
             
-            # Cr�ation du titre
+            # Création du titre
             if type(titreGroupe) != six.text_type :
                 titreGroupe = titreGroupe.decode("iso-8859-15")
             dataTableau = [(titreGroupe, "" , ""),]
             
-            # Cr�ation de chaque ligne
+            # Création de chaque ligne
             totalTemps = 0
             for IDpersonne_ligne, datetime_date, posY, titre_ligne in listeLignes :
                 
-                # R�cup�ration des pr�sences de la ligne
+                # Récupération des présences de la ligne
                 txtTaches = ""
                 txtTemps = ""
                 
@@ -2815,22 +2815,22 @@ class ImpressionPDFvTexte():
                         totalTemps += temps
                         txtTemps = txtTemps + self.minutesEnHeures(temps) + "\n"
             
-                # Int�gration des lignes et des pr�sences dans le tableau
+                # Intégration des lignes et des présences dans le tableau
                 if type(titre_ligne) != six.text_type :
                     titre_ligne = titre_ligne.decode("iso-8859-15")
                 dataTableau.append( (titre_ligne, txtTaches[:-1], txtTemps[:-1]) )
             
-            # Cr�ation de la ligne de total
+            # Création de la ligne de total
             dataTableau.append( ("","Total :", self.minutesEnHeures(totalTemps)) )
             
-            # Cr�ation du tableau
+            # Création du tableau
             tableau = Table(dataTableau, largeursColonnes)
             tableau.setStyle(style)
             story.append(tableau)
             story.append(Spacer(0,12))
         
-        # Cr�ation des totaux de cat�gories
-        dataTableau = [("", _(u"Total par cat�gorie"), ""),]
+        # Création des totaux de catégories
+        dataTableau = [("", _(u"Total par catégorie"), ""),]
         totalTemps = 0
         for IDcategorie, valeurs in dictCategories.items() :
             nomCategorie = valeurs[0]
@@ -2842,9 +2842,9 @@ class ImpressionPDFvTexte():
         
         style = TableStyle([('GRID', (1,0), (2,-2), 0.25, colors.black),
                             ('VALIGN', (0,0), (-1,-1), 'TOP'), # Centre verticalement toutes les cases
-                            ('ALIGN', (1,0), (2,0), 'LEFT'), # Titre du groupe � gauche
-                            ('ALIGN', (1,1), (1,-1), 'RIGHT'), # Colonne nom align�e � droite
-                            ('ALIGN', (2,1), (2,-1), 'CENTRE'), # Colonne temps align�e au centre
+                            ('ALIGN', (1,0), (2,0), 'LEFT'), # Titre du groupe à gauche
+                            ('ALIGN', (1,1), (1,-1), 'RIGHT'), # Colonne nom alignée à droite
+                            ('ALIGN', (2,1), (2,-1), 'CENTRE'), # Colonne temps alignée au centre
                             ('SPAN',(1,0),(2,0)), # Fusionne les 2 colonnes du haut pour faire le titre du groupe
                             ('FONT',(0,0),(-1,-1), "Helvetica", 8), # Donne la police de caract. + taille de police 
                             ('FONT',(0,0),(0,0), "Helvetica-Bold", 8), # Donne la police de caract. + taille de police du titre de groupe

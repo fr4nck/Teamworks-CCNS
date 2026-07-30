@@ -6,7 +6,7 @@ SOURCE = ROOT / "teamworks" / "GestionDB.py"
 
 
 def test_creation_table_builds_complete_sql_before_execution():
-    source = SOURCE.read_text(encoding="iso-8859-15")
+    source = SOURCE.read_text(encoding="utf-8")
     start = source.index("    def CreationTable(self, nomTable=\"\", dicoDB={}):")
     end = source.index("    def ExecuterReq(self, req):", start)
     block = source[start:end]

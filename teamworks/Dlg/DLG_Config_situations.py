@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -22,7 +22,7 @@ class Panel(wx.Panel):
         wx.Panel.__init__(self, parent, ID, style=wx.TAB_TRAVERSAL)
         
         self.barreTitre = FonctionsPerso.BarreTitre(self,  _(u"Les situations sociales"), u"")
-        texteIntro = _(u"Vous pouvez ici ajouter, modifier ou supprimer des types de situations pour les personnes.\nExemples : 'Etudiant', 'RetraitÈ', 'EmployÈ', etc...")
+        texteIntro = _(u"Vous pouvez ici ajouter, modifier ou supprimer des types de situations pour les personnes.\nExemples : 'Etudiant', 'Retrait√©', 'Employ√©', etc...")
         self.label_introduction = FonctionsPerso.StaticWrapText(self, -1, texteIntro)
         
         self.listCtrl_Situations = ListCtrl(self)
@@ -50,11 +50,11 @@ class Panel(wx.Panel):
 ##        self.bouton_supprimer.Enable(False)
         
     def __set_properties(self):
-        self.bouton_ajouter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour crÈer un nouveau type de situation sociale")))
+        self.bouton_ajouter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour cr√©er un nouveau type de situation sociale")))
         self.bouton_ajouter.SetSize(self.bouton_ajouter.GetBestSize())
-        self.bouton_modifier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier un type de situation sociale sÈlectionnÈ dans la liste")))
+        self.bouton_modifier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier un type de situation sociale s√©lectionn√© dans la liste")))
         self.bouton_modifier.SetSize(self.bouton_modifier.GetBestSize())
-        self.bouton_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer un type de situation sociale sÈlectionnÈ dans la liste")))
+        self.bouton_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer un type de situation sociale s√©lectionn√© dans la liste")))
         self.bouton_supprimer.SetSize(self.bouton_supprimer.GetBestSize())
         self.bouton_aide.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour obtenir de l'aide")))
 
@@ -86,7 +86,7 @@ class Panel(wx.Panel):
         self.Ajouter()
 
     def Ajouter(self):
-        """ CrÈer un nouveau type de situation sociale """
+        """ Cr√©er un nouveau type de situation sociale """
         dlg = wx.TextEntryDialog(self, _(u"Saisissez le nom du nouveau type de situation sociale :"), _(u"Saisie d'un nouveau type de situation sociale"), u"")
         if dlg.ShowModal() == wx.ID_OK:
             varSituation = dlg.GetValue()
@@ -104,12 +104,12 @@ class Panel(wx.Panel):
         # Sauvegarde
         listeDonnees = [("situation",  varSituation),]
         
-        # Initialisation de la connexion avec la Base de donnÈes
+        # Initialisation de la connexion avec la Base de donn√©es
         DB = GestionDB.DB()
         newID = DB.ReqInsert("situations", listeDonnees)
         DB.Close()
 
-        # M‡J du ListCtrl
+        # M√†J du ListCtrl
         self.listCtrl_Situations.MAJListeCtrl()
 
 
@@ -117,18 +117,18 @@ class Panel(wx.Panel):
         self.Modifier()
 
     def Modifier(self):
-        """ Modification d'un type de piËce """
+        """ Modification d'un type de pi√®ce """
         index = self.listCtrl_Situations.GetFirstSelected()
         if index == -1:
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÈlectionner un type de situation sociale ‡ modifier dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord s√©lectionner un type de situation sociale √† modifier dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
 
-        # Avertissement si ce type de situation a dÈj‡ ÈtÈ attribuÈ ‡ une personne
+        # Avertissement si ce type de situation a d√©j√† √©t√© attribu√© √† une personne
         nbreTitulaires = int(self.listCtrl_Situations.GetItem(index, 2).GetText())
         if nbreTitulaires != 0:
-            message =_(u"Avertissement : Ce type de situation sociale a dÈj‡ ÈtÈ attribuÈ a ") + str(nbreTitulaires) + _(u" personne(s). Toute modification sera donc rÈpercutÈe en cascade sur toutes les fiches des personnes ‡ qui cette situation sociale a ÈtÈ attribuÈe. \n\nSouhaitez-vous quand mÍme modifier ce type de situation ?")
+            message =_(u"Avertissement : Ce type de situation sociale a d√©j√† √©t√© attribu√© a ") + str(nbreTitulaires) + _(u" personne(s). Toute modification sera donc r√©percut√©e en cascade sur toutes les fiches des personnes √† qui cette situation sociale a √©t√© attribu√©e. \n\nSouhaitez-vous quand m√™me modifier ce type de situation ?")
             dlg = wx.MessageDialog(self, message, "Information", wx.YES_NO|wx.NO_DEFAULT|wx.ICON_INFORMATION)
             reponse = dlg.ShowModal()
             if reponse == wx.ID_NO:
@@ -157,12 +157,12 @@ class Panel(wx.Panel):
         # Sauvegarde
         listeDonnees = [("situation",  varNomSituation),]
         
-        # Initialisation de la connexion avec la Base de donnÈes
+        # Initialisation de la connexion avec la Base de donn√©es
         DB = GestionDB.DB()
         DB.ReqMAJ("situations", listeDonnees, "IDsituation", varIDsituation)
         DB.Close()
 
-        # M‡J du ListCtrl
+        # M√†J du ListCtrl
         self.listCtrl_Situations.MAJListeCtrl()
     
     def MAJpanel(self):
@@ -176,17 +176,17 @@ class Panel(wx.Panel):
         """ Suppression d'une situation sociale """
         index = self.listCtrl_Situations.GetFirstSelected()
 
-        # VÈrifie qu'un item a bien ÈtÈ sÈlectionnÈ
+        # V√©rifie qu'un item a bien √©t√© s√©lectionn√©
         if index == -1:
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÈlectionner un type de situation sociale ‡ supprimer dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord s√©lectionner un type de situation sociale √† supprimer dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
 
-        # VÈrifie que cette situation n'est attribuÈe ‡ aucune personne
+        # V√©rifie que cette situation n'est attribu√©e √† aucune personne
         nbreTitulaires = int(self.listCtrl_Situations.GetItem(index, 2).GetText())
         if nbreTitulaires != 0:
-            dlg = wx.MessageDialog(self, _(u"Pour des raisons de sÈcuritÈ des donnÈes, vous ne pouvez pas supprimer un type de situation sociale qui a dÈj‡ ÈtÈ attribuÈ ‡ des personnes.\n\nSi vous voulez vraiment le supprimer, vous devez d'abord supprimer cette situation sociale sur chaque fiche individuelle concernÈe."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Pour des raisons de s√©curit√© des donn√©es, vous ne pouvez pas supprimer un type de situation sociale qui a d√©j√† √©t√© attribu√© √† des personnes.\n\nSi vous voulez vraiment le supprimer, vous devez d'abord supprimer cette situation sociale sur chaque fiche individuelle concern√©e."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -201,12 +201,12 @@ class Panel(wx.Panel):
         if reponse == wx.ID_NO:
             return
         
-        # Suppression du type de piËce
+        # Suppression du type de pi√®ce
         DB = GestionDB.DB()
         DB.ReqDEL("situations", "IDsituation", IDsituation)
         DB.Close()
 
-        # M‡J du ListCtrl
+        # M√†J du ListCtrl
         self.listCtrl_Situations.MAJListeCtrl()
 
     def OnBoutonAide(self, event):
@@ -242,10 +242,10 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
 
     def Remplissage(self):
         
-        # RÈcupÈration des donnÈes dans la base de donnÈes
+        # R√©cup√©ration des donn√©es dans la base de donn√©es
         self.Importation()
         
-        # CrÈation des colonnes
+        # Cr√©ation des colonnes
         self.nbreColonnes = 3
         self.InsertColumn(0, _(u"     ID"))
         self.SetColumnWidth(0, 0)
@@ -274,7 +274,7 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
 
     def Importation(self):
       
-        # RÈcupÈration des donnÈes de la table TYPES_PIECES
+        # R√©cup√©ration des donn√©es de la table TYPES_PIECES
         DB = GestionDB.DB()
         req = """SELECT situations.IDsituation, situations.situation, Count(personnes.IDpersonne) AS CompteDeIDsituation
         FROM situations LEFT JOIN personnes ON situations.IDsituation = personnes.IDsituation
@@ -286,7 +286,7 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
 
         self.nbreLignes = len(listeSituations)
 
-        # CrÈation du dictionnaire de donnÈes
+        # Cr√©ation du dictionnaire de donn√©es
         self.donnees = self.listeEnDict(listeSituations)
 
 
@@ -300,7 +300,7 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
         dictio = {}
         x = 1
         for ligne in liste:
-            index = x # Donne un entier comme clÈ
+            index = x # Donne un entier comme cl√©
             dictio[index] = ligne
             x += 1
         return dictio
@@ -324,12 +324,12 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
         return valeur
 
     def OnGetItemImage(self, item):
-        """ Affichage des images en dÈbut de ligne """
+        """ Affichage des images en d√©but de ligne """
         return -1
 
     def OnGetItemAttr(self, item):
         """ Application d'une couleur de fond pour une ligne sur deux """
-        # CrÈation d'une ligne de couleur 1 ligne sur 2
+        # Cr√©ation d'une ligne de couleur 1 ligne sur 2
         if item % 2 == 1:
             return self.attr1
         else:
@@ -373,7 +373,7 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
         index = self.GetFirstSelected()
         key = int(self.getColumnText(index, 0))
         
-        # CrÈation du menu contextuel
+        # Cr√©ation du menu contextuel
         menuPop = UTILS_Adaptations.Menu()
 
         # Item Modifier

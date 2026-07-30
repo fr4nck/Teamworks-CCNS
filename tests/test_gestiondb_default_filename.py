@@ -6,7 +6,7 @@ TARGET = ROOT / "teamworks" / "GestionDB.py"
 
 
 def test_db_resolves_current_teamworks_file_before_suffix_handling() -> None:
-    source = TARGET.read_text(encoding="iso-8859-15")
+    source = TARGET.read_text(encoding="utf-8")
     block = (
         '        if self.nomFichier == "":\n'
         '            self.nomFichier = self.GetNomFichierDefaut()\n'
@@ -19,5 +19,5 @@ def test_db_resolves_current_teamworks_file_before_suffix_handling() -> None:
 
 
 def test_db_default_filename_source_still_compiles() -> None:
-    source = TARGET.read_text(encoding="iso-8859-15")
+    source = TARGET.read_text(encoding="utf-8")
     compile(source, str(TARGET), "exec")

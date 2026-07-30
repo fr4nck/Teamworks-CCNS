@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -25,37 +25,37 @@ from Ctrl.CTRL_ObjectListView import FastObjectListView, ColumnDefn, Filter, CTR
 LISTE_COLONNES_1 = [
             [_(u"ID"), "left", 0, "IDcontrat", "entier", _(u"ID du contrat"), True, 1 ],
             [_(u"Type de contrat"), "left", 180, "type_contrat", "texte", _(u"Type de contrat"), True, 2 ],
-            [_(u"Date de début"), "left", 90, _(u"date_debut"), "date", _(u"Date de début de contrat"), True, 3 ],
+            [_(u"Date de dÃ©but"), "left", 90, _(u"date_debut"), "date", _(u"Date de dÃ©but de contrat"), True, 3 ],
             [_(u"Date de fin"), "left", 90, _(u"date_fin"), "date", _(u"Date de fin de contrat"), True, 4 ],
             [_(u"Classification"), "left", 100, _(u"classification"), "text", _(u"Classification du contrat"), True, 5 ],
-            ] # nom Colonne, alignement, largeur, nom Champ, Args pour OLV, Description, Affiché ?, Ordre
+            ] # nom Colonne, alignement, largeur, nom Champ, Args pour OLV, Description, AffichÃ© ?, Ordre
 
 # Liste avec nom du candidat
 LISTE_COLONNES_2 = [
             [_(u"ID"), "left", 0, "IDcontrat", "entier", _(u"ID du contrat"), True, 1 ],
-            [_(u"Nom du salarié"), "left", 140, "nomPersonne", "texte", _(u"Nom du salarié"), True, 2 ],
+            [_(u"Nom du salariÃ©"), "left", 140, "nomPersonne", "texte", _(u"Nom du salariÃ©"), True, 2 ],
             [_(u"Type de contrat"), "left", 180, "type_contrat", "texte", _(u"Type de contrat"), True, 3 ],
-            [_(u"Date de début"), "left", 90, _(u"date_debut"), "date", _(u"Date de début de contrat"), True, 4 ],
+            [_(u"Date de dÃ©but"), "left", 90, _(u"date_debut"), "date", _(u"Date de dÃ©but de contrat"), True, 4 ],
             [_(u"Date de fin"), "left", 90, _(u"date_fin"), "date", _(u"Date de fin de contrat"), True, 5 ],
             [_(u"Classification"), "left", 100, _(u"classification"), "texte", _(u"Classification du contrat"), True, 6 ],
-            ] # nom Colonne, alignement, largeur, nom Champ, Args pour OLV, Description, Affiché ?, Ordre
+            ] # nom Colonne, alignement, largeur, nom Champ, Args pour OLV, Description, AffichÃ© ?, Ordre
 
-# Liste complète de tous les contrats
+# Liste complÃ¨te de tous les contrats
 LISTE_COLONNES_3 = [
             [_(u"ID"), "left", 0, "IDcontrat", "entier", _(u"ID du contrat"), True, 1 ],
-            [_(u"Entrée"), "left", 90, "date_debut", "date", _(u"Date de début de contrat"), True, 2],
+            [_(u"EntrÃ©e"), "left", 90, "date_debut", "date", _(u"Date de dÃ©but de contrat"), True, 2],
             [_(u"Sortie"), "left", 90, "date_fin", "date", _(u"Date de fin de contrat"), True, 3],
-            [_(u"Civilité"), "left", 50, "civilite", "texte", _(u"Civilité"), True, 4],
+            [_(u"CivilitÃ©"), "left", 50, "civilite", "texte", _(u"CivilitÃ©"), True, 4],
             [_(u"Nom"), "left", 120, "nom", "texte", _(u"Nom de famille"), True, 5],
             [_(u"Nom de jeune fille"), "left", 120, "nom_jfille", "texte", _(u"Nom de jeune fille"), True, 6],
-            [_(u"Prénom"), "left", 120, "prenom", "texte", _(u"Prénom"), True, 7],
+            [_(u"PrÃ©nom"), "left", 120, "prenom", "texte", _(u"PrÃ©nom"), True, 7],
             [_(u"Date naiss."), "left", 70, "date_naiss", "date", _(u"Date de naissance"), True, 8],
-            [_(u"Nationalité"), "left", 90, "nationalite", "texte", _(u"Nationalité"), True, 9],
-            [_(u"Num. sécurité sociale"), "left", 130, "num_secu", "texte", _(u"Numéro de sécurité sociale"), True, 10],
+            [_(u"NationalitÃ©"), "left", 90, "nationalite", "texte", _(u"NationalitÃ©"), True, 9],
+            [_(u"Num. sÃ©curitÃ© sociale"), "left", 130, "num_secu", "texte", _(u"NumÃ©ro de sÃ©curitÃ© sociale"), True, 10],
             [_(u"Type de contrat"), "left", 200, "type_contrat", "texte", _(u"Type de contrat"), True, 11],
             [_(u"Classification"), "left", 200, "classification", "texte", _(u"Classification du contrat"), True, 12],
             [_(u"Qualifications"), "left", 200, "qualifications", "texte", _(u"Qualifications"), True, 13],
-            ] # nom Colonne, alignement, largeur, nom Champ, Args pour OLV, Description, Affiché ?, Ordre
+            ] # nom Colonne, alignement, largeur, nom Champ, Args pour OLV, Description, AffichÃ© ?, Ordre
 
 
 # ---------------------------------------- LISTVIEW PERSONNES  -----------------------------------------------------------------------
@@ -102,7 +102,7 @@ class Track(object):
 class ListView(FastObjectListView):
     def __init__(self, *args, **kwds):
         wx.Locale(wx.LANGUAGE_FRENCH)
-        # Récupération des paramètres perso
+        # RÃ©cupÃ©ration des paramÃ¨tres perso
         self.IDpersonne = kwds.pop("IDpersonne", None)
         self.modeAffichage = kwds.pop("modeAffichage", None)
         self.activeCheckBoxes = kwds.pop("activeCheckBoxes", False)
@@ -151,7 +151,7 @@ class ListView(FastObjectListView):
                     return False
                 IDcandidat = self.Selection()[0].IDcandidat
                 IDpersonne = self.Selection()[0].IDpersonne
-                # Met à jour le cadre Résumé
+                # Met Ã  jour le cadre RÃ©sumÃ©
                 self.GetGrandParent().GetParent().panel_resume.MAJ(IDcandidat=IDcandidat, IDpersonne=IDpersonne)
                 self.GetGrandParent().GetParent().AffichePanelResume(True)
         except : 
@@ -176,8 +176,8 @@ class ListView(FastObjectListView):
         self.donnees = self.GetTracks()
         
     def GetTracks(self):
-        """ Récupération des données """
-        # Critères
+        """ RÃ©cupÃ©ration des donnÃ©es """
+        # CritÃ¨res
         listeID = None
         self.criteres = ""
         if self.IDpersonne != None and self.IDpersonne != 0 :
@@ -207,7 +207,7 @@ class ListView(FastObjectListView):
             else:
                 self.dict_qualifications[IDpersonne] = [IDtype_diplome, ]
 
-        # Types de diplômes
+        # Types de diplÃ´mes
         req = """SELECT IDtype_diplome, nom_diplome
         FROM types_diplomes; """
         DB.ExecuterReq(req)
@@ -258,7 +258,7 @@ class ListView(FastObjectListView):
             text = str(date[8:10]) + "/" + str(date[5:7]) + "/" + str(date[:4])
             return text
         
-        # Création des colonnes
+        # CrÃ©ation des colonnes
         liste_ColonnesTmp = self.listeColonnes
         # Tri par ordre
         liste_ColonnesTmp.sort(key=operator.itemgetter(7))
@@ -296,7 +296,7 @@ class ListView(FastObjectListView):
             self.presents = presents
         self.InitModel()
         self.InitObjectListView()
-        # Sélection d'un item
+        # SÃ©lection d'un item
         if self.selectionTrack != None :
             self.SelectObject(self.selectionTrack, deselectOthers=True, ensureVisible=True)
         self.selectionID = None
@@ -319,10 +319,10 @@ class ListView(FastObjectListView):
         else:
             noSelection = False
 
-        # Création du menu contextuel
+        # CrÃ©ation du menu contextuel
         menuPop = UTILS_Adaptations.Menu()
 
-        # Génération automatique des fonctions standards
+        # GÃ©nÃ©ration automatique des fonctions standards
         self.GenerationContextMenu(menuPop, dictParametres=self.GetParametresImpression())
 
         self.PopupMenu(menuPop)
@@ -344,7 +344,7 @@ class ListView(FastObjectListView):
         else:
             noSelection = False
 
-        # Création du menu contextuel
+        # CrÃ©ation du menu contextuel
         menuPop = UTILS_Adaptations.Menu()
 
         # Item Ajouter
@@ -374,7 +374,7 @@ class ListView(FastObjectListView):
         menuPop.AppendSeparator()
         
         # Item Publipostage
-        item = wx.MenuItem(menuPop, 140, _(u"Créer un courrier ou un mail par publipostage"))
+        item = wx.MenuItem(menuPop, 140, _(u"CrÃ©er un courrier ou un mail par publipostage"))
         bmp = wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Mail.png"), wx.BITMAP_TYPE_PNG)
         item.SetBitmap(bmp)
         menuPop.AppendItem(item)
@@ -463,7 +463,7 @@ class ListView(FastObjectListView):
         self.Options()
 
     def Menu_Aide(self, event):
-        dlg = wx.MessageDialog(self, _(u"L'aide du module Recrutement est en cours de rédaction.\nElle sera disponible lors d'une mise à jour ultérieure."), "Aide indisponible", wx.OK | wx.ICON_INFORMATION)
+        dlg = wx.MessageDialog(self, _(u"L'aide du module Recrutement est en cours de rÃ©daction.\nElle sera disponible lors d'une mise Ã  jour ultÃ©rieure."), "Aide indisponible", wx.OK | wx.ICON_INFORMATION)
         dlg.ShowModal()
         dlg.Destroy()
         
@@ -471,7 +471,7 @@ class ListView(FastObjectListView):
         FonctionsPerso.EnvoyerMail(adresses = (self.adresseMail,))
 
     def AfficherTout(self):
-        """ Réafficher toute la liste """
+        """ RÃ©afficher toute la liste """
         self.criteres = ""
         self.listeFiltres = []
         self.MAJ()
@@ -493,9 +493,9 @@ class ListView(FastObjectListView):
         self.ExportExcel()
 
     def Rechercher(self):
-        # Récupération des filtres souhaités
+        # RÃ©cupÃ©ration des filtres souhaitÃ©s
         from Dlg import DLG_Filtre_recrutement
-        dlg = DLG_Filtre_recrutement.MyDialog(self, categorie="candidatures", listeValeursDefaut=self.listeFiltres, title=_(u"Sélection de filtres de liste"))
+        dlg = DLG_Filtre_recrutement.MyDialog(self, categorie="candidatures", listeValeursDefaut=self.listeFiltres, title=_(u"SÃ©lection de filtres de liste"))
         if dlg.ShowModal() == wx.ID_OK:
             listeFiltres = dlg.GetListeFiltres()
             dlg.Destroy()
@@ -509,7 +509,7 @@ class ListView(FastObjectListView):
         try :
             if self.GetGrandParent().GetParent().GetName() == "Recrutement" :
                 if len(self.listeFiltres) > 0 :
-                    texte = _(u"Filtres de sélection : ")
+                    texte = _(u"Filtres de sÃ©lection : ")
                     for dictFiltre in self.listeFiltres :
                         texte += u"%s (%s), " % (dictFiltre["labelControle"], dictFiltre["label"])
                     texte = texte[:-2]
@@ -529,7 +529,7 @@ class ListView(FastObjectListView):
         except : 
             pass
             
-        # Si aucun candidat sélectionné
+        # Si aucun candidat sÃ©lectionnÃ©
         if (self.IDcandidat == None or self.IDcandidat == 0) and (self.IDpersonne == None or self.IDpersonne == 0 ):
             dlg = DLG_Selection_candidat.MyDialog(self)
             if dlg.ShowModal() == wx.ID_OK:
@@ -557,7 +557,7 @@ class ListView(FastObjectListView):
             pass
             
         if len(self.Selection()) == 0:
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sélectionner une candidature à modifier dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÃ©lectionner une candidature Ã  modifier dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return False
@@ -577,7 +577,7 @@ class ListView(FastObjectListView):
             pass
             
         if len(self.Selection()) == 0:
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sélectionner une candidature à supprimer dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÃ©lectionner une candidature Ã  supprimer dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return False
@@ -602,7 +602,7 @@ class ListView(FastObjectListView):
         DB.ReqDEL("cand_affectations", "IDcandidature", IDcandidature)
         
         DB.Close()
-        # MàJ du ListCtrl
+        # MÃ J du ListCtrl
         self.MAJ()
         
         try :
@@ -621,8 +621,8 @@ class ListView(FastObjectListView):
             pass
             
     def GetValeurs(self):
-        """ Récupère les valeurs affichées sous forme de liste """
-        # Récupère les labels de colonnes
+        """ RÃ©cupÃ¨re les valeurs affichÃ©es sous forme de liste """
+        # RÃ©cupÃ¨re les labels de colonnes
         liste_ColonnesTmp = self.listeColonnes
         liste_ColonnesTmp.sort(key=operator.itemgetter(7))
         liste_labelsColonnes = []
@@ -630,7 +630,7 @@ class ListView(FastObjectListView):
             if affiche == True :
                 liste_labelsColonnes.append( (labelCol, alignement, largeur, nomChamp) )
 
-        # Récupère les valeurs
+        # RÃ©cupÃ¨re les valeurs
         listeValeurs = []
         listeObjects = self.GetFilteredObjects()
         for object in listeObjects :
@@ -648,7 +648,7 @@ class ListView(FastObjectListView):
     def CourrierPublipostage(self, mode="unique"):
         if mode == "unique" :
             if len(self.Selection()) == 0:
-                dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sélectionner une candidature dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
+                dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÃ©lectionner une candidature dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
                 dlg.ShowModal()
                 dlg.Destroy()
                 return False
@@ -659,7 +659,7 @@ class ListView(FastObjectListView):
                 dlg.ShowModal()
                 dlg.Destroy()
                 return
-            # Récupération des valeurs
+            # RÃ©cupÃ©ration des valeurs
             liste_labelsColonnes, listeValeurs = self.GetValeurs()
             # Selection des lignes
             from Dlg import DLG_Selection_liste
@@ -672,7 +672,7 @@ class ListView(FastObjectListView):
                 return False
             listeID = listeSelections
         
-        # Récupère les données pour le publipostage
+        # RÃ©cupÃ¨re les donnÃ©es pour le publipostage
         from Utils import UTILS_Publipostage_donnees
         dictDonnees = UTILS_Publipostage_donnees.GetDictDonnees(categorie="candidature", listeID=listeID)
         # Ouvre le publiposteur
@@ -691,7 +691,7 @@ class ListView(FastObjectListView):
             
         item = self.GetItem(index, 0)
         
-        pos = self.ClientToScreen(event.GetPosition()) # Position du curseur sur l'écran
+        pos = self.ClientToScreen(event.GetPosition()) # Position du curseur sur l'Ã©cran
         decalage = (15, 15)
 
         tailleCtrl = self.GetSize()
@@ -703,14 +703,14 @@ class ListView(FastObjectListView):
                 self.DestroyPopup()
                 return
 
-        # Si on était déjà sur l'item , on ne fait que bouger le popup 
+        # Si on Ã©tait dÃ©jÃ  sur l'item , on ne fait que bouger le popup 
         if self.popupIndex == index :
             self.Popup.Position(pos, decalage)
 
         if self.popupIndex != index and self.popupIndex != -1:
             self.DestroyPopup()
 
-        # Sinon, création d'un popup
+        # Sinon, crÃ©ation d'un popup
         if self.popupIndex != index and posInListCtrl[0] > 3 and posInListCtrl[1] > 3:
             key = self.GetItemData(index)
             self.popupIndex = index
@@ -720,7 +720,7 @@ class ListView(FastObjectListView):
             self.CaptureMouse()
 
     def DestroyPopup(self):
-        """ Destruction de la fenêtre Popup """
+        """ Destruction de la fenÃªtre Popup """
         if self.HasCapture():
             self.ReleaseMouse()
         try:
@@ -741,25 +741,25 @@ class Popup(wx.PopupWindow):
         track = listView.GetObjectAt(key)
         imageList = listView.smallImageList.imageList
         
-        # Récupération des images
+        # RÃ©cupÃ©ration des images
         img_depot = imageList.GetBitmap(listView.GetImageAt(track, 1))
         img_decision = imageList.GetBitmap(listView.GetImageAt(track, 6))
         img_reponse = imageList.GetBitmap(listView.GetImageAt(track, 7))
         
-        # Récupération des données
+        # RÃ©cupÃ©ration des donnÃ©es
         listeColonnes = [
-            ( 1, _(u"Dépôt"), img_depot, track.depot_long ),
+            ( 1, _(u"DÃ©pÃ´t"), img_depot, track.depot_long ),
             ( 1, _(u"Nom"), None, track.nom_candidat ),
             ( 2, _(u"Emploi"), None, track.offre_emploi ),
-            ( 3, _(u"Disponibilités"), None, track.disponibilites ),
+            ( 3, _(u"DisponibilitÃ©s"), None, track.disponibilites ),
             ( 4, _(u"Fonctions"), None, track.fonctions ),
             ( 5, _(u"Affectations"), None, track.affectations ),
-            ( 6, _(u"Décision"), img_decision, track.decision ),
-            ( 7, _(u"Réponse"), img_reponse, track.texte_reponse_long ),
-            ] # IndexColonne, Label, Image, Donnée
+            ( 6, _(u"DÃ©cision"), img_decision, track.decision ),
+            ( 7, _(u"RÃ©ponse"), img_reponse, track.texte_reponse_long ),
+            ] # IndexColonne, Label, Image, DonnÃ©e
         
         
-        # Création du popup
+        # CrÃ©ation du popup
         sizer_base = wx.BoxSizer(wx.VERTICAL)
         sizer_base_2 = wx.BoxSizer(wx.VERTICAL)
         grid_sizer_base = wx.FlexGridSizer(rows=7, cols=2, vgap=5, hgap=5)
@@ -770,10 +770,10 @@ class Popup(wx.PopupWindow):
             exec("self.label_" + str(index) + " = wx.StaticText(self.panel, -1, u'%s :' % label)")
             exec("self.label_" + str(index) + ".SetForegroundColour(wx.Colour(127, 0, 255))")
             exec("grid_sizer_base.Add(self.label_" + str(index) + ", 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL, 0)")
-            # Détail : Image et valeur
+            # DÃ©tail : Image et valeur
             if img != None : exec("self.image_" + str(index) + " = wx.StaticBitmap(self.panel, -1, img)")
             exec("self.ctrl_" + str(index) + " = wx.StaticText(self.panel, -1, donnee)")
-            # Sizer détail
+            # Sizer dÃ©tail
             if img != None : 
                 exec("grid_sizer_" + str(index) + " = wx.FlexGridSizer(rows=1, cols=2, vgap=5, hgap=5)")
                 exec("grid_sizer_" + str(index) + ".Add(self.image_" + str(index) + ", 0, wx.ALIGN_CENTER_VERTICAL, 0)")
@@ -824,11 +824,11 @@ class Impression():
         doc = SimpleDocTemplate(nomDoc, pagesize=landscape(A4))
         story = []
 
-        # Création du titre du document
+        # CrÃ©ation du titre du document
         dataTableau = []
         largeursColonnes = ( (620, 100) )
         dateDuJour = DateEngFr(str(datetime.date.today()))
-        dataTableau.append( (_(u"Liste des candidatures"), _(u"Edité le %s") % dateDuJour )  )
+        dataTableau.append( (_(u"Liste des candidatures"), _(u"EditÃ© le %s") % dateDuJour )  )
         style = TableStyle([
                             ('BOX', (0,0), (-1,-1), 0.25, colors.black), 
                             ('VALIGN', (0,0), (-1,-1), 'TOP'), 
@@ -842,10 +842,10 @@ class Impression():
         story.append(tableau)
         story.append(Spacer(0,20))       
         
-        # Tableau de données
+        # Tableau de donnÃ©es
         dataTableau = []
         
-        # Création des colonnes
+        # CrÃ©ation des colonnes
         largeursColonnes = []
         labelsColonnes = []
 
@@ -857,7 +857,7 @@ class Impression():
             index += 1
         dataTableau.append(labelsColonnes)
         
-        # Création des lignes
+        # CrÃ©ation des lignes
         for valeurs in listeValeurs :
             ligne = []
             if int(valeurs[0]) in listeSelections :
@@ -867,14 +867,14 @@ class Impression():
     
         # Style du tableau
         style = TableStyle([
-                            ('GRID', (0,0), (-1,-1), 0.25, colors.black), # Crée la bordure noire pour tout le tableau
-                            ('ALIGN', (0,0), (-1,-1), 'CENTRE'), # Titre du groupe à gauche
+                            ('GRID', (0,0), (-1,-1), 0.25, colors.black), # CrÃ©e la bordure noire pour tout le tableau
+                            ('ALIGN', (0,0), (-1,-1), 'CENTRE'), # Titre du groupe Ã  gauche
                             ('VALIGN', (0,0), (-1,-1), 'TOP'),
                             ('FONT',(0,0),(-1,-1), "Helvetica", 7), # Donne la police de caract. + taille de police 
                             ])
             
            
-        # Création du tableau
+        # CrÃ©ation du tableau
         tableau = Table(dataTableau, largeursColonnes)
         tableau.setStyle(style)
         story.append(tableau)

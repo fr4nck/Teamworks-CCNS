@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -49,9 +49,9 @@ class PanelResume(wx.Panel):
         wx.Panel.__init__(self, parent, -1, name="panel_resume")
         self.parent = parent
         
-        self.barreTitre_resume = FonctionsPerso.BarreTitre(self,  _(u"Détail de la sélection"), _(u"Détail de la sélection"))
+        self.barreTitre_resume = FonctionsPerso.BarreTitre(self,  _(u"DÃ©tail de la sÃ©lection"), _(u"DÃ©tail de la sÃ©lection"))
 
-        # Contrôles
+        # ContrÃ´les
         self.bitmap_photo = CTRL_Photo.CTRL_Photo(self, style=wx.SUNKEN_BORDER)
         self.bitmap_photo.SetPhoto(IDindividu=None, nomFichier=Chemins.GetStaticPath("Images/128x128/Personne.png"), taillePhoto=(128, 128))
         
@@ -63,7 +63,7 @@ class PanelResume(wx.Panel):
         self.resume_L6 = wx.StaticText(self, -1, "")
         #self.tree_ctrl_resume = TreeCtrlCategories(self)
                 
-        # Propriétés
+        # PropriÃ©tÃ©s
         self.SetBackgroundColour((214, 223, 247))
         self.resume_L1.SetFont(wx.Font(14, wx.DEFAULT, wx.NORMAL, wx.BOLD, 0, ""))
         
@@ -99,7 +99,7 @@ class PanelResume(wx.Panel):
         event.Skip()
         
     def RecupIDfichier(self):
-        """ Récupère le code identifiant unique du fichier """
+        """ RÃ©cupÃ¨re le code identifiant unique du fichier """
         DB = GestionDB.DB()        
         req = "SELECT codeIDfichier FROM divers WHERE IDdivers=1;"
         DB.ExecuterReq(req)
@@ -109,9 +109,9 @@ class PanelResume(wx.Panel):
         return codeIDfichier
 
     def OnSelectPersonne(self, IDpersonne=0):
-        """ Met à jour le cadre résumé identité """
+        """ Met Ã  jour le cadre rÃ©sumÃ© identitÃ© """
         
-        # Récupération des données de la table Personnes
+        # RÃ©cupÃ©ration des donnÃ©es de la table Personnes
         DB = GestionDB.DB()        
         req = """SELECT civilite, nom, prenom, date_naiss, ville_naiss, adresse_resid, cp_resid, ville_resid
         FROM personnes WHERE IDpersonne=%d; """ % IDpersonne
@@ -151,7 +151,7 @@ class PanelResume(wx.Panel):
             
         age = self.RetourneAge(donnees[3])
         
-        # Récupération des données de la table Coordonnées
+        # RÃ©cupÃ©ration des donnÃ©es de la table CoordonnÃ©es
         DB = GestionDB.DB()        
         req = """SELECT categorie, texte, intitule
         FROM coordonnees WHERE IDpersonne=%d; """ % IDpersonne
@@ -160,7 +160,7 @@ class PanelResume(wx.Panel):
         DB.Close()
         
         if len(listeCoords) != 0 :
-            texteCoords = _(u"Tél : ")
+            texteCoords = _(u"TÃ©l : ")
             for coord in listeCoords :
                 categorie = coord[0]
                 texte = coord[1]
@@ -168,16 +168,16 @@ class PanelResume(wx.Panel):
                 texteCoords += texte + " | "
             texteCoords = texteCoords[:-3]
         else :
-            texteCoords = _(u"Aucune coordonnée")
+            texteCoords = _(u"Aucune coordonnÃ©e")
         
-        # Création des lignes
+        # CrÃ©ation des lignes
         ligne1 = nom + " " + prenom
         if civilite == "Mr" : 
-            ligne2 = _(u"Né le ")
+            ligne2 = _(u"NÃ© le ")
         else :
-            ligne2 = _(u"Née le ") 
-        ligne2 += date_naiss + u" à " + ville_naiss + ", " + age
-        ligne3 = _(u"Résidant ") + adresse_resid + " " + cp_resid + " " + ville_resid
+            ligne2 = _(u"NÃ©e le ") 
+        ligne2 += date_naiss + u" Ã  " + ville_naiss + ", " + age
+        ligne3 = _(u"RÃ©sidant ") + adresse_resid + " " + cp_resid + " " + ville_resid
 
         if civilite == "Mr" :
             img = "Homme.png"
@@ -202,13 +202,13 @@ class PanelResume(wx.Panel):
         contratEnCours = False
         if len(listeContrats) == 0 : 
             # Aucun contrat existant
-            etatContrat = _(u"Aucun contrat à ce jour.")
+            etatContrat = _(u"Aucun contrat Ã  ce jour.")
             detailContrat = u""
         else:
             # Analyse des contrats
             dateDuJour = str(datetime.date.today())
             for classification, date_debut, date_fin, date_rupture, type in listeContrats :
-                # Contrats à durée déterminée
+                # Contrats Ã  durÃ©e dÃ©terminÃ©e
                 if type == "non" : 
                     if date_debut <= dateDuJour <= date_fin : 
                         etatContrat = _(u">> Contrat en cours :")
@@ -222,7 +222,7 @@ class PanelResume(wx.Panel):
                         etatContrat = _(u"Aucun contrat en cours. Prochain contrat :")
                         detailContrat = classification + " du " + FonctionsPerso.DateEngFr(date_debut) + " au " + FonctionsPerso.DateEngFr(date_fin) + "."
                 else:
-                    # Contrats à durée indéterminée
+                    # Contrats Ã  durÃ©e indÃ©terminÃ©e
                     if date_rupture != "" :
                         if date_debut <= dateDuJour <= date_rupture : 
                             etatContrat = _(u">> Contrat en cours :")
@@ -238,12 +238,12 @@ class PanelResume(wx.Panel):
                     else:
                         if date_debut <= dateDuJour : 
                             etatContrat = _(u">> Contrat en cours :")
-                            detailContrat = classification + _(u" depuis le ") + FonctionsPerso.DateEngFr(date_debut) + _(u" (durée ind.).")
+                            detailContrat = classification + _(u" depuis le ") + FonctionsPerso.DateEngFr(date_debut) + _(u" (durÃ©e ind.).")
                             contratEnCours = True
                             break
                         elif date_debut > dateDuJour : 
                             etatContrat = _(u"Aucun contrat en cours. Prochain contrat :")
-                            detailContrat = classification + _(u" à partir du ") + FonctionsPerso.DateEngFr(date_debut) + _(u" (durée ind.).")
+                            detailContrat = classification + _(u" Ã  partir du ") + FonctionsPerso.DateEngFr(date_debut) + _(u" (durÃ©e ind.).")
         
         # Met dans les controles
         self.resume_L1.SetLabel(ligne1)
@@ -347,18 +347,18 @@ class PanelPersonnes(wx.Panel):
 ##        self.splitter.SetSashPosition(250, True)
         
     def __set_properties(self):
-        self.barreRecherche.SetToolTip(wx.ToolTip(_(u"Saisissez ici un nom, un prénom, un nom de ville, etc... pour retrouver une personne donnée.")))
-        self.bouton_ajouter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour créer une nouvelle fiche individuelle")))
-        self.bouton_modifier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier la fiche sélectionnée dans la liste\n(Vous pouvez également double-cliquer sur une ligne)")))
-        self.bouton_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer la fiche sélectionnée dans la liste")))
-        self.bouton_rechercher.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour rechercher les personnes présentes sur une période donnée")))
-        self.bouton_affichertout.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour réafficher toute la liste")))
+        self.barreRecherche.SetToolTip(wx.ToolTip(_(u"Saisissez ici un nom, un prÃ©nom, un nom de ville, etc... pour retrouver une personne donnÃ©e.")))
+        self.bouton_ajouter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour crÃ©er une nouvelle fiche individuelle")))
+        self.bouton_modifier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier la fiche sÃ©lectionnÃ©e dans la liste\n(Vous pouvez Ã©galement double-cliquer sur une ligne)")))
+        self.bouton_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer la fiche sÃ©lectionnÃ©e dans la liste")))
+        self.bouton_rechercher.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour rechercher les personnes prÃ©sentes sur une pÃ©riode donnÃ©e")))
+        self.bouton_affichertout.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour rÃ©afficher toute la liste")))
         self.bouton_options.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour afficher les options de la liste")))
         self.bouton_imprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour imprimer la liste")))
         self.bouton_export_texte.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour exporter la liste au format texte")))
         self.bouton_export_excel.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour exporter la liste au format Excel")))
         self.bouton_aide.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour obtenir de l'aide")))
-        self.bouton_courrier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour créer un courrier ou un Email par publipostage")))
+        self.bouton_courrier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour crÃ©er un courrier ou un Email par publipostage")))
 
     def __do_layout(self):
         sizer_base = wx.BoxSizer(wx.VERTICAL)
@@ -442,7 +442,7 @@ class PanelPersonnes(wx.Panel):
             self.AfficheLabelSelection(True)
             date_debut = resultat[0].strftime("%d/%m/%Y")
             date_fin = resultat[1].strftime("%d/%m/%Y")
-            texte = _(u"Sélection des personnes présentes du %s au %s :") % (date_debut, date_fin)
+            texte = _(u"SÃ©lection des personnes prÃ©sentes du %s au %s :") % (date_debut, date_fin)
             self.label_selection.SetLabel(texte)
 
     def OnBoutonAfficherTout(self, event):
@@ -457,7 +457,7 @@ class PanelPersonnes(wx.Panel):
         UTILS_Aide.Aide("Personnes")
         
     def AffichePanelResume(self, etat=True):
-        """ Affiche ou fait disparaître le panel Résumé """
+        """ Affiche ou fait disparaÃ®tre le panel RÃ©sumÃ© """
         if etat == True and self.panel_resume.IsShown() == True: 
             return
         self.panel_resume.Show(etat)
@@ -465,7 +465,7 @@ class PanelPersonnes(wx.Panel):
         self.Refresh()
     
     def AfficheLabelSelection(self, etat=True):
-        """ Affiche ou fait disparaître le label Sélection en cours de la liste des personnes """
+        """ Affiche ou fait disparaÃ®tre le label SÃ©lection en cours de la liste des personnes """
         if etat==True and self.label_selection.IsShown()==True: 
             return
         self.label_selection.Show(etat)
@@ -474,7 +474,7 @@ class PanelPersonnes(wx.Panel):
         
         
     def MAJpanel(self, listeElements=[]) :
-        """ Met à jour les éléments du panel personnes """
+        """ Met Ã  jour les Ã©lÃ©ments du panel personnes """
         # Elements possibles : [] pour tout, listCtrl_personnes
         if self.init == False :
             self.InitPage()
@@ -513,7 +513,7 @@ class TreeCtrlCategories(wx.TreeCtrl):
         print(self.listeDonnees)
 
 
-        self.root = self.AddRoot(_(u"Problèmes à résoudre"))
+        self.root = self.AddRoot(_(u"ProblÃ¨mes Ã  rÃ©soudre"))
         self.SetItemData(self.root, None)
 
         self.AddTreeNodes(self.root, self.listeDonnees)
@@ -525,7 +525,7 @@ class TreeCtrlCategories(wx.TreeCtrl):
                 newItem = self.AppendItem(parentItem, item)
                 self.SetItemData(newItem, None)
             else:
-                # Tête de rubrique
+                # TÃªte de rubrique
                 texte = item[0]
                     
                 newItem = self.AppendItem(parentItem, texte)
@@ -597,7 +597,7 @@ class MyFrame(wx.Frame):
         self.statusbar.SetStatusWidths( [360, -1] )
         panel = PanelPersonnes(self)
         panel.InitPage()
-        self.SetTitle(_(u"Panel Présences"))
+        self.SetTitle(_(u"Panel PrÃ©sences"))
         self.SetSize((900, 800))
         self.Centre()
 

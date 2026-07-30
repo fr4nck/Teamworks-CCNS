@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -17,25 +17,25 @@ import FonctionsPerso
 from Ctrl import CTRL_Vignettes_documents
 
 class Dialog(wx.Dialog):
-    def __init__(self, parent, title=_(u"Saisie des piËces"), IDpiece=0, IDpersonne=0, IDtypePiece=None):
+    def __init__(self, parent, title=_(u"Saisie des pi√®ces"), IDpiece=0, IDpersonne=0, IDtypePiece=None):
         wx.Dialog.__init__(self, parent, -1, style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX)
         self.parent = parent
         self.IDpersonne = IDpersonne
         self.IDpiece = IDpiece
-        self.selection1 = ("NoSelect",) # Pour mÈmoriser la sÈlection dans la liste des piËces ‡ fournir
-        self.selection2 = ("NoSelect",) # Pour mÈmoriser la sÈlection dans la liste des autres piËces
+        self.selection1 = ("NoSelect",) # Pour m√©moriser la s√©lection dans la liste des pi√®ces √† fournir
+        self.selection2 = ("NoSelect",) # Pour m√©moriser la s√©lection dans la liste des autres pi√®ces
         
         self.panel_base = wx.Panel(self, -1)
-        self.sizer_date_debut_staticbox = wx.StaticBox(self.panel_base, -1, _(u"2. Saisissez la date de dÈbut"))
+        self.sizer_date_debut_staticbox = wx.StaticBox(self.panel_base, -1, _(u"2. Saisissez la date de d√©but"))
         self.sizer_date_fin_staticbox = wx.StaticBox(self.panel_base, -1, "3. Saisissez la date de fin")
-        self.sizer_type_staticbox = wx.StaticBox(self.panel_base, -1, _(u"1. SÈlectionnez un type de piËce"))
-        self.radio_pieces_1 = wx.RadioButton(self.panel_base, -1, _(u"Dans la liste de piËces que la personne doit fournir :"), style = wx.RB_GROUP)
+        self.sizer_type_staticbox = wx.StaticBox(self.panel_base, -1, _(u"1. S√©lectionnez un type de pi√®ce"))
+        self.radio_pieces_1 = wx.RadioButton(self.panel_base, -1, _(u"Dans la liste de pi√®ces que la personne doit fournir :"), style = wx.RB_GROUP)
         
         self.list_ctrl_pieces = ListCtrl_Pieces(self.panel_base, -1)
         
-        self.radio_pieces_2 = wx.RadioButton(self.panel_base, -1, _(u"Dans la liste des autres types de piËces :"))
+        self.radio_pieces_2 = wx.RadioButton(self.panel_base, -1, _(u"Dans la liste des autres types de pi√®ces :"))
 
-        # Importe les durÈes de validitÈ des types de piËces
+        # Importe les dur√©es de validit√© des types de pi√®ces
         self.RemplissageAutresTypes()
 
         self.combo_box_autres = wx.ComboBox(self.panel_base, -1, choices=self.ListeAutresPourCombo, style=wx.CB_DROPDOWN|wx.CB_READONLY)
@@ -43,10 +43,10 @@ class Dialog(wx.Dialog):
         self.text_date_debut = masked.TextCtrl(self.panel_base, -1, "", style=wx.TE_CENTRE, mask = "##/##/####")
         self.radio_date_fin_1 = wx.RadioButton(self.panel_base, -1, "Date :", style = wx.RB_GROUP)
         self.text_date_fin = masked.TextCtrl(self.panel_base, -1, "", style=wx.TE_CENTRE, mask = "##/##/####")
-        self.radio_date_fin_2 = wx.RadioButton(self.panel_base, -1, _(u"ValiditÈ illimitÈe"))
+        self.radio_date_fin_2 = wx.RadioButton(self.panel_base, -1, _(u"Validit√© illimit√©e"))
 
-        # Pages capturÈes
-        self.sizer_pages_staticbox = wx.StaticBox(self.panel_base, -1, _(u"Documents associÈs"))
+        # Pages captur√©es
+        self.sizer_pages_staticbox = wx.StaticBox(self.panel_base, -1, _(u"Documents associ√©s"))
         self.ctrl_pages = CTRL_Vignettes_documents.CTRL(self.panel_base, IDpiece=self.IDpiece, style=wx.BORDER_SUNKEN)
         self.bouton_ajouter_page = wx.BitmapButton(self.panel_base, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_ANY))
         self.bouton_supprimer_page = wx.BitmapButton(self.panel_base, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
@@ -61,14 +61,14 @@ class Dialog(wx.Dialog):
         self.__set_properties()
         self.__do_layout()
 
-        # DÈsactive le combobox ‡ l'ouverture de la frame
+        # D√©sactive le combobox √† l'ouverture de la frame
         self.combo_box_autres.Enable(False)
 
-        # Si Modification -> importation des donnÈes
+        # Si Modification -> importation des donn√©es
         if IDpiece == 0 :
-            self.SetTitle(_(u"Saisie d'une piËce"))
+            self.SetTitle(_(u"Saisie d'une pi√®ce"))
         else:
-            self.SetTitle(_(u"Modification d'une piËce"))
+            self.SetTitle(_(u"Modification d'une pi√®ce"))
             self.Importation()
 
         # Binds
@@ -88,7 +88,7 @@ class Dialog(wx.Dialog):
         self.Bind(wx.EVT_BUTTON, self.ZoomPlus, self.bouton_zoom_plus)
         self.Bind(wx.EVT_BUTTON, self.ZoomMoins, self.bouton_zoom_moins)
 
-        # Si c'est une saisie de piËce ‡ partir du listeCtrl des piËces ‡ fournir de la fiche individuelle
+        # Si c'est une saisie de pi√®ce √† partir du listeCtrl des pi√®ces √† fournir de la fiche individuelle
         if IDtypePiece != None :
             self.list_ctrl_pieces.SetIDtypePieceDefaut(IDtypePiece)
 
@@ -103,18 +103,18 @@ class Dialog(wx.Dialog):
         self.bouton_aide.SetSize(self.bouton_aide.GetBestSize())
         self.bouton_ok.SetSize(self.bouton_ok.GetBestSize())
         self.bouton_annuler.SetSize(self.bouton_annuler.GetBestSize())
-        self.radio_pieces_2.SetToolTip(wx.ToolTip(_(u"Cliquez ici si la piËce que vous souhaitez enregistrer n'est pas dans la liste des piËces obligatoires ‡ fournir")))
-        self.list_ctrl_pieces.SetToolTip(wx.ToolTip(_(u"SÈlectionnez un type de piËce en cliquant sur son nom")))
-        self.text_date_debut.SetToolTip(wx.ToolTip(_(u"Saisissez la date de dÈbut de validitÈ.\nRemarque : Il s'agit bien de la date d'emission de la piËce \n(par exemple, la date d'obtention d'un diplÙme) et non la date ‡ laquelle vous avez reÁue la piËce")))
-        self.text_date_fin.SetToolTip(wx.ToolTip(_(u"Saisissez la date d'expiration de la piËce")))
-        self.radio_date_fin_1.SetToolTip(wx.ToolTip(_(u"Cliquez ici si la piËce a une durÈe de validitÈ limitÈe dans le temps")))
-        self.radio_date_fin_2.SetToolTip(wx.ToolTip(_(u"Cliquez ici si la piËce que vous souhaitez enregistrer a une durÈe de validitÈ illimitÈe")))
+        self.radio_pieces_2.SetToolTip(wx.ToolTip(_(u"Cliquez ici si la pi√®ce que vous souhaitez enregistrer n'est pas dans la liste des pi√®ces obligatoires √† fournir")))
+        self.list_ctrl_pieces.SetToolTip(wx.ToolTip(_(u"S√©lectionnez un type de pi√®ce en cliquant sur son nom")))
+        self.text_date_debut.SetToolTip(wx.ToolTip(_(u"Saisissez la date de d√©but de validit√©.\nRemarque : Il s'agit bien de la date d'emission de la pi√®ce \n(par exemple, la date d'obtention d'un dipl√¥me) et non la date √† laquelle vous avez re√ßue la pi√®ce")))
+        self.text_date_fin.SetToolTip(wx.ToolTip(_(u"Saisissez la date d'expiration de la pi√®ce")))
+        self.radio_date_fin_1.SetToolTip(wx.ToolTip(_(u"Cliquez ici si la pi√®ce a une dur√©e de validit√© limit√©e dans le temps")))
+        self.radio_date_fin_2.SetToolTip(wx.ToolTip(_(u"Cliquez ici si la pi√®ce que vous souhaitez enregistrer a une dur√©e de validit√© illimit√©e")))
 
         self.bouton_ajouter_page.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour ajouter un document")))
-        self.bouton_supprimer_page.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer le document sÈlectionnÈ")))
-        self.bouton_visualiser_page.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour visualiser le document sÈlectionnÈ")))
+        self.bouton_supprimer_page.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer le document s√©lectionn√©")))
+        self.bouton_visualiser_page.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour visualiser le document s√©lectionn√©")))
         self.bouton_zoom_plus.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour agrandir les vignettes")))
-        self.bouton_zoom_moins.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour rÈduire les vignettes")))
+        self.bouton_zoom_moins.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour r√©duire les vignettes")))
         self.SetMinSize((640, 500)) 
 
     def __do_layout(self):
@@ -123,7 +123,7 @@ class Dialog(wx.Dialog):
         grid_sizer_horiz = wx.FlexGridSizer(rows=1, cols=2, vgap=10, hgap=10)
         grid_sizer_gauche = wx.FlexGridSizer(rows=4, cols=1, vgap=10, hgap=10)
         
-        # Listes de types de piËces
+        # Listes de types de pi√®ces
         sizer_type = wx.StaticBoxSizer(self.sizer_type_staticbox, wx.VERTICAL)
         grid_sizer_3 = wx.FlexGridSizer(rows=4, cols=1, vgap=10, hgap=10)
         grid_sizer_3.Add(self.radio_pieces_1, 0, 0, 0)
@@ -136,7 +136,7 @@ class Dialog(wx.Dialog):
         
         grid_sizer_gauche.Add(sizer_type, 1, wx.LEFT|wx.RIGHT|wx.TOP|wx.EXPAND, 0)
         
-        # Date dÈbut
+        # Date d√©but
         sizer_date_debut = wx.StaticBoxSizer(self.sizer_date_debut_staticbox, wx.VERTICAL)
         grid_sizer_date_debut = wx.FlexGridSizer(rows=1, cols=2, vgap=10, hgap=10)
         grid_sizer_date_debut.Add(self.label_date_debut, 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL, 0)
@@ -206,7 +206,7 @@ class Dialog(wx.Dialog):
         self.CenterOnScreen()
 
     def RemplissageAutresTypes(self):
-        # CrÈe un dictionnaire des dates de validitÈ par dÈfaut des types de piËces
+        # Cr√©e un dictionnaire des dates de validit√© par d√©faut des types de pi√®ces
         self.DictTypesPieces = {}
         self.ListeAutresPieces = []
         self.ListeAutresPourCombo = []
@@ -222,10 +222,10 @@ class Dialog(wx.Dialog):
             nom = typePiece[1]
             duree = typePiece[2]
 
-            # CrÈation d'un dict pour que le listCtrl accËde aux durÈes de validitÈ
+            # Cr√©ation d'un dict pour que le listCtrl acc√®de aux dur√©es de validit√©
             self.DictTypesPieces[key] = duree
 
-            # CrÈation d'une liste pour remplir le comboBox des autres types
+            # Cr√©ation d'une liste pour remplir le comboBox des autres types
             if key not in list(self.list_ctrl_pieces.DictPieces.keys()):
                 self.ListeAutresPieces.append((key, nom, duree))
                 self.ListeAutresPourCombo.append(nom)
@@ -237,9 +237,9 @@ class Dialog(wx.Dialog):
 
         self.selection2 = (index, key)
 
-        # Si une date de dÈbut a dÈj‡ ÈtÈ saisie, on procËde ‡ la recherche de la date de fin par dÈfaut
+        # Si une date de d√©but a d√©j√† √©t√© saisie, on proc√®de √† la recherche de la date de fin par d√©faut
         if self.CalcValiditeDefaut(self.selection2) == False :
-            # Mets le focus sur la date de dÈbut
+            # Mets le focus sur la date de d√©but
             self.text_date_debut.SetFocus()
         
 
@@ -266,27 +266,27 @@ class Dialog(wx.Dialog):
 
     def OnBoutonOk(self, event):
         """ Bouton Ok """
-        # VÈrification des donnÈes saisies
+        # V√©rification des donn√©es saisies
 
         # Validation du listCtrl
         if self.radio_pieces_1.GetValue() == True:
             if self.selection1 == ("NoSelect",):
-                message = _(u"Vous devez sÈlectionner un type de piËce dans la liste proposÈe.")
+                message = _(u"Vous devez s√©lectionner un type de pi√®ce dans la liste propos√©e.")
                 wx.MessageBox(message, "Erreur de saisie")
                 return
 
         # Validation du comboBox
         if self.radio_pieces_2.GetValue() == True:
             if self.selection2 == ("NoSelect",):
-                message = _(u"Vous devez sÈlectionner un autre type de piËce dans la liste proposÈe.")
+                message = _(u"Vous devez s√©lectionner un autre type de pi√®ce dans la liste propos√©e.")
                 wx.MessageBox(message, "Erreur de saisie")
                 self.combo_box_autres.SetFocus()
                 return
 
-        # Validation de la date de dÈbut
+        # Validation de la date de d√©but
         textDate = self.text_date_debut.GetValue()
         if textDate == "  /  /    ":
-            message = _(u"Vous devez saisir une date de dÈbut de validitÈ.")
+            message = _(u"Vous devez saisir une date de d√©but de validit√©.")
             wx.MessageBox(message, "Erreur de saisie")
             self.text_date_debut.SetFocus()
             return
@@ -299,16 +299,16 @@ class Dialog(wx.Dialog):
         if self.radio_date_fin_1.GetValue() == True:
             textDate = self.text_date_fin.GetValue()
             if textDate == "  /  /    ":
-                message = _(u"Vous devez saisir une date de fin de validitÈ.")
+                message = _(u"Vous devez saisir une date de fin de validit√©.")
                 wx.MessageBox(message, "Erreur de saisie")
                 self.text_date_fin.SetFocus()
                 return
-            # VÈrifie la cohÈrence de la date de fin
+            # V√©rifie la coh√©rence de la date de fin
             validation = ValideDate(texte=textDate, date_min="01/01/1910", date_max="01/01/2099")
             if validation == False:
                 self.text_date_fin.SetFocus()
                 return
-            # VÈrifie que la date de fin est supÈrieure ‡ la date de dÈbut
+            # V√©rifie que la date de fin est sup√©rieure √† la date de d√©but
             dateDebut = self.text_date_debut.GetValue()
             dateFin = self.text_date_fin.GetValue()
             dateDebut = datetime.date(int(dateDebut[6:10]), int(dateDebut[3:5]), int(dateDebut[:2]))
@@ -317,23 +317,23 @@ class Dialog(wx.Dialog):
             if reste != "0:00:00":
                 jours = int(reste[:reste.index("day")])
                 if jours < 0:
-                    message = _(u"Vous devez saisir une date de fin de validitÈ supÈrieure ‡ la date de dÈbut !")
+                    message = _(u"Vous devez saisir une date de fin de validit√© sup√©rieure √† la date de d√©but !")
                     wx.MessageBox(message, "Erreur de saisie")
                     self.text_date_fin.SetFocus()
                     return
 
-        # ProcÈdure d'enregistrement des donnÈes
+        # Proc√©dure d'enregistrement des donn√©es
         self.Sauvegarde()
 
-        # Sauvegarde des pages scannÈes
+        # Sauvegarde des pages scann√©es
         self.ctrl_pages.Sauvegarde(self.IDpiece) 
 
-        # M‡J des listCtrl de la fiche individuelle
+        # M√†J des listCtrl de la fiche individuelle
         self.parent.list_ctrl_dossier.Remplissage()
         self.parent.list_ctrl_pieces.Remplissage()
         self.parent.MAJ_barre_problemes()
 
-        # Fermeture de la fenÍtre
+        # Fermeture de la fen√™tre
         self.EndModal(wx.ID_OK)
         
 
@@ -362,13 +362,13 @@ class Dialog(wx.Dialog):
             if self.combo_box_autres.GetSelection() == -1:
                 return
         
-        # Validation de la date de dÈbut
+        # Validation de la date de d√©but
         validation = ValideDate(texte=dateDebut, date_min="01/01/1910", date_max="01/01/2099")
         if validation == False:
             self.text_date_debut.SetFocus()
             return
 
-        # Recherche de la durÈe de validitÈ par dÈfaut de la piËce
+        # Recherche de la dur√©e de validit√© par d√©faut de la pi√®ce
         key = selection[1]
         duree = self.DictTypesPieces[key]
         posM = duree.find("m")
@@ -378,14 +378,14 @@ class Dialog(wx.Dialog):
         annees = int(duree[posA+1:])
         
         if jours==0 and mois==0 and annees==0:
-            # Si illimitÈ
+            # Si illimit√©
             dateFin = "2999-01-01"
             self.radio_date_fin_2.SetValue(1)
             self.text_date_fin.Enable(False)
             self.bouton_ok.SetFocus()
             
         else:
-            # Si validitÈ limitÈe
+            # Si validit√© limit√©e
             dateJour = int(dateDebut[:2])
             dateMois = int(dateDebut[3:5])
             dateAnnee = int(dateDebut[6:10])
@@ -410,7 +410,7 @@ class Dialog(wx.Dialog):
                 dateMois = dateFin.month
                 dateAnnee = dateFin.year
 
-            # Calcul des annÈes
+            # Calcul des ann√©es
             if annees != 0:
                 dateAnnee = dateAnnee + annees
                 dateFin = datetime.date(dateAnnee, dateMois, dateJour)
@@ -429,7 +429,7 @@ class Dialog(wx.Dialog):
         # ------------------------- SAUVEGARDE ET IMPORTATION ----------------------------------
 
     def Sauvegarde(self):
-        """ Sauvegarde des donnÈes dans la base de donnÈes """
+        """ Sauvegarde des donn√©es dans la base de donn√©es """
         
         varIDpersonne = self.IDpersonne
         varIDpiece = self.IDpiece
@@ -451,42 +451,42 @@ class Dialog(wx.Dialog):
             textDate = self.text_date_fin.GetValue()
             varDateFin = datetime.date(int(textDate[6:10]), int(textDate[3:5]), int(textDate[:2]))
 
-        # PrÈparation des donnÈes
+        # Pr√©paration des donn√©es
         listeDonnees = [    ("IDpersonne",      varIDpersonne),
                             ("IDtype_piece",    varIDtypePiece),
                             ("date_debut",      varDateDebut),
                             ("date_fin",        varDateFin),
                         ]
         
-        # Initialisation de la connexion avec la Base de donnÈes
+        # Initialisation de la connexion avec la Base de donn√©es
         DB = GestionDB.DB()
 
         if self.IDpiece == 0:
-            # Enregistrement d'une nouvelle coordonnÈe
+            # Enregistrement d'une nouvelle coordonn√©e
             self.IDpiece = DB.ReqInsert("pieces", listeDonnees)
         else:
-            # Modification de la coordonnÈe
+            # Modification de la coordonn√©e
             DB.ReqMAJ("pieces", listeDonnees, "IDpiece", self.IDpiece)
         DB.Close()
 
     def Importation(self,):
         """ Importation des donnees de la base """
 
-        # Initialisation de la connexion avec la Base de donnÈes
+        # Initialisation de la connexion avec la Base de donn√©es
         DB = GestionDB.DB()
         req = "SELECT * FROM pieces WHERE IDpiece = %s" % self.IDpiece
         DB.ExecuterReq(req)
         donnees = DB.ResultatReq()[0]
         DB.Close()
         
-        # Placement des donnÈes dans les contrÙles
+        # Placement des donn√©es dans les contr√¥les
         varIDtypePiece = donnees[2]
         varDateDebut = donnees[3]
         varDateFin = donnees[4]
 
-        # Placement du type de piËce
+        # Placement du type de pi√®ce
         if varIDtypePiece in list(self.list_ctrl_pieces.DictPieces.keys()):
-            # Ce type de piËce est dans le ListCtrl
+            # Ce type de pi√®ce est dans le ListCtrl
             self.radio_pieces_1.SetValue(1)
             self.radio_pieces_2.SetValue(0)
             self.list_ctrl_pieces.Enable(True)
@@ -503,7 +503,7 @@ class Dialog(wx.Dialog):
             self.list_ctrl_pieces.SetItem(item)
             
         else:
-            # Ce type de piËce est dans le ComboBox
+            # Ce type de pi√®ce est dans le ComboBox
             self.radio_pieces_1.SetValue(0)
             self.radio_pieces_2.SetValue(1)
             self.combo_box_autres.Enable(True)
@@ -516,7 +516,7 @@ class Dialog(wx.Dialog):
                 index += 1
             self.selection2 = (index, varIDtypePiece)
 
-        # Placement de la date de dÈbut
+        # Placement de la date de d√©but
         textDate = varDateDebut
         self.text_date_debut.SetValue(str(textDate[8:10]) + "/" + str(textDate[5:7]) + "/" + str(textDate[:4]))
 
@@ -568,7 +568,7 @@ class ListCtrl_Pieces(wx.ListCtrl):
         self.InsertColumn(0, "")
         self.SetColumnWidth(0, 175)
 
-        # CrÈation des items
+        # Cr√©ation des items
         self.Remplissage()
 
         # Binds
@@ -577,35 +577,35 @@ class ListCtrl_Pieces(wx.ListCtrl):
 
     def Remplissage(self):
         """ Remplissage du ListCtrl """
-        # Importation des donnÈes
+        # Importation des donn√©es
         self.Importation()
 
         # S'il existe des items, on les efface d'abord
         if self.GetItemCount() != 0:
             self.DeleteAllItems()
             
-        # CrÈation des items
+        # Cr√©ation des items
         index = 0
         for key, valeurs in self.DictPieces.items():
             etat = valeurs[0]
             nomPiece = valeurs[1]
-            # CrÈation de l'item
+            # Cr√©ation de l'item
             if 'phoenix' in wx.PlatformInfo:
                 self.InsertItem(index, nomPiece)
             else:
                 self.InsertItem(index, nomPiece)
-            # IntÈgration de l'image
+            # Int√©gration de l'image
             if etat == "Ok":
                 self.SetItemImage(index, self.imgOk)
             if etat == "Attention":
                 self.SetItemImage(index, self.imgAttention)
             if etat == "PasOk":
                 self.SetItemImage(index, self.imgPasOk)
-            # IntÈgration du data ID
+            # Int√©gration du data ID
             self.SetItemData(index, key)
             index += 1
 
-        # Tri dans l'ordre alphabÈtique
+        # Tri dans l'ordre alphab√©tique
         self.SortItems(self.ColumnSorter)
 
     def ColumnSorter(self, key1, key2):
@@ -617,15 +617,15 @@ class ListCtrl_Pieces(wx.ListCtrl):
                return 1
 
     def Importation(self):
-        """ Importe les donnÈes """
+        """ Importe les donn√©es """
 
         date_jour = datetime.date.today()
         
         
-        # Initialisation de la base de donnÈes
+        # Initialisation de la base de donn√©es
         DB = GestionDB.DB()
         
-        # Recherche des piËces SPECIFIQUES que la personne doit fournir...
+        # Recherche des pi√®ces SPECIFIQUES que la personne doit fournir...
         req = """
         SELECT types_pieces.IDtype_piece, types_pieces.nom_piece
         FROM diplomes INNER JOIN diplomes_pieces ON diplomes.IDtype_diplome = diplomes_pieces.IDtype_diplome INNER JOIN types_pieces ON diplomes_pieces.IDtype_piece = types_pieces.IDtype_piece
@@ -638,7 +638,7 @@ class ListCtrl_Pieces(wx.ListCtrl):
         if type( listePiecesAFournir) != list :
             listePiecesAFournir = list(listePiecesAFournir)
             
-        # Recherche des piËces BASIQUES que la personne doit fournir...
+        # Recherche des pi√®ces BASIQUES que la personne doit fournir...
         req = """
         SELECT diplomes_pieces.IDtype_piece, types_pieces.nom_piece
         FROM diplomes_pieces INNER JOIN types_pieces ON diplomes_pieces.IDtype_piece = types_pieces.IDtype_piece
@@ -649,7 +649,7 @@ class ListCtrl_Pieces(wx.ListCtrl):
         
         listePiecesAFournir.extend(listePiecesBasiquesAFournir)
         
-        # Recherche des piËces que la personne possËde
+        # Recherche des pi√®ces que la personne poss√®de
         req = """
         SELECT types_pieces.IDtype_piece, pieces.date_debut, pieces.date_fin
         FROM types_pieces LEFT JOIN pieces ON types_pieces.IDtype_piece = pieces.IDtype_piece
@@ -662,13 +662,13 @@ class ListCtrl_Pieces(wx.ListCtrl):
         for IDtype_piece, date_debut, date_fin in listePieces :
             dictTmpPieces[IDtype_piece] = (date_debut, date_fin)
         
-        # Passe en revue toutes les piËces ‡ fournir et regarde si la personne possËde les piËces correspondantes
+        # Passe en revue toutes les pi√®ces √† fournir et regarde si la personne poss√®de les pi√®ces correspondantes
         self.DictPieces = {}
         for IDtype_piece, nom_piece in listePiecesAFournir :
             if (IDtype_piece in dictTmpPieces) == True :
                 date_debut = dictTmpPieces[IDtype_piece][0]
                 date_fin = dictTmpPieces[IDtype_piece][1]
-                # Recherche la validitÈ
+                # Recherche la validit√©
                 date_fin = datetime.date(int(date_fin[:4]), int(date_fin[5:7]), int(date_fin[8:10]))
                 reste = str(date_fin - date_jour)
                 if reste != "0:00:00":
@@ -685,17 +685,17 @@ class ListCtrl_Pieces(wx.ListCtrl):
                 etat = "PasOk"
             self.DictPieces[IDtype_piece] = (etat, nom_piece)
 
-        # Fermeture de la base de donnÈes
+        # Fermeture de la base de donn√©es
         DB.Close()
 
     def OnSize(self, event):
-        # La largeur de la colonne s'adapte ‡ la largeur du listCtrl
+        # La largeur de la colonne s'adapte √† la largeur du listCtrl
         size = self.GetSize()
         self.SetColumnWidth(0, size.x-30)
         event.Skip()
 
     def OnItemSelected(self, event):
-        """ Item cliquÈ """
+        """ Item cliqu√© """
         x = event.GetX()
         y = event.GetY()
         index, flags = self.HitTest((x, y))
@@ -703,7 +703,7 @@ class ListCtrl_Pieces(wx.ListCtrl):
             return
         key = self.GetItemData(index)
 
-        # Eleve le gras de la sÈlection prÈcÈdente
+        # Eleve le gras de la s√©lection pr√©c√©dente
         if self.GetGrandParent().selection1[0] != "NoSelect":
             index1 = self.GetGrandParent().selection1[0]
             item = self.GetItem(index1)
@@ -714,51 +714,51 @@ class ListCtrl_Pieces(wx.ListCtrl):
 
         self.GetGrandParent().selection1 = (index, key)
 
-        # Change la font de la sÈlection
+        # Change la font de la s√©lection
         item = self.GetItem(index)
         font = self.GetFont()
         font.SetWeight(wx.FONTWEIGHT_BOLD)
         item.SetFont(font)
         self.SetItem(item)
 
-        # Si une date de dÈbut a dÈj‡ ÈtÈ saisie, on procËde ‡ la recherche de la date de fin par dÈfaut
+        # Si une date de d√©but a d√©j√† √©t√© saisie, on proc√®de √† la recherche de la date de fin par d√©faut
         if self.GetGrandParent().CalcValiditeDefaut(self.GetGrandParent().selection1) == False :
-            # Mets le focus sur la date de dÈbut
+            # Mets le focus sur la date de d√©but
             self.GetGrandParent().text_date_debut.SetFocus()
             
     def SetIDtypePieceDefaut(self, IDtypePiece):
-        """ Cette fonction sert ‡ charger le type de piËce double-cliquÈ dans les piËces manquantes
+        """ Cette fonction sert √† charger le type de pi√®ce double-cliqu√© dans les pi√®ces manquantes
         du panel Qualifications de la fiche individuelle """
-        # Recherche la piËce dans la liste proposÈe
+        # Recherche la pi√®ce dans la liste propos√©e
         index = self.FindItemData(-1, IDtypePiece)
 
         self.GetGrandParent().selection1 = (index, IDtypePiece)
 
-        # Change la font de la sÈlection
+        # Change la font de la s√©lection
         item = self.GetItem(index)
         font = self.GetFont()
         font.SetWeight(wx.FONTWEIGHT_BOLD)
         item.SetFont(font)
         self.SetItem(item)
         
-        # Focus sur la date de dÈbut
+        # Focus sur la date de d√©but
         self.GetGrandParent().text_date_debut.SetFocus()
 
 
 def ValideDate(texte, date_min="01/01/1900", date_max="01/01/2090"):
     """ Verificateur de validite de date """
     listeErreurs = []
-    # On vÈrifie si les cases ne sont pas vides
+    # On v√©rifie si les cases ne sont pas vides
     if texte[0] == " " or texte[1] == " ":
         listeErreurs.append(_(u"le jour"))
     if texte[3] == " " or texte[4] == " ":
         listeErreurs.append(_(u"le mois"))
     if texte[6] == " " or texte[7] == " " or texte[8] == " " or texte[9] == " ":
-        listeErreurs.append(_(u"l'annÈe"))
+        listeErreurs.append(_(u"l'ann√©e"))
     
     if texte != "  /  /    ":
 
-        # On vÈrifie que les chiffres existent
+        # On v√©rifie que les chiffres existent
         if _(u"le jour") not in listeErreurs:
             jour = int(texte[:2])
             if jour == 0 or jour > 31:
@@ -769,43 +769,43 @@ def ValideDate(texte, date_min="01/01/1900", date_max="01/01/2090"):
             if mois == 0 or mois > 12:
                 listeErreurs.append(_(u"le mois"))
                 
-        if _(u"l'annÈe") not in listeErreurs:
+        if _(u"l'ann√©e") not in listeErreurs:
             annee = int(texte[6:10])
             if annee < 1900 or annee > 2999:
-                listeErreurs.append(_(u"l'annÈe"))
+                listeErreurs.append(_(u"l'ann√©e"))
         
         # Test de la date avec le datetime
         try : testDate = datetime.date(year=int(texte[6:10]), month=int(texte[3:5]), day=int(texte[:2]))
         except : 
-            wx.MessageBox(_(u"La date de dÈbut que vous avez saisie n'est pas valide"), "Erreur de date")
+            wx.MessageBox(_(u"La date de d√©but que vous avez saisie n'est pas valide"), "Erreur de date")
             return False
               
         # Affichage du message d'erreur
         
         if len(listeErreurs) != 0:
-            # Message en cas de date incomplËte
+            # Message en cas de date incompl√®te
             if len(listeErreurs) == 1:
-                message = _(u"Une incohÈrence a ÈtÈ dÈtectÈe dans ") + listeErreurs[0]
+                message = _(u"Une incoh√©rence a √©t√© d√©tect√©e dans ") + listeErreurs[0]
             if len(listeErreurs) == 2:
-                message = _(u"Des incohÈrences ont ÈtÈ dÈtectÈes dans ") + listeErreurs[0] + " et " + listeErreurs[1]
+                message = _(u"Des incoh√©rences ont √©t√© d√©tect√©es dans ") + listeErreurs[0] + " et " + listeErreurs[1]
             if len(listeErreurs) == 3:
-                message = _(u"Des incohÈrences ont ÈtÈ dÈtectÈes dans ") + listeErreurs[0]  + ", " + listeErreurs[1]  + " et " + listeErreurs[2]
-            message = message + _(u" de la date que vous venez de saisir. Veuillez la vÈrifier.")
+                message = _(u"Des incoh√©rences ont √©t√© d√©tect√©es dans ") + listeErreurs[0]  + ", " + listeErreurs[1]  + " et " + listeErreurs[2]
+            message = message + _(u" de la date que vous venez de saisir. Veuillez la v√©rifier.")
 
             wx.MessageBox(message, "Erreur de date")
             return False
         else:
-            # On vÈrifie que les dates sont comprises dans l'intervalle donnÈ en paramËtre
+            # On v√©rifie que les dates sont comprises dans l'intervalle donn√© en param√®tre
             date_min = int(str(date_min[6:10]) + str(date_min[3:5]) + str(date_min[:2]))
             date_max = int(str(date_max[6:10]) + str(date_max[3:5]) + str(date_max[:2]))
             date_sel = int(str(texte[6:10]) + str(texte[3:5]) + str(texte[:2]))
 
             if date_sel < date_min:
-                message = _(u"La date que vous venez de saisir semble trop ancienne. Veuillez la vÈrifier.")
+                message = _(u"La date que vous venez de saisir semble trop ancienne. Veuillez la v√©rifier.")
                 wx.MessageBox(message, "Erreur de date")
                 return False
             if date_sel > date_max:
-                message = _(u"La date que vous venez de saisir semble trop ÈlevÈe. Veuillez la vÈrifier.")
+                message = _(u"La date que vous venez de saisir semble trop √©lev√©e. Veuillez la v√©rifier.")
                 wx.MessageBox(message, "Erreur de date")
                 return False
             

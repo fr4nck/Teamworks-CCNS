@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -21,14 +21,14 @@ class Dialog(wx.Dialog):
     def __init__(self, parent, size=(550, 335), listeBoutons=None, type=None):
         if listeBoutons is None:
             listeBoutons = []
-        wx.Dialog.__init__(self, parent, -1, title=_(u"Sélection du type de document"))
+        wx.Dialog.__init__(self, parent, -1, title=_(u"SÃ©lection du type de document"))
         self.parent = parent
         self.choix = None
         self.type = type
         self.listeBoutons = listeBoutons
-        self.label_intro = wx.StaticText(self, -1, _(u"Veuillez sélectionner le type de document à éditer :"))
+        self.label_intro = wx.StaticText(self, -1, _(u"Veuillez sÃ©lectionner le type de document Ã  Ã©diter :"))
                 
-        # Création des boutons de commandes
+        # CrÃ©ation des boutons de commandes
         index = 1
         for image, infobulle in self.listeBoutons :
             exec("self.bouton_" + str(index) + " = wx.BitmapButton(self, " + str(index) + ", wx.Bitmap(image, wx.BITMAP_TYPE_ANY))")
@@ -82,7 +82,7 @@ class Dialog(wx.Dialog):
         self.CentreOnScreen()       
 
     def OnBoutonAide(self, event):
-        # Si impression présences :
+        # Si impression prÃ©sences :
         if self.type == "presences" :
             from Utils import UTILS_Aide
             UTILS_Aide.Aide("Imprimerunelistedeprsences")

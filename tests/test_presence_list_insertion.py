@@ -18,7 +18,7 @@ FORBIDDEN = (
 def test_presence_lists_use_a_valid_phoenix_append_index() -> None:
     combined = ""
     for path in TARGETS:
-        source = path.read_text(encoding="iso-8859-15")
+        source = path.read_text(encoding="utf-8")
         combined += source
         assert not any(token in source for token in FORBIDDEN), path
         if "CheckListCtrlMixin" in source:

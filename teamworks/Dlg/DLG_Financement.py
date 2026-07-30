@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #------------------------------------------------------------------------
-# Application :    Noethys, gestion multi-activités
+# Application :    Noethys, gestion multi-activitÃ©s
 # Site internet :  www.noethys.com
 # Auteur:          Ivan LUCAS
 # Copyright:       (c) 2010-16 Ivan LUCAS
@@ -32,9 +32,9 @@ class Page_documentation(wx.Panel):
         self.bouton_imprimer = CTRL_Bouton_image.CTRL(self, texte=_(u"Bon de commande"), cheminImage=Chemins.GetStaticPath("Images/32x32/Imprimante.png"))
         self.bouton_fermer = CTRL_Bouton_image.CTRL(self, texte=_(u"Fermer"), cheminImage=Chemins.GetStaticPath("Images/32x32/Fermer.png"))
 
-        # Propriétés
-        self.bouton_aide.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour en savoir plus sur le manuel de référence")))
-        self.bouton_imprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour imprimer le bon de commande et les conditions générales de vente")))
+        # PropriÃ©tÃ©s
+        self.bouton_aide.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour en savoir plus sur le manuel de rÃ©fÃ©rence")))
+        self.bouton_imprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour imprimer le bon de commande et les conditions gÃ©nÃ©rales de vente")))
         self.bouton_fermer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour fermer")))
 
         # Calcule les espaces du sizer
@@ -60,7 +60,7 @@ class Page_documentation(wx.Panel):
 
         self.SetSizer(grid_sizer_base)
 
-        # Calcule taille de la fenêtre
+        # Calcule taille de la fenÃªtre
         self.SetMinSize(self.image_fond.GetSize())
         self.Layout()
 
@@ -93,7 +93,7 @@ class Page_documentation(wx.Panel):
         try:
             FonctionsPerso.LanceFichierExterne("https://teamworks.ovh/public/bon_commande_documentation.pdf")
         except:
-            dlg = wx.MessageDialog(None, _(u"Teamworks ne peut pas ouvrir le PDF !\n\nVeuillez vérifier qu'un autre PDF n'est pas déjà ouvert en arrière-plan..."),_(u"Erreur"), wx.OK | wx.ICON_ERROR)
+            dlg = wx.MessageDialog(None, _(u"Teamworks ne peut pas ouvrir le PDF !\n\nVeuillez vÃ©rifier qu'un autre PDF n'est pas dÃ©jÃ  ouvert en arriÃ¨re-plan..."),_(u"Erreur"), wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
             dlg.Destroy()
 

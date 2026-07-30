@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -20,7 +20,7 @@ class Panel(wx.Panel):
         self.IDpersonne = IDpersonne
 
         # Widgets
-        self.staticBox_staticbox = wx.StaticBox(self, -1, _(u"Scénarios"))
+        self.staticBox_staticbox = wx.StaticBox(self, -1, _(u"ScÃ©narios"))
         self.panelScenarios = DLG_Scenario_gestion.Panel(self, IDpersonne=self.IDpersonne)
         self.panelScenarios.label_introduction.Show(False)
         

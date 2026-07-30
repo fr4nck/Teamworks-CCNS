@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -23,7 +23,7 @@ class Dialog(wx.Dialog):
         self.panel_base = wx.Panel(self, -1)
         self.nomGadget = "horloge"
         
-        self.sizer_contenu_staticbox = wx.StaticBox(self.panel_base, -1, _(u"Paramètres"))
+        self.sizer_contenu_staticbox = wx.StaticBox(self.panel_base, -1, _(u"ParamÃ¨tres"))
                 
         self.largeur_min = 100
         self.largeur_max = 800
@@ -79,9 +79,9 @@ class Dialog(wx.Dialog):
         _icon.CopyFromBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Logo.png"), wx.BITMAP_TYPE_ANY))
         self.SetIcon(_icon)
         self.largeur_texte.SetToolTip(wx.ToolTip(_(u"Saisissez ici une valeur pour la largeur du gadget")))
-        self.largeur_slider.SetToolTip(wx.ToolTip(_(u"Vous pouvez aussi utiliser cette glissière pour régler la largeur")))
+        self.largeur_slider.SetToolTip(wx.ToolTip(_(u"Vous pouvez aussi utiliser cette glissiÃ¨re pour rÃ©gler la largeur")))
         self.hauteur_texte.SetToolTip(wx.ToolTip(_(u"Saisissez ici une valeur pour la hauteur du gadget")))
-        self.hauteur_slider.SetToolTip(wx.ToolTip(_(u"Vous pouvez aussi utiliser cette glissière pour régler la hauteur")))
+        self.hauteur_slider.SetToolTip(wx.ToolTip(_(u"Vous pouvez aussi utiliser cette glissiÃ¨re pour rÃ©gler la hauteur")))
         self.bouton_couleurFace.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier la couleur de face de l'horloge")))
         self.bouton_couleurFond.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier la couleur de fond de l'horloge")))
         self.bouton_aide.SetToolTip(wx.ToolTip("Cliquez ici pour obtenir de l'aide"))
@@ -156,30 +156,30 @@ class Dialog(wx.Dialog):
     def Build_Hyperlink(self) :
         """ Construit un hyperlien """
         self.SetFont(wx.Font(10, wx.SWISS, wx.NORMAL, wx.NORMAL, False))
-        hyper = hl.HyperLinkCtrl(self.panel_base, -1, _(u"Réinitialiser les paramètres par défaut"), URL="")
+        hyper = hl.HyperLinkCtrl(self.panel_base, -1, _(u"RÃ©initialiser les paramÃ¨tres par dÃ©faut"), URL="")
         hyper.Bind(hl.EVT_HYPERLINK_LEFT, self.OnLeftLink)
         hyper.AutoBrowse(False)
         hyper.SetColours("BLACK", "BLACK", "BLUE")
         hyper.EnableRollover(True)
         hyper.SetUnderlines(True, True, True)
         hyper.SetBold(False)
-        hyper.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour réinitialiser les paramètres par défaut de ce gadget")))
+        hyper.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour rÃ©initialiser les paramÃ¨tres par dÃ©faut de ce gadget")))
         hyper.UpdateLink()
         hyper.DoPopup(False)
         return hyper
         
     def OnLeftLink(self, event):
-        """ Réinitialiser les paramètres par défaut """
+        """ RÃ©initialiser les paramÃ¨tres par dÃ©faut """
         # Confirmation
-        message = _(u"Souhaitez-vous vraiment réinitialiser les paramètres par défaut de ce gadget ?")
-        dlg = wx.MessageDialog(self, message, _(u"Réinitialisation"), wx.YES_NO | wx.NO_DEFAULT | wx.ICON_EXCLAMATION)
+        message = _(u"Souhaitez-vous vraiment rÃ©initialiser les paramÃ¨tres par dÃ©faut de ce gadget ?")
+        dlg = wx.MessageDialog(self, message, _(u"RÃ©initialisation"), wx.YES_NO | wx.NO_DEFAULT | wx.ICON_EXCLAMATION)
         if dlg.ShowModal() == wx.ID_YES :
             dlg.Destroy()
         else:
             return
             dlg.Destroy()
         
-        # Recherche des paramètres par défaut dans la base DEFAUTS
+        # Recherche des paramÃ¨tres par dÃ©faut dans la base DEFAUTS
         DB = GestionDB.DB(nomDB="Defaut.db3")
         req = "SELECT taille, parametres FROM gadgets WHERE nom='%s';" % self.nomGadget
         DB.ExecuterReq(req)
@@ -187,7 +187,7 @@ class Dialog(wx.Dialog):
         DB.Close()
         self.InitValeurs(donnees)
         
-        # Place les valeur dans les contrôles
+        # Place les valeur dans les contrÃ´les
         self.largeur_texte.SetValue(str(self.val_largeur))
         self.largeur_slider.SetValue(self.val_largeur)
         self.hauteur_texte.SetValue(str(self.val_hauteur))
@@ -247,7 +247,7 @@ class Dialog(wx.Dialog):
         
         
     def Importation(self):
-        """ Importation des paramètres du gadget """
+        """ Importation des paramÃ¨tres du gadget """
         DB = GestionDB.DB()
         req = "SELECT taille, parametres FROM gadgets WHERE nom='%s';" % self.nomGadget
         DB.ExecuterReq(req)
@@ -266,9 +266,9 @@ class Dialog(wx.Dialog):
         
 
     def Sauvegarde(self):
-        """ Sauvegarde des données dans la base de données """
+        """ Sauvegarde des donnÃ©es dans la base de donnÃ©es """
         
-        # Récupération ds valeurs saisies
+        # RÃ©cupÃ©ration ds valeurs saisies
         largeur = int(self.largeur_texte.GetValue())
         hauteur = int(self.hauteur_texte.GetValue())
         self.dictParametres["couleur_face"] = self.val_couleurFace
@@ -288,14 +288,14 @@ class Dialog(wx.Dialog):
         self.EndModal(wx.ID_CANCEL)
 
     def OnBoutonOk(self, event):
-        """ Validation des données saisies """
+        """ Validation des donnÃ©es saisies """
         
         # Sauvegarde
         self.Sauvegarde()
         
         # MAJ des parents       
         if self.parent == None and FonctionsPerso.FrameOuverte("panel_accueil") != None :
-            # Mise à jour de la page d'accueil
+            # Mise Ã  jour de la page d'accueil
             topWindow = wx.GetApp().GetTopWindow() 
             topWindow.toolBook.GetPage(0).MAJpanel() 
             

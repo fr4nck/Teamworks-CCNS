@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Application :    Teamworks
 # Auteur:           Ivan LUCAS
@@ -196,7 +196,7 @@ class CTRL(ULC.UltimateListCtrl):
         self.Remplissage() 
 
     def Remplissage(self):
-        """ Remplissage du contrôle """
+        """ Remplissage du contrÃ´le """
         wx.BeginBusyCursor()
         self.Freeze()
         
@@ -230,8 +230,8 @@ class CTRL(ULC.UltimateListCtrl):
         wx.EndBusyCursor()
     
     def GetListeFichiersLocal(self) :
-        """ Récupère la liste des fichiers locaux à afficher """
-        # Lit le répertoire
+        """ RÃ©cupÃ¨re la liste des fichiers locaux Ã  afficher """
+        # Lit le rÃ©pertoire
         chemin = UTILS_Fichiers.GetRepData()
         fichiers = os.listdir(chemin)
         fichiers.sort()
@@ -244,7 +244,7 @@ class CTRL(ULC.UltimateListCtrl):
             
             if (self.prefixe == None and nomFichier.endswith("_TDATA.dat")) or (self.prefixe != None and nomFichier.endswith("_TDATA.dat") and nomFichier.startswith(self.prefixe)) :
             
-                # Taille des 3 bases de données
+                # Taille des 3 bases de donnÃ©es
                 taille = 0
                 for suffixe in ("TDATA", "TDOCUMENTS", "TPHOTOS") :
                     fichierTemp = "%s/%s_%s.dat" % (chemin, titre, suffixe)
@@ -252,18 +252,18 @@ class CTRL(ULC.UltimateListCtrl):
                         taille += os.path.getsize(fichierTemp)
                 taille = FormatFileSize(taille)
                 
-                # Date dernière modification
+                # Date derniÃ¨re modification
                 t = os.path.getmtime(cheminFichier)
                 date = datetime.datetime.fromtimestamp(t)
                 dateModif = date.strftime("%d/%m/%Y %H:%M")
                 
-                # Ouverture de la base de données pour récupérer les infos sur le fichier
+                # Ouverture de la base de donnÃ©es pour rÃ©cupÃ©rer les infos sur le fichier
                 description = u""
                 img = wx.Image(Chemins.GetStaticPath("Images/80x80/Logo_tw.png"), wx.BITMAP_TYPE_PNG)
                 img = RecadreImg(img)
                 image = img.ConvertToBitmap()
 
-                # Mémorisation
+                # MÃ©morisation
                 listeFichiers.append({"titre" : titre, "image" : image, "description" : description, "taille" : taille, "dateModif" : dateModif})
         
         return listeFichiers
@@ -281,10 +281,10 @@ class CTRL(ULC.UltimateListCtrl):
         return True
 
     def GetListeFichiersReseau(self) :
-        """ Récupère la liste des fichiers réseau à afficher """
+        """ RÃ©cupÃ¨re la liste des fichiers rÃ©seau Ã  afficher """
         listeFichiers = []
 
-        # Connexion au réseau MySQL
+        # Connexion au rÃ©seau MySQL
         hote = self.codesReseau["hote"]
         utilisateur = self.codesReseau["utilisateur"]
         motdepasse = self.codesReseau["motdepasse"]
@@ -298,34 +298,34 @@ class CTRL(ULC.UltimateListCtrl):
             DB.Close()
             return listeFichiers
 
-        # Test de connexion à une base de données
+        # Test de connexion Ã  une base de donnÃ©es
         listeDatabases = []
         DB.ExecuterReq("SHOW DATABASES;")
         listeValeurs = DB.ResultatReq()
         for valeurs in listeValeurs :
             listeDatabases.append(valeurs[0])
             
-        # Récupération des infos
+        # RÃ©cupÃ©ration des infos
         for nomFichier in listeDatabases :
             if (self.prefixe == None and nomFichier.endswith("_tdata")) or (self.prefixe != None and nomFichier.endswith("_tdata") and nomFichier.startswith(self.prefixe)) :
                 
                 titre = nomFichier[:-6]
                 
-                # Taille des 3 bases de données
+                # Taille des 3 bases de donnÃ©es
                 taille = 0
                 taille = FormatFileSize(float(taille))
                 
-                # Date de dernière modification
+                # Date de derniÃ¨re modification
                 dateModif = None
                 
-                # Ouverture de la base de données pour récupérer les infos sur le fichier
+                # Ouverture de la base de donnÃ©es pour rÃ©cupÃ©rer les infos sur le fichier
                 nom = u""
                 description = u""
                 img = wx.Image(Chemins.GetStaticPath("Images/80x80/Logo_tw.png"), wx.BITMAP_TYPE_PNG)
                 img = RecadreImg(img)
                 image = img.ConvertToBitmap()
 
-                # Mémorisation
+                # MÃ©morisation
                 listeFichiers.append({"titre" : titre, "image" : image, "description" : description, "taille" : taille, "dateModif" : dateModif})
 
         # Fermeture connexion
@@ -336,7 +336,7 @@ class CTRL(ULC.UltimateListCtrl):
     def ModifierFichier(self, titre=""):
         """ Modifier un fichier """
         if self.mode == "reseau" :
-            dlg = wx.MessageDialog(self, _(u"Il est impossible de modifier le nom d'un fichier réseau !"), _(u"Désolé"), wx.OK | wx.ICON_EXCLAMATION)
+            dlg = wx.MessageDialog(self, _(u"Il est impossible de modifier le nom d'un fichier rÃ©seau !"), _(u"DÃ©solÃ©"), wx.OK | wx.ICON_EXCLAMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -364,7 +364,7 @@ class CTRL(ULC.UltimateListCtrl):
             return
 
         # Demande de confirmation 2
-        dlg = wx.MessageDialog(None, _(u"Vous êtes vraiment sûr de vouloir changer le nom du fichier '%s' en '%s' ?") % (titre, nouveauTitre), _(u"Modifier un fichier"), wx.YES_NO|wx.NO_DEFAULT|wx.CANCEL|wx.ICON_EXCLAMATION)
+        dlg = wx.MessageDialog(None, _(u"Vous Ãªtes vraiment sÃ»r de vouloir changer le nom du fichier '%s' en '%s' ?") % (titre, nouveauTitre), _(u"Modifier un fichier"), wx.YES_NO|wx.NO_DEFAULT|wx.CANCEL|wx.ICON_EXCLAMATION)
         reponse = dlg.ShowModal()
         dlg.Destroy()
         if reponse != wx.ID_YES :
@@ -390,7 +390,7 @@ class CTRL(ULC.UltimateListCtrl):
         if reponse != wx.ID_YES :
             return 
         
-        dlg = wx.MessageDialog(None, _(u"Attention, la suppression est irreversible !!! \n\n Vous êtes vraiment sûr de vouloir supprimer le fichier '%s' ?") % titre, _(u"Supprimer un fichier"), wx.YES_NO|wx.NO_DEFAULT|wx.CANCEL|wx.ICON_EXCLAMATION)
+        dlg = wx.MessageDialog(None, _(u"Attention, la suppression est irreversible !!! \n\n Vous Ãªtes vraiment sÃ»r de vouloir supprimer le fichier '%s' ?") % titre, _(u"Supprimer un fichier"), wx.YES_NO|wx.NO_DEFAULT|wx.CANCEL|wx.ICON_EXCLAMATION)
         reponse = dlg.ShowModal()
         dlg.Destroy()
         if reponse != wx.ID_YES :
@@ -404,7 +404,7 @@ class CTRL(ULC.UltimateListCtrl):
                 except Exception as err :
                     pass
         
-        # Supprime un fichier réseau
+        # Supprime un fichier rÃ©seau
         if self.mode == "reseau" :
             hote = self.codesReseau["hote"]
             utilisateur = self.codesReseau["utilisateur"]

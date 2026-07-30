@@ -4,7 +4,7 @@ from pathlib import Path
 
 def _read_source(path: Path) -> str:
     data = path.read_bytes()
-    for encoding in ("utf-8", "iso-8859-15", "cp1252"):
+    for encoding in ("utf-8",):
         try:
             return data.decode(encoding)
         except UnicodeDecodeError:

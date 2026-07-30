@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -28,11 +28,11 @@ class Dialog(wx.Dialog):
         self.text_nom = wx.TextCtrl(self.panel_base, -1, "")
         self.label_description = wx.StaticText(self.panel_base, -1, "Description :")
         self.text_description = wx.TextCtrl(self.panel_base, -1, "", style=wx.TE_MULTILINE)
-        self.label_defaut = wx.StaticText(self.panel_base, -1, _(u"Valeur par défaut :"))
+        self.label_defaut = wx.StaticText(self.panel_base, -1, _(u"Valeur par dÃ©faut :"))
         self.text_defaut = wx.TextCtrl(self.panel_base, -1, "")
         self.label_exemple = wx.StaticText(self.panel_base, -1, _(u"Exemples de valeur :"))
         self.text_exemple = wx.TextCtrl(self.panel_base, -1, "")
-        self.label_motCle = wx.StaticText(self.panel_base, -1, _(u"Mot-clé :"))
+        self.label_motCle = wx.StaticText(self.panel_base, -1, _(u"Mot-clÃ© :"))
         self.text_motCle = wx.TextCtrl(self.panel_base, -1, "")
         self.label_motCle_aide = wx.StaticText(self.panel_base, -1, "(En majuscules et sans espaces)")
         self.bouton_aide = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))
@@ -59,17 +59,17 @@ class Dialog(wx.Dialog):
         self.text_motCle.Bind(wx.EVT_KILL_FOCUS, self.OnTextMotCle)
 
     def __set_properties(self):
-        self.SetTitle(_(u"Saisie d'un champ personnalisé"))
+        self.SetTitle(_(u"Saisie d'un champ personnalisÃ©"))
         if 'phoenix' in wx.PlatformInfo:
             _icon = wx.Icon()
         else :
             _icon = wx.EmptyIcon()
         _icon.CopyFromBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Logo.png"), wx.BITMAP_TYPE_ANY))
         self.SetIcon(_icon)
-        self.text_nom.SetToolTip(wx.ToolTip(_(u"Saisissez ici le nom complet du champ. Il doit être explicite.")))
-        self.text_description.SetToolTip(wx.ToolTip(_(u"[Optionnel] Vous pouvez saisir une description détaillée du champ qui facilitera la saisie.")))
-        self.text_defaut.SetToolTip(wx.ToolTip(_(u"[Optionnel] Saisissez ici la valeur qui apparaîtra par défaut lors d'un saisie")))
-        self.text_motCle.SetToolTip(wx.ToolTip(_(u"Saisissez ici un mot-clé qui sera utilisé pour le publipostage lors de l'impression des documents \nCe mot-clé doit être unique, en majuscule et sans caractères spéciaux (accents ou symboles...)")))
+        self.text_nom.SetToolTip(wx.ToolTip(_(u"Saisissez ici le nom complet du champ. Il doit Ãªtre explicite.")))
+        self.text_description.SetToolTip(wx.ToolTip(_(u"[Optionnel] Vous pouvez saisir une description dÃ©taillÃ©e du champ qui facilitera la saisie.")))
+        self.text_defaut.SetToolTip(wx.ToolTip(_(u"[Optionnel] Saisissez ici la valeur qui apparaÃ®tra par dÃ©faut lors d'un saisie")))
+        self.text_motCle.SetToolTip(wx.ToolTip(_(u"Saisissez ici un mot-clÃ© qui sera utilisÃ© pour le publipostage lors de l'impression des documents \nCe mot-clÃ© doit Ãªtre unique, en majuscule et sans caractÃ¨res spÃ©ciaux (accents ou symboles...)")))
         self.label_motCle_aide.SetFont(wx.Font(7, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, ""))
         self.bouton_aide.SetToolTip(wx.ToolTip("Cliquez ici pour obtenir de l'aide"))
         self.bouton_ok.SetToolTip(wx.ToolTip("Cliquez ici pour valider la saisie"))
@@ -117,7 +117,7 @@ class Dialog(wx.Dialog):
         if texte == "" : return
         resultat = ""
         incoherences = ""
-        # Vérifie chaque caractère
+        # VÃ©rifie chaque caractÃ¨re
         for lettre in texte :
             if lettre in "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789" :
                 resultat += lettre.upper()
@@ -128,7 +128,7 @@ class Dialog(wx.Dialog):
         # Signale une erreur
         if incoherences != "" :
             incoherences = incoherences[:-2]
-            txt = _(u"Le mot-clé que vous avez saisi n'est pas valide. Les caractères suivants ne sont pas valides : ") + incoherences + _(u"\n\nRappel : Ce mot-clé doit être en majuscules, ne peut comporter que des lettres ou des chiffres. Les espaces, accents ou autres caractères spéciaux ne sont pas acceptés.")
+            txt = _(u"Le mot-clÃ© que vous avez saisi n'est pas valide. Les caractÃ¨res suivants ne sont pas valides : ") + incoherences + _(u"\n\nRappel : Ce mot-clÃ© doit Ãªtre en majuscules, ne peut comporter que des lettres ou des chiffres. Les espaces, accents ou autres caractÃ¨res spÃ©ciaux ne sont pas acceptÃ©s.")
             dlg = wx.MessageDialog(self, txt, "Erreur", wx.OK)  
             dlg.ShowModal()
             dlg.Destroy()
@@ -149,15 +149,15 @@ class Dialog(wx.Dialog):
         self.ancienMotcle = mot_cle
 
     def Sauvegarde(self):
-        """ Sauvegarde des données dans la base de données """
+        """ Sauvegarde des donnÃ©es dans la base de donnÃ©es """
         
-        # Récupération des valeurs des controles
+        # RÃ©cupÃ©ration des valeurs des controles
         nom = self.text_nom.GetValue()
         defaut = self.text_defaut.GetValue()
         motCle = self.text_motCle.GetValue()
 
         DB = GestionDB.DB()
-        # Création de la liste des données
+        # CrÃ©ation de la liste des donnÃ©es
         listeDonnees = [("nom",   nom),
                         ("categorie",   self.categorie),
                         ("mot_cle",    motCle),
@@ -183,13 +183,13 @@ class Dialog(wx.Dialog):
         self.EndModal(wx.ID_CANCEL)
 
     def OnBoutonOk(self, event):
-        """ Validation des données saisies """
-        # Récupération des valeurs des controles
+        """ Validation des donnÃ©es saisies """
+        # RÃ©cupÃ©ration des valeurs des controles
         nom = self.text_nom.GetValue()
         defaut = self.text_defaut.GetValue()
         motCle = self.text_motCle.GetValue()
 
-        # Vérifie que les valeurs ont été saisies
+        # VÃ©rifie que les valeurs ont Ã©tÃ© saisies
         if nom == "" :
             dlg = wx.MessageDialog(self, _(u"Vous devez saisir un nom pour le champ."), "Erreur", wx.OK)  
             dlg.ShowModal()
@@ -198,42 +198,42 @@ class Dialog(wx.Dialog):
             return
 
         if motCle == "" :
-            txt = _(u"Vous devez saisir un mot-clé.\n\nCe mot-clé sera nécessaire lors de l'impression des documents lors de la procédure de publipostage.")
+            txt = _(u"Vous devez saisir un mot-clÃ©.\n\nCe mot-clÃ© sera nÃ©cessaire lors de l'impression des documents lors de la procÃ©dure de publipostage.")
             dlg = wx.MessageDialog(self, txt, "Erreur", wx.OK)  
             dlg.ShowModal()
             dlg.Destroy()
             self.text_motCle.SetFocus()
             return
         
-        # Vérifie la validité du mot-clé
+        # VÃ©rifie la validitÃ© du mot-clÃ©
         incoherences = ""
         for lettre in motCle :
             if lettre not in "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789" :
                 incoherences += "'" + lettre + "', "
         if incoherences != "" :
             incoherences = incoherences[:-2]
-            txt = _(u"Le mot-clé que vous avez saisi n'est pas valide. Les caractères suivants ne sont pas valides : ") + incoherences + _(u"\n\nRappel : Ce mot-clé doit être en majuscules, ne peut comporter que des lettres ou des chiffres. Les espaces, accents ou autres caractères spéciaux ne sont pas acceptés.")
+            txt = _(u"Le mot-clÃ© que vous avez saisi n'est pas valide. Les caractÃ¨res suivants ne sont pas valides : ") + incoherences + _(u"\n\nRappel : Ce mot-clÃ© doit Ãªtre en majuscules, ne peut comporter que des lettres ou des chiffres. Les espaces, accents ou autres caractÃ¨res spÃ©ciaux ne sont pas acceptÃ©s.")
             dlg = wx.MessageDialog(self, txt, "Erreur", wx.OK)  
             dlg.ShowModal()
             dlg.Destroy()
             return
         
-        # Vérifie que le mot-clé n'existe pas déjà dans la base
+        # VÃ©rifie que le mot-clÃ© n'existe pas dÃ©jÃ  dans la base
         DB = GestionDB.DB()
         req = "SELECT IDchamp, categorie, nom, mot_cle, defaut FROM publipostage_champs WHERE categorie='%s' AND mot_cle='%s' AND IDchamp<>%d" % (self.categorie, motCle, self.IDchamp)
         DB.ExecuterReq(req)
         donnees = DB.ResultatReq()
         DB.Close()
         if len(donnees) > 0 :
-            dlg = wx.MessageDialog(self, _(u"Ce mot-clé est déjà utilisé"), "Erreur", wx.OK| wx.ICON_EXCLAMATION)  
+            dlg = wx.MessageDialog(self, _(u"Ce mot-clÃ© est dÃ©jÃ  utilisÃ©"), "Erreur", wx.OK| wx.ICON_EXCLAMATION)  
             dlg.ShowModal()
             dlg.Destroy()
             return
         
-        # Vérifie que le mot-clé n'existe pas déjà dans les mots-clés de base
+        # VÃ©rifie que le mot-clÃ© n'existe pas dÃ©jÃ  dans les mots-clÃ©s de base
         for motcleTemp, type in self.listeMotsCles :
             if motcleTemp == motCle and type != self.IDchamp :
-                dlg = wx.MessageDialog(self, _(u"Ce mot-clé est déjà utilisé dans les mots-clés de base. Veuillez saisir un autre mot-clé"), "Erreur", wx.OK| wx.ICON_EXCLAMATION)  
+                dlg = wx.MessageDialog(self, _(u"Ce mot-clÃ© est dÃ©jÃ  utilisÃ© dans les mots-clÃ©s de base. Veuillez saisir un autre mot-clÃ©"), "Erreur", wx.OK| wx.ICON_EXCLAMATION)  
                 dlg.ShowModal()
                 dlg.Destroy()
                 return

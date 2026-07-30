@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -37,7 +37,7 @@ class Dialog(wx.Dialog):
         self.ctrl_heure = masked.TextCtrl(self.panel, -1, "", size=(60, -1), style=wx.TE_CENTRE, mask = "##:##", validRegex   = "[0-2][0-9]:[0-5][0-9]")
         self.ctrl_heure.SetCtrlParameters(invalidBackgroundColour = "PINK")
         self.label_avis = wx.StaticText(self.panel, -1, _(u"Avis :"))
-        listeImages = [ (_(u"Avis inconnu"), "Smiley_question.png"), (_(u"Pas convaincant"), "Smiley_nul.png"), (_(u"Mitigé"), "Smiley_bof.png"), (_(u"Bien"), "Smiley_bien.png"), (_(u"Très bien"), "Smiley_genial.png"),]
+        listeImages = [ (_(u"Avis inconnu"), "Smiley_question.png"), (_(u"Pas convaincant"), "Smiley_nul.png"), (_(u"MitigÃ©"), "Smiley_bof.png"), (_(u"Bien"), "Smiley_bien.png"), (_(u"TrÃ¨s bien"), "Smiley_genial.png"),]
         self.ctrl_avis = MyBitmapComboBox(self.panel, listeImages=listeImages)
         self.label_remarques = wx.StaticText(self.panel, -1, _(u"Commentaire :"))
         self.ctrl_remarques = wx.TextCtrl(self.panel, -1, "", style=wx.TE_MULTILINE)
@@ -75,10 +75,10 @@ class Dialog(wx.Dialog):
         self.SetIcon(_icon)
         self.ctrl_date.SetToolTip(wx.ToolTip(_(u"Saisissez la date de l'entretien")))
         self.ctrl_heure.SetToolTip(wx.ToolTip(_(u"Saisissez l'heure de l'entretien")))
-        self.ctrl_avis.SetToolTip(wx.ToolTip(_(u"Sélectionnez une appréciation de l'entretien")))
-        self.ctrl_remarques.SetToolTip(wx.ToolTip(_(u"Saisissez l'avis complet émis après l'entretien")))
+        self.ctrl_avis.SetToolTip(wx.ToolTip(_(u"SÃ©lectionnez une apprÃ©ciation de l'entretien")))
+        self.ctrl_remarques.SetToolTip(wx.ToolTip(_(u"Saisissez l'avis complet Ã©mis aprÃ¨s l'entretien")))
         self.bouton_aide.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour obtenir de l'aide")))
-        self.bouton_ok.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour valider la saisie des données")))
+        self.bouton_ok.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour valider la saisie des donnÃ©es")))
         self.bouton_annuler.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour annuler")))
         self.SetMinSize((450, 330))
 
@@ -122,7 +122,7 @@ class Dialog(wx.Dialog):
         pass
         
     def SetDatePicker(self, controle, date) :
-        """ Met une date au format datetime dans un datePicker donné """
+        """ Met une date au format datetime dans un datePicker donnÃ© """
         annee = int(date.year)
         mois = int(date.month)-1
         jour = int(date.day)
@@ -142,7 +142,7 @@ class Dialog(wx.Dialog):
         donnees = DB.ResultatReq()[0]
         DB.Close()
         if len(donnees) == 0: return
-        # Récupération des données
+        # RÃ©cupÃ©ration des donnÃ©es
         IDentretien, IDcandidat, IDpersonne, date, heure, avis, remarques = donnees
         # Date
         self.SetDatePicker(self.ctrl_date, datetime.date(year=int(date[:4]), month=int(date[5:7]), day=int(date[8:10])))
@@ -155,16 +155,16 @@ class Dialog(wx.Dialog):
 
 
     def Sauvegarde(self):
-        """ Sauvegarde des données dans la base de données """
+        """ Sauvegarde des donnÃ©es dans la base de donnÃ©es """
         
-        # Récupération ds valeurs saisies
+        # RÃ©cupÃ©ration ds valeurs saisies
         date = self.GetDatePickerValue(self.ctrl_date)
         heure = self.ctrl_heure.GetValue()
         avis = self.ctrl_avis.GetSelection()
         remarques = self.ctrl_remarques.GetValue()
 
         DB = GestionDB.DB()
-        # Création de la liste des données
+        # CrÃ©ation de la liste des donnÃ©es
         listeDonnees = [    ("IDcandidat",   self.IDcandidat),  
                                     ("IDpersonne",   self.IDpersonne),
                                     ("date",   date),
@@ -192,7 +192,7 @@ class Dialog(wx.Dialog):
         self.EndModal(wx.ID_CANCEL)
 
     def OnBoutonOk(self, event):
-        """ Validation des données saisies """
+        """ Validation des donnÃ©es saisies """
         
         heure = self.ctrl_heure.GetValue()
         if heure == "" or heure == "  :  " :
@@ -232,7 +232,7 @@ class Dialog(wx.Dialog):
         self.EndModal(wx.ID_OK)
 
     def GetNomCandidat(self, IDcandidat=None, IDpersonne=None):
-        # Récupération des données
+        # RÃ©cupÃ©ration des donnÃ©es
         DB = GestionDB.DB()
         if IDpersonne == None or IDpersonne == 0 : 
             req = """SELECT civilite, nom, prenom
@@ -257,7 +257,7 @@ class MyBitmapComboBox(BitmapComboBox):
         for texte, nomImage in listeImages :
             img = wx.Bitmap(Chemins.GetStaticPath("Images/22x22/%s" % nomImage), wx.BITMAP_TYPE_ANY)
             self.Append(texte, img, texte)
-        # Sélection par défaut
+        # SÃ©lection par dÃ©faut
         self.Select(0)
         
 

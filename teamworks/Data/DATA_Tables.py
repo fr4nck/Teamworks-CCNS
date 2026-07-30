@@ -1,20 +1,20 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
-# Application :    Teamworks Gestion d'équipes
+# Application :    Teamworks Gestion d'Ã©quipes
 # Site internet :  teamworks.forumactif.com
 # Auteur:           Ivan LUCAS
 # Copyright:       (c) 2010-11 Ivan LUCAS
 # Licence:         Licence GNU GPL
 #-----------------------------------------------------------
 
-TABLES_IMPORTATION_OPTIONNELLES = [ # [Nom Categorie, (liste des tables...,), Selectionné]
-        [u"diplômes et pièces", ("types_pieces", "types_diplomes", "diplomes_pieces"), True],
-        [u"Périodes de vacances", ("periodes_vacances",), True],
-        [u"Jours fériés", ("jours_feries",), True],
-        [u"Catégories de présences", ("cat_presences",), True],
+TABLES_IMPORTATION_OPTIONNELLES = [ # [Nom Categorie, (liste des tables...,), SelectionnÃ©]
+        [u"diplÃ´mes et piÃ¨ces", ("types_pieces", "types_diplomes", "diplomes_pieces"), True],
+        [u"PÃ©riodes de vacances", ("periodes_vacances",), True],
+        [u"Jours fÃ©riÃ©s", ("jours_feries",), True],
+        [u"CatÃ©gories de prÃ©sences", ("cat_presences",), True],
         [u"Situations professionelles", ("situations",), True],
-        [u"Données de contrats", ("contrats_champs", "contrats_class", "contrats_modeles", "contrats_types", "contrats_valchamps", "valeurs_point"), True],
+        [u"DonnÃ©es de contrats", ("contrats_champs", "contrats_class", "contrats_modeles", "contrats_types", "contrats_valchamps", "valeurs_point"), True],
         #[u"Pays", ("pays",), True],
         ]
 
@@ -24,35 +24,35 @@ TABLES_IMPORTATION_OBLIGATOIRES = ["gadgets", "pays"]
 DB_DATA = {
 
     "personnes":[           ("IDpersonne", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID de la personne"),
-                                    ("civilite", "VARCHAR(5)", u"Civilité", u"Civilité de la personne"),
+                                    ("civilite", "VARCHAR(5)", u"CivilitÃ©", u"CivilitÃ© de la personne"),
                                     ("nom", "VARCHAR(100)", u"Nom", u"Nom de famille de la personne"),
                                     ("nom_jfille", "VARCHAR(100)", u"Nom de jeune fille", u"Nom de jeune fille de la personne"),
-                                    ("prenom", "VARCHAR(100)", u"Prénom", u"Prénom de la personne"),
+                                    ("prenom", "VARCHAR(100)", u"PrÃ©nom", u"PrÃ©nom de la personne"),
                                     ("date_naiss", "DATE", "Date de naissance", u"Date de naissance de la personne"),
                                     ("cp_naiss", "INTEGER", u"CP naissance", u"Code postal du lieu de naissance de la personne"),
                                     ("ville_naiss", "VARCHAR(100)", u"Ville naissance", u"Ville du lieu de naissance de la personne"),
                                     ("pays_naiss", "INTEGER", u"Pays naissance", u"ID du Pays de naissance de la personne"),
-                                    ("nationalite", "INTEGER", u"Nationalité", u"Nationalité de la personne"),
-                                    ("num_secu", "VARCHAR(21)", u"Num Sécu", u"Numéro de sécurité sociale de la personne"),
+                                    ("nationalite", "INTEGER", u"NationalitÃ©", u"NationalitÃ© de la personne"),
+                                    ("num_secu", "VARCHAR(21)", u"Num SÃ©cu", u"NumÃ©ro de sÃ©curitÃ© sociale de la personne"),
                                     ("adresse_resid", "VARCHAR(200)", "Adresse", u"Adresse de la personne"),
                                     ("cp_resid", "INTEGER", u"Code postal", u"Code postal de la personne"),
                                     ("ville_resid", "VARCHAR(100)", u"Ville", u"Ville de la personne"),
-                                    ("memo", "VARCHAR(800)", u"Mémo", u"Mémo sur la personne"),
+                                    ("memo", "VARCHAR(800)", u"MÃ©mo", u"MÃ©mo sur la personne"),
                                     ("IDsituation", "INTEGER", u"ID", u"ID de la situation sociale"),
-                                    ("cadre_photo", "VARCHAR(200)", u"Cadre", u"Cadre photo rattaché"),
-                                    ("texte_photo", "VARCHAR(300)", u"Texte", u"Texte de la photo rattachée"),
-                                    ], # Données sur les personnes
+                                    ("cadre_photo", "VARCHAR(200)", u"Cadre", u"Cadre photo rattachÃ©"),
+                                    ("texte_photo", "VARCHAR(300)", u"Texte", u"Texte de la photo rattachÃ©e"),
+                                    ], # DonnÃ©es sur les personnes
 
     "situations":[          ("IDsituation", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID de la situation sociale"),
                                     ("situation", "VARCHAR(400)", u"Situation", u"Situation sociale"),
                                     ], # Liste des situations sociales possibles
 
-    "coordonnees":[         ("IDcoord", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID de la coordonnée"),
+    "coordonnees":[         ("IDcoord", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID de la coordonnÃ©e"),
                                     ("IDpersonne", "INTEGER", u"IDpersonne", u"ID de la personne"),
-                                    ("categorie", "VARCHAR(100)", u"Catégorie", u"Catégorie"),
+                                    ("categorie", "VARCHAR(100)", u"CatÃ©gorie", u"CatÃ©gorie"),
                                     ("texte", "VARCHAR(50)", u"Texte", u"Texte"),
-                                    ("intitule", "VARCHAR(300)", u"Intitulé", u"Intitulé"),
-                                    ], # Liste des coordonnées de la personne
+                                    ("intitule", "VARCHAR(300)", u"IntitulÃ©", u"IntitulÃ©"),
+                                    ], # Liste des coordonnÃ©es de la personne
 
     "diplomes":[            ("IDdiplome", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID du diplome"),
                                     ("IDpersonne", "INTEGER", u"IDpersonne", u"ID de la personne"),
@@ -60,38 +60,38 @@ DB_DATA = {
                                     ], # Liste des diplomes saisis pour chaque personne
 
     "types_diplomes":[      ("IDtype_diplome", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID du type de diplome"),
-                                    ("nom_diplome", "VARCHAR(200)", u"Diplôme", u"Nom du type de diplôme"),
+                                    ("nom_diplome", "VARCHAR(200)", u"DiplÃ´me", u"Nom du type de diplÃ´me"),
                                     ], # Types de diplomes des personnes. Apparait dans Diplomes.
 
-    "pieces":[              ("IDpiece", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID de la pièce"),
+    "pieces":[              ("IDpiece", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID de la piÃ¨ce"),
                                     ("IDpersonne", "INTEGER", u"IDpersonne", u"ID de la personne"),
-                                    ("IDtype_piece", "INTEGER", u"IDtype_piece", u"ID du type de pièce"),
-                                    ("date_debut", "DATE", u"Début validité", u"Date de début de validité"),
-                                    ("date_fin", "DATE", u"Fin validité", u"Date de fin de validité"),
-                                    ], # Liste des pièces saisies pour chaque personne
+                                    ("IDtype_piece", "INTEGER", u"IDtype_piece", u"ID du type de piÃ¨ce"),
+                                    ("date_debut", "DATE", u"DÃ©but validitÃ©", u"Date de dÃ©but de validitÃ©"),
+                                    ("date_fin", "DATE", u"Fin validitÃ©", u"Date de fin de validitÃ©"),
+                                    ], # Liste des piÃ¨ces saisies pour chaque personne
 
-    "types_pieces":[        ("IDtype_piece", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID du type de pièce"),
-                                    ("nom_piece", "VARCHAR(200)", u"Pièce", u"Nom de la pièce"),
-                                    ("duree_validite", "VARCHAR(100)", u"Durée validité", u"Durée par défaut de la validité de la pièce"),
-                                    ], # Liste des types de pièces possibles. Apparait dans Pieces et diplomes_pieces.
+    "types_pieces":[        ("IDtype_piece", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID du type de piÃ¨ce"),
+                                    ("nom_piece", "VARCHAR(200)", u"PiÃ¨ce", u"Nom de la piÃ¨ce"),
+                                    ("duree_validite", "VARCHAR(100)", u"DurÃ©e validitÃ©", u"DurÃ©e par dÃ©faut de la validitÃ© de la piÃ¨ce"),
+                                    ], # Liste des types de piÃ¨ces possibles. Apparait dans Pieces et diplomes_pieces.
 
-    "diplomes_pieces":[     ("IDdiplome_piece", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID du type de pièce"),
+    "diplomes_pieces":[     ("IDdiplome_piece", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID du type de piÃ¨ce"),
                                     ("IDtype_diplome", "INTEGER", u"IDdiplome", u"ID du diplome"),
-                                    ("IDtype_piece", "INTEGER", u"IDtype_piece", u"ID du type de pièce"),
-                                    ], # Table des liaisons entre les tables Diplomes et Types_pieces. Permet d'attribuer des types de pièces à des diplomes.
+                                    ("IDtype_piece", "INTEGER", u"IDtype_piece", u"ID du type de piÃ¨ce"),
+                                    ], # Table des liaisons entre les tables Diplomes et Types_pieces. Permet d'attribuer des types de piÃ¨ces Ã  des diplomes.
 
     "contrats":[                ("IDcontrat", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID du contrat"),
                                     ("IDpersonne", "INTEGER", u"IDpersonne", u"ID de la personne"),
                                     ("IDclassification", "INTEGER", u"IDclassification", u"Classification du contrat"),
                                     ("IDtype", "INTEGER", u"IDtype", u"ID du type de contrat"),
                                     ("valeur_point", "INTEGER", u"ID Valeur du point", u"ID de la valeur du point"),
-                                    ("date_debut", "DATE", u"Début validité", u"Date de début du contrat"),
-                                    ("date_fin", "DATE", u"Fin validité", u"Date de fin du contrat"),
-                                    ("date_rupture", "DATE", u"Date Rupture", u"Date de rupture anticipée du contrat"),
-                                    ("essai", "INTEGER", u"Période d'essai", u"Nombre de jours de période d'essai"),
-                                    ("signature", "VARCHAR(3)", u"Signé?", u"Contrat signé ? (oui/non)"),
+                                    ("date_debut", "DATE", u"DÃ©but validitÃ©", u"Date de dÃ©but du contrat"),
+                                    ("date_fin", "DATE", u"Fin validitÃ©", u"Date de fin du contrat"),
+                                    ("date_rupture", "DATE", u"Date Rupture", u"Date de rupture anticipÃ©e du contrat"),
+                                    ("essai", "INTEGER", u"PÃ©riode d'essai", u"Nombre de jours de pÃ©riode d'essai"),
+                                    ("signature", "VARCHAR(3)", u"SignÃ©?", u"Contrat signÃ© ? (oui/non)"),
                                     ("due", "VARCHAR(3)", u"DUE", u"DUE faite ? (oui/non)"),
-                                    ], # Contrats = postes occupés par la personne sur la structure
+                                    ], # Contrats = postes occupÃ©s par la personne sur la structure
 
     "contrats_class":       [("IDclassification", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID de la classification du poste"),
                                     ("nom", "VARCHAR(200)", u"Classification", u"Nom de la classification du poste"),
@@ -99,29 +99,29 @@ DB_DATA = {
 
     "contrats_types":       [("IDtype", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID du type de contrat"),
                                     ("nom", "VARCHAR(300)", u"Type de contrat", u"Nom du type de contrat"),
-                                    ("nom_abrege", "VARCHAR(10)", u"Type de contrat", u"Nom abrégé du type de contrat"),
-                                    ("duree_indeterminee", "VARCHAR(3)", u"Durée indéterminée", u"Type de contrat à durée indéterminée (oui/non)"),
-                                    ], # Type de contrat = "CEE", "CDD", "CDI", "Convention de bénévolat"...
+                                    ("nom_abrege", "VARCHAR(10)", u"Type de contrat", u"Nom abrÃ©gÃ© du type de contrat"),
+                                    ("duree_indeterminee", "VARCHAR(3)", u"DurÃ©e indÃ©terminÃ©e", u"Type de contrat Ã  durÃ©e indÃ©terminÃ©e (oui/non)"),
+                                    ], # Type de contrat = "CEE", "CDD", "CDI", "Convention de bÃ©nÃ©volat"...
 
     "valeurs_point":        [("IDvaleur_point", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID de la valeur du point"),
                                     ("valeur", "REAL", u"Valeur du point", u"Valeur du point"),
-                                    ("date_debut", "DATE", u"Date de début de validité", u"Date de début de validité de la valeur du point"),
+                                    ("date_debut", "DATE", u"Date de dÃ©but de validitÃ©", u"Date de dÃ©but de validitÃ© de la valeur du point"),
                                     ], # Valeur actuel du point... Apparait dans Contrats
 
-    "contrats_modeles": [ ("IDmodele", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID du modèle de contrat"),
-                                    ("nom", "VARCHAR(300)", u"Nom", u"Nom du modèle de contrat"),
-                                    ("description", "VARCHAR(400)", u"Description", u"Description du modèle de contrat"),
+    "contrats_modeles": [ ("IDmodele", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID du modÃ¨le de contrat"),
+                                    ("nom", "VARCHAR(300)", u"Nom", u"Nom du modÃ¨le de contrat"),
+                                    ("description", "VARCHAR(400)", u"Description", u"Description du modÃ¨le de contrat"),
                                     ("IDclassification", "INTEGER", u"IDclassification", u"Classification du contrat"),
                                     ("IDtype", "INTEGER", u"IDtype", u"ID du type de contrat"),
-                                    ], # Modèles de contrats.
+                                    ], # ModÃ¨les de contrats.
 
     "contrats_champs":  [ ("IDchamp", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID du champ"),
                                     ("nom", "VARCHAR(300)", u"Nom", u"Nom du champ"),
                                     ("description", "VARCHAR(400)", u"Description", u"Description du champ"),
-                                    ("mot_cle", "VARCHAR(50)", u"Mot-clé", u"Mot-clé pour le publipostage"),
-                                    ("defaut", "VARCHAR(800)", u"Valeur par défaut", u"Valeur par défaut du champ"),
+                                    ("mot_cle", "VARCHAR(50)", u"Mot-clÃ©", u"Mot-clÃ© pour le publipostage"),
+                                    ("defaut", "VARCHAR(800)", u"Valeur par dÃ©faut", u"Valeur par dÃ©faut du champ"),
                                     ("exemple", "VARCHAR(200)", u"Exemple", u"Exemple de valeur pour ce champ"),
-                                    ], # Champs personnalisés pour les contrats.
+                                    ], # Champs personnalisÃ©s pour les contrats.
 
     "contrats_valchamps":  [ ("IDval_champ", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID de la valeur du champ"),
                                     ("IDchamp", "INTEGER", u"IDchamp", u"ID du champ"),
@@ -129,82 +129,82 @@ DB_DATA = {
                                     ("IDcontrat", "INTEGER", u"IDcontrat", u"ID du contrat"),
                                     ("IDmodele", "INTEGER", u"IDmodele", u"ID du modele"),
                                     ("valeur", "VARCHAR(800)", u"Description", u"Description du champ"),
-                                    ], # Valeurs des champs pour les contrats et les modèles de contrats.
+                                    ], # Valeurs des champs pour les contrats et les modÃ¨les de contrats.
                                                                         
     "presences":[           ("IDpresence", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID de la presence"),
                                     ("IDpersonne", "INTEGER", u"IDpersonne", u"ID de la personne"),
-                                    ("date", "DATE", u"DATE", u"Date de la présence"),
-                                    ("heure_debut", "DATE", u"Heure de début", u"Heure de début"),
+                                    ("date", "DATE", u"DATE", u"Date de la prÃ©sence"),
+                                    ("heure_debut", "DATE", u"Heure de dÃ©but", u"Heure de dÃ©but"),
                                     ("heure_fin", "DATE", u"Heure de fin", u"Heure de fin"),
-                                    ("IDcategorie", "INTEGER", u"Catégorie", u"Catégorie du travail effectué"),
-                                    ("intitule", "VARCHAR(200)", u"Intitulé", u"Intitulé du travail effectué"),
-                                    ], # Présences du personnel
+                                    ("IDcategorie", "INTEGER", u"CatÃ©gorie", u"CatÃ©gorie du travail effectuÃ©"),
+                                    ("intitule", "VARCHAR(200)", u"IntitulÃ©", u"IntitulÃ© du travail effectuÃ©"),
+                                    ], # PrÃ©sences du personnel
 
-    "cat_presences":[       ("IDcategorie", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID de la catégorie de présence"),
-                                    ("nom_categorie", "VARCHAR(200)", u"Catégorie", u"Nom de la catégorie de la présence"),
-                                    ("IDcat_parent", "INTEGER", u"ID de la catégorie parente", u"ID de la catégorie parente"),
-                                    ("ordre", "INTEGER", u"Ordre", u"Ordre dans l'arborescence des catégories"),
-                                    ("couleur", "VARCHAR(30)", u"Couleur", u"Couleur de la catégorie"),
-                                    ], # Catégories de présences. Ex : "Réunion", "Congés payés"... Apparait dans Présences
+    "cat_presences":[       ("IDcategorie", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID de la catÃ©gorie de prÃ©sence"),
+                                    ("nom_categorie", "VARCHAR(200)", u"CatÃ©gorie", u"Nom de la catÃ©gorie de la prÃ©sence"),
+                                    ("IDcat_parent", "INTEGER", u"ID de la catÃ©gorie parente", u"ID de la catÃ©gorie parente"),
+                                    ("ordre", "INTEGER", u"Ordre", u"Ordre dans l'arborescence des catÃ©gories"),
+                                    ("couleur", "VARCHAR(30)", u"Couleur", u"Couleur de la catÃ©gorie"),
+                                    ], # CatÃ©gories de prÃ©sences. Ex : "RÃ©union", "CongÃ©s payÃ©s"... Apparait dans PrÃ©sences
 
     "periodes_vacances":[     ("IDperiode", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID periode vacances"),
-                                    ("nom", "VARCHAR(100)", "Nom de la période", u"Nom de la période de vacances"),
-                                    ("annee", "VARCHAR(4)", "Année de la période", u"Année de la période de vacances"),
-                                    ("date_debut", "DATE", "Date de début", u"Date de début"),
+                                    ("nom", "VARCHAR(100)", "Nom de la pÃ©riode", u"Nom de la pÃ©riode de vacances"),
+                                    ("annee", "VARCHAR(4)", "AnnÃ©e de la pÃ©riode", u"AnnÃ©e de la pÃ©riode de vacances"),
+                                    ("date_debut", "DATE", "Date de dÃ©but", u"Date de dÃ©but"),
                                     ("date_fin", "DATE", "Date de fin", u"Date de fin"),
                                     ], # Calendrier des jours de vacances
 
-    "jours_feries":[             ("IDferie", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID jour férié"),
-                                    ("type", "VARCHAR(10)", "Type", u"Type de jour férié : fixe ou variable"),
-                                    ("nom", "VARCHAR(100)", "Nom du jour férié", u"Nom du jour férié"),
+    "jours_feries":[             ("IDferie", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID jour fÃ©riÃ©"),
+                                    ("type", "VARCHAR(10)", "Type", u"Type de jour fÃ©riÃ© : fixe ou variable"),
+                                    ("nom", "VARCHAR(100)", "Nom du jour fÃ©riÃ©", u"Nom du jour fÃ©riÃ©"),
                                     ("jour", "INTEGER", "Jour de la date", u"Jour de la date"),
                                     ("mois", "INTEGER", "Mois de la date", u"Mois de la date"),
-                                    ("annee", "INTEGER", "Année de la date", u"Année de la date"),
-                                    ], # Calendrier des jours fériés variables et fixes
+                                    ("annee", "INTEGER", "AnnÃ©e de la date", u"AnnÃ©e de la date"),
+                                    ], # Calendrier des jours fÃ©riÃ©s variables et fixes
 
-    "modeles_planning":[    ("IDmodele", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID modèle de planning"),
-                                    ("nom", "VARCHAR(300)", u"Nom", u"Nom du modèle"),
-                                    ("type", "VARCHAR(5)", u"Type", u"Type de modèle"),
-                                    ("description", "VARCHAR(400)", u"Description", u"Description du modèle"),
-                                    ("periodes", "VARCHAR(3)", u"Périodes", u"Périodes d'application du modèle"),
-                                    ("inclureferies", "INTEGER", u"Inclure Fériés", u"Inclure les jours fériés"),
-                                    ], # Modèles de planning
+    "modeles_planning":[    ("IDmodele", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID modÃ¨le de planning"),
+                                    ("nom", "VARCHAR(300)", u"Nom", u"Nom du modÃ¨le"),
+                                    ("type", "VARCHAR(5)", u"Type", u"Type de modÃ¨le"),
+                                    ("description", "VARCHAR(400)", u"Description", u"Description du modÃ¨le"),
+                                    ("periodes", "VARCHAR(3)", u"PÃ©riodes", u"PÃ©riodes d'application du modÃ¨le"),
+                                    ("inclureferies", "INTEGER", u"Inclure FÃ©riÃ©s", u"Inclure les jours fÃ©riÃ©s"),
+                                    ], # ModÃ¨les de planning
 
-    "modeles_taches":[      ("IDtache", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID tâche modèle"),
-                                    ("IDmodele", "INTEGER", u"IDmodèle", u"ID modèle rattaché"),
-                                    ("type", "VARCHAR(5)", u"Type", u"Type de modèle"),
-                                    ("periode", "INTEGER", u"Période", u"Période d'application de la tâche"),
+    "modeles_taches":[      ("IDtache", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID tÃ¢che modÃ¨le"),
+                                    ("IDmodele", "INTEGER", u"IDmodÃ¨le", u"ID modÃ¨le rattachÃ©"),
+                                    ("type", "VARCHAR(5)", u"Type", u"Type de modÃ¨le"),
+                                    ("periode", "INTEGER", u"PÃ©riode", u"PÃ©riode d'application de la tÃ¢che"),
                                     ("jour", "INTEGER", u"Jour", u"Jour d'application"),
-                                    ("heure_debut", "DATE", u"Heure de début", u"Heure de début"),
+                                    ("heure_debut", "DATE", u"Heure de dÃ©but", u"Heure de dÃ©but"),
                                     ("heure_fin", "DATE", u"Heure de fin", u"Heure de fin"),
-                                    ("IDcategorie", "INTEGER", u"Catégorie", u"Catégorie de la tâche"),
-                                    ("intitule", "VARCHAR(200)", u"Intitulé", u"Intitulé de la tâche"),
-                                    ], # Tâches pour les Modèles de planning
+                                    ("IDcategorie", "INTEGER", u"CatÃ©gorie", u"CatÃ©gorie de la tÃ¢che"),
+                                    ("intitule", "VARCHAR(200)", u"IntitulÃ©", u"IntitulÃ© de la tÃ¢che"),
+                                    ], # TÃ¢ches pour les ModÃ¨les de planning
 
     "due_valeurs":[          ("IDvaleur", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"IDvaleur"),
                                     ("code", "VARCHAR(50)", u"Code", u"Code d'identification du champ"),
                                     ("valeur", "VARCHAR(200)", u"Valeur", u"Valeur du champ"),
-                                    ], # Valeurs sauvegardées pour le document DUE.
+                                    ], # Valeurs sauvegardÃ©es pour le document DUE.
 
     "pays":[                    ("IDpays", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID pays"),
-                                    ("code_drapeau", "VARCHAR(50)", u"Code drapeau", u"Code drapeau associé"),
+                                    ("code_drapeau", "VARCHAR(50)", u"Code drapeau", u"Code drapeau associÃ©"),
                                     ("nom", "VARCHAR(100)", u"Nom", u"Nom du pays"),
-                                    ("nationalite", "VARCHAR(100)", u"Nationalité", u"Nationalité correspondante"),
-                                    ], # Liste des pays, drapeaux et nationalités
+                                    ("nationalite", "VARCHAR(100)", u"NationalitÃ©", u"NationalitÃ© correspondante"),
+                                    ], # Liste des pays, drapeaux et nationalitÃ©s
                                     
     "divers":[                   ("IDdivers", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID divers"),
                                     ("motdepasse", "VARCHAR(50)", u"Mot de passe", u"Mot de passe du fichier"),
-                                    ("date_derniere_ouverture", "DATE", u"Date", u"Date de dernière ouverture du fichier"),
-                                    ("date_creation_fichier", "DATE", u"Date", u"Date de création du fichier"),
-                                    ("version_DB", "INTEGER", u"Version", u"Version de la base de données"),
-                                    ("save_active", "INTEGER", u"Activation", u"Sauvegarde autom. activée (1/0)"),
-                                    ("save_frequence", "INTEGER", u"Fréquence", u"Fréquence des sauvegardes auto."),
+                                    ("date_derniere_ouverture", "DATE", u"Date", u"Date de derniÃ¨re ouverture du fichier"),
+                                    ("date_creation_fichier", "DATE", u"Date", u"Date de crÃ©ation du fichier"),
+                                    ("version_DB", "INTEGER", u"Version", u"Version de la base de donnÃ©es"),
+                                    ("save_active", "INTEGER", u"Activation", u"Sauvegarde autom. activÃ©e (1/0)"),
+                                    ("save_frequence", "INTEGER", u"FrÃ©quence", u"FrÃ©quence des sauvegardes auto."),
                                     ("save_elements", "VARCHAR(500)", u"Elements", u"Elements des sauvegardes auto."),
-                                    ("save_destination", "VARCHAR(500)", u"Destination", u"Répertoire de destination des sauvegardes auto."),
-                                    ("save_conservation", "INTEGER", u"Conservation", u"Nbre exemplaires conservés des sauvegardes auto."),
-                                    ("save_date_derniere", "DATE", u"Date dernière", u"Date de la dernière sauvegarde"),
+                                    ("save_destination", "VARCHAR(500)", u"Destination", u"RÃ©pertoire de destination des sauvegardes auto."),
+                                    ("save_conservation", "INTEGER", u"Conservation", u"Nbre exemplaires conservÃ©s des sauvegardes auto."),
+                                    ("save_date_derniere", "DATE", u"Date derniÃ¨re", u"Date de la derniÃ¨re sauvegarde"),
                                     ("codeIDfichier", "VARCHAR(20)", u"ID fichier", u"Identifiant unique de fichier"),
-                                    ], # Données diverses
+                                    ], # DonnÃ©es diverses
 
 
     "gadgets":[                ("IDgadget", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID gadget"),
@@ -213,86 +213,86 @@ DB_DATA = {
                                     ("description", "VARCHAR(400)", u"Description", u"Description du gadget"),
                                     ("taille", "VARCHAR(50)", u"Taille", u"Taille du gadget"),
                                     ("affichage", "VARCHAR(5)", u"Affichage(True/False)", u"Affichage du gadget"),
-                                    ("ordre", "INTEGER", u"Ordre", u"Numéro d'ordre d'affichage"),
+                                    ("ordre", "INTEGER", u"Ordre", u"NumÃ©ro d'ordre d'affichage"),
                                     ("config", "VARCHAR(5)", u"config(True/False)", u"config(True/False)"),
-                                    ("parametres", "VARCHAR(500)", u"Paramètres", u"Paramètres du gadget"),
-                                    ], # Paramètres des gadgets de la page d'accueil
+                                    ("parametres", "VARCHAR(500)", u"ParamÃ¨tres", u"ParamÃ¨tres du gadget"),
+                                    ], # ParamÃ¨tres des gadgets de la page d'accueil
 
 
     "parametres":[           ("IDparametre", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID parametre"),
-                                    ("categorie", "VARCHAR(100)", u"Catégorie", u"Catégorie"),
+                                    ("categorie", "VARCHAR(100)", u"CatÃ©gorie", u"CatÃ©gorie"),
                                     ("nom", "VARCHAR(100)", u"Nom", u"Nom"),
                                     ("parametre", "VARCHAR(300)", u"Parametre", u"Parametre"),
-                                    ], # Paramètres divers
+                                    ], # ParamÃ¨tres divers
 
 
     "distances":[              ("IDdistance", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID distance"),
-                                    ("cp_depart", "VARCHAR(5)", u"CP départ", u"CP de la ville de départ"),
-                                    ("ville_depart", "VARCHAR(200)", u"Ville départ", u"Nom de la ville de départ"),
-                                    ("cp_arrivee", "VARCHAR(5)", u"CP arrivée", u"CP de la ville d'arrivée"),
-                                    ("ville_arrivee", "VARCHAR(200)", u"Ville arrivée", u"Nom de la ville d'arrivée"),
+                                    ("cp_depart", "VARCHAR(5)", u"CP dÃ©part", u"CP de la ville de dÃ©part"),
+                                    ("ville_depart", "VARCHAR(200)", u"Ville dÃ©part", u"Nom de la ville de dÃ©part"),
+                                    ("cp_arrivee", "VARCHAR(5)", u"CP arrivÃ©e", u"CP de la ville d'arrivÃ©e"),
+                                    ("ville_arrivee", "VARCHAR(200)", u"Ville arrivÃ©e", u"Nom de la ville d'arrivÃ©e"),
                                     ("distance", "FLOAT", u"Distance", u"Distance en Km"),
-                                    ], # Liste des distances entre les villes pour les frais de déplacements
+                                    ], # Liste des distances entre les villes pour les frais de dÃ©placements
 
-    "deplacements":[       ("IDdeplacement", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID déplacement"),
+    "deplacements":[       ("IDdeplacement", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID dÃ©placement"),
                                     ("IDpersonne", "INTEGER", u"IDpersonne", u"ID de la personne"),
-                                    ("date", "DATE", u"Date", u"Date du déplacement"),
-                                    ("objet", "VARCHAR(100)", u"Objet", u"Objet du déplacement"),
-                                    ("cp_depart", "VARCHAR(5)", u"CP départ", u"CP de la ville de départ"),
-                                    ("ville_depart", "VARCHAR(200)", u"Ville départ", u"Nom de la ville de départ"),
-                                    ("cp_arrivee", "VARCHAR(5)", u"CP arrivée", u"CP de la ville d'arrivée"),
-                                    ("ville_arrivee", "VARCHAR(200)", u"Ville arrivée", u"Nom de la ville d'arrivée"),
+                                    ("date", "DATE", u"Date", u"Date du dÃ©placement"),
+                                    ("objet", "VARCHAR(100)", u"Objet", u"Objet du dÃ©placement"),
+                                    ("cp_depart", "VARCHAR(5)", u"CP dÃ©part", u"CP de la ville de dÃ©part"),
+                                    ("ville_depart", "VARCHAR(200)", u"Ville dÃ©part", u"Nom de la ville de dÃ©part"),
+                                    ("cp_arrivee", "VARCHAR(5)", u"CP arrivÃ©e", u"CP de la ville d'arrivÃ©e"),
+                                    ("ville_arrivee", "VARCHAR(200)", u"Ville arrivÃ©e", u"Nom de la ville d'arrivÃ©e"),
                                     ("distance", "FLOAT", u"Distance", u"Distance en Km"),
                                     ("aller_retour", "VARCHAR(5)", u"Aller_retour(True/False)", u"Aller_retour(True/False)"),
                                     ("tarif_km", "FLOAT", u"Tarif du Km", u"Tarif du Km en euros"),
                                     ("IDremboursement", "INTEGER", u"IDremboursement", u"ID du remboursement"),
-                                    ], # Liste des déplacements
+                                    ], # Liste des dÃ©placements
 
     "remboursements":[    ("IDremboursement", "INTEGER PRIMARY KEY AUTOINCREMENT", u"IDremboursement", u"ID remboursement"),
                                     ("IDpersonne", "INTEGER", u"IDpersonne", u"ID de la personne"),
                                     ("date", "DATE", u"Date", u"Date du remboursement"),
                                     ("montant", "FLOAT", u"Montant", u"Montant total du remboursement"),
-                                    ("listeIDdeplacement", "VARCHAR(300)", u"Déplacements", u"Liste des IDdeplacements"),
-                                    ], # Liste des remboursements de frais de déplacements
+                                    ("listeIDdeplacement", "VARCHAR(300)", u"DÃ©placements", u"Liste des IDdeplacements"),
+                                    ], # Liste des remboursements de frais de dÃ©placements
 
     "scenarios":[             ("IDscenario", "INTEGER PRIMARY KEY AUTOINCREMENT", u"IDscenario", u"ID scenario"),
                                     ("IDpersonne", "INTEGER", u"IDpersonne", u"ID de la personne"),
-                                    ("nom", "VARCHAR(200)", u"Nom", u"Nom du scénario"),
-                                    ("description", "VARCHAR(400)", u"Description", u"Description du scénario"),
-                                    ("mode_heure", "INTEGER", u"Mode", u"Mode (heure/décimal)"),
-                                    ("detail_mois", "INTEGER", u"Détail mois", u"Détail répartition par mois"),
-                                    ("date_debut", "DATE", u"Date début", u"Date de début de période"),
-                                    ("date_fin", "DATE", u"Date fin", u"Date de fin de période"),
-                                    ("toutes_categories", "INTEGER", u"Inclure toutes catégories", u"Inclure toutes catégories"),
-                                    ], # Liste des scénarios
+                                    ("nom", "VARCHAR(200)", u"Nom", u"Nom du scÃ©nario"),
+                                    ("description", "VARCHAR(400)", u"Description", u"Description du scÃ©nario"),
+                                    ("mode_heure", "INTEGER", u"Mode", u"Mode (heure/dÃ©cimal)"),
+                                    ("detail_mois", "INTEGER", u"DÃ©tail mois", u"DÃ©tail rÃ©partition par mois"),
+                                    ("date_debut", "DATE", u"Date dÃ©but", u"Date de dÃ©but de pÃ©riode"),
+                                    ("date_fin", "DATE", u"Date fin", u"Date de fin de pÃ©riode"),
+                                    ("toutes_categories", "INTEGER", u"Inclure toutes catÃ©gories", u"Inclure toutes catÃ©gories"),
+                                    ], # Liste des scÃ©narios
 
-    "scenarios_cat":[       ("IDscenario_cat", "INTEGER PRIMARY KEY AUTOINCREMENT", u"IDscenario_cat", u"ID scenario catégorie"),
+    "scenarios_cat":[       ("IDscenario_cat", "INTEGER PRIMARY KEY AUTOINCREMENT", u"IDscenario_cat", u"ID scenario catÃ©gorie"),
                                     ("IDscenario", "INTEGER", u"IDscenario", u"IDscenario"),
                                     ("IDcategorie", "INTEGER", u"IDcategorie", u"IDcategorie"),
-                                    ("prevision", "VARCHAR(50)", u"Prévision", u"Prévision"),
+                                    ("prevision", "VARCHAR(50)", u"PrÃ©vision", u"PrÃ©vision"),
                                     ("report", "VARCHAR(50)", u"Report", u"Report"),
-                                    ("date_debut_realise", "DATE", u"Date début Réalisé", u"Date de début de période Réalisé"),
-                                    ("date_fin_realise", "DATE", u"Date fin Réalisé", u"Date de fin de période Réalisé"),
-                                    ], # Liste des catégories de scénarios
+                                    ("date_debut_realise", "DATE", u"Date dÃ©but RÃ©alisÃ©", u"Date de dÃ©but de pÃ©riode RÃ©alisÃ©"),
+                                    ("date_fin_realise", "DATE", u"Date fin RÃ©alisÃ©", u"Date de fin de pÃ©riode RÃ©alisÃ©"),
+                                    ], # Liste des catÃ©gories de scÃ©narios
 
     "candidats":[             ("IDcandidat", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID du candidat"),
-                                    ("civilite", "VARCHAR(5)", u"Civilité", u"Civilité du candidat"),
+                                    ("civilite", "VARCHAR(5)", u"CivilitÃ©", u"CivilitÃ© du candidat"),
                                     ("nom", "VARCHAR(100)", u"Nom", u"Nom de famille de la candidate"),
-                                    ("prenom", "VARCHAR(100)", u"Prénom", u"Prénom du candidat"),
+                                    ("prenom", "VARCHAR(100)", u"PrÃ©nom", u"PrÃ©nom du candidat"),
                                     ("date_naiss", "DATE", u"Date de naissance", u"Date de naissance du candidat"),
                                     ("age", "INTEGER", u"Age", u"Age du candidat si date de naissance inconnue"),
                                     ("adresse_resid", "VARCHAR(200)", "Adresse", u"Adresse du candidat"),
                                     ("cp_resid", "INTEGER", u"Code postal", u"Code postal du candidat"),
                                     ("ville_resid", "VARCHAR(200)", u"Ville", u"Ville du candidat"),
-                                    ("memo", "VARCHAR(300)", u"Mémo", u"Mémo sur la personne"),
-                                    ], # Données sur les candidats
+                                    ("memo", "VARCHAR(300)", u"MÃ©mo", u"MÃ©mo sur la personne"),
+                                    ], # DonnÃ©es sur les candidats
 
-    "coords_candidats":[  ("IDcoord", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID de la coordonnée"),
+    "coords_candidats":[  ("IDcoord", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID de la coordonnÃ©e"),
                                     ("IDcandidat", "INTEGER", u"IDcandidat", u"ID du candidat"),
-                                    ("categorie", "VARCHAR(50)", u"Catégorie", u"Catégorie"),
+                                    ("categorie", "VARCHAR(50)", u"CatÃ©gorie", u"CatÃ©gorie"),
                                     ("texte", "VARCHAR(50)", u"Texte", u"Texte"),
-                                    ("intitule", "VARCHAR(200)", u"Intitulé", u"Intitulé"),
-                                    ], # Liste des coordonnées du candidat
+                                    ("intitule", "VARCHAR(200)", u"IntitulÃ©", u"IntitulÃ©"),
+                                    ], # Liste des coordonnÃ©es du candidat
 
     "diplomes_candidats":[("IDdiplome", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID du diplome"),
                                     ("IDcandidat", "INTEGER", u"IDcandidat", u"ID du candidat"),
@@ -301,7 +301,7 @@ DB_DATA = {
 
     "entretiens":[             ("IDentretien", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID de l'entretien"),
                                     ("IDcandidat", "INTEGER", u"IDcandidat", u"ID du candidat"),
-                                    ("IDpersonne", "INTEGER", u"IDpersonne", u"ID du salarié"),
+                                    ("IDpersonne", "INTEGER", u"IDpersonne", u"ID du salariÃ©"),
                                     ("date", "DATE", u"Date de l'entretien", u"Date de l'entretien"),
                                     ("heure", "DATE", u"Heure", u"Heure de l'entretien"),
                                     ("avis", "INTEGER", u"Avis", u"Avis sur l'entretien"),
@@ -310,60 +310,60 @@ DB_DATA = {
 
     "disponibilites":[         ("IDdisponibilite", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID de la disponibilite"),
                                     ("IDcandidature", "INTEGER", u"IDcandidature", u"ID de la candidature"),
-                                    ("date_debut", "DATE", u"DATE", u"Date de début"),
+                                    ("date_debut", "DATE", u"DATE", u"Date de dÃ©but"),
                                     ("date_fin", "DATE", u"DATE", u"Date de fin"),
-                                    ], # Liste des disponibilités du candidat
+                                    ], # Liste des disponibilitÃ©s du candidat
                                     
     "fonctions":[              ("IDfonction", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID de la fonction"),
                                     ("fonction", "VARCHAR(500)", u"Fonction", u"Fonction candidat"),
-                                    ], # Liste des fonctions demandées par les candidats
+                                    ], # Liste des fonctions demandÃ©es par les candidats
 
     "affectations":[          ("IDaffectation", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID de l'affectation"),
                                     ("affectation", "VARCHAR(500)", u"Affectation", u"Affectation candidat"),
-                                    ], # Liste des affectations demandées par les candidats
+                                    ], # Liste des affectations demandÃ©es par les candidats
 
     "candidatures":[         ("IDcandidature", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID de la candidature"),
                                     ("IDcandidat", "INTEGER", u"IDcandidat", u"ID du candidat"),
-                                    ("IDpersonne", "INTEGER", u"IDpersonne", u"ID du salarié"),
+                                    ("IDpersonne", "INTEGER", u"IDpersonne", u"ID du salariÃ©"),
                                     ("date_depot", "DATE", u"Date de la candidature", u"Date de la candidature"),
                                     ("IDtype", "INTEGER", u"IDtype", u"ID du type de candidature"),
-                                    ("acte_remarques", "VARCHAR(500)", u"Remarques", u"Remarques sur le dépôt de candidature"),
+                                    ("acte_remarques", "VARCHAR(500)", u"Remarques", u"Remarques sur le dÃ©pÃ´t de candidature"),
                                     ("IDemploi", "INTEGER", u"IDemploi", u"ID de l'emploi"),
-                                    ("periodes_remarques", "VARCHAR(500)", u"Remarques", u"Remarques sur les disponibilités"),
+                                    ("periodes_remarques", "VARCHAR(500)", u"Remarques", u"Remarques sur les disponibilitÃ©s"),
                                     ("poste_remarques", "VARCHAR(500)", u"Remarques", u"Remarques sur le poste de la candidature"),
-                                    ("IDdecision", "INTEGER", u"IDdecision", u"ID de la décision"),
-                                    ("decision_remarques", "VARCHAR(500)", u"Remarques", u"Remarques sur la décision"),
-                                    ("reponse_obligatoire", "INTEGER", u"Reponse obligatoire", u"Réponse obligatoire (0 ou 1)"),
-                                    ("reponse", "INTEGER", u"Reponse", u"Réponse de la candidature (0 ou 1)"),
-                                    ("date_reponse", "DATE", u"Date de la réponse", u"Date de la réponse"),
-                                    ("IDtype_reponse", "INTEGER", u"IDtype", u"ID du type de réponse"),
+                                    ("IDdecision", "INTEGER", u"IDdecision", u"ID de la dÃ©cision"),
+                                    ("decision_remarques", "VARCHAR(500)", u"Remarques", u"Remarques sur la dÃ©cision"),
+                                    ("reponse_obligatoire", "INTEGER", u"Reponse obligatoire", u"RÃ©ponse obligatoire (0 ou 1)"),
+                                    ("reponse", "INTEGER", u"Reponse", u"RÃ©ponse de la candidature (0 ou 1)"),
+                                    ("date_reponse", "DATE", u"Date de la rÃ©ponse", u"Date de la rÃ©ponse"),
+                                    ("IDtype_reponse", "INTEGER", u"IDtype", u"ID du type de rÃ©ponse"),
                                     ], # Liste des candidatures du candidat
                                     
     "cand_fonctions":[      ("IDcand_fonction", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID"),
                                     ("IDcandidature", "INTEGER", u"ID", u"ID de la candidature"),
                                     ("IDfonction", "INTEGER", u"ID", u"ID de la fonction"),
-                                    ], # Liste des fonctions demandées par les candidats
+                                    ], # Liste des fonctions demandÃ©es par les candidats
 
     "cand_affectations":[  ("IDcand_affectation", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID"),
                                     ("IDcandidature", "INTEGER", u"ID", u"ID de la candidature"),
                                     ("IDaffectation", "INTEGER", u"ID", u"ID de l'affectation"),
-                                    ], # Liste des affectations demandées par les candidats
+                                    ], # Liste des affectations demandÃ©es par les candidats
 
     "emplois":[                ("IDemploi", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID de l'emploi"),
-                                    ("date_debut", "DATE", u"Date début", u"Date de début de recrutement"),
+                                    ("date_debut", "DATE", u"Date dÃ©but", u"Date de dÃ©but de recrutement"),
                                     ("date_fin", "DATE", u"Date fin", u"Date de fin de recrutement"),
-                                    ("intitule", "VARCHAR(300)", u"Intitulé", u"Intitulé de l'offre d'emploi"),
-                                    ("detail", "VARCHAR(800)", u"Détail", u"Détail de l'offre d'emploi"),
-                                    ("reference_anpe", "VARCHAR(100)", u"Référence", u"Référence ANPE"),
-                                    ("periodes_remarques", "VARCHAR(300)", u"Remarques", u"Remarques sur les disponibilités"),
+                                    ("intitule", "VARCHAR(300)", u"IntitulÃ©", u"IntitulÃ© de l'offre d'emploi"),
+                                    ("detail", "VARCHAR(800)", u"DÃ©tail", u"DÃ©tail de l'offre d'emploi"),
+                                    ("reference_anpe", "VARCHAR(100)", u"RÃ©fÃ©rence", u"RÃ©fÃ©rence ANPE"),
+                                    ("periodes_remarques", "VARCHAR(300)", u"Remarques", u"Remarques sur les disponibilitÃ©s"),
                                     ("poste_remarques", "VARCHAR(300)", u"Remarques", u"Remarques sur le poste"),
                                     ], # Liste des offres d'emploi
 
     "emplois_dispo":[       ("IDdisponibilite", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID de la disponibilite"),
                                     ("IDemploi", "INTEGER", u"IDemploi", u"ID de l'emploi"),
-                                    ("date_debut", "DATE", u"DATE", u"Date de début"),
+                                    ("date_debut", "DATE", u"DATE", u"Date de dÃ©but"),
                                     ("date_fin", "DATE", u"DATE", u"Date de fin"),
-                                    ], # Liste des disponibilités d'une offre d'emploi
+                                    ], # Liste des disponibilitÃ©s d'une offre d'emploi
 
     "emplois_fonctions":[  ("IDemploi_fonction", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID"),
                                     ("IDemploi", "INTEGER", u"IDemploi", u"ID de l'emploi"),
@@ -378,112 +378,112 @@ DB_DATA = {
     "emplois_diffuseurs":[ ("IDemploi_diffuseur", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID"),
                                     ("IDemploi", "INTEGER", u"IDemploi", u"ID de l'emploi"),
                                     ("IDdiffuseur", "INTEGER", u"ID", u"ID du diffuseur"),
-                                    ], # Liste des diffuseurs utilisés pour un offre d'emploi
+                                    ], # Liste des diffuseurs utilisÃ©s pour un offre d'emploi
 
     "diffuseurs":[              ("IDdiffuseur", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID du diffuseur"),
                                     ("diffuseur", "VARCHAR(400)", u"Diffuseur", u"Diffuseur"),
                                     ], # Liste des diffuseurs d'offres d'emploi
 
     "publipostage_champs":  [ ("IDchamp", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID du champ"),
-                                    ("categorie", "VARCHAR(200)", u"Catégorie", u"Catégorie du champ"),
+                                    ("categorie", "VARCHAR(200)", u"CatÃ©gorie", u"CatÃ©gorie du champ"),
                                     ("nom", "VARCHAR(200)", u"Nom", u"Nom du champ"),
                                     ("description", "VARCHAR(400)", u"Description", u"Description du champ"),
-                                    ("mot_cle", "VARCHAR(50)", u"Mot-clé", u"Mot-clé pour le publipostage"),
-                                    ("defaut", "VARCHAR(400)", u"Valeur par défaut", u"Valeur par défaut du champ"),
+                                    ("mot_cle", "VARCHAR(50)", u"Mot-clÃ©", u"Mot-clÃ© pour le publipostage"),
+                                    ("defaut", "VARCHAR(400)", u"Valeur par dÃ©faut", u"Valeur par dÃ©faut du champ"),
                                     ("exemple", "VARCHAR(100)", u"Exemple", u"Exemple de valeur pour ce champ"),
-                                    ], # Champs personnalisés pour le publipostage.
+                                    ], # Champs personnalisÃ©s pour le publipostage.
 
     "adresses_mail": [("IDadresse", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID"),
                       ("adresse", "VARCHAR(200)", u"Adresse de messagerie"),
                       ("nom_adresse", "VARCHAR(200)", u"Nom d'affichage de l'adresse de messagerie"),
                       ("motdepasse", "VARCHAR(200)", u"Mot de passe si SSL"),
                       ("smtp", "VARCHAR(200)", u"Adresse SMTP"),
-                      ("port", "INTEGER", u"Numéro du port"),
-                      ("connexionssl", "INTEGER", u"Connexion ssl (1/0) - N'est plus utilisé !"),
-                      ("defaut", "INTEGER", u"Adresse utilisée par défaut (1/0)"),
-                      ("connexionAuthentifiee", "INTEGER", u"Authentification activée (1/0)"),
-                      ("startTLS", "INTEGER", u"startTLS activé (1/0)"),
+                      ("port", "INTEGER", u"NumÃ©ro du port"),
+                      ("connexionssl", "INTEGER", u"Connexion ssl (1/0) - N'est plus utilisÃ© !"),
+                      ("defaut", "INTEGER", u"Adresse utilisÃ©e par dÃ©faut (1/0)"),
+                      ("connexionAuthentifiee", "INTEGER", u"Authentification activÃ©e (1/0)"),
+                      ("startTLS", "INTEGER", u"startTLS activÃ© (1/0)"),
                       ("utilisateur", "VARCHAR(200)", u"Nom d'utilisateur"),
                       ("moteur", "VARCHAR(200)", u"Moteur d'envoi"),
-                      ("parametres", "VARCHAR(1000)", u"Autres paramètres"),
-                      ], # Adresses d'expéditeur de mail
+                      ("parametres", "VARCHAR(1000)", u"Autres paramÃ¨tres"),
+                      ], # Adresses d'expÃ©diteur de mail
 
     "questionnaire_categories": [("IDcategorie", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID"),
                             ("ordre", "INTEGER", u"Ordre"),
                             ("visible", "INTEGER", u"Visible (0/1)"),
                             ("type", "VARCHAR(100)", u"Individu ou Famille"),
-                            ("couleur", "VARCHAR(100)", u"Couleur de la catégorie"),
+                            ("couleur", "VARCHAR(100)", u"Couleur de la catÃ©gorie"),
                             ("label", "VARCHAR(400)", u"Label de la question"),
-                            ], # Catégories des questionnaires
+                            ], # CatÃ©gories des questionnaires
 
     "questionnaire_questions": [("IDquestion", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID"),
-                                    ("IDcategorie", "INTEGER", u"ID de la catégorie"),
+                                    ("IDcategorie", "INTEGER", u"ID de la catÃ©gorie"),
                                     ("ordre", "INTEGER", u"Ordre"),
                                     ("visible", "INTEGER", u"Visible (0/1)"),
                                     ("label", "VARCHAR(400)", u"Label de la question"),
-                                    ("controle", "VARCHAR(200)", u"Nom du contrôle"),
-                                    ("defaut", "VARCHAR(400)", u"Valeur par défaut"),
+                                    ("controle", "VARCHAR(200)", u"Nom du contrÃ´le"),
+                                    ("defaut", "VARCHAR(400)", u"Valeur par dÃ©faut"),
                                     ("options", "VARCHAR(400)", u"Options de la question"),
                                     ], # Questions des questionnaires
 
     "questionnaire_choix": [("IDchoix", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID"),
-                                    ("IDquestion", "INTEGER", u"ID de la question rattachée"),
+                                    ("IDquestion", "INTEGER", u"ID de la question rattachÃ©e"),
                                     ("ordre", "INTEGER", u"Ordre"),
                                     ("visible", "INTEGER", u"Visible (0/1)"),
                                     ("label", "VARCHAR(400)", u"Label de la question"),
-                                    ], # Choix de réponses des questionnaires
+                                    ], # Choix de rÃ©ponses des questionnaires
 
     "questionnaire_reponses": [("IDreponse", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID"),
-                                    ("IDquestion", "INTEGER", u"ID de la question rattachée"),
-                                    ("IDindividu", "INTEGER", u"ID de l'individu rattaché"),
-                                    ("reponse", "VARCHAR(400)", u"Réponse"),
-                                    ], # Réponses des questionnaires
+                                    ("IDquestion", "INTEGER", u"ID de la question rattachÃ©e"),
+                                    ("IDindividu", "INTEGER", u"ID de l'individu rattachÃ©"),
+                                    ("reponse", "VARCHAR(400)", u"RÃ©ponse"),
+                                    ], # RÃ©ponses des questionnaires
 
     "profils":                  [("IDprofil", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID Profil"),
                                 ("label", "VARCHAR(400)", u"Nom de profil"),
-                                ("categorie", "VARCHAR(200)", u"Catégorie du profil"),
-                                ("defaut", "INTEGER", u"(0/1) Profil sélectionné par défaut"),
-                                ],  # Profils de paramètres
+                                ("categorie", "VARCHAR(200)", u"CatÃ©gorie du profil"),
+                                ("defaut", "INTEGER", u"(0/1) Profil sÃ©lectionnÃ© par dÃ©faut"),
+                                ],  # Profils de paramÃ¨tres
 
     "profils_parametres": [("IDparametre", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID parametre"),
                            ("IDprofil", "INTEGER", u"ID du profil"),
                            ("nom", "VARCHAR(200)", u"Nom"),
                            ("parametre", "VARCHAR(30000)", u"Parametre"),
-                           ("type_donnee", "VARCHAR(200)", u"Type de données"),
-                           ],  # Paramètres des profils
+                           ("type_donnee", "VARCHAR(200)", u"Type de donnÃ©es"),
+                           ],  # ParamÃ¨tres des profils
 
     "sauvegardes_auto": [("IDsauvegarde", "INTEGER PRIMARY KEY AUTOINCREMENT", u"IDsauvegarde"),
-                         ("nom", "VARCHAR(455)", u"Nom de la procédure de sauvegarde auto"),
+                         ("nom", "VARCHAR(455)", u"Nom de la procÃ©dure de sauvegarde auto"),
                          ("observations", "VARCHAR(455)", u"Observations"),
-                         ("date_derniere", "DATE", u"Date de la dernière sauvegarde"),
+                         ("date_derniere", "DATE", u"Date de la derniÃ¨re sauvegarde"),
                          ("sauvegarde_nom", "VARCHAR(455)", u"Sauvegarde Nom"),
                          ("sauvegarde_motdepasse", "VARCHAR(455)", u"Sauvegarde mot de passe"),
-                         ("sauvegarde_repertoire", "VARCHAR(455)", u"sauvegarde Répertoire"),
+                         ("sauvegarde_repertoire", "VARCHAR(455)", u"sauvegarde RÃ©pertoire"),
                          ("sauvegarde_emails", "VARCHAR(455)", u"Sauvegarde Emails"),
                          ("sauvegarde_fichiers_locaux", "VARCHAR(455)", u"Sauvegarde fichiers locaux"),
-                         ("sauvegarde_fichiers_reseau", "VARCHAR(455)", u"Sauvegarde fichiers réseau"),
-                         ("sauvegarde_modeles", "INTEGER", u"Sauvegarde des modèles"),
-                         ("sauvegarde_editions", "INTEGER", u"Sauvegarde des éditions"),
+                         ("sauvegarde_fichiers_reseau", "VARCHAR(455)", u"Sauvegarde fichiers rÃ©seau"),
+                         ("sauvegarde_modeles", "INTEGER", u"Sauvegarde des modÃ¨les"),
+                         ("sauvegarde_editions", "INTEGER", u"Sauvegarde des Ã©ditions"),
                          ("condition_jours_scolaires", "VARCHAR(455)", u"Condition Jours scolaires"),
                          ("condition_jours_vacances", "VARCHAR(455)", u"Condition Jours vacances"),
                          ("condition_heure", "VARCHAR(455)", u"Condition Heure"),
                          ("condition_poste", "VARCHAR(455)", u"Condition Poste"),
-                         ("condition_derniere", "VARCHAR(455)", u"Condition Date dernière sauvegarde"),
+                         ("condition_derniere", "VARCHAR(455)", u"Condition Date derniÃ¨re sauvegarde"),
                          ("condition_utilisateur", "VARCHAR(455)", u"Condition Utilisateur"),
                          ("option_afficher_interface", "VARCHAR(455)", u"Option Afficher interface (0/1)"),
                          ("option_demander", "VARCHAR(455)", u"Option Demander (0/1)"),
                          ("option_confirmation", "VARCHAR(455)", u"Option Confirmation (0/1)"),
-                         ("option_suppression", "VARCHAR(455)", u"Option Suppression sauvegardes obsolètes"),
-                         ], # procédures de sauvegardes automatiques
+                         ("option_suppression", "VARCHAR(455)", u"Option Suppression sauvegardes obsolÃ¨tes"),
+                         ], # procÃ©dures de sauvegardes automatiques
 
     "modeles_emails": [("IDmodele", "INTEGER PRIMARY KEY AUTOINCREMENT", u"IDmodele"),
-                       ("categorie", "VARCHAR(455)", u"Catégorie du modèle"), ("nom", "VARCHAR(455)", u"Nom du modèle"),
-                       ("description", "VARCHAR(455)", u"Description du modèle"),
+                       ("categorie", "VARCHAR(455)", u"CatÃ©gorie du modÃ¨le"), ("nom", "VARCHAR(455)", u"Nom du modÃ¨le"),
+                       ("description", "VARCHAR(455)", u"Description du modÃ¨le"),
                        ("objet", "VARCHAR(455)", u"Texte objet du mail"),
                        ("texte_xml", "VARCHAR(50000)", u"Contenu du texte version XML"),
-                       ("IDadresse", "INTEGER", u"IDadresse d'expédition de mails"),
-                       ("defaut", "INTEGER", u"Modèle par défaut (0/1)"),
-                       ], # Modèles d'Emails
+                       ("IDadresse", "INTEGER", u"IDadresse d'expÃ©dition de mails"),
+                       ("defaut", "INTEGER", u"ModÃ¨le par dÃ©faut (0/1)"),
+                       ], # ModÃ¨les d'Emails
 
 
 
@@ -505,8 +505,8 @@ DB_PHOTOS = {
 DB_DOCUMENTS = {
 
     "documents":[            ("IDdocument", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID du document"),
-                                    ("IDpiece", "INTEGER", u"ID de la pièce"),
-                                    ("IDreponse", "INTEGER", u"ID de la réponse du Questionnaire"),
+                                    ("IDpiece", "INTEGER", u"ID de la piÃ¨ce"),
+                                    ("IDreponse", "INTEGER", u"ID de la rÃ©ponse du Questionnaire"),
                                     ("document", "LONGBLOB", u"Document converti en binaire"),
                                     ("type", "VARCHAR(50)", u"Type de document : jpeg, pdf..."),
                                     ("label", "VARCHAR(400)", u"Label du document"),
@@ -515,7 +515,7 @@ DB_DOCUMENTS = {
     }
 
 # ---------------------------------------------------------------------------
-# Teamworks-CCNS : socle coeur CCNS branché dans la base Teamworks existante
+# Teamworks-CCNS : socle coeur CCNS branchÃ© dans la base Teamworks existante
 # ---------------------------------------------------------------------------
 
 DB_DATA.update({
@@ -523,7 +523,7 @@ DB_DATA.update({
     "tw_people": [
         ("IDtw_person", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID Teamworks-CCNS personne"),
         ("code_interne", "VARCHAR(50)", u"Code interne", u"Code interne de la personne"),
-        ("nom_affiche", "VARCHAR(200)", u"Nom affiché", u"Nom affiché"),
+        ("nom_affiche", "VARCHAR(200)", u"Nom affichÃ©", u"Nom affichÃ©"),
         ("date_naissance", "DATE", u"Date naissance", u"Date de naissance"),
         ("actif", "INTEGER", u"Actif", u"Personne active (1/0)"),
     ],
@@ -532,8 +532,8 @@ DB_DATA.update({
         ("IDtw_legal_profile", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID du profil juridique"),
         ("IDtw_person", "INTEGER", u"ID personne", u"ID Teamworks-CCNS personne"),
         ("est_mineur", "INTEGER", u"Mineur", u"Mineur (1/0)"),
-        ("age_group", "VARCHAR(20)", u"Groupe d'âge", u"Groupe d'âge"),
-        ("work_regime", "VARCHAR(100)", u"Régime", u"Régime de travail"),
+        ("age_group", "VARCHAR(20)", u"Groupe d'Ã¢ge", u"Groupe d'Ã¢ge"),
+        ("work_regime", "VARCHAR(100)", u"RÃ©gime", u"RÃ©gime de travail"),
         ("convention_frame", "VARCHAR(100)", u"Cadre conventionnel", u"Cadre conventionnel"),
         ("training_time_included", "INTEGER", u"Temps formation inclus", u"Temps de formation inclus"),
         ("contract_hours_basis", "REAL", u"Base heures contrat", u"Base heures contrat"),
@@ -542,42 +542,42 @@ DB_DATA.update({
     "tw_contract_types": [
         ("IDtw_contract_type", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID type contrat"),
         ("code", "VARCHAR(30)", u"Code", u"Code du type de contrat"),
-        ("label", "VARCHAR(200)", u"Libellé", u"Libellé du type de contrat"),
+        ("label", "VARCHAR(200)", u"LibellÃ©", u"LibellÃ© du type de contrat"),
     ],
 
     "tw_employment_regimes": [
-        ("IDtw_employment_regime", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID régime"),
-        ("code", "VARCHAR(50)", u"Code", u"Code du régime d'emploi"),
-        ("label", "VARCHAR(200)", u"Libellé", u"Libellé du régime d'emploi"),
+        ("IDtw_employment_regime", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID rÃ©gime"),
+        ("code", "VARCHAR(50)", u"Code", u"Code du rÃ©gime d'emploi"),
+        ("label", "VARCHAR(200)", u"LibellÃ©", u"LibellÃ© du rÃ©gime d'emploi"),
     ],
 
     "tw_time_organizations": [
         ("IDtw_time_organization", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID organisation"),
         ("code", "VARCHAR(50)", u"Code", u"Code organisation temps"),
-        ("label", "VARCHAR(200)", u"Libellé", u"Libellé organisation temps"),
+        ("label", "VARCHAR(200)", u"LibellÃ©", u"LibellÃ© organisation temps"),
     ],
 
     "tw_contracts": [
         ("IDtw_contract", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID contrat Teamworks-CCNS"),
         ("IDtw_person", "INTEGER", u"ID personne", u"ID Teamworks-CCNS personne"),
         ("IDtw_contract_type", "INTEGER", u"ID type", u"ID type de contrat"),
-        ("IDtw_employment_regime", "INTEGER", u"ID régime", u"ID régime d'emploi"),
+        ("IDtw_employment_regime", "INTEGER", u"ID rÃ©gime", u"ID rÃ©gime d'emploi"),
         ("IDtw_time_organization", "INTEGER", u"ID organisation", u"ID organisation temps"),
         ("classification_code", "VARCHAR(30)", u"Classification", u"Code classification"),
         ("salary_grid_code", "VARCHAR(50)", u"Grille", u"Code grille salariale"),
-        ("date_debut", "DATE", u"Début", u"Date de début"),
+        ("date_debut", "DATE", u"DÃ©but", u"Date de dÃ©but"),
         ("date_fin", "DATE", u"Fin", u"Date de fin"),
-        ("heures_hebdo_reference", "REAL", u"Heures hebdo", u"Heures hebdo de référence"),
-        ("quotite", "REAL", u"Quotité", u"Quotité de travail"),
+        ("heures_hebdo_reference", "REAL", u"Heures hebdo", u"Heures hebdo de rÃ©fÃ©rence"),
+        ("quotite", "REAL", u"QuotitÃ©", u"QuotitÃ© de travail"),
         ("salaire_base", "REAL", u"Salaire base", u"Salaire de base"),
-        ("unite_salaire", "VARCHAR(20)", u"Unité salaire", u"Unité du salaire"),
+        ("unite_salaire", "VARCHAR(20)", u"UnitÃ© salaire", u"UnitÃ© du salaire"),
         ("statut_contrat", "VARCHAR(30)", u"Statut", u"Statut du contrat"),
     ],
 
     "tw_ccns_classifications": [
         ("IDtw_classification", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID classification"),
         ("code", "VARCHAR(30)", u"Code", u"Code classification"),
-        ("label", "VARCHAR(200)", u"Libellé", u"Libellé classification"),
+        ("label", "VARCHAR(200)", u"LibellÃ©", u"LibellÃ© classification"),
         ("family", "VARCHAR(100)", u"Famille", u"Famille"),
         ("level", "VARCHAR(100)", u"Niveau", u"Niveau"),
         ("effective_date", "DATE", u"Date effet", u"Date d'effet"),
@@ -588,7 +588,7 @@ DB_DATA.update({
     "tw_salary_grids": [
         ("IDtw_salary_grid", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID grille"),
         ("code", "VARCHAR(50)", u"Code", u"Code grille"),
-        ("label", "VARCHAR(200)", u"Libellé", u"Libellé grille"),
+        ("label", "VARCHAR(200)", u"LibellÃ©", u"LibellÃ© grille"),
         ("convention_code", "VARCHAR(30)", u"Convention", u"Convention"),
         ("effective_date", "DATE", u"Date effet", u"Date d'effet"),
         ("end_date", "DATE", u"Date fin", u"Date de fin"),
@@ -602,39 +602,39 @@ DB_DATA.update({
         ("classification_code", "VARCHAR(30)", u"Classification", u"Code classification"),
         ("minimum_type", "VARCHAR(30)", u"Type minimum", u"Type de minimum"),
         ("amount", "REAL", u"Montant", u"Montant"),
-        ("unit", "VARCHAR(20)", u"Unité", u"Unité"),
-        ("age_min", "INTEGER", u"Âge min", u"Âge minimum"),
-        ("age_max", "INTEGER", u"Âge max", u"Âge maximum"),
-        ("execution_year_min", "INTEGER", u"Année exécution min", u"Année d'exécution min"),
-        ("execution_year_max", "INTEGER", u"Année exécution max", u"Année d'exécution max"),
+        ("unit", "VARCHAR(20)", u"UnitÃ©", u"UnitÃ©"),
+        ("age_min", "INTEGER", u"Ã‚ge min", u"Ã‚ge minimum"),
+        ("age_max", "INTEGER", u"Ã‚ge max", u"Ã‚ge maximum"),
+        ("execution_year_min", "INTEGER", u"AnnÃ©e exÃ©cution min", u"AnnÃ©e d'exÃ©cution min"),
+        ("execution_year_max", "INTEGER", u"AnnÃ©e exÃ©cution max", u"AnnÃ©e d'exÃ©cution max"),
         ("notes", "VARCHAR(400)", u"Notes", u"Notes"),
     ],
 
     "tw_calculation_rules": [
-        ("IDtw_rule", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID règle"),
-        ("code", "VARCHAR(50)", u"Code", u"Code règle"),
-        ("label", "VARCHAR(250)", u"Libellé", u"Libellé règle"),
-        ("family", "VARCHAR(50)", u"Famille", u"Famille règle"),
+        ("IDtw_rule", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID rÃ¨gle"),
+        ("code", "VARCHAR(50)", u"Code", u"Code rÃ¨gle"),
+        ("label", "VARCHAR(250)", u"LibellÃ©", u"LibellÃ© rÃ¨gle"),
+        ("family", "VARCHAR(50)", u"Famille", u"Famille rÃ¨gle"),
         ("context", "VARCHAR(50)", u"Contexte", u"Contexte"),
         ("target_object", "VARCHAR(50)", u"Cible", u"Cible"),
         ("effective_date", "DATE", u"Date effet", u"Date d'effet"),
         ("end_date", "DATE", u"Date fin", u"Date de fin"),
-        ("priority", "INTEGER", u"Priorité", u"Priorité"),
+        ("priority", "INTEGER", u"PrioritÃ©", u"PrioritÃ©"),
         ("active", "INTEGER", u"Actif", u"Actif"),
-        ("parameters_json", "VARCHAR(4000)", u"Paramètres", u"Paramètres JSON"),
+        ("parameters_json", "VARCHAR(4000)", u"ParamÃ¨tres", u"ParamÃ¨tres JSON"),
     ],
 
     "tw_calculation_results": [
-        ("IDtw_result", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID résultat"),
+        ("IDtw_result", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID rÃ©sultat"),
         ("object_type", "VARCHAR(50)", u"Type objet", u"Type objet"),
         ("object_id", "VARCHAR(50)", u"ID objet", u"ID objet"),
         ("person_id", "VARCHAR(50)", u"ID personne", u"ID personne"),
         ("contract_id", "VARCHAR(50)", u"ID contrat", u"ID contrat"),
         ("assignment_id", "VARCHAR(50)", u"ID affectation", u"ID affectation"),
-        ("rule_code", "VARCHAR(50)", u"Code règle", u"Code règle"),
+        ("rule_code", "VARCHAR(50)", u"Code rÃ¨gle", u"Code rÃ¨gle"),
         ("calculation_date", "DATE", u"Date calcul", u"Date calcul"),
-        ("actual_value", "REAL", u"Valeur réelle", u"Valeur réelle"),
-        ("theoretical_value", "REAL", u"Valeur théorique", u"Valeur théorique"),
+        ("actual_value", "REAL", u"Valeur rÃ©elle", u"Valeur rÃ©elle"),
+        ("theoretical_value", "REAL", u"Valeur thÃ©orique", u"Valeur thÃ©orique"),
         ("gap", "REAL", u"Ecart", u"Ecart"),
         ("status", "VARCHAR(30)", u"Statut", u"Statut"),
         ("message", "VARCHAR(500)", u"Message", u"Message lisible"),
@@ -650,8 +650,8 @@ DB_DATA.update({
         ("level", "VARCHAR(20)", u"Niveau", u"Niveau"),
         ("code", "VARCHAR(50)", u"Code", u"Code anomalie"),
         ("message", "VARCHAR(500)", u"Message", u"Message"),
-        ("detection_date", "DATE", u"Date détection", u"Date détection"),
-        ("resolved", "INTEGER", u"Résolue", u"Résolue"),
+        ("detection_date", "DATE", u"Date dÃ©tection", u"Date dÃ©tection"),
+        ("resolved", "INTEGER", u"RÃ©solue", u"RÃ©solue"),
     ],
 
     "tw_individual_counters": [
@@ -660,7 +660,7 @@ DB_DATA.update({
         ("contract_id", "VARCHAR(50)", u"ID contrat", u"ID contrat"),
         ("counter_code", "VARCHAR(50)", u"Code compteur", u"Code compteur"),
         ("value", "REAL", u"Valeur", u"Valeur"),
-        ("unit", "VARCHAR(20)", u"Unité", u"Unité"),
+        ("unit", "VARCHAR(20)", u"UnitÃ©", u"UnitÃ©"),
         ("calculation_date", "DATE", u"Date calcul", u"Date calcul"),
     ],
 

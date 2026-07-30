@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -37,7 +37,7 @@ class Panel(wx.Panel):
         self.IDpersonne = IDpersonne
 
         # Widgets
-        self.staticBox_deplacements = wx.StaticBox(self, -1, _(u"Déplacements"))
+        self.staticBox_deplacements = wx.StaticBox(self, -1, _(u"DÃ©placements"))
         self.ctrl_deplacements = ListCtrl_deplacements(self, -1)
         self.ctrl_deplacements.SetMinSize((20, 20))
         self.bouton_deplacements_ajouter = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_PNG))
@@ -67,19 +67,19 @@ class Panel(wx.Panel):
         
 
     def __set_properties(self):
-        self.bouton_deplacements_ajouter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour saisir un nouveau déplacement")))
+        self.bouton_deplacements_ajouter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour saisir un nouveau dÃ©placement")))
         self.bouton_deplacements_ajouter.SetSize(self.bouton_deplacements_ajouter.GetBestSize())
-        self.bouton_deplacements_modifier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier le déplacement sélectionné dans la liste")))
+        self.bouton_deplacements_modifier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier le dÃ©placement sÃ©lectionnÃ© dans la liste")))
         self.bouton_deplacements_modifier.SetSize(self.bouton_deplacements_modifier.GetBestSize())
-        self.bouton_deplacements_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer le déplacement sélectionné dans la liste")))
+        self.bouton_deplacements_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer le dÃ©placement sÃ©lectionnÃ© dans la liste")))
         self.bouton_deplacements_supprimer.SetSize(self.bouton_deplacements_supprimer.GetBestSize())
-        self.bouton_deplacements_imprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour imprimer une fiche de frais de déplacement")))
+        self.bouton_deplacements_imprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour imprimer une fiche de frais de dÃ©placement")))
         
         self.bouton_remboursements_ajouter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour saisir un nouveau remboursement")))
         self.bouton_remboursements_ajouter.SetSize(self.bouton_remboursements_ajouter.GetBestSize())
-        self.bouton_remboursements_modifier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier le remboursement sélectionné dans la liste")))
+        self.bouton_remboursements_modifier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier le remboursement sÃ©lectionnÃ© dans la liste")))
         self.bouton_remboursements_modifier.SetSize(self.bouton_remboursements_modifier.GetBestSize())
-        self.bouton_remboursements_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer le remboursement sélectionné dans la liste")))
+        self.bouton_remboursements_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer le remboursement sÃ©lectionnÃ© dans la liste")))
         self.bouton_remboursements_supprimer.SetSize(self.bouton_remboursements_supprimer.GetBestSize())
 
 
@@ -87,7 +87,7 @@ class Panel(wx.Panel):
         grid_sizer_base = wx.FlexGridSizer(rows=2, cols=1, vgap=10, hgap=10)
         
         # --------------
-        # Déplacements
+        # DÃ©placements
         staticBox_deplacements = wx.StaticBoxSizer(self.staticBox_deplacements, wx.VERTICAL)
         grid_sizer_deplacements = wx.FlexGridSizer(rows=2, cols=2, vgap=5, hgap=5)
         grid_sizer_deplacements.Add(self.ctrl_deplacements, 1, wx.EXPAND, 0)
@@ -130,7 +130,7 @@ class Panel(wx.Panel):
         # ---------------
 
     def MAJ_frm_gestion_frais(self):
-        """ Met à jour le listCtrl de la frame gestion des frais si elle est ouverte """
+        """ Met Ã  jour le listCtrl de la frame gestion des frais si elle est ouverte """
         try :
             if self.GetGrandParent().GetName() == "frm_gestion_frais" :
                 self.GetGrandParent().ctrl_personnes.MAJListeCtrl()
@@ -140,7 +140,7 @@ class Panel(wx.Panel):
 
     def OnBoutonAjoutDeplacement(self, event):
         if self.IDpersonne == None : 
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sélectionner une personne dans la liste"), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÃ©lectionner une personne dans la liste"), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -160,7 +160,7 @@ class Panel(wx.Panel):
 
     def OnBoutonModifDeplacement(self, event):
         if self.IDpersonne == None : 
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sélectionner une personne dans la liste"), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÃ©lectionner une personne dans la liste"), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -168,10 +168,10 @@ class Panel(wx.Panel):
         event.Skip()
 
     def ModifierDeplacement(self):
-        """ Modification de coordonnées """
+        """ Modification de coordonnÃ©es """
         index = self.ctrl_deplacements.GetFirstSelected()
         if index == -1:
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sélectionner un déplacement à modifier dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÃ©lectionner un dÃ©placement Ã  modifier dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -189,7 +189,7 @@ class Panel(wx.Panel):
 
     def OnBoutonSupprDeplacement(self, event):
         if self.IDpersonne == None : 
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sélectionner une personne dans la liste"), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÃ©lectionner une personne dans la liste"), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -197,19 +197,19 @@ class Panel(wx.Panel):
         event.Skip()
         
     def SupprimerDeplacement(self):
-        """ Suppression d'une coordonnée """
+        """ Suppression d'une coordonnÃ©e """
         index = self.ctrl_deplacements.GetFirstSelected()
 
-        # Vérifie qu'un item a bien été sélectionné
+        # VÃ©rifie qu'un item a bien Ã©tÃ© sÃ©lectionnÃ©
         if index == -1:
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sélectionner un déplacement à supprimer dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÃ©lectionner un dÃ©placement Ã  supprimer dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
         
         IDdeplacement = int(self.ctrl_deplacements.GetItem(index, 0).GetText())
         
-        # Vérifie que le déplacement n'est pas attribué à un remboursement :
+        # VÃ©rifie que le dÃ©placement n'est pas attribuÃ© Ã  un remboursement :
         DB = GestionDB.DB()        
         req = """SELECT IDdeplacement, IDremboursement FROM deplacements WHERE IDdeplacement=%d; """ % IDdeplacement
         DB.ExecuterReq(req)
@@ -221,14 +221,14 @@ class Panel(wx.Panel):
                 dejaAttribue = IDremboursement
                 break
         if dejaAttribue != None : 
-            dlg = wx.MessageDialog(self, _(u"Ce déplacement a déjà été attribué au remboursement n°") + str(dejaAttribue) + _(u".\nVous ne pouvez donc pas le supprimer."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Ce dÃ©placement a dÃ©jÃ  Ã©tÃ© attribuÃ© au remboursement nÂ°") + str(dejaAttribue) + _(u".\nVous ne pouvez donc pas le supprimer."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
         
         # Demande de confirmation
         texte = self.ctrl_deplacements.GetItem(index, 3).GetText() + "\nLe " + self.ctrl_deplacements.GetItem(index, 1).GetText()
-        txtMessage = six.text_type((_(u"Voulez-vous vraiment supprimer ce déplacement ? \n\n") + texte))
+        txtMessage = six.text_type((_(u"Voulez-vous vraiment supprimer ce dÃ©placement ? \n\n") + texte))
         dlgConfirm = wx.MessageDialog(self, txtMessage, _(u"Confirmation de suppression"), wx.YES_NO|wx.NO_DEFAULT|wx.ICON_QUESTION)
         reponse = dlgConfirm.ShowModal()
         dlgConfirm.Destroy()
@@ -240,7 +240,7 @@ class Panel(wx.Panel):
         DB.ReqDEL("deplacements", "IDdeplacement", IDdeplacement)
         DB.Close()
 
-        # MàJ du listCtrl de la fiche individuelle
+        # MÃ J du listCtrl de la fiche individuelle
         self.ctrl_deplacements.MAJListeCtrl()
         self.ctrl_remboursements.MAJListeCtrl()
         
@@ -251,13 +251,13 @@ class Panel(wx.Panel):
     def OnBoutonImprimerDeplacement(self, event):
         """ Impression """
         if self.IDpersonne == None : 
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sélectionner une personne dans la liste"), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÃ©lectionner une personne dans la liste"), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
-        # Vérifie qu'il existe des déplacements
+        # VÃ©rifie qu'il existe des dÃ©placements
         if self.ctrl_deplacements.GetItemCount() == 0 :
-            dlg = wx.MessageDialog(self, _(u"Il n'y a aucun déplacement à imprimer pour cette personne."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Il n'y a aucun dÃ©placement Ã  imprimer pour cette personne."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -273,7 +273,7 @@ class Panel(wx.Panel):
 
     def OnBoutonAjoutRemboursement(self, event):
         if self.IDpersonne == None : 
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sélectionner une personne dans la liste"), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÃ©lectionner une personne dans la liste"), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -293,7 +293,7 @@ class Panel(wx.Panel):
 
     def OnBoutonModifRemboursement(self, event):
         if self.IDpersonne == None : 
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sélectionner une personne dans la liste"), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÃ©lectionner une personne dans la liste"), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -301,10 +301,10 @@ class Panel(wx.Panel):
         event.Skip()
 
     def ModifierRemboursement(self):
-        """ Modification de coordonnées """
+        """ Modification de coordonnÃ©es """
         index = self.ctrl_remboursements.GetFirstSelected()
         if index == -1:
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sélectionner un remboursement à modifier dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÃ©lectionner un remboursement Ã  modifier dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -322,7 +322,7 @@ class Panel(wx.Panel):
 
     def OnBoutonSupprRemboursement(self, event):
         if self.IDpersonne == None : 
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sélectionner une personne dans la liste"), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÃ©lectionner une personne dans la liste"), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -333,16 +333,16 @@ class Panel(wx.Panel):
         """ Suppression d'un remboursement """
         index = self.ctrl_remboursements.GetFirstSelected()
 
-        # Vérifie qu'un item a bien été sélectionné
+        # VÃ©rifie qu'un item a bien Ã©tÃ© sÃ©lectionnÃ©
         if index == -1:
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sélectionner un remboursement à supprimer dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÃ©lectionner un remboursement Ã  supprimer dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
         
         IDremboursement = int(self.ctrl_remboursements.GetItem(index, 1).GetText())
         
-        # Vérifie si des déplacements ont déjà été attachés à ce remboursement
+        # VÃ©rifie si des dÃ©placements ont dÃ©jÃ  Ã©tÃ© attachÃ©s Ã  ce remboursement
         DB = GestionDB.DB()        
         req = """SELECT IDdeplacement FROM deplacements WHERE IDremboursement=%d; """ % IDremboursement
         DB.ExecuterReq(req)
@@ -350,7 +350,7 @@ class Panel(wx.Panel):
         DB.Close()
         nbreRattaches = len(listeDeplacements)
         if nbreRattaches != 0 : 
-            txtMessage = _(u"Ce remboursement possède déjà ") + str(nbreRattaches) + _(u" déplacement(s) rattaché(s).\nSouhaitez-vous vous quand même le supprimer ?")
+            txtMessage = _(u"Ce remboursement possÃ¨de dÃ©jÃ  ") + str(nbreRattaches) + _(u" dÃ©placement(s) rattachÃ©(s).\nSouhaitez-vous vous quand mÃªme le supprimer ?")
             dlgConfirm = wx.MessageDialog(self, txtMessage, _(u"Confirmation de suppression"), wx.YES_NO|wx.NO_DEFAULT|wx.ICON_QUESTION)
             reponse = dlgConfirm.ShowModal()
             dlgConfirm.Destroy()
@@ -371,7 +371,7 @@ class Panel(wx.Panel):
         DB = GestionDB.DB()
         DB.ReqDEL("remboursements", "IDremboursement", IDremboursement)
         
-        # Modification du IDdeplacement de chaque déplacement rattaché
+        # Modification du IDdeplacement de chaque dÃ©placement rattachÃ©
         DB = GestionDB.DB()
         for donnees in listeDeplacements :
             IDdeplacement = donnees[0]
@@ -380,7 +380,7 @@ class Panel(wx.Panel):
         DB.Commit()
         DB.Close()
 
-        # MàJ du listCtrl de la fiche individuelle
+        # MÃ J du listCtrl de la fiche individuelle
         self.ctrl_deplacements.MAJListeCtrl()
         self.ctrl_remboursements.MAJListeCtrl()
         
@@ -422,12 +422,12 @@ class ListCtrl_deplacements(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix
 
     def Remplissage(self):
         
-        # Récupération des données dans la base de données
+        # RÃ©cupÃ©ration des donnÃ©es dans la base de donnÃ©es
         self.Importation()
         
-        # Création des colonnes
+        # CrÃ©ation des colonnes
         self.nbreColonnes = 8
-        self.InsertColumn(0, u"N°")
+        self.InsertColumn(0, u"NÂ°")
         self.SetColumnWidth(0, 50)
         self.InsertColumn(1, _(u"Date"))
         self.SetColumnWidth(1, 80)
@@ -466,14 +466,14 @@ class ListCtrl_deplacements(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix
         self.parent.bouton_deplacements_supprimer.Enable(False)
         
     def Importation(self):
-        # Récupération des données
+        # RÃ©cupÃ©ration des donnÃ©es
         DB = GestionDB.DB()        
         req = """SELECT IDdeplacement, date, objet, ville_depart, ville_arrivee, distance, aller_retour, tarif_km, IDremboursement FROM deplacements WHERE IDpersonne=%d ORDER BY date; """ % self.IDpersonne
         DB.ExecuterReq(req)
         listeDonnees = DB.ResultatReq()
         DB.Close()
         self.nbreLignes = len(listeDonnees)
-        # Création du dictionnaire de données
+        # CrÃ©ation du dictionnaire de donnÃ©es
         self.donnees = {}
         index = 0
         for IDdeplacement, date, objet, ville_depart, ville_arrivee, distance, aller_retour, tarif_km, IDremboursement in listeDonnees :
@@ -484,16 +484,16 @@ class ListCtrl_deplacements(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix
                 trajet = ville_depart + " -> " + ville_arrivee
             # Formatage Remboursement
             if IDremboursement != None and IDremboursement != 0 and IDremboursement != "" :
-                remboursement = u"N°" + str(IDremboursement)
+                remboursement = u"NÂ°" + str(IDremboursement)
             else :
                 remboursement = ""
             # Formatage distance
             dist = str(distance) + _(u" Km")
             # Formatage montant
             montant = float(distance) * float(tarif_km)
-            montantStr = u"%.2f ¤" % montant
+            montantStr = u"%.2f â‚¬" % montant
             # Formatage tarif/Km
-            tarif_km = str(tarif_km) + _(u" ¤/km")
+            tarif_km = str(tarif_km) + _(u" â‚¬/km")
             self.donnees[IDdeplacement] = (IDdeplacement, date, objet, trajet, dist, tarif_km, montantStr, remboursement)
             index += 1
             
@@ -518,14 +518,14 @@ class ListCtrl_deplacements(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix
         """ Affichage des valeurs dans chaque case du ListCtrl """
         index=self.itemIndexMap[item]
         valeur = six.text_type(self.itemDataMap[index][col])
-        # Reformate une valeur date en version française
+        # Reformate une valeur date en version franÃ§aise
         if col == 1 :
             if valeur[4:5]=="-" and valeur[7:8]=="-":
                 valeur = str(valeur[8:10])+"/"+str(valeur[5:7])+"/"+str(valeur[0:4])
         return valeur
 
     def OnGetItemImage(self, item):
-        """ Affichage des images en début de ligne """
+        """ Affichage des images en dÃ©but de ligne """
         index=self.itemIndexMap[item]
         valeur =self.itemDataMap[index][7]
         if valeur == "" :
@@ -535,7 +535,7 @@ class ListCtrl_deplacements(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix
 
     def OnGetItemAttr(self, item):
         """ Application d'une couleur de fond pour une ligne sur deux """
-        # Création d'une ligne de couleur 1 ligne sur 2
+        # CrÃ©ation d'une ligne de couleur 1 ligne sur 2
         if item % 2 == 1:
             return self.attr1
         else:
@@ -572,7 +572,7 @@ class ListCtrl_deplacements(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix
         index = self.GetFirstSelected()
         key = int(self.getColumnText(index, 0))
         
-        # Création du menu contextuel
+        # CrÃ©ation du menu contextuel
         menuPop = UTILS_Adaptations.Menu()
 
         # Item Modifier
@@ -645,20 +645,20 @@ class ListCtrl_remboursements(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listm
 
     def Remplissage(self):
         
-        # Récupération des données dans la base de données
+        # RÃ©cupÃ©ration des donnÃ©es dans la base de donnÃ©es
         self.Importation()
         
-        # Création des colonnes
+        # CrÃ©ation des colonnes
         self.nbreColonnes = 5
         self.InsertColumn(0, u"")
         self.SetColumnWidth(0, 0)
-        self.InsertColumn(1, u"N°")
+        self.InsertColumn(1, u"NÂ°")
         self.SetColumnWidth(1, 30)
         self.InsertColumn(2, _(u"Date"))
         self.SetColumnWidth(2, 80)
         self.InsertColumn(3, _(u"Montant"))
         self.SetColumnWidth(3, 70) 
-        self.InsertColumn(4, _(u"Déplacements rattachés"))
+        self.InsertColumn(4, _(u"DÃ©placements rattachÃ©s"))
         self.SetColumnWidth(4, 200)   
 
         #These two should probably be passed to init more cleanly
@@ -683,19 +683,19 @@ class ListCtrl_remboursements(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listm
         self.parent.bouton_remboursements_supprimer.Enable(False)
         
     def Importation(self):
-        # Récupération des données
+        # RÃ©cupÃ©ration des donnÃ©es
         DB = GestionDB.DB()        
         req = """SELECT IDremboursement, date, montant, listeIDdeplacement FROM remboursements WHERE IDpersonne=%d ORDER BY date; """ % self.IDpersonne
         DB.ExecuterReq(req)
         listeDonnees = DB.ResultatReq()
         DB.Close()
         self.nbreLignes = len(listeDonnees)
-        # Création du dictionnaire de données
+        # CrÃ©ation du dictionnaire de donnÃ©es
         self.donnees = {}
         index = 0
         for IDremboursement, date, montant, listeIDdeplacement in listeDonnees :
             # Formatage montant
-            montant = u"%.2f ¤" % montant
+            montant = u"%.2f â‚¬" % montant
             # Formatage liste IDdeplacement
             listeID = []
             if isinstance(listeIDdeplacement, int):
@@ -707,9 +707,9 @@ class ListCtrl_remboursements(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listm
                 if "-" in listeIDdeplacement:
                     listeID = listeIDdeplacement.split("-")
             if not listeID or listeID[0] == "" :
-                texteListeID = _(u"Aucun déplacement rattaché")
+                texteListeID = _(u"Aucun dÃ©placement rattachÃ©")
             else :
-                texteListeID = u"N° " + ", ".join([str(x) for x in listeID])
+                texteListeID = u"NÂ° " + ", ".join([str(x) for x in listeID])
             self.donnees[IDremboursement] = ("", IDremboursement, date, montant, texteListeID)
             index += 1
             
@@ -732,14 +732,14 @@ class ListCtrl_remboursements(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listm
     # "virtualness" of the list...
 
     def OnGetItemImage(self, item):
-        """ Affichage des images en début de ligne """
+        """ Affichage des images en dÃ©but de ligne """
         return -1
 
     def OnGetItemText(self, item, col):
         """ Affichage des valeurs dans chaque case du ListCtrl """
         index = self.itemIndexMap[item]
         valeur = six.text_type(self.itemDataMap[index][col])
-        # Reformate une valeur date en version française
+        # Reformate une valeur date en version franÃ§aise
         if col == 2 :
             if valeur[4:5]=="-" and valeur[7:8]=="-":
                 valeur = str(valeur[8:10])+"/"+str(valeur[5:7])+"/"+str(valeur[0:4])
@@ -747,7 +747,7 @@ class ListCtrl_remboursements(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listm
     
     def OnGetItemAttr(self, item):
         """ Application d'une couleur de fond pour une ligne sur deux """
-        # Création d'une ligne de couleur 1 ligne sur 2
+        # CrÃ©ation d'une ligne de couleur 1 ligne sur 2
         if item % 2 == 1:
             return self.attr1
         else:
@@ -784,7 +784,7 @@ class ListCtrl_remboursements(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listm
         index = self.GetFirstSelected()
         key = int(self.getColumnText(index, 1))
         
-        # Création du menu contextuel
+        # CrÃ©ation du menu contextuel
         menuPop = UTILS_Adaptations.Menu()
 
         # Item Modifier

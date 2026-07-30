@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #------------------------------------------------------------------------
-# Application :    Noethys, gestion multi-activitÈs
+# Application :    Noethys, gestion multi-activit√©s
 # Site internet :  www.noethys.com
 # Auteur:           Ivan LUCAS
 # Copyright:       (c) 2010-11 Ivan LUCAS
@@ -19,10 +19,10 @@ from Utils import UTILS_Fichiers
 # ------------------------------------ CONVERSION LOCAL -> RESEAU -------------------------------
 
 def ConversionLocalReseau(parent, nomFichier=""):
-    # Demande le nom du nouveau fichier rÈseau
+    # Demande le nom du nouveau fichier r√©seau
     from Dlg import DLG_Saisie_nouveau_fichier
     dlg = DLG_Saisie_nouveau_fichier.MyDialog(parent)
-    dlg.SetTitle(_(u"Conversion d'un fichier local en fichier rÈseau"))
+    dlg.SetTitle(_(u"Conversion d'un fichier local en fichier r√©seau"))
     dlg.radio_reseau.SetValue(True)
     dlg.OnRadioReseau(None)
     dlg.radio_local.Enable(False)
@@ -37,29 +37,29 @@ def ConversionLocalReseau(parent, nomFichier=""):
         dlg.Destroy()
         return False
     
-    # VÈrifie la validitÈ du nouveau nom
+    # V√©rifie la validit√© du nouveau nom
     dictResultats = GestionDB.TestConnexionMySQL(typeTest="fichier", nomFichier="%s_TDATA" % nouveauFichier)
     
-    # VÈrifie la connexion au rÈseau
+    # V√©rifie la connexion au r√©seau
     if dictResultats["connexion"][0] == False :
         erreur = dictResultats["connexion"][1]
-        dlg = wx.MessageDialog(parent, _(u"La connexion au rÈseau MySQL est impossible. \n\nErreur : %s") % erreur, _(u"Erreur de connexion"), wx.OK | wx.ICON_ERROR)
+        dlg = wx.MessageDialog(parent, _(u"La connexion au r√©seau MySQL est impossible. \n\nErreur : %s") % erreur, _(u"Erreur de connexion"), wx.OK | wx.ICON_ERROR)
         dlg.ShowModal()
         dlg.Destroy()
         return False
     
-    # VÈrifie que le fichier n'est pas dÈj‡ utilisÈ
+    # V√©rifie que le fichier n'est pas d√©j√† utilis√©
     if dictResultats["fichier"][0] == True :
-        dlg = wx.MessageDialog(parent, _(u"Le fichier existe dÈj‡."), _(u"Erreur de crÈation de fichier"), wx.OK | wx.ICON_ERROR)
+        dlg = wx.MessageDialog(parent, _(u"Le fichier existe d√©j√†."), _(u"Erreur de cr√©ation de fichier"), wx.OK | wx.ICON_ERROR)
         dlg.ShowModal()
         dlg.Destroy()
         return False
     
-    # RÈcupËre le nom du fichier local actuellement ouvert
+    # R√©cup√®re le nom du fichier local actuellement ouvert
     nouveauNom = nouveauFichier[nouveauFichier.index("[RESEAU]"):].replace("[RESEAU]", "")
     
     # Demande une confirmation pour la conversion
-    message = _(u"Confirmez-vous la conversion du fichier local '%s' en fichier rÈseau portant le nom '%s' ? \n\nCette opÈration va durer quelques instants...\n\n(Notez que le fichier original sera toujours conservÈ)") % (nomFichier, nouveauNom)
+    message = _(u"Confirmez-vous la conversion du fichier local '%s' en fichier r√©seau portant le nom '%s' ? \n\nCette op√©ration va durer quelques instants...\n\n(Notez que le fichier original sera toujours conserv√©)") % (nomFichier, nouveauNom)
     dlg = wx.MessageDialog(parent, message, _(u"Confirmation de la conversion"), wx.YES_NO | wx.CANCEL | wx.ICON_QUESTION)
     if dlg.ShowModal() == wx.ID_YES :
         dlg.Destroy()
@@ -70,8 +70,8 @@ def ConversionLocalReseau(parent, nomFichier=""):
     # Lance la conversion
     parent.SetStatusText(_(u"Conversion du fichier en cours... Veuillez patientez..."))
     conversion = GestionDB.ConversionLocalReseau(nomFichier, nouveauFichier, parent)
-    parent.SetStatusText(_(u"La conversion s'est terminÈe avec succËs."))
-    dlg = wx.MessageDialog(None, _(u"La conversion s'est terminÈe avec succËs. Le nouveau fichier a ÈtÈ crÈÈ."), "Information", wx.OK | wx.ICON_INFORMATION)
+    parent.SetStatusText(_(u"La conversion s'est termin√©e avec succ√®s."))
+    dlg = wx.MessageDialog(None, _(u"La conversion s'est termin√©e avec succ√®s. Le nouveau fichier a √©t√© cr√©√©."), "Information", wx.OK | wx.ICON_INFORMATION)
     dlg.ShowModal()
     dlg.Destroy()
     return True
@@ -88,7 +88,7 @@ def ConversionReseauLocal(parent, nomFichier=""):
     # Demande le nom du nouveau fichier local
     from Dlg import DLG_Saisie_nouveau_fichier
     dlg = DLG_Saisie_nouveau_fichier.MyDialog(parent)
-    dlg.SetTitle(_(u"Conversion d'un fichier rÈseau en fichier local"))
+    dlg.SetTitle(_(u"Conversion d'un fichier r√©seau en fichier local"))
     dlg.radio_local.SetValue(True)
     dlg.OnRadioLocal(None)
     dlg.radio_local.Enable(False)
@@ -103,9 +103,9 @@ def ConversionReseauLocal(parent, nomFichier=""):
         dlg.Destroy()
         return False
     
-    # VÈrifie que le fichier n'est pas dÈj‡ utilisÈ
+    # V√©rifie que le fichier n'est pas d√©j√† utilis√©
     if os.path.isfile(UTILS_Fichiers.GetRepData(u"%s_TDATA.dat" % nomFichier)) == True :
-        dlg = wx.MessageDialog(parent, _(u"Le fichier existe dÈj‡."), _(u"Erreur de crÈation de fichier"), wx.OK | wx.ICON_ERROR)
+        dlg = wx.MessageDialog(parent, _(u"Le fichier existe d√©j√†."), _(u"Erreur de cr√©ation de fichier"), wx.OK | wx.ICON_ERROR)
         dlg.ShowModal()
         dlg.Destroy()
         return False
@@ -113,7 +113,7 @@ def ConversionReseauLocal(parent, nomFichier=""):
     nomFichierReseauFormate = nomFichier[nomFichier.index("[RESEAU]"):].replace("[RESEAU]", "")
     
     # Demande une confirmation pour la conversion
-    message = _(u"Confirmez-vous la conversion du fichier rÈseau '%s' en fichier local portant le nom '%s' ? \n\nCette opÈration va durer quelques instants...\n\n(Notez que le fichier original sera toujours conservÈ)") % (nomFichierReseauFormate, nouveauFichier)
+    message = _(u"Confirmez-vous la conversion du fichier r√©seau '%s' en fichier local portant le nom '%s' ? \n\nCette op√©ration va durer quelques instants...\n\n(Notez que le fichier original sera toujours conserv√©)") % (nomFichierReseauFormate, nouveauFichier)
     dlg = wx.MessageDialog(parent, message, _(u"Confirmation de la conversion"), wx.YES_NO | wx.CANCEL | wx.ICON_QUESTION)
     if dlg.ShowModal() == wx.ID_YES :
         dlg.Destroy()
@@ -124,8 +124,8 @@ def ConversionReseauLocal(parent, nomFichier=""):
     # Lance la conversion
     parent.SetStatusText(_(u"Conversion du fichier en cours... Veuillez patientez..."))
     conversion = GestionDB.ConversionReseauLocal(nomFichier, nouveauFichier, parent)
-    parent.SetStatusText(_(u"La conversion s'est terminÈe avec succËs."))
-    dlg = wx.MessageDialog(None, _(u"La conversion s'est terminÈe avec succËs. Le nouveau fichier a ÈtÈ crÈÈ."), "Information", wx.OK | wx.ICON_INFORMATION)
+    parent.SetStatusText(_(u"La conversion s'est termin√©e avec succ√®s."))
+    dlg = wx.MessageDialog(None, _(u"La conversion s'est termin√©e avec succ√®s. Le nouveau fichier a √©t√© cr√©√©."), "Information", wx.OK | wx.ICON_INFORMATION)
     dlg.ShowModal()
     dlg.Destroy()
     return True

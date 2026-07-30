@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -23,7 +23,7 @@ class Panel(wx.Panel):
         wx.Panel.__init__(self, parent, ID, name="config_emploi", style=wx.TAB_TRAVERSAL)
         
         self.barreTitre = FonctionsPerso.BarreTitre(self,  _(u"Les offres d'emploi"), u"")
-        texteIntro = _(u"Vous pouvez ici crÈer, modifier ou supprimer des offres d'emploi.")
+        texteIntro = _(u"Vous pouvez ici cr√©er, modifier ou supprimer des offres d'emploi.")
         self.label_introduction = FonctionsPerso.StaticWrapText(self, -1, texteIntro)
         self.listCtrl = ListCtrl(self)
         self.listCtrl.SetMinSize((20, 20)) 
@@ -47,9 +47,9 @@ class Panel(wx.Panel):
         self.bouton_supprimer.Enable(False)
         
     def __set_properties(self):
-        self.bouton_ajouter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour crÈer une nouvelle offre d'emploi")))
-        self.bouton_modifier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier l'offre d'emploi sÈlectionnÈe dans la liste")))
-        self.bouton_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer l'offre d'emploi sÈlectionnÈe dans la liste")))
+        self.bouton_ajouter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour cr√©er une nouvelle offre d'emploi")))
+        self.bouton_modifier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier l'offre d'emploi s√©lectionn√©e dans la liste")))
+        self.bouton_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer l'offre d'emploi s√©lectionn√©e dans la liste")))
         self.bouton_aide.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour obtenir de l'aide")))
 
     def __do_layout(self):
@@ -89,7 +89,7 @@ class Panel(wx.Panel):
     def Modifier(self):
         index = self.listCtrl.GetFirstSelected()
         if index == -1:
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÈlectionner une offre d'emploi ‡ modifier dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord s√©lectionner une offre d'emploi √† modifier dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -97,14 +97,14 @@ class Panel(wx.Panel):
         varID = int(self.listCtrl.GetItem(index, 0).GetText())
         varNom = self.listCtrl.GetItem(index, 1).GetText()
 
-        # VÈrifie que l'offre n'est pas attribuÈe ‡ une candidature
+        # V√©rifie que l'offre n'est pas attribu√©e √† une candidature
         DB = GestionDB.DB()
         req = "SELECT IDcandidature FROM candidatures WHERE IDemploi=%d;" % varID
         DB.ExecuterReq(req)
         listeDonnees = DB.ResultatReq()
         DB.Close()
         if len(listeDonnees) != 0 :
-            dlg = wx.MessageDialog(self, _(u"Cette offre d'emploi a dÈj‡ ÈtÈ attribuÈ ‡ ") + str(len(listeDonnees)) + _(u" candidature(s).\nEtes-vous s˚r de vouloir la modifier ?"), "Confirmation", wx.YES_NO|wx.NO_DEFAULT|wx.ICON_EXCLAMATION)
+            dlg = wx.MessageDialog(self, _(u"Cette offre d'emploi a d√©j√† √©t√© attribu√© √† ") + str(len(listeDonnees)) + _(u" candidature(s).\nEtes-vous s√ªr de vouloir la modifier ?"), "Confirmation", wx.YES_NO|wx.NO_DEFAULT|wx.ICON_EXCLAMATION)
             reponse = dlg.ShowModal()
             if reponse == wx.ID_NO:
                 dlg.Destroy()
@@ -120,9 +120,9 @@ class Panel(wx.Panel):
     def Supprimer(self):
         index = self.listCtrl.GetFirstSelected()
 
-        # VÈrifie qu'un item a bien ÈtÈ sÈlectionnÈ
+        # V√©rifie qu'un item a bien √©t√© s√©lectionn√©
         if index == -1:
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÈlectionner une offre d'emploi ‡ supprimer dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord s√©lectionner une offre d'emploi √† supprimer dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -130,14 +130,14 @@ class Panel(wx.Panel):
         ID = int(self.listCtrl.GetItem(index, 0).GetText())
         Nom = self.listCtrl.GetItem(index, 1).GetText()
         
-        # VÈrifie que cette offre d'emploi n'est pas attribuÈe ‡ une candidature
+        # V√©rifie que cette offre d'emploi n'est pas attribu√©e √† une candidature
         DB = GestionDB.DB()
         req = "SELECT IDcandidature FROM candidatures WHERE IDemploi=%d;" % ID
         DB.ExecuterReq(req)
         listeDonnees = DB.ResultatReq()
         DB.Close()
         if len(listeDonnees) != 0 :
-            dlg = wx.MessageDialog(self, _(u"Vous avez dÈj‡ enregistrÈ ") + str(len(listeDonnees)) + _(u" candidature(s) rattachÈe(s) ‡ cette offre d'emploi. \nVous ne pouvez donc pas la supprimer."), "Information", wx.OK | wx.ICON_ERROR)
+            dlg = wx.MessageDialog(self, _(u"Vous avez d√©j√† enregistr√© ") + str(len(listeDonnees)) + _(u" candidature(s) rattach√©e(s) √† cette offre d'emploi. \nVous ne pouvez donc pas la supprimer."), "Information", wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -150,7 +150,7 @@ class Panel(wx.Panel):
         if reponse == wx.ID_NO:
             return
         
-        # Suppression du type de piËce
+        # Suppression du type de pi√®ce
         DB = GestionDB.DB()
         DB.ReqDEL("emplois", "IDemploi", ID)
         DB.ReqDEL("emplois_dispo", "IDemploi", ID)
@@ -159,7 +159,7 @@ class Panel(wx.Panel):
         DB.ReqDEL("emplois_diffuseurs", "IDemploi", ID)
         DB.Close()
 
-        # M‡J du ListCtrl
+        # M√†J du ListCtrl
         self.listCtrl.MAJListeCtrl()
 
     def MAJpanel(self):
@@ -205,19 +205,19 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
 
     def Remplissage(self):
         
-        # RÈcupÈration des donnÈes dans la base de donnÈes
+        # R√©cup√©ration des donn√©es dans la base de donn√©es
         self.dictNbTitulaires = self.GetNbTitulaires()
         self.Importation()
         
-        # CrÈation des colonnes
+        # Cr√©ation des colonnes
         self.nbreColonnes = 3
         self.InsertColumn(0, _(u"     ID"))
         self.SetColumnWidth(0, 0)
         self.InsertColumn(1, _(u"Nom"))
         self.SetColumnWidth(1, 350)
-        self.InsertColumn(2, _(u"DÈtail"))
+        self.InsertColumn(2, _(u"D√©tail"))
         self.SetColumnWidth(2, 300)
-        self.InsertColumn(3, _(u"Nb candidatures associÈes"))
+        self.InsertColumn(3, _(u"Nb candidatures associ√©es"))
         self.SetColumnWidth(3, 150)        
 
         #These two should probably be passed to init more cleanly
@@ -243,7 +243,7 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
         
     def Importation(self):
       
-        # RÈcupÈration des donnÈes de la table
+        # R√©cup√©ration des donn√©es de la table
         DB = GestionDB.DB()
         req = """SELECT IDemploi, intitule, detail
         FROM emplois %s;
@@ -254,7 +254,7 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
 
         self.nbreLignes = len(liste)
 
-        # CrÈation du dictionnaire de donnÈes
+        # Cr√©ation du dictionnaire de donn√©es
         self.donnees = self.listeEnDict(liste)
 
     def GetNbTitulaires(self):
@@ -283,7 +283,7 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
         dictio = {}
         x = 1
         for ligne in liste:
-            index = x # Donne un entier comme clÈ
+            index = x # Donne un entier comme cl√©
             # Rajoute le nb de titulaires
             ligne = list(ligne)
             ID = ligne[0]
@@ -313,12 +313,12 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
         return valeur
 
     def OnGetItemImage(self, item):
-        """ Affichage des images en dÈbut de ligne """
+        """ Affichage des images en d√©but de ligne """
         return -1
 
     def OnGetItemAttr(self, item):
         """ Application d'une couleur de fond pour une ligne sur deux """
-        # CrÈation d'une ligne de couleur 1 ligne sur 2
+        # Cr√©ation d'une ligne de couleur 1 ligne sur 2
         if item % 2 == 1:
             return self.attr1
         else:
@@ -355,7 +355,7 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
         index = self.GetFirstSelected()
         key = int(self.getColumnText(index, 0))
         
-        # CrÈation du menu contextuel
+        # Cr√©ation du menu contextuel
         menuPop = UTILS_Adaptations.Menu()
 
         # Item Modifier

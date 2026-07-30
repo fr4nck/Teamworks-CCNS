@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -13,7 +13,7 @@ from Ctrl import CTRL_Bouton_image
 from wx.lib import platebtn
 
 
-# Pour contrer bug sur platebtn lors de la fermeture de la fenêtre
+# Pour contrer bug sur platebtn lors de la fermeture de la fenÃªtre
 class MyPlateBtn(platebtn.PlateButton):
     def __init__(self, *args, **kwds):
         platebtn.PlateButton.__init__(self, *args, **kwds)
@@ -33,7 +33,7 @@ class MyPlateBtn(platebtn.PlateButton):
 
 class Dialog(wx.Dialog):
     def __init__(self, parent, checkAffichage=False, afficherDernierFichier=True, nomDernierFichier=""):
-        wx.Dialog.__init__(self, parent, -1, title=_(u"Assistant de démarrage"), size=(730, -1))
+        wx.Dialog.__init__(self, parent, -1, title=_(u"Assistant de dÃ©marrage"), size=(730, -1))
         self.parent = parent
         self.choix = None
         
@@ -43,11 +43,11 @@ class Dialog(wx.Dialog):
         
         self.label_intro = wx.StaticText(self, -1, _(u"Bienvenue dans TeamWorks !"))
         
-        # Boutons de commande spéciaux
+        # Boutons de commande spÃ©ciaux
         self.listeCommandes = [
-            [ 1, "", wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Bienvenue_video.png"), wx.BITMAP_TYPE_ANY), _(u"Visionner une vidéo de présentation de TeamWorks") ],
-            [ 2, "", wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Bienvenue_nouveau.png"), wx.BITMAP_TYPE_ANY), _(u"Créer un nouveau fichier") ],
-            [ 3, "", wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Bienvenue_tutoriels.png"), wx.BITMAP_TYPE_ANY), _(u"Découvrir en détail les fonctions principales de TeamWorks") ],
+            [ 1, "", wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Bienvenue_video.png"), wx.BITMAP_TYPE_ANY), _(u"Visionner une vidÃ©o de prÃ©sentation de TeamWorks") ],
+            [ 2, "", wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Bienvenue_nouveau.png"), wx.BITMAP_TYPE_ANY), _(u"CrÃ©er un nouveau fichier") ],
+            [ 3, "", wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Bienvenue_tutoriels.png"), wx.BITMAP_TYPE_ANY), _(u"DÃ©couvrir en dÃ©tail les fonctions principales de TeamWorks") ],
             [ 4, "", wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Bienvenue_ouvrir.png"), wx.BITMAP_TYPE_ANY), _(u"Ouvrir un fichier existant") ],
             [ 5, "", wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Bienvenue_exemple.png"), wx.BITMAP_TYPE_ANY), _(u"Charger le fichier Exemple") ],
             [ 6, "", wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Bienvenue_dernier.png"), wx.BITMAP_TYPE_ANY), _(u"Charger le dernier fichier ouvert : %s") % nomDernierFichier ],
@@ -85,7 +85,7 @@ class Dialog(wx.Dialog):
         self.bouton_aide.SetSize(self.bouton_aide.GetBestSize())
         self.bouton_ok.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour fermer l'assistant et utiliser TeamWorks")))
         self.bouton_ok.SetSize(self.bouton_ok.GetBestSize())
-        self.check_affichage.SetToolTip(wx.ToolTip(_(u"Cochez cette case pour ne plus faire apparaître cet assistant au démarrage de TeamWorks. \nLe dernier fichier utilisé sera alors automatiquement chargé au démarrage. \n\nRemarque : Il vous sera toujours possible de recharger l'assistant à partir du menu 'fichier'.")))
+        self.check_affichage.SetToolTip(wx.ToolTip(_(u"Cochez cette case pour ne plus faire apparaÃ®tre cet assistant au dÃ©marrage de TeamWorks. \nLe dernier fichier utilisÃ© sera alors automatiquement chargÃ© au dÃ©marrage. \n\nRemarque : Il vous sera toujours possible de recharger l'assistant Ã  partir du menu 'fichier'.")))
 
     def __do_layout(self):
         sizer_base = wx.BoxSizer(wx.VERTICAL)
@@ -127,14 +127,14 @@ class Dialog(wx.Dialog):
         
     def OnBoutonCommande(self, event):
         self.choix = event.GetId()
-        # Ferme la boîte de dialogue
+        # Ferme la boÃ®te de dialogue
         self.bouton_ok.SetFocus()
         self.EndModal(wx.ID_OK)
 
     def OnBoutonOk(self, event):
-        """ Démarrage direct de TeamWorks """
+        """ DÃ©marrage direct de TeamWorks """
         self.choix = None
-        # Ferme la boîte de dialogue
+        # Ferme la boÃ®te de dialogue
         self.EndModal(wx.ID_OK)
 
     def GetChoix(self):

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -51,12 +51,12 @@ class Notebook(wx.Notebook):
         self.img8 = il.Add(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Document2.png"), wx.BITMAP_TYPE_PNG))
         self.AssignImageList(il)
 
-        # Page GÈnÈralitÈs
+        # Page G√©n√©ralit√©s
         self.pageGeneralites = CTRL_Page_generalites.Panel_general(self, -1, IDpersonne=self.IDpersonne)
-        self.AddPage(self.pageGeneralites, _(u"GÈnÈralitÈs"))
+        self.AddPage(self.pageGeneralites, _(u"G√©n√©ralit√©s"))
         self.SetPageImage(0, self.img1)
         
-        # Enregistre la fiche si nouvelle personne et dÈtermination du nouvel IDpersonne
+        # Enregistre la fiche si nouvelle personne et d√©termination du nouvel IDpersonne
         if self.IDpersonne == 0 :
             self.GetGrandParent().nouvelleFiche = True
             self.pageGeneralites.Sauvegarde()
@@ -79,14 +79,14 @@ class Notebook(wx.Notebook):
         self.AddPage(self.pageContrats, _(u"Contrats"))
         self.SetPageImage(3, self.img3)
         
-        # Page PrÈsences
+        # Page Pr√©sences
         self.pagePresences = CTRL_Page_presences.Panel(self, IDpersonne=self.IDpersonne)
-        self.AddPage(self.pagePresences, _(u"PrÈsences"))
+        self.AddPage(self.pagePresences, _(u"Pr√©sences"))
         self.SetPageImage(4, self.img4)
         
-        # Page ScÈnarios
+        # Page Sc√©narios
         self.pageScenarios = CTRL_Page_scenarios.Panel(self, IDpersonne=self.IDpersonne)
-        self.AddPage(self.pageScenarios, _(u"ScÈnarios"))
+        self.AddPage(self.pageScenarios, _(u"Sc√©narios"))
         self.SetPageImage(5, self.img5)
         
         # Page Frais
@@ -102,7 +102,7 @@ class Notebook(wx.Notebook):
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnPageChanged)
         
     def AfficheAutresPages(self, etat=True):
-        """ Affiche les autres pages que GÈnÈralitÈs """
+        """ Affiche les autres pages que G√©n√©ralit√©s """
         if etat==True and self.GetPageCount()>1 :
             # On ne fait rien
             pass
@@ -114,9 +114,9 @@ class Notebook(wx.Notebook):
             self.SetPageImage(2, self.img2)
             self.AddPage(self.pageContrats, _(u"Contrats"))
             self.SetPageImage(3, self.img3)
-            self.AddPage(self.pagePresences, _(u"PrÈsences"))
+            self.AddPage(self.pagePresences, _(u"Pr√©sences"))
             self.SetPageImage(4, self.img4)
-            self.AddPage(self.pageScenarios, _(u"ScÈnarios"))
+            self.AddPage(self.pageScenarios, _(u"Sc√©narios"))
             self.SetPageImage(5, self.img5)
             self.AddPage(self.pageFrais, _(u"Frais"))
             self.SetPageImage(6, self.img6)
@@ -124,7 +124,7 @@ class Notebook(wx.Notebook):
             self.SetPageImage(7, self.img7)
             
         if etat==False and self.GetPageCount()>1 :
-            # On enlËve les pages
+            # On enl√®ve les pages
             self.RemovePage(7)
             self.RemovePage(6)
             self.RemovePage(5)
@@ -140,7 +140,7 @@ class Notebook(wx.Notebook):
         newPage = event.GetSelection()
         page = self.GetPage(newPage)
         page.Refresh()
-        # Si on quitte la page 0 (gÈnÈralitÈs), on sauvegarde les donnÈes saisies sur la page
+        # Si on quitte la page 0 (g√©n√©ralit√©s), on sauvegarde les donn√©es saisies sur la page
         if oldPage == 0 :
             self.GetGrandParent().AnnulationImpossible = True
             self.GetGrandParent().bitmap_button_annuler.Enable(False)
@@ -167,8 +167,8 @@ class Dialog(wx.Dialog):
         self.panel_1 = wx.Panel(self, -1)
         self.label_hd_CatId = wx.StaticText(self.panel_1, -1, u"")
         self.static_line_1 = wx.StaticLine(self.panel_1, -1)
-        self.label_hd_nomPrenom = wx.StaticText(self.panel_1, -1, _(u"NOM, PrÈnom"))
-        self.label_hd_adresse = wx.StaticText(self.panel_1, -1, _(u"RÈsidant 42 rue des oiseaux 29870 LANNILIS"))
+        self.label_hd_nomPrenom = wx.StaticText(self.panel_1, -1, _(u"NOM, Pr√©nom"))
+        self.label_hd_adresse = wx.StaticText(self.panel_1, -1, _(u"R√©sidant 42 rue des oiseaux 29870 LANNILIS"))
         self.label_hd_naiss = wx.StaticText(self.panel_1, -1, _(u"Date et lieu de naissance inconnus"))
         self.bitmap_photo = CTRL_Photo.CTRL_Photo(self.panel_1, style=wx.SUNKEN_BORDER)
         self.bitmap_photo.SetPhoto(IDindividu=None, nomFichier=Chemins.GetStaticPath("Images/128x128/Personne.png"), taillePhoto=(128, 128), qualite=100)
@@ -182,20 +182,20 @@ class Dialog(wx.Dialog):
         if self.nouvelleFiche == True :
             self.notebook.AfficheAutresPages(False)  
         
-        # Recherche s'il y a un contrat en cours ou ‡ venir pour savoir s'il faut afficher la barre des problËmes
+        # Recherche s'il y a un contrat en cours ou √† venir pour savoir s'il faut afficher la barre des probl√®mes
         if self.IDpersonne in FonctionsPerso.Recherche_ContratsEnCoursOuAVenir() :
             self.barre_problemes = True
         else:
             self.barre_problemes = False
         
-        # RÈcupÈration de la liste des problËmes de la personne
+        # R√©cup√©ration de la liste des probl√®mes de la personne
         self.bitmap_problemes_G = wx.StaticBitmap(self.panel_1, -1, wx.Bitmap(Chemins.GetStaticPath("Images/Special/Problemes_G.png"), wx.BITMAP_TYPE_PNG))
         self.bitmap_problemes_D = wx.StaticBitmap(self.panel_1, -1, wx.Bitmap(Chemins.GetStaticPath("Images/Special/Problemes_D.png"), wx.BITMAP_TYPE_PNG))
         self.txtDefilant = Ticker(self.panel_1,  size=(-1, 18), fgcolor=(255, 255, 255), bgcolor=(255, 60, 60))
         self.txtPbPersonne = self.Recup_txt_pb_personne() 
         self.txtDefilant.SetText(self.txtPbPersonne)
         
-        # Mise ‡ jour des infos du bandeau supÈrieur de la fiche
+        # Mise √† jour des infos du bandeau sup√©rieur de la fiche
         self.MaJ_header()
             
         self.Bind(wx.EVT_BUTTON, self.OnBoutonAide, self.bitmap_button_aide)
@@ -221,7 +221,7 @@ class Dialog(wx.Dialog):
         self.label_hd_CatId.SetFont(wx.Font(7, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, ""))
         self.label_hd_nomPrenom.SetFont(wx.Font(16, wx.DEFAULT, wx.NORMAL, wx.BOLD, 0, ""))
         self.bitmap_photo.SetBackgroundColour(wx.Colour(0, 0, 0))
-        self.txtDefilant.SetToolTip(wx.ToolTip(_(u"Cette barre d'information recense les points\n‡ contrÙler sur le dossier de cette personne.")))
+        self.txtDefilant.SetToolTip(wx.ToolTip(_(u"Cette barre d'information recense les points\n√† contr√¥ler sur le dossier de cette personne.")))
         self.bitmap_photo.SetToolTip(wx.ToolTip("Cliquez sur le bouton droit de votre souris pour modifier cette image"))
         self.bitmap_button_aide.SetToolTip(wx.ToolTip("Cliquez ici pour obtenir de l'aide"))
         self.bitmap_button_aide.SetSize(self.bitmap_button_aide.GetBestSize())
@@ -275,7 +275,7 @@ class Dialog(wx.Dialog):
         self.sizer_header_textes = sizer_header_textes
 
     def Affichage_barre_problemes(self):
-        """ Permet d'afficher ou non la barre des problËmes """
+        """ Permet d'afficher ou non la barre des probl√®mes """
         if self.txtPbPersonne == "" or self.barre_problemes == False :
             self.bitmap_problemes_G.Show(False)
             self.bitmap_problemes_D.Show(False)
@@ -300,7 +300,7 @@ class Dialog(wx.Dialog):
    
         
     def Recup_txt_pb_personne(self):
-        """ RÈcupËre un texte de la liste des problËmes de la personne """
+        """ R√©cup√®re un texte de la liste des probl√®mes de la personne """
         dictNomsPersonnes, dictProblemesPersonnes = FonctionsPerso.Recup_liste_pb_personnes()
         if self.IDpersonne in dictProblemesPersonnes:
             txtProblemes = ""
@@ -314,7 +314,7 @@ class Dialog(wx.Dialog):
             return ""
 
     def MAJ_txt_pb_personne(self):
-        """ RÈcupËre un texte de la liste des problËmes de la personne """
+        """ R√©cup√®re un texte de la liste des probl√®mes de la personne """
         civilite = self.notebook.pageGeneralites.combo_box_civilite.GetStringSelection()
         nom= self.notebook.pageGeneralites.text_nom.GetValue()
         nom_jfille = self.notebook.pageGeneralites.text_ctrl_nomjf.GetValue()
@@ -363,18 +363,18 @@ class Dialog(wx.Dialog):
             return ""
                 
     def MaJ_header(self):
-        # M‡J de l'affichage de ID :
+        # M√†J de l'affichage de ID :
         if self.IDpersonne == 0:
             ID = "Attribution de l'ID en cours"
         else:
             ID = self.IDpersonne
-        # M‡J de l'affichage du contrat en cours :
+        # M√†J de l'affichage du contrat en cours :
         if self.contratEnCours == None :
             txtContrat = _(u"Aucun contrat en cours")
         else:
             date_debut = FonctionsPerso.DateEngFr(self.contratEnCours[1])
             if self.contratEnCours[2] == "2999-01-01" :
-                txtContrat = _(u"Contrat en cours : ") + self.contratEnCours[0] + " depuis le " + date_debut + _(u" (DurÈe ind.)")
+                txtContrat = _(u"Contrat en cours : ") + self.contratEnCours[0] + " depuis le " + date_debut + _(u" (Dur√©e ind.)")
             else:
                 date_fin = FonctionsPerso.DateEngFr(self.contratEnCours[2])
                 date_rupture = FonctionsPerso.DateEngFr(self.contratEnCours[3])
@@ -404,7 +404,7 @@ class Dialog(wx.Dialog):
         event.Skip()
 
     def OnBoutonAnnuler(self, event): 
-        # Test d'importation des donnÈes de la base
+        # Test d'importation des donn√©es de la base
         if self.AnnulationImpossible == True :
             self.Fermer(save=True)
         else:
@@ -421,7 +421,7 @@ class Dialog(wx.Dialog):
     def Fermer(self, save=True):
         """ Fermeture """
         if save == False :
-            # Annule la crÈation d'une nouvelle fiche
+            # Annule la cr√©ation d'une nouvelle fiche
             if self.nouvelleFiche == True :
                 db = GestionDB.DB()
                 db.ReqDEL("coordonnees", "IDpersonne", self.IDpersonne)
@@ -429,15 +429,15 @@ class Dialog(wx.Dialog):
                 db.Close()
                 
         else :
-            # Sauvegarde des donnÈes
-            # VÈrifie que les infos principales sont saisies :
+            # Sauvegarde des donn√©es
+            # V√©rifie que les infos principales sont saisies :
             if self.Verifie_validite_donnees() == True :                
                 self.notebook.pageGeneralites.Sauvegarde()
                 self.notebook.pageQuestionnaire.Sauvegarde()
             else:
                 return
          
-        # Recherche si un parent est ‡ mettre ‡ jour
+        # Recherche si un parent est √† mettre √† jour
         frm = FonctionsPerso.FrameOuverte("Personnes")
         if frm != None :
             frm.listCtrl_personnes.MAJ(IDpersonne=self.IDpersonne)
@@ -446,23 +446,23 @@ class Dialog(wx.Dialog):
         self.EndModal(wx.ID_OK)
     
     def Verifie_validite_donnees(self):
-        # VÈrifie CivilitÈ        
+        # V√©rifie Civilit√©        
         if self.notebook.pageGeneralites.combo_box_civilite.GetStringSelection() == "" :
-            dlg = wx.MessageDialog(self, _(u"Vous devez saisir obligatoirement une civilitÈ !"), "Information", wx.OK | wx.ICON_EXCLAMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez saisir obligatoirement une civilit√© !"), "Information", wx.OK | wx.ICON_EXCLAMATION)
             dlg.ShowModal()
             dlg.Destroy()
             self.notebook.pageGeneralites.combo_box_civilite.SetFocus()
             return False
-        # VÈrifie Nom        
+        # V√©rifie Nom        
         if self.notebook.pageGeneralites.text_nom.GetValue() == "" :
             dlg = wx.MessageDialog(self, _(u"Vous devez saisir obligatoirement un nom de famille !"), "Information", wx.OK | wx.ICON_EXCLAMATION)
             dlg.ShowModal()
             dlg.Destroy()
             self.notebook.pageGeneralites.text_nom.SetFocus()
             return False
-        # VÈrifie PrÈnom        
+        # V√©rifie Pr√©nom        
         if self.notebook.pageGeneralites.text_prenom.GetValue() == "" :
-            dlg = wx.MessageDialog(self, _(u"Vous devez saisir obligatoirement un prÈnom !"), "Information", wx.OK | wx.ICON_EXCLAMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez saisir obligatoirement un pr√©nom !"), "Information", wx.OK | wx.ICON_EXCLAMATION)
             dlg.ShowModal()
             dlg.Destroy()
             self.notebook.pageGeneralites.text_prenom.SetFocus()

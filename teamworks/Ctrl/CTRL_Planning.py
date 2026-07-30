@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -2776,7 +2776,7 @@ class ImpressionPDFvTexte():
             
             # Cr ation du titre
             if type(titreGroupe) != six.text_type :
-                titreGroupe = titreGroupe.decode("iso-8859-15")
+                titreGroupe = titreGroupe.decode("utf-8")
             dataTableau = [(titreGroupe, "" , ""),]
             
             # Cr ation de chaque ligne
@@ -2800,7 +2800,7 @@ class ImpressionPDFvTexte():
             
                 # Int gration des lignes et des pr sences dans le tableau
                 if type(titre_ligne) != six.text_type :
-                    titre_ligne = titre_ligne.decode("iso-8859-15")
+                    titre_ligne = titre_ligne.decode("utf-8")
                 dataTableau.append( (titre_ligne, txtTaches[:-1], txtTemps[:-1]) )
             
             # Cr ation de la ligne de total

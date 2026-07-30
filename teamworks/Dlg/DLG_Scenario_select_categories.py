@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -16,21 +16,21 @@ import wx.lib.agw.customtreectrl as CT
 
 
 class MyDialog(wx.Dialog):
-    """ SÈlection de catÈgories pour un scÈnario """
+    """ S√©lection de cat√©gories pour un sc√©nario """
     def __init__(self, parent, listeSelections=None, listeDisabledItems = None):
         if listeSelections is None:
             listeSelections = []
         if listeDisabledItems is None:
             listeDisabledItems = []
-        wx.Dialog.__init__(self, parent, id=-1, title=_(u"SÈlection de catÈgories"), size=(450, 600))
+        wx.Dialog.__init__(self, parent, id=-1, title=_(u"S√©lection de cat√©gories"), size=(450, 600))
         self.listeSelections = listeSelections
         self.listeDisabledItems = listeDisabledItems
 
         # Label
-        self.label = wx.StaticText(self, -1, _(u"Veuillez cocher les catÈgories ‡ inclure obligatoirement dans le scÈnario :"))
+        self.label = wx.StaticText(self, -1, _(u"Veuillez cocher les cat√©gories √† inclure obligatoirement dans le sc√©nario :"))
         
         # listCtrl vacances
-        self.staticbox_treeCtrl = wx.StaticBox(self, -1, _(u"Aucune catÈgorie sÈlectionnÈe"))
+        self.staticbox_treeCtrl = wx.StaticBox(self, -1, _(u"Aucune cat√©gorie s√©lectionn√©e"))
         self.ctrl_treeCtrl = TreeCtrl(self, listeSelections, listeDisabledItems)
         
         # Boutons
@@ -70,10 +70,10 @@ class MyDialog(wx.Dialog):
 
         
     def OnBoutonOk(self, event):
-        """ Validation des donnÈes saisies """
+        """ Validation des donn√©es saisies """
         listeSelections = self.ctrl_treeCtrl.GetListeItemsCoches()
         if len(listeSelections) == 0 :
-            dlg = wx.MessageDialog(self, _(u"Aucune catÈgorie n'a ÈtÈ sÈlectionnÈe.\n\nSouhaitez-vous valider ce choix ?"), "Confirmation", wx.YES_NO|wx.CANCEL|wx.NO_DEFAULT|wx.ICON_EXCLAMATION)
+            dlg = wx.MessageDialog(self, _(u"Aucune cat√©gorie n'a √©t√© s√©lectionn√©e.\n\nSouhaitez-vous valider ce choix ?"), "Confirmation", wx.YES_NO|wx.CANCEL|wx.NO_DEFAULT|wx.ICON_EXCLAMATION)
             reponse = dlg.ShowModal()
             if reponse == wx.ID_YES:
                 dlg.Destroy()
@@ -107,9 +107,9 @@ class TreeCtrl(CT.CustomTreeCtrl):
     
     def OnItemCheck(self, event):
         nbreSelections = len(self.GetListeItemsCoches())
-        if nbreSelections == 0 : texte = _(u"Aucune catÈgorie sÈlectionnÈe")
-        if nbreSelections == 1 : texte = _(u"1 catÈgorie sÈlectionnÈe")
-        if nbreSelections > 1 : texte = _(u"%d catÈgories sÈlectionnÈes") % nbreSelections
+        if nbreSelections == 0 : texte = _(u"Aucune cat√©gorie s√©lectionn√©e")
+        if nbreSelections == 1 : texte = _(u"1 cat√©gorie s√©lectionn√©e")
+        if nbreSelections > 1 : texte = _(u"%d cat√©gories s√©lectionn√©es") % nbreSelections
         self.GetParent().staticbox_treeCtrl.SetLabel(texte)
         
     def FormateCouleur(self, texte):
@@ -121,7 +121,7 @@ class TreeCtrl(CT.CustomTreeCtrl):
         return (r, v, b)
 
     def CreationImage(self, tailleImages, r, v, b):
-        """ CrÈation des images pour le TreeCtrl """
+        """ Cr√©ation des images pour le TreeCtrl """
         if 'phoenix' in wx.PlatformInfo:
             bmp = wx.Image(tailleImages[0], tailleImages[1], True)
             bmp.SetRGB((0, 0, 16, 16), 255, 255, 255)
@@ -149,7 +149,7 @@ class TreeCtrl(CT.CustomTreeCtrl):
             exec("self.img" + str(ID) +  "= il.Add(self.CreationImage(tailleImages, " + str(r) + ", " + str(v) + ", " + str(b) + "))")
         self.SetImageList(il)
         self.il = il
-        self.root = self.AddRoot(_(u"CatÈgories"))
+        self.root = self.AddRoot(_(u"Cat√©gories"))
         self.SetItemData(self.root, 0)
         self.SetItemImage(self.root, self.imgRoot, wx.TreeItemIcon_Normal)
         
@@ -165,7 +165,7 @@ class TreeCtrl(CT.CustomTreeCtrl):
         """ Boucle de remplissage du TreeCtrl """
         for item in self.listeCategories :
             if item[2] == IDparent:
-                # CrÈation de la branche
+                # Cr√©ation de la branche
                 newItem = self.AppendItem(itemParent, item[1], ct_type=1)
                 self.SetItemData(newItem, item[0])
                 
@@ -189,20 +189,20 @@ class TreeCtrl(CT.CustomTreeCtrl):
         self.Remplissage()
 
     def Importation(self):
-        """ RÈcupÈration de la liste des catÈgories dans la base """
-        # Initialisation de la connexion avec la Base de donnÈes
+        """ R√©cup√©ration de la liste des cat√©gories dans la base """
+        # Initialisation de la connexion avec la Base de donn√©es
         DB = GestionDB.DB()
         req = "SELECT * FROM cat_presences ORDER BY IDcat_parent, ordre"
         DB.ExecuterReq(req)
         listeCategories = DB.ResultatReq()
         DB.Close()
-        listeCategories.append( (999, _(u"Sans catÈgorie"), 0, 0, "(255, 255, 255)" ) )
+        listeCategories.append( (999, _(u"Sans cat√©gorie"), 0, 0, "(255, 255, 255)" ) )
         return listeCategories               
 
     def GetListeItemsCoches(self):
-        """ Obtient la liste des ÈlÈments cochÈs """
+        """ Obtient la liste des √©l√©ments coch√©s """
         listeSelections = []
-        # Parcours les types de sources : (1Ëre branche)
+        # Parcours les types de sources : (1√®re branche)
         nbre = self.GetChildrenCount(self.root)
         item = self.GetFirstChild(self.root)[0]
         for index in range(nbre) :

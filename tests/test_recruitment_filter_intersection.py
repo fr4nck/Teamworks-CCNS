@@ -11,7 +11,7 @@ TARGET = TEAMWORKS / "Ol" / "OL_candidatures.py"
 
 
 def _load_filter_method():
-    source = TARGET.read_text(encoding="iso-8859-15")
+    source = TARGET.read_text(encoding="utf-8")
     tree = ast.parse(source, filename=str(TARGET))
     for node in tree.body:
         if isinstance(node, ast.ClassDef) and node.name == "ListView":
@@ -30,7 +30,7 @@ def _load_filter_method():
 
 
 def test_recruitment_filter_intersection_is_explicit_and_deterministic() -> None:
-    source = TARGET.read_text(encoding="iso-8859-15")
+    source = TARGET.read_text(encoding="utf-8")
 
     assert 'exec("listeID=%s" % texteFonction)' not in source
     assert "set.intersection(*(set(liste) for liste in listeListes))" in source
@@ -93,5 +93,5 @@ def test_recruitment_filter_intersects_real_filter_dimensions() -> None:
 
 
 def test_recruitment_list_source_compiles() -> None:
-    source = TARGET.read_text(encoding="iso-8859-15")
+    source = TARGET.read_text(encoding="utf-8")
     compile(source, str(TARGET), "exec")

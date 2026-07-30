@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -31,27 +31,27 @@ DICT_TYPES_DIPLOMES = {}
 
 LISTE_COLONNES = [
             [u"", "left", 22, "IDpersonne", "image_civilite", _(u"ID de la personne"), True, 1 ],
-            [_(u"CivilitÈ"), "left", 50, _(u"civilite"), "", _(u"CivilitÈ"), True, 2 ],
+            [_(u"Civilit√©"), "left", 50, _(u"civilite"), "", _(u"Civilit√©"), True, 2 ],
             [_(u"Nom"), "left", 120, "nom", "", _(u"Nom de famille"), True, 3 ],
             [_(u"Nom de jeune fille"), "left", 120, "nom_jfille", "", _(u"Nom de jeune fille"), False, 4 ],
-            [_(u"PrÈnom"), "left", 120, "prenom", "", _(u"PrÈnom"), True, 5 ],
-            [_(u"¬ge"), "left", 50, "age", "", _(u"¬ge"), True, 6 ],
+            [_(u"Pr√©nom"), "left", 120, "prenom", "", _(u"Pr√©nom"), True, 5 ],
+            [_(u"√Çge"), "left", 50, "age", "", _(u"√Çge"), True, 6 ],
             [_(u"Qualifications"), "left", 90, "qualifications", "", _(u"Qualifications"), True, 7 ],
             [_(u"Date naiss."), "left", 70, "date_naiss", "date" , _(u"Date de naissance"), True, 8 ],
             [_(u"CP naiss."), "left", 60, "cp_naiss", "", _(u"Code postal de la ville de naissance"), True, 9 ],
             [_(u"Ville naiss."), "left", 110, "ville_naiss", "", _(u"Nom de la ville de naissance"), True, 10 ],
             [_(u"Pays naiss."), "left", 80, "nom_pays_naiss", "", _(u"Nom du pays de naissance"), False, 11 ],
-            [_(u"NationalitÈ"), "left", 90, "nom_nationalite",  "", _(u"NationalitÈ"), False, 12 ],
-            [_(u"Num. sÈcuritÈ sociale"), "left", 130, "num_secu", "", _(u"NumÈro de sÈcuritÈ sociale"), True, 13 ],
-            [_(u"Adresse"), "left", 160, "adresse_resid",  "", _(u"Adresse de rÈsidence"), True, 14 ],
-            [_(u"CP"), "left", 50, "cp_resid",  "", _(u"Code postal de la ville de rÈsidence"), True, 15 ],
-            [_(u"Ville"), "left", 110, "ville_resid",  "", _(u"Nom de la ville de rÈsidence"), True, 16 ],
-            [_(u"TÈlÈphones"), "left", 200, "telephones", "", _(u"NumÈros de tÈlÈphones"), True, 17 ],
+            [_(u"Nationalit√©"), "left", 90, "nom_nationalite",  "", _(u"Nationalit√©"), False, 12 ],
+            [_(u"Num. s√©curit√© sociale"), "left", 130, "num_secu", "", _(u"Num√©ro de s√©curit√© sociale"), True, 13 ],
+            [_(u"Adresse"), "left", 160, "adresse_resid",  "", _(u"Adresse de r√©sidence"), True, 14 ],
+            [_(u"CP"), "left", 50, "cp_resid",  "", _(u"Code postal de la ville de r√©sidence"), True, 15 ],
+            [_(u"Ville"), "left", 110, "ville_resid",  "", _(u"Nom de la ville de r√©sidence"), True, 16 ],
+            [_(u"T√©l√©phones"), "left", 200, "telephones", "", _(u"Num√©ros de t√©l√©phones"), True, 17 ],
             [_(u"Email"), "left", 150, "email", "", _(u"Adresses emails"), True, 18 ],
-            [_(u"Fax"), "left", 150, "fax", "", _(u"NumÈros de fax"), False, 19 ],            
+            [_(u"Fax"), "left", 150, "fax", "", _(u"Num√©ros de fax"), False, 19 ],            
             [_(u"Situation"), "left", 100, "nom_situation",  "", _(u"Situation sociale"), True, 20 ],
 ##            [_(u"Etat du dossier"), "left", 200, "dossier",  "", _(u"Etat du dossier"), True, 20 ],
-            ] # nom Colonne, alignement, largeur, nom Champ, Args pour OLV, Description, AffichÈ ?, Ordre
+            ] # nom Colonne, alignement, largeur, nom Champ, Args pour OLV, Description, Affich√© ?, Ordre
             
 
 # ---------------------------------------- LISTVIEW PERSONNES  -----------------------------------------------------------------------
@@ -155,7 +155,7 @@ class Track(object):
 
 class ListView(FastObjectListView):
     def __init__(self, *args, **kwds):
-        # RÈcupÈration des paramËtres perso
+        # R√©cup√©ration des param√®tres perso
         self.activeDoubleClic = kwds.pop("activeDoubleClic", True)
         self.activeCheckBoxes = kwds.pop("activeCheckBoxes", False)
         self.activeMenuContextuel = kwds.pop("activeMenuContextuel", True)
@@ -190,7 +190,7 @@ class ListView(FastObjectListView):
             if len(self.Selection()) == 0:
                 return False
             IDpersonne = self.Selection()[0].IDpersonne
-            # Met ‡ jour le cadre RÈsumÈ
+            # Met √† jour le cadre R√©sum√©
             self.GetGrandParent().GetParent().panel_resume.OnSelectPersonne(IDpersonne=IDpersonne)
             self.GetGrandParent().GetParent().AffichePanelResume(True)
         except :
@@ -223,7 +223,7 @@ class ListView(FastObjectListView):
         for situation in listeSituations :
             DICT_SITUATIONS[situation[0]] = situation[1]
 
-        # Import coordonnÈes
+        # Import coordonn√©es
         req = """SELECT IDcoord, IDpersonne, categorie, texte, intitule
         FROM Coordonnees; """
         DB.ExecuterReq(req)
@@ -250,7 +250,7 @@ class ListView(FastObjectListView):
             else:
                 DICT_QUALIFICATIONS[IDpersonne] = [IDtype_diplome,]
 
-        # Import des types de diplÙmes
+        # Import des types de dipl√¥mes
         req = """SELECT IDtype_diplome, nom_diplome
         FROM types_diplomes; """
         DB.ExecuterReq(req)
@@ -266,7 +266,7 @@ class ListView(FastObjectListView):
         self.donnees = self.GetTracks()
 
     def GetTracks(self):
-        """ RÈcupÈration des donnÈes """
+        """ R√©cup√©ration des donn√©es """
         DB = GestionDB.DB()
         req = """SELECT IDpersonne, civilite, nom, nom_jfille, prenom, date_naiss, cp_naiss, ville_naiss, pays_naiss, nationalite, num_secu, adresse_resid, cp_resid, ville_resid, IDsituation
         FROM personnes %s ORDER BY nom, prenom; """ % self.criteres
@@ -282,7 +282,7 @@ class ListView(FastObjectListView):
         return listeListeView
 
     def Importation_pays(self):
-        # RÈcupÈration des donnÈes
+        # R√©cup√©ration des donn√©es
         DB = GestionDB.DB()        
         req = """SELECT IDpays, nom, nationalite
         FROM pays; """
@@ -300,7 +300,7 @@ class ListView(FastObjectListView):
         imgHomme = self.AddNamedImages("homme", wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Homme.png"), wx.BITMAP_TYPE_PNG))
         imgFemme = self.AddNamedImages("femme", wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Femme.png"), wx.BITMAP_TYPE_PNG))
         
-        # Formatage des donnÈes
+        # Formatage des donn√©es
         def ImageGetter_civilite(track):
             if track.civilite == "Mr" : return imgHomme
             else: return imgFemme
@@ -316,7 +316,7 @@ class ListView(FastObjectListView):
             text = str(date[8:10]) + "/" + str(date[5:7]) + "/" + str(date[:4])
             return text
         
-        # CrÈation des colonnes
+        # Cr√©ation des colonnes
         liste_ColonnesTmp = self.listeColonnesTemp
         # Tri par ordre
         liste_ColonnesTmp.sort(key=operator.itemgetter(7))
@@ -334,7 +334,7 @@ class ListView(FastObjectListView):
                     colonne = ColumnDefn(labelCol, alignement, largeur, nomChamp)
                 liste_Colonnes.append(colonne)
 
-        # Colonne pour recherche facile sur nom et prÈnom
+        # Colonne pour recherche facile sur nom et pr√©nom
         liste_Colonnes.append(ColumnDefn(_(u"Recherche"), "left", 0, "champ_recherche", typeDonnee="texte"))
 
         self.SetColumns(liste_Colonnes)
@@ -359,7 +359,7 @@ class ListView(FastObjectListView):
             self.presents = presents
         self.InitModel()
         self.InitObjectListView()
-        # SÈlection d'un item
+        # S√©lection d'un item
         if self.selectionTrack != None :
             self.SelectObject(self.selectionTrack, deselectOthers=True, ensureVisible=True)
         self.selectionID = None
@@ -385,7 +385,7 @@ class ListView(FastObjectListView):
             return False
         ID = self.Selection()[0].IDpersonne
         
-        # RÈcupÈration d'une adresse Email
+        # R√©cup√©ration d'une adresse Email
         DB = GestionDB.DB()
         req = "SELECT texte FROM coordonnees WHERE IDpersonne = %d AND categorie='Email'" % ID
         DB.ExecuterReq(req)
@@ -396,7 +396,7 @@ class ListView(FastObjectListView):
         else:
             self.adresseMail = ""
         
-        # CrÈation du menu contextuel
+        # Cr√©ation du menu contextuel
         menuPop = UTILS_Adaptations.Menu()
 
         # Item Modifier
@@ -426,20 +426,20 @@ class ListView(FastObjectListView):
         
         # Item Envoyer un Mail
         if self.adresseMail != "" :
-            item = wx.MenuItem(menuPop, 80, _(u"Envoyer un Email depuis l'Èditeur d'Emails intÈgrÈ"))
+            item = wx.MenuItem(menuPop, 80, _(u"Envoyer un Email depuis l'√©diteur d'Emails int√©gr√©"))
             bmp = wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Mail.png"), wx.BITMAP_TYPE_PNG)
             item.SetBitmap(bmp)
             menuPop.AppendItem(item)
             self.Bind(wx.EVT_MENU, self.Menu_Mail, id=80)
 
-            item = wx.MenuItem(menuPop, 81, _(u"Envoyer un Email depuis le client de messagerie par dÈfaut"))
+            item = wx.MenuItem(menuPop, 81, _(u"Envoyer un Email depuis le client de messagerie par d√©faut"))
             bmp = wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Mail.png"), wx.BITMAP_TYPE_PNG)
             item.SetBitmap(bmp)
             menuPop.AppendItem(item)
             self.Bind(wx.EVT_MENU, self.Menu_Mail, id=81)
 
         # Item Publipostage
-        item = wx.MenuItem(menuPop, 140, _(u"CrÈer un courrier ou un mail par publipostage"))
+        item = wx.MenuItem(menuPop, 140, _(u"Cr√©er un courrier ou un mail par publipostage"))
         bmp = wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Mail.png"), wx.BITMAP_TYPE_PNG)
         item.SetBitmap(bmp)
         menuPop.AppendItem(item)
@@ -447,8 +447,8 @@ class ListView(FastObjectListView):
 
         menuPop.AppendSeparator()
         
-        # Item Rechercher PrÈsents
-        item = wx.MenuItem(menuPop, 40, _(u"Rechercher les prÈsents"))
+        # Item Rechercher Pr√©sents
+        item = wx.MenuItem(menuPop, 40, _(u"Rechercher les pr√©sents"))
         bmp = wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Calendrier3jours.png"), wx.BITMAP_TYPE_PNG)
         item.SetBitmap(bmp)
         menuPop.AppendItem(item)
@@ -532,7 +532,7 @@ class ListView(FastObjectListView):
     def Menu_Mail(self, event):
         adresse = self.adresseMail
 
-        # Depuis l'Èditeur d'Emails intÈgrÈ
+        # Depuis l'√©diteur d'Emails int√©gr√©
         if event.GetId() == 80:
             from Dlg import DLG_Mailer
             dlg = DLG_Mailer.Dialog(self)
@@ -541,13 +541,13 @@ class ListView(FastObjectListView):
             dlg.ShowModal()
             dlg.Destroy()
 
-        # Depuis le client de messagerie par dÈfaut
+        # Depuis le client de messagerie par d√©faut
         if event.GetId() == 81:
             FonctionsPerso.EnvoyerMail(adresses=[adresse,], sujet="", message="")
 
 
     def AfficherTout(self):
-        """ RÈafficher toute la liste """
+        """ R√©afficher toute la liste """
         try :
             self.GetGrandParent().GetParent().barreRecherche.OnCancel(None)
         except : pass
@@ -579,7 +579,7 @@ class ListView(FastObjectListView):
 
     def Modifier(self):
         if len(self.Selection()) == 0:
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÈlectionner une fiche personne ‡ modifier dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord s√©lectionner une fiche personne √† modifier dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return False
@@ -590,63 +590,63 @@ class ListView(FastObjectListView):
                 
     def Supprimer(self):
         if len(self.Selection()) == 0:
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÈlectionner une fiche personne ‡ supprimer dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord s√©lectionner une fiche personne √† supprimer dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return False
         IDpersonne = self.Selection()[0].IDpersonne
         
-        # VÈrifie qu'il n'y a aucun contrat enregistrÈ pour cette personne
+        # V√©rifie qu'il n'y a aucun contrat enregistr√© pour cette personne
         DB = GestionDB.DB()
         req = """SELECT IDcontrat FROM contrats WHERE IDpersonne=%d;""" % IDpersonne
         DB.ExecuterReq(req)
         listeContrats = DB.ResultatReq()
         DB.Close()
         if len(listeContrats)>0 :
-            dlg = wx.MessageDialog(self, _(u"Vous ne pouvez pas supprimer une personne qui possËde un ou plusieurs contrat(s).\n\nSi vous voulez vraiment supprimer cette fiche, vous devez d'abord supprimer le ou les contrat(s) de la personne."), "Information", wx.OK | wx.ICON_ERROR)
+            dlg = wx.MessageDialog(self, _(u"Vous ne pouvez pas supprimer une personne qui poss√®de un ou plusieurs contrat(s).\n\nSi vous voulez vraiment supprimer cette fiche, vous devez d'abord supprimer le ou les contrat(s) de la personne."), "Information", wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
             dlg.Destroy()
             return
         
-        # VÈrifie qu'il n'y a aucune prÈsence enregistrÈe pour cette personne
+        # V√©rifie qu'il n'y a aucune pr√©sence enregistr√©e pour cette personne
         DB = GestionDB.DB()
         req = """SELECT IDpresence FROM presences WHERE IDpersonne=%d;""" % IDpersonne
         DB.ExecuterReq(req)
         listePresences = DB.ResultatReq()
         DB.Close()
         if len(listePresences)>0 :
-            dlg = wx.MessageDialog(self, _(u"Vous ne pouvez pas supprimer une personne pour laquelle des prÈsences ont dÈj‡ ÈtÈ enregistrÈes.\n\nSi vous voulez vraiment supprimer cette fiche, vous devez d'abord supprimer le ou les prÈsence(s) de la personne."), "Information", wx.OK | wx.ICON_ERROR)
+            dlg = wx.MessageDialog(self, _(u"Vous ne pouvez pas supprimer une personne pour laquelle des pr√©sences ont d√©j√† √©t√© enregistr√©es.\n\nSi vous voulez vraiment supprimer cette fiche, vous devez d'abord supprimer le ou les pr√©sence(s) de la personne."), "Information", wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
             dlg.Destroy()
             return
         
-        # VÈrifie qu'il n'y a aucun dÈplacement enregistrÈ pour cette personne
+        # V√©rifie qu'il n'y a aucun d√©placement enregistr√© pour cette personne
         DB = GestionDB.DB()
         req = """SELECT IDdeplacement FROM deplacements WHERE IDpersonne=%d;""" % IDpersonne
         DB.ExecuterReq(req)
         listeDeplacements = DB.ResultatReq()
         DB.Close()
         if len(listeDeplacements)>0 :
-            dlg = wx.MessageDialog(self, _(u"Vous ne pouvez pas supprimer une personne pour laquelle des dÈplacements ont dÈj‡ ÈtÈ enregistrÈs.\n\nSi vous voulez vraiment supprimer cette fiche, vous devez d'abord supprimer le ou les dÈplacements(s) de la personne."), "Information", wx.OK | wx.ICON_ERROR)
+            dlg = wx.MessageDialog(self, _(u"Vous ne pouvez pas supprimer une personne pour laquelle des d√©placements ont d√©j√† √©t√© enregistr√©s.\n\nSi vous voulez vraiment supprimer cette fiche, vous devez d'abord supprimer le ou les d√©placements(s) de la personne."), "Information", wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
             dlg.Destroy()
             return
         
-        # VÈrifie qu'il n'y a aucun remboursement enregistrÈ pour cette personne
+        # V√©rifie qu'il n'y a aucun remboursement enregistr√© pour cette personne
         DB = GestionDB.DB()
         req = """SELECT IDremboursement FROM remboursements WHERE IDpersonne=%d;""" % IDpersonne
         DB.ExecuterReq(req)
         listeRemboursements= DB.ResultatReq()
         DB.Close()
         if len(listeRemboursements)>0 :
-            dlg = wx.MessageDialog(self, _(u"Vous ne pouvez pas supprimer une personne pour laquelle des remboursements ont dÈj‡ ÈtÈ enregistrÈs.\n\nSi vous voulez vraiment supprimer cette fiche, vous devez d'abord supprimer le ou les remboursement(s) de la personne."), "Information", wx.OK | wx.ICON_ERROR)
+            dlg = wx.MessageDialog(self, _(u"Vous ne pouvez pas supprimer une personne pour laquelle des remboursements ont d√©j√† √©t√© enregistr√©s.\n\nSi vous voulez vraiment supprimer cette fiche, vous devez d'abord supprimer le ou les remboursement(s) de la personne."), "Information", wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
             dlg.Destroy()
             return
         
         # Demande de confirmation
         Nom = self.Selection()[0].prenom + " " + self.Selection()[0].nom
-        txtMessage = six.text_type((_(u"Voulez-vous vraiment supprimer cette identitÈ ? \n\n> ") + Nom + _(u"\n\n\nAttention : Les coordonnÈes, diplÙmes ou piËces de cette personne seront Ègalement supprimÈs.")))
+        txtMessage = six.text_type((_(u"Voulez-vous vraiment supprimer cette identit√© ? \n\n> ") + Nom + _(u"\n\n\nAttention : Les coordonn√©es, dipl√¥mes ou pi√®ces de cette personne seront √©galement supprim√©s.")))
         dlgConfirm = wx.MessageDialog(self, txtMessage, _(u"Confirmation de suppression"), wx.YES_NO|wx.NO_DEFAULT|wx.ICON_QUESTION)
         reponse = dlgConfirm.ShowModal()
         dlgConfirm.Destroy()
@@ -657,21 +657,21 @@ class ListView(FastObjectListView):
         DB = GestionDB.DB()
         # Suppression de la fiche
         DB.ReqDEL("personnes", "IDpersonne", IDpersonne)
-        # Suppression des coordonnÈes
+        # Suppression des coordonn√©es
         DB.ReqDEL("coordonnees", "IDpersonne", IDpersonne)
-        # Suppression des diplÙmes
+        # Suppression des dipl√¥mes
         DB.ReqDEL("diplomes", "IDpersonne", IDpersonne)
-        # Suppression des piËces
+        # Suppression des pi√®ces
         DB.ReqDEL("pieces", "IDpersonne", IDpersonne)
         
         DB.Close()
 
-        # M‡J du ListCtrl
+        # M√†J du ListCtrl
         self.MAJ()
         self.GetGrandParent().GetParent().AffichePanelResume(False)
 
     def Rechercher(self):
-        """ Rechercher les prÈsents sur une pÈriode donnÈe """
+        """ Rechercher les pr√©sents sur une p√©riode donn√©e """
         if self.GetNbrePersonnes() == 0 :
             dlg = wx.MessageDialog(self, _(u"Il n'y a aucune personne dans la liste !"), "Erreur", wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
@@ -688,14 +688,14 @@ class ListView(FastObjectListView):
             dlg.Destroy()
             return False
         
-        # S'il n'y a aucune personne prÈsente sur la pÈriode sÈlectionnÈe
+        # S'il n'y a aucune personne pr√©sente sur la p√©riode s√©lectionn√©e
         if len(listePersonnesPresentes) == 0 :
-            dlg = wx.MessageDialog(self, _(u"Il n'y a aucune personne prÈsente sur la pÈriode que vous avez sÈlectionnÈ."), _(u"Erreur"), wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Il n'y a aucune personne pr√©sente sur la p√©riode que vous avez s√©lectionn√©."), _(u"Erreur"), wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return False
         
-        # SÈlection dans le listView
+        # S√©lection dans le listView
         if len(listePersonnesPresentes) == 1 : listePersonnesPresentes = "(%d)" % listePersonnesPresentes[0]
         else : listePersonnesPresentes = str(tuple(listePersonnesPresentes))
         
@@ -704,8 +704,8 @@ class ListView(FastObjectListView):
         return datesSelection
     
     def GetValeurs(self):
-        """ RÈcupËre les valeurs affichÈes sous forme de liste """
-        # RÈcupËre les labels de colonnes
+        """ R√©cup√®re les valeurs affich√©es sous forme de liste """
+        # R√©cup√®re les labels de colonnes
         liste_ColonnesTmp = self.listeColonnesTemp
         liste_ColonnesTmp.sort(key=operator.itemgetter(7))
         liste_labelsColonnes = []
@@ -713,7 +713,7 @@ class ListView(FastObjectListView):
             if affiche == True :
                 liste_labelsColonnes.append( (labelCol, alignement, largeur, nomChamp) )
 
-        # RÈcupËre les valeurs
+        # R√©cup√®re les valeurs
         listeValeurs = []
         listeObjects = self.GetFilteredObjects()
         for object in listeObjects :
@@ -734,7 +734,7 @@ class ListView(FastObjectListView):
     def CourrierPublipostage(self, mode="unique"):
         if mode == "unique" :
             if len(self.Selection()) == 0:
-                dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÈlectionner un individu dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
+                dlg = wx.MessageDialog(self, _(u"Vous devez d'abord s√©lectionner un individu dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
                 dlg.ShowModal()
                 dlg.Destroy()
                 return False
@@ -745,7 +745,7 @@ class ListView(FastObjectListView):
                 dlg.ShowModal()
                 dlg.Destroy()
                 return
-            # RÈcupÈration des valeurs
+            # R√©cup√©ration des valeurs
             liste_labelsColonnes, listeValeurs = self.GetValeurs()
             # Selection des lignes
             from Dlg import DLG_Selection_liste
@@ -758,7 +758,7 @@ class ListView(FastObjectListView):
                 return False
             listeID = listeSelections
         
-        # RÈcupËre les donnÈes pour le publipostage
+        # R√©cup√®re les donn√©es pour le publipostage
         from Utils import UTILS_Publipostage_donnees
         dictDonnees = UTILS_Publipostage_donnees.GetDictDonnees(categorie="personne", listeID=listeID)
         # Ouvre le publiposteur
@@ -776,7 +776,7 @@ class ListView(FastObjectListView):
             dlg.Destroy()
             return
         
-        # RÈcupÈration des valeurs
+        # R√©cup√©ration des valeurs
         liste_labelsColonnes, listeValeurs = self.GetValeurs()
         
         # Selection des lignes
@@ -790,13 +790,13 @@ class ListView(FastObjectListView):
             return False
         
         nomFichier = "ExportTexte.txt"
-        # Demande ‡ l'utilisateur le nom de fichier et le rÈpertoire de destination
+        # Demande √† l'utilisateur le nom de fichier et le r√©pertoire de destination
         wildcard = "Fichier texte (*.txt)|*.txt|" \
                         "All files (*.*)|*.*"
         sp = wx.StandardPaths.Get()
         cheminDefaut = sp.GetDocumentsDir()
         dlg = wx.FileDialog(
-            self, message = _(u"Veuillez sÈlectionner le rÈpertoire de destination et le nom du fichier"), defaultDir=cheminDefaut, 
+            self, message = _(u"Veuillez s√©lectionner le r√©pertoire de destination et le nom du fichier"), defaultDir=cheminDefaut, 
             defaultFile = nomFichier, 
             wildcard = wildcard, 
             style = wx.FD_SAVE
@@ -809,16 +809,16 @@ class ListView(FastObjectListView):
             dlg.Destroy()
             return
         
-        # Le fichier de destination existe dÈj‡ :
+        # Le fichier de destination existe d√©j√† :
         if os.path.isfile(cheminFichier) == True :
-            dlg = wx.MessageDialog(None, _(u"Un fichier portant ce nom existe dÈj‡. \n\nVoulez-vous le remplacer ?"), "Attention !", wx.YES_NO | wx.NO_DEFAULT | wx.ICON_EXCLAMATION)
+            dlg = wx.MessageDialog(None, _(u"Un fichier portant ce nom existe d√©j√†. \n\nVoulez-vous le remplacer ?"), "Attention !", wx.YES_NO | wx.NO_DEFAULT | wx.ICON_EXCLAMATION)
             if dlg.ShowModal() == wx.ID_NO :
                 return False
                 dlg.Destroy()
             else:
                 dlg.Destroy()
 
-        # CrÈation du fichier texte
+        # Cr√©ation du fichier texte
         texte = ""
         separateur = ";"
         for labelCol, alignement, largeur, nomChamp in liste_labelsColonnes :
@@ -831,16 +831,16 @@ class ListView(FastObjectListView):
                     texte += valeur + separateur
                 texte = texte[:-1] + "\n"
         
-        # Elimination du dernier saut ‡ la ligne
+        # Elimination du dernier saut √† la ligne
         texte = texte[:-1]
 
-        # CrÈation du fichier texte
+        # Cr√©ation du fichier texte
         f = open(cheminFichier, "w")
         f.write(texte)
         f.close()
         
-        # Confirmation de crÈation du fichier et demande d'ouverture directe dans Excel
-        txtMessage = _(u"Le fichier Texte a ÈtÈ crÈÈ avec succËs. Souhaitez-vous l'ouvrir dËs maintenant ?")
+        # Confirmation de cr√©ation du fichier et demande d'ouverture directe dans Excel
+        txtMessage = _(u"Le fichier Texte a √©t√© cr√©√© avec succ√®s. Souhaitez-vous l'ouvrir d√®s maintenant ?")
         dlgConfirm = wx.MessageDialog(self, txtMessage, _(u"Confirmation"), wx.YES_NO|wx.NO_DEFAULT|wx.ICON_QUESTION)
         reponse = dlgConfirm.ShowModal()
         dlgConfirm.Destroy()
@@ -853,7 +853,7 @@ class ListView(FastObjectListView):
     def ExportExcel(self):
         """ Export de la liste au format Excel """
         if "linux" in sys.platform :
-            dlg = wx.MessageDialog(self, _(u"DÈsolÈ, cette fonction n'est pas disponible dans la version LINUX de Teamworks."), "Fonction indisponible", wx.OK | wx.ICON_ERROR)
+            dlg = wx.MessageDialog(self, _(u"D√©sol√©, cette fonction n'est pas disponible dans la version LINUX de Teamworks."), "Fonction indisponible", wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -864,7 +864,7 @@ class ListView(FastObjectListView):
             dlg.Destroy()
             return
         
-        # RÈcupÈration des valeurs
+        # R√©cup√©ration des valeurs
         labels_colonnes, liste_valeurs = self.GetValeurs()
         from Utils import UTILS_Excel
         UTILS_Excel.Excel(self, labels_colonnes, liste_valeurs)
@@ -877,7 +877,7 @@ class ListView(FastObjectListView):
             dlg.Destroy()
             return
             
-        # RÈcupÈration des valeurs
+        # R√©cup√©ration des valeurs
         liste_labelsColonnes, listeValeurs = self.GetValeurs()
         
         # Selection des lignes
@@ -920,11 +920,11 @@ class Impression():
         doc = SimpleDocTemplate(nomDoc, pagesize=landscape(A4))
         story = []
 
-        # CrÈation du titre du document
+        # Cr√©ation du titre du document
         dataTableau = []
         largeursColonnes = ( (620, 100) )
         dateDuJour = DateEngFr(str(datetime.date.today()))
-        dataTableau.append( (_(u"Liste de personnes"), _(u"EditÈ le %s") % dateDuJour )  )
+        dataTableau.append( (_(u"Liste de personnes"), _(u"Edit√© le %s") % dateDuJour )  )
         style = TableStyle([
                             ('BOX', (0,0), (-1,-1), 0.25, colors.black), 
                             ('VALIGN', (0,0), (-1,-1), 'TOP'), 
@@ -938,10 +938,10 @@ class Impression():
         story.append(tableau)
         story.append(Spacer(0,20))       
         
-        # Tableau de donnÈes
+        # Tableau de donn√©es
         dataTableau = []
         
-        # CrÈation des colonnes
+        # Cr√©ation des colonnes
         largeursColonnes = []
         labelsColonnes = []
 
@@ -952,7 +952,7 @@ class Impression():
             index += 1
         dataTableau.append(labelsColonnes)
         
-        # CrÈation des lignes
+        # Cr√©ation des lignes
         for valeurs in listeValeurs :
             ligne = []
             if int(valeurs[0]) in listeSelections :
@@ -962,13 +962,13 @@ class Impression():
     
         # Style du tableau
         style = TableStyle([
-                            ('GRID', (0,0), (-1,-1), 0.25, colors.black), # CrÈe la bordure noire pour tout le tableau
-                            ('ALIGN', (0,0), (-1,-1), 'LEFT'), # Titre du groupe ‡ gauche
+                            ('GRID', (0,0), (-1,-1), 0.25, colors.black), # Cr√©e la bordure noire pour tout le tableau
+                            ('ALIGN', (0,0), (-1,-1), 'LEFT'), # Titre du groupe √† gauche
                             ('FONT',(0,0),(-1,-1), "Helvetica", 6), # Donne la police de caract. + taille de police 
                             ])
             
            
-        # CrÈation du tableau
+        # Cr√©ation du tableau
         tableau = Table(dataTableau, largeursColonnes)
         tableau.setStyle(style)
         story.append(tableau)

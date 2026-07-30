@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -19,16 +19,16 @@ try :
     from com.sun.star.beans import PropertyValue
 except :
     message = u"""
-    Teamworks n'arrive pas ‡ communiquer avec OpenOffice.
+    Teamworks n'arrive pas √† communiquer avec OpenOffice.
     
-    Si OpenOffice est bien installÈ sur votre ordinateur, vous pourrez s˚rement rÈsoudre le problËme  avec la mÈthode suivante :
+    Si OpenOffice est bien install√© sur votre ordinateur, vous pourrez s√ªrement r√©soudre le probl√®me  avec la m√©thode suivante :
     1. Quittez Teamworks
     2. Ouvrez le terminal (Menu Applications > Accessoires > Terminal
     3. Tapez-y le texte suivant :
         sudo ldconfig -v /usr/lib/openoffice/program
-    4. Tapez sur la touche EntrÈe puis saisissez votre mot de passe administrateur
+    4. Tapez sur la touche Entr√©e puis saisissez votre mot de passe administrateur
     5. Attendez quelques instants, quittez le terminal puis relancez Teamworks
-    Le problËme devrait Ítre rÈsolu dÈfinitivement. Sinon contactez le crÈateur de Teamworks.
+    Le probl√®me devrait √™tre r√©solu d√©finitivement. Sinon contactez le cr√©ateur de Teamworks.
     """
     dlg = wx.MessageDialog(None, message, _(u"Erreur de communication avec OpenOffice"), wx.OK | wx.ICON_ERROR)
     dlg.ShowModal()
@@ -75,11 +75,11 @@ class Pilotage():
         
     def Ecrire_exemple(self, listeValeurs=[]):
         print('Ecrit un texte exemple...')
-        texte = u"""Je viens de crÈer pour vous un nouveau document OpenOffice WRITER. Vous pouvez maintenant y saisir le texte de votre choix. Pour insÈrer des donnÈes pour le publipostage, c'est trËs simple : tapez son mot-clÈ ! Exemple : "Je suis {CIVILITE} {NOM}" donnera aprËs le publipostage "Je suis David DUPOND"... \n
-Voici la liste des mots-clÈs du contrat en cours. Elle vous aidera ‡ Ècrire votre texte : \n\n"""
+        texte = u"""Je viens de cr√©er pour vous un nouveau document OpenOffice WRITER. Vous pouvez maintenant y saisir le texte de votre choix. Pour ins√©rer des donn√©es pour le publipostage, c'est tr√®s simple : tapez son mot-cl√© ! Exemple : "Je suis {CIVILITE} {NOM}" donnera apr√®s le publipostage "Je suis David DUPOND"... \n
+Voici la liste des mots-cl√©s du contrat en cours. Elle vous aidera √† √©crire votre texte : \n\n"""
         for motCle, valeur in listeValeurs :
             texte += "  - {" + motCle + "} \n"
-        texte += _(u"\n(Effacez bien-s˚r ce petit texte d'introduction aprËs l'avoir lu !!!)")
+        texte += _(u"\n(Effacez bien-s√ªr ce petit texte d'introduction apr√®s l'avoir lu !!!)")
         
         objText = self.document.Text
         objCursor = objText.createTextCursor()
@@ -103,19 +103,19 @@ Voici la liste des mots-clÈs du contrat en cours. Elle vous aidera ‡ Ècrire votr
             orempl.SearchString= "{" + motCle + "}"
             orempl.ReplaceString= valeur
             orempl.SearchWords = True  #mots entiers seulement ?
-            orempl.SearchCaseSensitive = True    # sensible ‡ la casse ?
+            orempl.SearchCaseSensitive = True    # sensible √† la casse ?
             nbre = self.document.replaceAll(orempl)
             
             listeRemplacements.append((motCle, valeur, nbre))
             if nbre == 0 : listeNotFind.append((motCle, valeur))
         
         if len(listeNotFind) == 0 :
-            txtPublipostage = _(u"\n\n> Toutes les valeurs ont ÈtÈ placÈes dans le document.")
+            txtPublipostage = _(u"\n\n> Toutes les valeurs ont √©t√© plac√©es dans le document.")
         else:
             if len(listeNotFind) == 1 :
-                txtPublipostage = _(u"\n\n> Remarque : Un mot-clÈ n'a pas ÈtÈ dans le document : ")
+                txtPublipostage = _(u"\n\n> Remarque : Un mot-cl√© n'a pas √©t√© dans le document : ")
             else:
-                txtPublipostage = _(u"\n\n> Remarque : Certains mot-clÈs n'ont pas ÈtÈ trouvÈs dans le document : ")
+                txtPublipostage = _(u"\n\n> Remarque : Certains mot-cl√©s n'ont pas √©t√© trouv√©s dans le document : ")
             for item in listeNotFind :
                 txtPublipostage += "{" + item[0] + "}, "
             txtPublipostage = txtPublipostage[:-2] + "."
@@ -128,7 +128,7 @@ Voici la liste des mots-clÈs du contrat en cours. Elle vous aidera ‡ Ècrire votr
         dest = "file:///" + cheminDoc.replace("\\", "/")
         args = ()
         self.document.storeAsURL(dest, args)
-        txtSave = _(u"\n\n> Document sauvegardÈ sur votre ordinateur.")
+        txtSave = _(u"\n\n> Document sauvegard√© sur votre ordinateur.")
         print("Sauvegarde doc...")
         return txtSave
 
@@ -169,10 +169,10 @@ Voici la liste des mots-clÈs du contrat en cours. Elle vous aidera ‡ Ècrire votr
             for x in range(nbreExemplaires) :
                 uno.invoke(self.document, "print", (args, ))
                 print("Impression...")
-                time.sleep(2) # Attend 2 secondes que le doc soit envoyÈ ‡ l'imprimante, sinon bug !
-            txtImpress = _(u"\n\n> Document imprimÈ en ") + str(nbreExemplaires) + " exemplaire(s)."
+                time.sleep(2) # Attend 2 secondes que le doc soit envoy√© √† l'imprimante, sinon bug !
+            txtImpress = _(u"\n\n> Document imprim√© en ") + str(nbreExemplaires) + " exemplaire(s)."
         except :
-            txtImpress = _(u"\n\n> ProblËme d'impression.")
+            txtImpress = _(u"\n\n> Probl√®me d'impression.")
         return txtImpress
     
                        

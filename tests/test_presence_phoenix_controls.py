@@ -18,7 +18,7 @@ def test_presence_lists_use_valid_end_insertion_index() -> None:
 
     combined = ""
     for path in PRESENCE_SOURCES:
-        source = path.read_text(encoding="iso-8859-15")
+        source = path.read_text(encoding="utf-8")
         combined += source
         for token in forbidden:
             assert token not in source, (path, token)
@@ -34,6 +34,6 @@ def test_presence_lists_enable_native_phoenix_checkboxes() -> None:
     )
 
     for path in PRESENCE_SOURCES:
-        source = path.read_text(encoding="iso-8859-15")
+        source = path.read_text(encoding="utf-8")
         assert source.count(marker) == 1, path
         assert "CheckListCtrlMixin.__init__(self)" in source

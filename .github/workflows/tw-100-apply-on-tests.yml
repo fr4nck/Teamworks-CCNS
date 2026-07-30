@@ -25,7 +25,7 @@ jobs:
 
           path = Path('teamworks/Ctrl/CTRL_thumbnailctrl.py')
           data = path.read_bytes()
-          text = data.decode('iso-8859-15')
+          text = data.decode('utf-8')
           old = """def getShadow():\n    if 'phoenix' in wx.PlatformInfo:\n        fonction = wx.Image\n    else :\n        fonction = wx.ImageFromStream\n    sh_tr = fonction(six.BytesIO(getDataTR())).ConvertToBitmap()\n    sh_bl = fonction(six.BytesIO(getDataBL())).ConvertToBitmap()\n    sh_sh = fonction(six.BytesIO(getDataSH())).Rescale(500, 500, wx.IMAGE_QUALITY_HIGH)\n"""
           new = """def getShadow():\n    sh_tr = wx.Image(six.BytesIO(getDataTR())).ConvertToBitmap()\n    sh_bl = wx.Image(six.BytesIO(getDataBL())).ConvertToBitmap()\n    sh_sh = wx.Image(six.BytesIO(getDataSH())).Rescale(500, 500, wx.IMAGE_QUALITY_HIGH)\n"""
           if old not in text:

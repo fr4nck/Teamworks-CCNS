@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -27,14 +27,14 @@ class Page(wx.Panel):
         
         self.imgBandeau = wx.StaticBitmap(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/Bandeaux/Contrat.png"), wx.BITMAP_TYPE_ANY) )
         
-        self.label_titre = wx.StaticText(self, -1, _(u"Bienvenue dans l'assistant de crÈation de contrat"))
+        self.label_titre = wx.StaticText(self, -1, _(u"Bienvenue dans l'assistant de cr√©ation de contrat"))
         
         # Label Html
         txtIntro = u"""
         <FONT face="Arial" color="#000000" size=2>
-        <P>Gr‚ce ‡ cet assistant, vous pouvez crÈer ou modifier des contrats. Cette Ètape est essentielle pour permettre au logiciel de savoir si tel salariÈ doit travailler sur une pÈriode donnÈe.</P>
-        <p>Vous devrez donc saisir dans cet assistant les caractÈristiques de son contrat. Vous avez ensuite la possibilitÈ d'imprimer le contrat et une D.U.E. </p>
-        <p><b><u>Remarque :</u></b> Si vous avez l'occasion d'Ètablir des contrats souvent identiques (pour les saisonniers par exemple), vous pouvez utiliser les modËles de contrats qui faciliteront fortement la saisie des donnÈes.</p>
+        <P>Gr√¢ce √† cet assistant, vous pouvez cr√©er ou modifier des contrats. Cette √©tape est essentielle pour permettre au logiciel de savoir si tel salari√© doit travailler sur une p√©riode donn√©e.</P>
+        <p>Vous devrez donc saisir dans cet assistant les caract√©ristiques de son contrat. Vous avez ensuite la possibilit√© d'imprimer le contrat et une D.U.E. </p>
+        <p><b><u>Remarque :</u></b> Si vous avez l'occasion d'√©tablir des contrats souvent identiques (pour les saisonniers par exemple), vous pouvez utiliser les mod√®les de contrats qui faciliteront fortement la saisie des donn√©es.</p>
         </FONT>
         """ 
         self.label_intro = FonctionsPerso.TexteHtml(self, texte=txtIntro, Enabled=False)

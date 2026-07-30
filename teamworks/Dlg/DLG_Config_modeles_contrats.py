@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -22,8 +22,8 @@ class Panel(wx.Panel):
     def __init__(self, parent, ID=-1):
         wx.Panel.__init__(self, parent, ID, name="panel_config_Modeles_Contrats", style=wx.TAB_TRAVERSAL)
         
-        self.barreTitre = FonctionsPerso.BarreTitre(self,  _(u"Les modèles de contrats"), u"")
-        texteIntro = _(u"Vous pouvez ici créer, modifier ou supprimer les modèles de contrats. Ceux-ci sont bien utiles quand vous avez besoin de créer\nsouvent les mêmes types de contrat.")
+        self.barreTitre = FonctionsPerso.BarreTitre(self,  _(u"Les modÃ¨les de contrats"), u"")
+        texteIntro = _(u"Vous pouvez ici crÃ©er, modifier ou supprimer les modÃ¨les de contrats. Ceux-ci sont bien utiles quand vous avez besoin de crÃ©er\nsouvent les mÃªmes types de contrat.")
         self.label_introduction = FonctionsPerso.StaticWrapText(self, -1, texteIntro)
         
         self.listCtrl = ListCtrl(self)
@@ -49,11 +49,11 @@ class Panel(wx.Panel):
         self.bouton_supprimer.Enable(False)
         
     def __set_properties(self):
-        self.bouton_ajouter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour créer un nouveau champ personnalisé")))
+        self.bouton_ajouter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour crÃ©er un nouveau champ personnalisÃ©")))
         self.bouton_ajouter.SetSize(self.bouton_ajouter.GetBestSize())
-        self.bouton_modifier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier le champ sélectionné dans la liste")))
+        self.bouton_modifier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier le champ sÃ©lectionnÃ© dans la liste")))
         self.bouton_modifier.SetSize(self.bouton_modifier.GetBestSize())
-        self.bouton_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer le champ sélectionné dans la liste")))
+        self.bouton_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer le champ sÃ©lectionnÃ© dans la liste")))
         self.bouton_supprimer.SetSize(self.bouton_supprimer.GetBestSize())
         self.bouton_aide.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour obtenir de l'aide")))
 
@@ -98,7 +98,7 @@ class Panel(wx.Panel):
     def Modifier(self):
         index = self.listCtrl.GetFirstSelected()
         if index == -1:
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sélectionner un modèle à modifier dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÃ©lectionner un modÃ¨le Ã  modifier dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -114,17 +114,17 @@ class Panel(wx.Panel):
     def Supprimer(self):
         index = self.listCtrl.GetFirstSelected()
 
-        # Vérifie qu'un item a bien été sélectionné
+        # VÃ©rifie qu'un item a bien Ã©tÃ© sÃ©lectionnÃ©
         if index == -1:
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sélectionner un modèle à supprimer dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÃ©lectionner un modÃ¨le Ã  supprimer dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
 
-##        # Vérifie que cet item n'est attribuée à aucune personne
+##        # VÃ©rifie que cet item n'est attribuÃ©e Ã  aucune personne
 ##        nbreTitulaires = int(self.listCtrl_Situations.GetItem(index, 2).GetText())
 ##        if nbreTitulaires != 0:
-##            dlg = wx.MessageDialog(self, _(u"Pour des raisons de sécurité des données, vous ne pouvez pas supprimer un type de situation sociale qui a déjà été attribué à des personnes.\n\nSi vous voulez vraiment le supprimer, vous devez d'abord supprimer cette situation sociale sur chaque fiche individuelle concernée."), "Information", wx.OK | wx.ICON_INFORMATION)
+##            dlg = wx.MessageDialog(self, _(u"Pour des raisons de sÃ©curitÃ© des donnÃ©es, vous ne pouvez pas supprimer un type de situation sociale qui a dÃ©jÃ  Ã©tÃ© attribuÃ© Ã  des personnes.\n\nSi vous voulez vraiment le supprimer, vous devez d'abord supprimer cette situation sociale sur chaque fiche individuelle concernÃ©e."), "Information", wx.OK | wx.ICON_INFORMATION)
 ##            dlg.ShowModal()
 ##            dlg.Destroy()
 ##            return
@@ -139,11 +139,11 @@ class Panel(wx.Panel):
         if reponse == wx.ID_NO:
             return
         
-        # Suppression du modèle
+        # Suppression du modÃ¨le
         DB = GestionDB.DB()
         DB.ReqDEL("contrats_modeles", "IDmodele", IDmodele)
 
-        # Suppression des champs associés
+        # Suppression des champs associÃ©s
         req = "SELECT IDval_champ FROM contrats_valchamps WHERE (IDmodele=%d AND type='modele')  ;" % IDmodele
         DB.ExecuterReq(req)
         listeChamps = DB.ResultatReq()
@@ -155,7 +155,7 @@ class Panel(wx.Panel):
         # Fermeture de la DB
         DB.Close()
 
-        # MàJ du ListCtrl
+        # MÃ J du ListCtrl
         self.MAJ_ListCtrl()
         
     def MAJ_ListCtrl(self):
@@ -205,10 +205,10 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
 
     def Remplissage(self):
         
-        # Récupération des données dans la base de données
+        # RÃ©cupÃ©ration des donnÃ©es dans la base de donnÃ©es
         self.Importation()
         
-        # Création des colonnes
+        # CrÃ©ation des colonnes
         self.nbreColonnes =2
         self.InsertColumn(0, _(u"     ID"))
         self.SetColumnWidth(0, 0)
@@ -239,7 +239,7 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
         self.parent.bouton_supprimer.Enable(False)
         
     def Importation(self):
-        # Récupération des données
+        # RÃ©cupÃ©ration des donnÃ©es
         DB = GestionDB.DB()        
         req = """SELECT IDmodele, nom, description
         FROM contrats_modeles ORDER BY nom; """
@@ -247,7 +247,7 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
         liste = DB.ResultatReq()
         DB.Close()
         self.nbreLignes = len(liste)
-        # Création du dictionnaire de données
+        # CrÃ©ation du dictionnaire de donnÃ©es
         self.donnees = self.listeEnDict(liste)
             
     def MAJListeCtrl(self):
@@ -260,7 +260,7 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
         dictio = {}
         x = 1
         for ligne in liste:
-            index = x # Donne un entier comme clé
+            index = x # Donne un entier comme clÃ©
             dictio[index] = ligne
             x += 1
         return dictio
@@ -283,12 +283,12 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
         return valeur
 
     def OnGetItemImage(self, item):
-        """ Affichage des images en début de ligne """
+        """ Affichage des images en dÃ©but de ligne """
         return -1
 
     def OnGetItemAttr(self, item):
         """ Application d'une couleur de fond pour une ligne sur deux """
-        # Création d'une ligne de couleur 1 ligne sur 2
+        # CrÃ©ation d'une ligne de couleur 1 ligne sur 2
         if item % 2 == 1:
             return self.attr1
         else:
@@ -325,7 +325,7 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
         index = self.GetFirstSelected()
         key = int(self.getColumnText(index, 0))
         
-        # Création du menu contextuel
+        # CrÃ©ation du menu contextuel
         menuPop = UTILS_Adaptations.Menu()
 
         # Item Modifier
@@ -383,7 +383,7 @@ class Dialog(wx.Dialog):
         self.Bind(wx.EVT_BUTTON, self.Onbouton_annuler, self.bouton_fermer)
 
     def __set_properties(self):
-        self.SetTitle(_(u"Gestion des modèles de contrats"))
+        self.SetTitle(_(u"Gestion des modÃ¨les de contrats"))
         self.bouton_aide.SetToolTip(wx.ToolTip("Cliquez ici pour obtenir de l'aide"))
         self.bouton_fermer.SetToolTip(wx.ToolTip(_(u"Cliquez pour fermer")))
         self.SetMinSize((750, 600))

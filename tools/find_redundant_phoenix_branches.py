@@ -11,7 +11,7 @@ from typing import Iterable
 
 
 DEFAULT_ROOT = Path("teamworks")
-ENCODINGS = ("utf-8", "iso-8859-15", "cp1252")
+ENCODINGS = ("utf-8",)
 
 
 @dataclass(frozen=True)
@@ -63,7 +63,7 @@ def find_redundant_phoenix_branches(root: Path = DEFAULT_ROOT) -> list[Finding]:
 
 
 def format_findings(findings: Iterable[Finding]) -> str:
-    return "\n".join(f"{item.path}:{item.line}" for item in findings)
+    return "\n".join(f"{item.path.as_posix()}:{item.line}" for item in findings)
 
 
 def main() -> int:

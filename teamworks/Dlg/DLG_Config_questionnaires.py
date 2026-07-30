@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -22,7 +22,7 @@ class Panel(wx.Panel):
         
         # Titre et intro
         self.barreTitre = FonctionsPerso.BarreTitre(self,  _(u"Le questionnaire"), u"")
-        texteIntro = _(u"Vous pouvez ici concevoir des questionnaires personnalisés pour les fiches individuelles. Commencez par créer des catégories puis\nparamétrez des questions basées sur les contrôles de votre choix en fonction des données à saisir : texte, liste, entier, etc...")
+        texteIntro = _(u"Vous pouvez ici concevoir des questionnaires personnalisÃ©s pour les fiches individuelles. Commencez par crÃ©er des catÃ©gories puis\nparamÃ©trez des questions basÃ©es sur les contrÃ´les de votre choix en fonction des donnÃ©es Ã  saisir : texte, liste, entier, etc...")
         self.label_introduction = FonctionsPerso.StaticWrapText(self, -1, texteIntro)
 
         # Questionnaire
@@ -40,11 +40,11 @@ class Panel(wx.Panel):
         self.Bind(wx.EVT_BUTTON, self.OnBoutonMonter, self.bouton_monter)
         self.Bind(wx.EVT_BUTTON, self.OnBoutonDescendre, self.bouton_descendre)
 
-        self.bouton_ajouter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour ajouter une catégorie ou une question")))
-        self.bouton_modifier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier la catégorie ou la question sélectionnée")))
-        self.bouton_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer la catégorie ou la question sélectionnée")))
-        self.bouton_monter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour monter la catégorie ou la question sélectionnée")))
-        self.bouton_descendre.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour descendre la catégorie ou la question sélectionnée")))
+        self.bouton_ajouter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour ajouter une catÃ©gorie ou une question")))
+        self.bouton_modifier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier la catÃ©gorie ou la question sÃ©lectionnÃ©e")))
+        self.bouton_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer la catÃ©gorie ou la question sÃ©lectionnÃ©e")))
+        self.bouton_monter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour monter la catÃ©gorie ou la question sÃ©lectionnÃ©e")))
+        self.bouton_descendre.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour descendre la catÃ©gorie ou la question sÃ©lectionnÃ©e")))
 
 ##        self.label_conclusion = wx.StaticText(self, -1, "Remarques...")
 

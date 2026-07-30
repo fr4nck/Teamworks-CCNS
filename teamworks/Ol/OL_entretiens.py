@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -45,7 +45,7 @@ LISTE_COLONNES_1 = [
             [_(u"Heure"), "left", 50, "heure", "heure", _(u"Heure de l'entretien"), True, 3 ],
             [_(u"Avis"), "left", 120, "avis", "image_avis", _(u"Avis sur le candidat"), True, 4 ],
             [_(u"Commentaire"), "left", 270, "remarques", "", _(u"Commentaire sur l'entretien"), True, 5 ],
-            ] # nom Colonne, alignement, largeur, nom Champ, Args pour OLV, Description, AffichÈ ?, Ordre
+            ] # nom Colonne, alignement, largeur, nom Champ, Args pour OLV, Description, Affich√© ?, Ordre
 
 # Liste avec nom du candidat
 LISTE_COLONNES_2 = [
@@ -55,14 +55,14 @@ LISTE_COLONNES_2 = [
             [_(u"Nom"), "left", 120, "nom_candidat", "", _(u"Nom du candidat"), True, 4 ],
             [_(u"Avis"), "left", 120, "avis", "image_avis", _(u"Avis sur le candidat"), True, 5 ],
             [_(u"Commentaire"), "left", 300, "remarques", "", _(u"Commentaire sur l'entretien"), True, 6 ],
-            ] # nom Colonne, alignement, largeur, nom Champ, Args pour OLV, Description, AffichÈ ?, Ordre
+            ] # nom Colonne, alignement, largeur, nom Champ, Args pour OLV, Description, Affich√© ?, Ordre
 
 # Liste pour gagdet
 LISTE_COLONNES_3 = [
             [_(u"ID"), "left", 0, "IDentretien", "", _(u"ID de l'entretien"), True, 1 ],
             [_(u"Date et Heure et Nom"), "left", 210, _(u"date_heure_nom"), "date_heure_nom", _(u"Date, heure et nom"), True, 2 ],
             [_(u"Avis"), "left", 0, "avis", "image_avis", _(u"Avis sur le candidat"), False, 4 ],
-            ] # nom Colonne, alignement, largeur, nom Champ, Args pour OLV, Description, AffichÈ ?, Ordre
+            ] # nom Colonne, alignement, largeur, nom Champ, Args pour OLV, Description, Affich√© ?, Ordre
 
 # ---------------------------------------- LISTVIEW   -----------------------------------------------------------------------
 
@@ -75,7 +75,7 @@ class Track(object):
         self.date_heure = self.date + ";" + self.heure
         if VERROUILLAGE == True :
             self.avis = 999
-            self.remarques = _(u"Commentaire verrouillÈ")
+            self.remarques = _(u"Commentaire verrouill√©")
         else:
             self.avis = donnees[4]
             self.remarques = donnees[5]
@@ -95,7 +95,7 @@ class Track(object):
     
 class ListView(ObjectListView):
     def __init__(self, *args, **kwds):
-        # RÈcupÈration des paramËtres perso
+        # R√©cup√©ration des param√®tres perso
         self.IDcandidat = kwds.pop("IDcandidat", None)
         self.IDpersonne = kwds.pop("IDpersonne", None)
         self.modeAffichage = kwds.pop("modeAffichage", None)
@@ -153,10 +153,10 @@ class ListView(ObjectListView):
         if self.afficheHyperlink == False : return
         password = FonctionsPerso.Parametres(mode="get", categorie="recrutement", nom="password_entretien", valeur="")
         if VERROUILLAGE == True :
-            self.texteVerrouillage.SetLabel(_(u"Cliquez ici pour dÈverrouiller l'affichage"))
+            self.texteVerrouillage.SetLabel(_(u"Cliquez ici pour d√©verrouiller l'affichage"))
         else:
             if password == "" :
-                self.texteVerrouillage.SetLabel(_(u"Cliquez ici pour dÈfinir un code de verrouillage de l'affichage"))
+                self.texteVerrouillage.SetLabel(_(u"Cliquez ici pour d√©finir un code de verrouillage de l'affichage"))
             else:
                 self.texteVerrouillage.SetLabel(_(u"Cliquez ici pour verrouiller l'affichage"))
         
@@ -173,7 +173,7 @@ class ListView(ObjectListView):
                     return False
                 IDcandidat = self.Selection()[0].IDcandidat
                 IDpersonne = self.Selection()[0].IDpersonne
-                # Met ‡ jour le cadre RÈsumÈ
+                # Met √† jour le cadre R√©sum√©
                 self.GetGrandParent().GetParent().panel_resume.MAJ(IDcandidat=IDcandidat, IDpersonne=IDpersonne)
                 self.GetGrandParent().GetParent().AffichePanelResume(True)
         except : 
@@ -204,7 +204,7 @@ class ListView(ObjectListView):
         # ------------------------------------------------------------------------------------------------------------------------
         
 ##        def GetListeDisponibilites(dictFiltres):
-##            """ Recherche des disponibilitÈs """
+##            """ Recherche des disponibilit√©s """
 ##            listeTemp = []
 ##            for IDcandidature, disponibilites in DICT_DISPONIBILITES.iteritems() :
 ##                for IDdisponibilite, date_debut, date_fin in disponibilites :
@@ -272,8 +272,8 @@ class ListView(ObjectListView):
         return listeID, criteresSQL
                     
     def GetTracks(self):
-        """ RÈcupÈration des donnÈes """
-        # CritËres
+        """ R√©cup√©ration des donn√©es """
+        # Crit√®res
         listeID = None
         self.criteres = ""
         if self.IDcandidat != None and self.IDcandidat != 0 :
@@ -313,7 +313,7 @@ class ListView(ObjectListView):
         return listeListeView
 
     def Importation_candidats(self):
-        # RÈcupÈration des donnÈes
+        # R√©cup√©ration des donn√©es
         DB = GestionDB.DB()        
         req = """SELECT IDcandidat, civilite, nom, prenom
         FROM candidats ORDER BY nom, prenom; """
@@ -327,7 +327,7 @@ class ListView(ObjectListView):
             NOMS_CANDIDATS[IDcandidat] = (civilite, nom, prenom)
 
     def Importation_personnes(self):
-        # RÈcupÈration des donnÈes
+        # R√©cup√©ration des donn√©es
         DB = GestionDB.DB()        
         req = """SELECT IDpersonne, civilite, nom, prenom
         FROM personnes ORDER BY nom, prenom; """
@@ -361,7 +361,7 @@ class ListView(ObjectListView):
             self.imgAvis4= imagelist.Add(wx.Bitmap(Chemins.GetStaticPath("Images/22x22/Smiley_genial.png"), wx.BITMAP_TYPE_PNG))
             self.SetImageLists(smallImageList=imagelist)
         
-        # Formatage des donnÈes
+        # Formatage des donn√©es
         def ImageGetter_avis(track):
             if VERROUILLAGE == True :
                 return self.imgCadenas
@@ -375,10 +375,10 @@ class ListView(ObjectListView):
         def FormateLabelAvis(avis):
             if avis == 0 : return _(u"Avis inconnu")
             if avis == 1 : return _(u"Pas convaincant")
-            if avis == 2 : return _(u"MitigÈ")
+            if avis == 2 : return _(u"Mitig√©")
             if avis == 3 : return _(u"Bien")
-            if avis == 4 : return _(u"TrËs bien")
-            if avis == 999 : return _(u"Avis verrouillÈ")
+            if avis == 4 : return _(u"Tr√®s bien")
+            if avis == 999 : return _(u"Avis verrouill√©")
             else: return ""
             
         def FormateDate(dateStr):
@@ -408,7 +408,7 @@ class ListView(ObjectListView):
         if self.colorerSalaries == True :
             self.rowFormatter = rowFormatter
         
-        # CrÈation des colonnes
+        # Cr√©ation des colonnes
         liste_ColonnesTmp = self.listeColonnes
         # Tri par ordre
         liste_ColonnesTmp.sort(key=operator.itemgetter(7))
@@ -449,7 +449,7 @@ class ListView(ObjectListView):
             self.presents = presents
         self.InitModel()
         self.InitObjectListView()
-        # SÈlection d'un item
+        # S√©lection d'un item
         if self.selectionTrack != None :
             self.SelectObject(self.selectionTrack, deselectOthers=True, ensureVisible=True)
         self.selectionID = None
@@ -484,7 +484,7 @@ class ListView(ObjectListView):
             noSelection = False
             ID = self.Selection()[0].IDcandidat
                 
-        # CrÈation du menu contextuel
+        # Cr√©ation du menu contextuel
         menuPop = UTILS_Adaptations.Menu()
 
         # Item Modifier
@@ -516,7 +516,7 @@ class ListView(ObjectListView):
         
         # Item Verrouillage
         if VERROUILLAGE == True :
-            item = wx.MenuItem(menuPop, 120, _(u"DÈverrouillage"))
+            item = wx.MenuItem(menuPop, 120, _(u"D√©verrouillage"))
             bmp = wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Cadenas.png"), wx.BITMAP_TYPE_PNG)
         else:
             item = wx.MenuItem(menuPop, 120, _(u"Verrouillage"))
@@ -614,7 +614,7 @@ class ListView(ObjectListView):
         FonctionsPerso.EnvoyerMail(adresses = (self.adresseMail,))
 
     def AfficherTout(self):
-        """ RÈafficher toute la liste """
+        """ R√©afficher toute la liste """
         self.criteres = ""
         self.listeFiltres = []
         self.MAJ()
@@ -636,9 +636,9 @@ class ListView(ObjectListView):
         self.ExportExcel()
 
     def Rechercher(self):
-        # RÈcupÈration des filtres souhaitÈs
+        # R√©cup√©ration des filtres souhait√©s
         from Dlg import DLG_Filtre_recrutement
-        dlg = DLG_Filtre_recrutement.MyDialog(self, categorie="entretiens", listeValeursDefaut=self.listeFiltres, title=_(u"SÈlection de filtres de liste"))
+        dlg = DLG_Filtre_recrutement.MyDialog(self, categorie="entretiens", listeValeursDefaut=self.listeFiltres, title=_(u"S√©lection de filtres de liste"))
         if dlg.ShowModal() == wx.ID_OK:
             listeFiltres = dlg.GetListeFiltres()
             dlg.Destroy()
@@ -652,7 +652,7 @@ class ListView(ObjectListView):
         try :
             if self.GetGrandParent().GetParent().GetName() == "Recrutement" :
                 if len(self.listeFiltres) > 0 :
-                    texte = _(u"Filtres de sÈlection : ")
+                    texte = _(u"Filtres de s√©lection : ")
                     for dictFiltre in self.listeFiltres :
                         texte += u"%s (%s), " % (dictFiltre["labelControle"], dictFiltre["label"])
                     texte = texte[:-2]
@@ -673,7 +673,7 @@ class ListView(ObjectListView):
         except : 
             pass
             
-        # Si aucun candidat sÈlectionnÈ
+        # Si aucun candidat s√©lectionn√©
         if (self.IDcandidat == None or self.IDcandidat == 0) and (self.IDpersonne == None or self.IDpersonne == 0 ):
             dlg = DLG_Selection_candidat.MyDialog(self)
             if dlg.ShowModal() == wx.ID_OK:
@@ -700,7 +700,7 @@ class ListView(ObjectListView):
             pass
             
         if len(self.Selection()) == 0:
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÈlectionner un entretien ‡ modifier dans la liste"), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord s√©lectionner un entretien √† modifier dans la liste"), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -727,7 +727,7 @@ class ListView(ObjectListView):
             pass
             
         if len(self.Selection()) == 0:
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÈlectionner un entretien ‡ supprimer dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord s√©lectionner un entretien √† supprimer dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -749,7 +749,7 @@ class ListView(ObjectListView):
         DB.ReqDEL("entretiens", "IDentretien", IDentretien)
         DB.Close()
         
-        # M‡J
+        # M√†J
         self.MAJ()
         
         try :
@@ -768,8 +768,8 @@ class ListView(ObjectListView):
             pass
     
     def GetValeurs(self):
-        """ RÈcupËre les valeurs affichÈes sous forme de liste """
-        # RÈcupËre les labels de colonnes
+        """ R√©cup√®re les valeurs affich√©es sous forme de liste """
+        # R√©cup√®re les labels de colonnes
         liste_ColonnesTmp = self.listeColonnes
         liste_ColonnesTmp.sort(key=operator.itemgetter(7))
         liste_labelsColonnes = []
@@ -777,7 +777,7 @@ class ListView(ObjectListView):
             if affiche == True :
                 liste_labelsColonnes.append( (labelCol, alignement, largeur, nomChamp) )
 
-        # RÈcupËre les valeurs
+        # R√©cup√®re les valeurs
         listeValeurs = []
         listeObjects = self.GetFilteredObjects()
         for object in listeObjects :
@@ -800,7 +800,7 @@ class ListView(ObjectListView):
             dlg.Destroy()
             return
         
-        # RÈcupÈration des valeurs
+        # R√©cup√©ration des valeurs
         liste_labelsColonnes, listeValeurs = self.GetValeurs()
         
         # Selection des lignes
@@ -814,13 +814,13 @@ class ListView(ObjectListView):
             return False
         
         nomFichier = "ExportTexte.txt"
-        # Demande ‡ l'utilisateur le nom de fichier et le rÈpertoire de destination
+        # Demande √† l'utilisateur le nom de fichier et le r√©pertoire de destination
         wildcard = "Fichier texte (*.txt)|*.txt|" \
                         "All files (*.*)|*.*"
         sp = wx.StandardPaths.Get()
         cheminDefaut = sp.GetDocumentsDir()
         dlg = wx.FileDialog(
-            self, message = _(u"Veuillez sÈlectionner le rÈpertoire de destination et le nom du fichier"), defaultDir=cheminDefaut, 
+            self, message = _(u"Veuillez s√©lectionner le r√©pertoire de destination et le nom du fichier"), defaultDir=cheminDefaut, 
             defaultFile = nomFichier, 
             wildcard = wildcard, 
             style = wx.FD_SAVE
@@ -833,16 +833,16 @@ class ListView(ObjectListView):
             dlg.Destroy()
             return
         
-        # Le fichier de destination existe dÈj‡ :
+        # Le fichier de destination existe d√©j√† :
         if os.path.isfile(cheminFichier) == True :
-            dlg = wx.MessageDialog(None, _(u"Un fichier portant ce nom existe dÈj‡. \n\nVoulez-vous le remplacer ?"), "Attention !", wx.YES_NO | wx.NO_DEFAULT | wx.ICON_EXCLAMATION)
+            dlg = wx.MessageDialog(None, _(u"Un fichier portant ce nom existe d√©j√†. \n\nVoulez-vous le remplacer ?"), "Attention !", wx.YES_NO | wx.NO_DEFAULT | wx.ICON_EXCLAMATION)
             if dlg.ShowModal() == wx.ID_NO :
                 return False
                 dlg.Destroy()
             else:
                 dlg.Destroy()
 
-        # CrÈation du fichier texte
+        # Cr√©ation du fichier texte
         texte = ""
         separateur = ";"
         for labelCol, alignement, largeur, nomChamp in liste_labelsColonnes :
@@ -855,16 +855,15 @@ class ListView(ObjectListView):
                     texte += valeur + separateur
                 texte = texte[:-1] + "\n"
         
-        # Elimination du dernier saut ‡ la ligne
+        # Elimination du dernier saut √† la ligne
         texte = texte[:-1]
 
-        # CrÈation du fichier texte
-        f = open(cheminFichier, "w")
-        f.write(texte.encode("iso-8859-15"))
-        f.close()
+        # Cr√©ation du fichier texte
+        with open(cheminFichier, "w", encoding="utf-8", newline="") as fichier:
+            fichier.write(texte)
         
-        # Confirmation de crÈation du fichier et demande d'ouverture directe dans Excel
-        txtMessage = _(u"Le fichier Texte a ÈtÈ crÈÈ avec succËs. Souhaitez-vous l'ouvrir dËs maintenant ?")
+        # Confirmation de cr√©ation du fichier et demande d'ouverture directe dans Excel
+        txtMessage = _(u"Le fichier Texte a √©t√© cr√©√© avec succ√®s. Souhaitez-vous l'ouvrir d√®s maintenant ?")
         dlgConfirm = wx.MessageDialog(self, txtMessage, _(u"Confirmation"), wx.YES_NO|wx.NO_DEFAULT|wx.ICON_QUESTION)
         reponse = dlgConfirm.ShowModal()
         dlgConfirm.Destroy()
@@ -877,7 +876,7 @@ class ListView(ObjectListView):
     def ExportExcel(self):
         """ Export de la liste au format Excel """
         if "linux" in sys.platform :
-            dlg = wx.MessageDialog(self, _(u"DÈsolÈ, cette fonction n'est pas disponible dans la version LINUX de Teamworks."), "Fonction indisponible", wx.OK | wx.ICON_ERROR)
+            dlg = wx.MessageDialog(self, _(u"D√©sol√©, cette fonction n'est pas disponible dans la version LINUX de Teamworks."), "Fonction indisponible", wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -888,7 +887,7 @@ class ListView(ObjectListView):
             dlg.Destroy()
             return
         
-        # RÈcupÈration des valeurs
+        # R√©cup√©ration des valeurs
         labels_colonnes, liste_valeurs = self.GetValeurs()
         from Utils import UTILS_Excel
         UTILS_Excel.Excel(self, labels_colonnes, liste_valeurs)
@@ -901,7 +900,7 @@ class ListView(ObjectListView):
             dlg.Destroy()
             return
             
-        # RÈcupÈration des valeurs
+        # R√©cup√©ration des valeurs
         liste_labelsColonnes, listeValeurs = self.GetValeurs()
         
         # Selection des lignes
@@ -919,19 +918,19 @@ class ListView(ObjectListView):
     def GestionVerrouillage(self, MAJ=False):
         global VERROUILLAGE
 
-        # RÈcup du mot de passe
+        # R√©cup du mot de passe
         password = FonctionsPerso.Parametres(mode="get", categorie="recrutement", nom="password_entretien", valeur="")
         
         if VERROUILLAGE == True :
             
-            # DÈverrouiller
+            # D√©verrouiller
             dlg = SaisiePassword(self)  
             if dlg.ShowModal() == wx.ID_OK:
                 pwd = dlg.GetPassword()
                 if pwd == password :
                     VERROUILLAGE = False
                 else:
-                    dlg2 = wx.MessageDialog(self, _(u"Votre mot de passe est erronÈ."), _(u"Mot de passe erronÈ"), wx.OK | wx.ICON_ERROR)
+                    dlg2 = wx.MessageDialog(self, _(u"Votre mot de passe est erron√©."), _(u"Mot de passe erron√©"), wx.OK | wx.ICON_ERROR)
                     dlg2.ShowModal()
                     dlg2.Destroy()
                 dlg.Destroy()
@@ -943,9 +942,9 @@ class ListView(ObjectListView):
             # Verrouiller
             if password == "" :
                 
-                # si pas de mot de passe : on en crÈÈ un :
+                # si pas de mot de passe : on en cr√©√© un :
                 from Dlg import DLG_Saisie_password_dialog
-                texteIntro = _(u"Vous pouvez protÈger l'accËs aux informations liÈes aux entretiens \nd'embauche (avis et commentaires). Saisissez le mot de passe \nsouhaitÈ ‡ deux reprises pour activer cette protection :")
+                texteIntro = _(u"Vous pouvez prot√©ger l'acc√®s aux informations li√©es aux entretiens \nd'embauche (avis et commentaires). Saisissez le mot de passe \nsouhait√© √† deux reprises pour activer cette protection :")
                 dlg = DLG_Saisie_password_dialog.MyDialog(self, texteIntro=texteIntro)
                 if dlg.ShowModal() == wx.ID_OK:
                     pwd = dlg.GetPassword()
@@ -956,7 +955,7 @@ class ListView(ObjectListView):
                     dlg.Destroy()
                     
             else :
-                # Si un mot de passe existe dÈj‡, on verrouille juste l'affichage :
+                # Si un mot de passe existe d√©j√†, on verrouille juste l'affichage :
                 VERROUILLAGE = True
         
         if MAJ == True :
@@ -1002,11 +1001,11 @@ class Impression():
         doc = SimpleDocTemplate(nomDoc, pagesize=landscape(A4))
         story = []
 
-        # CrÈation du titre du document
+        # Cr√©ation du titre du document
         dataTableau = []
         largeursColonnes = ( (620, 100) )
         dateDuJour = DateEngFr(str(datetime.date.today()))
-        dataTableau.append( (_(u"Liste des entretiens"), _(u"EditÈ le %s") % dateDuJour )  )
+        dataTableau.append( (_(u"Liste des entretiens"), _(u"Edit√© le %s") % dateDuJour )  )
         style = TableStyle([
                             ('BOX', (0,0), (-1,-1), 0.25, colors.black), 
                             ('VALIGN', (0,0), (-1,-1), 'TOP'), 
@@ -1020,10 +1019,10 @@ class Impression():
         story.append(tableau)
         story.append(Spacer(0,20))       
         
-        # Tableau de donnÈes
+        # Tableau de donn√©es
         dataTableau = []
         
-        # CrÈation des colonnes
+        # Cr√©ation des colonnes
         largeursColonnes = []
         labelsColonnes = []
 
@@ -1035,7 +1034,7 @@ class Impression():
             index += 1
         dataTableau.append(labelsColonnes)
         
-        # CrÈation des lignes
+        # Cr√©ation des lignes
         for valeurs in listeValeurs :
             ligne = []
             if int(valeurs[0]) in listeSelections :
@@ -1045,13 +1044,13 @@ class Impression():
     
         # Style du tableau
         style = TableStyle([
-                            ('GRID', (0,0), (-1,-1), 0.25, colors.black), # CrÈe la bordure noire pour tout le tableau
-                            ('ALIGN', (0,0), (-1,-1), 'CENTRE'), # Titre du groupe ‡ gauche
+                            ('GRID', (0,0), (-1,-1), 0.25, colors.black), # Cr√©e la bordure noire pour tout le tableau
+                            ('ALIGN', (0,0), (-1,-1), 'CENTRE'), # Titre du groupe √† gauche
                             ('VALIGN', (0,0), (-1,-1), 'TOP'),
                             ('FONT',(0,0),(-1,-1), "Helvetica", 7), # Donne la police de caract. + taille de police 
                             ])
            
-        # CrÈation du tableau
+        # Cr√©ation du tableau
         tableau = Table(dataTableau, largeursColonnes)
         tableau.setStyle(style)
         story.append(tableau)
@@ -1087,15 +1086,15 @@ class Hyperlink(hl.HyperLinkCtrl):
 # -------------------------------------------------------------------------------------------------------------------------------------------
 
 class SaisiePassword(wx.Dialog):
-    def __init__(self, parent, id=-1, title=_(u"Saisie du code de dÈverrouillage")):
+    def __init__(self, parent, id=-1, title=_(u"Saisie du code de d√©verrouillage")):
         wx.Dialog.__init__(self, parent, id, title)
             
         self.sizer_3_staticbox = wx.StaticBox(self, -1, "")
-        self.label_2 = wx.StaticText(self, -1, _(u"Les avis et commentaires sont verrouillÈs.\nPour les afficher, saisissez votre code de dÈverrouillage :"))
+        self.label_2 = wx.StaticText(self, -1, _(u"Les avis et commentaires sont verrouill√©s.\nPour les afficher, saisissez votre code de d√©verrouillage :"))
         self.label_password = wx.StaticText(self, -1, "Mot de passe :")
         self.text_password = wx.TextCtrl(self, -1, "", size=(200, -1), style=wx.TE_PASSWORD)
         
-        self.label_3 = wx.StaticText(self, -1, _(u"Remarque : Le dÈverrouillage ne sera effectif que jusqu'‡ la fermeture du logiciel.\nPour dÈsactiver dÈfinitivement la protection par mot de passe, rendez-vous dans \nle panneau Configuration (rubrique 'Recrutement')."))
+        self.label_3 = wx.StaticText(self, -1, _(u"Remarque : Le d√©verrouillage ne sera effectif que jusqu'√† la fermeture du logiciel.\nPour d√©sactiver d√©finitivement la protection par mot de passe, rendez-vous dans \nle panneau Configuration (rubrique 'Recrutement')."))
         defaultFont = self.GetFont()
         defaultFont.SetPointSize(7)
         self.label_3.SetFont(defaultFont)

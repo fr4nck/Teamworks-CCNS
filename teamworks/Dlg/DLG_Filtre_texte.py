@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -19,13 +19,13 @@ class MyDialog(wx.Dialog):
     def __init__(self, parent, nom_filtre=u"", titre_frame = u"", texte=None):
         wx.Dialog.__init__(self, parent, id=-1, title=u"", size=(350, 250))
         
-        # Paramètres personnalisables
+        # ParamÃ¨tres personnalisables
         self.nom_filtre = nom_filtre # _(u"les fonctions")
         self.titre_frame = titre_frame # _(u"Filtre des fonctions")
         self.texte = texte #None
         
         # Label
-        self.label = wx.StaticText(self, -1, _(u"Veuillez définir un filtre pour %s :") % self.nom_filtre)
+        self.label = wx.StaticText(self, -1, _(u"Veuillez dÃ©finir un filtre pour %s :") % self.nom_filtre)
         
         # Controles
         self.staticbox = wx.StaticBox(self, -1, self.nom_filtre.capitalize())
@@ -88,16 +88,16 @@ class MyDialog(wx.Dialog):
             self.ctrl_texte.Enable(True)
 
     def GetTexte(self):
-        """ Renvoie les sélection """
+        """ Renvoie les sÃ©lection """
         if self.radio1.GetValue() == True :
             return None
         else:
             return self.ctrl_texte.GetValue()
         
     def OnBoutonOk(self, event):
-        """ Validation des données saisies """
+        """ Validation des donnÃ©es saisies """
         if self.radio2.GetValue() == True and self.ctrl_texte.GetValue() == "" :
-            dlg = wx.MessageDialog(self, _(u"Vous avez oublié de saisir une expression à trouver !"), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous avez oubliÃ© de saisir une expression Ã  trouver !"), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return False

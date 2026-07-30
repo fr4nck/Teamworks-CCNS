@@ -8,7 +8,7 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
-ENCODINGS = ("utf-8", "iso-8859-15", "cp1252")
+ENCODINGS = ("utf-8",)
 
 
 def read_source(path: Path) -> tuple[str, str]:

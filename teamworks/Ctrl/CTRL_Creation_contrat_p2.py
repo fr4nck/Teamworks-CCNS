@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -21,9 +21,9 @@ class Page(wx.Panel):
     def __init__(self, *args, **kwds):
         kwds["style"] = wx.TAB_TRAVERSAL
         wx.Panel.__init__(self, *args, **kwds)
-        self.sizer_choix_modele_staticbox = wx.StaticBox(self, -1, _(u"Choix du modèle"))
-        self.label_titre = wx.StaticText(self, -1, _(u"1. Importation d'un modèle de contrat"))
-        self.label_intro = wx.StaticText(self, -1, _(u"Souhaitez-vous utiliser un modèle de contrat pour faciliter votre saisie ?"))
+        self.sizer_choix_modele_staticbox = wx.StaticBox(self, -1, _(u"Choix du modÃ¨le"))
+        self.label_titre = wx.StaticText(self, -1, _(u"1. Importation d'un modÃ¨le de contrat"))
+        self.label_intro = wx.StaticText(self, -1, _(u"Souhaitez-vous utiliser un modÃ¨le de contrat pour faciliter votre saisie ?"))
         self.radio_non = wx.RadioButton(self, -1, "Non", style=wx.RB_GROUP)
         self.radio_oui = wx.RadioButton(self, -1, "Oui")
         self.listCtrl_modeles = ListCtrl(self)
@@ -42,7 +42,7 @@ class Page(wx.Panel):
     def __set_properties(self):
         self.label_titre.SetFont(wx.Font(8, wx.DEFAULT, wx.NORMAL, wx.BOLD, 0, ""))
         self.bouton_modeles.SetMinSize((20, 20))
-        self.bouton_modeles.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour ajouter, modifier ou supprimer des modèles de contrat")))
+        self.bouton_modeles.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour ajouter, modifier ou supprimer des modÃ¨les de contrat")))
 
     def __do_layout(self):
         grid_sizer_base = wx.FlexGridSizer(rows=4, cols=1, vgap=10, hgap=10)
@@ -100,22 +100,22 @@ class Page(wx.Panel):
 
     def Validation(self):
         
-        # Si "non", on passe à la page suivante
+        # Si "non", on passe Ã  la page suivante
         if self.radio_oui.GetValue() == False : return True
         
         # Si "oui", on valide le choix dans le ListCtrl
         index = self.listCtrl_modeles.GetFirstSelected()
-        # Vérifie qu'un item a bien été sélectionné dans la liste
+        # VÃ©rifie qu'un item a bien Ã©tÃ© sÃ©lectionnÃ© dans la liste
         if index == -1:
-            dlg = wx.MessageDialog(self, _(u"Vous devez sélectionner un modèle dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez sÃ©lectionner un modÃ¨le dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return False
         
-        # Transmission des données
+        # Transmission des donnÃ©es
         IDmodele = int(self.listCtrl_modeles.GetItem(index, 0).GetText())
         
-        # Récupération des données du MODELE
+        # RÃ©cupÃ©ration des donnÃ©es du MODELE
         DB = GestionDB.DB()        
         req = """SELECT IDclassification, IDtype
         FROM contrats_modeles WHERE IDmodele=%d; """ % IDmodele
@@ -126,7 +126,7 @@ class Page(wx.Panel):
         self.GetGrandParent().dictContrats["IDclassification"] = listeDonnees[0]
         self.GetGrandParent().dictContrats["IDtype"] = listeDonnees[1]
         
-        # Récupération des données CHAMPS du MODELE
+        # RÃ©cupÃ©ration des donnÃ©es CHAMPS du MODELE
         req = "SELECT IDchamp, valeur FROM contrats_valchamps WHERE (IDmodele=%d AND type='modele')  ;" % IDmodele
         DB.ExecuterReq(req)
         listeDonnees = DB.ResultatReq()
@@ -136,7 +136,7 @@ class Page(wx.Panel):
             
         DB.Close()
         
-        # MAJ des contrôles des pages suivantes avec les données importées des modèles
+        # MAJ des contrÃ´les des pages suivantes avec les donnÃ©es importÃ©es des modÃ¨les
         self.GetGrandParent().page3.Importation() 
         self.GetGrandParent().page4.MAJ_ListCtrl()
         
@@ -182,10 +182,10 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
 
     def Remplissage(self):
         
-        # Récupération des données dans la base de données
+        # RÃ©cupÃ©ration des donnÃ©es dans la base de donnÃ©es
         self.Importation()
         
-        # Création des colonnes
+        # CrÃ©ation des colonnes
         self.nbreColonnes =2
         self.InsertColumn(0, _(u"     ID"))
         self.SetColumnWidth(0, 0)
@@ -214,7 +214,7 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
         pass
         
     def Importation(self):
-        # Récupération des données
+        # RÃ©cupÃ©ration des donnÃ©es
         DB = GestionDB.DB()        
         req = """SELECT IDmodele, nom, description
         FROM contrats_modeles ORDER BY nom; """
@@ -222,7 +222,7 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
         liste = DB.ResultatReq()
         DB.Close()
         self.nbreLignes = len(liste)
-        # Création du dictionnaire de données
+        # CrÃ©ation du dictionnaire de donnÃ©es
         self.donnees = self.listeEnDict(liste)
             
     def MAJListeCtrl(self):
@@ -235,7 +235,7 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
         dictio = {}
         x = 1
         for ligne in liste:
-            index = x # Donne un entier comme clé
+            index = x # Donne un entier comme clÃ©
             dictio[index] = ligne
             x += 1
         return dictio
@@ -258,12 +258,12 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
         return valeur
 
     def OnGetItemImage(self, item):
-        """ Affichage des images en début de ligne """
+        """ Affichage des images en dÃ©but de ligne """
         return -1
 
     def OnGetItemAttr(self, item):
         """ Application d'une couleur de fond pour une ligne sur deux """
-        # Création d'une ligne de couleur 1 ligne sur 2
+        # CrÃ©ation d'une ligne de couleur 1 ligne sur 2
         if item % 2 == 1:
             return self.attr1
         else:
@@ -300,7 +300,7 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
         index = self.GetFirstSelected()
         key = int(self.getColumnText(index, 0))
         
-        # Création du menu contextuel
+        # CrÃ©ation du menu contextuel
         menuPop = UTILS_Adaptations.Menu()
 
         # Item Modifier

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -29,17 +29,17 @@ DICT_CANDIDATURES = {}
 LISTE_COLONNES_1 = [
             [_(u"ID"), "left", 0, "IDemploi", "", _(u"ID de l'offre d'emploi"), True, 1 ],
             [_(u"Lancement"), "left", 100, "date_debut", "date", _(u"Date de lancement du recrutement"), True, 2 ],
-            [_(u"ClÙture"), "left", 70, "date_fin", "date", _(u"Date de clÙture du recrutement"), True, 3 ],
-            [_(u"IntitulÈ"), "left", 300, _(u"intitule"), "", _(u"IntitulÈ de l'offre d'emploi"), True, 4 ],
-            [_(u"Candidatures"), "left", 80, "nbre_candidatures", "", _(u"Nombre de candidatures rattachÈes"), True, 5 ],
-            [_(u"DÈtail"), "left", 400, "detail", "", _(u"DÈtail de l'offre d'emploi"), True, 6 ],
-            ] # nom Colonne, alignement, largeur, nom Champ, Args pour OLV, Description, AffichÈ ?, Ordre
+            [_(u"Cl√¥ture"), "left", 70, "date_fin", "date", _(u"Date de cl√¥ture du recrutement"), True, 3 ],
+            [_(u"Intitul√©"), "left", 300, _(u"intitule"), "", _(u"Intitul√© de l'offre d'emploi"), True, 4 ],
+            [_(u"Candidatures"), "left", 80, "nbre_candidatures", "", _(u"Nombre de candidatures rattach√©es"), True, 5 ],
+            [_(u"D√©tail"), "left", 400, "detail", "", _(u"D√©tail de l'offre d'emploi"), True, 6 ],
+            ] # nom Colonne, alignement, largeur, nom Champ, Args pour OLV, Description, Affich√© ?, Ordre
 
 
-# Importation de donnÈes pour les filtres spÈciaux
+# Importation de donn√©es pour les filtres sp√©ciaux
 
 def Importation_disponibilites():
-    # RÈcupÈration des donnÈes
+    # R√©cup√©ration des donn√©es
     DB = GestionDB.DB()        
     req = """SELECT IDdisponibilite, IDemploi, date_debut, date_fin
     FROM emplois_dispo; """
@@ -58,7 +58,7 @@ def Importation_disponibilites():
     return DICT_DISPONIBILITES
 
 def Importation_emplois_fonctions():
-    # RÈcupÈration des donnÈes
+    # R√©cup√©ration des donn√©es
     DB = GestionDB.DB()        
     req = """SELECT IDemploi_fonction, IDemploi, IDfonction
     FROM emplois_fonctions; """
@@ -75,7 +75,7 @@ def Importation_emplois_fonctions():
     return DICT_EMPLOIS_FONCTIONS
 
 def Importation_emplois_affectations():
-    # RÈcupÈration des donnÈes
+    # R√©cup√©ration des donn√©es
     DB = GestionDB.DB()        
     req = """SELECT IDemploi_affectation, IDemploi, IDaffectation
     FROM emplois_affectations; """
@@ -92,7 +92,7 @@ def Importation_emplois_affectations():
     return DICT_EMPLOIS_AFFECTATIONS
 
 def Importation_diffuseurs():
-    # RÈcupÈration des donnÈes
+    # R√©cup√©ration des donn√©es
     DB = GestionDB.DB()        
     req = """SELECT IDemploi_diffuseur, IDemploi, IDdiffuseur
     FROM emplois_diffuseurs; """
@@ -119,7 +119,7 @@ class Track(object):
         self.date_fin = donnees[2]
         self.intitule = donnees[3]
         self.detail = donnees[4]
-        # Nbre candidatures rattachÈes
+        # Nbre candidatures rattach√©es
         if self.IDemploi in DICT_CANDIDATURES :
             self.nbre_candidatures = DICT_CANDIDATURES[self.IDemploi]
         else:
@@ -128,7 +128,7 @@ class Track(object):
     
 class ListView(ObjectListView):
     def __init__(self, *args, **kwds):
-        # RÈcupÈration des paramËtres perso
+        # R√©cup√©ration des param√®tres perso
         self.selectionID = None
         self.selectionTrack = None
         self.presents = False
@@ -160,7 +160,7 @@ class ListView(ObjectListView):
                 if len(self.Selection()) == 0:
                     return False
                 IDemploi = self.Selection()[0].IDemploi
-                # Met ‡ jour le cadre RÈsumÈ
+                # Met √† jour le cadre R√©sum√©
                 self.GetGrandParent().GetParent().panel_resume.MAJ(IDemploi=IDemploi)
                 self.GetGrandParent().GetParent().AffichePanelResume(True)
         except : 
@@ -190,7 +190,7 @@ class ListView(ObjectListView):
         # ------------------------------------------------------------------------------------------------------------------------
         
         def GetListeDisponibilites(dictFiltres):
-            """ Recherche des disponibilitÈs """
+            """ Recherche des disponibilit√©s """
             listeTemp = []
             for IDemploi, disponibilites in Importation_disponibilites().items() :
                 for IDdisponibilite, date_debut, date_fin in disponibilites :
@@ -274,8 +274,8 @@ class ListView(ObjectListView):
 
 
     def GetTracks(self):
-        """ RÈcupÈration des donnÈes """
-        # CritËres
+        """ R√©cup√©ration des donn√©es """
+        # Crit√®res
         listeID = None
         self.criteres = ""
         # Liste de filtres
@@ -307,7 +307,7 @@ class ListView(ObjectListView):
         return listeListeView
     
     def Importation_candidatures(self):
-        # Recherche le nombre de candidatures attachÈes
+        # Recherche le nombre de candidatures attach√©es
         DB = GestionDB.DB()
         req = """SELECT IDcandidature, Count(IDemploi) AS CompteDeIDemploi
         FROM candidatures 
@@ -329,14 +329,14 @@ class ListView(ObjectListView):
         self.evenRowsBackColor = wx.Colour(255, 255, 255) #"#F0FBED" # Vert
         self.useExpansionColumn = True
                 
-        # Formatage des donnÈes
+        # Formatage des donn√©es
         def FormateDate(dateStr):
             if dateStr == "" or dateStr == None : return ""
             date = str(datetime.date(year=int(dateStr[:4]), month=int(dateStr[5:7]), day=int(dateStr[8:10])))
             text = str(date[8:10]) + "/" + str(date[5:7]) + "/" + str(date[:4])
             return text        
         
-        # CrÈation des colonnes
+        # Cr√©ation des colonnes
         liste_ColonnesTmp = self.listeColonnes
         # Tri par ordre
         liste_ColonnesTmp.sort(key=operator.itemgetter(7))
@@ -368,7 +368,7 @@ class ListView(ObjectListView):
             self.presents = presents
         self.InitModel()
         self.InitObjectListView()
-        # SÈlection d'un item
+        # S√©lection d'un item
         if self.selectionTrack != None :
             self.SelectObject(self.selectionTrack, deselectOthers=True, ensureVisible=True)
         self.selectionID = None
@@ -394,7 +394,7 @@ class ListView(ObjectListView):
             noSelection = False
             ID = self.Selection()[0].IDemploi
                 
-        # CrÈation du menu contextuel
+        # Cr√©ation du menu contextuel
         menuPop = UTILS_Adaptations.Menu()
 
         # Item Modifier
@@ -508,7 +508,7 @@ class ListView(ObjectListView):
         FonctionsPerso.EnvoyerMail(adresses = (self.adresseMail,))
 
     def AfficherTout(self):
-        """ RÈafficher toute la liste """
+        """ R√©afficher toute la liste """
         self.criteres = ""
         self.listeFiltres = []
         self.MAJ()
@@ -530,9 +530,9 @@ class ListView(ObjectListView):
         self.ExportExcel()
 
     def Rechercher(self):
-        # RÈcupÈration des filtres souhaitÈs
+        # R√©cup√©ration des filtres souhait√©s
         from Dlg import DLG_Filtre_recrutement
-        dlg = DLG_Filtre_recrutement.MyDialog(self, categorie="emplois", listeValeursDefaut=self.listeFiltres, title=_(u"SÈlection de filtres de liste"))
+        dlg = DLG_Filtre_recrutement.MyDialog(self, categorie="emplois", listeValeursDefaut=self.listeFiltres, title=_(u"S√©lection de filtres de liste"))
         if dlg.ShowModal() == wx.ID_OK:
             listeFiltres = dlg.GetListeFiltres()
             dlg.Destroy()
@@ -546,7 +546,7 @@ class ListView(ObjectListView):
         try :
             if self.GetGrandParent().GetParent().GetName() == "Recrutement" :
                 if len(self.listeFiltres) > 0 :
-                    texte = _(u"Filtres de sÈlection : ")
+                    texte = _(u"Filtres de s√©lection : ")
                     for dictFiltre in self.listeFiltres :
                         texte += u"%s (%s), " % (dictFiltre["labelControle"], dictFiltre["label"])
                     texte = texte[:-2]
@@ -579,7 +579,7 @@ class ListView(ObjectListView):
             pass
             
         if len(self.Selection()) == 0:
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÈlectionner une offre d'emploi ‡ modifier dans la liste"), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord s√©lectionner une offre d'emploi √† modifier dans la liste"), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -597,7 +597,7 @@ class ListView(ObjectListView):
             pass
             
         if len(self.Selection()) == 0:
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÈlectionner un entretien ‡ supprimer dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord s√©lectionner un entretien √† supprimer dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -605,14 +605,14 @@ class ListView(ObjectListView):
         ID = self.Selection()[0].IDemploi
         nom = self.Selection()[0].intitule
 
-        # VÈrifie que cette offre d'emploi n'est pas attribuÈe ‡ une candidature
+        # V√©rifie que cette offre d'emploi n'est pas attribu√©e √† une candidature
         DB = GestionDB.DB()
         req = "SELECT IDcandidature FROM candidatures WHERE IDemploi=%d;" % ID
         DB.ExecuterReq(req)
         listeDonnees = DB.ResultatReq()
         DB.Close()
         if len(listeDonnees) != 0 :
-            dlg = wx.MessageDialog(self, _(u"Vous avez dÈj‡ enregistrÈ ") + str(len(listeDonnees)) + _(u" candidature(s) rattachÈe(s) ‡ cette offre d'emploi. \nVous ne pouvez donc pas la supprimer."), "Information", wx.OK | wx.ICON_ERROR)
+            dlg = wx.MessageDialog(self, _(u"Vous avez d√©j√† enregistr√© ") + str(len(listeDonnees)) + _(u" candidature(s) rattach√©e(s) √† cette offre d'emploi. \nVous ne pouvez donc pas la supprimer."), "Information", wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -625,7 +625,7 @@ class ListView(ObjectListView):
         if reponse == wx.ID_NO:
             return
         
-        # Suppression du type de piËce
+        # Suppression du type de pi√®ce
         DB = GestionDB.DB()
         DB.ReqDEL("emplois", "IDemploi", ID)
         DB.ReqDEL("emplois_dispo", "IDemploi", ID)
@@ -634,12 +634,12 @@ class ListView(ObjectListView):
         DB.ReqDEL("emplois_diffuseurs", "IDemploi", ID)
         DB.Close()
 
-        # M‡J
+        # M√†J
         self.MAJ()
     
     def GetValeurs(self):
-        """ RÈcupËre les valeurs affichÈes sous forme de liste """
-        # RÈcupËre les labels de colonnes
+        """ R√©cup√®re les valeurs affich√©es sous forme de liste """
+        # R√©cup√®re les labels de colonnes
         liste_ColonnesTmp = self.listeColonnes
         liste_ColonnesTmp.sort(key=operator.itemgetter(7))
         liste_labelsColonnes = []
@@ -647,7 +647,7 @@ class ListView(ObjectListView):
             if affiche == True :
                 liste_labelsColonnes.append( (labelCol, alignement, largeur, nomChamp) )
 
-        # RÈcupËre les valeurs
+        # R√©cup√®re les valeurs
         listeValeurs = []
         listeObjects = self.GetFilteredObjects()
         for object in listeObjects :
@@ -670,7 +670,7 @@ class ListView(ObjectListView):
             dlg.Destroy()
             return
         
-        # RÈcupÈration des valeurs
+        # R√©cup√©ration des valeurs
         liste_labelsColonnes, listeValeurs = self.GetValeurs()
         
         # Selection des lignes
@@ -684,13 +684,13 @@ class ListView(ObjectListView):
             return False
         
         nomFichier = "ExportTexte.txt"
-        # Demande ‡ l'utilisateur le nom de fichier et le rÈpertoire de destination
+        # Demande √† l'utilisateur le nom de fichier et le r√©pertoire de destination
         wildcard = "Fichier texte (*.txt)|*.txt|" \
                         "All files (*.*)|*.*"
         sp = wx.StandardPaths.Get()
         cheminDefaut = sp.GetDocumentsDir()
         dlg = wx.FileDialog(
-            self, message = _(u"Veuillez sÈlectionner le rÈpertoire de destination et le nom du fichier"), defaultDir=cheminDefaut, 
+            self, message = _(u"Veuillez s√©lectionner le r√©pertoire de destination et le nom du fichier"), defaultDir=cheminDefaut, 
             defaultFile = nomFichier, 
             wildcard = wildcard, 
             style = wx.FD_SAVE
@@ -703,16 +703,16 @@ class ListView(ObjectListView):
             dlg.Destroy()
             return
         
-        # Le fichier de destination existe dÈj‡ :
+        # Le fichier de destination existe d√©j√† :
         if os.path.isfile(cheminFichier) == True :
-            dlg = wx.MessageDialog(None, _(u"Un fichier portant ce nom existe dÈj‡. \n\nVoulez-vous le remplacer ?"), "Attention !", wx.YES_NO | wx.NO_DEFAULT | wx.ICON_EXCLAMATION)
+            dlg = wx.MessageDialog(None, _(u"Un fichier portant ce nom existe d√©j√†. \n\nVoulez-vous le remplacer ?"), "Attention !", wx.YES_NO | wx.NO_DEFAULT | wx.ICON_EXCLAMATION)
             if dlg.ShowModal() == wx.ID_NO :
                 return False
                 dlg.Destroy()
             else:
                 dlg.Destroy()
 
-        # CrÈation du fichier texte
+        # Cr√©ation du fichier texte
         texte = ""
         separateur = ";"
         for labelCol, alignement, largeur, nomChamp in liste_labelsColonnes :
@@ -725,16 +725,15 @@ class ListView(ObjectListView):
                     texte += valeur + separateur
                 texte = texte[:-1] + "\n"
         
-        # Elimination du dernier saut ‡ la ligne
+        # Elimination du dernier saut √† la ligne
         texte = texte[:-1]
 
-        # CrÈation du fichier texte
-        f = open(cheminFichier, "w")
-        f.write(texte.encode("iso-8859-15"))
-        f.close()
+        # Cr√©ation du fichier texte
+        with open(cheminFichier, "w", encoding="utf-8", newline="") as fichier:
+            fichier.write(texte)
         
-        # Confirmation de crÈation du fichier et demande d'ouverture directe dans Excel
-        txtMessage = _(u"Le fichier Texte a ÈtÈ crÈÈ avec succËs. Souhaitez-vous l'ouvrir dËs maintenant ?")
+        # Confirmation de cr√©ation du fichier et demande d'ouverture directe dans Excel
+        txtMessage = _(u"Le fichier Texte a √©t√© cr√©√© avec succ√®s. Souhaitez-vous l'ouvrir d√®s maintenant ?")
         dlgConfirm = wx.MessageDialog(self, txtMessage, _(u"Confirmation"), wx.YES_NO|wx.NO_DEFAULT|wx.ICON_QUESTION)
         reponse = dlgConfirm.ShowModal()
         dlgConfirm.Destroy()
@@ -747,7 +746,7 @@ class ListView(ObjectListView):
     def ExportExcel(self):
         """ Export de la liste au format Excel """
         if "linux" in sys.platform :
-            dlg = wx.MessageDialog(self, _(u"DÈsolÈ, cette fonction n'est pas disponible dans la version LINUX de Teamworks."), "Fonction indisponible", wx.OK | wx.ICON_ERROR)
+            dlg = wx.MessageDialog(self, _(u"D√©sol√©, cette fonction n'est pas disponible dans la version LINUX de Teamworks."), "Fonction indisponible", wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -758,7 +757,7 @@ class ListView(ObjectListView):
             dlg.Destroy()
             return
         
-        # RÈcupÈration des valeurs
+        # R√©cup√©ration des valeurs
         labels_colonnes, liste_valeurs = self.GetValeurs()
         from Utils import UTILS_Excel
         UTILS_Excel.Excel(self, labels_colonnes, liste_valeurs)
@@ -771,7 +770,7 @@ class ListView(ObjectListView):
             dlg.Destroy()
             return
             
-        # RÈcupÈration des valeurs
+        # R√©cup√©ration des valeurs
         liste_labelsColonnes, listeValeurs = self.GetValeurs()
         
         # Selection des lignes
@@ -814,11 +813,11 @@ class Impression():
         doc = SimpleDocTemplate(nomDoc, pagesize=landscape(A4))
         story = []
 
-        # CrÈation du titre du document
+        # Cr√©ation du titre du document
         dataTableau = []
         largeursColonnes = ( (620, 100) )
         dateDuJour = DateEngFr(str(datetime.date.today()))
-        dataTableau.append( (_(u"Liste des offres d'emploi"), _(u"EditÈ le %s") % dateDuJour )  )
+        dataTableau.append( (_(u"Liste des offres d'emploi"), _(u"Edit√© le %s") % dateDuJour )  )
         style = TableStyle([
                             ('BOX', (0,0), (-1,-1), 0.25, colors.black), 
                             ('VALIGN', (0,0), (-1,-1), 'TOP'), 
@@ -832,10 +831,10 @@ class Impression():
         story.append(tableau)
         story.append(Spacer(0,20))       
         
-        # Tableau de donnÈes
+        # Tableau de donn√©es
         dataTableau = []
         
-        # CrÈation des colonnes
+        # Cr√©ation des colonnes
         largeursColonnes = []
         labelsColonnes = []
 
@@ -847,7 +846,7 @@ class Impression():
             index += 1
         dataTableau.append(labelsColonnes)
         
-        # CrÈation des lignes
+        # Cr√©ation des lignes
         for valeurs in listeValeurs :
             ligne = []
             if int(valeurs[0]) in listeSelections :
@@ -857,13 +856,13 @@ class Impression():
     
         # Style du tableau
         style = TableStyle([
-                            ('GRID', (0,0), (-1,-1), 0.25, colors.black), # CrÈe la bordure noire pour tout le tableau
-                            ('ALIGN', (0,0), (-1,-1), 'CENTRE'), # Titre du groupe ‡ gauche
+                            ('GRID', (0,0), (-1,-1), 0.25, colors.black), # Cr√©e la bordure noire pour tout le tableau
+                            ('ALIGN', (0,0), (-1,-1), 'CENTRE'), # Titre du groupe √† gauche
                             ('VALIGN', (0,0), (-1,-1), 'TOP'),
                             ('FONT',(0,0),(-1,-1), "Helvetica", 7), # Donne la police de caract. + taille de police 
                             ])
            
-        # CrÈation du tableau
+        # Cr√©ation du tableau
         tableau = Table(dataTableau, largeursColonnes)
         tableau.setStyle(style)
         story.append(tableau)

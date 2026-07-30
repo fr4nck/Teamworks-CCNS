@@ -45,7 +45,7 @@ jobs:
           python - <<'PY'
           from pathlib import Path
 
-          source = Path("teamworks/Teamworks.py").read_text(encoding="iso-8859-15")
+          source = Path("teamworks/Teamworks.py").read_text(encoding="utf-8")
           assert source.count('TEAMWORKS_SMOKE_MODE') == 1
           assert source.count('TEAMWORKS_SMOKE_MAIN_WINDOW_READY') == 1
           assert 'self.ExitMainLoop' in source

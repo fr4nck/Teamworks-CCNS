@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -38,11 +38,11 @@ class Panel(wx.Panel):
         
         self.panel_base_1 = wx.Panel(self, -1)
         self.panel_base_2 = wx.Panel(self.panel_base_1, -1)
-        self.sizer_modeles_staticbox = wx.StaticBox(self.panel_base_2, -1, _(u"Sélection des modèles"))
-        self.sizer_parametres_staticbox = wx.StaticBox(self.panel_base_2, -1, _(u"Sélection de la période et des personnes"))
+        self.sizer_modeles_staticbox = wx.StaticBox(self.panel_base_2, -1, _(u"SÃ©lection des modÃ¨les"))
+        self.sizer_parametres_staticbox = wx.StaticBox(self.panel_base_2, -1, _(u"SÃ©lection de la pÃ©riode et des personnes"))
         self.radio_btn_1 = wx.RadioButton(self.panel_base_2, -1, u"")
-        self.radio_btn_2 = wx.RadioButton(self.panel_base_2, -1, _(u"Selon les paramètres suivants :"))
-        self.label_periode = wx.StaticText(self.panel_base_2, -1, _(u"Période du :"))
+        self.radio_btn_2 = wx.RadioButton(self.panel_base_2, -1, _(u"Selon les paramÃ¨tres suivants :"))
+        self.label_periode = wx.StaticText(self.panel_base_2, -1, _(u"PÃ©riode du :"))
         self.date_debut = DatePickerCtrl(self.panel_base_2, -1, style=DP_DROPDOWN)
         self.label_au = wx.StaticText(self.panel_base_2, -1, "au")
         self.date_fin = DatePickerCtrl(self.panel_base_2, -1, style=DP_DROPDOWN)
@@ -76,7 +76,7 @@ class Panel(wx.Panel):
         self.boutonsEnabled(True, False, False)
         self.SetLabelRadio1()
         
-        # Définit les dates des datePickers
+        # DÃ©finit les dates des datePickers
         if self.selectionDates[0] != None : 
             jour = self.selectionDates[0].day
             mois = self.selectionDates[0].month-1
@@ -94,10 +94,10 @@ class Panel(wx.Panel):
             self.date_fin.SetValue(date)
 
     def __set_properties(self):
-        self.bouton_ajouter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour créer un modèle")))
-        self.bouton_modifier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier le modèle sélectionné dans la liste")))
-        self.bouton_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer le modèle sélectionné dans la liste")))
-        self.bouton_dupliquer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour dupliquer le modèle sélectionné dans la liste")))
+        self.bouton_ajouter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour crÃ©er un modÃ¨le")))
+        self.bouton_modifier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier le modÃ¨le sÃ©lectionnÃ© dans la liste")))
+        self.bouton_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer le modÃ¨le sÃ©lectionnÃ© dans la liste")))
+        self.bouton_dupliquer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour dupliquer le modÃ¨le sÃ©lectionnÃ© dans la liste")))
 
     def __do_layout(self):
         sizer_base_1 = wx.BoxSizer(wx.VERTICAL)
@@ -155,13 +155,13 @@ class Panel(wx.Panel):
     def SetLabelRadio1(self):
         """ Assigne un label au radio1 """
         if self.parent.GetName() == "panel_applicModele_FicheInd" :
-            if len(self.selectionLignes) == 0 : txt = _(u"Selon les dates sélectionnées dans le calendrier")
-            elif len(self.selectionLignes) == 1 : txt = _(u"Selon la date sélectionnée dans le calendrier")
-            else : txt = _(u"Selon les ") + str(len(self.selectionLignes)) + _(u" dates sélectionnées dans le calendrier")
+            if len(self.selectionLignes) == 0 : txt = _(u"Selon les dates sÃ©lectionnÃ©es dans le calendrier")
+            elif len(self.selectionLignes) == 1 : txt = _(u"Selon la date sÃ©lectionnÃ©e dans le calendrier")
+            else : txt = _(u"Selon les ") + str(len(self.selectionLignes)) + _(u" dates sÃ©lectionnÃ©es dans le calendrier")
         else :
-            if len(self.selectionLignes) == 0 : txt = _(u"Selon les lignes sélectionnées dans le planning")
-            elif len(self.selectionLignes) == 1 : txt = _(u"Selon la ligne sélectionnée dans le planning")
-            else : txt = _(u"Selon les ") + str(len(self.selectionLignes)) + _(u" lignes sélectionnées dans le planning")
+            if len(self.selectionLignes) == 0 : txt = _(u"Selon les lignes sÃ©lectionnÃ©es dans le planning")
+            elif len(self.selectionLignes) == 1 : txt = _(u"Selon la ligne sÃ©lectionnÃ©e dans le planning")
+            else : txt = _(u"Selon les ") + str(len(self.selectionLignes)) + _(u" lignes sÃ©lectionnÃ©es dans le planning")
         self.radio_btn_1.SetLabel(txt)
         if len(self.selectionLignes) == 0 :
             self.radio_btn_1.Enable(False)
@@ -207,7 +207,7 @@ class Panel(wx.Panel):
 
     def Fermer(self):
         if self.parent.GetName() == "panel_applicModele_FicheInd" :
-            # Si appellée à partir de la fiche individuelle
+            # Si appellÃ©e Ã  partir de la fiche individuelle
             self.parent.GetParent().Fermer()
         else:
             # Sinon...
@@ -215,16 +215,16 @@ class Panel(wx.Panel):
             
     def OnBoutonOk(self, event):
         """ Bouton Ok """
-        # Vérifie qu'au moins un modèle a été coché
+        # VÃ©rifie qu'au moins un modÃ¨le a Ã©tÃ© cochÃ©
         selectionModeles = self.list_ctrl_modeles.selections
         if len(selectionModeles) == 0 :
-            dlg = wx.MessageDialog(self, _(u"Vous devez cocher au moins un modèle dans la liste proposée."), "Erreur", wx.OK)  
+            dlg = wx.MessageDialog(self, _(u"Vous devez cocher au moins un modÃ¨le dans la liste proposÃ©e."), "Erreur", wx.OK)  
             dlg.ShowModal()
             dlg.Destroy() 
             return
         
         DB = GestionDB.DB()
-        # Récupération des modèles
+        # RÃ©cupÃ©ration des modÃ¨les
         if len(selectionModeles) == 1 : selectionModelesTmp = "(%d)" % selectionModeles[0]
         else : selectionModelesTmp = str(tuple(selectionModeles))
         req = "SELECT * FROM modeles_planning WHERE IDmodele IN %s" % selectionModelesTmp
@@ -236,13 +236,13 @@ class Panel(wx.Panel):
             dictModeles[modele[0]] = (modele[1], modele[2], modele[3], modele[4], modele[5])
             if modele[5] == 1 : 
                 inclureFeries = True
-        # Récupération des tâches
+        # RÃ©cupÃ©ration des tÃ¢ches
         req = "SELECT * FROM modeles_taches WHERE IDmodele IN %s" % selectionModelesTmp
         DB.ExecuterReq(req)
         listeTaches = DB.ResultatReq()
         DB.Close()
         
-        # On enlève les taches non utiles (d'autres périodes)
+        # On enlÃ¨ve les taches non utiles (d'autres pÃ©riodes)
         listeExclusions = []
         for tache in listeTaches :
             typeModele = dictModeles[tache[1]][1]
@@ -266,7 +266,7 @@ class Panel(wx.Panel):
                     break
                 index += 1
                 
-        # Creation du schéma d'application
+        # Creation du schÃ©ma d'application
         periodeEcole = { 1 : [], 2 : [], 3 : [], 4 : [], 5 : [], 6 : [], 7 : []}
         periodeVacs = { 1 : [], 2 : [], 3 : [], 4 : [], 5 : [], 6 : [], 7 : []}
         
@@ -300,7 +300,7 @@ class Panel(wx.Panel):
                     detailTache = (IDtache, heure_debut, heure_fin, IDcategorie, intitule)
                     periodeVacs[jour].append(detailTache)
                    
-        # On vérifie que des taches ne se chevauchent pas dans le schéma d'application
+        # On vÃ©rifie que des taches ne se chevauchent pas dans le schÃ©ma d'application
         chevauchement = 0
         
         for numJour in range(1, 8) :
@@ -329,18 +329,18 @@ class Panel(wx.Panel):
         
         if chevauchement > 0 :
             nbreModelesCoches = len(selectionModeles)
-            txt = _(u"Les ") + str(nbreModelesCoches) + _(u" modèles que vous avez sélectionnés ne sont pas compatibles entre eux : Des tâches se chevauchent. \n\nDéselectionnez ou modifiez les tâches de l'un des modèles.")
+            txt = _(u"Les ") + str(nbreModelesCoches) + _(u" modÃ¨les que vous avez sÃ©lectionnÃ©s ne sont pas compatibles entre eux : Des tÃ¢ches se chevauchent. \n\nDÃ©selectionnez ou modifiez les tÃ¢ches de l'un des modÃ¨les.")
             dlg = wx.MessageDialog(self, txt, "Erreur", wx.OK)  
             dlg.ShowModal()
             dlg.Destroy() 
             return
         
-        # Application du schéma d'application
+        # Application du schÃ©ma d'application
         listeCreationsTaches = []
         
         if self.radio_btn_1.GetValue() == True :
            
-            # Récupération des dates extremes de la sélection de lignes
+            # RÃ©cupÃ©ration des dates extremes de la sÃ©lection de lignes
             listeDatesSelection = []
             for ligne in self.selectionLignes :
                 listeDatesSelection.append(ligne[1])
@@ -348,10 +348,10 @@ class Panel(wx.Panel):
             dateMin = listeDatesSelection[0]
             dateMax = listeDatesSelection[-1]
             
-            # Récupération des dates de jours de vacances
+            # RÃ©cupÃ©ration des dates de jours de vacances
             listeJoursVacs = self.Importation_Jours_Vacances(dateMin, dateMax)
             
-            # Création de la liste des taches à créer            
+            # CrÃ©ation de la liste des taches Ã  crÃ©er            
             for ligne in self.selectionLignes :
                 
                 IDpersonne = ligne[0]
@@ -375,26 +375,26 @@ class Panel(wx.Panel):
 
         if self.radio_btn_2.GetValue() == True :
             
-            # Vérifie que au moins 1 nom de personnes a été coché dans le listCtrl
+            # VÃ©rifie que au moins 1 nom de personnes a Ã©tÃ© cochÃ© dans le listCtrl
             if len(self.selectionPersonnes) == 0 :
                 dlg = wx.MessageDialog(self, _(u"Vous devez cocher au moins un nom dans la liste des personnes."), "Erreur", wx.OK)  
                 dlg.ShowModal()
                 dlg.Destroy()
                 return
             
-            # Vérifie que les dates données dans les datePickers sont correctes
+            # VÃ©rifie que les dates donnÃ©es dans les datePickers sont correctes
             date_tmp = self.date_debut.GetValue()
             date_debut = datetime.date(date_tmp.GetYear(), date_tmp.GetMonth()+1, date_tmp.GetDay())
             date_tmp = self.date_fin.GetValue()
             date_fin = datetime.date(date_tmp.GetYear(), date_tmp.GetMonth()+1, date_tmp.GetDay())
             
             if date_debut > date_fin :
-                dlg = wx.MessageDialog(self, _(u"La date de début doit être inférieure à la date de fin."), "Erreur de saisie", wx.OK)  
+                dlg = wx.MessageDialog(self, _(u"La date de dÃ©but doit Ãªtre infÃ©rieure Ã  la date de fin."), "Erreur de saisie", wx.OK)  
                 dlg.ShowModal()
                 dlg.Destroy()
                 return
             
-            # Création de la liste de dates
+            # CrÃ©ation de la liste de dates
             listeDatesSelection = []
             nbreJours = (date_fin - date_debut).days + 1
             dateTemp = date_debut
@@ -405,10 +405,10 @@ class Panel(wx.Panel):
             dateMin = listeDatesSelection[0]
             dateMax = listeDatesSelection[-1]
             
-            # Récupération des dates de jours de vacances
+            # RÃ©cupÃ©ration des dates de jours de vacances
             listeJoursVacs = self.Importation_Jours_Vacances(dateMin, dateMax)
             
-            # Création de la liste des taches à créer 
+            # CrÃ©ation de la liste des taches Ã  crÃ©er 
             for IDpersonne in self.selectionPersonnes :
                 for date in listeDatesSelection :
                     jourSemaine = date.isoweekday()
@@ -428,12 +428,12 @@ class Panel(wx.Panel):
                             listeCreationsTaches.append(detailTache)         
         
         if len(listeCreationsTaches) == 0 :
-            dlg = wx.MessageDialog(self, _(u"Selon les paramètres que vous avez saisis, aucune tâche n'est à créer..."), "Information", wx.OK)  
+            dlg = wx.MessageDialog(self, _(u"Selon les paramÃ¨tres que vous avez saisis, aucune tÃ¢che n'est Ã  crÃ©er..."), "Information", wx.OK)  
             dlg.ShowModal()
             dlg.Destroy()
             return
             
-        # Création de la liste formatée de confirmation
+        # CrÃ©ation de la liste formatÃ©e de confirmation
         dictCategories = self.Importation_categories_presences()
         
 ##        listeConfirmations = []
@@ -470,7 +470,7 @@ class Panel(wx.Panel):
         
         nbreTaches = len(listeCreationsTaches)
         
-        # Fenêtre de demande de confirmation
+        # FenÃªtre de demande de confirmation
         dlg = DLG_Confirm_appli_modele.Dialog(self, nbreTaches=nbreTaches, dictTaches=dictConfirmations, listeCreationsTaches=listeCreationsTaches, inclureFeries=inclureFeries)
         dlg.ShowModal()
         etat = dlg.etat
@@ -482,13 +482,13 @@ class Panel(wx.Panel):
                 self.GetParent().EndModal(wx.ID_OK)
 
     def EnregistrementTaches(self, listeCreationsTaches) :
-        """ Enregistrement des taches dans la base de données """        
+        """ Enregistrement des taches dans la base de donnÃ©es """        
         listeExceptions = []
                             
-        # Récupération des dates de jours fériés
+        # RÃ©cupÃ©ration des dates de jours fÃ©riÃ©s
         self.listeFeriesFixes, self.listeFeriesVariables = self.Importation_Feries()
     
-        # Initialisation de la connexion avec la Base de données
+        # Initialisation de la connexion avec la Base de donnÃ©es
         DB = GestionDB.DB()
         for tache in listeCreationsTaches :
 
@@ -501,7 +501,7 @@ class Panel(wx.Panel):
             
             valide = True
 
-            # Vérifie qu'aucune tâche n'existe déjà à ce moment dans la base de données
+            # VÃ©rifie qu'aucune tÃ¢che n'existe dÃ©jÃ  Ã  ce moment dans la base de donnÃ©es
             req = """
             SELECT IDpresence, date, heure_debut, heure_fin
             FROM presences
@@ -512,11 +512,11 @@ class Panel(wx.Panel):
             listePresences = DB.ResultatReq()
             nbreResultats = len(listePresences)
             
-            # Un ou des présences existent à ce moment, donc pas d'enregistrement
+            # Un ou des prÃ©sences existent Ã  ce moment, donc pas d'enregistrement
             if nbreResultats != 0 :
                 valide = False
                 
-            # Vérifie que ce n'est pas un jour férié
+            # VÃ©rifie que ce n'est pas un jour fÃ©riÃ©
             #print date, type(date)
             if (date.day, date.month) in self.listeFeriesFixes :
                 valide = False
@@ -538,12 +538,12 @@ class Panel(wx.Panel):
                 DB.Commit()
             else:
                 
-                # Si date non valide : on crée un rapport
+                # Si date non valide : on crÃ©e un rapport
                 dictPersonnes = self.list_ctrl_personnes.dictPersonnes
                 nomPersonne = dictPersonnes[IDpersonne][0] + " " + dictPersonnes[IDpersonne][1]
                 listeExceptions.append((nomPersonne, DatetimeDateEnStr(date), (heure_debut, heure_fin)))
 
-        # Fermeture de la base de données
+        # Fermeture de la base de donnÃ©es
         DB.Close()
 
         # Lecture de la liste des exceptions
@@ -552,17 +552,17 @@ class Panel(wx.Panel):
                 
         if nbreInvalides != 0 :
             message = ""
-            if nbreValides == 0 : message += _(u"Aucune tâche n'a été correctement enregistrée.\n\nL")
-            elif nbreValides == 1 : message += str(nbreValides) + _(u" tâche a été correctement enregistrée.\n\nMais l")
-            else: message += str(nbreValides) + _(u" tâches ont été correctement enregistrées.\n\nMais l")
+            if nbreValides == 0 : message += _(u"Aucune tÃ¢che n'a Ã©tÃ© correctement enregistrÃ©e.\n\nL")
+            elif nbreValides == 1 : message += str(nbreValides) + _(u" tÃ¢che a Ã©tÃ© correctement enregistrÃ©e.\n\nMais l")
+            else: message += str(nbreValides) + _(u" tÃ¢ches ont Ã©tÃ© correctement enregistrÃ©es.\n\nMais l")
             if nbreInvalides == 1 :
-                message += _(u"a tâche de la liste suivante n'a pas pu être saisie car elle chevauchait une ou plusieurs des tâches existantes. ")
-                message += _(u"Vous devrez donc d'abord supprimer ou modifier les horaires de ces tâches existantes avant de pouvoir saisir celle-ci.\n\n")
+                message += _(u"a tÃ¢che de la liste suivante n'a pas pu Ãªtre saisie car elle chevauchait une ou plusieurs des tÃ¢ches existantes. ")
+                message += _(u"Vous devrez donc d'abord supprimer ou modifier les horaires de ces tÃ¢ches existantes avant de pouvoir saisir celle-ci.\n\n")
             else:
-                message += _(u"es ") + str(nbreInvalides) + _(u" tâches de la liste suivante n'ont pas pu être saisies car elles chevauchaient des tâches existantes. ")
-                message += _(u"Vous devrez donc d'abord supprimer ou modifier les horaires de ces tâches existantes avant de pouvoir saisir celles-ci.\n\n")
+                message += _(u"es ") + str(nbreInvalides) + _(u" tÃ¢ches de la liste suivante n'ont pas pu Ãªtre saisies car elles chevauchaient des tÃ¢ches existantes. ")
+                message += _(u"Vous devrez donc d'abord supprimer ou modifier les horaires de ces tÃ¢ches existantes avant de pouvoir saisir celles-ci.\n\n")
             for exception in listeExceptions :
-                message += "   > Le " + exception[1] + " pour " + exception[0] + " de " + exception[2][0] + u" à " + exception[2][1] + ".\n"
+                message += "   > Le " + exception[1] + " pour " + exception[0] + " de " + exception[2][0] + u" Ã  " + exception[2][1] + ".\n"
             dlg = wx.lib.dialogs.ScrolledMessageDialog(self, message, _(u"Rapport d'erreurs"))
             dlg.ShowModal()
             
@@ -608,7 +608,7 @@ class Panel(wx.Panel):
         return listeVacances2
     
     def Importation_Feries(self):
-        """ Importation des dates des jours fériés """
+        """ Importation des dates des jours fÃ©riÃ©s """
 
         req = "SELECT * FROM jours_feries;"
         DB = GestionDB.DB()
@@ -640,16 +640,16 @@ class Panel(wx.Panel):
         return dictCategories
        
     def OnBoutonAjouter(self, event):
-        """ Créer un nouveau modèle """
+        """ CrÃ©er un nouveau modÃ¨le """
         dlg = DLG_Saisie_modele.Dialog(self, IDmodele=0)
         dlg.ShowModal()
         dlg.Destroy()
 
     def OnBoutonModifier(self, event):
-        """ Modifier un modèle """
+        """ Modifier un modÃ¨le """
         index = self.list_ctrl_modeles.GetFirstSelected()
         if index == -1 : 
-            dlg = wx.MessageDialog(self, _(u"Vous devez sélectionner un modèle dans la liste proposée"), "Erreur", wx.OK)  
+            dlg = wx.MessageDialog(self, _(u"Vous devez sÃ©lectionner un modÃ¨le dans la liste proposÃ©e"), "Erreur", wx.OK)  
             dlg.ShowModal()
             dlg.Destroy() 
             return
@@ -659,16 +659,16 @@ class Panel(wx.Panel):
         dlg.Destroy()
 
     def OnBoutonSupprimer(self, event):
-        """ Suppression d'un modèle """
+        """ Suppression d'un modÃ¨le """
         index = self.list_ctrl_modeles.GetFirstSelected()
         if index == -1 : 
-            dlg = wx.MessageDialog(self, _(u"Vous devez sélectionner un modèle dans la liste proposée"), "Erreur", wx.OK)  
+            dlg = wx.MessageDialog(self, _(u"Vous devez sÃ©lectionner un modÃ¨le dans la liste proposÃ©e"), "Erreur", wx.OK)  
             dlg.ShowModal()
             dlg.Destroy() 
             return
         IDmodele = self.list_ctrl_modeles.GetItemData(index)
         nomModele = self.list_ctrl_modeles.dictModeles[IDmodele][0]
-        dlg = wx.MessageDialog(self, _(u"Souhaitez-vous vraiment supprimer le modèle '") + nomModele + "' ?",  _(u"Suppression d'un modèle"), wx.ICON_QUESTION | wx.YES_NO | wx.NO_DEFAULT)
+        dlg = wx.MessageDialog(self, _(u"Souhaitez-vous vraiment supprimer le modÃ¨le '") + nomModele + "' ?",  _(u"Suppression d'un modÃ¨le"), wx.ICON_QUESTION | wx.YES_NO | wx.NO_DEFAULT)
         if dlg.ShowModal() == wx.ID_NO :
             dlg.Destroy() 
             return
@@ -678,9 +678,9 @@ class Panel(wx.Panel):
                 self.list_ctrl_modeles.selections.remove(IDmodele) 
         
         DB = GestionDB.DB()
-        # Suppression des taches associées au modèle
+        # Suppression des taches associÃ©es au modÃ¨le
         DB.ReqDEL("modeles_taches", "IDmodele", IDmodele)
-        # Suppression du modèle
+        # Suppression du modÃ¨le
         DB.ReqDEL("modeles_planning", "IDmodele", IDmodele)
         DB.Close()
         
@@ -690,23 +690,23 @@ class Panel(wx.Panel):
 
 
     def OnBoutonDupliquer(self, event):
-        """ Dupliquer un modèle """
+        """ Dupliquer un modÃ¨le """
         # Demande de confirmation
         index = self.list_ctrl_modeles.GetFirstSelected()
         if index == -1 : 
-            dlg = wx.MessageDialog(self, _(u"Vous devez sélectionner un modèle dans la liste proposée"), "Erreur", wx.OK)  
+            dlg = wx.MessageDialog(self, _(u"Vous devez sÃ©lectionner un modÃ¨le dans la liste proposÃ©e"), "Erreur", wx.OK)  
             dlg.ShowModal()
             dlg.Destroy() 
             return
         IDmodele = self.list_ctrl_modeles.GetItemData(index)
         nomModele = self.list_ctrl_modeles.dictModeles[IDmodele][0]
-        dlg = wx.MessageDialog(self, _(u"Souhaitez-vous vraiment dupliquer le modèle '") + nomModele + u"' ?",  _(u"Duplication d'un modèle"), wx.ICON_QUESTION | wx.YES_NO | wx.NO_DEFAULT)
+        dlg = wx.MessageDialog(self, _(u"Souhaitez-vous vraiment dupliquer le modÃ¨le '") + nomModele + u"' ?",  _(u"Duplication d'un modÃ¨le"), wx.ICON_QUESTION | wx.YES_NO | wx.NO_DEFAULT)
         if dlg.ShowModal() == wx.ID_NO :
             dlg.Destroy() 
             return
         dlg.Destroy()
         
-        # Duplication du modèle
+        # Duplication du modÃ¨le
         dlg = DLG_Saisie_modele.Dialog(self, IDmodele=IDmodele)
         dlg.IDmodele = 0
         dlg.text_nom.SetValue(_(u"Copie de %s") % nomModele)
@@ -737,7 +737,7 @@ class listCtrl_Personnes(wx.ListCtrl, CheckListCtrlMixin):
 
     def Remplissage(self):
         self.ClearAll()
-        # Création des colonnes
+        # CrÃ©ation des colonnes
         self.InsertColumn(0, "Individus")
 
         # Remplissage avec les valeurs
@@ -747,7 +747,7 @@ class listCtrl_Personnes(wx.ListCtrl, CheckListCtrlMixin):
             else:
                 index = self.InsertItem(self.GetItemCount(), valeurs[0] + " " + valeurs[1])
             self.SetItemData(index, key)
-            # Sélection
+            # SÃ©lection
             if key in self.GetGrandParent().GetParent().selectionPersonnes :
                 self.CheckItem(index)
 
@@ -797,7 +797,7 @@ class listCtrl_Personnes(wx.ListCtrl, CheckListCtrlMixin):
         # Transformation de la liste en dict
         dictPersonnes = {}
         for personne in listeDonnees :
-            dictPersonnes[personne[0]] = [personne[1], personne[2]] # Nom, prénom
+            dictPersonnes[personne[0]] = [personne[1], personne[2]] # Nom, prÃ©nom
         
         return dictPersonnes
         
@@ -829,7 +829,7 @@ class listCtrl_Modeles(wx.ListCtrl, CheckListCtrlMixin):
         """ Remplissage du listCtrl """
         self.dictModeles = self.Import_Modeles()
         self.ClearAll()
-        # Création des colonnes
+        # CrÃ©ation des colonnes
         self.InsertColumn(0, "Nom")
         self.InsertColumn(1, "Description")
 
@@ -842,7 +842,7 @@ class listCtrl_Modeles(wx.ListCtrl, CheckListCtrlMixin):
                 index = self.InsertItem(self.GetItemCount(), valeurs[0])
                 self.SetItem(index, 1, valeurs[1])
             self.SetItemData(index, key)
-            # Sélection
+            # SÃ©lection
             if key in self.selections :
                 self.CheckItem(index)
 
@@ -884,7 +884,7 @@ class listCtrl_Modeles(wx.ListCtrl, CheckListCtrlMixin):
                 self.selections.remove(IDmodele) 
 
     def Import_Modeles(self):
-        """ Importe les modèles de la base """
+        """ Importe les modÃ¨les de la base """
         
         req = """
             SELECT IDmodele, nom, description
@@ -898,25 +898,25 @@ class listCtrl_Modeles(wx.ListCtrl, CheckListCtrlMixin):
         # Transformation de la liste en dict
         dictModeles = {}
         for modele in listeDonnees :
-            dictModeles[modele[0]] = [modele[1], modele[2]] # Nom, prénom
+            dictModeles[modele[0]] = [modele[1], modele[2]] # Nom, prÃ©nom
         
         return dictModeles
     
     def OnContextMenu(self, event):
         """Ouverture du menu contextuel """
 
-        # Recherche et sélection de l'item pointé avec la souris
+        # Recherche et sÃ©lection de l'item pointÃ© avec la souris
         index = self.GetFirstSelected()
         if index == -1 :
             mode = "selected"
         else:
             mode = "deselected"
         
-        # Création du menu contextuel
+        # CrÃ©ation du menu contextuel
         menuPop = UTILS_Adaptations.Menu()
         
         # Item Ajouter
-        item = wx.MenuItem(menuPop, 10, _(u"Créer un nouveau modèle"))
+        item = wx.MenuItem(menuPop, 10, _(u"CrÃ©er un nouveau modÃ¨le"))
         bmp = wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_PNG)
         item.SetBitmap(bmp)
         menuPop.AppendItem(item)
@@ -972,9 +972,9 @@ class Dialog(wx.Dialog):
             selectionPersonnes = []
         wx.Dialog.__init__(self, parent, -1, style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX)
         self.panel = Panel(self, selectionLignes=selectionLignes, selectionPersonnes=selectionPersonnes, selectionDates=selectionDates)
-        self.SetTitle(_(u"Application d'un modèle"))
+        self.SetTitle(_(u"Application d'un modÃ¨le"))
 
-        # Propriétés
+        # PropriÃ©tÃ©s
         if 'phoenix' in wx.PlatformInfo:
             _icon = wx.Icon()
         else :

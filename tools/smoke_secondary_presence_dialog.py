@@ -72,7 +72,7 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
 
 
 def build_patched_entrypoint() -> int:
-    source = SOURCE.read_text(encoding="iso-8859-15")
+    source = SOURCE.read_text(encoding="utf-8")
     marker_count = source.count(MARKER_LINE)
     if marker_count < 1:
         raise RuntimeError(
@@ -82,7 +82,7 @@ def build_patched_entrypoint() -> int:
     if SECONDARY_MARKER not in patched_source or FAILURE_MARKER not in patched_source:
         raise RuntimeError("injection des marqueurs du formulaire absente")
     compile(patched_source, str(PATCHED), "exec")
-    PATCHED.write_text(patched_source, encoding="iso-8859-15")
+    PATCHED.write_text(patched_source, encoding="utf-8")
     return marker_count
 
 

@@ -32,7 +32,7 @@ def test_dynamic_contract_fields_do_not_mix_expand_and_vertical_alignment() -> N
     forbidden = "wx.ALIGN_CENTER_VERTICAL|wx.EXPAND"
 
     for path in SIZER_TARGETS:
-        source = path.read_text(encoding="iso-8859-15")
+        source = path.read_text(encoding="utf-8")
         assert forbidden not in source, path
         assert "sizer_champ.Add" in source
         compile(source, str(path), "exec")

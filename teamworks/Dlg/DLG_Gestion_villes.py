@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -14,15 +14,22 @@ from Ctrl import CTRL_Bouton_image
 import wx.lib.mixins.listctrl  as  listmix
 import sqlite3
 from Utils import UTILS_Phonex
-import string
+import unicodedata
 import wx.lib.masked as masked
 import FonctionsPerso
 from Utils import UTILS_Adaptations
 
 
+def NormaliseRecherche(word):
+    """Retourne une cha√Æne Unicode sans accents pour les recherches SQL."""
+    texte = unicodedata.normalize("NFKD", six.text_type(word))
+    return "".join(
+        caractere for caractere in texte if not unicodedata.combining(caractere)
+    ).upper()
+
+
 def PhonexPerso(word):
-    resultat = UTILS_Phonex.phonex(word.encode("iso-8859-15"))
-    return resultat
+    return UTILS_Phonex.phonex(NormaliseRecherche(word))
 
 
 class Dialog(wx.Dialog):
@@ -32,11 +39,11 @@ class Dialog(wx.Dialog):
         self.parent = parent
         self.sizer_SaisieManuelle_staticbox = wx.StaticBox(self.panel_base, -1, "Saisie manuelle")
         self.sizer_Recherche_staticbox = wx.StaticBox(self.panel_base, -1, "Recherche")
-        self.label_Intro = wx.StaticText(self.panel_base, -1, _(u"Ce logiciel possËde une base de donnÈes de villes et de codes de la France."))
+        self.label_Intro = wx.StaticText(self.panel_base, -1, _(u"Ce logiciel poss√®de une base de donn√©es de villes et de codes de la France."))
         self.exportCP = exportCP
         self.exportVille = exportVille
         
-        # CrÈation du ListCtrl
+        # Cr√©ation du ListCtrl
         listeChamps = [("cp", _(u"Code postal"), 80, True), ("ville", _(u"Nom de la ville"), 200, True), ]
         self.list_ctrl_1 = VirtualList(self.panel_base, "villes", listeChamps)
         self.list_ctrl_1.SetMinSize((20, 20)) 
@@ -44,9 +51,9 @@ class Dialog(wx.Dialog):
         self.label_Recherche1 = wx.StaticText(self.panel_base, -1, "Saisissez ici un nom de ville \nou un code postal :")
         self.text_recherche_ville = wx.TextCtrl(self.panel_base, -1, "")
         self.bouton_Rechercher = wx.BitmapButton(self.panel_base, -1, wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Rechercher.png"), wx.BITMAP_TYPE_PNG))
-        self.radio_box_recherche = wx.RadioBox(self.panel_base, -1, "Type de recherche", choices=[_(u"Une partie du nom"), _(u"Recherche phonÈtique")], majorDimension=0, style=wx.RA_SPECIFY_ROWS)
+        self.radio_box_recherche = wx.RadioBox(self.panel_base, -1, "Type de recherche", choices=[_(u"Une partie du nom"), _(u"Recherche phon√©tique")], majorDimension=0, style=wx.RA_SPECIFY_ROWS)
         self.bouton_AfficherTout = wx.BitmapButton(self.panel_base, -1, wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Reafficher_Liste.png"), wx.BITMAP_TYPE_PNG))
-        self.label_SaisieManuelle = wx.StaticText(self.panel_base, -1, _(u"Vous pouvez ici saisir manuellement un nom de ville et son code postal. \n\nCeux-ci seront automatiquement insÈrÈs dans la fiche individuelle :"))
+        self.label_SaisieManuelle = wx.StaticText(self.panel_base, -1, _(u"Vous pouvez ici saisir manuellement un nom de ville et son code postal. \n\nCeux-ci seront automatiquement ins√©r√©s dans la fiche individuelle :"))
         self.label_SaisieCode = wx.StaticText(self.panel_base, -1, "Code postal :", style=wx.ALIGN_RIGHT)
         self.text_SaisieCode = masked.TextCtrl(self.panel_base, -1, "", style=wx.TE_CENTRE, mask = "#####")
         self.label_SaisieVille = wx.StaticText(self.panel_base, -1, "Nom de la ville :", style=wx.ALIGN_RIGHT)
@@ -60,7 +67,7 @@ class Dialog(wx.Dialog):
         # end wxGlade
 
         if self.exportCP == None and self.exportVille == None:
-            # Si la fenÍtre n'a as ÈtÈ appelÈe ‡ partir de la fiche individuelle, on dÈsactive le sizer SAISIE MANUELLE
+            # Si la fen√™tre n'a as √©t√© appel√©e √† partir de la fiche individuelle, on d√©sactive le sizer SAISIE MANUELLE
             self.sizer_SaisieManuelle_staticbox.Hide()
             self.sizer_SaisieManuelle.Hide(False)
             self.sizer_principal.Layout()
@@ -77,16 +84,16 @@ class Dialog(wx.Dialog):
         self.SetIcon(_icon)
         self.text_recherche_ville.SetToolTip(wx.ToolTip(_(u"Saisissez ici un nom de ville")))
         self.bouton_Rechercher.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour lancer la recherche")))
-        self.bouton_AfficherTout.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour rÈ-afficher la liste complËte")))
+        self.bouton_AfficherTout.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour r√©-afficher la liste compl√®te")))
         self.bouton_AfficherTout.Hide()
-        self.radio_box_recherche.SetToolTip(wx.ToolTip(_(u"SÈlectionnez ici un type de recherche")))
+        self.radio_box_recherche.SetToolTip(wx.ToolTip(_(u"S√©lectionnez ici un type de recherche")))
         self.radio_box_recherche.SetSelection(0)
         self.text_SaisieCode.SetMinSize((70, -1))
         self.text_SaisieCode.SetToolTip(wx.ToolTip(_(u"Saisissez ici un code postal")))
         self.text_SaisieVille.SetToolTip(wx.ToolTip(_(u"Saisissez ici un nom de ville")))
         self.bouton_Aide.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour obtenir de l'aide")))
-        self.bouton_Ok.SetToolTip(wx.ToolTip(_(u"Cliquez ici pou valider et fermer cette fenÍtre")))
-        self.bouton_Annuler.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour annuler et fermer cette fenÍtre")))
+        self.bouton_Ok.SetToolTip(wx.ToolTip(_(u"Cliquez ici pou valider et fermer cette fen√™tre")))
+        self.bouton_Annuler.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour annuler et fermer cette fen√™tre")))
         self.list_ctrl_1.SetMinSize((300, -1))
         # end wxGlade
 
@@ -154,7 +161,7 @@ class Dialog(wx.Dialog):
     def OnBoutonRechercher(self, event):
         """ Bouton de lancement de la recherche """
         
-        # RÈcupÈration du texte recherchÈ
+        # R√©cup√©ration du texte recherch√©
         textRecherche = self.text_recherche_ville.GetValue()
         
         # Appel de la fonction de recherche en fonction du type de recherche
@@ -164,14 +171,14 @@ class Dialog(wx.Dialog):
         if self.radio_box_recherche.GetSelection() == 1:
             resultats = self.list_ctrl_1.RechercheSoundex(textRecherche)
 
-        # Ceci permet de recalculer le sizer aprËs l'affichage du bouton Afficher Tout
+        # Ceci permet de recalculer le sizer apr√®s l'affichage du bouton Afficher Tout
         if resultats == True and textRecherche != "":
             self.bouton_AfficherTout.Show()
             self.grid_sizer_3.Layout()
         elif resultats == False and textRecherche != "":
             self.bouton_AfficherTout.Show()
             self.grid_sizer_3.Layout()
-            dlg = wx.MessageDialog(self, _(u"Aucun rÈsultat n'a ÈtÈ trouvÈ pour votre recherche"), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Aucun r√©sultat n'a √©t√© trouv√© pour votre recherche"), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
         else:
@@ -208,12 +215,12 @@ class Dialog(wx.Dialog):
 
         # Validation des champs de saisie manuelle
         if code.strip() == "" :
-            dlg = wx.MessageDialog(self, _(u"Vous avez saisi un nom de ville. Vous devez Ègalement saisir un code postal pour exporter cette ville"), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous avez saisi un nom de ville. Vous devez √©galement saisir un code postal pour exporter cette ville"), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return False
         if ville.strip() == "":
-            dlg = wx.MessageDialog(self, _(u"Vous avez saisi un code postal. Vous devez Ègalement saisir un un nom de ville pour exporter cette ville"), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous avez saisi un code postal. Vous devez √©galement saisir un un nom de ville pour exporter cette ville"), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return False
@@ -241,7 +248,7 @@ class Dialog(wx.Dialog):
             self.parent.text_ville.SetValue(ville.upper())
         self.parent.autoComplete = True
 
-        dlg = wx.MessageDialog(self, _(u"La ville ") + ville + _(u" a bien ÈtÈ importÈe dans la fiche individuelle."), "Information", wx.OK | wx.ICON_INFORMATION)
+        dlg = wx.MessageDialog(self, _(u"La ville ") + ville + _(u" a bien √©t√© import√©e dans la fiche individuelle."), "Information", wx.OK | wx.ICON_INFORMATION)
         dlg.ShowModal()
         dlg.Destroy()
 
@@ -274,7 +281,7 @@ class VirtualList(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSor
         self.attr1 = wx.ListItemAttr()
         self.attr1.SetBackgroundColour("#EEF4FB") # Vert = #F0FBED
 
-        # CrÈation de la liste des colonnes initiale
+        # Cr√©ation de la liste des colonnes initiale
         self.CreationListeColonnes()
 
         # Remplissage du ListCtrl
@@ -282,10 +289,10 @@ class VirtualList(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSor
 
     def InitListCtrl(self):
         
-        # RÈcupÈration des donnÈes dans la base de donnÈes
+        # R√©cup√©ration des donn√©es dans la base de donn√©es
         self.ImportationDonnees(self.nomTable, self.listeChamps)
         
-        # CrÈation des colonnes
+        # Cr√©ation des colonnes
         x = 0
         for colonne in self.listeColonnes:
             for champ in self.listeChamps:
@@ -315,7 +322,7 @@ class VirtualList(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSor
         self.Bind(wx.EVT_CONTEXT_MENU, self.OnContextMenu)
 
     def CreationListeColonnes(self):
-        # RÈcupÈration des champs ‡ partir de listeChamps
+        # R√©cup√©ration des champs √† partir de listeChamps
         self.listeColonnes = []
         for champ in self.listeChamps:
             if champ[3] == True :
@@ -323,15 +330,15 @@ class VirtualList(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSor
 
     def ImportationDonnees(self, nomTable, listeChamps):
 
-        # listeChamps = nom Champ | Titre colonne | Taille colonne | AffichÈe (True/False)
+        # listeChamps = nom Champ | Titre colonne | Taille colonne | Affich√©e (True/False)
 
-        # Liste des champs pour la requete de rÈcupÈration
+        # Liste des champs pour la requete de r√©cup√©ration
         champs = ""
         for champ in self.listeColonnes:
             champs = champs + champ + ", "
         champs = champs[:-2]
         
-        # Requete de rÈcupÈration des donnÈes
+        # Requete de r√©cup√©ration des donn√©es
         con = sqlite3.connect(Chemins.GetStaticPath("Databases/Villes.db3"))
         con.create_function("phonex", 1, PhonexPerso)
         cur = con.cursor()
@@ -342,7 +349,7 @@ class VirtualList(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSor
         self.nbreColonnes = len(self.listeColonnes)
         self.nbreLignes = len(listeValeurs)
 
-        # CrÈation du dictionnaire de donnÈes
+        # Cr√©ation du dictionnaire de donn√©es
         self.donnees = self.listeEnDict(listeValeurs)
 
 
@@ -357,7 +364,7 @@ class VirtualList(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSor
         dictio = {}
         x = 1
         for ligne in liste:
-            index = x # Donne un entier comme clÈ
+            index = x # Donne un entier comme cl√©
             dictio[index] = ligne
             x += 1
         return dictio
@@ -395,12 +402,12 @@ class VirtualList(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSor
         return valeur
 
     def OnGetItemImage(self, item):
-        """ Affichage des images en dÈbut de ligne """
+        """ Affichage des images en d√©but de ligne """
         return -1
 
     def OnGetItemAttr(self, item):
         """ Application d'une couleur de fond pour une ligne sur deux """
-        # CrÈation d'une ligne de couleur 1 ligne sur 2
+        # Cr√©ation d'une ligne de couleur 1 ligne sur 2
         if item % 2 == 1:
             return self.attr1
         else:
@@ -436,23 +443,20 @@ class VirtualList(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSor
         
     def RechercheBase(self, textRecherche):
         """ Recherche dans la liste sur tout ou une partie du nom """
-        textRecherche = textRecherche.encode("iso-8859-15")
-        table = string.maketrans('‡‚‰„ÈËÍÎÏÓÔÚÙˆı˘˚¸Ò¿¬ƒ√…» ÀÃŒœ“‘÷’Ÿ€‹—', 'AAAAEEEEIIIOOOOUUUNAAAAEEEEIIIOOOOUUUN');
-        textRecherche = textRecherche.translate(table)
-        textRecherche = textRecherche.upper()
+        textRecherche = NormaliseRecherche(textRecherche)
 
         # Boite de dialogue de recherche
         if textRecherche != "":
-            # Recherche dans tous les champs affichÈs
+            # Recherche dans tous les champs affich√©s
             strCriteres = "WHERE "
             for champ in self.listeColonnes :
                 strCriteres = strCriteres + champ + " like '%" + textRecherche + "%' or "
 
-            # M‡J du listCtrl
+            # M√†J du listCtrl
             self.criteres = strCriteres[:-4]
             self.MAJListeCtrl()
 
-        # Renvoie si rÈsultats ou non
+        # Renvoie si r√©sultats ou non
         if self.GetItemCount() == 0:
             resultats = False
         else:
@@ -460,18 +464,15 @@ class VirtualList(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSor
         return resultats
 
     def RechercheSoundex(self, textRecherche):
-        """ Recherche dans la liste avec mÈthode SOUNDEX"""
-        textRecherche = textRecherche.encode("iso-8859-15")
-        table = string.maketrans('‡‚‰„ÈËÍÎÏÓÔÚÙˆı˘˚¸Ò¿¬ƒ√…» ÀÃŒœ“‘÷’Ÿ€‹—', 'AAAAEEEEIIIOOOOUUUNAAAAEEEEIIIOOOOUUUN');
-        textRecherche = textRecherche.translate(table)
-        textRecherche = textRecherche.upper()
+        """ Recherche dans la liste avec m√©thode SOUNDEX"""
+        textRecherche = NormaliseRecherche(textRecherche)
 
         # Boite de dialogue de recherche
         if textRecherche != "":
             self.criteres = "WHERE phonex(ville)=phonex('%s')" % textRecherche
             self.MAJListeCtrl()
 
-        # Renvoie si rÈsultats ou non
+        # Renvoie si r√©sultats ou non
         if self.GetItemCount() == 0:
             resultats = False
         else:
@@ -486,11 +487,11 @@ class VirtualList(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSor
         index = self.GetFirstSelected()
         self.selection = (int(self.getColumnText(index, 0)), self.getColumnText(index, 1))
         
-        # CrÈation du menu contextuel
+        # Cr√©ation du menu contextuel
         menuPop = UTILS_Adaptations.Menu()
 
         # Item avec image
-        item = wx.MenuItem(menuPop, 10, _(u"InsÈrer cette ville dans la fiche individuelle"))
+        item = wx.MenuItem(menuPop, 10, _(u"Ins√©rer cette ville dans la fiche individuelle"))
         bmp = wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Fleche_bas.png"), wx.BITMAP_TYPE_PNG)
         item.SetBitmap(bmp)
         menuPop.AppendItem(item)

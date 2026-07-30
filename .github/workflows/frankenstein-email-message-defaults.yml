@@ -30,7 +30,7 @@ jobs:
           import ast
           from pathlib import Path
           raw = Path('teamworks/Utils/UTILS_Envoi_email.py').read_bytes()
-          for encoding in ('utf-8', 'iso-8859-15', 'cp1252'):
+          for encoding in ('utf-8',):
               try:
                   tree = ast.parse(raw.decode(encoding))
                   break

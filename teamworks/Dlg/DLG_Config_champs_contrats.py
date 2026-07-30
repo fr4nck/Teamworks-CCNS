@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -22,7 +22,7 @@ class Panel(wx.Panel):
         wx.Panel.__init__(self, parent, ID, name="panel_config_champsContrats", style=wx.TAB_TRAVERSAL)
         
         self.barreTitre = FonctionsPerso.BarreTitre(self,  _(u"Les champs de contrats"), u"")
-        texteIntro = _(u"Vous pouvez ici crÈer, modifier ou supprimer les champs personnalisÈs qui sont utilisÈs dans la crÈation des contrats.\nIls vous permettent de personnaliser librement vos contrats en fonction de vos besoins.")
+        texteIntro = _(u"Vous pouvez ici cr√©er, modifier ou supprimer les champs personnalis√©s qui sont utilis√©s dans la cr√©ation des contrats.\nIls vous permettent de personnaliser librement vos contrats en fonction de vos besoins.")
         self.label_introduction = FonctionsPerso.StaticWrapText(self, -1, texteIntro)
         
         self.listCtrl = ListCtrl(self)
@@ -48,9 +48,9 @@ class Panel(wx.Panel):
         self.bouton_supprimer.Enable(False)
         
     def __set_properties(self):
-        self.bouton_ajouter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour crÈer un nouveau champ personnalisÈ")))
-        self.bouton_modifier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier le champ sÈlectionnÈ dans la liste")))
-        self.bouton_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer le champ sÈlectionnÈ dans la liste")))
+        self.bouton_ajouter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour cr√©er un nouveau champ personnalis√©")))
+        self.bouton_modifier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier le champ s√©lectionn√© dans la liste")))
+        self.bouton_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer le champ s√©lectionn√© dans la liste")))
         self.bouton_aide.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour obtenir de l'aide")))
 
     def __do_layout(self):
@@ -90,35 +90,35 @@ class Panel(wx.Panel):
     def Modifier(self):
         index = self.listCtrl.GetFirstSelected()
         if index == -1:
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÈlectionner un champ ‡ modifier dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord s√©lectionner un champ √† modifier dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
         
         ID = int(self.listCtrl.GetItem(index, 0).GetText())
         
-        # VÈrifie que ce champ n'est pas attribuÈ ‡ un contrat
+        # V√©rifie que ce champ n'est pas attribu√© √† un contrat
         DB = GestionDB.DB()
         req = "SELECT IDval_champ FROM contrats_valchamps WHERE IDchamp=%d AND type='contrat'" % ID
         DB.ExecuterReq(req)
         listeDonnees = DB.ResultatReq()
         DB.Close()
         if len(listeDonnees) != 0 :
-            dlg = wx.MessageDialog(self, _(u"Ce champ a dÈj‡ ÈtÈ attribuÈ ‡ ") + str(len(listeDonnees)) + _(u" contrat(s). \nEtes-vous s˚r de vouloir le modifier ?"), "Confirmation", wx.YES_NO|wx.NO_DEFAULT|wx.ICON_EXCLAMATION)
+            dlg = wx.MessageDialog(self, _(u"Ce champ a d√©j√† √©t√© attribu√© √† ") + str(len(listeDonnees)) + _(u" contrat(s). \nEtes-vous s√ªr de vouloir le modifier ?"), "Confirmation", wx.YES_NO|wx.NO_DEFAULT|wx.ICON_EXCLAMATION)
             reponse = dlg.ShowModal()
             if reponse == wx.ID_NO:
                 dlg.Destroy()
                 return
             else: dlg.Destroy()
         
-        # VÈrifie que ce champ n'est pas attribuÈ ‡ un modËle de contrat
+        # V√©rifie que ce champ n'est pas attribu√© √† un mod√®le de contrat
         DB = GestionDB.DB()
         req = "SELECT IDval_champ FROM contrats_valchamps WHERE IDchamp=%d AND type='modele'" % ID
         DB.ExecuterReq(req)
         listeDonnees = DB.ResultatReq()
         DB.Close()
         if len(listeDonnees) != 0 :
-            dlg = wx.MessageDialog(self, _(u"Ce champ a dÈj‡ ÈtÈ attribuÈ ‡ ") + str(len(listeDonnees)) + _(u" modËle(s) de contrat.\nEtes-vous s˚r de vouloir le modifier ?"), "Confirmation", wx.YES_NO|wx.NO_DEFAULT|wx.ICON_EXCLAMATION)
+            dlg = wx.MessageDialog(self, _(u"Ce champ a d√©j√† √©t√© attribu√© √† ") + str(len(listeDonnees)) + _(u" mod√®le(s) de contrat.\nEtes-vous s√ªr de vouloir le modifier ?"), "Confirmation", wx.YES_NO|wx.NO_DEFAULT|wx.ICON_EXCLAMATION)
             reponse = dlg.ShowModal()
             if reponse == wx.ID_NO:
                 dlg.Destroy()
@@ -135,9 +135,9 @@ class Panel(wx.Panel):
     def Supprimer(self):
         index = self.listCtrl.GetFirstSelected()
 
-        # VÈrifie qu'un item a bien ÈtÈ sÈlectionnÈ
+        # V√©rifie qu'un item a bien √©t√© s√©lectionn√©
         if index == -1:
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÈlectionner un champ ‡ supprimer dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord s√©lectionner un champ √† supprimer dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -145,26 +145,26 @@ class Panel(wx.Panel):
         ID = int(self.listCtrl.GetItem(index, 0).GetText())
         Nom = self.listCtrl.GetItem(index, 2).GetText()
         
-        # VÈrifie que ce champ n'est pas attribuÈ ‡ un contrat
+        # V√©rifie que ce champ n'est pas attribu√© √† un contrat
         DB = GestionDB.DB()
         req = "SELECT IDval_champ FROM contrats_valchamps WHERE IDchamp=%d AND type='contrat'" % ID
         DB.ExecuterReq(req)
         listeDonnees = DB.ResultatReq()
         DB.Close()
         if len(listeDonnees) != 0 :
-            dlg = wx.MessageDialog(self, _(u"Vous avez dÈj‡ enregistrÈ ") + str(len(listeDonnees)) + _(u" contrat(s) avec ce champ. \nVous ne pouvez donc pas le supprimer."), "Information", wx.OK | wx.ICON_ERROR)
+            dlg = wx.MessageDialog(self, _(u"Vous avez d√©j√† enregistr√© ") + str(len(listeDonnees)) + _(u" contrat(s) avec ce champ. \nVous ne pouvez donc pas le supprimer."), "Information", wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
             dlg.Destroy()
             return
         
-        # VÈrifie que ce champ n'est pas attribuÈ ‡ un modËle de contrat
+        # V√©rifie que ce champ n'est pas attribu√© √† un mod√®le de contrat
         DB = GestionDB.DB()
         req = "SELECT IDval_champ FROM contrats_valchamps WHERE IDchamp=%d AND type='modele'" % ID
         DB.ExecuterReq(req)
         listeDonnees = DB.ResultatReq()
         DB.Close()
         if len(listeDonnees) != 0 :
-            dlg = wx.MessageDialog(self, _(u"Vous avez dÈj‡ enregistrÈ ") + str(len(listeDonnees)) + _(u" modËle(s) de contrat avec ce champ. \nVous ne pouvez donc pas le supprimer."), "Information", wx.OK | wx.ICON_ERROR)
+            dlg = wx.MessageDialog(self, _(u"Vous avez d√©j√† enregistr√© ") + str(len(listeDonnees)) + _(u" mod√®le(s) de contrat avec ce champ. \nVous ne pouvez donc pas le supprimer."), "Information", wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -177,12 +177,12 @@ class Panel(wx.Panel):
         if reponse == wx.ID_NO:
             return
         
-        # Suppression du type de piËce
+        # Suppression du type de pi√®ce
         DB = GestionDB.DB()
         DB.ReqDEL("contrats_champs", "IDchamp", ID)
         DB.Close()
 
-        # M‡J du ListCtrl
+        # M√†J du ListCtrl
         self.listCtrl.MAJListeCtrl()
         
     def MAJ_ListCtrl(self):
@@ -232,20 +232,20 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
 
     def Remplissage(self):
         
-        # RÈcupÈration des donnÈes dans la base de donnÈes
+        # R√©cup√©ration des donn√©es dans la base de donn√©es
         self.Importation()
         
-        # CrÈation des colonnes
+        # Cr√©ation des colonnes
         self.nbreColonnes = 6
         self.InsertColumn(0, _(u"     ID"))
         self.SetColumnWidth(0, 0)
         self.InsertColumn(1, _(u"Nom"))
         self.SetColumnWidth(1, 190)  
-        self.InsertColumn(2, _(u"Mot-clÈ"))
+        self.InsertColumn(2, _(u"Mot-cl√©"))
         self.SetColumnWidth(2, 110)
         self.InsertColumn(3, _(u"Description"))
         self.SetColumnWidth(3, 200)        
-        self.InsertColumn(4, _(u"Valeur par dÈfaut"))
+        self.InsertColumn(4, _(u"Valeur par d√©faut"))
         self.SetColumnWidth(4, 200)  
         self.InsertColumn(5, _(u"Valeur exemple"))
         self.SetColumnWidth(5, 200)
@@ -273,7 +273,7 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
         self.parent.bouton_supprimer.Enable(False)
         
     def Importation(self):
-        # RÈcupÈration des donnÈes
+        # R√©cup√©ration des donn√©es
         DB = GestionDB.DB()        
         req = """SELECT IDchamp, nom, mot_cle, description, defaut, exemple
         FROM contrats_champs ORDER BY nom; """
@@ -281,7 +281,7 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
         liste = DB.ResultatReq()
         DB.Close()
         self.nbreLignes = len(liste)
-        # CrÈation du dictionnaire de donnÈes
+        # Cr√©ation du dictionnaire de donn√©es
         self.donnees = self.listeEnDict(liste)
             
     def MAJListeCtrl(self):
@@ -294,7 +294,7 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
         dictio = {}
         x = 1
         for ligne in liste:
-            index = x # Donne un entier comme clÈ
+            index = x # Donne un entier comme cl√©
             dictio[index] = ligne
             x += 1
         return dictio
@@ -317,12 +317,12 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
         return valeur
 
     def OnGetItemImage(self, item):
-        """ Affichage des images en dÈbut de ligne """
+        """ Affichage des images en d√©but de ligne """
         return -1
 
     def OnGetItemAttr(self, item):
         """ Application d'une couleur de fond pour une ligne sur deux """
-        # CrÈation d'une ligne de couleur 1 ligne sur 2
+        # Cr√©ation d'une ligne de couleur 1 ligne sur 2
         if item % 2 == 1:
             return self.attr1
         else:
@@ -359,7 +359,7 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
         index = self.GetFirstSelected()
         key = int(self.getColumnText(index, 0))
         
-        # CrÈation du menu contextuel
+        # Cr√©ation du menu contextuel
         menuPop = UTILS_Adaptations.Menu()
 
         # Item Modifier
@@ -416,7 +416,7 @@ class Dialog(wx.Dialog):
         self.Bind(wx.EVT_BUTTON, self.Onbouton_annuler, self.bouton_fermer)
 
     def __set_properties(self):
-        self.SetTitle(_(u"Gestion des champs personnalisÈs de contrats"))
+        self.SetTitle(_(u"Gestion des champs personnalis√©s de contrats"))
         self.SetMinSize((800, 600))
         self.bouton_aide.SetToolTip(wx.ToolTip("Cliquez ici pour obtenir de l'aide"))
         self.bouton_fermer.SetToolTip(wx.ToolTip(_(u"Cliquez pour annuler et fermer")))

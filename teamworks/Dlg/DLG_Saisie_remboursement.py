@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -23,28 +23,28 @@ else :
 
 
 class SaisieRemboursement(wx.Dialog):
-    """ Saisie d'un remboursement pour les frais de déplacement """
+    """ Saisie d'un remboursement pour les frais de dÃ©placement """
     def __init__(self, parent, id=-1, title=_(u"Saisie d'un remboursement"), IDremboursement=None, IDpersonne=None):
         wx.Dialog.__init__(self, parent, id, title) #, size=(400, 450)
         self.IDremboursement = IDremboursement
         self.IDpersonne = IDpersonne
         
-        # Généralités
-        self.staticbox_generalites = wx.StaticBox(self, -1, _(u"Caractéristiques"))
+        # GÃ©nÃ©ralitÃ©s
+        self.staticbox_generalites = wx.StaticBox(self, -1, _(u"CaractÃ©ristiques"))
         
         self.label_date = wx.StaticText(self, -1, _(u"Date :"), size=(60, -1), style=wx.ALIGN_RIGHT)
         self.ctrl_date = DatePickerCtrl(self, -1, style=DP_DROPDOWN)
         
         self.label_montant = wx.StaticText(self, -1, _(u"Montant :"), size=(60, -1), style=wx.ALIGN_RIGHT)
         self.ctrl_montant = wx.TextCtrl(self, -1, u"", size=(50, -1), )
-        self.label_euro_montant = wx.StaticText(self, -1, u"¤")
+        self.label_euro_montant = wx.StaticText(self, -1, u"â‚¬")
         
         self.label_utilisateur = wx.StaticText(self, -1, _(u"Utilisateur :"), size=(60, -1), style=wx.ALIGN_RIGHT)
         self.ImportationPersonnes()
         self.ctrl_utilisateur = AdvancedComboBox( self, "", size=(100, -1), choices = self.listePersonnes)
         
-        # Déplacements
-        self.staticbox_deplacements = wx.StaticBox(self, -1, _(u"Déplacements rattachés"))
+        # DÃ©placements
+        self.staticbox_deplacements = wx.StaticBox(self, -1, _(u"DÃ©placements rattachÃ©s"))
         
         self.label_rattachement = wx.StaticText(self, -1, u"", size=(-1, -1))
         self.ctrl_deplacements = ListCtrl_deplacements(self, size=(-1, 200), IDremboursement=IDremboursement, IDpersonne=self.IDpersonne)
@@ -81,23 +81,23 @@ class SaisieRemboursement(wx.Dialog):
         self.bouton_aide.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour obtenir de l'aide")))
         self.bouton_ok.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour valider")))
         self.bouton_annuler.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour annuler la saisie")))
-        self.ctrl_date.SetToolTip(wx.ToolTip(_(u"Sélectionnez ici la date du déplacement")))
-        self.ctrl_utilisateur.SetToolTip(wx.ToolTip(_(u"Sélectionnez ici l'utilisateur pour ce déplacement")))
-##        self.ctrl_objet.SetToolTip(wx.ToolTip(_(u"Saisissez ici l'objet du déplacement. Ex : réunion, formation, etc...")))
-##        self.ctrl_cp_depart.SetToolTip(wx.ToolTip(_(u"Saisissez ici le code postal de la ville de départ")))
-##        self.ctrl_ville_depart.SetToolTip(wx.ToolTip(_(u"Saisissez ici le nom de la ville de départ")))
-##        self.ctrl_cp_arrivee.SetToolTip(wx.ToolTip(_(u"Saisissez ici le code postal de la ville d'arrivée")))
-##        self.ctrl_ville_arrivee.SetToolTip(wx.ToolTip(_(u"Saisissez ici le nom de la ville d'arrivée")))
-##        self.ctrl_distance.SetToolTip(wx.ToolTip(_(u"Saisissez ici la distance en Km entre les 2 villes sélectionnées.\nSi Teamworks la connait, il l'indiquera automatiquement.")))
-##        self.ctrl_aller_retour.SetToolTip(wx.ToolTip(_(u"Cochez cette case si le déplacement a fait l'objet d'un aller/retour.\nLa distance sera ainsi doublée.")))
-##        self.ctrl_tarif.SetToolTip(wx.ToolTip(_(u"Saisissez ici le montant du tarif du Km pour permettre calculer le montant du remboursement pour ce déplacement.")))
-##        self.bouton_options_depart.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour rechercher une ville ou pour saisir manuellement une ville non présente dans la base de données du logiciel")))
-##        self.bouton_options_arrivee.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour rechercher une ville ou pour saisir manuellement une ville non présente dans la base de données du logiciel")))
+        self.ctrl_date.SetToolTip(wx.ToolTip(_(u"SÃ©lectionnez ici la date du dÃ©placement")))
+        self.ctrl_utilisateur.SetToolTip(wx.ToolTip(_(u"SÃ©lectionnez ici l'utilisateur pour ce dÃ©placement")))
+##        self.ctrl_objet.SetToolTip(wx.ToolTip(_(u"Saisissez ici l'objet du dÃ©placement. Ex : rÃ©union, formation, etc...")))
+##        self.ctrl_cp_depart.SetToolTip(wx.ToolTip(_(u"Saisissez ici le code postal de la ville de dÃ©part")))
+##        self.ctrl_ville_depart.SetToolTip(wx.ToolTip(_(u"Saisissez ici le nom de la ville de dÃ©part")))
+##        self.ctrl_cp_arrivee.SetToolTip(wx.ToolTip(_(u"Saisissez ici le code postal de la ville d'arrivÃ©e")))
+##        self.ctrl_ville_arrivee.SetToolTip(wx.ToolTip(_(u"Saisissez ici le nom de la ville d'arrivÃ©e")))
+##        self.ctrl_distance.SetToolTip(wx.ToolTip(_(u"Saisissez ici la distance en Km entre les 2 villes sÃ©lectionnÃ©es.\nSi Teamworks la connait, il l'indiquera automatiquement.")))
+##        self.ctrl_aller_retour.SetToolTip(wx.ToolTip(_(u"Cochez cette case si le dÃ©placement a fait l'objet d'un aller/retour.\nLa distance sera ainsi doublÃ©e.")))
+##        self.ctrl_tarif.SetToolTip(wx.ToolTip(_(u"Saisissez ici le montant du tarif du Km pour permettre calculer le montant du remboursement pour ce dÃ©placement.")))
+##        self.bouton_options_depart.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour rechercher une ville ou pour saisir manuellement une ville non prÃ©sente dans la base de donnÃ©es du logiciel")))
+##        self.bouton_options_arrivee.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour rechercher une ville ou pour saisir manuellement une ville non prÃ©sente dans la base de donnÃ©es du logiciel")))
 
     def __do_layout(self):
         grid_sizer_base = wx.FlexGridSizer(rows=3, cols=1, vgap=10, hgap=10)
         
-        # Généralités
+        # GÃ©nÃ©ralitÃ©s
         sizerStaticBox_generalites = wx.StaticBoxSizer(self.staticbox_generalites, wx.HORIZONTAL)
         grid_sizer_generalites = wx.FlexGridSizer(rows=3, cols=2, vgap=10, hgap=10)
         
@@ -118,7 +118,7 @@ class SaisieRemboursement(wx.Dialog):
         sizerStaticBox_generalites.Add(grid_sizer_generalites, 1, wx.EXPAND|wx.ALL, 5)
         grid_sizer_base.Add(sizerStaticBox_generalites, 0, wx.EXPAND|wx.LEFT|wx.RIGHT|wx.TOP, 10)
         
-        # Déplacements
+        # DÃ©placements
         sizerStaticBox_deplacements = wx.StaticBoxSizer(self.staticbox_deplacements, wx.HORIZONTAL)
         grid_sizer_deplacements = wx.FlexGridSizer(rows=2, cols=1, vgap=10, hgap=10)
         
@@ -147,13 +147,13 @@ class SaisieRemboursement(wx.Dialog):
                 
     def ImportationPersonnes(self):
         """ Importation de la liste des personnes """
-        # Récupération de la liste des personnes
+        # RÃ©cupÃ©ration de la liste des personnes
         DB = GestionDB.DB()        
         req = """SELECT IDpersonne, nom, prenom FROM personnes ORDER BY nom, prenom; """
         DB.ExecuterReq(req)
         listeDonnees = DB.ResultatReq()
         DB.Close()
-        # Création de la liste pour le listBox
+        # CrÃ©ation de la liste pour le listBox
         self.listePersonnes = []
         self.dictPersonnes = {}
         index = 0
@@ -164,9 +164,9 @@ class SaisieRemboursement(wx.Dialog):
             
     
     def Importation(self):
-        """ Importation des données si c'est une modification de déplacement """
+        """ Importation des donnÃ©es si c'est une modification de dÃ©placement """
         
-        # Récupération des données du déplacement
+        # RÃ©cupÃ©ration des donnÃ©es du dÃ©placement
         DB = GestionDB.DB()        
         req = """SELECT IDremboursement, IDpersonne, date, montant, listeIDdeplacement FROM remboursements WHERE IDremboursement=%d; """ % self.IDremboursement
         DB.ExecuterReq(req)
@@ -174,7 +174,7 @@ class SaisieRemboursement(wx.Dialog):
         DB.Close()
         if len(listeDonnees) == 0 : return
         
-        # Intégration des données dans le formulaire
+        # IntÃ©gration des donnÃ©es dans le formulaire
         self.IDpersonne = listeDonnees[0][1]
         self.SetPersonne(self.IDpersonne)
         date = listeDonnees[0][2]
@@ -185,7 +185,7 @@ class SaisieRemboursement(wx.Dialog):
         self.MajLabelRattachement(float(self.ctrl_montant.GetValue()))
     
     def SetRemboursement(self, IDremboursement=None):
-        """ Définit le remboursement """
+        """ DÃ©finit le remboursement """
         if IDremboursement == None or IDremboursement == 0 or IDremboursement == "":
             self.ctrl_remboursement.SetLabel("Aucun remboursement.")
         else:
@@ -196,14 +196,14 @@ class SaisieRemboursement(wx.Dialog):
             listeDonnees = DB.ResultatReq()
             DB.Close()
             dateRemboursement = self.DateEngFr(listeDonnees[0][0])
-            self.ctrl_remboursement.SetLabel("N°" + str(IDremboursement) + " du " + dateRemboursement)
+            self.ctrl_remboursement.SetLabel("NÂ°" + str(IDremboursement) + " du " + dateRemboursement)
         
     def DateEngFr(self, textDate):
         text = str(textDate[8:10]) + "/" + str(textDate[5:7]) + "/" + str(textDate[:4])
         return text
 
     def SetAllerRetour(self, etat=False):
-        """ Définit l'aller retour """
+        """ DÃ©finit l'aller retour """
         self.ctrl_aller_retour.SetValue(etat)
         if etat == False :
             self.label_km.SetLabel("Km  (Aller simple)")
@@ -217,40 +217,40 @@ class SaisieRemboursement(wx.Dialog):
         distance = float(self.ctrl_distance.GetValue())
         tarif = float(self.ctrl_tarif.GetValue())
         montant = distance * tarif
-        self.ctrl_montant.SetLabel(u"%.2f ¤" % montant)
+        self.ctrl_montant.SetLabel(u"%.2f â‚¬" % montant)
     
 
     def montant_EvtKillFocus(self, event):
-        # Vérifie la validité de la valeur
+        # VÃ©rifie la validitÃ© de la valeur
         if self.ValideControleFloat(self.ctrl_montant) == False : 
-            dlg = wx.MessageDialog(self, _(u"Le montant n'est pas valide. \nIl doit être sous la forme '1.32' ou '100.50' par exemple..."), _(u"Erreur de saisie"), wx.OK | wx.ICON_ERROR)
+            dlg = wx.MessageDialog(self, _(u"Le montant n'est pas valide. \nIl doit Ãªtre sous la forme '1.32' ou '100.50' par exemple..."), _(u"Erreur de saisie"), wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
             dlg.Destroy()
             self.ctrl_deplacements.Enable(False)
             self.ctrl_montant.SetFocus()
             return
-        # Met à jour le montant dans le listCtrl
+        # Met Ã  jour le montant dans le listCtrl
         if self.ctrl_utilisateur.GetCurrentSelection() != -1 :
             self.MajLabelRattachement(float(self.ctrl_montant.GetValue()))
             
     
     def MajIDpersonne(self):
-        """ Quand l'utilisateur est mis à jour """
+        """ Quand l'utilisateur est mis Ã  jour """
         self.IDpersonne = self.GetPersonne()
         self.ctrl_deplacements.IDpersonne = self.IDpersonne
         self.ctrl_deplacements.MAJListeCtrl()
         
     def MajLabelRattachement(self, montant=None):
-        # Met à jour le montant dans le listCtrl
+        # Met Ã  jour le montant dans le listCtrl
         if montant != None :
             self.ctrl_deplacements.montantRemboursement = montant
         self.ctrl_deplacements.MajLabelRattachement()
         
     def ValideControleFloat(self, controle=None):
-        """ Vérifie la validité d'un contrôle de type Float """
+        """ VÃ©rifie la validitÃ© d'un contrÃ´le de type Float """
         valeur = controle.GetValue()
         if valeur == "" : return True
-        # Vérifie que la valeur est bien constituée de chiffres uniquement
+        # VÃ©rifie que la valeur est bien constituÃ©e de chiffres uniquement
         incoherences = ""
         for lettre in valeur :
             if lettre not in "0123456789." : incoherences += "'"+ lettre + "', "
@@ -265,7 +265,7 @@ class SaisieRemboursement(wx.Dialog):
             
                 
     def MajDistance(self):
-        """ Met à jour le Contrôle Distance en fonction des villes saisies """
+        """ Met Ã  jour le ContrÃ´le Distance en fonction des villes saisies """
         depart = (self.ctrl_cp_depart.GetValue(), self.ctrl_ville_depart.GetValue())
         arrivee = (self.ctrl_cp_arrivee.GetValue(), self.ctrl_ville_arrivee.GetValue())
         
@@ -280,7 +280,7 @@ class SaisieRemboursement(wx.Dialog):
                 break    
         
     def GetPersonne(self):
-        """ Récupère l'IDpersonne du comboBox """
+        """ RÃ©cupÃ¨re l'IDpersonne du comboBox """
         index = self.ctrl_utilisateur.GetCurrentSelection()
         if index == -1 : return None
         IDpersonne = self.dictPersonnes[index]
@@ -298,7 +298,7 @@ class SaisieRemboursement(wx.Dialog):
         self.SetDatePicker(self.ctrl_date, date)
                
     def SetDatePicker(self, controle, date) :
-        """ Met une date au format datetime dans un datePicker donné """
+        """ Met une date au format datetime dans un datePicker donnÃ© """
         annee = int(date.year)
         mois = int(date.month)-1
         jour = int(date.day)
@@ -317,18 +317,18 @@ class SaisieRemboursement(wx.Dialog):
         UTILS_Aide.Aide("Enregistrerunremboursement")
         
     def OnBoutonOk(self, event):
-        """ Validation des données saisies """
+        """ Validation des donnÃ©es saisies """
 
-        # Vérifie contrôle Utilisateur
+        # VÃ©rifie contrÃ´le Utilisateur
         valeur = self.ctrl_utilisateur.GetValue()
         if valeur == "" :
-            dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement sélectionner un utilisateur."), "Erreur", wx.OK | wx.ICON_EXCLAMATION)  
+            dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement sÃ©lectionner un utilisateur."), "Erreur", wx.OK | wx.ICON_EXCLAMATION)  
             dlg.ShowModal()
             dlg.Destroy()
             self.ctrl_utilisateur.SetFocus()
             return
         
-        # Vérifie contrôle montant
+        # VÃ©rifie contrÃ´le montant
         valeur = self.ctrl_montant.GetValue()
         if valeur == "" :
             dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement saisir un montant en euros pour ce remboursement."), "Erreur", wx.OK | wx.ICON_EXCLAMATION)  
@@ -338,14 +338,14 @@ class SaisieRemboursement(wx.Dialog):
             return
         
         if self.ValideControleFloat(self.ctrl_montant) == False : 
-            dlg = wx.MessageDialog(self, _(u"Le montant saisi n'est pas valide \nIl doit être sous la forme '32.50' ou '54' par exemple..."), _(u"Erreur de saisie"), wx.OK | wx.ICON_ERROR)
+            dlg = wx.MessageDialog(self, _(u"Le montant saisi n'est pas valide \nIl doit Ãªtre sous la forme '32.50' ou '54' par exemple..."), _(u"Erreur de saisie"), wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
             dlg.Destroy()
             self.ctrl_montant.SetFocus()
             return
         
         if float(valeur) == 0 :
-            dlg = wx.MessageDialog(self, _(u"Le montant que vous avez saisi est de 0 ¤\n\nSouhaitez-vous conserver ce montant ?\n(Cliquez sur 'Non' ou 'Annuler' pour modifier maintenant le montant)"), _(u"Erreur de saisie"), wx.YES_NO|wx.NO_DEFAULT|wx.CANCEL|wx.ICON_EXCLAMATION)
+            dlg = wx.MessageDialog(self, _(u"Le montant que vous avez saisi est de 0 â‚¬\n\nSouhaitez-vous conserver ce montant ?\n(Cliquez sur 'Non' ou 'Annuler' pour modifier maintenant le montant)"), _(u"Erreur de saisie"), wx.YES_NO|wx.NO_DEFAULT|wx.CANCEL|wx.ICON_EXCLAMATION)
             reponse = dlg.ShowModal()
             if reponse == wx.ID_NO or reponse == wx.ID_CANCEL:
                 dlg.Destroy()
@@ -353,11 +353,11 @@ class SaisieRemboursement(wx.Dialog):
                 return
             else: dlg.Destroy()
         
-        # Vérifie contrôle déplacements
+        # VÃ©rifie contrÃ´le dÃ©placements
         listeIDcoches, listeIDdecoches = self.ctrl_deplacements.ListeItemsCoches()
         
         if len(listeIDcoches) == 0 :
-            dlg = wx.MessageDialog(self, _(u"Vous n'avez coché aucun déplacement dans la liste.\n\nSouhaitez-vous quand même valider ?\n(Cliquez sur 'Non' ou 'Annuler' pour cocher maintenant des déplacements)"), _(u"Erreur de saisie"), wx.YES_NO|wx.NO_DEFAULT|wx.CANCEL|wx.ICON_EXCLAMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous n'avez cochÃ© aucun dÃ©placement dans la liste.\n\nSouhaitez-vous quand mÃªme valider ?\n(Cliquez sur 'Non' ou 'Annuler' pour cocher maintenant des dÃ©placements)"), _(u"Erreur de saisie"), wx.YES_NO|wx.NO_DEFAULT|wx.CANCEL|wx.ICON_EXCLAMATION)
             reponse = dlg.ShowModal()
             if reponse == wx.ID_NO or reponse == wx.ID_CANCEL:
                 dlg.Destroy()
@@ -367,17 +367,17 @@ class SaisieRemboursement(wx.Dialog):
         # Sauvegarde
         self.Sauvegarde()
 
-        # Ferme la boîte de dialogue
+        # Ferme la boÃ®te de dialogue
         self.EndModal(wx.ID_OK)        
         
         
     def Sauvegarde(self):
-        """ Sauvegarde des données """
-        # Récupération des valeurs saisies
+        """ Sauvegarde des donnÃ©es """
+        # RÃ©cupÃ©ration des valeurs saisies
         date = str(self.GetDatePickerValue(self.ctrl_date))
         IDpersonne = self.dictPersonnes[self.ctrl_utilisateur.GetCurrentSelection()]
         montant = float(self.ctrl_montant.GetValue())
-        # Récupération des déplacements cochés
+        # RÃ©cupÃ©ration des dÃ©placements cochÃ©s
         listeIDcoches, listeIDdecoches = self.ctrl_deplacements.ListeItemsCoches()
         texteID = ""
         if len(listeIDcoches) != 0 :
@@ -386,7 +386,7 @@ class SaisieRemboursement(wx.Dialog):
             texteID = texteID[:-1]
         
         DB = GestionDB.DB()
-        # Création de la liste des données
+        # CrÃ©ation de la liste des donnÃ©es
         listeDonnees = [    ("date",   date),  
                                     ("IDpersonne",    IDpersonne),
                                     ("montant",    montant),
@@ -404,14 +404,14 @@ class SaisieRemboursement(wx.Dialog):
         DB.Close()
         
         #
-        # Modification du IDdeplacement de chaque déplacement rattaché
+        # Modification du IDdeplacement de chaque dÃ©placement rattachÃ©
         #
         DB = GestionDB.DB()
-        # Création de la liste des données
+        # CrÃ©ation de la liste des donnÃ©es
         for IDdeplacement in listeIDcoches :
             listeDonnees = [    ("IDremboursement",   ID),  ]
             DB.ReqMAJ("deplacements", listeDonnees, "IDdeplacement", IDdeplacement)
-        # Décoche les autres items
+        # DÃ©coche les autres items
         for IDdeplacement in listeIDdecoches :
             listeDonnees = [    ("IDremboursement",   0),  ]
             DB.ReqMAJ("deplacements", listeDonnees, "IDdeplacement", IDdeplacement)
@@ -425,7 +425,7 @@ class SaisieRemboursement(wx.Dialog):
 
 
 class AdvancedComboBox(wx.ComboBox) :
-    """ Crée un comboBox avec auto-complete limité à la liste donnée """
+    """ CrÃ©e un comboBox avec auto-complete limitÃ© Ã  la liste donnÃ©e """
     def __init__(self, parent, value, choices=None, style=0, **par):
         if choices is None:
             choices = []
@@ -478,10 +478,10 @@ class AdvancedComboBox(wx.ComboBox) :
         event.Skip()
     
     def EvtKillFocus(self, event):
-        # Si la valeur n'est pas correcte dans le champ, remet la valeur précédente
+        # Si la valeur n'est pas correcte dans le champ, remet la valeur prÃ©cÃ©dente
         if self.GetValue() not in self.choices and self.GetValue() != u"" :
             self.Undo()
-        # Fait la sélection dans la liste
+        # Fait la sÃ©lection dans la liste
         if self.GetValue() in self.choices :
             self.SetStringSelection(self.GetValue())
         self.parent.MajIDpersonne()
@@ -513,8 +513,8 @@ class ListCtrl_deplacements(wx.ListCtrl, CheckListCtrlMixin):
 
         self.Importation()
 
-        # Création des colonnes
-        self.InsertColumn(0, u"N°")
+        # CrÃ©ation des colonnes
+        self.InsertColumn(0, u"NÂ°")
         self.SetColumnWidth(0, 50)
         self.InsertColumn(1, _(u"Date"))
         self.SetColumnWidth(1, 80)
@@ -560,10 +560,10 @@ class ListCtrl_deplacements(wx.ListCtrl, CheckListCtrlMixin):
 
     def MAJListeCtrl(self):
         self.ClearAll()
-        # Active ou non ce listCtrl si IDpersonne a été renseigné
+        # Active ou non ce listCtrl si IDpersonne a Ã©tÃ© renseignÃ©
         if self.IDpersonne == None :
             self.Enable(False)
-            self.parent.label_rattachement.SetLabel(_(u"Veuillez sélectionner un utilisateur dans la liste proposée..."))
+            self.parent.label_rattachement.SetLabel(_(u"Veuillez sÃ©lectionner un utilisateur dans la liste proposÃ©e..."))
             return
         else:
             self.Enable(True)
@@ -579,40 +579,40 @@ class ListCtrl_deplacements(wx.ListCtrl, CheckListCtrlMixin):
         self.MajLabelRattachement()
 
     def MajLabelRattachement(self):
-        """ Met à jour le label Résumé de rattachement """
+        """ Met Ã  jour le label RÃ©sumÃ© de rattachement """
         montantRattache = 0
         montantNonRattache = 0
         nbreItems = self.GetItemCount()
         for index in range(0, nbreItems) :
             montant = float(self.GetItem(index, 6).GetText()[:-2])
-            # Vérifie si l'item est coché
+            # VÃ©rifie si l'item est cochÃ©
             if self.IsChecked(index) :
                 montantRattache += montant
         
         montantNonRattache = self.montantRemboursement - montantRattache
         if montantNonRattache == 0 :
-            self.parent.label_rattachement.SetLabel(_(u"Vous devez cocher les déplacements ci-dessous pour les rattacher."))
+            self.parent.label_rattachement.SetLabel(_(u"Vous devez cocher les dÃ©placements ci-dessous pour les rattacher."))
         if montantNonRattache > 0 :
-            self.parent.label_rattachement.SetLabel(_(u"Vous pouvez encore rattacher pour ") + u"%.2f ¤" % montantNonRattache + _(u" de déplacements."))
+            self.parent.label_rattachement.SetLabel(_(u"Vous pouvez encore rattacher pour ") + u"%.2f â‚¬" % montantNonRattache + _(u" de dÃ©placements."))
         if montantNonRattache < 0 :
-            self.parent.label_rattachement.SetLabel(_(u"Attention ! Vous avez rattaché ") + u"%.2f ¤" % (-montantNonRattache) + _(u" de déplacements en trop !"))
+            self.parent.label_rattachement.SetLabel(_(u"Attention ! Vous avez rattachÃ© ") + u"%.2f â‚¬" % (-montantNonRattache) + _(u" de dÃ©placements en trop !"))
         if len(self.donnees) == 0 :
-            self.parent.label_rattachement.SetLabel(_(u"Aucun déplacement n'est à rattacher pour cette personne."))
+            self.parent.label_rattachement.SetLabel(_(u"Aucun dÃ©placement n'est Ã  rattacher pour cette personne."))
 
     def Importation(self):
-        # Récupération des données
+        # RÃ©cupÃ©ration des donnÃ©es
         DB = GestionDB.DB()
         if self.IDremboursement ==None :
-            # Si en mode ajout : On ne sélectionne que les déplacements non rattachés
+            # Si en mode ajout : On ne sÃ©lectionne que les dÃ©placements non rattachÃ©s
             req = """SELECT IDdeplacement, date, objet, ville_depart, ville_arrivee, distance, aller_retour, tarif_km, IDremboursement FROM deplacements WHERE IDpersonne=%d AND IDremboursement=0 ORDER BY date; """ % self.IDpersonne
         else:
-            # Si en mode modification, on sélectionne les déplacements rattachés à self.IDremboursement et les non rattachés
+            # Si en mode modification, on sÃ©lectionne les dÃ©placements rattachÃ©s Ã  self.IDremboursement et les non rattachÃ©s
             req = """SELECT IDdeplacement, date, objet, ville_depart, ville_arrivee, distance, aller_retour, tarif_km, IDremboursement FROM deplacements WHERE IDpersonne=%d AND (IDremboursement=0 OR IDremboursement=%d) ORDER BY date; """ % (self.IDpersonne, self.IDremboursement)
         DB.ExecuterReq(req)
         listeDonnees = DB.ResultatReq()
         DB.Close()
         self.nbreLignes = len(listeDonnees)
-        # Création du dictionnaire de données
+        # CrÃ©ation du dictionnaire de donnÃ©es
         self.donnees = []
         index = 0
         self.montantRattache = 0
@@ -630,23 +630,23 @@ class ListCtrl_deplacements(wx.ListCtrl, CheckListCtrlMixin):
             dist = str(distance) + _(u" Km")
             # Formatage montant
             montant = float(distance) * float(tarif_km)
-            montantStr = u"%.2f ¤" % montant
+            montantStr = u"%.2f â‚¬" % montant
             # Formatage tarif/Km
-            tarif_km = str(tarif_km) + _(u" ¤/km")
-            # Montant rattaché
+            tarif_km = str(tarif_km) + _(u" â‚¬/km")
+            # Montant rattachÃ©
             if IDremboursement != 0 : 
                 self.montantRattache += montant
             self.donnees.append((IDdeplacement, dateTmp, objet, trajet, dist, tarif_km, montantStr, IDremboursement))
             index += 1
 
     def ListeItemsCoches(self):
-        """ Récupère la liste des IDdeplacements cochés """
+        """ RÃ©cupÃ¨re la liste des IDdeplacements cochÃ©s """
         listeIDcoches = []
         listeIDdecoches = []
         nbreItems = self.GetItemCount()
         for index in range(0, nbreItems) :
             ID = int(self.GetItem(index, 0).GetText())
-            # Vérifie si l'item est coché
+            # VÃ©rifie si l'item est cochÃ©
             if self.IsChecked(index) :
                 listeIDcoches.append(ID)
             else:

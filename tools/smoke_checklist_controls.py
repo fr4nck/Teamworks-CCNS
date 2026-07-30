@@ -129,7 +129,7 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
 
 
 def build_patched_entrypoint() -> int:
-    source = SOURCE.read_text(encoding="iso-8859-15")
+    source = SOURCE.read_text(encoding="utf-8")
     marker_count = source.count(MARKER_LINE)
     if marker_count < 1:
         raise RuntimeError(f"marqueur principal introuvable: count={marker_count}")
@@ -137,7 +137,7 @@ def build_patched_entrypoint() -> int:
     if READY_MARKER not in patched or FAILURE_MARKER not in patched:
         raise RuntimeError("marqueurs secondaires absents après injection")
     compile(patched, str(PATCHED), "exec")
-    PATCHED.write_text(patched, encoding="iso-8859-15")
+    PATCHED.write_text(patched, encoding="utf-8")
     return marker_count
 
 

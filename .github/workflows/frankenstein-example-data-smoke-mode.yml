@@ -44,7 +44,7 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-          source = Path("teamworks/Teamworks.py").read_text(encoding="iso-8859-15")
+          source = Path("teamworks/Teamworks.py").read_text(encoding="utf-8")
           assert source.count("TEAMWORKS_SMOKE_EXAMPLE_READY") == 1
           assert 'frame.OuvrirFichier("Exemple")' in source
           assert 'Exemples/Exemple_{suffix}.dat' in source

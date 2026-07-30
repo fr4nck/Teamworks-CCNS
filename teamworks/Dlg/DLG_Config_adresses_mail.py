@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -22,8 +22,8 @@ class Panel(wx.Panel):
     def __init__(self, parent, ID=-1):
         wx.Panel.__init__(self, parent, ID, style=wx.TAB_TRAVERSAL, name="config_adresses_mail")
         
-        self.barreTitre = FonctionsPerso.BarreTitre(self,  _(u"Les adresses d'expÈditeur"), u"")
-        texteIntro = _(u"Vous pouvez ici crÈer, modifier ou supprimer les adresses mail d'expÈditeur qui sont\nnÈcessaires ‡ l'envoi de mails.")
+        self.barreTitre = FonctionsPerso.BarreTitre(self,  _(u"Les adresses d'exp√©diteur"), u"")
+        texteIntro = _(u"Vous pouvez ici cr√©er, modifier ou supprimer les adresses mail d'exp√©diteur qui sont\nn√©cessaires √† l'envoi de mails.")
         self.label_introduction = FonctionsPerso.StaticWrapText(self, -1, texteIntro)
         
         self.listCtrl = ListCtrl(self)
@@ -51,13 +51,13 @@ class Panel(wx.Panel):
         self.bouton_supprimer.Enable(False)
         
     def __set_properties(self):
-        self.bouton_ajouter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour crÈer une nouvelle adresse d'expÈditeur")))
+        self.bouton_ajouter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour cr√©er une nouvelle adresse d'exp√©diteur")))
         self.bouton_ajouter.SetSize(self.bouton_ajouter.GetBestSize())
-        self.bouton_modifier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier l'adresse sÈlectionnÈe dans la liste")))
+        self.bouton_modifier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier l'adresse s√©lectionn√©e dans la liste")))
         self.bouton_modifier.SetSize(self.bouton_modifier.GetBestSize())
-        self.bouton_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer l'adresse sÈlectionnÈe dans la liste")))
+        self.bouton_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer l'adresse s√©lectionn√©e dans la liste")))
         self.bouton_supprimer.SetSize(self.bouton_supprimer.GetBestSize())
-        self.bouton_defaut.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour dÈfinir l'adresse sÈlectionnÈe dans la liste comme adresse par dÈfaut")))
+        self.bouton_defaut.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour d√©finir l'adresse s√©lectionn√©e dans la liste comme adresse par d√©faut")))
         self.bouton_aide.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour obtenir de l'aide")))
 
     def __do_layout(self):
@@ -101,7 +101,7 @@ class Panel(wx.Panel):
     def Modifier(self):
         index = self.listCtrl.GetFirstSelected()
         if index == -1:
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÈlectionner une adresse ‡ modifier dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord s√©lectionner une adresse √† modifier dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -117,9 +117,9 @@ class Panel(wx.Panel):
     def Supprimer(self):
         index = self.listCtrl.GetFirstSelected()
 
-        # VÈrifie qu'un item a bien ÈtÈ sÈlectionnÈ
+        # V√©rifie qu'un item a bien √©t√© s√©lectionn√©
         if index == -1:
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÈlectionner une adresse ‡ supprimer dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord s√©lectionner une adresse √† supprimer dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -135,7 +135,7 @@ class Panel(wx.Panel):
         if reponse == wx.ID_NO:
             return
         
-        # Recherche si l'adresse supprimÈe est celle par dÈfaut
+        # Recherche si l'adresse supprim√©e est celle par d√©faut
         DB = GestionDB.DB()
         req = """SELECT IDadresse, defaut
         FROM adresses_mail WHERE IDadresse=%d; """ % ID
@@ -143,10 +143,10 @@ class Panel(wx.Panel):
         listeServeurs = DB.ResultatReq()
         IDadresseTmp, defaut = listeServeurs[0]
         
-        # Suppression du type de piËce
+        # Suppression du type de pi√®ce
         DB.ReqDEL("adresses_mail", "IDadresse", ID)
         
-        # Attribue la valeur par dÈfaut ‡ une autre adresse
+        # Attribue la valeur par d√©faut √† une autre adresse
         if defaut == 1 :
             req = """SELECT IDadresse, adresse
             FROM adresses_mail ORDER BY adresse; """
@@ -158,7 +158,7 @@ class Panel(wx.Panel):
                 DB.ReqMAJ("adresses_mail", listeDonnees, "IDadresse", IDadresse)
         DB.Close()
 
-        # M‡J du ListCtrl
+        # M√†J du ListCtrl
         self.listCtrl.MAJListeCtrl()
         
     def MAJ_ListCtrl(self):
@@ -177,7 +177,7 @@ class Panel(wx.Panel):
     def SetDefaut(self):
         index = self.listCtrl.GetFirstSelected()
         if index == -1:
-            dlg = wx.MessageDialog(self, _(u"Vous n'avez sÈlectionnÈ aucune adresse dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous n'avez s√©lectionn√© aucune adresse dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -238,10 +238,10 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
 
     def Remplissage(self):
         
-        # RÈcupÈration des donnÈes dans la base de donnÈes
+        # R√©cup√©ration des donn√©es dans la base de donn√©es
         self.Importation()
         
-        # CrÈation des colonnes
+        # Cr√©ation des colonnes
         self.nbreColonnes = 6
         self.InsertColumn(0, u"")
         self.SetColumnWidth(0, 20)
@@ -279,7 +279,7 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
         self.parent.bouton_supprimer.Enable(False)
         
     def Importation(self):
-        # RÈcupÈration des donnÈes
+        # R√©cup√©ration des donn√©es
         DB = GestionDB.DB()        
         req = """SELECT IDadresse, adresse, smtp, port, defaut, connexionssl
         FROM adresses_mail ORDER BY adresse; """
@@ -287,7 +287,7 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
         liste = DB.ResultatReq()
         DB.Close()
         self.nbreLignes = len(liste)
-        # CrÈation du dictionnaire de donnÈes
+        # Cr√©ation du dictionnaire de donn√©es
         self.donnees = self.listeEnDict(liste)
 
     def MAJListeCtrl(self):
@@ -300,7 +300,7 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
         dictio = {}
         x = 1
         for ligne in liste:
-            index = x # Donne un entier comme clÈ
+            index = x # Donne un entier comme cl√©
             dictio[index] = ligne
             x += 1
         return dictio
@@ -333,7 +333,7 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
             else:
                 valeur = _(u"Non")
     
-        # Adresse par dÈfaut
+        # Adresse par d√©faut
         if col == 4 : 
             if valeur == 1 : 
                 valeur = _(u"Oui")
@@ -343,7 +343,7 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
         return valeur
 
     def OnGetItemImage(self, item):
-        """ Affichage des images en dÈbut de ligne """
+        """ Affichage des images en d√©but de ligne """
         index=self.itemIndexMap[item]
         defaut =self.itemDataMap[index][4]
         if defaut == 1 :
@@ -353,7 +353,7 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
 
     def OnGetItemAttr(self, item):
         """ Application d'une couleur de fond pour une ligne sur deux """
-        # CrÈation d'une ligne de couleur 1 ligne sur 2
+        # Cr√©ation d'une ligne de couleur 1 ligne sur 2
         if item % 2 == 1:
             return self.attr1
         else:
@@ -390,7 +390,7 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
         index = self.GetFirstSelected()
         key = int(self.getColumnText(index, 0))
         
-        # CrÈation du menu contextuel
+        # Cr√©ation du menu contextuel
         menuPop = UTILS_Adaptations.Menu()
 
         # Item Modifier
@@ -418,8 +418,8 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
         
         menuPop.AppendSeparator()
 
-        # Item DÈfaut
-        item = wx.MenuItem(menuPop, 40, _(u"DÈfinir comme adresse par dÈfaut"))
+        # Item D√©faut
+        item = wx.MenuItem(menuPop, 40, _(u"D√©finir comme adresse par d√©faut"))
         bmp = wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ok.png"), wx.BITMAP_TYPE_PNG)
         item.SetBitmap(bmp)
         menuPop.AppendItem(item)
@@ -463,7 +463,7 @@ class Dialog(wx.Dialog):
         self.SetSize((500, 400))
 
     def __set_properties(self):
-        self.SetTitle(_(u"Gestion des adresses d'expÈditeur de mails"))
+        self.SetTitle(_(u"Gestion des adresses d'exp√©diteur de mails"))
         if 'phoenix' in wx.PlatformInfo:
             _icon = wx.Icon()
         else :
@@ -500,20 +500,20 @@ class Dialog(wx.Dialog):
         self.sizer_pages = sizer_pages
 
     def Onbouton_aide(self, event):
-        dlg = wx.MessageDialog(self, _(u"L'aide pour ce nouveau module est en cours de rÈdaction."), _(u"Aide indisponible"), wx.OK | wx.ICON_INFORMATION)
+        dlg = wx.MessageDialog(self, _(u"L'aide pour ce nouveau module est en cours de r√©daction."), _(u"Aide indisponible"), wx.OK | wx.ICON_INFORMATION)
         dlg.ShowModal()
         dlg.Destroy()
         return
 
     def Onbouton_annuler(self, event):
-        # Si frame Creation_contrats ouverte, on met ‡ jour le listCtrl Valeurs de points
+        # Si frame Creation_contrats ouverte, on met √† jour le listCtrl Valeurs de points
         if FonctionsPerso.FrameOuverte("panel_param_mail") != None :
             self.GetParent().MAJ_ctrl_expediteur()
         # Fermeture
         self.EndModal(wx.ID_CANCEL)
         
     def Onbouton_ok(self, event):
-        # Si frame Creation_contrats ouverte, on met ‡ jour le listCtrl Valeurs de points
+        # Si frame Creation_contrats ouverte, on met √† jour le listCtrl Valeurs de points
         if self.GetParent().GetName() == "panel_param_mail" :
             self.GetParent().MAJ_ctrl_expediteur()
         # Fermeture

@@ -10,7 +10,7 @@ import sys
 from typing import Iterable
 
 
-DEFAULT_ENCODINGS = ("utf-8", "cp1252", "iso-8859-15")
+DEFAULT_ENCODINGS = ("utf-8",)
 
 
 def decode_output(data: bytes, encodings: Iterable[str] = DEFAULT_ENCODINGS) -> str:

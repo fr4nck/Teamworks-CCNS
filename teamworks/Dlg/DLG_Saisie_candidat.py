@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -30,21 +30,21 @@ class Panel(wx.Panel):
         wx.Panel.__init__(self, parent, id=-1, name="panel_candidat", style=wx.TAB_TRAVERSAL)
         self.IDcandidat = IDcandidat
         
-        # Création d'une fiche
+        # CrÃ©ation d'une fiche
         if self.IDcandidat == None :
             self.IDcandidat = self.CreationIDfiche()
             self.nouvelleFiche = True
         else:
             self.nouvelleFiche = False
         
-        # Création d'une liste des villes et codes postaux
+        # CrÃ©ation d'une liste des villes et codes postaux
         con = sqlite3.connect(Chemins.GetStaticPath("Databases/Villes.db3"))
         cur = con.cursor()
         cur.execute("SELECT ville, cp FROM villes")
         self.listeVillesTmp = cur.fetchall()
         con.close()
         
-        # Création d'une liste de noms de villes
+        # CrÃ©ation d'une liste de noms de villes
         self.listeNomsVilles = []
         self.listeVilles = []
         for nom, cp in self.listeVillesTmp:
@@ -52,19 +52,19 @@ class Panel(wx.Panel):
             self.listeNomsVilles.append(nom)
         
         # Identite
-        self.sizer_identite_staticbox = wx.StaticBox(self, -1, _(u"Identité"))
-        self.label_civilite = wx.StaticText(self, -1, _(u"Civilité :"))
+        self.sizer_identite_staticbox = wx.StaticBox(self, -1, _(u"IdentitÃ©"))
+        self.label_civilite = wx.StaticText(self, -1, _(u"CivilitÃ© :"))
         self.ctrl_civilite = wx.Choice(self, -1, choices=[_(u"Mr"), _(u"Melle"), _(u"Mme")])
         self.label_nom = wx.StaticText(self, -1, _(u"Nom :"))
         self.ctrl_nom = wx.TextCtrl(self, -1, u"")
-        self.label_prenom = wx.StaticText(self, -1, _(u"Prénom :"))
+        self.label_prenom = wx.StaticText(self, -1, _(u"PrÃ©nom :"))
         self.ctrl_prenom = wx.TextCtrl(self, -1, u"")
         self.label_date_naiss = wx.StaticText(self, -1, _(u"Date naiss. :"))
         self.ctrl_radio_1 = wx.RadioButton(self, -1, u"", style=wx.RB_GROUP)
         self.ctrl_date_naiss = masked.TextCtrl(self, -1, "", style=wx.TE_CENTRE, mask = "##/##/####") 
         self.ctrl_age_1 = wx.TextCtrl(self, -1, "", style=wx.TE_CENTRE, size=(46,-1))
         self.ctrl_radio_2 = wx.RadioButton(self, -1, u"")
-        self.label_age = wx.StaticText(self, -1, _(u"ou âge :"))
+        self.label_age = wx.StaticText(self, -1, _(u"ou Ã¢ge :"))
         self.ctrl_age_2 = wx.TextCtrl(self, -1, "", style=wx.TE_CENTRE, size=(30,-1))
         self.label_ans = wx.StaticText(self, -1, _(u"ans"))
         
@@ -80,7 +80,7 @@ class Panel(wx.Panel):
         self.bouton_villes = wx.Button(self, -1, u"...")
         
         # Coords
-        self.sizer_coords_staticbox = wx.StaticBox(self, -1, _(u"Coordonnées"))
+        self.sizer_coords_staticbox = wx.StaticBox(self, -1, _(u"CoordonnÃ©es"))
         self.ctrl_coords = ListCtrlCoords(self, -1)
         self.ctrl_coords.SetMinSize((20, 20))
         self.bouton_ajouter_coord = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_ANY))
@@ -113,7 +113,7 @@ class Panel(wx.Panel):
         self.bouton_supprimer_entretien = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
         
         # Memo
-        self.sizer_memo_staticbox = wx.StaticBox(self, -1, _(u"Mémo"))
+        self.sizer_memo_staticbox = wx.StaticBox(self, -1, _(u"MÃ©mo"))
         self.ctrl_memo = wx.TextCtrl(self, -1, u"", style=wx.TE_MULTILINE)
         self.ctrl_memo.SetMinSize((200, 30))
         
@@ -149,7 +149,7 @@ class Panel(wx.Panel):
         self.Bind(wx.EVT_BUTTON, self.OnBoutonConvertir, self.bouton_convertir)
         self.Bind(wx.EVT_CONTEXT_MENU, self.OnContextMenu)
         
-        # Appel de l'importation des données
+        # Appel de l'importation des donnÃ©es
         if self.IDcandidat != None and self.nouvelleFiche != True :
             self.Importation()
             self.MaJ_DateNaiss()
@@ -161,36 +161,36 @@ class Panel(wx.Panel):
             self.bouton_ok.SetFocus()
         
     def __set_properties(self):
-        self.ctrl_civilite.SetToolTip(wx.ToolTip(_(u"Sélectionnez la civilité du candidat")))
+        self.ctrl_civilite.SetToolTip(wx.ToolTip(_(u"SÃ©lectionnez la civilitÃ© du candidat")))
         self.ctrl_civilite.SetSelection(0)
         self.ctrl_nom.SetFont(wx.Font(14, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, ""))
         self.ctrl_nom.SetToolTip(wx.ToolTip(_(u"Saisissez le nom de famille du candidat")))
         self.ctrl_prenom.SetFont(wx.Font(14, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, ""))
-        self.ctrl_prenom.SetToolTip(wx.ToolTip(_(u"Saisissez le prénom du candidat")))
+        self.ctrl_prenom.SetToolTip(wx.ToolTip(_(u"Saisissez le prÃ©nom du candidat")))
         self.ctrl_date_naiss.SetToolTip(wx.ToolTip(_(u"Saisissez la date de naissance du candidat")))
         self.ctrl_age_1.Enable(False)
-        self.ctrl_age_2.SetToolTip(wx.ToolTip(_(u"Saisissez l'âge du candidat si vous ne connaissez pas sa date de naissance")))
+        self.ctrl_age_2.SetToolTip(wx.ToolTip(_(u"Saisissez l'Ã¢ge du candidat si vous ne connaissez pas sa date de naissance")))
         self.ctrl_adresse.SetToolTip(wx.ToolTip(_(u"Saisissez l'adresse du candidat")))
         self.ctrl_cp.SetMinSize((60, -1))
         self.ctrl_cp.SetToolTip(wx.ToolTip(_(u"Saisissez le code postal")))
         self.ctrl_ville.SetToolTip(wx.ToolTip(_(u"Saisissez la ville")))
         self.bouton_villes.SetMinSize((20, 20))
         self.bouton_villes.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour la gestion des villes")))
-        self.bouton_ajouter_coord.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour ajouter une coordonnée")))
-        self.bouton_modifier_coord.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier la coordonnée selectionnée")))
-        self.bouton_supprimer_coord.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer la coordonnée selectionnée")))
-        self.bouton_qualifications.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour sélectionner des qualifications pour ce candidat")))
-        self.bouton_ajouter_cand.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour créer une candidature pour ce candidat")))
-        self.bouton_modifier_cand.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier la candidature sélectionnée dans la liste")))
-        self.bouton_supprimer_cand.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer la candidature sélectionnée dans la liste")))
-        self.bouton_ajouter_entretien.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour créer un entretien")))
-        self.bouton_modifier_entretien.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier l'entretien selectionné dans la liste")))
-        self.bouton_supprimer_entretien.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer l'entretien selectionné dans la liste")))
+        self.bouton_ajouter_coord.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour ajouter une coordonnÃ©e")))
+        self.bouton_modifier_coord.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier la coordonnÃ©e selectionnÃ©e")))
+        self.bouton_supprimer_coord.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer la coordonnÃ©e selectionnÃ©e")))
+        self.bouton_qualifications.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour sÃ©lectionner des qualifications pour ce candidat")))
+        self.bouton_ajouter_cand.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour crÃ©er une candidature pour ce candidat")))
+        self.bouton_modifier_cand.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier la candidature sÃ©lectionnÃ©e dans la liste")))
+        self.bouton_supprimer_cand.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer la candidature sÃ©lectionnÃ©e dans la liste")))
+        self.bouton_ajouter_entretien.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour crÃ©er un entretien")))
+        self.bouton_modifier_entretien.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier l'entretien selectionnÃ© dans la liste")))
+        self.bouton_supprimer_entretien.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer l'entretien selectionnÃ© dans la liste")))
         self.bouton_aide.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour obtenir de l'aide")))
-        self.bouton_convertir.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour convertir la fiche de ce candidat en fiche individuelle d'employé")))
+        self.bouton_convertir.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour convertir la fiche de ce candidat en fiche individuelle d'employÃ©")))
         self.bouton_ok.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour valider la fiche")))
         self.bouton_annuler.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour annuler")))
-        self.bouton_courrier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour créer un courrier ou un mail par publipostage")))
+        self.bouton_courrier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour crÃ©er un courrier ou un mail par publipostage")))
 
     def __do_layout(self):
         grid_sizer_base = wx.FlexGridSizer(rows=6, cols=1, vgap=0, hgap=0)
@@ -323,16 +323,16 @@ class Panel(wx.Panel):
     def Onbouton_courrier(self, event):
         """ Imprime un document par publipostage """
         
-        # Civilité
+        # CivilitÃ©
         civilite = self.ctrl_civilite.GetSelection()
         if civilite == -1 :
-            dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement sélectionner une civilité"), "Erreur", wx.OK | wx.ICON_EXCLAMATION)  
+            dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement sÃ©lectionner une civilitÃ©"), "Erreur", wx.OK | wx.ICON_EXCLAMATION)  
             dlg.ShowModal()
             dlg.Destroy()
             self.ctrl_civilite.SetFocus()
             return False
 
-        # Nom et prénom
+        # Nom et prÃ©nom
         nom = self.ctrl_nom.GetValue()
         prenom = self.ctrl_prenom.GetValue()
         if nom == "" :
@@ -342,14 +342,14 @@ class Panel(wx.Panel):
             self.ctrl_nom.SetFocus()
             return False
         if prenom == "" :
-            dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement saisir un prénom"), "Erreur", wx.OK | wx.ICON_EXCLAMATION)  
+            dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement saisir un prÃ©nom"), "Erreur", wx.OK | wx.ICON_EXCLAMATION)  
             dlg.ShowModal()
             dlg.Destroy()
             self.ctrl_prenom.SetFocus()
             return False
         
         # Confirmation de la sauvegarde
-        dlg = wx.MessageDialog(self, _(u"Avant d'ouvrir l'assistant publipostage, il est nécessaire\nde sauvegarder les données de cette fiche. Confirmez-vous ?"), "Confirmation", wx.YES_NO|wx.NO_DEFAULT|wx.ICON_QUESTION)
+        dlg = wx.MessageDialog(self, _(u"Avant d'ouvrir l'assistant publipostage, il est nÃ©cessaire\nde sauvegarder les donnÃ©es de cette fiche. Confirmez-vous ?"), "Confirmation", wx.YES_NO|wx.NO_DEFAULT|wx.ICON_QUESTION)
         reponse = dlg.ShowModal()
         if reponse == wx.ID_NO:
             dlg.Destroy()
@@ -362,7 +362,7 @@ class Panel(wx.Panel):
         self.bouton_annuler.Enable(False)
         self.GetParent().EnableCloseButton(False)
         
-        # Récupère les données pour le publipostage
+        # RÃ©cupÃ¨re les donnÃ©es pour le publipostage
         from Utils import UTILS_Publipostage_donnees
         dictDonnees = UTILS_Publipostage_donnees.GetDictDonnees(categorie="candidat", listeID=[self.IDcandidat,])
         # Ouvre le publiposteur
@@ -390,7 +390,7 @@ class Panel(wx.Panel):
         
         civilite, nom, prenom, date_naiss, age, adresse_resid, cp_resid, ville_resid, memo = listeDonnees
         
-        # Placement des données dans les contrôles
+        # Placement des donnÃ©es dans les contrÃ´les
         self.autoComplete = False
         
         self.ctrl_civilite.SetStringSelection(civilite)
@@ -401,7 +401,7 @@ class Panel(wx.Panel):
             self.ctrl_ville.SetValue(ville_resid)
         self.ctrl_memo.SetValue(memo)
 
-        # Champs spéciaux
+        # Champs spÃ©ciaux
         try :
             if cp_resid != "" and cp_resid != None and cp_resid != "     " :
                 if type(cp_resid) == six.text_type : cp_resid = int(cp_resid)
@@ -466,37 +466,37 @@ class Panel(wx.Panel):
                 
         
     def AjouterCoord(self, event):
-        dlg = DLG_Saisie_coords.Dialog(self, -1, _(u"Coordonnées"), size=(280, 290), IDcoord=0, IDpersonne=self.IDcandidat)
+        dlg = DLG_Saisie_coords.Dialog(self, -1, _(u"CoordonnÃ©es"), size=(280, 290), IDcoord=0, IDpersonne=self.IDcandidat)
         dlg.ShowModal()
         dlg.Destroy()
 
     def ModifierCoord(self, event):
-        """ Modification de coordonnées """
+        """ Modification de coordonnÃ©es """
         index = self.ctrl_coords.GetFirstSelected()
         if index == -1:
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sélectionner un item à modifier dans la liste des coordonnées"), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÃ©lectionner un item Ã  modifier dans la liste des coordonnÃ©es"), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
         varIDcoord = self.ctrl_coords.GetItemData(index)
-        dlg = DLG_Saisie_coords.Dialog(self, -1, _(u"Coordonnées"), size=(280, 290), IDcoord=varIDcoord, IDpersonne=self.IDcandidat)
+        dlg = DLG_Saisie_coords.Dialog(self, -1, _(u"CoordonnÃ©es"), size=(280, 290), IDcoord=varIDcoord, IDpersonne=self.IDcandidat)
         dlg.ShowModal()
         dlg.Destroy()
 
     def SupprimerCoord(self, event):
-        """ Suppression d'une coordonnée """
+        """ Suppression d'une coordonnÃ©e """
         index = self.ctrl_coords.GetFirstSelected()
 
-        # Vérifie qu'un item a bien été sélectionné
+        # VÃ©rifie qu'un item a bien Ã©tÃ© sÃ©lectionnÃ©
         if index == -1:
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sélectionner un item à supprimer dans la liste des coordonnées"), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sÃ©lectionner un item Ã  supprimer dans la liste des coordonnÃ©es"), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
 
         # Demande de confirmation
         texteCoord = self.ctrl_coords.GetItemText(index)
-        txtMessage = six.text_type((_(u"Voulez-vous vraiment supprimer cette coordonnée ? \n\n> ") + texteCoord))
+        txtMessage = six.text_type((_(u"Voulez-vous vraiment supprimer cette coordonnÃ©e ? \n\n> ") + texteCoord))
         dlgConfirm = wx.MessageDialog(self, txtMessage, _(u"Confirmation de suppression"), wx.YES_NO|wx.NO_DEFAULT|wx.ICON_QUESTION)
         reponse = dlgConfirm.ShowModal()
         dlgConfirm.Destroy()
@@ -510,22 +510,22 @@ class Panel(wx.Panel):
         DB.ReqDEL("coords_candidats", "IDcoord", varIDcoord)
         DB.Close()
 
-        # MàJ du listCtrl Coords de la fiche individuelle
+        # MÃ J du listCtrl Coords de la fiche individuelle
         self.ctrl_coords.Remplissage()
 
     def OnBoutonQualifications(self, event):
-        """ Boîte de dialogue pour choisir les diplômes """
+        """ BoÃ®te de dialogue pour choisir les diplÃ´mes """
         resultat = ""
-        titre = _(u"Sélection des qualifications")
+        titre = _(u"SÃ©lection des qualifications")
 
-        # Récupération de la liste de tous les diplomes
+        # RÃ©cupÃ©ration de la liste de tous les diplomes
         DB = GestionDB.DB()
         req = "SELECT IDtype_diplome, nom_diplome FROM types_diplomes ORDER BY nom_diplome"
         DB.ExecuterReq(req)
         donnees = DB.ResultatReq()
         DB.Close()
 
-        # Création d'un dictionnaire diplomes et d'une liste pour la boîte de dialogue
+        # CrÃ©ation d'un dictionnaire diplomes et d'une liste pour la boÃ®te de dialogue
         dictDiplomes = {}
         listeNoms = []
         preSelection = []
@@ -541,13 +541,13 @@ class Panel(wx.Panel):
                 preSelection.append(index)
                 TypesDiplomesPerso.append(ID)
             index += 1
-        message = _(u"Sélectionnez les qualifications que possède le candidat dans la liste proposée :")
+        message = _(u"SÃ©lectionnez les qualifications que possÃ¨de le candidat dans la liste proposÃ©e :")
         dlg = wx.MultiChoiceDialog(self, message, titre, listeNoms, wx.CHOICEDLG_STYLE)
         
-        # Coche ceux qui doivent être déjà sélectionnés dans la liste
+        # Coche ceux qui doivent Ãªtre dÃ©jÃ  sÃ©lectionnÃ©s dans la liste
         dlg.SetSelections(preSelection)
         
-        # Résultats
+        # RÃ©sultats
         if dlg.ShowModal() == wx.ID_OK:
             resultat = dlg.GetSelections()
         else:
@@ -558,7 +558,7 @@ class Panel(wx.Panel):
         listeAEnregistrer = []
         for diplome in resultat:
             IDtype_diplome = dictDiplomes[diplome]
-            # On regarde si l'ID est déjà dans la liste des diplomes de la personne
+            # On regarde si l'ID est dÃ©jÃ  dans la liste des diplomes de la personne
             if IDtype_diplome in TypesDiplomesPerso:
                 # On passe et on l'efface de la liste
                 TypesDiplomesPerso.remove(IDtype_diplome)
@@ -573,7 +573,7 @@ class Panel(wx.Panel):
             DB.Commit()
             DB.Close()
 
-        # On voit si certains ont été enlevés de la liste
+        # On voit si certains ont Ã©tÃ© enlevÃ©s de la liste
         if len(TypesDiplomesPerso) != 0:
             DB = GestionDB.DB()
             for IDtype in TypesDiplomesPerso:
@@ -606,12 +606,12 @@ class Panel(wx.Panel):
     def Onbouton_aide(self, event):
         from Utils import UTILS_Aide
         UTILS_Aide.Aide("Lesclassifications")
-        dlg = wx.MessageDialog(self, _(u"L'aide du module Recrutement est en cours de rédaction.\nElle sera disponible lors d'une mise à jour ultérieure."), "Aide indisponible", wx.OK | wx.ICON_INFORMATION)
+        dlg = wx.MessageDialog(self, _(u"L'aide du module Recrutement est en cours de rÃ©daction.\nElle sera disponible lors d'une mise Ã  jour ultÃ©rieure."), "Aide indisponible", wx.OK | wx.ICON_INFORMATION)
         dlg.ShowModal()
         dlg.Destroy()
             
     def Onbouton_annuler(self, event):
-        # Effacement des données si c'est une nouvelle fiche annulée
+        # Effacement des donnÃ©es si c'est une nouvelle fiche annulÃ©e
         if self.nouvelleFiche == True :
             DB = GestionDB.DB()
             DB.ReqDEL("candidats", "IDcandidat", self.IDcandidat)
@@ -625,18 +625,18 @@ class Panel(wx.Panel):
         self.GetParent().Fermer()
         
     def Onbouton_ok(self, event):
-        """ Validation des données saisies """
+        """ Validation des donnÃ©es saisies """
         
-        # Civilité
+        # CivilitÃ©
         civilite = self.ctrl_civilite.GetSelection()
         if civilite == -1 :
-            dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement sélectionner une civilité"), "Erreur", wx.OK | wx.ICON_EXCLAMATION)  
+            dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement sÃ©lectionner une civilitÃ©"), "Erreur", wx.OK | wx.ICON_EXCLAMATION)  
             dlg.ShowModal()
             dlg.Destroy()
             self.ctrl_civilite.SetFocus()
             return False
 
-        # Nom et prénom
+        # Nom et prÃ©nom
         nom = self.ctrl_nom.GetValue()
         prenom = self.ctrl_prenom.GetValue()
         if nom == "" :
@@ -646,20 +646,20 @@ class Panel(wx.Panel):
             self.ctrl_nom.SetFocus()
             return False
         if prenom == "" :
-            dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement saisir un prénom"), "Erreur", wx.OK | wx.ICON_EXCLAMATION)  
+            dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement saisir un prÃ©nom"), "Erreur", wx.OK | wx.ICON_EXCLAMATION)  
             dlg.ShowModal()
             dlg.Destroy()
             self.ctrl_prenom.SetFocus()
             return False
         
-        # Sauvegarde des données
+        # Sauvegarde des donnÃ©es
         self.Sauvegarde()
                 
         # Fermeture
         self.GetParent().Fermer()
     
     def Sauvegarde(self):
-        # Sauvegarde des données
+        # Sauvegarde des donnÃ©es
         civilite = self.ctrl_civilite.GetStringSelection()
         nom = self.ctrl_nom.GetValue()
         prenom = self.ctrl_prenom.GetValue()
@@ -727,7 +727,7 @@ class Panel(wx.Panel):
     def OnBoutonConvertir(self, event):
         """ Convertir en fiche individuelle """
         # Demande de confirmation
-        txtMessage = _(u"Cette fonction vous permet de convertir une fiche CANDIDAT en fiche INDIVIDUELLE (fiche salarié). \nAttention, cette action est irreversible !\n\nConfirmez-vous la conversion ?")
+        txtMessage = _(u"Cette fonction vous permet de convertir une fiche CANDIDAT en fiche INDIVIDUELLE (fiche salariÃ©). \nAttention, cette action est irreversible !\n\nConfirmez-vous la conversion ?")
         dlgConfirm = wx.MessageDialog(self, txtMessage, _(u"Conversion de fiche"), wx.YES_NO|wx.NO_DEFAULT|wx.ICON_QUESTION)
         reponse = dlgConfirm.ShowModal()
         dlgConfirm.Destroy()
@@ -748,17 +748,17 @@ class Panel(wx.Panel):
 def ValideDate(texte, date_min="01/01/1900", date_max="01/01/2090"):
     """ Verificateur de validite de date """
     listeErreurs = []
-    # On vérifie si les cases ne sont pas vides
+    # On vÃ©rifie si les cases ne sont pas vides
     if texte[0] == " " or texte[1] == " ":
         listeErreurs.append(_(u"le jour"))
     if texte[3] == " " or texte[4] == " ":
         listeErreurs.append(_(u"le mois"))
     if texte[6] == " " or texte[7] == " " or texte[8] == " " or texte[9] == " ":
-        listeErreurs.append(_(u"l'année"))
+        listeErreurs.append(_(u"l'annÃ©e"))
     
     if texte != "  /  /    ":
 
-        # On vérifie que les chiffres existent
+        # On vÃ©rifie que les chiffres existent
         if _(u"le jour") not in listeErreurs:
             jour = int(texte[:2])
             if jour == 0 or jour > 31:
@@ -769,37 +769,37 @@ def ValideDate(texte, date_min="01/01/1900", date_max="01/01/2090"):
             if mois == 0 or mois > 12:
                 listeErreurs.append(_(u"le mois"))
                 
-        if _(u"l'année") not in listeErreurs:
+        if _(u"l'annÃ©e") not in listeErreurs:
             annee = int(texte[6:10])
             if annee < 1900 or annee > 2999:
-                listeErreurs.append(_(u"l'année"))
+                listeErreurs.append(_(u"l'annÃ©e"))
               
         # Affichage du message d'erreur
         
         if len(listeErreurs) != 0:
-            # Message en cas de date incomplète
+            # Message en cas de date incomplÃ¨te
             if len(listeErreurs) == 1:
-                message = _(u"Une incohérence a été détectée dans ") + listeErreurs[0]
+                message = _(u"Une incohÃ©rence a Ã©tÃ© dÃ©tectÃ©e dans ") + listeErreurs[0]
             if len(listeErreurs) == 2:
-                message = _(u"Des incohérences ont été détectées dans ") + listeErreurs[0] + " et " + listeErreurs[1]
+                message = _(u"Des incohÃ©rences ont Ã©tÃ© dÃ©tectÃ©es dans ") + listeErreurs[0] + " et " + listeErreurs[1]
             if len(listeErreurs) == 3:
-                message = _(u"Des incohérences ont été détectées dans ") + listeErreurs[0]  + ", " + listeErreurs[1]  + " et " + listeErreurs[2]
-            message = message + _(u" de la date que vous venez de saisir. Veuillez la vérifier.")
+                message = _(u"Des incohÃ©rences ont Ã©tÃ© dÃ©tectÃ©es dans ") + listeErreurs[0]  + ", " + listeErreurs[1]  + " et " + listeErreurs[2]
+            message = message + _(u" de la date que vous venez de saisir. Veuillez la vÃ©rifier.")
 
             wx.MessageBox(message, "Erreur de date")
             return False
         else:
-            # On vérifie que les dates sont comprises dans l'intervalle donné en paramètre
+            # On vÃ©rifie que les dates sont comprises dans l'intervalle donnÃ© en paramÃ¨tre
             date_min = int(str(date_min[6:10]) + str(date_min[3:5]) + str(date_min[:2]))
             date_max = int(str(date_max[6:10]) + str(date_max[3:5]) + str(date_max[:2]))
             date_sel = int(str(texte[6:10]) + str(texte[3:5]) + str(texte[:2]))
 
             if date_sel < date_min:
-                message = _(u"La date que vous venez de saisir semble trop ancienne. Veuillez la vérifier.")
+                message = _(u"La date que vous venez de saisir semble trop ancienne. Veuillez la vÃ©rifier.")
                 wx.MessageBox(message, "Erreur de date")
                 return False
             if date_sel > date_max:
-                message = _(u"La date que vous venez de saisir semble trop élevée. Veuillez la vérifier.")
+                message = _(u"La date que vous venez de saisir semble trop Ã©levÃ©e. Veuillez la vÃ©rifier.")
                 wx.MessageBox(message, "Erreur de date")
                 return False
             
@@ -814,11 +814,11 @@ class ListCtrl_Diplomes(wx.ListCtrl):
         self.parent = parent
         self.IDcandidat = self.GetParent().IDcandidat
         
-        # Création de la Colonne
+        # CrÃ©ation de la Colonne
         self.InsertColumn(0, "Qualification")
         self.SetColumnWidth(0, 75)
 
-        # Création des items
+        # CrÃ©ation des items
         self.Remplissage()
         
         # Binds
@@ -826,30 +826,30 @@ class ListCtrl_Diplomes(wx.ListCtrl):
 
     def Remplissage(self):
         """ Remplissage du ListCtrl """
-        # Importation des données
+        # Importation des donnÃ©es
         self.Importation()
 
         # S'il existe des items, on les efface d'abord
         if self.GetItemCount() != 0:
             self.DeleteAllItems()
             
-        # Création des items
+        # CrÃ©ation des items
         index = 0
         for key, valeurs in self.DictDiplomes.items():
             IDdiplome = key
             IDtype_diplome = valeurs[0]
             self.listeDiplomes.append(IDtype_diplome)
             nom_diplome = valeurs[1]
-            # Création de l'item
+            # CrÃ©ation de l'item
             if 'phoenix' in wx.PlatformInfo:
                 self.InsertItem(index, nom_diplome)
             else:
                 self.InsertItem(index, nom_diplome)
-            # Intégration du data ID
+            # IntÃ©gration du data ID
             self.SetItemData(index, key)
             index += 1
 
-        # Tri dans l'ordre alphabétique
+        # Tri dans l'ordre alphabÃ©tique
         self.SortItems(self.ColumnSorter)
 
     def ColumnSorter(self, key1, key2):
@@ -861,11 +861,11 @@ class ListCtrl_Diplomes(wx.ListCtrl):
                return 1
 
     def Importation(self):
-        """ Importe les données des diplomes """
+        """ Importe les donnÃ©es des diplomes """
         self.DictDiplomes = {}
-        self.listeDiplomes = [] # Pour la boîte de dialogue de choix des diplomes
+        self.listeDiplomes = [] # Pour la boÃ®te de dialogue de choix des diplomes
 
-        # Initialisation de la connexion avec la Base de données
+        # Initialisation de la connexion avec la Base de donnÃ©es
         DB = GestionDB.DB()
         req = "SELECT IDdiplome, diplomes_candidats.IDtype_diplome, nom_diplome FROM diplomes_candidats, types_diplomes WHERE diplomes_candidats.IDtype_diplome=types_diplomes.IDtype_diplome and IDcandidat=%d" % self.IDcandidat
         DB.ExecuterReq(req)
@@ -877,19 +877,19 @@ class ListCtrl_Diplomes(wx.ListCtrl):
             self.DictDiplomes[index] = (ligne[1], ligne[2])
         
     def OnItemSelected(self, event):
-        """ Item cliqué """
+        """ Item cliquÃ© """
         index = self.GetFirstSelected()
         key = self.GetItemData(index)
         event.Skip()
 
     def OnItemActivated(self, event):
-        """ Item double-cliqué """
+        """ Item double-cliquÃ© """
         index = self.GetFirstSelected()
         key = self.GetItemData(index)
         event.Skip()
         
     def OnSize(self, event):
-        # La largeur de la colonne s'adapte à la largeur du listCtrl
+        # La largeur de la colonne s'adapte Ã  la largeur du listCtrl
         size = self.GetSize()
         self.SetColumnWidth(0, size.x-5)
         event.Skip()
@@ -902,7 +902,7 @@ class ListCtrl_Diplomes(wx.ListCtrl):
         index = self.GetFirstSelected()
         key = self.GetItemData(index)
         
-        # Création du menu contextuel
+        # CrÃ©ation du menu contextuel
         menuPop = UTILS_Adaptations.Menu()
 
         # Item Modifier
@@ -936,18 +936,18 @@ class TextCtrlCp(masked.TextCtrl):
         self.Bind(wx.EVT_KILL_FOCUS, self.OnKillFocus)
 
     def OnKillFocus(self, event):
-        """ Quand le contrôle Code perd le focus """
+        """ Quand le contrÃ´le Code perd le focus """
         if self.autoComplete == False :
             return
         textCode = self.GetValue()
-        # On vérifie que la ville n'est pas déjà dans la case ville
+        # On vÃ©rifie que la ville n'est pas dÃ©jÃ  dans la case ville
         villeSelect = self.ctrlVille.GetValue()
         if villeSelect != '':
             for ville, cp in self.listeVilles:
                 if ville == villeSelect and cp == textCode :
                     return
                 
-        # On recherche si plusieurs villes ont ce même code postal
+        # On recherche si plusieurs villes ont ce mÃªme code postal
         ReponsesVilles = []
         for ville, cp in self.listeVilles:
             if cp == textCode :
@@ -957,7 +957,7 @@ class TextCtrlCp(masked.TextCtrl):
         # Code postal introuvable
         if nbreReponses == 0:
             if textCode.strip() != '':
-                dlg = wx.MessageDialog(self, _(u"Ce code postal n'est pas répertorié dans la base de données. \nVérifiez que vous n'avez pas fait d'erreur de saisie."), "Information", wx.OK | wx.ICON_INFORMATION)
+                dlg = wx.MessageDialog(self, _(u"Ce code postal n'est pas rÃ©pertoriÃ© dans la base de donnÃ©es. \nVÃ©rifiez que vous n'avez pas fait d'erreur de saisie."), "Information", wx.OK | wx.ICON_INFORMATION)
                 dlg.ShowModal()
                 dlg.Destroy()
             return
@@ -966,24 +966,24 @@ class TextCtrlCp(masked.TextCtrl):
             resultat = ReponsesVilles[0]
             self.ctrlVille.SetValue(resultat)
 
-        # Fenêtre de choix entre plusieurs codes postau
+        # FenÃªtre de choix entre plusieurs codes postau
         if nbreReponses > 1:
             resultat = self.ChoixVilles(textCode, ReponsesVilles)
             if resultat != '':
                 self.ctrlVille.SetValue(resultat)
 
-        # Sélection du texte de la case ville pour l'autocomplete
+        # SÃ©lection du texte de la case ville pour l'autocomplete
         self.ctrlVille.SetSelection(0, len(resultat))
         
         event.Skip()
 
     def ChoixVilles(self, cp, listeReponses):
-        """ Boîte de dialogue pour donner le choix entre plusieurs villes possédant un code postal identique """
+        """ BoÃ®te de dialogue pour donner le choix entre plusieurs villes possÃ©dant un code postal identique """
         resultat = ""
-        titre = _(u"Sélection d'une ville")
+        titre = _(u"SÃ©lection d'une ville")
         nbreReponses = len(listeReponses)
         listeReponses.sort()
-        message = str(nbreReponses) + _(u" villes possèdent le code postal ") + str(cp) + _(u". Double-cliquez sur\nle nom d'une ville pour la sélectionner :")
+        message = str(nbreReponses) + _(u" villes possÃ¨dent le code postal ") + str(cp) + _(u". Double-cliquez sur\nle nom d'une ville pour la sÃ©lectionner :")
         dlg = wx.SingleChoiceDialog(self, message, titre, listeReponses, wx.CHOICEDLG_STYLE)
         if dlg.ShowModal() == wx.ID_OK:
             resultat = dlg.GetStringSelection()
@@ -1008,7 +1008,7 @@ class TextCtrlVille(wx.TextCtrl):
 
 
     def OnKillFocus(self, event):
-        """ Quand le contrôle ville perd le focus """
+        """ Quand le contrÃ´le ville perd le focus """
         if self.autoComplete == False :
             return
         villeSelect = self.GetValue()
@@ -1024,14 +1024,14 @@ class TextCtrlVille(wx.TextCtrl):
                 if villeSelect == ville:
                     listeCodes.append(cp)
                     
-            # Chargement de la fenêtre de choix des codes
+            # Chargement de la fenÃªtre de choix des codes
             resultat = self.ChoixCodes(villeSelect, listeCodes)
             if resultat != '':
                 self.ctrlCp.SetValue(resultat)
 
         # Si la ville saisie n'existe pas
         if nbreCodes == 0:
-            dlg = wx.MessageDialog(self, _(u"Cette ville n'est pas répertoriée dans la base de données. \nVérifiez que vous n'avez pas fait d'erreur de saisie."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(self, _(u"Cette ville n'est pas rÃ©pertoriÃ©e dans la base de donnÃ©es. \nVÃ©rifiez que vous n'avez pas fait d'erreur de saisie."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
         
@@ -1067,12 +1067,12 @@ class TextCtrlVille(wx.TextCtrl):
             event.Skip()
 
     def ChoixCodes(self, ville, listeReponses):
-        """ Boîte de dialogue pour donner le choix entre plusieurs villes possédant le même nom """
+        """ BoÃ®te de dialogue pour donner le choix entre plusieurs villes possÃ©dant le mÃªme nom """
         resultat = ""
-        titre = _(u"Sélection d'une ville")
+        titre = _(u"SÃ©lection d'une ville")
         nbreReponses = len(listeReponses)
         listeReponses.sort()
-        message = str(nbreReponses) + _(u" villes portent le nom ") + str(ville) + _(u". Double-cliquez sur\nle code postal d'une ville pour la sélectionner :")
+        message = str(nbreReponses) + _(u" villes portent le nom ") + str(ville) + _(u". Double-cliquez sur\nle code postal d'une ville pour la sÃ©lectionner :")
         dlg = wx.SingleChoiceDialog(self, message, titre, listeReponses, wx.CHOICEDLG_STYLE)
         if dlg.ShowModal() == wx.ID_OK:
             resultat = dlg.GetStringSelection()
@@ -1100,7 +1100,7 @@ class ListCtrlCoords(wx.ListCtrl):
         self.InsertColumn(0, "")
         self.SetColumnWidth(0, 135)
 
-        # Création des items
+        # CrÃ©ation des items
         self.Remplissage()
 
         # Binds
@@ -1110,24 +1110,24 @@ class ListCtrlCoords(wx.ListCtrl):
 
     def Remplissage(self):
         """ Remplissage du ListCtrl """
-        # Importation des données
+        # Importation des donnÃ©es
         self.Importation()
 
         # S'il existe des items, on les efface d'abord
         if self.GetItemCount() != 0:
             self.DeleteAllItems()
             
-        # Création des items
+        # CrÃ©ation des items
         index = 0
         for key, valeurs in self.DictCoords.items():
             categorie = valeurs[2]
             texte = valeurs[3]
-            # Création de l'item
+            # CrÃ©ation de l'item
             if 'phoenix' in wx.PlatformInfo:
                 self.InsertItem(index, texte)
             else:
                 self.InsertItem(index, texte)
-            # Intégration de l'image
+            # IntÃ©gration de l'image
             if categorie == "Fixe":
                 self.SetItemImage(index, self.imgMaison)
             if categorie == "Mobile":
@@ -1136,14 +1136,14 @@ class ListCtrlCoords(wx.ListCtrl):
                 self.SetItemImage(index, self.imgFax)
             if categorie == "Email":
                 self.SetItemImage(index, self.imgMail)
-            # Intégration du data ID
+            # IntÃ©gration du data ID
             self.SetItemData(index, key)
             index += 1
             
     def Importation(self):
-        """ Importation des données depuis la base de données """
+        """ Importation des donnÃ©es depuis la base de donnÃ©es """
        
-        # Initialisation de la connexion avec la Base de données
+        # Initialisation de la connexion avec la Base de donnÃ©es
         IDcandidat = self.parent.IDcandidat
         if IDcandidat == None : IDcandidat = 0
         DB = GestionDB.DB()
@@ -1162,20 +1162,20 @@ class ListCtrlCoords(wx.ListCtrl):
         return dictio
         
     def OnItemSelected(self, event):
-        """ Item cliqué """
-        # Désactivation de la capture de la souris pour le popup
+        """ Item cliquÃ© """
+        # DÃ©sactivation de la capture de la souris pour le popup
         if self.HasCapture():
             self.ReleaseMouse()
         event.Skip()
 
     def OnItemActivated(self, event):
-        """ Item double-cliqué """
+        """ Item double-cliquÃ© """
         self.DestroyPopup()
         self.parent.ModifierCoord(None)
         event.Skip()
         
     def OnSize(self, event):
-        # La largeur de la colonne s'adapte à la largeur du listCtrl
+        # La largeur de la colonne s'adapte Ã  la largeur du listCtrl
         size = self.GetSize()
         self.SetColumnWidth(0, size.x-5)
         event.Skip()
@@ -1189,7 +1189,7 @@ class ListCtrlCoords(wx.ListCtrl):
         
         item = self.GetItem(index, 0)
        
-        pos = self.ClientToScreen(event.GetPosition()) # Position du curseur sur l'écran
+        pos = self.ClientToScreen(event.GetPosition()) # Position du curseur sur l'Ã©cran
         decalage = (-130, -70)
 
         tailleCtrl = self.GetSize()
@@ -1201,14 +1201,14 @@ class ListCtrlCoords(wx.ListCtrl):
                 self.DestroyPopup()
                 return
 
-        # Si on était déjà sur l'item , on ne fait que bouger le popup 
+        # Si on Ã©tait dÃ©jÃ  sur l'item , on ne fait que bouger le popup 
         if self.popupIndex == index :
             self.Popup.Position(pos, decalage)
 
         if self.popupIndex != index and self.popupIndex != -1:
             self.DestroyPopup()
 
-        # Sinon, création d'un popup
+        # Sinon, crÃ©ation d'un popup
         if self.popupIndex != index and posInListCtrl[0] > 3 and posInListCtrl[1] > 3:
             key = self.GetItemData(index)
             self.popupIndex = index
@@ -1220,7 +1220,7 @@ class ListCtrlCoords(wx.ListCtrl):
             
 
     def DestroyPopup(self):
-        """ Destruction de la fenêtre Popup """
+        """ Destruction de la fenÃªtre Popup """
         if self.HasCapture():
             self.ReleaseMouse()
 
@@ -1243,7 +1243,7 @@ class ListCtrlCoords(wx.ListCtrl):
         index = self.GetFirstSelected()
         key = self.GetItemData(index)
         
-        # Création du menu contextuel
+        # CrÃ©ation du menu contextuel
         menuPop = UTILS_Adaptations.Menu()
 
         # Item Modifier
@@ -1305,14 +1305,14 @@ class TestPopup(wx.PopupWindow):
     def __init__(self, parent, style=wx.SIMPLE_BORDER, key=0):
         wx.PopupWindow.__init__(self, parent, style)
 
-        # Récupération des données
+        # RÃ©cupÃ©ration des donnÃ©es
         self.parent = parent
         valeurs = self.parent.DictCoords[key]
         categorie = valeurs[2]
         texte = valeurs[3]
         intitule = valeurs[4]
         
-        # Intégration de l'image
+        # IntÃ©gration de l'image
         if categorie == "Fixe":
             img = wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Maison.png"), wx.BITMAP_TYPE_PNG)
         if categorie == "Mobile":
@@ -1322,7 +1322,7 @@ class TestPopup(wx.PopupWindow):
         if categorie == "Email":
             img = wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Mail.png"), wx.BITMAP_TYPE_PNG)
 
-        # Création des widgets
+        # CrÃ©ation des widgets
         self.panel_base = wx.Panel(self, -1)
         self.bitmap_1 = wx.StaticBitmap(self.panel_base, -1, img)
         self.label_coords = wx.StaticText(self.panel_base, -1, texte)
@@ -1358,7 +1358,7 @@ class Dialog(wx.Dialog):
         self.parent = parent
         self.panel = Panel(self, IDcandidat=IDcandidat)
                 
-        # Propriétés
+        # PropriÃ©tÃ©s
         if IDcandidat == None :
             self.SetTitle(_(u"Saisie d'un candidat"))
         else:

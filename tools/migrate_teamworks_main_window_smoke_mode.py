@@ -32,7 +32,7 @@ NEW = '''        frame.Show()
 
 
 def main() -> int:
-    source = TARGET.read_text(encoding="iso-8859-15")
+    source = TARGET.read_text(encoding="utf-8")
 
     # A richer smoke mode (for example the tabs smoke) legitimately keeps the
     # same readiness marker while extending the body. Treat it as migrated.
@@ -42,7 +42,7 @@ def main() -> int:
 
     old_count = source.count(OLD)
     if old_count == 1:
-        TARGET.write_text(source.replace(OLD, NEW), encoding="iso-8859-15")
+        TARGET.write_text(source.replace(OLD, NEW), encoding="utf-8")
         print(f"updated {TARGET.relative_to(ROOT)}")
         return 0
 

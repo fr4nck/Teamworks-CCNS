@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -19,17 +19,17 @@ from Utils import UTILS_Config
 from Utils import UTILS_Fichiers
 
 
-# Liste des gadgets par défaut
+# Liste des gadgets par dÃ©faut
 LISTEGADGETSDEFAUT = [      ["dossiers_incomplets",  { "label" : _(u"Dossiers incomplets"), "taille" : (200, 200), "affichage" : True, "config" : False } ], 
                                                 ["horloge", { "label" : _(u"Horloge"), "taille" : (200, 200), "affichage" : True, "config" : True, "couleur_face" : (214, 223, 247) } ],
                                                 ["calendrier", { "label" : _(u"Calendrier"), "taille" : (200, 200), "affichage" : True, "config" : True } ],
-                                                ["updater", { "label" : _(u"Mises à jour internet"), "taille" : (200, 200), "affichage" : True, "config" : False} ],
+                                                ["updater", { "label" : _(u"Mises Ã  jour internet"), "taille" : (200, 200), "affichage" : True, "config" : False} ],
                                                 ["notes", { "label" : _(u"Bloc-notes"), "taille" : (200, 200), "affichage" : True, "config" : True, "texte" : _(u"Hello !"), "taillePolice" : 10, "familyPolice" : 74, "stylePolice" : 90, "weightPolice" : 90 , "nomPolice" : "Segoe Print" } ],
-                                                ] # nomGadget, dict de paramètres
+                                                ] # nomGadget, dict de paramÃ¨tres
 
 
 def ImportListeGadgets():
-    """ Récupération des données de la table GADGETS """
+    """ RÃ©cupÃ©ration des donnÃ©es de la table GADGETS """
     DB = GestionDB.DB()
     req = "SELECT * FROM gadgets ORDER BY ordre;"
     DB.ExecuterReq(req)
@@ -55,24 +55,24 @@ def ImportListeGadgets():
     return listeGadgets
             
 def MajTableGadgets(nomGadget="", parametres={}):
-    """ Enregistre les modifications de paramètres d'un gadget """
+    """ Enregistre les modifications de paramÃ¨tres d'un gadget """
     listeDonnees = []
     dictParametres = {}
     
     for key, valeur in parametres.items() :
-        # Paramètres de base
+        # ParamÃ¨tres de base
         if key == "label" : listeDonnees.append( ("label", valeur) )
         elif key == "taille" : listeDonnees.append( ("taille", str(valeur)) )
         elif key == "affichage" : listeDonnees.append( ("affichage", str(valeur)) )
         elif key == "ordre" : listeDonnees.append( ("ordre", valeur) )
         elif key == "config" : listeDonnees.append( ("config", str(valeur)) )
         else:
-            # Autres paramètres :
+            # Autres paramÃ¨tres :
             dictParametres[key] = valeur
         
     listeDonnees.append( ("parametres", str(list(dictParametres.values())[0])) )
 
-    # Initialisation de la connexion avec la Base de données
+    # Initialisation de la connexion avec la Base de donnÃ©es
     DB = GestionDB.DB()
     DB.ReqMAJ("gadgets", listeDonnees, "nom", nomGadget, IDestChaine=True)
     DB.Close()
@@ -88,7 +88,7 @@ class MyHtmlWindow(html.HtmlWindow):
         self.couleur_fond = self.GetParent().couleur_fond
         self.listeGadgets = listeGadgets
         
-##        # Création de la page
+##        # CrÃ©ation de la page
 ##        source = self.Source()
 ##        self.SetPage(source)
 ##        # Aligne tous les gagdets en haut
@@ -120,12 +120,12 @@ class MyHtmlWindow(html.HtmlWindow):
             c = c.GetNext()
     
     def MAJ(self):
-        # Création de la page
+        # CrÃ©ation de la page
         source = self.Source()
         self.SetPage(source)
         # Aligne tous les gagdets en haut
         self.Alignement(c = self.GetInternalRepresentation())
-        # Pour résoudre le bug d'alignement après MAJ
+        # Pour rÃ©soudre le bug d'alignement aprÃ¨s MAJ
         self.SendSizeEvent()
         
     def Efface(self):
@@ -134,9 +134,9 @@ class MyHtmlWindow(html.HtmlWindow):
         self.SetPage(txt)
             
     def Source(self):
-        """ Création de la source HTML """
+        """ CrÃ©ation de la source HTML """
         
-        # Crée le HTML pour les gadgets
+        # CrÃ©e le HTML pour les gadgets
         txtGadgets = ""
         index = 0
         for nomGadget, parametres in self.listeGadgets :
@@ -148,7 +148,7 @@ class MyHtmlWindow(html.HtmlWindow):
                 </wxp> """ % (parametres["taille"][0], parametres["taille"][1], str(self.couleur_fond), index)
             index += 1
         
-        # Crée le HTML pour la page complète
+        # CrÃ©e le HTML pour la page complÃ¨te
         txtSource = """
         <html>
         <head>
@@ -190,10 +190,10 @@ class Panel(wx.Panel):
         self.couleur_fond = (122, 161, 230)
         self.SetBackgroundColour(self.couleur_fond)
         
-        # Récupère la liste des gadgets
+        # RÃ©cupÃ¨re la liste des gadgets
         self.listeGadgets = self.GetListeGadgets()
         
-        # Contrôles
+        # ContrÃ´les
         self.html = MyHtmlWindow(self, -1, self.listeGadgets)
         self.logo = wx.StaticBitmap(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/Special/Logo_accueil.png"), wx.BITMAP_TYPE_ANY))
         
@@ -226,7 +226,7 @@ class Panel(wx.Panel):
         self.Thaw()
 
     def MAJpanel(self, listeElements=[]) :
-        """ Met à jour les éléments du panel Accueil """
+        """ Met Ã  jour les Ã©lÃ©ments du panel Accueil """
         # Elements possibles : [] pour tout
         if "exemple" in listeElements or listeElements==[] : 
             self.MAJ_Gadgets()
@@ -234,10 +234,10 @@ class Panel(wx.Panel):
 
             
     def GetListeGadgets(self):
-        """ Récupère la liste des gadgets """           
+        """ RÃ©cupÃ¨re la liste des gadgets """           
         listeGadgets = ImportListeGadgets()
 
-        # Regarde quels gadgets sont à afficher : 
+        # Regarde quels gadgets sont Ã  afficher : 
         
         # -> Affiche "les dossier incomplets" uniquement si un fichier est ouvert 
 ##        try :
@@ -258,7 +258,7 @@ class Panel(wx.Panel):
 ##            index += 1
         
         
-        # -> Affiche "L'updater" uniquement si une mise à jour existe existe sur internet 
+        # -> Affiche "L'updater" uniquement si une mise Ã  jour existe existe sur internet 
         if self.GetGrandParent().MAJexiste == True :
             affichage = True
         else:
@@ -284,10 +284,10 @@ class Panel(wx.Panel):
 
 
 class AffichageGadgets():
-    """ Boîte de dialogue d'affichage des gadgets pour barre de menus """
+    """ BoÃ®te de dialogue d'affichage des gadgets pour barre de menus """
     def __init__(self, parent):
         
-        """ Récupère la liste des gadgets dans la base de données """
+        """ RÃ©cupÃ¨re la liste des gadgets dans la base de donnÃ©es """
         self.listeGadgets = ImportListeGadgets()
     
     def dialogue(self):
@@ -299,16 +299,16 @@ class AffichageGadgets():
             if parametres["affichage"] == True : preSelection.append(index)
             index += 1
         
-        # Boîte de dialogue
-        message = _(u"Sélectionnez les gadgets que vous souhaitez afficher sur votre page d'accueil")
+        # BoÃ®te de dialogue
+        message = _(u"SÃ©lectionnez les gadgets que vous souhaitez afficher sur votre page d'accueil")
         dlg = wx.MultiChoiceDialog(None, message, _(u"Affichage des gadgets"), listeNoms, wx.CHOICEDLG_STYLE)
-        # Coche ceux qui doivent être déjà sélectionnés dans la liste
+        # Coche ceux qui doivent Ãªtre dÃ©jÃ  sÃ©lectionnÃ©s dans la liste
         dlg.SetSelections(preSelection)
-        # Résultats
+        # RÃ©sultats
         if dlg.ShowModal() == wx.ID_OK:
             resultats = dlg.GetSelections()
             
-            # Enregistrement des sélections
+            # Enregistrement des sÃ©lections
             for index in range(len(self.listeGadgets)) :
                 if index in resultats :
                     self.listeGadgets[index][1]["affichage"] = True
@@ -323,11 +323,11 @@ class AffichageGadgets():
             except :
                 nomWindow = None
             if nomWindow == "general" : 
-                # Si la frame 'General' est chargée, on y récupère le dict de config
+                # Si la frame 'General' est chargÃ©e, on y rÃ©cupÃ¨re le dict de config
                 cfg = topWindow.userConfig
                 cfg["listeGadgets"] = self.listeGadgets
             else:
-                # Récupération du nom de la DB directement dans le fichier de config sur le disque dur
+                # RÃ©cupÃ©ration du nom de la DB directement dans le fichier de config sur le disque dur
                 cfg = UTILS_Config.FichierConfig(nomFichier=UTILS_Fichiers.GetRepUtilisateur("Config.dat"))
                 cfg.SetItemConfig("listeGadgets", self.listeGadgets)
                 

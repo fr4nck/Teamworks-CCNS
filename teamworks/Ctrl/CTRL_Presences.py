@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
@@ -21,8 +21,8 @@ from Ctrl import CTRL_Calendrier_tw
 from Dlg import DLG_Application_modele
 from Utils import UTILS_Adaptations
 
-selectionPersonnes = []     # liste de IDpersonne sélectionnés
-selectionDates = []     # liste des dates sélectionnées
+selectionPersonnes = []     # liste de IDpersonne sÃ©lectionnÃ©s
+selectionDates = []     # liste des dates sÃ©lectionnÃ©es
 
 # Couleurs
 couleurFondPanneau = (122, 161, 230)
@@ -38,7 +38,7 @@ class PanelCalendrier(CTRL_Calendrier_tw.Panel):
         
         self.dictCouleurs = { "colFond" : (255, 255, 255), "colNormal" : (255, 255, 255), "colWE" : (220, 223, 227), "colSelect" : (255, 162, 0), "colSurvol" : (0, 0, 0), "colFontJours" : (0, 0, 0), "colVacs" : (255, 255, 187), "colFontPresents" : (255, 0, 0), "colFeries" : (200, 200, 200) }
         
-        # Couleurs des éléments du calendrier
+        # Couleurs des Ã©lÃ©ments du calendrier
         self.calendrier.couleurFond = self.dictCouleurs["colFond"]
         self.calendrier.couleurNormal = self.dictCouleurs["colNormal"]
         self.calendrier.couleurWE = self.dictCouleurs["colWE"]
@@ -50,7 +50,7 @@ class PanelCalendrier(CTRL_Calendrier_tw.Panel):
         self.calendrier.couleurFerie = self.dictCouleurs["colFeries"]
         
         
-        # Création fond
+        # CrÃ©ation fond
         self.espaceBord = 10
         self.coinArrondi = 5
         self.hauteurTitre = 17
@@ -84,9 +84,9 @@ class PanelCalendrier(CTRL_Calendrier_tw.Panel):
         # Barre de titre
         dc.SetBrush(wx.Brush(self.couleurFondTitre))
         dc.DrawRoundedRectangle(0+self.espaceBord, 0+self.espaceBord, largeurDC-(self.espaceBord*2), self.hauteurTitre+self.coinArrondi, self.coinArrondi)
-        # Dégradé
+        # DÃ©gradÃ©
         dc.GradientFillLinear((self.espaceBord+1, self.espaceBord+7, largeurDC-(self.espaceBord*2)-2, self.hauteurTitre-2), (214, 223, 247), (0, 0, 0), wx.NORTH)
-        # Cache pour enlever l'arrondi inférieur de la barre de titre
+        # Cache pour enlever l'arrondi infÃ©rieur de la barre de titre
         dc.SetBrush(wx.Brush(self.couleurFondCadre))
         dc.SetPen(wx.Pen(self.couleurFondCadre, 0))
         dc.DrawRectangle(self.espaceBord+1, self.espaceBord+self.hauteurTitre+1, largeurDC-(self.espaceBord*2)-2, self.coinArrondi+5)
@@ -113,7 +113,7 @@ class CTRL_Annee(wx.SpinCtrl):
         wx.SpinCtrl.__init__(self, parent, -1, min=1950, max=2999)
         self.parent = parent
         self.SetMinSize((60, -1))
-        self.SetToolTip(wx.ToolTip(_(u"Sélectionnez une année")))
+        self.SetToolTip(wx.ToolTip(_(u"SÃ©lectionnez une annÃ©e")))
         annee_actuelle = datetime.date.today().year
         self.SetAnnee(annee_actuelle)
 
@@ -136,12 +136,12 @@ class ListCtrl_Legendes(wx.ListCtrl):
 
         self.SetBackgroundColour(couleurFondWidgets)
        
-        self.InsertColumn(0, _(u"Catégories"))
+        self.InsertColumn(0, _(u"CatÃ©gories"))
         self.SetColumnWidth(0, 130)
         self.InsertColumn(1, _(u"Temps"), wx.LIST_FORMAT_RIGHT)
         self.SetColumnWidth(1, 60)        
 
-        # Création des items
+        # CrÃ©ation des items
         self.Remplissage()
 
         # Binds
@@ -166,7 +166,7 @@ class ListCtrl_Legendes(wx.ListCtrl):
         if self.GetItemCount() != 0:
             self.DeleteAllItems()
             
-        # Création des items
+        # CrÃ©ation des items
         index = 0
         totalMinutes = 0
         for key, valeurs in self.DictCategories.items():
@@ -184,18 +184,18 @@ class ListCtrl_Legendes(wx.ListCtrl):
                 else:
                     duree = ""
                 
-                # Création de l'item
+                # CrÃ©ation de l'item
                 self.InsertItem(index, nomCategorie)
                 self.SetItem(index, 1, duree)
 
-                # Intégration de l'image
+                # IntÃ©gration de l'image
                 self.SetItemImage(index, getattr(self, "img%s" % key))
 
-                # Intégration du data ID
+                # IntÃ©gration du data ID
                 self.SetItemData(index, key)
                 index += 1
                 
-        # Création du total des durées
+        # CrÃ©ation du total des durÃ©es
         if totalMinutes != 0 :
             nbreHeures = totalMinutes//60
             nbreMinutes = totalMinutes-(nbreHeures*60)
@@ -212,20 +212,20 @@ class ListCtrl_Legendes(wx.ListCtrl):
         self.Remplissage()    
                    
     def OnItemSelected(self, event):
-        """ Item cliqué """
-        # Désactivation de la capture de la souris pour le popup
+        """ Item cliquÃ© """
+        # DÃ©sactivation de la capture de la souris pour le popup
         if self.HasCapture():
             self.ReleaseMouse()
         event.Skip()
 
     def OnItemActivated(self, event):
-        """ Item double-cliqué """
+        """ Item double-cliquÃ© """
         self.DestroyPopup()
         self.parent.ModifierCoord()
         event.Skip()
         
     def OnSize(self, event):
-        # La largeur de la colonne 0 s'adapte à la largeur du listCtrl
+        # La largeur de la colonne 0 s'adapte Ã  la largeur du listCtrl
         size = self.GetSize()
         self.SetColumnWidth(0, size.x-82)
         event.Skip()
@@ -240,7 +240,7 @@ class ListCtrl_Legendes(wx.ListCtrl):
 
         item = self.GetItem(index, 0)
        
-        pos = self.ClientToScreen(event.GetPosition()) # Position du curseur sur l'écran
+        pos = self.ClientToScreen(event.GetPosition()) # Position du curseur sur l'Ã©cran
         decalage = (10, -50)
 
         tailleCtrl = self.GetSize()
@@ -252,14 +252,14 @@ class ListCtrl_Legendes(wx.ListCtrl):
                 self.DestroyPopup()
                 return
 
-        # Si on était déjà sur l'item , on ne fait que bouger le popup 
+        # Si on Ã©tait dÃ©jÃ  sur l'item , on ne fait que bouger le popup 
         if self.popupIndex == index :
             self.Popup.Position(pos, decalage)
 
         if self.popupIndex != index and self.popupIndex != -1:
             self.DestroyPopup()
 
-        # Sinon, création d'un popup
+        # Sinon, crÃ©ation d'un popup
         if self.popupIndex != index and posInListCtrl[0] > 3 and posInListCtrl[1] > 3:
             key = self.GetItemData(index)
             self.popupIndex = index
@@ -269,7 +269,7 @@ class ListCtrl_Legendes(wx.ListCtrl):
             self.CaptureMouse()
 
     def DestroyPopup(self):
-        """ Destruction de la fenêtre Popup """
+        """ Destruction de la fenÃªtre Popup """
         if self.HasCapture():
             self.ReleaseMouse()
 
@@ -286,7 +286,7 @@ class ListCtrl_Legendes(wx.ListCtrl):
         """Ouverture du menu contextuel du ListCtrl."""
 
        
-        # Création du menu contextuel
+        # CrÃ©ation du menu contextuel
         menuPop = UTILS_Adaptations.Menu()
 
         menuPop.Append(400, _(u"Ajouter1"), "aide sur ajouter1", wx.ITEM_RADIO)
@@ -334,7 +334,7 @@ class ListCtrl_Legendes(wx.ListCtrl):
         return (r, v, b)
 
     def CreationImage(self, tailleImages, r, v, b, IDcategorie):
-        """ Création des images pour le TreeCtrl """
+        """ CrÃ©ation des images pour le TreeCtrl """
 
         colFond = couleurFondWidgets
         if 'phoenix' in wx.PlatformInfo:
@@ -355,14 +355,14 @@ class TestPopup(wx.PopupWindow):
     def __init__(self, parent, style=wx.SIMPLE_BORDER, key=0):
         wx.PopupWindow.__init__(self, parent, style)
         
-        # Récupération des données
+        # RÃ©cupÃ©ration des donnÃ©es
         self.parent = parent
         """valeurs = self.parent.DictCoords[key]
         categorie = valeurs[2]
         texte = valeurs[3]
         intitule = valeurs[4]
         
-        # Intégration de l'image
+        # IntÃ©gration de l'image
         if categorie == "Fixe":
             img = wx.Bitmap("Images/32x32/Maison.png", wx.BITMAP_TYPE_PNG)
         if categorie == "Mobile":
@@ -372,7 +372,7 @@ class TestPopup(wx.PopupWindow):
         if categorie == "Email":
             img = wx.Bitmap("Images/32x32/Mail.png", wx.BITMAP_TYPE_PNG)"""
 
-        # Création des widgets
+        # CrÃ©ation des widgets
         self.panel_base = wx.Panel(self, -1)
         self.label_coords = wx.StaticText(self.panel_base, -1, "Bonjour !")
         self.label_Intitu = wx.StaticText(self.panel_base, -1, "Ca va ?")
@@ -402,11 +402,11 @@ class TestPopup(wx.PopupWindow):
 
 class PanelLegendes(FonctionsPerso.PanelArrondi):
     def __init__(self, parent, ID=-1):
-        FonctionsPerso.PanelArrondi.__init__(self, parent, ID, texteTitre = _(u"Légende"))
+        FonctionsPerso.PanelArrondi.__init__(self, parent, ID, texteTitre = _(u"LÃ©gende"))
 
-        # Création Widgets
+        # CrÃ©ation Widgets
         self.listCtrlLegendes = ListCtrl_Legendes(self, -1)
-##        self.barreTitre = FonctionsPerso.BarreTitre(self, _(u"Légende"), _(u"Ceci est l'info-bulle !"), arrondis=True, couleurFondPanel=self.GetParent().GetBackgroundColour())
+##        self.barreTitre = FonctionsPerso.BarreTitre(self, _(u"LÃ©gende"), _(u"Ceci est l'info-bulle !"), arrondis=True, couleurFondPanel=self.GetParent().GetBackgroundColour())
         
         # Layout
         #box = wx.StaticBox(self, -1, "This is a wx.StaticBox")
@@ -447,7 +447,7 @@ class listCtrl_Personnes(wx.ListCtrl, CheckListCtrlMixin):
 
         self.ClearAll()
 
-        # Création des colonnes
+        # CrÃ©ation des colonnes
         self.InsertColumn(0, "Individus")
 
         # Remplissage avec les valeurs
@@ -459,7 +459,7 @@ class listCtrl_Personnes(wx.ListCtrl, CheckListCtrlMixin):
                     txt = valeurs[0] + " " + valeurs[1]
                 index = self.InsertItem(self.GetItemCount(), txt)
                 self.SetItemData(index, key)
-                # Sélection
+                # SÃ©lection
                 if valeurs[4] == True :
                     self.CheckItem(index)                    
 
@@ -470,7 +470,7 @@ class listCtrl_Personnes(wx.ListCtrl, CheckListCtrlMixin):
         self.SortItems(self.columnSorter)
 
     def CreateCouleurs(self, cocheAussi = True):
-        # Couleur si animateur présent sur la période sélectionnée
+        # Couleur si animateur prÃ©sent sur la pÃ©riode sÃ©lectionnÃ©e
         listePresents = self.GetGrandParent().GetGrandParent().panelPlanning.listePresents
         
         for index in range(self.GetItemCount()) :
@@ -586,7 +586,7 @@ class PanelPersonnes(FonctionsPerso.PanelArrondi):
         self.triCritere = FonctionsPerso.Parametres(mode="get", categorie="presences", nom="tri_critere", valeur="presence")
         self.triOrdre = FonctionsPerso.Parametres(mode="get", categorie="presences", nom="tri_ordre", valeur="decroissant")
 
-        # Création Widgets
+        # CrÃ©ation Widgets
         self.imgMenu = wx.StaticBitmap(self, bitmap=wx.Bitmap(Chemins.GetStaticPath("Images/16x16/MiniFleche_bas_nr.png"), wx.BITMAP_TYPE_PNG))
         self.imgMenu.SetBackgroundColour(couleurFondWidgets)
         self.imgMenu.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour afficher le menu des options d'affichage de la liste")))
@@ -627,9 +627,9 @@ class PanelPersonnes(FonctionsPerso.PanelArrondi):
         if self.triOrdre == "croissant" : txt = _(u"Tri asc. selon ")
         if self.triOrdre == "decroissant" : txt = _(u"Tri desc. selon ")
 
-        if self.triCritere == "presence" : txt += _(u"la dernière présence")
+        if self.triCritere == "presence" : txt += _(u"la derniÃ¨re prÃ©sence")
         if self.triCritere == "nom" : txt += _(u"le nom")
-        if self.triCritere == "prenom" : txt += _(u"le prénom")
+        if self.triCritere == "prenom" : txt += _(u"le prÃ©nom")
 
         self.txtOptions.SetLabel(txt)
 
@@ -652,13 +652,13 @@ class PanelPersonnes(FonctionsPerso.PanelArrondi):
     def Menu_Personnes(self, event):
         """Ouverture du menu contextuel du ListCtrl."""
         
-        # Création du menu contextuel
+        # CrÃ©ation du menu contextuel
         menu = UTILS_Adaptations.Menu()
 
         smTri = UTILS_Adaptations.Menu()
-        smTri.Append(110, _(u"Dernière présence"), _(u"Trier selon la dernière présence"), wx.ITEM_RADIO)
+        smTri.Append(110, _(u"DerniÃ¨re prÃ©sence"), _(u"Trier selon la derniÃ¨re prÃ©sence"), wx.ITEM_RADIO)
         smTri.Append(120, _(u"Nom"), _(u"Trier selon le nom"), wx.ITEM_RADIO)
-        smTri.Append(130, _(u"Prénom"), _(u"Trier selon le prénom"), wx.ITEM_RADIO)
+        smTri.Append(130, _(u"PrÃ©nom"), _(u"Trier selon le prÃ©nom"), wx.ITEM_RADIO)
         if self.triCritere == "presence" : smTri.Check(110, True)
         if self.triCritere == "nom" : smTri.Check(120, True)
         if self.triCritere == "prenom" : smTri.Check(130, True)
@@ -667,7 +667,7 @@ class PanelPersonnes(FonctionsPerso.PanelArrondi):
 
         smOrdre = UTILS_Adaptations.Menu()
         smOrdre.Append(210, _(u"Ordre croissant"), _(u"Trier par ordre croissant"), wx.ITEM_RADIO)
-        smOrdre.Append(220, _(u"Ordre décroissant"), _(u"Trier par ordre décroissant"), wx.ITEM_RADIO)
+        smOrdre.Append(220, _(u"Ordre dÃ©croissant"), _(u"Trier par ordre dÃ©croissant"), wx.ITEM_RADIO)
         if self.triOrdre == "croissant" : smOrdre.Check(210, True)
         if self.triOrdre == "decroissant" : smOrdre.Check(220, True)
         menu.AppendSubMenu(smOrdre, "Ordre de tri")
@@ -678,28 +678,28 @@ class PanelPersonnes(FonctionsPerso.PanelArrondi):
         
         menu.AppendSeparator()
         
-        menu.Append(40, _(u"Tout sélectionner"), _(u"Tout sélectionner"))
-        menu.Append(50, _(u"Tout désélectionner"), _(u"Tout désélectionner")) 
+        menu.Append(40, _(u"Tout sÃ©lectionner"), _(u"Tout sÃ©lectionner"))
+        menu.Append(50, _(u"Tout dÃ©sÃ©lectionner"), _(u"Tout dÃ©sÃ©lectionner")) 
         
         index = self.listCtrlPersonnes.GetFirstSelected()
         if index != -1:
             IDpersonne = int(self.listCtrlPersonnes.GetItemData(index))
             nomPersonne = self.listCtrlPersonnes.GetItem(index, 0).GetText()
-            texte = _(u"Sélectionner uniquement ") + nomPersonne
+            texte = _(u"SÃ©lectionner uniquement ") + nomPersonne
             menu.Append(55, texte, texte)
              
-        menu.Append(60, _(u"Sélectionner les personnes présentes"), _(u"Sélectionner les personnes présentes sur les jours sélectionnés"))
+        menu.Append(60, _(u"SÃ©lectionner les personnes prÃ©sentes"), _(u"SÃ©lectionner les personnes prÃ©sentes sur les jours sÃ©lectionnÃ©s"))
         
         menu.AppendSeparator()
         
-        menu.Append(70, _(u"Appliquer un modèle aux personnes sélectionnées"), _(u"Appliquer un modèle aux personnes sélectionnées"))
+        menu.Append(70, _(u"Appliquer un modÃ¨le aux personnes sÃ©lectionnÃ©es"), _(u"Appliquer un modÃ¨le aux personnes sÃ©lectionnÃ©es"))
         
         index = self.listCtrlPersonnes.GetFirstSelected()
         if index != -1:
             IDpersonne = int(self.listCtrlPersonnes.GetItemData(index))
             nomPersonne = self.listCtrlPersonnes.GetItem(index, 0).GetText()
             menu.AppendSeparator()
-            texte = _(u"Afficher la liste des présences de ") + nomPersonne
+            texte = _(u"Afficher la liste des prÃ©sences de ") + nomPersonne
             menu.Append(80, texte, texte)
             
             texte = _(u"Imprimer un planning annuel pour ") + nomPersonne
@@ -764,7 +764,7 @@ class PanelPersonnes(FonctionsPerso.PanelArrondi):
         self.MAJlistCtrl()
 
     def Menu_40(self, event):
-        """ Tout sélectionner """
+        """ Tout sÃ©lectionner """
 ##        global selectionPersonnes
 ##        selectionPersonnes = []
 ##        for key, valeurs in self.dictPersonnes.iteritems():
@@ -777,7 +777,7 @@ class PanelPersonnes(FonctionsPerso.PanelArrondi):
             self.listCtrlPersonnes.CheckItem(index, True)
 
     def Menu_50(self, event):
-        """ Tout désélectionner """
+        """ Tout dÃ©sÃ©lectionner """
 ##        global selectionPersonnes
 ##        selectionPersonnes = []
 ##        for key, valeurs in self.dictPersonnes.iteritems():
@@ -790,7 +790,7 @@ class PanelPersonnes(FonctionsPerso.PanelArrondi):
             self.listCtrlPersonnes.CheckItem(index, False)
 
     def Menu_55(self,event):
-        """ Sélectionne uniquement la personne sélectionnée """
+        """ SÃ©lectionne uniquement la personne sÃ©lectionnÃ©e """
         indexSelect = self.listCtrlPersonnes.GetFirstSelected()
         IDpersonne = int(self.listCtrlPersonnes.GetItemData(indexSelect))
         
@@ -803,7 +803,7 @@ class PanelPersonnes(FonctionsPerso.PanelArrondi):
             self.listCtrlPersonnes.CheckItem(index, etat)
         
     def Menu_60(self,event):
-        """ Sélectionne uniquement les personnes présentes sur les jours sélectionnés """
+        """ SÃ©lectionne uniquement les personnes prÃ©sentes sur les jours sÃ©lectionnÃ©s """
         listePresents = self.GetGrandParent().GetParent().panelPlanning.listePresents
         listCtrl = self.listCtrlPersonnes
         for index in range(listCtrl.GetItemCount()) :
@@ -815,7 +815,7 @@ class PanelPersonnes(FonctionsPerso.PanelArrondi):
                 listCtrl.CheckItem(index, False)
                 
     def Menu_70(self,event):
-        """ Application d'un modèle aux personnes sélectionnées dans le listCtrl personnes """
+        """ Application d'un modÃ¨le aux personnes sÃ©lectionnÃ©es dans le listCtrl personnes """
         selectionPersonnes = []
         for index in range(self.listCtrlPersonnes.GetItemCount()) :
             if self.listCtrlPersonnes.IsChecked(index) == True :
@@ -828,7 +828,7 @@ class PanelPersonnes(FonctionsPerso.PanelArrondi):
             dlg.Destroy() 
             return
         
-        # Récupération des dates du calendrier
+        # RÃ©cupÃ©ration des dates du calendrier
         selectionDates = self.GetGrandParent().GetParent().GetSelectionDates()
         selectionDates.sort()
         if len(selectionDates) != 0 :
@@ -844,7 +844,7 @@ class PanelPersonnes(FonctionsPerso.PanelArrondi):
         self.GetGrandParent().GetParent().MAJpanelPlanning()
 
     def Menu_80(self,event):
-        """ Ouvre la liste des présences de la personne sélectionnée """
+        """ Ouvre la liste des prÃ©sences de la personne sÃ©lectionnÃ©e """
         index = self.listCtrlPersonnes.GetFirstSelected()
         IDpersonne = int(self.listCtrlPersonnes.GetItemData(index))
         from Ctrl import CTRL_Page_presences
@@ -877,7 +877,7 @@ class PanelPersonnes(FonctionsPerso.PanelArrondi):
         # Transformation de la liste en dict
         dictPersonnes = {}
         for personne in listeDonnees :
-            dictPersonnes[personne[0]] = [personne[1], personne[2], personne[3], True, False] # Nom, prénom, DateDernièrePrésence, Affiché, Sélectionné
+            dictPersonnes[personne[0]] = [personne[1], personne[2], personne[3], True, False] # Nom, prÃ©nom, DateDerniÃ¨rePrÃ©sence, AffichÃ©, SÃ©lectionnÃ©
         
         return dictPersonnes
 
@@ -890,22 +890,22 @@ class PanelPresences(wx.Panel):
         self.init = False 
         
     def InitPage(self):
-        # Création des splitter
+        # CrÃ©ation des splitter
         self.splitterV = wx.SplitterWindow(self, -1, style=wx.SP_3D | wx.SP_NO_XP_THEME | wx.SP_LIVE_UPDATE)
         self.splitterH = MultiSplitterWindow(self.splitterV, -1, style= wx.SP_NOSASH | wx.SP_LIVE_UPDATE)
         self.splitterH.SetOrientation(wx.VERTICAL)
         self.splitterH.SetBackgroundColour(couleurFondPanneau)
-        # Création du panel Planning
+        # CrÃ©ation du panel Planning
         self.panelPlanning = CTRL_Planning.PanelPlanning(self.splitterV, -1)
-        # Création du panel Calendrier
+        # CrÃ©ation du panel Calendrier
         self.panelCalendrier = PanelCalendrier(self.splitterH, -1)
         self.panelCalendrier.SetMinSize((200, 220))
         self.splitterH.AppendWindow(self.panelCalendrier, 220)
-        # Création du panel Légendes
+        # CrÃ©ation du panel LÃ©gendes
         self.panelLegendes = PanelLegendes(self.splitterH, -1)
         #self.panelLegendes.SetMinSize((300, 200))
         self.splitterH.AppendWindow(self.panelLegendes, 160)
-        # Création du panel Personnes
+        # CrÃ©ation du panel Personnes
         self.panelPersonnes = PanelPersonnes(self.splitterH, -1)
         self.panelPersonnes.SetMinSize((200, 200))
         self.splitterH.AppendWindow(self.panelPersonnes, 200)
@@ -914,7 +914,7 @@ class PanelPresences(wx.Panel):
         
         self.__do_layout()
         
-        # Affichage des présences d'aujourd'hui
+        # Affichage des prÃ©sences d'aujourd'hui
         self.panelCalendrier.MAJselectionDates(listeDates=selectionDates)
 
         self.init = True
@@ -947,7 +947,7 @@ class PanelPresences(wx.Panel):
         return selectionPersonnes
         
     def MAJpanelPlanning(self, reinitSelectionPersonnes=False) :
-        """ Met à jour le DC Planning """
+        """ Met Ã  jour le DC Planning """
         global selectionPersonnes, selectionDates
         modeAffichage = CTRL_Planning.modeAffichage
         if reinitSelectionPersonnes==True :
@@ -958,7 +958,7 @@ class PanelPresences(wx.Panel):
         self.panelPlanning.DCplanning.MAJAffichage()
     
     def MAJpanel(self, listeElements=[], reinitSelectionPersonnes=False) :
-        """ Met à jour les éléments du panel présences """
+        """ Met Ã  jour les Ã©lÃ©ments du panel prÃ©sences """
         # Elements possibles : [] pour tout, planning, listCtrl_personnes, legendes, calendrier
         if self.init == False :
             self.InitPage()
@@ -988,7 +988,7 @@ class TestFrame(wx.Frame):
         self.__do_layout()
 
     def __set_properties(self):
-        self.SetTitle(_(u"Panel Présences"))
+        self.SetTitle(_(u"Panel PrÃ©sences"))
         self.SetSize((1000, 800))
 
     def __do_layout(self):
