@@ -991,7 +991,7 @@ class ListView(ObjectListView):
             wildcard = wildcard, 
             style = wx.FD_SAVE
             )
-        dlg.SetFilterIndex(2)
+        dlg.SetFilterIndex(0)
         if dlg.ShowModal() == wx.ID_OK:
             cheminFichier = dlg.GetPath()
             dlg.Destroy()
