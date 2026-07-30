@@ -15,6 +15,7 @@ import GestionDB
 import datetime
 import FonctionsPerso
 from Ctrl import CTRL_Vignettes_documents
+from Utils import UTILS_Dates
 
 class Dialog(wx.Dialog):
     def __init__(self, parent, title=_(u"Saisie des pièces"), IDpiece=0, IDpersonne=0, IDtypePiece=None):
@@ -416,8 +417,7 @@ class Dialog(wx.Dialog):
                 dateFin = datetime.date(dateAnnee, dateMois, dateJour)
 
             # Insertion de la date dans la case Date_Fin
-            dateFinale = str(dateFin)
-            dateFinale = dateFinale[8:10] + "/" + dateFinale[5:7] + "/" + dateFinale[:4]
+            dateFinale = UTILS_Dates.DateEngFr(dateFin)
             self.text_date_fin.SetValue(dateFinale)
 
             # Mets le focus sur la date de fin
@@ -517,8 +517,7 @@ class Dialog(wx.Dialog):
             self.selection2 = (index, varIDtypePiece)
 
         # Placement de la date de début
-        textDate = varDateDebut
-        self.text_date_debut.SetValue(str(textDate[8:10]) + "/" + str(textDate[5:7]) + "/" + str(textDate[:4]))
+        self.text_date_debut.SetValue(UTILS_Dates.DateEngFr(varDateDebut))
 
         # Placement de la date de fin
         if varDateFin == "2999-01-01":
@@ -527,8 +526,7 @@ class Dialog(wx.Dialog):
         else:
             self.radio_date_fin_1.SetValue(True)
             self.text_date_fin.Enable(True)
-            textDate = varDateFin
-            self.text_date_fin.SetValue(str(textDate[8:10]) + "/" + str(textDate[5:7]) + "/" + str(textDate[:4]))
+            self.text_date_fin.SetValue(UTILS_Dates.DateEngFr(varDateFin))
                 
     def AjouterPage(self, event):
         self.ctrl_pages.AjouterPage()
@@ -669,7 +667,7 @@ class ListCtrl_Pieces(wx.ListCtrl):
                 date_debut = dictTmpPieces[IDtype_piece][0]
                 date_fin = dictTmpPieces[IDtype_piece][1]
                 # Recherche la validité
-                date_fin = datetime.date(int(date_fin[:4]), int(date_fin[5:7]), int(date_fin[8:10]))
+                date_fin = UTILS_Dates.DateEnDateDD(date_fin)
                 reste = str(date_fin - date_jour)
                 if reste != "0:00:00":
                     jours = int(reste[:reste.index("day")])

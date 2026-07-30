@@ -109,25 +109,10 @@ class Date(masked.TextCtrl):
 
     def SetDate(self, date):
         """ Importe une date string ou datetime """
-        if date == None or date == "" : 
+        dateDD = UTILS_Dates.DateEnDateDD(date)
+        if dateDD is None:
             return
-        try :
-            # Quelque soit le format, le change en datetime
-            if type(date) == datetime.date :
-                # Si c'est un datetime
-                dateDD = date
-            if type(date) == str or type(date) == six.text_type :
-                if date[2] == "/" :
-                    # Si c'est une date française
-                    dateDD = datetime.date(year=int(date[6:10]), month=int(date[3:5]), day=int(date[:2]))
-                else:
-                    # Si c'est une date anglaise
-                    dateDD = datetime.date(year=int(date[:4]), month=int(date[5:7]), day=int(date[8:10]))
-            # Transformation en date française
-            dateFR = self.DateEngFr(str(dateDD))
-            self.SetValue(dateFR)
-        except :
-            pass
+        self.SetValue(UTILS_Dates.DateEngFr(dateDD))
     
     def GetDate(self, FR=False):
         """ Récupère une date au format Datetime ou francaise"""
@@ -137,20 +122,20 @@ class Date(masked.TextCtrl):
         validation = ValideDate(dateFR, self.date_min, self.date_max, avecMessages=False, mask=self.mask_date)
         if validation == False : 
             return None
-        dateDD = datetime.date(year=int(dateFR[6:10]), month=int(dateFR[3:5]), day=int(dateFR[:2]))
-        dateFR = self.DateEngFr(str(dateDD))
+        dateDD = UTILS_Dates.DateEnDateDD(dateFR)
+        if dateDD is None:
+            return None
+        dateFR = UTILS_Dates.DateEngFr(dateDD)
         if FR == True :
             return dateFR
         else:
             return dateDD
             
     def DateEngFr(self, textDate):
-        text = str(textDate[8:10]) + "/" + str(textDate[5:7]) + "/" + str(textDate[:4])
-        return text
+        return UTILS_Dates.DateEngFr(textDate)
 
     def DateFrEng(self, textDate):
-        text = str(textDate[6:10]) + "/" + str(textDate[3:5]) + "/" + str(textDate[:2])
-        return text
+        return UTILS_Dates.DateFrEng(textDate)
         
     def OnKillFocus(self, event):
         self.MaJ_DateNaiss()

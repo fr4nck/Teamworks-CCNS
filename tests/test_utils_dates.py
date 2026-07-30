@@ -52,3 +52,32 @@ def test_manual_date_string_slicing_cannot_return():
                 offenders.append(f"{path.relative_to(ROOT)}: {fragment}")
 
     assert offenders == []
+
+
+def test_masked_date_fields_use_the_central_normalizer():
+    guarded_fragments = {
+        ROOT / "teamworks" / "Ctrl" / "CTRL_Page_generalites.py": (
+            "temp[8:10]",
+            "temp[5:7]",
+            "temp[:4]",
+        ),
+        ROOT / "teamworks" / "Dlg" / "DLG_Saisie_candidat.py": (
+            "temp[8:10]",
+            "temp[5:7]",
+            "temp[:4]",
+        ),
+        ROOT / "teamworks" / "Dlg" / "DLG_Saisie_piece.py": (
+            "textDate[8:10]",
+            "textDate[5:7]",
+            "textDate[:4]",
+        ),
+    }
+
+    offenders = []
+    for path, fragments in guarded_fragments.items():
+        source = path.read_text(encoding="utf-8")
+        for fragment in fragments:
+            if fragment in source:
+                offenders.append(f"{path.relative_to(ROOT)}: {fragment}")
+
+    assert offenders == []

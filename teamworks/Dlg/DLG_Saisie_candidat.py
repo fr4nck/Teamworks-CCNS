@@ -8,7 +8,7 @@
 
 import Chemins
 from Utils.UTILS_Traduction import _
-from Utils import UTILS_Adaptations
+from Utils import UTILS_Adaptations, UTILS_Dates
 import wx
 import six
 from Ctrl import CTRL_Bouton_image
@@ -413,14 +413,7 @@ class Panel(wx.Panel):
             pass
 
         # Date de naissance
-        temp = date_naiss
-        if temp == "  /  /    " or temp == '' or temp == None:
-            temp = "  /  /    "
-        else:
-            jour = str(temp[8:10])
-            mois = str(temp[5:7])
-            annee = str(temp[:4])
-            temp = jour + "/" + mois + "/" + annee
+        temp = UTILS_Dates.DateEngFr(date_naiss) or "  /  /    "
         self.ctrl_date_naiss.SetValue(temp)
         
         # Age
