@@ -84,6 +84,15 @@ def GetListeChoix_diplomes():
     return listeDonnees
 
 
+def ResoudreListeChoix(nom_liste):
+    """Retourne une liste de choix déclarée sans exécution dynamique."""
+    nom_fonction = "GetListeChoix_%s" % nom_liste
+    fonction = globals().get(nom_fonction)
+    if not callable(fonction):
+        raise ValueError("Liste de choix inconnue : %s" % nom_liste)
+    return fonction()
+
+
 class MyDialog(wx.Dialog):
     """ On récupère les infos de cette boîte avec GetDates() ou avec GetPersonnesPresentes() """
     def __init__(self, parent, id=-1, categorie="", listeValeursDefaut=None, title=_(u"Sélection de filtres de liste")):
@@ -325,7 +334,7 @@ class hyperlink_choice(Hyperlink):
             selection = None
         else:
             selection = self.valeur[0]
-        exec("liste = GetListeChoix_%s()" % self.listeChoix)
+        liste = ResoudreListeChoix(self.listeChoix)
         dlg = DLG_Filtre_choice.MyDialog(self, nom_filtre=self.nomFiltre, titre_frame = _(u"Filtre"), selection=selection, listeChoix = liste)
         if dlg.ShowModal() == wx.ID_OK:
             ID, label = dlg.GetSelection()
@@ -374,7 +383,7 @@ class hyperlink_liste(Hyperlink):
             listeSelection = []
             for ID, texte in self.valeur : 
                 listeSelection.append(ID)
-        exec("liste = GetListeChoix_%s()" % self.listeChoix)
+        liste = ResoudreListeChoix(self.listeChoix)
         dlg = DLG_Filtre_coches.MyDialog(self, nom_filtre=self.nomFiltre, titre_frame = _(u"Filtre"), listeSelection=listeSelection, listeChoix = liste)
         if dlg.ShowModal() == wx.ID_OK:
             listeSelections = dlg.GetListeSelections()
