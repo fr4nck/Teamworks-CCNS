@@ -19,7 +19,7 @@ from Dlg import DLG_Config_situations
 from Dlg import DLG_Config_pays
 import FonctionsPerso
 import sys
-from Utils import UTILS_Adaptations
+from Utils import UTILS_Adaptations, UTILS_Dates
 
 
 class Panel_general(wx.Panel):
@@ -1233,14 +1233,7 @@ class Panel_general(wx.Panel):
             dlg.Destroy()
 
         # Date de naissance
-        temp = date_naiss
-        if temp == "  /  /    " or temp == '' or temp == None:
-            temp = "  /  /    "
-        else:
-            jour = str(temp[8:10])
-            mois = str(temp[5:7])
-            annee = str(temp[:4])
-            temp = jour + "/" + mois + "/" + annee
+        temp = UTILS_Dates.DateEngFr(date_naiss) or "  /  /    "
         self.text_date_naiss.SetValue(temp)
 
         # Civilité
