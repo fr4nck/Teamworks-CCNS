@@ -44,7 +44,7 @@ def Excel(parent, labels_colonnes=None, liste_valeurs=None, tableau=None):
         wildcard=wildcard,
         style=wx.FD_SAVE
     )
-    dlg.SetFilterIndex(2)
+    dlg.SetFilterIndex(0)
     if dlg.ShowModal() == wx.ID_OK:
         cheminFichier = dlg.GetPath()
         dlg.Destroy()
