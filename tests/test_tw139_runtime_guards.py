@@ -24,6 +24,15 @@ class RuntimeGuardRegressionTests(unittest.TestCase):
             self.assertIn(f"donnees[{index}] or \"\"", source)
         self.assertIn("self.text_exemple.SetFocus()", source)
 
+    def test_calendar_parameters_guard_missing_rows(self):
+        source = self.read_source("teamworks/Dlg/DLG_Parametres_calendrier.py")
+
+        self.assertNotIn("donnees = DB.ResultatReq()[0]", source)
+        self.assertGreaterEqual(source.count("if not resultats:"), 2)
+        self.assertIn("Les paramètres du calendrier sont introuvables.", source)
+        self.assertIn("Les paramètres par défaut du calendrier sont introuvables.", source)
+        self.assertNotIn("return\n            dlg.Destroy()", source)
+
 
 if __name__ == "__main__":
     unittest.main()
