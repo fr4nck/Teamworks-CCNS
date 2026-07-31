@@ -139,9 +139,11 @@ class Dialog(wx.Dialog):
         DB = GestionDB.DB()
         req = "SELECT IDentretien, IDcandidat, IDpersonne, date, heure, avis, remarques FROM entretiens WHERE IDentretien=%d" % self.IDentretien
         DB.ExecuterReq(req)
-        donnees = DB.ResultatReq()[0]
+        resultats = DB.ResultatReq()
         DB.Close()
-        if len(donnees) == 0: return
+        if not resultats:
+            return
+        donnees = resultats[0]
         # Récupération des données
         IDentretien, IDcandidat, IDpersonne, date, heure, avis, remarques = donnees
         # Date
