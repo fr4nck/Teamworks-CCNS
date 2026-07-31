@@ -70,7 +70,11 @@ class Dialog(wx.Dialog):
         DB = GestionDB.DB()
         req = "SELECT IDclassification, IDtype, valeur_point, date_debut, date_fin, date_rupture, essai FROM contrats WHERE IDcontrat=%d ;" % IDcontrat
         DB.ExecuterReq(req)
-        listeDonnees = DB.ResultatReq()[0]
+        resultats = DB.ResultatReq()
+        if not resultats:
+            DB.Close()
+            return
+        listeDonnees = resultats[0]
         
         self.dictContrats["IDclassification"] = listeDonnees[0]
         self.dictContrats["IDtype"] = listeDonnees[1]
