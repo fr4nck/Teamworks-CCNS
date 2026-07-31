@@ -132,11 +132,11 @@ class Dialog(wx.Dialog):
             return
         donnees = resultats[0]
         # Place les valeurs dans les controles
-        self.text_nom.SetValue(donnees[1])
-        self.text_description.SetValue(donnees[2])
-        self.text_defaut.SetValue(donnees[4])
-        self.text_motCle.SetValue(donnees[3])
-        self.text_exemple.SetValue(donnees[5])
+        self.text_nom.SetValue(donnees[1] or "")
+        self.text_description.SetValue(donnees[2] or "")
+        self.text_defaut.SetValue(donnees[4] or "")
+        self.text_motCle.SetValue(donnees[3] or "")
+        self.text_exemple.SetValue(donnees[5] or "")
 
     def Sauvegarde(self):
         """ Sauvegarde des données dans la base de données """
