@@ -108,9 +108,11 @@ class Dialog(wx.Dialog):
         DB = GestionDB.DB()
         req = "SELECT * FROM contrats_types WHERE IDtype=%d" % self.IDtype
         DB.ExecuterReq(req)
-        donnees = DB.ResultatReq()[0]
+        resultats = DB.ResultatReq()
         DB.Close()
-        if len(donnees) == 0: return
+        if not resultats:
+            return
+        donnees = resultats[0]
         
         # Place les valeurs dans les controles
         self.text_nom_abrege.SetValue(donnees[2])
