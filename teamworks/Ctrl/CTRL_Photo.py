@@ -289,9 +289,12 @@ class CTRL_Photo(wx.StaticBitmap):
         DB = GestionDB.DB()
         req = "SELECT civilite FROM personnes WHERE IDpersonne=%d;" % self.IDindividu 
         DB.ExecuterReq(req)
-        civilite = DB.ResultatReq()[0][0]
-        if civilite == None : return
+        resultats = DB.ResultatReq()
         DB.Close()
+        if not resultats:
+            return
+        civilite = resultats[0][0]
+        if civilite == None : return
         if civilite == "Mr" :
             img = "Homme.png"
         elif civilite == "Mme" or civilite == "Melle":
@@ -308,8 +311,12 @@ class CTRL_Photo(wx.StaticBitmap):
         DB = GestionDB.DB()        
         req = """SELECT IDpersonne, nom, prenom FROM personnes WHERE IDpersonne=%d; """ % self.IDindividu
         DB.ExecuterReq(req)
-        donnees = DB.ResultatReq()[0]
+        resultats = DB.ResultatReq()
         DB.Close()
+        if not resultats:
+            wx.MessageBox(_(u"Cette personne n'existe plus dans la base de données."), _(u"Impression impossible"), wx.OK | wx.ICON_INFORMATION)
+            return
+        donnees = resultats[0]
         # Ouverture de la frame d'impression des photos  
         from Dlg import DLG_Impression_photo
         dlg = DLG_Impression_photo.Dialog(None, listePersonnes=[[self.IDindividu, donnees[1], donnees[2], None],])
