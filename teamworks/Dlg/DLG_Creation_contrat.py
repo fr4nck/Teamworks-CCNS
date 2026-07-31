@@ -73,7 +73,9 @@ class Dialog(wx.Dialog):
         resultats = DB.ResultatReq()
         if not resultats:
             DB.Close()
-            return
+            self.dictContrats["IDcontrat"] = 0
+            self.SetTitle(_(u"Création d'un contrat"))
+            return False
         listeDonnees = resultats[0]
         
         self.dictContrats["IDclassification"] = listeDonnees[0]
@@ -92,6 +94,7 @@ class Dialog(wx.Dialog):
             self.dictChamps[item[0]] = item[1]
 
         DB.Close()
+        return True
 
     def Creation_Pages(self):
         """ Creation des pages """
