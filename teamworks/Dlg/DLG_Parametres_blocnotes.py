@@ -203,16 +203,23 @@ class Dialog(wx.Dialog):
         if dlg.ShowModal() == wx.ID_YES :
             dlg.Destroy()
         else:
-            return
             dlg.Destroy()
+            return
         
         # Recherche des paramètres par défaut dans la base DEFAUTS
         DB = GestionDB.DB(nomDB="Defaut.db3")
         req = "SELECT taille, parametres FROM gadgets WHERE nom='%s';" % self.nomGadget
         DB.ExecuterReq(req)
-        donnees = DB.ResultatReq()[0]
+        resultats = DB.ResultatReq()
         DB.Close()
-        self.InitValeurs(donnees)
+        if not resultats:
+            wx.MessageBox(
+                _(u"Les paramètres par défaut du gadget Bloc-Notes sont introuvables."),
+                _(u"Réinitialisation impossible"),
+                wx.OK | wx.ICON_ERROR,
+            )
+            return
+        self.InitValeurs(resultats[0])
         
         # Place les valeur dans les contrôles
         self.largeur_texte.SetValue(str(self.val_largeur))
@@ -305,9 +312,19 @@ class Dialog(wx.Dialog):
         DB = GestionDB.DB()
         req = "SELECT taille, parametres FROM gadgets WHERE nom='%s';" % self.nomGadget
         DB.ExecuterReq(req)
-        donnees = DB.ResultatReq()[0]
+        resultats = DB.ResultatReq()
         DB.Close()
-        self.InitValeurs(donnees)
+        if not resultats:
+            self.val_largeur = 300
+            self.val_hauteur = 300
+            self.val_couleurFond = (255, 255, 255)
+            self.val_couleurPolice = (0, 0, 0)
+            self.val_police = wx.SystemSettings.GetFont(wx.SYS_DEFAULT_GUI_FONT)
+            self.val_multipages = False
+            self.dictParametres = {}
+            return False
+        self.InitValeurs(resultats[0])
+        return True
     
     def InitValeurs(self, donnees):
         # Place les valeurs dans les controles
