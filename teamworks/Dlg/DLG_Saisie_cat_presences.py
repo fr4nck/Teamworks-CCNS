@@ -117,11 +117,12 @@ class Dialog(wx.Dialog):
         DB = GestionDB.DB()
         req = "SELECT * FROM cat_presences WHERE IDcategorie=%d" % self.IDcategorie
         DB.ExecuterReq(req)
-        donnees = DB.ResultatReq()[0]
+        resultats = DB.ResultatReq()
         DB.Close()
 
-        if len(donnees) == 0:
+        if not resultats:
             return
+        donnees = resultats[0]
 
         # Création des variables
         self.IDcat_parent = donnees[2]
@@ -141,7 +142,8 @@ class Dialog(wx.Dialog):
         WHERE cat_presences.IDcat_parent=%d;
         """ % self.IDcat_parent
         DB.ExecuterReq(req)
-        ordreMax = DB.ResultatReq()[0][0]
+        resultats = DB.ResultatReq()
+        ordreMax = resultats[0][0] if resultats and resultats[0] else None
 
         if ordreMax == None:
             ordreMax = 0
