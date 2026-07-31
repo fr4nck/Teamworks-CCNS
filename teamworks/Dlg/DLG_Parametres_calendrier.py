@@ -142,7 +142,6 @@ class Dialog(wx.Dialog):
         sizer_contenu = wx.StaticBoxSizer(self.sizer_contenu_staticbox, wx.VERTICAL)
         grid_sizer_contenu = wx.FlexGridSizer(rows=13, cols=2, vgap=5, hgap=5)
         
-        # Sizer largeur
         sizer_largeur = wx.FlexGridSizer(rows=1, cols=2, vgap=5, hgap=5)
         sizer_largeur.Add(self.largeur_texte, 0, wx.ALIGN_CENTER_VERTICAL, 0)
         sizer_largeur.Add(self.largeur_slider, 1, wx.EXPAND|wx.ALIGN_CENTER_VERTICAL, 0)
@@ -150,7 +149,6 @@ class Dialog(wx.Dialog):
         grid_sizer_contenu.Add(self.largeur_label, 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL, 0)
         grid_sizer_contenu.Add(sizer_largeur, 1, wx.EXPAND, 0)
         
-        # Sizer hauteur
         sizer_hauteur = wx.FlexGridSizer(rows=1, cols=2, vgap=5, hgap=5)
         sizer_hauteur.Add(self.hauteur_texte, 0, wx.ALIGN_CENTER_VERTICAL, 0)
         sizer_hauteur.Add(self.hauteur_slider, 1, wx.EXPAND|wx.ALIGN_CENTER_VERTICAL, 0)
@@ -158,57 +156,33 @@ class Dialog(wx.Dialog):
         grid_sizer_contenu.Add(self.hauteur_label, 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL, 0)
         grid_sizer_contenu.Add(sizer_hauteur, 1, wx.EXPAND, 0)
         
-        # Bouton couleur de fond
         grid_sizer_contenu.Add(self.label_couleurFond, 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL, 0)
         grid_sizer_contenu.Add(self.bouton_couleurFond, 0, 0, 0)
-                
-        # Bouton couleur des cases (semaines)
         grid_sizer_contenu.Add(self.label_couleurCases, 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL, 0)
         grid_sizer_contenu.Add(self.bouton_couleurCases, 0, 0, 0)
-        
-        # Bouton couleur des cases (we)
         grid_sizer_contenu.Add(self.label_couleurWE, 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL, 0)
         grid_sizer_contenu.Add(self.bouton_couleurWE, 0, 0, 0)
-        
-        # Bouton couleur des cases (vacs)
         grid_sizer_contenu.Add(self.label_couleurVacances, 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL, 0)
         grid_sizer_contenu.Add(self.bouton_couleurVacances, 0, 0, 0)
-        
-        # Bouton couleur des cases (fériés)
         grid_sizer_contenu.Add(self.label_couleurFerie, 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL, 0)
         grid_sizer_contenu.Add(self.bouton_couleurFerie, 0, 0, 0)
-        
-        # Bouton couleur des cases sélectionnées
         grid_sizer_contenu.Add(self.label_couleurSelect, 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL, 0)
         grid_sizer_contenu.Add(self.bouton_couleurSelect, 0, 0, 0)
-        
-        # Bouton couleur des cases survolées
         grid_sizer_contenu.Add(self.label_couleurSurvol, 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL, 0)
         grid_sizer_contenu.Add(self.bouton_couleurSurvol, 0, 0, 0)
-        
-        # Bouton couleur des FontJours
         grid_sizer_contenu.Add(self.label_couleurFontJours, 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL, 0)
         grid_sizer_contenu.Add(self.bouton_couleurFontJours, 0, 0, 0)
-        
-        # Bouton couleur des FontJoursAvecPresents
         grid_sizer_contenu.Add(self.label_couleurFontJoursAvecPresents, 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL, 0)
         grid_sizer_contenu.Add(self.bouton_couleurFontJoursAvecPresents, 0, 0, 0)
-
-
-        # Spacer
         grid_sizer_contenu.Add((1, 1), 0, 0, 0)
         grid_sizer_contenu.Add((1, 1), 0, 0, 0)
-                
-        # Hyperlink_reinit
         grid_sizer_contenu.Add((1, 1), 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL, 0)
         grid_sizer_contenu.Add(self.bouton_reinit, 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL, 0)
 
-        grid_sizer_contenu.AddGrowableRow(11)        
+        grid_sizer_contenu.AddGrowableRow(11)
         grid_sizer_contenu.AddGrowableCol(1)
         sizer_contenu.Add(grid_sizer_contenu, 1, wx.ALL|wx.EXPAND, 10)
         grid_sizer_base.Add(sizer_contenu, 1, wx.RIGHT|wx.LEFT|wx.TOP|wx.EXPAND, 10)
-    
-        
         grid_sizer_boutons.Add(self.bouton_aide, 0, 0, 0)
         grid_sizer_boutons.Add((20, 20), 0, wx.EXPAND, 0)
         grid_sizer_boutons.Add(self.bouton_ok, 0, 0, 0)
@@ -223,13 +197,11 @@ class Dialog(wx.Dialog):
         sizer_base.Fit(self)
         self.Layout()
         self.grid_sizer_base = grid_sizer_base
-        
         self.SetMinSize((400, 480))
         self.SetSize((400, 480))
         self.CenterOnScreen()
 
     def Build_Hyperlink(self) :
-        """ Construit un hyperlien """
         self.SetFont(wx.Font(10, wx.SWISS, wx.NORMAL, wx.NORMAL, False))
         hyper = hl.HyperLinkCtrl(self.panel_base, -1, _(u"Réinitialiser les paramètres par défaut"), URL="")
         hyper.Bind(hl.EVT_HYPERLINK_LEFT, self.OnLeftLink)
@@ -244,30 +216,31 @@ class Dialog(wx.Dialog):
         return hyper
         
     def OnLeftLink(self, event):
-        """ Réinitialiser les paramètres par défaut """
-        # Confirmation
         message = _(u"Souhaitez-vous vraiment réinitialiser les paramètres par défaut de ce gadget ?")
         dlg = wx.MessageDialog(self, message, _(u"Réinitialisation"), wx.YES_NO | wx.NO_DEFAULT | wx.ICON_EXCLAMATION)
-        if dlg.ShowModal() == wx.ID_YES :
-            dlg.Destroy()
-        else:
+        reponse = dlg.ShowModal()
+        dlg.Destroy()
+        if reponse != wx.ID_YES:
             return
-            dlg.Destroy()
         
-        # Recherche des paramètres par défaut dans la base DEFAUTS
         DB = GestionDB.DB(nomDB="Defaut.db3")
         req = "SELECT taille, parametres FROM gadgets WHERE nom='%s';" % self.nomGadget
         DB.ExecuterReq(req)
-        donnees = DB.ResultatReq()[0]
+        resultats = DB.ResultatReq()
         DB.Close()
-        self.InitValeurs(donnees)
+        if not resultats:
+            wx.MessageBox(
+                _(u"Les paramètres par défaut du calendrier sont introuvables."),
+                _(u"Configuration indisponible"),
+                wx.OK | wx.ICON_INFORMATION,
+            )
+            return
+        self.InitValeurs(resultats[0])
         
-        # Place les valeur dans les contrôles
         self.largeur_texte.SetValue(str(self.val_largeur))
         self.largeur_slider.SetValue(self.val_largeur)
         self.hauteur_texte.SetValue(str(self.val_hauteur))
         self.hauteur_slider.SetValue(self.val_hauteur)
-
         self.bouton_couleurFond.SetValue(self.val_couleurFond)
         self.bouton_couleurCases.SetValue(self.val_couleurCases)
         self.bouton_couleurWE.SetValue(self.val_couleurWE)
@@ -278,7 +251,6 @@ class Dialog(wx.Dialog):
         self.bouton_couleurFontJours.SetValue(self.val_couleurFontJours)
         self.bouton_couleurFontJoursAvecPresents.SetValue(self.val_couleurFontJoursAvecPresents)
 
-        
     def OnSliderLargeur(self, event):
         self.largeur_texte.SetValue(str(self.largeur_slider.GetValue()))
 
@@ -289,7 +261,7 @@ class Dialog(wx.Dialog):
         valide = True
         try :
             valeur = int(self.largeur_texte.GetValue())
-        except : 
+        except :
             valeur = 0
             valide = False
         if self.largeur_min <= valeur <= self.largeur_max :
@@ -306,7 +278,7 @@ class Dialog(wx.Dialog):
         valide = True
         try :
             valeur = int(self.hauteur_texte.GetValue())
-        except : 
+        except :
             valeur = 0
             valide = False
         if self.hauteur_min <= valeur <= self.hauteur_max :
@@ -317,7 +289,7 @@ class Dialog(wx.Dialog):
             dlg.ShowModal()
             dlg.Destroy()
             self.hauteur_texte.Undo()
-            return        
+            return
 
     def OnBoutonColFond(self, event):
         reponse = event.GetValue()
@@ -355,18 +327,23 @@ class Dialog(wx.Dialog):
         reponse = event.GetValue()
         self.val_couleurFontJoursAvecPresents = (reponse[0], reponse[1], reponse[2])
 
-
     def Importation(self):
-        """ Importation des paramètres du gadget """
         DB = GestionDB.DB()
         req = "SELECT taille, parametres FROM gadgets WHERE nom='%s';" % self.nomGadget
         DB.ExecuterReq(req)
-        donnees = DB.ResultatReq()[0]
+        resultats = DB.ResultatReq()
         DB.Close()
-        self.InitValeurs(donnees)
+        if not resultats:
+            wx.MessageBox(
+                _(u"Les paramètres du calendrier sont introuvables."),
+                _(u"Configuration indisponible"),
+                wx.OK | wx.ICON_INFORMATION,
+            )
+            self.EndModal(wx.ID_CANCEL)
+            return
+        self.InitValeurs(resultats[0])
     
     def InitValeurs(self, donnees):
-        # Place les valeurs dans les controles
         taille = eval(donnees[0])
         self.dictParametres = eval(donnees[1])
         self.val_largeur = taille[0]
@@ -381,11 +358,7 @@ class Dialog(wx.Dialog):
         self.val_couleurFontJoursAvecPresents = self.dictParametres["colFontPresents"]
         self.val_couleurFerie = self.dictParametres["colFeries"]
 
-
     def Sauvegarde(self):
-        """ Sauvegarde des données dans la base de données """
-        
-        # Récupération ds valeurs saisies
         largeur = int(self.largeur_texte.GetValue())
         hauteur = int(self.hauteur_texte.GetValue())
         self.dictParametres["colFond"] = self.val_couleurFond
@@ -398,8 +371,7 @@ class Dialog(wx.Dialog):
         self.dictParametres["colFontPresents"] = self.val_couleurFontJoursAvecPresents
         self.dictParametres["colFeries"] = self.val_couleurFerie
 
-
-        DB = GestionDB.DB()       
+        DB = GestionDB.DB()
         listeDonnees = [("taille", str((largeur, hauteur))), ("parametres", str(self.dictParametres)), ]
         DB.ReqMAJ("gadgets", listeDonnees, "nom", "calendrier", IDestChaine=True)
         DB.Commit()
@@ -413,21 +385,13 @@ class Dialog(wx.Dialog):
         self.EndModal(wx.ID_CANCEL)
 
     def OnBoutonOk(self, event):
-        """ Validation des données saisies """
-        # Sauvegarde
         self.Sauvegarde()
-        
-        # MAJ des parents       
         if self.parent == None and FonctionsPerso.FrameOuverte("panel_accueil") != None :
-            # Mise à jour de la page d'accueil
-            topWindow = wx.GetApp().GetTopWindow() 
-            topWindow.toolBook.GetPage(0).MAJpanel() 
-            
-        # Fermeture
+            topWindow = wx.GetApp().GetTopWindow()
+            topWindow.toolBook.GetPage(0).MAJpanel()
         self.EndModal(wx.ID_OK)
 
-    
-    
+
 if __name__ == "__main__":
     app = wx.App(0)
     dlg = Dialog(None)
