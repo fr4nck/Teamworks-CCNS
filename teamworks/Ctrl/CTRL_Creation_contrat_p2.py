@@ -120,7 +120,15 @@ class Page(wx.Panel):
         req = """SELECT IDclassification, IDtype
         FROM contrats_modeles WHERE IDmodele=%d; """ % IDmodele
         DB.ExecuterReq(req)
-        listeDonnees = DB.ResultatReq()[0]
+        resultats = DB.ResultatReq()
+        if not resultats:
+            DB.Close()
+            dlg = wx.MessageDialog(self, _(u"Le modèle de contrat sélectionné n'existe plus."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg.ShowModal()
+            dlg.Destroy()
+            self.MAJ_ListCtrl()
+            return False
+        listeDonnees = resultats[0]
         
 
         self.GetGrandParent().dictContrats["IDclassification"] = listeDonnees[0]
