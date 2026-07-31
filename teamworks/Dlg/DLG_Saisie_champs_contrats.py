@@ -206,7 +206,7 @@ class Dialog(wx.Dialog):
             reponse = dlgConfirm.ShowModal()
             dlgConfirm.Destroy()
             if reponse == wx.ID_YES:
-                self.text_description.SetFocus()
+                self.text_exemple.SetFocus()
                 return
                     
         if motCle == "" :
