@@ -33,8 +33,9 @@ class Panel_general(wx.Panel):
         # Pays de naissance et nationalité
         self.IDpays_naiss = 0
         self.IDpays_nation = 0
-        IDfrance = self.Recherche_Pays(nomPays="France")[0]
-        if IDfrance != False :
+        pays_france = self.Recherche_Pays(nomPays="France")
+        if pays_france is not None:
+            IDfrance = pays_france[0]
             self.IDpays_naiss = IDfrance
             self.IDpays_nation = IDfrance
 
