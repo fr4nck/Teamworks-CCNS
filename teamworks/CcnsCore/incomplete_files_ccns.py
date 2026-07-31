@@ -3,10 +3,12 @@
 
 from __future__ import annotations
 
-from teamworks.CcnsCore.audit_person_summary import build_person_ccns_summary
-
 
 def build_ccns_tree_nodes(IDpersonne):
+    # Import différé : les fonctions de formatage de ce module doivent rester
+    # importables même lorsque le moteur de synthèse CCNS n'est pas disponible.
+    from teamworks.CcnsCore.audit_person_summary import build_person_ccns_summary
+
     summary = build_person_ccns_summary(IDpersonne)
 
     nodes = []
