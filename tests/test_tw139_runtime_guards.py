@@ -100,6 +100,35 @@ class RuntimeGuardRegressionTests(unittest.TestCase):
         self.assertIn("Cette coordonnée n'existe plus dans la base de données.", source)
         self.assertIn("self.EndModal(wx.ID_CANCEL)", source)
 
+    def test_edition_due_guard_missing_contrat(self):
+        source = self.read_source("teamworks/Dlg/DLG_Edition_DUE.py")
+
+        self.assertNotIn("listeContrat = DB.ResultatReq()[0]", source)
+        self.assertNotIn("listePersonne = DB.ResultatReq()[0]", source)
+        self.assertIn("if not resultats:", source)
+
+    def test_edition_due_guard_secondary_lookups(self):
+        source = self.read_source("teamworks/Dlg/DLG_Edition_DUE.py")
+
+        self.assertNotIn("listeClassification = DB.ResultatReq()[0]", source)
+        self.assertNotIn("listeType = DB.ResultatReq()[0]", source)
+        self.assertNotIn("listeValeursPoint = DB.ResultatReq()[0]", source)
+        self.assertNotIn("nationalite = listePays[0][0]\n", source)
+        self.assertNotIn("pays_naiss = listePays[0][0]\n", source)
+        self.assertIn("if listePays else", source)
+
+    def test_ol_candidats_convert_guard_missing_candidat(self):
+        source = self.read_source("teamworks/Ol/OL_candidats.py")
+
+        self.assertNotIn("listeDonnees = DB.ResultatReq()[0]", source)
+        self.assertIn("if not resultats:", source)
+
+    def test_publipostage_donnees_guard_secondary_lookups(self):
+        source = self.read_source("teamworks/Utils/UTILS_Publipostage_donnees.py")
+
+        self.assertNotIn('DB.ResultatReq()[0][0]', source)
+        self.assertIn('if resultats else ""', source)
+
 
 if __name__ == "__main__":
     unittest.main()

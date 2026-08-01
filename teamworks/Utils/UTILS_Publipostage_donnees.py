@@ -538,7 +538,8 @@ def Importation_contrat(IDcontrat=None):
     FROM contrats_class WHERE IDclassification=%d;
     """ % IDclassification
     DB.ExecuterReq(req)
-    dictDonnees["CLASSIFICATION"] = DB.ResultatReq()[0][0]
+    resultats = DB.ResultatReq()
+    dictDonnees["CLASSIFICATION"] = resultats[0][0] if resultats else ""
             
     # Type contrat
     req = """
@@ -546,7 +547,8 @@ def Importation_contrat(IDcontrat=None):
     FROM contrats_types WHERE IDtype=%d;
     """ % IDtype
     DB.ExecuterReq(req)
-    dictDonnees["TYPECONTRAT"] = DB.ResultatReq()[0][0]
+    resultats = DB.ResultatReq()
+    dictDonnees["TYPECONTRAT"] = resultats[0][0] if resultats else ""
             
     # Valeur du point
     req = """
@@ -554,7 +556,8 @@ def Importation_contrat(IDcontrat=None):
     FROM valeurs_point WHERE IDvaleur_point=%d;
     """ % valeur_point
     DB.ExecuterReq(req)
-    dictDonnees["VALEURPOINT"] = u"%s €" % DB.ResultatReq()[0][0]
+    resultats = DB.ResultatReq()
+    dictDonnees["VALEURPOINT"] = u"%s €" % resultats[0][0] if resultats else ""
     
     # Liste des mots-clés
     listeMotscles = [ "DATEDEBUT", "DATEFIN", "CLASSIFICATION", "TYPECONTRAT", "VALEURPOINT", "ESSAI"]

@@ -621,7 +621,11 @@ class Dialog(wx.Dialog):
             FROM contrats WHERE IDcontrat=%d;
         """ % IDcontrat
         DB.ExecuterReq(req)
-        listeContrat = DB.ResultatReq()[0]
+        resultats = DB.ResultatReq()
+        if not resultats:
+            DB.Close()
+            return
+        listeContrat = resultats[0]
         
         IDpersonne = listeContrat[0]
         IDclassification = listeContrat[1]
@@ -641,7 +645,8 @@ class Dialog(wx.Dialog):
             FROM contrats_class WHERE IDclassification=%d;
         """ % IDclassification
         DB.ExecuterReq(req)
-        listeClassification = DB.ResultatReq()[0]
+        resultats = DB.ResultatReq()
+        listeClassification = resultats[0] if resultats else ("",)
         
         classification = listeClassification[0]
                 
@@ -651,7 +656,8 @@ class Dialog(wx.Dialog):
             FROM contrats_types WHERE IDtype=%d;
         """ % IDtype
         DB.ExecuterReq(req)
-        listeType = DB.ResultatReq()[0]
+        resultats = DB.ResultatReq()
+        listeType = resultats[0] if resultats else ("", "", "non")
         
         type = listeType[0]
         type_CDI = listeType[2]
@@ -667,7 +673,8 @@ class Dialog(wx.Dialog):
             FROM valeurs_point WHERE IDvaleur_point=%d;
         """ % IDvaleur_point
         DB.ExecuterReq(req)
-        listeValeursPoint = DB.ResultatReq()[0]
+        resultats = DB.ResultatReq()
+        listeValeursPoint = resultats[0] if resultats else (0,)
         
         valeur_point = listeValeursPoint[0]
         
@@ -677,7 +684,11 @@ class Dialog(wx.Dialog):
             FROM personnes WHERE IDpersonne=%d;
         """ % IDpersonne
         DB.ExecuterReq(req)
-        listePersonne = DB.ResultatReq()[0]
+        resultats = DB.ResultatReq()
+        if not resultats:
+            DB.Close()
+            return
+        listePersonne = resultats[0]
         
         civilite = listePersonne[0]
         nom = listePersonne[1]
@@ -745,7 +756,7 @@ class Dialog(wx.Dialog):
         """ % IDnationalite
         DB.ExecuterReq(req)
         listePays = DB.ResultatReq()
-        nationalite = listePays[0][0]
+        nationalite = listePays[0][0] if listePays else ""
         if nationalite == _(u"Française") :
             nationalite1 = _(u"Française")
             nationalite2 = ""
@@ -760,7 +771,7 @@ class Dialog(wx.Dialog):
         """ % IDpays_naiss
         DB.ExecuterReq(req)
         listePays = DB.ResultatReq()
-        pays_naiss = listePays[0][0]
+        pays_naiss = listePays[0][0] if listePays else ""
                 
         # Intégration des données à la liste des valeurs
         listeDonnees = {}

@@ -998,8 +998,11 @@ class ListView(ObjectListView):
         req = """SELECT civilite, nom, prenom, date_naiss, age, adresse_resid, cp_resid, ville_resid, memo
         FROM candidats WHERE IDcandidat = %d""" % IDcandidat
         DB.ExecuterReq(req)
-        listeDonnees = DB.ResultatReq()[0]
+        resultats = DB.ResultatReq()
         DB.Close()
+        if not resultats:
+            return
+        listeDonnees = resultats[0]
         civilite, nom, prenom, date_naiss, age, adresse_resid, cp_resid, ville_resid, memo = listeDonnees
         listeDonnees = [    ("civilite",        civilite),
                             ("nom",             nom),

@@ -57,6 +57,14 @@ Obtenir une navigation sans traceback sur les écrans principaux de Teamworks av
 |---|---|---|
 | `DLG_Parametres_dossiers.py` | `Importation`, `OnLeftLink` | gardes + fermeture DB avant retour |
 
+### Lot 4 — Gardes `ResultatReq()[0]` restantes (01/08/2026)
+
+| Fichier | Méthode | Correction |
+|---|---|---|
+| `DLG_Edition_DUE.py` | `Import_Donnees` | garde contrat/personne + fallbacks classification, type, valeur_point, nationalité, pays_naiss |
+| `OL_candidats.py` | `ConvertirFiche` | garde `if not resultats: return` |
+| `UTILS_Publipostage_donnees.py` | `Importation_contrat` | fallbacks `if resultats else ""` pour 3 champs |
+
 ## Contrôles techniques
 
 - imports et chargement différé des modules ;
@@ -72,7 +80,7 @@ Obtenir une navigation sans traceback sur les écrans principaux de Teamworks av
 
 ```
 python -m unittest tests/test_tw139_runtime_guards.py -v
-Ran 13 tests in 0.001s — OK
+Ran 17 tests in 0.002s — OK
 ```
 
 ## Parcours nécessitant encore une recette Windows manuelle
@@ -102,4 +110,4 @@ Ran 13 tests in 0.001s — OK
 
 ## État technique au 01/08/2026
 
-Tous les défauts confirmés dans les parcours automatisables ont été corrigés. La PR est techniquement prête sur la base des tests disponibles. Une recette Windows manuelle sur les parcours restants est requise avant fusion.
+Aucune occurrence `DB.ResultatReq()[0]` non protégée dans le périmètre audité. Tous les défauts confirmés automatisables sont couverts. La PR est techniquement prête. Une recette Windows manuelle sur les parcours restants est requise avant fusion.
