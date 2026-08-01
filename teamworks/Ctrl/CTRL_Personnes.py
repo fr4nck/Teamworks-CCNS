@@ -117,8 +117,11 @@ class PanelResume(wx.Panel):
         req = """SELECT civilite, nom, prenom, date_naiss, ville_naiss, adresse_resid, cp_resid, ville_resid
         FROM personnes WHERE IDpersonne=%d; """ % IDpersonne
         DB.ExecuterReq(req)
-        donnees = DB.ResultatReq()[0]
+        resultats = DB.ResultatReq()
         DB.Close()
+        if not resultats:
+            return
+        donnees = resultats[0]
         
         civilite = donnees[0]
         if donnees[1] == "" or donnees[1] == None :

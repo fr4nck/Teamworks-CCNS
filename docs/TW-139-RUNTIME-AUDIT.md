@@ -15,8 +15,8 @@ Obtenir une navigation sans traceback sur les écrans principaux de Teamworks av
 
 | Écran | Ouverture | Chargement | Ajout | Modification | Suppression | Fermeture | Résultat |
 |---|---:|---:|---:|---:|---:|---:|---|
-| Accueil | ☐ | ☐ | N/A | ☐ | N/A | ☐ | À tester |
-| Individus | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ | À tester |
+| Accueil | ✓ | ✓ | N/A | ✓ | N/A | ✓ | Validé 30/07/2026 |
+| Individus | ✓ | ✓ | ☐ | ☐ | ☐ | ✓ | Partiellement validé — recette ajout/modif/suppr requise |
 | Présences | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ | À tester |
 | Recrutement | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ | À tester |
 | Contrats | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ | À tester |
@@ -24,6 +24,38 @@ Obtenir une navigation sans traceback sur les écrans principaux de Teamworks av
 | Paramètres | ☐ | ☐ | N/A | ☐ | N/A | ☐ | À tester |
 | Rapports | ☐ | ☐ | N/A | ☐ | N/A | ☐ | À tester |
 | Impression | ☐ | ☐ | N/A | ☐ | N/A | ☐ | À tester |
+
+## Corrections appliquées dans cette PR
+
+### Lot 1 — Gardes résultats SQL vides
+
+| Fichier | Méthode | Symptôme |
+|---|---|---|
+| `CTRL_Page_generalites.py` | `__init__` | `TypeError` si France absente de la table `pays` |
+| `CTRL_Page_generalites.py` | `Importation` | `IndexError` si personne supprimée |
+| `CTRL_Page_generalites.py` | `SetPaysNaiss`, `SetNationalite` | `TypeError` si pays inexistant |
+| `CTRL_Personnes.py` | `OnSelectPersonne` | `IndexError` si personne supprimée |
+| `CTRL_Recrutement.py` | `MAJidentite` | `IndexError` si candidat/personne supprimé |
+| `DLG_Saisie_candidat.py` | `Importation` | `IndexError` si candidat supprimé |
+| `DLG_Saisie_coords.py` | `Importation` | `IndexError` si coordonnée supprimée |
+| `DLG_Saisie_piece.py` | `Importation` | `IndexError` si pièce supprimée |
+| `DLG_Saisie_presence.py` | `ImportDonneesModif` | `IndexError` si présence supprimée |
+| `DLG_Importation_vacances.py` | `ImportationZone` | `IndexError` si organisateur absent |
+| `DLG_Parametres_calendrier.py` | `Importation`, `OnLeftLink` | `IndexError` si gadget absent |
+| `DLG_Saisie_champs_contrats.py` | `Importation` | champs NULL provoquant une erreur de formatage |
+| `CTRL_Photo.py` | `OnBoutonPhoto`, `OnMenuPhoto` | `IndexError` si personne supprimée |
+
+### Lot 2 — Assertion wxWidgets
+
+| Fichier | Problème | Correction |
+|---|---|---|
+| `DLG_Selection_periode.py` | `wx.ALIGN_RIGHT` dans 4 sizers horizontaux | drapeau retiré des appels `.Add()` |
+
+### Lot 3 — Paramètres du dossier et du calendrier
+
+| Fichier | Méthode | Correction |
+|---|---|---|
+| `DLG_Parametres_dossiers.py` | `Importation`, `OnLeftLink` | gardes + fermeture DB avant retour |
 
 ## Contrôles techniques
 
@@ -34,14 +66,32 @@ Obtenir une navigation sans traceback sur les écrans principaux de Teamworks av
 - encodage UTF-8 ;
 - parentage des widgets et sizers ;
 - chemins runtime Windows ;
-- absence de blocage de l’interface lors des chargements.
+- absence de blocage de l'interface lors des chargements.
+
+## Tests exécutés
+
+```
+python -m unittest tests/test_tw139_runtime_guards.py -v
+Ran 13 tests in 0.001s — OK
+```
+
+## Parcours nécessitant encore une recette Windows manuelle
+
+- Individus > Ajouter (formulaire complet) ;
+- Individus > Modifier (avec pays absent) ;
+- Présences (ouverture, ajout, modification, suppression) ;
+- Recrutement (ouverture fiche candidat, ajout candidature) ;
+- Contrats (création, modification) ;
+- Frais (saisie, liste) ;
+- Paramètres (tous les sous-écrans) ;
+- Rapports et Impression.
 
 ## Discipline CI
 
 - conserver le workflow unique existant ;
 - ajouter uniquement des tests ciblés et frugaux ;
 - ne pas créer de nouveau workflow ;
-- regrouper les correctifs issus de l’audit dans une seule PR.
+- regrouper les correctifs issus de l'audit dans une seule PR.
 
 ## Critère de fermeture
 
@@ -49,3 +99,7 @@ Obtenir une navigation sans traceback sur les écrans principaux de Teamworks av
 - tests existants au vert ;
 - recette Windows renseignée ;
 - aucun nouveau workflow GitHub Actions.
+
+## État technique au 01/08/2026
+
+Tous les défauts confirmés dans les parcours automatisables ont été corrigés. La PR est techniquement prête sur la base des tests disponibles. Une recette Windows manuelle sur les parcours restants est requise avant fusion.

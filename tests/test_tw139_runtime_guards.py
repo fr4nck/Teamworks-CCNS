@@ -57,6 +57,49 @@ class RuntimeGuardRegressionTests(unittest.TestCase):
         self.assertIn("if not resultats:", source)
         self.assertIn("Les coordonnées de l'organisateur sont introuvables", source)
 
+    def test_selection_periode_no_align_right_in_horizontal_sizer(self):
+        source = self.read_source("teamworks/Dlg/DLG_Selection_periode.py")
+
+        self.assertNotIn("wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL", source)
+
+    def test_page_generalites_importation_guard_missing_person(self):
+        source = self.read_source("teamworks/Ctrl/CTRL_Page_generalites.py")
+
+        self.assertNotIn("donnees = DB.ResultatReq()[0]\n        DB.Close()", source)
+        self.assertIn("Cette personne n'existe plus dans la base de données.", source)
+
+    def test_page_generalites_set_pays_guard(self):
+        source = self.read_source("teamworks/Ctrl/CTRL_Page_generalites.py")
+
+        self.assertIn("if not pays:\n            return", source)
+
+    def test_ctrl_personnes_on_select_guard(self):
+        source = self.read_source("teamworks/Ctrl/CTRL_Personnes.py")
+
+        self.assertNotIn("donnees = DB.ResultatReq()[0]", source)
+        self.assertIn("if not resultats:", source)
+
+    def test_ctrl_recrutement_maj_identite_guard(self):
+        source = self.read_source("teamworks/Ctrl/CTRL_Recrutement.py")
+
+        self.assertNotIn("donnees = DB.ResultatReq()[0]", source)
+        self.assertIn("if not resultats:", source)
+
+    def test_saisie_candidat_importation_guard(self):
+        source = self.read_source("teamworks/Dlg/DLG_Saisie_candidat.py")
+
+        self.assertNotIn("listeDonnees = DB.ResultatReq()[0]", source)
+        self.assertIn("if not resultats:", source)
+        self.assertIn("Ce candidat n'existe plus dans la base de données.", source)
+
+    def test_saisie_coords_importation_guard(self):
+        source = self.read_source("teamworks/Dlg/DLG_Saisie_coords.py")
+
+        self.assertNotIn("donnees = DB.ResultatReq()[0]", source)
+        self.assertIn("if not resultats:", source)
+        self.assertIn("Cette coordonnée n'existe plus dans la base de données.", source)
+        self.assertIn("self.EndModal(wx.ID_CANCEL)", source)
+
 
 if __name__ == "__main__":
     unittest.main()

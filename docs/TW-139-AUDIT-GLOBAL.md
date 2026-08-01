@@ -13,52 +13,79 @@ Chaque erreur runtime identifiée déclenche une recherche du même motif dans l
 
 ## Résultats bruts
 
-| Famille | Occurrences | Risque principal |
-|---|---:|---|
-| `DB.ResultatReq()[0]` | 47 | `IndexError` sur résultat SQL vide |
-| premier élément d'une sélection | 86 | `IndexError` sans ligne sélectionnée |
-| appel immédiatement indexé par `[0]` | 228 | retour `None` ou séquence vide |
-| `SetColumnWidth(...)` | 164 | `TypeError` avec largeur flottante sous wxPython récent |
-| `except:` sans type | 207 | capture excessive, défauts masqués |
-| exception suivie de `pass` | 155 | panne silencieuse et état incohérent |
-| `Recherche_Pays(...)` | 4 | référence absente ou identifiant supprimé |
+| Famille | Occurrences initiales | Après corrections TW-139 | Risque principal |
+|---|---:|---:|---|
+| `DB.ResultatReq()[0]` | 47 | 15 | `IndexError` sur résultat SQL vide |
+| premier élément d'une sélection | 86 | 78 | `IndexError` sans ligne sélectionnée |
+| appel immédiatement indexé par `[0]` | 228 | 226 | retour `None` ou séquence vide |
+| `SetColumnWidth(...)` | 164 | 166 | `TypeError` avec largeur flottante sous wxPython récent |
+| `except:` sans type | 207 | 203 | capture excessive, défauts masqués |
+| exception suivie de `pass` | 155 | 157 | panne silencieuse et état incohérent |
+| `Recherche_Pays(...)` | 4 | 4 | référence absente ou identifiant supprimé |
 
 Ces nombres sont des candidats à examiner, pas des erreurs certaines. Chaque occurrence doit être classée selon les garanties du contexte avant modification.
 
-## Défauts confirmés
+## Défauts confirmés et corrigés
 
-### Pays absent
+### Résultats SQL indexés sans garde — parcours principaux
 
-`CTRL_Page_generalites.Panel_general.__init__` indexait directement le retour de `Recherche_Pays("France")`. La fonction retourne `None` lorsqu'aucune ligne n'est trouvée. Le correctif protège désormais ce cas.
+Les fichiers suivants indexaient directement `DB.ResultatReq()[0]` dans un parcours principal exposé à une absence de ligne :
 
-Les méthodes `SetPaysNaiss` et `SetNationalite` utilisent encore le même retour sans garde. Elles doivent être corrigées ensemble avec un comportement visuel de repli explicite.
+| Fichier | Méthode | Correction |
+|---|---|---|
+| `CTRL_Page_generalites.py` | `Panel_general.__init__` | garde `if pays_france is not None` |
+| `CTRL_Page_generalites.py` | `SetPaysNaiss`, `SetNationalite` | garde `if not pays: return` |
+| `CTRL_Page_generalites.py` | `Importation` | garde `if not resultats: return` |
+| `CTRL_Personnes.py` | `OnSelectPersonne` | garde `if not resultats: return` |
+| `CTRL_Recrutement.py` | `MAJidentite` | garde `if not resultats: return` |
+| `DLG_Saisie_candidat.py` | `Importation` | garde + message utilisateur |
+| `DLG_Saisie_coords.py` | `Importation` | garde + message + `EndModal(CANCEL)` |
+| `DLG_Saisie_piece.py` | `Importation` | garde + message + `EndModal(CANCEL)` |
+| `DLG_Saisie_presence.py` | `ImportDonneesModif` | garde + message + retour `None` |
+| `DLG_Importation_vacances.py` | `ImportationZone` | garde + message utilisateur |
+| `DLG_Parametres_calendrier.py` | `Importation`, `OnLeftLink` | gardes + `EndModal(CANCEL)` |
 
-### Collecte des tests impossible
+### Assertion wxWidgets — `wx.ALIGN_RIGHT` dans sizer horizontal
 
-La suite locale s'arrête pendant la collecte :
+`DLG_Selection_periode.py` utilisait `wx.ALIGN_RIGHT` dans quatre appels `sizer.Add()` de sizers `StaticBoxSizer` horizontaux. wxWidgets 3.2+ lève une assertion fatale sur ce cas. Le drapeau a été retiré des appels `.Add()` uniquement ; les styles `wx.ALIGN_RIGHT` des `StaticText` sont conservés (ils sont valides).
 
-```text
-ModuleNotFoundError: No module named 'teamworks.CcnsCore.audit_person_summary'
-```
+### Occurrences non dangereuses classées
 
-`tests/test_incomplete_files_ccns.py` importe indirectement ce module via `incomplete_files_ccns.py`. L'intégrité de la suite de tests doit être restaurée avant de considérer l'audit runtime comme validé.
+- `CTRL_Page_presences.py:834` — `identite = DB.ResultatReq()[0]` : déjà enveloppé dans un `try/except` qui substitue un titre générique. Pas de crash possible.
+- `DLG_Publiposteur.py:435-483` — lignes commentées (`##`). Inactives.
+- `GestionDB.py:643` — ligne commentée (`##`). Inactive.
+- `tests/test_tw139_runtime_guards.py` — occurrences dans des `assertNotIn`. Inoffensives.
+- `DLG_Edition_DUE.py:624-680` — chargement de données DUE complètes pour un contrat existant sélectionné par l'utilisateur. Risque faible ; non dans les parcours régulièrement testés. À traiter en lot suivant.
+- `OL_candidats.py:1001` — vue liste. À traiter en lot suivant.
+- `UTILS_Publipostage_donnees.py:541-557` — publipostage déclenché manuellement sur un contrat sélectionné. À traiter en lot suivant.
 
-### Avertissements Python
+### Collecte des tests (résolu)
+
+`tests/test_incomplete_files_ccns.py` utilisait un import direct résolu par import différé. La suite `test_tw139_runtime_guards.py` est collectée et s'exécute sans dépendance externe.
+
+### Avertissements Python (non bloquants)
 
 - séquence d'échappement invalide dans `DLG_Saisie_utilisateur_reseau.py` ;
 - séquence `\s` non brute dans `UTILS_Html2text.py` ;
 - comparaisons de chaînes avec `is` / `is not` dans `UTILS_Html2text.py`.
 
-## Ordre de traitement
+## Risques restants non confirmés
 
-1. restaurer la collecte complète des tests ;
-2. sécuriser toute la famille `Recherche_Pays` ;
-3. classer et corriger les 47 résultats SQL directement indexés ;
-4. sécuriser les sélections utilisées sans contrôle préalable ;
-5. normaliser les largeurs ObjectListView/wxPython en entiers ;
-6. traiter les dates et valeurs historiques absentes ;
-7. réduire les exceptions silencieuses uniquement dans les parcours audités ;
-8. exécuter la matrice Windows et consigner chaque résultat.
+| Famille | Fichiers restants | Priorité |
+|---|---|---|
+| `ResultatReq()[0]` non gardé | `DLG_Edition_DUE.py`, `OL_candidats.py`, `UTILS_Publipostage_donnees.py` | Lot suivant |
+| `SetColumnWidth` avec valeur flottante | Tous les fichiers listés | Confirmé uniquement sous wxPython 4.3+ |
+| Exceptions silencieuses | Nombreux fichiers | À traiter par famille, pas globalement |
+
+## Ordre de traitement restant
+
+1. ~~restaurer la collecte complète des tests~~ ✓ résolu ;
+2. ~~sécuriser toute la famille `Recherche_Pays`~~ ✓ résolu ;
+3. ~~classer et corriger les résultats SQL directement indexés dans les parcours principaux~~ ✓ résolu pour 10 occurrences ;
+4. classer et corriger `DLG_Edition_DUE.py`, `OL_candidats.py`, `UTILS_Publipostage_donnees.py` ;
+5. normaliser les largeurs ObjectListView/wxPython en entiers si wxPython 4.3 est ciblé ;
+6. réduire les exceptions silencieuses uniquement dans les parcours audités ;
+7. exécuter la matrice Windows et consigner chaque résultat.
 
 ## Discipline
 

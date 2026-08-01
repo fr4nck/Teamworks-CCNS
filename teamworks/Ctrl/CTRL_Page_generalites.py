@@ -1188,8 +1188,16 @@ class Panel_general(wx.Panel):
         DB = GestionDB.DB()
         req = "SELECT civilite, nom, nom_jfille, prenom, date_naiss, cp_naiss, ville_naiss, pays_naiss, nationalite, num_secu, adresse_resid, cp_resid, ville_resid, memo, IDsituation FROM personnes WHERE IDpersonne = %d" % self.IDpersonne
         DB.ExecuterReq(req)
-        donnees = DB.ResultatReq()[0]
+        resultats = DB.ResultatReq()
         DB.Close()
+        if not resultats:
+            wx.MessageBox(
+                _(u"Cette personne n'existe plus dans la base de données."),
+                _(u"Personne introuvable"),
+                wx.OK | wx.ICON_ERROR,
+            )
+            return
+        donnees = resultats[0]
         
         civilite = donnees[0]
         nom = donnees[1]
@@ -1261,13 +1269,17 @@ class Panel_general(wx.Panel):
         self.SetInfobulleVille(self.text_ville, "ville")
         
     def SetPaysNaiss(self, IDpays) :
-        pays = self.Recherche_Pays(IDpays=IDpays) 
+        pays = self.Recherche_Pays(IDpays=IDpays)
+        if not pays:
+            return
         self.image_pays.SetBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/Drapeaux/" + pays[1] + ".png"), wx.BITMAP_TYPE_PNG))
         self.image_pays.SetToolTip(wx.ToolTip(_(u"Pays de naissance : %s" % pays[2])))
         self.IDpays_naiss = IDpays
         
     def SetNationalite(self, IDpays) :
         pays = self.Recherche_Pays(IDpays=IDpays)
+        if not pays:
+            return
         self.image_nation.SetBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/Drapeaux/" + pays[1] + ".png"), wx.BITMAP_TYPE_PNG))
         self.image_nation.SetToolTip(wx.ToolTip(_(u"Nationalité : %s" % pays[3])))
         self.IDpays_nation = IDpays
