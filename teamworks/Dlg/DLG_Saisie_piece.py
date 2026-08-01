@@ -476,8 +476,17 @@ class Dialog(wx.Dialog):
         DB = GestionDB.DB()
         req = "SELECT * FROM pieces WHERE IDpiece = %s" % self.IDpiece
         DB.ExecuterReq(req)
-        donnees = DB.ResultatReq()[0]
+        resultats = DB.ResultatReq()
         DB.Close()
+        if not resultats:
+            wx.MessageBox(
+                _(u"Cette pièce n'existe plus dans la base de données."),
+                _(u"Pièce introuvable"),
+                wx.OK | wx.ICON_ERROR,
+            )
+            self.EndModal(wx.ID_CANCEL)
+            return
+        donnees = resultats[0]
         
         # Placement des données dans les contrôles
         varIDtypePiece = donnees[2]

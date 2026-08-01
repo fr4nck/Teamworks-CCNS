@@ -33,6 +33,30 @@ class RuntimeGuardRegressionTests(unittest.TestCase):
         self.assertIn("Les paramètres par défaut du calendrier sont introuvables.", source)
         self.assertNotIn("return\n            dlg.Destroy()", source)
 
+    def test_saisie_piece_guard_missing_piece(self):
+        source = self.read_source("teamworks/Dlg/DLG_Saisie_piece.py")
+
+        self.assertNotIn("donnees = DB.ResultatReq()[0]", source)
+        self.assertIn("if not resultats:", source)
+        self.assertIn("Cette pièce n'existe plus dans la base de données.", source)
+        self.assertIn("self.EndModal(wx.ID_CANCEL)", source)
+
+    def test_saisie_presence_guard_missing_presence(self):
+        source = self.read_source("teamworks/Dlg/DLG_Saisie_presence.py")
+
+        self.assertNotIn("donnees = DB.ResultatReq()[0]", source)
+        self.assertIn("if not resultats:", source)
+        self.assertIn("Cette présence n'existe plus dans la base de données.", source)
+        self.assertIn("return None", source)
+        self.assertIn("wx.CallAfter(self.parent.EndModal, wx.ID_CANCEL)", source)
+
+    def test_importation_vacances_guard_missing_organisateur(self):
+        source = self.read_source("teamworks/Dlg/DLG_Importation_vacances.py")
+
+        self.assertNotIn("cp, ville = DB.ResultatReq()[0]", source)
+        self.assertIn("if not resultats:", source)
+        self.assertIn("Les coordonnées de l'organisateur sont introuvables", source)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -56,6 +56,9 @@ class Panel(wx.Panel):
         self.IDmodif = IDmodif
         if self.IDmodif != 0 and mode == "planning" : 
             donneesModif = self.ImportDonneesModif()
+            if donneesModif is None:
+                wx.CallAfter(self.parent.EndModal, wx.ID_CANCEL)
+                return
             self.donneesModif = donneesModif
             listeDonnees=[(donneesModif[1], donneesModif[2])]
         
@@ -561,8 +564,16 @@ class Panel(wx.Panel):
         DB = GestionDB.DB()
         req = "SELECT * FROM presences WHERE IDpresence=%d" % self.IDmodif
         DB.ExecuterReq(req)
-        donnees = DB.ResultatReq()[0]
+        resultats = DB.ResultatReq()
         DB.Close()
+        if not resultats:
+            wx.MessageBox(
+                _(u"Cette présence n'existe plus dans la base de données."),
+                _(u"Présence introuvable"),
+                wx.OK | wx.ICON_ERROR,
+            )
+            return None
+        donnees = resultats[0]
         
         IDpresence = donnees[0]
         IDpersonne = donnees[1]
