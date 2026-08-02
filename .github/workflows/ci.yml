@@ -25,8 +25,103 @@ permissions:
   contents: read
 
 jobs:
+  # ─────────────────────────────────────────────────────────────
+  # Détection des chemins modifiés
+  # Pilote les jobs suivants pour éviter les jobs inutiles :
+  #   - docs_only : tous les changements sont dans docs/** ou *.md
+  #   - has_gui   : au moins un fichier GUI (Ctrl/Dlg/Ol/requirements)
+  # Sur workflow_dispatch : tout est exécuté (has_gui=true, docs_only=false).
+  # ─────────────────────────────────────────────────────────────
+  detect-changes:
+    name: Détecter les chemins modifiés
+    runs-on: ubuntu-24.04
+    outputs:
+      docs_only: ${{ steps.classify.outputs.docs_only }}
+      has_gui: ${{ steps.classify.outputs.has_gui }}
+    steps:
+      - name: Récupérer le dépôt (historique minimal)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Classifier les fichiers modifiés
+        id: classify
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import os, subprocess, sys
+
+          event = os.environ.get("GITHUB_EVENT_NAME", "push")
+          output_file = os.environ["GITHUB_OUTPUT"]
+
+          def emit(docs_only, has_gui):
+              with open(output_file, "a") as fh:
+                  fh.write(f"docs_only={'true' if docs_only else 'false'}\n")
+                  fh.write(f"has_gui={'true' if has_gui else 'false'}\n")
+              print(f"docs_only={'true' if docs_only else 'false'}")
+              print(f"has_gui={'true' if has_gui else 'false'}")
+
+          if event == "workflow_dispatch":
+              # Déclenchement manuel : tout exécuter
+              emit(docs_only=False, has_gui=True)
+              sys.exit(0)
+
+          if event == "pull_request":
+              base = os.environ.get("GITHUB_BASE_REF", "master")
+              subprocess.run(
+                  ["git", "fetch", "--depth=1", "origin", base],
+                  check=True, capture_output=True,
+              )
+              result = subprocess.run(
+                  ["git", "diff", "--name-only", f"origin/{base}...HEAD"],
+                  capture_output=True, text=True,
+              )
+          else:
+              # push
+              result = subprocess.run(
+                  ["git", "diff", "--name-only", "HEAD~1", "HEAD"],
+                  capture_output=True, text=True,
+              )
+
+          if result.returncode != 0 or not result.stdout.strip():
+              # Impossible de déterminer les fichiers modifiés : tout exécuter
+              emit(docs_only=False, has_gui=True)
+              sys.exit(0)
+
+          files = set(result.stdout.strip().splitlines())
+          print(f"Fichiers modifiés ({len(files)}) :")
+          for f in sorted(files):
+              print(f"  {f}")
+
+          non_docs = {
+              f for f in files
+              if not (f.startswith("docs/") or f.endswith(".md"))
+          }
+          docs_only = len(non_docs) == 0
+
+          gui_prefixes = (
+              "teamworks/Ctrl/",
+              "teamworks/Dlg/",
+              "teamworks/Ol/",
+              "requirements/",
+          )
+          has_gui = any(
+              f.startswith(p)
+              for f in files
+              for p in gui_prefixes
+          )
+
+          emit(docs_only=docs_only, has_gui=has_gui)
+          PY
+
+  # ─────────────────────────────────────────────────────────────
+  # Job Linux : compilations, audits, tests
+  # Ignoré si tous les changements sont dans docs/** ou *.md.
+  # ─────────────────────────────────────────────────────────────
   tests:
     name: Tests et règles du socle
+    needs: [detect-changes]
+    if: needs.detect-changes.outputs.docs_only != 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
 
@@ -127,9 +222,22 @@ jobs:
           if-no-files-found: warn
           retention-days: 1
 
+  # ─────────────────────────────────────────────────────────────
+  # Job Windows : parcours critiques et gardes TW-139
+  # Déclenché seulement si des fichiers GUI ont changé, ou en
+  # workflow_dispatch. Jamais sur les tags (réservés au build).
+  # ─────────────────────────────────────────────────────────────
   windows-smokes:
     name: Parcours critiques Windows
-    if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+    needs: [detect-changes]
+    if: >-
+      ${{
+        !startsWith(github.ref, 'refs/tags/')
+        && (
+          needs['detect-changes'].outputs.has_gui == 'true'
+          || github.event_name == 'workflow_dispatch'
+        )
+      }}
     runs-on: windows-2022
     timeout-minutes: 45
 
@@ -157,6 +265,24 @@ jobs:
             tests/test_secondary_presence_smoke_contract.py `
             tests/test_secondary_person_smoke_contract.py `
             tests/test_secondary_contract_smoke_contract.py
+
+      - name: Compiler les modules GUI de TW-139
+        shell: pwsh
+        run: python -m compileall -q teamworks/Ctrl teamworks/Dlg teamworks/Ol
+
+      - name: Vérifier wx.App minimal
+        shell: pwsh
+        run: |
+          python -c "
+          import wx
+          app = wx.App(False)
+          app.Destroy()
+          print('wx.App : creation et destruction OK')
+          "
+
+      - name: Exécuter les tests de gardes TW-139
+        shell: pwsh
+        run: python -m pytest -q tests/test_tw139_runtime_guards.py
 
       - name: Exécuter tous les parcours critiques
         shell: pwsh
