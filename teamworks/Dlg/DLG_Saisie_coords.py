@@ -291,7 +291,7 @@ class Dialog(wx.Dialog):
                 _(u"Coordonnée introuvable"),
                 wx.OK | wx.ICON_ERROR,
             )
-            self.EndModal(wx.ID_CANCEL)
+            wx.CallAfter(self.EndModal, wx.ID_CANCEL)
             return
         donnees = resultats[0]
 

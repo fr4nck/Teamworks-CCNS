@@ -39,7 +39,7 @@ class RuntimeGuardRegressionTests(unittest.TestCase):
         self.assertNotIn("donnees = DB.ResultatReq()[0]", source)
         self.assertIn("if not resultats:", source)
         self.assertIn("Cette pièce n'existe plus dans la base de données.", source)
-        self.assertIn("self.EndModal(wx.ID_CANCEL)", source)
+        self.assertIn("wx.CallAfter(self.EndModal, wx.ID_CANCEL)", source)
 
     def test_saisie_presence_guard_missing_presence(self):
         source = self.read_source("teamworks/Dlg/DLG_Saisie_presence.py")
@@ -98,7 +98,7 @@ class RuntimeGuardRegressionTests(unittest.TestCase):
         self.assertNotIn("donnees = DB.ResultatReq()[0]", source)
         self.assertIn("if not resultats:", source)
         self.assertIn("Cette coordonnée n'existe plus dans la base de données.", source)
-        self.assertIn("self.EndModal(wx.ID_CANCEL)", source)
+        self.assertIn("wx.CallAfter(self.EndModal, wx.ID_CANCEL)", source)
 
     def test_edition_due_guard_missing_contrat(self):
         source = self.read_source("teamworks/Dlg/DLG_Edition_DUE.py")
