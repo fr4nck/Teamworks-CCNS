@@ -1,16 +1,18 @@
 # Teamworks-CCNS — Roadmap officielle et unique
 
-Mise à jour : 29 juillet 2026
+**Mise à jour : 7 août 2026**
 
-Ce fichier est l'unique roadmap de référence du projet. Toute autre roadmap doit être supprimée. Les tickets, PR, notes de version et décisions techniques doivent rester cohérents avec ce document.
+Ce fichier est l’unique roadmap de référence du projet. Toute autre documentation peut détailler un domaine, mais ne doit pas porter une roadmap concurrente ni annoncer un niveau de maturité différent.
 
 ## 1. État réel du projet
 
-Teamworks-CCNS est actuellement un prototype de migration Windows non validé en usage réel.
+Teamworks-CCNS est actuellement en **`0.9.0-dev`**.
 
-La désignation `v0.9.0-rc1` est annulée comme indicateur de maturité. Le build a été produit, mais le parcours élémentaire démarrer → ouvrir une base → ouvrir un dossier salarié n'avait pas été validé sur le poste utilisateur.
+Le socle Python 3 / wxPython Phoenix, la CI et le packaging Windows ont fortement progressé. Le dépôt sait désormais construire un portable Windows reproductible, exécuter des parcours critiques Windows automatisés et publier une Release sur tag conforme.
 
-Aucune version ne doit être qualifiée de bêta, RC ou stable sur la seule base d'une CI verte ou d'un ZIP généré.
+En revanche, la qualification **bêta / RC / stable reste volontairement refusée** tant que le parcours Windows minimal n’a pas été validé manuellement sur une copie de base réelle par l’utilisateur.
+
+Aucune CI verte, aucun pourcentage d’avancement et aucun ZIP généré ne suffisent à qualifier une version.
 
 ## 2. Règles de vérité
 
@@ -22,93 +24,158 @@ Chaque annonce doit distinguer explicitement :
 - parcours Windows réellement exécuté ;
 - validation utilisateur obtenue.
 
-Les pourcentages d'avancement, les formulations « presque fini » et les dates de sortie non démontrées sont interdits.
+Les formulations « presque fini » et les dates de sortie non démontrées sont interdites.
 
-## 3. Priorité immédiate — gel fonctionnel
+## 3. Historique consolidé des lots récents
 
-Aucune nouvelle fonction métier, nouvelle convention collective ou refonte visuelle importante tant que le socle n'est pas fiable.
+Les références ci-dessous décrivent ce qui est réellement intégré à `master`.
 
-Ordre obligatoire :
+| Lot | Objet | Référence | État réel |
+| --- | --- | --- | --- |
+| TW-121 | Validation des préférences d’affichage Windows | PR #189 | Fusionné ; validation visuelle réelle à compléter |
+| TW-122 | Restauration sûre des profils d’affichage Windows | PR #190 | Fusionné |
+| TW-123 | Roadmap de livraison RC1 Windows | PR #191 | Fusionné puis supersédé par TW-126 / `ROADMAP.md` |
+| TW-123 | Compatibilité Windows des profils d’affichage | PR #192 | Fusionné |
+| TW-124 | Réparer le build Windows avec NumPy 2 | PR #193 | Fusionné |
+| TW-125 | Verrouiller le contenu du ZIP Windows | PR #194 | Fusionné |
+| TW-126 | Stabiliser les parcours runtime Windows | PR #195 | Fusionné |
+| TW-126 | Établir une roadmap unique | PR #196 | Fusionné ; `ROADMAP.md` devient la seule roadmap |
+| TW-127 | Utiliser réellement le thème système natif | PR #197 | Fusionné ; validation visuelle réelle à compléter |
+| TW-128 | Consolider la CI et supprimer les builds Windows redondants | PR #198 | Fusionné |
+| TW-129 | Consolider les contrôles légers dans un seul workflow | PR #199 | Fusionné |
+| TW-130 | Préflight SQLite strictement en lecture seule | PR #200 | Fusionné |
+| TW-131 | Workflow Tests reproductible et frugal | PR #201 | Fusionné |
+| TW-132 | Build Windows reproductible et vérifiable | PR #202 | Fusionné |
+| TW-133 | Vérifier réellement le manifeste du portable Windows | PR #203 | Fusionné |
+| TW-134 | Publier automatiquement les builds Windows dans les Releases | PR #204 | Fusionné |
+| TW-136 | Centraliser et fiabiliser toutes les dates | PR #205 | Fusionné |
+| TW-137 | Corriger les libellés Unicode du calendrier | PR #206 | Fusionné |
+| TW-138 | Migrer le socle historique en UTF-8 | PR #207 | Fusionné |
+| TW-138 | Regrouper GitHub Actions dans un workflow unique | PR #208 | Fusionné |
+| TW-139 | Auditer et stabiliser les parcours runtime | PR #209 | **Brouillon ouvert ; recette Windows réelle requise** |
+| TW-139 | Supprimer définitivement les découpages manuels de dates | PR #210 | Fusionné |
+| TW-140 | Fiabiliser les champs masqués de dates | PR #211 | Fusionné |
+| TW-141 | Fiabiliser les listes du filtre recrutement | PR #212 | Fusionné |
+| TW-142 | Fiabiliser la sélection multiple native | PR #213 | Fusionné |
+| TW-143 | Corriger les filtres des boîtes d’export | PR #214 | Fusionné |
 
-1. démarrage de l'exécutable portable ;
-2. présence de toutes les dépendances et ressources ;
-3. ouverture d'une base existante ;
-4. affichage de la liste des salariés ;
-5. ouverture d'une fiche individuelle ;
-6. chargement de tous les onglets ;
-7. modification, enregistrement et relecture ;
-8. sauvegarde et restauration sur copie ;
-9. fermeture propre ;
-10. journalisation exploitable des erreurs.
+### Collisions historiques d’identifiants TW
 
-## 4. Parcours minimal de validation Windows
+Les identifiants `TW-123`, `TW-126`, `TW-138` et `TW-139` ont été réutilisés dans l’historique avant la consolidation de la gouvernance documentaire. Ces collisions sont conservées comme faits historiques et ne doivent pas être réécrites artificiellement.
 
-Un build n'est publiable que si le parcours suivant est entièrement validé sur Windows depuis un dossier fraîchement décompressé, sans Python installé :
+**À compter de cette consolidation, un identifiant `TW-*` déjà présent dans une branche, un commit, une issue ou une PR ne doit plus être réattribué.**
 
-- lancement de `Teamworks.exe` ;
-- ouverture d'une copie de base réelle ;
-- affichage de l'accueil ;
+## 4. Priorité immédiate — stabilisation avant pré-release
+
+Aucune nouvelle fonction métier, convention collective ou refonte visuelle importante ne doit passer devant les validations suivantes :
+
+1. terminer la recette Windows réelle du lot d’audit runtime ouvert en PR #209 ;
+2. produire un portable Windows depuis `master` avec le workflow unique ;
+3. exécuter le parcours minimal sur une copie de base réelle ;
+4. corriger uniquement les anomalies bloquantes constatées ;
+5. documenter les résultats ;
+6. seulement ensuite décider si la version mérite une qualification bêta ou RC.
+
+## 5. Parcours minimal de validation Windows
+
+Un build n’est qualifiable en pré-release que si le parcours suivant est entièrement validé depuis un dossier fraîchement décompressé, sans dépendre d’un environnement développeur :
+
+- lancement de `Teamworks-CCNS.exe` ;
+- ouverture d’une copie de base réelle ;
+- affichage de l’accueil ;
 - affichage de la liste des salariés ;
-- ouverture d'une fiche salarié ;
+- ouverture d’une fiche salarié ;
 - ouverture de chaque onglet ;
-- modification d'une donnée non sensible ;
+- modification d’une donnée de test ;
 - enregistrement ;
 - fermeture et redémarrage ;
 - vérification de la persistance ;
-- création d'une sauvegarde ;
-- restauration d'une copie ;
+- création d’une sauvegarde ;
+- restauration d’une copie ;
 - fermeture sans processus résiduel.
 
-Chaque étape doit avoir un résultat daté : automatique, CI Windows, test manuel développeur, validation utilisateur.
+Chaque étape doit avoir un résultat daté et préciser sa nature : automatique, CI Windows, test manuel développeur ou validation utilisateur.
 
-## 5. Packaging Windows
+## 6. Packaging Windows — état actuel
 
-Le packaging doit :
+Le workflow unique `.github/workflows/ci.yml` construit le paquet Windows uniquement :
 
-- inclure les paquets chargés dynamiquement ;
-- inclure ressources, traductions, icônes, licences et fichiers de version ;
-- échouer si un module ou fichier obligatoire manque ;
-- produire un manifeste de contenu ;
-- produire une somme SHA-256 ;
-- conserver la liste figée des dépendances ;
-- être testé depuis un chemin contenant espaces et caractères accentués ;
-- ne contenir aucun chemin absolu du poste de développement.
+- sur déclenchement manuel explicite avec l’option de build ;
+- sur tag `v*`.
 
-Les modules chargés via `importlib`, `__getattr__`, plugins ou imports conditionnels doivent être inventoriés et contrôlés automatiquement.
+Le packaging est actuellement fondé sur **Python 3.11**, **Windows Server 2022** et **PyInstaller 6.16.0**.
 
-## 6. Thèmes et affichage
+Le build :
 
-Le mode `Système` doit reprendre le thème natif de Windows, Linux ou macOS.
+- inventorie les modules internes ;
+- inclut les paquets chargés dynamiquement ;
+- inclut ressources et fichiers de version essentiels ;
+- exécute un smoke test de démarrage ;
+- produit un manifeste UTF-8 ;
+- vérifie les empreintes SHA-256 des fichiers ;
+- produit la somme SHA-256 du ZIP ;
+- conserve la liste des dépendances réellement utilisées ;
+- publie une GitHub Release uniquement lorsqu’un tag correspond exactement à `VERSION`.
 
-Le thème doit s'appliquer à l'ensemble de l'interface wxPython : fenêtres, panneaux, boîtes de dialogue, listes, arbres, notebooks, champs, boutons, menus et zones de texte.
+Ce niveau de packaging est une condition nécessaire mais non suffisante pour une RC.
 
-Les modes `Clair` et `Sombre` sont des surcharges explicites. Un thème partiel n'est pas considéré comme livré.
+## 7. CI — état actuel
 
-La validation comprend au minimum :
+La CI doit rester **unique, lisible et frugale**.
 
-- Windows 11 clair ;
-- Windows 11 sombre ;
-- changement de thème puis redémarrage ;
-- lisibilité de tous les textes ;
-- absence de panneaux blancs isolés en mode sombre ;
-- contraste suffisant des éléments sélectionnés, désactivés et en erreur.
+Le seul workflow autorisé est `.github/workflows/ci.yml`.
 
-## 7. Inventaire technique obligatoire
+Il regroupe :
 
-Avant toute nouvelle extension métier, documenter :
+- compilation et audits sur Ubuntu 24.04 / Python 3.11 ;
+- politique UTF-8 ;
+- tests automatisés ;
+- parcours critiques Windows sur Windows Server 2022 ;
+- build portable uniquement sur demande explicite ou tag.
 
-- écrans existants ;
-- tables et fichiers de données utilisés ;
-- imports dynamiques ;
-- dépendances externes ;
-- fonctions opérationnelles ;
-- fonctions partielles ;
-- fonctions mortes ;
-- règles historiques héritées ;
-- règles ajoutées pour PMSL ;
-- zones sans tests.
+Aucun deuxième workflow ne doit être ajouté pour contourner ou dupliquer ces contrôles.
 
-## 8. Socle RH neutre
+## 8. Thèmes et affichage
+
+Le mode `Système` doit reprendre les couleurs natives exposées par wxWidgets. Les modes `Clair` et `Sombre` restent des surcharges explicites.
+
+Le code de préférences, de persistance, de restauration et de thème natif est intégré. La validation manuelle doit encore confirmer sur les écrans prioritaires :
+
+- lisibilité complète ;
+- absence de panneaux incohérents ;
+- absence de texte tronqué avec l’échelle choisie ;
+- persistance après redémarrage ;
+- comportement correct des sélections et états désactivés.
+
+## 9. Données, encodages et dates
+
+État consolidé :
+
+- sources et ressources textuelles suivies migrées vers UTF-8 ;
+- compatibilité avec certains anciens encodages conservée aux frontières d’import ;
+- normalisation centrale des dates historiques ;
+- suppression des découpages manuels de dates recensés ;
+- champs masqués de dates fiabilisés ;
+- aucune migration destructive de la base réalisée dans ces lots.
+
+Toute future migration de données devra rester séparée, sauvegardée et réversible.
+
+## 10. Audit runtime en cours
+
+La PR #209 reste la référence du chantier de recette runtime globale. Elle couvre notamment :
+
+- Individus ;
+- Présences ;
+- Recrutement ;
+- Contrats / DUE ;
+- Frais ;
+- Paramètres ;
+- Rapports ;
+- Impression / publipostage.
+
+Son audit automatisable est avancé, mais **sa fusion reste conditionnée à la recette Windows manuelle sur base réelle**. Aucun document ne doit la présenter comme terminée avant cette validation.
+
+## 11. Socle RH neutre après stabilisation
 
 Après validation du parcours minimal :
 
@@ -125,18 +192,16 @@ Après validation du parcours minimal :
 - sauvegardes ;
 - exports.
 
-Chaque bloc doit être utilisable indépendamment des conventions collectives.
+Chaque bloc doit rester utilisable indépendamment des conventions collectives.
 
-## 9. Moteur réglementaire
+## 12. Moteur réglementaire
 
-Les règles ne doivent pas être dispersées dans les écrans.
-
-Chaque règle doit comporter :
+Les règles ne doivent pas être dispersées dans les écrans. Chaque règle doit comporter au minimum :
 
 - identifiant stable ;
-- domaine : légal, conventionnel, accord PMSL ou paramétrage interne ;
+- domaine ;
 - source ;
-- date d'effet ;
+- date d’effet ;
 - population concernée ;
 - paramètres ;
 - méthode de calcul ;
@@ -145,11 +210,11 @@ Chaque règle doit comporter :
 - tests associés ;
 - historique de version.
 
-Une règle n'est jamais déclarée prise en charge sans cas de tests démontrés.
+Une règle n’est jamais déclarée prise en charge sans cas de tests démontrés.
 
-## 10. Périmètre CCNS PMSL
+## 13. Périmètre CCNS PMSL
 
-Ordre de traitement :
+Ordre de consolidation métier après stabilisation :
 
 1. groupes et classifications ;
 2. minima conventionnels et historique des grilles ;
@@ -165,9 +230,7 @@ Ordre de traitement :
 12. services civiques ;
 13. salariés mineurs.
 
-Chaque contrôle doit afficher la règle, les données utilisées, le résultat et les données manquantes.
-
-## 11. Intégrations après stabilisation
+## 14. Intégrations après stabilisation
 
 - imports CSV ou Excel ;
 - rapprochement Noethys ;
@@ -180,20 +243,7 @@ Chaque contrôle doit afficher la règle, les données utilisées, le résultat 
 
 Aucune intégration ne doit fragiliser le socle local.
 
-## 12. Versionnement réaliste
-
-- `0.1.x` : démarrage et écrans essentiels réparés ;
-- `0.2.x` : parcours salarié complet validé ;
-- `0.3.x` : contrats, absences, congés et sauvegardes fiables ;
-- `0.4.x` : planning et pointage ;
-- `0.5.x` : moteur de règles isolé et testé ;
-- `0.6.x` : premier périmètre CCNS validé ;
-- `0.7.x` : exports et contrôles consolidés ;
-- `0.8.x` : bêta interne PMSL ;
-- `0.9.x` : préproduction sur copie réelle ;
-- `1.0.0` : usage réel possible avec procédure de sauvegarde, restauration et retour arrière validée.
-
-## 13. Critères de passage
+## 15. Critères de maturité
 
 ### Bêta interne
 
@@ -209,26 +259,31 @@ Aucune intégration ne doit fragiliser le socle local.
 - anomalies bloquantes corrigées ;
 - tests de non-régression exécutés ;
 - packaging reproductible ;
-- validation explicite de l'utilisateur.
+- validation explicite de l’utilisateur.
 
 ### Version stable
 
-- période d'utilisation réelle sans anomalie bloquante ;
+- période d’utilisation réelle sans anomalie bloquante ;
 - procédure de secours documentée ;
 - données récupérables ;
 - règles métier critiques sourcées et testées ;
 - limites connues publiées.
 
-## 14. Mode de développement
+## 16. Mode de développement
 
 - un seul fichier de roadmap : `ROADMAP.md` ;
 - pas de ZIP à chaque PR ;
+- workflow GitHub Actions unique ;
 - PR regroupées par objectif testable ;
 - aucune fusion sans critère de sortie explicite ;
-- aucun ticket fermé sur simple présence de code ;
 - changelog fondé sur des fonctions vérifiées ;
-- priorité aux parcours complets plutôt qu'au nombre de commits.
+- priorité aux parcours complets plutôt qu’au nombre de commits ;
+- aucun nouvel identifiant TW sans vérification préalable de son absence dans l’historique.
 
-## 15. Prochain jalon
+## 17. Prochain jalon
 
-Le prochain jalon est la stabilisation du parcours Windows minimal et du thème système natif. Aucun numéro de RC ne sera utilisé avant validation complète de ce jalon.
+Le prochain jalon est **la validation Windows réelle du socle actuel**, pas l’ajout de nouvelles fonctionnalités.
+
+La séquence est :
+
+**PR #209 / recette runtime → build portable `master` → parcours minimal sur copie réelle → correction des seuls blocages → décision de qualification pré-release.**
