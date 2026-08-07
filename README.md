@@ -2,233 +2,141 @@
 
 Fork de **Teamworks** orienté **CCNS** pour la gestion d’équipes, de contrats, de classifications et de contrôles métier dans le sport associatif.
 
-Projet d’origine : Teamworks  
-Cible du fork : **structurer une surcouche CCNS utile, lisible et progressive**, branchée sur les écrans réellement utilisés dans Teamworks.
+Projet d’origine : Teamworks.
 
----
+> **Statut actuel : `0.9.0-dev`.** Le dépôt n’est pas encore qualifié bêta, RC ou stable. Une qualification de pré-release exige encore la validation manuelle du parcours Windows minimal sur une copie de base réelle.
 
-## Positionnement du fork
+## Positionnement
 
-Teamworks-CCNS n’a pas vocation à être une réécriture complète de Teamworks.
+Teamworks-CCNS n’est pas une réécriture complète de Teamworks. Le projet conserve le socle historique utile, le migre progressivement vers Python 3 / wxPython Phoenix et ajoute une couche métier CCNS raccordée aux écrans existants.
 
-Le projet vise à :
+Les points d’entrée principaux restent :
 
-- conserver les usages utiles déjà présents dans Teamworks ;
-- ajouter un **cœur métier CCNS** dédié ;
-- introduire des **contrôles métier** exploitables ;
-- faire remonter les alertes aux bons endroits de l’interface ;
-- éviter la multiplication d’écrans parallèles quand un point d’entrée pertinent existe déjà.
+- l’accueil et ses alertes ;
+- la fenêtre **Dossiers incomplets** pour la supervision ;
+- la **fiche individuelle** pour la lecture détaillée ;
+- les écrans **contrats** pour les corrections ;
+- l’**audit CCNS** pour la vue transverse et les exports.
 
-En pratique :
+## État technique consolidé
 
-- l’**accueil** sert d’appel rapide ;
-- la fenêtre **Dossiers incomplets** sert de supervision globale par individu ;
-- la **fiche individuelle** sert de point de lecture détaillé ;
-- les **écrans contrats** restent le point naturel de correction ;
-- l’**audit CCNS** sert de vue transverse et exportable.
+Le dépôt a désormais franchi plusieurs étapes importantes :
 
----
+- migration Python 3 / wxPython Phoenix largement consolidée ;
+- socle historique converti en UTF-8 ;
+- normalisation centrale des dates et suppression des découpages manuels fragiles ;
+- préférences d’affichage Système / Clair / Sombre et échelle de police ;
+- thème Système basé sur les couleurs natives exposées par wxWidgets ;
+- diagnostic de premier démarrage et préflight SQLite en lecture seule ;
+- packaging Windows portable reproductible avec manifeste et sommes SHA-256 ;
+- publication automatique des builds de version lors d’un tag conforme à `VERSION` ;
+- workflow GitHub Actions unique ;
+- tests Linux et parcours critiques Windows regroupés dans ce workflow ;
+- corrections récentes des listes, sélections multiples et boîtes d’export.
 
-## Ce que le fork introduit
+La référence de planification est **uniquement `ROADMAP.md`**. Les autres documents détaillent un domaine mais ne doivent pas porter de roadmap concurrente.
 
-### 1. Un cœur métier CCNS
-Le fork prépare une couche dédiée pour gérer notamment :
+## Couche métier CCNS
 
-- personnes ;
-- profils juridiques ;
+Le fork contient notamment :
+
+- personnes et profils juridiques ;
 - contrats ;
 - classifications CCNS ;
 - grilles salariales ;
 - affectations ;
-- règles métier ;
-- résultats de contrôle ;
-- anomalies ;
-- compteurs individuels.
-
-### 2. Des contrôles CCNS
-Le moteur posé dans le fork couvre déjà la logique de base autour de :
-
-- classification présente ou absente ;
-- grille salariale présente ou absente ;
-- calcul du minimum conventionnel depuis une grille ;
-- comparaison entre salaire saisi et minimum théorique ;
-- temps partiel court ;
-- ancienneté standard ;
-- premiers cas CEE ;
-- premiers cas apprentissage.
-
-### 3. Une intégration progressive dans Teamworks
-L’intégration est pensée autour des écrans existants, notamment :
-
-- gadget d’accueil CCNS ;
-- extension CCNS de la fenêtre **Dossiers incomplets** ;
-- synthèse CCNS par individu dans la **fiche individuelle** ;
-- audit CCNS des contrats ;
-- listes exportables ;
-- points d’ouverture directe des contrats.
-
----
-
-## Architecture projet
-
-Le fork s’organise autour de quatre niveaux :
-
-1. **cœur métier**
-2. **moteur de contrôle**
-3. **raccord Teamworks**
-4. **points d’entrée interface**
-
-### Vue simple
-
-```text
-Accueil Teamworks
- └─ Gadget CCNS
-      └─ alertes prioritaires / ouverture contrat
-
-Dossiers incomplets
- └─ supervision CCNS par individu
-      ├─ alertes bloquantes
-      ├─ contrats à revoir
-      └─ synthèse globale
-
-Fiche individuelle
- └─ onglet Synthèse CCNS
-      └─ détail des contrats et anomalies de la personne
-
-Audit contrats
- └─ lecture transverse
-      ├─ filtres
-      ├─ tri par individu puis gravité
-      ├─ export CSV
-      └─ ouverture contrat
-```
-
----
-
-## État d’avancement
-
-### Déjà posé
-- socle domaine ;
-- moteur de contrôle ;
-- anomalies ;
-- calcul des minima depuis grilles ;
-- calcul d’ancienneté standard ;
-- bootstrap de données de référence ;
-- seed Teamworks ;
-- audit CCNS des contrats ;
-- liste d’audit exportable ;
-- filtres ;
-- marquage visuel ;
-- tri par individu puis gravité ;
-- synthèse CCNS par individu ;
-- extension de la fenêtre **Dossiers incomplets** ;
-- gadgets d’accueil CCNS ;
-- premiers raccords au dépôt Teamworks.
-
-### À consolider
-- branchements effectifs dans les menus et écrans réels ;
-- validation des imports et noms exacts de classes Teamworks ;
-- tests manuels complets dans le dépôt réel ;
-- consolidation des tables et colonnes réellement utiles ;
-- durcissement progressif des cas métier spécifiques.
-
----
-
-## Documents utiles
-
-Le dépôt a vocation à contenir une documentation projet simple et lisible, notamment :
-
-- cartographie fonctionnelle et technique ;
-- ordre de migration ;
-- objets conventionnels ;
-- activité et affectations ;
-- moteur et anomalies ;
-- contrôles CCNS détaillés ;
-- synthèse d’intégration dans Teamworks ;
-- règles de développement relatives aux performances ;
-- règles de pérennité technique, de compatibilité multiplateforme et de gestion des dépendances ;
-- guide opérationnel des agents et contributeurs (`AGENTS.md`) ;
-- matrice de compatibilité réelle (`docs/MATRICE_COMPATIBILITE.md`) ;
-- feuille de route de maintenance (`docs/FEUILLE_ROUTE_MAINTENANCE.md`) ;
-- audit architectural pour l’évolution long terme (`docs/ARCHITECTURE_EVOLUTION.md`).
-
----
-
-## Principe de conception
-
-Le principe directeur du fork est le suivant :
-
-> **pas de surcouche décorative ; une surcouche métier CCNS utile, progressive et branchée sur les écrans réellement utilisés.**
-
----
-
-## Installation
-
-Les modalités d’installation restent proches de Teamworks tant que le fork poursuit son intégration progressive.
-
-### Linux
-
-1. Installer Python 3.7 ou plus.
-2. Ouvrir un terminal.
-3. Se placer dans le répertoire du projet.
-4. Installer les dépendances :
-
-```bash
-pip install -r requirements.txt
-```
-
-### Windows
-
-1. Installer Python 3.7 ou plus.
-2. Cocher l’option d’ajout au `PATH` lors de l’installation.
-3. Ouvrir l’invite de commandes.
-4. Se placer dans le répertoire du projet.
-5. Installer les dépendances :
-
-```bash
-pip install -r requirements.txt
-```
-
----
-
-## Lancement
-
-Depuis le répertoire `teamworks/` :
-
-```bash
-python Teamworks.py
-```
-
----
-
-## Objectif du projet
-
-L’objectif n’est pas seulement de stocker davantage d’informations RH.
-
-L’objectif est de permettre à Teamworks de mieux couvrir :
-
-- les contrats et cadres d’emploi ;
-- les classifications CCNS ;
-- les minima conventionnels ;
-- la lecture des anomalies ;
-- les points de contrôle utiles au quotidien ;
-- la supervision par individu et par contrat.
-
----
-
-## Statut
-
-Le projet est en cours de structuration active.
-
-Le fork est déjà au-delà d’un simple cadrage :
-il constitue une **base d’implémentation cohérente** pour une extension CCNS de Teamworks, mais demande encore de la consolidation côté intégration réelle.
-
-### Couche d’accès aux données CCNS
+- règles métier et résultats de contrôle ;
+- anomalies et compteurs individuels ;
+- audit CCNS et listes exportables ;
+- synthèse CCNS par individu.
 
 Une première couche moderne de lecture des données CCNS est introduite au-dessus de `GestionDB` :
 
 - `domain/repositories/ccns_data.py` définit les DTO de lecture ;
 - `infrastructure/persistence/ccns_data_reader.py` centralise les requêtes SQL pour les contrats, classifications, grilles et lignes de grilles ;
-- `teamworks/CcnsCore/audit_contracts_ccns.py` consomme ce lecteur au lieu de porter directement les requêtes SQL.
+- `teamworks/CcnsCore/audit_contracts_ccns.py` consomme ce lecteur.
 
-Cette couche ne remplace pas encore `GestionDB`; elle prépare une migration progressive sans dépendance wxPython et sans changement de comportement utilisateur. Voir `docs/40-couche-acces-donnees.md`.
+Cette couche prépare une migration progressive sans modifier le comportement utilisateur ni imposer une refonte brutale de `GestionDB`.
+
+## Environnement actuellement validé par la CI
+
+La CI de référence utilise :
+
+- **Python 3.11** ;
+- **Ubuntu 24.04** pour les tests et audits du socle ;
+- **Windows Server 2022** pour les parcours critiques wxPython et le packaging ;
+- `pytest==8.4.1` et `six==1.17.0` pour le job de tests ;
+- `PyInstaller==6.16.0` pour le build Windows.
+
+Cela ne signifie pas que toutes les plateformes ou versions de Python sont qualifiées. La matrice réelle se trouve dans `docs/MATRICE_COMPATIBILITE.md`.
+
+## Installation et lancement depuis les sources
+
+Pour le développement courant, utiliser **Python 3.11**, version actuellement exercée par la CI.
+
+```bash
+python -m pip install -r requirements.txt
+cd teamworks
+python Teamworks.py
+```
+
+Les anciennes mentions « Python 3.7 ou plus » ne constituent plus une cible supportée.
+
+## Paquet Windows portable
+
+Le build Windows est volontairement coûteux et n’est pas lancé automatiquement pour chaque modification. Il est déclenché :
+
+- manuellement via le workflow unique avec l’option de build Windows ;
+- automatiquement lors d’un tag `v*` conforme au contenu de `VERSION`.
+
+Le paquet vérifie notamment :
+
+- la présence des modules internes inventoriés ;
+- les ressources essentielles ;
+- le démarrage de l’exécutable ;
+- un manifeste UTF-8 des fichiers ;
+- les empreintes SHA-256 du contenu et de l’archive ;
+- la liste des dépendances utilisées pour le build.
+
+Un ZIP construit avec succès n’est toutefois **pas** à lui seul une RC.
+
+## Validation avant pré-release
+
+Le prochain jalon est un parcours Windows manuel complet depuis un dossier fraîchement décompressé, sur une copie de base réelle :
+
+1. lancer l’exécutable ;
+2. ouvrir la base ;
+3. afficher l’accueil et la liste des salariés ;
+4. ouvrir une fiche individuelle et tous ses onglets ;
+5. modifier une donnée de test, enregistrer et relire ;
+6. vérifier sauvegarde et restauration sur copie ;
+7. fermer proprement sans processus résiduel.
+
+La qualification bêta/RC ne sera posée qu’après preuve de ce parcours conformément à `ROADMAP.md`.
+
+## CI et frugalité
+
+Le dépôt impose un seul fichier de workflow : `.github/workflows/ci.yml`.
+
+La politique est volontairement frugale :
+
+- un job Linux automatique pour compilation, audits et suite de tests ;
+- des parcours critiques Windows regroupés ;
+- aucun workflow parallèle ou auto-modifiant ;
+- build du portable uniquement sur demande explicite ou tag de version ;
+- diagnostics conservés brièvement lorsque cela suffit.
+
+## Documentation de référence
+
+- `ROADMAP.md` — **roadmap officielle et unique** ;
+- `AGENTS.md` — règles opérationnelles pour les agents et contributeurs ;
+- `docs/MATRICE_COMPATIBILITE.md` — état réel des environnements et plateformes ;
+- `docs/CI_POLICY.md` — politique CI ;
+- `docs/35-perennite-technique.md` — règles de pérennité et dépendances ;
+- `docs/30-cartographie-teamworks-ccns.md` — cartographie fonctionnelle et technique ;
+- `docs/40-couche-acces-donnees.md` — couche moderne d’accès aux données CCNS ;
+- `docs/FEUILLE_ROUTE_MAINTENANCE.md` — priorités de maintenance, sans roadmap concurrente.
+
+## Principe directeur
+
+> **Pas de surcouche décorative : une surcouche métier CCNS utile, progressive, testable et branchée sur les écrans réellement utilisés.**
