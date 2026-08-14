@@ -81,7 +81,7 @@ def audit_compile_warnings(root: Path, path: Path, lines: list[str]) -> list[Fin
     with warnings.catch_warnings(record=True) as caught:
         warnings.simplefilter("always")
         try:
-            compile(text, rel, "exec", flags=ast.PyCF_ONLY_AST, dont_inherit=True)
+            compile(text, rel, "exec", dont_inherit=True)
         except SyntaxError:
             return findings
     seen: set[tuple[int, str]] = set()
