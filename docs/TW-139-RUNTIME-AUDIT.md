@@ -76,12 +76,9 @@ Obtenir une navigation sans traceback sur les écrans principaux de Teamworks av
 - chemins runtime Windows ;
 - absence de blocage de l'interface lors des chargements.
 
-## Tests exécutés
+## Tests ciblés TW-139
 
-```
-python -m unittest tests/test_tw139_runtime_guards.py -v
-Ran 17 tests in 0.002s — OK
-```
+La PR contient `tests/test_tw139_runtime_guards.py` avec 17 gardes de non-régression. La suite globale du dépôt reste la source de vérité en CI ; aucun job ni workflow supplémentaire n'est ajouté spécifiquement pour TW-139.
 
 ## Parcours nécessitant encore une recette Windows manuelle
 
@@ -96,18 +93,18 @@ Ran 17 tests in 0.002s — OK
 
 ## Discipline CI
 
-- conserver le workflow unique existant ;
-- ajouter uniquement des tests ciblés et frugaux ;
-- ne pas créer de nouveau workflow ;
-- regrouper les correctifs issus de l'audit dans une seule PR.
+- conserver strictement le workflow unique `.github/workflows/ci.yml` de `master` ;
+- les tests TW-139 passent par la suite globale existante ;
+- aucun job de détection de chemins ni workflow spécialisé ;
+- regrouper les correctifs issus de l'audit dans cette PR unique.
 
 ## Critère de fermeture
 
 - aucun traceback connu sur les parcours principaux ;
-- tests existants au vert ;
-- recette Windows renseignée ;
+- CI existante au vert ;
+- recette Windows réelle renseignée ;
 - aucun nouveau workflow GitHub Actions.
 
-## État technique au 01/08/2026
+## État technique au 14/08/2026
 
-Aucune occurrence `DB.ResultatReq()[0]` non protégée dans le périmètre audité. Tous les défauts confirmés automatisables sont couverts. La PR est techniquement prête. Une recette Windows manuelle sur les parcours restants est requise avant fusion.
+Aucune occurrence `DB.ResultatReq()[0]` non protégée dans le périmètre audité. Tous les défauts confirmés automatisables de TW-139 sont couverts. La surcouche CI historique de cette branche a été retirée afin d'utiliser exactement le workflow frugal de `master`. La PR reste volontairement en brouillon jusqu'à la recette Windows réelle sur copie de base.
