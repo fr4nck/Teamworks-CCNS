@@ -87,18 +87,20 @@ class MyDialog(wx.Dialog):
         self.EndModal(wx.ID_OK)
 
     def GetIDcandidat(self):
-        if self.noteBook.GetSelection() == 0 :
-            IDcandidat = self.listCtrl_candidats.Selection()[0].IDcandidat
-        else:
-            IDcandidat = 0
-        return IDcandidat
+        if self.noteBook.GetSelection() != 0:
+            return 0
+        selection = self.listCtrl_candidats.Selection()
+        if not selection:
+            return 0
+        return selection[0].IDcandidat
     
     def GetIDpersonne(self):
-        if self.noteBook.GetSelection() == 1 :
-            IDpersonne = self.listCtrl_personnes.Selection()[0].IDpersonne
-        else:
-            IDpersonne = 0
-        return IDpersonne
+        if self.noteBook.GetSelection() != 1:
+            return 0
+        selection = self.listCtrl_personnes.Selection()
+        if not selection:
+            return 0
+        return selection[0].IDpersonne
 
 
 class BarreRecherche_candidats(wx.SearchCtrl):
