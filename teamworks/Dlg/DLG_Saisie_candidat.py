@@ -385,8 +385,16 @@ class Panel(wx.Panel):
         req = """SELECT civilite, nom, prenom, date_naiss, age, adresse_resid, cp_resid, ville_resid, memo
         FROM candidats WHERE IDcandidat = %d""" % self.IDcandidat
         DB.ExecuterReq(req)
-        listeDonnees = DB.ResultatReq()[0]
+        resultats = DB.ResultatReq()
         DB.Close()
+        if not resultats:
+            wx.MessageBox(
+                _(u"Ce candidat n'existe plus dans la base de données."),
+                _(u"Candidat introuvable"),
+                wx.OK | wx.ICON_ERROR,
+            )
+            return
+        listeDonnees = resultats[0]
         
         civilite, nom, prenom, date_naiss, age, adresse_resid, cp_resid, ville_resid, memo = listeDonnees
         
