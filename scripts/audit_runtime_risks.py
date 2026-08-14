@@ -10,6 +10,7 @@ import argparse
 import ast
 import json
 import re
+import warnings
 from collections import Counter
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -69,6 +70,31 @@ def audit_text(root: Path, path: Path, lines: list[str]) -> list[Finding]:
             findings.append(Finding("dynamic-execution", rel, number, stripped))
         if re.search(r"open\([^\n]*[\"'](?:w|a|x)b?[\"']", line):
             findings.append(Finding("file-write", rel, number, stripped))
+    return findings
+
+
+def audit_compile_warnings(root: Path, path: Path, lines: list[str]) -> list[Finding]:
+    """Capture Python parser/compiler warnings without executing the module."""
+    rel = path.relative_to(root).as_posix()
+    text = "\n".join(lines) + "\n"
+    findings: list[Finding] = []
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        try:
+            compile(text, rel, "exec", flags=ast.PyCF_ONLY_AST, dont_inherit=True)
+        except SyntaxError:
+            return findings
+    seen: set[tuple[int, str]] = set()
+    for warning in caught:
+        if not issubclass(warning.category, (SyntaxWarning, DeprecationWarning)):
+            continue
+        line = int(getattr(warning, "lineno", 0) or 0)
+        detail = str(warning.message)
+        key = (line, detail)
+        if key in seen:
+            continue
+        seen.add(key)
+        findings.append(Finding("python-compile-warning", rel, line, detail))
     return findings
 
 
@@ -281,6 +307,7 @@ def run(root: Path) -> dict:
     for path in files:
         lines = source_lines(path)
         findings.extend(audit_text(root, path, lines))
+        findings.extend(audit_compile_warnings(root, path, lines))
         findings.extend(audit_ast(root, path, lines))
 
     counts = Counter(item.category for item in findings)
