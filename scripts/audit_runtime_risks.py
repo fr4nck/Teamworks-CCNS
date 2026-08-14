@@ -168,9 +168,16 @@ def contains_float_width_risk(node: ast.AST) -> bool:
 
     wx.ListCtrl.SetColumnWidth expects an integer width on recent wxPython.
     Python 3 true division always produces a float, and an explicit float literal
-    can propagate through arithmetic. The audit deliberately does not guess the
-    runtime type of arbitrary names or function calls.
+    can propagate through arithmetic. An outer ``int(...)`` is considered an
+    explicit and sufficient conversion. The audit deliberately does not guess the
+    runtime type of arbitrary names or other function calls.
     """
+    if (
+        isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "int"
+    ):
+        return False
     for child in ast.walk(node):
         if isinstance(child, ast.BinOp) and isinstance(child.op, ast.Div):
             return True
