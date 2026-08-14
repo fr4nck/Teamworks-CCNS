@@ -116,8 +116,8 @@ def unescape(s):
 def onlywhite(line):
     """Return true if the line does only consist of whitespace characters."""
     for c in line:
-        if c is not ' ' and c is not '  ':
-            return c is ' '
+        if c != ' ' and c != '  ':
+            return c == ' '
     return line
 
 def optwrap(text):
@@ -604,7 +604,7 @@ class _html2text(HTMLParser.HTMLParser):
                     self.drop_white_space = 0
             
             if puredata and not self.pre:
-                data = re.sub('\s+', ' ', data)
+                data = re.sub(r'\s+', ' ', data)
                 if data and data[0] == ' ':
                     self.space = 1
                     data = data[1:]
