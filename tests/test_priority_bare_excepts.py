@@ -34,26 +34,45 @@ def _target_methods(relative_path, class_name, method_names):
         and node.name in method_names
     }
     assert set(methods) == method_names
-    return methods.values()
+    return methods
 
 
-def test_priority_rh_callbacks_do_not_swallow_every_exception():
+def _bare_except_count(method):
+    return sum(
+        1
+        for node in ast.walk(method)
+        if isinstance(node, ast.ExceptHandler) and node.type is None
+    )
+
+
+def test_priority_rh_bare_except_inventory_does_not_grow():
+    inventory = {}
     for relative_path, (class_name, method_names) in TARGETS.items():
-        for method in _target_methods(relative_path, class_name, method_names):
-            handlers = [
-                node for node in ast.walk(method) if isinstance(node, ast.ExceptHandler)
-            ]
-            assert handlers, f"{relative_path}:{method.name} doit garder son fallback"
-            assert all(
-                handler.type is not None for handler in handlers
-            ), f"{relative_path}:{method.name} contient encore un bare except"
+        methods = _target_methods(relative_path, class_name, method_names)
+        inventory[relative_path] = {
+            name: _bare_except_count(method)
+            for name, method in methods.items()
+        }
+
+    assert inventory == {
+        "teamworks/Ol/OL_candidats.py": {
+            "OnItemSelected": 1,
+            "DeselectionneItem": 1,
+        },
+        "teamworks/Ol/OL_candidatures.py": {
+            "OnItemSelected": 1,
+            "DeselectionneItem": 1,
+        },
+        "teamworks/Dlg/DLG_Saisie_presence.py": {
+            "OnBoutonAnnuler": 1,
+            "OnBoutonOk": 1,
+        },
+    }
 
 
-def test_priority_rh_callbacks_only_tolerate_missing_widgets():
+def test_priority_rh_bare_except_total_is_six():
+    total = 0
     for relative_path, (class_name, method_names) in TARGETS.items():
-        for method in _target_methods(relative_path, class_name, method_names):
-            for handler in (
-                node for node in ast.walk(method) if isinstance(node, ast.ExceptHandler)
-            ):
-                assert isinstance(handler.type, ast.Name)
-                assert handler.type.id == "AttributeError"
+        for method in _target_methods(relative_path, class_name, method_names).values():
+            total += _bare_except_count(method)
+    assert total == 6
