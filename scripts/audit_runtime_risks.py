@@ -163,6 +163,22 @@ def is_nested_scope(node: ast.AST, parents: dict[ast.AST, ast.AST]) -> bool:
     return False
 
 
+def contains_float_width_risk(node: ast.AST) -> bool:
+    """Return True when a width expression can trivially evaluate to float.
+
+    wx.ListCtrl.SetColumnWidth expects an integer width on recent wxPython.
+    Python 3 true division always produces a float, and an explicit float literal
+    can propagate through arithmetic. The audit deliberately does not guess the
+    runtime type of arbitrary names or function calls.
+    """
+    for child in ast.walk(node):
+        if isinstance(child, ast.BinOp) and isinstance(child.op, ast.Div):
+            return True
+        if isinstance(child, ast.Constant) and isinstance(child.value, float):
+            return True
+    return False
+
+
 def audit_ast(root: Path, path: Path, lines: list[str]) -> list[Finding]:
     rel = path.relative_to(root).as_posix()
     text = "\n".join(lines) + "\n"
@@ -180,6 +196,24 @@ def audit_ast(root: Path, path: Path, lines: list[str]) -> list[Finding]:
     binding_lines = module_binding_lines(tree)
     guarded_loads = guarded_compatibility_loads(tree)
     for node in ast.walk(tree):
+        if isinstance(node, ast.Call):
+            func = node.func
+            if (
+                isinstance(func, ast.Attribute)
+                and func.attr == "SetColumnWidth"
+                and len(node.args) >= 2
+                and contains_float_width_risk(node.args[1])
+            ):
+                detail = ast.get_source_segment(text, node.args[1]) or "width expression"
+                findings.append(
+                    Finding(
+                        "wx-column-width-float-risk",
+                        rel,
+                        node.lineno,
+                        detail.strip(),
+                    )
+                )
+
         if not (
             isinstance(node, ast.Name)
             and isinstance(node.ctx, ast.Load)
