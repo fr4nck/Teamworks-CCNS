@@ -176,16 +176,23 @@ class Dialog(wx.Dialog):
         if dlg.ShowModal() == wx.ID_YES :
             dlg.Destroy()
         else:
-            return
             dlg.Destroy()
+            return
         
         # Recherche des paramètres par défaut dans la base DEFAUTS
         DB = GestionDB.DB(nomDB="Defaut.db3")
         req = "SELECT taille, parametres FROM gadgets WHERE nom='%s';" % self.nomGadget
         DB.ExecuterReq(req)
-        donnees = DB.ResultatReq()[0]
+        resultats = DB.ResultatReq()
         DB.Close()
-        self.InitValeurs(donnees)
+        if not resultats:
+            wx.MessageBox(
+                _(u"Les paramètres par défaut du gadget Horloge sont introuvables."),
+                _(u"Réinitialisation impossible"),
+                wx.OK | wx.ICON_ERROR,
+            )
+            return
+        self.InitValeurs(resultats[0])
         
         # Place les valeur dans les contrôles
         self.largeur_texte.SetValue(str(self.val_largeur))
@@ -251,9 +258,16 @@ class Dialog(wx.Dialog):
         DB = GestionDB.DB()
         req = "SELECT taille, parametres FROM gadgets WHERE nom='%s';" % self.nomGadget
         DB.ExecuterReq(req)
-        donnees = DB.ResultatReq()[0]
+        resultats = DB.ResultatReq()
         DB.Close()
-        self.InitValeurs(donnees)
+        if not resultats:
+            self.InitValeurs((
+                "(300, 300)",
+                "{'couleur_face': (255, 255, 255), 'couleur_fond': (0, 0, 0)}",
+            ))
+            return False
+        self.InitValeurs(resultats[0])
+        return True
     
     def InitValeurs(self, donnees):
         # Place les valeurs dans les controles
