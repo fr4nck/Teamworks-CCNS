@@ -381,8 +381,16 @@ class Dialog(wx.Dialog):
         FROM organisateur
         WHERE IDorganisateur=1;"""
         DB.ExecuterReq(req)
-        cp, ville = DB.ResultatReq()[0]
+        resultats = DB.ResultatReq()
         DB.Close()
+        if not resultats:
+            wx.MessageBox(
+                _(u"Les coordonnées de l'organisateur sont introuvables dans la base de données."),
+                _(u"Organisateur introuvable"),
+                wx.OK | wx.ICON_ERROR,
+            )
+            return
+        cp, ville = resultats[0]
         
         # Recherche sur internet
         try :
