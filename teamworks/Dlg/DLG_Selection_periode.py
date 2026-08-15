@@ -79,16 +79,16 @@ class SelectionPeriode(wx.Dialog):
         grid_sizer_base.Add(sizerStaticBox_vacances, 0, wx.EXPAND|wx.LEFT|wx.RIGHT, 10)
         # Mois et Année
         sizerStaticBox_moisAnnee = wx.StaticBoxSizer(self.staticbox_moisAnnee, wx.HORIZONTAL)
-        sizerStaticBox_moisAnnee.Add(self.label_mois, 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
+        sizerStaticBox_moisAnnee.Add(self.label_mois, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
         sizerStaticBox_moisAnnee.Add(self.ctrl_mois, 0, wx.EXPAND|wx.ALL, 5)
-        sizerStaticBox_moisAnnee.Add(self.label_annee, 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
+        sizerStaticBox_moisAnnee.Add(self.label_annee, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
         sizerStaticBox_moisAnnee.Add(self.ctrl_annee, 0, wx.EXPAND|wx.ALL, 5)
         grid_sizer_base.Add(sizerStaticBox_moisAnnee, 0, wx.EXPAND|wx.LEFT|wx.RIGHT, 10)
         # Dates
         sizerStaticBox_dates = wx.StaticBoxSizer(self.staticbox_dates, wx.HORIZONTAL)
-        sizerStaticBox_dates.Add(self.label_date_debut, 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
+        sizerStaticBox_dates.Add(self.label_date_debut, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
         sizerStaticBox_dates.Add(self.ctrl_date_debut, 0, wx.EXPAND|wx.ALL, 5)
-        sizerStaticBox_dates.Add(self.label_date_fin, 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
+        sizerStaticBox_dates.Add(self.label_date_fin, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
         sizerStaticBox_dates.Add(self.ctrl_date_fin, 0, wx.EXPAND|wx.ALL, 5)
         grid_sizer_base.Add(sizerStaticBox_dates, 0, wx.EXPAND|wx.LEFT|wx.RIGHT, 10)
         
