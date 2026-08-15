@@ -65,7 +65,12 @@ class Dialog(wx.Dialog):
         # Importe les données MODELES
         req = "SELECT nom, description, IDclassification, IDtype FROM contrats_modeles WHERE IDmodele=%d ;" % IDmodele
         DB.ExecuterReq(req)
-        listeDonnees = DB.ResultatReq()[0]
+        resultats = DB.ResultatReq()
+        if not resultats:
+            DB.Close()
+            self.dictModeles["IDmodele"] = 0
+            return False
+        listeDonnees = resultats[0]
         self.dictModeles["nom"] = listeDonnees[0]
         self.dictModeles["description"] = listeDonnees[1]        
         self.dictModeles["IDclassification"] = listeDonnees[2]
@@ -80,6 +85,7 @@ class Dialog(wx.Dialog):
             self.dictChamps[item[0]] = item[1]
 
         DB.Close()
+        return True
 
     def Creation_Pages(self):
         """ Creation des pages """
