@@ -127,9 +127,81 @@ jobs:
           if-no-files-found: warn
           retention-days: 1
 
+  detect-changes:
+    name: Détecter les familles de changements
+    runs-on: ubuntu-24.04
+    if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+    timeout-minutes: 5
+    outputs:
+      docs_only: ${{ steps.classify.outputs.docs_only }}
+      has_gui: ${{ steps.classify.outputs.has_gui }}
+
+    steps:
+      - name: Récupérer le dépôt (fetch complet PR ou push)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Classifier les fichiers modifiés
+        id: classify
+        shell: bash
+        run: |
+          python - <<'PY'
+          import os, subprocess, sys
+
+          event = os.environ.get("GITHUB_EVENT_NAME", "")
+          ref = os.environ.get("GITHUB_REF", "")
+
+          # Sur workflow_dispatch : tout exécuter par sécurité
+          if event == "workflow_dispatch":
+              print("docs_only=false")
+              print("has_gui=true")
+              for line in ["docs_only=false", "has_gui=true"]:
+                  with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+                      f.write(line + "\n")
+              sys.exit(0)
+
+          # Déterminer la base de comparaison
+          if event == "pull_request":
+              base = os.environ.get("GITHUB_BASE_SHA") or "HEAD~1"
+          else:
+              base = os.environ.get("GITHUB_EVENT_BEFORE") or "HEAD~1"
+
+          result = subprocess.run(
+              ["git", "diff", "--name-only", base, "HEAD"],
+              capture_output=True, text=True
+          )
+          files = [f.strip() for f in result.stdout.splitlines() if f.strip()]
+          if not files:
+              # Pas de diff détectable : exécuter tout par prudence
+              docs_only, has_gui = False, True
+          else:
+              non_doc = [f for f in files
+                         if not (f.startswith("docs/") or f.endswith(".md"))]
+              gui_paths = ("teamworks/Ctrl/", "teamworks/Dlg/", "teamworks/Ol/",
+                           "requirements/", ".github/requirements-windows-build.txt")
+              has_gui = any(
+                  f.startswith(gui_paths) or "requirements" in f
+                  for f in non_doc
+              )
+              docs_only = len(non_doc) == 0
+
+          print(f"Fichiers modifiés : {len(files)}")
+          print(f"docs_only={str(docs_only).lower()}")
+          print(f"has_gui={str(has_gui).lower()}")
+          with open(os.environ["GITHUB_OUTPUT"], "a") as fh:
+              fh.write(f"docs_only={str(docs_only).lower()}\n")
+              fh.write(f"has_gui={str(has_gui).lower()}\n")
+          PY
+
   windows-smokes:
     name: Parcours critiques Windows
-    if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+    needs: [detect-changes]
+    if: >-
+      ${{
+        !startsWith(github.ref, 'refs/tags/')
+        && needs.detect-changes.outputs.docs_only != 'true'
+      }}
     runs-on: windows-2022
     timeout-minutes: 45
 
@@ -221,6 +293,60 @@ jobs:
             artifacts/**
             functional-report/**
           if-no-files-found: warn
+          retention-days: 1
+
+  macos-smokes:
+    name: Validation macOS (compilation + smoke wx)
+    needs: [detect-changes]
+    if: >-
+      ${{
+        !startsWith(github.ref, 'refs/tags/')
+        && needs.detect-changes.outputs.docs_only != 'true'
+        && needs.detect-changes.outputs.has_gui == 'true'
+      }}
+    runs-on: macos-14
+    timeout-minutes: 30
+
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v4
+
+      - name: Installer Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements/python311-core.txt
+
+      - name: Installer les dépendances socle
+        run: |
+          python -m pip install --requirement requirements/python311-core.txt
+          python -m pip install pytest
+
+      - name: Compiler les modules Python (macOS)
+        run: python -m compileall -q teamworks/Ctrl teamworks/Dlg teamworks/Ol
+
+      - name: Vérifier wx.App minimal (headless)
+        run: |
+          python - <<'PY'
+          import sys
+          import wx
+          app = wx.App(False)
+          app.Destroy()
+          print(f"wx.App créé et détruit — wxPython {wx.version()} Python {sys.version.split()[0]}")
+          PY
+
+      - name: Exécuter les tests de gardes TW-139
+        run: python -m pytest -q tests/test_tw139_runtime_guards.py
+
+      - name: Publier les diagnostics macOS
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: diagnostics-macos
+          path: |
+            pytest-output.txt
+          if-no-files-found: ignore
           retention-days: 1
 
   build-windows:
