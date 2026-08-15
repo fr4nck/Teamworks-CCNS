@@ -120,11 +120,8 @@ class ListView(FastObjectListView):
 
     def OnContextMenu(self, event):
         """Ouverture du menu contextuel """
-        if len(self.Selection()) == 0:
-            noSelection = True
-        else:
-            noSelection = False
-            ID = self.Selection()[0].IDsauvegarde
+        selection = self.Selection()
+        noSelection = len(selection) == 0
                 
         # Création du menu contextuel
         menuPop = UTILS_Adaptations.Menu()
@@ -193,12 +190,13 @@ class ListView(FastObjectListView):
         dlg.Destroy()
 
     def Modifier(self, event):
-        if len(self.Selection()) == 0 :
+        selection = self.Selection()
+        if not selection:
             dlg = wx.MessageDialog(self, _(u"Vous n'avez sélectionné aucune procédure de sauvegarde à modifier dans la liste"), _(u"Erreur de saisie"), wx.OK | wx.ICON_EXCLAMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
-        track = self.Selection()[0]
+        track = selection[0]
         from Dlg import DLG_Saisie_procedure_sauvegarde
         dlg = DLG_Saisie_procedure_sauvegarde.Dialog(self, IDsauvegarde=track.IDsauvegarde)      
         if dlg.ShowModal() == wx.ID_OK:
@@ -206,12 +204,13 @@ class ListView(FastObjectListView):
         dlg.Destroy() 
 
     def Supprimer(self, event):
-        if len(self.Selection()) == 0 :
+        selection = self.Selection()
+        if not selection:
             dlg = wx.MessageDialog(self, _(u"Vous n'avez sélectionné aucune procédure de sauvegarde à supprimer dans la liste"), _(u"Erreur de saisie"), wx.OK | wx.ICON_EXCLAMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
-        track = self.Selection()[0]
+        track = selection[0]
         dlg = wx.MessageDialog(self, _(u"Souhaitez-vous vraiment supprimer cette procédure de sauvegarde ?"), _(u"Suppression"), wx.YES_NO|wx.NO_DEFAULT|wx.CANCEL|wx.ICON_INFORMATION)
         if dlg.ShowModal() == wx.ID_YES :
             DB = GestionDB.DB()
