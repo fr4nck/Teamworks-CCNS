@@ -138,10 +138,11 @@ class Dialog(wx.Dialog):
         DB = GestionDB.DB()
         req = "SELECT IDchamp, categorie, nom, mot_cle, defaut FROM publipostage_champs WHERE IDchamp=%d" % self.IDchamp
         DB.ExecuterReq(req)
-        donnees = DB.ResultatReq()[0]
+        resultats = DB.ResultatReq()
         DB.Close()
-        if len(donnees) == 0: return
-        IDchamp, categorie, nom, mot_cle, defaut = donnees
+        if not resultats:
+            return
+        IDchamp, categorie, nom, mot_cle, defaut = resultats[0]
         # Place les valeurs dans les controles
         self.text_nom.SetValue(nom)
         self.text_defaut.SetValue(defaut)
