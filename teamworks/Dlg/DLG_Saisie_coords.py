@@ -283,8 +283,17 @@ class Dialog(wx.Dialog):
         DB = GestionDB.DB()
         req = "SELECT * FROM %s WHERE IDcoord = %d" % (self.nomTable, self.IDcoord)
         DB.ExecuterReq(req)
-        donnees = DB.ResultatReq()[0]
+        resultats = DB.ResultatReq()
         DB.Close()
+        if not resultats:
+            wx.MessageBox(
+                _(u"Cette coordonnée n'existe plus dans la base de données."),
+                _(u"Coordonnée introuvable"),
+                wx.OK | wx.ICON_ERROR,
+            )
+            wx.CallAfter(self.EndModal, wx.ID_CANCEL)
+            return
+        donnees = resultats[0]
 
         self.categorieSelect = donnees[2]
         self.text_intitule.SetValue(donnees[4] or "")
