@@ -87,9 +87,11 @@ class Dialog(wx.Dialog):
         DB = GestionDB.DB()
         req = "SELECT * FROM valeurs_point WHERE IDvaleur_point=%d" % self.IDvaleur
         DB.ExecuterReq(req)
-        donnees = DB.ResultatReq()[0]
+        resultats = DB.ResultatReq()
         DB.Close()
-        if len(donnees) == 0: return
+        if not resultats:
+            return
+        donnees = resultats[0]
         # Place la valeur dans le controle
         self.text_valeur.SetValue(str(donnees[1]))
         # Place la date dans le cdatePicker 
