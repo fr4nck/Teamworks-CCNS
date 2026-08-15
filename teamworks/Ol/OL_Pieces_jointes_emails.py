@@ -129,10 +129,8 @@ class ListView(FastObjectListView):
 
     def OnContextMenu(self, event):
         """Ouverture du menu contextuel """
-        if len(self.Selection()) == 0:
-            selection = None
-        else:
-            selection = self.Selection()[0]
+        selections = self.Selection()
+        selection = selections[0] if selections else None
 
         # Création du menu contextuel
         menuPop = UTILS_Adaptations.Menu()
@@ -194,6 +192,7 @@ class ListView(FastObjectListView):
         if dlg.ShowModal() == wx.ID_OK:
             chemins = dlg.GetPaths()
         else:
+            dlg.Destroy()
             return
         dlg.Destroy()
         listeTemp = []
@@ -210,22 +209,24 @@ class ListView(FastObjectListView):
         
     def Retirer(self, event):
         """ Retirer pièces """
-        if len(self.Selection()) == 0 :
+        selection = self.Selection()
+        if not selection:
             dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sélectionner une pièce à retirer dans la liste !"), _(u"Erreur de saisie"), wx.OK | wx.ICON_EXCLAMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
-        track = self.Selection()[0]
+        track = selection[0]
         self.listeDonnees.remove(track.fichier)
         self.MAJ() 
 
     def Ouvrir(self, event):
-        if len(self.Selection()) == 0 :
+        selection = self.Selection()
+        if not selection:
             dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sélectionner une pièce à ouvrir dans la liste !"), _(u"Erreur de saisie"), wx.OK | wx.ICON_EXCLAMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
-        track = self.Selection()[0]
+        track = selection[0]
         FonctionsPerso.LanceFichierExterne(track.fichier)
 
     def Apercu(self, event):
