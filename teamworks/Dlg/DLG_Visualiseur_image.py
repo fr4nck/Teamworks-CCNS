@@ -55,7 +55,7 @@ class Visu(wx.ScrolledWindow):
             self.bmp = bmp
         self.SetVirtualSize(wx.Size(bmp.GetWidth(), bmp.GetHeight()))
         self.image = wx.StaticBitmap(self, -1, bmp)
-        self.SetScrollRate((10*ratio)/100, (10*ratio)/100)
+        self.SetScrollRate((10 * ratio) // 100, (10 * ratio) // 100)
         self.Scroll(posX, posY)
         self.Refresh()
 
@@ -156,8 +156,8 @@ class MyFrame(wx.Frame):
     def Plus(self, evt):
         if self.imgORIG != None:
             self.ratio = self.ratio + self.inc
-            largeur = (self.imgORIX * self.ratio)/100
-            hauteur = (self.imgORIY * self.ratio)/100
+            largeur = (self.imgORIX * self.ratio) // 100
+            hauteur = (self.imgORIY * self.ratio) // 100
             self.bmpRESU = self.imgORIG.Scale(largeur, hauteur).ConvertToBitmap()
             self.panneau.Affiche(self.bmpRESU, self.ratio)
             self.barre.SetStatusText("(%s, %s) %s %%"%(self.imgORIX, self.imgORIY, self.ratio), 1)
@@ -165,8 +165,8 @@ class MyFrame(wx.Frame):
     def Moins(self, evt):
         if self.ratio > 5 and self.imgORIG != None:
             self.ratio = self.ratio - self.inc
-            largeur = (self.imgORIX * self.ratio)/100
-            hauteur = (self.imgORIY * self.ratio)/100
+            largeur = (self.imgORIX * self.ratio) // 100
+            hauteur = (self.imgORIY * self.ratio) // 100
             self.bmpRESU = self.imgORIG.Scale(largeur, hauteur).ConvertToBitmap()
             self.panneau.Affiche(self.bmpRESU, self.ratio)
             self.barre.SetStatusText("(%s, %s) %s %%"%(self.imgORIX, self.imgORIY, self.ratio), 1)
