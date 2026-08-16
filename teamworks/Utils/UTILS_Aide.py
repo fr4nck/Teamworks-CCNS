@@ -28,10 +28,12 @@ def Aide(page=None):
     
     # Redirection si aucune licence
     if identifiant == None and code == None :
-        dlg = DLG_Financement.Dialog(None, code="documentation")
-        dlg.ShowModal() 
-        dlg.Destroy()
-        return
+        if UTILS_Config.GetParametre("afficher_offres_externes", defaut=False):
+            dlg = DLG_Financement.Dialog(None, code="documentation")
+            dlg.ShowModal()
+            dlg.Destroy()
+            return
+        # offres désactivées (défaut CCNS) : ouvre l'URL de base sans bloquer
 
     # Si aucune aide existe, propose de renvoyer vers le sommaire
     if page == "" :

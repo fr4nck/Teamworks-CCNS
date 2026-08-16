@@ -129,6 +129,38 @@ class RuntimeGuardRegressionTests(unittest.TestCase):
         self.assertNotIn('DB.ResultatReq()[0][0]', source)
         self.assertIn('if resultats else ""', source)
 
+    def test_afficher_offres_externes_default_disabled(self):
+        """Le paramètre afficher_offres_externes doit être absent de la base => défaut False."""
+        source_aide = self.read_source("teamworks/Utils/UTILS_Aide.py")
+        source_tw = self.read_source("teamworks/Teamworks.py")
+
+        # La porte DLG_Financement est conditionnelle dans UTILS_Aide.Aide()
+        self.assertIn('GetParametre("afficher_offres_externes", defaut=False)', source_aide)
+        self.assertNotIn(
+            "dlg = DLG_Financement.Dialog(None, code=\"documentation\")\n        dlg.ShowModal() \n        dlg.Destroy()\n        return",
+            source_aide,
+        )
+
+        # AnnonceFinancement court-circuite si offres désactivées
+        self.assertIn('GetParametre("afficher_offres_externes", defaut=False)', source_tw)
+        self.assertIn("def AnnonceFinancement(self):", source_tw)
+        idx_annonce = source_tw.index("def AnnonceFinancement(self):")
+        bloc_annonce = source_tw[idx_annonce: idx_annonce + 200]
+        self.assertIn("return False", bloc_annonce)
+
+        # On_propos_soutenir est protégé
+        self.assertIn("def On_propos_soutenir(self, event):", source_tw)
+        idx_soutenir = source_tw.index("def On_propos_soutenir(self, event):")
+        bloc_soutenir = source_tw[idx_soutenir: idx_soutenir + 200]
+        self.assertIn("return", bloc_soutenir)
+
+        # Handler de paramétrage présent
+        self.assertIn("def On_param_offres_externes(self, event):", source_tw)
+        self.assertIn("SetParametre(\"afficher_offres_externes\",", source_tw)
+
+        # Item de menu déclaré
+        self.assertIn('"offres_externes"', source_tw)
+
 
 if __name__ == "__main__":
     unittest.main()

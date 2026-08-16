@@ -317,6 +317,7 @@ class MyFrame(wx.Frame):
             {"code": "menu_parametrage", "label": _(u"Paramétrage"), "items": [
                 #{"code": "preferences", "label": _(u"Préférences"), "infobulle": _(u"Préférences"), "image": "Images/16x16/Mecanisme.png", "action": self.On_param_preferences},
                 {"code": "enregistrement", "label": _(u"Enregistrement"), "infobulle": _(u"Enregistrement"), "image": "Images/16x16/Cle.png", "action": self.On_param_enregistrement},
+                {"code": "offres_externes", "label": _(u"Afficher les offres et services externes"), "infobulle": _(u"Activer ou désactiver l'affichage des offres commerciales externes"), "image": "Images/16x16/Cle.png", "action": self.On_param_offres_externes},
                 "-",
                 {"code": "gadgets", "label": _(u"Gestion des Gadgets de la page d'accueil"), "infobulle": _(u"Gestion des Gadgets de la page d'accueil"), "image": "Images/16x16/Calendrier_ajout.png", "action": self.On_param_gadgets},
                 "-",
@@ -1209,6 +1210,19 @@ class MyFrame(wx.Frame):
         dlg.ShowModal()
         dlg.Destroy()
 
+    def On_param_offres_externes(self, event):
+        """ Paramétrage : activer/désactiver les offres et services externes """
+        actuel = UTILS_Config.GetParametre("afficher_offres_externes", defaut=False)
+        if actuel:
+            msg = _(u"Les offres et services externes sont actuellement activés.\n\nSouhaitez-vous les désactiver ?")
+        else:
+            msg = _(u"Les offres et services externes sont actuellement désactivés.\n\nSouhaitez-vous les activer ?")
+        dlg = wx.MessageDialog(self, msg, _(u"Offres et services externes"), wx.YES_NO | wx.YES_DEFAULT | wx.ICON_QUESTION)
+        reponse = dlg.ShowModal()
+        dlg.Destroy()
+        if reponse == wx.ID_YES:
+            UTILS_Config.SetParametre("afficher_offres_externes", not actuel)
+
     def On_param_gadgets(self, event):
         """ Configuration des gadgets de la page d'accueil """
         # Vérifie qu'un fichier est chargé
@@ -1510,6 +1524,8 @@ class MyFrame(wx.Frame):
 
     def On_propos_soutenir(self, event):
         """ A propos : Soutenir """
+        if not UTILS_Config.GetParametre("afficher_offres_externes", defaut=False):
+            return
         from Dlg import DLG_Financement
         dlg = DLG_Financement.Dialog(None, code="documentation")
         dlg.ShowModal()
@@ -1661,6 +1677,8 @@ Phillip Piper (ObjectListView), Armin Rigo (Psycho)...
         return False
 
     def AnnonceFinancement(self):
+        if not UTILS_Config.GetParametre("afficher_offres_externes", defaut=False):
+            return False
         # Vérifie si identifiant saisi et valide
         identifiant = UTILS_Config.GetParametre("enregistrement_identifiant", defaut=None)
         if identifiant != None:
