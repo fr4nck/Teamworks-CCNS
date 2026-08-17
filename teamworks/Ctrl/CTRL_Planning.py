@@ -24,6 +24,15 @@ from Utils import UTILS_Adaptations
 
 CURSOR = wx.Cursor
 
+
+def _wx_int(value):
+    return int(round(value))
+
+
+def _wx_rect(x, y, width, height):
+    return wx.Rect(_wx_int(x), _wx_int(y), _wx_int(width), _wx_int(height))
+
+
 # D claration de variables   modifier au choix
 
 heureMin = datetime.time(7, 00)
@@ -487,7 +496,7 @@ class WidgetPlanning(wx.ScrolledWindow):
         dc.SetPen(wx.Pen(couleurBordDefaut, 1))
        
         # Dessin de la case
-        dc.DrawRectangle(posG, y, posD-posG, h)
+        dc.DrawRectangle(_wx_int(posG), _wx_int(y), _wx_int(posD-posG), _wx_int(h))
         
         # Dessin Heures
         dc.SetTextForeground(couleurFontHeures)
@@ -500,13 +509,13 @@ class WidgetPlanning(wx.ScrolledWindow):
         if heureDebut < heureMin :
             texteDebut = "<<< " + texteDebut
             dc.SetPen(wx.Pen(couleurFondBarre, 1))
-            dc.DrawLine(posG, y, posG, y + h -1)
-        dc.DrawText(texteDebut, posG + 3, y + 2)
+            dc.DrawLine(_wx_int(posG), _wx_int(y), _wx_int(posG), _wx_int(y + h -1))
+        dc.DrawText(texteDebut, _wx_int(posG + 3), _wx_int(y + 2))
         # Heure Fin
         texteFin = str(heureFin)[:5]
         texteFin = self.AdapteTexteHeure(dc, texteFin, posD-posG-8)
         largTexte, hautTexte = self.GetTextExtent(texteFin)
-        dc.DrawText(texteFin, posD - largTexte , y + 2)
+        dc.DrawText(texteFin, _wx_int(posD - largTexte), _wx_int(y + 2))
         # Dessin L gende
         if hauteurBarre > 25 :
             dc.SetTextForeground(couleurFontIntitule)
@@ -523,17 +532,21 @@ class WidgetPlanning(wx.ScrolledWindow):
                 xIntitule = posG + 3
                 yIntitule = y + 13
             intitule2 = self.AdapteTexteIntitule(dc, intitule, posD - posG-4)
-            dc.DrawText(intitule2, xIntitule, yIntitule)
+            dc.DrawText(intitule2, _wx_int(xIntitule), _wx_int(yIntitule))
         
         # Petit dessin dans le coin gauche sup rieure pour signaler une l gende existante
         if intitule != "" :
             dc.SetBrush(wx.Brush((255, 0, 0)))
             dc.SetPen(wx.Pen((0, 0, 0), 1))
-            dc.DrawPolygon([(posG, y), (posG+5, y), (posG, y+5)])
+            dc.DrawPolygon([
+                (_wx_int(posG), _wx_int(y)),
+                (_wx_int(posG + 5), _wx_int(y)),
+                (_wx_int(posG), _wx_int(y + 5)),
+            ])
                 
         if mode =="screen":    
             # Traitement pour le PseudoDC
-            r = wx.Rect(posG, y, posD-posG, h)
+            r = _wx_rect(posG, y, posD-posG, h)
             dc.SetIdBounds(IDobjet,r) 
             # M morisation dans le dict de IDs
             self.dictIDs[IDobjet] = ("tache", IDpresence)
@@ -717,7 +730,7 @@ class WidgetPlanning(wx.ScrolledWindow):
                         
             # Dessin de la ligne
             dc.SetBrush(wx.Brush(couleurLigneTmp))
-            dc.DrawRectangle(posX, posY, largeur, hauteur)
+            dc.DrawRectangle(_wx_int(posX), _wx_int(posY), _wx_int(largeur), _wx_int(hauteur))
             
             # Rayures si hors contrat
             if afficher_contrats == True :
@@ -731,7 +744,7 @@ class WidgetPlanning(wx.ScrolledWindow):
                             contrat = True
                     if contrat == False :
                         dc.SetBrush(wx.Brush( (200, 200, 200) , wx.BDIAGONAL_HATCH))
-                        dc.DrawRectangle(posX, posY, largeur, hauteur)
+                        dc.DrawRectangle(_wx_int(posX), _wx_int(posY), _wx_int(largeur), _wx_int(hauteur))
 
             # Cr ation du texte d'entete de ligne
             texteLigne = valeurs[2]
@@ -740,7 +753,7 @@ class WidgetPlanning(wx.ScrolledWindow):
             posXTxt = largeurEnteteLigne - largeurTexte + 20 # 20 est la taille du bord gauche du DC
             dc.SetTextForeground(couleurTxtLigne)
             if key in selectionsLignes : dc.SetTextForeground(couleurTxtLigneSelect)
-            dc.DrawText(texteLigne, posXTxt, posYTxt)
+            dc.DrawText(texteLigne, _wx_int(posXTxt), _wx_int(posYTxt))
             
             # Dessin du label temps total de la ligne
             if afficher_temps_ligne == True :
@@ -788,18 +801,18 @@ class WidgetPlanning(wx.ScrolledWindow):
             
             dc.SetTextForeground(couleurTxtLigne)
             dc.SetFont(wx.Font(7, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, 'Arial'))
-            self.pdc.DrawText(labelTempsLigne, posX, posY)
+            self.pdc.DrawText(labelTempsLigne, _wx_int(posX), _wx_int(posY))
             
             # M morisation dans le dict de IDs
             if mode =="screen": 
-                r = (posX, posY, 30, 15)
+                r = _wx_rect(posX, posY, 30, 15)
                 dc.SetIdBounds(IDobjet, r) 
                 self.dictIDs[IDobjet] = ("tempsLigne", keyLigne)
             
             # MAJ de l'affichage
             if refresh == True :
                 posXtmp, posY = self.ConvertCoords(posX, posY)
-                r = (posX, posY, 30, 15)
+                r = _wx_rect(posX, posY, 30, 15)
                 self.RefreshRect(r, False)
 
     def DessineLabelTempsGroupe(self, dc, keyGroupe, IDobjet=None, refresh=False, mode="screen"):
@@ -838,18 +851,18 @@ class WidgetPlanning(wx.ScrolledWindow):
 
         dc.SetTextForeground(couleurFondGroupe)
         dc.SetFont(wx.Font(7, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, 'Arial'))        
-        self.pdc.DrawText(labelTempsGroupe, posX, posY)
+        self.pdc.DrawText(labelTempsGroupe, _wx_int(posX), _wx_int(posY))
         
         # M morisation dans le dict de IDs
         if mode =="screen": 
-            r = (posX, posY, 30, 15)
+            r = _wx_rect(posX, posY, 30, 15)
             dc.SetIdBounds(IDobjet, r) 
             self.dictIDs[IDobjet] = ("tempsGroupe", keyGroupe)
         
         # MAJ de l'affichage
         if refresh == True :
             posXtmp, posY = self.ConvertCoords(posX, posY)
-            r = (posX, posY, 30, 15)
+            r = _wx_rect(posX, posY, 30, 15)
             self.RefreshRect(r, False)
 
     def DessineNbrePresents(self, dc, keyGroupe, IDobjet=None, refresh=False, mode="screen"):
@@ -897,17 +910,17 @@ class WidgetPlanning(wx.ScrolledWindow):
         index = 0
         for position, nbre in listePositions :
             dc.SetPen(wx.Pen(couleur, 1))
-            dc.DrawLine(position, posY-2, position, posY+3) # Ligne verticale
+            dc.DrawLine(_wx_int(position), _wx_int(posY-2), _wx_int(position), _wx_int(posY+3)) # Ligne verticale
             if index < len(listePositions)-1 and nbre > 0 :
                 positionSuivante = listePositions[index+1][0]
-                dc.DrawLine(position, posY, positionSuivante, posY) # Ligne horizontale
+                dc.DrawLine(_wx_int(position), _wx_int(posY), _wx_int(positionSuivante), _wx_int(posY)) # Ligne horizontale
                 texte = str(nbre)
                 largTexte, hautTexte = self.GetTextExtent(texte)
                 positionTexte = ((position + positionSuivante) / 2.0 ) - (largTexte/2.0)+1
                 dc.SetPen(wx.Pen(couleurFondGroupe, 0))
                 dc.SetBrush(wx.Brush(couleurFondGroupe))
-                dc.DrawRectangle(positionTexte-1, posY-5, largTexte+1, hautTexte-2)
-                self.pdc.DrawText(texte, positionTexte, posY-6)
+                dc.DrawRectangle(_wx_int(positionTexte-1), _wx_int(posY-5), _wx_int(largTexte+1), _wx_int(hautTexte-2))
+                self.pdc.DrawText(texte, _wx_int(positionTexte), _wx_int(posY-6))
             index += 1
         
         premierePosition = listePositions[0][0]
@@ -915,7 +928,7 @@ class WidgetPlanning(wx.ScrolledWindow):
         
         # M morisation dans le dict de IDs
         if mode =="screen": 
-            r = (premierePosition, posY-7, dernierePosition-premierePosition+5, 15)
+            r = _wx_rect(premierePosition, posY-7, dernierePosition-premierePosition+5, 15)
             dc.SetIdBounds(IDobjet, r) 
             self.dictIDs[IDobjet] = ("nbrePresents", keyGroupe)
                 

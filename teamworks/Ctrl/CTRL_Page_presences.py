@@ -323,7 +323,6 @@ class Dialog_saisie(wx.Dialog):
 
     def OnClose(self, event):
         self.Fermer()
-        event.Skip()
         
     def Fermer(self):
         self.parent.MAJpanel()
