@@ -17,6 +17,7 @@ import FonctionsPerso
 from Dlg import DLG_Saisie_modele
 from Dlg import DLG_Confirm_appli_modele
 from Utils import UTILS_Adaptations
+from Utils import UTILS_Presences
 if 'phoenix' in wx.PlatformInfo:
     from wx.adv import DatePickerCtrl, DP_DROPDOWN
 else :
@@ -278,7 +279,7 @@ class Panel(wx.Panel):
             heure_debut = tache[5]
             heure_fin = tache[6]
             IDcategorie = tache[7]
-            intitule = tache[8]
+            intitule = UTILS_Presences.normaliser_intitule_presence(tache[8])
             
             # Application periodeEcole :
             if periode == 1 or periode == 2 :
@@ -460,7 +461,7 @@ class Panel(wx.Panel):
             date = tache[1]
             horaires = (tache[2] , tache[3]) #(tache[2][:2] + "h" + tache[2][3:] + "-" + tache[3][:2] + "h" + tache[3][3:]
             categorie = dictCategories[tache[4]]
-            intitule = tache[5]
+            intitule = UTILS_Presences.normaliser_intitule_presence(tache[5])
             #if len(dictConfirmations[nomPersonne]) == 0 :
             if date in dictConfirmations[key] :
                 dictConfirmations[key][date].append( [horaires, categorie, intitule] )
@@ -497,7 +498,7 @@ class Panel(wx.Panel):
             heure_debut = tache[2]
             heure_fin = tache[3]
             IDcategorie = tache[4]
-            intitule = tache[5]
+            intitule = UTILS_Presences.normaliser_intitule_presence(tache[5])
             
             valide = True
 

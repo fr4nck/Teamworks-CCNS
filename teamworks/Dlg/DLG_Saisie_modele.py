@@ -16,6 +16,7 @@ import time
 from Dlg import DLG_Saisie_presence
 import FonctionsPerso
 from Utils import UTILS_Adaptations
+from Utils import UTILS_Presences
 
 
 class Dialog(wx.Dialog):
@@ -367,7 +368,7 @@ class Dialog(wx.Dialog):
         heure_debut = donnees[5]
         heure_fin = donnees[6]
         IDcategorie = donnees[7]
-        intitule = donnees[8]
+        intitule = UTILS_Presences.normaliser_intitule_presence(donnees[8])
         type = self.type
         IDmodele = self.IDmodele
         if ID == 0 :
@@ -583,8 +584,7 @@ class TreeCtrlPlanning(wx.TreeCtrl):
             etat = tache[9]
             
             if self.GetGrandParent().type == type and self.GetGrandParent().periodes[numPeriode-1] == True and etat != "suppr" :
-                txtTache = heure_debut + "-" + heure_fin + " : " + nom_categorie
-                if intitule != "" : txtTache += " (" + intitule + ")"
+                txtTache = heure_debut + "-" + heure_fin + " : " + UTILS_Presences.formater_libelle_activite(nom_categorie, intitule)
 
                 nom_ctrl = "P" + str(numPeriode) + "J" + str(numJour) + "T" + str(ID)
                 setattr(self, nom_ctrl, self.AppendItem(getattr(self, "P" + str(numPeriode) + "J" + str(numJour)), txtTache))

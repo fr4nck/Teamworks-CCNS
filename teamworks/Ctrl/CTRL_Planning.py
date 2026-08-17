@@ -21,6 +21,7 @@ import operator
 import sys
 from Utils import UTILS_Fichiers
 from Utils import UTILS_Adaptations
+from Utils import UTILS_Presences
 
 CURSOR = wx.Cursor
 
@@ -483,6 +484,7 @@ class WidgetPlanning(wx.ScrolledWindow):
 
     def DrawBarre(self, dc, IDpresence, heureDebut, heureFin, IDcategorie, intitule, posG, posD, posYhaut, posYbas, IDobjet=None, mode="screen"):
         """ Dessine une barre """
+        intitule = UTILS_Presences.normaliser_intitule_presence(intitule)
         y = posYhaut
         h = hauteurBarre
         if mode =="screen":
@@ -1147,7 +1149,7 @@ class WidgetPlanning(wx.ScrolledWindow):
             heure_fin = six.text_type(self.dictPresences[IDpresence][4])[:5]
             IDcategorie = self.dictPresences[IDpresence][5]
             categorieStr = self.dictCategories[IDcategorie][0]
-            intitule = six.text_type(self.dictPresences[IDpresence][6])
+            intitule = UTILS_Presences.normaliser_intitule_presence(self.dictPresences[IDpresence][6])
             if intitule != "" : categorieStr = u"%s | %s" % (categorieStr, intitule)
             texteStatusBar = u"%s-%s (%s) : %s" % (heure_debut, heure_fin, dureeStr, categorieStr)
         else:
@@ -1411,7 +1413,7 @@ class WidgetPlanning(wx.ScrolledWindow):
         listeDonnees = [    ("heure_debut",     str(item[3])[:5]),
                             ("heure_fin",       str(item[4])[:5]),
                             ("IDcategorie",     item[5]),
-                            ("intitule",        item[6]),
+                            ("intitule",        UTILS_Presences.normaliser_intitule_presence(item[6])),
                         ]
         # Modification de la pr sence
         DB.ReqMAJ("presences", listeDonnees, "IDpresence", IDpresence)
@@ -1431,7 +1433,7 @@ class WidgetPlanning(wx.ScrolledWindow):
                             ("heure_debut",     item[3]),
                             ("heure_fin",       item[4]),
                             ("IDcategorie",     item[5]),
-                            ("intitule",        item[6]),
+                            ("intitule",        UTILS_Presences.normaliser_intitule_presence(item[6])),
                         ]
         # Enregistrement d'une nouvelle pr sence
         ID = DB.ReqInsert("presences", listeDonnees)
@@ -1623,7 +1625,7 @@ class WidgetPlanning(wx.ScrolledWindow):
 
         dlg = wx.TextEntryDialog(self, intro, _(u"Saisie d'une l gende"), legendeDefaut)
         if dlg.ShowModal() == wx.ID_OK:
-            varLegende = dlg.GetValue()
+            varLegende = UTILS_Presences.normaliser_intitule_presence(dlg.GetValue())
             dlg.Destroy()
         else:
             dlg.Destroy()
@@ -2802,8 +2804,8 @@ class ImpressionPDFvTexte():
                 
                 for IDpresence, IDpersonne_presence, date, heureDebut, heureFin, IDcategorie, intitule, posG, posD, posYhaut, posYbas in listePresences :
                     if date == datetime_date and IDpersonne_ligne == IDpersonne_presence :
-                        if intitule != "" : intitule = " (" + intitule + ")"
-                        txtTaches = txtTaches + self.formateHeure(heureDebut) + " - " + self.formateHeure(heureFin)  + " : " + dictCategories[IDcategorie][0] + intitule + "\n"
+                        libelle_activite = UTILS_Presences.formater_libelle_activite(dictCategories[IDcategorie][0], intitule)
+                        txtTaches = txtTaches + self.formateHeure(heureDebut) + " - " + self.formateHeure(heureFin)  + " : " + libelle_activite + "\n"
                         # Calcul du temps
                         HMin = datetime.timedelta(hours=heureDebut.hour, minutes=heureDebut.minute)
                         HMax = datetime.timedelta(hours=heureFin.hour, minutes=heureFin.minute)
