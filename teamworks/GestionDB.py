@@ -166,8 +166,10 @@ class DB:
                 self.cursor.execute("USE %s;" % nomFichier)
             
         except Exception as err:
-            print("La connexion avec la base de donnees MYSQL a echouee. Erreur :")
-            print((err,))
+            diagnostic = UTILS_MySQL.ConsommerDiagnosticConnexion(err)
+            if diagnostic is not None:
+                print("La connexion avec la base de données MySQL a échoué :")
+                print(diagnostic)
             self.erreur = err
             self.echec = 1
             #AfficheConnexionOuvertes() 

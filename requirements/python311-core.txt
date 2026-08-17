@@ -1,5 +1,5 @@
 # Socle Python 3.11 / Teamworks-CCNS
-wxPython>=4.2,<4.3
+wxPython==4.3.1
 six>=1.16,<2
 Pillow>=10,<13
 reportlab>=4,<5

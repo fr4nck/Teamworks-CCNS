@@ -262,7 +262,7 @@ class ListCtrl_vacances(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.Col
         self.parent = parent
 
         #adding some attributes (colourful background for each item rows)
-        self.attr1 = wx.ListItemAttr()
+        self.attr1 = wx.ItemAttr()
         self.attr1.SetBackgroundColour("#EEF4FB") # Vert = #F0FBED
 
         # Remplissage du ListCtrl

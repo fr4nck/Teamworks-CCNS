@@ -168,7 +168,7 @@ class ListCtrl_personnes(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.Co
         self.SetImageList(self.il, wx.IMAGE_LIST_SMALL)
 
         #adding some attributes (colourful background for each item rows)
-        self.attr1 = wx.ListItemAttr()
+        self.attr1 = wx.ItemAttr()
         self.attr1.SetBackgroundColour("#EEF4FB") # Vert = #F0FBED
         
         # Remplissage
