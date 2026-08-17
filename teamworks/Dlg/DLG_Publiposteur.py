@@ -1730,7 +1730,7 @@ class Page5(wx.Panel):
         grid_sizer_contenu.Add((1, 1), 0, wx.EXPAND, 0)
         grid_sizer_contenu.Add(self.ctrl_apercu_avant_envoi, 0, wx.EXPAND, 0) 
         
-        grid_sizer_contenu.Add(self.checkbox_impression, 0, wx.EXPAND|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 0)
+        grid_sizer_contenu.Add(self.checkbox_impression, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 0)
         
         grid_sizer_options_impress = wx.FlexGridSizer(rows=1, cols=3, vgap=5, hgap=5)
         grid_sizer_options_impress.Add(self.label_impress1, 0, wx.ALIGN_CENTER_VERTICAL, 0)
@@ -1752,8 +1752,8 @@ class Page5(wx.Panel):
         grid_sizer_contenu.Add((10, 10), 0, 0, 0)
         grid_sizer_contenu.Add((10, 10), 0, 0, 0)
         
-        grid_sizer_contenu.Add(self.checkbox_save, 0, wx.EXPAND|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 0)
-        grid_sizer_contenu.Add(self.label_save, 0, wx.EXPAND|wx.ALIGN_CENTER_VERTICAL, 0)
+        grid_sizer_contenu.Add(self.checkbox_save, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 0)
+        grid_sizer_contenu.Add(self.label_save, 0, wx.EXPAND, 0)
         
         grid_sizer_contenu.Add((10, 10), 0, 0, 0)
         grid_sizer_contenu.Add((10, 10), 0, 0, 0)
@@ -1778,7 +1778,7 @@ class Page5(wx.Panel):
         grid_sizer_contenu.Add((10, 10), 0, 0, 0)
         grid_sizer_contenu.Add((10, 10), 0, 0, 0)
         
-        grid_sizer_contenu.Add(self.checkbox_apercu, 0, wx.EXPAND|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 0)
+        grid_sizer_contenu.Add(self.checkbox_apercu, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 0)
         grid_sizer_contenu.Add(self.label_apercu, 0, wx.ALIGN_CENTER_VERTICAL, 0)
         
 ##        grid_sizer_contenu.Add((10, 10), 0, 0, 0)
