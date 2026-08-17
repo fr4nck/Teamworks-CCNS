@@ -73,6 +73,17 @@ def test_opaque_pyinstaller_error_gets_an_actionable_hint():
     assert "manifeste" in diagnostic
 
 
+def test_identical_connection_diagnostic_is_emitted_only_once_per_session():
+    module = _load_module()
+    module.ReinitialiserDiagnosticsConnexion()
+
+    diagnostic = "Connexion MySQL impossible sur serveur.local:3306"
+
+    assert module.ConsommerDiagnosticConnexion(diagnostic) == diagnostic
+    assert module.ConsommerDiagnosticConnexion(diagnostic) is None
+    assert module.ConsommerDiagnosticConnexion("Autre erreur") == "Autre erreur"
+
+
 def test_windows_build_collects_the_complete_mysql_connector_package():
     workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
 

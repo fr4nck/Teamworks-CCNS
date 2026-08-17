@@ -3,6 +3,9 @@
 """Options et diagnostic de connexion MySQL, sans dépendance graphique."""
 
 
+_DIAGNOSTICS_CONNEXION_EMIS = set()
+
+
 def ConstruireOptionsConnexion(host, user, password, port, certificats=None):
     """Construit une connexion tolérante aux anciens serveurs MySQL/MariaDB.
 
@@ -59,3 +62,17 @@ def FormaterDiagnosticConnexion(erreur, host, port, interface, version_connecteu
             "l'erreur du serveur ; vérifier l'artefact Windows et son manifeste."
         )
     return "\n".join(details)
+
+
+def ConsommerDiagnosticConnexion(diagnostic):
+    """Retourne un diagnostic seulement lors de sa première occurrence."""
+    diagnostic = str(diagnostic).strip()
+    if not diagnostic or diagnostic in _DIAGNOSTICS_CONNEXION_EMIS:
+        return None
+    _DIAGNOSTICS_CONNEXION_EMIS.add(diagnostic)
+    return diagnostic
+
+
+def ReinitialiserDiagnosticsConnexion():
+    """Réinitialise la mémoire des diagnostics, principalement pour les tests."""
+    _DIAGNOSTICS_CONNEXION_EMIS.clear()
