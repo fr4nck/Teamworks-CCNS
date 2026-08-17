@@ -13,12 +13,20 @@ TEAMWORKS_DIR = ROOT / "teamworks"
 ENTRYPOINT = TEAMWORKS_DIR / "Teamworks.py"
 
 
+def _same_path(left: str, right: Path) -> bool:
+    try:
+        return Path(left).resolve() == right.resolve()
+    except (OSError, RuntimeError):
+        return False
+
+
 def configure_import_paths() -> None:
     """Expose à la fois l'architecture moderne et les modules historiques."""
     for path in (ROOT, TEAMWORKS_DIR):
-        value = str(path)
-        if value not in sys.path:
-            sys.path.insert(0, value)
+        sys.path[:] = [value for value in sys.path if not _same_path(value, path)]
+
+    sys.path.insert(0, str(ROOT))
+    sys.path.insert(0, str(TEAMWORKS_DIR))
 
 
 def main() -> int:
