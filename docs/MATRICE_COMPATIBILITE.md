@@ -20,7 +20,7 @@ Cette matrice distingue les environnements **réellement exercés** des platefor
 | macOS Apple Silicon | **Non qualifié** | aucune CI actuelle | roues ARM, wxPython, dépendances natives, packaging |
 | SQLite locale | **Partiellement automatisé** | préflight lecture seule, quick_check, tests fonctionnels et sauvegarde/restauration automatisés | parcours utilisateur complet sur copie réelle |
 | SQLite sur partage réseau | **Non qualifié** | aucune preuve suffisante | latence, verrouillage, concurrence et récupération après coupure |
-| MySQL / réseau | **Non qualifié comme cible de pré-release** | connecteur historique présent dans le code | connexion réelle, TLS, timeouts, reconnexion, concurrence |
+| MySQL / réseau | **Compatibilité historique préservée** | connexion Python pure, test des options MySQL/MariaDB 5.5 et diagnostic sans secret | recette réelle sur le serveur 5.5, TLS, reconnexion, concurrence |
 | Bureau distant | **Non qualifié** | aucune recette dédiée actuelle | rendu wxPython, listes, rafraîchissements et latence perçue |
 
 ## Dépendances structurantes
@@ -35,7 +35,7 @@ Cette matrice distingue les environnements **réellement exercés** des platefor
 | Pillow | images | conservé dans le packaging | API dépréciées et ressources graphiques |
 | matplotlib | graphiques | collecté dans le paquet Windows | poids et backends inutiles |
 | reportlab | PDF | collecté dans le paquet Windows | régressions d’export / packaging |
-| mysql-connector-python | accès MySQL | import explicitement prévu au build | réseau, TLS, reconnexion |
+| mysql-connector-python | accès MySQL | paquet complet collecté au build ; mode Python pur pour MySQL/MariaDB 5.5 | réseau réel, TLS, reconnexion |
 | win32com / intégration Windows | fonctions Windows historiques | import explicitement prévu au build | dépendance spécifique Windows |
 | XlsxWriter / exports | exports tableurs | parcours export couvert par smoke/tests ciblés | formats, encodage, boîtes de dialogue |
 

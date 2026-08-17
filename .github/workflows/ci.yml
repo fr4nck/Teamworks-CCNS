@@ -328,7 +328,7 @@ jobs:
             '--collect-all', 'matplotlib',
             '--collect-all', 'reportlab',
             '--collect-all', 'PIL',
-            '--hidden-import', 'mysql.connector',
+            '--collect-all', 'mysql.connector',
             '--hidden-import', 'win32com.client'
           )
           foreach ($module in $modules) {
