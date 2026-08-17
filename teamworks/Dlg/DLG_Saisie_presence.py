@@ -18,6 +18,7 @@ import sys
 import datetime
 import time
 import wx.lib.dialogs
+from Utils import UTILS_Presences
 
 
 def DatetimeDateEnStr(date):
@@ -97,12 +98,12 @@ class Panel(wx.Panel):
         if self.IDmodif != 0 and mode == "planning": 
             self.text_heure_debut.SetValue(str(donneesModif[3])[:5])
             self.text_heure_fin.SetValue(str(donneesModif[4])[:5])
-            self.text_intitule.SetValue(donneesModif[6])
+            self.text_intitule.SetValue(UTILS_Presences.normaliser_intitule_presence(donneesModif[6]))
         
         if self.IDmodif != 0 and mode == "modele": 
             self.text_heure_debut.SetValue(listeDonnees[5])
             self.text_heure_fin.SetValue(listeDonnees[6])
-            self.text_intitule.SetValue(listeDonnees[8])
+            self.text_intitule.SetValue(UTILS_Presences.normaliser_intitule_presence(listeDonnees[8]))
         
         self.__set_properties()
         self.__do_layout()
@@ -296,7 +297,7 @@ class Panel(wx.Panel):
             return False
 
         # Vérifie la taille de l'intitulé
-        intitule = self.text_intitule.GetValue()
+        intitule = UTILS_Presences.normaliser_intitule_presence(self.text_intitule.GetValue())
         if len(intitule) > 200:
             message = _(u"Vous devez écrire une légende plus courte !")
             wx.MessageBox(message, "Erreur de saisie")
@@ -395,7 +396,7 @@ class Panel(wx.Panel):
         heureDebut = self.text_heure_debut.GetValue()
         heureFin = self.text_heure_fin.GetValue()
         IDcategorie = self.treeCtrl_categories.GetDataSelection()
-        intitule = self.text_intitule.GetValue()
+        intitule = UTILS_Presences.normaliser_intitule_presence(self.text_intitule.GetValue())
                 
         listeDonnees = [
             ("heure_debut", heureDebut),
@@ -475,7 +476,7 @@ class Panel(wx.Panel):
                                         ("heure_debut",     heureDebut),
                                         ("heure_fin",       heureFin),
                                         ("IDcategorie",     self.treeCtrl_categories.GetDataSelection()),
-                                        ("intitule",        self.text_intitule.GetValue()),
+                                        ("intitule",        UTILS_Presences.normaliser_intitule_presence(self.text_intitule.GetValue())),
                                     ]
 
                     # Enregistrement dans la base
@@ -513,7 +514,7 @@ class Panel(wx.Panel):
         heureDebut = self.text_heure_debut.GetValue()
         heureFin = self.text_heure_fin.GetValue()
         IDcategorie = self.treeCtrl_categories.GetDataSelection()
-        intitule = self.text_intitule.GetValue()
+        intitule = UTILS_Presences.normaliser_intitule_presence(self.text_intitule.GetValue())
         
         if ID != 0 :
             IDmodele = self.listeDonnees[1]
