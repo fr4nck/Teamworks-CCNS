@@ -24,6 +24,7 @@ def test_phonex_tolerates_empty_and_non_text_values():
     assert UTILS_Phonex.phonex("") == 0.0
     assert UTILS_Phonex.phonex(" - ' ") == 0.0
     assert UTILS_Phonex.phonex(12345) == 0.0
+    assert UTILS_Phonex.phonex(b"Saint-\xffMalo") == UTILS_Phonex.phonex("Saint-Malo")
 
 
 def test_phonex_can_be_used_as_a_sqlite_function_on_compound_names():

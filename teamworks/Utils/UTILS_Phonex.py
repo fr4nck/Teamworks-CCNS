@@ -17,10 +17,7 @@ def _normalise_chaine(chaine):
         return ""
 
     if isinstance(chaine, bytes):
-        try:
-            chaine = chaine.decode("utf-8")
-        except UnicodeDecodeError:
-            chaine = chaine.decode("cp1252", errors="replace")
+        chaine = chaine.decode("utf-8", errors="replace")
 
     chaine = unicodedata.normalize("NFKD", str(chaine))
     chaine = "".join(
