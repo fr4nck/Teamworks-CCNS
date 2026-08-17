@@ -23,9 +23,8 @@ def test_root_launcher_exposes_modern_and_legacy_import_roots(monkeypatch):
 
     launcher.configure_import_paths()
 
-    assert str(launcher.ROOT) in sys.path
-    assert str(launcher.TEAMWORKS_DIR) in sys.path
-    assert "sentinel" in sys.path
+    assert sys.path[:2] == [str(launcher.TEAMWORKS_DIR), str(launcher.ROOT)]
+    assert sys.path[2:] == ["sentinel"]
 
 
 def test_root_launcher_configuration_is_idempotent(monkeypatch):
@@ -37,6 +36,24 @@ def test_root_launcher_configuration_is_idempotent(monkeypatch):
 
     assert sys.path.count(str(launcher.ROOT)) == 1
     assert sys.path.count(str(launcher.TEAMWORKS_DIR)) == 1
+
+
+def test_root_launcher_moves_existing_paths_before_legacy_subdirectories(monkeypatch):
+    launcher = load_launcher()
+    object_list_view_dir = launcher.TEAMWORKS_DIR / "ObjectListView"
+    monkeypatch.setattr(
+        sys,
+        "path",
+        [str(launcher.ROOT), str(object_list_view_dir), str(launcher.TEAMWORKS_DIR)],
+    )
+
+    launcher.configure_import_paths()
+
+    assert sys.path[:3] == [
+        str(launcher.TEAMWORKS_DIR),
+        str(launcher.ROOT),
+        str(object_list_view_dir),
+    ]
 
 
 def test_root_launcher_executes_historical_entrypoint_as_main(monkeypatch):
