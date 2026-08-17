@@ -261,6 +261,7 @@ class VirtualList(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSor
         self.nomTable = nomTable
         self.listeChamps = listeChamps
         self.criteres = ""
+        self.parametres_criteres = ()
         self.parent = parent
 
         # Initialisation des images
@@ -342,7 +343,10 @@ class VirtualList(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSor
         con = sqlite3.connect(Chemins.GetStaticPath("Databases/Villes.db3"))
         con.create_function("phonex", 1, PhonexPerso)
         cur = con.cursor()
-        cur.execute("SELECT %s FROM %s %s" % (champs, nomTable, self.criteres))
+        cur.execute(
+            "SELECT %s FROM %s %s" % (champs, nomTable, self.criteres),
+            self.parametres_criteres,
+        )
         listeValeurs = cur.fetchall()
         con.close()
 
@@ -439,6 +443,7 @@ class VirtualList(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSor
 
     def comAfficherTout(self):
         self.criteres = ""
+        self.parametres_criteres = ()
         self.MAJListeCtrl()
         
     def RechercheBase(self, textRecherche):
@@ -454,6 +459,7 @@ class VirtualList(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSor
 
             # MàJ du listCtrl
             self.criteres = strCriteres[:-4]
+            self.parametres_criteres = ()
             self.MAJListeCtrl()
 
         # Renvoie si résultats ou non
@@ -469,7 +475,8 @@ class VirtualList(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSor
 
         # Boite de dialogue de recherche
         if textRecherche != "":
-            self.criteres = "WHERE phonex(ville)=phonex('%s')" % textRecherche
+            self.criteres = "WHERE phonex(ville)=phonex(?)"
+            self.parametres_criteres = (textRecherche,)
             self.MAJListeCtrl()
 
         # Renvoie si résultats ou non

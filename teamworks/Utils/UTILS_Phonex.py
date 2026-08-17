@@ -8,6 +8,30 @@
 
 import string
 import re
+import unicodedata
+
+
+def _normalise_chaine(chaine):
+    """Prépare une valeur pour Phonex sans laisser passer de séparateur."""
+    if chaine is None:
+        return ""
+
+    if isinstance(chaine, bytes):
+        try:
+            chaine = chaine.decode("utf-8")
+        except UnicodeDecodeError:
+            chaine = chaine.decode("cp1252", errors="replace")
+
+    chaine = unicodedata.normalize("NFKD", str(chaine))
+    chaine = "".join(
+        caractere
+        for caractere in chaine
+        if not unicodedata.combining(caractere)
+    ).upper()
+
+    # L'algorithme historique ne sait coder que les lettres A à Z. Les noms
+    # composés doivent donc être rapprochés avant le calcul phonétique.
+    return re.sub(r"[^A-Z]", "", chaine)
 
 def phonex(chaine):
 
@@ -15,7 +39,7 @@ def phonex(chaine):
 ##trans = string.maketrans(u'àâäãéèêëìîïòôöõùûüñÀÂÄÃÉÈÊËÌÎÏÒÔÖÕÙÛÜÑ', 'AAAAEEEEIIIOOOOUUUNAAAAEEEEIIIOOOOUUUN');
 ##print (trans,)
 ##    chaine = string.translate(chaine," 0123456789-.+*/,:;_'()")
-    chaine = chaine.upper()
+    chaine = _normalise_chaine(chaine)
 
     #1 remplacer les y par des i
     r = chaine.replace('Y','I')
