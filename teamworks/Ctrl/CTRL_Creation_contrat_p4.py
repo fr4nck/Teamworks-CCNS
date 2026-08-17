@@ -9,7 +9,6 @@
 import Chemins
 from Utils.UTILS_Traduction import _
 import wx
-from wx.lib.mixins.listctrl import CheckListCtrlMixin
 import GestionDB
 from Utils import UTILS_Adaptations
 from Dlg import DLG_Config_champs_contrats
@@ -83,16 +82,17 @@ class Page(wx.Panel):
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------
 
-class ListCtrl_champs(wx.ListCtrl, CheckListCtrlMixin):
+class ListCtrl_champs(wx.ListCtrl):
     def __init__(self, parent):
         wx.ListCtrl.__init__(self, parent, -1, style=wx.LC_REPORT|wx.LC_NO_HEADER)
-        CheckListCtrlMixin.__init__(self)
         self.EnableCheckBoxes(True)
         self.parent = parent
             
         self.Remplissage()
         
         self.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.OnItemActivated)
+        self.Bind(wx.EVT_LIST_ITEM_CHECKED, self.OnItemChecked)
+        self.Bind(wx.EVT_LIST_ITEM_UNCHECKED, self.OnItemUnchecked)
 ##        self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.OnItemSelected)
 ##        self.Bind(wx.EVT_LIST_ITEM_DESELECTED, self.OnItemDeselected)
         self.Bind(wx.EVT_CONTEXT_MENU, self.OnContextMenu)
@@ -161,7 +161,15 @@ class ListCtrl_champs(wx.ListCtrl, CheckListCtrlMixin):
             return 1
 
     def OnItemActivated(self, evt):
-        self.ToggleItem(evt.Index)
+        self.CheckItem(evt.Index, not self.IsItemChecked(evt.Index))
+
+    def OnItemChecked(self, evt):
+        self.OnCheckItem(evt.Index, True)
+        evt.Skip()
+
+    def OnItemUnchecked(self, evt):
+        self.OnCheckItem(evt.Index, False)
+        evt.Skip()
 
     # this is called by the base class when an item is checked/unchecked
     def OnCheckItem(self, index, flag):
@@ -216,12 +224,9 @@ class ListCtrl_champs(wx.ListCtrl, CheckListCtrlMixin):
     
     def Menu_Ajouter(self, event):
         self.parent.OnBoutonAjouter(None)
-        
+
     def Menu_Modifier(self, event):
         self.parent.OnBoutonModifier(None)
 
     def Menu_Supprimer(self, event):
         self.parent.OnBoutonSupprimer(None)
-        
-        
-        
