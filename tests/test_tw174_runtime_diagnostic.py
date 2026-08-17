@@ -1,8 +1,18 @@
 import json
 from pathlib import Path
 
+from tools import smoke_runtime
+
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def test_smoke_diagnostic_survives_legacy_windows_console_encoding() -> None:
+    diagnostic = "Chaîne historique endommagée : \ufffd"
+
+    safe = smoke_runtime.console_safe_text(diagnostic, encoding="cp1252")
+
+    assert safe == r"Chaîne historique endommagée : \ufffd"
 
 
 def test_windows_runtime_and_portable_use_the_same_wxpython_version() -> None:

@@ -13,6 +13,14 @@ from typing import Iterable
 DEFAULT_ENCODINGS = ("utf-8",)
 
 
+def console_safe_text(value: str, encoding: str | None = None) -> str:
+    """Préserve le diagnostic même si la console Windows n'accepte pas Unicode."""
+    target_encoding = encoding or getattr(sys.stdout, "encoding", None) or "utf-8"
+    return value.encode(target_encoding, errors="backslashreplace").decode(
+        target_encoding
+    )
+
+
 def decode_output(data: bytes, encodings: Iterable[str] = DEFAULT_ENCODINGS) -> str:
     for encoding in encodings:
         try:
@@ -58,7 +66,7 @@ def write_diagnostic(
         f"{output}"
     )
     report.write_text(diagnostic, encoding="utf-8")
-    print(diagnostic)
+    print(console_safe_text(diagnostic))
 
 
 def run_entrypoint(
