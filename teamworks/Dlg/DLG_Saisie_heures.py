@@ -174,11 +174,6 @@ class MyDialog(wx.Dialog):
             wx.MessageBox(message, "Erreur de saisie")
             self.ctrl_heure_min.SetFocus()
             return False
-        if heureDebut[4] != "5" and heureDebut[4] != "0" :
-            message = _(u"Vous ne pouvez saisir qu'un horaire terminant par 0 ou 5. \nEx.: 10:05 ou 10:10 ou 10:15, etc... mais pas 10:02 !")
-            wx.MessageBox(message, "Erreur de saisie")
-            self.ctrl_heure_min.SetFocus()
-            return False
         if heureFin == "  :  " :
             message = _(u"Vous devez saisir une heure de fin.")
             wx.MessageBox(message, "Erreur de saisie")
@@ -196,11 +191,6 @@ class MyDialog(wx.Dialog):
             return False
         if heureFin < "00:00" or heureFin > "24:00" :
             message = _(u"L'heure de fin n'est pas valide")
-            wx.MessageBox(message, "Erreur de saisie")
-            self.ctrl_heure_max.SetFocus()
-            return False
-        if heureFin[4] != "5" and heureFin[4] != "0" :
-            message = _(u"Vous ne pouvez saisir qu'un horaire terminant par 0 ou 5. \nEx.: 10:05 ou 10:10 ou 10:15, etc... mais pas 10:02 !")
             wx.MessageBox(message, "Erreur de saisie")
             self.ctrl_heure_max.SetFocus()
             return False
