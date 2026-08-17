@@ -21,6 +21,7 @@ import random
 import six
 from Data import DATA_Tables as Tables
 from Utils import UTILS_Fichiers
+from Utils import UTILS_MySQL
 
 MODE_TEAMWORKS = True
 DICT_CONNEXIONS = {}
@@ -975,15 +976,17 @@ def GetConnexionReseau(nomFichier=""):
         connexion.set_character_set('utf8')
 
     if INTERFACE_MYSQL == "mysql.connector":
-        if "ca" in CERTIFICATS_SSL:
-            ssl_ca = CERTIFICATS_SSL["ca"]
-        else :
-            ssl_ca = ""
-        if "_" in nomFichier :
-            suffixe = nomFichier.split("_")[-1]
-        else :
-            suffixe = ""
-        connexion = mysql.connector.connect(host=host, user=user, passwd=passwd, port=int(port), use_unicode=True, ssl_ca=ssl_ca)#, pool_name="mypool2%s" % suffixe, pool_size=3)
+        options = UTILS_MySQL.ConstruireOptionsConnexion(
+            host, user, passwd, port, CERTIFICATS_SSL
+        )
+        try:
+            connexion = mysql.connector.connect(**options)
+        except Exception as err:
+            version_connecteur = getattr(mysql.connector, "__version__", "inconnue")
+            diagnostic = UTILS_MySQL.FormaterDiagnosticConnexion(
+                err, host, port, INTERFACE_MYSQL, version_connecteur
+            )
+            raise RuntimeError(diagnostic) from err
 
     return connexion, nomFichier
 
