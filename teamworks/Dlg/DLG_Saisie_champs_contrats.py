@@ -126,15 +126,17 @@ class Dialog(wx.Dialog):
         DB = GestionDB.DB()
         req = "SELECT * FROM contrats_champs WHERE IDchamp=%d" % self.IDchamp
         DB.ExecuterReq(req)
-        donnees = DB.ResultatReq()[0]
+        resultats = DB.ResultatReq()
         DB.Close()
-        if len(donnees) == 0: return
+        if not resultats:
+            return
+        donnees = resultats[0]
         # Place les valeurs dans les controles
-        self.text_nom.SetValue(donnees[1])
-        self.text_description.SetValue(donnees[2])
-        self.text_defaut.SetValue(donnees[4])
-        self.text_motCle.SetValue(donnees[3])
-        self.text_exemple.SetValue(donnees[5])
+        self.text_nom.SetValue(donnees[1] or "")
+        self.text_description.SetValue(donnees[2] or "")
+        self.text_defaut.SetValue(donnees[4] or "")
+        self.text_motCle.SetValue(donnees[3] or "")
+        self.text_exemple.SetValue(donnees[5] or "")
 
     def Sauvegarde(self):
         """ Sauvegarde des données dans la base de données """
@@ -204,7 +206,7 @@ class Dialog(wx.Dialog):
             reponse = dlgConfirm.ShowModal()
             dlgConfirm.Destroy()
             if reponse == wx.ID_YES:
-                self.text_description.SetFocus()
+                self.text_exemple.SetFocus()
                 return
                     
         if motCle == "" :
