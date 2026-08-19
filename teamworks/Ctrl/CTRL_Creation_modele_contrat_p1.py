@@ -33,6 +33,7 @@ class Page(wx.Panel):
         wx.Panel.__init__(self, *args, **kwds)
 
         self.dictTypes = {}
+        self.dictTypeCodes = {}
 
         self.sizer_champs_staticbox = wx.StaticBox(self, -1, _(u"Champs personnalisés"))
         self.sizer_caract_staticbox = wx.StaticBox(self, -1, _(u"Caractéristiques générales"))
@@ -44,7 +45,7 @@ class Page(wx.Panel):
         self.Importation_Type()
         self.bouton_type = wx.Button(self, -1, "...", style=wx.BU_EXACTFIT)
 
-        self.label_convention = wx.StaticText(self, -1, "Régime / convention :")
+        self.label_convention = wx.StaticText(self, -1, "Parcours / convention :")
         self.choice_convention = wx.Choice(
             self,
             -1,
@@ -125,14 +126,36 @@ class Page(wx.Panel):
         grid_sizer_base.AddGrowableCol(0)
         grid_sizer_base.AddGrowableRow(3)
 
+    @staticmethod
+    def _GetContractTypeCode(nom, nom_abrege):
+        abrege = (nom_abrege or "").strip().upper()
+        texte = (nom or "").strip().lower()
+        if abrege == "CEE" or "engagement educatif" in texte or "engagement éducatif" in texte:
+            return "CEE"
+        return abrege
+
+    def IsCEEType(self, IDtype=None):
+        if IDtype is None:
+            IDtype = self.GetChoiceData(self.choice_type)
+        return self.dictTypeCodes.get(IDtype) == "CEE"
+
     def Importation(self):
         dictModeles = self.GetGrandParent().dictModeles
-        self.SelectChoice(self.choice_type, data=dictModeles.get("IDtype"))
+        IDtype = dictModeles.get("IDtype")
+        self.SelectChoice(self.choice_type, data=IDtype)
         self.SelectChoice(self.choice_class, data=dictModeles.get("IDclassification"))
 
         convention = dictModeles.get("convention_code")
         cee_qualification = dictModeles.get("cee_qualification")
-        if cee_qualification is not None:
+        classification = dictModeles.get("IDclassification")
+
+        # Un modèle CEE générique moderne a qualification=None, mais il se
+        # distingue d'un ancien modèle CEE par l'absence de classification.
+        if cee_qualification is not None or (
+            self.IsCEEType(IDtype)
+            and classification in (None, "")
+            and convention in (None, "")
+        ):
             self.choice_convention.SetSelection(2)
         elif convention == "CCNS":
             self.choice_convention.SetSelection(1)
@@ -231,8 +254,10 @@ class Page(wx.Panel):
 
         controle.Clear()
         self.dictTypes = {}
+        self.dictTypeCodes = {}
         for index, (key, nom, nom_abrege, duree_indeterminee) in enumerate(liste):
             self.dictTypes[key] = duree_indeterminee
+            self.dictTypeCodes[key] = self._GetContractTypeCode(nom, nom_abrege)
             controle.Append(nom, key)
             if IDselection == key:
                 controle.SetSelection(index)
@@ -264,6 +289,25 @@ class Page(wx.Panel):
         dictModeles = self.GetGrandParent().dictModeles
         mode = self.choice_convention.GetSelection()
         cible = self.GetChoiceData(self.choice_cible)
+
+        if mode == 2 and not self.IsCEEType(type_contrat):
+            wx.MessageBox(
+                _(u"Le ciblage CEE nécessite un type de contrat CEE."),
+                _(u"Modèle de contrat"),
+                wx.OK | wx.ICON_ERROR,
+                parent=self,
+            )
+            self.choice_type.SetFocus()
+            return False
+        if mode == 1 and self.IsCEEType(type_contrat):
+            wx.MessageBox(
+                _(u"Un CEE ne doit pas être ciblé comme un groupe CCNS classique."),
+                _(u"Modèle de contrat"),
+                wx.OK | wx.ICON_ERROR,
+                parent=self,
+            )
+            self.choice_convention.SetFocus()
+            return False
 
         dictModeles["IDtype"] = type_contrat
         dictModeles["IDclassification"] = None
