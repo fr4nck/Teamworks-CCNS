@@ -30,6 +30,9 @@ LISTE_DONNEES = [
         ("theme", "Systeme"),
         ("echelle_police", "100"),
     ]),
+    ("branding", [
+        ("logo_association", ""),
+    ]),
     ("journal", [
         ("actif", "1"),
         ("nom", "journal.log"),
@@ -82,6 +85,8 @@ class Customize():
                 return self.cfg.get(section, cle)
         else:
             if ajouter_si_manquant == True :
+                if self.cfg.has_section(section) == False:
+                    self.cfg.add_section(section)
                 self.cfg.set(section, cle, str(defaut))
                 self.Enregistrement()
                 return defaut
