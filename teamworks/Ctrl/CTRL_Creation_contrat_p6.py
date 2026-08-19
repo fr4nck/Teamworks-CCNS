@@ -6,12 +6,21 @@
 # Licence:      Licence GNU GPL
 #-----------------------------------------------------------
 
+import datetime
+from decimal import Decimal
+
 from Utils.UTILS_Traduction import _
-from Utils import UTILS_Contrats_schema
+from Utils import UTILS_Contrats_schema, UTILS_CEE_baremes
 import wx
-from Ctrl import CTRL_Bouton_image
 import FonctionsPerso
 import GestionDB
+
+from application.control.contract_compensation_preflight import (
+    validate_cee_daily_compensation,
+    validate_ccns_monthly_compensation,
+)
+from domain.contracts.cee_compensation import legal_cee_daily_minimum
+from domain.convention.smic import SmicTerritory, create_smic_catalog_2026
 
 
 def getRGB(winColor):
@@ -19,6 +28,25 @@ def getRGB(winColor):
     g = winColor >> 8 & 255
     r = winColor & 255
     return (r,g,b)
+
+
+def _is_cee_type(DB, IDtype):
+    if IDtype is None:
+        return False
+    DB.ExecuterReq("SELECT nom, nom_abrege FROM contrats_types WHERE IDtype=%d;" % int(IDtype))
+    rows = DB.ResultatReq()
+    if not rows:
+        return False
+    nom, nom_abrege = rows[0]
+    abrege = (nom_abrege or "").strip().upper()
+    texte = (nom or "").strip().lower()
+    return abrege == "CEE" or "engagement educatif" in texte or "engagement éducatif" in texte
+
+
+def _decimal_or_none(value):
+    if value is None or value == "":
+        return None
+    return Decimal(str(value))
 
 
 class Page(wx.Panel):
@@ -51,11 +79,87 @@ class Page(wx.Panel):
         grid_sizer_base.AddGrowableCol(0)
         grid_sizer_base.AddGrowableRow(1)
 
+    def _PreflightCompensation(self, DB, dictContrats):
+        reference_date = datetime.date.fromisoformat(dictContrats["date_debut"])
+        is_cee = _is_cee_type(DB, dictContrats.get("IDtype"))
+
+        if is_cee:
+            qualification = dictContrats.get("cee_qualification")
+            # Contrat historique antérieur à TW-184 : ne pas imposer de conversion.
+            if not qualification and dictContrats.get("IDcontrat"):
+                return True
+            legal = legal_cee_daily_minimum(
+                smic_catalog=create_smic_catalog_2026(),
+                reference_date=reference_date,
+                territory=SmicTerritory.METROPOLITAN_FRANCE,
+            )
+            rate = None
+            if qualification:
+                applicable = UTILS_CEE_baremes.GetApplicableRate(DB, qualification, reference_date)
+                if applicable is not None:
+                    rate = Decimal(str(applicable["montant_journalier"]))
+            result = validate_cee_daily_compensation(
+                qualification=qualification,
+                employer_daily_rate=rate,
+                legal_minimum_daily_rate=legal,
+            )
+            if not result.compliant:
+                detail = result.message
+                if result.required_minimum is not None:
+                    detail += _(u"\nMinimum requis : %.2f € brut/jour.") % result.required_minimum
+                if result.proposed_amount is not None:
+                    detail += _(u"\nBarème proposé : %.2f € brut/jour.") % result.proposed_amount
+                wx.MessageBox(detail, _(u"Contrôle CEE"), wx.OK | wx.ICON_ERROR, parent=self)
+                return False
+            return True
+
+        if dictContrats.get("convention_code") == "CCNS":
+            group = dictContrats.get("ccns_group")
+            if not group:
+                wx.MessageBox(
+                    _(u"Le groupe CCNS est obligatoire pour ce contrat."),
+                    _(u"Contrôle CCNS"), wx.OK | wx.ICON_ERROR, parent=self,
+                )
+                return False
+            weekly = _decimal_or_none(dictContrats.get("weekly_hours"))
+            if weekly is None:
+                weekly = Decimal("0.00")
+            salary = _decimal_or_none(dictContrats.get("gross_monthly_salary"))
+            result = validate_ccns_monthly_compensation(
+                group_code=group,
+                reference_date=reference_date,
+                weekly_hours=weekly,
+                gross_monthly_salary=salary,
+                territory=SmicTerritory.METROPOLITAN_FRANCE,
+            )
+            if not result.compliant:
+                detail = result.message
+                if result.required_minimum is not None:
+                    detail += _(u"\nMinimum requis : %.2f € brut/mois.") % result.required_minimum
+                if result.proposed_amount is not None:
+                    detail += _(u"\nRémunération proposée : %.2f € brut/mois.") % result.proposed_amount
+                wx.MessageBox(detail, _(u"Contrôle CCNS / SMIC"), wx.OK | wx.ICON_ERROR, parent=self)
+                return False
+        return True
+
     def Validation(self):
         dictContrats = self.GetGrandParent().dictContrats
         dictChamps = self.GetGrandParent().dictChamps
         DB = GestionDB.DB()
         UTILS_Contrats_schema.EnsureContractEngineColumns(DB)
+
+        # Défense en profondeur : aucun contrat moderne incohérent n'est écrit.
+        try:
+            if not self._PreflightCompensation(DB, dictContrats):
+                DB.Close()
+                return False
+        except Exception as err:
+            DB.Close()
+            wx.MessageBox(
+                _(u"Le contrôle final de rémunération n'a pas pu être exécuté :\n%s") % err,
+                _(u"Contrôle du contrat"), wx.OK | wx.ICON_ERROR, parent=self,
+            )
+            return False
 
         listeDonnees = [
             ("IDpersonne", dictContrats["IDpersonne"]),
