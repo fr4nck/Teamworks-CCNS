@@ -2,44 +2,119 @@
 
 ## Objectif
 
-Remplacer le parcours générique hérité de Noethys par un moteur de création de contrat piloté par la convention collective, le type de contrat et le statut/qualification du salarié.
+Remplacer le parcours générique hérité de Noethys par un moteur de création de contrat piloté par la convention collective, le type de contrat, la nature de l'opération et le statut/qualification du salarié.
 
 Le moteur doit empêcher les mélanges entre :
 
 - classification conventionnelle ;
 - type de contrat ;
+- nature de l'opération contractuelle ;
 - qualification professionnelle ;
 - statut particulier ;
 - barème interne de rémunération ;
-- minimum légal ou conventionnel.
+- minimum légal ou conventionnel ;
+- période d'essai et ancienneté.
 
 ## Principe de saisie
 
 Ordre cible :
 
 1. convention applicable ;
-2. type de contrat ;
-3. fonction / métier ;
-4. classification conventionnelle si elle s'applique ;
-5. qualification ou statut spécifique si nécessaire ;
-6. durée / dates / temps de travail ;
-7. rémunération proposée ;
-8. contrôles automatiques et avertissements.
+2. nature de l'opération : nouveau contrat, renouvellement CDD ou passage CDD → CDI ;
+3. type de contrat ;
+4. contrat précédent lorsqu'une continuité doit être établie ;
+5. fonction / métier ;
+6. classification conventionnelle si elle s'applique ;
+7. qualification ou statut spécifique si nécessaire ;
+8. durée / dates / temps de travail ;
+9. rémunération proposée ;
+10. période d'essai proposée lorsqu'elle est applicable ;
+11. contrôles automatiques et avertissements.
 
-Les champs doivent être contextuels : un champ sans sens pour le contrat choisi ne doit pas être affiché comme s'il était obligatoire.
+Les champs sont contextuels : un champ sans sens pour le contrat choisi ne doit pas être affiché comme s'il était obligatoire.
 
-## État d'implémentation du premier incrément
+## État d'implémentation de TW-184
 
-Le premier incrément TW-184 est désormais raccordé à l'assistant wx historique :
+TW-184 est raccordé à l'assistant wx historique :
 
 - `convention_code` est stocké séparément sur le contrat ;
 - `ccns_group` stocke G1 à G8 sans détourner `IDclassification` ;
-- `weekly_hours` et `gross_monthly_salary` deviennent des données standard du contrat ;
+- `weekly_hours`, `gross_monthly_salary` et `gross_annual_salary` deviennent des données standard du contrat ;
 - `cee_qualification` stocke le statut CEE ;
+- `operation_type` distingue `NEW`, `CDD_RENEWAL` et `CDD_TO_CDI` ;
+- `previous_contract_id` rattache un renouvellement ou une poursuite en CDI au CDD précédent ;
+- `trial_period_value` et `trial_period_unit` stockent la période d'essai sous forme structurée ;
+- le champ historique `essai` continue d'être alimenté en jours calendaires pour préserver les anciens modèles et anciennes fonctions ;
 - toutes ces colonnes sont additives, nullable et créées de façon idempotente, sans `ADD COLUMN IF NOT EXISTS` afin de préserver MySQL/MariaDB 5.5 ;
-- un nouveau contrat Teamworks-CCNS propose CCNS par défaut ;
-- un contrat historique sans `convention_code` n'est jamais converti implicitement ;
+- un nouveau contrat Teamworks-CCNS propose CCNS et l'opération `Nouveau contrat` par défaut ;
+- un contrat historique sans les nouveaux discriminants n'est jamais converti implicitement ;
 - le parcours historique `IDclassification + valeur_point` reste disponible uniquement comme fallback des anciennes données ou des conventions non encore raccordées.
+
+## Nature de l'opération et continuité contractuelle
+
+Le type du contrat ne suffit pas à déterminer les règles applicables. L'assistant distingue donc explicitement :
+
+- **Nouveau contrat** ;
+- **Renouvellement d'un CDD** ;
+- **Passage CDD → CDI**.
+
+Pour un renouvellement ou un passage CDD → CDI, Teamworks demande le CDD précédent et vérifie que le nouveau contrat commence immédiatement après sa date de fin.
+
+Cette relation est stockée par `previous_contract_id`. Elle permettra également d'alimenter progressivement les futurs contrôles d'ancienneté et de continuité sans tenter de déduire ces situations à partir de simples ressemblances de dates.
+
+## Période d'essai
+
+La période d'essai devient une donnée métier calculée et non plus un simple nombre de jours libre.
+
+L'assistant affiche :
+
+- une case `Prévoir une période d'essai` ;
+- une durée ;
+- une unité `jour(s) calendaires` ou `mois calendaires` ;
+- l'explication de la proposition automatique.
+
+La période d'essai reste facultative lorsqu'elle est juridiquement possible : Teamworks propose le maximum applicable mais l'utilisateur peut la réduire ou la supprimer. Une durée supérieure au maximum calculé est refusée.
+
+### Nouveau CDI CCNS
+
+La proposition maximale est calculée selon la catégorie correspondant au groupe :
+
+- G1-G2 : 1 mois ;
+- G3-G5 : 2 mois ;
+- G6-G8 : 3 mois.
+
+Les mois sont conservés comme mois calendaires. Le champ historique `essai`, qui exige un entier en jours, est alimenté à partir de la vraie date de début : un mois de février n'est donc jamais transformé artificiellement en 30 jours.
+
+### Nouveau CDD
+
+Lorsque le terme du CDD est connu, le moteur propose la période d'essai à partir de la durée du contrat et applique les plafonds du régime CDD :
+
+- un jour par semaine de contrat dans la limite de deux semaines lorsque le CDD est de six mois au plus ;
+- un mois au maximum lorsque le CDD dépasse six mois.
+
+Si la durée permettant le calcul n'est pas disponible, Teamworks n'invente pas de valeur et laisse le cas explicite.
+
+### Renouvellement CDD
+
+Un renouvellement de CDD ne crée **aucune nouvelle période d'essai**.
+
+L'opération `CDD_RENEWAL` force donc une proposition de zéro et évite l'ancien avertissement Teamworks qui assimilait systématiquement zéro à une saisie oubliée.
+
+### Passage CDD → CDI
+
+Pour `CDD_TO_CDI`, Teamworks :
+
+1. sélectionne le CDD précédent ;
+2. vérifie la continuité des dates ;
+3. calcule la période d'essai CDI théorique à partir du groupe CCNS ;
+4. déduit la durée du CDD précédent ;
+5. ramène le résultat à zéro lorsque le CDD précédent absorbe toute la période d'essai théorique.
+
+Le calcul est conservateur : il s'appuie sur le contrat explicitement relié, plutôt que de sommer automatiquement tous les anciens CDD de la personne malgré d'éventuelles interruptions ou changements de situation.
+
+### CEE
+
+Le CEE n'utilise pas le moteur de période d'essai CDI/CDD et la proposition est nulle.
 
 ## CCNS — contrats classiques
 
@@ -48,20 +123,47 @@ Pour les CDI/CDD relevant pleinement de la Convention collective nationale du sp
 - utiliser les groupes CCNS G1 à G8 issus du moteur de grille existant ;
 - proposer les minima applicables à la date du contrat ;
 - contrôler le minimum conventionnel et le SMIC ;
-- appliquer le calcul temps partiel déjà porté par le domaine ;
+- appliquer le calcul temps partiel déjà porté par le domaine pour les minima mensuels ;
 - stocker durée hebdomadaire et rémunération indépendamment des champs personnalisés ;
 - ne plus utiliser une « valeur du point » générique comme pivot ;
-- calculer ou proposer la période d'essai uniquement si elle est juridiquement permise et pertinente pour le contrat.
+- proposer automatiquement la période d'essai lorsque le parcours le permet.
 
-### Contrôle de rémunération
+### Contrôle de rémunération — G1 à G6
 
-Pour G1 à G6, l'assistant affiche :
+Pour G1 à G6, l'assistant calcule :
 
 `Minimum CCNS` → `Minimum SMIC` → `Minimum retenu` → `Conforme / non conforme`.
 
-Le minimum retenu est le montant le plus favorable au salarié selon le moteur existant. Une rémunération inférieure au minimum calculé empêche la validation du contrat.
+Le minimum retenu est le montant le plus favorable au salarié selon le moteur existant. Lorsque l'utilisateur choisit un groupe, la case de rémunération est **préremplie directement avec ce minimum retenu** si elle est vide ou contient encore une valeur précédemment préremplie.
 
-G7 et G8 ont des minima annuels. L'assistant les identifie comme tels et n'effectue volontairement aucune conversion mensuelle artificielle.
+Une valeur saisie manuellement n'est jamais écrasée par un changement de rafraîchissement. Une rémunération inférieure au minimum calculé empêche la validation du contrat.
+
+### G7 et G8 — minimum annuel
+
+G7 et G8 ont des minima annuels. Teamworks ne fabrique donc plus de faux minimum mensuel.
+
+Lorsqu'un groupe G7 ou G8 est choisi :
+
+- le libellé devient `Rémunération annuelle de référence` ;
+- l'unité devient `€ brut / an` ;
+- la case est préremplie avec le minimum annuel CCNS applicable à la date ;
+- l'écran rappelle que, pour une période incomplète, le minimum conventionnel est apprécié au prorata du nombre de mois concernés ;
+- à temps plein, une référence annuelle inférieure au minimum de groupe est refusée avant écriture.
+
+Le calcul complet d'un minimum annuel temps partiel et de la rémunération réellement due sur une période incomplète reste distinct de cette valeur annuelle de référence et devra être traité dans un incrément spécialisé.
+
+## Ancienneté et expérience professionnelle
+
+TW-184 ne transforme pas encore l'ancienneté en moteur automatique de prime.
+
+Le modèle cible distingue explicitement :
+
+- **ancienneté reconnue chez l'employeur**, qui pourra être alimentée par la continuité des contrats et des ajustements explicites ;
+- **expérience professionnelle extérieure**, qui peut justifier une rémunération supérieure mais ne doit pas être confondue automatiquement avec l'ancienneté acquise dans l'entreprise.
+
+La relation `previous_contract_id` constitue le premier socle fiable pour calculer ultérieurement la continuité CDD → CDI et les renouvellements sans sommer aveuglément toutes les anciennes périodes de la personne.
+
+Le futur moteur d'ancienneté CCNS devra couvrir les groupes 1 à 6 et rester séparé du minimum salarial de base.
 
 ## CEE — régime spécifique
 
@@ -87,10 +189,10 @@ Un nouveau CEE ne renseigne ni classification CCNS ni ancienne valeur du point. 
 
 Le coefficient légal n'est pas une constante intemporelle :
 
-- du 1er mai 2008 au 30 avril 2025 : minimum journalier = `2,20 × SMIC horaire` ; la règle figurait d'abord à l'article D432-3 du CASF puis à D432-2 à partir de 2012 ;
-- depuis le 1er mai 2025 : minimum journalier = `4,30 × SMIC horaire`, conformément à l'article D432-2 du CASF modifié par le décret n° 2024-1151 du 4 décembre 2024.
+- du 1er mai 2008 au 30 avril 2025 : minimum journalier = `2,20 × SMIC horaire` ;
+- depuis le 1er mai 2025 : minimum journalier = `4,30 × SMIC horaire`.
 
-Le moteur résout donc d'abord le coefficient applicable à la date du contrat, puis la version du SMIC applicable à cette même date. Une date antérieure à l'historique réglementaire porté par Teamworks provoque une absence de règle explicite au lieu d'appliquer artificiellement le coefficient courant.
+Le moteur résout d'abord le coefficient applicable à la date du contrat, puis la version du SMIC applicable à cette même date. Une date antérieure à l'historique réglementaire porté par Teamworks provoque une absence de règle explicite au lieu d'appliquer artificiellement le coefficient courant.
 
 Toute l'arithmétique du calcul légal, multiplication comprise, est exécutée dans un contexte `Decimal` local. Le vieux runtime Teamworks peut laisser une précision globale très faible ; elle ne doit jamais transformer par exemple `12,31 × 4,30 = 52,933` en `53` avant l'arrondi au centime.
 
@@ -122,9 +224,11 @@ Le modèle CEE livré historiquement avec Teamworks utilise des mots-clés et du
 - `{BRUTJOUR}` est conservé comme **alias de compatibilité** de `{BAREMECEE}` pour un CEE moderne ; l'assistant ne demande donc plus une seconde saisie « salaire brut par jour » lorsque le barème CEE est déjà déterminé ;
 - `{CLASSIFICATION}` est historique et reste vide sur un CEE moderne ; un modèle CEE mis à jour doit employer `{QUALIFICATIONCEE}` lorsqu'il veut afficher « BAFA titulaire », « BAFA stagiaire », etc. ;
 - le minimum CEE ne doit jamais être écrit en dur dans le modèle. Employer `{MINIMUMCEE}` permet de reprendre le montant calculé à la date du contrat ;
-- de même, une phrase figée comme « minimum = 2,2 heures de SMIC » est obsolète pour les contrats postérieurs au 30 avril 2025 et doit être remplacée par une formulation fondée sur `{MINIMUMCEE}` ou par une clause juridiquement maintenue dans le modèle.
+- une phrase figée comme « minimum = 2,2 heures de SMIC » est obsolète pour les contrats postérieurs au 30 avril 2025 et doit être remplacée par une formulation fondée sur `{MINIMUMCEE}` ou par une clause juridiquement maintenue dans le modèle.
 
 L'écran de vérification du publipostage contrat adapte la largeur des libellés afin que les mots-clés longs TW-184 restent lisibles. Cette adaptation reste limitée à la catégorie `contrat`.
+
+Le champ historique `{ESSAI}` reste disponible en jours pour les anciens modèles. Des mots-clés documentaires dédiés à la nature de l'opération, à la période d'essai structurée et à la rémunération annuelle pourront être ajoutés sans modifier la compatibilité de `{ESSAI}`.
 
 ## Autres conventions
 
@@ -154,20 +258,34 @@ Chaque futur moteur pourra définir classifications, minima, période d'essai, a
 
 Exemple CEE :
 
-`Convention employeur` → `CEE` → `Qualification : BAFA stagiaire` → `Barème employeur` → `Minimum légal` → `Conformité`.
+`Nouveau contrat` → `Convention employeur` → `CEE` → `Qualification : BAFA stagiaire` → `Barème employeur` → `Minimum légal` → `Conformité`.
 
-Exemple CDI CCNS :
+Exemple nouveau CDI CCNS :
 
-`CCNS — Sport (IDCC 2511)` → `CDI` → `Groupe CCNS` → `Durée hebdomadaire` → `Brut mensuel` → `Minimum CCNS / SMIC` → `Conformité`.
+`Nouveau contrat` → `CCNS — Sport (IDCC 2511)` → `CDI` → `Groupe CCNS` → `Durée hebdomadaire` → `Minimum prérempli` → `Période d'essai proposée` → `Conformité`.
+
+Exemple renouvellement :
+
+`Renouvellement d'un CDD` → `CDD précédent` → `CDD` → `continuité des dates` → `aucune nouvelle période d'essai`.
+
+Exemple poursuite en CDI :
+
+`Passage CDD → CDI` → `CDD précédent` → `CDI` → `Groupe CCNS` → `période CDI théorique - durée du CDD précédent`.
 
 ## Tests
 
-Le lot comporte des tests du domaine et de l'adaptateur CCNS ainsi qu'un smoke Windows du dialogue réel. Les contrôles couvrent notamment :
+Le lot comporte des tests du domaine, des garde-fous statiques et des smokes Windows du dialogue réel. Les contrôles couvrent notamment :
 
 - présélection CCNS sur un nouveau contrat ;
 - huit groupes G1 à G8 ;
-- masquage de l'ancienne classification et de la valeur du point sur le parcours moderne ;
-- contrôle de rémunération CCNS ;
+- minimum mensuel CCNS/SMIC et conformité ;
+- proposition d'essai CDI G1/G4/G7 ;
+- calcul de période d'essai CDD et plafonds ;
+- renouvellement CDD avec zéro nouvelle période d'essai ;
+- déduction du CDD précédent lors du passage en CDI ;
+- conversion exacte des mois calendaires vers le champ legacy en jours ;
+- masquage permanent des anciens contrôles d'essai après rafraîchissement wx ;
+- rémunération annuelle de référence pour G7/G8 ;
 - distinction BAFA titulaire / stagiaire et autres qualifications CEE ;
 - bascule du minimum légal CEE `2,20 → 4,30` au 1er mai 2025 ;
 - conservation du parcours des contrats historiques ;
@@ -180,5 +298,7 @@ Le lot comporte des tests du domaine et de l'adaptateur CCNS ainsi qu'un smoke W
 - génération juridique exhaustive de toutes les clauses du contrat ;
 - prise en charge complète d'ÉCLAT ou des centres sociaux ;
 - migration automatique des anciens contrats ;
-- moteur définitif de période d'essai par convention ;
-- contrôle mensuel artificiel des minima annuels G7/G8.
+- moteur complet de prime d'ancienneté CCNS ;
+- reconnaissance automatique de l'expérience professionnelle acquise chez d'autres employeurs comme ancienneté entreprise ;
+- calcul annuel temps partiel complet G7/G8 et calcul de rémunération due sur une période incomplète ;
+- reconstruction automatique d'une chaîne complexe de plusieurs CDD séparés sans relation explicite.
