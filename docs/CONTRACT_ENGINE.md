@@ -83,11 +83,35 @@ Quand `Type de contrat = CEE`, le parcours devient :
 
 Un nouveau CEE ne renseigne ni classification CCNS ni ancienne valeur du point. Un CEE historique sans qualification moderne reste lisible et modifiable sans conversion forcée.
 
+### Minimum légal CEE daté
+
+Le coefficient légal n'est pas une constante intemporelle :
+
+- du 1er mai 2008 au 30 avril 2025 : minimum journalier = `2,20 × SMIC horaire` ; la règle figurait d'abord à l'article D432-3 du CASF puis à D432-2 à partir de 2012 ;
+- depuis le 1er mai 2025 : minimum journalier = `4,30 × SMIC horaire`, conformément à l'article D432-2 du CASF modifié par le décret n° 2024-1151 du 4 décembre 2024.
+
+Le moteur résout donc d'abord le coefficient applicable à la date du contrat, puis la version du SMIC applicable à cette même date. Une date antérieure à l'historique réglementaire porté par Teamworks provoque une absence de règle explicite au lieu d'appliquer artificiellement le coefficient courant.
+
 ### Barèmes internes
 
 Les barèmes employeur sont historisés par qualification et date d'effet dans une table dédiée. L'écran `Barèmes CEE…` permet de définir des montants différents pour BAFA titulaire, BAFA stagiaire, non diplômé, équivalence et BAFD.
 
 Le logiciel compare le barème employeur au minimum légal CEE résolu à la date du contrat.
+
+## Modèles de contrats et publipostage
+
+Les fichiers de publipostage historiques restent disponibles sans métadonnées : l'absence de ciblage signifie « modèle legacy / secours ».
+
+Un modèle peut désormais être ciblé explicitement :
+
+- CCNS générique ;
+- CCNS G1 à G8 ;
+- CEE générique ;
+- CEE BAFA titulaire, BAFA stagiaire, non diplômé, équivalence, BAFD titulaire ou BAFD stagiaire.
+
+Le bouton d'impression d'un contrat ouvre un adaptateur dédié du publiposteur. Celui-ci filtre uniquement les modèles de la catégorie `contrat` et restaure immédiatement le sélecteur vanilla après construction du dialogue ; les autres usages du publiposteur ne sont donc pas modifiés.
+
+Le ciblage se règle depuis le menu contextuel du fichier. Supprimer réellement un fichier supprime aussi sa métadonnée de ciblage afin qu'un futur fichier portant le même nom ne récupère pas une ancienne règle. Annuler la suppression ne modifie aucune métadonnée.
 
 ## Autres conventions
 
@@ -108,6 +132,7 @@ Chaque futur moteur pourra définir classifications, minima, période d'essai, a
 - préserver la lecture des contrats historiques ;
 - conserver les anciennes valeurs lorsqu'elles existent ;
 - nouvelles colonnes nullable et additives ;
+- nouvelles tables créées via l'adaptation historique de `GestionDB.CreationTable`, qui traduit notamment l'auto-incrément SQLite vers MySQL ;
 - aucune migration automatique d'un ancien contrat vers CCNS ;
 - source et date d'effet des grilles portées par le domaine ;
 - journalisation détaillée des changements de contrat à compléter dans un incrément ultérieur.
@@ -124,13 +149,17 @@ Exemple CDI CCNS :
 
 ## Tests
 
-Le lot comporte des tests du domaine et de l'adaptateur CCNS ainsi qu'un smoke Windows du dialogue réel. Le smoke vérifie notamment qu'un nouveau contrat :
+Le lot comporte des tests du domaine et de l'adaptateur CCNS ainsi qu'un smoke Windows du dialogue réel. Les contrôles couvrent notamment :
 
-- présélectionne CCNS ;
-- expose les huit groupes G1 à G8 ;
-- masque l'ancienne classification et la valeur du point ;
-- affiche le bloc de contrôle CCNS ;
-- conserve le parcours des contrats historiques.
+- présélection CCNS sur un nouveau contrat ;
+- huit groupes G1 à G8 ;
+- masquage de l'ancienne classification et de la valeur du point sur le parcours moderne ;
+- contrôle de rémunération CCNS ;
+- distinction BAFA titulaire / stagiaire et autres qualifications CEE ;
+- bascule du minimum légal CEE `2,20 → 4,30` au 1er mai 2025 ;
+- conservation du parcours des contrats historiques ;
+- filtrage réel d'un modèle CCNS G1 contre un modèle G4 sous Windows ;
+- conservation d'un modèle legacy non ciblé.
 
 ## Hors périmètre immédiat
 
