@@ -4,7 +4,11 @@ import pytest
 
 from domain.contracts.contract_operation import ContractOperation
 from domain.contracts.contract_type import ContractType
-from domain.contracts.probation_period import ProbationUnit, propose_ccns_probation_period
+from domain.contracts.probation_period import (
+    ProbationUnit,
+    probation_calendar_days,
+    propose_ccns_probation_period,
+)
 
 
 def test_new_ccns_cdi_uses_group_category_months() -> None:
@@ -93,6 +97,15 @@ def test_cdd_to_cdi_keeps_only_the_remaining_trial_duration() -> None:
     # précédent compte 31 jours calendaires, il reste donc 60 jours.
     assert proposal.value == 60
     assert proposal.unit is ProbationUnit.DAY
+
+
+def test_month_unit_uses_real_calendar_length_for_legacy_days() -> None:
+    assert probation_calendar_days(
+        start_date=date(2026, 2, 1), value=1, unit=ProbationUnit.MONTH
+    ) == 28
+    assert probation_calendar_days(
+        start_date=date(2026, 9, 1), value=3, unit=ProbationUnit.MONTH
+    ) == 91
 
 
 def test_operation_type_must_match_resulting_contract_type() -> None:
