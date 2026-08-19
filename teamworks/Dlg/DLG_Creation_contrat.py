@@ -19,19 +19,13 @@ import FonctionsPerso
 from Ctrl.CTRL_Creation_contrat_p1 import Page as Page1
 from Ctrl.CTRL_Creation_contrat_p2 import Page as Page2
 from Ctrl.CTRL_Creation_contrat_p3 import Page as LegacyPage3
-from Ctrl.CTRL_Creation_contrat_p4 import Page as Page4
+from Ctrl.CTRL_Creation_contrat_p4 import Page as LegacyPage4
 from Ctrl.CTRL_Creation_contrat_p5 import Page as Page5
 from Ctrl.CTRL_Creation_contrat_p6 import Page as Page6
 
 
 class Page3(LegacyPage3):
-    """Isole les quantifications monétaires du contexte Decimal historique.
-
-    Certains chemins du runtime vanilla réduisent la précision globale de
-    ``decimal``. La page contrat contient encore deux quantifications UI ; on
-    les exécute dans un contexte local suffisamment précis sans modifier le
-    comportement global du reste de Teamworks.
-    """
+    """Isole les calculs modernes et rafraîchit les champs dérivés du régime."""
 
     def _MonthlySalaryDecimal(self):
         with localcontext() as context:
@@ -41,7 +35,44 @@ class Page3(LegacyPage3):
     def Validation(self):
         with localcontext() as context:
             context.prec = max(28, context.prec)
-            return super().Validation()
+            validation = super().Validation()
+        if validation and hasattr(self.GetGrandParent(), "page4"):
+            # Le choix CCNS/CEE peut modifier la liste des champs legacy utiles.
+            self.GetGrandParent().page4.MAJ_ListCtrl()
+        return validation
+
+
+class Page4(LegacyPage4):
+    """Conserve les champs legacy sauf ceux désormais fournis par le moteur.
+
+    BRUTJOUR est utilisé par le modèle CEE d'origine de Teamworks. Pour un CEE
+    moderne, le montant provient du barème employeur : demander une seconde
+    saisie serait contradictoire. Le champ reste disponible hors CEE.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._FilterEngineManagedFields()
+
+    def MAJ_ListCtrl(self):
+        super().MAJ_ListCtrl()
+        self._FilterEngineManagedFields()
+
+    def _FilterEngineManagedFields(self):
+        dialog = self.GetGrandParent()
+        if not hasattr(dialog, "page3") or not dialog.page3.IsCEESelected():
+            return
+        list_ctrl = self.listCtrl_champs
+        for index in range(list_ctrl.GetItemCount() - 1, -1, -1):
+            IDchamp = list_ctrl.GetItemData(index)
+            valeurs = list_ctrl.dictChamps.get(IDchamp)
+            mot_cle = (valeurs[3] if valeurs else "") or ""
+            if mot_cle.strip().upper() != "BRUTJOUR":
+                continue
+            list_ctrl.DeleteItem(index)
+            list_ctrl.dictChamps.pop(IDchamp, None)
+            if IDchamp in list_ctrl.selections:
+                list_ctrl.selections.remove(IDchamp)
 
 
 class Dialog(wx.Dialog):
