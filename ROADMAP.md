@@ -46,6 +46,11 @@ Les lots TW historiques ont été traités par PR successives. La quasi-totalit�
 - TW-179 : robustesse des champs de contrat ;
 - TW-180 : suppression des doubles checkboxes Phoenix.
 
+### Lots actifs après TW-180
+
+- **TW-181 — Nettoyage du packaging Windows** : PR #253 ouverte. Les tests du socle et les parcours critiques Windows sont verts. Le build portable doit encore être exécuté explicitement sur cette branche afin de vérifier la disparition des warnings liés aux anciennes versions d’actions GitHub et aux collectes PyInstaller trop larges avant fusion.
+- **TW-182 — Branding Teamworks CCNS et personnalisation association** : branche `agent/tw-182-branding-teamworks-ccns` active. Le développement peut avancer en parallèle, mais sa fusion ne doit pas court-circuiter la séquence de stabilisation et de validation Windows.
+
 ### PR d’audit historique #209
 
 La PR #209 « TW-139 — Auditer et stabiliser les parcours runtime » a servi de chantier d’exploration et d’audit global. Son contenu utile a ensuite été extrait en lots ciblés, testés et fusionnés individuellement dans `master` (notamment TW-149 à TW-170, puis les corrections runtime suivantes).
@@ -64,24 +69,30 @@ Ces collisions sont conservées comme faits historiques et ne doivent pas être 
 
 ## 4. État GitHub au 19 août 2026
 
-Après consolidation :
+État courant :
 
-- aucune PR ouverte ;
-- aucune issue ouverte ;
-- `master` est la seule base de travail à considérer ;
+- PR #253 ouverte pour TW-181 ;
+- branche `agent/tw-182-branding-teamworks-ccns` ouverte pour TW-182 ;
+- aucune issue ouverte, les Issues étant désactivées sur le dépôt ;
+- `master` reste la seule base de référence ;
 - le dernier lot fonctionnel fusionné est TW-180 ;
+- les branches de travail doivent partir de `master` et rester isolées par objectif ;
 - les anciennes branches peuvent rester comme historique, mais ne doivent pas piloter les décisions de développement.
 
 ## 5. Priorité immédiate — validation réelle avant pré-release
 
-Aucune nouvelle fonction métier, convention collective ou refonte visuelle importante ne doit passer devant les validations suivantes :
+La stabilisation Windows reste prioritaire. Les développements non bloquants peuvent avancer sur des branches isolées, mais aucune nouvelle fonction métier, convention collective ou refonte visuelle importante ne doit être fusionnée au détriment des validations suivantes :
 
-1. produire un portable Windows depuis le `master` courant ;
-2. vérifier le démarrage et les smoke tests automatisés sur ce build ;
-3. exécuter le parcours minimal sur une copie de base réelle ;
-4. corriger uniquement les anomalies bloquantes réellement constatées ;
-5. documenter les résultats ;
-6. décider ensuite seulement si la version mérite une qualification bêta ou RC.
+1. valider TW-181 par un build portable Windows de sa branche ;
+2. fusionner TW-181 si le packaging est propre et fonctionnel ;
+3. produire un portable Windows depuis le `master` courant ;
+4. vérifier le démarrage et les smoke tests automatisés sur ce build ;
+5. exécuter le parcours minimal sur une copie de base réelle ;
+6. corriger uniquement les anomalies bloquantes réellement constatées ;
+7. documenter les résultats ;
+8. décider ensuite seulement si la version mérite une qualification bêta ou RC.
+
+TW-182 peut être développé en parallèle afin de ne pas bloquer l’avancement, mais son intégration finale doit préserver cette discipline de stabilisation.
 
 ## 6. Parcours minimal de validation Windows
 
@@ -105,6 +116,8 @@ Un build n’est qualifiable en pré-release que si le parcours suivant est enti
 - frais ;
 - paramètres ;
 - rapports / publipostage / impression ;
+- statistiques ;
+- vérification des écrans à checkboxes ;
 - fermeture sans processus résiduel.
 
 Chaque étape doit avoir un résultat daté et préciser sa nature : automatique, CI Windows, test manuel développeur ou validation utilisateur.
@@ -130,6 +143,8 @@ Le build :
 - conserve la liste des dépendances réellement utilisées ;
 - publie une GitHub Release uniquement lorsqu’un tag correspond exactement à `VERSION`.
 
+TW-181 vise à réduire le bruit de packaging sans modifier le runtime métier : actions GitHub compatibles Node 24 et retrait des collectes PyInstaller globales inutiles de wxPython et Matplotlib. Le build portable de validation doit notamment confirmer que le backend Matplotlib `wxagg` et les statistiques restent disponibles.
+
 Ce niveau de packaging est une condition nécessaire mais non suffisante pour une RC.
 
 ## 8. CI — état actuel
@@ -151,7 +166,7 @@ Il regroupe :
 
 Aucun deuxième workflow ne doit être ajouté pour contourner ou dupliquer ces contrôles.
 
-## 9. Thèmes et affichage
+## 9. Thèmes, branding et affichage
 
 Le mode `Système` doit reprendre les couleurs natives exposées par wxWidgets. Les modes `Clair` et `Sombre` restent des surcharges explicites.
 
@@ -162,6 +177,29 @@ Le code de préférences, de persistance, de restauration et de thème natif est
 - absence de texte tronqué avec l’échelle choisie ;
 - persistance après redémarrage ;
 - comportement correct des sélections et états désactivés.
+
+### TW-182 — identité visuelle Teamworks CCNS
+
+Le branding cible devient explicitement **Teamworks CCNS** afin de distinguer le fork spécialisé CCNS du logiciel historique.
+
+Périmètre prévu :
+
+- nouveau logo Teamworks CCNS moderne, lisible et exploitable en petite taille ;
+- suppression/remplacement des anciens visuels Teamworks datés utilisés au splash, à l’accueil ou comme fond ;
+- splash cohérent en thème clair et sombre ;
+- barre de chargement centrée ;
+- logo de l’association utilisatrice affiché sous la zone de chargement ;
+- crédit discret `© Teamworks CCNS` en pied de splash, sans année codée en dur ;
+- possibilité de définir un logo d’association dans les paramètres ;
+- conservation automatique des proportions, sans étirement ;
+- PNG transparent recommandé, JPEG accepté ;
+- fallback automatique vers le branding Teamworks CCNS si aucun logo d’association n’est défini ou si le fichier est invalide ;
+- stockage de la personnalisation utilisateur hors des assets statiques afin qu’une mise à jour ne l’écrase pas ;
+- identité Teamworks CCNS conservée pour l’icône de l’application ;
+- intégration du logo de l’association dans l’accueil sans remplacer l’identité du logiciel ;
+- cohérence complète des deux thèmes clair et sombre.
+
+Les maquettes servent de référence visuelle, mais l’implémentation finale doit respecter les contraintes wxPython, le packaging Windows et les réglages existants.
 
 ## 10. Données, encodages, dates et compatibilité
 
@@ -300,8 +338,10 @@ Aucune intégration ne doit fragiliser le socle local.
 
 ## 18. Prochain jalon
 
-Le prochain jalon est **la validation Windows réelle du `master` actuel**.
+Le prochain jalon reste **la validation Windows réelle du `master`**, avec TW-181 comme dernier nettoyage de packaging à qualifier avant fusion.
 
-Séquence :
+Séquence principale :
 
-**build portable `master` → smoke tests Windows → parcours minimal sur copie réelle → correction des seuls blocages → décision de qualification pré-release.**
+**build portable TW-181 → fusion si conforme → build portable `master` → smoke tests Windows → parcours minimal sur copie réelle → correction des seuls blocages → décision de qualification pré-release.**
+
+En parallèle, TW-182 peut progresser sur sa branche dédiée jusqu’à disposer d’un branding Teamworks CCNS cohérent, personnalisable et validé en thèmes clair et sombre, sans perturber la séquence de stabilisation.
