@@ -7,6 +7,7 @@
 #-----------------------------------------------------------
 
 from Utils.UTILS_Traduction import _
+from Utils import UTILS_Contrats_schema
 import wx
 from Ctrl import CTRL_Bouton_image
 import FonctionsPerso
@@ -58,6 +59,7 @@ class Page(wx.Panel):
         dictContrats = self.GetGrandParent().dictContrats
         dictChamps = self.GetGrandParent().dictChamps
         DB = GestionDB.DB()
+        UTILS_Contrats_schema.EnsureCEEQualificationColumn(DB)
 
         # Enregistrement des données du CONTRAT 
         listeDonnees = [    ("IDpersonne",     dictContrats["IDpersonne"]),
@@ -69,6 +71,11 @@ class Page(wx.Panel):
                                     ("date_rupture",            dictContrats["date_rupture"]),
                                     ("essai",            dictContrats["essai"]),
                                 ]
+        # TW-184 : stockage dédié, sans réutiliser IDclassification. La clé est
+        # présente dans les nouveaux assistants et chargée pour les contrats qui
+        # ont déjà été migrés. Les anciennes données restent donc intactes.
+        if "cee_qualification" in dictContrats:
+            listeDonnees.append(("cee_qualification", dictContrats.get("cee_qualification")))
         
         if dictContrats["IDcontrat"] == 0 :
             # Ajout
@@ -134,4 +141,3 @@ class Page(wx.Panel):
             self.GetGrandParent().GetParent().MAJ_barre_problemes() 
            
         return True
-
