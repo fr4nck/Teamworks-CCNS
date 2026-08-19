@@ -24,9 +24,6 @@ def _install_native_checklist_bridge():
     mixin utilisée par ces écrans (``ToggleItem`` et ``IsChecked``), mais laisse
     exclusivement wxPython gérer l'affichage et l'état des cases.
     """
-    if "phoenix" not in wx.PlatformInfo:
-        return
-
     try:
         from wx.lib.mixins import listctrl as listmix
     except ImportError:
