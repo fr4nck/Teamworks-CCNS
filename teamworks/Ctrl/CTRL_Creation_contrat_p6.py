@@ -3,7 +3,7 @@
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
-# Licence:      Licence GNU GPL
+# Licence:       Licence GNU GPL
 #-----------------------------------------------------------
 
 import datetime
@@ -124,14 +124,34 @@ class Page(wx.Panel):
             weekly = _decimal_or_none(dictContrats.get("weekly_hours"))
             if weekly is None:
                 weekly = Decimal("0.00")
-            salary = _decimal_or_none(dictContrats.get("gross_monthly_salary"))
+            monthly_salary = _decimal_or_none(dictContrats.get("gross_monthly_salary"))
             result = validate_ccns_monthly_compensation(
                 group_code=group,
                 reference_date=reference_date,
                 weekly_hours=weekly,
-                gross_monthly_salary=salary,
+                gross_monthly_salary=monthly_salary,
                 territory=SmicTerritory.METROPOLITAN_FRANCE,
             )
+
+            if result.control_scope == "CCNS_ANNUAL":
+                annual_salary = _decimal_or_none(dictContrats.get("gross_annual_salary"))
+                if annual_salary is None or annual_salary <= Decimal("0"):
+                    wx.MessageBox(
+                        _(u"La rémunération brute annuelle est obligatoire pour les groupes G7/G8."),
+                        _(u"Contrôle CCNS annuel"), wx.OK | wx.ICON_ERROR, parent=self,
+                    )
+                    return False
+                # Le moteur annuel de temps partiel sera raccordé séparément.
+                # À temps plein, le contrôle est déterministe et peut bloquer.
+                if weekly == Decimal("35") and result.required_minimum is not None and annual_salary < result.required_minimum:
+                    wx.MessageBox(
+                        _(u"La rémunération annuelle est inférieure au minimum CCNS applicable.\nMinimum requis : %.2f € brut/an.")
+                        % result.required_minimum,
+                        _(u"Contrôle CCNS annuel"), wx.OK | wx.ICON_ERROR, parent=self,
+                    )
+                    return False
+                return True
+
             if not result.compliant:
                 detail = result.message
                 if result.required_minimum is not None:
@@ -171,6 +191,11 @@ class Page(wx.Panel):
             ("ccns_group", dictContrats.get("ccns_group")),
             ("weekly_hours", dictContrats.get("weekly_hours")),
             ("gross_monthly_salary", dictContrats.get("gross_monthly_salary")),
+            ("gross_annual_salary", dictContrats.get("gross_annual_salary")),
+            ("operation_type", dictContrats.get("operation_type")),
+            ("previous_contract_id", dictContrats.get("previous_contract_id")),
+            ("trial_period_value", dictContrats.get("trial_period_value")),
+            ("trial_period_unit", dictContrats.get("trial_period_unit")),
             ("date_debut", dictContrats["date_debut"]),
             ("date_fin", dictContrats["date_fin"]),
             ("date_rupture", dictContrats["date_rupture"]),
