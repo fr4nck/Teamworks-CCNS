@@ -7,6 +7,7 @@
 #-----------------------------------------------------------
 
 from Utils.UTILS_Traduction import _
+from Utils import UTILS_Contrats_schema
 import wx
 import GestionDB
 import FonctionsPerso
@@ -52,14 +53,16 @@ class Page(wx.Panel):
     def Validation(self):
         if self.text_nom.GetValue() == "":
             dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement saisir un nom pour ce modèle !"), "Erreur", wx.OK)
-            dlg.ShowModal(); dlg.Destroy()
+            dlg.ShowModal()
+            dlg.Destroy()
             self.text_nom.SetFocus()
             return False
 
         dictModeles = self.GetGrandParent().dictModeles
         dictChamps = self.GetGrandParent().dictChamps
         DB = GestionDB.DB()
-        champs = DB.GetListeChamps2("contrats_modeles")
+        UTILS_Contrats_schema.EnsureContractModelColumns(DB)
+        noms_champs = [champ[0] for champ in DB.GetListeChamps2("contrats_modeles")]
         listeDonnees = [
             ("IDclassification", dictModeles.get("IDclassification")),
             ("IDtype", dictModeles.get("IDtype")),
@@ -67,7 +70,7 @@ class Page(wx.Panel):
             ("description", self.text_description.GetValue()),
         ]
         for nom in ("convention_code", "ccns_group", "cee_qualification"):
-            if nom in champs:
+            if nom in noms_champs:
                 listeDonnees.append((nom, dictModeles.get(nom)))
 
         if dictModeles["IDmodele"] == 0:
@@ -82,14 +85,22 @@ class Page(wx.Panel):
         DB.ExecuterReq(req)
         existants = DB.ResultatReq()
         for IDchamp, valeur in dictChamps.items():
-            ligne = [("IDchamp", IDchamp), ("type", "modele"), ("valeur", valeur), ("IDmodele", IDmodele), ("IDcontrat", 0)]
+            ligne = [
+                ("IDchamp", IDchamp),
+                ("type", "modele"),
+                ("valeur", valeur),
+                ("IDmodele", IDmodele),
+                ("IDcontrat", 0),
+            ]
             trouve = False
             for IDval, IDchampDB in existants:
                 if IDchampDB == IDchamp:
                     DB.ReqMAJ("contrats_valchamps", ligne, "IDval_champ", IDval)
-                    DB.Commit(); trouve = True
+                    DB.Commit()
+                    trouve = True
             if not trouve:
-                DB.ReqInsert("contrats_valchamps", ligne); DB.Commit()
+                DB.ReqInsert("contrats_valchamps", ligne)
+                DB.Commit()
         for IDval, IDchampDB in existants:
             if IDchampDB not in dictChamps:
                 DB.ReqDEL("contrats_valchamps", "IDval_champ", IDval)
