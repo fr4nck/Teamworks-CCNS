@@ -39,6 +39,24 @@ def _inclusive_days(start_date: date, end_date: date) -> int:
     return (end_date - start_date).days + 1
 
 
+def probation_calendar_days(*, start_date: date, value: int, unit: ProbationUnit) -> int:
+    """Convertit une durée structurée en jours calendaires pour le champ legacy.
+
+    Le champ historique ``essai`` de Teamworks est un entier en jours. La
+    conversion des mois dépend donc de la date réelle de début ; elle ne doit
+    jamais être remplacée par une approximation fixe de 30 jours.
+    """
+    if type(start_date) is not date:
+        raise TypeError("start_date doit être une date stricte.")
+    if type(value) is not int or value < 0:
+        raise ValueError("value doit être un entier positif ou nul.")
+    if unit is ProbationUnit.DAY:
+        return value
+    if unit is ProbationUnit.MONTH:
+        return (_add_calendar_months(start_date, value) - start_date).days
+    raise ValueError("Unité de période d'essai inconnue.")
+
+
 def _ccns_cdi_months(group_code: str) -> int:
     code = (group_code or "").strip().upper()
     if code in ("G1", "G2"):
