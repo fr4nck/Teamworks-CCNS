@@ -50,6 +50,13 @@ class CompatibilityTests(unittest.TestCase):
         self.assertIn("self.SetRowLabelSize(max(140, min(320, largeur)))", source)
         self.assertIn("original_grid = _base.Grid_donnees", source)
 
+    def test_modern_cee_supplies_legacy_brutjour_from_employer_rate(self):
+        source = (ROOT / "teamworks" / "Dlg" / "DLG_Publiposteur_contrat.py").read_text(encoding="utf-8")
+        self.assertIn("def _apply_legacy_cee_aliases(dict_donnees):", source)
+        self.assertIn('document["BRUTJOUR"] = document["BAREMECEE"]', source)
+        self.assertIn('motcles.append(("BRUTJOUR", "base"))', source)
+        self.assertIn("_apply_legacy_cee_aliases(dict_donnees)", source)
+
     def test_deleted_file_drops_its_targeting_only_after_actual_removal(self):
         source = (ROOT / "teamworks" / "Dlg" / "DLG_Publiposteur_contrat.py").read_text(encoding="utf-8")
         self.assertIn("if not os.path.isfile(chemin):", source)
