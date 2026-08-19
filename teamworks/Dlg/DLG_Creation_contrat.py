@@ -18,7 +18,7 @@ import FonctionsPerso
 
 from Ctrl.CTRL_Creation_contrat_p1 import Page as Page1
 from Ctrl.CTRL_Creation_contrat_p2 import Page as Page2
-from Ctrl.CTRL_Creation_contrat_p3 import Page as LegacyPage3
+from Ctrl.CTRL_Creation_contrat_p3_modern import Page as LegacyPage3
 from Ctrl.CTRL_Creation_contrat_p4 import Page as LegacyPage4
 from Ctrl.CTRL_Creation_contrat_p5 import Page as LegacyPage5
 from Ctrl.CTRL_Creation_contrat_p6 import Page as Page6
@@ -74,7 +74,7 @@ class Page4(LegacyPage4):
             mots_cles_masques.add("BRUTJOUR")
         if dialog.page3.IsCCNSSelected():
             # Ces données sont désormais des champs standards du contrat CCNS.
-            mots_cles_masques.update(("HEBDO", "BRUTMENS"))
+            mots_cles_masques.update(("HEBDO", "BRUTMENS", "ANNUEL"))
 
         if not mots_cles_masques:
             return
@@ -146,6 +146,11 @@ class Dialog(wx.Dialog):
             "ccns_group": None,
             "weekly_hours": None,
             "gross_monthly_salary": None,
+            "gross_annual_salary": None,
+            "operation_type": "NEW" if IDcontrat == 0 else None,
+            "previous_contract_id": None,
+            "trial_period_value": None,
+            "trial_period_unit": None,
             "date_debut": "",
             "date_fin": "",
             "date_rupture": "",
@@ -167,25 +172,35 @@ class Dialog(wx.Dialog):
         UTILS_Contrats_schema.EnsureContractEngineColumns(DB)
         req = (
             "SELECT IDclassification, IDtype, valeur_point, cee_qualification, "
-            "convention_code, ccns_group, weekly_hours, gross_monthly_salary, "
+            "convention_code, ccns_group, weekly_hours, gross_monthly_salary, gross_annual_salary, "
+            "operation_type, previous_contract_id, trial_period_value, trial_period_unit, "
             "date_debut, date_fin, date_rupture, essai "
             "FROM contrats WHERE IDcontrat=%d ;" % IDcontrat
         )
         DB.ExecuterReq(req)
-        listeDonnees = DB.ResultatReq()[0]
+        rows = DB.ResultatReq()
+        if not rows:
+            DB.Close()
+            return
+        values = rows[0]
 
-        self.dictContrats["IDclassification"] = listeDonnees[0]
-        self.dictContrats["IDtype"] = listeDonnees[1]
-        self.dictContrats["valeur_point"] = listeDonnees[2]
-        self.dictContrats["cee_qualification"] = listeDonnees[3]
-        self.dictContrats["convention_code"] = listeDonnees[4]
-        self.dictContrats["ccns_group"] = listeDonnees[5]
-        self.dictContrats["weekly_hours"] = listeDonnees[6]
-        self.dictContrats["gross_monthly_salary"] = listeDonnees[7]
-        self.dictContrats["date_debut"] = listeDonnees[8]
-        self.dictContrats["date_fin"] = listeDonnees[9]
-        self.dictContrats["date_rupture"] = listeDonnees[10]
-        self.dictContrats["essai"] = listeDonnees[11]
+        self.dictContrats["IDclassification"] = values[0]
+        self.dictContrats["IDtype"] = values[1]
+        self.dictContrats["valeur_point"] = values[2]
+        self.dictContrats["cee_qualification"] = values[3]
+        self.dictContrats["convention_code"] = values[4]
+        self.dictContrats["ccns_group"] = values[5]
+        self.dictContrats["weekly_hours"] = values[6]
+        self.dictContrats["gross_monthly_salary"] = values[7]
+        self.dictContrats["gross_annual_salary"] = values[8]
+        self.dictContrats["operation_type"] = values[9]
+        self.dictContrats["previous_contract_id"] = values[10]
+        self.dictContrats["trial_period_value"] = values[11]
+        self.dictContrats["trial_period_unit"] = values[12]
+        self.dictContrats["date_debut"] = values[13]
+        self.dictContrats["date_fin"] = values[14]
+        self.dictContrats["date_rupture"] = values[15]
+        self.dictContrats["essai"] = values[16]
 
         req = "SELECT IDchamp, valeur FROM contrats_valchamps WHERE (IDcontrat=%d AND type='contrat')  ;" % IDcontrat
         DB.ExecuterReq(req)
