@@ -3,7 +3,7 @@
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
-# Licence:      Licence GNU GPL
+# Licence:       Licence GNU GPL
 #-----------------------------------------------------------
 
 from decimal import localcontext
@@ -20,7 +20,7 @@ from Ctrl.CTRL_Creation_contrat_p1 import Page as Page1
 from Ctrl.CTRL_Creation_contrat_p2 import Page as Page2
 from Ctrl.CTRL_Creation_contrat_p3 import Page as LegacyPage3
 from Ctrl.CTRL_Creation_contrat_p4 import Page as LegacyPage4
-from Ctrl.CTRL_Creation_contrat_p5 import Page as Page5
+from Ctrl.CTRL_Creation_contrat_p5 import Page as LegacyPage5
 from Ctrl.CTRL_Creation_contrat_p6 import Page as Page6
 
 
@@ -43,15 +43,20 @@ class Page3(LegacyPage3):
 
 
 class Page4(LegacyPage4):
-    """Conserve les champs legacy sauf ceux désormais fournis par le moteur.
+    """Informations complémentaires facultatives du contrat.
 
-    BRUTJOUR est utilisé par le modèle CEE d'origine de Teamworks. Pour un CEE
-    moderne, le montant provient du barème employeur : demander une seconde
-    saisie serait contradictoire. Le champ reste disponible hors CEE.
+    Les données désormais natives du moteur ne doivent plus être demandées une
+    seconde fois comme champs personnalisés. Les autres champs historiques
+    restent disponibles pour les modèles spécifiques des utilisateurs.
     """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.label_titre.SetLabel(_(u"3. Informations complémentaires (optionnel)"))
+        self.label_intro.SetLabel(
+            _(u"Cochez uniquement les informations supplémentaires nécessaires à ce contrat.\n"
+              u"Les données déjà gérées par le contrat sont renseignées automatiquement.")
+        )
         self._FilterEngineManagedFields()
 
     def MAJ_ListCtrl(self):
@@ -60,19 +65,50 @@ class Page4(LegacyPage4):
 
     def _FilterEngineManagedFields(self):
         dialog = self.GetGrandParent()
-        if not hasattr(dialog, "page3") or not dialog.page3.IsCEESelected():
+        if not hasattr(dialog, "page3"):
             return
+
+        mots_cles_masques = set()
+        if dialog.page3.IsCEESelected():
+            # Le forfait journalier vient du barème employeur CEE.
+            mots_cles_masques.add("BRUTJOUR")
+        if dialog.page3.IsCCNSSelected():
+            # Ces données sont désormais des champs standards du contrat CCNS.
+            mots_cles_masques.update(("HEBDO", "BRUTMENS"))
+
+        if not mots_cles_masques:
+            return
+
         list_ctrl = self.listCtrl_champs
         for index in range(list_ctrl.GetItemCount() - 1, -1, -1):
             IDchamp = list_ctrl.GetItemData(index)
             valeurs = list_ctrl.dictChamps.get(IDchamp)
-            mot_cle = (valeurs[3] if valeurs else "") or ""
-            if mot_cle.strip().upper() != "BRUTJOUR":
+            mot_cle = ((valeurs[3] if valeurs else "") or "").strip().upper()
+            if mot_cle not in mots_cles_masques:
                 continue
             list_ctrl.DeleteItem(index)
             list_ctrl.dictChamps.pop(IDchamp, None)
             if IDchamp in list_ctrl.selections:
                 list_ctrl.selections.remove(IDchamp)
+
+    def Validation(self):
+        # Aucun complément choisi : rien à confirmer ni à remplir. Le dialogue
+        # sautera directement à la validation finale.
+        if len(self.listCtrl_champs.selections) == 0:
+            self.GetGrandParent().dictChamps = {}
+            return True
+
+        self.GetGrandParent().page5.MAJ_panelDefilant()
+        return True
+
+
+class Page5(LegacyPage5):
+    """Saisie des seuls compléments explicitement sélectionnés à l'étape 3."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.label_titre.SetLabel(_(u"4. Saisie des informations complémentaires"))
+        self.label_intro.SetLabel(_(u"Renseignez les informations complémentaires sélectionnées :"))
 
 
 class Dialog(wx.Dialog):
@@ -265,11 +301,24 @@ class Dialog(wx.Dialog):
         from Utils import UTILS_Aide
         UTILS_Aide.Aide("Creruncontrat")
 
+    def _HasSelectedCustomFields(self):
+        if not hasattr(self, "page4"):
+            return False
+        return bool(self.page4.listCtrl_champs.selections)
+
     def Onbouton_retour(self, event):
-        pageCible = eval("self.page"+str(self.pageVisible))
+        pageCible = getattr(self, "page%d" % self.pageVisible)
         pageCible.Show(False)
-        self.pageVisible -= 1
-        pageCible = eval("self.page"+str(self.pageVisible))
+
+        # Si aucune information complémentaire n'a été choisie, la page 5
+        # n'a jamais été affichée : Retour depuis la validation revient donc
+        # directement au choix facultatif de la page 4.
+        if self.pageVisible == 6 and not self._HasSelectedCustomFields():
+            self.pageVisible = 4
+        else:
+            self.pageVisible -= 1
+
+        pageCible = getattr(self, "page%d" % self.pageVisible)
         pageCible.Show(True)
         self.sizer_pages.Layout()
         if self.pageVisible == self.nbrePages-1:
@@ -285,10 +334,18 @@ class Dialog(wx.Dialog):
         if self.pageVisible == self.nbrePages:
             self.Terminer()
             return
-        pageCible = eval("self.page"+str(self.pageVisible))
+
+        pageCible = getattr(self, "page%d" % self.pageVisible)
         pageCible.Show(False)
-        self.pageVisible += 1
-        pageCible = eval("self.page"+str(self.pageVisible))
+
+        # Sans champ complémentaire, l'ancien écran « aucun champ à remplir »
+        # est inutile : on passe directement du choix facultatif à la validation.
+        if self.pageVisible == 4 and not self._HasSelectedCustomFields():
+            self.pageVisible = 6
+        else:
+            self.pageVisible += 1
+
+        pageCible = getattr(self, "page%d" % self.pageVisible)
         pageCible.Show(True)
         self.sizer_pages.Layout()
         if self.pageVisible == self.nbrePages:
