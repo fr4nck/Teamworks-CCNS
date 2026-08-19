@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
-from decimal import Decimal
+from decimal import Decimal, getcontext
 
 from domain.convention.applicable_salary_minimum import (
     ApplicableSalaryMinimumResult,
@@ -39,13 +39,17 @@ class CCNSContractCompliancePreview:
 
 
 class CCNSContractCompliancePresenter:
-    """Pont entre l'assistant de contrat et le moteur CCNS déjà présent.
+    """Pont entre l'assistant historique et le moteur CCNS.
 
-    Il ne persiste rien : il expose les groupes de la grille applicable et
-    calcule le minimum le plus favorable CCNS/SMIC pour l'aperçu de contrat.
+    Le vieux runtime Teamworks peut laisser le contexte Decimal du thread avec
+    une précision anormalement faible. Les objets domaine sont eux-mêmes
+    protégés par des contextes locaux ; ce garde-fou remet aussi l'UI du thread
+    courant à une précision financière normale avant toute saisie monétaire.
     """
 
     def __init__(self) -> None:
+        if getcontext().prec < 28:
+            getcontext().prec = 28
         salary_grid = create_ccns_salary_grid_2026_01()
         self._grid_catalog = SalaryGridCatalog((salary_grid,))
         self._service = ApplicableSalaryMinimumService(
