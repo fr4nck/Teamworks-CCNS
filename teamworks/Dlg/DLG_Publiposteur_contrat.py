@@ -7,12 +7,13 @@ Seule la liste des fichiers de modèles est filtrée selon le régime du contrat
 Les fichiers sans métadonnées restent visibles comme modèles historiques.
 """
 
+import os
 import wx
 import Chemins
 import GestionDB
 from Utils.UTILS_Traduction import _
 from Dlg import DLG_Publiposteur as _base
-from Utils import UTILS_Adaptations, UTILS_Contrats_modeles_documents
+from Utils import UTILS_Adaptations, UTILS_Contrats_modeles_documents, UTILS_Fichiers
 
 
 _TARGETS = [
@@ -110,7 +111,21 @@ class ListCtrl_fichiers(_base.ListCtrl_fichiers):
         return super(ListCtrl_fichiers, self).Menu_Modifier(event)
 
     def Menu_Supprimer(self, event):
-        return super(ListCtrl_fichiers, self).Menu_Supprimer(event)
+        index = self.GetFirstSelected()
+        nom_fichier = self.getColumnText(index, 0) if index != -1 else None
+        resultat = super(ListCtrl_fichiers, self).Menu_Supprimer(event)
+
+        # Le dialogue vanilla gère la confirmation. On ne retire les métadonnées
+        # que si le fichier a réellement disparu ; une annulation ne change rien.
+        if nom_fichier:
+            chemin = os.path.join(UTILS_Fichiers.GetRepModeles(), nom_fichier)
+            if not os.path.isfile(chemin):
+                DB = GestionDB.DB()
+                try:
+                    UTILS_Contrats_modeles_documents.DeleteMetadata(DB, nom_fichier)
+                finally:
+                    DB.Close()
+        return resultat
 
     def Menu_Parcourir(self, event):
         return super(ListCtrl_fichiers, self).Menu_Parcourir(event)
