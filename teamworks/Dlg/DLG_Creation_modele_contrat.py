@@ -67,15 +67,15 @@ class Dialog(wx.Dialog):
             DB.Close()
             self.dictModeles["IDmodele"] = 0
             return False
-        donnees = resultats[0]
-        self.dictModeles["nom"] = donnees[0]
-        self.dictModeles["description"] = donnees[1]
-        self.dictModeles["IDclassification"] = donnees[2]
-        self.dictModeles["IDtype"] = donnees[3]
+        listeDonnees = resultats[0]
+        self.dictModeles["nom"] = listeDonnees[0]
+        self.dictModeles["description"] = listeDonnees[1]
+        self.dictModeles["IDclassification"] = listeDonnees[2]
+        self.dictModeles["IDtype"] = listeDonnees[3]
         if modernes:
-            self.dictModeles["convention_code"] = donnees[4]
-            self.dictModeles["ccns_group"] = donnees[5]
-            self.dictModeles["cee_qualification"] = donnees[6]
+            self.dictModeles["convention_code"] = listeDonnees[4]
+            self.dictModeles["ccns_group"] = listeDonnees[5]
+            self.dictModeles["cee_qualification"] = listeDonnees[6]
         req = "SELECT IDchamp, valeur FROM contrats_valchamps WHERE (IDmodele=%d AND type='modele') ;" % IDmodele
         DB.ExecuterReq(req)
         for IDchamp, valeur in DB.ResultatReq():
