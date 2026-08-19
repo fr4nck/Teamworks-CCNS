@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import date
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal, ROUND_HALF_UP, localcontext
 
 from domain.convention.smic import SmicCatalog, SmicTerritory
 
@@ -70,6 +70,7 @@ def legal_cee_daily_minimum(
 
     Le multiplicateur légal est résolu à la date du contrat puis appliqué au
     SMIC horaire applicable, afin de conserver un calcul historique exact.
+    L'arrondi est isolé du contexte Decimal global laissé par le runtime legacy.
     """
     if type(smic_catalog) is not SmicCatalog:
         raise TypeError("smic_catalog doit être un SmicCatalog.")
@@ -80,4 +81,7 @@ def legal_cee_daily_minimum(
 
     hourly = smic_catalog.hourly_amount_on(reference_date, territory)
     multiplier = legal_cee_daily_smic_multiplier_on(reference_date)
-    return (hourly * multiplier).quantize(_CENT, rounding=ROUND_HALF_UP)
+    amount = hourly * multiplier
+    with localcontext() as context:
+        context.prec = max(28, len(amount.as_tuple().digits) + 4)
+        return amount.quantize(_CENT, rounding=ROUND_HALF_UP)
