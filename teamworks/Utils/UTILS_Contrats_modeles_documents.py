@@ -8,6 +8,15 @@ Les anciens fichiers restent utilisables : l'absence de métadonnées signifie
 
 TABLE = "contrats_documents_modeles"
 
+CEE_LABELS = {
+    "BAFA_HOLDER": u"BAFA titulaire",
+    "BAFA_TRAINEE": u"BAFA stagiaire",
+    "UNQUALIFIED": u"Non diplômé",
+    "EQUIVALENT": u"Qualification équivalente",
+    "BAFD_HOLDER": u"BAFD titulaire",
+    "BAFD_TRAINEE": u"BAFD stagiaire",
+}
+
 _SCHEMA = {
     TABLE: [
         ("IDdocument_modele", "INTEGER PRIMARY KEY AUTOINCREMENT", u"ID", u"ID du modèle documentaire"),
@@ -35,6 +44,19 @@ def _clean(value):
     return str(value)
 
 
+def _normalize_cee(value):
+    value = _clean(value)
+    if value is None:
+        return None
+    if value in CEE_LABELS:
+        return value
+    lowered = value.strip().lower()
+    for code, label in CEE_LABELS.items():
+        if lowered == label.lower():
+            return code
+    return value
+
+
 def SaveMetadata(DB, nom_fichier, convention_code=None, ccns_group=None, cee_qualification=None):
     """Crée ou remplace le ciblage d'un fichier de publipostage."""
     EnsureTable(DB)
@@ -42,7 +64,7 @@ def SaveMetadata(DB, nom_fichier, convention_code=None, ccns_group=None, cee_qua
         raise ValueError("nom_fichier est requis")
     convention_code = _clean(convention_code)
     ccns_group = _clean(ccns_group)
-    cee_qualification = _clean(cee_qualification)
+    cee_qualification = _normalize_cee(cee_qualification)
     if convention_code == "CCNS" and cee_qualification:
         raise ValueError("un modèle CCNS ne peut pas cibler une qualification CEE")
     if convention_code != "CCNS" and ccns_group:
@@ -78,7 +100,7 @@ def GetMetadata(DB, nom_fichier):
     return {
         "convention_code": _clean(convention_code),
         "ccns_group": _clean(ccns_group),
-        "cee_qualification": _clean(cee_qualification),
+        "cee_qualification": _normalize_cee(cee_qualification),
     }
 
 
@@ -93,16 +115,15 @@ def IsCompatible(contract_data, metadata):
     contract_data = contract_data or {}
     c_convention = _clean(contract_data.get("CONVENTION_CODE") or contract_data.get("CONVENTION"))
     c_group = _clean(contract_data.get("GROUPECCNS"))
-    c_cee = _clean(contract_data.get("QUALIFICATIONCEE_CODE") or contract_data.get("QUALIFICATIONCEE"))
+    c_cee = _normalize_cee(contract_data.get("QUALIFICATIONCEE_CODE") or contract_data.get("QUALIFICATIONCEE"))
     m_convention = _clean(metadata.get("convention_code"))
     m_group = _clean(metadata.get("ccns_group"))
-    m_cee = _clean(metadata.get("cee_qualification"))
+    m_cee = _normalize_cee(metadata.get("cee_qualification"))
 
     if m_convention == "CCNS":
         return c_convention == "CCNS" and (m_group is None or m_group == c_group)
     if m_convention == "CEE" or m_cee:
         return (c_convention == "CEE" or c_cee is not None) and (m_cee is None or m_cee == c_cee)
-    # Métadonnée explicite mais générique : utilisable partout.
     return m_convention is None and m_group is None and m_cee is None
 
 
