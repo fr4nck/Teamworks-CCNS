@@ -12,6 +12,7 @@ import wx
 from Ctrl import CTRL_Bouton_image
 import GestionDB
 import FonctionsPerso
+from Utils import UTILS_Contrats_schema
 
 from Ctrl.CTRL_Creation_modele_contrat_p1 import Page as Page1
 from Ctrl.CTRL_Creation_modele_contrat_p2 import Page as Page2
@@ -49,14 +50,25 @@ class Dialog(wx.Dialog):
             "description": "",
         }
         self.dictChamps = {}
+
+        # Évolution additive/idempotente : les anciens modèles restent valides.
+        DB = GestionDB.DB()
+        UTILS_Contrats_schema.EnsureContractModelColumns(DB)
+        DB.Close()
+
         if IDmodele != 0:
             self.Importation(IDmodele)
         self.Creation_Pages()
 
     def Importation(self, IDmodele=0):
         DB = GestionDB.DB()
+        UTILS_Contrats_schema.EnsureContractModelColumns(DB)
         champs = DB.GetListeChamps2("contrats_modeles")
-        modernes = all(x in champs for x in ("convention_code", "ccns_group", "cee_qualification"))
+        noms_champs = [champ[0] for champ in champs]
+        modernes = all(
+            nom in noms_champs
+            for nom in ("convention_code", "ccns_group", "cee_qualification")
+        )
         if modernes:
             req = "SELECT nom, description, IDclassification, IDtype, convention_code, ccns_group, cee_qualification FROM contrats_modeles WHERE IDmodele=%d ;" % IDmodele
         else:
