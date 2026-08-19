@@ -44,11 +44,11 @@ def test_canonical_schema_preserves_cee_rates_and_document_targeting_on_repair()
     }
 
 
-def test_optional_contract_import_includes_tw184_configuration_tables() -> None:
+def test_employer_specific_tw184_tables_are_not_imported_from_default_database() -> None:
     contract_group = next(
         tables
         for label, tables, enabled in DATA_Tables.TABLES_IMPORTATION_OPTIONNELLES
         if label == u"Données de contrats"
     )
-    assert "contrats_cee_baremes" in contract_group
-    assert "contrats_documents_modeles" in contract_group
+    assert "contrats_cee_baremes" not in contract_group
+    assert "contrats_documents_modeles" not in contract_group
