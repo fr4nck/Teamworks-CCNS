@@ -93,6 +93,7 @@ class Dialog(wx.Dialog):
             self.Importation(IDcontrat)
 
         self.Creation_Pages()
+        self._ApplyInitialResponsiveSize()
 
     def Importation(self, IDcontrat=0):
         DB = GestionDB.DB()
@@ -138,6 +139,56 @@ class Dialog(wx.Dialog):
         self.page1.Show(True)
         self.sizer_pages.Layout()
 
+    def _ApplyInitialResponsiveSize(self):
+        """Dimensionne une fois le wizard sur sa page la plus exigeante.
+
+        L'ancien dialogue faisait ``Fit()`` avant de créer les pages : il
+        s'ouvrait donc autour de 500x460 puis tronquait la page contrat et la
+        barre de navigation. On calcule maintenant le besoin réel des six pages
+        et on le borne à la zone de travail Windows. La taille reste ensuite
+        stable pendant toute la navigation.
+        """
+        content_width = 0
+        content_height = 0
+        for numPage in range(1, self.nbrePages + 1):
+            page = getattr(self, "page%d" % numPage)
+            best = page.GetBestSize()
+            minimum = page.GetMinSize()
+            content_width = max(content_width, best.GetWidth(), minimum.GetWidth())
+            content_height = max(content_height, best.GetHeight(), minimum.GetHeight())
+
+        button_height = max(
+            self.bouton_aide.GetBestSize().GetHeight(),
+            self.bouton_retour.GetBestSize().GetHeight(),
+            self.bouton_suite.GetBestSize().GetHeight(),
+            self.bouton_annuler.GetBestSize().GetHeight(),
+        )
+        desired_width = max(740, content_width + 40)
+        desired_height = max(640, content_height + button_height + 70)
+
+        try:
+            display_rect = wx.GetClientDisplayRect()
+            available_width = display_rect.GetWidth()
+            available_height = display_rect.GetHeight()
+        except Exception:
+            display_size = wx.GetDisplaySize()
+            available_width = display_size.GetWidth()
+            available_height = display_size.GetHeight()
+
+        max_width = max(640, available_width - 60)
+        max_height = max(520, available_height - 60)
+        width = min(desired_width, max_width)
+        height = min(desired_height, max_height)
+
+        min_width = min(720, max_width)
+        min_height = min(600, max_height)
+        self.SetMinSize((min_width, min_height))
+        self.SetSize((width, height))
+        self.panel_base.Layout()
+        self.sizer_pages.Layout()
+        self.Layout()
+        self.CenterOnScreen()
+
     def __set_properties(self):
         self.SetTitle(_(u"Création d'un contrat"))
         _icon = wx.Icon()
@@ -151,6 +202,8 @@ class Dialog(wx.Dialog):
         self.bouton_suite.SetSize(self.bouton_suite.GetBestSize())
         self.bouton_annuler.SetToolTip(wx.ToolTip(_(u"Cliquez pour annuler la création du contrat")))
         self.bouton_annuler.SetSize(self.bouton_annuler.GetBestSize())
+        # Taille de secours avant création des pages. La taille réelle est
+        # calculée ensuite par _ApplyInitialResponsiveSize().
         self.SetMinSize((500, 460))
 
     def __do_layout(self):
