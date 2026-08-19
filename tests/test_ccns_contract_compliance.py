@@ -19,16 +19,27 @@ def test_group_choices_expose_ccns_2026_groups_and_periodicity():
     assert choices[5].minimum_amount == Decimal("2865.97")
 
 
-def test_grid_construction_is_independent_from_ambient_decimal_precision():
+def test_grid_and_salary_control_are_independent_from_ambient_decimal_precision():
     # Le runtime historique peut laisser une précision Decimal très faible.
-    # Le moteur conventionnel doit rester déterministe, notamment pour G7/G8.
+    # Construction de grille et calcul du minimum doivent rester déterministes.
     with localcontext() as context:
         context.prec = 5
         presenter = CCNSContractCompliancePresenter()
         choices = presenter.group_choices(date(2026, 8, 19))
+        preview = presenter.evaluate_monthly(
+            group_code="G1",
+            reference_date=date(2026, 8, 19),
+            weekly_hours=Decimal("35.00"),
+            remuneration_amount=Decimal("1900.00"),
+        )
 
     assert choices[6].minimum_amount == Decimal("40597.94")
     assert choices[7].minimum_amount == Decimal("46833.81")
+    assert preview.ccns_minimum_amount == Decimal("1848.42")
+    assert preview.smic_minimum_amount == Decimal("1867.02")
+    assert preview.required_minimum_amount == Decimal("1867.02")
+    assert preview.difference_amount == Decimal("32.98")
+    assert preview.compliant is True
 
 
 def test_monthly_preview_uses_more_favourable_ccns_or_smic_minimum():
