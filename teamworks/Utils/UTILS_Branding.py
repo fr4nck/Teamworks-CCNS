@@ -17,6 +17,7 @@ APPLICATION_CREDIT = "© Teamworks CCNS"
 SUPPORTED_LOGO_EXTENSIONS = {".png", ".jpg", ".jpeg", ".bmp"}
 MANAGED_LOGO_PREFIX = "logo_association"
 ACCENT = wx.Colour(24, 153, 166)
+_TITLE_PATCHED = False
 
 
 def GetBrandingDir():
@@ -176,7 +177,6 @@ def EnsureSplashImage():
     dc.SetBackground(wx.Brush(background))
     dc.Clear()
 
-    # Symbole TW compact : simple, lisible et indépendant des anciens PNG.
     mark_size = 64
     mark_x, mark_y = 78, 54
     dc.SetPen(wx.Pen(ACCENT))
@@ -207,7 +207,6 @@ def EnsureSplashImage():
     loading_font = wx.Font(13, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
     _draw_centered_text(dc, "Chargement en cours…", 210, loading_font, foreground, width)
 
-    # Barre sobre : elle indique l'état de chargement sans afficher un faux pourcentage.
     bar_x, bar_y, bar_width = 180, 252, 360
     dc.SetPen(wx.Pen(track, 4))
     dc.DrawLine(bar_x, bar_y, bar_x + bar_width, bar_y)
@@ -258,6 +257,26 @@ def GetRuntimeAssetOverride(relative_path):
         if normalized == "Images/16x16/Logo.png":
             return EnsureAppIconImage()
     except Exception:
-        # Un problème de personnalisation ne doit jamais empêcher Teamworks de démarrer.
         return ""
     return ""
+
+
+def InstallLegacyTitleBranding():
+    """Normalise les anciens titres `Teamworks v…` sans réécrire la frame historique."""
+    global _TITLE_PATCHED
+    if _TITLE_PATCHED:
+        return
+    _TITLE_PATCHED = True
+
+    original_set_title = wx.Frame.SetTitle
+
+    def branded_set_title(frame, title):
+        if isinstance(title, str) and title.startswith("Teamworks v"):
+            title = APPLICATION_NAME + title[len("Teamworks"):]
+        return original_set_title(frame, title)
+
+    wx.Frame.SetTitle = branded_set_title
+
+
+# CTRL_Accueil importe ce module avant l'instanciation de la frame principale.
+InstallLegacyTitleBranding()
