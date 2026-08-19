@@ -68,8 +68,15 @@ def test_contract_wizard_applies_modern_model_discriminants() -> None:
 
     assert "UTILS_Contrats_schema.EnsureContractModelColumns(DB)" in source
     assert "SELECT IDclassification, IDtype, convention_code, ccns_group, cee_qualification" in source
-    assert 'contrat["convention_code"] = convention_code' in source
     assert 'contrat["ccns_group"] = ccns_group' in source
     assert 'contrat["cee_qualification"] = cee_qualification' in source
     assert "self.GetGrandParent().dictChamps.clear()" in source
     assert "self.GetGrandParent().page3.RefreshContractRules()" in source
+
+
+def test_legacy_model_switches_new_contract_out_of_default_ccns_path() -> None:
+    source = CONTRACT_PAGE2.read_text(encoding="utf-8")
+
+    assert "is_legacy_model = (" in source
+    assert 'IDclassification not in (None, "")' in source
+    assert 'contrat["convention_code"] = "OTHER" if is_legacy_model else convention_code' in source
