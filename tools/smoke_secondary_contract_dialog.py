@@ -24,6 +24,7 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 print("TEAMWORKS_SMOKE_CONTRACT_STAGE:imports", flush=True)
                 import GestionDB as _smoke_gestiondb
                 from Dlg import DLG_Creation_contrat as _smoke_contract
+                from Utils import UTILS_CEE_baremes as _smoke_cee_rates
 
                 print("TEAMWORKS_SMOKE_CONTRACT_STAGE:database", flush=True)
                 _smoke_db = _smoke_gestiondb.DB()
@@ -36,14 +37,19 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                     raise RuntimeError("aucun contrat disponible pour le smoke contrat")
                 _smoke_contract_id, _smoke_person_id = _smoke_rows[0]
                 _smoke_non_cee_type = None
+                _smoke_cee_type = None
                 for _type_id, _type_name, _type_short in _smoke_types:
                     _short = (_type_short or "").strip().upper()
                     _name = (_type_name or "").strip().lower()
-                    if _short != "CEE" and "engagement educatif" not in _name and "engagement éducatif" not in _name:
+                    _is_cee = _short == "CEE" or "engagement educatif" in _name or "engagement éducatif" in _name
+                    if _is_cee and _smoke_cee_type is None:
+                        _smoke_cee_type = _type_id
+                    if not _is_cee and _smoke_non_cee_type is None:
                         _smoke_non_cee_type = _type_id
-                        break
                 if _smoke_non_cee_type is None:
                     raise RuntimeError("aucun type de contrat non CEE disponible")
+                if _smoke_cee_type is None:
+                    raise RuntimeError("aucun type CEE disponible")
 
                 print("TEAMWORKS_SMOKE_CONTRACT_STAGE:dialog", flush=True)
                 _smoke_dialog = _smoke_contract.Dialog(
@@ -157,6 +163,69 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 _after_blocked = _smoke_db.ResultatReq()[0][0]
                 assert _after_blocked == _after_compliant
                 _smoke_db.ReqDEL("contrats", "IDcontrat", _after_compliant)
+                _smoke_db.Commit()
+                _smoke_db.Close()
+
+                print("TEAMWORKS_SMOKE_CONTRACT_STAGE:save-cee", flush=True)
+                _smoke_db = _smoke_gestiondb.DB()
+                _smoke_db.ExecuterReq("SELECT COALESCE(MAX(IDcontrat), 0) FROM contrats")
+                _cee_before_max = _smoke_db.ResultatReq()[0][0]
+                _cee_rate_id = _smoke_cee_rates.SaveRate(
+                    _smoke_db,
+                    "BAFA_HOLDER",
+                    65.0,
+                    "2099-12-31",
+                )
+                _smoke_db.Commit()
+                _smoke_db.Close()
+
+                _smoke_new.dictContrats.update({
+                    "IDcontrat": 0,
+                    "IDpersonne": _smoke_person_id,
+                    "IDclassification": None,
+                    "IDtype": _smoke_cee_type,
+                    "valeur_point": None,
+                    "cee_qualification": "BAFA_HOLDER",
+                    "convention_code": "CCNS",
+                    "ccns_group": None,
+                    "weekly_hours": None,
+                    "gross_monthly_salary": None,
+                    "date_debut": "2099-12-31",
+                    "date_fin": "2099-12-31",
+                    "date_rupture": "",
+                    "essai": 0,
+                })
+                assert _smoke_new.page6.Validation() is True
+
+                _smoke_db = _smoke_gestiondb.DB()
+                _smoke_db.ExecuterReq("SELECT COALESCE(MAX(IDcontrat), 0) FROM contrats")
+                _cee_after_compliant = _smoke_db.ResultatReq()[0][0]
+                _smoke_db.Close()
+                assert _cee_after_compliant > _cee_before_max
+
+                print("TEAMWORKS_SMOKE_CONTRACT_STAGE:block-cee-under-minimum", flush=True)
+                _smoke_db = _smoke_gestiondb.DB()
+                _smoke_cee_rates.SaveRate(
+                    _smoke_db,
+                    "BAFA_HOLDER",
+                    50.0,
+                    "2099-12-31",
+                )
+                _smoke_db.Commit()
+                _smoke_db.Close()
+                _old_message_box = wx.MessageBox
+                try:
+                    wx.MessageBox = lambda *args, **kwargs: wx.OK
+                    assert _smoke_new.page6.Validation() is False
+                finally:
+                    wx.MessageBox = _old_message_box
+
+                _smoke_db = _smoke_gestiondb.DB()
+                _smoke_db.ExecuterReq("SELECT COALESCE(MAX(IDcontrat), 0) FROM contrats")
+                _cee_after_blocked = _smoke_db.ResultatReq()[0][0]
+                assert _cee_after_blocked == _cee_after_compliant
+                _smoke_db.ReqDEL("contrats", "IDcontrat", _cee_after_compliant)
+                _smoke_db.ReqDEL("contrats_cee_baremes", "IDbareme", _cee_rate_id)
                 _smoke_db.Commit()
                 _smoke_db.Close()
 
