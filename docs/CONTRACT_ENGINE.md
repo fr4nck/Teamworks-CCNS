@@ -92,6 +92,8 @@ Le coefficient légal n'est pas une constante intemporelle :
 
 Le moteur résout donc d'abord le coefficient applicable à la date du contrat, puis la version du SMIC applicable à cette même date. Une date antérieure à l'historique réglementaire porté par Teamworks provoque une absence de règle explicite au lieu d'appliquer artificiellement le coefficient courant.
 
+Toute l'arithmétique du calcul légal, multiplication comprise, est exécutée dans un contexte `Decimal` local. Le vieux runtime Teamworks peut laisser une précision globale très faible ; elle ne doit jamais transformer par exemple `12,31 × 4,30 = 52,933` en `53` avant l'arrondi au centime.
+
 ### Barèmes internes
 
 Les barèmes employeur sont historisés par qualification et date d'effet dans une table dédiée. L'écran `Barèmes CEE…` permet de définir des montants différents pour BAFA titulaire, BAFA stagiaire, non diplômé, équivalence et BAFD.
@@ -112,6 +114,17 @@ Un modèle peut désormais être ciblé explicitement :
 Le bouton d'impression d'un contrat ouvre un adaptateur dédié du publiposteur. Celui-ci filtre uniquement les modèles de la catégorie `contrat` et restaure immédiatement le sélecteur vanilla après construction du dialogue ; les autres usages du publiposteur ne sont donc pas modifiés.
 
 Le ciblage se règle depuis le menu contextuel du fichier. Supprimer réellement un fichier supprime aussi sa métadonnée de ciblage afin qu'un futur fichier portant le même nom ne récupère pas une ancienne règle. Annuler la suppression ne modifie aucune métadonnée.
+
+### Migration des anciens modèles CEE
+
+Le modèle CEE livré historiquement avec Teamworks utilise des mots-clés et du texte qui précèdent TW-184. Il doit rester imprimable, mais une nouvelle version du modèle doit préférer les données du moteur moderne :
+
+- `{BRUTJOUR}` est conservé comme **alias de compatibilité** de `{BAREMECEE}` pour un CEE moderne ; l'assistant ne demande donc plus une seconde saisie « salaire brut par jour » lorsque le barème CEE est déjà déterminé ;
+- `{CLASSIFICATION}` est historique et reste vide sur un CEE moderne ; un modèle CEE mis à jour doit employer `{QUALIFICATIONCEE}` lorsqu'il veut afficher « BAFA titulaire », « BAFA stagiaire », etc. ;
+- le minimum CEE ne doit jamais être écrit en dur dans le modèle. Employer `{MINIMUMCEE}` permet de reprendre le montant calculé à la date du contrat ;
+- de même, une phrase figée comme « minimum = 2,2 heures de SMIC » est obsolète pour les contrats postérieurs au 30 avril 2025 et doit être remplacée par une formulation fondée sur `{MINIMUMCEE}` ou par une clause juridiquement maintenue dans le modèle.
+
+L'écran de vérification du publipostage contrat adapte la largeur des libellés afin que les mots-clés longs TW-184 restent lisibles. Cette adaptation reste limitée à la catégorie `contrat`.
 
 ## Autres conventions
 
@@ -159,7 +172,8 @@ Le lot comporte des tests du domaine et de l'adaptateur CCNS ainsi qu'un smoke W
 - bascule du minimum légal CEE `2,20 → 4,30` au 1er mai 2025 ;
 - conservation du parcours des contrats historiques ;
 - filtrage réel d'un modèle CCNS G1 contre un modèle G4 sous Windows ;
-- conservation d'un modèle legacy non ciblé.
+- conservation d'un modèle legacy non ciblé ;
+- compatibilité `{BRUTJOUR}` des anciens modèles CEE sans double saisie utilisateur.
 
 ## Hors périmètre immédiat
 
