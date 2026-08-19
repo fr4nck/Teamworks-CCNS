@@ -42,3 +42,21 @@ def test_cee_targeting_does_not_invent_a_cee_collective_convention() -> None:
 
     assert 'dictModeles["cee_qualification"] = cible' in source
     assert 'dictModeles["convention_code"] = "CEE"' not in source
+
+
+def test_generic_cee_model_is_distinguished_from_legacy_model() -> None:
+    source = PAGE1.read_text(encoding="utf-8")
+
+    assert "self.dictTypeCodes" in source
+    assert "self.IsCEEType(IDtype)" in source
+    assert 'classification in (None, "")' in source
+    assert 'convention in (None, "")' in source
+    assert "self.choice_convention.SetSelection(2)" in source
+
+
+def test_cee_targeting_requires_cee_contract_type() -> None:
+    source = PAGE1.read_text(encoding="utf-8")
+
+    assert "if mode == 2 and not self.IsCEEType(type_contrat):" in source
+    assert "Le ciblage CEE nécessite un type de contrat CEE." in source
+    assert "if mode == 1 and self.IsCEEType(type_contrat):" in source
