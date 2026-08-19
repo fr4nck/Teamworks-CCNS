@@ -18,8 +18,8 @@ def test_engine_managed_legacy_fields_are_hidden_contextually() -> None:
 
     # CEE : le forfait journalier vient du barème employeur.
     assert 'mots_cles_masques.add("BRUTJOUR")' in source
-    # CCNS : durée hebdomadaire et brut mensuel sont des champs standards.
-    assert 'mots_cles_masques.update(("HEBDO", "BRUTMENS"))' in source
+    # CCNS : durée hebdomadaire et rémunérations mensuelle/annuelle sont natives.
+    assert 'mots_cles_masques.update(("HEBDO", "BRUTMENS", "ANNUEL"))' in source
 
 
 def test_empty_optional_selection_skips_fill_page_without_confirmation() -> None:
