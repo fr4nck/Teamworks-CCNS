@@ -1,5 +1,5 @@
 from datetime import date
-from decimal import Decimal
+from decimal import Decimal, localcontext
 
 import pytest
 
@@ -17,6 +17,18 @@ def test_group_choices_expose_ccns_2026_groups_and_periodicity():
     assert all(choice.periodicity is SalaryMinimumPeriodicity.ANNUAL for choice in choices[6:])
     assert choices[0].minimum_amount == Decimal("1848.42")
     assert choices[5].minimum_amount == Decimal("2865.97")
+
+
+def test_grid_construction_is_independent_from_ambient_decimal_precision():
+    # Le runtime historique peut laisser une précision Decimal très faible.
+    # Le moteur conventionnel doit rester déterministe, notamment pour G7/G8.
+    with localcontext() as context:
+        context.prec = 5
+        presenter = CCNSContractCompliancePresenter()
+        choices = presenter.group_choices(date(2026, 8, 19))
+
+    assert choices[6].minimum_amount == Decimal("40597.94")
+    assert choices[7].minimum_amount == Decimal("46833.81")
 
 
 def test_monthly_preview_uses_more_favourable_ccns_or_smic_minimum():
