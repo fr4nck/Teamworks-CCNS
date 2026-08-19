@@ -16,6 +16,7 @@ APPLICATION_NAME = "Teamworks CCNS"
 APPLICATION_CREDIT = "© Teamworks CCNS"
 SUPPORTED_LOGO_EXTENSIONS = {".png", ".jpg", ".jpeg", ".bmp"}
 MANAGED_LOGO_PREFIX = "logo_association"
+ACCENT = wx.Colour(24, 153, 166)
 
 
 def GetBrandingDir():
@@ -49,7 +50,6 @@ def SetAssociationLogo(source_path):
     if not _is_supported_logo(source):
         raise ValueError("Le logo doit être une image PNG, JPEG ou BMP valide.")
 
-    # wx valide réellement le contenu de l'image au lieu de se fier à l'extension.
     image = wx.Image(str(source))
     if not image.IsOk():
         raise ValueError("Le fichier sélectionné n'est pas une image lisible.")
@@ -85,14 +85,16 @@ def ClearAssociationLogo():
     UTILS_Customize.SetValeur("branding", "logo_association", "")
 
 
-def LoadScaledBitmap(path, max_width, max_height):
+def LoadScaledBitmap(path, max_width, max_height, allow_upscale=False):
     if not path:
         return wx.NullBitmap
     image = wx.Image(str(path))
     if not image.IsOk() or image.GetWidth() <= 0 or image.GetHeight() <= 0:
         return wx.NullBitmap
 
-    ratio = min(float(max_width) / image.GetWidth(), float(max_height) / image.GetHeight(), 1.0)
+    ratio = min(float(max_width) / image.GetWidth(), float(max_height) / image.GetHeight())
+    if not allow_upscale:
+        ratio = min(ratio, 1.0)
     width = max(1, int(round(image.GetWidth() * ratio)))
     height = max(1, int(round(image.GetHeight() * ratio)))
     if width != image.GetWidth() or height != image.GetHeight():
@@ -107,7 +109,7 @@ def GetHomeColours():
             "background": (32, 32, 32),
             "text": wx.Colour(240, 240, 240),
             "muted": wx.Colour(170, 176, 185),
-            "accent": wx.Colour(24, 153, 166),
+            "accent": ACCENT,
         }
 
     try:
@@ -119,7 +121,7 @@ def GetHomeColours():
         "background": background,
         "text": wx.Colour(28, 42, 56),
         "muted": wx.Colour(100, 112, 124),
-        "accent": wx.Colour(24, 153, 166),
+        "accent": ACCENT,
     }
 
 
@@ -148,3 +150,114 @@ def BuildWordmark(parent):
     row.Add(name, 0, wx.ALIGN_CENTER_VERTICAL)
     panel.SetSizer(row)
     return panel
+
+
+def _draw_centered_text(dc, text, y, font, colour, width):
+    dc.SetFont(font)
+    dc.SetTextForeground(colour)
+    text_width, text_height = dc.GetTextExtent(text)
+    dc.DrawText(text, max(0, (width - text_width) // 2), y)
+    return text_height
+
+
+def EnsureSplashImage():
+    """Construit le splash au démarrage selon le thème et le logo utilisateur."""
+    output = GetBrandingDir() / "splash_runtime.png"
+    width, height = 720, 420
+    dark = UTILS_Theme.is_dark_theme()
+
+    background = wx.Colour(17, 24, 39) if dark else wx.Colour(248, 250, 252)
+    foreground = wx.Colour(245, 247, 250) if dark else wx.Colour(28, 42, 56)
+    muted = wx.Colour(166, 176, 190) if dark else wx.Colour(104, 116, 128)
+    track = wx.Colour(62, 72, 87) if dark else wx.Colour(214, 221, 228)
+
+    bitmap = wx.Bitmap(width, height)
+    dc = wx.MemoryDC(bitmap)
+    dc.SetBackground(wx.Brush(background))
+    dc.Clear()
+
+    # Symbole TW compact : simple, lisible et indépendant des anciens PNG.
+    mark_size = 64
+    mark_x, mark_y = 78, 54
+    dc.SetPen(wx.Pen(ACCENT))
+    dc.SetBrush(wx.Brush(ACCENT))
+    dc.DrawRoundedRectangle(mark_x, mark_y, mark_size, mark_size, 14)
+    mark_font = wx.Font(22, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)
+    dc.SetFont(mark_font)
+    dc.SetTextForeground(wx.WHITE)
+    tw_width, tw_height = dc.GetTextExtent("TW")
+    dc.DrawText("TW", mark_x + (mark_size - tw_width) // 2, mark_y + (mark_size - tw_height) // 2)
+
+    title_font = wx.Font(30, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)
+    dc.SetFont(title_font)
+    dc.SetTextForeground(foreground)
+    dc.DrawText("Teamworks", 164, 57)
+    team_width, _ = dc.GetTextExtent("Teamworks")
+    dc.SetTextForeground(ACCENT)
+    dc.DrawText("CCNS", 178 + team_width, 57)
+
+    subtitle_font = wx.Font(11, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
+    dc.SetFont(subtitle_font)
+    dc.SetTextForeground(muted)
+    dc.DrawText("Gestion du personnel & planning", 166, 101)
+
+    dc.SetPen(wx.Pen(track, 1))
+    dc.DrawLine(78, 150, width - 78, 150)
+
+    loading_font = wx.Font(13, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
+    _draw_centered_text(dc, "Chargement en cours…", 210, loading_font, foreground, width)
+
+    # Barre sobre : elle indique l'état de chargement sans afficher un faux pourcentage.
+    bar_x, bar_y, bar_width = 180, 252, 360
+    dc.SetPen(wx.Pen(track, 4))
+    dc.DrawLine(bar_x, bar_y, bar_x + bar_width, bar_y)
+    dc.SetPen(wx.Pen(ACCENT, 4))
+    dc.DrawLine(bar_x + 115, bar_y, bar_x + 245, bar_y)
+
+    logo_bitmap = LoadScaledBitmap(GetAssociationLogoPath(), 190, 70)
+    if logo_bitmap.IsOk():
+        logo_x = (width - logo_bitmap.GetWidth()) // 2
+        logo_y = 282
+        dc.DrawBitmap(logo_bitmap, logo_x, logo_y, True)
+
+    credit_font = wx.Font(9, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
+    _draw_centered_text(dc, APPLICATION_CREDIT, 390, credit_font, muted, width)
+
+    dc.SelectObject(wx.NullBitmap)
+    bitmap.SaveFile(str(output), wx.BITMAP_TYPE_PNG)
+    return str(output)
+
+
+def EnsureAppIconImage():
+    """Produit une petite icône TW cohérente avec la nouvelle identité."""
+    output = GetBrandingDir() / "app_icon_runtime.png"
+    size = 32
+    bitmap = wx.Bitmap(size, size)
+    dc = wx.MemoryDC(bitmap)
+    dc.SetBackground(wx.Brush(wx.Colour(20, 42, 62)))
+    dc.Clear()
+    dc.SetPen(wx.Pen(ACCENT))
+    dc.SetBrush(wx.Brush(ACCENT))
+    dc.DrawRoundedRectangle(2, 2, size - 4, size - 4, 7)
+    font = wx.Font(10, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)
+    dc.SetFont(font)
+    dc.SetTextForeground(wx.WHITE)
+    text_width, text_height = dc.GetTextExtent("TW")
+    dc.DrawText("TW", (size - text_width) // 2, (size - text_height) // 2)
+    dc.SelectObject(wx.NullBitmap)
+    bitmap.SaveFile(str(output), wx.BITMAP_TYPE_PNG)
+    return str(output)
+
+
+def GetRuntimeAssetOverride(relative_path):
+    """Remplace uniquement les anciens assets de marque appelés par le runtime historique."""
+    normalized = str(relative_path).replace("\\", "/")
+    try:
+        if normalized == "Images/Special/Logo_splash.png":
+            return EnsureSplashImage()
+        if normalized == "Images/16x16/Logo.png":
+            return EnsureAppIconImage()
+    except Exception:
+        # Un problème de personnalisation ne doit jamais empêcher Teamworks de démarrer.
+        return ""
+    return ""
