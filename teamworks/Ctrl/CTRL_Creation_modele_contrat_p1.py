@@ -118,7 +118,8 @@ class ListCtrl_champs(wx.ListCtrl):
         wx.ListCtrl.__init__(self,parent,-1,style=wx.LC_REPORT|wx.LC_NO_HEADER); self.EnableCheckBoxes(True); self.parent=parent
         self.selections=list(self.GetGrandParent().GetParent().dictChamps.keys()); self.Remplissage()
         self.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.OnItemActivated)
-        self.Bind(wx.EVT_LIST_ITEM_CHECKED,self.OnChecked); self.Bind(wx.EVT_LIST_ITEM_UNCHECKED,self.OnUnchecked)
+        self.Bind(wx.EVT_LIST_ITEM_CHECKED, self.OnItemChecked)
+        self.Bind(wx.EVT_LIST_ITEM_UNCHECKED, self.OnItemUnchecked)
     def Import_Donnees(self):
         DB=GestionDB.DB(); DB.ExecuterReq("SELECT IDchamp, nom, description, mot_cle, defaut, exemple FROM contrats_champs ORDER BY nom"); rows=DB.ResultatReq(); DB.Close(); return {r[0]:r for r in rows}
     def Remplissage(self):
@@ -129,11 +130,11 @@ class ListCtrl_champs(wx.ListCtrl):
     def MAJListeCtrl(self): self.Remplissage()
     def OnItemActivated(self, evt):
         self.CheckItem(evt.Index, not self.IsItemChecked(evt.Index))
-    def OnChecked(self,e):
-        ID=self.GetItemData(e.Index)
+    def OnItemChecked(self, evt):
+        ID=self.GetItemData(evt.Index)
         if ID not in self.selections: self.selections.append(ID)
-        e.Skip()
-    def OnUnchecked(self,e):
-        ID=self.GetItemData(e.Index)
+        evt.Skip()
+    def OnItemUnchecked(self, evt):
+        ID=self.GetItemData(evt.Index)
         if ID in self.selections: self.selections.remove(ID)
-        e.Skip()
+        evt.Skip()
