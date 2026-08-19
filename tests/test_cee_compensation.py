@@ -24,13 +24,15 @@ class CEECompensationTests(unittest.TestCase):
         self.assertEqual(minimum, Decimal("52.93"))
 
     def test_minimum_is_independent_from_ambient_decimal_precision(self):
+        # Régression observée dans le portable : avec prec=2, la multiplication
+        # 12,31 × 4,30 était arrondie à 53 AVANT le quantize, d'où 53,00 €.
         with localcontext() as context:
-            context.prec = 5
+            context.prec = 2
             minimum = legal_cee_daily_minimum(
                 smic_catalog=create_smic_catalog_2026(),
                 reference_date=date(2026, 8, 19),
             )
-            self.assertEqual(context.prec, 5)
+            self.assertEqual(context.prec, 2)
         self.assertEqual(minimum, Decimal("52.93"))
 
     def test_uses_smic_version_applicable_on_contract_date(self):
