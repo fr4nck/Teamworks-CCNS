@@ -236,6 +236,17 @@ class Page(wx.Panel):
         IDtype = self.choice_type.GetClientData(selection)
         return self.dictTypeCodes.get(IDtype) == "CEE"
 
+    def IsLegacyCEEWithoutQualification(self):
+        """CEE existant créé avant TW-184 : aucune conversion implicite/destructive."""
+        dictContrats = self.GetGrandParent().dictContrats
+        if not dictContrats.get("IDcontrat"):
+            return False
+        original_type = dictContrats.get("IDtype")
+        return (
+            self.dictTypeCodes.get(original_type) == "CEE"
+            and dictContrats.get("cee_qualification") in (None, "")
+        )
+
     def RefreshContractRules(self):
         is_cee = self.IsCEESelected()
         for controle in (self.label_cee_qualification, self.choice_cee_qualification, self.cee_spacer):
@@ -243,7 +254,9 @@ class Page(wx.Panel):
         for controle in (self.label_class, self.choice_class, self.bouton_class,
                          self.label_valpoint, self.choice_valpoint, self.bouton_valpoint):
             controle.Show(not is_cee)
-        if is_cee:
+        if is_cee and self.IsLegacyCEEWithoutQualification():
+            self.label_intro.SetLabel(_(u"CEE historique : l'ancien classement est conservé. Choisissez une qualification pour le convertir au nouveau moteur de barème."))
+        elif is_cee:
             self.label_intro.SetLabel(_(u"CEE : sélectionnez la qualification qui détermine le barème employeur. Elle n'est pas une classification CCNS."))
         else:
             self.label_intro.SetLabel(_(u"Saisissez les caractéristiques générales du contrat :"))
@@ -390,17 +403,20 @@ class Page(wx.Panel):
             return False
 
         is_cee = self.IsCEESelected()
+        legacy_cee = is_cee and self.IsLegacyCEEWithoutQualification()
         if is_cee:
-            if cee_qualification is None:
+            if cee_qualification is None and not legacy_cee:
                 dlg = wx.MessageDialog(self, _(u"Vous devez sélectionner la qualification ou le statut CEE (BAFA titulaire, stagiaire, etc.)."), "Erreur", wx.OK)
                 dlg.ShowModal(); dlg.Destroy()
                 self.choice_cee_qualification.SetFocus()
                 return False
-            # TW-184 : un statut CEE n'est ni une classification conventionnelle
-            # ni une valeur de point. Les anciens champs restent en base pour la
-            # lecture historique mais ne sont plus alimentés pour un nouveau CEE.
-            classification = None
-            valPoint = None
+            if cee_qualification is not None:
+                # TW-184 : un statut CEE moderne n'est ni une classification
+                # conventionnelle ni une valeur de point.
+                classification = None
+                valPoint = None
+            # Un CEE historique sans qualification garde ses anciennes valeurs
+            # jusqu'à une conversion explicite par sélection d'une qualification.
         else:
             if classification is None:
                 dlg = wx.MessageDialog(self, _(u"Vous devez sélectionner une classification dans la liste proposée."), "Erreur", wx.OK)
