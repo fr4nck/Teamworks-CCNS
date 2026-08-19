@@ -1,5 +1,5 @@
 from datetime import date
-from decimal import Decimal
+from decimal import Decimal, localcontext
 import unittest
 
 from domain.contracts.cee_compensation import (
@@ -21,6 +21,16 @@ class CEECompensationTests(unittest.TestCase):
             reference_date=date(2026, 8, 19),
             territory=SmicTerritory.METROPOLITAN_FRANCE,
         )
+        self.assertEqual(minimum, Decimal("52.93"))
+
+    def test_minimum_is_independent_from_ambient_decimal_precision(self):
+        with localcontext() as context:
+            context.prec = 5
+            minimum = legal_cee_daily_minimum(
+                smic_catalog=create_smic_catalog_2026(),
+                reference_date=date(2026, 8, 19),
+            )
+            self.assertEqual(context.prec, 5)
         self.assertEqual(minimum, Decimal("52.93"))
 
     def test_uses_smic_version_applicable_on_contract_date(self):
