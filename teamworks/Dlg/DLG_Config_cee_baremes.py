@@ -67,12 +67,12 @@ class Dialog(wx.Dialog):
         main.Add(note, 0, wx.EXPAND | wx.ALL, 12)
 
         # Sous wxWidgets 3.3.x, tous les contrôles gérés par le sizer d'un panel
-        # doivent avoir ce même panel comme parent. CreateStdDialogButtonSizer()
-        # créerait ici les boutons avec le dialogue comme parent, ce qui déclenche
-        # une assertion SetContainingWindow au moment de l'ouverture.
+        # doivent avoir ce même panel comme parent. On garde donc un sizer de
+        # boutons explicite et on fournit aussi les libellés français : le
+        # runtime portable n'initialise pas toujours les labels standards wx.
         buttons = wx.StdDialogButtonSizer()
-        self.bouton_ok = wx.Button(panel, wx.ID_OK)
-        self.bouton_annuler = wx.Button(panel, wx.ID_CANCEL)
+        self.bouton_ok = wx.Button(panel, wx.ID_OK, u"Valider")
+        self.bouton_annuler = wx.Button(panel, wx.ID_CANCEL, u"Annuler")
         buttons.AddButton(self.bouton_ok)
         buttons.AddButton(self.bouton_annuler)
         buttons.Realize()
