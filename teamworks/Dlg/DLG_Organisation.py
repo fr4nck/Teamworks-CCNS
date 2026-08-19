@@ -217,13 +217,7 @@ class Dialog(wx.Dialog):
         return errors
 
     def _refresh_preview(self):
-        values = self._values()
-        current = UTILS_Organisation.GetProfil()
-        UTILS_Organisation.SetProfil(values)
-        try:
-            lines = UTILS_Organisation.GetLignesEnteteDocument()
-        finally:
-            UTILS_Organisation.SetProfil(current)
+        lines = UTILS_Organisation.BuildLignesEnteteDocument(self._values())
         self.preview.SetValue("\n".join(lines) or "Aucune mention configurée.")
 
     def OnPreview(self, event):
