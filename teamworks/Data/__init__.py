@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Extensions additives du schéma Teamworks historique.
 
-``DATA_Tables.py`` reste volontairement proche du fichier vanilla.  Les
+``DATA_Tables.py`` reste volontairement proche du fichier vanilla. Les
 extensions Teamworks-CCNS sont appliquées ici dès l'import du package ``Data``
 avant que ``GestionDB`` ne conserve une référence vers ``DATA_Tables.DB_DATA``.
 
@@ -25,18 +25,6 @@ def _extend_table(table_name, columns):
 def _ensure_table(table_name, columns):
     if table_name not in DATA_Tables.DB_DATA:
         DATA_Tables.DB_DATA[table_name] = list(columns)
-
-
-def _extend_contract_import_group(*table_names):
-    for row in DATA_Tables.TABLES_IMPORTATION_OPTIONNELLES:
-        if row[0] != u"Données de contrats":
-            continue
-        current = list(row[1])
-        for table_name in table_names:
-            if table_name not in current:
-                current.append(table_name)
-        row[1] = tuple(current)
-        return
 
 
 def _apply_tw184_contract_schema():
@@ -77,7 +65,6 @@ def _apply_tw184_contract_schema():
             ("cee_qualification", "VARCHAR(32)", u"Qualification CEE", u"Qualification CEE ciblée, vide = générique"),
         ),
     )
-    _extend_contract_import_group("contrats_cee_baremes", "contrats_documents_modeles")
 
 
 _apply_tw184_contract_schema()
