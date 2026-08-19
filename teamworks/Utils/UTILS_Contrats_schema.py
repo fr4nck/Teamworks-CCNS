@@ -9,28 +9,50 @@ réinterprète aucune colonne historique.
 
 CEE_QUALIFICATION_COLUMN = "cee_qualification"
 CEE_QUALIFICATION_TYPE = "VARCHAR(32)"
+CONVENTION_CODE_COLUMN = "convention_code"
+CONVENTION_CODE_TYPE = "VARCHAR(32)"
+CCNS_GROUP_COLUMN = "ccns_group"
+CCNS_GROUP_TYPE = "VARCHAR(8)"
+WEEKLY_HOURS_COLUMN = "weekly_hours"
+WEEKLY_HOURS_TYPE = "REAL"
+GROSS_MONTHLY_SALARY_COLUMN = "gross_monthly_salary"
+GROSS_MONTHLY_SALARY_TYPE = "REAL"
+
+ADDITIVE_COLUMNS = (
+    (CEE_QUALIFICATION_COLUMN, CEE_QUALIFICATION_TYPE),
+    (CONVENTION_CODE_COLUMN, CONVENTION_CODE_TYPE),
+    (CCNS_GROUP_COLUMN, CCNS_GROUP_TYPE),
+    (WEEKLY_HOURS_COLUMN, WEEKLY_HOURS_TYPE),
+    (GROSS_MONTHLY_SALARY_COLUMN, GROSS_MONTHLY_SALARY_TYPE),
+)
+
+
+def _ensure_column(DB, name, type_name):
+    if DB is None:
+        raise ValueError("DB est requis")
+    champs = DB.GetListeChamps2("contrats")
+    noms = [champ[0] for champ in champs]
+    if name in noms:
+        return False
+    DB.AjoutChamp(nomTable="contrats", nomChamp=name, typeChamp=type_name)
+    return True
 
 
 def EnsureCEEQualificationColumn(DB):
-    """Ajoute la qualification CEE si la base historique ne la possède pas.
+    """Ajoute la qualification CEE si la base historique ne la possède pas."""
+    return _ensure_column(DB, CEE_QUALIFICATION_COLUMN, CEE_QUALIFICATION_TYPE)
 
-    ``DB`` est une instance compatible avec ``GestionDB.DB``. La vérification
-    préalable évite volontairement ``ADD COLUMN IF NOT EXISTS``, non retenu
-    pour garantir la compatibilité avec MySQL/MariaDB 5.5.
 
-    Renvoie True si la colonne a été créée, False si elle existait déjà.
+def EnsureContractEngineColumns(DB):
+    """Ajoute les colonnes TW-184 manquantes, sans conversion des anciennes lignes.
+
+    La vérification préalable évite volontairement ``ADD COLUMN IF NOT EXISTS``
+    afin de conserver la compatibilité avec MySQL/MariaDB 5.5.
+
+    Renvoie le tuple des noms de colonnes effectivement créées.
     """
-    if DB is None:
-        raise ValueError("DB est requis")
-
-    champs = DB.GetListeChamps2("contrats")
-    noms = [champ[0] for champ in champs]
-    if CEE_QUALIFICATION_COLUMN in noms:
-        return False
-
-    DB.AjoutChamp(
-        nomTable="contrats",
-        nomChamp=CEE_QUALIFICATION_COLUMN,
-        typeChamp=CEE_QUALIFICATION_TYPE,
-    )
-    return True
+    created = []
+    for name, type_name in ADDITIVE_COLUMNS:
+        if _ensure_column(DB, name, type_name):
+            created.append(name)
+    return tuple(created)
