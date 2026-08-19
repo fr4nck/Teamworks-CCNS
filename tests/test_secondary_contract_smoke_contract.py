@@ -8,6 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SMOKE = ROOT / "tools" / "smoke_secondary_contract_dialog.py"
 RUNTIME = ROOT / "tools" / "smoke_runtime.py"
 ENTRYPOINT = ROOT / "teamworks" / "Teamworks.py"
+CONTRACT_DIALOG = ROOT / "teamworks" / "Dlg" / "DLG_Creation_contrat.py"
 
 
 def test_contract_smoke_targets_real_application_context() -> None:
@@ -36,6 +37,23 @@ def test_contract_smoke_exercises_forward_and_backward_navigation() -> None:
     assert "TEAMWORKS_SMOKE_CONTRACT_DIALOG_READY" in source
     assert "TEAMWORKS_SMOKE_CONTRACT_DIALOG_FAILED" in source
     assert "PATCHED.unlink(missing_ok=True)" in source
+
+
+def test_contract_wizard_sizes_after_pages_are_created() -> None:
+    source = CONTRACT_DIALOG.read_text(encoding="utf-8")
+
+    # L'ancien wizard faisait Fit() sur un sizer encore vide puis ouvrait une
+    # fenêtre trop petite. Le calcul responsive doit arriver après les 6 pages.
+    assert "self.Creation_Pages()\n        self._ApplyInitialResponsiveSize()" in source
+    assert "def _ApplyInitialResponsiveSize(self):" in source
+    assert "for numPage in range(1, self.nbrePages + 1):" in source
+    assert "page.GetBestSize()" in source
+    assert "page.GetMinSize()" in source
+    assert "desired_width = max(740," in source
+    assert "desired_height = max(640," in source
+    assert "wx.GetClientDisplayRect()" in source
+    assert "self.SetMinSize((min_width, min_height))" in source
+    assert "self.SetSize((width, height))" in source
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="wxWidgets MSW requis")
