@@ -79,16 +79,18 @@ def SetProfil(values):
             SetValeur(key, value)
 
 
-def GetLignesEnteteDocument():
-    """Retourne les mentions optionnelles prêtes à afficher dans un en-tête."""
-    p = GetProfil()
+def BuildLignesEnteteDocument(profile):
+    """Construit les mentions d'en-tête à partir d'un profil déjà chargé."""
+    p = dict(FIELDS)
+    p.update(DOCUMENT_FLAGS)
+    p.update(profile or {})
     lines = []
 
     name = p["nom_usage"] or p["nom_officiel"]
     if name:
         lines.append(name)
 
-    if p["afficher_coordonnees"]:
+    if _to_bool(p["afficher_coordonnees"], True):
         address = " ".join(x for x in [p["adresse"], p["code_postal"], p["ville"]] if x)
         if address:
             lines.append(address)
@@ -97,13 +99,13 @@ def GetLignesEnteteDocument():
             lines.append(contacts)
 
     legal = []
-    if p["afficher_rna"] and p["rna"]:
+    if _to_bool(p["afficher_rna"]) and p["rna"]:
         legal.append("RNA %s" % p["rna"])
-    if p["afficher_siret"] and p["siret"]:
+    if _to_bool(p["afficher_siret"]) and p["siret"]:
         legal.append("SIRET %s" % p["siret"])
-    if p["afficher_agrement"] and p["agrement_js"]:
+    if _to_bool(p["afficher_agrement"]) and p["agrement_js"]:
         legal.append("Agrément %s" % p["agrement_js"])
-    if p["afficher_assurance"] and p["police_assurance"]:
+    if _to_bool(p["afficher_assurance"]) and p["police_assurance"]:
         assurance = "Assurance %s" % p["police_assurance"]
         if p["assureur"]:
             assurance += " (%s)" % p["assureur"]
@@ -112,3 +114,8 @@ def GetLignesEnteteDocument():
         lines.append(" · ".join(legal))
 
     return lines
+
+
+def GetLignesEnteteDocument():
+    """Retourne les mentions optionnelles prêtes à afficher dans un en-tête."""
+    return BuildLignesEnteteDocument(GetProfil())
