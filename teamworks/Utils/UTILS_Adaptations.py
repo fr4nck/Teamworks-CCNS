@@ -15,6 +15,57 @@ from importlib import import_module
 import wx
 
 
+def _install_native_checklist_bridge():
+    """Neutralise les anciennes cases du CheckListCtrlMixin sous Phoenix.
+
+    Plusieurs écrans historiques héritent encore de ``CheckListCtrlMixin`` tout
+    en activant les cases natives de ``wx.ListCtrl``. Sous Phoenix cela affiche
+    deux colonnes de cases à cocher. Le pont conserve temporairement l'API du
+    mixin utilisée par ces écrans (``ToggleItem`` et ``IsChecked``), mais laisse
+    exclusivement wxPython gérer l'affichage et l'état des cases.
+    """
+    try:
+        from wx.lib.mixins import listctrl as listmix
+    except ImportError:
+        return
+
+    mixin = listmix.CheckListCtrlMixin
+    if getattr(mixin, "_teamworks_native_checkbox_bridge", False):
+        return
+
+    def native_init(self):
+        # Ne crée aucune ImageList de checkbox : wx.ListCtrl affiche ses cases
+        # natives via EnableCheckBoxes(True), déjà appelé par les écrans.
+        def on_checked(event):
+            callback = getattr(self, "OnCheckItem", None)
+            if callable(callback):
+                callback(event.GetIndex(), True)
+            event.Skip()
+
+        def on_unchecked(event):
+            callback = getattr(self, "OnCheckItem", None)
+            if callable(callback):
+                callback(event.GetIndex(), False)
+            event.Skip()
+
+        self.Bind(wx.EVT_LIST_ITEM_CHECKED, on_checked)
+        self.Bind(wx.EVT_LIST_ITEM_UNCHECKED, on_unchecked)
+
+    def native_toggle_item(self, index):
+        self.CheckItem(index, not self.IsItemChecked(index))
+
+    def native_is_checked(self, index):
+        return self.IsItemChecked(index)
+
+    mixin.__init__ = native_init
+    mixin.ToggleItem = native_toggle_item
+    mixin.IsChecked = native_is_checked
+    mixin._teamworks_native_checkbox_bridge = True
+
+
+_install_native_checklist_bridge()
+
+
 def _safe_person_age(self, date_value):
     """Retourne un âge lisible sans bloquer sur une date historique invalide."""
     if not date_value:
