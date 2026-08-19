@@ -28,16 +28,40 @@ Ordre cible :
 
 Les champs doivent être contextuels : un champ sans sens pour le contrat choisi ne doit pas être affiché comme s'il était obligatoire.
 
+## État d'implémentation du premier incrément
+
+Le premier incrément TW-184 est désormais raccordé à l'assistant wx historique :
+
+- `convention_code` est stocké séparément sur le contrat ;
+- `ccns_group` stocke G1 à G8 sans détourner `IDclassification` ;
+- `weekly_hours` et `gross_monthly_salary` deviennent des données standard du contrat ;
+- `cee_qualification` stocke le statut CEE ;
+- toutes ces colonnes sont additives, nullable et créées de façon idempotente, sans `ADD COLUMN IF NOT EXISTS` afin de préserver MySQL/MariaDB 5.5 ;
+- un nouveau contrat Teamworks-CCNS propose CCNS par défaut ;
+- un contrat historique sans `convention_code` n'est jamais converti implicitement ;
+- le parcours historique `IDclassification + valeur_point` reste disponible uniquement comme fallback des anciennes données ou des conventions non encore raccordées.
+
 ## CCNS — contrats classiques
 
 Pour les CDI/CDD relevant pleinement de la Convention collective nationale du sport :
 
-- utiliser les groupes et classifications CCNS ;
+- utiliser les groupes CCNS G1 à G8 issus du moteur de grille existant ;
 - proposer les minima applicables à la date du contrat ;
 - contrôler le minimum conventionnel et le SMIC ;
-- distinguer salaire de base, éventuels compléments et temps de travail ;
-- ne plus utiliser une « valeur du point » générique comme pivot si elle ne correspond pas au mécanisme conventionnel en vigueur ;
+- appliquer le calcul temps partiel déjà porté par le domaine ;
+- stocker durée hebdomadaire et rémunération indépendamment des champs personnalisés ;
+- ne plus utiliser une « valeur du point » générique comme pivot ;
 - calculer ou proposer la période d'essai uniquement si elle est juridiquement permise et pertinente pour le contrat.
+
+### Contrôle de rémunération
+
+Pour G1 à G6, l'assistant affiche :
+
+`Minimum CCNS` → `Minimum SMIC` → `Minimum retenu` → `Conforme / non conforme`.
+
+Le minimum retenu est le montant le plus favorable au salarié selon le moteur existant. Une rémunération inférieure au minimum calculé empêche la validation du contrat.
+
+G7 et G8 ont des minima annuels. L'assistant les identifie comme tels et n'effectue volontairement aucune conversion mensuelle artificielle.
 
 ## CEE — régime spécifique
 
@@ -45,92 +69,73 @@ Le contrat d'engagement éducatif ne doit pas être assimilé à une classificat
 
 Quand `Type de contrat = CEE`, le parcours devient :
 
-- fonction : animateur, directeur, adjoint ou autre fonction autorisée ;
 - qualification / statut :
   - BAFA titulaire ;
   - BAFA stagiaire ;
   - non diplômé ;
   - équivalence / qualification reconnue ;
-  - BAFD titulaire ou stagiaire lorsqu'il s'agit de direction ;
+  - BAFD titulaire ;
+  - BAFD stagiaire ;
 - barème journalier interne de l'employeur ;
 - contrôle du minimum légal CEE applicable à la date ;
-- nombre de jours / période ;
-- compteur annuel de jours CEE et alertes associées ;
-- règles spécifiques mineurs si le salarié est mineur.
+- dates du contrat ;
+- à terme : fonction, compteur annuel de jours CEE et règles spécifiques mineurs.
+
+Un nouveau CEE ne renseigne ni classification CCNS ni ancienne valeur du point. Un CEE historique sans qualification moderne reste lisible et modifiable sans conversion forcée.
 
 ### Barèmes internes
 
-Teamworks doit permettre à chaque organisation de définir ses propres barèmes CEE par fonction et qualification.
+Les barèmes employeur sont historisés par qualification et date d'effet dans une table dédiée. L'écran `Barèmes CEE…` permet de définir des montants différents pour BAFA titulaire, BAFA stagiaire, non diplômé, équivalence et BAFD.
 
-Exemple de structure de barème :
-
-| Fonction | Qualification | Montant journalier | Date d'effet |
-|---|---|---:|---|
-| Animateur | BAFA titulaire | configurable | configurable |
-| Animateur | BAFA stagiaire | configurable | configurable |
-| Animateur | Non diplômé | configurable | configurable |
-| Directeur | BAFD titulaire | configurable | configurable |
-| Directeur | BAFD stagiaire | configurable | configurable |
-
-Le logiciel doit proposer le barème configuré mais laisser une modification explicite si l'utilisateur dispose des droits nécessaires, tout en conservant le contrôle du minimum légal.
+Le logiciel compare le barème employeur au minimum légal CEE résolu à la date du contrat.
 
 ## Autres conventions
 
-L'architecture ne doit pas coder en dur la CCNS dans l'interface.
+L'architecture ne code pas la CCNS comme unique convention possible. Les codes actuellement prévus sont :
 
-Elle doit permettre ultérieurement d'ajouter des moteurs de règles pour :
+- `CCNS` ;
+- `ECLAT` ;
+- `CENTRES_SOCIAUX` ;
+- `OTHER`.
 
-- ÉCLAT ;
-- acteurs du lien social et familial / centres sociaux ;
-- autres conventions ou accords applicables à une organisation.
+ÉCLAT et Centres sociaux sont reconnus par l'assistant mais leur moteur détaillé n'est pas encore raccordé. Dans ce cas, Teamworks affiche explicitement que le parcours historique est conservé sans prétendre effectuer un contrôle conventionnel.
 
-Chaque convention peut définir :
-
-- classifications ;
-- minima ;
-- règles de période d'essai ;
-- contrats spécifiques ;
-- ancienneté ;
-- temps de travail ;
-- primes et sujétions ;
-- règles de contrôle propres.
+Chaque futur moteur pourra définir classifications, minima, période d'essai, ancienneté, temps de travail, primes et règles de contrôle propres.
 
 ## Données et compatibilité
 
 - aucune migration destructive de la base MySQL/MariaDB 5.5 ;
 - préserver la lecture des contrats historiques ;
-- conserver les anciennes valeurs lorsqu'elles existent, même si elles sont désormais considérées comme « héritées » ;
-- introduire les nouveaux champs progressivement avec fallback ;
-- journaliser les changements de classification, barème et rémunération ;
-- afficher la source et la date d'effet d'une règle lorsque cela est possible.
+- conserver les anciennes valeurs lorsqu'elles existent ;
+- nouvelles colonnes nullable et additives ;
+- aucune migration automatique d'un ancien contrat vers CCNS ;
+- source et date d'effet des grilles portées par le domaine ;
+- journalisation détaillée des changements de contrat à compléter dans un incrément ultérieur.
 
 ## UX cible
 
-L'assistant ne doit plus présenter simultanément des listes incohérentes.
-
 Exemple CEE :
 
-`Convention / régime : CEE` → `Fonction : Animateur` → `Qualification : BAFA stagiaire` → `Barème employeur` → `Contrôle minimum légal`.
+`Convention employeur` → `CEE` → `Qualification : BAFA stagiaire` → `Barème employeur` → `Minimum légal` → `Conformité`.
 
 Exemple CDI CCNS :
 
-`Convention : Sport` → `CDI` → `Métier` → `Groupe CCNS` → `Minimum conventionnel` → `Rémunération` → `Temps de travail` → `Période d'essai applicable`.
+`CCNS — Sport (IDCC 2511)` → `CDI` → `Groupe CCNS` → `Durée hebdomadaire` → `Brut mensuel` → `Minimum CCNS / SMIC` → `Conformité`.
 
-## Tests attendus
+## Tests
 
-- CEE BAFA titulaire et stagiaire produisent des propositions de rémunération distinctes lorsque les barèmes employeur sont distincts ;
-- le minimum légal CEE est toujours contrôlé ;
-- un CEE n'expose pas une pseudo-classification CCNS ;
-- un CDI/CDD CCNS propose uniquement les classifications CCNS compatibles ;
-- les contrats historiques restent ouvrables ;
-- les règles sont sélectionnées selon la date d'effet ;
-- les erreurs de combinaison convention/contrat/statut sont bloquées ou clairement signalées ;
-- aucun changement de schéma destructif n'est requis.
+Le lot comporte des tests du domaine et de l'adaptateur CCNS ainsi qu'un smoke Windows du dialogue réel. Le smoke vérifie notamment qu'un nouveau contrat :
+
+- présélectionne CCNS ;
+- expose les huit groupes G1 à G8 ;
+- masque l'ancienne classification et la valeur du point ;
+- affiche le bloc de contrôle CCNS ;
+- conserve le parcours des contrats historiques.
 
 ## Hors périmètre immédiat
 
 - génération juridique exhaustive de toutes les clauses du contrat ;
-- prise en charge complète d'ÉCLAT ou des centres sociaux dès le premier lot ;
-- migration automatique des anciens contrats vers une nouvelle classification.
-
-Le premier incrément doit sécuriser le modèle et le parcours CCNS/CEE avant d'étendre les autres conventions.
+- prise en charge complète d'ÉCLAT ou des centres sociaux ;
+- migration automatique des anciens contrats ;
+- moteur définitif de période d'essai par convention ;
+- contrôle mensuel artificiel des minima annuels G7/G8.
