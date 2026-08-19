@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Construit l'assistant de contrat réel et parcourt ses six étapes sous Windows."""
+"""Construit l'assistant de contrat réel et teste affichage + sauvegarde sous Windows."""
 
 from __future__ import annotations
 
@@ -29,10 +29,21 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 _smoke_db = _smoke_gestiondb.DB()
                 _smoke_db.ExecuterReq("SELECT IDcontrat, IDpersonne FROM contrats ORDER BY IDcontrat LIMIT 1")
                 _smoke_rows = _smoke_db.ResultatReq()
+                _smoke_db.ExecuterReq("SELECT IDtype, nom, nom_abrege FROM contrats_types ORDER BY IDtype")
+                _smoke_types = _smoke_db.ResultatReq()
                 _smoke_db.Close()
                 if not _smoke_rows:
                     raise RuntimeError("aucun contrat disponible pour le smoke contrat")
                 _smoke_contract_id, _smoke_person_id = _smoke_rows[0]
+                _smoke_non_cee_type = None
+                for _type_id, _type_name, _type_short in _smoke_types:
+                    _short = (_type_short or "").strip().upper()
+                    _name = (_type_name or "").strip().lower()
+                    if _short != "CEE" and "engagement educatif" not in _name and "engagement éducatif" not in _name:
+                        _smoke_non_cee_type = _type_id
+                        break
+                if _smoke_non_cee_type is None:
+                    raise RuntimeError("aucun type de contrat non CEE disponible")
 
                 print("TEAMWORKS_SMOKE_CONTRACT_STAGE:dialog", flush=True)
                 _smoke_dialog = _smoke_contract.Dialog(
@@ -100,6 +111,55 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 assert _smoke_page3.sizer_ccns.GetStaticBox().IsShown()
                 assert not _smoke_page3.sizer_cee.GetStaticBox().IsShown()
                 assert _smoke_page3.weekly_hours.GetValue() == 35.0
+
+                print("TEAMWORKS_SMOKE_CONTRACT_STAGE:save-ccns", flush=True)
+                _smoke_db = _smoke_gestiondb.DB()
+                _smoke_db.ExecuterReq("SELECT COALESCE(MAX(IDcontrat), 0) FROM contrats")
+                _before_max = _smoke_db.ResultatReq()[0][0]
+                _smoke_db.Close()
+
+                _smoke_new.dictChamps = {}
+                _smoke_new.dictContrats.update({
+                    "IDcontrat": 0,
+                    "IDpersonne": _smoke_person_id,
+                    "IDclassification": None,
+                    "IDtype": _smoke_non_cee_type,
+                    "valeur_point": None,
+                    "cee_qualification": None,
+                    "convention_code": "CCNS",
+                    "ccns_group": "G1",
+                    "weekly_hours": 35.0,
+                    "gross_monthly_salary": 1900.0,
+                    "date_debut": "2026-08-19",
+                    "date_fin": "2999-01-01",
+                    "date_rupture": "",
+                    "essai": 30,
+                })
+                assert _smoke_new.page6.Validation() is True
+
+                _smoke_db = _smoke_gestiondb.DB()
+                _smoke_db.ExecuterReq("SELECT COALESCE(MAX(IDcontrat), 0) FROM contrats")
+                _after_compliant = _smoke_db.ResultatReq()[0][0]
+                _smoke_db.Close()
+                assert _after_compliant > _before_max
+
+                print("TEAMWORKS_SMOKE_CONTRACT_STAGE:block-noncompliant", flush=True)
+                _old_message_box = wx.MessageBox
+                try:
+                    wx.MessageBox = lambda *args, **kwargs: wx.OK
+                    _smoke_new.dictContrats["gross_monthly_salary"] = 1800.0
+                    assert _smoke_new.page6.Validation() is False
+                finally:
+                    wx.MessageBox = _old_message_box
+
+                _smoke_db = _smoke_gestiondb.DB()
+                _smoke_db.ExecuterReq("SELECT COALESCE(MAX(IDcontrat), 0) FROM contrats")
+                _after_blocked = _smoke_db.ResultatReq()[0][0]
+                assert _after_blocked == _after_compliant
+                _smoke_db.ReqDEL("contrats", "IDcontrat", _after_compliant)
+                _smoke_db.Commit()
+                _smoke_db.Close()
+
                 _smoke_new.Destroy()
                 wx.Yield()
 
