@@ -18,6 +18,15 @@ def test_cee_rate_dialog_buttons_belong_to_inner_panel() -> None:
     assert "buttons.Realize()" in source
 
 
+def test_cee_rate_dialog_owns_and_resizes_its_inner_panel() -> None:
+    source = DIALOG.read_text(encoding="utf-8")
+
+    assert "outer = wx.BoxSizer(wx.VERTICAL)" in source
+    assert "outer.Add(panel, 1, wx.EXPAND)" in source
+    assert "self.SetSizer(outer)" in source
+    assert "self.SetMinSize((570, 440))" in source
+
+
 def test_cee_rate_dialog_reloads_rates_when_effective_date_changes() -> None:
     source = DIALOG.read_text(encoding="utf-8")
 
