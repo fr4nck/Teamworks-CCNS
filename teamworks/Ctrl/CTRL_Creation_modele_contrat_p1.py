@@ -7,12 +7,12 @@ from Dlg import DLG_Config_classifications, DLG_Config_types_contrats, DLG_Confi
 
 CCNS_GROUPS = ["G%d" % n for n in range(1, 9)]
 CEE_QUALIFICATIONS = [
-    ("BAFA_TITULAIRE", "BAFA titulaire"),
-    ("BAFA_STAGIAIRE", "BAFA stagiaire"),
-    ("NON_DIPLOME", "Non diplômé"),
-    ("EQUIVALENCE", "Équivalence"),
-    ("BAFD_TITULAIRE", "BAFD titulaire"),
-    ("BAFD_STAGIAIRE", "BAFD stagiaire"),
+    ("BAFA_HOLDER", "BAFA titulaire"),
+    ("BAFA_TRAINEE", "BAFA stagiaire"),
+    ("UNQUALIFIED", "Non diplômé"),
+    ("EQUIVALENT", "Équivalence"),
+    ("BAFD_HOLDER", "BAFD titulaire"),
+    ("BAFD_TRAINEE", "BAFD stagiaire"),
 ]
 
 class Page(wx.Panel):
