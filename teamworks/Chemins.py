@@ -51,10 +51,25 @@ for rep in os.listdir(REP_COURANT) :
     if os.path.isdir(chemin) and chemin not in sys.path :
         sys.path.insert(2, chemin)
 
+
 def GetStaticPath(fichier=""):
-    """ Retourne le chemin du répertoire Static """
+    """Retourne le chemin Static ou l'asset de marque généré au runtime."""
+    normalized = str(fichier).replace("\\", "/")
+    if normalized in ("Images/Special/Logo_splash.png", "Images/16x16/Logo.png"):
+        try:
+            # Import volontairement tardif : Chemins est chargé avant le système
+            # de préférences, alors que les assets de marque ne sont demandés
+            # qu'une fois wx.App initialisé.
+            from Utils import UTILS_Branding
+            override = UTILS_Branding.GetRuntimeAssetOverride(normalized)
+            if override:
+                return override
+        except Exception:
+            pass
+
     chemin = os.path.join(REP_COURANT, "Static")
     return os.path.join(chemin, fichier)
+
 
 def GetMainPath(fichier=""):
     """ Retourne le chemin du répertoire principal """
