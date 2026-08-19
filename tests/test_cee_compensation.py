@@ -2,8 +2,16 @@ from datetime import date
 from decimal import Decimal
 import unittest
 
-from domain.contracts.cee_compensation import legal_cee_daily_minimum
-from domain.convention.smic import SmicTerritory, create_smic_catalog_2026
+from domain.contracts.cee_compensation import (
+    legal_cee_daily_minimum,
+    legal_cee_daily_smic_multiplier_on,
+)
+from domain.convention.smic import (
+    SmicCatalog,
+    SmicTerritory,
+    SmicVersion,
+    create_smic_catalog_2026,
+)
 
 
 class CEECompensationTests(unittest.TestCase):
@@ -28,6 +36,51 @@ class CEECompensationTests(unittest.TestCase):
         self.assertEqual(january, Decimal("51.69"))
         self.assertEqual(june, Decimal("52.93"))
         self.assertLess(january, june)
+
+    def test_legal_multiplier_changes_on_may_1_2025(self):
+        self.assertEqual(
+            legal_cee_daily_smic_multiplier_on(date(2025, 4, 30)),
+            Decimal("2.20"),
+        )
+        self.assertEqual(
+            legal_cee_daily_smic_multiplier_on(date(2025, 5, 1)),
+            Decimal("4.30"),
+        )
+
+    def test_daily_minimum_uses_historical_multiplier(self):
+        catalog = SmicCatalog(
+            (
+                SmicVersion(
+                    code="SMIC-TEST-2025",
+                    name="SMIC test 2025",
+                    territory=SmicTerritory.METROPOLITAN_FRANCE,
+                    effective_from=date(2025, 4, 1),
+                    effective_until=date(2025, 5, 31),
+                    hourly_gross_amount=Decimal("10.00"),
+                    monthly_gross_amount_35h=Decimal("1516.70"),
+                    legal_weekly_hours=Decimal("35.00"),
+                    source_reference="Valeur de test pour vérifier la règle CEE datée",
+                ),
+            )
+        )
+        self.assertEqual(
+            legal_cee_daily_minimum(
+                smic_catalog=catalog,
+                reference_date=date(2025, 4, 30),
+            ),
+            Decimal("22.00"),
+        )
+        self.assertEqual(
+            legal_cee_daily_minimum(
+                smic_catalog=catalog,
+                reference_date=date(2025, 5, 1),
+            ),
+            Decimal("43.00"),
+        )
+
+    def test_no_rule_is_invented_before_supported_history(self):
+        with self.assertRaises(ValueError):
+            legal_cee_daily_smic_multiplier_on(date(2008, 4, 30))
 
 
 if __name__ == "__main__":
