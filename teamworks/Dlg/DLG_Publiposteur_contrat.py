@@ -46,6 +46,27 @@ def _target_index(metadata):
     return 0
 
 
+class Grid_donnees(_base.Grid_donnees):
+    """Grille contrat dont la colonne des mots-clés s'adapte au contenu.
+
+    Le publiposteur vanilla réserve 140 px aux libellés de lignes, ce qui coupe
+    les nouveaux mots-clés explicites comme CONFORMITEREMUNERATION. La largeur
+    est calculée avec la police réellement utilisée par wx, donc reste correcte
+    en DPI élevé sans élargir les autres catégories de publipostage.
+    """
+
+    def Remplissage(self):
+        super(Grid_donnees, self).Remplissage()
+        labels = [
+            u"{%s}%s" % (motcle, "*" if type_motcle != "base" else "")
+            for motcle, type_motcle in _base.DICT_DONNEES.get("MOTSCLES", [])
+        ]
+        if not labels:
+            return
+        largeur = max(self.GetTextExtent(label)[0] for label in labels) + 28
+        self.SetRowLabelSize(max(140, min(320, largeur)))
+
+
 class ListCtrl_fichiers(_base.ListCtrl_fichiers):
     def GetListeDocuments(self):
         fichiers = super(ListCtrl_fichiers, self).GetListeDocuments()
@@ -179,13 +200,16 @@ class ListCtrl_fichiers(_base.ListCtrl_fichiers):
 
 
 class Dialog(_base.Dialog):
-    """Publiposteur standard avec liste de modèles filtrée pour un contrat."""
+    """Publiposteur standard avec ergonomie et modèles filtrés pour un contrat."""
 
     def __init__(self, *args, **kwargs):
-        original = _base.ListCtrl_fichiers
+        original_list = _base.ListCtrl_fichiers
+        original_grid = _base.Grid_donnees
         _base.ListCtrl_fichiers = ListCtrl_fichiers
+        _base.Grid_donnees = Grid_donnees
         try:
             _base.Dialog.__init__(self, *args, **kwargs)
         finally:
             # Les autres usages du publiposteur restent strictement vanilla.
-            _base.ListCtrl_fichiers = original
+            _base.ListCtrl_fichiers = original_list
+            _base.Grid_donnees = original_grid
