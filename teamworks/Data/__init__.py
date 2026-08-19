@@ -36,6 +36,11 @@ def _apply_tw184_contract_schema():
             ("ccns_group", "VARCHAR(8)", u"Groupe CCNS", u"Groupe de classification CCNS"),
             ("weekly_hours", "REAL", u"Durée hebdo", u"Durée hebdomadaire de référence"),
             ("gross_monthly_salary", "REAL", u"Salaire brut mensuel", u"Rémunération brute mensuelle"),
+            ("gross_annual_salary", "REAL", u"Salaire brut annuel", u"Rémunération brute annuelle"),
+            ("operation_type", "VARCHAR(24)", u"Nature opération", u"Nouveau contrat, renouvellement CDD ou CDD vers CDI"),
+            ("previous_contract_id", "INTEGER", u"Contrat précédent", u"Contrat précédent lié à l'opération"),
+            ("trial_period_value", "INTEGER", u"Période d'essai", u"Valeur structurée de la période d'essai"),
+            ("trial_period_unit", "VARCHAR(8)", u"Unité essai", u"DAY ou MONTH"),
         ),
     )
     _extend_table(
