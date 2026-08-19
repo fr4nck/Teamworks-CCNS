@@ -35,12 +35,20 @@ class CompatibilityTests(unittest.TestCase):
         self.assertIn("from Dlg import DLG_Publiposteur_contrat", source)
         self.assertIn("DLG_Publiposteur_contrat.Dialog", source)
 
-    def test_adapter_restores_vanilla_selector_after_dialog_construction(self):
+    def test_adapter_restores_vanilla_controls_after_dialog_construction(self):
         source = (ROOT / "teamworks" / "Dlg" / "DLG_Publiposteur_contrat.py").read_text(encoding="utf-8")
         self.assertIn("UTILS_Contrats_modeles_documents.FilterFilenames", source)
-        self.assertIn("_base.ListCtrl_fichiers = original", source)
+        self.assertIn("_base.ListCtrl_fichiers = original_list", source)
+        self.assertIn("_base.Grid_donnees = original_grid", source)
         self.assertIn("Ciblage du modèle de contrat", source)
         self.assertIn("DeleteMetadata", source)
+
+    def test_contract_grid_expands_keyword_labels_without_touching_vanilla(self):
+        source = (ROOT / "teamworks" / "Dlg" / "DLG_Publiposteur_contrat.py").read_text(encoding="utf-8")
+        self.assertIn("class Grid_donnees(_base.Grid_donnees):", source)
+        self.assertIn("self.GetTextExtent(label)[0]", source)
+        self.assertIn("self.SetRowLabelSize(max(140, min(320, largeur)))", source)
+        self.assertIn("original_grid = _base.Grid_donnees", source)
 
     def test_deleted_file_drops_its_targeting_only_after_actual_removal(self):
         source = (ROOT / "teamworks" / "Dlg" / "DLG_Publiposteur_contrat.py").read_text(encoding="utf-8")
