@@ -13,8 +13,8 @@ def test_cee_rate_dialog_buttons_belong_to_inner_panel() -> None:
     # explicitement les boutons avec `panel` comme parent.
     assert "self.CreateStdDialogButtonSizer(" not in source
     assert "buttons = wx.StdDialogButtonSizer()" in source
-    assert "wx.Button(panel, wx.ID_OK)" in source
-    assert "wx.Button(panel, wx.ID_CANCEL)" in source
+    assert 'wx.Button(panel, wx.ID_OK, u"Valider")' in source
+    assert 'wx.Button(panel, wx.ID_CANCEL, u"Annuler")' in source
     assert "buttons.Realize()" in source
 
 
