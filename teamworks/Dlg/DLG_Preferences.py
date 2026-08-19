@@ -2,11 +2,8 @@
 # -*- coding: utf-8 -*-
 """Préférences d'affichage et de branding de Teamworks CCNS."""
 
-import os
-
 import wx
 
-from Utils import UTILS_Branding
 from Utils import UTILS_Customize
 
 
@@ -14,10 +11,7 @@ class Dialog(wx.Dialog):
     THEMES = ["Système", "Clair", "Sombre"]
 
     def __init__(self, parent):
-        super().__init__(parent, title="Préférences d'affichage", size=(620, 430))
-
-        self.initial_logo_path = UTILS_Branding.GetAssociationLogoPath()
-        self.remove_logo = False
+        super().__init__(parent, title="Préférences d'affichage", size=(620, 390))
 
         panel = wx.Panel(self)
         main = wx.BoxSizer(wx.VERTICAL)
@@ -57,42 +51,26 @@ class Dialog(wx.Dialog):
         scale_row.Add(self.scale, 0)
         scale_row.Add(wx.StaticText(panel, label=" %"), 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 4)
         grid.Add(scale_row, 0, wx.ALIGN_LEFT)
-
         main.Add(grid, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 16)
 
-        branding_title = wx.StaticText(panel, label="Personnalisation de l'organisation")
-        branding_font = branding_title.GetFont()
-        branding_font.SetWeight(wx.FONTWEIGHT_BOLD)
-        branding_title.SetFont(branding_font)
-        main.Add(branding_title, 0, wx.LEFT | wx.RIGHT | wx.TOP, 16)
-
-        logo_row = wx.BoxSizer(wx.HORIZONTAL)
-        self.logo_picker = wx.FilePickerCtrl(
-            panel,
-            path=self.initial_logo_path,
-            message="Sélectionner le logo de l'organisation",
-            wildcard="Images (*.png;*.jpg;*.jpeg;*.bmp)|*.png;*.jpg;*.jpeg;*.bmp",
-            style=wx.FLP_OPEN | wx.FLP_FILE_MUST_EXIST | wx.FLP_USE_TEXTCTRL,
-        )
-        logo_row.Add(self.logo_picker, 1, wx.EXPAND | wx.RIGHT, 8)
-        self.remove_button = wx.Button(panel, label="Retirer")
-        logo_row.Add(self.remove_button, 0)
-        main.Add(logo_row, 0, wx.EXPAND | wx.ALL, 16)
-
-        hint = wx.StaticText(
+        organisation_box = wx.StaticBoxSizer(wx.VERTICAL, panel, "Structure / Association")
+        description = wx.StaticText(
             panel,
             label=(
-                "PNG transparent recommandé. Le fichier est copié dans le dossier utilisateur de "
-                "Teamworks CCNS : une mise à jour du logiciel ne l'écrasera pas."
+                "Identité, coordonnées, RNA/SIRET, agrément, assurance, représentant légal, logo "
+                "et mentions affichées sur les documents."
             ),
         )
-        hint.Wrap(570)
-        main.Add(hint, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 16)
+        description.Wrap(560)
+        organisation_box.Add(description, 0, wx.EXPAND | wx.ALL, 10)
+        self.organisation_button = wx.Button(panel, label="Configurer la structure / association…")
+        organisation_box.Add(self.organisation_button, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
+        main.Add(organisation_box, 0, wx.EXPAND | wx.ALL, 16)
 
         main.Add(
             wx.StaticText(
                 panel,
-                label="Les changements sont appliqués après redémarrage de Teamworks CCNS.",
+                label="Le changement de thème et de taille de police est appliqué après redémarrage.",
             ),
             0,
             wx.LEFT | wx.RIGHT | wx.BOTTOM,
@@ -109,18 +87,18 @@ class Dialog(wx.Dialog):
         main.Add(buttons, 0, wx.EXPAND | wx.ALL, 12)
         panel.SetSizer(main)
 
-        self.Bind(wx.EVT_BUTTON, self.OnRemoveLogo, self.remove_button)
-        self.Bind(wx.EVT_FILEPICKER_CHANGED, self.OnLogoChanged, self.logo_picker)
+        self.Bind(wx.EVT_BUTTON, self.OnOrganisation, self.organisation_button)
         self.Bind(wx.EVT_BUTTON, self.OnOk, id=wx.ID_OK)
         self.CentreOnParent()
 
-    def OnRemoveLogo(self, event):
-        self.remove_logo = True
-        self.logo_picker.SetPath("")
+    def OnOrganisation(self, event):
+        from Dlg import DLG_Organisation
 
-    def OnLogoChanged(self, event):
-        self.remove_logo = False
-        event.Skip()
+        dialog = DLG_Organisation.Dialog(self)
+        try:
+            dialog.ShowModal()
+        finally:
+            dialog.Destroy()
 
     def OnOk(self, event):
         values = ["Systeme", "Clair", "Sombre"]
@@ -131,23 +109,8 @@ class Dialog(wx.Dialog):
             "interface", "echelle_police", str(self.scale.GetValue())
         )
 
-        try:
-            selected_logo = self.logo_picker.GetPath().strip()
-            if self.remove_logo:
-                UTILS_Branding.ClearAssociationLogo()
-            elif selected_logo and os.path.abspath(selected_logo) != os.path.abspath(self.initial_logo_path or ""):
-                UTILS_Branding.SetAssociationLogo(selected_logo)
-        except (OSError, ValueError) as exc:
-            wx.MessageBox(
-                str(exc),
-                "Logo non enregistré",
-                wx.OK | wx.ICON_ERROR,
-                parent=self,
-            )
-            return
-
         wx.MessageBox(
-            "Les préférences seront appliquées au prochain démarrage.",
+            "Les préférences d'affichage seront appliquées au prochain démarrage.",
             "Préférences enregistrées",
             wx.OK | wx.ICON_INFORMATION,
             parent=self,
