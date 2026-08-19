@@ -32,10 +32,10 @@ jobs:
 
     steps:
       - name: Récupérer le dépôt
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Installer Python 3.11
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
           cache: pip
@@ -113,7 +113,7 @@ jobs:
 
       - name: Publier les diagnostics
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: diagnostics-tests
           path: |
@@ -135,10 +135,10 @@ jobs:
 
     steps:
       - name: Récupérer le dépôt
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Installer Python 3.11
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
           cache: pip
@@ -214,7 +214,7 @@ jobs:
 
       - name: Publier les diagnostics Windows
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: diagnostics-windows
           path: |
@@ -243,10 +243,10 @@ jobs:
 
     steps:
       - name: Récupérer le dépôt
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Installer Python 3.11
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
           cache: pip
@@ -324,8 +324,6 @@ jobs:
             '--distpath', 'dist',
             '--workpath', 'build/pyinstaller',
             '--specpath', 'build/spec',
-            '--collect-all', 'wx',
-            '--collect-all', 'matplotlib',
             '--collect-all', 'reportlab',
             '--collect-all', 'PIL',
             '--collect-all', 'mysql.connector',
@@ -398,7 +396,7 @@ jobs:
 
       - name: Publier les journaux de démarrage en cas d'échec
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: journaux-demarrage-windows
           path: |
@@ -455,7 +453,7 @@ jobs:
           "$hash  $archive" | Set-Content SHA256SUMS.txt -Encoding ascii
 
       - name: Publier l'artefact Windows
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: Teamworks-CCNS-Windows-portable
           path: |
