@@ -1,4 +1,7 @@
 from pathlib import Path
+import sys
+
+import pytest
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -33,3 +36,51 @@ def test_contract_smoke_exercises_forward_and_backward_navigation() -> None:
     assert "TEAMWORKS_SMOKE_CONTRACT_DIALOG_READY" in source
     assert "TEAMWORKS_SMOKE_CONTRACT_DIALOG_FAILED" in source
     assert "PATCHED.unlink(missing_ok=True)" in source
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="wxWidgets MSW requis")
+def test_cee_rate_subdialog_is_constructible_with_wx33(monkeypatch) -> None:
+    """Construit le sous-dialogue qui avait échappé au smoke de l'assistant parent."""
+    teamworks_dir = str(ROOT / "teamworks")
+    if teamworks_dir not in sys.path:
+        sys.path.insert(0, teamworks_dir)
+
+    import wx
+    from Dlg import DLG_Config_cee_baremes
+
+    class FakeDB:
+        def IsTableExists(self, table_name):
+            return True
+
+        def ExecuterReq(self, request):
+            self.request = request
+            return "ok"
+
+        def ResultatReq(self):
+            return []
+
+        def Close(self):
+            pass
+
+    monkeypatch.setattr(DLG_Config_cee_baremes.GestionDB, "DB", FakeDB)
+
+    app = wx.GetApp()
+    owns_app = app is None
+    if owns_app:
+        app = wx.App(False)
+    frame = wx.Frame(None)
+    dialog = None
+    try:
+        dialog = DLG_Config_cee_baremes.Dialog(frame)
+        button_parent = dialog.bouton_ok.GetParent()
+        assert button_parent is dialog.bouton_annuler.GetParent()
+        assert button_parent.GetParent() is dialog
+        dialog.Show()
+        wx.Yield()
+    finally:
+        if dialog is not None:
+            dialog.Destroy()
+        frame.Destroy()
+        wx.Yield()
+        if owns_app:
+            app.Destroy()
