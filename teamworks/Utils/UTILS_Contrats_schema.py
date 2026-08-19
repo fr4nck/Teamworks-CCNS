@@ -26,21 +26,27 @@ ADDITIVE_COLUMNS = (
     (GROSS_MONTHLY_SALARY_COLUMN, GROSS_MONTHLY_SALARY_TYPE),
 )
 
+MODEL_ADDITIVE_COLUMNS = (
+    (CEE_QUALIFICATION_COLUMN, CEE_QUALIFICATION_TYPE),
+    (CONVENTION_CODE_COLUMN, CONVENTION_CODE_TYPE),
+    (CCNS_GROUP_COLUMN, CCNS_GROUP_TYPE),
+)
 
-def _ensure_column(DB, name, type_name):
+
+def _ensure_column(DB, table_name, name, type_name):
     if DB is None:
         raise ValueError("DB est requis")
-    champs = DB.GetListeChamps2("contrats")
+    champs = DB.GetListeChamps2(table_name)
     noms = [champ[0] for champ in champs]
     if name in noms:
         return False
-    DB.AjoutChamp(nomTable="contrats", nomChamp=name, typeChamp=type_name)
+    DB.AjoutChamp(nomTable=table_name, nomChamp=name, typeChamp=type_name)
     return True
 
 
 def EnsureCEEQualificationColumn(DB):
     """Ajoute la qualification CEE si la base historique ne la possède pas."""
-    return _ensure_column(DB, CEE_QUALIFICATION_COLUMN, CEE_QUALIFICATION_TYPE)
+    return _ensure_column(DB, "contrats", CEE_QUALIFICATION_COLUMN, CEE_QUALIFICATION_TYPE)
 
 
 def EnsureContractEngineColumns(DB):
@@ -53,6 +59,19 @@ def EnsureContractEngineColumns(DB):
     """
     created = []
     for name, type_name in ADDITIVE_COLUMNS:
-        if _ensure_column(DB, name, type_name):
+        if _ensure_column(DB, "contrats", name, type_name):
+            created.append(name)
+    return tuple(created)
+
+
+def EnsureContractModelColumns(DB):
+    """Ajoute les discriminants TW-184 aux modèles de contrat.
+
+    Les anciens modèles restent valides avec les trois colonnes à ``NULL``.
+    Aucun modèle existant n'est reclassé automatiquement.
+    """
+    created = []
+    for name, type_name in MODEL_ADDITIVE_COLUMNS:
+        if _ensure_column(DB, "contrats_modeles", name, type_name):
             created.append(name)
     return tuple(created)
