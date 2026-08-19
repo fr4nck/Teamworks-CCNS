@@ -8,6 +8,7 @@
 
 import Chemins
 from Utils.UTILS_Traduction import _
+from Utils import UTILS_Contrats_schema
 import wx
 from Ctrl import CTRL_Bouton_image
 import GestionDB
@@ -51,6 +52,7 @@ class Dialog(wx.Dialog):
                                             "IDclassification" : None,
                                             "IDtype" : None,
                                             "valeur_point" : None,
+                                            "cee_qualification" : None,
                                             "date_debut" : "",
                                             "date_fin": "",
                                             "date_rupture" : "",
@@ -68,17 +70,19 @@ class Dialog(wx.Dialog):
         
     def Importation(self, IDcontrat=0):
         DB = GestionDB.DB()
-        req = "SELECT IDclassification, IDtype, valeur_point, date_debut, date_fin, date_rupture, essai FROM contrats WHERE IDcontrat=%d ;" % IDcontrat
+        UTILS_Contrats_schema.EnsureCEEQualificationColumn(DB)
+        req = "SELECT IDclassification, IDtype, valeur_point, cee_qualification, date_debut, date_fin, date_rupture, essai FROM contrats WHERE IDcontrat=%d ;" % IDcontrat
         DB.ExecuterReq(req)
         listeDonnees = DB.ResultatReq()[0]
         
         self.dictContrats["IDclassification"] = listeDonnees[0]
         self.dictContrats["IDtype"] = listeDonnees[1]
         self.dictContrats["valeur_point"] = listeDonnees[2]
-        self.dictContrats["date_debut"] = listeDonnees[3]
-        self.dictContrats["date_fin"] = listeDonnees[4]
-        self.dictContrats["date_rupture"] = listeDonnees[5]
-        self.dictContrats["essai"] = listeDonnees[6]
+        self.dictContrats["cee_qualification"] = listeDonnees[3]
+        self.dictContrats["date_debut"] = listeDonnees[4]
+        self.dictContrats["date_fin"] = listeDonnees[5]
+        self.dictContrats["date_rupture"] = listeDonnees[6]
+        self.dictContrats["essai"] = listeDonnees[7]
 
         req = "SELECT IDchamp, valeur FROM contrats_valchamps WHERE (IDcontrat=%d AND type='contrat')  ;" % IDcontrat
         DB.ExecuterReq(req)
