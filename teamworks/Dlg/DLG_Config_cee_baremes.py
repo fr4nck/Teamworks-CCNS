@@ -27,7 +27,7 @@ QUALIFICATIONS = (
 
 class Dialog(wx.Dialog):
     def __init__(self, parent):
-        wx.Dialog.__init__(self, parent, title=u"Barèmes employeur CEE", size=(570, 440))
+        wx.Dialog.__init__(self, parent, title=u"Barèmes employeur CEE", size=(570, 440), style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
         panel = wx.Panel(self)
         main = wx.BoxSizer(wx.VERTICAL)
 
@@ -80,6 +80,15 @@ class Dialog(wx.Dialog):
         main.AddStretchSpacer()
         main.Add(buttons, 0, wx.EXPAND | wx.ALL, 12)
         panel.SetSizer(main)
+
+        # Le dialogue doit gérer explicitement son panel principal. Sans ce
+        # sizer externe, le panel conserve une taille indépendante du dialogue
+        # et peut être tronqué selon le DPI ou le thème Windows.
+        outer = wx.BoxSizer(wx.VERTICAL)
+        outer.Add(panel, 1, wx.EXPAND)
+        self.SetSizer(outer)
+        self.SetMinSize((570, 440))
+        self.Layout()
 
         self.bouton_ok.Bind(wx.EVT_BUTTON, self.OnOk)
         self.date_effet.Bind(EVT_DATE_CHANGED, self.OnDateChanged)
