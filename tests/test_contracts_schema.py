@@ -25,6 +25,20 @@ class FakeDB:
         self.fields_by_table.setdefault(nomTable, []).append((nomChamp, typeChamp))
 
 
+EXPECTED_CONTRACT_COLUMNS = (
+    "cee_qualification",
+    "convention_code",
+    "ccns_group",
+    "weekly_hours",
+    "gross_monthly_salary",
+    "gross_annual_salary",
+    "operation_type",
+    "previous_contract_id",
+    "trial_period_value",
+    "trial_period_unit",
+)
+
+
 class ContractSchemaTests(unittest.TestCase):
     def test_adds_cee_qualification_once_on_legacy_database(self):
         db = FakeDB([
@@ -50,16 +64,7 @@ class ContractSchemaTests(unittest.TestCase):
 
         created = module.EnsureContractEngineColumns(db)
 
-        self.assertEqual(
-            created,
-            (
-                "cee_qualification",
-                "convention_code",
-                "ccns_group",
-                "weekly_hours",
-                "gross_monthly_salary",
-            ),
-        )
+        self.assertEqual(created, EXPECTED_CONTRACT_COLUMNS)
         self.assertEqual(
             db.add_calls,
             [
@@ -68,11 +73,16 @@ class ContractSchemaTests(unittest.TestCase):
                 ("contrats", "ccns_group", "VARCHAR(8)"),
                 ("contrats", "weekly_hours", "REAL"),
                 ("contrats", "gross_monthly_salary", "REAL"),
+                ("contrats", "gross_annual_salary", "REAL"),
+                ("contrats", "operation_type", "VARCHAR(24)"),
+                ("contrats", "previous_contract_id", "INTEGER"),
+                ("contrats", "trial_period_value", "INTEGER"),
+                ("contrats", "trial_period_unit", "VARCHAR(8)"),
             ],
         )
 
         self.assertEqual(module.EnsureContractEngineColumns(db), ())
-        self.assertEqual(len(db.add_calls), 5)
+        self.assertEqual(len(db.add_calls), len(EXPECTED_CONTRACT_COLUMNS))
 
     def test_preserves_existing_partial_schema(self):
         db = FakeDB([
@@ -82,7 +92,7 @@ class ContractSchemaTests(unittest.TestCase):
         ])
 
         created = module.EnsureContractEngineColumns(db)
-        self.assertEqual(created, ("ccns_group", "weekly_hours", "gross_monthly_salary"))
+        self.assertEqual(created, EXPECTED_CONTRACT_COLUMNS[2:])
 
     def test_adds_contract_model_discriminants_idempotently(self):
         db = FakeDB({
