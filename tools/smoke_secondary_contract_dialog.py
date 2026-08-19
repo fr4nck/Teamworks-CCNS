@@ -22,9 +22,13 @@ FAILURE_MARKER = "TEAMWORKS_SMOKE_CONTRACT_DIALOG_FAILED"
 INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
             try:
                 print("TEAMWORKS_SMOKE_CONTRACT_STAGE:imports", flush=True)
+                from pathlib import Path as _smoke_path
                 import GestionDB as _smoke_gestiondb
                 from Dlg import DLG_Creation_contrat as _smoke_contract
+                from Dlg import DLG_Publiposteur_contrat as _smoke_contract_mailmerge_dialog
                 from Utils import UTILS_CEE_baremes as _smoke_cee_rates
+                from Utils import UTILS_Contrats_modeles_documents as _smoke_document_templates
+                from Utils import UTILS_Fichiers as _smoke_files
                 from Utils import UTILS_Publipostage_donnees as _smoke_mailmerge
 
                 print("TEAMWORKS_SMOKE_CONTRACT_STAGE:database", flush=True)
@@ -170,6 +174,78 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 assert _ccns_data["MINIMUMRETENU"] == "1867.02 €"
                 assert _ccns_data["CONFORMITEREMUNERATION"] == "Conforme"
                 assert "GROUPECCNS" in _ccns_keywords
+
+                print("TEAMWORKS_SMOKE_CONTRACT_STAGE:ccns-document-filter", flush=True)
+                _smoke_model_dir = _smoke_path(_smoke_files.GetRepModeles())
+                _smoke_model_dir.mkdir(parents=True, exist_ok=True)
+                _smoke_legacy_name = "TW184_smoke_legacy.doc"
+                _smoke_g1_name = "TW184_smoke_ccns_g1.doc"
+                _smoke_g4_name = "TW184_smoke_ccns_g4.doc"
+                _smoke_temp_names = (_smoke_legacy_name, _smoke_g1_name, _smoke_g4_name)
+                _smoke_mailmerge_dialog = None
+                try:
+                    for _smoke_name in _smoke_temp_names:
+                        (_smoke_model_dir / _smoke_name).write_bytes(b"TW184 smoke model")
+
+                    _smoke_db = _smoke_gestiondb.DB()
+                    try:
+                        _smoke_document_templates.DeleteMetadata(_smoke_db, _smoke_legacy_name)
+                        _smoke_document_templates.DeleteMetadata(_smoke_db, _smoke_g1_name)
+                        _smoke_document_templates.DeleteMetadata(_smoke_db, _smoke_g4_name)
+                        _smoke_document_templates.SaveMetadata(
+                            _smoke_db,
+                            _smoke_g1_name,
+                            convention_code="CCNS",
+                            ccns_group="G1",
+                        )
+                        _smoke_document_templates.SaveMetadata(
+                            _smoke_db,
+                            _smoke_g4_name,
+                            convention_code="CCNS",
+                            ccns_group="G4",
+                        )
+                        _smoke_db.Commit()
+                    finally:
+                        _smoke_db.Close()
+
+                    _smoke_publipostage_data = _smoke_mailmerge.GetDictDonnees(
+                        categorie="contrat",
+                        listeID=[_after_compliant],
+                    )
+                    _smoke_mailmerge_dialog = _smoke_contract_mailmerge_dialog.Dialog(
+                        frame,
+                        "",
+                        dictDonnees=_smoke_publipostage_data,
+                    )
+                    _smoke_mailmerge_dialog.Show()
+                    wx.Yield()
+                    _smoke_mailmerge_dialog.page4.choixLogiciel = 1
+                    _smoke_mailmerge_dialog.page4.choixModele = ""
+                    _smoke_mailmerge_dialog.page4.MAJ_ListCtrl()
+                    wx.Yield()
+                    _smoke_visible_models = {
+                        _smoke_mailmerge_dialog.page4.listCtrl.getColumnText(_index, 0)
+                        for _index in range(_smoke_mailmerge_dialog.page4.listCtrl.GetItemCount())
+                    }
+                    assert _smoke_legacy_name in _smoke_visible_models
+                    assert _smoke_g1_name in _smoke_visible_models
+                    assert _smoke_g4_name not in _smoke_visible_models
+                    assert (
+                        _smoke_contract_mailmerge_dialog._base.ListCtrl_fichiers
+                        is not _smoke_contract_mailmerge_dialog.ListCtrl_fichiers
+                    )
+                finally:
+                    if _smoke_mailmerge_dialog is not None:
+                        _smoke_mailmerge_dialog.Destroy()
+                        wx.Yield()
+                    _smoke_db = _smoke_gestiondb.DB()
+                    try:
+                        for _smoke_name in _smoke_temp_names:
+                            _smoke_document_templates.DeleteMetadata(_smoke_db, _smoke_name)
+                    finally:
+                        _smoke_db.Close()
+                    for _smoke_name in _smoke_temp_names:
+                        (_smoke_model_dir / _smoke_name).unlink(missing_ok=True)
 
                 print("TEAMWORKS_SMOKE_CONTRACT_STAGE:block-noncompliant", flush=True)
                 _old_message_box = wx.MessageBox
