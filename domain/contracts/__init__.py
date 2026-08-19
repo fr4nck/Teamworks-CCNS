@@ -1,4 +1,11 @@
 from domain.contracts.contract import Contract
+from domain.contracts.contract_operation import ContractOperation
+from domain.contracts.probation_period import (
+    ProbationPeriodProposal,
+    ProbationUnit,
+    probation_calendar_days,
+    propose_ccns_probation_period,
+)
 from domain.contracts.contract_salary_batch_audit import (
     ContractSalaryBatchAuditResult,
     ContractSalaryBatchAuditService,
@@ -68,6 +75,11 @@ from domain.contracts.time_organization import TimeOrganization
 
 __all__ = [
     "Contract",
+    "ContractOperation",
+    "ProbationPeriodProposal",
+    "ProbationUnit",
+    "probation_calendar_days",
+    "propose_ccns_probation_period",
     "ContractSalaryBatchAuditResult",
     "ContractSalaryBatchAuditService",
     "ContractSalaryBatchEvaluationResult",
