@@ -3,7 +3,7 @@
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
-# Licence:      Licence GNU GPL
+# Licence GNU GPL
 #-----------------------------------------------------------
 
 import Chemins
@@ -15,6 +15,22 @@ import wx.lib.mixins.listctrl as listmix
 from Dlg import DLG_Config_modeles_contrats as ConfigModeles
 import GestionDB
 from Utils import UTILS_Adaptations, UTILS_Contrats_schema
+
+
+def _resolve_model_convention(current_convention, model_convention, is_legacy_model, is_cee_model):
+    """Résout la convention sans confondre régime CEE et convention collective.
+
+    Les anciens modèles CEE ne stockaient aucune convention. Leur appliquer
+    automatiquement OTHER est faux : CEE décrit le type/régime du contrat, pas
+    la convention collective de l'employeur. On conserve donc la convention
+    déjà sélectionnée dans l'assistant. Le comportement historique OTHER reste
+    inchangé pour les anciens modèles non CEE.
+    """
+    if is_cee_model and model_convention in (None, ""):
+        return current_convention
+    if is_legacy_model:
+        return "OTHER"
+    return model_convention
 
 
 class Page(wx.Panel):
@@ -132,19 +148,26 @@ class Page(wx.Panel):
 
         IDclassification, IDtype, convention_code, ccns_group, cee_qualification = rows[0]
         contrat = self.GetGrandParent().dictContrats
+        current_convention = contrat.get("convention_code")
         contrat["IDclassification"] = IDclassification
         contrat["IDtype"] = IDtype
 
-        # Un ancien modèle impose le parcours historique à un nouveau contrat.
-        # On utilise OTHER pour disposer d'un choix UI explicite sans modifier
-        # le modèle historique en base ni convertir les anciens contrats.
+        # Un ancien modèle non CEE impose toujours le parcours historique.
+        # Pour un CEE, le type de contrat est le régime et ne doit pas effacer
+        # la convention collective déjà choisie dans l'assistant.
         is_legacy_model = (
             convention_code in (None, "")
             and ccns_group in (None, "")
             and cee_qualification in (None, "")
             and IDclassification not in (None, "")
         )
-        contrat["convention_code"] = "OTHER" if is_legacy_model else convention_code
+        is_cee_model = self.GetGrandParent().page3.dictTypeCodes.get(IDtype) == "CEE"
+        contrat["convention_code"] = _resolve_model_convention(
+            current_convention,
+            convention_code,
+            is_legacy_model,
+            is_cee_model,
+        )
         contrat["ccns_group"] = ccns_group
         contrat["cee_qualification"] = cee_qualification
 
