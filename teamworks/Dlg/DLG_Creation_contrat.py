@@ -321,7 +321,7 @@ class Dialog(wx.Dialog):
         pageCible = getattr(self, "page%d" % self.pageVisible)
         pageCible.Show(True)
         self.sizer_pages.Layout()
-        if self.pageVisible == self.nbrePages-1:
+        if self.pageVisible < self.nbrePages:
             self.bouton_suite.Enable(True)
             self.bouton_suite.SetBitmapLabel(wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Suite_L72.png"), wx.BITMAP_TYPE_ANY))
         if self.pageVisible == 1:
