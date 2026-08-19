@@ -134,9 +134,17 @@ class Page(wx.Panel):
         contrat = self.GetGrandParent().dictContrats
         contrat["IDclassification"] = IDclassification
         contrat["IDtype"] = IDtype
-        # Affectation explicite, y compris des None : appliquer un ancien modèle
-        # doit effacer le CCNS proposé par défaut sur un nouveau contrat.
-        contrat["convention_code"] = convention_code
+
+        # Un ancien modèle impose le parcours historique à un nouveau contrat.
+        # On utilise OTHER pour disposer d'un choix UI explicite sans modifier
+        # le modèle historique en base ni convertir les anciens contrats.
+        is_legacy_model = (
+            convention_code in (None, "")
+            and ccns_group in (None, "")
+            and cee_qualification in (None, "")
+            and IDclassification not in (None, "")
+        )
+        contrat["convention_code"] = "OTHER" if is_legacy_model else convention_code
         contrat["ccns_group"] = ccns_group
         contrat["cee_qualification"] = cee_qualification
 
