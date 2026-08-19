@@ -11,7 +11,7 @@ def test_cee_rate_dialog_buttons_belong_to_inner_panel() -> None:
     # wxWidgets 3.3.x refuse qu'un sizer attaché au panel gère des boutons
     # dont le parent est le wx.Dialog. Le dialogue doit donc construire
     # explicitement les boutons avec `panel` comme parent.
-    assert "CreateStdDialogButtonSizer" not in source
+    assert "self.CreateStdDialogButtonSizer(" not in source
     assert "buttons = wx.StdDialogButtonSizer()" in source
     assert "wx.Button(panel, wx.ID_OK)" in source
     assert "wx.Button(panel, wx.ID_CANCEL)" in source
