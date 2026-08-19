@@ -46,14 +46,30 @@ def _target_index(metadata):
     return 0
 
 
-class Grid_donnees(_base.Grid_donnees):
-    """Grille contrat dont la colonne des mots-clés s'adapte au contenu.
+def _apply_legacy_cee_aliases(dict_donnees):
+    """Alimente les mots-clés historiques depuis la source moderne unique.
 
-    Le publiposteur vanilla réserve 140 px aux libellés de lignes, ce qui coupe
-    les nouveaux mots-clés explicites comme CONFORMITEREMUNERATION. La largeur
-    est calculée avec la police réellement utilisée par wx, donc reste correcte
-    en DPI élevé sans élargir les autres catégories de publipostage.
+    Le modèle CEE livré historiquement avec Teamworks utilise ``{BRUTJOUR}``.
+    TW-184 expose désormais ``{BAREMECEE}``, calculé à partir du barème
+    employeur historisé. Pour éviter une deuxième saisie contradictoire, on
+    fournit BRUTJOUR comme alias de BAREMECEE uniquement pour les CEE modernes.
     """
+    if not dict_donnees or dict_donnees.get("CATEGORIE") != "contrat":
+        return
+    motcles = dict_donnees.setdefault("MOTSCLES", [])
+    has_brutjour = any(motcle == "BRUTJOUR" for motcle, _type in motcles)
+    for index in range(1, int(dict_donnees.get("NBREDOCUMENTS", 0)) + 1):
+        document = dict_donnees.get(index, {})
+        if not document.get("QUALIFICATIONCEE") or not document.get("BAREMECEE"):
+            continue
+        document["BRUTJOUR"] = document["BAREMECEE"]
+        if not has_brutjour:
+            motcles.append(("BRUTJOUR", "base"))
+            has_brutjour = True
+
+
+class Grid_donnees(_base.Grid_donnees):
+    """Grille contrat dont la colonne des mots-clés s'adapte au contenu."""
 
     def Remplissage(self):
         super(Grid_donnees, self).Remplissage()
@@ -203,6 +219,11 @@ class Dialog(_base.Dialog):
     """Publiposteur standard avec ergonomie et modèles filtrés pour un contrat."""
 
     def __init__(self, *args, **kwargs):
+        dict_donnees = kwargs.get("dictDonnees")
+        if dict_donnees is None and len(args) >= 3:
+            dict_donnees = args[2]
+        _apply_legacy_cee_aliases(dict_donnees)
+
         original_list = _base.ListCtrl_fichiers
         original_grid = _base.Grid_donnees
         _base.ListCtrl_fichiers = ListCtrl_fichiers
