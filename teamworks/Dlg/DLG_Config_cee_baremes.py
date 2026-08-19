@@ -6,9 +6,10 @@ from decimal import Decimal, InvalidOperation
 
 import wx
 if 'phoenix' in wx.PlatformInfo:
-    from wx.adv import DatePickerCtrl, DP_DROPDOWN
+    from wx.adv import DatePickerCtrl, DP_DROPDOWN, EVT_DATE_CHANGED
 else:
     from wx import DatePickerCtrl, DP_DROPDOWN
+    EVT_DATE_CHANGED = wx.EVT_DATE_CHANGED
 
 import GestionDB
 from Utils import UTILS_CEE_baremes
@@ -81,6 +82,7 @@ class Dialog(wx.Dialog):
         panel.SetSizer(main)
 
         self.bouton_ok.Bind(wx.EVT_BUTTON, self.OnOk)
+        self.date_effet.Bind(EVT_DATE_CHANGED, self.OnDateChanged)
         self._load_applicable_rates()
         self.CentreOnParent()
 
@@ -93,11 +95,18 @@ class Dialog(wx.Dialog):
         try:
             reference_date = self._get_date()
             for code, label in QUALIFICATIONS:
+                ctrl = self.controls[code]
+                ctrl.SetValue("")
                 rate = UTILS_CEE_baremes.GetApplicableRate(DB, code, reference_date)
                 if rate is not None:
-                    self.controls[code].SetValue(str(rate["montant_journalier"]).replace(".", ","))
+                    ctrl.SetValue(str(rate["montant_journalier"]).replace(".", ","))
         finally:
             DB.Close()
+
+    def OnDateChanged(self, event):
+        self._load_applicable_rates()
+        if event:
+            event.Skip()
 
     @staticmethod
     def _parse_amount(text):
