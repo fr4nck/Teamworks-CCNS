@@ -20,3 +20,16 @@ def test_contract_dialog_wraps_page3_decimal_quantization_in_local_context() -> 
     assert 'def Validation(self):' in dialog_source
     assert dialog_source.count('context.prec = max(28, context.prec)') == 2
     assert page_source.count('.quantize(Decimal("0.01"))') >= 2
+
+
+def test_modern_cee_hides_legacy_brutjour_custom_field() -> None:
+    source = DIALOG.read_text(encoding="utf-8")
+
+    assert 'from Ctrl.CTRL_Creation_contrat_p4 import Page as LegacyPage4' in source
+    assert 'class Page4(LegacyPage4):' in source
+    assert 'dialog.page3.IsCEESelected()' in source
+    assert 'mot_cle.strip().upper() != "BRUTJOUR"' in source
+    assert 'list_ctrl.dictChamps.pop(IDchamp, None)' in source
+    # La liste est recalculée après validation du régime/type afin que le
+    # passage CCNS <-> CEE soit immédiatement reflété à l'étape suivante.
+    assert 'self.GetGrandParent().page4.MAJ_ListCtrl()' in source
