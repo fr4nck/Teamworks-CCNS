@@ -6,6 +6,8 @@
 # Licence:      Licence GNU GPL
 #-----------------------------------------------------------
 
+from decimal import localcontext
+
 import Chemins
 from Utils.UTILS_Traduction import _
 from Utils import UTILS_Contrats_schema
@@ -16,10 +18,30 @@ import FonctionsPerso
 
 from Ctrl.CTRL_Creation_contrat_p1 import Page as Page1
 from Ctrl.CTRL_Creation_contrat_p2 import Page as Page2
-from Ctrl.CTRL_Creation_contrat_p3 import Page as Page3
+from Ctrl.CTRL_Creation_contrat_p3 import Page as LegacyPage3
 from Ctrl.CTRL_Creation_contrat_p4 import Page as Page4
 from Ctrl.CTRL_Creation_contrat_p5 import Page as Page5
 from Ctrl.CTRL_Creation_contrat_p6 import Page as Page6
+
+
+class Page3(LegacyPage3):
+    """Isole les quantifications monétaires du contexte Decimal historique.
+
+    Certains chemins du runtime vanilla réduisent la précision globale de
+    ``decimal``. La page contrat contient encore deux quantifications UI ; on
+    les exécute dans un contexte local suffisamment précis sans modifier le
+    comportement global du reste de Teamworks.
+    """
+
+    def _MonthlySalaryDecimal(self):
+        with localcontext() as context:
+            context.prec = max(28, context.prec)
+            return super()._MonthlySalaryDecimal()
+
+    def Validation(self):
+        with localcontext() as context:
+            context.prec = max(28, context.prec)
+            return super().Validation()
 
 
 class Dialog(wx.Dialog):
