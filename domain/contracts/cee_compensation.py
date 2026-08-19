@@ -70,7 +70,8 @@ def legal_cee_daily_minimum(
 
     Le multiplicateur légal est résolu à la date du contrat puis appliqué au
     SMIC horaire applicable, afin de conserver un calcul historique exact.
-    L'arrondi est isolé du contexte Decimal global laissé par le runtime legacy.
+    Toute l'opération arithmétique, multiplication comprise, est isolée du
+    contexte Decimal global laissé par le runtime legacy.
     """
     if type(smic_catalog) is not SmicCatalog:
         raise TypeError("smic_catalog doit être un SmicCatalog.")
@@ -81,7 +82,10 @@ def legal_cee_daily_minimum(
 
     hourly = smic_catalog.hourly_amount_on(reference_date, territory)
     multiplier = legal_cee_daily_smic_multiplier_on(reference_date)
-    amount = hourly * multiplier
     with localcontext() as context:
-        context.prec = max(28, len(amount.as_tuple().digits) + 4)
+        context.prec = max(
+            28,
+            len(hourly.as_tuple().digits) + len(multiplier.as_tuple().digits) + 4,
+        )
+        amount = hourly * multiplier
         return amount.quantize(_CENT, rounding=ROUND_HALF_UP)
