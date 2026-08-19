@@ -25,6 +25,7 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 import GestionDB as _smoke_gestiondb
                 from Dlg import DLG_Creation_contrat as _smoke_contract
                 from Utils import UTILS_CEE_baremes as _smoke_cee_rates
+                from Utils import UTILS_Publipostage_donnees as _smoke_mailmerge
 
                 print("TEAMWORKS_SMOKE_CONTRACT_STAGE:database", flush=True)
                 _smoke_db = _smoke_gestiondb.DB()
@@ -50,6 +51,13 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                     raise RuntimeError("aucun type de contrat non CEE disponible")
                 if _smoke_cee_type is None:
                     raise RuntimeError("aucun type CEE disponible")
+
+                print("TEAMWORKS_SMOKE_CONTRACT_STAGE:legacy-mailmerge", flush=True)
+                _legacy_keywords, _legacy_data = _smoke_mailmerge.Importation_contrat(_smoke_contract_id)
+                assert _legacy_data["_IDPERSONNE"] == _smoke_person_id
+                assert "TYPECONTRAT" in _legacy_keywords
+                assert "CLASSIFICATION" in _legacy_keywords
+                assert "VALEURPOINT" in _legacy_keywords
 
                 print("TEAMWORKS_SMOKE_CONTRACT_STAGE:dialog", flush=True)
                 _smoke_dialog = _smoke_contract.Dialog(
@@ -149,6 +157,20 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 _smoke_db.Close()
                 assert _after_compliant > _before_max
 
+                print("TEAMWORKS_SMOKE_CONTRACT_STAGE:ccns-mailmerge", flush=True)
+                _ccns_keywords, _ccns_data = _smoke_mailmerge.Importation_contrat(_after_compliant)
+                assert _ccns_data["CONVENTION"] == "CCNS"
+                assert _ccns_data["GROUPECCNS"] == "G1"
+                assert _ccns_data["CLASSIFICATION"] == ""
+                assert _ccns_data["VALEURPOINT"] == ""
+                assert _ccns_data["DUREEHEBDO"] == "35 h"
+                assert _ccns_data["SALAIREBRUTMENSUEL"] == "1900.00 €"
+                assert _ccns_data["MINIMUMCCNS"] == "1848.42 €"
+                assert _ccns_data["MINIMUMSMIC"] == "1867.02 €"
+                assert _ccns_data["MINIMUMRETENU"] == "1867.02 €"
+                assert _ccns_data["CONFORMITEREMUNERATION"] == "Conforme"
+                assert "GROUPECCNS" in _ccns_keywords
+
                 print("TEAMWORKS_SMOKE_CONTRACT_STAGE:block-noncompliant", flush=True)
                 _old_message_box = wx.MessageBox
                 try:
@@ -202,6 +224,18 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 _cee_after_compliant = _smoke_db.ResultatReq()[0][0]
                 _smoke_db.Close()
                 assert _cee_after_compliant > _cee_before_max
+
+                print("TEAMWORKS_SMOKE_CONTRACT_STAGE:cee-mailmerge", flush=True)
+                _cee_keywords, _cee_data = _smoke_mailmerge.Importation_contrat(_cee_after_compliant)
+                assert _cee_data["CONVENTION"] == "CCNS"
+                assert _cee_data["GROUPECCNS"] == ""
+                assert _cee_data["QUALIFICATIONCEE"] == "BAFA titulaire"
+                assert _cee_data["CLASSIFICATION"] == ""
+                assert _cee_data["VALEURPOINT"] == ""
+                assert _cee_data["BAREMECEE"] == "65.00 €"
+                assert _cee_data["MINIMUMCEE"] != ""
+                assert _cee_data["CONFORMITEREMUNERATION"] == "Conforme"
+                assert "QUALIFICATIONCEE" in _cee_keywords
 
                 print("TEAMWORKS_SMOKE_CONTRACT_STAGE:block-cee-under-minimum", flush=True)
                 _smoke_db = _smoke_gestiondb.DB()
