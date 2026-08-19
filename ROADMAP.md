@@ -44,7 +44,14 @@ Les lots TW historiques ont été traités par PR successives. La quasi-totalit�
 - TW-177 : lanceur diagnostic ;
 - TW-178 : nettoyage des légendes de présence ;
 - TW-179 : robustesse des champs de contrat ;
-- TW-180 : suppression des doubles checkboxes Phoenix.
+- TW-180 : suppression des doubles checkboxes Phoenix ;
+- TW-181 : nettoyage des warnings du packaging Windows et validation du portable allégé.
+
+### Lots actifs ou réservés
+
+- **TW-182 — Branding Teamworks CCNS** : PR #254 ouverte en draft. Branding, logo d’organisation et profil structure sont implémentés ; fusion bloquée jusqu’au contrôle visuel clair/sombre et au test du portable.
+- **TW-183 — Architecture planning** : identifiant réservé au moteur de planning/remplacement. La spécification peut être documentée, mais aucun autre lot ne doit réutiliser cet identifiant.
+- **TW-184 — Moteur de contrats piloté par convention** : PR #255 ouverte en draft. Le lot sépare convention, type de contrat, classification, qualification/statut et rémunération ; CCNS et CEE sont le premier périmètre raccordé. La rétrocompatibilité des contrats historiques reste obligatoire.
 
 ### PR d’audit historique #209
 
@@ -64,24 +71,30 @@ Ces collisions sont conservées comme faits historiques et ne doivent pas être 
 
 ## 4. État GitHub au 19 août 2026
 
-Après consolidation :
+État courant :
 
-- aucune PR ouverte ;
-- aucune issue ouverte ;
-- `master` est la seule base de travail à considérer ;
-- le dernier lot fonctionnel fusionné est TW-180 ;
+- `master` reste la base de vérité ;
+- TW-181 est fusionné dans `master` ;
+- PR #254 / TW-182 est ouverte en draft ;
+- PR #255 / TW-184 est ouverte en draft ;
+- TW-183 est réservé au planning et ne correspond pas à une branche active ;
 - les anciennes branches peuvent rester comme historique, mais ne doivent pas piloter les décisions de développement.
 
-## 5. Priorité immédiate — validation réelle avant pré-release
+Les PR draft ne sont pas considérées comme intégrées tant qu’elles ne sont pas fusionnées dans `master`.
 
-Aucune nouvelle fonction métier, convention collective ou refonte visuelle importante ne doit passer devant les validations suivantes :
+## 5. Priorité immédiate — stabiliser les lots actifs puis valider réellement
 
-1. produire un portable Windows depuis le `master` courant ;
-2. vérifier le démarrage et les smoke tests automatisés sur ce build ;
-3. exécuter le parcours minimal sur une copie de base réelle ;
-4. corriger uniquement les anomalies bloquantes réellement constatées ;
-5. documenter les résultats ;
-6. décider ensuite seulement si la version mérite une qualification bêta ou RC.
+Les lots déjà engagés TW-182 et TW-184 peuvent être menés jusqu’à un état testable, mais aucune nouvelle refonte fonctionnelle indépendante ne doit les contourner.
+
+Priorité :
+
+1. maintenir la CI Linux et les parcours critiques Windows verts sur les PR actives ;
+2. terminer TW-184 sans migration destructive et avec lecture des contrats historiques ;
+3. conserver TW-182 en draft jusqu’au contrôle visuel réel ;
+4. produire ensuite un portable Windows depuis le `master` retenu ;
+5. exécuter le parcours minimal sur une copie de base réelle ;
+6. corriger uniquement les anomalies bloquantes réellement constatées ;
+7. décider ensuite seulement si la version mérite une qualification bêta ou RC.
 
 ## 6. Parcours minimal de validation Windows
 
@@ -130,6 +143,8 @@ Le build :
 - conserve la liste des dépendances réellement utilisées ;
 - publie une GitHub Release uniquement lorsqu’un tag correspond exactement à `VERSION`.
 
+TW-181 a supprimé les collectes PyInstaller globales inutiles de wx et Matplotlib et modernisé les actions GitHub, sans modifier le métier.
+
 Ce niveau de packaging est une condition nécessaire mais non suffisante pour une RC.
 
 ## 8. CI — état actuel
@@ -155,7 +170,9 @@ Aucun deuxième workflow ne doit être ajouté pour contourner ou dupliquer ces 
 
 Le mode `Système` doit reprendre les couleurs natives exposées par wxWidgets. Les modes `Clair` et `Sombre` restent des surcharges explicites.
 
-Le code de préférences, de persistance, de restauration et de thème natif est intégré. La validation manuelle doit encore confirmer sur les écrans prioritaires :
+Le code de préférences, de persistance, de restauration et de thème natif est intégré. TW-182 complète ce socle par le branding Teamworks CCNS et le logo d’organisation, mais reste en draft jusqu’à validation visuelle.
+
+La validation manuelle doit encore confirmer sur les écrans prioritaires :
 
 - lisibilité complète ;
 - absence de panneaux incohérents ;
@@ -175,7 +192,7 @@ Le code de préférences, de persistance, de restauration et de thème natif est
 - connexion MySQL/MariaDB historique maintenue sans migration du serveur ;
 - aucune migration destructive de la base réalisée dans ces lots.
 
-Toute future migration de données devra rester séparée, sauvegardée et réversible.
+Toute future migration de données devra rester séparée, sauvegardée et réversible. Les évolutions de schéma TW-184 doivent rester additives et idempotentes.
 
 ## 11. Dette technique encore autorisée
 
@@ -226,6 +243,8 @@ Les règles ne doivent pas être dispersées dans les écrans. Chaque règle doi
 - historique de version.
 
 Une règle n’est jamais déclarée prise en charge sans cas de tests démontrés.
+
+TW-184 doit respecter cette architecture : l’interface consomme les règles de domaine et ne devient pas la source des minima, classifications ou barèmes.
 
 ## 14. Périmètre CCNS PMSL après stabilisation
 
@@ -300,8 +319,8 @@ Aucune intégration ne doit fragiliser le socle local.
 
 ## 18. Prochain jalon
 
-Le prochain jalon est **la validation Windows réelle du `master` actuel**.
+Le prochain jalon est **la stabilisation des PR actives, puis la validation Windows réelle du `master` retenu**.
 
 Séquence :
 
-**build portable `master` → smoke tests Windows → parcours minimal sur copie réelle → correction des seuls blocages → décision de qualification pré-release.**
+**TW-184 CI + smoke Windows → contrôle du parcours contrat/publipostage → maintien de TW-182 en draft jusqu’au contrôle visuel → fusion des lots validés → build portable `master` → parcours minimal sur copie réelle → correction des seuls blocages → décision de qualification pré-release.**
