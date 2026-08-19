@@ -92,6 +92,8 @@ Lorsque le terme du CDD est connu, le moteur propose la période d'essai à part
 - un jour par semaine de contrat dans la limite de deux semaines lorsque le CDD est de six mois au plus ;
 - un mois au maximum lorsque le CDD dépasse six mois.
 
+L'implémentation courante compte une semaine commencée comme une semaine pour produire la proposition automatique. Ce détail de calcul devra rester vérifié contre la source juridique applicable avant d'être considéré comme une règle conventionnelle autonome de Teamworks.
+
 Si la durée permettant le calcul n'est pas disponible, Teamworks n'invente pas de valeur et laisse le cas explicite.
 
 ### Renouvellement CDD
