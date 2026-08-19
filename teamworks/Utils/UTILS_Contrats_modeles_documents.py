@@ -86,6 +86,21 @@ def SaveMetadata(DB, nom_fichier, convention_code=None, ccns_group=None, cee_qua
     return DB.ReqInsert(TABLE, donnees)
 
 
+def DeleteMetadata(DB, nom_fichier):
+    """Retire le ciblage explicite et remet le fichier en mode legacy/secours."""
+    EnsureTable(DB)
+    if not nom_fichier:
+        raise ValueError("nom_fichier est requis")
+    req = "SELECT IDdocument_modele FROM %s WHERE nom_fichier='%s';" % (TABLE, nom_fichier.replace("'", "''"))
+    DB.ExecuterReq(req)
+    rows = DB.ResultatReq()
+    if not rows:
+        return False
+    DB.ReqDEL(TABLE, "IDdocument_modele", rows[0][0])
+    DB.Commit()
+    return True
+
+
 def GetMetadata(DB, nom_fichier):
     EnsureTable(DB)
     req = (
