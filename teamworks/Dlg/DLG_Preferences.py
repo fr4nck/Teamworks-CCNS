@@ -11,7 +11,7 @@ class Dialog(wx.Dialog):
     THEMES = ["Système", "Clair", "Sombre"]
 
     def __init__(self, parent):
-        super().__init__(parent, title="Préférences d'affichage", size=(620, 390))
+        super().__init__(parent, title="Préférences d'affichage", size=(650, 490))
 
         panel = wx.Panel(self)
         main = wx.BoxSizer(wx.VERTICAL)
@@ -61,11 +61,25 @@ class Dialog(wx.Dialog):
                 "et mentions affichées sur les documents."
             ),
         )
-        description.Wrap(560)
+        description.Wrap(590)
         organisation_box.Add(description, 0, wx.EXPAND | wx.ALL, 10)
         self.organisation_button = wx.Button(panel, label="Configurer la structure / association…")
         organisation_box.Add(self.organisation_button, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
         main.Add(organisation_box, 0, wx.EXPAND | wx.ALL, 16)
+
+        admin_box = wx.StaticBoxSizer(wx.VERTICAL, panel, "Références administratives RH")
+        admin_description = wx.StaticText(
+            panel,
+            label=(
+                "Pense-bête interne : santé au travail, URSSAF/MSA, mutuelle, prévoyance, OPCO, "
+                "retraite, assurance employeur et contacts utiles. Aucun mot de passe."
+            ),
+        )
+        admin_description.Wrap(590)
+        admin_box.Add(admin_description, 0, wx.EXPAND | wx.ALL, 10)
+        self.admin_button = wx.Button(panel, label="Ouvrir les références administratives RH…")
+        admin_box.Add(self.admin_button, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
+        main.Add(admin_box, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 16)
 
         main.Add(
             wx.StaticText(
@@ -88,6 +102,7 @@ class Dialog(wx.Dialog):
         panel.SetSizer(main)
 
         self.Bind(wx.EVT_BUTTON, self.OnOrganisation, self.organisation_button)
+        self.Bind(wx.EVT_BUTTON, self.OnReferencesAdmin, self.admin_button)
         self.Bind(wx.EVT_BUTTON, self.OnOk, id=wx.ID_OK)
         self.CentreOnParent()
 
@@ -95,6 +110,15 @@ class Dialog(wx.Dialog):
         from Dlg import DLG_Organisation
 
         dialog = DLG_Organisation.Dialog(self)
+        try:
+            dialog.ShowModal()
+        finally:
+            dialog.Destroy()
+
+    def OnReferencesAdmin(self, event):
+        from Dlg import DLG_References_admin
+
+        dialog = DLG_References_admin.Dialog(self)
         try:
             dialog.ShowModal()
         finally:
