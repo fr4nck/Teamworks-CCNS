@@ -10,17 +10,19 @@ spec.loader.exec_module(module)
 
 
 class FakeDB:
-    def __init__(self, fields):
-        self.fields = list(fields)
+    def __init__(self, fields_by_table):
+        if isinstance(fields_by_table, dict):
+            self.fields_by_table = {name: list(fields) for name, fields in fields_by_table.items()}
+        else:
+            self.fields_by_table = {"contrats": list(fields_by_table)}
         self.add_calls = []
 
     def GetListeChamps2(self, nomTable):
-        assert nomTable == "contrats"
-        return list(self.fields)
+        return list(self.fields_by_table.get(nomTable, []))
 
     def AjoutChamp(self, nomTable="", nomChamp="", typeChamp=""):
         self.add_calls.append((nomTable, nomChamp, typeChamp))
-        self.fields.append((nomChamp, typeChamp))
+        self.fields_by_table.setdefault(nomTable, []).append((nomChamp, typeChamp))
 
 
 class ContractSchemaTests(unittest.TestCase):
@@ -82,6 +84,28 @@ class ContractSchemaTests(unittest.TestCase):
         created = module.EnsureContractEngineColumns(db)
         self.assertEqual(created, ("ccns_group", "weekly_hours", "gross_monthly_salary"))
 
+    def test_adds_contract_model_discriminants_idempotently(self):
+        db = FakeDB({
+            "contrats_modeles": [
+                ("IDmodele", "INTEGER"),
+                ("IDclassification", "INTEGER"),
+                ("IDtype", "INTEGER"),
+            ]
+        })
+
+        created = module.EnsureContractModelColumns(db)
+
+        self.assertEqual(created, ("cee_qualification", "convention_code", "ccns_group"))
+        self.assertEqual(
+            db.add_calls,
+            [
+                ("contrats_modeles", "cee_qualification", "VARCHAR(32)"),
+                ("contrats_modeles", "convention_code", "VARCHAR(32)"),
+                ("contrats_modeles", "ccns_group", "VARCHAR(8)"),
+            ],
+        )
+        self.assertEqual(module.EnsureContractModelColumns(db), ())
+
     def test_does_nothing_when_cee_column_already_exists(self):
         db = FakeDB([
             ("IDcontrat", "INTEGER"),
@@ -94,6 +118,8 @@ class ContractSchemaTests(unittest.TestCase):
     def test_rejects_missing_database(self):
         with self.assertRaises(ValueError):
             module.EnsureCEEQualificationColumn(None)
+        with self.assertRaises(ValueError):
+            module.EnsureContractModelColumns(None)
 
 
 if __name__ == "__main__":
