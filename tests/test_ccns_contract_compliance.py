@@ -21,10 +21,12 @@ def test_group_choices_expose_ccns_2026_groups_and_periodicity():
 
 def test_grid_and_salary_control_are_independent_from_ambient_decimal_precision():
     # Le runtime historique peut laisser une précision Decimal très faible.
-    # Construction de grille et calcul du minimum doivent rester déterministes.
+    # Construction de grille et calcul du minimum doivent rester déterministes,
+    # sans modifier cette précision globale pour le reste de Teamworks.
     with localcontext() as context:
         context.prec = 5
         presenter = CCNSContractCompliancePresenter()
+        assert context.prec == 5
         choices = presenter.group_choices(date(2026, 8, 19))
         preview = presenter.evaluate_monthly(
             group_code="G1",
@@ -32,6 +34,7 @@ def test_grid_and_salary_control_are_independent_from_ambient_decimal_precision(
             weekly_hours=Decimal("35.00"),
             remuneration_amount=Decimal("1900.00"),
         )
+        assert context.prec == 5
 
     assert choices[6].minimum_amount == Decimal("40597.94")
     assert choices[7].minimum_amount == Decimal("46833.81")
