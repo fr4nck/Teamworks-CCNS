@@ -42,6 +42,11 @@ class CompatibilityTests(unittest.TestCase):
         self.assertIn("Ciblage du modèle de contrat", source)
         self.assertIn("DeleteMetadata", source)
 
+    def test_deleted_file_drops_its_targeting_only_after_actual_removal(self):
+        source = (ROOT / "teamworks" / "Dlg" / "DLG_Publiposteur_contrat.py").read_text(encoding="utf-8")
+        self.assertIn("if not os.path.isfile(chemin):", source)
+        self.assertIn("UTILS_Contrats_modeles_documents.DeleteMetadata(DB, nom_fichier)", source)
+
 
 if __name__ == "__main__":
     unittest.main()
