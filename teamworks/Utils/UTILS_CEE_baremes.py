@@ -3,7 +3,7 @@
 """Stockage des barèmes employeur CEE par qualification et date d'effet."""
 
 import datetime
-from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP, localcontext
 
 
 TABLE = "contrats_cee_baremes"
@@ -59,7 +59,9 @@ def _amount(value):
         raise ValueError("montant_journalier invalide")
     if montant <= Decimal("0"):
         raise ValueError("montant_journalier doit être strictement positif")
-    return montant.quantize(_CENT, rounding=ROUND_HALF_UP)
+    with localcontext() as context:
+        context.prec = max(28, len(montant.as_tuple().digits) + 4)
+        return montant.quantize(_CENT, rounding=ROUND_HALF_UP)
 
 
 def SaveRate(DB, qualification, montant_journalier, date_debut):
