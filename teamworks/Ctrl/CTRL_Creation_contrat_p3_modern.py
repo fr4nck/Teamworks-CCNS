@@ -239,6 +239,22 @@ class Page(LegacyPage):
             self._trial_user_modified = True
         self._EnableTrialControls()
 
+    def _HideLegacyTrialControls(self):
+        """Le sizer historique peut réafficher ses enfants lors d'un refresh."""
+        for control_name in ("label_essai", "periode_essai", "aide_essai"):
+            control = getattr(self, control_name, None)
+            if control is not None:
+                control.Hide()
+
+    def RefreshContractRules(self):
+        # Le contrôleur vanilla appelle ShowItems() sur tout le StaticBoxSizer ;
+        # on réapplique ensuite la séparation TW-184 pour ne jamais afficher
+        # simultanément l'ancien champ d'essai et les nouveaux contrôles.
+        super().RefreshContractRules()
+        self._HideLegacyTrialControls()
+        if self._modern_ready and hasattr(self, "label_operation"):
+            self._RefreshOperationVisibility()
+
     def _EnableTrialControls(self):
         enabled = self.check_trial.GetValue()
         self.label_trial_value.Enable(enabled)
@@ -408,11 +424,11 @@ class Page(LegacyPage):
             return
 
         if choice.periodicity is SalaryMinimumPeriodicity.ANNUAL:
-            self.label_monthly_salary.SetLabel(_(u"Rémunération brute annuelle :"))
+            self.label_monthly_salary.SetLabel(_(u"Rémunération annuelle de référence :"))
             self.label_monthly_unit.SetLabel(_(u"€ brut / an"))
             self._MaybePrefillSalary(choice.minimum_amount)
             self.label_ccns_preview.SetLabel(
-                _(u"Minimum CCNS annuel de référence à temps plein : %s €. Le minimum est appliqué au prorata des mois concernés.")
+                _(u"Minimum CCNS annuel de référence à temps plein : %s €. Pour une période incomplète, le minimum s'applique au prorata du nombre de mois concernés.")
                 % self._Money(choice.minimum_amount)
             )
             return
@@ -500,11 +516,11 @@ class Page(LegacyPage):
         annual_salary = self._MonthlySalaryDecimal() if annual else None
         if annual:
             if annual_salary is None or annual_salary <= Decimal("0"):
-                wx.MessageBox(_(u"Vous devez saisir la rémunération brute annuelle."), _(u"CCNS"), wx.OK | wx.ICON_ERROR, parent=self)
+                wx.MessageBox(_(u"Vous devez saisir la rémunération annuelle de référence."), _(u"CCNS"), wx.OK | wx.ICON_ERROR, parent=self)
                 return False
             if Decimal(str(self.weekly_hours.GetValue())) == Decimal("35") and annual_salary < choice.minimum_amount:
                 wx.MessageBox(
-                    _(u"La rémunération annuelle saisie est inférieure au minimum CCNS du groupe."),
+                    _(u"La rémunération annuelle de référence saisie est inférieure au minimum CCNS du groupe."),
                     _(u"Rémunération non conforme"), wx.OK | wx.ICON_ERROR, parent=self,
                 )
                 return False
