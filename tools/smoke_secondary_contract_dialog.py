@@ -79,8 +79,31 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 assert _smoke_dialog.page1.IsShown()
                 assert not _smoke_dialog.bouton_retour.IsEnabled()
                 assert _smoke_dialog.bouton_suite.IsEnabled()
-                print("TEAMWORKS_SMOKE_CONTRACT_DIALOG_READY", flush=True)
                 _smoke_dialog.Destroy()
+                wx.Yield()
+
+                print("TEAMWORKS_SMOKE_CONTRACT_STAGE:new-ccns", flush=True)
+                _smoke_new = _smoke_contract.Dialog(
+                    frame,
+                    IDcontrat=0,
+                    IDpersonne=_smoke_person_id,
+                )
+                _smoke_new.Show()
+                wx.Yield()
+                _smoke_page3 = _smoke_new.page3
+                assert _smoke_new.dictContrats["convention_code"] == "CCNS"
+                assert _smoke_page3.GetChoiceData(_smoke_page3.choice_convention) == "CCNS"
+                assert _smoke_page3.choice_ccns_group.GetCount() == 8
+                assert _smoke_page3.choice_ccns_group.IsShown()
+                assert not _smoke_page3.choice_class.IsShown()
+                assert not _smoke_page3.choice_valpoint.IsShown()
+                assert _smoke_page3.sizer_ccns.GetStaticBox().IsShown()
+                assert not _smoke_page3.sizer_cee.GetStaticBox().IsShown()
+                assert _smoke_page3.weekly_hours.GetValue() == 35.0
+                _smoke_new.Destroy()
+                wx.Yield()
+
+                print("TEAMWORKS_SMOKE_CONTRACT_DIALOG_READY", flush=True)
             except Exception:
                 import traceback as _smoke_traceback
                 _smoke_traceback.print_exc()
