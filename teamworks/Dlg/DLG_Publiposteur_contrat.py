@@ -7,9 +7,42 @@ Seule la liste des fichiers de modèles est filtrée selon le régime du contrat
 Les fichiers sans métadonnées restent visibles comme modèles historiques.
 """
 
+import wx
+import Chemins
 import GestionDB
+from Utils.UTILS_Traduction import _
 from Dlg import DLG_Publiposteur as _base
-from Utils import UTILS_Contrats_modeles_documents
+from Utils import UTILS_Adaptations, UTILS_Contrats_modeles_documents
+
+
+_TARGETS = [
+    (u"Historique / tous contrats (aucun ciblage)", None, None, None),
+    (u"CCNS — tous les groupes", "CCNS", None, None),
+] + [
+    (u"CCNS — G%d" % n, "CCNS", "G%d" % n, None) for n in range(1, 9)
+] + [
+    (u"CEE — toutes les qualifications", "CEE", None, None),
+    (u"CEE — BAFA titulaire", "CEE", None, "BAFA_HOLDER"),
+    (u"CEE — BAFA stagiaire", "CEE", None, "BAFA_TRAINEE"),
+    (u"CEE — non diplômé", "CEE", None, "UNQUALIFIED"),
+    (u"CEE — qualification équivalente", "CEE", None, "EQUIVALENT"),
+    (u"CEE — BAFD titulaire", "CEE", None, "BAFD_HOLDER"),
+    (u"CEE — BAFD stagiaire", "CEE", None, "BAFD_TRAINEE"),
+]
+
+
+def _target_index(metadata):
+    if metadata is None:
+        return 0
+    target = (
+        metadata.get("convention_code"),
+        metadata.get("ccns_group"),
+        metadata.get("cee_qualification"),
+    )
+    for index, (_, convention, group, qualification) in enumerate(_TARGETS):
+        if target == (convention, group, qualification):
+            return index
+    return 0
 
 
 class ListCtrl_fichiers(_base.ListCtrl_fichiers):
@@ -33,6 +66,87 @@ class ListCtrl_fichiers(_base.ListCtrl_fichiers):
                 resultat[index] = valeurs
                 index += 1
         return resultat
+
+    def OnContextMenu(self, event):
+        if self.GetFirstSelected() == -1:
+            return False
+
+        menuPop = UTILS_Adaptations.Menu()
+        item = wx.MenuItem(menuPop, 10, _(u"Créer un nouveau modèle de document"))
+        item.SetBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_PNG))
+        menuPop.AppendItem(item)
+        self.Bind(wx.EVT_MENU, self.Menu_Ajouter, id=10)
+
+        menuPop.AppendSeparator()
+        item = wx.MenuItem(menuPop, 20, _(u"Modifier"))
+        item.SetBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Modifier.png"), wx.BITMAP_TYPE_PNG))
+        menuPop.AppendItem(item)
+        self.Bind(wx.EVT_MENU, self.Menu_Modifier, id=20)
+
+        item = wx.MenuItem(menuPop, 30, _(u"Supprimer"))
+        item.SetBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_PNG))
+        menuPop.AppendItem(item)
+        self.Bind(wx.EVT_MENU, self.Menu_Supprimer, id=30)
+
+        item = wx.MenuItem(menuPop, 40, _(u"Parcourir"))
+        item.SetBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Inbox.png"), wx.BITMAP_TYPE_PNG))
+        menuPop.AppendItem(item)
+        self.Bind(wx.EVT_MENU, self.Menu_Parcourir, id=40)
+
+        menuPop.AppendSeparator()
+        item = wx.MenuItem(menuPop, 184, _(u"Ciblage du modèle de contrat…"))
+        menuPop.AppendItem(item)
+        self.Bind(wx.EVT_MENU, self.Menu_CiblageContrat, id=184)
+
+        self.PopupMenu(menuPop)
+        menuPop.Destroy()
+
+    def Menu_CiblageContrat(self, event):
+        index = self.GetFirstSelected()
+        if index == -1:
+            return
+        nom_fichier = self.getColumnText(index, 0)
+        DB = GestionDB.DB()
+        try:
+            metadata = UTILS_Contrats_modeles_documents.GetMetadata(DB, nom_fichier)
+        finally:
+            DB.Close()
+
+        choices = [item[0] for item in _TARGETS]
+        dlg = wx.SingleChoiceDialog(
+            self,
+            _(u"Choisissez les contrats pour lesquels ce fichier doit être proposé."),
+            _(u"Ciblage du modèle de contrat"),
+            choices,
+        )
+        dlg.SetSelection(_target_index(metadata))
+        if dlg.ShowModal() != wx.ID_OK:
+            dlg.Destroy()
+            return
+        selection = dlg.GetSelection()
+        dlg.Destroy()
+        _, convention, group, qualification = _TARGETS[selection]
+
+        DB = GestionDB.DB()
+        try:
+            if selection == 0:
+                UTILS_Contrats_modeles_documents.DeleteMetadata(DB, nom_fichier)
+            else:
+                UTILS_Contrats_modeles_documents.SaveMetadata(
+                    DB,
+                    nom_fichier,
+                    convention_code=convention,
+                    ccns_group=group,
+                    cee_qualification=qualification,
+                )
+                DB.Commit()
+        finally:
+            DB.Close()
+
+        # Le fichier peut disparaître de la liste s'il vient d'être ciblé pour
+        # un autre régime que le contrat actuellement imprimé.
+        self.parent.nomFichier = ""
+        self.parent.MAJ_ListCtrl()
 
 
 class Dialog(_base.Dialog):
