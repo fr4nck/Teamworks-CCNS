@@ -1,6 +1,6 @@
 # Teamworks-CCNS — Roadmap officielle et unique
 
-**Mise à jour : 7 août 2026**
+**Mise à jour : 19 août 2026**
 
 Ce fichier est l’unique roadmap de référence du projet. Toute autre documentation peut détailler un domaine, mais ne doit pas porter une roadmap concurrente ni annoncer un niveau de maturité différent.
 
@@ -8,9 +8,9 @@ Ce fichier est l’unique roadmap de référence du projet. Toute autre document
 
 Teamworks-CCNS est actuellement en **`0.9.0-dev`**.
 
-Le socle Python 3 / wxPython Phoenix, la CI et le packaging Windows ont fortement progressé. Le dépôt sait désormais construire un portable Windows reproductible, exécuter des parcours critiques Windows automatisés et publier une Release sur tag conforme.
+Le socle Python 3 / wxPython Phoenix, la CI et le packaging Windows sont largement stabilisés. Le dépôt sait construire un portable Windows reproductible, exécuter des parcours critiques Windows automatisés et publier une Release sur tag conforme.
 
-En revanche, la qualification **bêta / RC / stable reste volontairement refusée** tant que le parcours Windows minimal n’a pas été validé manuellement sur une copie de base réelle par l’utilisateur.
+La qualification **bêta / RC / stable reste volontairement refusée** tant que le parcours Windows minimal n’a pas été validé manuellement sur une copie de base réelle par l’utilisateur.
 
 Aucune CI verte, aucun pourcentage d’avancement et aucun ZIP généré ne suffisent à qualifier une version.
 
@@ -26,57 +26,64 @@ Chaque annonce doit distinguer explicitement :
 
 Les formulations « presque fini » et les dates de sortie non démontrées sont interdites.
 
-## 3. Historique consolidé des lots récents
+## 3. Historique consolidé
 
-Les références ci-dessous décrivent ce qui est réellement intégré à `master`.
+Les lots TW historiques ont été traités par PR successives. La quasi-totalité des PR récentes est fusionnée dans `master`.
 
-| Lot | Objet | Référence | État réel |
-| --- | --- | --- | --- |
-| TW-121 | Validation des préférences d’affichage Windows | PR #189 | Fusionné ; validation visuelle réelle à compléter |
-| TW-122 | Restauration sûre des profils d’affichage Windows | PR #190 | Fusionné |
-| TW-123 | Roadmap de livraison RC1 Windows | PR #191 | Fusionné puis supersédé par TW-126 / `ROADMAP.md` |
-| TW-123 | Compatibilité Windows des profils d’affichage | PR #192 | Fusionné |
-| TW-124 | Réparer le build Windows avec NumPy 2 | PR #193 | Fusionné |
-| TW-125 | Verrouiller le contenu du ZIP Windows | PR #194 | Fusionné |
-| TW-126 | Stabiliser les parcours runtime Windows | PR #195 | Fusionné |
-| TW-126 | Établir une roadmap unique | PR #196 | Fusionné ; `ROADMAP.md` devient la seule roadmap |
-| TW-127 | Utiliser réellement le thème système natif | PR #197 | Fusionné ; validation visuelle réelle à compléter |
-| TW-128 | Consolider la CI et supprimer les builds Windows redondants | PR #198 | Fusionné |
-| TW-129 | Consolider les contrôles légers dans un seul workflow | PR #199 | Fusionné |
-| TW-130 | Préflight SQLite strictement en lecture seule | PR #200 | Fusionné |
-| TW-131 | Workflow Tests reproductible et frugal | PR #201 | Fusionné |
-| TW-132 | Build Windows reproductible et vérifiable | PR #202 | Fusionné |
-| TW-133 | Vérifier réellement le manifeste du portable Windows | PR #203 | Fusionné |
-| TW-134 | Publier automatiquement les builds Windows dans les Releases | PR #204 | Fusionné |
-| TW-136 | Centraliser et fiabiliser toutes les dates | PR #205 | Fusionné |
-| TW-137 | Corriger les libellés Unicode du calendrier | PR #206 | Fusionné |
-| TW-138 | Migrer le socle historique en UTF-8 | PR #207 | Fusionné |
-| TW-138 | Regrouper GitHub Actions dans un workflow unique | PR #208 | Fusionné |
-| TW-139 | Auditer et stabiliser les parcours runtime | PR #209 | **Brouillon ouvert ; recette Windows réelle requise** |
-| TW-139 | Supprimer définitivement les découpages manuels de dates | PR #210 | Fusionné |
-| TW-140 | Fiabiliser les champs masqués de dates | PR #211 | Fusionné |
-| TW-141 | Fiabiliser les listes du filtre recrutement | PR #212 | Fusionné |
-| TW-142 | Fiabiliser la sélection multiple native | PR #213 | Fusionné |
-| TW-143 | Corriger les filtres des boîtes d’export | PR #214 | Fusionné |
+### Stabilisation et runtime intégrés
+
+- TW-136 à TW-143 : dates, Unicode, UTF-8, workflow unique, filtres recrutement, sélection multiple et exports ;
+- TW-144 à TW-147 : audits wx/Python et inventaire des bare-excepts RH ;
+- TW-149 à TW-170 : extraction en lots ciblés des gardes runtime initialement regroupés dans l’audit TW-139 ;
+- TW-171 : compatibilité MySQL/MariaDB 5.5 et diagnostic du portable Windows ;
+- TW-172 : recherche phonétique des villes ;
+- TW-173 : publiposteur sous wxPython 4.3 ;
+- TW-174 : alignement du runtime Windows sur wxPython 4.3.1 ;
+- TW-175 : horaires à la minute ;
+- TW-176 : stabilisation du planning sous wxPython 4.3 ;
+- TW-177 : lanceur diagnostic ;
+- TW-178 : nettoyage des légendes de présence ;
+- TW-179 : robustesse des champs de contrat ;
+- TW-180 : suppression des doubles checkboxes Phoenix.
+
+### PR d’audit historique #209
+
+La PR #209 « TW-139 — Auditer et stabiliser les parcours runtime » a servi de chantier d’exploration et d’audit global. Son contenu utile a ensuite été extrait en lots ciblés, testés et fusionnés individuellement dans `master` (notamment TW-149 à TW-170, puis les corrections runtime suivantes).
+
+**La PR #209 est fermée comme supersédée depuis le 19 août 2026 et ne doit plus être utilisée comme branche de travail ni comme prérequis de merge.**
+
+La PR technique #251, créée uniquement pour tester une remise à niveau de cette ancienne branche, a également été fermée sans fusion.
 
 ### Collisions historiques d’identifiants TW
 
-Les identifiants `TW-123`, `TW-126`, `TW-138` et `TW-139` ont été réutilisés dans l’historique avant la consolidation de la gouvernance documentaire. Ces collisions sont conservées comme faits historiques et ne doivent pas être réécrites artificiellement.
+Plusieurs identifiants ont été réutilisés dans l’historique avant la consolidation de la gouvernance documentaire, notamment `TW-087`, `TW-088`, `TW-117`, `TW-123`, `TW-126`, `TW-138` et `TW-139`.
 
-**À compter de cette consolidation, un identifiant `TW-*` déjà présent dans une branche, un commit, une issue ou une PR ne doit plus être réattribué.**
+Ces collisions sont conservées comme faits historiques et ne doivent pas être réécrites artificiellement.
 
-## 4. Priorité immédiate — stabilisation avant pré-release
+**Un identifiant `TW-*` déjà présent dans une branche, un commit, une issue ou une PR ne doit plus être réattribué.**
+
+## 4. État GitHub au 19 août 2026
+
+Après consolidation :
+
+- aucune PR ouverte ;
+- aucune issue ouverte ;
+- `master` est la seule base de travail à considérer ;
+- le dernier lot fonctionnel fusionné est TW-180 ;
+- les anciennes branches peuvent rester comme historique, mais ne doivent pas piloter les décisions de développement.
+
+## 5. Priorité immédiate — validation réelle avant pré-release
 
 Aucune nouvelle fonction métier, convention collective ou refonte visuelle importante ne doit passer devant les validations suivantes :
 
-1. terminer la recette Windows réelle du lot d’audit runtime ouvert en PR #209 ;
-2. produire un portable Windows depuis `master` avec le workflow unique ;
+1. produire un portable Windows depuis le `master` courant ;
+2. vérifier le démarrage et les smoke tests automatisés sur ce build ;
 3. exécuter le parcours minimal sur une copie de base réelle ;
-4. corriger uniquement les anomalies bloquantes constatées ;
+4. corriger uniquement les anomalies bloquantes réellement constatées ;
 5. documenter les résultats ;
-6. seulement ensuite décider si la version mérite une qualification bêta ou RC.
+6. décider ensuite seulement si la version mérite une qualification bêta ou RC.
 
-## 5. Parcours minimal de validation Windows
+## 6. Parcours minimal de validation Windows
 
 Un build n’est qualifiable en pré-release que si le parcours suivant est entièrement validé depuis un dossier fraîchement décompressé, sans dépendre d’un environnement développeur :
 
@@ -92,18 +99,24 @@ Un build n’est qualifiable en pré-release que si le parcours suivant est enti
 - vérification de la persistance ;
 - création d’une sauvegarde ;
 - restauration d’une copie ;
+- contrats / DUE ;
+- présences ;
+- recrutement ;
+- frais ;
+- paramètres ;
+- rapports / publipostage / impression ;
 - fermeture sans processus résiduel.
 
 Chaque étape doit avoir un résultat daté et préciser sa nature : automatique, CI Windows, test manuel développeur ou validation utilisateur.
 
-## 6. Packaging Windows — état actuel
+## 7. Packaging Windows — état actuel
 
 Le workflow unique `.github/workflows/ci.yml` construit le paquet Windows uniquement :
 
 - sur déclenchement manuel explicite avec l’option de build ;
 - sur tag `v*`.
 
-Le packaging est actuellement fondé sur **Python 3.11**, **Windows Server 2022** et **PyInstaller 6.16.0**.
+Le packaging est fondé sur Python 3.11, Windows Server 2022 et PyInstaller. Le runtime Windows automatisé utilise désormais wxPython 4.3.1.
 
 Le build :
 
@@ -119,7 +132,7 @@ Le build :
 
 Ce niveau de packaging est une condition nécessaire mais non suffisante pour une RC.
 
-## 7. CI — état actuel
+## 8. CI — état actuel
 
 La CI doit rester **unique, lisible et frugale**.
 
@@ -130,12 +143,15 @@ Il regroupe :
 - compilation et audits sur Ubuntu 24.04 / Python 3.11 ;
 - politique UTF-8 ;
 - tests automatisés ;
-- parcours critiques Windows sur Windows Server 2022 ;
+- parcours critiques Windows ;
+- contrôles des checklists Phoenix ;
+- dialogues critiques (personne, présence, recrutement, contrat) ;
+- aller-retour fonctionnel sur base de test ;
 - build portable uniquement sur demande explicite ou tag.
 
 Aucun deuxième workflow ne doit être ajouté pour contourner ou dupliquer ces contrôles.
 
-## 8. Thèmes et affichage
+## 9. Thèmes et affichage
 
 Le mode `Système` doit reprendre les couleurs natives exposées par wxWidgets. Les modes `Clair` et `Sombre` restent des surcharges explicites.
 
@@ -147,7 +163,7 @@ Le code de préférences, de persistance, de restauration et de thème natif est
 - persistance après redémarrage ;
 - comportement correct des sélections et états désactivés.
 
-## 9. Données, encodages et dates
+## 10. Données, encodages, dates et compatibilité
 
 État consolidé :
 
@@ -156,26 +172,25 @@ Le code de préférences, de persistance, de restauration et de thème natif est
 - normalisation centrale des dates historiques ;
 - suppression des découpages manuels de dates recensés ;
 - champs masqués de dates fiabilisés ;
+- connexion MySQL/MariaDB historique maintenue sans migration du serveur ;
 - aucune migration destructive de la base réalisée dans ces lots.
 
 Toute future migration de données devra rester séparée, sauvegardée et réversible.
 
-## 10. Audit runtime en cours
+## 11. Dette technique encore autorisée
 
-La PR #209 reste la référence du chantier de recette runtime globale. Elle couvre notamment :
+Les audits de dette technique restent des outils de prévention, pas des prétextes à lancer des nettoyages massifs avant la validation Windows.
 
-- Individus ;
-- Présences ;
-- Recrutement ;
-- Contrats / DUE ;
-- Frais ;
-- Paramètres ;
-- Rapports ;
-- Impression / publipostage.
+Restent notamment à suivre :
 
-Son audit automatisable est avancé, mais **sa fusion reste conditionnée à la recette Windows manuelle sur base réelle**. Aucun document ne doit la présenter comme terminée avant cette validation.
+- bare-excepts RH inventoriés par TW-147 ;
+- avertissements wxWidgets non bloquants encore visibles dans certains `StaticBoxSizer` ;
+- dette Phoenix résiduelle hors parcours critique ;
+- validations multiplateformes non prioritaires par rapport au poste Windows cible.
 
-## 11. Socle RH neutre après stabilisation
+Ces sujets ne bloquent une pré-release que s’ils provoquent une anomalie réelle sur le parcours minimal.
+
+## 12. Socle RH neutre après stabilisation
 
 Après validation du parcours minimal :
 
@@ -194,7 +209,7 @@ Après validation du parcours minimal :
 
 Chaque bloc doit rester utilisable indépendamment des conventions collectives.
 
-## 12. Moteur réglementaire
+## 13. Moteur réglementaire
 
 Les règles ne doivent pas être dispersées dans les écrans. Chaque règle doit comporter au minimum :
 
@@ -212,9 +227,9 @@ Les règles ne doivent pas être dispersées dans les écrans. Chaque règle doi
 
 Une règle n’est jamais déclarée prise en charge sans cas de tests démontrés.
 
-## 13. Périmètre CCNS PMSL
+## 14. Périmètre CCNS PMSL après stabilisation
 
-Ordre de consolidation métier après stabilisation :
+Ordre de consolidation métier :
 
 1. groupes et classifications ;
 2. minima conventionnels et historique des grilles ;
@@ -230,7 +245,7 @@ Ordre de consolidation métier après stabilisation :
 12. services civiques ;
 13. salariés mineurs.
 
-## 14. Intégrations après stabilisation
+## 15. Intégrations après stabilisation
 
 - imports CSV ou Excel ;
 - rapprochement Noethys ;
@@ -243,7 +258,7 @@ Ordre de consolidation métier après stabilisation :
 
 Aucune intégration ne doit fragiliser le socle local.
 
-## 15. Critères de maturité
+## 16. Critères de maturité
 
 ### Bêta interne
 
@@ -269,21 +284,24 @@ Aucune intégration ne doit fragiliser le socle local.
 - règles métier critiques sourcées et testées ;
 - limites connues publiées.
 
-## 16. Mode de développement
+## 17. Mode de développement continu
 
 - un seul fichier de roadmap : `ROADMAP.md` ;
+- `master` comme vérité courante ;
 - pas de ZIP à chaque PR ;
 - workflow GitHub Actions unique ;
 - PR regroupées par objectif testable ;
 - aucune fusion sans critère de sortie explicite ;
 - changelog fondé sur des fonctions vérifiées ;
 - priorité aux parcours complets plutôt qu’au nombre de commits ;
-- aucun nouvel identifiant TW sans vérification préalable de son absence dans l’historique.
+- aucun nouvel identifiant TW sans vérification préalable de son absence dans l’historique ;
+- les lots déjà absorbés ou supersédés sont fermés et ne sont pas réactivés artificiellement ;
+- après une instruction générale de poursuite, les étapes techniques sûres peuvent être enchaînées sans demander une validation à chaque micro-étape ; seules les décisions métier, les conflits ambigus et les opérations risquées nécessitent un arrêt explicite.
 
-## 17. Prochain jalon
+## 18. Prochain jalon
 
-Le prochain jalon est **la validation Windows réelle du socle actuel**, pas l’ajout de nouvelles fonctionnalités.
+Le prochain jalon est **la validation Windows réelle du `master` actuel**.
 
-La séquence est :
+Séquence :
 
-**PR #209 / recette runtime → build portable `master` → parcours minimal sur copie réelle → correction des seuls blocages → décision de qualification pré-release.**
+**build portable `master` → smoke tests Windows → parcours minimal sur copie réelle → correction des seuls blocages → décision de qualification pré-release.**
