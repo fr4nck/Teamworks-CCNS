@@ -74,9 +74,19 @@ def test_contract_wizard_applies_modern_model_discriminants() -> None:
     assert "self.GetGrandParent().page3.RefreshContractRules()" in source
 
 
-def test_legacy_model_switches_new_contract_out_of_default_ccns_path() -> None:
+def test_legacy_non_cee_model_switches_new_contract_out_of_default_ccns_path() -> None:
     source = CONTRACT_PAGE2.read_text(encoding="utf-8")
 
     assert "is_legacy_model = (" in source
     assert 'IDclassification not in (None, "")' in source
-    assert 'contrat["convention_code"] = "OTHER" if is_legacy_model else convention_code' in source
+    assert "if is_legacy_model:" in source
+    assert 'return "OTHER"' in source
+
+
+def test_legacy_cee_model_preserves_existing_collective_convention() -> None:
+    source = CONTRACT_PAGE2.read_text(encoding="utf-8")
+
+    assert "def _resolve_model_convention(" in source
+    assert 'if is_cee_model and model_convention in (None, ""):' in source
+    assert "return current_convention" in source
+    assert 'is_cee_model = self.GetGrandParent().page3.dictTypeCodes.get(IDtype) == "CEE"' in source
