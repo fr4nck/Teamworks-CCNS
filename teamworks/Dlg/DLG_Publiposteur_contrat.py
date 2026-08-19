@@ -101,6 +101,20 @@ class ListCtrl_fichiers(_base.ListCtrl_fichiers):
         self.PopupMenu(menuPop)
         menuPop.Destroy()
 
+    # L'audit de handlers est volontairement statique et ne suit pas
+    # l'héritage : ces relais rendent explicites les actions vanilla conservées.
+    def Menu_Ajouter(self, event):
+        return super(ListCtrl_fichiers, self).Menu_Ajouter(event)
+
+    def Menu_Modifier(self, event):
+        return super(ListCtrl_fichiers, self).Menu_Modifier(event)
+
+    def Menu_Supprimer(self, event):
+        return super(ListCtrl_fichiers, self).Menu_Supprimer(event)
+
+    def Menu_Parcourir(self, event):
+        return super(ListCtrl_fichiers, self).Menu_Parcourir(event)
+
     def Menu_CiblageContrat(self, event):
         index = self.GetFirstSelected()
         if index == -1:
