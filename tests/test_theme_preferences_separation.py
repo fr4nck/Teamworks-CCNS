@@ -54,6 +54,22 @@ def test_theme_engine_reads_appearance_before_legacy_theme():
     assert 'os.environ.get("TEAMWORKS_APPEARANCE"' in source
 
 
+def test_theme_engine_prefers_interface_scale_and_keeps_legacy_alias():
+    source = _source(THEME_PATH)
+
+    assert 'os.environ.get("TEAMWORKS_UI_SCALE"' in source
+    assert 'os.environ.get("TEAMWORKS_FONT_SCALE"' in source
+    assert source.index('os.environ.get("TEAMWORKS_UI_SCALE"') < source.index(
+        'os.environ.get("TEAMWORKS_FONT_SCALE"'
+    )
+
+    modern = source.index('has_option("interface", "echelle_interface")')
+    legacy = source.index('has_option("interface", "echelle_police")')
+    assert modern < legacy
+    assert "def interface_scale_percent" in source
+    assert "return interface_scale_percent()" in source
+
+
 def test_black_accent_no_longer_forces_dark_mode():
     source = _source(THEME_PATH)
     legacy_function = source.split("def _legacy_theme_as_appearance", 1)[1].split(
@@ -61,6 +77,8 @@ def test_black_accent_no_longer_forces_dark_mode():
     )[0]
 
     assert '"noir"' not in legacy_function
+    dark_names = source.split("DARK_THEME_NAMES =", 1)[1].split("\n", 1)[0]
+    assert "noir" not in dark_names.lower()
 
 
 def test_interface_stores_accent_separately_and_syncs_legacy_appearance():
@@ -88,6 +106,16 @@ def test_preferences_expose_accent_appearance_and_interface_scale():
     assert "UTILS_Interface.SetAppearanceMode" in source
 
 
+def test_preferences_do_not_overwrite_accent_with_legacy_appearance():
+    source = _source(PREFERENCES_PATH)
+    on_ok = source.split("def OnOk", 1)[1]
+
+    assert "UTILS_Interface.SetTheme" in on_ok
+    assert "UTILS_Interface.SetAppearanceMode" in on_ok
+    assert 'SetValeur("interface", "theme"' not in on_ok
+    assert "values = [" not in on_ok
+
+
 def test_preferences_use_direct_flexible_rows_instead_of_grid():
     source = _source(PREFERENCES_PATH)
 
@@ -107,3 +135,19 @@ def test_global_theme_targets_dense_desktop_controls():
     assert 'GetToken("on_surface"' in source
     assert 'GetToken("selection"' in source
     assert "stEmptyListMsg" in source
+
+
+def test_global_theme_scales_native_metrics_without_reintroducing_toolbook():
+    source = _source(THEME_PATH)
+
+    assert "BASE_METRICS" in source
+    assert "def scale_px" in source
+    assert "def metrics" in source
+    assert "def _apply_metrics" in source
+    assert '"control_height": 28' in source
+    assert '"toolbar_icon": 24' in source
+    assert "wx.ToolBar" in source
+    assert "wx.Notebook" in source
+    assert "SetToolBitmapSize" in source
+    assert "SetPadding" in source
+    assert "wx.Toolbook" not in source
