@@ -147,7 +147,9 @@ def _normalise_theme(theme):
 def _normalise_appearance(appearance):
     if appearance in APPEARANCE_MODES:
         return appearance
-    return "system"
+    # Tant que tous les écrans historiques ne sont pas migrés, rester en clair
+    # évite une interface hybride sur les machines configurées en sombre.
+    return "light"
 
 
 def GetTheme():
@@ -159,9 +161,15 @@ def SetTheme(theme="Vert"):
 
 
 def GetAppearanceMode():
-    """Retourne la préférence enregistrée : system, light ou dark."""
+    """Retourne la préférence enregistrée : system, light ou dark.
+
+    Le mode clair reste la valeur par défaut de migration afin de préserver le
+    rendu historique tant que tous les écrans ne consomment pas encore les
+    tokens sémantiques. Les modes system et dark restent disponibles
+    explicitement.
+    """
     return _normalise_appearance(
-        UTILS_Customize.GetValeur("interface", "appearance", "system")
+        UTILS_Customize.GetValeur("interface", "appearance", "light")
     )
 
 
