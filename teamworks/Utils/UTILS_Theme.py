@@ -1,11 +1,19 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Gestion centralisée de l'affichage Teamworks-CCNS."""
+"""Gestion centralisée de l'affichage Teamworks CCNS.
+
+Le thème ``Système`` doit suivre l'OS, pas fabriquer une apparence parallèle.
+Sous Windows, wxWidgets ne remonte pas toujours correctement le mode sombre ;
+on complète donc sa détection avec le réglage utilisateur Windows. Les contrôles
+natifs restent ensuite natifs autant que possible : on ne recolore manuellement
+que les surfaces que wx laisse manifestement incohérentes.
+"""
 
 from __future__ import annotations
 
 import configparser
 import os
+import sys
 from pathlib import Path
 from configparser import ConfigParser
 
@@ -86,8 +94,6 @@ def _config_values():
         font_scale = 100
 
     values = (theme or "Systeme", font_scale)
-    # Ne jamais figer les valeurs par défaut tant que le fichier cible n'existe
-    # pas : il peut être déplacé juste après par la migration de premier lancement.
     if config_exists and not env_theme and not env_scale:
         _CONFIG_CACHE = values
     return values
@@ -101,12 +107,40 @@ def font_scale_percent():
     return _config_values()[1]
 
 
-def is_dark_theme(theme=None):
+def _theme_kind(theme=None):
     value = (theme or requested_theme()).strip().lower()
     if value in DARK_THEME_NAMES:
-        return True
+        return "dark"
     if value in LIGHT_THEME_NAMES:
-        return False
+        return "light"
+    return "system"
+
+
+def _windows_apps_dark():
+    """Retourne le choix clair/sombre des applications Windows, ou None.
+
+    ``wx.SystemSettings.GetAppearance()`` peut rester en mode clair sous Windows
+    10/11 alors que les applications sont configurées en sombre. La valeur
+    ``AppsUseLightTheme`` est la source utilisateur utilisée par Windows pour ce
+    choix. L'accès est volontairement local et ne lit aucune donnée personnelle.
+    """
+    if sys.platform != "win32":
+        return None
+    try:
+        import winreg
+
+        path = r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, path) as key:
+            value, _ = winreg.QueryValueEx(key, "AppsUseLightTheme")
+        return int(value) == 0
+    except (ImportError, OSError, ValueError, TypeError):
+        return None
+
+
+def _system_dark_from_os():
+    windows_value = _windows_apps_dark()
+    if windows_value is not None:
+        return windows_value
     try:
         appearance = wx.SystemSettings.GetAppearance()
         return bool(hasattr(appearance, "IsDark") and appearance.IsDark())
@@ -114,12 +148,24 @@ def is_dark_theme(theme=None):
         return False
 
 
+def is_dark_theme(theme=None):
+    kind = _theme_kind(theme)
+    if kind == "dark":
+        return True
+    if kind == "light":
+        return False
+    return _system_dark_from_os()
+
+
 def enable_native_dark_mode(theme=None):
+    """Demande à wxWidgets le rendu natif sombre avant création des fenêtres."""
     dark = is_dark_theme(theme)
-    try:
-        wx.SystemOptions.SetOption("msw.dark-mode", 2 if dark else 0)
-    except Exception:
-        pass
+    if sys.platform == "win32":
+        try:
+            # 2 active le support sombre natif de wxMSW lorsque disponible.
+            wx.SystemOptions.SetOption("msw.dark-mode", 2 if dark else 0)
+        except Exception:
+            pass
     return dark
 
 
@@ -137,12 +183,19 @@ def _colour_luminance(colour):
     return 0.2126 * colour.Red() + 0.7152 * colour.Green() + 0.0722 * colour.Blue()
 
 
-def _native_palette(dark):
-    """Construit la palette à partir des couleurs exposées par l'OS.
+def _looks_light(colour, threshold=150):
+    try:
+        return bool(colour and colour.IsOk() and _colour_luminance(colour) > threshold)
+    except Exception:
+        return False
 
-    Sous certains ports wxWidgets, Windows annonce un mode sombre mais retourne
-    encore les couleurs claires historiques. Dans ce cas seulement, on applique
-    un repli sombre cohérent au lieu d'un mélange blanc/noir.
+
+def _native_palette(dark):
+    """Construit une palette de surfaces cohérente avec le rendu système.
+
+    Les valeurs de repli sombres reprennent les niveaux de surfaces Windows 11 :
+    fond principal, cartes/panneaux, puis zones de saisie. Elles ne servent que
+    lorsque wxMSW continue de renvoyer ses anciennes couleurs claires.
     """
     palette = {
         "window": _system_colour(wx.SYS_COLOUR_WINDOW, (255, 255, 255)),
@@ -156,11 +209,11 @@ def _native_palette(dark):
     if dark and _colour_luminance(palette["window"]) > 128:
         palette.update({
             "window": wx.Colour(32, 32, 32),
-            "panel": wx.Colour(37, 37, 38),
-            "control": wx.Colour(45, 45, 48),
-            "text": wx.Colour(240, 240, 240),
-            "button_text": wx.Colour(240, 240, 240),
-            "selection": wx.Colour(0, 95, 184),
+            "panel": wx.Colour(43, 43, 43),
+            "control": wx.Colour(50, 50, 50),
+            "text": wx.Colour(243, 243, 243),
+            "button_text": wx.Colour(243, 243, 243),
+            "selection": _system_colour(wx.SYS_COLOUR_HIGHLIGHT, (0, 95, 184)),
             "selection_text": wx.Colour(255, 255, 255),
         })
     return palette
@@ -184,26 +237,82 @@ def _scale_font(window, scale):
         pass
 
 
-def _apply_palette(window, palette, dark):
+def _set_colours(window, background=None, foreground=None):
+    try:
+        if background is not None:
+            window.SetBackgroundColour(background)
+        if foreground is not None:
+            window.SetForegroundColour(foreground)
+    except Exception:
+        pass
+
+
+def _apply_palette(window, palette, dark, theme_kind):
+    """Corrige uniquement les surfaces que le rendu natif laisse incohérentes.
+
+    On évite volontairement de repeindre ``wx.Button``, ``wx.Choice`` et
+    ``wx.ComboBox`` : sous Windows, leur apparence native sombre est nettement
+    plus cohérente que des rectangles dessinés à la main.
+    """
     if not dark:
         return
 
-    background = palette["panel"]
-    foreground = palette["text"]
-
     if isinstance(window, (wx.Frame, wx.Dialog)):
-        background = palette["window"]
-    elif isinstance(window, (wx.TextCtrl, wx.ComboBox, wx.Choice, wx.ListBox,
-                             wx.CheckListBox, wx.ListCtrl, wx.TreeCtrl, wx.SpinCtrl)):
-        background = palette["control"]
-    elif isinstance(window, wx.Button):
-        foreground = palette["button_text"]
+        _set_colours(window, palette["window"], palette["text"])
+        return
 
-    try:
-        window.SetBackgroundColour(background)
-        window.SetForegroundColour(foreground)
-    except Exception:
-        pass
+    if isinstance(window, wx.Panel):
+        _set_colours(window, palette["panel"], palette["text"])
+        return
+
+    # Libellés : texte uniquement, afin de conserver la transparence du parent.
+    label_types = tuple(
+        cls for cls in (
+            getattr(wx, "StaticText", None),
+            getattr(wx, "StaticBox", None),
+            getattr(wx, "CheckBox", None),
+            getattr(wx, "RadioButton", None),
+        ) if cls is not None
+    )
+    if label_types and isinstance(window, label_types):
+        _set_colours(window, foreground=palette["text"])
+        return
+
+    # Contrôles de contenu qui restent parfois blancs malgré msw.dark-mode.
+    content_types = tuple(
+        cls for cls in (
+            getattr(wx, "TextCtrl", None),
+            getattr(wx, "ListBox", None),
+            getattr(wx, "CheckListBox", None),
+            getattr(wx, "ListCtrl", None),
+            getattr(wx, "TreeCtrl", None),
+            getattr(wx, "SpinCtrl", None),
+        ) if cls is not None
+    )
+    if content_types and isinstance(window, content_types):
+        background = None
+        try:
+            current = window.GetBackgroundColour()
+        except Exception:
+            current = None
+        # En thème Sombre explicite on garantit la surface sombre ; en thème
+        # Système on n'intervient que si wx a laissé un îlot franchement clair.
+        if theme_kind == "dark" or _looks_light(current):
+            background = palette["control"]
+        _set_colours(window, background, palette["text"])
+        return
+
+    # Pour les autres widgets natifs, ne forcer que le texte en mode sombre
+    # explicite. Le thème Système doit rester le plus natif possible.
+    if theme_kind == "dark" and not isinstance(
+        window,
+        tuple(cls for cls in (
+            getattr(wx, "Button", None),
+            getattr(wx, "Choice", None),
+            getattr(wx, "ComboBox", None),
+        ) if cls is not None),
+    ):
+        _set_colours(window, foreground=palette["text"])
 
 
 def apply_to_window(window, recursive=True, theme=None, scale=None, palette=None):
@@ -214,11 +323,12 @@ def apply_to_window(window, recursive=True, theme=None, scale=None, palette=None
         configured_theme, configured_scale = _config_values()
         theme = configured_theme if theme is None else theme
         scale = configured_scale if scale is None else scale
+    kind = _theme_kind(theme)
     dark = is_dark_theme(theme)
     palette = palette or _native_palette(dark)
 
     _scale_font(window, scale)
-    _apply_palette(window, palette, dark)
+    _apply_palette(window, palette, dark, kind)
 
     if recursive:
         try:
