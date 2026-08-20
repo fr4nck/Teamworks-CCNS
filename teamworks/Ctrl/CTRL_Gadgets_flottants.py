@@ -46,6 +46,32 @@ class EspaceGadgets(wx.Panel):
     def _couleur_tuple(couleur):
         return (couleur.Red(), couleur.Green(), couleur.Blue())
 
+    def _token_tuple(self, token):
+        return self._couleur_tuple(UTILS_Interface.GetToken(token))
+
+    def AppliquerThemeGadget(self, gadget):
+        """Modernise le chrome du gadget sans écraser ses couleurs métier.
+
+        Les contenus configurables (bloc-notes, horloge, dossiers incomplets)
+        conservent leurs couleurs propres. Seules les anciennes couleurs de
+        cadre par défaut et la barre de titre sont remplacées par les rôles du
+        thème Teamworks.
+        """
+        gadget.couleurFondDC = self._token_tuple("surface")
+        gadget.couleurFondTitre = self._token_tuple("surface_container_highest")
+        gadget.couleurBord = self._token_tuple("outline_variant")
+        gadget.couleurDegrade = self._token_tuple("surface_container_high")
+        gadget.couleurTexteTitre = self._token_tuple("on_surface")
+
+        if getattr(gadget, "couleurFondCadre", None) == (214, 223, 247):
+            gadget.couleurFondCadre = self._token_tuple("surface_container_low")
+
+        try:
+            gadget.SetBackgroundColour(UTILS_Interface.GetToken("surface"))
+            gadget.Refresh()
+        except Exception:
+            pass
+
     def _info_pane(self, nom, label, taille, index):
         largeur = max(180, int(taille[0]))
         hauteur = max(140, int(taille[1]))
@@ -102,6 +128,7 @@ class EspaceGadgets(wx.Panel):
                     index,
                     size=parametres.get("taille", wx.DefaultSize),
                 )
+                self.AppliquerThemeGadget(gadget)
                 self._gadgets[nom] = gadget
                 info = self._info_pane(
                     nom,
