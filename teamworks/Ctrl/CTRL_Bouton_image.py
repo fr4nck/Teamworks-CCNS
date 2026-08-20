@@ -10,6 +10,7 @@
 
 import Chemins
 from Utils.UTILS_Traduction import _
+from Utils import UTILS_Interface
 import wx
 import time
 import os
@@ -60,8 +61,15 @@ class CTRL(wx.Button):
         self.SetBitmap(bmp, self.positionImage)
         if self.cheminImage not in ("", None):
             self.SetBitmapMargins(self.margesTexte)
-        self.SetFont(wx.Font(9, wx.SWISS, wx.NORMAL, wx.BOLD))
+        self.AppliquerTheme()
         self.SetInitialSize()
+
+    def AppliquerTheme(self):
+        """Conserve le rendu natif du bouton tout en alignant typo et texte."""
+        font = wx.SystemSettings.GetFont(wx.SYS_DEFAULT_GUI_FONT)
+        font.SetWeight(wx.FONTWEIGHT_BOLD)
+        self.SetFont(font)
+        self.SetForegroundColour(UTILS_Interface.GetToken("on_surface"))
 
     def SetImage(self, cheminImage=""):
         self.SetBitmap(wx.NullBitmap)
