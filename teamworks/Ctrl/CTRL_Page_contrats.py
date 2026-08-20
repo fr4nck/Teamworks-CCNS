@@ -15,54 +15,72 @@ import FonctionsPerso
 from Dlg import DLG_Edition_DUE
 from Dlg import DLG_Creation_contrat
 from Utils import UTILS_Adaptations
+from Utils import UTILS_Customize
+from Utils import UTILS_Interface
 import six
 
 
 def DateEngFr(textDate):
-    text = str(textDate[8:10]) + "/" + str(textDate[5:7]) + "/" + str(textDate[:4])
-    return text
+    return str(textDate[8:10]) + "/" + str(textDate[5:7]) + "/" + str(textDate[:4])
+
 
 def DateFrEng(textDate):
-    text = str(textDate[6:10]) + "/" + str(textDate[3:5]) + "/" + str(textDate[:2])
-    return text   
+    return str(textDate[6:10]) + "/" + str(textDate[3:5]) + "/" + str(textDate[:2])
+
+
+def _echelle_interface():
+    try:
+        return max(80, min(200, UTILS_Customize.GetValeur(
+            "interface", "echelle_police", "100", type_valeur=int
+        )))
+    except Exception:
+        return 100
+
+
+def _bouton_action(parent, nom_image):
+    taille = max(24, min(32, int(round(24 * _echelle_interface() / 100.0))))
+    bitmap = wx.Bitmap(Chemins.GetStaticPath("Images/16x16/%s" % nom_image), wx.BITMAP_TYPE_PNG)
+    if bitmap.IsOk() and (bitmap.GetWidth() != taille or bitmap.GetHeight() != taille):
+        bitmap = wx.Bitmap(bitmap.ConvertToImage().Scale(taille, taille, wx.IMAGE_QUALITY_HIGH))
+    bouton = wx.BitmapButton(parent, -1, bitmap)
+    cote = max(36, taille + 12)
+    bouton.SetMinSize((cote, cote))
+    return bouton
+
 
 class Panel_Contrats(wx.Panel):
     def __init__(self, parent, id, IDpersonne=0):
         wx.Panel.__init__(self, parent, id, name="page_contrats", style=wx.TAB_TRAVERSAL)
-
         self.parent = parent
         self.IDpersonne = IDpersonne
 
-        # Widgets
-##        self.staticBox_pieces_staticbox = wx.StaticBox(self, -1, _(u"Pièces à fournir"))
-        self.staticBox_contrats_staticbox = wx.StaticBox(self, -1, _(u"Contrats"))
+        self.titre = wx.StaticText(self, -1, _(u"Contrats"))
+        police = self.titre.GetFont()
+        police.SetWeight(wx.FONTWEIGHT_BOLD)
+        police.SetPointSize(max(11, police.GetPointSize() + 2))
+        self.titre.SetFont(police)
+
         self.list_ctrl_contrats = ListCtrl_contrats(self, -1)
-        self.list_ctrl_contrats.SetMinSize((20, 20)) 
-        
-        self.bouton_contrats_ajouter = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_PNG))
-        self.bouton_contrats_modifier = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Modifier.png"), wx.BITMAP_TYPE_PNG))
-        self.bouton_contrats_supprimer = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_PNG))
-        self.bouton_signature = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Signature.png"), wx.BITMAP_TYPE_PNG))
-        self.bouton_due = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Due.png"), wx.BITMAP_TYPE_PNG))
-        self.bouton_imprimer = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Imprimante.png"), wx.BITMAP_TYPE_PNG))
+        self.list_ctrl_contrats.SetMinSize((320, 180))
+
+        self.bouton_contrats_ajouter = _bouton_action(self, "Ajouter.png")
+        self.bouton_contrats_modifier = _bouton_action(self, "Modifier.png")
+        self.bouton_contrats_supprimer = _bouton_action(self, "Supprimer.png")
+        self.bouton_signature = _bouton_action(self, "Signature.png")
+        self.bouton_due = _bouton_action(self, "Due.png")
+        self.bouton_imprimer = _bouton_action(self, "Imprimante.png")
 
         self.__set_properties()
         self.__do_layout()
-        
 
     def __set_properties(self):
-
         self.bouton_contrats_ajouter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour saisir un nouveau contrat")))
-        self.bouton_contrats_ajouter.SetSize(self.bouton_contrats_ajouter.GetBestSize())
         self.bouton_contrats_modifier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier le contrat sélectionné dans la liste")))
-        self.bouton_contrats_modifier.SetSize(self.bouton_contrats_modifier.GetBestSize())
         self.bouton_contrats_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer le contrat sélectionné dans la liste")))
-        self.bouton_contrats_supprimer.SetSize(self.bouton_contrats_supprimer.GetBestSize())
         self.bouton_signature.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour signaler que le contrat est signé ou non")))
         self.bouton_due.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour signaler si la DUE a bien été faite")))
         self.bouton_imprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour imprimer un contrat, une DUE, une attestation de travail, etc...")))
-        
-        # Binds
+
         self.Bind(wx.EVT_BUTTON, self.OnBoutonAjoutContrat, self.bouton_contrats_ajouter)
         self.Bind(wx.EVT_BUTTON, self.OnBoutonModifContrat, self.bouton_contrats_modifier)
         self.Bind(wx.EVT_BUTTON, self.OnBoutonSupprContrat, self.bouton_contrats_supprimer)
@@ -71,69 +89,29 @@ class Panel_Contrats(wx.Panel):
         self.Bind(wx.EVT_BUTTON, self.OnBoutonImprimer, self.bouton_imprimer)
 
     def __do_layout(self):
-        grid_sizer_base = wx.FlexGridSizer(rows=2, cols=1, vgap=10, hgap=10)
-        staticBox_contrats = wx.StaticBoxSizer(self.staticBox_contrats_staticbox, wx.VERTICAL)
-        grid_sizer_contrats = wx.FlexGridSizer(rows=2, cols=2, vgap=5, hgap=5)
-        grid_sizer_haut = wx.FlexGridSizer(rows=1, cols=2, vgap=10, hgap=10)
-        
-##        # Pièces
-##        staticBox_pieces = wx.StaticBoxSizer(self.staticBox_pieces_staticbox, wx.VERTICAL)
-##        grid_sizer_pieces = wx.FlexGridSizer(rows=2, cols=2, vgap=5, hgap=5)
-##        grid_sizer_pieces.Add(self.list_ctrl_pieces, 1, wx.EXPAND, 0)
-##        grid_sizer_pieces.AddGrowableRow(0)
-##        grid_sizer_pieces.AddGrowableCol(0)
-##        staticBox_pieces.Add(grid_sizer_pieces, 1, wx.ALL|wx.EXPAND, 5)
-##        grid_sizer_haut.Add(staticBox_pieces, 1, wx.LEFT|wx.TOP|wx.EXPAND, 5)
-##        
-##        # Diplômes
-##        staticBox_diplomes = wx.StaticBoxSizer(self.staticBox_diplomes_staticbox, wx.VERTICAL)
-##        grid_sizer_diplomes = wx.FlexGridSizer(rows=2, cols=2, vgap=5, hgap=5)
-##        grid_sizer_boutons_diplomes = wx.FlexGridSizer(rows=4, cols=1, vgap=5, hgap=5)
-##        grid_sizer_diplomes.Add(self.list_ctrl_diplomes, 1, wx.EXPAND, 0)
-##        grid_sizer_boutons_diplomes.Add(self.bouton_diplomes_modifier, 0, 0, 0)
-##        grid_sizer_diplomes.Add(grid_sizer_boutons_diplomes, 1, wx.EXPAND, 0)
-##        grid_sizer_diplomes.AddGrowableRow(0)
-##        grid_sizer_diplomes.AddGrowableCol(0)
-##        staticBox_diplomes.Add(grid_sizer_diplomes, 1, wx.ALL|wx.EXPAND, 5)
-##        grid_sizer_haut.Add(staticBox_diplomes, 1, wx.RIGHT|wx.TOP|wx.EXPAND, 5)
-##        
-##        grid_sizer_haut.AddGrowableRow(0)
-##        grid_sizer_haut.AddGrowableCol(0)
-##        grid_sizer_haut.AddGrowableCol(1)
-##        grid_sizer_base.Add(grid_sizer_haut, 1, wx.EXPAND, 0)
-        
-        # Dossier
-        grid_sizer_contrats.Add(self.list_ctrl_contrats, 1, wx.EXPAND, 0)
-        
-        grid_sizer_boutons_contrats = wx.FlexGridSizer(rows=8, cols=1, vgap=5, hgap=5)
-        grid_sizer_boutons_contrats.Add(self.bouton_contrats_ajouter, 0, 0, 0)
-        grid_sizer_boutons_contrats.Add(self.bouton_contrats_modifier, 0, 0, 0)
-        grid_sizer_boutons_contrats.Add(self.bouton_contrats_supprimer, 0, 0, 0)
-        grid_sizer_boutons_contrats.Add((10, 10), 0, 0, 0)
-        grid_sizer_boutons_contrats.Add(self.bouton_signature, 0, 0, 0) 
-        grid_sizer_boutons_contrats.Add(self.bouton_due, 0, 0, 0) 
-        grid_sizer_boutons_contrats.Add((10, 10), 0, 0, 0)
-        grid_sizer_boutons_contrats.Add(self.bouton_imprimer, 0, 0, 0) 
-        grid_sizer_contrats.Add(grid_sizer_boutons_contrats, 1, wx.EXPAND, 0)
-        
-        grid_sizer_contrats.AddGrowableRow(0)
-        grid_sizer_contrats.AddGrowableCol(0)
-        staticBox_contrats.Add(grid_sizer_contrats, 1, wx.ALL|wx.EXPAND, 5)
-        grid_sizer_base.Add(staticBox_contrats, 1, wx.LEFT|wx.RIGHT|wx.BOTTOM|wx.TOP|wx.EXPAND, 5)
-        
-        self.SetSizer(grid_sizer_base)
-        grid_sizer_base.Fit(self)
-        grid_sizer_base.AddGrowableRow(0)
-        grid_sizer_base.AddGrowableRow(1)
-        grid_sizer_base.AddGrowableCol(0)
+        actions = wx.WrapSizer(wx.HORIZONTAL)
+        for numero, groupe in enumerate((
+            (self.bouton_contrats_ajouter, self.bouton_contrats_modifier, self.bouton_contrats_supprimer),
+            (self.bouton_signature, self.bouton_due),
+            (self.bouton_imprimer,),
+        )):
+            if numero:
+                actions.AddSpacer(10)
+            for bouton in groupe:
+                actions.Add(bouton, 0, wx.RIGHT | wx.BOTTOM, 4)
+
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self.titre, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 8)
+        sizer.Add(actions, 0, wx.EXPAND | wx.ALL, 8)
+        sizer.Add(self.list_ctrl_contrats, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
+        self.SetSizer(sizer)
 
     def MAJ_barre_problemes(self):
-        if self.IDpersonne in FonctionsPerso.Recherche_ContratsEnCoursOuAVenir() :
+        if self.IDpersonne in FonctionsPerso.Recherche_ContratsEnCoursOuAVenir():
             self.parent.GetGrandParent().barre_problemes = True
         else:
             self.parent.GetGrandParent().barre_problemes = False
         self.parent.GetGrandParent().MAJ_barre_problemes()
-
 
     def OnBoutonAjoutContrat(self, event):
         self.AjouterContrat()
@@ -149,7 +127,6 @@ class Panel_Contrats(wx.Panel):
         event.Skip()
 
     def ModifierContrat(self):
-        """ Modification de coordonnées """
         index = self.list_ctrl_contrats.GetFirstSelected()
         if index == -1:
             dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sélectionner un contrat à modifier dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
@@ -164,110 +141,84 @@ class Panel_Contrats(wx.Panel):
     def OnBoutonSupprContrat(self, event):
         self.SupprimerContrat()
         event.Skip()
-        
-    def SupprimerContrat(self):
-        """ Suppression d'une coordonnée """
-        index = self.list_ctrl_contrats.GetFirstSelected()
 
-        # Vérifie qu'un item a bien été sélectionné
+    def SupprimerContrat(self):
+        index = self.list_ctrl_contrats.GetFirstSelected()
         if index == -1:
             dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sélectionner un contrat à supprimer dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
 
-        # Demande de confirmation
         texteContrat = self.list_ctrl_contrats.GetItem(index, 3).GetText()
         txtMessage = six.text_type((_(u"Voulez-vous vraiment supprimer ce contrat ? \n\n> ") + texteContrat))
-        dlgConfirm = wx.MessageDialog(self, txtMessage, _(u"Confirmation de suppression"), wx.YES_NO|wx.NO_DEFAULT|wx.ICON_QUESTION)
+        dlgConfirm = wx.MessageDialog(self, txtMessage, _(u"Confirmation de suppression"), wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
         reponse = dlgConfirm.ShowModal()
         dlgConfirm.Destroy()
         if reponse == wx.ID_NO:
             return
-        
-        varIDcontrat = self.list_ctrl_contrats.GetItemData(index)
 
-        # Suppression
+        varIDcontrat = self.list_ctrl_contrats.GetItemData(index)
         DB = GestionDB.DB()
         DB.ReqDEL("contrats", "IDcontrat", varIDcontrat)
         DB.Close()
 
-        # MàJ du listCtrl Coords de la fiche individuelle
         self.list_ctrl_contrats.Remplissage()
         self.MAJ_barre_problemes()
-        
+
     def OnBoutonSignature(self, event):
-        """ Signer un contrat """
         index = self.list_ctrl_contrats.GetFirstSelected()
-        # Vérifie qu'un item a bien été sélectionné
         if index == -1:
             dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sélectionner un contrat dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
-        
+
         IDcontrat = self.list_ctrl_contrats.GetItemData(index)
         etatSignature = self.list_ctrl_contrats.GetItem(index, 4).GetText()
-        if etatSignature == "Oui" :
-            etatSignature = ""
-        else:
-            etatSignature = "Oui"
-        
-        # Enregistrement de la modification dans la base
+        etatSignature = "" if etatSignature == "Oui" else "Oui"
+
         DB = GestionDB.DB()
-        listeDonnees = [    ("signature",     etatSignature),  ]
-        DB.ReqMAJ("contrats", listeDonnees, "IDcontrat", IDcontrat)
+        DB.ReqMAJ("contrats", [("signature", etatSignature)], "IDcontrat", IDcontrat)
         DB.Commit()
         DB.Close()
-        
-        # MAJ du listCtrl
+
         self.list_ctrl_contrats.SetItem(index, 4, etatSignature)
         self.MAJ_barre_problemes()
 
     def OnBoutonDue(self, event):
-        """ Signer un contrat """
         index = self.list_ctrl_contrats.GetFirstSelected()
-        # Vérifie qu'un item a bien été sélectionné
         if index == -1:
             dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sélectionner un contrat dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
-        
+
         IDcontrat = self.list_ctrl_contrats.GetItemData(index)
         etatDue = self.list_ctrl_contrats.GetItem(index, 5).GetText()
-        if etatDue == "Oui" :
-            etatDue = ""
-        else:
-            etatDue = "Oui"
-        
-        # Enregistrement de la modification dans la base
+        etatDue = "" if etatDue == "Oui" else "Oui"
+
         DB = GestionDB.DB()
-        listeDonnees = [    ("due",     etatDue),  ]
-        DB.ReqMAJ("contrats", listeDonnees, "IDcontrat", IDcontrat)
+        DB.ReqMAJ("contrats", [("due", etatDue)], "IDcontrat", IDcontrat)
         DB.Commit()
         DB.Close()
-        
-        # MAJ du listCtrl
+
         self.list_ctrl_contrats.SetItem(index, 5, etatDue)
         self.MAJ_barre_problemes()
-        
+
     def OnBoutonImprimer(self, event):
-        """ Impressions """
         index = self.list_ctrl_contrats.GetFirstSelected()
-        # Vérifie qu'un contrat a été sélectionné dans la liste
         if index == -1:
             dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sélectionner un contrat dans la liste proposée."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
-        
-        # Demande le type d'impression à l'utilisateur
+
         from Dlg import DLG_Selection_type_document
         listeBoutons = [
             (Chemins.GetStaticPath("Images/BoutonsImages/Imprimer_doc_DUE.png"), _(u"Cliquez ici pour imprimer une D.U.E.")),
             (Chemins.GetStaticPath("Images/BoutonsImages/Imprimer_doc_contrat.png"), _(u"Cliquez ici pour imprimer un autre document (Contrat, attestation, etc...)")),
-            ]
+        ]
         dlg = DLG_Selection_type_document.Dialog(self, size=(450, 335), listeBoutons=listeBoutons, type="contrats")
         if dlg.ShowModal() == wx.ID_OK:
             ChoixType = dlg.GetChoix()
@@ -275,26 +226,23 @@ class Panel_Contrats(wx.Panel):
         else:
             dlg.Destroy()
             return False
-        if ChoixType == 1 : self.ImprimerDUE()
-        if ChoixType == 2 : self.ImprimerContrat()
-        
-                
+        if ChoixType == 1:
+            self.ImprimerDUE()
+        if ChoixType == 2:
+            self.ImprimerContrat()
+
     def ImprimerContrat(self):
-        """ Editer un contrat """
         index = self.list_ctrl_contrats.GetFirstSelected()
         IDcontrat = self.list_ctrl_contrats.GetItemData(index)
 
-        # Récupère les données pour le publipostage
         from Utils import UTILS_Publipostage_donnees
-        dictDonnees = UTILS_Publipostage_donnees.GetDictDonnees(categorie="contrat", listeID=[IDcontrat,])
-        # Ouvre le publiposteur
+        dictDonnees = UTILS_Publipostage_donnees.GetDictDonnees(categorie="contrat", listeID=[IDcontrat])
         from Dlg import DLG_Publiposteur
         dlg = DLG_Publiposteur.Dialog(self, "", dictDonnees=dictDonnees)
         dlg.ShowModal()
         dlg.Destroy()
 
     def ImprimerDUE(self):
-        """ Editer un contrat """
         index = self.list_ctrl_contrats.GetFirstSelected()
         IDcontrat = self.list_ctrl_contrats.GetItemData(index)
         dlg = DLG_Edition_DUE.Dialog(self, IDcontrat=IDcontrat)
@@ -302,116 +250,120 @@ class Panel_Contrats(wx.Panel):
         dlg.Destroy()
 
 
-# ----------- LISTCTRL DOSSIER ---------------------------------------------------------------------------------------------------
-
-
 class ListCtrl_contrats(wx.ListCtrl):
     def __init__(self, parent, id):
-        wx.ListCtrl.__init__(self, parent, id, size=(250, -1), style=wx.LC_REPORT|wx.LC_HRULES|wx.LC_VRULES|wx.LC_SINGLE_SEL|wx.SUNKEN_BORDER) 
+        wx.ListCtrl.__init__(
+            self,
+            parent,
+            id,
+            style=wx.LC_REPORT | wx.LC_HRULES | wx.LC_VRULES | wx.LC_SINGLE_SEL,
+        )
         self.parent = parent
         self.IDpersonne = self.GetParent().IDpersonne
+        self._ajustement_en_cours = False
 
-        # Colonnes
         self.InsertColumn(0, _(u"ID"))
-        self.SetColumnWidth(0, 0)
         self.InsertColumn(1, _(u"Date de début"))
-        self.SetColumnWidth(1, 85)
         self.InsertColumn(2, _(u"Date de fin"))
-        self.SetColumnWidth(2, 85)
         self.InsertColumn(3, _(u"Classification"))
-        self.SetColumnWidth(3, 220)
         self.InsertColumn(4, _(u"Signé"))
-        self.SetColumnWidth(4, 43)
-        self.InsertColumn(5, _(u"Due"))
-        self.SetColumnWidth(5, 40)
+        self.InsertColumn(5, _(u"DUE"))
 
-        # Création des items
         self.Remplissage()
 
-        # Binds
         self.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.OnItemActivated)
         self.Bind(wx.EVT_CONTEXT_MENU, self.OnContextMenu)
+        self.Bind(wx.EVT_SIZE, self.OnSize)
+        wx.CallAfter(self.AjusterColonnes)
+
+    def OnSize(self, event):
+        wx.CallAfter(self.AjusterColonnes)
+        event.Skip()
+
+    def AjusterColonnes(self):
+        if self._ajustement_en_cours:
+            return
+        largeur = self.GetClientSize().GetWidth()
+        if largeur <= 120:
+            return
+
+        facteur = _echelle_interface() / 100.0
+        minimums = [
+            0,
+            max(100, int(100 * facteur)),
+            max(100, int(100 * facteur)),
+            max(220, int(220 * facteur)),
+            max(58, int(58 * facteur)),
+            max(58, int(58 * facteur)),
+        ]
+        disponible = max(220, largeur - 24)
+        fixes = sum(minimums[i] for i in (0, 1, 2, 4, 5))
+        minimums[3] = max(minimums[3], disponible - fixes)
+
+        self._ajustement_en_cours = True
+        try:
+            for index, taille in enumerate(minimums):
+                self.SetColumnWidth(index, taille)
+        finally:
+            self._ajustement_en_cours = False
 
     def Remplissage(self):
-        """ Remplissage du ListCtrl """
-        # Importation des données
         self.Importation_Classifications()
         self.Importation()
 
-        # S'il existe des items, on les efface d'abord
         if self.GetItemCount() != 0:
             self.DeleteAllItems()
-            
-        # Création des items
+
         index = 0
         for IDcontrat, valeurs in self.DictContrats.items():
             etat = valeurs[0]
             classification = valeurs[1]
-            date_debut =valeurs[2]
+            date_debut = valeurs[2]
             date_fin = valeurs[3]
             date_rupture = valeurs[4]
-            signature= valeurs[5]
-            due= valeurs[6]
-            # Création de l'item
+            signature = valeurs[5]
+            due = valeurs[6]
+
             self.InsertItem(index, str(IDcontrat))
-            # Etat
             if etat == "Perim":
                 item = self.GetItem(index)
-                item.SetTextColour("GREY")
+                item.SetTextColour(UTILS_Interface.GetToken("disabled"))
                 self.SetItem(item)
 
-            # Autres colonnes
             self.SetItem(index, 1, DateEngFr(date_debut))
-            if date_fin == "2999-01-01" :
+            if date_fin == "2999-01-01":
                 date_fin = _(u"Indétermin.")
             else:
                 date_fin = DateEngFr(date_fin)
-            if date_rupture != "" :
+            if date_rupture != "":
                 date_fin = DateEngFr(date_rupture) + "-R"
             self.SetItem(index, 2, date_fin)
             self.SetItem(index, 3, classification)
             self.SetItem(index, 4, signature)
-            if due == None :
-                due = ""
-            self.SetItem(index, 5, due)
-            # Intégration du data ID
+            self.SetItem(index, 5, "" if due is None else due)
             self.SetItemData(index, IDcontrat)
             index += 1
 
-        # Tri dans l'ordre alphabétique
         self.SortItems(self.ColumnSorter)
-
-        # Fait dérouler la liste
         nbreItems = self.GetItemCount()
         if nbreItems > 0:
-            self.EnsureVisible(nbreItems-1) 
+            self.EnsureVisible(nbreItems - 1)
+        wx.CallAfter(self.AjusterColonnes)
 
     def ColumnSorter(self, key1, key2):
-        item1 = self.GetItem( self.FindItem(-1, key1), 1).GetText()
-        item2 = self.GetItem( self.FindItem(-1, key2), 1).GetText()
-        # Bascule les dates françaises en dates anglaises pour faire le tri
+        item1 = self.GetItem(self.FindItem(-1, key1), 1).GetText()
+        item2 = self.GetItem(self.FindItem(-1, key2), 1).GetText()
         item1 = DateFrEng(item1)
         item2 = DateFrEng(item2)
-        
-        if item1 < item2:    
-               return -1
-        else:                   
-               return 1
+        return -1 if item1 < item2 else 1
 
     def Importation(self):
-        """ Importe les données """
-        
-        # MAJ Header fiche individuelle
         self.parent.GetGrandParent().GetParent().contratEnCours = None
         self.parent.GetGrandParent().GetParent().MaJ_header()
-                    
-        date_jour = datetime.date.today()
 
-        # Initialisation de la base de données
+        date_jour = datetime.date.today()
         DB = GestionDB.DB()
         self.DictContrats = {}
-        
-        # Recherche des pièces
         req = """
         SELECT IDcontrat, IDclassification, date_debut, date_fin, date_rupture, signature, due
         FROM contrats
@@ -420,134 +372,103 @@ class ListCtrl_contrats(wx.ListCtrl):
         DB.ExecuterReq(req)
         listeContrats = DB.ResultatReq()
 
-        # Création du dictionnaire de données des contrats
         for contrat in listeContrats:
             IDcontrat = contrat[0]
             classification = self.DictClass[contrat[1]]
             date_debut = contrat[2]
             date_fin = contrat[3]
             date_rupture = contrat[4]
-            signature= contrat[5]
-            due= contrat[6]
-            # Recherche la validité               
+            signature = contrat[5]
+            due = contrat[6]
             date_fin_2 = datetime.date(int(date_fin[:4]), int(date_fin[5:7]), int(date_fin[8:10]))
             reste = str(date_fin_2 - date_jour)
             if reste != "0:00:00":
                 jours = int(reste[:reste.index("day")])
-                if jours > 0 :
+                if jours > 0:
                     etat = "Ok"
-                    # MAJ Header fiche individuelle
                     self.parent.GetGrandParent().GetParent().contratEnCours = (classification, date_debut, date_fin, date_rupture)
                     self.parent.GetGrandParent().GetParent().MaJ_header()
                 else:
                     etat = "Perim"
             else:
                 etat = "Ok"
-                # MAJ Header fiche individuelle
                 self.parent.GetGrandParent().GetParent().contratEnCours = (classification, date_debut, date_fin, date_rupture)
                 self.parent.GetGrandParent().GetParent().MaJ_header()
-                    
+
             self.DictContrats[IDcontrat] = (etat, classification, date_debut, date_fin, date_rupture, signature, due)
-        
-        # Fermeture de la base de données
-        DB.Close() 
-        
+
+        DB.Close()
+
     def Importation_Classifications(self):
         DB = GestionDB.DB()
         self.DictClass = {}
         req = """
         SELECT IDclassification, nom
         FROM contrats_class
-        """ 
+        """
         DB.ExecuterReq(req)
         listeClassifications = DB.ResultatReq()
-        # Création du dictionnaire
         for classification in listeClassifications:
             self.DictClass[classification[0]] = classification[1]
-        # Fermeture de la base de données
-        DB.Close() 
+        DB.Close()
 
     def OnItemActivated(self, event):
-        """ Item double-cliqué """
         self.parent.ModifierContrat()
 
     def OnContextMenu(self, event):
-        """Ouverture du menu contextuel du ListCtrl Diplomes."""
-        
         if self.GetFirstSelected() == -1:
             return False
         index = self.GetFirstSelected()
-        key = self.GetItemData(index)
-        
+
         etatSignature = self.GetItem(index, 4).GetText()
         etatDue = self.GetItem(index, 5).GetText()
-        
-        # Création du menu contextuel
+
         menuPop = UTILS_Adaptations.Menu()
 
-        # Item Modifier
         item = wx.MenuItem(menuPop, 10, _(u"Ajouter"))
-        bmp = wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_PNG)
-        item.SetBitmap(bmp)
+        item.SetBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_PNG))
         menuPop.AppendItem(item)
         self.Bind(wx.EVT_MENU, self.Menu_Ajouter, id=10)
-        
+
         menuPop.AppendSeparator()
 
-        # Item Ajouter
         item = wx.MenuItem(menuPop, 20, _(u"Modifier"))
-        bmp = wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Modifier.png"), wx.BITMAP_TYPE_PNG)
-        item.SetBitmap(bmp)
+        item.SetBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Modifier.png"), wx.BITMAP_TYPE_PNG))
         menuPop.AppendItem(item)
         self.Bind(wx.EVT_MENU, self.Menu_Modifier, id=20)
 
-        # Item Supprimer
         item = wx.MenuItem(menuPop, 30, _(u"Supprimer"))
-        bmp = wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_PNG)
-        item.SetBitmap(bmp)
+        item.SetBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_PNG))
         menuPop.AppendItem(item)
         self.Bind(wx.EVT_MENU, self.Menu_Supprimer, id=30)
-        
+
         menuPop.AppendSeparator()
-        
-        # Item SIgnature
-        if etatSignature == "Oui" :
-            txt = _(u"Contrat non signé !")
-        else:
-            txt =_(u"Contrat signé !")
+
+        txt = _(u"Contrat non signé !") if etatSignature == "Oui" else _(u"Contrat signé !")
         item = wx.MenuItem(menuPop, 40, txt)
-        bmp = wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Signature.png"), wx.BITMAP_TYPE_PNG)
-        item.SetBitmap(bmp)
+        item.SetBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Signature.png"), wx.BITMAP_TYPE_PNG))
         menuPop.AppendItem(item)
         self.Bind(wx.EVT_MENU, self.Menu_Signature, id=40)
-        
-        # Item Due
-        if etatDue == "Oui" :
-            txt = _(u"DUE non faite !")
-        else:
-            txt =_(u"DUE faite !")
+
+        txt = _(u"DUE non faite !") if etatDue == "Oui" else _(u"DUE faite !")
         item = wx.MenuItem(menuPop, 80, txt)
-        bmp = wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Due.png"), wx.BITMAP_TYPE_PNG)
-        item.SetBitmap(bmp)
+        item.SetBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Due.png"), wx.BITMAP_TYPE_PNG))
         menuPop.AppendItem(item)
         self.Bind(wx.EVT_MENU, self.Menu_Due, id=80)
-        
+
         menuPop.AppendSeparator()
-        
-        # Item Imprimer 
+
         item = wx.MenuItem(menuPop, 50, _(u"Imprimer un document"))
-        bmp = wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Imprimante.png"), wx.BITMAP_TYPE_PNG)
-        item.SetBitmap(bmp)
+        item.SetBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Imprimante.png"), wx.BITMAP_TYPE_PNG))
         menuPop.AppendItem(item)
         self.Bind(wx.EVT_MENU, self.Menu_Imprimer, id=50)
 
-        
         self.PopupMenu(menuPop)
         menuPop.Destroy()
 
     def Menu_Ajouter(self, event):
         self.parent.AjouterContrat()
-        
+
     def Menu_Modifier(self, event):
         self.parent.ModifierContrat()
 
@@ -556,10 +477,9 @@ class ListCtrl_contrats(wx.ListCtrl):
 
     def Menu_Signature(self, event):
         self.parent.OnBoutonSignature(None)
-        
+
     def Menu_Due(self, event):
         self.parent.OnBoutonDue(None)
 
     def Menu_Imprimer(self, event):
         self.parent.OnBoutonImprimer(None)
-
