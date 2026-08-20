@@ -27,7 +27,11 @@ UTILS_Theme.install_auto_theming()
 
 LISTE_DONNEES = [
     ("interface", [
-        ("theme", "Vert"),
+        # Contrat TW-121 historique : ``theme`` décrit l'apparence.
+        # Les nouveaux composants utilisent ``appearance`` et ``accent`` afin
+        # de ne plus confondre clair/sombre avec Vert/Bleu/Noir.
+        ("theme", "Systeme"),
+        ("accent", "Vert"),
         ("appearance", "system"),
         ("echelle_police", "100"),
     ]),
@@ -122,4 +126,4 @@ def SetValeur(section="", cle="", valeur=""):
 
 
 if __name__ == u"__main__":
-    print(("GET :", GetValeur("interface", "theme", "Vert")))
+    print(("GET :", GetValeur("interface", "theme", "Systeme")))
