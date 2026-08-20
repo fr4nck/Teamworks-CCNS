@@ -10,6 +10,7 @@ import Chemins
 from Utils.UTILS_Traduction import _
 import wx
 from Ctrl import CTRL_Bouton_image
+from Ctrl import CTRL_Gadgets_flottants
 
 import  wx.html as  html
 import  wx.lib.wxpTag   
@@ -17,6 +18,7 @@ import FonctionsPerso
 import GestionDB
 from Utils import UTILS_Config
 from Utils import UTILS_Fichiers
+from Utils import UTILS_Interface
 
 
 # Liste des gadgets par défaut
@@ -79,116 +81,33 @@ def MajTableGadgets(nomGadget="", parametres={}):
 
 
             
-class MyHtmlWindow(html.HtmlWindow):
+class MyHtmlWindow(CTRL_Gadgets_flottants.EspaceGadgets):
+    """Compatibilité : l'ancien hôte HTML devient un espace AUI flottant."""
+
     def __init__(self, parent, id, listeGadgets):
-        html.HtmlWindow.__init__(self, parent, id, style=wx.NO_FULL_REPAINT_ON_RESIZE)
-        if "gtk2" in wx.PlatformInfo:
-            self.SetStandardFonts()
-            
-        self.couleur_fond = self.GetParent().couleur_fond
-        self.listeGadgets = listeGadgets
-        
-##        # Création de la page
-##        source = self.Source()
-##        self.SetPage(source)
-##        # Aligne tous les gagdets en haut
-##        self.Alignement(c = self.GetInternalRepresentation())
+        CTRL_Gadgets_flottants.EspaceGadgets.__init__(self, parent, listeGadgets)
 
-
-    def OnLinkClicked(self, linkinfo):
-        #self.log.WriteText('OnLinkClicked: %s\n' % linkinfo.GetHref())
-        super(MyHtmlWindow, self).OnLinkClicked(linkinfo)
-
-    def OnCellMouseHover(self, cell, x, y):
-        #self.log.WriteText('OnCellMouseHover: %s, (%d %d)\n' % (cell, x, y))
-        super(MyHtmlWindow, self).OnCellMouseHover(cell, x, y)
-
-    def OnCellClicked(self, cell, x, y, evt):
-        #self.log.WriteText('OnCellClicked: %s, (%d %d)\n' % (cell, x, y))
-        if isinstance(cell, html.HtmlWordCell):
-            sel = html.HtmlSelection()
-            #self.log.WriteText('     %s\n' % cell.ConvertToText(sel))
-        super(MyHtmlWindow, self).OnCellClicked(cell, x, y, evt)
-        return True
-                
-    def Alignement(self, c):
-        """ Aligne tout les gadgets en haut """
-        while c:
-            if isinstance(c, html.HtmlContainerCell):
-                c.SetAlignVer(0) # Alignement ici
-                self.Alignement(c.GetFirstChild())
-            c = c.GetNext()
-    
-    def MAJ(self):
-        # Création de la page
-        source = self.Source()
-        self.SetPage(source)
-        # Aligne tous les gagdets en haut
-        self.Alignement(c = self.GetInternalRepresentation())
-        # Pour résoudre le bug d'alignement après MAJ
-        self.SendSizeEvent()
-        
     def Efface(self):
-        """ Efface toute la page html """
-        txt = "<html><head><title>Page accueil</title></head><body bgcolor='%s'></body></html>" % self.ConvertitCouleur(self.couleur_fond)
-        self.SetPage(txt)
-            
+        for nom in list(self._gadgets):
+            pane = self.manager.GetPane(nom)
+            if pane.IsOk():
+                pane.Hide()
+        self.manager.Update()
+
     def Source(self):
-        """ Création de la source HTML """
-        
-        # Crée le HTML pour les gadgets
-        txtGadgets = ""
-        index = 0
-        for nomGadget, parametres in self.listeGadgets :
-            if parametres["affichage"] == True :
-                txtGadgets += """
-                <wxp module="Gadget" class="PanelGadget" width=%d height=%d >
-                    <param name="couleurFondPanel" value="%s">
-                    <param name="index" value="%d">
-                </wxp> """ % (parametres["taille"][0], parametres["taille"][1], str(self.couleur_fond), index)
-            index += 1
-        
-        # Crée le HTML pour la page complète
-        txtSource = """
-        <html>
-        <head>
-        <title>Page accueil</title>
-        </head>
-        <body bgcolor="%s">
-        %s        
-        </body></html>
-        """ % (self.ConvertitCouleur(self.couleur_fond), txtGadgets)
-        
-        return txtSource
-        
+        # Conservé pour les rares extensions qui interrogeaient l'ancien hôte HTML.
+        return ""
+
     def ConvertitCouleur(self, couleur):
-        """ Convertit une couleur de format (0, 0, 0) au format #000000 """
         return "#%02X%02X%02X" % couleur
-
-    def Fermer_Gadget(self, nomGadgetAFermer):
-        """ Ferme un gadget """
-        index = 0
-        for nomGadget, parametres in self.listeGadgets :
-            if nomGadget == nomGadgetAFermer : 
-                self.listeGadgets[index][1]["affichage"] = False
-            index += 1
-        self.MAJ()
-
-    def Ouvre_Gadget(self, nomGadgetAOuvrir):
-        """ Ferme un gadget """
-        index = 0
-        for nomGadget, parametres in self.listeGadgets :
-            if nomGadget == nomGadgetAOuvrir : 
-                self.listeGadgets[index][1]["affichage"] = True
-            index += 1
-        self.MAJ()
 
 
 class Panel(wx.Panel):
     def __init__(self, parent):
         wx.Panel.__init__(self, parent, -1, name="panel_accueil", style=wx.NO_FULL_REPAINT_ON_RESIZE)
-        self.couleur_fond = (122, 161, 230)
-        self.SetBackgroundColour(self.couleur_fond)
+        couleur_surface = UTILS_Interface.GetToken("surface")
+        self.couleur_fond = (couleur_surface.Red(), couleur_surface.Green(), couleur_surface.Blue())
+        self.SetBackgroundColour(couleur_surface)
         
         # Récupère la liste des gadgets
         self.listeGadgets = self.GetListeGadgets()
@@ -221,8 +140,7 @@ class Panel(wx.Panel):
     def MAJ_Gadgets(self):
         self.Freeze()
         self.listeGadgets = self.GetListeGadgets()
-        self.html.listeGadgets = self.listeGadgets
-        self.html.MAJ()
+        self.html.MAJ(self.listeGadgets)
         self.Thaw()
 
     def MAJpanel(self, listeElements=[]) :
