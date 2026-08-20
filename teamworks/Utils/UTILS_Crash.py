@@ -4,8 +4,7 @@
 """Diagnostics de crash persistants pour Teamworks CCNS.
 
 Ce module reste volontairement limité à la bibliothèque standard afin de pouvoir
-être importé avant wxPython et avant le reste de Teamworks par le bootstrap du
-portable PyInstaller.
+être importé avant wxPython et avant le reste du runtime historique.
 """
 
 from __future__ import annotations
@@ -27,6 +26,7 @@ _NATIVE_PATH: Optional[str] = None
 _NATIVE_INITIAL_SIZE = 0
 _LAST_EXCEPTION_ID: Optional[int] = None
 _LAST_REPORT_PATH: Optional[str] = None
+_EARLY_HOOK_INSTALLED = False
 
 
 def _repertoire_principal() -> str:
@@ -88,7 +88,8 @@ def _informations_build() -> list[str]:
         chemin = os.path.join(principal, nom)
         try:
             if os.path.isfile(chemin):
-                contenu = open(chemin, "r", encoding="utf-8", errors="replace").read().strip()
+                with open(chemin, "r", encoding="utf-8", errors="replace") as fichier:
+                    contenu = fichier.read().strip()
                 if contenu:
                     lignes.append(f"{nom}: {contenu.replace(chr(10), ' | ')}")
         except Exception:
@@ -165,11 +166,7 @@ def EcrireRapportException(
     version_wx: str = "",
     repertoire: Optional[str] = None,
 ) -> str:
-    """Écrit un rapport persistant et retourne son chemin.
-
-    Une même instance d'exception n'est écrite qu'une fois afin d'éviter le
-    doublon hook wx -> bootstrap.
-    """
+    """Écrit un rapport persistant et retourne son chemin."""
     global _LAST_EXCEPTION_ID, _LAST_REPORT_PATH
 
     exception_id = id(value)
@@ -195,6 +192,38 @@ def EcrireRapportException(
     _LAST_REPORT_PATH = chemin
     _nettoyer_anciens_rapports(repertoire)
     return chemin
+
+
+def InstallerHookMinimal(*, version: str = "") -> None:
+    """Installe un hook sans wxPython pour les erreurs de démarrage/import.
+
+    Il sera remplacé ensuite par le rapporteur graphique de Teamworks lorsque
+    l'application aura fini ses imports.
+    """
+    global _EARLY_HOOK_INSTALLED
+    if _EARLY_HOOK_INSTALLED:
+        return
+
+    precedent = sys.excepthook
+
+    def early_excepthook(exctype, value, tb):
+        try:
+            EcrireRapportException(
+                exctype,
+                value,
+                tb,
+                version=version,
+                contexte="Démarrage / import",
+            )
+        except Exception:
+            pass
+        try:
+            precedent(exctype, value, tb)
+        except Exception:
+            pass
+
+    sys.excepthook = early_excepthook
+    _EARLY_HOOK_INSTALLED = True
 
 
 def _fermer_native(clean: bool = True) -> None:
@@ -225,11 +254,7 @@ def _fermer_native(clean: bool = True) -> None:
 
 
 def ActiverFaulthandler(*, version: str = "", repertoire: Optional[str] = None) -> Optional[str]:
-    """Capture les erreurs fatales Python/C dans un fichier dédié.
-
-    Le fichier vide est supprimé lors d'une fermeture normale. En cas de crash
-    fatal, le processus ne passe pas par atexit et le fichier reste disponible.
-    """
+    """Capture les erreurs fatales Python/C dans un fichier dédié."""
     global _NATIVE_HANDLE, _NATIVE_PATH, _NATIVE_INITIAL_SIZE
 
     if _NATIVE_HANDLE is not None:
