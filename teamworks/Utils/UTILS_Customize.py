@@ -15,19 +15,14 @@ from six.moves import configparser
 try :
     from Utils import UTILS_Adaptations
     from Utils import UTILS_Theme
-    from Utils import UTILS_Responsive
 except:
     import UTILS_Adaptations
     import UTILS_Theme
-    import UTILS_Responsive
 UTILS_Fichiers = UTILS_Adaptations.Import("Utils.UTILS_Fichiers")
 
 # Le rendu natif doit être demandé avant la construction des fenêtres.
 UTILS_Theme.enable_native_dark_mode()
 UTILS_Theme.install_auto_theming()
-# Le reflow doit envelopper le hook de thème afin de travailler sur des
-# contrôles déjà thématisés et d'adapter ensuite leur géométrie.
-UTILS_Responsive.install_auto_layout()
 
 
 LISTE_DONNEES = [
