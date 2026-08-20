@@ -4,6 +4,7 @@ from pathlib import Path
 
 BANDEAU_PATH = Path("teamworks/Ctrl/CTRL_Bandeau.py")
 FOOTER_PATH = Path("teamworks/Ctrl/CTRL_Footer.py")
+BUTTON_PATH = Path("teamworks/Ctrl/CTRL_Bouton_image.py")
 
 
 def _source(path):
@@ -60,6 +61,18 @@ def test_footer_keeps_explicit_theme_refresh_api():
     assert "OnPaint" in methods
 
 
+def test_common_image_button_keeps_native_rendering_and_semantic_text():
+    source = _source(BUTTON_PATH)
+    methods = _class_methods(BUTTON_PATH, "CTRL")
+
+    assert "from Utils import UTILS_Interface" in source
+    assert 'GetToken("on_surface")' in source
+    assert "SYS_DEFAULT_GUI_FONT" in source
+    assert "wx.Font(9, wx.SWISS" not in source
+    assert "AppliquerTheme" in methods
+
+
 def test_common_theme_controls_remain_valid_python():
     _tree(BANDEAU_PATH)
     _tree(FOOTER_PATH)
+    _tree(BUTTON_PATH)
