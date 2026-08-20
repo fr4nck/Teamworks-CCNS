@@ -12,9 +12,6 @@ CCNS_PART_TIME_DEROGATION_STUDENT_SOURCE = "CCNS, article 5.1.5.2.2"
 CCNS_PART_TIME_DEROGATION_EMPLOYEE_SOURCE = "CCNS, article 5.1.5.2.3"
 CCNS_COMPLEMENTARY_HOURS_SOURCE = "CCNS, article 5.1.5 â€” Heures complÃ©mentaires"
 CCNS_HOURS_AMENDMENT_SOURCE = "CCNS, article 5.1.5 â€” ComplÃ©ments d'heures par avenant"
-CCNS_PART_TIME_MODULATION_SOURCE = "CCNS, article 5.2.4"
-CODE_PART_TIME_FULL_TIME_THRESHOLD_SOURCE = "Code du travail, article L.3123-9"
-CCNS_WEEKLY_MAXIMUM_SOURCE = "CCNS, article 5.1.3"
 
 _ZERO = Decimal("0.00")
 _LEGAL_WEEKLY_DURATION = Decimal("35.00")
@@ -85,35 +82,6 @@ class ComplementaryHoursResult:
     increase_rate: Decimal = _COMPLEMENTARY_INCREASE_RATE
     source_reference: str = CCNS_COMPLEMENTARY_HOURS_SOURCE
 
-
-
-
-class PartTimePlannedWeekStatus(str, Enum):
-    COMPLIANT = "COMPLIANT"
-    COMPLEMENTARY_HOURS_LIMIT_EXCEEDED = "COMPLEMENTARY_HOURS_LIMIT_EXCEEDED"
-    FULL_TIME_THRESHOLD_REACHED = "FULL_TIME_THRESHOLD_REACHED"
-    ABSOLUTE_WEEKLY_MAXIMUM_EXCEEDED = "ABSOLUTE_WEEKLY_MAXIMUM_EXCEEDED"
-
-
-@dataclass(frozen=True, slots=True)
-class PartTimePlannedWeekResult:
-    contractual_weekly_hours: Decimal
-    planned_weekly_hours: Decimal
-    status: PartTimePlannedWeekStatus
-    compliant: bool
-    recording_allowed: bool
-    manual_override_used: bool
-    manual_override_reason: str
-    can_be_marked_compliant: bool
-    source_references: tuple[str, ...]
-
-    @property
-    def requires_manual_override(self) -> bool:
-        return not self.compliant
-
-    @property
-    def exceeds_or_reaches_full_time(self) -> bool:
-        return self.planned_weekly_hours >= _LEGAL_WEEKLY_DURATION
 
 @dataclass(frozen=True, slots=True)
 class HoursAmendmentCapacityResult:
@@ -189,4 +157,109 @@ class CCNSPartTimeWorkingTimeService:
             ("employee_requested_derogation", employee_requested_derogation),
         ):
             if type(value) is not bool:
-                raise TypeError(f"{name} doit Ãªt²È="24€ÍÑ…ÑÕÌ€ôA…ÉÑQ¥µ•5¥¹¥µÕµMÑ…ÑÕÌ¹	1=]}5%9%5U4(€€€€€€€€€€€•™™•Ñ¥Ù•}µ¥¹¥µÕ´€ôµ¥¹¥µÕ´(€€€€€€€•±Í”è(€€€€€€€€€€€ÍÑ…ÑÕÌ€ôA…ÉÑQ¥µ•5¥¹¥µÕµMÑ…ÑÕÌ¹=5A1%9P(€€€€€€€€€€€•™™•Ñ¥Ù•}µ¥¹¥µÕ´€ôµ¥¹¥µÕ´((€€€€€€€É•ÑÕÉ¸A…ÉÑQ¥µ•5¥¹¥µÕµI•ÍÕ±Ğ (€€€€€€€€€€€½¹ÑÉ…ÑÕ…±}İ••­±å}¡½ÕÉÌõ½¹ÑÉ…ÑÕ…±}İ••­±å}¡½ÕÉÌ°(€€€€€€€€€€€‘…åÍ}Á•É}İ½É­•‘}İ••¬õ‘…åÍ}Á•É}İ½É­•‘}İ••¬°(€€€€€€€€€€€µ¥¹¥µÕµ}İ••­±å}¡½ÕÉÌõ•™™•Ñ¥Ù•}µ¥¹¥µÕ´°(€€€€€€€€€€€ÍÑ…ÑÕÌõÍÑ…ÑÕÌ°(€€€€€€€€€€€ÍÑÕ‘•¹Ñ}Õ¹‘•É|ÈÙ}‘•É½…Ñ¥½¸õÍÑÕ‘•¹Ñ}Õ¹‘•É|ÈÙ}‘•É½…Ñ¥½¸°(€€€€€€€€€€€•µÁ±½å••}É•ÅÕ•ÍÑ•‘}‘•É½…Ñ¥½¸õ•µÁ±½å••}É•ÅÕ•ÍÑ•‘}‘•É½…Ñ¥½¸°(€€€€€€€€€€€Í¡½ÉÑ}Á…ÉÑ}Ñ¥µ•}¹Í}É½ÕÑ•}…±±½İ•õÍ¡½ÉÑ}É½ÕÑ•}…±±½İ•°(€€€€€€€€€€€‘•É½…Ñ¥½¹}Í½ÕÉ•}É•™•É•¹”ô (€€€€€€€€€€€€€€€9M}AIQ}Q%5}I=Q%=9}MQU9Q}M=UI(€€€€€€€€€€€€€€€¥˜ÍÑÕ‘•¹Ñ}Õ¹‘•É|ÈÙ}‘•É½…Ñ¥½¸(€€€€€€€€€€€€€€€•±Í”9M}AIQ}Q%5}I=Q%=9}5A1=e}M=UI(€€€€€€€€€€€€€€€¥˜•µÁ±½å••}É•ÅÕ•ÍÑ•‘}‘•É½…Ñ¥½¸(€€€€€€€€€€€€€€€•±Í”9½¹”(€€€€€€€€€€€€¤°(€€€€€€€€¤((€€€‘•˜•Ù…±Õ…Ñ•}½µÁ±•µ•¹Ñ…Éå}¡½ÕÉÌ (€€€€€€€Í•±˜°(€€€€€€€€¨°(€€€€€€€½¹ÑÉ…ÑÕ…±}İ••­±å}¡½ÕÉÌè•¥µ…°°(€€€€€€€½µÁ±•µ•¹Ñ…Éå}¡½ÕÉÌè•¥µ…°°(€€€€¤€´ø½µÁ±•µ•¹Ñ…Éå!½ÕÉÍI•ÍÕ±Ğè(€€€€€€€¥˜ÑåÁ”¡½¹ÑÉ…ÑÕ…±}İ••­±å}¡½ÕÉÌ¤¥Ì¹½Ğ•¥µ…°è(€€€€€€€€€€€É…¥Í”QåÁ•ÉÉ½È ‰½¹ÑÉ…ÑÕ…±}İ••­±å}¡½ÕÉÌ‘½¥Ğƒ©ÑÉ”Õ¸•¥µ…°ÍÑÉ¥Ğ¸ˆ¤(€€€€€€€¥˜ÑåÁ”¡½µÁ±•µ•¹Ñ…Éå}¡½ÕÉÌ¤¥Ì¹½Ğ•¥µ…°è(€€€€€€€€€€€É…¥Í”QåÁ•ÉÉ½È ‰½µÁ±•µ•¹Ñ…Éå}¡½ÕÉÌ‘½¥Ğƒ©ÑÉ”Õ¸•¥µ…°ÍÑÉ¥Ğ¸ˆ¤(€€€€€€€¥˜¹½Ğ}iI<€ğ½¹ÑÉ…ÑÕ…±}İ••­±å}¡½ÕÉÌ€ğ}11}]-1e}UIQ%=8è(€€€€€€€€€€€É…¥Í”Y…±Õ•ÉÉ½È ‰½¹ÑÉ…ÑÕ…±}İ••­±å}¡½ÕÉÌ‘½¥Ğƒ©ÑÉ”€ø€À•Ğ€ğ€ÌÔ¡•ÕÉ•Ì¸ˆ¤(€€€€€€€¥˜½µÁ±•µ•¹Ñ…Éå}¡½ÕÉÌ€ğ}iI<è(€€€€€€€€€€€É…¥Í”Y…±Õ•ÉÉ½È ‰½µÁ±•µ•¹Ñ…Éå}¡½ÕÉÌ¹”Á•ÕĞÁ…Ìƒ©ÑÉ”»¥…Ñ¥˜¸ˆ¤((€€€€€€€İ¥Ñ ±½…±½¹Ñ•áĞ ¤…ÌÑàè(€€€€€€€€€€€Ñà¹ÁÉ•Œ€ô€Èà(€€€€€€€€€€€½¹•}Ñ¡¥É‘}±¥µ¥Ğ€ô½¹ÑÉ…ÑÕ…±}İ••­±å}¡½ÕÉÌ€¼•¥µ…° ˆÌˆ¤(€€€€€€€€€€€É•ÍÕ±Ñ¥¹œ€ô½¹ÑÉ…ÑÕ…±}İ••­±å}¡½ÕÉÌ€¬½µÁ±•µ•¹Ñ…Éå}¡½ÕÉÌ(€€€€€€€€€€€µ…¹‘…Ñ½Éå}±¥µ¥Ğ€ô½¹ÑÉ…ÑÕ…±}İ••­±å}¡½ÕÉÌ€¨}59Q=Ie}=5A159QIe}IQ%=8((€€€€€€€İ¥Ñ¡¥¹}½¹•}Ñ¡¥É€ô½µÁ±•µ•¹Ñ…Éå}¡½ÕÉÌ€ğô½¹•}Ñ¡¥É‘}±¥µ¥Ğ(€€€€€€€‰•±½İ}±•…°€ôÉ•ÍÕ±Ñ¥¹œ€ğ}11}]-1e}UIQ%=8(€€€€€€€É•ÑÕÉ¸½µÁ±•µ•¹Ñ…Éå!½ÕÉÍI•ÍÕ±Ğ (€€€€€€€€€€€½¹ÑÉ…ÑÕ…±}İ••­±å}¡½ÕÉÌõ½¹ÑÉ…ÑÕ…±}İ••­±å}¡½ÕÉÌ°(€€€€€€€€€€€½µÁ±•µ•¹Ñ…Éå}¡½ÕÉÌõ½µÁ±•µ•¹Ñ…Éå}¡½ÕÉÌ°(€€€€€€€€€€€É•ÍÕ±Ñ¥¹}İ••­±å}¡½ÕÉÌõÉ•ÍÕ±Ñ¥¹œ°(€€€€€€€€€€€½¹•}Ñ¡¥É‘}±¥µ¥Ñ}¡½ÕÉÌõ½¹•}Ñ¡¥É‘}±¥µ¥Ğ°(€€€€€€€€€€€İ¥Ñ¡¥¹}½¹•}Ñ¡¥É‘}±¥µ¥Ğõİ¥Ñ¡¥¹}½¹•}Ñ¡¥É°(€€€€€€€€€€€‰•±½İ}±•…±}‘ÕÉ…Ñ¥½¸õ‰•±½İ}±•…°°(€€€€€€€€€€€½µÁ±¥…¹Ğõİ¥Ñ¡¥¹}½¹•}Ñ¡¥É…¹‰•±½İ}±•…°°(€€€€€€€€€€€•µÁ±½å••}µÕÍÑ}Á•É™½É´õ½µÁ±•µ•¹Ñ…Éå}¡½ÕÉÌ€ğôµ…¹‘…Ñ½Éå}±¥µ¥Ğ°(€€€€€€€€¤(((€€€‘•˜•Ù…±Õ…Ñ•}Á±…¹¹•‘}İ••¬ (€€€€€€€Í•±˜°(€€€€€€€€¨°(€€€€€€€½¹ÑÉ…ÑÕ…±}İ••­±å}¡½ÕÉÌè•¥µ…°°(€€€€€€€Á±…¹¹•‘}İ••­±å}¡½ÕÉÌè•¥µ…°°(€€€€€€€µ…¹Õ…±}½Ù•ÉÉ¥‘•}É•…Í½¸èÍÑÈ€ô€ˆˆ°(€€€€¤€´øA…ÉÑQ¥µ•A±…¹¹•‘]••­I•ÍÕ±Ğè(€€€€€€€€ˆˆ‰½¹ÑËÑ±”Õ¹”Í•µ…¥¹”Á±…¹¥™§¥”Í…¹Ì•µÃ©¡•È‘”Í…¥Í¥È±„Ë¥…±¥Ó¤¸((€€€€€€€U¹”¹½¸µ½¹™½Éµ¥Ó¤Á•ÕĞƒ©ÑÉ”•¹É•¥ÍÑË¥”±½ÉÍÅÕ”°ÕÑ¥±¥Í…Ñ•ÕÈ™½ÕÉ¹¥ĞÕ¸(€€€€€€€µ½Ñ¥˜•áÁ±¥¥Ñ”¸•Ğ…ÅÕ¥ÑÑ•µ•¹Ğ¹”É•¹©…µ…¥Ì±„Í•µ…¥¹”½¹™½Éµ”€è¥°(€€€€€€€Á•Éµ•ĞÍ•Õ±•µ•¹Ğ‘”½¹Í•ÉÙ•ÈÕ¸Á±…¹¹¥¹œË¥•°½ÔÕ¹”¡åÁ½Ñ£¡Í”‘”ÑÉ…Ù…¥°¸(€€€€€€€€ˆˆˆ(€€€€€€€¥˜ÑåÁ”¡½¹ÑÉ…ÑÕ…±}İ••­±å}¡½ÕÉÌ¤¥Ì¹½Ğ•¥µ…°è(€€€€€€€€€€€É…¥Í”QåÁ•ÉÉ½È ‰½¹ÑÉ…ÑÕ…±}İ••­±å}¡½ÕÉÌ‘½¥Ğƒ©ÑÉ”Õ¸•¥µ…°ÍÑÉ¥Ğ¸ˆ¤(€€€€€€€¥˜ÑåÁ”¡Á±…¹¹•‘}İ••­±å}¡½ÕÉÌ¤¥Ì¹½Ğ•¥µ…°è(€€€€€€€€€€€É…¥Í”QåÁ•ÉÉ½È ‰Á±…¹¹•‘}İ••­±å}¡½ÕÉÌ‘½¥Ğƒ©ÑÉ”Õ¸•¥µ…°ÍÑÉ¥Ğ¸ˆ¤(€€€€€€€¥˜ÑåÁ”¡µ…¹Õ…±}½Ù•ÉÉ¥‘•}É•…Í½¸¤¥Ì¹½ĞÍÑÈè(€€€€€€€€€€€É…¥Í”QåÁ•ÉÉ½È ‰µ…¹Õ…±}½Ù•ÉÉ¥‘•}É•…Í½¸‘½¥Ğƒ©ÑÉ”Õ¹”¡‡¹¹”¸ˆ¤(€€€€€€€¥˜¹½Ğ}iI<€ğ½¹ÑÉ…ÑÕ…±}İ••­±å}¡½ÕÉÌ€ğ}11}]-1e}UIQ%=8è(€€€€€€€€€€€É…¥Í”Y…±Õ•ÉÉ½È ‰½¹ÑÉ…ÑÕ…±}İ••­±å}¡½ÕÉÌ‘½¥Ğƒ©ÑÉ”€ø€À•Ğ€ğ€ÌÔ¡•ÕÉ•Ì¸ˆ¤(€€€€€€€¥˜Á±…¹¹•‘}İ••­±å}¡½ÕÉÌ€ğô}iI<è(€€€€€€€€€€€É…¥Í”Y…±Õ•ÉÉ½È ‰Á±…¹¹•‘}İ••­±å}¡½ÕÉÌ‘½¥Ğƒ©ÑÉ”ÍÑÉ¥Ñ•µ•¹ĞÁ½Í¥Ñ¥˜¸ˆ¤((€€€€€€€É•…Í½¸€ôµ…¹Õ…±}½Ù•ÉÉ¥‘•}É•…Í½¸¹ÍÑÉ¥À ¤(€€€€€€€Í½ÕÉ•ÌèÑÕÁ±•mÍÑÈ°€¸¸¹t(€€€€€€€¥˜Á±…¹¹•‘}İ••­±å}¡½ÕÉÌ€ø•¥µ…° ˆĞà¸ÀÀˆ¤è(€€€€€€€€€€€ÍÑ…ÑÕÌ€ôA…ÉÑQ¥µ•A±…¹¹•‘]••­MÑ…ÑÕÌ¹	M=1UQ}]-1e}5a%5U5}a(€€€€€€€€€€€Í½ÕÉ•Ì€ô€¡9M}]-1e}5a%5U5}M=UI°9M}AIQ}Q%5}5=U1Q%=9}M=UI¤(€€€€€€€•±¥˜Á±…¹¹•‘}İ••­±å}¡½ÕÉÌ€øô}11}]-1e}UIQ%=8è(€€€€€€€€€€€ÍÑ…ÑÕÌ€ôA…ÉÑQ¥µ•A±…¹¹•‘]••­MÑ…ÑÕÌ¹U11}Q%5}Q!IM!=1}I!(€€€€€€€€€€€Í½ÕÉ•Ì€ô€¡9M}AIQ}Q%5}5=U1Q%=9}M=UI°=}AIQ}Q%5}U11}Q%5}Q!IM!=1}M=UI¤(€€€€€€€•±¥˜Á±…¹¹•‘}İ••­±å}¡½ÕÉÌ€ø½¹ÑÉ…ÑÕ…±}İ••­±å}¡½ÕÉÌè(€€€€€€€€€€€½µÁ±•µ•¹Ñ…Éä€ôÍ•±˜¹•Ù…±Õ…Ñ•}½µÁ±•µ•¹Ñ…Éå}¡½ÕÉÌ (€€€€€€€€€€€€€€€½¹ÑÉ…ÑÕ…±}İ••­±å}¡½ÕÉÌõ½¹ÑÉ…ÑÕ…±}İ••­±å}¡½ÕÉÌ°(€€€€€€€€€€€€€€€½µÁ±•µ•¹Ñ…Éå}¡½ÕÉÌõÁ±…¹¹•‘}İ••­±å}¡½ÕÉÌ€´½¹ÑÉ…ÑÕ…±}İ••­±å}¡½ÕÉÌ°(€€€€€€€€€€€€¤(€€€€€€€€€€€¥˜½µÁ±•µ•¹Ñ…Éä¹½µÁ±¥…¹Ğè(€€€€€€€€€€€€€€€ÍÑ…ÑÕÌ€ôA…ÉÑQ¥µ•A±…¹¹•‘]••­MÑ…ÑÕÌ¹=5A1%9P(€€€€€€€€€€€€€€€Í½ÕÉ•Ì€ô€¡9M}=5A159QIe}!=UIM}M=UI°¤(€€€€€€€€€€€•±Í”è(€€€€€€€€€€€€€€€ÍÑ…ÑÕÌ€ôA…ÉÑQ¥µ•A±…¹¹•‘]••­MÑ…ÑÕÌ¹=5A159QIe}!=UIM}1%5%Q}a(€€€€€€€€€€€€€€€Í½ÕÉ•Ì€ô€¡9M}=5A159QIe}!=UIM}M=UI°¤(€€€€€€€•±Í”è(€€€€€€€€€€€ÍÑ…ÑÕÌ€ôA…ÉÑQ¥µ•A±…¹¹•‘]••­MÑ…ÑÕÌ¹=5A1%9P(€€€€€€€€€€€Í½ÕÉ•Ì€ô€¡9M}AIQ}Q%5}5=U1Q%=9}M=UI°¤((€€€€€€€½µÁ±¥…¹Ğ€ôÍÑ…ÑÕÌ¥ÌA…ÉÑQ¥µ•A±…¹¹•‘]••­MÑ…ÑÕÌ¹=5A1%9P(€€€€€€€½Ù•ÉÉ¥‘•}ÕÍ•€ô€¡¹½Ğ½µÁ±¥…¹Ğ¤…¹‰½½°¡É•…Í½¸¤(€€€€€€€É•ÑÕÉ¸A…ÉÑQ¥µ•A±…¹¹•‘]••­I•ÍÕ±Ğ (€€€€€€€€€€€½¹ÑÉ…ÑÕ…±}İ••­±å}¡½ÕÉÌõ½¹ÑÉ…ÑÕ…±}İ••­±å}¡½ÕÉÌ°(€€€€€€€€€€€Á±…¹¹•‘}İ••­±å}¡½ÕÉÌõÁ±…¹¹•‘}İ••­±å}¡½ÕÉÌ°(€€€€€€€€€€€ÍÑ…ÑÕÌõÍÑ…ÑÕÌ°(€€€€€€€€€€€½µÁ±¥…¹Ğõ½µÁ±¥…¹Ğ°(€€€€€€€€€€€É•½É‘¥¹}…±±½İ•õ½µÁ±¥…¹Ğ½È½Ù•ÉÉ¥‘•}ÕÍ•°(€€€€€€€€€€€µ…¹Õ…±}½Ù•ÉÉ¥‘•}ÕÍ•õ½Ù•ÉÉ¥‘•}ÕÍ•°(€€€€€€€€€€€µ…¹Õ…±}½Ù•ÉÉ¥‘•}É•…Í½¸õÉ•…Í½¸°(€€€€€€€€€€€…¹}‰•}µ…É­•‘}½µÁ±¥…¹Ğõ½µÁ±¥…¹Ğ°(€€€€€€€€€€€Í½ÕÉ•}É•™•É•¹•ÌõÍ½ÕÉ•Ì°(€€€€€€€€¤((€€€‘•˜•Ù…±Õ…Ñ•}¡½ÕÉÍ}…µ•¹‘µ•¹Ñ}…Á…¥Ñä (€€€€€€€Í•±˜°(€€€€€€€€¨°(€€€€€€€…µ•¹‘µ•¹ÑÍ}ÕÍ•‘}‰•™½É”è¥¹Ğ°(€€€€€€€İ••­Í}ÕÍ•‘}‰•™½É”è¥¹Ğ°(€€€€€€€Á±…¹¹•‘}İ••­Ìè¥¹Ğ°(€€€€€€€É•Á±…•µ•¹Ñ}…Ñ}±•…ÍÑ}½¹•}µ½¹Ñ è‰½½°€ô…±Í”°(€€€€¤€´ø!½ÕÉÍµ•¹‘µ•¹Ñ…Á…¥ÑåI•ÍÕ±Ğè(€€€€€€€™½È¹…µ”°Ù…±Õ”¥¸€ (€€€€€€€€€€€€ ‰…µ•¹‘µ•¹ÑÍ}ÕÍ•‘}‰•™½É”ˆ°…µ•¹‘µ•¹ÑÍ}ÕÍ•‘}‰•™½É”¤°(€€€€€€€€€€€€ ‰İ••­Í}ÕÍ•‘}‰•™½É”ˆ°İ••­Í}ÕÍ•‘}‰•™½É”¤°(€€€€€€€€€€€€ ‰Á±…¹¹•‘}İ••­Ìˆ°Á±…¹¹•‘}İ••­Ì¤°(€€€€€€€€¤è(€€€€€€€€€€€¥˜ÑåÁ”¡Ù…±Õ”¤¥Ì¹½Ğ¥¹Ğ½È¥Í¥¹ÍÑ…¹”¡Ù…±Õ”°‰½½°¤è(€€€€€€€€€€€€€€€É…¥Í”QåÁ•ÉÉ½È¡˜‰í¹…µ•ô‘½¥Ğƒ©ÑÉ”Õ¸•¹Ñ¥•ÈÍÑÉ¥Ğ¸ˆ¤(€€€€€€€€€€€¥˜Ù…±Õ”€ğ€Àè(€€€€€€€€€€€€€€€É…¥Í”Y…±Õ•ÉÉ½È¡˜‰í¹…µ•ô¹”Á•ÕĞÁ…Ìƒ©ÑÉ”»¥…Ñ¥˜¸ˆ¤(€€€€€€€¥˜ÑåÁ”¡É•Á±…•µ•¹Ñ}…Ñ}±•…ÍÑ}½¹•}µ½¹Ñ ¤¥Ì¹½Ğ‰½½°è(€€€€€€€€€€€É…¥Í”QåÁ•ÉÉ½È ‰É•Á±…•µ•¹Ñ}…Ñ}±•…ÍÑ}½¹•}µ½¹Ñ ‘½¥Ğƒ©ÑÉ”Õ¸‰½½³¥•¸ÍÑÉ¥Ğ¸ˆ¤(€€€€€€€¥˜Á±…¹¹•‘}İ••­Ì€ôô€Àè(€€€€€€€€€€€É…¥Í”Y…±Õ•ÉÉ½È ‰Á±…¹¹•‘}İ••­Ì‘½¥Ğƒ©ÑÉ”ÍÑÉ¥Ñ•µ•¹ĞÁ½Í¥Ñ¥˜¸ˆ¤((€€€€€€€…µ•¹‘µ•¹Ñ}¹Õµ‰•É}…™Ñ•È€ô…µ•¹‘µ•¹ÑÍ}ÕÍ•‘}‰•™½É”€¬€Ä(€€€€€€€½Õ¹Ñ•‘}İ••­Í}…™Ñ•È€ôİ••­Í}ÕÍ•‘}‰•™½É”€¬€ À¥˜É•Á±…•µ•¹Ñ}…Ñ}±•…ÍÑ}½¹•}µ½¹Ñ •±Í”Á±…¹¹•‘}İ••­Ì¤(€€€€€€€…µ•¹‘µ•¹Ñ}½¬€ô…µ•¹‘µ•¹Ñ}¹Õµ‰•É}…™Ñ•È€ğô€à(€€€€€€€İ••­Í}½¬€ô½Õ¹Ñ•‘}İ••­Í}…™Ñ•È€ğô€ä(€€€€€€€É•ÑÕÉ¸!½ÕÉÍµ•¹‘µ•¹Ñ…Á…¥ÑåI•ÍÕ±Ğ (€€€€€€€€€€€…µ•¹‘µ•¹ÑÍ}ÕÍ•‘}‰•™½É”õ…µ•¹‘µ•¹ÑÍ}ÕÍ•‘}‰•™½É”°(€€€€€€€€€€€İ••­Í}ÕÍ•‘}‰•™½É”õİ••­Í}ÕÍ•‘}‰•™½É”°(€€€€€€€€€€€Á±…¹¹•‘}İ••­ÌõÁ±…¹¹•‘}İ••­Ì°(€€€€€€€€€€€É•Á±…•µ•¹Ñ}…Ñ}±•…ÍÑ}½¹•}µ½¹Ñ õÉ•Á±…•µ•¹Ñ}…Ñ}±•…ÍÑ}½¹•}µ½¹Ñ °(€€€€€€€€€€€…µ•¹‘µ•¹Ñ}¹Õµ‰•É}…™Ñ•Èõ…µ•¹‘µ•¹Ñ}¹Õµ‰•É}…™Ñ•È°(€€€€€€€€€€€½Õ¹Ñ•‘}İ••­Í}…™Ñ•Èõ½Õ¹Ñ•‘}İ••­Í}…™Ñ•È°(€€€€€€€€€€€…µ•¹‘µ•¹Ñ}½Õ¹Ñ}½µÁ±¥…¹Ğõ…µ•¹‘µ•¹Ñ}½¬°(€€€€€€€€€€€İ••­Í}½Õ¹Ñ}½µÁ±¥…¹Ğõİ••­Í}½¬°(€€€€€€€€€€€½µÁ±¥…¹Ğõ…µ•¹‘µ•¹Ñ}½¬…¹İ••­Í}½¬°(€€€€€€€€¤(
+                raise TypeError(f"{name} doit Ãªtre un boolÃ©en strict.")
+
+        minimum = self.minimum_weekly_hours_for_days(
+            days_per_worked_week,
+            legal_minimum_for_six_days=legal_minimum_for_six_days,
+        )
+        short_route_allowed = not (job_eligible_for_cdii and organization_allows_cdii)
+
+        if student_under_26_derogation or employee_requested_derogation:
+            status = PartTimeMinimumStatus.DEROGATION_APPLIES
+            effective_minimum = None
+        elif contractual_weekly_hours < minimum:
+            status = PartTimeMinimumStatus.BELOW_MINIMUM
+            effective_minimum = minimum
+        else:
+            status = PartTimeMinimumStatus.COMPLIANT
+            effective_minimum = minimum
+
+        return PartTimeMinimumResult(
+            contractual_weekly_hours=contractual_weekly_hours,
+            days_per_worked_week=days_per_worked_week,
+            minimum_weekly_hours=effective_minimum,
+            status=status,
+            student_under_26_derogation=student_under_26_derogation,
+            employee_requested_derogation=employee_requested_derogation,
+            short_part_time_ccns_route_allowed=short_route_allowed,
+            derogation_source_reference=(
+                CCNS_PART_TIME_DEROGATION_STUDENT_SOURCE
+                if student_under_26_derogation
+                else CCNS_PART_TIME_DEROGATION_EMPLOYEE_SOURCE
+                if employee_requested_derogation
+                else None
+            ),
+        )
+
+    def evaluate_complementary_hours(
+        self,
+        *,
+        contractual_weekly_hours: Decimal,
+        complementary_hours: Decimal,
+    ) -> ComplementaryHoursResult:
+        if type(contractual_weekly_hours) is not Decimal:
+            raise TypeError("contractual_weekly_hours doit Ãªtre un Decimal strict.")
+        if type(complementary_hours) is not Decimal:
+            raise TypeError("complementary_hours doit Ãªtre un Decimal strict.")
+        if not _ZERO < contractual_weekly_hours < _LEGAL_WEEKLY_DURATION:
+            raise ValueError("contractual_weekly_hours doit Ãªtre > 0 et < 35 heures.")
+        if complementary_hours < _ZERO:
+            raise ValueError("complementary_hours ne peut pas Ãªtre nÃ©gatif.")
+
+        with localcontext() as ctx:
+            ctx.prec = 28
+            one_third_limit = contractual_weekly_hours / Decimal("3")
+            resulting = contractual_weekly_hours + complementary_hours
+            mandatory_limit = contractual_weekly_hours * _MANDATORY_COMPLEMENTARY_FRACTION
+
+        within_one_third = complementary_hours <= one_third_limit
+        below_legal = resulting < _LEGAL_WEEKLY_DURATION
+        return ComplementaryHoursResult(
+            contractual_weekly_hours=contractual_weekly_hours,
+            complementary_hours=complementary_hours,
+            resulting_weekly_hours=resulting,
+            one_third_limit_hours=one_third_limit,
+            within_one_third_limit=within_one_third,
+            below_legal_duration=below_legal,
+            compliant=within_one_third and below_legal,
+            employee_must_perform=complementary_hours <= mandatory_limit,
+        )
+
+    def evaluate_hours_amendment_capacity(
+        self,
+        *,
+        amendments_used_before: int,
+        weeks_used_before: int,
+        planned_weeks: int,
+        replacement_at_least_one_month: bool = False,
+    ) -> HoursAmendmentCapacityResult:
+        for name, value in (
+            ("amendments_used_before", amendments_used_before),
+            ("weeks_used_before", weeks_used_before),
+            ("planned_weeks", planned_weeks),
+        ):
+            if type(value) is not int or isinstance(value, bool):
+                raise TypeError(f"{name} doit Ãªtre un entier strict.")
+            if value < 0:
+                raise ValueError(f"{name} ne peut pas Ãªtre nÃ©gatif.")
+        if type(replacement_at_least_one_month) is not bool:
+            raise TypeError("replacement_at_least_one_month doit Ãªtre un boolÃ©en strict.")
+        if planned_weeks == 0:
+            raise ValueError("planned_weeks doit Ãªtre strictement positif.")
+
+        amendment_number_after = amendments_used_before + 1
+        counted_weeks_after = weeks_used_before + (0 if replacement_at_least_one_month else planned_weeks)
+        amendment_ok = amendment_number_after <= 8
+        weeks_ok = counted_weeks_after <= 9
+        return HoursAmendmentCapacityResult(
+            amendments_used_before=amendments_used_before,
+            weeks_used_before=weeks_used_before,
+            planned_weeks=planned_weeks,
+            replacement_at_least_one_month=replacement_at_least_one_month,
+            amendment_number_after=amendment_number_after,
+            counted_weeks_after=counted_weeks_after,
+            amendment_count_compliant=amendment_ok,
+            weeks_count_compliant=weeks_ok,
+            compliant=amendment_ok and weeks_ok,
+        )
