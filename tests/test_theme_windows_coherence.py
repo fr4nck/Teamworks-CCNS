@@ -43,7 +43,7 @@ def test_windows_personalize_setting_is_the_primary_windows_source():
 def test_native_controls_are_not_flat_repainted():
     source = _function_source("_apply_palette")
     native_source = _function_source("enable_native_dark_mode")
-    assert "On évite volontairement de repeindre" in source
+    assert "leur apparence native sombre est préférable" in source
     assert 'getattr(wx, "Button", None)' in source
     assert 'getattr(wx, "Choice", None)' in source
     assert 'getattr(wx, "ComboBox", None)' in source
@@ -57,7 +57,23 @@ def test_dark_fallback_uses_distinct_windows_like_surface_levels():
     assert '"control": wx.Colour(50, 50, 50)' in source
 
 
-def test_system_dark_only_repaints_content_left_obviously_light():
+def test_system_dark_repairs_only_obviously_light_surfaces():
     source = _function_source("_apply_palette")
-    assert 'theme_kind == "dark" or _looks_light(current)' in source
-    assert "background = palette[\"control\"]" in source
+    assert 'theme_kind == "dark" or _looks_light(current_bg)' in source
+    assert 'theme_kind == "dark" or _looks_dark(current_fg)' in source
+    assert 'background = palette["window"]' in source
+    assert 'background = palette["panel"]' in source
+    assert 'background = palette["control"]' in source
+
+
+def test_system_mode_keeps_other_widgets_entirely_native():
+    source = _function_source("_apply_palette")
+    assert "Les autres widgets restent entièrement natifs en mode Système" in source
+    assert 'if theme_kind == "dark" and not isinstance(' in source
+
+
+def test_contrast_detection_is_bidirectional():
+    light_source = _function_source("_looks_light")
+    dark_source = _function_source("_looks_dark")
+    assert "_colour_luminance" in light_source
+    assert "_colour_luminance" in dark_source
