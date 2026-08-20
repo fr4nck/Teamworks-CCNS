@@ -26,10 +26,19 @@ def PILtoWx(image):
 
 
 def _echelle_interface():
+    """Retourne l'échelle UI, avec lecture de l'ancienne clé en repli."""
     try:
-        return max(80, min(200, UTILS_Customize.GetValeur(
-            "interface", "echelle_police", "100", type_valeur=int
-        )))
+        valeur = UTILS_Customize.GetValeur(
+            "interface",
+            "echelle_interface",
+            "",
+            ajouter_si_manquant=False,
+        )
+        if valeur in (None, ""):
+            valeur = UTILS_Customize.GetValeur(
+                "interface", "echelle_police", "100", type_valeur=int
+            )
+        return max(80, min(200, int(valeur)))
     except Exception:
         return 100
 
@@ -97,10 +106,14 @@ class CTRL(wx.Button):
         self.AppliquerTheme()
         self.SetInitialSize()
 
-        # Une augmentation de police doit aussi agrandir la cible d'action.
+        # Une augmentation d'échelle doit agrandir la cible complète, pas
+        # uniquement son texte. 36 DIP à 100 % reste compact pour un desktop.
         best = self.GetBestSize()
-        hauteur_min = _echelle_valeur(32, 32)
-        self.SetMinSize((best.GetWidth(), max(best.GetHeight(), hauteur_min)))
+        hauteur_min = _echelle_valeur(36, 36)
+        largeur_min = best.GetWidth()
+        if self.cheminImage not in ("", None) and not self.texte:
+            largeur_min = max(largeur_min, hauteur_min)
+        self.SetMinSize((largeur_min, max(best.GetHeight(), hauteur_min)))
 
     def AppliquerTheme(self):
         """Conserve le rendu natif et utilise la typographie de la plateforme."""
