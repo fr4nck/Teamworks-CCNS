@@ -114,6 +114,9 @@ class Dialog(wx.Dialog):
         self.CentreOnParent()
 
     def OnOk(self, event):
+        # Valeurs historiques TW-121 : conservées et synchronisées pour les
+        # anciens consommateurs de ``interface.theme``.
+        values = ["Systeme", "Clair", "Sombre"]
         accent_codes = [code for code, label in self.ACCENTS]
         appearance_codes = [code for code, label in self.APPEARANCES]
 
@@ -122,6 +125,11 @@ class Dialog(wx.Dialog):
 
         UTILS_Interface.SetTheme(accent_codes[accent_index])
         UTILS_Interface.SetAppearanceMode(appearance_codes[appearance_index])
+        UTILS_Customize.SetValeur(
+            "interface",
+            "theme",
+            values[appearance_index],
+        )
         UTILS_Customize.SetValeur(
             "interface",
             "echelle_police",
