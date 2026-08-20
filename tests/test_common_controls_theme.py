@@ -72,6 +72,25 @@ def test_common_image_button_keeps_native_rendering_and_semantic_text():
     assert "AppliquerTheme" in methods
 
 
+def test_common_image_button_scales_image_and_action_target_directly():
+    source = _source(BUTTON_PATH)
+
+    assert "from Utils import UTILS_Customize" in source
+    assert '"echelle_police"' in source
+    assert "_echelle_taille" in source
+    assert "Image.Resampling.LANCZOS" in source
+    assert "hauteur_min = _echelle_valeur(32, 32)" in source
+    assert "SetMinSize" in source
+
+
+def test_common_image_button_no_longer_contains_runtime_migration_scripts():
+    source = _source(BUTTON_PATH)
+
+    assert "def ModifieFichiers" not in source
+    assert "class Dialog(wx.Dialog)" not in source
+    assert "os.listdir(os.getcwd())" not in source
+
+
 def test_common_theme_controls_remain_valid_python():
     _tree(BANDEAU_PATH)
     _tree(FOOTER_PATH)
