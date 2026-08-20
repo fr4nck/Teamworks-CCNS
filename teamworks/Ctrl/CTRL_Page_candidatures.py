@@ -8,14 +8,11 @@
 
 import Chemins
 from Utils.UTILS_Traduction import _
+from Utils import UTILS_Interface
 import wx
 from Ctrl import CTRL_Bouton_image
-import GestionDB
-import datetime
-import FonctionsPerso
 from Ol import OL_candidatures
 from Ol import OL_entretiens
-
 
 
 class Panel(wx.Panel):
@@ -23,85 +20,116 @@ class Panel(wx.Panel):
         wx.Panel.__init__(self, parent, id, name="page_candidatures", style=wx.TAB_TRAVERSAL)
         self.parent = parent
         self.IDpersonne = IDpersonne
+        self.SetBackgroundColour(UTILS_Interface.GetToken("surface"))
 
-        # Widgets
-        self.staticBox_candidatures = wx.StaticBox(self, -1, _(u"Candidatures"))
-        self.ctrl_candidatures = OL_candidatures.ListView(self, id=-1,  name="OL_candidatures", IDpersonne=IDpersonne, colorerSalaries=False, modeAffichage = "sans_nom", style=wx.LC_REPORT|wx.SUNKEN_BORDER|wx.LC_SINGLE_SEL|wx.LC_HRULES|wx.LC_VRULES)
-        self.ctrl_candidatures.SetMinSize((20, 20))
+        self.titre_candidatures = self._titre(_(u"Candidatures"))
+        self.ctrl_candidatures = OL_candidatures.ListView(
+            self,
+            id=-1,
+            name="OL_candidatures",
+            IDpersonne=IDpersonne,
+            colorerSalaries=False,
+            modeAffichage="sans_nom",
+            style=wx.LC_REPORT | wx.LC_SINGLE_SEL | wx.LC_HRULES | wx.LC_VRULES,
+        )
+        self.ctrl_candidatures.SetMinSize((300, 140))
         self.ctrl_candidatures.MAJ()
-        self.bouton_candidatures_ajouter = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_PNG))
-        self.bouton_candidatures_modifier = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Modifier.png"), wx.BITMAP_TYPE_PNG))
-        self.bouton_candidatures_supprimer = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_PNG))
-        
-        self.staticBox_entretiens = wx.StaticBox(self, -1, _(u"Entretiens"))
-        self.ctrl_entretiens = OL_entretiens.ListView(self, id=-1,  name="OL_entretiens", IDpersonne=IDpersonne, colorerSalaries=False, modeAffichage="sans_nom", style=wx.LC_REPORT|wx.SUNKEN_BORDER|wx.LC_SINGLE_SEL|wx.LC_HRULES|wx.LC_VRULES)
-        self.ctrl_entretiens.SetMinSize((20, 20))
+
+        self.bouton_candidatures_ajouter = self._bouton(_(u"Ajouter"), "Ajouter.png")
+        self.bouton_candidatures_modifier = self._bouton(_(u"Modifier"), "Modifier.png")
+        self.bouton_candidatures_supprimer = self._bouton(_(u"Supprimer"), "Supprimer.png")
+
+        self.titre_entretiens = self._titre(_(u"Entretiens"))
+        self.ctrl_entretiens = OL_entretiens.ListView(
+            self,
+            id=-1,
+            name="OL_entretiens",
+            IDpersonne=IDpersonne,
+            colorerSalaries=False,
+            modeAffichage="sans_nom",
+            style=wx.LC_REPORT | wx.LC_SINGLE_SEL | wx.LC_HRULES | wx.LC_VRULES,
+        )
+        self.ctrl_entretiens.SetMinSize((300, 140))
         self.ctrl_entretiens.MAJ()
-        self.bouton_entretiens_ajouter = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_PNG))
-        self.bouton_entretiens_modifier = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Modifier.png"), wx.BITMAP_TYPE_PNG))
-        self.bouton_entretiens_supprimer = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_PNG))
-        
+
+        self.bouton_entretiens_ajouter = self._bouton(_(u"Ajouter"), "Ajouter.png")
+        self.bouton_entretiens_modifier = self._bouton(_(u"Modifier"), "Modifier.png")
+        self.bouton_entretiens_supprimer = self._bouton(_(u"Supprimer"), "Supprimer.png")
+
         self.__set_properties()
         self.__do_layout()
-        
-        # Binds
+
         self.Bind(wx.EVT_BUTTON, self.OnBoutonAjoutCandidature, self.bouton_candidatures_ajouter)
         self.Bind(wx.EVT_BUTTON, self.OnBoutonModifCandidature, self.bouton_candidatures_modifier)
         self.Bind(wx.EVT_BUTTON, self.OnBoutonSupprCandidature, self.bouton_candidatures_supprimer)
-        
         self.Bind(wx.EVT_BUTTON, self.OnBoutonAjoutEntretien, self.bouton_entretiens_ajouter)
         self.Bind(wx.EVT_BUTTON, self.OnBoutonModifEntretien, self.bouton_entretiens_modifier)
         self.Bind(wx.EVT_BUTTON, self.OnBoutonSupprEntretien, self.bouton_entretiens_supprimer)
 
+    def _titre(self, label):
+        ctrl = wx.StaticText(self, -1, label)
+        font = ctrl.GetFont()
+        font.SetWeight(wx.FONTWEIGHT_BOLD)
+        font.SetPointSize(max(11, font.GetPointSize() + 2))
+        ctrl.SetFont(font)
+        return ctrl
+
+    def _bouton(self, label, image):
+        return CTRL_Bouton_image.CTRL(
+            self,
+            texte=label,
+            cheminImage=Chemins.GetStaticPath("Images/16x16/%s" % image),
+            tailleImage=(20, 20),
+        )
+
     def __set_properties(self):
-        self.bouton_candidatures_ajouter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour saisir uune nouvelle candidature")))
-        self.bouton_candidatures_modifier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier la candidature sélectionnée dans la liste")))
-        self.bouton_candidatures_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer la candidature sélectionnée dans la liste")))
-        self.bouton_entretiens_ajouter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour saisir un nouvel entretien")))
-        self.bouton_entretiens_modifier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier l'entretien sélectionné dans la liste")))
-        self.bouton_entretiens_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer l'entretien sélectionné dans la liste")))
+        self.bouton_candidatures_ajouter.SetToolTip(wx.ToolTip(_(u"Saisir une nouvelle candidature")))
+        self.bouton_candidatures_modifier.SetToolTip(wx.ToolTip(_(u"Modifier la candidature sélectionnée")))
+        self.bouton_candidatures_supprimer.SetToolTip(wx.ToolTip(_(u"Supprimer la candidature sélectionnée")))
+        self.bouton_entretiens_ajouter.SetToolTip(wx.ToolTip(_(u"Saisir un nouvel entretien")))
+        self.bouton_entretiens_modifier.SetToolTip(wx.ToolTip(_(u"Modifier l'entretien sélectionné")))
+        self.bouton_entretiens_supprimer.SetToolTip(wx.ToolTip(_(u"Supprimer l'entretien sélectionné")))
+
+    @staticmethod
+    def _barre_actions(*boutons):
+        sizer = wx.WrapSizer(wx.HORIZONTAL)
+        for bouton in boutons:
+            sizer.Add(bouton, 0, wx.RIGHT | wx.BOTTOM, 6)
+        return sizer
 
     def __do_layout(self):
-        grid_sizer_base = wx.FlexGridSizer(rows=2, cols=1, vgap=10, hgap=10)
-        
-        # --------------
-        # Candidatures
-        staticBox_candidatures = wx.StaticBoxSizer(self.staticBox_candidatures, wx.VERTICAL)
-        grid_sizer_candidatures = wx.FlexGridSizer(rows=2, cols=2, vgap=5, hgap=5)
-        grid_sizer_candidatures.Add(self.ctrl_candidatures, 1, wx.EXPAND, 0)
-        grid_sizer_boutons_candidatures = wx.FlexGridSizer(rows=5, cols=1, vgap=5, hgap=5)
-        grid_sizer_boutons_candidatures.Add(self.bouton_candidatures_ajouter, 0, 0, 0)
-        grid_sizer_boutons_candidatures.Add(self.bouton_candidatures_modifier, 0, 0, 0)
-        grid_sizer_boutons_candidatures.Add(self.bouton_candidatures_supprimer, 0, 0, 0)
-        grid_sizer_candidatures.Add(grid_sizer_boutons_candidatures, 1, wx.EXPAND, 0)
-        grid_sizer_candidatures.AddGrowableRow(0)
-        grid_sizer_candidatures.AddGrowableCol(0)
-        staticBox_candidatures.Add(grid_sizer_candidatures, 1, wx.ALL|wx.EXPAND, 5)
-        grid_sizer_base.Add(staticBox_candidatures, 1, wx.LEFT|wx.RIGHT|wx.TOP|wx.EXPAND, 5)
-        
-        # ---------------
-        # entretiens
-        staticBox_entretiens = wx.StaticBoxSizer(self.staticBox_entretiens, wx.VERTICAL)
-        grid_sizer_entretiens = wx.FlexGridSizer(rows=2, cols=2, vgap=5, hgap=5)
-        grid_sizer_entretiens.Add(self.ctrl_entretiens, 1, wx.EXPAND, 0)
-        grid_sizer_boutons_entretiens = wx.FlexGridSizer(rows=5, cols=1, vgap=5, hgap=5)
-        grid_sizer_boutons_entretiens.Add(self.bouton_entretiens_ajouter, 0, 0, 0)
-        grid_sizer_boutons_entretiens.Add(self.bouton_entretiens_modifier, 0, 0, 0)
-        grid_sizer_boutons_entretiens.Add(self.bouton_entretiens_supprimer, 0, 0, 0)
-##        grid_sizer_boutons_entretiens.Add((10, 10), 0, 0, 0)
-##        grid_sizer_boutons_entretiens.Add(self.bouton_entretiens_imprimer, 0, 0, 0) 
-        grid_sizer_entretiens.Add(grid_sizer_boutons_entretiens, 1, wx.EXPAND, 0)
-        grid_sizer_entretiens.AddGrowableRow(0)
-        grid_sizer_entretiens.AddGrowableCol(0)
-        staticBox_entretiens.Add(grid_sizer_entretiens, 1, wx.ALL|wx.EXPAND, 5)
-        grid_sizer_base.Add(staticBox_entretiens, 1, wx.LEFT|wx.RIGHT|wx.BOTTOM|wx.EXPAND, 5)
-        
-        # ---------------
-        self.SetSizer(grid_sizer_base)
-        grid_sizer_base.Fit(self)
-        grid_sizer_base.AddGrowableRow(0)
-        grid_sizer_base.AddGrowableCol(0)
-        
+        candidatures = wx.BoxSizer(wx.VERTICAL)
+        candidatures.Add(self.titre_candidatures, 0, wx.EXPAND | wx.BOTTOM, 6)
+        candidatures.Add(
+            self._barre_actions(
+                self.bouton_candidatures_ajouter,
+                self.bouton_candidatures_modifier,
+                self.bouton_candidatures_supprimer,
+            ),
+            0,
+            wx.EXPAND | wx.BOTTOM,
+            4,
+        )
+        candidatures.Add(self.ctrl_candidatures, 1, wx.EXPAND)
+
+        entretiens = wx.BoxSizer(wx.VERTICAL)
+        entretiens.Add(self.titre_entretiens, 0, wx.EXPAND | wx.BOTTOM, 6)
+        entretiens.Add(
+            self._barre_actions(
+                self.bouton_entretiens_ajouter,
+                self.bouton_entretiens_modifier,
+                self.bouton_entretiens_supprimer,
+            ),
+            0,
+            wx.EXPAND | wx.BOTTOM,
+            4,
+        )
+        entretiens.Add(self.ctrl_entretiens, 1, wx.EXPAND)
+
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(candidatures, 1, wx.EXPAND | wx.ALL, 10)
+        sizer.Add(entretiens, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
+        self.SetSizer(sizer)
 
     def OnBoutonAjoutCandidature(self, event):
         self.ctrl_candidatures.Ajouter()
@@ -111,13 +139,12 @@ class Panel(wx.Panel):
 
     def OnBoutonSupprCandidature(self, event):
         self.ctrl_candidatures.Supprimer()
-        
+
     def OnBoutonAjoutEntretien(self, event):
         self.ctrl_entretiens.Ajouter()
 
     def OnBoutonModifEntretien(self, event):
         self.ctrl_entretiens.Modifier()
-        
+
     def OnBoutonSupprEntretien(self, event):
         self.ctrl_entretiens.Supprimer()
-        
