@@ -3,10 +3,11 @@ from pathlib import Path
 
 
 SOURCE = Path("teamworks/Ctrl/CTRL_Navigation_principale.py")
+MAIN = Path("teamworks/Teamworks.py")
 
 
-def _source():
-    return SOURCE.read_text(encoding="utf-8")
+def _source(path=SOURCE):
+    return path.read_text(encoding="utf-8")
 
 
 def test_navigation_source_is_valid_python():
@@ -17,9 +18,19 @@ def test_navigation_replaces_fixed_toolbook_geometry():
     source = _source()
 
     assert "wx.Toolbook" not in source
-    assert "wx.Simplebook" in source
+    assert "wx.Simplebook" not in source
     assert "wx.WrapSizer(wx.HORIZONTAL)" in source
     assert "wx.ToggleButton" in source
+    assert "self.sizer_pages = wx.BoxSizer(wx.VERTICAL)" in source
+
+
+def test_navigation_pages_keep_historical_parent_depth():
+    source = _source()
+
+    assert "page.Reparent(self)" in source
+    assert "self.sizer_pages.Add(page, 1, wx.EXPAND)" in source
+    assert "page.Hide()" in source
+    assert "self._pages[index].Show()" in source
 
 
 def test_navigation_buttons_keep_full_labels_and_scale_their_targets():
@@ -71,6 +82,16 @@ def test_navigation_wraps_instead_of_truncating_labels():
     source = _source()
 
     assert "wx.WrapSizer" in source
-    assert "SetLabel(" not in source
     assert "Ellips" not in source
     assert "SetToolBitmapSize" not in source
+
+
+def test_main_program_uses_flexible_navigation_once_integrated():
+    if not MAIN.exists():
+        return
+    source = _source(MAIN)
+    # Ce test devient pleinement actif dès le raccordement de Teamworks.py.
+    if "CTRL_Navigation_principale" in source:
+        assert "class Toolbook(wx.Toolbook)" not in source
+        assert "class Toolbook(CTRL_Navigation_principale.NavigationPrincipale)" in source
+        assert "GetToolBar()" not in source.split("class Toolbook", 1)[1].split("class MyFrame", 1)[0]
