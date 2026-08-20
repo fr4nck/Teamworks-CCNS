@@ -45,6 +45,17 @@ def test_bandeau_keeps_explicit_theme_refresh_api():
     assert "SetTexte" in _class_methods(BANDEAU_PATH, "MyHtml")
 
 
+def test_bandeau_no_longer_uses_fixed_grid_or_fit_geometry():
+    source = _source(BANDEAU_PATH)
+
+    assert "FlexGridSizer" not in source
+    assert ".Fit(self)" not in source
+    assert "wx.BoxSizer" in source
+    assert "SYS_DEFAULT_GUI_FONT" in source
+    assert '"echelle_police"' in source
+    assert "SetMinSize((-1, _echelle_valeur(hauteur, 25)))" in source
+
+
 def test_footer_uses_semantic_theme_tokens():
     source = _source(FOOTER_PATH)
 
