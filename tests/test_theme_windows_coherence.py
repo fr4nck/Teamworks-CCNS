@@ -26,7 +26,7 @@ def test_system_theme_uses_os_detection(monkeypatch):
 def test_windows_personalize_setting_is_the_primary_windows_source():
     source = (TEAMWORKS / "Utils" / "UTILS_Theme.py").read_text(encoding="utf-8")
     assert "AppsUseLightTheme" in source
-    assert r"Themes\\Personalize" in source
+    assert "Themes\\Personalize" in source
     assert "wx.SystemSettings.GetAppearance()" in source
 
 
