@@ -32,7 +32,7 @@ class EspaceGadgets(wx.Panel):
         self.couleur_fond = self._couleur_tuple(UTILS_Interface.GetToken("surface"))
         self.SetBackgroundColour(UTILS_Interface.GetToken("surface"))
 
-        self.manager = aui.AuiManager(self)
+        self.manager = None
         self._gadgets = {}
         self._restauration_en_cours = False
 
@@ -53,6 +53,7 @@ class EspaceGadgets(wx.Panel):
             aui.AuiPaneInfo()
             .Name(nom)
             .Caption(label)
+            .CaptionVisible(False)
             .BestSize((largeur, hauteur))
             .MinSize((160, 110))
             .FloatingSize((largeur, hauteur))
@@ -62,44 +63,57 @@ class EspaceGadgets(wx.Panel):
             .Dockable(True)
             .Movable(True)
             .Resizable(True)
-            .CloseButton(True)
-            .MaximizeButton(True)
+            .Gripper(True)
+            .GripperTop(True)
+            .CloseButton(False)
+            .MaximizeButton(False)
         )
+
+    def _DetruirePanes(self):
+        for gadget in list(self._gadgets.values()):
+            try:
+                gadget.Destroy()
+            except Exception:
+                pass
+        self._gadgets = {}
+
+        if self.manager is not None:
+            try:
+                self.manager.UnInit()
+            except Exception:
+                pass
+            self.manager = None
 
     def Construire(self):
         """Reconstruit les panes puis restaure leur disposition mémorisée."""
         self.Freeze()
         try:
-            self.manager.UnInit()
-        except Exception:
-            pass
+            self._DetruirePanes()
+            self.manager = aui.AuiManager(self)
 
-        self.manager = aui.AuiManager(self)
-        self.Bind(aui.EVT_AUI_PANE_CLOSE, self.OnPaneClose)
-        self._gadgets = {}
+            for index, (nom, parametres) in enumerate(self.listeGadgets):
+                if not parametres.get("affichage", True):
+                    continue
 
-        for index, (nom, parametres) in enumerate(self.listeGadgets):
-            if not parametres.get("affichage", True):
-                continue
+                gadget = Gadget.PanelGadget(
+                    self,
+                    self.couleur_fond,
+                    index,
+                    size=parametres.get("taille", wx.DefaultSize),
+                )
+                self._gadgets[nom] = gadget
+                info = self._info_pane(
+                    nom,
+                    parametres.get("label", nom),
+                    parametres.get("taille", (220, 180)),
+                    index,
+                )
+                self.manager.AddPane(gadget, info)
 
-            gadget = Gadget.PanelGadget(
-                self,
-                self.couleur_fond,
-                index,
-                size=parametres.get("taille", wx.DefaultSize),
-            )
-            self._gadgets[nom] = gadget
-            info = self._info_pane(
-                nom,
-                parametres.get("label", nom),
-                parametres.get("taille", (220, 180)),
-                index,
-            )
-            self.manager.AddPane(gadget, info)
-
-        self._RestaurerPerspective()
-        self.manager.Update()
-        self.Thaw()
+            self._RestaurerPerspective()
+            self.manager.Update()
+        finally:
+            self.Thaw()
 
     def _RestaurerPerspective(self):
         perspective = UTILS_Customize.GetValeur(
@@ -120,7 +134,7 @@ class EspaceGadgets(wx.Panel):
             self._restauration_en_cours = False
 
     def SauverPerspective(self):
-        if self._restauration_en_cours:
+        if self._restauration_en_cours or self.manager is None:
             return
         try:
             perspective = self.manager.SavePerspective()
@@ -131,6 +145,11 @@ class EspaceGadgets(wx.Panel):
             )
         except Exception:
             pass
+
+    def ReinitialiserDisposition(self):
+        """Revient à la disposition flottante initiale."""
+        UTILS_Customize.SetValeur(PERSPECTIVE_SECTION, PERSPECTIVE_KEY, "")
+        self.Construire()
 
     def MAJ(self, listeGadgets=None):
         """Recharge les gadgets sans perdre la disposition courante."""
@@ -188,8 +207,5 @@ class EspaceGadgets(wx.Panel):
     def OnDestroy(self, event):
         if event.GetEventObject() is self:
             self.SauverPerspective()
-            try:
-                self.manager.UnInit()
-            except Exception:
-                pass
+            self._DetruirePanes()
         event.Skip()
