@@ -30,12 +30,22 @@ def test_floating_workspace_uses_native_aui_capabilities():
     assert ".Gripper(True)" in source
 
 
-def test_floating_workspace_persists_its_perspective():
+def test_gadgets_start_visible_and_docked_instead_of_forced_floating():
+    source = _source(FLOATING_PATH)
+    pane_builder = source.split("def _info_pane", 1)[1].split("def _DetruirePanes", 1)[0]
+
+    assert ".Top()" in pane_builder
+    assert ".Row(row)" in pane_builder
+    assert ".Position(position)" in pane_builder
+    assert ".Float()" not in pane_builder
+
+
+def test_floating_workspace_persists_versioned_perspective():
     source = _source(FLOATING_PATH)
 
     assert "SavePerspective" in source
     assert "LoadPerspective" in source
-    assert 'PERSPECTIVE_KEY = "gadgets_perspective"' in source
+    assert 'PERSPECTIVE_KEY = "gadgets_perspective_v2"' in source
     assert "ReinitialiserDisposition" in source
 
 
@@ -43,8 +53,10 @@ def test_floating_workspace_has_recovery_commands():
     source = _source(FLOATING_PATH)
 
     assert "ToutRendreFlottant" in source
+    assert "ToutAncrer" in source
     assert "OnContextMenu" in source
     assert "Tout rendre flottant" in source
+    assert "Tout ancrer dans l'accueil" in source
     assert "Réinitialiser la disposition" in source
 
 
