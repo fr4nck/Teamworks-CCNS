@@ -51,6 +51,16 @@ for rep in os.listdir(REP_COURANT) :
     if os.path.isdir(chemin) and chemin not in sys.path :
         sys.path.insert(2, chemin)
 
+# Diagnostic installé très tôt : un import manquant ou un crash natif survenant
+# avant la création de wx.App doit quand même laisser une trace transmissible.
+try:
+    from Utils import UTILS_Crash
+    UTILS_Crash.InstallerHookMinimal()
+    UTILS_Crash.ActiverFaulthandler()
+except Exception:
+    # Le diagnostic ne doit jamais empêcher Teamworks de démarrer.
+    pass
+
 
 def GetStaticPath(fichier=""):
     """Retourne le chemin Static ou l'asset de marque généré au runtime."""
