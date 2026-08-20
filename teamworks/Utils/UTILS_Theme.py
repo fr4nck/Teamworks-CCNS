@@ -25,7 +25,6 @@ LIGHT_THEME_NAMES = {"clair", "light", "blanc"}
 SYSTEM_THEME_NAMES = {"systeme", "système", "system", "auto"}
 CONFIG_ENCODINGS = ("utf-8-sig", "utf-8", "cp1252")
 
-# Grille desktop compacte. Ces valeurs sont les dimensions de référence à 100 %.
 BASE_METRICS = {
     "space_xs": 4,
     "space_s": 8,
@@ -57,31 +56,19 @@ def _read_config(path):
 
 
 def _customize_path():
-    """Retourne exactement le même emplacement que UTILS_Fichiers.GetRepUtilisateur.
-
-    Cette fonction reste autonome pour éviter la dépendance circulaire
-    UTILS_Customize -> UTILS_Theme -> UTILS_Fichiers -> UTILS_Customize.
-    """
     portable = Path(Chemins.GetMainPath("Portable"))
     if portable.is_dir():
         return portable / "Customize.ini"
-
     config_dir = Path(appdirs.user_config_dir(appname=None, appauthor=False, roaming=True))
     return config_dir / "teamworks" / "Customize.ini"
 
 
 def refresh_preferences():
-    """Invalide le cache après migration ou modification des préférences."""
     global _CONFIG_CACHE
     _CONFIG_CACHE = None
 
 
 def _legacy_theme_as_appearance(value):
-    """Convertit uniquement les anciennes valeurs d'apparence stockées en theme.
-
-    Vert/Bleu/Noir sont désormais des accents. La valeur historique ``Noir`` ne
-    doit donc plus déclencher implicitement le mode sombre.
-    """
     value = (value or "").strip().lower()
     if value in DARK_THEME_NAMES:
         return "dark"
@@ -102,7 +89,6 @@ def _config_values():
         os.environ.get("TEAMWORKS_UI_SCALE", "").strip()
         or os.environ.get("TEAMWORKS_FONT_SCALE", "").strip()
     )
-
     if _CONFIG_CACHE is not None and not env_appearance and not env_scale:
         return _CONFIG_CACHE
 
@@ -116,9 +102,7 @@ def _config_values():
             if not appearance and parser.has_option("interface", "appearance"):
                 appearance = parser.get("interface", "appearance")
             if not appearance and parser.has_option("interface", "theme"):
-                appearance = _legacy_theme_as_appearance(
-                    parser.get("interface", "theme")
-                )
+                appearance = _legacy_theme_as_appearance(parser.get("interface", "theme"))
             if not scale:
                 if parser.has_option("interface", "echelle_interface"):
                     scale = parser.get("interface", "echelle_interface")
@@ -143,8 +127,6 @@ def _config_values():
         interface_scale = 100
 
     values = (appearance, interface_scale)
-    # Ne jamais figer les valeurs par défaut tant que le fichier cible n'existe
-    # pas : il peut être déplacé juste après par la migration de premier lancement.
     if config_exists and not env_appearance and not env_scale:
         _CONFIG_CACHE = values
     return values
@@ -155,7 +137,6 @@ def requested_appearance():
 
 
 def requested_theme():
-    """Alias historique conservé pour les appels existants."""
     return requested_appearance()
 
 
@@ -164,19 +145,16 @@ def interface_scale_percent():
 
 
 def font_scale_percent():
-    """Alias historique : l'ancien zoom de police est devenu échelle d'interface."""
     return interface_scale_percent()
 
 
 def scale_px(value, scale=None, minimum=1):
-    """Met à l'échelle une métrique de référence avec un résultat entier."""
     if scale is None:
         scale = interface_scale_percent()
     return max(minimum, int(round(float(value) * scale / 100.0)))
 
 
 def metrics(scale=None):
-    """Retourne la grille de dimensions cohérente avec l'échelle demandée."""
     if scale is None:
         scale = interface_scale_percent()
     return {name: scale_px(value, scale=scale) for name, value in BASE_METRICS.items()}
@@ -219,7 +197,6 @@ def _colour_luminance(colour):
 
 
 def _native_palette(dark):
-    """Construit une palette de repli à partir des couleurs exposées par l'OS."""
     palette = {
         "surface": _system_colour(wx.SYS_COLOUR_BTNFACE, (240, 240, 240)),
         "surface_low": _system_colour(wx.SYS_COLOUR_BTNFACE, (245, 245, 245)),
@@ -249,12 +226,8 @@ def _native_palette(dark):
 
 
 def _semantic_palette(dark):
-    """Mappe le design system Teamworks sur les familles de contrôles wx."""
     try:
-        # Import tardif indispensable : UTILS_Customize importe ce module au
-        # démarrage, alors que UTILS_Interface dépend lui-même de Customize.
         from Utils import UTILS_Interface
-
         appearance = "dark" if dark else "light"
         return {
             "surface": UTILS_Interface.GetToken("surface", appearance=appearance),
@@ -278,11 +251,7 @@ def _scale_font(window, scale):
     try:
         font = window.GetFont()
         if font and font.IsOk():
-            current = (
-                font.GetFractionalPointSize()
-                if hasattr(font, "GetFractionalPointSize")
-                else font.GetPointSize()
-            )
+            current = font.GetFractionalPointSize() if hasattr(font, "GetFractionalPointSize") else font.GetPointSize()
             new_size = max(6.0, current * scale / 100.0)
             if hasattr(font, "SetFractionalPointSize"):
                 font.SetFractionalPointSize(new_size)
@@ -306,9 +275,7 @@ def _minimum_height(window, height):
 
 
 def _apply_metrics(window, scale):
-    """Met à l'échelle les métriques natives sans refaire les layouts métier."""
     ui = metrics(scale)
-
     try:
         if hasattr(window, "InvalidateBestSize"):
             window.InvalidateBestSize()
@@ -326,7 +293,6 @@ def _apply_metrics(window, scale):
             _minimum_height(window, window.GetBestSize().GetHeight())
         except Exception:
             pass
-
     elif isinstance(window, wx.Notebook):
         try:
             if hasattr(window, "SetPadding"):
@@ -353,17 +319,20 @@ def _set_colours(window, background=None, foreground=None):
         pass
 
 
-def _apply_objectlistview_group_theme(window, palette):
-    """Thématise uniquement le chrome de groupes ObjectListView.
+def _apply_objectlistview_theme(window, palette):
+    """Applique uniquement le chrome visuel exposé publiquement par OLV.
 
-    GroupListView expose ses couleurs de groupe comme attributs publics. On ne
-    touche ni aux colonnes, ni aux images de checkboxes, ni aux handlers de clic.
+    Aucune colonne, checkbox ni callback métier n'est modifié ici.
     """
-    if not hasattr(window, "groupTextColour") or not hasattr(window, "groupBackgroundColour"):
-        return
     try:
-        window.groupTextColour = palette["text"]
-        window.groupBackgroundColour = palette["surface_high"]
+        if hasattr(window, "oddRowsBackColor"):
+            window.oddRowsBackColor = palette["surface_low"]
+        if hasattr(window, "evenRowsBackColor"):
+            window.evenRowsBackColor = palette["control"]
+        if hasattr(window, "groupTextColour"):
+            window.groupTextColour = palette["text"]
+        if hasattr(window, "groupBackgroundColour"):
+            window.groupBackgroundColour = palette["surface_high"]
         group_font = getattr(window, "groupFont", None)
         if group_font is not None and group_font.IsOk():
             group_font.SetWeight(wx.FONTWEIGHT_BOLD)
@@ -373,10 +342,8 @@ def _apply_objectlistview_group_theme(window, palette):
 
 
 def _apply_palette(window, palette, dark):
-    """Applique les rôles sémantiques sans redessiner les widgets natifs."""
     background = None
     foreground = None
-
     input_types = (
         wx.TextCtrl,
         wx.ComboBox,
@@ -400,7 +367,6 @@ def _apply_palette(window, palette, dark):
         background = palette["surface"]
         foreground = palette["text"]
     elif isinstance(window, wx.Button):
-        # Conserver le rendu natif du bouton : texte seulement.
         foreground = palette["button_text"]
     elif isinstance(window, (wx.StaticText, wx.CheckBox, wx.RadioButton)):
         foreground = palette["text"]
@@ -408,10 +374,8 @@ def _apply_palette(window, palette, dark):
         foreground = palette["outline"]
 
     _set_colours(window, background=background, foreground=foreground)
-    _apply_objectlistview_group_theme(window, palette)
+    _apply_objectlistview_theme(window, palette)
 
-    # État de liste vide d'ObjectListView : il s'agit d'un contrôle enfant
-    # spécifique qui n'est pas toujours parcouru de manière fiable par wx.
     empty = getattr(window, "stEmptyListMsg", None)
     if empty is not None:
         _set_colours(empty, background=palette["control"], foreground=palette["text_variant"])
@@ -420,7 +384,6 @@ def _apply_palette(window, palette, dark):
 def apply_to_window(window, recursive=True, theme=None, scale=None, palette=None):
     if window is None:
         return
-
     if theme is None or scale is None:
         configured_theme, configured_scale = _config_values()
         theme = configured_theme if theme is None else theme
