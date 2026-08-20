@@ -5,13 +5,12 @@
 import wx
 
 from Utils import UTILS_Customize
+from Utils import UTILS_Theme
 
 
 class Dialog(wx.Dialog):
-    THEMES = ["Système", "Clair", "Sombre"]
-
     def __init__(self, parent):
-        super().__init__(parent, title="Préférences d'affichage", size=(650, 490))
+        super().__init__(parent, title="Préférences d'affichage", size=(650, 525))
 
         panel = wx.Panel(self)
         main = wx.BoxSizer(wx.VERTICAL)
@@ -21,6 +20,9 @@ class Dialog(wx.Dialog):
         font.SetWeight(wx.FONTWEIGHT_BOLD)
         title.SetFont(font)
         main.Add(title, 0, wx.ALL, 12)
+
+        system_state = "sombre" if UTILS_Theme.is_dark_theme("Systeme") else "clair"
+        self.THEMES = [f"Système — Windows est {system_state}", "Clair", "Sombre"]
 
         grid = wx.FlexGridSizer(2, 2, 12, 12)
         grid.AddGrowableCol(1, 1)
@@ -52,6 +54,17 @@ class Dialog(wx.Dialog):
         scale_row.Add(wx.StaticText(panel, label=" %"), 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 4)
         grid.Add(scale_row, 0, wx.ALIGN_LEFT)
         main.Add(grid, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 16)
+
+        theme_help = wx.StaticText(
+            panel,
+            label=(
+                "Système suit le mode clair/sombre de Windows et conserve autant que possible "
+                "le rendu natif des contrôles. Sombre force une palette sombre lorsque vous "
+                "souhaitez l'utiliser indépendamment du réglage Windows."
+            ),
+        )
+        theme_help.Wrap(600)
+        main.Add(theme_help, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 16)
 
         organisation_box = wx.StaticBoxSizer(wx.VERTICAL, panel, "Structure / Association")
         description = wx.StaticText(
@@ -93,8 +106,8 @@ class Dialog(wx.Dialog):
         main.AddStretchSpacer()
 
         buttons = wx.StdDialogButtonSizer()
-        ok_button = wx.Button(panel, wx.ID_OK)
-        cancel_button = wx.Button(panel, wx.ID_CANCEL)
+        ok_button = wx.Button(panel, wx.ID_OK, "Valider")
+        cancel_button = wx.Button(panel, wx.ID_CANCEL, "Annuler")
         buttons.AddButton(ok_button)
         buttons.AddButton(cancel_button)
         buttons.Realize()
