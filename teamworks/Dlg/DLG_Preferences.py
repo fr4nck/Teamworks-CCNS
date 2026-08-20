@@ -11,7 +11,7 @@ class Dialog(wx.Dialog):
     THEMES = ["Système", "Clair", "Sombre"]
 
     def __init__(self, parent):
-        super().__init__(parent, title="Préférences d'affichage", size=(460, 300))
+        super().__init__(parent, title="Préférences d'affichage", size=(480, 320))
 
         panel = wx.Panel(self)
         main = wx.BoxSizer(wx.VERTICAL)
@@ -37,12 +37,21 @@ class Dialog(wx.Dialog):
         self.theme.SetSelection(index)
         grid.Add(self.theme, 1, wx.EXPAND)
 
-        grid.Add(wx.StaticText(panel, label="Taille des polices :"), 0, wx.ALIGN_CENTER_VERTICAL)
+        grid.Add(wx.StaticText(panel, label="Échelle de l'interface :"), 0, wx.ALIGN_CENTER_VERTICAL)
         self.scale = wx.SpinCtrl(panel, min=80, max=200, initial=100)
         try:
             current_scale = UTILS_Customize.GetValeur(
-                "interface", "echelle_police", "100", type_valeur=int
+                "interface",
+                "echelle_interface",
+                "",
+                ajouter_si_manquant=False,
             )
+            if current_scale in (None, ""):
+                current_scale = UTILS_Customize.GetValeur(
+                    "interface", "echelle_police", "100", type_valeur=int
+                )
+            else:
+                current_scale = int(current_scale)
         except Exception:
             current_scale = 100
         self.scale.SetValue(max(80, min(200, current_scale)))
@@ -53,6 +62,18 @@ class Dialog(wx.Dialog):
         grid.Add(scale_row, 0, wx.ALIGN_LEFT)
 
         main.Add(grid, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 16)
+        main.Add(
+            wx.StaticText(
+                panel,
+                label=(
+                    "L'échelle agit ensemble sur les textes, les icônes, les barres d'outils "
+                    "et la hauteur des contrôles."
+                ),
+            ),
+            0,
+            wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP,
+            16,
+        )
         main.Add(
             wx.StaticText(
                 panel,
@@ -81,9 +102,10 @@ class Dialog(wx.Dialog):
         UTILS_Customize.SetValeur(
             "interface", "theme", values[max(0, self.theme.GetSelection())]
         )
-        UTILS_Customize.SetValeur(
-            "interface", "echelle_police", str(self.scale.GetValue())
-        )
+        scale = str(self.scale.GetValue())
+        # Nouvelle clé explicite + miroir historique pour les versions antérieures.
+        UTILS_Customize.SetValeur("interface", "echelle_interface", scale)
+        UTILS_Customize.SetValeur("interface", "echelle_police", scale)
         wx.MessageBox(
             "Les préférences seront appliquées au prochain démarrage.",
             "Préférences enregistrées",
