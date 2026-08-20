@@ -27,7 +27,8 @@ UTILS_Theme.install_auto_theming()
 
 LISTE_DONNEES = [
     ("interface", [
-        ("theme", "Systeme"),
+        ("theme", "Vert"),
+        ("appearance", "system"),
         ("echelle_police", "100"),
     ]),
     ("journal", [
@@ -121,4 +122,4 @@ def SetValeur(section="", cle="", valeur=""):
 
 
 if __name__ == u"__main__":
-    print(("GET :", GetValeur("interface", "theme", "Systeme")))
+    print(("GET :", GetValeur("interface", "theme", "Vert")))
