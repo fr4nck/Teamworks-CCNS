@@ -3,6 +3,7 @@ from pathlib import Path
 
 
 FLOATING_PATH = Path("teamworks/Ctrl/CTRL_Gadgets_flottants.py")
+GADGET_PATH = Path("teamworks/Gadget.py")
 HOME_PATH = Path("teamworks/Ctrl/CTRL_Accueil.py")
 
 
@@ -14,8 +15,9 @@ def _tree(path):
     return ast.parse(_source(path))
 
 
-def test_floating_gadgets_module_is_valid_python():
+def test_gadget_modules_are_valid_python():
     _tree(FLOATING_PATH)
+    _tree(GADGET_PATH)
 
 
 def test_floating_workspace_uses_native_aui_capabilities():
@@ -60,22 +62,44 @@ def test_floating_workspace_has_recovery_commands():
     assert "Réinitialiser la disposition" in source
 
 
-def test_floating_gadget_chrome_uses_semantic_tokens():
-    source = _source(FLOATING_PATH)
+def test_gadget_chrome_is_owned_by_the_component_and_uses_semantic_tokens():
+    host = _source(FLOATING_PATH)
+    gadget = _source(GADGET_PATH)
 
-    assert "AppliquerThemeGadget" in source
-    assert 'self._token_tuple("surface")' in source
-    assert 'self._token_tuple("surface_container_highest")' in source
-    assert 'self._token_tuple("surface_container_high")' in source
-    assert 'self._token_tuple("outline_variant")' in source
-    assert 'self._token_tuple("on_surface")' in source
+    assert "AppliquerThemeGadget" in host
+    assert 'getattr(gadget, "AppliquerTheme", None)' in host
+    assert "def AppliquerTheme(self):" in gadget
+    assert 'GetToken("surface")' in gadget
+    assert 'GetToken("surface_container_high")' in gadget
+    assert 'GetToken("on_surface")' in gadget
+    assert 'GetToken("outline_variant")' in gadget
 
 
-def test_custom_gadget_content_colours_are_not_overwritten_blindly():
-    source = _source(FLOATING_PATH)
+def test_gadget_chrome_no_longer_uses_historical_fixed_paint_layout():
+    source = _source(GADGET_PATH)
+    panel = source.split("class PanelGadget", 1)[1].split(
+        "class Gadget_BlocNotes", 1
+    )[0]
 
-    assert 'getattr(gadget, "couleurFondCadre", None) == (214, 223, 247)' in source
-    assert 'gadget.couleurFondCadre = self._token_tuple("surface_container_low")' in source
+    assert "FlexGridSizer" not in panel
+    assert ".Fit(" not in panel
+    assert "GradientFillLinear" not in panel
+    assert "wx.Font(8" not in panel
+    assert "wx.BoxSizer" in panel
+    assert "wx.StaticText" in panel
+    assert "wx.BitmapButton" in source
+    assert "EVT_BUTTON" in panel
+
+
+def test_gadget_title_controls_scale_with_interface():
+    source = _source(GADGET_PATH)
+
+    assert '"echelle_interface"' in source
+    assert '"echelle_police"' in source  # repli de migration uniquement
+    assert "ajouter_si_manquant=False" in source
+    assert "self.hauteurTitre = max(32" in source
+    assert "cote = max(30" in source
+    assert "wx.IMAGE_QUALITY_HIGH" in source
 
 
 def test_home_screen_uses_floating_workspace_instead_of_html_layout():
@@ -87,7 +111,7 @@ def test_home_screen_uses_floating_workspace_instead_of_html_layout():
     assert 'UTILS_Interface.GetToken("surface")' in source
 
 
-def test_floating_workspace_keeps_legacy_gadget_contract():
+def test_floating_workspace_keeps_gadget_business_contract():
     source = _source(FLOATING_PATH)
 
     assert "Gadget.PanelGadget(" in source
@@ -109,13 +133,26 @@ def test_hiding_one_gadget_does_not_rebuild_every_gadget():
     assert "self.Construire()" not in maj.split("if self.manager is None:", 1)[1].split("visibles =", 1)[1]
 
 
-def test_closing_button_does_not_write_visibility_twice():
+def test_closing_gadget_repaints_before_persistence():
     source = _source(FLOATING_PATH)
     fermer = source.split("def Fermer_Gadget", 1)[1].split("def Ouvre_Gadget", 1)[0]
 
-    assert 'getattr(gadget, "paramGadget", {}).get("affichage", True) is not False' in fermer
-    assert 'gadget.SaveConfig({"affichage": False})' in fermer
+    hide_pos = fermer.index("pane.Hide()")
+    update_pos = fermer.index("self.manager.Update()")
+    persist_pos = fermer.index("self.PlanifierVisibilite")
+    assert hide_pos < update_pos < persist_pos
+    assert "gadget.SaveConfig" not in fermer
     assert "self.Construire()" not in fermer
+
+
+def test_visibility_and_perspective_writes_are_deferred_and_deduplicated():
+    source = _source(FLOATING_PATH)
+
+    assert "def PlanifierVisibilite" in source
+    assert "wx.CallLater(" in source
+    assert "def PlanifierSauvegardePerspective" in source
+    assert "self._timer_perspective.Stop()" in source
+    assert "self._timers_visibilite" in source
 
 
 def test_opening_one_missing_gadget_does_not_rebuild_dashboard():
@@ -123,6 +160,6 @@ def test_opening_one_missing_gadget_does_not_rebuild_dashboard():
     ouvrir = source.split("def Ouvre_Gadget", 1)[1].split("def OnPaneClose", 1)[0]
 
     assert "_CreerGadget" in ouvrir
-    assert 'gadget.SaveConfig({"affichage": True})' in ouvrir
+    assert "PlanifierVisibilite" in ouvrir
     assert "self.Construire()" not in ouvrir
     assert "DetachPane" in source
