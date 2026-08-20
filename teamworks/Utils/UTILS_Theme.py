@@ -3,9 +3,9 @@
 """Gestion centralisée de l'affichage Teamworks-CCNS.
 
 Le thème d'accent (Vert/Bleu/Noir) et l'apparence (clair/sombre/système) sont
-volontairement séparés. Ce module applique l'apparence aux contrôles wx natifs
-et délègue les couleurs sémantiques à ``UTILS_Interface`` lorsque celui-ci est
-disponible.
+volontairement séparés. Ce module applique l'apparence aux contrôles wx natifs,
+délègue les couleurs sémantiques à ``UTILS_Interface`` et met à l'échelle les
+métriques d'interface sans réintroduire le ``wx.Toolbook`` historique.
 """
 
 from __future__ import annotations
@@ -20,10 +20,22 @@ import wx
 
 import Chemins
 
-DARK_THEME_NAMES = {"sombre", "dark", "noir"}
+DARK_THEME_NAMES = {"sombre", "dark"}
 LIGHT_THEME_NAMES = {"clair", "light", "blanc"}
 SYSTEM_THEME_NAMES = {"systeme", "système", "system", "auto"}
 CONFIG_ENCODINGS = ("utf-8-sig", "utf-8", "cp1252")
+
+# Grille desktop compacte. Ces valeurs sont les dimensions de référence à 100 %.
+BASE_METRICS = {
+    "space_xs": 4,
+    "space_s": 8,
+    "space_m": 12,
+    "space_l": 16,
+    "control_height": 28,
+    "toolbar_icon": 24,
+    "tab_padding_x": 10,
+    "tab_padding_y": 6,
+}
 
 _PATCHED = False
 _MENU_INSTALLED = False
@@ -71,7 +83,7 @@ def _legacy_theme_as_appearance(value):
     doit donc plus déclencher implicitement le mode sombre.
     """
     value = (value or "").strip().lower()
-    if value in {"sombre", "dark"}:
+    if value in DARK_THEME_NAMES:
         return "dark"
     if value in LIGHT_THEME_NAMES:
         return "light"
@@ -86,7 +98,10 @@ def _config_values():
         os.environ.get("TEAMWORKS_APPEARANCE", "").strip()
         or os.environ.get("TEAMWORKS_THEME", "").strip()
     )
-    env_scale = os.environ.get("TEAMWORKS_FONT_SCALE", "").strip()
+    env_scale = (
+        os.environ.get("TEAMWORKS_UI_SCALE", "").strip()
+        or os.environ.get("TEAMWORKS_FONT_SCALE", "").strip()
+    )
 
     if _CONFIG_CACHE is not None and not env_appearance and not env_scale:
         return _CONFIG_CACHE
@@ -104,8 +119,11 @@ def _config_values():
                 appearance = _legacy_theme_as_appearance(
                     parser.get("interface", "theme")
                 )
-            if not scale and parser.has_option("interface", "echelle_police"):
-                scale = parser.get("interface", "echelle_police")
+            if not scale:
+                if parser.has_option("interface", "echelle_interface"):
+                    scale = parser.get("interface", "echelle_interface")
+                elif parser.has_option("interface", "echelle_police"):
+                    scale = parser.get("interface", "echelle_police")
         except (OSError, ValueError):
             pass
 
@@ -120,11 +138,11 @@ def _config_values():
         appearance = "system"
 
     try:
-        font_scale = max(80, min(200, int(scale or "100")))
+        interface_scale = max(80, min(200, int(scale or "100")))
     except ValueError:
-        font_scale = 100
+        interface_scale = 100
 
-    values = (appearance, font_scale)
+    values = (appearance, interface_scale)
     # Ne jamais figer les valeurs par défaut tant que le fichier cible n'existe
     # pas : il peut être déplacé juste après par la migration de premier lancement.
     if config_exists and not env_appearance and not env_scale:
@@ -141,8 +159,27 @@ def requested_theme():
     return requested_appearance()
 
 
-def font_scale_percent():
+def interface_scale_percent():
     return _config_values()[1]
+
+
+def font_scale_percent():
+    """Alias historique : l'ancien zoom de police est devenu échelle d'interface."""
+    return interface_scale_percent()
+
+
+def scale_px(value, scale=None, minimum=1):
+    """Met à l'échelle une métrique de référence avec un résultat entier."""
+    if scale is None:
+        scale = interface_scale_percent()
+    return max(minimum, int(round(float(value) * scale / 100.0)))
+
+
+def metrics(scale=None):
+    """Retourne la grille de dimensions cohérente avec l'échelle demandée."""
+    if scale is None:
+        scale = interface_scale_percent()
+    return {name: scale_px(value, scale=scale) for name, value in BASE_METRICS.items()}
 
 
 def is_dark_theme(theme=None):
@@ -238,7 +275,11 @@ def _scale_font(window, scale):
     try:
         font = window.GetFont()
         if font and font.IsOk():
-            current = font.GetFractionalPointSize() if hasattr(font, "GetFractionalPointSize") else font.GetPointSize()
+            current = (
+                font.GetFractionalPointSize()
+                if hasattr(font, "GetFractionalPointSize")
+                else font.GetPointSize()
+            )
             new_size = max(6.0, current * scale / 100.0)
             if hasattr(font, "SetFractionalPointSize"):
                 font.SetFractionalPointSize(new_size)
@@ -248,6 +289,55 @@ def _scale_font(window, scale):
             window._teamworks_font_scaled = True
     except Exception:
         pass
+
+
+def _minimum_height(window, height):
+    try:
+        minimum = window.GetMinSize()
+        width = minimum.GetWidth() if minimum else -1
+        current_height = minimum.GetHeight() if minimum else -1
+        if current_height < height:
+            window.SetMinSize((width, height))
+    except Exception:
+        pass
+
+
+def _apply_metrics(window, scale):
+    """Met à l'échelle les métriques natives sans refaire les layouts métier."""
+    ui = metrics(scale)
+
+    try:
+        if hasattr(window, "InvalidateBestSize"):
+            window.InvalidateBestSize()
+    except Exception:
+        pass
+
+    if isinstance(window, wx.ToolBar):
+        try:
+            window.SetToolBitmapSize((ui["toolbar_icon"], ui["toolbar_icon"]))
+            if hasattr(window, "SetToolPacking"):
+                window.SetToolPacking(ui["space_xs"])
+            if hasattr(window, "SetMargins"):
+                window.SetMargins(ui["space_s"], ui["space_xs"])
+            window.Realize()
+            _minimum_height(window, window.GetBestSize().GetHeight())
+        except Exception:
+            pass
+
+    elif isinstance(window, wx.Notebook):
+        try:
+            if hasattr(window, "SetPadding"):
+                window.SetPadding((ui["tab_padding_x"], ui["tab_padding_y"]))
+        except Exception:
+            pass
+
+    controls = (wx.Button, wx.TextCtrl, wx.ComboBox, wx.Choice, wx.SpinCtrl)
+    if hasattr(wx, "ToggleButton"):
+        controls = controls + (wx.ToggleButton,)
+    if hasattr(wx, "SearchCtrl"):
+        controls = controls + (wx.SearchCtrl,)
+    if isinstance(window, controls):
+        _minimum_height(window, ui["control_height"])
 
 
 def _set_colours(window, background=None, foreground=None):
@@ -316,6 +406,7 @@ def apply_to_window(window, recursive=True, theme=None, scale=None, palette=None
     palette = palette or _semantic_palette(dark)
 
     _scale_font(window, scale)
+    _apply_metrics(window, scale)
     _apply_palette(window, palette, dark)
 
     if recursive:
