@@ -18,6 +18,7 @@ def _tree(path):
 def test_gadget_modules_are_valid_python():
     _tree(FLOATING_PATH)
     _tree(GADGET_PATH)
+    _tree(HOME_PATH)
 
 
 def test_floating_workspace_uses_native_aui_capabilities():
@@ -109,6 +110,34 @@ def test_home_screen_uses_floating_workspace_instead_of_html_layout():
     assert "class MyHtmlWindow(CTRL_Gadgets_flottants.EspaceGadgets)" in source
     assert "wxp module=\"Gadget\"" not in source
     assert 'UTILS_Interface.GetToken("surface")' in source
+
+
+def test_home_dashboard_owns_the_full_work_surface():
+    source = _source(HOME_PATH)
+    panel = source.split("class Panel(wx.Panel):", 1)[1].split(
+        "class AffichageGadgets", 1
+    )[0]
+
+    assert "Logo_accueil.png" not in panel
+    assert "FlexGridSizer" not in panel
+    assert "wx.BoxSizer(wx.VERTICAL)" in panel
+    assert "sizer.Add(self.html, 1, wx.EXPAND)" in panel
+
+
+def test_home_refresh_does_not_double_freeze_aui():
+    source = _source(HOME_PATH)
+    maj = source.split("def MAJ_Gadgets", 1)[1].split("def MAJpanel", 1)[0]
+
+    assert "Freeze(" not in maj
+    assert "Thaw(" not in maj
+    assert "self.html.MAJ(self.listeGadgets)" in maj
+
+
+def test_home_parses_persisted_gadgets_without_eval():
+    source = _source(HOME_PATH)
+
+    assert "ast.literal_eval" in source
+    assert "eval(" not in source.replace("literal_eval(", "")
 
 
 def test_floating_workspace_keeps_gadget_business_contract():
