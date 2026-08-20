@@ -6,13 +6,10 @@
 # Licence:      Licence GNU GPL
 #-----------------------------------------------------------
 
-import Chemins
-from Utils.UTILS_Traduction import _
 import wx
-from Ctrl import CTRL_Bouton_image
 from Ctrl import CTRL_Questionnaire
+from Utils import UTILS_Interface
 import GestionDB
-
 
 
 class Panel(wx.Panel):
@@ -21,79 +18,127 @@ class Panel(wx.Panel):
         self.parent = parent
         self.IDpersonne = IDpersonne
         self.majEffectuee = False
-        
-        # Widgets
-        self.staticBox_staticbox = wx.StaticBox(self, -1, _(u"Questionnaire"))
-        self.ctrl_questionnaire = CTRL_Questionnaire.CTRL(self, type="individu", IDindividu=self.IDpersonne, 
-                                                                                        largeurReponse=335)
-        
-        self.__do_layout()
-        
-        # MAJ
-        self.MAJ() 
+        self._ajustement_en_cours = False
+        self.SetBackgroundColour(UTILS_Interface.GetToken("surface"))
 
+        self.titre = wx.StaticText(self, -1, "Questionnaire")
+        font = self.titre.GetFont()
+        font.SetWeight(wx.FONTWEIGHT_BOLD)
+        font.SetPointSize(max(11, font.GetPointSize() + 2))
+        self.titre.SetFont(font)
 
-    def __do_layout(self):
-        grid_sizer_base = wx.FlexGridSizer(rows=2, cols=1, vgap=10, hgap=10)
-        staticBox = wx.StaticBoxSizer(self.staticBox_staticbox, wx.VERTICAL)
-        staticBox.Add(self.ctrl_questionnaire, 1, wx.EXPAND|wx.ALL, 5)
-        grid_sizer_base.Add(staticBox, 1, wx.EXPAND|wx.ALL, 5)
-        
-        self.SetSizer(grid_sizer_base)
-        grid_sizer_base.Fit(self)
-        grid_sizer_base.AddGrowableRow(0)
-        grid_sizer_base.AddGrowableCol(0)
+        # Les valeurs ne sont que des minima d'initialisation : OnSize répartit
+        # ensuite toute la largeur réellement disponible.
+        self.ctrl_questionnaire = CTRL_Questionnaire.CTRL(
+            self,
+            type="individu",
+            IDindividu=self.IDpersonne,
+            largeurQuestion=300,
+            largeurReponse=420,
+        )
+        self.ctrl_questionnaire.SetBackgroundColour(
+            UTILS_Interface.GetToken("surface_container_lowest")
+        )
+
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self.titre, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 10)
+        sizer.Add(self.ctrl_questionnaire, 1, wx.EXPAND | wx.ALL, 8)
+        self.SetSizer(sizer)
+
+        self.Bind(wx.EVT_SIZE, self.OnSize)
+        self.MAJ()
+        wx.CallAfter(self.AjusterLargeurs)
+
+    def OnSize(self, event):
+        wx.CallAfter(self.AjusterLargeurs)
+        event.Skip()
+
+    def AjusterLargeurs(self):
+        """Répartit la largeur entre question et réponse, contrôles compris."""
+        if self._ajustement_en_cours:
+            return
+        try:
+            largeur = self.ctrl_questionnaire.GetClientSize().GetWidth() - 28
+        except Exception:
+            return
+        if largeur < 520:
+            return
+
+        largeur_question = max(240, int(largeur * 0.38))
+        largeur_reponse = max(280, largeur - largeur_question)
+        largeur_ctrl = max(260, largeur_reponse - 12)
+
+        self._ajustement_en_cours = True
+        try:
+            self.ctrl_questionnaire.largeurQuestion = largeur_question
+            self.ctrl_questionnaire.largeurReponse = largeur_reponse
+            self.ctrl_questionnaire.SetColumnWidth(0, largeur_question)
+            self.ctrl_questionnaire.SetColumnWidth(1, largeur_reponse)
+
+            for categorie in self.ctrl_questionnaire.dictCategories.values():
+                for track in categorie.get("questions", []):
+                    ctrl = getattr(track, "ctrl", None)
+                    if ctrl is None:
+                        continue
+                    track.largeur = largeur_ctrl
+                    try:
+                        taille = ctrl.GetSize()
+                        ctrl.SetMinSize((largeur_ctrl, taille.GetHeight()))
+                        ctrl.SetSize((largeur_ctrl, taille.GetHeight()))
+                    except Exception:
+                        pass
+
+            try:
+                self.ctrl_questionnaire.GetMainWindow().CalculatePositions()
+            except Exception:
+                pass
+            self.ctrl_questionnaire.Refresh()
+        finally:
+            self._ajustement_en_cours = False
 
     def MAJ(self):
-        """ MAJ integrale du controle avec MAJ des donnees """
-        if self.majEffectuee == True :
+        """MAJ intégrale du contrôle avec MAJ des données."""
+        if self.majEffectuee:
             return
-        self.ctrl_questionnaire.MAJ() 
+        self.ctrl_questionnaire.MAJ()
         self.majEffectuee = True
-        
-    def ValidationData(self):
-        """ Return True si les données sont valides et pretes à être sauvegardées """
-        return True
-    
-    def Sauvegarde(self):
-        valeurs = self.ctrl_questionnaire.GetValeurs() 
-        dictReponses = self.ctrl_questionnaire.GetDictReponses() 
-        dictValeursInitiales = self.ctrl_questionnaire.GetDictValeursInitiales()
-        
-        # Sauvegarde
-        DB = GestionDB.DB()
-        for IDquestion, reponse in valeurs.items() :            
-            # Si la réponse est différente de la réponse initiale
-            if reponse != dictValeursInitiales[IDquestion] or reponse == "##DOCUMENTS##" :
+        wx.CallAfter(self.AjusterLargeurs)
 
+    def ValidationData(self):
+        return True
+
+    def Sauvegarde(self):
+        valeurs = self.ctrl_questionnaire.GetValeurs()
+        dictReponses = self.ctrl_questionnaire.GetDictReponses()
+        dictValeursInitiales = self.ctrl_questionnaire.GetDictValeursInitiales()
+
+        DB = GestionDB.DB()
+        for IDquestion, reponse in valeurs.items():
+            if reponse != dictValeursInitiales[IDquestion] or reponse == "##DOCUMENTS##":
                 if IDquestion in dictReponses:
                     IDreponse = dictReponses[IDquestion]["IDreponse"]
                 else:
                     IDreponse = None
-                
-                # Si c'est un document, on regarde s'il y a des docs à sauver
+
                 sauvegarder = True
-                if reponse == "##DOCUMENTS##" :
+                if reponse == "##DOCUMENTS##":
                     nbreDocuments = self.ctrl_questionnaire.GetNbreDocuments(IDquestion)
-                    if nbreDocuments == 0 :
+                    if nbreDocuments == 0:
                         sauvegarder = False
-                
-                # Sauvegarde la réponse
-                if sauvegarder == True :
-                    listeDonnees = [    
+
+                if sauvegarder:
+                    listeDonnees = [
                         ("IDquestion", IDquestion),
                         ("IDindividu", self.IDpersonne),
                         ("reponse", reponse),
-                        ]
-                    if IDreponse == None :
+                    ]
+                    if IDreponse is None:
                         IDreponse = DB.ReqInsert("questionnaire_reponses", listeDonnees)
                     else:
                         DB.ReqMAJ("questionnaire_reponses", listeDonnees, "IDreponse", IDreponse)
-                
-                # Sauvegarde du contrôle Porte-documents
-                if reponse == "##DOCUMENTS##" :
+
+                if reponse == "##DOCUMENTS##":
                     nbreDocuments = self.ctrl_questionnaire.SauvegardeDocuments(IDquestion, IDreponse)
-                    if nbreDocuments == 0 and IDreponse != None :
+                    if nbreDocuments == 0 and IDreponse is not None:
                         DB.ReqDEL("questionnaire_reponses", "IDreponse", IDreponse)
-                
         DB.Close()
