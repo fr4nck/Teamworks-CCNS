@@ -190,6 +190,13 @@ def _looks_light(colour, threshold=150):
         return False
 
 
+def _looks_dark(colour, threshold=105):
+    try:
+        return bool(colour and colour.IsOk() and _colour_luminance(colour) < threshold)
+    except Exception:
+        return False
+
+
 def _native_palette(dark):
     """Construit une palette de surfaces cohérente avec le rendu système.
 
@@ -247,25 +254,51 @@ def _set_colours(window, background=None, foreground=None):
         pass
 
 
+def _background_colour(window):
+    try:
+        return window.GetBackgroundColour()
+    except Exception:
+        return None
+
+
+def _foreground_colour(window):
+    try:
+        return window.GetForegroundColour()
+    except Exception:
+        return None
+
+
 def _apply_palette(window, palette, dark, theme_kind):
     """Corrige uniquement les surfaces que le rendu natif laisse incohérentes.
 
-    On évite volontairement de repeindre ``wx.Button``, ``wx.Choice`` et
-    ``wx.ComboBox`` : sous Windows, leur apparence native sombre est nettement
-    plus cohérente que des rectangles dessinés à la main.
+    En mode ``Système``, Windows reste prioritaire : on n'impose jamais une
+    palette parallèle à une surface déjà correctement sombre. On corrige seulement
+    les îlots clairement restés en apparence claire ou un texte devenu illisible.
+
+    En mode ``Sombre`` explicite, la palette Teamworks sert de repli cohérent.
+    On évite dans tous les cas de repeindre ``wx.Button``, ``wx.Choice`` et
+    ``wx.ComboBox`` : sous Windows leur apparence native sombre est préférable.
     """
     if not dark:
         return
 
     if isinstance(window, (wx.Frame, wx.Dialog)):
-        _set_colours(window, palette["window"], palette["text"])
+        current_bg = _background_colour(window)
+        current_fg = _foreground_colour(window)
+        background = palette["window"] if theme_kind == "dark" or _looks_light(current_bg) else None
+        foreground = palette["text"] if theme_kind == "dark" or _looks_dark(current_fg) else None
+        _set_colours(window, background, foreground)
         return
 
     if isinstance(window, wx.Panel):
-        _set_colours(window, palette["panel"], palette["text"])
+        current_bg = _background_colour(window)
+        current_fg = _foreground_colour(window)
+        background = palette["panel"] if theme_kind == "dark" or _looks_light(current_bg) else None
+        foreground = palette["text"] if theme_kind == "dark" or _looks_dark(current_fg) else None
+        _set_colours(window, background, foreground)
         return
 
-    # Libellés : texte uniquement, afin de conserver la transparence du parent.
+    # Libellés : jamais de fond imposé, seulement une correction de contraste.
     label_types = tuple(
         cls for cls in (
             getattr(wx, "StaticText", None),
@@ -275,7 +308,9 @@ def _apply_palette(window, palette, dark, theme_kind):
         ) if cls is not None
     )
     if label_types and isinstance(window, label_types):
-        _set_colours(window, foreground=palette["text"])
+        current_fg = _foreground_colour(window)
+        if theme_kind == "dark" or _looks_dark(current_fg):
+            _set_colours(window, foreground=palette["text"])
         return
 
     # Contrôles de contenu qui restent parfois blancs malgré msw.dark-mode.
@@ -290,20 +325,15 @@ def _apply_palette(window, palette, dark, theme_kind):
         ) if cls is not None
     )
     if content_types and isinstance(window, content_types):
-        background = None
-        try:
-            current = window.GetBackgroundColour()
-        except Exception:
-            current = None
-        # En thème Sombre explicite on garantit la surface sombre ; en thème
-        # Système on n'intervient que si wx a laissé un îlot franchement clair.
-        if theme_kind == "dark" or _looks_light(current):
-            background = palette["control"]
-        _set_colours(window, background, palette["text"])
+        current_bg = _background_colour(window)
+        current_fg = _foreground_colour(window)
+        background = palette["control"] if theme_kind == "dark" or _looks_light(current_bg) else None
+        foreground = palette["text"] if theme_kind == "dark" or _looks_dark(current_fg) else None
+        _set_colours(window, background, foreground)
         return
 
-    # Pour les autres widgets natifs, ne forcer que le texte en mode sombre
-    # explicite. Le thème Système doit rester le plus natif possible.
+    # Les autres widgets restent entièrement natifs en mode Système. En mode
+    # Sombre explicite, seul le texte non natif est corrigé si nécessaire.
     if theme_kind == "dark" and not isinstance(
         window,
         tuple(cls for cls in (
