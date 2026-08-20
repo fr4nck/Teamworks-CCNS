@@ -109,10 +109,20 @@ def test_hiding_one_gadget_does_not_rebuild_every_gadget():
     assert "self.Construire()" not in maj.split("if self.manager is None:", 1)[1].split("visibles =", 1)[1]
 
 
+def test_closing_button_does_not_write_visibility_twice():
+    source = _source(FLOATING_PATH)
+    fermer = source.split("def Fermer_Gadget", 1)[1].split("def Ouvre_Gadget", 1)[0]
+
+    assert 'getattr(gadget, "paramGadget", {}).get("affichage", True) is not False' in fermer
+    assert 'gadget.SaveConfig({"affichage": False})' in fermer
+    assert "self.Construire()" not in fermer
+
+
 def test_opening_one_missing_gadget_does_not_rebuild_dashboard():
     source = _source(FLOATING_PATH)
     ouvrir = source.split("def Ouvre_Gadget", 1)[1].split("def OnPaneClose", 1)[0]
 
     assert "_CreerGadget" in ouvrir
+    assert 'gadget.SaveConfig({"affichage": True})' in ouvrir
     assert "self.Construire()" not in ouvrir
     assert "DetachPane" in source
