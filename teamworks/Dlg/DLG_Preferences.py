@@ -132,16 +132,16 @@ class Dialog(wx.Dialog):
         return ligne
 
     def OnOk(self, event):
-        values = ["Systeme", "Clair", "Sombre"]
         accent_codes = [code for code, label in self.ACCENTS]
         appearance_codes = [code for code, label in self.APPEARANCES]
 
         accent_index = max(0, self.accent.GetSelection())
         appearance_index = max(0, self.appearance.GetSelection())
 
+        # Chaque préférence a désormais une responsabilité unique. La couche
+        # Interface maintient elle-même la vieille clé ``theme`` pour TW-121.
         UTILS_Interface.SetTheme(accent_codes[accent_index])
         UTILS_Interface.SetAppearanceMode(appearance_codes[appearance_index])
-        UTILS_Customize.SetValeur("interface", "theme", values[appearance_index])
 
         scale = str(self.scale.GetValue())
         # Nouvelle clé explicite + miroir historique pour les profils existants.
