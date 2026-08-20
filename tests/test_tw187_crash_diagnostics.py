@@ -11,12 +11,14 @@ TEAMWORKS = ROOT / "teamworks"
 if str(TEAMWORKS) not in sys.path:
     sys.path.insert(0, str(TEAMWORKS))
 
+from Utils import UTILS_Blackbox  # noqa: E402
 from Utils import UTILS_Crash  # noqa: E402
 
 
 def test_exception_report_is_written_with_runtime_context(tmp_path: Path) -> None:
+    marker = "TW187_SENSITIVE_VALUE_42_50"
     try:
-        raise RuntimeError("TW187 boom")
+        raise RuntimeError(marker)
     except RuntimeError:
         exctype, value, tb = sys.exc_info()
         path = UTILS_Crash.EcrireRapportException(
@@ -36,19 +38,21 @@ def test_exception_report_is_written_with_runtime_context(tmp_path: Path) -> Non
     assert "Version application: 0.9-test" in text
     assert "Contexte: Test contrôlé" in text
     assert "wxPython: 4.3-test" in text
-    assert "RuntimeError: TW187 boom" in text
-    assert "ni variables" in text
-    assert "d'environnement" in text
-    assert "ni contenu de base de données" in text
+    assert "Exception: RuntimeError" in text
+    assert marker not in text
+    assert "aucune variable locale" in text
+    assert "requête SQL" in text
+    assert "contenu de base de données" in text
 
 
-def test_early_hook_captures_import_time_style_crash(tmp_path: Path) -> None:
+def test_early_hook_captures_import_time_style_crash_without_message(tmp_path: Path) -> None:
+    marker = "TW187_EARLY_SENSITIVE"
     code = "\n".join(
         [
             "import sys",
             f"sys.path.insert(0, {str(TEAMWORKS)!r})",
             "import Chemins",
-            "raise RuntimeError('TW187 early crash')",
+            f"raise RuntimeError({marker!r})",
         ]
     )
     env = os.environ.copy()
@@ -68,7 +72,27 @@ def test_early_hook_captures_import_time_style_crash(tmp_path: Path) -> None:
     assert reports, completed.stderr
     text = reports[-1].read_text(encoding="utf-8")
     assert "Contexte: Démarrage / import" in text
-    assert "RuntimeError: TW187 early crash" in text
+    assert "Exception: RuntimeError" in text
+    assert marker not in text
+    assert marker not in completed.stderr
+
+
+def test_safe_import_error_keeps_only_technical_module_name(tmp_path: Path) -> None:
+    try:
+        import definitely_missing_tw187_module  # noqa: F401
+    except ModuleNotFoundError:
+        exctype, value, tb = sys.exc_info()
+        path = UTILS_Crash.EcrireRapportException(
+            exctype,
+            value,
+            tb,
+            contexte="Import test",
+            repertoire=str(tmp_path),
+        )
+
+    text = Path(path).read_text(encoding="utf-8")
+    assert "Exception: ModuleNotFoundError | module=definitely_missing_tw187_module" in text
+    assert "No module named" not in text
 
 
 def test_report_does_not_dump_environment_values(tmp_path: Path, monkeypatch) -> None:
@@ -89,6 +113,29 @@ def test_report_does_not_dump_environment_values(tmp_path: Path, monkeypatch) ->
 
     text = Path(path).read_text(encoding="utf-8")
     assert marker not in text
+
+
+def test_crash_report_embeds_only_blackbox_technical_breadcrumbs(tmp_path: Path) -> None:
+    UTILS_Blackbox.ViderChronologie()
+    UTILS_Blackbox.Tracer("MENU", "menu:contrats_types", code=123)
+    UTILS_Blackbox.Tracer("DOUBLE_CLICK", "wx:Ol.OL_contrats.ListView", code=456)
+
+    try:
+        raise KeyError("family-sensitive-key")
+    except KeyError:
+        exctype, value, tb = sys.exc_info()
+        path = UTILS_Crash.EcrireRapportException(
+            exctype,
+            value,
+            tb,
+            contexte="Breadcrumbs",
+            repertoire=str(tmp_path),
+        )
+
+    text = Path(path).read_text(encoding="utf-8")
+    assert "menu:contrats_types" in text
+    assert "wx:Ol.OL_contrats.ListView" in text
+    assert "family-sensitive-key" not in text
 
 
 def test_crash_dialog_source_exposes_logs_folder() -> None:
