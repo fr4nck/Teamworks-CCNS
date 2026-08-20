@@ -130,3 +130,10 @@ def test_system_light_dark_modes_are_preserved():
     tree = parse_source()
     modes = literal_strings(assignment_value(tree, "APPEARANCE_MODES"))
     assert {"system", "light", "dark"} <= modes
+
+
+def test_light_mode_is_the_safe_migration_default():
+    source = SOURCE_PATH.read_text(encoding="utf-8")
+
+    assert 'GetValeur("interface", "appearance", "light")' in source
+    assert 'return "light"' in source
