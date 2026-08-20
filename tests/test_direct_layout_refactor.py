@@ -9,6 +9,8 @@ CONTRACTS = ROOT / "Ctrl" / "CTRL_Page_contrats.py"
 PERSON_DIALOG = ROOT / "Dlg" / "DLG_Fiche_individuelle.py"
 BUTTON = ROOT / "Ctrl" / "CTRL_Bouton_image.py"
 GADGET = ROOT / "Gadget.py"
+HOME = ROOT / "Ctrl" / "CTRL_Accueil.py"
+NAVIGATION = ROOT / "Ctrl" / "CTRL_Navigation_principale.py"
 RESPONSIVE = ROOT / "Utils" / "UTILS_Responsive.py"
 
 
@@ -17,7 +19,16 @@ def _source(path):
 
 
 def test_refactored_sources_are_valid_python():
-    for path in (CUSTOMIZE, PERSONS, CONTRACTS, PERSON_DIALOG, BUTTON, GADGET):
+    for path in (
+        CUSTOMIZE,
+        PERSONS,
+        CONTRACTS,
+        PERSON_DIALOG,
+        BUTTON,
+        GADGET,
+        HOME,
+        NAVIGATION,
+    ):
         ast.parse(_source(path))
 
 
@@ -61,7 +72,7 @@ def test_person_dialog_uses_available_display_instead_of_fit():
 
 
 def test_components_read_interface_scale_before_legacy_font_scale():
-    for path in (PERSONS, CONTRACTS, BUTTON, GADGET):
+    for path in (PERSONS, CONTRACTS, BUTTON, GADGET, NAVIGATION):
         source = _source(path)
         assert '"echelle_interface"' in source
         assert '"echelle_police"' in source
@@ -74,11 +85,13 @@ def test_icons_scale_in_their_own_components_not_with_a_global_patch():
     contracts = _source(CONTRACTS)
     dialog = _source(PERSON_DIALOG)
     button = _source(BUTTON)
+    navigation = _source(NAVIGATION)
 
     assert "wx.IMAGE_QUALITY_HIGH" in persons
     assert "wx.IMAGE_QUALITY_HIGH" in contracts
     assert "wx.IMAGE_QUALITY_HIGH" in dialog
     assert "_echelle_valeur(36, 36)" in button
+    assert "wx.IMAGE_QUALITY_HIGH" in navigation
 
 
 def test_gadget_chrome_is_direct_not_runtime_repaint_overlay():
@@ -93,3 +106,20 @@ def test_gadget_chrome_is_direct_not_runtime_repaint_overlay():
     assert ".Fit(" not in panel
     assert "wx.StaticText" in panel
     assert "EVT_BUTTON" in panel
+
+
+def test_home_uses_all_available_space_without_historical_logo_strip():
+    source = _source(HOME)
+    assert "Logo_accueil.png" not in source
+    assert "FlexGridSizer" not in source
+    assert "sizer.Add(self.html, 1, wx.EXPAND)" in source
+
+
+def test_new_navigation_is_a_direct_replacement_component():
+    source = _source(NAVIGATION)
+    assert "wx.Toolbook" not in source
+    assert "wx.Simplebook" in source
+    assert "wx.WrapSizer(wx.HORIZONTAL)" in source
+    assert "GetBestSize()" in source
+    assert "ActiveToolBook" in source
+    assert "MAJ_page_si_affichee" in source
