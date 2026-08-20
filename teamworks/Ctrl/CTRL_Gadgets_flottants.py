@@ -1,12 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Espace AUI pour les gadgets de la page d'accueil.
-
-Les gadgets restent les contrôles historiques de ``Gadget.py`` mais deviennent
-déplaçables, redimensionnables, dockables et flottants. Leur disposition AUI
-est mémorisée séparément des données métier des gadgets.
-"""
+"""Espace AUI pour les gadgets de la page d'accueil."""
 
 import wx
 import wx.aui as aui
@@ -17,8 +12,6 @@ from Utils import UTILS_Interface
 
 
 PERSPECTIVE_SECTION = "interface"
-# V2 ignore la première perspective expérimentale qui pouvait restaurer des
-# fenêtres flottantes invisibles suivant la version de wx/Windows.
 PERSPECTIVE_KEY = "gadgets_perspective_v2"
 
 
@@ -52,13 +45,7 @@ class EspaceGadgets(wx.Panel):
         return self._couleur_tuple(UTILS_Interface.GetToken(token))
 
     def AppliquerThemeGadget(self, gadget):
-        """Modernise le chrome du gadget sans écraser ses couleurs métier.
-
-        Les contenus configurables (bloc-notes, horloge, dossiers incomplets)
-        conservent leurs couleurs propres. Seules les anciennes couleurs de
-        cadre par défaut et la barre de titre sont remplacées par les rôles du
-        thème Teamworks.
-        """
+        """Modernise le chrome du gadget sans écraser ses couleurs métier."""
         gadget.couleurFondDC = self._token_tuple("surface")
         gadget.couleurFondTitre = self._token_tuple("surface_container_highest")
         gadget.couleurBord = self._token_tuple("outline_variant")
@@ -75,18 +62,9 @@ class EspaceGadgets(wx.Panel):
             pass
 
     def _info_pane(self, nom, label, taille, index):
-        """Crée un pane visible, tuilé et détachable.
-
-        Les panes ne naissent plus en ``Float()`` : sur certains couples
-        wxPython/Windows un AuiManager hébergé dans un Panel peut alors créer
-        les fenêtres hors du flux visible. Le docking initial garantit qu'un
-        gadget configuré comme affiché est réellement visible. L'utilisateur
-        peut toujours le détacher ensuite.
-        """
+        """Crée un pane visible, tuilé, redimensionnable et détachable."""
         largeur = max(200, int(taille[0]))
         hauteur = max(150, int(taille[1]))
-        row = index // 3
-        position = index % 3
         return (
             aui.AuiPaneInfo()
             .Name(nom)
@@ -97,8 +75,8 @@ class EspaceGadgets(wx.Panel):
             .FloatingSize((largeur, hauteur))
             .Top()
             .Layer(0)
-            .Row(row)
-            .Position(position)
+            .Row(index // 3)
+            .Position(index % 3)
             .Floatable(True)
             .Dockable(True)
             .Movable(True)
@@ -109,47 +87,61 @@ class EspaceGadgets(wx.Panel):
             .MaximizeButton(False)
         )
 
-    def _DetruirePanes(self):
-        for gadget in list(self._gadgets.values()):
-            try:
-                gadget.Destroy()
-            except Exception:
-                pass
-        self._gadgets = {}
+    def _CreerGadget(self, nom, parametres, index):
+        gadget = Gadget.PanelGadget(
+            self,
+            self.couleur_fond,
+            index,
+            size=parametres.get("taille", wx.DefaultSize),
+        )
+        self.AppliquerThemeGadget(gadget)
+        self._gadgets[nom] = gadget
+        self.manager.AddPane(
+            gadget,
+            self._info_pane(
+                nom,
+                parametres.get("label", nom),
+                parametres.get("taille", (220, 180)),
+                index,
+            ),
+        )
+        return gadget
 
+    def _SupprimerGadget(self, nom):
+        """Retire un seul pane sans reconstruire le dashboard complet."""
+        gadget = self._gadgets.pop(nom, None)
+        if gadget is None or self.manager is None:
+            return
+        try:
+            self.manager.DetachPane(gadget)
+        except Exception:
+            pass
+        try:
+            gadget.Destroy()
+        except Exception:
+            pass
+
+    def _DetruirePanes(self):
         if self.manager is not None:
+            for nom in list(self._gadgets):
+                self._SupprimerGadget(nom)
             try:
                 self.manager.UnInit()
             except Exception:
                 pass
             self.manager = None
+        self._gadgets = {}
 
     def Construire(self):
-        """Reconstruit les panes puis restaure leur disposition mémorisée."""
+        """Construit le dashboard initial puis restaure sa perspective."""
         self.Freeze()
         try:
             self._DetruirePanes()
             self.manager = aui.AuiManager(self)
 
             for index, (nom, parametres) in enumerate(self.listeGadgets):
-                if not parametres.get("affichage", True):
-                    continue
-
-                gadget = Gadget.PanelGadget(
-                    self,
-                    self.couleur_fond,
-                    index,
-                    size=parametres.get("taille", wx.DefaultSize),
-                )
-                self.AppliquerThemeGadget(gadget)
-                self._gadgets[nom] = gadget
-                info = self._info_pane(
-                    nom,
-                    parametres.get("label", nom),
-                    parametres.get("taille", (220, 180)),
-                    index,
-                )
-                self.manager.AddPane(gadget, info)
+                if parametres.get("affichage", True):
+                    self._CreerGadget(nom, parametres, index)
 
             self._RestaurerPerspective()
             self.manager.Update()
@@ -168,8 +160,6 @@ class EspaceGadgets(wx.Panel):
             self._restauration_en_cours = True
             self.manager.LoadPerspective(perspective, update=False)
         except Exception:
-            # Une perspective devient invalide si un ancien gadget disparaît :
-            # l'accueil doit continuer à s'ouvrir avec la disposition par défaut.
             pass
         finally:
             self._restauration_en_cours = False
@@ -178,22 +168,19 @@ class EspaceGadgets(wx.Panel):
         if self._restauration_en_cours or self.manager is None:
             return
         try:
-            perspective = self.manager.SavePerspective()
             UTILS_Customize.SetValeur(
                 PERSPECTIVE_SECTION,
                 PERSPECTIVE_KEY,
-                perspective,
+                self.manager.SavePerspective(),
             )
         except Exception:
             pass
 
     def ReinitialiserDisposition(self):
-        """Revient à la disposition tuilée initiale."""
         UTILS_Customize.SetValeur(PERSPECTIVE_SECTION, PERSPECTIVE_KEY, "")
         self.Construire()
 
     def ToutRendreFlottant(self):
-        """Détache tous les gadgets visibles et les répartit en cascade."""
         if self.manager is None:
             return
         for index, (nom, gadget) in enumerate(self._gadgets.items()):
@@ -208,14 +195,12 @@ class EspaceGadgets(wx.Panel):
         self.SauverPerspective()
 
     def ToutAncrer(self):
-        """Rattache tous les gadgets à l'accueil sans les masquer."""
         if self.manager is None:
             return
         for index, nom in enumerate(self._gadgets):
             pane = self.manager.GetPane(nom)
-            if not pane.IsOk():
-                continue
-            pane.Dock().Top().Layer(0).Row(index // 3).Position(index % 3).Show(True)
+            if pane.IsOk():
+                pane.Dock().Top().Layer(0).Row(index // 3).Position(index % 3).Show(True)
         self.manager.Update()
         self.SauverPerspective()
 
@@ -235,14 +220,51 @@ class EspaceGadgets(wx.Panel):
         menu.Destroy()
 
     def MAJ(self, listeGadgets=None):
-        """Recharge les gadgets sans perdre la disposition courante."""
-        self.SauverPerspective()
+        """Applique uniquement les différences de visibilité/configuration.
+
+        Masquer une horloge ne doit jamais recréer le calendrier, les dossiers
+        incomplets, les notes et leurs accès base de données.
+        """
         if listeGadgets is not None:
             self.listeGadgets = listeGadgets
-        self.Construire()
+        if self.manager is None:
+            self.Construire()
+            return
+
+        visibles = {
+            nom: (index, parametres)
+            for index, (nom, parametres) in enumerate(self.listeGadgets)
+            if parametres.get("affichage", True)
+        }
+        existants = set(self._gadgets)
+        souhaites = set(visibles)
+
+        self.Freeze()
+        try:
+            for nom in existants - souhaites:
+                self._SupprimerGadget(nom)
+
+            for nom in souhaites - existants:
+                index, parametres = visibles[nom]
+                self._CreerGadget(nom, parametres, index)
+
+            for nom in souhaites & existants:
+                index, parametres = visibles[nom]
+                pane = self.manager.GetPane(nom)
+                if not pane.IsOk():
+                    continue
+                pane.Caption(parametres.get("label", nom))
+                taille = parametres.get("taille", (220, 180))
+                pane.BestSize((max(200, int(taille[0])), max(150, int(taille[1]))))
+                pane.Show(True)
+                self.AppliquerThemeGadget(self._gadgets[nom])
+
+            self.manager.Update()
+        finally:
+            self.Thaw()
+        self.SauverPerspective()
 
     def Fermer_Gadget(self, nomGadgetAFermer):
-        """Masque un gadget et conserve son état métier historique."""
         gadget = self._gadgets.get(nomGadgetAFermer)
         if gadget is None:
             return
@@ -257,14 +279,16 @@ class EspaceGadgets(wx.Panel):
         self.SauverPerspective()
 
     def Ouvre_Gadget(self, nomGadgetAOuvrir):
-        """Réaffiche un gadget déjà construit ou reconstruit l'espace."""
         gadget = self._gadgets.get(nomGadgetAOuvrir)
         if gadget is None:
-            for nom, parametres in self.listeGadgets:
-                if nom == nomGadgetAOuvrir:
-                    parametres["affichage"] = True
-                    break
-            self.Construire()
+            for index, (nom, parametres) in enumerate(self.listeGadgets):
+                if nom != nomGadgetAOuvrir:
+                    continue
+                parametres["affichage"] = True
+                self._CreerGadget(nom, parametres, index)
+                self.manager.Update()
+                self.SauverPerspective()
+                return
             return
 
         try:
