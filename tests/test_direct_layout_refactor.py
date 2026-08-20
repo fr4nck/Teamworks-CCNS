@@ -118,8 +118,10 @@ def test_home_uses_all_available_space_without_historical_logo_strip():
 def test_new_navigation_is_a_direct_replacement_component():
     source = _source(NAVIGATION)
     assert "wx.Toolbook" not in source
-    assert "wx.Simplebook" in source
+    assert "wx.Simplebook" not in source
     assert "wx.WrapSizer(wx.HORIZONTAL)" in source
+    assert "self.sizer_pages = wx.BoxSizer(wx.VERTICAL)" in source
+    assert "page.Reparent(self)" in source
     assert "GetBestSize()" in source
     assert "ActiveToolBook" in source
     assert "MAJ_page_si_affichee" in source
