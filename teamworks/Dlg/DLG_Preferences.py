@@ -5,13 +5,23 @@
 import wx
 
 from Utils import UTILS_Customize
+from Utils import UTILS_Interface
 
 
 class Dialog(wx.Dialog):
-    THEMES = ["Système", "Clair", "Sombre"]
+    ACCENTS = [
+        ("Vert", "Vert"),
+        ("Bleu", "Bleu"),
+        ("Noir", "Neutre"),
+    ]
+    APPEARANCES = [
+        ("system", "Système"),
+        ("light", "Clair"),
+        ("dark", "Sombre"),
+    ]
 
     def __init__(self, parent):
-        super().__init__(parent, title="Préférences d'affichage", size=(460, 300))
+        super().__init__(parent, title="Préférences d'affichage", size=(500, 350))
 
         panel = wx.Panel(self)
         main = wx.BoxSizer(wx.VERTICAL)
@@ -22,20 +32,45 @@ class Dialog(wx.Dialog):
         title.SetFont(font)
         main.Add(title, 0, wx.ALL, 12)
 
-        grid = wx.FlexGridSizer(2, 2, 12, 12)
+        intro = wx.StaticText(
+            panel,
+            label=(
+                "L'accent colore les actions et sélections. "
+                "L'apparence pilote les surfaces claires ou sombres."
+            ),
+        )
+        intro.Wrap(440)
+        main.Add(intro, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 12)
+
+        grid = wx.FlexGridSizer(3, 2, 12, 12)
         grid.AddGrowableCol(1, 1)
 
-        grid.Add(wx.StaticText(panel, label="Thème :"), 0, wx.ALIGN_CENTER_VERTICAL)
-        self.theme = wx.Choice(panel, choices=self.THEMES)
-        current_theme = UTILS_Customize.GetValeur("interface", "theme", "Systeme")
-        normalized = current_theme.lower().replace("è", "e")
-        index = 0
-        if normalized in ("clair", "light", "blanc"):
-            index = 1
-        elif normalized in ("sombre", "dark", "noir"):
-            index = 2
-        self.theme.SetSelection(index)
-        grid.Add(self.theme, 1, wx.EXPAND)
+        grid.Add(wx.StaticText(panel, label="Accent :"), 0, wx.ALIGN_CENTER_VERTICAL)
+        self.accent = wx.Choice(panel, choices=[label for code, label in self.ACCENTS])
+        current_accent = UTILS_Interface.GetTheme()
+        accent_codes = [code for code, label in self.ACCENTS]
+        self.accent.SetSelection(
+            accent_codes.index(current_accent) if current_accent in accent_codes else 0
+        )
+        grid.Add(self.accent, 1, wx.EXPAND)
+
+        grid.Add(wx.StaticText(panel, label="Apparence :"), 0, wx.ALIGN_CENTER_VERTICAL)
+        self.appearance = wx.Choice(
+            panel,
+            choices=[label for code, label in self.APPEARANCES],
+        )
+        current_appearance = UTILS_Customize.GetValeur(
+            "interface",
+            "appearance",
+            "system",
+        ).lower()
+        appearance_codes = [code for code, label in self.APPEARANCES]
+        self.appearance.SetSelection(
+            appearance_codes.index(current_appearance)
+            if current_appearance in appearance_codes
+            else 0
+        )
+        grid.Add(self.appearance, 1, wx.EXPAND)
 
         grid.Add(wx.StaticText(panel, label="Taille des polices :"), 0, wx.ALIGN_CENTER_VERTICAL)
         self.scale = wx.SpinCtrl(panel, min=80, max=200, initial=100)
@@ -56,7 +91,10 @@ class Dialog(wx.Dialog):
         main.Add(
             wx.StaticText(
                 panel,
-                label="Les changements sont appliqués après redémarrage de Teamworks-CCNS.",
+                label=(
+                    "La palette est enregistrée immédiatement. Un redémarrage reste "
+                    "recommandé pour appliquer complètement le mode sombre natif de Windows."
+                ),
             ),
             0,
             wx.ALL,
@@ -77,15 +115,38 @@ class Dialog(wx.Dialog):
         self.CentreOnParent()
 
     def OnOk(self, event):
-        values = ["Systeme", "Clair", "Sombre"]
+        accent_codes = [code for code, label in self.ACCENTS]
+        appearance_codes = [code for code, label in self.APPEARANCES]
+
+        accent_index = max(0, self.accent.GetSelection())
+        appearance_index = max(0, self.appearance.GetSelection())
+
         UTILS_Customize.SetValeur(
-            "interface", "theme", values[max(0, self.theme.GetSelection())]
+            "interface",
+            "theme",
+            accent_codes[accent_index],
         )
         UTILS_Customize.SetValeur(
-            "interface", "echelle_police", str(self.scale.GetValue())
+            "interface",
+            "appearance",
+            appearance_codes[appearance_index],
         )
+        UTILS_Customize.SetValeur(
+            "interface",
+            "echelle_police",
+            str(self.scale.GetValue()),
+        )
+
+        try:
+            from Utils import UTILS_Theme
+            UTILS_Theme.refresh_preferences()
+            top = wx.GetApp().GetTopWindow()
+            UTILS_Theme.apply_to_window(top, True)
+        except Exception:
+            pass
+
         wx.MessageBox(
-            "Les préférences seront appliquées au prochain démarrage.",
+            "Préférences enregistrées. Le mode sombre natif sera complet au prochain démarrage.",
             "Préférences enregistrées",
             wx.OK | wx.ICON_INFORMATION,
             parent=self,
