@@ -37,7 +37,9 @@ def test_exception_report_is_written_with_runtime_context(tmp_path: Path) -> Non
     assert "Contexte: Test contrôlé" in text
     assert "wxPython: 4.3-test" in text
     assert "RuntimeError: TW187 boom" in text
-    assert "variables d'environnement" in text
+    assert "ni variables" in text
+    assert "d'environnement" in text
+    assert "ni contenu de base de données" in text
 
 
 def test_early_hook_captures_import_time_style_crash(tmp_path: Path) -> None:
