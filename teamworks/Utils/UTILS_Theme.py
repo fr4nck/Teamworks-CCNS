@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Gestion centralisée de l'affichage Teamworks-CCNS."""
+"""Gestion centralisée de l'affichage Teamworks-CCNS.
+
+Le thème d'accent (Vert/Bleu/Noir) et l'apparence (clair/sombre/système) sont
+volontairement séparés. Ce module applique l'apparence aux contrôles wx natifs
+et délègue les couleurs sémantiques à ``UTILS_Interface`` lorsque celui-ci est
+disponible.
+"""
 
 from __future__ import annotations
 
@@ -58,43 +64,81 @@ def refresh_preferences():
     _CONFIG_CACHE = None
 
 
+def _legacy_theme_as_appearance(value):
+    """Convertit uniquement les anciennes valeurs d'apparence stockées en theme.
+
+    Vert/Bleu/Noir sont désormais des accents. La valeur historique ``Noir`` ne
+    doit donc plus déclencher implicitement le mode sombre.
+    """
+    value = (value or "").strip().lower()
+    if value in {"sombre", "dark"}:
+        return "dark"
+    if value in LIGHT_THEME_NAMES:
+        return "light"
+    if value in SYSTEM_THEME_NAMES:
+        return "system"
+    return ""
+
+
 def _config_values():
     global _CONFIG_CACHE
-    env_theme = os.environ.get("TEAMWORKS_THEME", "").strip()
+    env_appearance = (
+        os.environ.get("TEAMWORKS_APPEARANCE", "").strip()
+        or os.environ.get("TEAMWORKS_THEME", "").strip()
+    )
     env_scale = os.environ.get("TEAMWORKS_FONT_SCALE", "").strip()
 
-    if _CONFIG_CACHE is not None and not env_theme and not env_scale:
+    if _CONFIG_CACHE is not None and not env_appearance and not env_scale:
         return _CONFIG_CACHE
 
-    theme = env_theme
+    appearance = env_appearance
     scale = env_scale
     path = _customize_path()
     config_exists = path.is_file()
     if config_exists:
         try:
             parser = _read_config(path)
-            if not theme and parser.has_option("interface", "theme"):
-                theme = parser.get("interface", "theme")
+            if not appearance and parser.has_option("interface", "appearance"):
+                appearance = parser.get("interface", "appearance")
+            if not appearance and parser.has_option("interface", "theme"):
+                appearance = _legacy_theme_as_appearance(
+                    parser.get("interface", "theme")
+                )
             if not scale and parser.has_option("interface", "echelle_police"):
                 scale = parser.get("interface", "echelle_police")
         except (OSError, ValueError):
             pass
+
+    appearance = (appearance or "system").strip().lower()
+    if appearance in DARK_THEME_NAMES:
+        appearance = "dark"
+    elif appearance in LIGHT_THEME_NAMES:
+        appearance = "light"
+    elif appearance in SYSTEM_THEME_NAMES:
+        appearance = "system"
+    else:
+        appearance = "system"
 
     try:
         font_scale = max(80, min(200, int(scale or "100")))
     except ValueError:
         font_scale = 100
 
-    values = (theme or "Systeme", font_scale)
+    values = (appearance, font_scale)
     # Ne jamais figer les valeurs par défaut tant que le fichier cible n'existe
     # pas : il peut être déplacé juste après par la migration de premier lancement.
-    if config_exists and not env_theme and not env_scale:
+    if config_exists and not env_appearance and not env_scale:
         _CONFIG_CACHE = values
     return values
 
 
-def requested_theme():
+def requested_appearance():
     return _config_values()[0]
+
+
+def requested_theme():
+    """Alias historique conservé pour les appels existants."""
+    return requested_appearance()
 
 
 def font_scale_percent():
@@ -102,7 +146,7 @@ def font_scale_percent():
 
 
 def is_dark_theme(theme=None):
-    value = (theme or requested_theme()).strip().lower()
+    value = (theme or requested_appearance()).strip().lower()
     if value in DARK_THEME_NAMES:
         return True
     if value in LIGHT_THEME_NAMES:
@@ -138,32 +182,54 @@ def _colour_luminance(colour):
 
 
 def _native_palette(dark):
-    """Construit la palette à partir des couleurs exposées par l'OS.
-
-    Sous certains ports wxWidgets, Windows annonce un mode sombre mais retourne
-    encore les couleurs claires historiques. Dans ce cas seulement, on applique
-    un repli sombre cohérent au lieu d'un mélange blanc/noir.
-    """
+    """Construit une palette de repli à partir des couleurs exposées par l'OS."""
     palette = {
-        "window": _system_colour(wx.SYS_COLOUR_WINDOW, (255, 255, 255)),
-        "panel": _system_colour(wx.SYS_COLOUR_BTNFACE, (240, 240, 240)),
+        "surface": _system_colour(wx.SYS_COLOUR_BTNFACE, (240, 240, 240)),
+        "surface_low": _system_colour(wx.SYS_COLOUR_BTNFACE, (245, 245, 245)),
         "control": _system_colour(wx.SYS_COLOUR_WINDOW, (255, 255, 255)),
         "text": _system_colour(wx.SYS_COLOUR_WINDOWTEXT, (0, 0, 0)),
+        "text_variant": _system_colour(wx.SYS_COLOUR_GRAYTEXT, (100, 100, 100)),
         "button_text": _system_colour(wx.SYS_COLOUR_BTNTEXT, (0, 0, 0)),
         "selection": _system_colour(wx.SYS_COLOUR_HIGHLIGHT, (0, 120, 215)),
         "selection_text": _system_colour(wx.SYS_COLOUR_HIGHLIGHTTEXT, (255, 255, 255)),
+        "outline": _system_colour(wx.SYS_COLOUR_3DSHADOW, (180, 180, 180)),
     }
-    if dark and _colour_luminance(palette["window"]) > 128:
+    if dark and _colour_luminance(palette["control"]) > 128:
         palette.update({
-            "window": wx.Colour(32, 32, 32),
-            "panel": wx.Colour(37, 37, 38),
+            "surface": wx.Colour(32, 32, 32),
+            "surface_low": wx.Colour(37, 37, 38),
             "control": wx.Colour(45, 45, 48),
             "text": wx.Colour(240, 240, 240),
+            "text_variant": wx.Colour(190, 190, 190),
             "button_text": wx.Colour(240, 240, 240),
             "selection": wx.Colour(0, 95, 184),
             "selection_text": wx.Colour(255, 255, 255),
+            "outline": wx.Colour(83, 86, 90),
         })
     return palette
+
+
+def _semantic_palette(dark):
+    """Mappe le design system Teamworks sur les familles de contrôles wx."""
+    try:
+        # Import tardif indispensable : UTILS_Customize importe ce module au
+        # démarrage, alors que UTILS_Interface dépend lui-même de Customize.
+        from Utils import UTILS_Interface
+
+        appearance = "dark" if dark else "light"
+        return {
+            "surface": UTILS_Interface.GetToken("surface", appearance=appearance),
+            "surface_low": UTILS_Interface.GetToken("surface_container_low", appearance=appearance),
+            "control": UTILS_Interface.GetToken("surface_container_lowest", appearance=appearance),
+            "text": UTILS_Interface.GetToken("on_surface", appearance=appearance),
+            "text_variant": UTILS_Interface.GetToken("on_surface_variant", appearance=appearance),
+            "button_text": UTILS_Interface.GetToken("on_surface", appearance=appearance),
+            "selection": UTILS_Interface.GetToken("selection", appearance=appearance),
+            "selection_text": UTILS_Interface.GetToken("selection_text", appearance=appearance),
+            "outline": UTILS_Interface.GetToken("outline_variant", appearance=appearance),
+        }
+    except Exception:
+        return _native_palette(dark)
 
 
 def _scale_font(window, scale):
@@ -184,26 +250,58 @@ def _scale_font(window, scale):
         pass
 
 
-def _apply_palette(window, palette, dark):
-    if not dark:
-        return
-
-    background = palette["panel"]
-    foreground = palette["text"]
-
-    if isinstance(window, (wx.Frame, wx.Dialog)):
-        background = palette["window"]
-    elif isinstance(window, (wx.TextCtrl, wx.ComboBox, wx.Choice, wx.ListBox,
-                             wx.CheckListBox, wx.ListCtrl, wx.TreeCtrl, wx.SpinCtrl)):
-        background = palette["control"]
-    elif isinstance(window, wx.Button):
-        foreground = palette["button_text"]
-
+def _set_colours(window, background=None, foreground=None):
     try:
-        window.SetBackgroundColour(background)
-        window.SetForegroundColour(foreground)
+        if background is not None:
+            window.SetBackgroundColour(background)
+        if foreground is not None:
+            window.SetForegroundColour(foreground)
     except Exception:
         pass
+
+
+def _apply_palette(window, palette, dark):
+    """Applique les rôles sémantiques sans redessiner les widgets natifs."""
+    background = None
+    foreground = None
+
+    input_types = (
+        wx.TextCtrl,
+        wx.ComboBox,
+        wx.Choice,
+        wx.ListBox,
+        wx.CheckListBox,
+        wx.ListCtrl,
+        wx.TreeCtrl,
+        wx.SpinCtrl,
+    )
+    if hasattr(wx, "SearchCtrl"):
+        input_types = input_types + (wx.SearchCtrl,)
+
+    if isinstance(window, (wx.Frame, wx.Dialog)):
+        background = palette["surface"]
+        foreground = palette["text"]
+    elif isinstance(window, input_types):
+        background = palette["control"]
+        foreground = palette["text"]
+    elif isinstance(window, wx.Panel):
+        background = palette["surface"]
+        foreground = palette["text"]
+    elif isinstance(window, wx.Button):
+        # Conserver le rendu natif du bouton : texte seulement.
+        foreground = palette["button_text"]
+    elif isinstance(window, (wx.StaticText, wx.CheckBox, wx.RadioButton)):
+        foreground = palette["text"]
+    elif isinstance(window, wx.StaticLine):
+        foreground = palette["outline"]
+
+    _set_colours(window, background=background, foreground=foreground)
+
+    # État de liste vide d'ObjectListView : il s'agit d'un contrôle enfant
+    # spécifique qui n'est pas toujours parcouru de manière fiable par wx.
+    empty = getattr(window, "stEmptyListMsg", None)
+    if empty is not None:
+        _set_colours(empty, background=palette["control"], foreground=palette["text_variant"])
 
 
 def apply_to_window(window, recursive=True, theme=None, scale=None, palette=None):
@@ -215,7 +313,7 @@ def apply_to_window(window, recursive=True, theme=None, scale=None, palette=None
         theme = configured_theme if theme is None else theme
         scale = configured_scale if scale is None else scale
     dark = is_dark_theme(theme)
-    palette = palette or _native_palette(dark)
+    palette = palette or _semantic_palette(dark)
 
     _scale_font(window, scale)
     _apply_palette(window, palette, dark)
@@ -255,6 +353,7 @@ def _install_preferences_menu(frame):
                 dialog.ShowModal()
                 dialog.Destroy()
                 refresh_preferences()
+                apply_to_window(frame, True)
 
             frame.Bind(wx.EVT_MENU, open_preferences, item)
             _MENU_INSTALLED = True
