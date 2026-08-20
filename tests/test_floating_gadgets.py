@@ -39,6 +39,15 @@ def test_floating_workspace_persists_its_perspective():
     assert "ReinitialiserDisposition" in source
 
 
+def test_floating_workspace_has_recovery_commands():
+    source = _source(FLOATING_PATH)
+
+    assert "ToutRendreFlottant" in source
+    assert "OnContextMenu" in source
+    assert "Tout rendre flottant" in source
+    assert "Réinitialiser la disposition" in source
+
+
 def test_home_screen_uses_floating_workspace_instead_of_html_layout():
     source = _source(HOME_PATH)
 
