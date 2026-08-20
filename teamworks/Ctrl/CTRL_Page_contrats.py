@@ -30,9 +30,14 @@ def DateFrEng(textDate):
 
 def _echelle_interface():
     try:
-        return max(80, min(200, UTILS_Customize.GetValeur(
-            "interface", "echelle_police", "100", type_valeur=int
-        )))
+        valeur = UTILS_Customize.GetValeur(
+            "interface", "echelle_interface", "", ajouter_si_manquant=False
+        )
+        if valeur in (None, ""):
+            valeur = UTILS_Customize.GetValeur(
+                "interface", "echelle_police", "100", type_valeur=int
+            )
+        return max(80, min(200, int(valeur)))
     except Exception:
         return 100
 
