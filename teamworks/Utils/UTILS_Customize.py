@@ -33,6 +33,9 @@ LISTE_DONNEES = [
         ("theme", "Systeme"),
         ("accent", "Vert"),
         ("appearance", "system"),
+        # Nouvelle clé explicite. ``echelle_police`` reste le miroir de
+        # compatibilité pour les profils et versions antérieurs.
+        ("echelle_interface", "100"),
         ("echelle_police", "100"),
     ]),
     ("journal", [
