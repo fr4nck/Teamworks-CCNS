@@ -34,7 +34,10 @@ def test_default_theme_is_system_and_font_scale_is_100_percent():
 
 def test_preferences_offer_three_modes_and_accessibility_scale_bounds():
     source = _read(PREFERENCES)
-    assert 'THEMES = ["Système", "Clair", "Sombre"]' in source
+    # Le premier libellé précise maintenant l'état Windows détecté, mais la
+    # valeur persistée reste bien le mode générique ``Systeme``.
+    assert 'f"Système — Windows est {system_state}"' in source
+    assert '"Clair", "Sombre"' in source
     assert "min=80" in source
     assert "max=200" in source
     assert 'values = ["Systeme", "Clair", "Sombre"]' in source
@@ -47,6 +50,7 @@ def test_theme_service_supports_system_light_dark_and_scale_clamping():
     assert "SYSTEM_THEME_NAMES" in source
     assert "max(80, min(200" in source
     assert "wx.SystemSettings.GetAppearance()" in source
+    assert "AppsUseLightTheme" in source
 
 
 def test_theme_service_reads_utf8_bom_and_legacy_windows_profiles():
