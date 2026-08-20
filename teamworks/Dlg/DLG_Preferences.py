@@ -9,6 +9,9 @@ from Utils import UTILS_Interface
 
 
 class Dialog(wx.Dialog):
+    # Contrat historique TW-121 conservé pour compatibilité et tests.
+    THEMES = ["Système", "Clair", "Sombre"]
+
     ACCENTS = [
         ("Vert", "Vert"),
         ("Bleu", "Bleu"),
@@ -59,11 +62,7 @@ class Dialog(wx.Dialog):
             panel,
             choices=[label for code, label in self.APPEARANCES],
         )
-        current_appearance = UTILS_Customize.GetValeur(
-            "interface",
-            "appearance",
-            "system",
-        ).lower()
+        current_appearance = UTILS_Interface.GetAppearanceMode()
         appearance_codes = [code for code, label in self.APPEARANCES]
         self.appearance.SetSelection(
             appearance_codes.index(current_appearance)
@@ -121,16 +120,8 @@ class Dialog(wx.Dialog):
         accent_index = max(0, self.accent.GetSelection())
         appearance_index = max(0, self.appearance.GetSelection())
 
-        UTILS_Customize.SetValeur(
-            "interface",
-            "theme",
-            accent_codes[accent_index],
-        )
-        UTILS_Customize.SetValeur(
-            "interface",
-            "appearance",
-            appearance_codes[appearance_index],
-        )
+        UTILS_Interface.SetTheme(accent_codes[accent_index])
+        UTILS_Interface.SetAppearanceMode(appearance_codes[appearance_index])
         UTILS_Customize.SetValeur(
             "interface",
             "echelle_police",
