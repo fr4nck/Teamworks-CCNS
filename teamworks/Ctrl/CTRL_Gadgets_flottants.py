@@ -268,10 +268,16 @@ class EspaceGadgets(wx.Panel):
         gadget = self._gadgets.get(nomGadgetAFermer)
         if gadget is None:
             return
-        try:
-            gadget.SaveConfig({"affichage": False})
-        except Exception:
-            pass
+
+        # Le bouton historique du gadget appelle déjà SaveConfig avant de venir
+        # ici. On n'écrit donc en base que si l'état n'a pas encore été changé.
+        # Cela supprime une deuxième écriture SQLite sur un simple clic Fermer.
+        if getattr(gadget, "paramGadget", {}).get("affichage", True) is not False:
+            try:
+                gadget.SaveConfig({"affichage": False})
+            except Exception:
+                pass
+
         pane = self.manager.GetPane(nomGadgetAFermer)
         if pane.IsOk():
             pane.Hide()
@@ -285,16 +291,21 @@ class EspaceGadgets(wx.Panel):
                 if nom != nomGadgetAOuvrir:
                     continue
                 parametres["affichage"] = True
-                self._CreerGadget(nom, parametres, index)
+                gadget = self._CreerGadget(nom, parametres, index)
+                try:
+                    gadget.SaveConfig({"affichage": True})
+                except Exception:
+                    pass
                 self.manager.Update()
                 self.SauverPerspective()
                 return
             return
 
-        try:
-            gadget.SaveConfig({"affichage": True})
-        except Exception:
-            pass
+        if getattr(gadget, "paramGadget", {}).get("affichage", False) is not True:
+            try:
+                gadget.SaveConfig({"affichage": True})
+            except Exception:
+                pass
         pane = self.manager.GetPane(nomGadgetAOuvrir)
         if pane.IsOk():
             pane.Show(True)
