@@ -4,6 +4,9 @@ from pathlib import Path
 
 SOURCE = Path("teamworks/Ctrl/CTRL_Navigation_principale.py")
 MAIN = Path("teamworks/Teamworks.py")
+CORE = Path("teamworks/Teamworks_core.py")
+TEMP_BACKUP = Path("teamworks/Teamworks.py.bak-tw189")
+TEMP_WORKFLOW = Path(".github/workflows/tw189-integrate-navigation.yml")
 
 
 def _source(path=SOURCE):
@@ -87,11 +90,27 @@ def test_navigation_wraps_instead_of_truncating_labels():
 
 
 def test_main_program_uses_flexible_navigation_once_integrated():
-    if not MAIN.exists():
-        return
     source = _source(MAIN)
-    # Ce test devient pleinement actif dès le raccordement de Teamworks.py.
-    if "CTRL_Navigation_principale" in source:
-        assert "class Toolbook(wx.Toolbook)" not in source
-        assert "class Toolbook(CTRL_Navigation_principale.NavigationPrincipale)" in source
-        assert "GetToolBar()" not in source.split("class Toolbook", 1)[1].split("class MyFrame", 1)[0]
+
+    assert "CTRL_Navigation_principale" in source
+    assert "class Toolbook(wx.Toolbook)" not in source
+    assert "class Toolbook(CTRL_Navigation_principale.NavigationPrincipale)" in source
+    assert "GetToolBar()" not in source.split("class Toolbook", 1)[1].split(
+        "CORE.Toolbook", 1
+    )[0]
+
+
+def test_modern_entrypoint_keeps_historical_core_isolated():
+    main = _source(MAIN)
+    core = _source(CORE)
+
+    ast.parse(main)
+    ast.parse(core)
+    assert "import Teamworks_core as CORE" in main
+    assert "CORE.Toolbook = Toolbook" in main
+    assert "MyFrame = CORE.MyFrame" in main
+    assert "MyApp = CORE.MyApp" in main
+    assert "CORE.CUSTOMIZE = customize" in main
+    assert "class MyFrame(wx.Frame)" in core
+    assert not TEMP_BACKUP.exists()
+    assert not TEMP_WORKFLOW.exists()
