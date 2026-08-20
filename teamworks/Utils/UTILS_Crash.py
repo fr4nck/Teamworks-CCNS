@@ -24,7 +24,7 @@ _MAX_RAPPORTS = 30
 _NATIVE_HANDLE = None
 _NATIVE_PATH: Optional[str] = None
 _NATIVE_INITIAL_SIZE = 0
-_LAST_EXCEPTION_ID: Optional[int] = None
+_LAST_EXCEPTION_OBJECT = None
 _LAST_REPORT_PATH: Optional[str] = None
 _EARLY_HOOK_INSTALLED = False
 
@@ -166,11 +166,14 @@ def EcrireRapportException(
     version_wx: str = "",
     repertoire: Optional[str] = None,
 ) -> str:
-    """Écrit un rapport persistant et retourne son chemin."""
-    global _LAST_EXCEPTION_ID, _LAST_REPORT_PATH
+    """Écrit un rapport persistant et retourne son chemin.
 
-    exception_id = id(value)
-    if _LAST_EXCEPTION_ID == exception_id and _LAST_REPORT_PATH and os.path.isfile(_LAST_REPORT_PATH):
+    La même instance d'exception n'est écrite qu'une fois lorsque plusieurs
+    hooks la voient successivement (wx puis sys, par exemple).
+    """
+    global _LAST_EXCEPTION_OBJECT, _LAST_REPORT_PATH
+
+    if _LAST_EXCEPTION_OBJECT is value and _LAST_REPORT_PATH and os.path.isfile(_LAST_REPORT_PATH):
         return _LAST_REPORT_PATH
 
     repertoire = repertoire or GetRepertoireLogs()
@@ -188,7 +191,7 @@ def EcrireRapportException(
         fichier.write(rapport)
         fichier.flush()
 
-    _LAST_EXCEPTION_ID = exception_id
+    _LAST_EXCEPTION_OBJECT = value
     _LAST_REPORT_PATH = chemin
     _nettoyer_anciens_rapports(repertoire)
     return chemin
