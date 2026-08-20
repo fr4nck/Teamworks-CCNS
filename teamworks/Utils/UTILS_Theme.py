@@ -223,6 +223,7 @@ def _native_palette(dark):
     palette = {
         "surface": _system_colour(wx.SYS_COLOUR_BTNFACE, (240, 240, 240)),
         "surface_low": _system_colour(wx.SYS_COLOUR_BTNFACE, (245, 245, 245)),
+        "surface_high": _system_colour(wx.SYS_COLOUR_3DFACE, (232, 232, 232)),
         "control": _system_colour(wx.SYS_COLOUR_WINDOW, (255, 255, 255)),
         "text": _system_colour(wx.SYS_COLOUR_WINDOWTEXT, (0, 0, 0)),
         "text_variant": _system_colour(wx.SYS_COLOUR_GRAYTEXT, (100, 100, 100)),
@@ -235,6 +236,7 @@ def _native_palette(dark):
         palette.update({
             "surface": wx.Colour(32, 32, 32),
             "surface_low": wx.Colour(37, 37, 38),
+            "surface_high": wx.Colour(52, 52, 52),
             "control": wx.Colour(45, 45, 48),
             "text": wx.Colour(240, 240, 240),
             "text_variant": wx.Colour(190, 190, 190),
@@ -257,6 +259,7 @@ def _semantic_palette(dark):
         return {
             "surface": UTILS_Interface.GetToken("surface", appearance=appearance),
             "surface_low": UTILS_Interface.GetToken("surface_container_low", appearance=appearance),
+            "surface_high": UTILS_Interface.GetToken("surface_container_high", appearance=appearance),
             "control": UTILS_Interface.GetToken("surface_container_lowest", appearance=appearance),
             "text": UTILS_Interface.GetToken("on_surface", appearance=appearance),
             "text_variant": UTILS_Interface.GetToken("on_surface_variant", appearance=appearance),
@@ -350,6 +353,25 @@ def _set_colours(window, background=None, foreground=None):
         pass
 
 
+def _apply_objectlistview_group_theme(window, palette):
+    """Thématise uniquement le chrome de groupes ObjectListView.
+
+    GroupListView expose ses couleurs de groupe comme attributs publics. On ne
+    touche ni aux colonnes, ni aux images de checkboxes, ni aux handlers de clic.
+    """
+    if not hasattr(window, "groupTextColour") or not hasattr(window, "groupBackgroundColour"):
+        return
+    try:
+        window.groupTextColour = palette["text"]
+        window.groupBackgroundColour = palette["surface_high"]
+        group_font = getattr(window, "groupFont", None)
+        if group_font is not None and group_font.IsOk():
+            group_font.SetWeight(wx.FONTWEIGHT_BOLD)
+            window.groupFont = group_font
+    except Exception:
+        pass
+
+
 def _apply_palette(window, palette, dark):
     """Applique les rôles sémantiques sans redessiner les widgets natifs."""
     background = None
@@ -386,6 +408,7 @@ def _apply_palette(window, palette, dark):
         foreground = palette["outline"]
 
     _set_colours(window, background=background, foreground=foreground)
+    _apply_objectlistview_group_theme(window, palette)
 
     # État de liste vide d'ObjectListView : il s'agit d'un contrôle enfant
     # spécifique qui n'est pas toujours parcouru de manière fiable par wx.
