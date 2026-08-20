@@ -8,11 +8,11 @@
 import os
 import sys
 import threading
-import traceback
 
 import wx
 
 from Utils.UTILS_Traduction import _
+from Utils import UTILS_Blackbox
 from Utils import UTILS_Config
 from Utils import UTILS_Crash
 from Utils import UTILS_Fichiers
@@ -20,6 +20,9 @@ from Utils import UTILS_Fichiers
 
 _VERSION_ACTIVE = ""
 _ORIGINAL_WX_EXCEPTION_HANDLER = getattr(wx.App, "OnExceptionInMainLoop", None)
+_ORIGINAL_WX_MAINLOOP = getattr(wx.App, "MainLoop", None)
+_BLACKBOX_FILTER = None
+_BLACKBOX_MAINLOOP_WRAPPED = False
 
 
 def _copier_texte(texte):
@@ -48,8 +51,15 @@ def _afficher_dialogue(texte, chemin_rapport):
         pass
 
 
+def _type_exception_sur(exctype):
+    nom = getattr(exctype, "__name__", "Exception")
+    if isinstance(nom, str) and nom.replace("_", "").isalnum():
+        return nom
+    return "Exception"
+
+
 def Rapporter_exception(exctype, value, tb, version=None, contexte="Exception Python", afficher=True):
-    """Enregistre une exception et, si possible, affiche le rapport à l'utilisateur."""
+    """Enregistre une exception sans sérialiser de valeur métier."""
     version = _VERSION_ACTIVE if version is None else version
     try:
         version_wx = wx.version()
@@ -68,9 +78,8 @@ def Rapporter_exception(exctype, value, tb, version=None, contexte="Exception Py
     except Exception:
         chemin_rapport = ""
 
-    bug = "".join(traceback.format_exception(exctype, value, tb))
     try:
-        print(bug)
+        print("Exception %s — rapport technique créé" % _type_exception_sur(exctype))
     except Exception:
         pass
 
@@ -79,13 +88,13 @@ def Rapporter_exception(exctype, value, tb, version=None, contexte="Exception Py
             with open(chemin_rapport, "r", encoding="utf-8", errors="replace") as fichier:
                 rapport = fichier.read()
         except Exception:
-            rapport = bug
+            rapport = "Exception technique : %s" % _type_exception_sur(exctype)
         texte = _(
             u"Rapport enregistré : %s\n\n"
             u"Transmettez de préférence ce fichier .txt pour le débogage.\n\n%s"
         ) % (chemin_rapport, rapport)
     else:
-        texte = bug
+        texte = "Exception technique : %s" % _type_exception_sur(exctype)
 
     if not afficher:
         return chemin_rapport
@@ -110,9 +119,126 @@ def Rapporter_exception(exctype, value, tb, version=None, contexte="Exception Py
     return chemin_rapport
 
 
+def _binder_type(nom):
+    binder = getattr(wx, nom, None)
+    return getattr(binder, "typeId", None)
+
+
+def _wx_component(objet):
+    try:
+        cls = objet.__class__
+        module = getattr(cls, "__module__", "wx")
+        nom = getattr(cls, "__name__", "Window")
+        return "wx:%s.%s" % (module, nom)
+    except Exception:
+        return "wx:unknown"
+
+
+def _menu_component(event_id):
+    """Résout uniquement le code technique du menu, jamais son libellé."""
+    try:
+        app = wx.GetApp()
+        top = app.GetTopWindow() if app is not None else None
+        infos = getattr(top, "dictInfosMenu", {}) if top is not None else {}
+        for code, info in infos.items():
+            if isinstance(info, dict) and info.get("id") == event_id:
+                return "menu:%s" % code
+    except Exception:
+        pass
+    return "menu:unknown"
+
+
+class _BlackboxEventFilter(wx.EventFilter):
+    """Observe seulement des catégories d'événements, jamais leur contenu."""
+
+    def __init__(self):
+        wx.EventFilter.__init__(self)
+        self._types = {}
+        for binder_name, action in (
+            ("EVT_MENU", "MENU"),
+            ("EVT_BUTTON", "BUTTON_CLICK"),
+            ("EVT_TOOL", "TOOL_CLICK"),
+            ("EVT_LEFT_DCLICK", "DOUBLE_CLICK"),
+            ("EVT_LIST_ITEM_ACTIVATED", "LIST_ACTIVATE"),
+            ("EVT_TREE_ITEM_ACTIVATED", "TREE_ACTIVATE"),
+            ("EVT_TOOLBOOK_PAGE_CHANGED", "PAGE_CHANGED"),
+            ("EVT_NOTEBOOK_PAGE_CHANGED", "PAGE_CHANGED"),
+            ("EVT_WINDOW_CREATE", "WINDOW_CREATE"),
+            ("EVT_WINDOW_DESTROY", "WINDOW_DESTROY"),
+            ("EVT_SHOW", "WINDOW_VISIBILITY"),
+        ):
+            event_type = _binder_type(binder_name)
+            if event_type is not None:
+                self._types[event_type] = action
+
+    def FilterEvent(self, event):
+        continuer = getattr(wx.EventFilter, "Event_Skip", -1)
+        try:
+            action = self._types.get(event.GetEventType())
+            if action is None:
+                return continuer
+
+            event_id = event.GetId() if hasattr(event, "GetId") else None
+            if action == "MENU":
+                UTILS_Blackbox.Tracer("MENU", _menu_component(event_id), code=event_id)
+                return continuer
+
+            objet = event.GetEventObject() if hasattr(event, "GetEventObject") else None
+
+            if action in ("WINDOW_CREATE", "WINDOW_DESTROY", "WINDOW_VISIBILITY"):
+                if objet is None or not isinstance(objet, wx.TopLevelWindow):
+                    return continuer
+                if action == "WINDOW_VISIBILITY":
+                    try:
+                        action = "WINDOW_SHOW" if event.IsShown() else "WINDOW_HIDE"
+                    except Exception:
+                        action = "WINDOW_VISIBILITY"
+
+            component = _wx_component(objet) if objet is not None else "wx:unknown"
+            UTILS_Blackbox.Tracer(action, component, code=event_id)
+        except Exception:
+            # La boîte noire ne doit jamais perturber le traitement d'un événement.
+            pass
+        return continuer
+
+
+def Activer_boite_noire_wx(app=None):
+    """Active les breadcrumbs wx et le watchdog une fois OnInit terminé."""
+    global _BLACKBOX_FILTER
+    if _BLACKBOX_FILTER is not None:
+        return
+
+    try:
+        filtre = _BlackboxEventFilter()
+        wx.EvtHandler.AddFilter(filtre)
+        _BLACKBOX_FILTER = filtre
+    except Exception:
+        _BLACKBOX_FILTER = None
+
+    UTILS_Blackbox.Tracer("BLACKBOX_START", "app:wx_main_loop")
+
+    def poster_heartbeat():
+        wx.CallAfter(UTILS_Blackbox.MarquerHeartbeat)
+
+    try:
+        seuil = float(os.environ.get("TEAMWORKS_FREEZE_THRESHOLD_SECONDS", "8"))
+    except Exception:
+        seuil = 8.0
+
+    try:
+        UTILS_Blackbox.DemarrerWatchdog(
+            poster_heartbeat,
+            version=_VERSION_ACTIVE,
+            seuil_secondes=seuil,
+            intervalle_secondes=min(1.0, max(0.05, seuil / 4.0)),
+        )
+    except Exception:
+        pass
+
+
 def Activer_rapport_erreurs(version=""):
-    """Active les diagnostics Python, wx, threads et erreurs fatales."""
-    global _VERSION_ACTIVE
+    """Active crash reports, boîte noire technique, wx, threads et faulthandler."""
+    global _VERSION_ACTIVE, _BLACKBOX_MAINLOOP_WRAPPED
     _VERSION_ACTIVE = version or ""
 
     # Si Chemins.py ne l'a pas déjà fait, active aussi la capture des erreurs
@@ -126,12 +252,11 @@ def Activer_rapport_erreurs(version=""):
 
     if hasattr(threading, "excepthook"):
         def thread_excepthook(args):
-            nom_thread = getattr(args.thread, "name", "thread") if args.thread is not None else "thread"
             Rapporter_exception(
                 args.exc_type,
                 args.exc_value,
                 args.exc_traceback,
-                contexte="Thread : %s" % nom_thread,
+                contexte="Thread Python",
                 afficher=True,
             )
         threading.excepthook = thread_excepthook
@@ -139,7 +264,7 @@ def Activer_rapport_erreurs(version=""):
     if hasattr(sys, "unraisablehook"):
         def unraisable_hook(args):
             exc_type = type(args.exc_value) if args.exc_value is not None else RuntimeError
-            exc_value = args.exc_value or RuntimeError(str(args.err_msg or "Exception non remontable"))
+            exc_value = args.exc_value or RuntimeError("Exception non remontable")
             Rapporter_exception(
                 exc_type,
                 exc_value,
@@ -150,8 +275,7 @@ def Activer_rapport_erreurs(version=""):
         sys.unraisablehook = unraisable_hook
 
     # wxPython intercepte certaines exceptions d'événements à l'intérieur de sa
-    # boucle principale sans nécessairement passer par sys.excepthook. On pose
-    # donc le même rapporteur au niveau de wx.App avant l'instanciation de MyApp.
+    # boucle principale sans nécessairement passer par sys.excepthook.
     def wx_exception_handler(app_self):
         exctype, value, tb = sys.exc_info()
         if exctype is not None:
@@ -173,9 +297,24 @@ def Activer_rapport_erreurs(version=""):
     try:
         wx.App.OnExceptionInMainLoop = wx_exception_handler
     except Exception:
-        # Le hook sys + le rapport natif restent actifs même si une version de
-        # wxPython refuse le remplacement de cette méthode.
         pass
+
+    # Le watchdog doit commencer après MyApp.OnInit. En enveloppant MainLoop,
+    # l'initialisation (assistant, splash, ouverture initiale) ne peut pas être
+    # prise à tort pour un freeze de l'interface.
+    if not _BLACKBOX_MAINLOOP_WRAPPED and _ORIGINAL_WX_MAINLOOP is not None:
+        def mainloop_with_blackbox(app_self, *args, **kwargs):
+            try:
+                Activer_boite_noire_wx(app_self)
+            except Exception:
+                pass
+            return _ORIGINAL_WX_MAINLOOP(app_self, *args, **kwargs)
+
+        try:
+            wx.App.MainLoop = mainloop_with_blackbox
+            _BLACKBOX_MAINLOOP_WRAPPED = True
+        except Exception:
+            pass
 
 
 # ------------------------------------------- BOITE DE DIALOGUE ----------------------------------------------------------------------------------------
@@ -196,7 +335,7 @@ class DLG_Rapport(wx.Dialog):
             self,
             wx.ID_ANY,
             _(
-                u"Un rapport a été enregistré automatiquement. "
+                u"Un rapport technique sans données utilisateur a été enregistré automatiquement. "
                 u"Pour faciliter le débogage, transmettez le fichier .txt du dossier Logs."
             ),
         )
