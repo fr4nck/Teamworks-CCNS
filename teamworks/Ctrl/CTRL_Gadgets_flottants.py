@@ -30,6 +30,8 @@ class EspaceGadgets(wx.Panel):
         self.manager = None
         self._gadgets = {}
         self._restauration_en_cours = False
+        self._timer_perspective = None
+        self._timers_visibilite = {}
 
         self.Bind(aui.EVT_AUI_PANE_CLOSE, self.OnPaneClose)
         self.Bind(wx.EVT_CONTEXT_MENU, self.OnContextMenu)
@@ -45,16 +47,21 @@ class EspaceGadgets(wx.Panel):
         return self._couleur_tuple(UTILS_Interface.GetToken(token))
 
     def AppliquerThemeGadget(self, gadget):
-        """Modernise le chrome du gadget sans écraser ses couleurs métier."""
+        """Applique le thème via l'API du composant quand elle existe."""
+        appliquer = getattr(gadget, "AppliquerTheme", None)
+        if appliquer is not None:
+            try:
+                appliquer()
+                return
+            except Exception:
+                pass
+
+        # Compatibilité pour un éventuel gadget externe encore ancien.
         gadget.couleurFondDC = self._token_tuple("surface")
         gadget.couleurFondTitre = self._token_tuple("surface_container_highest")
         gadget.couleurBord = self._token_tuple("outline_variant")
         gadget.couleurDegrade = self._token_tuple("surface_container_high")
         gadget.couleurTexteTitre = self._token_tuple("on_surface")
-
-        if getattr(gadget, "couleurFondCadre", None) == (214, 223, 247):
-            gadget.couleurFondCadre = self._token_tuple("surface_container_low")
-
         try:
             gadget.SetBackgroundColour(UTILS_Interface.GetToken("surface"))
             gadget.Refresh()
@@ -176,6 +183,49 @@ class EspaceGadgets(wx.Panel):
         except Exception:
             pass
 
+    def PlanifierSauvegardePerspective(self, delai=150):
+        """Regroupe les mouvements AUI en une seule écriture disque."""
+        try:
+            if self._timer_perspective is not None and self._timer_perspective.IsRunning():
+                self._timer_perspective.Stop()
+        except Exception:
+            pass
+        self._timer_perspective = wx.CallLater(delai, self.SauverPerspective)
+
+    def _PersisterVisibilite(self, nom, affichage):
+        self._timers_visibilite.pop(nom, None)
+        gadget = self._gadgets.get(nom)
+        if gadget is None:
+            return
+        try:
+            gadget.SaveConfig({"affichage": affichage})
+        except Exception:
+            pass
+
+    def PlanifierVisibilite(self, nom, affichage, delai=80):
+        """Persiste après le repaint pour ne pas bloquer l'événement souris."""
+        gadget = self._gadgets.get(nom)
+        if gadget is None:
+            return
+        gadget.paramGadget["affichage"] = affichage
+        try:
+            self.listeGadgets[gadget.index][1]["affichage"] = affichage
+        except Exception:
+            pass
+
+        ancien = self._timers_visibilite.pop(nom, None)
+        try:
+            if ancien is not None and ancien.IsRunning():
+                ancien.Stop()
+        except Exception:
+            pass
+        self._timers_visibilite[nom] = wx.CallLater(
+            delai,
+            self._PersisterVisibilite,
+            nom,
+            affichage,
+        )
+
     def ReinitialiserDisposition(self):
         UTILS_Customize.SetValeur(PERSPECTIVE_SECTION, PERSPECTIVE_KEY, "")
         self.Construire()
@@ -192,7 +242,7 @@ class EspaceGadgets(wx.Panel):
             pane.FloatingPosition((48 + (32 * index), 72 + (32 * index)))
             pane.FloatingSize((max(200, largeur), max(150, hauteur)))
         self.manager.Update()
-        self.SauverPerspective()
+        self.PlanifierSauvegardePerspective()
 
     def ToutAncrer(self):
         if self.manager is None:
@@ -202,7 +252,7 @@ class EspaceGadgets(wx.Panel):
             if pane.IsOk():
                 pane.Dock().Top().Layer(0).Row(index // 3).Position(index % 3).Show(True)
         self.manager.Update()
-        self.SauverPerspective()
+        self.PlanifierSauvegardePerspective()
 
     def OnContextMenu(self, event):
         menu = wx.Menu()
@@ -220,11 +270,7 @@ class EspaceGadgets(wx.Panel):
         menu.Destroy()
 
     def MAJ(self, listeGadgets=None):
-        """Applique uniquement les différences de visibilité/configuration.
-
-        Masquer une horloge ne doit jamais recréer le calendrier, les dossiers
-        incomplets, les notes et leurs accès base de données.
-        """
+        """Applique uniquement les différences de visibilité/configuration."""
         if listeGadgets is not None:
             self.listeGadgets = listeGadgets
         if self.manager is None:
@@ -262,27 +308,21 @@ class EspaceGadgets(wx.Panel):
             self.manager.Update()
         finally:
             self.Thaw()
-        self.SauverPerspective()
+        self.PlanifierSauvegardePerspective()
 
     def Fermer_Gadget(self, nomGadgetAFermer):
+        """Masque immédiatement un gadget puis persiste son état en différé."""
         gadget = self._gadgets.get(nomGadgetAFermer)
-        if gadget is None:
+        if gadget is None or self.manager is None:
             return
-
-        # Le bouton historique du gadget appelle déjà SaveConfig avant de venir
-        # ici. On n'écrit donc en base que si l'état n'a pas encore été changé.
-        # Cela supprime une deuxième écriture SQLite sur un simple clic Fermer.
-        if getattr(gadget, "paramGadget", {}).get("affichage", True) is not False:
-            try:
-                gadget.SaveConfig({"affichage": False})
-            except Exception:
-                pass
 
         pane = self.manager.GetPane(nomGadgetAFermer)
         if pane.IsOk():
             pane.Hide()
             self.manager.Update()
-        self.SauverPerspective()
+
+        self.PlanifierVisibilite(nomGadgetAFermer, False)
+        self.PlanifierSauvegardePerspective()
 
     def Ouvre_Gadget(self, nomGadgetAOuvrir):
         gadget = self._gadgets.get(nomGadgetAOuvrir)
@@ -292,38 +332,35 @@ class EspaceGadgets(wx.Panel):
                     continue
                 parametres["affichage"] = True
                 gadget = self._CreerGadget(nom, parametres, index)
-                try:
-                    gadget.SaveConfig({"affichage": True})
-                except Exception:
-                    pass
                 self.manager.Update()
-                self.SauverPerspective()
+                self.PlanifierVisibilite(nom, True)
+                self.PlanifierSauvegardePerspective()
                 return
             return
 
-        if getattr(gadget, "paramGadget", {}).get("affichage", False) is not True:
-            try:
-                gadget.SaveConfig({"affichage": True})
-            except Exception:
-                pass
         pane = self.manager.GetPane(nomGadgetAOuvrir)
         if pane.IsOk():
             pane.Show(True)
             self.manager.Update()
-        self.SauverPerspective()
+        self.PlanifierVisibilite(nomGadgetAOuvrir, True)
+        self.PlanifierSauvegardePerspective()
 
     def OnPaneClose(self, event):
         pane = event.GetPane()
         gadget = pane.window
-        try:
-            gadget.SaveConfig({"affichage": False})
-        except Exception:
-            pass
-        wx.CallAfter(self.SauverPerspective)
+        nom = getattr(gadget, "nomGadget", "")
+        if nom:
+            self.PlanifierVisibilite(nom, False)
+            self.PlanifierSauvegardePerspective()
         event.Skip()
 
     def OnDestroy(self, event):
         if event.GetEventObject() is self:
+            try:
+                if self._timer_perspective is not None and self._timer_perspective.IsRunning():
+                    self._timer_perspective.Stop()
+            except Exception:
+                pass
             self.SauverPerspective()
             self._DetruirePanes()
         event.Skip()
