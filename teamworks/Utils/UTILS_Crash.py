@@ -5,6 +5,9 @@
 
 Ce module reste volontairement limité à la bibliothèque standard afin de pouvoir
 être importé avant wxPython et avant le reste du runtime historique.
+
+Les rapports sont conçus pour le débogage à distance sans collecter de données
+métier : aucune variable locale ni message d'exception arbitraire n'est sérialisé.
 """
 
 from __future__ import annotations
@@ -14,6 +17,7 @@ import datetime
 import faulthandler
 import os
 import platform
+import re
 import sys
 import traceback
 from typing import Optional
@@ -27,6 +31,7 @@ _NATIVE_INITIAL_SIZE = 0
 _LAST_EXCEPTION_OBJECT = None
 _LAST_REPORT_PATH: Optional[str] = None
 _EARLY_HOOK_INSTALLED = False
+_TECHNICAL_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_.]{0,160}$")
 
 
 def _repertoire_principal() -> str:
@@ -74,7 +79,7 @@ def _masquer_home(chemin: str) -> str:
             return "~" + absolu[len(home):]
         return absolu
     except Exception:
-        return str(chemin)
+        return "<path>"
 
 
 def _version_python() -> str:
@@ -97,6 +102,87 @@ def _informations_build() -> list[str]:
     return lignes
 
 
+def _nom_technique(value) -> str:
+    if isinstance(value, str) and _TECHNICAL_NAME_RE.fullmatch(value):
+        return value
+    return ""
+
+
+def _detail_exception_sur(exctype, value) -> str:
+    """Retourne un détail utile sans sérialiser le message libre de l'exception."""
+    nom = getattr(exctype, "__name__", "Exception")
+
+    if isinstance(value, ModuleNotFoundError):
+        module = _nom_technique(getattr(value, "name", None))
+        return "%s | module=%s" % (nom, module) if module else nom
+
+    if isinstance(value, ImportError):
+        module = _nom_technique(getattr(value, "name", None))
+        return "%s | module=%s" % (nom, module) if module else nom
+
+    if isinstance(value, AttributeError):
+        attribut = _nom_technique(getattr(value, "name", None))
+        return "%s | attribut=%s" % (nom, attribut) if attribut else nom
+
+    if isinstance(value, OSError):
+        errno = getattr(value, "errno", None)
+        return "%s | errno=%s" % (nom, errno) if isinstance(errno, int) else nom
+
+    return nom
+
+
+def _formater_pile(tb) -> list[str]:
+    lignes = []
+    if tb is None:
+        return ["  <pile indisponible>"]
+    try:
+        for entree in traceback.extract_tb(tb):
+            lignes.append(
+                "  %s:%s in %s"
+                % (_masquer_home(entree.filename), entree.lineno, entree.name)
+            )
+    except Exception:
+        lignes.append("  <pile indisponible>")
+    return lignes
+
+
+def _formater_exception_sans_donnees(exctype, value, tb) -> str:
+    """Formate la chaîne d'exceptions sans message, locals ni ligne source."""
+    lignes = []
+    courant = value
+    courant_type = exctype
+    courant_tb = tb
+    vus = set()
+    index = 0
+
+    while courant is not None and id(courant) not in vus and index < 8:
+        vus.add(id(courant))
+        if index:
+            lignes.append("Causé par :")
+        lignes.append("Exception: %s" % _detail_exception_sur(courant_type, courant))
+        lignes.extend(_formater_pile(courant_tb))
+
+        suivant = getattr(courant, "__cause__", None)
+        if suivant is None and not getattr(courant, "__suppress_context__", False):
+            suivant = getattr(courant, "__context__", None)
+        if suivant is None:
+            break
+        courant = suivant
+        courant_type = type(suivant)
+        courant_tb = getattr(suivant, "__traceback__", None)
+        index += 1
+
+    return "\n".join(lignes)
+
+
+def _chronologie_technique() -> str:
+    try:
+        from Utils import UTILS_Blackbox
+        return UTILS_Blackbox.FormaterChronologie()
+    except Exception:
+        return "Chronologie technique : indisponible."
+
+
 def ConstruireRapport(
     exctype,
     value,
@@ -106,7 +192,7 @@ def ConstruireRapport(
     contexte: str = "Exception Python",
     version_wx: str = "",
 ) -> str:
-    trace = "".join(traceback.format_exception(exctype, value, tb))
+    pile = _formater_exception_sans_donnees(exctype, value, tb)
     lignes = [
         "=" * 78,
         f"{_NOM_APPLICATION} — rapport de crash",
@@ -126,12 +212,15 @@ def ConstruireRapport(
     lignes.extend(_informations_build())
     lignes.extend([
         "",
-        "Traceback:",
-        "-" * 78,
-        trace.rstrip(),
+        _chronologie_technique(),
         "",
-        "Note: ce fichier ne contient volontairement ni mot de passe, ni variables",
-        "d'environnement, ni contenu de base de données.",
+        "Pile Python sécurisée :",
+        "-" * 78,
+        pile,
+        "",
+        "Confidentialité : aucune variable locale, valeur de champ, texte saisi,",
+        "identifiant métier, montant, requête SQL ou contenu de base de données n'est",
+        "collecté. Les messages d'exception libres ne sont pas sérialisés.",
         "",
     ])
     return "\n".join(lignes)
@@ -198,16 +287,10 @@ def EcrireRapportException(
 
 
 def InstallerHookMinimal(*, version: str = "") -> None:
-    """Installe un hook sans wxPython pour les erreurs de démarrage/import.
-
-    Il sera remplacé ensuite par le rapporteur graphique de Teamworks lorsque
-    l'application aura fini ses imports.
-    """
+    """Installe un hook sans wxPython pour les erreurs de démarrage/import."""
     global _EARLY_HOOK_INSTALLED
     if _EARLY_HOOK_INSTALLED:
         return
-
-    precedent = sys.excepthook
 
     def early_excepthook(exctype, value, tb):
         try:
@@ -221,7 +304,9 @@ def InstallerHookMinimal(*, version: str = "") -> None:
         except Exception:
             pass
         try:
-            precedent(exctype, value, tb)
+            sortie = getattr(sys, "__stderr__", None)
+            if sortie is not None:
+                sortie.write("Teamworks CCNS : rapport de crash créé.\n")
         except Exception:
             pass
 
