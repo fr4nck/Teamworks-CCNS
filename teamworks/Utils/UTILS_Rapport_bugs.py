@@ -1,306 +1,407 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------------------
-# Application :    Noethys, gestion multi-activités
-# Site internet :  www.noethys.com
-# Auteur:          Ivan LUCAS
-# Copyright:       (c) 2010-19 Ivan LUCAS
-# Licence:         Licence GNU GPL
+# Application :    Teamworks CCNS
+# Licence :         GNU GPL
 #------------------------------------------------------------------------
 
-
-import Chemins
-from Utils.UTILS_Traduction import _
-import wx
-from Ctrl import CTRL_Bouton_image
+import os
 import sys
-import platform
-import traceback
-import datetime
-import GestionDB
-import webbrowser
-import wx.lib.dialogs
+import threading
+
+import wx
+
+from Utils.UTILS_Traduction import _
+from Utils import UTILS_Blackbox
 from Utils import UTILS_Config
-from Utils import UTILS_Customize
+from Utils import UTILS_Crash
 from Utils import UTILS_Fichiers
 
 
+_VERSION_ACTIVE = ""
+_ORIGINAL_WX_EXCEPTION_HANDLER = getattr(wx.App, "OnExceptionInMainLoop", None)
+_ORIGINAL_WX_MAINLOOP = getattr(wx.App, "MainLoop", None)
+_BLACKBOX_FILTER = None
+_BLACKBOX_MAINLOOP_WRAPPED = False
 
-def Activer_rapport_erreurs(version=""):
-    def my_excepthook(exctype, value, tb):
-        dateDuJour = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-        systeme = u"%s %s %s %s" % (sys.platform, platform.system(), platform.release(), platform.machine())
-        infos = u"## %s | %s | wxPython %s | %s ##" % (dateDuJour, version, wx.version(), systeme)
-        bug = ''.join(traceback.format_exception(exctype, value, tb))
 
-        # Affichage dans le journal
-        print(bug)
+def _copier_texte(texte):
+    try:
+        if not wx.TheClipboard.Open():
+            return False
+        try:
+            data = wx.TextDataObject()
+            data.SetText(texte)
+            wx.TheClipboard.SetData(data)
+            return True
+        finally:
+            wx.TheClipboard.Close()
+    except Exception:
+        return False
 
-        # Affichage dans une DLG
-        if UTILS_Config.GetParametre("rapports_bugs", True) == False :
-            return
-        texte = u"%s\n%s" % (infos, bug)
-        dlg = DLG_Rapport(None, texte)
+
+def _afficher_dialogue(texte, chemin_rapport):
+    try:
+        dlg = DLG_Rapport(None, texte=texte, chemin_rapport=chemin_rapport)
         dlg.ShowModal()
         dlg.Destroy()
+    except Exception:
+        # Le rapport est déjà écrit sur disque : une défaillance du dialogue ne
+        # doit jamais masquer l'exception d'origine.
+        pass
+
+
+def _type_exception_sur(exctype):
+    nom = getattr(exctype, "__name__", "Exception")
+    if isinstance(nom, str) and nom.replace("_", "").isalnum():
+        return nom
+    return "Exception"
+
+
+def Rapporter_exception(exctype, value, tb, version=None, contexte="Exception Python", afficher=True):
+    """Enregistre une exception sans sérialiser de valeur métier."""
+    version = _VERSION_ACTIVE if version is None else version
+    try:
+        version_wx = wx.version()
+    except Exception:
+        version_wx = ""
+
+    try:
+        chemin_rapport = UTILS_Crash.EcrireRapportException(
+            exctype,
+            value,
+            tb,
+            version=version or "",
+            contexte=contexte,
+            version_wx=version_wx,
+        )
+    except Exception:
+        chemin_rapport = ""
+
+    try:
+        print("Exception %s — rapport technique créé" % _type_exception_sur(exctype))
+    except Exception:
+        pass
+
+    if chemin_rapport:
+        try:
+            with open(chemin_rapport, "r", encoding="utf-8", errors="replace") as fichier:
+                rapport = fichier.read()
+        except Exception:
+            rapport = "Exception technique : %s" % _type_exception_sur(exctype)
+        texte = _(
+            u"Rapport enregistré : %s\n\n"
+            u"Transmettez de préférence ce fichier .txt pour le débogage.\n\n%s"
+        ) % (chemin_rapport, rapport)
+    else:
+        texte = "Exception technique : %s" % _type_exception_sur(exctype)
+
+    if not afficher:
+        return chemin_rapport
+
+    try:
+        if UTILS_Config.GetParametre("rapports_bugs", True) is False:
+            return chemin_rapport
+    except Exception:
+        pass
+
+    try:
+        app = wx.GetApp()
+        if app is None:
+            return chemin_rapport
+        if threading.current_thread() is threading.main_thread():
+            _afficher_dialogue(texte, chemin_rapport)
+        else:
+            wx.CallAfter(_afficher_dialogue, texte, chemin_rapport)
+    except Exception:
+        pass
+
+    return chemin_rapport
+
+
+def _binder_type(nom):
+    binder = getattr(wx, nom, None)
+    return getattr(binder, "typeId", None)
+
+
+def _wx_component(objet):
+    try:
+        cls = objet.__class__
+        module = getattr(cls, "__module__", "wx")
+        nom = getattr(cls, "__name__", "Window")
+        return "wx:%s.%s" % (module, nom)
+    except Exception:
+        return "wx:unknown"
+
+
+def _menu_component(event_id):
+    """Résout uniquement le code technique du menu, jamais son libellé."""
+    try:
+        app = wx.GetApp()
+        top = app.GetTopWindow() if app is not None else None
+        infos = getattr(top, "dictInfosMenu", {}) if top is not None else {}
+        for code, info in infos.items():
+            if isinstance(info, dict) and info.get("id") == event_id:
+                return "menu:%s" % code
+    except Exception:
+        pass
+    return "menu:unknown"
+
+
+class _BlackboxEventFilter(wx.EventFilter):
+    """Observe seulement des catégories d'événements, jamais leur contenu."""
+
+    def __init__(self):
+        wx.EventFilter.__init__(self)
+        self._types = {}
+        for binder_name, action in (
+            ("EVT_MENU", "MENU"),
+            ("EVT_BUTTON", "BUTTON_CLICK"),
+            ("EVT_TOOL", "TOOL_CLICK"),
+            ("EVT_LEFT_DCLICK", "DOUBLE_CLICK"),
+            ("EVT_LIST_ITEM_ACTIVATED", "LIST_ACTIVATE"),
+            ("EVT_TREE_ITEM_ACTIVATED", "TREE_ACTIVATE"),
+            ("EVT_TOOLBOOK_PAGE_CHANGED", "PAGE_CHANGED"),
+            ("EVT_NOTEBOOK_PAGE_CHANGED", "PAGE_CHANGED"),
+            ("EVT_WINDOW_CREATE", "WINDOW_CREATE"),
+            ("EVT_WINDOW_DESTROY", "WINDOW_DESTROY"),
+            ("EVT_SHOW", "WINDOW_VISIBILITY"),
+        ):
+            event_type = _binder_type(binder_name)
+            if event_type is not None:
+                self._types[event_type] = action
+
+    def FilterEvent(self, event):
+        continuer = getattr(wx.EventFilter, "Event_Skip", -1)
+        try:
+            action = self._types.get(event.GetEventType())
+            if action is None:
+                return continuer
+
+            event_id = event.GetId() if hasattr(event, "GetId") else None
+            if action == "MENU":
+                UTILS_Blackbox.Tracer("MENU", _menu_component(event_id), code=event_id)
+                return continuer
+
+            objet = event.GetEventObject() if hasattr(event, "GetEventObject") else None
+
+            if action in ("WINDOW_CREATE", "WINDOW_DESTROY", "WINDOW_VISIBILITY"):
+                if objet is None or not isinstance(objet, wx.TopLevelWindow):
+                    return continuer
+                if action == "WINDOW_VISIBILITY":
+                    try:
+                        action = "WINDOW_SHOW" if event.IsShown() else "WINDOW_HIDE"
+                    except Exception:
+                        action = "WINDOW_VISIBILITY"
+
+            component = _wx_component(objet) if objet is not None else "wx:unknown"
+            UTILS_Blackbox.Tracer(action, component, code=event_id)
+        except Exception:
+            # La boîte noire ne doit jamais perturber le traitement d'un événement.
+            pass
+        return continuer
+
+
+def Activer_boite_noire_wx(app=None):
+    """Active les breadcrumbs wx et le watchdog une fois OnInit terminé."""
+    global _BLACKBOX_FILTER
+    if _BLACKBOX_FILTER is not None:
+        return
+
+    try:
+        filtre = _BlackboxEventFilter()
+        wx.EvtHandler.AddFilter(filtre)
+        _BLACKBOX_FILTER = filtre
+    except Exception:
+        _BLACKBOX_FILTER = None
+
+    UTILS_Blackbox.Tracer("BLACKBOX_START", "app:wx_main_loop")
+
+    def poster_heartbeat():
+        wx.CallAfter(UTILS_Blackbox.MarquerHeartbeat)
+
+    try:
+        seuil = float(os.environ.get("TEAMWORKS_FREEZE_THRESHOLD_SECONDS", "8"))
+    except Exception:
+        seuil = 8.0
+
+    try:
+        UTILS_Blackbox.DemarrerWatchdog(
+            poster_heartbeat,
+            version=_VERSION_ACTIVE,
+            seuil_secondes=seuil,
+            intervalle_secondes=min(1.0, max(0.05, seuil / 4.0)),
+        )
+    except Exception:
+        pass
+
+
+def Activer_rapport_erreurs(version=""):
+    """Active crash reports, boîte noire technique, wx, threads et faulthandler."""
+    global _VERSION_ACTIVE, _BLACKBOX_MAINLOOP_WRAPPED
+    _VERSION_ACTIVE = version or ""
+
+    # Si Chemins.py ne l'a pas déjà fait, active aussi la capture des erreurs
+    # fatales C/Python (segfault, abort, etc.).
+    UTILS_Crash.ActiverFaulthandler(version=_VERSION_ACTIVE)
+
+    def my_excepthook(exctype, value, tb):
+        Rapporter_exception(exctype, value, tb, contexte="Exception Python")
 
     sys.excepthook = my_excepthook
 
+    if hasattr(threading, "excepthook"):
+        def thread_excepthook(args):
+            Rapporter_exception(
+                args.exc_type,
+                args.exc_value,
+                args.exc_traceback,
+                contexte="Thread Python",
+                afficher=True,
+            )
+        threading.excepthook = thread_excepthook
+
+    if hasattr(sys, "unraisablehook"):
+        def unraisable_hook(args):
+            exc_type = type(args.exc_value) if args.exc_value is not None else RuntimeError
+            exc_value = args.exc_value or RuntimeError("Exception non remontable")
+            Rapporter_exception(
+                exc_type,
+                exc_value,
+                args.exc_traceback,
+                contexte="Exception non remontable",
+                afficher=False,
+            )
+        sys.unraisablehook = unraisable_hook
+
+    # wxPython intercepte certaines exceptions d'événements à l'intérieur de sa
+    # boucle principale sans nécessairement passer par sys.excepthook.
+    def wx_exception_handler(app_self):
+        exctype, value, tb = sys.exc_info()
+        if exctype is not None:
+            Rapporter_exception(
+                exctype,
+                value,
+                tb,
+                contexte="Boucle wxPython",
+                afficher=True,
+            )
+            return True
+        if _ORIGINAL_WX_EXCEPTION_HANDLER is not None:
+            try:
+                return _ORIGINAL_WX_EXCEPTION_HANDLER(app_self)
+            except Exception:
+                pass
+        return False
+
+    try:
+        wx.App.OnExceptionInMainLoop = wx_exception_handler
+    except Exception:
+        pass
+
+    # Le watchdog doit commencer après MyApp.OnInit. En enveloppant MainLoop,
+    # l'initialisation (assistant, splash, ouverture initiale) ne peut pas être
+    # prise à tort pour un freeze de l'interface.
+    if not _BLACKBOX_MAINLOOP_WRAPPED and _ORIGINAL_WX_MAINLOOP is not None:
+        def mainloop_with_blackbox(app_self, *args, **kwargs):
+            try:
+                Activer_boite_noire_wx(app_self)
+            except Exception:
+                pass
+            return _ORIGINAL_WX_MAINLOOP(app_self, *args, **kwargs)
+
+        try:
+            wx.App.MainLoop = mainloop_with_blackbox
+            _BLACKBOX_MAINLOOP_WRAPPED = True
+        except Exception:
+            pass
 
 
 # ------------------------------------------- BOITE DE DIALOGUE ----------------------------------------------------------------------------------------
 
 class DLG_Rapport(wx.Dialog):
-    def __init__(self, parent, texte=""):
-        wx.Dialog.__init__(self, parent, -1, style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX)
-        self.parent = parent
+    def __init__(self, parent, texte="", chemin_rapport=""):
+        wx.Dialog.__init__(
+            self,
+            parent,
+            -1,
+            title=_(u"Rapport de crash Teamworks CCNS"),
+            style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER | wx.MAXIMIZE_BOX | wx.MINIMIZE_BOX,
+        )
+        self.chemin_rapport = chemin_rapport
 
-        self.ctrl_image = wx.StaticBitmap(self, wx.ID_ANY, wx.Bitmap(Chemins.GetStaticPath("Images/48x48/Erreur.png"), wx.BITMAP_TYPE_ANY))
-        self.label_ligne_1 = wx.StaticText(self, wx.ID_ANY, _(u"Teamworks a rencontré un problème !"))
-        self.label_ligne_2 = wx.StaticText(self, wx.ID_ANY, _(u"Le rapport d'erreur ci-dessous peut servir à la résolution de ce bug.\nMerci de bien vouloir le communiquer à l'auteur par Email ou depuis le forum."))
-        self.ctrl_rapport = wx.TextCtrl(self, wx.ID_ANY, texte, style=wx.TE_MULTILINE | wx.TE_READONLY)
-        
-        self.bouton_envoyer = CTRL_Bouton_image.CTRL(self, texte=_(u"Envoyer à l'auteur"), cheminImage=Chemins.GetStaticPath("Images/32x32/Emails_exp.png"))
-        self.bouton_forum = CTRL_Bouton_image.CTRL(self, texte=_(u"Accéder au forum"), cheminImage=Chemins.GetStaticPath("Images/32x32/Forum.png"))
-        self.bouton_fermer = CTRL_Bouton_image.CTRL(self, texte=_(u"Fermer"), cheminImage=Chemins.GetStaticPath("Images/32x32/Fermer.png"))
+        self.label_titre = wx.StaticText(self, wx.ID_ANY, _(u"Teamworks CCNS a rencontré un problème."))
+        self.label_info = wx.StaticText(
+            self,
+            wx.ID_ANY,
+            _(
+                u"Un rapport technique sans données utilisateur a été enregistré automatiquement. "
+                u"Pour faciliter le débogage, transmettez le fichier .txt du dossier Logs."
+            ),
+        )
+        self.ctrl_rapport = wx.TextCtrl(
+            self,
+            wx.ID_ANY,
+            texte,
+            style=wx.TE_MULTILINE | wx.TE_READONLY | wx.HSCROLL,
+        )
 
-        self.__set_properties()
-        self.__do_layout()
+        self.bouton_dossier = wx.Button(self, wx.ID_ANY, _(u"Ouvrir le dossier Logs"))
+        self.bouton_copier = wx.Button(self, wx.ID_ANY, _(u"Copier le rapport"))
+        self.bouton_fermer = wx.Button(self, wx.ID_CANCEL, _(u"Fermer"))
 
-        self.Bind(wx.EVT_BUTTON, self.OnBoutonEnvoyer, self.bouton_envoyer)
-        self.Bind(wx.EVT_BUTTON, self.OnBoutonForum, self.bouton_forum)
+        self.label_titre.SetFont(self.label_titre.GetFont().Bold())
+        self.SetMinSize((760, 500))
+
+        self.Bind(wx.EVT_BUTTON, self.OnBoutonDossier, self.bouton_dossier)
+        self.Bind(wx.EVT_BUTTON, self.OnBoutonCopier, self.bouton_copier)
         self.Bind(wx.EVT_BUTTON, self.OnBoutonFermer, self.bouton_fermer)
 
-        # Envoi dans le presse-papiers
-        clipdata = wx.TextDataObject()
-        clipdata.SetText(texte)
-        wx.TheClipboard.Open()
-        wx.TheClipboard.SetData(clipdata)
-        wx.TheClipboard.Close()
-
+        self.__do_layout()
+        _copier_texte(texte)
         self.bouton_fermer.SetFocus()
 
-
-    def __set_properties(self):
-        self.SetTitle(_(u"Rapport d'erreurs"))
-        self.label_ligne_1.SetFont(wx.Font(9, wx.DEFAULT, wx.NORMAL, wx.BOLD, 0, ""))
-        self.ctrl_rapport.SetToolTip(wx.ToolTip(_(u"Ce rapport d'erreur a été copié dans le presse-papiers")))
-        self.bouton_envoyer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour envoyer ce rapport d'erreur à l'auteur par Email")))
-        self.bouton_forum.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour ouvrir votre navigateur internet et accéder au forum de Teamworks. Vous pourrez ainsi signaler ce bug dans la rubrique dédiée.")))
-        self.bouton_fermer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour fermer")))
-        self.SetMinSize((650, 450))
-
     def __do_layout(self):
-        grid_sizer_base = wx.FlexGridSizer(2, 1, 10, 10)
-        grid_sizer_bas = wx.FlexGridSizer(1, 5, 10, 10)
-        grid_sizer_haut = wx.FlexGridSizer(1, 2, 10, 10)
-        grid_sizer_droit = wx.FlexGridSizer(3, 1, 10, 10)
-        grid_sizer_haut.Add(self.ctrl_image, 0, wx.ALL, 10)
-        grid_sizer_droit.Add(self.label_ligne_1, 0, 0, 0)
-        grid_sizer_droit.Add(self.label_ligne_2, 0, 0, 0)
-        grid_sizer_droit.Add(self.ctrl_rapport, 0, wx.EXPAND, 0)
-        grid_sizer_droit.AddGrowableRow(2)
-        grid_sizer_droit.AddGrowableCol(0)
-        grid_sizer_haut.Add(grid_sizer_droit, 1, wx.RIGHT | wx.TOP | wx.EXPAND, 10)
-        grid_sizer_haut.AddGrowableRow(0)
-        grid_sizer_haut.AddGrowableCol(1)
-        grid_sizer_base.Add(grid_sizer_haut, 1, wx.EXPAND, 0)
-        grid_sizer_bas.Add((20, 20), 0, wx.EXPAND, 0)
-        grid_sizer_bas.Add(self.bouton_envoyer, 0, 0, 0)
-        grid_sizer_bas.Add(self.bouton_forum, 0, 0, 0)
-        grid_sizer_bas.Add(self.bouton_fermer, 0, 0, 0)
-        grid_sizer_bas.AddGrowableCol(0)
-        grid_sizer_base.Add(grid_sizer_bas, 1, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, 10)
-        self.SetSizer(grid_sizer_base)
-        grid_sizer_base.Fit(self)
-        grid_sizer_base.AddGrowableRow(0)
-        grid_sizer_base.AddGrowableCol(0)
-        self.Layout()
-        self.CenterOnScreen() 
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self.label_titre, 0, wx.LEFT | wx.RIGHT | wx.TOP, 12)
+        sizer.Add(self.label_info, 0, wx.LEFT | wx.RIGHT | wx.TOP, 12)
+        sizer.Add(self.ctrl_rapport, 1, wx.ALL | wx.EXPAND, 12)
 
-    def OnBoutonFermer(self, event):  
-        self.EndModal(wx.ID_CANCEL)
+        boutons = wx.BoxSizer(wx.HORIZONTAL)
+        boutons.Add(self.bouton_dossier, 0, wx.RIGHT, 8)
+        boutons.Add(self.bouton_copier, 0, wx.RIGHT, 8)
+        boutons.AddStretchSpacer(1)
+        boutons.Add(self.bouton_fermer, 0)
+        sizer.Add(boutons, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, 12)
 
-    def OnBoutonEnvoyer(self, event):
-        # DLG Commentaires
-        texteRapport = self.ctrl_rapport.GetValue()
-        dlg = DLG_Envoi(self, texteRapport)
-        reponse = dlg.ShowModal()
-        commentaires = dlg.GetCommentaires()
-        joindre_journal = dlg.GetJoindreJournal()
-        dlg.Destroy()
-
-        if reponse == wx.ID_OK :
-            self.Envoyer_mail(commentaires, joindre_journal)
-
-    def OnBoutonForum(self, event):
-        dlg = wx.MessageDialog(self, _(u"Teamworks va ouvrir votre navigateur internet à la page du forum de Teamworks. Vous n'aurez plus qu'à vous connecter avec vos identifiants Teamworks et poster un nouveau message dans la rubrique dédiée aux bugs."), _(u"Forum Teamworks"), wx.OK | wx.ICON_INFORMATION)
-        dlg.ShowModal()
-        dlg.Destroy()
-        webbrowser.open("https://teamworks.ovh/index.php/assistance/le-forum")
-
-    def GetAdresseExpDefaut(self):
-        """ Retourne les paramètres de l'adresse d'expéditeur par défaut """
-        dictAdresse = {}
-        # Récupération des données
-        DB = GestionDB.DB()
-        req = """SELECT IDadresse, moteur, adresse, motdepasse, smtp, port, defaut, connexionAuthentifiee, startTLS, utilisateur, parametres
-        FROM adresses_mail WHERE defaut=1 ORDER BY adresse; """
-        DB.ExecuterReq(req)
-        listeDonnees = DB.ResultatReq()
-        DB.Close()
-        if len(listeDonnees) == 0 : return None
-        IDadresse, moteur, adresse, motdepasse, smtp, port, defaut, connexionAuthentifiee, startTLS, utilisateur, parametres = listeDonnees[0]
-        dictAdresse = {"adresse":adresse, "moteur":moteur, "motdepasse":motdepasse, "smtp":smtp, "port":port, "auth":connexionAuthentifiee, "startTLS":startTLS, "utilisateur" : utilisateur, "parametres": parametres}
-        return dictAdresse
-
-    def Envoyer_mail(self, commentaires="", joindre_journal=False):
-        """ Envoi d'un mail avec pièce jointe """
-        from Utils import UTILS_Envoi_email
-
-        # Expéditeur
-        dictExp = self.GetAdresseExpDefaut()
-        if dictExp == None :
-            dlg = wx.MessageDialog(self, _(u"Vous devez d'abord saisir une adresse d'expéditeur depuis le menu Paramétrage > Adresses d'expédition d'Emails. Sinon, postez votre rapport de bug dans le forum de Teamworks."), _(u"Erreur"), wx.OK | wx.ICON_EXCLAMATION)
-            dlg.ShowModal()
-            dlg.Destroy()
-            return False
-        moteur = dictExp["moteur"]
-        adresseExpediteur = dictExp["adresse"]
-        serveur = dictExp["smtp"]
-        port = dictExp["port"]
-        auth = dictExp["auth"]
-        startTLS = dictExp["startTLS"]
-        motdepasse = dictExp["motdepasse"]
-        utilisateur = dictExp["utilisateur"]
-        parametres = dictExp["parametres"]
-
-        if adresseExpediteur == None :
-            dlg = wx.MessageDialog(self, _(u"L'adresse d'expédition ne semble pas valide. Veuillez la vérifier."), _(u"Envoi impossible"), wx.OK | wx.ICON_EXCLAMATION)
-            dlg.ShowModal()
-            dlg.Destroy()
-            return False
-
-        # Attacher le journal d'erreurs
-        fichiers = []
-        if joindre_journal == True :
-            customize = UTILS_Customize.Customize()
-            nom_journal = UTILS_Fichiers.GetRepUtilisateur(customize.GetValeur("journal", "nom", "journal.log"))
-            fichiers.append(nom_journal)
-
-        # Préparation du message
-        IDrapport = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-        texteRapport = self.ctrl_rapport.GetValue().replace("\n","<br/>")
-        if len(commentaires) == 0 :
-            commentaires = _(u"Aucun")
-        texte_html = _(u"<u>Rapport de bug %s :</u><br/><br/>%s<br/><u>Commentaires :</u><br/><br/>%s") % (IDrapport, texteRapport, commentaires)
-
-        sujet = _(u"Rapport de bug Teamworks n°%s") % IDrapport
-        message = UTILS_Envoi_email.Message(destinataires=["noe" + "thys" + "@" + "gm" + "ail" + ".com",], sujet=sujet, texte_html=texte_html, fichiers=fichiers)
-
-        # Envoi du mail
-        try :
-            messagerie = UTILS_Envoi_email.Messagerie(backend=moteur, hote=serveur, port=port, utilisateur=utilisateur, motdepasse=motdepasse, email_exp=adresseExpediteur, use_tls=startTLS, parametres=parametres)
-            messagerie.Connecter()
-            messagerie.Envoyer(message)
-            messagerie.Fermer()
-        except Exception as err :
-            dlg = wx.MessageDialog(self, _(u"Le message n'a pas pu être envoyé. Merci de poster votre rapport de bug sur le forum de Teamworks.\n\nErreur : %s !") % err, _(u"Envoi impossible"), wx.OK | wx.ICON_EXCLAMATION)
-            dlg.ShowModal()
-            dlg.Destroy()
-            return False
-
-        # Message de confirmation
-        dlg = wx.MessageDialog(self, _(u"Le rapport d'erreur a été envoyé avec succès."), _(u"Rapport envoyé"), wx.OK | wx.ICON_INFORMATION)
-        dlg.ShowModal()
-        dlg.Destroy()
-
-        return True
-
-
-# -------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-class DLG_Envoi(wx.Dialog):
-    def __init__(self, parent, texteRapport=u""):
-        wx.Dialog.__init__(self, parent, -1, style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX)
-        self.parent = parent
-        self.texteRapport = texteRapport
-
-        self.label_ligne_1 = wx.StaticText(self, wx.ID_ANY, _(u"Le rapport est prêt à être envoyé..."))
-        self.label_ligne_2 = wx.StaticText(self, wx.ID_ANY, _(u"Vous pouvez ajouter ci-dessous des commentaires, remarques ou compléments d'informations\navant de l'envoyer à l'auteur. Il est également possible de joindre le rapport complet."))
-
-        self.ctrl_commentaires = wx.TextCtrl(self, wx.ID_ANY, "", style=wx.TE_MULTILINE)
-
-        self.check_journal = wx.CheckBox(self, -1, _(u"Joindre le journal des erreurs (Recommandé)"))
-
-        self.bouton_apercu = CTRL_Bouton_image.CTRL(self, texte=_(u"Aperçu"), cheminImage=Chemins.GetStaticPath("Images/32x32/Apercu.png"))
-        self.bouton_envoyer = CTRL_Bouton_image.CTRL(self, texte=_(u"Envoyer l'Email"), cheminImage=Chemins.GetStaticPath("Images/32x32/Emails_exp.png"))
-        self.bouton_annuler = CTRL_Bouton_image.CTRL(self, texte=_(u"Annuler"), cheminImage=Chemins.GetStaticPath("Images/32x32/Annuler.png"))
-
-        self.__set_properties()
-        self.__do_layout()
-
-        self.Bind(wx.EVT_BUTTON, self.OnBoutonApercu, self.bouton_apercu)
-        self.Bind(wx.EVT_BUTTON, self.OnBoutonEnvoyer, self.bouton_envoyer)
-        self.Bind(wx.EVT_BUTTON, self.OnBoutonAnnuler, self.bouton_annuler)
-
-    def __set_properties(self):
-        self.SetTitle(_(u"Envoyer le rapport à l'auteur"))
-        self.label_ligne_1.SetFont(wx.Font(9, wx.DEFAULT, wx.NORMAL, wx.BOLD, 0, ""))
-        self.ctrl_commentaires.SetToolTip(wx.ToolTip(_(u"Vous pouvez saisir des commentaires ici")))
-        self.check_journal.SetToolTip(wx.ToolTip(_(u"Pour faciliter la résolution du bug, vous pouvez joindre votre rapport d'erreurs")))
-        self.bouton_apercu.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour visualiser le contenu du message qui sera envoyé à l'auteur")))
-        self.bouton_envoyer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour envoyer le rapport et les commentaires à l'auteur")))
-        self.bouton_annuler.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour annuler")))
-        self.SetMinSize((550, 350))
-
-    def __do_layout(self):
-        grid_sizer_base = wx.FlexGridSizer(5, 1, 10, 10)
-        grid_sizer_boutons = wx.FlexGridSizer(1, 4, 10, 10)
-        grid_sizer_base.Add(self.label_ligne_1, 0, wx.LEFT | wx.RIGHT | wx.TOP, 10)
-        grid_sizer_base.Add(self.label_ligne_2, 0, wx.LEFT | wx.RIGHT, 10)
-        grid_sizer_base.Add(self.ctrl_commentaires, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        grid_sizer_base.Add(self.check_journal, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        grid_sizer_boutons.Add(self.bouton_apercu, 0, 0, 0)
-        grid_sizer_boutons.Add((20, 20), 0, wx.EXPAND, 0)
-        grid_sizer_boutons.Add(self.bouton_envoyer, 0, 0, 0)
-        grid_sizer_boutons.Add(self.bouton_annuler, 0, 0, 0)
-        grid_sizer_boutons.AddGrowableCol(1)
-        grid_sizer_base.Add(grid_sizer_boutons, 1, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, 10)
-        self.SetSizer(grid_sizer_base)
-        grid_sizer_base.Fit(self)
-        grid_sizer_base.AddGrowableRow(2)
-        grid_sizer_base.AddGrowableCol(0)
+        self.SetSizer(sizer)
         self.Layout()
         self.CenterOnScreen()
 
-    def OnBoutonApercu(self, event):
-        """ Visualisation du message à envoyer """
-        commentaires = self.ctrl_commentaires.GetValue()
-        if len(commentaires) == 0 :
-            commentaires = _(u"Aucun")
-        message = _(u"Rapport : \n\n%s\nCommentaires : \n\n%s") % (self.texteRapport, commentaires)
-        dlg = wx.lib.dialogs.ScrolledMessageDialog(self, message, _(u"Visualisation du contenu du message"))
-        dlg.ShowModal()
-        dlg.Destroy()
+    def OnBoutonDossier(self, event):
+        try:
+            if self.chemin_rapport:
+                repertoire = os.path.dirname(self.chemin_rapport)
+            else:
+                repertoire = UTILS_Crash.GetRepertoireLogs()
+            UTILS_Fichiers.OuvrirRepertoire(repertoire)
+        except Exception as err:
+            wx.MessageBox(
+                _(u"Impossible d'ouvrir le dossier des diagnostics : %s") % err,
+                _(u"Diagnostics"),
+                wx.OK | wx.ICON_ERROR,
+                parent=self,
+            )
 
-    def OnBoutonEnvoyer(self, event):
-        self.EndModal(wx.ID_OK)
+    def OnBoutonCopier(self, event):
+        _copier_texte(self.ctrl_rapport.GetValue())
 
-    def OnBoutonAnnuler(self, event):
+    def OnBoutonFermer(self, event):
         self.EndModal(wx.ID_CANCEL)
-
-    def GetCommentaires(self):
-        return self.ctrl_commentaires.GetValue()
-
-    def GetJoindreJournal(self):
-        return self.check_journal.GetValue()
 
 
 if __name__ == u"__main__":
     app = wx.App(0)
-    #wx.InitAllImageHandlers()
-    dialog_1 = DLG_Rapport(None)
-    app.SetTopWindow(dialog_1)
-    dialog_1.ShowModal()
-    app.MainLoop()
+    dialog = DLG_Rapport(None, texte="Exemple de rapport")
+    app.SetTopWindow(dialog)
+    dialog.ShowModal()
