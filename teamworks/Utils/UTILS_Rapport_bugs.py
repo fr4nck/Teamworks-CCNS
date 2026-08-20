@@ -19,6 +19,7 @@ from Utils import UTILS_Fichiers
 
 
 _VERSION_ACTIVE = ""
+_ORIGINAL_WX_EXCEPTION_HANDLER = getattr(wx.App, "OnExceptionInMainLoop", None)
 
 
 def _copier_texte(texte):
@@ -110,12 +111,12 @@ def Rapporter_exception(exctype, value, tb, version=None, contexte="Exception Py
 
 
 def Activer_rapport_erreurs(version=""):
-    """Active les diagnostics Python, threads et erreurs fatales."""
+    """Active les diagnostics Python, wx, threads et erreurs fatales."""
     global _VERSION_ACTIVE
     _VERSION_ACTIVE = version or ""
 
-    # Si le bootstrap PyInstaller ne l'a pas déjà fait, active aussi la capture
-    # des erreurs fatales C/Python (segfault, abort, etc.).
+    # Si Chemins.py ne l'a pas déjà fait, active aussi la capture des erreurs
+    # fatales C/Python (segfault, abort, etc.).
     UTILS_Crash.ActiverFaulthandler(version=_VERSION_ACTIVE)
 
     def my_excepthook(exctype, value, tb):
@@ -147,6 +148,34 @@ def Activer_rapport_erreurs(version=""):
                 afficher=False,
             )
         sys.unraisablehook = unraisable_hook
+
+    # wxPython intercepte certaines exceptions d'événements à l'intérieur de sa
+    # boucle principale sans nécessairement passer par sys.excepthook. On pose
+    # donc le même rapporteur au niveau de wx.App avant l'instanciation de MyApp.
+    def wx_exception_handler(app_self):
+        exctype, value, tb = sys.exc_info()
+        if exctype is not None:
+            Rapporter_exception(
+                exctype,
+                value,
+                tb,
+                contexte="Boucle wxPython",
+                afficher=True,
+            )
+            return True
+        if _ORIGINAL_WX_EXCEPTION_HANDLER is not None:
+            try:
+                return _ORIGINAL_WX_EXCEPTION_HANDLER(app_self)
+            except Exception:
+                pass
+        return False
+
+    try:
+        wx.App.OnExceptionInMainLoop = wx_exception_handler
+    except Exception:
+        # Le hook sys + le rapport natif restent actifs même si une version de
+        # wxPython refuse le remplacement de cette méthode.
+        pass
 
 
 # ------------------------------------------- BOITE DE DIALOGUE ----------------------------------------------------------------------------------------
