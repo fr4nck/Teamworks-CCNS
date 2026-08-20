@@ -8,6 +8,7 @@
 
 import Chemins
 from Utils.UTILS_Traduction import _
+from Utils import UTILS_Colonnes
 from Utils import UTILS_Interface
 import wx
 from Ctrl import CTRL_Bouton_image
@@ -34,6 +35,10 @@ class Panel(wx.Panel):
         )
         self.ctrl_candidatures.SetMinSize((300, 140))
         self.ctrl_candidatures.MAJ()
+        self.colonnes_candidatures = UTILS_Colonnes.ColonnesFlexibles(
+            self.ctrl_candidatures,
+            extensibles=(2, 3, 4, 5, 7),
+        )
 
         self.bouton_candidatures_ajouter = self._bouton(_(u"Ajouter"), "Ajouter.png")
         self.bouton_candidatures_modifier = self._bouton(_(u"Modifier"), "Modifier.png")
@@ -51,6 +56,10 @@ class Panel(wx.Panel):
         )
         self.ctrl_entretiens.SetMinSize((300, 140))
         self.ctrl_entretiens.MAJ()
+        self.colonnes_entretiens = UTILS_Colonnes.ColonnesFlexibles(
+            self.ctrl_entretiens,
+            extensibles=(3, 4),
+        )
 
         self.bouton_entretiens_ajouter = self._bouton(_(u"Ajouter"), "Ajouter.png")
         self.bouton_entretiens_modifier = self._bouton(_(u"Modifier"), "Modifier.png")
