@@ -137,6 +137,12 @@ _DARK_ACCENTS = {
     },
 }
 
+_LEGACY_APPEARANCE_NAMES = {
+    "system": "Systeme",
+    "light": "Clair",
+    "dark": "Sombre",
+}
+
 
 def _normalise_theme(theme):
     if theme in DONNEES:
@@ -153,20 +159,33 @@ def _normalise_appearance(appearance):
 
 
 def GetTheme():
-    return _normalise_theme(UTILS_Customize.GetValeur("interface", "theme", "Vert"))
+    """Retourne l'accent visuel Vert/Bleu/Noir.
+
+    TW-121 utilisait historiquement ``interface.theme`` pour l'apparence
+    Système/Clair/Sombre. Le nouvel accent est donc stocké séparément. Une
+    ancienne configuration contenant encore Vert/Bleu/Noir dans ``theme`` est
+    néanmoins reconnue pendant la migration.
+    """
+    accent = UTILS_Customize.GetValeur(
+        "interface", "accent", "", ajouter_si_manquant=False
+    )
+    if accent in DONNEES:
+        return accent
+    legacy = UTILS_Customize.GetValeur("interface", "theme", "Vert")
+    return _normalise_theme(legacy)
 
 
 def SetTheme(theme="Vert"):
-    UTILS_Customize.SetValeur("interface", "theme", _normalise_theme(theme))
+    """Enregistre l'accent sans détourner la clé TW-121 ``theme``."""
+    UTILS_Customize.SetValeur("interface", "accent", _normalise_theme(theme))
 
 
 def GetAppearanceMode():
     """Retourne la préférence enregistrée : system, light ou dark.
 
-    Le mode clair reste la valeur par défaut de migration afin de préserver le
-    rendu historique tant que tous les écrans ne consomment pas encore les
-    tokens sémantiques. Les modes system et dark restent disponibles
-    explicitement.
+    Le mode clair reste le repli de migration afin de préserver le rendu
+    historique lorsqu'une valeur inconnue est rencontrée. Sur une installation
+    neuve, Customize.ini initialise explicitement ``appearance=system``.
     """
     return _normalise_appearance(
         UTILS_Customize.GetValeur("interface", "appearance", "light")
@@ -174,11 +193,13 @@ def GetAppearanceMode():
 
 
 def SetAppearanceMode(appearance="system"):
-    """Enregistre la préférence d'apparence sans modifier le thème métier."""
+    """Enregistre l'apparence moderne et maintient le contrat TW-121."""
+    appearance = _normalise_appearance(appearance)
+    UTILS_Customize.SetValeur("interface", "appearance", appearance)
     UTILS_Customize.SetValeur(
         "interface",
-        "appearance",
-        _normalise_appearance(appearance),
+        "theme",
+        _LEGACY_APPEARANCE_NAMES[appearance],
     )
 
 
