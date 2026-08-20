@@ -48,6 +48,24 @@ def test_floating_workspace_has_recovery_commands():
     assert "Réinitialiser la disposition" in source
 
 
+def test_floating_gadget_chrome_uses_semantic_tokens():
+    source = _source(FLOATING_PATH)
+
+    assert "AppliquerThemeGadget" in source
+    assert 'self._token_tuple("surface")' in source
+    assert 'self._token_tuple("surface_container_highest")' in source
+    assert 'self._token_tuple("surface_container_high")' in source
+    assert 'self._token_tuple("outline_variant")' in source
+    assert 'self._token_tuple("on_surface")' in source
+
+
+def test_custom_gadget_content_colours_are_not_overwritten_blindly():
+    source = _source(FLOATING_PATH)
+
+    assert 'getattr(gadget, "couleurFondCadre", None) == (214, 223, 247)' in source
+    assert 'gadget.couleurFondCadre = self._token_tuple("surface_container_low")' in source
+
+
 def test_home_screen_uses_floating_workspace_instead_of_html_layout():
     source = _source(HOME_PATH)
 
