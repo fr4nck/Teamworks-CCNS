@@ -9,195 +9,197 @@
 import Chemins
 from Utils.UTILS_Traduction import _
 import wx
-import FonctionsPerso
-# import wx.calendar
 import GestionDB
-import datetime
 from Ctrl import CTRL_Calendrier_tw
+from Utils import UTILS_Customize
+from Utils import UTILS_Interface
+
+
+def _echelle_interface():
+    try:
+        valeur = UTILS_Customize.GetValeur(
+            "interface", "echelle_interface", "", ajouter_si_manquant=False
+        )
+        if valeur in (None, ""):
+            valeur = UTILS_Customize.GetValeur(
+                "interface", "echelle_police", "100", type_valeur=int
+            )
+        return max(80, min(200, int(valeur)))
+    except Exception:
+        return 100
+
+
+def _bitmap_titre(nom_image):
+    taille = max(18, min(24, int(round(18 * _echelle_interface() / 100.0))))
+    bitmap = wx.Bitmap(
+        Chemins.GetStaticPath("Images/16x16/%s" % nom_image),
+        wx.BITMAP_TYPE_ANY,
+    )
+    if bitmap.IsOk() and (bitmap.GetWidth() != taille or bitmap.GetHeight() != taille):
+        bitmap = wx.Bitmap(
+            bitmap.ConvertToImage().Scale(taille, taille, wx.IMAGE_QUALITY_HIGH)
+        )
+    return bitmap
+
+
+def _bouton_titre(parent, nom_image, aide):
+    bitmap = _bitmap_titre(nom_image)
+    bouton = wx.BitmapButton(parent, -1, bitmap, style=wx.BORDER_NONE)
+    cote = max(30, bitmap.GetWidth() + 10)
+    bouton.SetMinSize((cote, cote))
+    bouton.SetToolTip(wx.ToolTip(aide))
+    return bouton
+
 
 class PanelGadget(wx.Panel):
+    """Conteneur moderne d'un gadget historique.
+
+    Le contenu métier des gadgets reste inchangé. Seul le chrome est désormais
+    un layout wx natif extensible, sans peinture ni sizer à dimensions figées.
+    """
+
     def __init__(self, parent, couleurFondPanel, index, size=wx.DefaultSize):
-        # L'index est la position du gadget dans la listeGadgets
         wx.Panel.__init__(self, parent, -1, size=size, name="panel_gadget")
-        index = int(index)
-        self.index = index
+        self.index = int(index)
         self.couleurFondPanel = couleurFondPanel
-        
-        # Données gadgets
-        self.nomGadget = parent.listeGadgets[index][0]
-        self.paramGadget = parent.listeGadgets[index][1]
+
+        self.nomGadget = parent.listeGadgets[self.index][0]
+        self.paramGadget = parent.listeGadgets[self.index][1]
         self.texteTitre = self.paramGadget["label"]
 
-        # Paramètres Cadre Gadget
-        self.espaceBord = 5
-        self.coinArrondi = 5
-        self.hauteurTitre = 17
-        
-        # Couleurs
+        # Attributs conservés pour les contenus/configurations historiques.
+        self.espaceBord = 0
+        self.coinArrondi = 0
+        self.hauteurTitre = max(32, int(round(32 * _echelle_interface() / 100.0)))
         self.couleurFondDC = self.couleurFondPanel
         self.couleurFondCadre = (214, 223, 247)
         self.couleurFondTitre = (70, 70, 70)
         self.couleurBord = (70, 70, 70)
         self.couleurDegrade = (130, 190, 235)
         self.couleurTexteTitre = (255, 255, 255)
-        
-        # Importation du contenu
+
         self.GetContenu(self.nomGadget)
 
-        # Boutons
-        self.img_config = wx.StaticBitmap(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Gadget_config.png"), wx.BITMAP_TYPE_ANY))
-        self.img_fermer = wx.StaticBitmap(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Gadget_fermer.png"), wx.BITMAP_TYPE_ANY))
-        self.img_config.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour accéder aux options de ce gadget")))
-        self.img_fermer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour fermer ce gadget")))
-        if self.paramGadget["config"] == False : self.img_config.Show(False)
-        
-        # Layout
-        grid_sizer_titre = wx.FlexGridSizer(rows=1, cols=3, vgap=0, hgap=0)        
-        grid_sizer_titre.Add( (5, 5), 1, wx.ALL|wx.EXPAND, 0)
-        grid_sizer_titre.Add( self.img_config , 1, wx.ALL|wx.EXPAND, 0)
-        grid_sizer_titre.Add( self.img_fermer , 1, wx.ALL|wx.EXPAND, 0)
-        grid_sizer_titre.AddGrowableCol(0)
-        
-        grid_sizer = wx.FlexGridSizer(rows=3, cols=3, vgap=0, hgap=0)
-        
-        grid_sizer.Add((5, 5), 0, 0, 0)
-        grid_sizer.Add(grid_sizer_titre, 1, wx.EXPAND|wx.ALL, 5+2)
-        grid_sizer.Add((5, 5), 0, 0, 0)
+        self.barre_titre = wx.Panel(self, -1, name="barre_titre_gadget")
+        self.titre = wx.StaticText(self.barre_titre, -1, self.texteTitre)
+        police = wx.SystemSettings.GetFont(wx.SYS_DEFAULT_GUI_FONT)
+        police.SetWeight(wx.FONTWEIGHT_BOLD)
+        self.titre.SetFont(police)
 
-        grid_sizer.Add((5, 5), 0, 0, 0)
-        grid_sizer.Add(self.contenu, 1, wx.EXPAND|wx.LEFT|wx.RIGHT|wx.BOTTOM, 5+1)
-        grid_sizer.Add((5, 5), 0, 0, 0)
+        self.img_config = _bouton_titre(
+            self.barre_titre,
+            "Gadget_config.png",
+            _(u"Cliquez ici pour accéder aux options de ce gadget"),
+        )
+        self.img_fermer = _bouton_titre(
+            self.barre_titre,
+            "Gadget_fermer.png",
+            _(u"Cliquez ici pour fermer ce gadget"),
+        )
+        if self.paramGadget["config"] is False:
+            self.img_config.Hide()
 
-        grid_sizer.Add((5, 5), 0, 0, 0)
-        grid_sizer.Add((5, 5), 0, 0, 0)
-        grid_sizer.Add((5, 5), 0, 0, 0)
-        
-        grid_sizer.AddGrowableRow(1)
-        grid_sizer.AddGrowableCol(1)
+        sizer_titre = wx.BoxSizer(wx.HORIZONTAL)
+        sizer_titre.Add(self.titre, 1, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 8)
+        sizer_titre.Add(self.img_config, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 2)
+        sizer_titre.Add(self.img_fermer, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 4)
+        self.barre_titre.SetSizer(sizer_titre)
+        self.barre_titre.SetMinSize((-1, self.hauteurTitre))
 
-        self.SetSizer(grid_sizer)
-        grid_sizer.Fit(self)
-        self.Layout()
-        
-        self.SetSize(size)
-        
-        # Bind
-        self.Bind(wx.EVT_PAINT, self.OnPaint)
-        self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self.barre_titre, 0, wx.EXPAND)
+        sizer.Add(self.contenu, 1, wx.EXPAND | wx.ALL, 6)
+        self.SetSizer(sizer)
+
+        self.AppliquerTheme()
+
         self.Bind(wx.EVT_SIZE, self.OnSize)
-        self.img_config.Bind(wx.EVT_LEFT_DOWN, self.OnConfigGadget)
-        self.img_fermer.Bind(wx.EVT_LEFT_DOWN, self.OnFermerGadget)         
-         
-    def OnPaint(self, event):
-        dc= wx.PaintDC(self)
-        dc= wx.BufferedDC(dc)
-        if 'phoenix' in wx.PlatformInfo:
-            largeurDC, hauteurDC= self.GetSize()
-        else:
-            largeurDC, hauteurDC= self.GetSizeTuple()
-        
-        # paint le fond
-        dc.SetBackground(wx.Brush(self.couleurFondDC))
-        dc.Clear()       
-        
-        # Cadre du groupe
-        dc.SetBrush(wx.Brush(self.couleurFondCadre))
-        dc.DrawRoundedRectangle(0+self.espaceBord, 0+self.espaceBord, largeurDC-(self.espaceBord*2), hauteurDC-(self.espaceBord*2), self.coinArrondi)
-        # Barre de titre
-        dc.SetBrush(wx.Brush(self.couleurFondTitre))
-        dc.DrawRoundedRectangle(0+self.espaceBord, 0+self.espaceBord, largeurDC-(self.espaceBord*2), self.hauteurTitre+self.coinArrondi, self.coinArrondi)
+        self.img_config.Bind(wx.EVT_BUTTON, self.OnConfigGadget)
+        self.img_fermer.Bind(wx.EVT_BUTTON, self.OnFermerGadget)
 
-##        # Titre du groupe
-##        dc.SetBrush(wx.Brush(self.couleurFondTitre))
-##        dc.DrawRoundedRectangle(0+self.espaceBord, 0+self.espaceBord, largeurDC-(self.espaceBord*2), self.hauteurTitre, self.coinArrondi)
-##        pen = wx.Pen(self.couleurFondTitre, 5)
-##        pen.SetCap(wx.CAP_BUTT) # Enlève l'arrondi aux bouts de la ligne
-##        dc.SetPen(pen)
-##        dc.DrawLine(1+self.espaceBord, self.hauteurTitre+2, largeurDC-self.espaceBord-1, self.hauteurTitre+2)
-        
-        # Dégradé
-        dc.GradientFillLinear((self.espaceBord+1, self.espaceBord+7, largeurDC-(self.espaceBord*2)-2, self.hauteurTitre-2), (214, 223, 247), (0, 0, 0), wx.NORTH)
-        # Cache pour enlever l'arrondi inférieur de la barre de titre
-        dc.SetBrush(wx.Brush(self.couleurFondCadre))
-        dc.SetPen(wx.Pen(self.couleurFondCadre, 0))
-        dc.DrawRectangle(self.espaceBord+1, self.espaceBord+self.hauteurTitre+1, largeurDC-(self.espaceBord*2)-2, self.coinArrondi+5)
-        # Titre
-        font = wx.Font(8, wx.DEFAULT, wx.NORMAL, wx.BOLD) 
-        dc.SetFont(font)
-        dc.SetTextForeground(self.couleurTexteTitre)
-        dc.DrawText(self.texteTitre, self.espaceBord+7, self.espaceBord+2)
-        
+    def AppliquerTheme(self):
+        surface = UTILS_Interface.GetToken("surface")
+        titre = UTILS_Interface.GetToken("surface_container_high")
+        texte = UTILS_Interface.GetToken("on_surface")
+        contour = UTILS_Interface.GetToken("outline_variant")
+
+        self.couleurFondDC = (surface.Red(), surface.Green(), surface.Blue())
+        self.couleurFondTitre = (titre.Red(), titre.Green(), titre.Blue())
+        self.couleurTexteTitre = (texte.Red(), texte.Green(), texte.Blue())
+        self.couleurBord = (contour.Red(), contour.Green(), contour.Blue())
+        self.couleurDegrade = self.couleurFondTitre
+
+        self.SetBackgroundColour(surface)
+        self.barre_titre.SetBackgroundColour(titre)
+        self.titre.SetForegroundColour(texte)
+        self.img_config.SetBackgroundColour(titre)
+        self.img_fermer.SetBackgroundColour(titre)
+        self.Refresh()
 
     def OnSize(self, event):
-        self.Refresh() 
+        self.Layout()
         event.Skip()
 
-    def OnEraseBackground(self, event):
-        pass 
-        
     def OnFermerGadget(self, event):
-        dictParametres = { "affichage" : False }
-        self.SaveConfig(dictParametres)
+        # Le host AUI masque immédiatement le pane puis persiste l'état hors de
+        # l'événement souris afin qu'une écriture SQLite ne fige pas l'interface.
         self.GetParent().Fermer_Gadget(self.nomGadget)
 
     def OnConfigGadget(self, event):
         self.contenu.Config()
-        #event.Skip()
 
-    def SaveConfig(self, parametres={}):
-        """ Sauvegarde la liste des gadgets dans le configUser.dat """
+    def SaveConfig(self, parametres=None):
+        """Sauvegarde les paramètres du gadget dans la table ``gadgets``."""
+        if parametres is None:
+            parametres = {}
 
-        # Enregistrement dans la listeGadgets du panel
-        for key, valeur in parametres.items() :
+        for key, valeur in parametres.items():
             self.GetParent().listeGadgets[self.index][1][key] = valeur
-        
-        # Sauvegarde de la listeGadgets dans la table Gadgets
+            self.paramGadget[key] = valeur
+
         listeDonnees = []
         dictParametres = {}
-        
+
         nomGadget = self.GetParent().listeGadgets[self.index][0]
         dictGadget = self.GetParent().listeGadgets[self.index][1]
 
-        for key, valeur in dictGadget.items() :
-            # Paramètres de base
-            if key == "label" : listeDonnees.append( ("label", valeur) )
-            elif key == "taille" : listeDonnees.append( ("taille", str(valeur)) )
-            elif key == "affichage" : listeDonnees.append( ("affichage", str(valeur)) )
-            elif key == "ordre" : listeDonnees.append( ("ordre", valeur) )
-            elif key == "config" : listeDonnees.append( ("config", str(valeur)) )
+        for key, valeur in dictGadget.items():
+            if key == "label":
+                listeDonnees.append(("label", valeur))
+            elif key == "taille":
+                listeDonnees.append(("taille", str(valeur)))
+            elif key == "affichage":
+                listeDonnees.append(("affichage", str(valeur)))
+            elif key == "ordre":
+                listeDonnees.append(("ordre", valeur))
+            elif key == "config":
+                listeDonnees.append(("config", str(valeur)))
             else:
-                # Autres paramètres :
                 dictParametres[key] = valeur
-        
-        if len(dictParametres) > 0 :
-            listeDonnees.append( ("parametres", str(dictParametres)) )
-        
-        # Initialisation de la connexion avec la Base de données
+
+        if dictParametres:
+            listeDonnees.append(("parametres", str(dictParametres)))
+
         DB = GestionDB.DB()
         DB.ReqMAJ("gadgets", listeDonnees, "nom", nomGadget, IDestChaine=True)
         DB.Close()
-       
 
-    def GetContenu(self, nomGadget) :
-        """ Le contenu peut être un panel ou un controle """
-        
-        if nomGadget == "dossiers_incomplets" :
-            self.contenu = Gadget_DossiersIncomplets(self)  # Dossiers incomplets
-        
-        if nomGadget == "horloge" : 
-            self.contenu = Gadget_Horloge(self) # horloge
-        
-        if nomGadget == "notes" :
-            self.contenu = Gadget_BlocNotes(self)  # Bloc-notes
-      
-        if nomGadget == "updater" :
-            self.contenu = Gadget_Updater(self) # Updater
+    def GetContenu(self, nomGadget):
+        """Construit le contenu métier correspondant au gadget."""
+        if nomGadget == "dossiers_incomplets":
+            self.contenu = Gadget_DossiersIncomplets(self)
+        elif nomGadget == "horloge":
+            self.contenu = Gadget_Horloge(self)
+        elif nomGadget == "notes":
+            self.contenu = Gadget_BlocNotes(self)
+        elif nomGadget == "updater":
+            self.contenu = Gadget_Updater(self)
+        elif nomGadget == "calendrier":
+            self.contenu = Gadget_Calendrier(self)
+        else:
+            self.contenu = wx.Panel(self)
 
-        if nomGadget == "calendrier" :
-            self.contenu = Gadget_Calendrier(self) # Calendrier
-        
 
-        
 # --------------------------------------------------------------------------------------------------------------
 
 class Gadget_BlocNotes(wx.Panel):
@@ -205,39 +207,42 @@ class Gadget_BlocNotes(wx.Panel):
         wx.Panel.__init__(self, parent, -1, name="panel_gadget_blocnotes")
         self.parent = parent
         dictParam = self.parent.paramGadget
-        # Widgets
-        if dictParam["multipages"] == True :
-            style=wx.TE_MULTILINE|wx.NO_BORDER
+        if dictParam["multipages"] is True:
+            style = wx.TE_MULTILINE | wx.NO_BORDER
         else:
-            style=wx.TE_MULTILINE|wx.NO_BORDER|wx.TE_NO_VSCROLL
-        self.texte = wx.TextCtrl(self, -1, dictParam["texte"], style = style)
+            style = wx.TE_MULTILINE | wx.NO_BORDER | wx.TE_NO_VSCROLL
+        self.texte = wx.TextCtrl(self, -1, dictParam["texte"], style=style)
         couleurFond = dictParam["couleur_fond"]
         self.texte.SetBackgroundColour(couleurFond)
         self.parent.couleurFondCadre = couleurFond
         couleurPolice = dictParam["couleur_police"]
         self.texte.SetForegroundColour(couleurPolice)
-        font = wx.Font(dictParam["taillePolice"], dictParam["familyPolice"], dictParam["stylePolice"], dictParam["weightPolice"], False, dictParam["nomPolice"])
+        font = wx.Font(
+            dictParam["taillePolice"],
+            dictParam["familyPolice"],
+            dictParam["stylePolice"],
+            dictParam["weightPolice"],
+            False,
+            dictParam["nomPolice"],
+        )
         self.texte.SetFont(font)
-        # Layout
+
         self.sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.sizer.Add(self.texte, 1, wx.EXPAND)
         self.SetSizer(self.sizer)
-        self.SetAutoLayout(True)
-        # Bind
+
         self.texte.Bind(wx.EVT_KILL_FOCUS, self.OnKillFocus)
-        
-        # Archive des paramètres : {"texte" : _(u"Hello !"), "taillePolice" : 10, "familyPolice" : 74, "stylePolice" : 90, "weightPolice" : 90 , "nomPolice" : "Segoe Print", "multipages" : False, "couleur_fond" : (255, 255, 187), "couleur_police" : (255, 0, 0) }
 
     def OnKillFocus(self, event):
-        """ Sauvegarde du texte """
-        dictParametres = { "texte" : self.texte.GetValue() }
-        self.parent.SaveConfig(dictParametres)
+        self.parent.SaveConfig({"texte": self.texte.GetValue()})
+        event.Skip()
 
     def Config(self):
         from Dlg import DLG_Parametres_blocnotes
         dlg = DLG_Parametres_blocnotes.Dialog(None)
         dlg.ShowModal()
         dlg.Destroy()
+
 
 # ----------------------------------------------------------------------------------------------------------------
 
@@ -246,14 +251,10 @@ class Gadget_DossiersIncomplets(wx.Panel):
         wx.Panel.__init__(self, parent, -1, name="panel_gadget_dossiersincomplets")
         self.parent = parent
         dictParam = self.parent.paramGadget
-        
-        # Import
+
         from Ctrl import CTRL_Gadget_pb_personnes as pbPersonnes
-                
-        # Widgets
         self.tree = pbPersonnes.TreeCtrl(self)
 
-        # Paramètres
         self.tree.couleurFond = dictParam["couleur_fond"]
         self.tree.couleurPersonne = dictParam["couleurPersonne"]
         self.tree.couleurType = dictParam["couleurType"]
@@ -262,49 +263,41 @@ class Gadget_DossiersIncomplets(wx.Panel):
         self.tree.expandPersonnes = dictParam["expandPersonnes"]
         self.tree.expandTypes = dictParam["expandTypes"]
         self.parent.couleurFondCadre = dictParam["couleur_fond"]
-        
+
         self.tree.MAJ_treeCtrl()
 
-        # Layout
         self.sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.sizer.Add(self.tree, 1, wx.EXPAND)
         self.SetSizer(self.sizer)
-        self.SetAutoLayout(True)
-                
+
     def Config(self):
         from Dlg import DLG_Parametres_dossiers
         dlg = DLG_Parametres_dossiers.Dialog(None)
         dlg.ShowModal()
         dlg.Destroy()
-                   
+
 
 # ----------------------------------------------------------------------------------------------------------------
-
 
 class Gadget_Horloge(wx.Panel):
     def __init__(self, parent):
         wx.Panel.__init__(self, parent, -1, name="panel_gadget_horloge")
         self.parent = parent
         dictParam = self.parent.paramGadget
-        
-        # Import
+
         import wx.lib.analogclock as clock
-        
-        # Données
+
         couleurFace = dictParam["couleur_face"]
         couleurFond = dictParam["couleur_fond"]
-        
-        # Widgets
-        self.horloge = clock.AnalogClock(self, size=(160,160))
+
+        self.horloge = clock.AnalogClock(self, size=(160, 160))
         self.horloge.SetBackgroundColour(couleurFond)
         self.parent.couleurFondCadre = couleurFond
         self.horloge.SetFaceFillColour(couleurFace)
-        
-        # Layout
+
         self.sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.sizer.Add(self.horloge, 1, wx.EXPAND)
         self.SetSizer(self.sizer)
-        self.SetAutoLayout(True)
 
     def Config(self):
         from Dlg import DLG_Parametres_horloge
@@ -315,59 +308,65 @@ class Gadget_Horloge(wx.Panel):
 
 # ----------------------------------------------------------------------------------------------------------------
 
-
 class Gadget_Updater(wx.Panel):
     def __init__(self, parent):
         wx.Panel.__init__(self, parent, -1, name="panel_gadget_updater")
         self.parent = parent
-        dictParam = self.parent.paramGadget
         couleurFondUpdater = (128, 221, 128)
         self.parent.couleurFondCadre = couleurFondUpdater
-        
-        # Widgets
-        self.texte = wx.StaticText(self, -1, _(u"Une nouvelle version du logiciel est disponible !\n\nCliquez ci-dessous pour la télécharger et l'installer dès maintenant."))
-        self.SetBackgroundColour(couleurFondUpdater)
-        
-        self.bouton_telecharger = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Telecharger_L140.png"), wx.BITMAP_TYPE_ANY), size=(-1, 60))
-        self.bouton_telecharger.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour télécharger et installer\nla nouvelle version de TeamWorks")))
 
-        #font = wx.Font(7, wx.DEFAULT, wx.NORMAL, wx.NORMAL) 
-        #self.contenu.SetFont(font)
-        
-        # Layout
-        self.sizer = wx.FlexGridSizer(rows=2, cols=1, vgap=0, hgap=0)
-        self.sizer.Add(self.texte, 1, wx.EXPAND)
-        self.sizer.Add(self.bouton_telecharger, 1, wx.EXPAND|wx.RIGHT, 5)
-        self.sizer.AddGrowableRow(0)
-        self.sizer.AddGrowableCol(0)
+        self.texte = wx.StaticText(
+            self,
+            -1,
+            _(u"Une nouvelle version du logiciel est disponible !\n\nCliquez ci-dessous pour la télécharger et l'installer dès maintenant."),
+        )
+        self.SetBackgroundColour(couleurFondUpdater)
+
+        self.bouton_telecharger = wx.BitmapButton(
+            self,
+            -1,
+            wx.Bitmap(
+                Chemins.GetStaticPath("Images/BoutonsImages/Telecharger_L140.png"),
+                wx.BITMAP_TYPE_ANY,
+            ),
+        )
+        self.bouton_telecharger.SetMinSize((-1, max(48, int(round(48 * _echelle_interface() / 100.0)))))
+        self.bouton_telecharger.SetToolTip(
+            wx.ToolTip(_(u"Cliquez ici pour télécharger et installer\nla nouvelle version de TeamWorks"))
+        )
+
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        self.sizer.Add(self.texte, 1, wx.EXPAND | wx.BOTTOM, 8)
+        self.sizer.Add(self.bouton_telecharger, 0, wx.EXPAND)
         self.SetSizer(self.sizer)
-        self.SetAutoLayout(True)
-        
-        # Bind
+
         self.Bind(wx.EVT_BUTTON, self.OnBoutonTelecharger, self.bouton_telecharger)
 
     def Config(self):
         pass
-    
+
     def OnBoutonTelecharger(self, event):
         topWindow = wx.GetApp().GetTopWindow()
         topWindow.On_outils_updater(None)
-        
+
+
 # ----------------------------------------------------------------------------------------------------------------------------
 
 class Gadget_Calendrier(CTRL_Calendrier_tw.Panel):
     def __init__(self, parent, ID=-1):
-        CTRL_Calendrier_tw.Panel.__init__(self, parent, ID, afficheBoutonAnnuel=False, afficheAujourdhui=False)
+        CTRL_Calendrier_tw.Panel.__init__(
+            self,
+            parent,
+            ID,
+            afficheBoutonAnnuel=False,
+            afficheAujourdhui=False,
+        )
         self.parent = parent
-        
-        #dictParam = { "colFond" : (255, 255, 255), "colNormal" : (214, 223, 247), "colWE" : (198, 211, 249), "colSelect" : (255, 162, 0), "colSurvol" : (0, 0, 0), "colFontJours" : (0, 0, 0), "colVacs" : (255, 255, 187), "colFontPresents" : (255, 0, 0), "colFeries" : (180, 180, 180) }
         dictParam = self.GetParent().paramGadget
-        
-        # Couleur du fond
+
         self.calendrier.SetBackgroundColour(dictParam["colFond"])
         self.SetBackgroundColour(dictParam["colFond"])
         self.parent.couleurFondCadre = dictParam["colFond"]
-        # Couleurs des éléments du calendrier
         self.calendrier.couleurFond = dictParam["colFond"]
         self.calendrier.couleurNormal = dictParam["colNormal"]
         self.calendrier.couleurWE = dictParam["colWE"]
@@ -383,44 +382,28 @@ class Gadget_Calendrier(CTRL_Calendrier_tw.Panel):
         dlg = DLG_Parametres_calendrier.Dialog(None)
         dlg.ShowModal()
         dlg.Destroy()
-     
+
 
 # --------------------------------------------------------------------------------------------------------------------------------
-        
-        
+
 class MyFrame(wx.Frame):
     def __init__(self, parent):
         wx.Frame.__init__(self, parent, -1, title="", name="frm_gadgets", style=wx.DEFAULT_FRAME_STYLE)
         self.parent = parent
         self.panel = wx.Panel(self, -1)
-                
-        couleurFondPanel = wx.Colour(122, 161, 230)
+
+        couleurFondPanel = UTILS_Interface.GetToken("surface")
         self.panel.SetBackgroundColour(couleurFondPanel)
-               
-        # Gadget
-        self.panelGadget = PanelGadget(self.panel, couleurFondPanel, "dossiers_incomplets")
-        
-        # Layout
-        sizer = wx.FlexGridSizer(rows=1, cols=3, vgap=0, hgap=0)
-        sizer.Add( (20, 20) , 1, wx.ALL|wx.EXPAND, 0)
-        sizer.Add( (20, 20) , 1, wx.ALL|wx.EXPAND, 0)
-        sizer.Add( (20, 20) , 1, wx.ALL|wx.EXPAND, 0)
-        sizer.Add( (20, 20) , 1, wx.ALL|wx.EXPAND, 0)
-        
-        sizer.Add( self.panelGadget, 1, wx.ALL|wx.EXPAND, 0 )
-        
-        sizer.Add( (20, 20) , 1, wx.ALL|wx.EXPAND, 0)
-        sizer.Add( (20, 20) , 1, wx.ALL|wx.EXPAND, 0)
-        sizer.AddGrowableRow(1)
-        sizer.AddGrowableCol(1)
+
+        # Ce bloc n'est qu'un harnais manuel de développement. PanelGadget
+        # attend normalement l'hôte AUI de CTRL_Gadgets_flottants.
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.AddStretchSpacer()
         self.panel.SetSizer(sizer)
-        
-        
 
 
 if __name__ == "__main__":
     app = wx.App(0)
-    #wx.InitAllImageHandlers()
     frame_1 = MyFrame(None)
     app.SetTopWindow(frame_1)
     frame_1.Show()
