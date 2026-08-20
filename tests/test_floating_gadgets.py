@@ -32,11 +32,11 @@ def test_floating_workspace_uses_native_aui_capabilities():
 
 def test_gadgets_start_visible_and_docked_instead_of_forced_floating():
     source = _source(FLOATING_PATH)
-    pane_builder = source.split("def _info_pane", 1)[1].split("def _DetruirePanes", 1)[0]
+    pane_builder = source.split("def _info_pane", 1)[1].split("def _CreerGadget", 1)[0]
 
     assert ".Top()" in pane_builder
-    assert ".Row(row)" in pane_builder
-    assert ".Position(position)" in pane_builder
+    assert ".Row(index // 3)" in pane_builder
+    assert ".Position(index % 3)" in pane_builder
     assert ".Float()" not in pane_builder
 
 
@@ -94,3 +94,25 @@ def test_floating_workspace_keeps_legacy_gadget_contract():
     assert "Fermer_Gadget" in source
     assert "Ouvre_Gadget" in source
     assert "gadget.SaveConfig" in source
+
+
+def test_hiding_one_gadget_does_not_rebuild_every_gadget():
+    source = _source(FLOATING_PATH)
+    maj = source.split("def MAJ(self, listeGadgets=None):", 1)[1].split(
+        "def Fermer_Gadget", 1
+    )[0]
+
+    assert "existants - souhaites" in maj
+    assert "souhaites - existants" in maj
+    assert "_SupprimerGadget" in maj
+    assert "_CreerGadget" in maj
+    assert "self.Construire()" not in maj.split("if self.manager is None:", 1)[1].split("visibles =", 1)[1]
+
+
+def test_opening_one_missing_gadget_does_not_rebuild_dashboard():
+    source = _source(FLOATING_PATH)
+    ouvrir = source.split("def Ouvre_Gadget", 1)[1].split("def OnPaneClose", 1)[0]
+
+    assert "_CreerGadget" in ouvrir
+    assert "self.Construire()" not in ouvrir
+    assert "DetachPane" in source
