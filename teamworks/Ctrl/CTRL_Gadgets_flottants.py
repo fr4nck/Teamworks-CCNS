@@ -37,6 +37,7 @@ class EspaceGadgets(wx.Panel):
         self._restauration_en_cours = False
 
         self.Bind(aui.EVT_AUI_PANE_CLOSE, self.OnPaneClose)
+        self.Bind(wx.EVT_CONTEXT_MENU, self.OnContextMenu)
         self.Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy)
 
         self.Construire()
@@ -150,6 +151,33 @@ class EspaceGadgets(wx.Panel):
         """Revient à la disposition flottante initiale."""
         UTILS_Customize.SetValeur(PERSPECTIVE_SECTION, PERSPECTIVE_KEY, "")
         self.Construire()
+
+    def ToutRendreFlottant(self):
+        """Détache tous les gadgets visibles et les répartit en cascade."""
+        if self.manager is None:
+            return
+        for index, (nom, gadget) in enumerate(self._gadgets.items()):
+            pane = self.manager.GetPane(nom)
+            if not pane.IsOk():
+                continue
+            largeur, hauteur = gadget.GetSize()
+            pane.Float()
+            pane.FloatingPosition((24 + (26 * index), 24 + (26 * index)))
+            pane.FloatingSize((max(180, largeur), max(140, hauteur)))
+        self.manager.Update()
+        self.SauverPerspective()
+
+    def OnContextMenu(self, event):
+        menu = wx.Menu()
+        id_flottants = wx.NewIdRef()
+        id_reset = wx.NewIdRef()
+        menu.Append(id_flottants, u"Tout rendre flottant")
+        menu.AppendSeparator()
+        menu.Append(id_reset, u"Réinitialiser la disposition")
+        self.Bind(wx.EVT_MENU, lambda evt: self.ToutRendreFlottant(), id=id_flottants)
+        self.Bind(wx.EVT_MENU, lambda evt: self.ReinitialiserDisposition(), id=id_reset)
+        self.PopupMenu(menu)
+        menu.Destroy()
 
     def MAJ(self, listeGadgets=None):
         """Recharge les gadgets sans perdre la disposition courante."""
