@@ -30,12 +30,26 @@ def test_persons_screen_uses_native_flexible_layout():
     assert "SetSashGravity(0.0)" in source
 
 
+def test_persons_splitter_starts_proportional_then_stays_user_controlled():
+    source = _source()
+    init = source.split("def InitialiserSeparateur", 1)[1].split(
+        "def OnTailleListe", 1
+    )[0]
+
+    assert "GetClientSize().GetWidth()" in init
+    assert "largeur * 0.18" in init
+    assert "max(220, min(360" in init
+    assert "self._separateur_initialise = True" in init
+
+
 def test_persons_actions_scale_directly_in_the_screen():
     source = _source()
     assert "_bouton_action" in source
     assert "wx.IMAGE_QUALITY_HIGH" in source
     assert "SetMinSize((cote, cote))" in source
-    assert '"echelle_police"' in source
+    assert '"echelle_interface"' in source
+    assert '"echelle_police"' in source  # repli de migration uniquement
+    assert "ajouter_si_manquant=False" in source
 
 
 def test_persons_list_consumes_available_width_directly():
