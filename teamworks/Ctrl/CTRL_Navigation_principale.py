@@ -3,9 +3,10 @@
 
 """Navigation principale flexible de Teamworks.
 
-Ce composant remplace le ``wx.Toolbook`` historique : les libellés ne sont plus
-contraints par la largeur d'une toolbar native et peuvent passer sur plusieurs
-lignes lorsque l'échelle de l'interface ou la largeur de fenêtre l'impose.
+Les pages métier restent directement enfants de ce composant, comme elles
+l'étaient du ``wx.Toolbook`` historique. On conserve ainsi les chaînes
+``GetParent()/GetGrandParent()`` existantes tout en supprimant la toolbar à
+largeur figée qui tronquait les libellés lorsque l'interface était agrandie.
 """
 
 import wx
@@ -35,7 +36,8 @@ def _dimension(valeur, minimum=1, maximum=None):
     return resultat
 
 
-def _bitmap_adapte(chemin, taille_base=24):
+def BitmapNavigation(chemin, taille_base=24):
+    """Charge une icône de navigation à l'échelle de l'interface."""
     taille = _dimension(taille_base, minimum=20, maximum=36)
     bitmap = wx.Bitmap(chemin, wx.BITMAP_TYPE_ANY)
     if bitmap.IsOk() and (bitmap.GetWidth() != taille or bitmap.GetHeight() != taille):
@@ -46,20 +48,20 @@ def _bitmap_adapte(chemin, taille_base=24):
 
 
 class BoutonNavigation(wx.ToggleButton):
-    """Bouton de section avec cible confortable et libellé jamais ellipsé."""
+    """Bouton de section dont la taille suit réellement son contenu."""
 
     def __init__(self, parent, label, bitmap=wx.NullBitmap):
         wx.ToggleButton.__init__(self, parent, -1, label=label)
-        self._bitmap = bitmap
-        self.SetBitmap(bitmap)
-        self.SetBitmapPosition(wx.LEFT)
-        self.SetBitmapMargins((_dimension(6), 0))
-        self.AppliquerTheme(False)
+        if bitmap is not None and bitmap.IsOk():
+            self.SetBitmap(bitmap)
+            self.SetBitmapPosition(wx.LEFT)
+            self.SetBitmapMargins((_dimension(6), 0))
         self._AjusterTaille()
+        self.AppliquerTheme(False)
 
     def _AjusterTaille(self):
-        # GetBestSize tient compte du texte complet. On conserve donc toute la
-        # place dont le libellé a besoin, même à 120/150 %.
+        # GetBestSize mesure le libellé complet avec la police courante : aucun
+        # texte n'est volontairement rogné lorsque l'utilisateur passe à 120 %.
         best = self.GetBestSize()
         hauteur = max(best.GetHeight(), _dimension(40, minimum=40))
         largeur = max(best.GetWidth(), _dimension(92, minimum=80))
@@ -78,7 +80,7 @@ class BoutonNavigation(wx.ToggleButton):
 
 
 class NavigationPrincipale(wx.Panel):
-    """Livre de pages piloté par une barre d'actions flexible."""
+    """Livre de pages léger piloté par une barre de navigation flexible."""
 
     def __init__(self, parent):
         wx.Panel.__init__(self, parent, -1, name="navigation_principale")
@@ -91,12 +93,16 @@ class NavigationPrincipale(wx.Panel):
         self.sizer_barre = wx.WrapSizer(wx.HORIZONTAL)
         self.barre.SetSizer(self.sizer_barre)
 
-        self.livre = wx.Simplebook(self, -1)
+        # Les pages restent directement enfants de NavigationPrincipale afin de
+        # préserver la hiérarchie historique attendue par les contrôles métier.
+        self.sizer_pages = wx.BoxSizer(wx.VERTICAL)
 
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.barre, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 6)
-        sizer.Add(self.livre, 1, wx.EXPAND | wx.ALL, 6)
-        self.SetSizer(sizer)
+        self.sizer_principal = wx.BoxSizer(wx.VERTICAL)
+        self.sizer_principal.Add(
+            self.barre, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, _dimension(6)
+        )
+        self.sizer_principal.Add(self.sizer_pages, 1, wx.EXPAND | wx.ALL, _dimension(6))
+        self.SetSizer(self.sizer_principal)
 
         self.AppliquerTheme()
         self.Bind(wx.EVT_SIZE, self.OnSize)
@@ -106,19 +112,22 @@ class NavigationPrincipale(wx.Panel):
         barre = UTILS_Interface.GetToken("surface_container_low")
         self.SetBackgroundColour(surface)
         self.barre.SetBackgroundColour(barre)
-        self.livre.SetBackgroundColour(surface)
         for index, bouton in enumerate(self._boutons):
             bouton.AppliquerTheme(index == self._selection)
 
     def AddPage(self, page, label, bitmap=wx.NullBitmap, select=False):
+        if page.GetParent() is not self:
+            page.Reparent(self)
+
         index = len(self._pages)
         self._pages.append(page)
-        self.livre.AddPage(page, label, select=False)
+        self.sizer_pages.Add(page, 1, wx.EXPAND)
+        page.Hide()
 
         bouton = BoutonNavigation(self.barre, label, bitmap)
         bouton.Bind(wx.EVT_TOGGLEBUTTON, lambda event, i=index: self.SetSelection(i))
         self._boutons.append(bouton)
-        self.sizer_barre.Add(bouton, 0, wx.RIGHT | wx.BOTTOM, 6)
+        self.sizer_barre.Add(bouton, 0, wx.RIGHT | wx.BOTTOM, _dimension(6))
 
         if self._selection == -1 or select:
             self.SetSelection(index, rafraichir=False)
@@ -141,18 +150,24 @@ class NavigationPrincipale(wx.Panel):
     def SetSelection(self, index, rafraichir=True):
         if index < 0 or index >= len(self._pages):
             return self._selection
+
         ancienne = self._selection
         if index == ancienne:
             self._boutons[index].SetValue(True)
             return ancienne
 
-        if rafraichir:
+        if rafraichir and ancienne != -1:
             self.MAJ_panel(index)
 
+        if ancienne != -1:
+            self._pages[ancienne].Hide()
         self._selection = index
-        self.livre.SetSelection(index)
+        self._pages[index].Show()
+
         for numero, bouton in enumerate(self._boutons):
             bouton.AppliquerTheme(numero == index)
+
+        self.Layout()
         return ancienne
 
     def ChangeSelection(self, index):
@@ -181,13 +196,13 @@ class NavigationPrincipale(wx.Panel):
                 if html is not None and hasattr(html, "Efface"):
                     html.Efface()
 
-        # Accueil reste toujours accessible ; les autres sections suivent
-        # l'état d'ouverture du fichier métier.
+        # Accueil reste toujours accessible ; les autres sections dépendent de
+        # l'ouverture d'un fichier métier.
         for index, bouton in enumerate(self._boutons):
             bouton.Enable(True if index == 0 else bool(etat))
 
     def OnSize(self, event):
-        # WrapSizer recalculera les lignes suivant la largeur disponible.
+        # WrapSizer recalcule le nombre de lignes selon la largeur réelle.
         self.barre.Layout()
         self.Layout()
         event.Skip()
