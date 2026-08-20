@@ -10,8 +10,14 @@
 
 import Chemins
 from Utils.UTILS_Traduction import _
+from Utils import UTILS_Interface
 import wx
 import wx.html as html
+
+
+def _html_colour(colour):
+    """Convertit une wx.Colour en couleur CSS sans dépendance supplémentaire."""
+    return "#%02X%02X%02X" % (colour.Red(), colour.Green(), colour.Blue())
 
 
 class MyHtml(html.HtmlWindow):
@@ -19,7 +25,16 @@ class MyHtml(html.HtmlWindow):
         html.HtmlWindow.__init__(self, parent, -1, style=wx.html.HW_NO_SELECTION | wx.html.HW_SCROLLBAR_NEVER | wx.NO_FULL_REPAINT_ON_RESIZE)
         self.SetBorders(0)
         self.SetMinSize((-1, hauteur))
-        self.SetPage(u"<FONT SIZE=-2>%s</FONT>" % texte)
+        self.SetTexte(texte)
+
+    def SetTexte(self, texte=""):
+        fond = UTILS_Interface.GetToken("surface_container_high")
+        texte_secondaire = UTILS_Interface.GetToken("on_surface_variant")
+        self.SetBackgroundColour(fond)
+        self.SetPage(
+            u'<BODY BGCOLOR="%s" TEXT="%s"><FONT SIZE=-2>%s</FONT></BODY>'
+            % (_html_colour(fond), _html_colour(texte_secondaire), texte)
+        )
 
 
 class Bandeau(wx.Panel):
@@ -39,8 +54,19 @@ class Bandeau(wx.Panel):
         self.__do_layout()
 
     def __set_properties(self):
-        self.SetBackgroundColour(wx.Colour(255, 255, 255))
+        self.AppliquerTheme()
         self.ctrl_titre.SetFont(wx.Font(10, wx.DEFAULT, wx.NORMAL, wx.BOLD, 0, ""))
+
+    def AppliquerTheme(self):
+        """Applique les rôles sémantiques communs au bandeau métier."""
+        fond = UTILS_Interface.GetToken("surface_container_high")
+        texte = UTILS_Interface.GetToken("on_surface")
+        bordure = UTILS_Interface.GetToken("outline_variant")
+
+        self.SetBackgroundColour(fond)
+        self.ctrl_titre.SetForegroundColour(texte)
+        self.ctrl_intro.SetBackgroundColour(fond)
+        self.ligne.SetForegroundColour(bordure)
 
     def __do_layout(self):
         grid_sizer_vertical = wx.FlexGridSizer(rows=2, cols=1, vgap=4, hgap=4)
