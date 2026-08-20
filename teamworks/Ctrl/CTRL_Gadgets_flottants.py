@@ -17,7 +17,9 @@ from Utils import UTILS_Interface
 
 
 PERSPECTIVE_SECTION = "interface"
-PERSPECTIVE_KEY = "gadgets_perspective"
+# V2 ignore la première perspective expérimentale qui pouvait restaurer des
+# fenêtres flottantes invisibles suivant la version de wx/Windows.
+PERSPECTIVE_KEY = "gadgets_perspective_v2"
 
 
 class EspaceGadgets(wx.Panel):
@@ -73,19 +75,30 @@ class EspaceGadgets(wx.Panel):
             pass
 
     def _info_pane(self, nom, label, taille, index):
-        largeur = max(180, int(taille[0]))
-        hauteur = max(140, int(taille[1]))
-        decalage = 26 * index
+        """Crée un pane visible, tuilé et détachable.
+
+        Les panes ne naissent plus en ``Float()`` : sur certains couples
+        wxPython/Windows un AuiManager hébergé dans un Panel peut alors créer
+        les fenêtres hors du flux visible. Le docking initial garantit qu'un
+        gadget configuré comme affiché est réellement visible. L'utilisateur
+        peut toujours le détacher ensuite.
+        """
+        largeur = max(200, int(taille[0]))
+        hauteur = max(150, int(taille[1]))
+        row = index // 3
+        position = index % 3
         return (
             aui.AuiPaneInfo()
             .Name(nom)
             .Caption(label)
             .CaptionVisible(False)
             .BestSize((largeur, hauteur))
-            .MinSize((160, 110))
+            .MinSize((180, 120))
             .FloatingSize((largeur, hauteur))
-            .FloatingPosition((24 + decalage, 24 + decalage))
-            .Float()
+            .Top()
+            .Layer(0)
+            .Row(row)
+            .Position(position)
             .Floatable(True)
             .Dockable(True)
             .Movable(True)
@@ -175,7 +188,7 @@ class EspaceGadgets(wx.Panel):
             pass
 
     def ReinitialiserDisposition(self):
-        """Revient à la disposition flottante initiale."""
+        """Revient à la disposition tuilée initiale."""
         UTILS_Customize.SetValeur(PERSPECTIVE_SECTION, PERSPECTIVE_KEY, "")
         self.Construire()
 
@@ -189,19 +202,34 @@ class EspaceGadgets(wx.Panel):
                 continue
             largeur, hauteur = gadget.GetSize()
             pane.Float()
-            pane.FloatingPosition((24 + (26 * index), 24 + (26 * index)))
-            pane.FloatingSize((max(180, largeur), max(140, hauteur)))
+            pane.FloatingPosition((48 + (32 * index), 72 + (32 * index)))
+            pane.FloatingSize((max(200, largeur), max(150, hauteur)))
+        self.manager.Update()
+        self.SauverPerspective()
+
+    def ToutAncrer(self):
+        """Rattache tous les gadgets à l'accueil sans les masquer."""
+        if self.manager is None:
+            return
+        for index, nom in enumerate(self._gadgets):
+            pane = self.manager.GetPane(nom)
+            if not pane.IsOk():
+                continue
+            pane.Dock().Top().Layer(0).Row(index // 3).Position(index % 3).Show(True)
         self.manager.Update()
         self.SauverPerspective()
 
     def OnContextMenu(self, event):
         menu = wx.Menu()
         id_flottants = wx.NewIdRef()
+        id_ancrer = wx.NewIdRef()
         id_reset = wx.NewIdRef()
         menu.Append(id_flottants, u"Tout rendre flottant")
+        menu.Append(id_ancrer, u"Tout ancrer dans l'accueil")
         menu.AppendSeparator()
         menu.Append(id_reset, u"Réinitialiser la disposition")
         self.Bind(wx.EVT_MENU, lambda evt: self.ToutRendreFlottant(), id=id_flottants)
+        self.Bind(wx.EVT_MENU, lambda evt: self.ToutAncrer(), id=id_ancrer)
         self.Bind(wx.EVT_MENU, lambda evt: self.ReinitialiserDisposition(), id=id_reset)
         self.PopupMenu(menu)
         menu.Destroy()
