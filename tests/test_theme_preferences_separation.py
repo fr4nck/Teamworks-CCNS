@@ -29,7 +29,19 @@ def test_customize_keeps_tw121_and_new_display_defaults():
     assert '("theme", "Systeme")' in source
     assert '("accent", "Vert")' in source
     assert '("appearance", "system")' in source
+    assert '("echelle_interface", "100")' in source
     assert '("echelle_police", "100")' in source
+
+
+def test_customize_migrates_legacy_scale_before_inserting_defaults():
+    source = _source(CUSTOMIZE_PATH)
+    migration = source.split("# Migration TW-189", 1)[1].split(
+        "for section, valeurs in LISTE_DONNEES", 1
+    )[0]
+
+    assert 'has_option("interface", "echelle_police")' in migration
+    assert '"echelle_interface"' in migration
+    assert 'self.cfg.get("interface", "echelle_police")' in migration
 
 
 def test_theme_engine_reads_appearance_before_legacy_theme():
@@ -61,16 +73,27 @@ def test_interface_stores_accent_separately_and_syncs_legacy_appearance():
     assert '"dark": "Sombre"' in source
 
 
-def test_preferences_expose_accent_and_appearance_separately():
+def test_preferences_expose_accent_appearance_and_interface_scale():
     source = _source(PREFERENCES_PATH)
 
     assert 'THEMES = ["Système", "Clair", "Sombre"]' in source
     assert "ACCENTS =" in source
     assert "APPEARANCES =" in source
-    assert 'label="Accent :"' in source
-    assert 'label="Apparence :"' in source
+    assert '"Accent :"' in source
+    assert '"Apparence :"' in source
+    assert '"Échelle de l\'interface :"' in source
+    assert '"echelle_interface"' in source
+    assert '"echelle_police"' in source
     assert "UTILS_Interface.SetTheme" in source
     assert "UTILS_Interface.SetAppearanceMode" in source
+
+
+def test_preferences_use_direct_flexible_rows_instead_of_grid():
+    source = _source(PREFERENCES_PATH)
+
+    assert "FlexGridSizer" not in source
+    assert "wx.BoxSizer" in source
+    assert "def _ligne" in source
 
 
 def test_global_theme_targets_dense_desktop_controls():
