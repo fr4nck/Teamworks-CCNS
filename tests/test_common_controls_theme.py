@@ -72,6 +72,18 @@ def test_footer_keeps_explicit_theme_refresh_api():
     assert "OnPaint" in methods
 
 
+def test_footer_follows_real_column_widths_and_interface_scale():
+    source = _source(FOOTER_PATH)
+
+    assert "GetColumnWidth(index)" in source
+    assert "return colonne.width" in source  # fallback only
+    assert '"echelle_interface"' in source
+    assert '"echelle_police"' in source
+    assert "GetTextExtent(\"Ag\")" in source
+    assert "wx.Font(8" not in source
+    assert "if __name__ == '__main__'" not in source
+
+
 def test_common_image_button_keeps_native_rendering_and_semantic_text():
     source = _source(BUTTON_PATH)
     methods = _class_methods(BUTTON_PATH, "CTRL")
