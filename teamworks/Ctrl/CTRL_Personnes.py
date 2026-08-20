@@ -26,9 +26,14 @@ from ObjectListView import Filter
 
 def _echelle_interface():
     try:
-        return max(80, min(200, UTILS_Customize.GetValeur(
-            "interface", "echelle_police", "100", type_valeur=int
-        )))
+        valeur = UTILS_Customize.GetValeur(
+            "interface", "echelle_interface", "", ajouter_si_manquant=False
+        )
+        if valeur in (None, ""):
+            valeur = UTILS_Customize.GetValeur(
+                "interface", "echelle_police", "100", type_valeur=int
+            )
+        return max(80, min(200, int(valeur)))
     except Exception:
         return 100
 
@@ -274,6 +279,7 @@ class PanelPersonnes(wx.Panel):
         self.parent = parent
         self.init = False
         self._largeurs_colonnes = None
+        self._separateur_initialise = False
 
     def InitPage(self):
         self.splitter = wx.SplitterWindow(self, -1, style=wx.SP_LIVE_UPDATE)
@@ -344,6 +350,7 @@ class PanelPersonnes(wx.Panel):
         self.AffichePanelResume(False)
 
         self.init = True
+        wx.CallAfter(self.InitialiserSeparateur)
         wx.CallAfter(self.AjusterColonnes)
 
     def __set_properties(self):
@@ -384,12 +391,26 @@ class PanelPersonnes(wx.Panel):
         self.window_D.SetSizer(sizer_droite)
         self.sizer_D = sizer_droite
 
-        self.splitter.SplitVertically(self.window_G, self.window_D, 280)
+        # Valeur provisoire minimale : la vraie proportion est calculée une fois
+        # que le panneau connaît sa largeur réelle. L'utilisateur garde ensuite
+        # la main sur le séparateur.
+        self.splitter.SplitVertically(self.window_G, self.window_D, 220)
 
         sizer_base = wx.BoxSizer(wx.VERTICAL)
         sizer_base.Add(self.splitter, 1, wx.EXPAND)
         self.SetSizer(sizer_base)
         self.Layout()
+
+    def InitialiserSeparateur(self):
+        if self._separateur_initialise:
+            return
+        largeur = self.GetClientSize().GetWidth()
+        if largeur <= 0:
+            wx.CallLater(50, self.InitialiserSeparateur)
+            return
+        cible = max(220, min(360, int(round(largeur * 0.18))))
+        self.splitter.SetSashPosition(cible, True)
+        self._separateur_initialise = True
 
     def OnTailleListe(self, event):
         wx.CallAfter(self.AjusterColonnes)
