@@ -71,6 +71,23 @@ def write_diagnostic(
     print(console_safe_text(diagnostic))
 
 
+def _append_crash_reports(output: str, log_dir: Path) -> str:
+    if not log_dir.exists():
+        return output
+    reports = sorted(
+        path
+        for path in log_dir.glob("*.txt")
+        if path.name.startswith(("crash-", "native-crash-", "freeze-"))
+    )
+    for report in reports:
+        try:
+            content = report.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        output += f"\n--- {report.name} ---\n{content}\n"
+    return output
+
+
 def run_entrypoint(
     patched: Path,
     *,
@@ -78,13 +95,17 @@ def run_entrypoint(
     teamworks_dir: Path,
     timeout: int,
 ) -> tuple[int, str]:
+    log_dir = root / "artifacts" / "runtime-crash" / patched.stem
+    env = build_environment(root, teamworks_dir)
+    env["TEAMWORKS_LOG_DIR"] = str(log_dir)
     result = subprocess.run(
         [sys.executable, str(patched)],
         cwd=teamworks_dir,
-        env=build_environment(root, teamworks_dir),
+        env=env,
         capture_output=True,
         timeout=timeout,
         check=False,
     )
     output = decode_output(result.stdout) + "\n" + decode_output(result.stderr)
+    output = _append_crash_reports(output, log_dir)
     return result.returncode, output
