@@ -8,57 +8,89 @@
 
 import Chemins
 from Utils.UTILS_Traduction import _
+from Utils import UTILS_Interface
 import wx
 from Ctrl import CTRL_Bouton_image
 import GestionDB
-import FonctionsPerso
 from Utils.UTILS_Coordonnees import normaliser_email, normaliser_telephone, normaliser_texte
+
+
+def _dip(window, width, height):
+    try:
+        return window.FromDIP(wx.Size(width, height))
+    except Exception:
+        return wx.Size(width, height)
+
+
+def _section_title(parent, label):
+    ctrl = wx.StaticText(parent, -1, label)
+    font = ctrl.GetFont()
+    font.SetWeight(wx.FONTWEIGHT_BOLD)
+    font.SetPointSize(max(10, font.GetPointSize() + 1))
+    ctrl.SetFont(font)
+    ctrl.SetForegroundColour(UTILS_Interface.GetToken("on_surface"))
+    return ctrl
 
 
 class Dialog(wx.Dialog):
     def __init__(self, parent, ID=-1, title=_(u"Coordonnées"), size=(280, 290), IDcoord=0, IDpersonne=0):
-        wx.Dialog.__init__(self, parent, -1, style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX)
+        wx.Dialog.__init__(self, parent, -1, style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
         self.parent = parent
         self.IDpersonne = IDpersonne
         self.IDcoord = IDcoord
-        
-        # Nom de la table
-        if self.parent.GetName() == "panel_candidat" : self.nomTable = "coords_candidats"
-        if self.parent.GetName() == "panel_generalites" : self.nomTable = "coordonnees"
-        
+        self.SetTitle(title)
+        self.SetBackgroundColour(UTILS_Interface.GetToken("surface"))
+
+        parent_name = self.parent.GetName() if self.parent is not None else ""
+        if parent_name == "panel_candidat":
+            self.nomTable = "coords_candidats"
+        else:
+            self.nomTable = "coordonnees"
+
         self.panel_frame = wx.Panel(self, -1)
-        self.sizer_infos_staticbox = wx.StaticBox(self.panel_frame, -1, _(u"2. Saisissez les informations"))
-        self.sizer_categories_staticbox = wx.StaticBox(self.panel_frame, -1, _(u"1. Sélectionnez une catégorie"))
+        self.panel_frame.SetBackgroundColour(UTILS_Interface.GetToken("surface"))
         self.categorieSelect = ""
 
-        # Boutons        
-        self.bouton_fixe = wx.BitmapButton(self.panel_frame, -1, wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Maison_NB.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_mobile = wx.BitmapButton(self.panel_frame, -1, wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Mobile_NB.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_fax = wx.BitmapButton(self.panel_frame, -1, wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Fax_NB.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_email = wx.BitmapButton(self.panel_frame, -1, wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Mail_NB.png"), wx.BITMAP_TYPE_ANY))
-        
-        
-        self.label_fixe = wx.StaticText(self.panel_frame, -1, "Fixe")
-        self.label_mobile = wx.StaticText(self.panel_frame, -1, "Mobile")
-        self.label_fax = wx.StaticText(self.panel_frame, -1, "Fax")
-        self.label_email = wx.StaticText(self.panel_frame, -1, "Email")
-        
-        self.label_info_mail = wx.StaticText(self.panel_frame, -1, _(u"Email :"))
-        self.text_info_mail = wx.TextCtrl(self.panel_frame, -1, "")
-        self.label_info_tel = wx.StaticText(self.panel_frame, -1, _(u"N° Fixe :"))
-        self.text_info_tel = wx.TextCtrl(self.panel_frame, -1, "", style=wx.TE_CENTRE)
+        self.titre_categories = _section_title(self.panel_frame, _(u"1. Sélectionnez une catégorie"))
+        self.bouton_fixe = wx.ToggleButton(self.panel_frame, -1, _(u"Fixe"))
+        self.bouton_mobile = wx.ToggleButton(self.panel_frame, -1, _(u"Mobile"))
+        self.bouton_fax = wx.ToggleButton(self.panel_frame, -1, _(u"Fax"))
+        self.bouton_email = wx.ToggleButton(self.panel_frame, -1, _(u"Email"))
+        self._category_buttons = {
+            "Fixe": self.bouton_fixe,
+            "Mobile": self.bouton_mobile,
+            "Fax": self.bouton_fax,
+            "Email": self.bouton_email,
+        }
+        for button in self._category_buttons.values():
+            button.SetMinSize(_dip(self, 105, 42))
 
+        self.titre_infos = _section_title(self.panel_frame, _(u"2. Saisissez les informations"))
+        self.label_info_mail = wx.StaticText(self.panel_frame, -1, _(u"Email"))
+        self.text_info_mail = wx.TextCtrl(self.panel_frame, -1, "")
+        self.label_info_tel = wx.StaticText(self.panel_frame, -1, _(u"N° Fixe"))
+        self.text_info_tel = wx.TextCtrl(self.panel_frame, -1, "", style=wx.TE_CENTRE)
         self.label_info_mail.Hide()
         self.text_info_mail.Hide()
-                
-        self.label_intitule = wx.StaticText(self.panel_frame, -1, _(u"Intitulé :"))
+
+        self.label_intitule = wx.StaticText(self.panel_frame, -1, _(u"Intitulé"))
         self.text_intitule = wx.TextCtrl(self.panel_frame, -1, "")
-        self.bouton_Ok = CTRL_Bouton_image.CTRL(self.panel_frame, texte=_(u"Ok"), cheminImage=Chemins.GetStaticPath("Images/32x32/Valider.png"))
-        self.bouton_Annuler = CTRL_Bouton_image.CTRL(self.panel_frame, texte=_(u"Annuler"), cheminImage=Chemins.GetStaticPath("Images/32x32/Annuler.png"))
+
+        self.bouton_Ok = CTRL_Bouton_image.CTRL(
+            self.panel_frame,
+            id=wx.ID_OK,
+            texte=_(u"Valider"),
+            cheminImage=Chemins.GetStaticPath("Images/32x32/Valider.png"),
+        )
+        self.bouton_Annuler = CTRL_Bouton_image.CTRL(
+            self.panel_frame,
+            id=wx.ID_CANCEL,
+            texte=_(u"Annuler"),
+            cheminImage=Chemins.GetStaticPath("Images/32x32/Annuler.png"),
+        )
 
         self.__set_properties()
         self.__do_layout()
-        # end wxGlade
 
         self.Bind(wx.EVT_BUTTON, self.OnBouton_Fixe, self.bouton_fixe)
         self.Bind(wx.EVT_BUTTON, self.OnBouton_Mobile, self.bouton_mobile)
@@ -67,143 +99,92 @@ class Dialog(wx.Dialog):
         self.Bind(wx.EVT_BUTTON, self.OnBouton_Ok, self.bouton_Ok)
         self.Bind(wx.EVT_BUTTON, self.OnBouton_Annuler, self.bouton_Annuler)
 
-        # Si c'est une modification, on importe les données
         if self.IDcoord != 0:
             self.Importation()
         else:
-            # Désactivation des champs
             self.ActivationChamps(False)
-
+        self._update_category_buttons()
 
     def __set_properties(self):
-        # begin wxGlade: FrameCoords.__set_properties
-        if 'phoenix' in wx.PlatformInfo:
-            _icon = wx.Icon()
-        else :
-            _icon = wx.EmptyIcon()
-        _icon.CopyFromBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Logo.png"), wx.BITMAP_TYPE_ANY))
-        self.SetIcon(_icon)
-        self.bouton_fixe.SetSize(self.bouton_fixe.GetBestSize())
-        self.bouton_mobile.SetSize(self.bouton_mobile.GetBestSize())
-        self.bouton_fax.SetSize(self.bouton_fax.GetBestSize())
-        self.bouton_email.SetSize(self.bouton_email.GetBestSize())
         self.bouton_Ok.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour valider")))
-        self.bouton_Ok.SetSize(self.bouton_Ok.GetBestSize())
         self.bouton_Annuler.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour annuler")))
-        self.bouton_Annuler.SetSize(self.bouton_Annuler.GetBestSize())
         self.text_info_tel.SetToolTip(wx.ToolTip(_(u"Saisissez ici un numéro de téléphone")))
         self.text_info_mail.SetToolTip(wx.ToolTip(_(u"Saisissez ici une adresse Mail valide")))
         self.text_intitule.SetToolTip(wx.ToolTip(_(u"Vous pouvez, si vous le souhaitez, saisir ici un intitulé. Ex : 'Contact à Rennes' ou 'Domicile des parents'...")))
-        # end wxGlade
+        self.SetMinSize(_dip(self, 460, 380))
+        self.SetSize(_dip(self, 560, 450))
 
     def __do_layout(self):
-        # begin wxGlade: FrameCoords.__do_layout
-        sizer_frame = wx.BoxSizer(wx.VERTICAL)
-        grid_sizer_base = wx.FlexGridSizer(rows=3, cols=1, vgap=15, hgap=0)
-        grid_sizer_boutons = wx.FlexGridSizer(rows=1, cols=4, vgap=10, hgap=10)
-        sizer_infos = wx.StaticBoxSizer(self.sizer_infos_staticbox, wx.VERTICAL)
-        grid_sizer_infos = wx.FlexGridSizer(rows=3, cols=2, vgap=5, hgap=5)
-        sizer_categories = wx.StaticBoxSizer(self.sizer_categories_staticbox, wx.VERTICAL)
-        grid_sizer_categories = wx.FlexGridSizer(rows=2, cols=4, vgap=5, hgap=10)
-        grid_sizer_categories.Add(self.bouton_fixe, 0, wx.ALIGN_CENTER_HORIZONTAL, 0)
-        grid_sizer_categories.Add(self.bouton_mobile, 0, wx.ALIGN_CENTER_HORIZONTAL, 0)
-        grid_sizer_categories.Add(self.bouton_fax, 0, wx.ALIGN_CENTER_HORIZONTAL, 0)
-        grid_sizer_categories.Add(self.bouton_email, 0, wx.ALIGN_CENTER_HORIZONTAL, 0)
-        grid_sizer_categories.Add(self.label_fixe, 0, wx.ALIGN_CENTER_HORIZONTAL, 0)
-        grid_sizer_categories.Add(self.label_mobile, 0, wx.ALIGN_CENTER_HORIZONTAL, 0)
-        grid_sizer_categories.Add(self.label_fax, 0, wx.ALIGN_CENTER_HORIZONTAL, 0)
-        grid_sizer_categories.Add(self.label_email, 0, wx.ALIGN_CENTER_HORIZONTAL, 0)
-        grid_sizer_categories.AddGrowableCol(0)
-        grid_sizer_categories.AddGrowableCol(1)
-        grid_sizer_categories.AddGrowableCol(2)
-        grid_sizer_categories.AddGrowableCol(3)
-        sizer_categories.Add(grid_sizer_categories, 1, wx.ALL|wx.EXPAND, 5)
-        grid_sizer_base.Add(sizer_categories, 1, wx.LEFT|wx.RIGHT|wx.TOP|wx.EXPAND, 10)
+        sizer_base = wx.BoxSizer(wx.VERTICAL)
+        sizer_base.Add(self.titre_categories, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 16)
 
-        grid_sizer_infos.Add(self.label_info_mail, 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL, 0)
-        grid_sizer_infos.Add(self.text_info_mail, 0, wx.EXPAND, 0)
+        sizer_categories = wx.WrapSizer(wx.HORIZONTAL)
+        for button in (self.bouton_fixe, self.bouton_mobile, self.bouton_fax, self.bouton_email):
+            sizer_categories.Add(button, 0, wx.RIGHT | wx.BOTTOM, 8)
+        sizer_base.Add(sizer_categories, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 16)
 
-        grid_sizer_infos.Add(self.label_info_tel, 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL, 0)
-        grid_sizer_infos.Add(self.text_info_tel, 0, wx.EXPAND, 0)
-        
-        grid_sizer_infos.Add(self.label_intitule, 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL, 0)
-        grid_sizer_infos.Add(self.text_intitule, 0, wx.EXPAND, 0)
-        grid_sizer_infos.AddGrowableCol(1)
-        sizer_infos.Add(grid_sizer_infos, 1, wx.ALL|wx.EXPAND, 5)
-        grid_sizer_base.Add(sizer_infos, 1, wx.LEFT|wx.RIGHT|wx.EXPAND, 10)
-        grid_sizer_boutons.Add((15, 15), 0, 0, 0)
-        grid_sizer_boutons.Add(self.bouton_Ok, 0, 0, 0)
-        grid_sizer_boutons.Add(self.bouton_Annuler, 0, 0, 0)
-        grid_sizer_boutons.AddGrowableCol(0)
-        grid_sizer_base.Add(grid_sizer_boutons, 1, wx.LEFT|wx.RIGHT|wx.BOTTOM|wx.EXPAND, 10)
-        self.panel_frame.SetSizer(grid_sizer_base)
-        grid_sizer_base.AddGrowableCol(0)
-        sizer_frame.Add(self.panel_frame, 1, wx.EXPAND, 0)
-        self.SetSizer(sizer_frame)
-        self.SetMinSize((280, 250))
-        grid_sizer_base.Fit(self)
+        sizer_base.Add(self.titre_infos, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 16)
+        self.sizer_infos = wx.BoxSizer(wx.VERTICAL)
+        self.sizer_infos.Add(self.label_info_mail, 0, wx.BOTTOM, 4)
+        self.sizer_infos.Add(self.text_info_mail, 0, wx.EXPAND | wx.BOTTOM, 12)
+        self.sizer_infos.Add(self.label_info_tel, 0, wx.BOTTOM, 4)
+        self.sizer_infos.Add(self.text_info_tel, 0, wx.EXPAND | wx.BOTTOM, 12)
+        self.sizer_infos.Add(self.label_intitule, 0, wx.BOTTOM, 4)
+        self.sizer_infos.Add(self.text_intitule, 0, wx.EXPAND)
+        sizer_base.Add(self.sizer_infos, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 16)
+
+        sizer_boutons = wx.BoxSizer(wx.HORIZONTAL)
+        sizer_boutons.AddStretchSpacer(1)
+        sizer_boutons.Add(self.bouton_Ok, 0, wx.RIGHT, 8)
+        sizer_boutons.Add(self.bouton_Annuler, 0)
+        sizer_base.Add(sizer_boutons, 0, wx.EXPAND | wx.ALL, 16)
+
+        self.panel_frame.SetSizer(sizer_base)
+        outer = wx.BoxSizer(wx.VERTICAL)
+        outer.Add(self.panel_frame, 1, wx.EXPAND)
+        self.SetSizer(outer)
         self.Layout()
         self.CenterOnScreen()
-        self.grid_sizer_infos = grid_sizer_infos
+
+    def _update_category_buttons(self):
+        for categorie, button in self._category_buttons.items():
+            selected = categorie == self.categorieSelect
+            button.SetValue(selected)
+            if selected:
+                button.SetBackgroundColour(UTILS_Interface.GetToken("primary_container"))
+                button.SetForegroundColour(UTILS_Interface.GetToken("on_primary_container"))
+            else:
+                button.SetBackgroundColour(UTILS_Interface.GetToken("surface_container_low"))
+                button.SetForegroundColour(UTILS_Interface.GetToken("on_surface"))
+            button.Refresh()
+
+    def _select_category(self, categorie, label, email=False):
+        self.categorieSelect = categorie
+        self.ActivationChamps(True)
+        self.label_info_tel.SetLabel(label)
+        self.label_info_mail.Show(email)
+        self.text_info_mail.Show(email)
+        self.label_info_tel.Show(not email)
+        self.text_info_tel.Show(not email)
+        self._update_category_buttons()
+        self.sizer_infos.Layout()
+        self.panel_frame.Layout()
+        if email:
+            self.text_info_mail.SetFocus()
+        else:
+            self.text_info_tel.SetFocus()
 
     def OnBouton_Fixe(self, event):
-        self.bouton_fixe.SetBitmapLabel(wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Maison_Bleu.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_mobile.SetBitmapLabel(wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Mobile_NB.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_fax.SetBitmapLabel(wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Fax_NB.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_email.SetBitmapLabel(wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Mail_NB.png"), wx.BITMAP_TYPE_ANY))
-        self.ActivationChamps(True)
-        self.label_info_tel.SetLabel(_(u"N° Fixe :"))
-        self.text_info_tel.SetFocus()
-        self.categorieSelect = "Fixe"
-        self.label_info_mail.Hide()
-        self.text_info_mail.Hide()
-        self.label_info_tel.Show()
-        self.text_info_tel.Show()
-        self.grid_sizer_infos.Layout()
+        self._select_category("Fixe", _(u"N° Fixe"))
 
     def OnBouton_Mobile(self, event):
-        self.bouton_fixe.SetBitmapLabel(wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Maison_NB.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_mobile.SetBitmapLabel(wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Mobile_Bleu.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_fax.SetBitmapLabel(wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Fax_NB.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_email.SetBitmapLabel(wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Mail_NB.png"), wx.BITMAP_TYPE_ANY))
-        self.ActivationChamps(True)
-        self.label_info_tel.SetLabel(_(u"N° Mobile :"))
-        self.text_info_tel.SetFocus()
-        self.categorieSelect = "Mobile"
-        self.label_info_mail.Hide()
-        self.text_info_mail.Hide()
-        self.label_info_tel.Show()
-        self.text_info_tel.Show()
-        self.grid_sizer_infos.Layout()
+        self._select_category("Mobile", _(u"N° Mobile"))
 
     def OnBouton_Fax(self, event):
-        self.bouton_fixe.SetBitmapLabel(wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Maison_NB.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_mobile.SetBitmapLabel(wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Mobile_NB.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_fax.SetBitmapLabel(wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Fax_Bleu.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_email.SetBitmapLabel(wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Mail_NB.png"), wx.BITMAP_TYPE_ANY))
-        self.ActivationChamps(True)
-        self.label_info_tel.SetLabel(_(u"N° Fax :"))
-        self.text_info_tel.SetFocus()
-        self.categorieSelect = "Fax"
-        self.label_info_mail.Hide()
-        self.text_info_mail.Hide()
-        self.label_info_tel.Show()
-        self.text_info_tel.Show()
-        self.grid_sizer_infos.Layout()
+        self._select_category("Fax", _(u"N° Fax"))
 
     def OnBouton_Email(self, event):
-        self.bouton_fixe.SetBitmapLabel(wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Maison_NB.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_mobile.SetBitmapLabel(wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Mobile_NB.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_fax.SetBitmapLabel(wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Fax_NB.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_email.SetBitmapLabel(wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Mail_Bleu.png"), wx.BITMAP_TYPE_ANY))
-        self.ActivationChamps(True)
-        self.text_info_mail.SetFocus()
-        self.categorieSelect = "Email"
-        self.label_info_tel.Hide()
-        self.text_info_tel.Hide()
-        self.label_info_mail.Show()
-        self.text_info_mail.Show()
-        self.grid_sizer_infos.Layout()
+        self._select_category("Email", _(u"Email"), email=True)
 
     def ActivationChamps(self, etat=False):
         self.label_info_tel.Enable(etat)
@@ -244,9 +225,9 @@ class Dialog(wx.Dialog):
 
         self.Sauvegarde()
 
-        if self.parent.GetName() == "panel_candidat":
+        if self.parent is not None and self.parent.GetName() == "panel_candidat":
             self.parent.ctrl_coords.Remplissage()
-        if self.parent.GetName() == "panel_generalites":
+        if self.parent is not None and self.parent.GetName() == "panel_generalites":
             self.parent.list_ctrl_coords.Remplissage()
             self.parent.MAJ_barre_problemes()
 
@@ -299,16 +280,16 @@ class Dialog(wx.Dialog):
         self.text_intitule.SetValue(donnees[4] or "")
 
         if self.categorieSelect == "Fixe":
-            self.OnBouton_Fixe("")
+            self.OnBouton_Fixe(None)
             self.text_info_tel.SetValue(donnees[3] or "")
         if self.categorieSelect == "Mobile":
-            self.OnBouton_Mobile("")
+            self.OnBouton_Mobile(None)
             self.text_info_tel.SetValue(donnees[3] or "")
         if self.categorieSelect == "Fax":
-            self.OnBouton_Fax("")
+            self.OnBouton_Fax(None)
             self.text_info_tel.SetValue(donnees[3] or "")
         if self.categorieSelect == "Email":
-            self.OnBouton_Email("")
+            self.OnBouton_Email(None)
             self.text_info_mail.SetValue(donnees[3] or "")
 
 
