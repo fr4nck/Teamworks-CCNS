@@ -355,6 +355,9 @@ class VirtualList(wx.ListCtrl, listmix.ColumnSorterMixin):
         self.criteres = ""
         self.parametres_criteres = ()
         self.parent = parent
+        self.dialog = parent
+        while self.dialog is not None and not isinstance(self.dialog, Dialog):
+            self.dialog = self.dialog.GetParent()
         self._ajustement_en_cours = False
         self.SetBackgroundColour(
             UTILS_Interface.GetToken("surface_container_lowest")
@@ -455,8 +458,8 @@ class VirtualList(wx.ListCtrl, listmix.ColumnSorterMixin):
 
     def OnItemActivated(self, event):
         self.currentItem = event.Index
-        if self.GetGrandParent().exportCP is not None:
-            self.GetGrandParent().ExportListeVille(
+        if self.dialog is not None and self.dialog.exportCP is not None:
+            self.dialog.ExportListeVille(
                 self.getColumnText(self.currentItem, 0),
                 self.getColumnText(self.currentItem, 1),
             )
@@ -531,7 +534,8 @@ class VirtualList(wx.ListCtrl, listmix.ColumnSorterMixin):
 
     def Menu_Inserer(self, event):
         code, ville = self.selection
-        self.GetGrandParent().ExportListeVille(code, ville)
+        if self.dialog is not None:
+            self.dialog.ExportListeVille(code, ville)
 
 
 if __name__ == "__main__":
