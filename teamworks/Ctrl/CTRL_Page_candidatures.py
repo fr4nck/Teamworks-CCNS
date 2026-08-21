@@ -8,10 +8,9 @@
 
 import Chemins
 from Utils.UTILS_Traduction import _
-from Utils import UTILS_Colonnes
-from Utils import UTILS_Interface
+from Utils import UTILS_Colonnes, UTILS_Interface, UTILS_Styles
 import wx
-from Ctrl import CTRL_Bouton_image
+from Ctrl import CTRL_Bouton_image, CTRL_Texte
 from Ol import OL_candidatures
 from Ol import OL_entretiens
 
@@ -23,7 +22,7 @@ class Panel(wx.Panel):
         self.IDpersonne = IDpersonne
         self.SetBackgroundColour(UTILS_Interface.GetToken("surface"))
 
-        self.titre_candidatures = self._titre(_(u"Candidatures"))
+        self.titre_candidatures = CTRL_Texte.H2(self, _(u"Candidatures"))
         self.ctrl_candidatures = OL_candidatures.ListView(
             self,
             id=-1,
@@ -33,7 +32,9 @@ class Panel(wx.Panel):
             modeAffichage="sans_nom",
             style=wx.LC_REPORT | wx.LC_SINGLE_SEL | wx.LC_HRULES | wx.LC_VRULES,
         )
-        self.ctrl_candidatures.SetMinSize((300, 140))
+        self.ctrl_candidatures.SetMinSize(
+            (UTILS_Styles.Scale(300), UTILS_Styles.Scale(140))
+        )
         self.ctrl_candidatures.MAJ()
         self.colonnes_candidatures = UTILS_Colonnes.ColonnesFlexibles(
             self.ctrl_candidatures,
@@ -44,7 +45,7 @@ class Panel(wx.Panel):
         self.bouton_candidatures_modifier = self._bouton(_(u"Modifier"), "Modifier.png")
         self.bouton_candidatures_supprimer = self._bouton(_(u"Supprimer"), "Supprimer.png")
 
-        self.titre_entretiens = self._titre(_(u"Entretiens"))
+        self.titre_entretiens = CTRL_Texte.H2(self, _(u"Entretiens"))
         self.ctrl_entretiens = OL_entretiens.ListView(
             self,
             id=-1,
@@ -54,7 +55,9 @@ class Panel(wx.Panel):
             modeAffichage="sans_nom",
             style=wx.LC_REPORT | wx.LC_SINGLE_SEL | wx.LC_HRULES | wx.LC_VRULES,
         )
-        self.ctrl_entretiens.SetMinSize((300, 140))
+        self.ctrl_entretiens.SetMinSize(
+            (UTILS_Styles.Scale(300), UTILS_Styles.Scale(140))
+        )
         self.ctrl_entretiens.MAJ()
         self.colonnes_entretiens = UTILS_Colonnes.ColonnesFlexibles(
             self.ctrl_entretiens,
@@ -75,20 +78,11 @@ class Panel(wx.Panel):
         self.Bind(wx.EVT_BUTTON, self.OnBoutonModifEntretien, self.bouton_entretiens_modifier)
         self.Bind(wx.EVT_BUTTON, self.OnBoutonSupprEntretien, self.bouton_entretiens_supprimer)
 
-    def _titre(self, label):
-        ctrl = wx.StaticText(self, -1, label)
-        font = ctrl.GetFont()
-        font.SetWeight(wx.FONTWEIGHT_BOLD)
-        font.SetPointSize(max(11, font.GetPointSize() + 2))
-        ctrl.SetFont(font)
-        return ctrl
-
     def _bouton(self, label, image):
         return CTRL_Bouton_image.CTRL(
             self,
             texte=label,
-            cheminImage=Chemins.GetStaticPath("Images/16x16/%s" % image),
-            tailleImage=(20, 20),
+            cheminImage=Chemins.GetStaticPath("Images/32x32/%s" % image),
         )
 
     def __set_properties(self):
@@ -101,14 +95,19 @@ class Panel(wx.Panel):
 
     @staticmethod
     def _barre_actions(*boutons):
+        gap = UTILS_Styles.GetLayoutSpacing("toolbar_gap")
         sizer = wx.WrapSizer(wx.HORIZONTAL)
         for bouton in boutons:
-            sizer.Add(bouton, 0, wx.RIGHT | wx.BOTTOM, 6)
+            sizer.Add(bouton, 0, wx.RIGHT | wx.BOTTOM, gap)
         return sizer
 
     def __do_layout(self):
+        field_gap = UTILS_Styles.GetLayoutSpacing("field_gap")
+        section_gap = UTILS_Styles.GetLayoutSpacing("section_gap")
+        content_padding = UTILS_Styles.GetLayoutSpacing("content_padding")
+
         candidatures = wx.BoxSizer(wx.VERTICAL)
-        candidatures.Add(self.titre_candidatures, 0, wx.EXPAND | wx.BOTTOM, 6)
+        candidatures.Add(self.titre_candidatures, 0, wx.EXPAND | wx.BOTTOM, field_gap)
         candidatures.Add(
             self._barre_actions(
                 self.bouton_candidatures_ajouter,
@@ -117,12 +116,12 @@ class Panel(wx.Panel):
             ),
             0,
             wx.EXPAND | wx.BOTTOM,
-            4,
+            field_gap,
         )
         candidatures.Add(self.ctrl_candidatures, 1, wx.EXPAND)
 
         entretiens = wx.BoxSizer(wx.VERTICAL)
-        entretiens.Add(self.titre_entretiens, 0, wx.EXPAND | wx.BOTTOM, 6)
+        entretiens.Add(self.titre_entretiens, 0, wx.EXPAND | wx.BOTTOM, field_gap)
         entretiens.Add(
             self._barre_actions(
                 self.bouton_entretiens_ajouter,
@@ -131,13 +130,19 @@ class Panel(wx.Panel):
             ),
             0,
             wx.EXPAND | wx.BOTTOM,
-            4,
+            field_gap,
         )
         entretiens.Add(self.ctrl_entretiens, 1, wx.EXPAND)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(candidatures, 1, wx.EXPAND | wx.ALL, 10)
-        sizer.Add(entretiens, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
+        sizer.Add(candidatures, 1, wx.EXPAND | wx.ALL, content_padding)
+        sizer.Add(
+            entretiens,
+            1,
+            wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM,
+            content_padding,
+        )
+        sizer.AddSpacer(section_gap)
         self.SetSizer(sizer)
 
     def OnBoutonAjoutCandidature(self, event):
