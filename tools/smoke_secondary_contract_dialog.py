@@ -31,6 +31,14 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 from Utils import UTILS_Fichiers as _smoke_files
                 from Utils import UTILS_Publipostage_donnees as _smoke_mailmerge
 
+                def _smoke_validate_accepting_review(_page):
+                    _old_message_box = wx.MessageBox
+                    try:
+                        wx.MessageBox = lambda *args, **kwargs: wx.YES
+                        return _page.Validation()
+                    finally:
+                        wx.MessageBox = _old_message_box
+
                 print("TEAMWORKS_SMOKE_CONTRACT_STAGE:database", flush=True)
                 _smoke_db = _smoke_gestiondb.DB()
                 _smoke_db.ExecuterReq("SELECT IDcontrat, IDpersonne FROM contrats ORDER BY IDcontrat LIMIT 1")
@@ -153,7 +161,7 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                     "date_rupture": "",
                     "essai": 30,
                 })
-                assert _smoke_new.page6.Validation() is True
+                assert _smoke_validate_accepting_review(_smoke_new.page6) is True
 
                 _smoke_db = _smoke_gestiondb.DB()
                 _smoke_db.ExecuterReq("SELECT COALESCE(MAX(IDcontrat), 0) FROM contrats")
@@ -293,7 +301,7 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                     "date_rupture": "",
                     "essai": 0,
                 })
-                assert _smoke_new.page6.Validation() is True
+                assert _smoke_validate_accepting_review(_smoke_new.page6) is True
 
                 _smoke_db = _smoke_gestiondb.DB()
                 _smoke_db.ExecuterReq("SELECT COALESCE(MAX(IDcontrat), 0) FROM contrats")

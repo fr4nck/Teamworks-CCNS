@@ -1,6 +1,8 @@
 from datetime import date
 from decimal import Decimal
 
+import pytest
+
 import application.control.contract_compensation_preflight as module
 from domain.convention.salary_grid_entry import SalaryMinimumPeriodicity
 
@@ -17,8 +19,9 @@ class Presenter:
         return (Choice("G7", "40597.94"), Choice("G8", "46833.81"))
 
 
-def setup_module():
-    module.CCNSContractCompliancePresenter = Presenter
+@pytest.fixture(autouse=True)
+def _stub_presenter(monkeypatch):
+    monkeypatch.setattr(module, "CCNSContractCompliancePresenter", Presenter)
 
 
 def test_g7_full_time_full_year_minimum():
