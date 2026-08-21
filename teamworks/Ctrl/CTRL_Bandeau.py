@@ -76,13 +76,16 @@ class Bandeau(wx.Panel):
         self.ligne.SetForegroundColour(bordure)
 
     def __do_layout(self):
+        field_gap = UTILS_Styles.GetLayoutSpacing("field_gap")
+        content_padding = UTILS_Styles.GetLayoutSpacing("content_padding")
+
         textes = wx.BoxSizer(wx.VERTICAL)
-        textes.Add(self.ctrl_titre, 0, wx.EXPAND | wx.TOP | wx.RIGHT, UTILS_Styles.Scale(6))
-        textes.Add(self.ctrl_intro, 0, wx.EXPAND | wx.RIGHT | wx.BOTTOM, UTILS_Styles.Scale(6))
+        textes.Add(self.ctrl_titre, 0, wx.EXPAND | wx.TOP | wx.RIGHT, field_gap)
+        textes.Add(self.ctrl_intro, 0, wx.EXPAND | wx.RIGHT | wx.BOTTOM, field_gap)
 
         contenu = wx.BoxSizer(wx.HORIZONTAL)
         if self.image.GetBitmap().IsOk():
-            contenu.Add(self.image, 0, wx.ALL | wx.ALIGN_TOP, UTILS_Styles.Scale(10))
+            contenu.Add(self.image, 0, wx.ALL | wx.ALIGN_TOP, content_padding)
         contenu.Add(textes, 1, wx.EXPAND)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
