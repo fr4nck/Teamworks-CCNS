@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Construit une fiche individuelle existante et parcourt ses pages sous wxPython."""
+"""Construit les dialogues critiques individu/paramétrage et refuse les fenêtres vides."""
 
 from __future__ import annotations
 
@@ -26,6 +26,52 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 print("TEAMWORKS_SMOKE_PERSON_STAGE:imports", flush=True)
                 import GestionDB as _smoke_gestiondb
                 from Dlg import DLG_Fiche_individuelle as _smoke_person
+                from Dlg import DLG_Enregistrement
+                from Dlg import DLG_Config_questionnaires
+                from Dlg import DLG_Config_types_diplomes
+                from Dlg import DLG_Config_types_pieces
+                from Dlg import DLG_Config_situations
+                from Dlg import DLG_Config_pays
+                from Dlg import DLG_Config_categories_presences
+                from Dlg import DLG_Config_classifications
+                from Dlg import DLG_Config_champs_contrats
+                from Dlg import DLG_Config_modeles_contrats
+                from Dlg import DLG_Config_types_contrats
+                from Dlg import DLG_Config_val_point
+                from Dlg import DLG_Config_verrouillage_entretien
+                from Dlg import DLG_Config_fonctions
+                from Dlg import DLG_Config_affectations
+                from Dlg import DLG_Config_diffuseurs
+                from Dlg import DLG_Config_emplois
+                from Dlg import DLG_Vacances
+                from Dlg import DLG_Feries
+
+                def _smoke_descendants(_smoke_window):
+                    _smoke_items = []
+                    _smoke_stack = list(_smoke_window.GetChildren())
+                    while _smoke_stack:
+                        _smoke_child = _smoke_stack.pop()
+                        _smoke_items.append(_smoke_child)
+                        _smoke_stack.extend(_smoke_child.GetChildren())
+                    return _smoke_items
+
+                def _smoke_assert_populated(_smoke_dialog, _smoke_label):
+                    _smoke_dialog.Show()
+                    _smoke_dialog.Layout()
+                    wx.Yield()
+                    _smoke_size = _smoke_dialog.GetClientSize()
+                    _smoke_desc = _smoke_descendants(_smoke_dialog)
+                    _smoke_visible = [
+                        _smoke_child for _smoke_child in _smoke_desc
+                        if _smoke_child.IsShownOnScreen()
+                        and _smoke_child.GetSize().GetWidth() > 0
+                        and _smoke_child.GetSize().GetHeight() > 0
+                    ]
+                    assert _smoke_dialog.IsShown(), "%s: dialogue non affiché" % _smoke_label
+                    assert _smoke_size.GetWidth() >= 100, "%s: largeur vide" % _smoke_label
+                    assert _smoke_size.GetHeight() >= 80, "%s: hauteur vide" % _smoke_label
+                    assert len(_smoke_desc) >= 2, "%s: contenu non construit" % _smoke_label
+                    assert len(_smoke_visible) >= 1, "%s: aucun contrôle visible" % _smoke_label
 
                 print("TEAMWORKS_SMOKE_PERSON_STAGE:database", flush=True)
                 _smoke_db = _smoke_gestiondb.DB()
@@ -38,8 +84,7 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
 
                 print("TEAMWORKS_SMOKE_PERSON_STAGE:dialog", flush=True)
                 _smoke_dialog = _smoke_person.Dialog(frame, IDpersonne=_smoke_person_id)
-                _smoke_dialog.Show()
-                wx.Yield()
+                _smoke_assert_populated(_smoke_dialog, "Fiche individuelle")
 
                 print("TEAMWORKS_SMOKE_PERSON_STAGE:notebook", flush=True)
                 _smoke_notebook = _smoke_dialog.notebook
@@ -64,8 +109,13 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 print("TEAMWORKS_SMOKE_PERSON_STAGE:pages", flush=True)
                 for _smoke_index in range(_smoke_notebook.GetPageCount()):
                     _smoke_notebook.SetSelection(_smoke_index)
+                    _smoke_dialog.Layout()
                     wx.Yield()
-                    assert _smoke_notebook.GetCurrentPage() is not None
+                    _smoke_page = _smoke_notebook.GetCurrentPage()
+                    assert _smoke_page is not None
+                    assert _smoke_page.GetSize().GetWidth() > 0
+                    assert _smoke_page.GetSize().GetHeight() > 0
+                    assert len(_smoke_descendants(_smoke_page)) >= 1
 
                 assert _smoke_notebook.pageGeneralites is not None
                 assert _smoke_notebook.pageContrats is not None
@@ -74,8 +124,40 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 assert _smoke_dialog.bitmap_button_Ok.IsEnabled()
                 assert _smoke_dialog.AnnulationImpossible is True
                 assert not _smoke_dialog.bitmap_button_annuler.IsEnabled()
-                print("TEAMWORKS_SMOKE_PERSON_DIALOG_READY", flush=True)
                 _smoke_dialog.Destroy()
+                wx.Yield()
+
+                print("TEAMWORKS_SMOKE_PERSON_STAGE:parametrage", flush=True)
+                _smoke_parameter_dialogs = (
+                    ("Enregistrement", DLG_Enregistrement.Dialog),
+                    ("Questionnaires", DLG_Config_questionnaires.Dialog),
+                    ("Qualifications", DLG_Config_types_diplomes.Dialog),
+                    ("Types de pièces", DLG_Config_types_pieces.Dialog),
+                    ("Situations", DLG_Config_situations.Dialog),
+                    ("Pays", DLG_Config_pays.Dialog),
+                    ("Catégories de présences", DLG_Config_categories_presences.Dialog),
+                    ("Classifications", DLG_Config_classifications.Dialog),
+                    ("Champs de contrats", DLG_Config_champs_contrats.Dialog),
+                    ("Modèles de contrats", DLG_Config_modeles_contrats.Dialog),
+                    ("Types de contrats", DLG_Config_types_contrats.Dialog),
+                    ("Valeurs de points", DLG_Config_val_point.Dialog),
+                    ("Protection des entretiens", DLG_Config_verrouillage_entretien.Dialog),
+                    ("Fonctions", DLG_Config_fonctions.Dialog),
+                    ("Affectations", DLG_Config_affectations.Dialog),
+                    ("Diffuseurs", DLG_Config_diffuseurs.Dialog),
+                    ("Offres d'emploi", DLG_Config_emplois.Dialog),
+                    ("Vacances", DLG_Vacances.Dialog),
+                    ("Jours fériés", DLG_Feries.Dialog),
+                )
+                for _smoke_label, _smoke_factory in _smoke_parameter_dialogs:
+                    print("TEAMWORKS_SMOKE_PARAMETER_OPEN:%s" % _smoke_label, flush=True)
+                    _smoke_parameter_dialog = _smoke_factory(frame)
+                    _smoke_assert_populated(_smoke_parameter_dialog, _smoke_label)
+                    _smoke_parameter_dialog.Destroy()
+                    wx.Yield()
+                    print("TEAMWORKS_SMOKE_PARAMETER_OK:%s" % _smoke_label, flush=True)
+
+                print("TEAMWORKS_SMOKE_PERSON_DIALOG_READY", flush=True)
             except Exception:
                 import traceback as _smoke_traceback
                 _smoke_traceback.print_exc()
@@ -118,7 +200,7 @@ def main() -> int:
             PATCHED,
             root=ROOT,
             teamworks_dir=TEAMWORKS_DIR,
-            timeout=180,
+            timeout=240,
         )
         write_diagnostic(
             REPORT,
