@@ -24,7 +24,7 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
             try:
                 import GestionDB as _smoke_gestiondb
                 from Ctrl import CTRL_Page_candidatures as _smoke_recruitment
-                from Ol import OL_candidatures as _smoke_candidates
+                from Ol import OL_candidatures_core as _smoke_candidates_core
 
                 _smoke_db = _smoke_gestiondb.DB()
                 _smoke_db.ExecuterReq("SELECT IDpersonne FROM personnes ORDER BY IDpersonne LIMIT 1")
@@ -51,22 +51,24 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 _smoke_panel.ctrl_entretiens.MAJ()
                 wx.Yield()
 
-                _smoke_candidates.DICT_DISPONIBILITES.clear()
-                _smoke_candidates.DICT_DISPONIBILITES.update({
+                # Cible les dictionnaires du core réellement consultés par
+                # GetListeFiltres après MAJ(), pas les alias historiques du wrapper.
+                _smoke_candidates_core.DICT_DISPONIBILITES.clear()
+                _smoke_candidates_core.DICT_DISPONIBILITES.update({
                     1: [(1, __import__('datetime').date(2026, 1, 1), __import__('datetime').date(2026, 12, 31))],
                     2: [(2, __import__('datetime').date(2026, 1, 1), __import__('datetime').date(2026, 12, 31))],
                 })
-                _smoke_candidates.DICT_CAND_FONCTIONS.clear()
-                _smoke_candidates.DICT_CAND_FONCTIONS.update({1: [10], 2: [20]})
-                _smoke_candidates.DICT_CAND_AFFECTATIONS.clear()
-                _smoke_candidates.DICT_CAND_AFFECTATIONS.update({1: [30], 2: [30]})
+                _smoke_candidates_core.DICT_CAND_FONCTIONS.clear()
+                _smoke_candidates_core.DICT_CAND_FONCTIONS.update({1: [10], 2: [20]})
+                _smoke_candidates_core.DICT_CAND_AFFECTATIONS.clear()
+                _smoke_candidates_core.DICT_CAND_AFFECTATIONS.update({1: [30], 2: [30]})
                 _smoke_filters = [
                     {"nomControle": "candidature_dispo", "valeur": (__import__('datetime').date(2026, 6, 1), __import__('datetime').date(2026, 6, 30)), "sql": ""},
                     {"nomControle": "candidature_fonctions", "valeur": [(10, "Animation")], "sql": ""},
                     {"nomControle": "candidature_affectations", "valeur": [(30, "ALSH")], "sql": ""},
                 ]
                 _smoke_ids, _smoke_sql = _smoke_panel.ctrl_candidatures.GetListeFiltres(_smoke_filters)
-                assert _smoke_ids == [1]
+                assert _smoke_ids == [1], _smoke_ids
                 assert _smoke_sql == ""
 
                 if _smoke_panel.ctrl_candidatures.GetColumnCount() > 1:
