@@ -1,1013 +1,672 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-#-----------------------------------------------------------
-# Auteur:        Ivan LUCAS
-# Copyright:    (c) 2008-09 Ivan LUCAS
-# Licence:      Licence GNU GPL
-#-----------------------------------------------------------
+"""Coque moderne du module Recrutement Teamworks.
 
-import Chemins
-from Utils.UTILS_Traduction import _
-import wx
-from wx.lib.splitter import MultiSplitterWindow
-import GestionDB
-import datetime
-import FonctionsPerso
-from Utils import UTILS_Dates
+La logique historique reste disponible dans ``CTRL_Recrutement_core``.
+Ce module reconstruit l'interface visible avec les composants du design
+system tout en conservant la hiérarchie ``window_D -> splitter -> Recrutement``
+attendue par les ObjectListView existantes.
+"""
+
 import sys
+import wx
+
+from Ctrl import CTRL_Bouton_image
 from Ctrl import CTRL_Gadget_candidatures
+from Ctrl import CTRL_Recrutement_core as CORE
+from Ctrl import CTRL_Section
+from Ctrl import CTRL_Texte
 from Ol import OL_candidatures
 from Ol import OL_candidats
 from Ol import OL_entretiens
 from Ol import OL_emplois
-from Utils import UTILS_Adaptations
 from ObjectListView import Filter
+from Utils import UTILS_Interface
+from Utils import UTILS_Styles
+from Utils.UTILS_Traduction import _
 
 
 MODE_AFFICHAGE = "candidats"
 
 
+def _racine_recrutement(window):
+    current = window
+    while current is not None:
+        try:
+            if current.GetName() == "Recrutement":
+                return current
+        except Exception:
+            pass
+        try:
+            current = current.GetParent()
+        except Exception:
+            current = None
+    return None
 
-class GadgetEntretiens(FonctionsPerso.PanelArrondi):
+
+def _surface(window, token="surface_container_lowest"):
+    window.SetBackgroundColour(UTILS_Interface.GetToken(token))
+    return window
+
+
+class GadgetEntretiens(wx.Panel):
     def __init__(self, parent, ID=-1, name="gadget_entretiens"):
-        FonctionsPerso.PanelArrondi.__init__(self, parent, ID, texteTitre=_(u"Prochains entretiens"))
-        self.SetBackgroundColour((122, 161, 230))
-        
-        self.ctrl = OL_entretiens.ListView(self, id=-1,  name="OL_gadget_entretiens", afficheHyperlink=False, prochainsEntretiens=True, modeAffichage="gadget", colorerSalaries=False, style=wx.LC_REPORT|wx.LC_NO_HEADER|wx.NO_BORDER|wx.LC_SINGLE_SEL)
-        self.ctrl.couleurFond = (214, 223, 247)
-        self.ctrl.SetBackgroundColour((214, 223, 247))
-        self.ctrl.stEmptyListMsg.SetBackgroundColour((214, 223, 247))
-        
+        wx.Panel.__init__(self, parent, ID, name=name, style=wx.TAB_TRAVERSAL)
+        _surface(self)
+        self.ctrl = OL_entretiens.ListView(
+            self,
+            id=-1,
+            name="OL_gadget_entretiens",
+            afficheHyperlink=False,
+            prochainsEntretiens=True,
+            modeAffichage="gadget",
+            colorerSalaries=False,
+            style=wx.LC_REPORT | wx.LC_NO_HEADER | wx.NO_BORDER | wx.LC_SINGLE_SEL,
+        )
+        fond = UTILS_Interface.GetToken("surface_container_lowest")
+        self.ctrl.couleurFond = fond
+        self.ctrl.SetBackgroundColour(fond)
+        try:
+            self.ctrl.stEmptyListMsg.SetBackgroundColour(fond)
+        except Exception:
+            pass
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add((19, 19), 0, wx.EXPAND, 0)
-        sizer.Add(self.ctrl, 1, wx.EXPAND|wx.LEFT|wx.RIGHT|wx.BOTTOM|wx.TOP, 14)
+        sizer.Add(self.ctrl, 1, wx.EXPAND)
         self.SetSizer(sizer)
-        
         self.MAJ()
-    
+
     def MAJ(self):
         self.ctrl.MAJ()
 
 
-class GadgetAvertissement(FonctionsPerso.PanelArrondi):
-    def __init__(self, parent, ID=-1, name="gadget_avertissement"):
-        FonctionsPerso.PanelArrondi.__init__(self, parent, ID, texteTitre=_(u"Avertissement"))
-        self.SetBackgroundColour((122, 161, 230))
-        
-        texteIntro = _(u"Attention, ce module Recrutement est encore en phase de test. Merci de bien vouloir signaler les bugs rencontrés.")
-        self.label_introduction = FonctionsPerso.StaticWrapText(self, -1, texteIntro)
-        self.label_introduction.SetBackgroundColour((214, 223, 247))
-        
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add((19, 19), 0, wx.EXPAND, 0)
-        sizer.Add(self.label_introduction, 1, wx.EXPAND|wx.LEFT|wx.RIGHT|wx.BOTTOM|wx.TOP, 16)
-        self.SetSizer(sizer)
-
-class GadgetInformations(FonctionsPerso.PanelArrondi):
+class GadgetInformations(wx.Panel):
     def __init__(self, parent, ID=-1, name="gadget_informations"):
-        FonctionsPerso.PanelArrondi.__init__(self, parent, ID, texteTitre=_(u"Informations"))
-        self.SetBackgroundColour((122, 161, 230))
-        
+        wx.Panel.__init__(self, parent, ID, name=name, style=wx.TAB_TRAVERSAL)
+        _surface(self)
         self.treeCtrl = CTRL_Gadget_candidatures.TreeCtrl(self)
-        self.treeCtrl.couleurFond = (214, 223, 247)
-        self.treeCtrl.SetBackgroundColour((214, 223, 247))
-        
+        fond = UTILS_Interface.GetToken("surface_container_lowest")
+        self.treeCtrl.couleurFond = fond
+        self.treeCtrl.SetBackgroundColour(fond)
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add((19, 19), 0, wx.EXPAND, 0)
-        sizer.Add(self.treeCtrl, 1, wx.EXPAND|wx.LEFT|wx.RIGHT|wx.BOTTOM|wx.TOP, 13)
+        sizer.Add(self.treeCtrl, 1, wx.EXPAND)
         self.SetSizer(sizer)
 
     def MAJ(self):
         self.treeCtrl.MAJ()
 
 
-class Panelidentite(wx.Panel):
+class GadgetAvertissement(wx.Panel):
+    def __init__(self, parent, ID=-1, name="gadget_avertissement"):
+        wx.Panel.__init__(self, parent, ID, name=name, style=wx.TAB_TRAVERSAL)
+        _surface(self, "surface_container_low")
+        self.label_introduction = CTRL_Texte.BodySecondary(
+            self,
+            _(u"Attention, ce module Recrutement est encore en phase de test. "
+              u"Merci de bien vouloir signaler les bugs rencontrés."),
+        )
+        padding = UTILS_Styles.GetLayoutSpacing("content_padding")
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self.label_introduction, 1, wx.EXPAND | wx.ALL, padding)
+        self.SetSizer(sizer)
+
+
+class Panelidentite(CORE.Panelidentite):
+    """Rendu moderne du résumé d'identité, logique métier historique conservée."""
+
     def __init__(self, parent):
-        wx.Panel.__init__(self, parent, -1, name="panel_identite", style=wx.SUNKEN_BORDER)
+        wx.Panel.__init__(self, parent, -1, name="panel_identite", style=wx.TAB_TRAVERSAL)
         self.parent = parent
+        _surface(self)
 
-        self.resume_L1 = wx.StaticText(self, -1, "")
-        self.resume_L2 = wx.StaticText(self, -1, "")
-        self.resume_L3 = wx.StaticText(self, -1, "")
-        self.resume_L4 = wx.StaticText(self, -1, "")
-        self.resume_L5 = wx.StaticText(self, -1, "")
-        self.resume_L6 = wx.StaticText(self, -1, "")
-                
-        # Propriétés
-        self.SetBackgroundColour((214, 223, 247))
-        self.resume_L1.SetFont(wx.Font(14, wx.DEFAULT, wx.NORMAL, wx.BOLD, 0, ""))
-        
-        # Layout
-        grid_sizer_base = wx.FlexGridSizer(rows=2, cols=1, vgap=0, hgap=0)
-        
-        grid_sizer_resume = wx.FlexGridSizer(rows=1, cols=3, vgap=0, hgap=0)
-        grid_sizer_texte = wx.FlexGridSizer(rows=8, cols=1, vgap=0, hgap=0)
-        grid_sizer_texte.Add(self.resume_L1, 0, 0, 0)
-        grid_sizer_texte.Add((5, 5), 0, wx.EXPAND, 0)
-        grid_sizer_texte.Add(self.resume_L2, 0, 0, 0)
-        grid_sizer_texte.Add(self.resume_L3, 0, 0, 0)
-        grid_sizer_texte.Add((5, 5), 0, wx.EXPAND, 0)
-        grid_sizer_texte.Add(self.resume_L4, 0, 0, 0)
-        grid_sizer_texte.Add(self.resume_L5, 0, 0, 0)
-        grid_sizer_texte.Add(self.resume_L6, 0, 0, 0)
-        grid_sizer_resume.Add(grid_sizer_texte, 1, wx.ALL|wx.EXPAND, 10)
-        #grid_sizer_resume.Add(self.tree_ctrl_resume, 1, wx.ALL|wx.EXPAND, 10)
-        grid_sizer_resume.AddGrowableCol(1)
-        
-        grid_sizer_base.Add(grid_sizer_resume, 0, wx.EXPAND, 0)
-        grid_sizer_base.AddGrowableRow(1)
-        grid_sizer_base.AddGrowableCol(0)
-        self.SetSizer(grid_sizer_base)
+        self.resume_L1 = CTRL_Texte.H2(self, u"")
+        self.resume_L2 = CTRL_Texte.Body(self, u"")
+        self.resume_L3 = CTRL_Texte.BodySecondary(self, u"")
+        self.resume_L4 = CTRL_Texte.BodySecondary(self, u"")
+        self.resume_L5 = CTRL_Texte.BodySecondary(self, u"")
+        self.resume_L6 = CTRL_Texte.BodySecondary(self, u"")
 
-    def MAJidentite(self, IDcandidat=None, IDpersonne=None):
-        """ Met à jour le cadre résumé identité """
-        
-        # Récupération des données de la table Candidats
-        DB = GestionDB.DB()
-        if IDpersonne == None or IDpersonne == 0 :
-            req = """SELECT civilite, nom, prenom, date_naiss, adresse_resid, cp_resid, ville_resid, memo, age
-            FROM candidats WHERE IDcandidat=%d; """ % IDcandidat
-        else:
-            req = """SELECT civilite, nom, prenom, date_naiss, adresse_resid, cp_resid, ville_resid, memo
-            FROM personnes WHERE IDpersonne=%d; """ % IDpersonne
-        DB.ExecuterReq(req)
-        donnees = DB.ResultatReq()[0]
-        DB.Close()
-                                    
-        civilite = donnees[0]
-        if donnees[1] == "" or donnees[1] == None :
-            nom = "?"
-        else:
-            nom = donnees[1]
-        if donnees[2] == "" or donnees[2] == None :
-            prenom = "?"
-        else:
-            prenom = donnees[2]
-        date_naiss = donnees[3]
-        if IDpersonne == None or IDpersonne == 0 :
-            age = donnees[8]
-        else:
-            age = ""
-        if donnees[4] == "" or donnees[4] == None :
-            adresse_resid = u"?"
-        else:
-            adresse_resid = donnees[4]
-        if donnees[5] == "" or donnees[5] == None :
-            cp_resid = u"?"
-        else:
-            cp_resid = str(donnees[5])
-        if donnees[6] == "" or donnees[6] == None :
-            ville_resid = u"?"
-        else:
-            ville_resid = donnees[6]
-        
-        if date_naiss == "" and age == 0 or age == "" :
-            texteAge = _(u"Age et date de naissance inconnus")
-        if date_naiss == "" and age != 0 and age != "" :
-            texteAge = "Age : %d ans" % age
-        if date_naiss != "" and date_naiss != None :
-            texteAge = _(u"Date de naissance : %s (%s)") % (FonctionsPerso.DateEngFr(date_naiss), self.RetourneAge(donnees[3]))
-        
-        # Récupération des qualifications du candidat
-        DB = GestionDB.DB()
-        if IDpersonne == None or IDpersonne == 0 :  
-            req = """SELECT diplomes_candidats.IDtype_diplome, types_diplomes.nom_diplome
-            FROM diplomes_candidats LEFT JOIN types_diplomes ON diplomes_candidats.IDtype_diplome = types_diplomes.IDtype_diplome
-            WHERE IDcandidat=%d; """ % IDcandidat
-        else:
-            req = """SELECT diplomes.IDtype_diplome, types_diplomes.nom_diplome
-            FROM diplomes LEFT JOIN types_diplomes ON diplomes.IDtype_diplome = types_diplomes.IDtype_diplome
-            WHERE IDpersonne=%d; """ % IDpersonne
-        DB.ExecuterReq(req)
-        listeQualifications = DB.ResultatReq()
-        DB.Close()
-        texteQualifications = ""
-        if len(listeQualifications) == 0 :
-            texteQualifications = _(u"Aucune qualification")
-        else:
-            if civilite == "Mr" :
-                texteQualifications = _(u"Qualifié ")
-            else:
-                texteQualifications = _(u"Qualifiée ")
-            index = 1
-            for IDtype_diplome, nom_diplome in listeQualifications :
-                texteQualifications += nom_diplome
-                if index == len(listeQualifications)-1 :
-                    texteQualifications += " et "
-                else:
-                    texteQualifications += ", "
-                index += 1
-            texteQualifications = texteQualifications[:-2]
-        
-        # Récupération des données de la table Coordonnées
-        DB = GestionDB.DB()
-        if IDpersonne == None or IDpersonne == 0 :      
-            req = """SELECT categorie, texte, intitule
-            FROM coords_candidats WHERE IDcandidat=%d; """ % IDcandidat
-        else:
-            req = """SELECT categorie, texte, intitule
-            FROM coordonnees WHERE IDpersonne=%d; """ % IDpersonne
-        DB.ExecuterReq(req)
-        listeCoords = DB.ResultatReq()
-        DB.Close()
-        
-        if len(listeCoords) != 0 :
-            texteCoords = _(u"Tél : ")
-            for coord in listeCoords :
-                categorie = coord[0]
-                texte = coord[1]
-                intitule = coord[2]
-                texteCoords += texte + " | "
-            texteCoords = texteCoords[:-3]
-        else :
-            texteCoords = _(u"Aucune coordonnée")
-        
-        # Création des lignes
-        ligne1 = nom + " " + prenom
-        ligne2 = texteAge
-        ligne3 = texteQualifications
-        ligne4 = _(u"Résidant %s %s %s") % (adresse_resid, cp_resid, ville_resid)
-        ligne5 = texteCoords
-        # Met dans les controles
-        self.resume_L1.SetLabel(ligne1)
-        self.resume_L2.SetLabel(ligne2)
-        self.resume_L3.SetLabel(ligne3)
-        self.resume_L4.SetLabel(ligne4)
-        self.resume_L5.SetLabel(ligne5)
-##        self.resume_L6.SetLabel(detailContrat)
-            
-    def RetourneAge(self, dateStr):
-        bday = UTILS_Dates.DateEnDateDD(dateStr)
-        if bday is None:
-            return ""
-        datedujour = datetime.date.today()
-        age = (datedujour.year - bday.year) - int((datedujour.month, datedujour.day) < (bday.month, bday.day))
-        texteAge = str(age) + " ans"
-        return texteAge
-
+        gap = UTILS_Styles.GetLayoutSpacing("field_gap")
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        for index, controle in enumerate(
+            (self.resume_L1, self.resume_L2, self.resume_L3, self.resume_L4, self.resume_L5, self.resume_L6)
+        ):
+            if index:
+                sizer.AddSpacer(gap)
+            sizer.Add(controle, 0, wx.EXPAND)
+        self.SetSizer(sizer)
+        self.SetMinSize((-1, UTILS_Styles.Scale(140)))
 
 
 class PanelResume(wx.Panel):
+    """Détail de la sélection sans hauteur fixe ni icônes de notebook."""
+
     def __init__(self, parent):
-        wx.Panel.__init__(self, parent, -1, name="panel_resume")
+        wx.Panel.__init__(self, parent, -1, name="panel_resume", style=wx.TAB_TRAVERSAL)
         self.parent = parent
-        
-        self.barreTitre_resume = FonctionsPerso.BarreTitre(self,  _(u"Détail de la sélection"), _(u"Détail de la sélection"))
+        _surface(self, "surface_container_low")
 
-        # Contrôles
-        self.noteBook = wx.Notebook(self, -1, size=(-1, 150), style=wx.BK_BOTTOM)
-        il = wx.ImageList(16, 16)
-        self.img1 = il.Add(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Identite.png"), wx.BITMAP_TYPE_PNG))
-        self.img2 = il.Add(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Candidature.png"), wx.BITMAP_TYPE_PNG))
-        self.img3 = il.Add(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Dialogue.png"), wx.BITMAP_TYPE_PNG))
-        self.noteBook.AssignImageList(il)
-        
-        # Panel Identité
-        self.panel_identite = Panelidentite(self.noteBook)       
-        self.noteBook.AddPage(self.panel_identite, _(u"Identité du candidat"))
-        self.noteBook.SetPageImage(0, self.img1)
-        # ListView Candidatures
-        self.listCtrl_candidatures = OL_candidatures.ListView(self.noteBook, id=-1,  name="OL_candidatures", modeAffichage = "avec_nom", style=wx.LC_REPORT|wx.SUNKEN_BORDER|wx.LC_SINGLE_SEL|wx.LC_HRULES|wx.LC_VRULES)       
+        self.section = CTRL_Section.Section(
+            self,
+            titre=_(u"Détail de la sélection"),
+            niveau=3,
+            surface="surface_container_low",
+        )
+        contenu = self.section.GetContentPanel()
+
+        self.noteBook = wx.Notebook(contenu, -1)
+        self.panel_identite = Panelidentite(self.noteBook)
+        self.listCtrl_candidatures = OL_candidatures.ListView(
+            self.noteBook,
+            id=-1,
+            name="OL_candidatures",
+            modeAffichage="avec_nom",
+            style=wx.LC_REPORT | wx.LC_SINGLE_SEL | wx.LC_HRULES,
+        )
+        self.listCtrl_entretiens = OL_entretiens.ListView(
+            self.noteBook,
+            id=-1,
+            name="OL_entretiens",
+            modeAffichage="avec_nom",
+            style=wx.LC_REPORT | wx.LC_SINGLE_SEL | wx.LC_HRULES,
+        )
+        self._mode = "candidat"
+        self._installer_pages_candidat()
+
+        sizer_contenu = wx.BoxSizer(wx.VERTICAL)
+        sizer_contenu.Add(self.noteBook, 1, wx.EXPAND)
+        contenu.SetSizer(sizer_contenu)
+
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self.section, 1, wx.EXPAND)
+        self.SetSizer(sizer)
+        self.SetMinSize((-1, UTILS_Styles.Scale(220)))
+
+    def _vider_pages(self):
+        while self.noteBook.GetPageCount():
+            self.noteBook.RemovePage(0)
+
+    def _installer_pages_candidat(self):
+        self._vider_pages()
+        self.noteBook.AddPage(self.panel_identite, _(u"Identité"))
         self.noteBook.AddPage(self.listCtrl_candidatures, _(u"Candidatures"))
-        self.noteBook.SetPageImage(1, self.img2)
-        # ListView Entretiens
-        self.listCtrl_entretiens = OL_entretiens.ListView(self.noteBook, id=-1,  name="OL_entretiens", modeAffichage="avec_nom", style=wx.LC_REPORT|wx.SUNKEN_BORDER|wx.LC_SINGLE_SEL|wx.LC_HRULES|wx.LC_VRULES)
         self.noteBook.AddPage(self.listCtrl_entretiens, _(u"Entretiens"))
-        self.noteBook.SetPageImage(2, self.img3)
-        
-        # Propriétés
-        self.SetBackgroundColour((214, 223, 247))
-        
-        # Layout
-        grid_sizer_base = wx.FlexGridSizer(rows=4, cols=1, vgap=0, hgap=0)
-        grid_sizer_base.Add(self.barreTitre_resume, 0, wx.EXPAND, 0)
-        grid_sizer_base.Add(self.noteBook, 0, wx.EXPAND, 0)
-        grid_sizer_base.AddGrowableRow(1)
-        grid_sizer_base.AddGrowableCol(0)
-        self.SetSizer(grid_sizer_base)
-        self.grid_sizer_base = grid_sizer_base
+        self._mode = "candidat"
 
-            
+    def _installer_page_emploi(self):
+        self._vider_pages()
+        self.noteBook.AddPage(self.listCtrl_candidatures, _(u"Candidatures"))
+        self._mode = "emploi"
+
+    def _index_page(self, page):
+        for index in range(self.noteBook.GetPageCount()):
+            if self.noteBook.GetPage(index) is page:
+                return index
+        return -1
+
     def MAJ(self, IDcandidat=None, IDpersonne=None, IDemploi=None):
-        """ Met à jour le cadre résumé identité """
-        if IDemploi == None :
-            
-            if self.noteBook.GetPageCount() == 1 :
-                self.noteBook.RemovePage(0)
-                self.noteBook.AddPage(self.panel_identite, _(u"Identité du candidat"))
-                self.noteBook.SetPageImage(0, self.img1)
-                self.noteBook.AddPage(self.listCtrl_candidatures, _(u"Candidatures"))
-                self.noteBook.SetPageImage(1, self.img2)
-                self.noteBook.AddPage(self.listCtrl_entretiens, _(u"Entretiens"))
-                self.noteBook.SetPageImage(2, self.img3)
-            
-            # MAJ des pages du noteBook
+        if IDemploi is None:
+            if self._mode != "candidat" or self.noteBook.GetPageCount() != 3:
+                self._installer_pages_candidat()
+
             self.panel_identite.MAJidentite(IDcandidat=IDcandidat, IDpersonne=IDpersonne)
-            
+
             self.listCtrl_candidatures.IDcandidat = IDcandidat
             self.listCtrl_candidatures.IDpersonne = IDpersonne
+            self.listCtrl_candidatures.IDemploi = None
             self.listCtrl_candidatures.MAJ()
-            
+
             self.listCtrl_entretiens.IDcandidat = IDcandidat
             self.listCtrl_entretiens.IDpersonne = IDpersonne
             self.listCtrl_entretiens.MAJ()
-            
-            # MAJ des noms des pages du noteBook
-            self.noteBook.SetPageText(0, _(u"Identité du candidat"))
-            nbreCandidatures = self.listCtrl_candidatures.GetNbreItems()
-            if nbreCandidatures == 1 :
-                self.noteBook.SetPageText(1, _(u"1 candidature"))
-            else:
-                self.noteBook.SetPageText(1, _(u"%d candidatures") % nbreCandidatures)
-            nbreEntretiens = self.listCtrl_entretiens.GetNbreItems()
-            if nbreEntretiens == 1 :
-                self.noteBook.SetPageText(2, _(u"1 entretien"))
-            else:
-                self.noteBook.SetPageText(2, _(u"%d entretiens") % nbreEntretiens)
+
+            self.noteBook.SetPageText(0, _(u"Identité"))
+            self.MAJlabelsPages("candidatures")
+            self.MAJlabelsPages("entretiens")
             self.panel_identite.Enable(True)
             self.listCtrl_entretiens.Enable(True)
-##            self.noteBook.SetSelection(0)
-            
-        if IDemploi != None :
-            # Pour afficher les candidatures attachées aux offres d'emploi
-            if self.noteBook.GetPageCount() == 3 :
-                self.noteBook.RemovePage(2)
-                self.noteBook.RemovePage(1)
-                self.noteBook.RemovePage(0)
-                self.noteBook.AddPage(self.listCtrl_candidatures, _(u"Candidatures"))
-                self.noteBook.SetPageImage(0, self.img2)
+        else:
+            if self._mode != "emploi" or self.noteBook.GetPageCount() != 1:
+                self._installer_page_emploi()
             self.listCtrl_candidatures.IDcandidat = None
+            self.listCtrl_candidatures.IDpersonne = None
             self.listCtrl_candidatures.IDemploi = IDemploi
             self.listCtrl_candidatures.MAJ()
-            nbreCandidatures = self.listCtrl_candidatures.GetNbreItems()
-            if nbreCandidatures == 1 :
-                self.noteBook.SetPageText(0, _(u"1 candidature"))
-            else:
-                self.noteBook.SetPageText(0, _(u"%d candidatures") % nbreCandidatures)
-        
+            self.MAJlabelsPages("candidatures")
+
     def MAJlabelsPages(self, nomPage="candidatures"):
-        if nomPage=="candidatures" :
-            nbreCandidatures = self.listCtrl_candidatures.GetNbreItems()
-            if nbreCandidatures == 1 :
-                self.noteBook.SetPageText(1, _(u"1 candidature"))
-            else:
-                self.noteBook.SetPageText(1, _(u"%d candidatures") % nbreCandidatures)
-        if nomPage=="entretiens" :
-            nbreEntretiens = self.listCtrl_entretiens.GetNbreItems()
-            if nbreEntretiens == 1 :
-                self.noteBook.SetPageText(2, _(u"1 entretien"))
-            else:
-                self.noteBook.SetPageText(2, _(u"%d entretiens") % nbreEntretiens)
-# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+        if nomPage == "candidatures":
+            page = self.listCtrl_candidatures
+            nombre = page.GetNbreItems()
+            label = _(u"1 candidature") if nombre == 1 else _(u"%d candidatures") % nombre
+        elif nomPage == "entretiens":
+            page = self.listCtrl_entretiens
+            nombre = page.GetNbreItems()
+            label = _(u"1 entretien") if nombre == 1 else _(u"%d entretiens") % nombre
+        else:
+            return
+        index = self._index_page(page)
+        if index != -1:
+            self.noteBook.SetPageText(index, label)
 
 
+class BoutonMode(wx.ToggleButton):
+    def __init__(self, parent, label, mode):
+        wx.ToggleButton.__init__(self, parent, -1, label=label)
+        self.mode = mode
+        self.SetFont(UTILS_Styles.GetFont("label"))
+        self.SetMinSize((-1, UTILS_Styles.GetControlMetric("button_min_height")))
+        self.AppliquerTheme(False)
 
-class BarreAffichage(wx.Panel):
+    def AppliquerTheme(self, actif=False):
+        if actif:
+            fond = UTILS_Interface.GetToken("primary_container")
+            texte = UTILS_Interface.GetToken("on_primary_container")
+        else:
+            fond = UTILS_Interface.GetToken("surface_container_low")
+            texte = UTILS_Interface.GetToken("on_surface")
+        self.SetBackgroundColour(fond)
+        self.SetForegroundColour(texte)
+        self.SetValue(bool(actif))
+
+
+class ToolBar(wx.Panel):
+    """Navigation de modes flexible remplaçant la wx.ToolBar 22 px."""
+
+    MODES = (
+        ("candidats", _(u"Candidats")),
+        ("candidatures", _(u"Candidatures")),
+        ("entretiens", _(u"Entretiens")),
+        ("emplois", _(u"Offres d'emploi")),
+    )
+
     def __init__(self, parent):
-        wx.Panel.__init__(self, parent, -1, style = wx.NO_BORDER)
-        self.parent = parent
-##        self.SetBackgroundColour("white")
-        
-        self.barreTitre = FonctionsPerso.BarreTitre(self,  _(u"Options d'affichage"), _(u"Options d'affichage"))
-        
-        # Widgets        
-        self.txtRadio = wx.StaticText( self, -1, _(u"Afficher les :") )
-        self.radio1 = wx.RadioButton( self, -1, _(u"Candidats"), style = wx.RB_GROUP )
-        self.radio2 = wx.RadioButton( self, -1, _(u"Candidatures") )
-        self.radio3 = wx.RadioButton( self, -1, _(u"Entretiens"))
-        self.radio4 = wx.RadioButton( self, -1, _(u"Offres d'emploi") )
-        
-        self.boutonOutils = wx.StaticBitmap(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Outils.png"), wx.BITMAP_TYPE_PNG) )
-        self.txtOutils = wx.StaticText( self, -1, "Outils" )
-        self.boutonOutils.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour afficher le menu des outils du planning")))
-        self.txtOutils.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour afficher le menu des outils du planning")))
-        
-        self.boutonAide = wx.StaticBitmap(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Aide.png"), wx.BITMAP_TYPE_PNG) )
-        self.txtAide = wx.StaticText( self, -1, "Aide " )
-        self.boutonAide.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour afficher l'aide")))
-        self.txtAide.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour afficher l'aide")))
+        wx.Panel.__init__(self, parent, -1, name="barre_modes_recrutement")
+        _surface(self, "surface_container_low")
+        self.boutons = {}
 
-        # Bind
-        self.Bind(wx.EVT_RADIOBUTTON, self.OnRadio1, self.radio1 )
-        self.Bind(wx.EVT_RADIOBUTTON, self.OnRadio2, self.radio2 )
-        self.Bind(wx.EVT_RADIOBUTTON, self.OnRadio3, self.radio3 )
-        self.Bind(wx.EVT_RADIOBUTTON, self.OnRadio4, self.radio4 )
-        
-        self.boutonOutils.Bind(wx.EVT_MOTION, self.OnMotion_Outils)
-        self.boutonOutils.Bind(wx.EVT_LEAVE_WINDOW, self.OnLeaveWindow_Outils)
-        self.boutonOutils.Bind(wx.EVT_LEFT_DOWN, self.Menu_Outils)
-        self.txtOutils.Bind(wx.EVT_MOTION, self.OnMotion_Outils)
-        self.txtOutils.Bind(wx.EVT_LEAVE_WINDOW, self.OnLeaveWindow_Outils)
-        self.txtOutils.Bind(wx.EVT_LEFT_DOWN, self.Menu_Outils)
-        
-        self.boutonAide.Bind(wx.EVT_MOTION, self.OnMotion_Aide)
-        self.boutonAide.Bind(wx.EVT_LEAVE_WINDOW, self.OnLeaveWindow_Aide)
-        self.boutonAide.Bind(wx.EVT_LEFT_DOWN, self.Com_Aide)
-        self.txtAide.Bind(wx.EVT_MOTION, self.OnMotion_Aide)
-        self.txtAide.Bind(wx.EVT_LEAVE_WINDOW, self.OnLeaveWindow_Aide)
-        self.txtAide.Bind(wx.EVT_LEFT_DOWN, self.Com_Aide)
-        
-        # Layout
-        grid_sizer_base = wx.FlexGridSizer(rows=2, cols=1, vgap=0, hgap=0)
-        grid_sizer_base.Add(self.barreTitre, 0, wx.ALL|wx.EXPAND, 0)
-        sizer = wx.FlexGridSizer(rows=1, cols=12)
-        sizer.Add( self.txtRadio, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 3 )
-        sizer.Add( self.radio1, 0, wx.ALL, 3 )
-        sizer.Add( self.radio2, 0, wx.ALL, 3 )
-        sizer.Add( self.radio3, 0, wx.ALL, 3 )
-        sizer.Add( self.radio4, 0, wx.ALL, 3 )
-        sizer.Add( (10, 10), 0, wx.ALL, 3 )
-##        sizer.Add( self.boutonImprimer, 0, wx.ALL, 2 )
-##        sizer.Add( self.txtImprimer, 0, wx.ALL, 3 )
-##        sizer.Add( (3, 10), 0, wx.ALL, 3 )
-        sizer.Add( self.boutonOutils, 0, wx.ALL, 2 )
-        sizer.Add( self.txtOutils, 0, wx.ALL, 3 )
-        sizer.Add( (3, 10), 0, wx.ALL, 3 )
-        sizer.Add( self.boutonAide, 0, wx.ALL, 2 )
-        sizer.Add( self.txtAide, 0, wx.ALL, 3 )
-        sizer.AddGrowableCol(5)
-        grid_sizer_base.Add(sizer, 0, wx.ALL|wx.EXPAND, 10)
-        grid_sizer_base.AddGrowableRow(1)
-        grid_sizer_base.AddGrowableCol(0)
-        self.SetSizer(grid_sizer_base)
-        
-        
-    
-    def OnRadio1(self, event):
+        gap = UTILS_Styles.GetLayoutSpacing("control_gap")
+        sizer = wx.WrapSizer(wx.HORIZONTAL)
+        for mode, label in self.MODES:
+            bouton = BoutonMode(self, label, mode)
+            bouton.Bind(wx.EVT_TOGGLEBUTTON, self.ModeAffichage)
+            self.boutons[mode] = bouton
+            sizer.Add(bouton, 0, wx.RIGHT | wx.BOTTOM, gap)
+        self.SetSizer(sizer)
+        self.SetMode(MODE_AFFICHAGE, notifier=False)
+
+    def SetMode(self, mode, notifier=True):
         global MODE_AFFICHAGE
-        MODE_AFFICHAGE = "candidats"
-        self.GetGrandParent().GetParent().AfficheListes()
+        if mode not in self.boutons:
+            return
+        MODE_AFFICHAGE = mode
+        CORE.MODE_AFFICHAGE = mode
+        for code, bouton in self.boutons.items():
+            bouton.AppliquerTheme(code == mode)
+        if notifier:
+            racine = _racine_recrutement(self)
+            if racine is not None:
+                racine.AfficheListes()
+                racine.AffichePanelResume(False)
 
-    def OnRadio2(self, event):
-        global MODE_AFFICHAGE
-        MODE_AFFICHAGE = "candidatures"
-        self.GetGrandParent().GetParent().AfficheListes()
-
-    def OnRadio3(self, event):
-        global MODE_AFFICHAGE
-        MODE_AFFICHAGE = "candidats"
-        self.GetGrandParent().GetParent().AfficheListes()
-
-    def OnRadio4(self, event):
-        global MODE_AFFICHAGE
-        MODE_AFFICHAGE = "candidatures"
-        self.GetGrandParent().GetParent().AfficheListes()
-        
-    def OnMotion_Outils(self, event):
-        self.boutonOutils.SetBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Outils_2.png"), wx.BITMAP_TYPE_PNG))
-        self.txtOutils.SetForegroundColour(wx.RED)
-        self.txtOutils.Refresh()
-        event.Skip()
-
-    def OnLeaveWindow_Outils(self, event):
-        self.boutonOutils.SetBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Outils.png"), wx.BITMAP_TYPE_PNG))
-        self.txtOutils.SetForegroundColour(wx.BLACK)
-        self.txtOutils.Refresh()
-        event.Skip()
-
-    def OnMotion_Aide(self, event):
-        self.boutonAide.SetBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Aide_2.png"), wx.BITMAP_TYPE_PNG))
-        self.txtAide.SetForegroundColour(wx.RED)
-        self.txtAide.Refresh()
-        event.Skip()
-
-    def OnLeaveWindow_Aide(self, event):
-        self.boutonAide.SetBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Aide.png"), wx.BITMAP_TYPE_PNG))
-        self.txtAide.SetForegroundColour(wx.BLACK)
-        self.txtAide.Refresh()
-        event.Skip()
-    
-    def Com_Aide(self, event):
-        from Utils import UTILS_Aide
-        UTILS_Aide.Aide("Leplanning")
-
-    def Menu_Outils(self, event):
-        """Ouverture du menu contextuel des options d'affichage du planning """
-        
-        # Création du menu contextuel
-        menu = UTILS_Adaptations.Menu()
-        
-        # Commande Imprimer
-        IDitem = 10
-        item = wx.MenuItem(menu, IDitem, _(u"Imprimer"), _(u"Imprimer le planning affiché"))
-        item.SetBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Imprimante.png"), wx.BITMAP_TYPE_PNG))
-        menu.AppendItem(item)
-        self.Bind(wx.EVT_MENU, self.Menu_10, id=IDitem)
-        
-        menu.AppendSeparator()
-        
-        # Commande Stats simples
-        IDitem = 20
-        item = wx.MenuItem(menu, IDitem, _(u"Statistiques"), _(u"Afficher les statistiques des présences"))
-        item.SetBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Stats.png"), wx.BITMAP_TYPE_PNG))
-        menu.AppendItem(item)
-        self.Bind(wx.EVT_MENU, self.Menu_20, id=IDitem)
-        
-        # Commande Scénarios
-        IDitem = 30
-        item = wx.MenuItem(menu, IDitem, _(u"Gestion des scénarios"), _(u"Gestion des scénarios"))
-        item.SetBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Scenario.png"), wx.BITMAP_TYPE_PNG))
-        menu.AppendItem(item)
-        self.Bind(wx.EVT_MENU, self.Menu_30, id=IDitem)
-        
-        menu.AppendSeparator()
-        
-        # Sous-menu Options d'affichage
-        smOptions = UTILS_Adaptations.Menu()
-
-        # Affichage des légendes
-        IDitem = 210
-        smOptions.Append(IDitem, _(u"Afficher les légendes"), _(u"Affiche ou non les légendes des présences"), wx.ITEM_CHECK)
-        if hauteurBarre == 26 :
-            smOptions.Check(IDitem, True)
-        self.Bind(wx.EVT_MENU, self.Menu_210, id=IDitem)
-        
-        # Affichage des périodes de contrats
-        IDitem = 220
-        smOptions.Append(IDitem, _(u"Afficher les périodes de contrats"), _(u"Affiche ou non les périodes des contrats des personnes sélectionnées"), wx.ITEM_CHECK)
-        if afficher_contrats == True :
-            smOptions.Check(IDitem, True)
-        self.Bind(wx.EVT_MENU, self.Menu_220, id=IDitem)
-        
-        menu.AppendSubMenu(smOptions, _(u"Options d'affichage"))
-        
-        self.PopupMenu(menu)
-        menu.Destroy()
-
-    def Menu_10(self, event):
-        """ Imprimer le planning """
-        self.GetParent().DCplanning.Impression()
-
-    def Menu_20(self, event):
-        """ Afficher les stats """
-        topWindow = wx.GetApp().GetTopWindow() 
-        try : topWindow.SetStatusText(_(u"Chargement du module des statistiques en cours. Veuillez patientez..."))
-        except : pass
-        panelPresences = self.GetGrandParent().GetParent()
-        # Récupération des dates du calendrier
-        listeDatesCalendrier = panelPresences.panelCalendrier.GetSelectionDates()
-        listeDates = []
-        for dateDD in listeDatesCalendrier :
-            listeDates.append(str(dateDD))
-        # Récupération des personnes de la liste de personnes
-        listePersonnes = panelPresences.panelPersonnes.listCtrlPersonnes.GetListePersonnes()
-        from Dlg import DLG_Statistiques
-        dlg = DLG_Statistiques.Dialog(self, listeDates=listeDates, listePersonnes=listePersonnes)
-        dlg.ShowModal()
-        dlg.Destroy()
-        topWindow = wx.GetApp().GetTopWindow() 
-        try : topWindow.SetStatusText(u"")
-        except : pass
-
-    def Menu_30(self, event):
-        """ Gestion des scénarios """
-        from Dlg import DLG_Scenario_gestion
-        dlg = DLG_Scenario_gestion.Dialog(self)
-        dlg.ShowModal()
-        dlg.Destroy()
-
-    def Menu_210(self, event):
-        """ Afficher légendes """
-        global hauteurBarre, modeTexte
-        if hauteurBarre == 26 :
-            hauteurBarre = 15
-            modeTexte = 1
-            etat = False
-        else:
-            hauteurBarre = 26
-            modeTexte = 2
-            etat = True
-        # MAJ du planning
-        self.GetGrandParent().GetParent().MAJpanelPlanning()
-        # Mémorisation du paramètre
-        FonctionsPerso.Parametres(mode="set", categorie="planning", nom="afficher_legendes", valeur=etat)
-
-    def Menu_220(self, event):
-        """ Afficher contrats """
-        global afficher_contrats
-        if afficher_contrats == True :
-            afficher_contrats = False
-        else:
-            afficher_contrats = True
-        # MAJ du planning
-        self.GetGrandParent().GetParent().MAJpanelPlanning()
-        # Mémorisation du paramètre
-        FonctionsPerso.Parametres(mode="set", categorie="planning", nom="afficher_contrats", valeur=afficher_contrats)
-
-
-
-
-
-# --------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-
-
-class ToolBar(UTILS_Adaptations.ToolBar):
-    def __init__(self, *args, **kwds):
-        kwds["style"] = wx.TB_FLAT|wx.TB_TEXT
-        UTILS_Adaptations.ToolBar.__init__(self, *args, **kwds)
-        self.SetToolBitmapSize((22, 22))
-        self.AddLabelTool(10, _(u"Candidats"), wx.Bitmap(Chemins.GetStaticPath("Images/22x22/Candidats.png"), wx.BITMAP_TYPE_ANY), wx.NullBitmap, wx.ITEM_RADIO, _(u"Afficher la liste des candidats"), "")
-        self.AddLabelTool(20, _(u"Candidatures"), wx.Bitmap(Chemins.GetStaticPath("Images/22x22/Candidatures.png"), wx.BITMAP_TYPE_ANY), wx.NullBitmap, wx.ITEM_RADIO, _(u"Afficher la liste des candidatures"), "")
-        self.AddLabelTool(30, _(u"Entretiens"), wx.Bitmap(Chemins.GetStaticPath("Images/22x22/Entretiens.png"), wx.BITMAP_TYPE_ANY), wx.NullBitmap, wx.ITEM_RADIO, _(u"Afficher la liste des entretiens"), "")
-        self.AddLabelTool(40, _(u"Offres d'emploi"), wx.Bitmap(Chemins.GetStaticPath("Images/22x22/Apercu.png"), wx.BITMAP_TYPE_ANY), wx.NullBitmap, wx.ITEM_RADIO, _(u"Afficher les offres d'emploi et les candidatures associées"), "")
-        self.AddSeparator()
-        self.AddLabelTool(50, _(u"Rechercher"), wx.Bitmap(Chemins.GetStaticPath("Images/22x22/Loupe.png"), wx.BITMAP_TYPE_ANY), wx.NullBitmap, wx.ITEM_NORMAL, _(u"Filtrer la liste"), "")
-        self.AddSeparator()
-        self.AddLabelTool(70, _(u"Aide"), wx.Bitmap(Chemins.GetStaticPath("Images/22x22/button_help.png"), wx.BITMAP_TYPE_ANY), wx.NullBitmap, wx.ITEM_NORMAL, _(u"Aide"), "")
-        self.Realize()
-
-        self.Bind(wx.EVT_TOOL, self.ModeAffichage, id=10)
-        self.Bind(wx.EVT_TOOL, self.ModeAffichage, id=20)
-        self.Bind(wx.EVT_TOOL, self.ModeAffichage, id=30)
-        self.Bind(wx.EVT_TOOL, self.ModeAffichage, id=40)
-        self.Bind(wx.EVT_TOOL, self.Rechercher, id=50)
-        self.Bind(wx.EVT_TOOL, self.Aide, id=70)
-        
     def ModeAffichage(self, event):
-        global MODE_AFFICHAGE
-        if event.GetId() == 10 : MODE_AFFICHAGE = "candidats"
-        if event.GetId() == 20 : MODE_AFFICHAGE = "candidatures"
-        if event.GetId() == 30 : MODE_AFFICHAGE = "entretiens"
-        if event.GetId() == 40 : MODE_AFFICHAGE = "emplois"
-        self.GetGrandParent().GetParent().AfficheListes()
-        self.GetGrandParent().GetParent().AffichePanelResume(False)
+        self.SetMode(event.GetEventObject().mode)
 
     def Rechercher(self, event):
-        self.GetGrandParent().GetParent().OnBoutonRechercher(None)
-    
+        racine = _racine_recrutement(self)
+        if racine is not None:
+            racine.OnBoutonRechercher(None)
+
     def Aide(self, event):
-        self.GetGrandParent().GetParent().OnBoutonAide(None)
-        
-        
+        racine = _racine_recrutement(self)
+        if racine is not None:
+            racine.OnBoutonAide(None)
 
-class Panel(wx.Panel):
-    def __init__(self, parent):
-        wx.Panel.__init__(self, parent, -1, name="Recrutement")
-        self.parent = parent
-        self.init = False 
-
-    def InitPage(self):               
-        self.splitter = wx.SplitterWindow(self, -1, style=wx.SP_3D | wx.SP_NO_XP_THEME | wx.SP_LIVE_UPDATE)
-        self.window_D = wx.Panel(self.splitter, -1)
-        
-        # Panel Etat des dossiers
-        self.window_G = MultiSplitterWindow(self.splitter, -1, style= wx.SP_NOSASH | wx.SP_LIVE_UPDATE)
-        self.window_G.SetOrientation(wx.VERTICAL)
-        self.window_G.SetMinimumPaneSize(100)
-        self.gadget_entretiens = GadgetEntretiens(self.window_G)
-        self.gadget_informations = GadgetInformations(self.window_G)
-##        self.gadget_avertissement = GadgetAvertissement(self.window_G)
-        self.window_G.AppendWindow(self.gadget_entretiens, 180) # Ici c'est la hauteur du panel pb de dossiers
-        self.window_G.AppendWindow(self.gadget_informations, 300) # Ici c'est la hauteur du panel pb de dossiers
-##        self.window_G.AppendWindow(self.gadget_avertissement, 100) # Ici c'est la hauteur du panel pb de dossiers
-        
-        # Panel vide
-        self.panel_vide = wx.Panel(self.window_G, -1)
-        self.panel_vide.SetBackgroundColour((122, 161, 230))
-        self.window_G.AppendWindow(self.panel_vide, 200)
-        
-        # Barre ToolBar
-        self.barreOutils = ToolBar(self.window_D)
-        
-##        self.panel_affichage = BarreAffichage(self.window_D)
-        self.panel_resume = PanelResume(self.window_D)
-        self.label_selection = wx.StaticText(self.window_D, -1, u"", size=((-1, 25)))
-        self.label_selection.SetForegroundColour((122, 161, 230))
-        self.label_selection.Show(False)
-        self.listCtrl_candidats = OL_candidats.ListView(self.window_D, id=-1,  name="OL_candidats", style=wx.LC_REPORT|wx.SUNKEN_BORDER|wx.LC_SINGLE_SEL|wx.LC_HRULES|wx.LC_VRULES)
-        self.listCtrl_candidatures = OL_candidatures.ListView(self.window_D, id=-1,  name="OL_candidatures", modeAffichage = "avec_nom", style=wx.LC_REPORT|wx.SUNKEN_BORDER|wx.LC_SINGLE_SEL|wx.LC_HRULES|wx.LC_VRULES)       
-        self.listCtrl_entretiens = OL_entretiens.ListView(self.window_D, id=-1,  name="OL_entretiens", modeAffichage="avec_nom", style=wx.LC_REPORT|wx.SUNKEN_BORDER|wx.LC_SINGLE_SEL|wx.LC_HRULES|wx.LC_VRULES)
-        self.listCtrl_emplois = OL_emplois.ListView(self.window_D, id=-1,  name="OL_emplois", style=wx.LC_REPORT|wx.SUNKEN_BORDER|wx.LC_SINGLE_SEL|wx.LC_HRULES|wx.LC_VRULES)
-        self.barreRecherche = BarreRecherche(self.window_D)
-        
-        self.listCtrl_candidats.SetMinSize((20, 20))
-        self.listCtrl_candidatures.SetMinSize((20, 20))
-        self.listCtrl_entretiens.SetMinSize((20, 20))
-        self.listCtrl_emplois.SetMinSize((20, 20))
-        
-        self.bouton_ajouter = wx.BitmapButton(self.window_D, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_modifier = wx.BitmapButton(self.window_D, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Modifier.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_supprimer = wx.BitmapButton(self.window_D, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_rechercher = wx.BitmapButton(self.window_D, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Loupe.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_affichertout = wx.BitmapButton(self.window_D, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Actualiser.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_options = wx.BitmapButton(self.window_D, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Mecanisme.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_courrier = wx.BitmapButton(self.window_D, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Mail.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_imprimer = wx.BitmapButton(self.window_D, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Imprimante.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_export_texte = wx.BitmapButton(self.window_D, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Document.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_export_excel = wx.BitmapButton(self.window_D, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Excel.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_aide = wx.BitmapButton(self.window_D, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Aide.png"), wx.BITMAP_TYPE_ANY))
-        
-        self.barreTitre_liste = FonctionsPerso.BarreTitre(self.window_D,  _(u"Liste des candidats"), _(u"Liste des candidats"))
-        
-        # Diminution de la taille de la police sous linux
-        if "linux" in sys.platform :
-            self.bouton_export_excel.Enable(False)
-            
-        self.__set_properties()
-        self.__do_layout()
-        
-        # Binds
-        self.Bind(wx.EVT_BUTTON, self.OnBoutonAjouter, self.bouton_ajouter)
-        self.Bind(wx.EVT_BUTTON, self.OnBoutonModifier, self.bouton_modifier)
-        self.Bind(wx.EVT_BUTTON, self.OnBoutonSupprimer, self.bouton_supprimer)
-        self.Bind(wx.EVT_BUTTON, self.OnBoutonRechercher, self.bouton_rechercher)
-        self.Bind(wx.EVT_BUTTON, self.OnBoutonAfficherTout, self.bouton_affichertout)
-        self.Bind(wx.EVT_BUTTON, self.OnBoutonOptions, self.bouton_options)
-        self.Bind(wx.EVT_BUTTON, self.OnBoutonCourrier, self.bouton_courrier)
-        self.Bind(wx.EVT_BUTTON, self.OnBoutonImprimer, self.bouton_imprimer)
-        self.Bind(wx.EVT_BUTTON, self.OnBoutonExportTexte, self.bouton_export_texte)
-        self.Bind(wx.EVT_BUTTON, self.OnBoutonExportExcel, self.bouton_export_excel)
-        self.Bind(wx.EVT_BUTTON, self.OnBoutonAide, self.bouton_aide)
-        
-        self.bouton_modifier.Enable(False)
-        self.bouton_supprimer.Enable(False)
-        
-        self.AffichePanelResume(False)
-        
-        self.init = True
-        self.AfficheListes()
-        
-##        self.splitter.SetSashPosition(250, True)
-        
-    def __set_properties(self):
-        self.barreRecherche.SetToolTip(wx.ToolTip(_(u"Saisissez ici un nom, un prénom, un nom de ville, etc... pour retrouver un candidat dans la liste.")))
-        self.bouton_ajouter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour créer une nouvelle fiche individuelle")))
-        self.bouton_modifier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier la fiche sélectionnée dans la liste\n(Vous pouvez également double-cliquer sur une ligne)")))
-        self.bouton_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer la fiche sélectionnée dans la liste")))
-        self.bouton_affichertout.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour réafficher toute la liste")))
-        self.bouton_options.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour afficher les options de la liste")))
-        self.bouton_courrier.SetToolTip(wx.ToolTip(_(u"Cliquez ici créer un courrier ou un Email par publipostage")))
-        self.bouton_imprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour imprimer la liste")))
-        self.bouton_export_texte.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour exporter la liste au format texte")))
-        self.bouton_export_excel.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour exporter la liste au format Excel")))
-        self.bouton_aide.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour obtenir de l'aide")))
-
-
-    def __do_layout(self):
-        sizer_base = wx.BoxSizer(wx.VERTICAL)
-        sizer_D = wx.BoxSizer(wx.VERTICAL)
-        grid_sizer_D = wx.FlexGridSizer(rows=5, cols=1, vgap=0, hgap=0)
-        grid_sizer_liste = wx.FlexGridSizer(rows=1, cols=2, vgap=5, hgap=5)
-        grid_sizer_liste2 = wx.FlexGridSizer(rows=5, cols=1, vgap=0, hgap=0)
-        grid_sizer_boutons = wx.FlexGridSizer(rows=14, cols=1, vgap=5, hgap=5)
-        
-##        # Panel Gauche
-##        sizer_G = wx.BoxSizer(wx.VERTICAL)
-####        sizer_G.Add(self.barreTitre_problemes, 0, wx.EXPAND, 0)
-##        grid_sizer_G = wx.FlexGridSizer(rows=3, cols=1, vgap=10, hgap=10)
-##        grid_sizer_G.Add(self.tree_ctrl_problemes, 1, wx.EXPAND|wx.ALL, 40)
-##        grid_sizer_G.AddGrowableRow(0)
-##        grid_sizer_G.AddGrowableCol(0)
-##        sizer_G.Add(grid_sizer_G, 1, wx.ALL|wx.EXPAND, 0)
-##        self.window_G.SetSizer(sizer_G)
-        
-        # Panel Droite
-##        grid_sizer_D.Add(self.barreOutils, 1, wx.EXPAND, 0)
-        grid_sizer_D.Add(self.barreTitre_liste, 1, wx.EXPAND, 0)
-        grid_sizer_D.Add(self.barreOutils, 1, wx.EXPAND, 0)
-        grid_sizer_D.Add(self.label_selection, 1, wx.EXPAND|wx.ALL, 4)
-        
-        # Liste des personnes
-        grid_sizer_liste2.Add(self.listCtrl_candidats, 1, wx.EXPAND, 0)
-        grid_sizer_liste2.Add(self.listCtrl_candidatures, 1, wx.EXPAND, 0)
-        grid_sizer_liste2.Add(self.listCtrl_entretiens, 1, wx.EXPAND, 0)
-        grid_sizer_liste2.Add(self.listCtrl_emplois, 1, wx.EXPAND, 0)
-        grid_sizer_liste2.Add(self.barreRecherche, 0, wx.EXPAND, 0)
-        grid_sizer_liste2.AddGrowableRow(0)
-        grid_sizer_liste2.AddGrowableRow(1)
-        grid_sizer_liste2.AddGrowableRow(2)
-        grid_sizer_liste2.AddGrowableRow(3)
-        grid_sizer_liste2.AddGrowableCol(0)
-        grid_sizer_liste.Add(grid_sizer_liste2, 1, wx.EXPAND, 0)
-        grid_sizer_boutons.Add(self.bouton_ajouter, 0, 0, 0)
-        grid_sizer_boutons.Add(self.bouton_modifier, 0, 0, 0)
-        grid_sizer_boutons.Add(self.bouton_supprimer, 0, 0, 0)
-        grid_sizer_boutons.Add((20, 20), 0, wx.EXPAND, 0)
-        grid_sizer_boutons.Add(self.bouton_rechercher, 0, 0, 0)
-        grid_sizer_boutons.Add(self.bouton_affichertout, 0, 0, 0)
-        grid_sizer_boutons.Add(self.bouton_options, 0, 0, 0)
-        grid_sizer_boutons.Add((20, 20), 0, wx.EXPAND, 0)
-        grid_sizer_boutons.Add(self.bouton_courrier, 0, 0, 0)
-        grid_sizer_boutons.Add(self.bouton_imprimer, 0, 0, 0)
-        grid_sizer_boutons.Add(self.bouton_export_texte, 0, 0, 0)
-        grid_sizer_boutons.Add(self.bouton_export_excel, 0, 0, 0)
-        grid_sizer_boutons.Add((20, 20), 0, wx.EXPAND, 0)
-        grid_sizer_boutons.Add(self.bouton_aide, 0, 0, 0)
-        grid_sizer_boutons.AddGrowableRow(2)
-        grid_sizer_liste.Add(grid_sizer_boutons, 1, wx.EXPAND|wx.TOP|wx.BOTTOM|wx.RIGHT, 5)
-        grid_sizer_liste.AddGrowableRow(0)
-        grid_sizer_liste.AddGrowableCol(0)
-        grid_sizer_D.Add(grid_sizer_liste, 1, wx.EXPAND|wx.ALL, 0)
-        
-##        grid_sizer_D.Add(self.barreRecherche, 1, wx.EXPAND|wx.ALL, 0)
-        grid_sizer_D.Add(self.panel_resume, 1, wx.EXPAND, 0)
-        
-        # Barre des options
-##        grid_sizer_D.Add(self.panel_affichage, 1, wx.EXPAND, 0)
-        
-        grid_sizer_D.AddGrowableRow(3)
-        grid_sizer_D.AddGrowableCol(0)
-        
-        sizer_D.Add(grid_sizer_D, 1, wx.EXPAND, 0)
-        self.window_D.SetSizer(sizer_D)
-        self.splitter.SplitVertically(self.window_G, self.window_D, 240)
-        sizer_base.Add(self.splitter, 1, wx.EXPAND, 0)
-        self.SetSizer(sizer_base)
-        sizer_base.Fit(self)
-        self.Layout()
-        self.Centre()
-        
-        self.grid_sizer_D = grid_sizer_D
-
-    
-    def OnBoutonAjouter(self, event):
-        getattr(self, "listCtrl_%s" % MODE_AFFICHAGE).Ajouter()
-
-    def OnBoutonModifier(self, event):
-        getattr(self, "listCtrl_%s" % MODE_AFFICHAGE).Modifier()
-
-    def OnBoutonSupprimer(self, event):
-        getattr(self, "listCtrl_%s" % MODE_AFFICHAGE).Supprimer()
-
-    def OnBoutonRechercher(self, event):
-        getattr(self, "listCtrl_%s" % MODE_AFFICHAGE).Rechercher()
-
-    def OnBoutonAfficherTout(self, event):
-        getattr(self, "listCtrl_%s" % MODE_AFFICHAGE).AfficherTout()
-        self.AfficheLabelSelection(etat=False)
-        
-    def OnBoutonOptions(self, event):
-        getattr(self, "listCtrl_%s" % MODE_AFFICHAGE).Options()
-
-    def OnBoutonAide(self, event):
-        from Utils import UTILS_Aide
-        UTILS_Aide.Aide("")
-        
-    def AffichePanelResume(self, etat=True):
-        """ Affiche ou fait disparaître le panel Résumé """
-        if etat == True and self.panel_resume.IsShown() == True: 
-            return
-        self.panel_resume.Show(etat)
-        self.grid_sizer_D.Layout()
-        self.Refresh()
-    
-    def AfficheLabelSelection(self, etat=True):
-        """ Affiche ou fait disparaître le label Sélection en cours de la liste en cours """
-        if etat==True and self.label_selection.IsShown()==True: 
-            return
-        self.label_selection.Show(etat)
-        self.grid_sizer_D.Layout()
-        self.Refresh()
-    
-    def AfficheListes(self):
-        # Candidats
-        if MODE_AFFICHAGE == "candidats" :
-            self.listCtrl_candidats.Show(True)
-            self.barreRecherche.Show(True)
-            self.barreTitre_liste.barreTitre.SetLabel(_(u"Liste des candidats"))
-            self.bouton_courrier.Show(True)
-            self.bouton_ajouter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour créer un nouveau candidat")))
-            self.bouton_modifier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier le candidat sélectionné dans la liste\n(Vous pouvez également double-cliquer sur une ligne)")))
-            self.bouton_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer le candidat sélectionné dans la liste")))
-        else:
-            self.listCtrl_candidats.Show(False)
-            self.barreRecherche.Show(False)
-        # Candidatures
-        if MODE_AFFICHAGE == "candidatures" :
-            self.listCtrl_candidatures.Show(True)
-            self.barreTitre_liste.barreTitre.SetLabel(_(u"Liste des candidatures"))
-            self.bouton_courrier.Show(True)
-            self.bouton_ajouter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour créer une nouvelle candidature")))
-            self.bouton_modifier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier la candidature sélectionnée dans la liste\n(Vous pouvez également double-cliquer sur une ligne)")))
-            self.bouton_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer la candidature sélectionnée dans la liste")))
-        else:
-            self.listCtrl_candidatures.Show(False)
-        # Entretiens
-        if MODE_AFFICHAGE == "entretiens" :
-            self.listCtrl_entretiens.Show(True)
-            self.barreTitre_liste.barreTitre.SetLabel(_(u"Liste des entretiens"))
-            self.bouton_courrier.Show(False)
-            self.bouton_ajouter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour créer un nouvel entretien")))
-            self.bouton_modifier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier l'entretien sélectionné dans la liste\n(Vous pouvez également double-cliquer sur une ligne)")))
-            self.bouton_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer l'entretien sélectionné dans la liste")))
-        else:
-            self.listCtrl_entretiens.Show(False)
-        # Offres d'emploi
-        if MODE_AFFICHAGE == "emplois" :
-            self.listCtrl_emplois.Show(True)
-            self.barreTitre_liste.barreTitre.SetLabel(_(u"Liste des offres d'emploi"))
-            self.bouton_courrier.Show(False)
-            self.bouton_ajouter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour créer une nouvelle offre d'emploi")))
-            self.bouton_modifier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier l'offre d'emploi sélectionnée dans la liste\n(Vous pouvez également double-cliquer sur une ligne)")))
-            self.bouton_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer l'offre d'emploi sélectionnée dans la liste")))
-        else:
-            self.listCtrl_emplois.Show(False)
-        # Refresh
-        self.grid_sizer_D.Layout()
-        self.Refresh()
-        # Refresh ListView
-        getattr(self, "listCtrl_%s" % MODE_AFFICHAGE).MAJ()
-
-    def MAJpanel(self, listeElements=[], MAJpanelResume=True) :
-        """ Met à jour les éléments du panel personnes """
-        # Elements possibles : [] pour tout, listCtrl_personnes
-        if self.init == False :
-            self.InitPage()
-        
-        if self.listCtrl_candidats.IsShown() : self.listCtrl_candidats.MAJ()
-        if self.listCtrl_candidatures.IsShown() : self.listCtrl_candidatures.MAJ()
-        if self.listCtrl_entretiens.IsShown() : self.listCtrl_entretiens.MAJ()
-        if self.listCtrl_emplois.IsShown() : self.listCtrl_emplois.MAJ()
-        self.gadget_entretiens.MAJ()
-        self.gadget_informations.MAJ()
-        
-        if MAJpanelResume == True :
-            self.AffichePanelResume(False)
-    
-    def MAJapresVerrouillage(self, OL_gadget=False, OL_principal=False, OL_resume=False):
-        """ Met les OL entretiens à jour après verrouillage ou deverrouillage """
-        if OL_gadget == True :
-            self.gadget_entretiens.MAJ()
-        if OL_principal == True :
-            if self.listCtrl_entretiens.IsShown() : 
-                self.listCtrl_entretiens.MAJ()
-        if OL_resume == True :
-            if self.panel_resume.noteBook.GetPageCount() > 1 :
-                if self.panel_resume.listCtrl_entretiens.IsShown() :
-                    self.panel_resume.listCtrl_entretiens.MAJ()
-    
-    def OnBoutonCourrier(self, event):
-        getattr(self, "listCtrl_%s" % MODE_AFFICHAGE).CourrierPublipostage(mode='multiple')
-
-    def OnBoutonImprimer(self, event):
-        getattr(self, "listCtrl_%s" % MODE_AFFICHAGE).Imprimer()
-        
-    def OnBoutonExportTexte(self, event):
-        getattr(self, "listCtrl_%s" % MODE_AFFICHAGE).ExportTexte()
-        
-    def OnBoutonExportExcel(self, event):
-        getattr(self, "listCtrl_%s" % MODE_AFFICHAGE).ExportExcel()
-
-
-# ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 class BarreRecherche(wx.SearchCtrl):
-    def __init__(self, parent):
-        wx.SearchCtrl.__init__(self, parent, size=(-1,-1), style=wx.TE_PROCESS_ENTER)
-        self.parent = parent
-
-        self.SetDescriptiveText(_(u"Rechercher un individu"))
+    def __init__(self, parent, owner):
+        wx.SearchCtrl.__init__(self, parent, size=(-1, -1), style=wx.TE_PROCESS_ENTER)
+        self.owner = owner
+        self.SetDescriptiveText(_(u"Rechercher un candidat"))
         self.ShowSearchButton(True)
-        
-        self.listView = self.GetParent().GetGrandParent().listCtrl_candidats
+        self.ShowCancelButton(False)
+        self.SetMinSize((-1, UTILS_Styles.GetControlMetric("input_min_height")))
+
+        self.listView = owner.listCtrl_candidats
         nbreColonnes = self.listView.GetColumnCount()
-        self.listView.SetFilter(Filter.TextSearch(self.listView, self.listView.columns[0:nbreColonnes]))
-        
-        self.SetCancelBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Interdit.png"), wx.BITMAP_TYPE_PNG))
-        self.SetSearchBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Loupe.png"), wx.BITMAP_TYPE_PNG))
-        
+        self.listView.SetFilter(
+            Filter.TextSearch(self.listView, self.listView.columns[0:nbreColonnes])
+        )
+
         self.Bind(wx.EVT_SEARCHCTRL_SEARCH_BTN, self.OnSearch)
         self.Bind(wx.EVT_SEARCHCTRL_CANCEL_BTN, self.OnCancel)
         self.Bind(wx.EVT_TEXT_ENTER, self.OnDoSearch)
         self.Bind(wx.EVT_TEXT, self.OnDoSearch)
 
-    def OnSearch(self, evt):
-        self.Recherche(self.GetValue())
-            
-    def OnCancel(self, evt):
-        self.SetValue("")
+    def OnSearch(self, event):
         self.Recherche(self.GetValue())
 
-    def OnDoSearch(self, evt):
+    def OnCancel(self, event):
+        self.SetValue("")
+        self.Recherche("")
+
+    def OnDoSearch(self, event):
         self.Recherche(self.GetValue())
-        
+
     def Recherche(self, txtSearch):
-        self.ShowCancelButton(len(txtSearch))
+        self.ShowCancelButton(bool(txtSearch))
         self.listView.GetFilter().SetText(txtSearch)
         self.listView.RepopulateList()
-        
-# -----------------------------------------------------------------------------------------------------------------------------------------------------
-        
+
+
+BarreAffichage = CORE.BarreAffichage
+
+
+class Panel(wx.Panel):
+    def __init__(self, parent):
+        wx.Panel.__init__(self, parent, -1, name="Recrutement", style=wx.TAB_TRAVERSAL)
+        self.parent = parent
+        self.init = False
+        _surface(self, "surface")
+
+    def InitPage(self):
+        if self.init:
+            return
+
+        self.splitter = wx.SplitterWindow(
+            self,
+            -1,
+            style=wx.SP_LIVE_UPDATE | wx.SP_3D,
+            name="splitter_recrutement",
+        )
+        self.splitter.SetSashGravity(0.22)
+        self.splitter.SetMinimumPaneSize(UTILS_Styles.Scale(230))
+
+        self.window_G = wx.Panel(self.splitter, -1, name="recrutement_colonne_suivi")
+        self.window_D = wx.Panel(self.splitter, -1, name="recrutement_contenu")
+        _surface(self.window_G, "surface_container_low")
+        _surface(self.window_D, "surface")
+
+        self.section_entretiens = CTRL_Section.Section(
+            self.window_G,
+            titre=_(u"Prochains entretiens"),
+            niveau=3,
+            surface="surface_container_lowest",
+        )
+        self.gadget_entretiens = GadgetEntretiens(
+            self.section_entretiens.GetContentPanel()
+        )
+        sizer_entretiens = wx.BoxSizer(wx.VERTICAL)
+        sizer_entretiens.Add(self.gadget_entretiens, 1, wx.EXPAND)
+        self.section_entretiens.GetContentPanel().SetSizer(sizer_entretiens)
+
+        self.section_informations = CTRL_Section.Section(
+            self.window_G,
+            titre=_(u"À traiter"),
+            niveau=3,
+            description=_(u"Entretiens sans avis et candidatures en attente de réponse."),
+            surface="surface_container_lowest",
+        )
+        self.gadget_informations = GadgetInformations(
+            self.section_informations.GetContentPanel()
+        )
+        sizer_infos = wx.BoxSizer(wx.VERTICAL)
+        sizer_infos.Add(self.gadget_informations, 1, wx.EXPAND)
+        self.section_informations.GetContentPanel().SetSizer(sizer_infos)
+
+        gap = UTILS_Styles.GetLayoutSpacing("section_gap")
+        padding = UTILS_Styles.GetLayoutSpacing("content_padding")
+        sizer_gauche = wx.BoxSizer(wx.VERTICAL)
+        sizer_gauche.Add(self.section_entretiens, 1, wx.EXPAND | wx.ALL, padding)
+        sizer_gauche.AddSpacer(gap)
+        sizer_gauche.Add(
+            self.section_informations,
+            2,
+            wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM,
+            padding,
+        )
+        self.window_G.SetSizer(sizer_gauche)
+
+        self.titre_liste = CTRL_Texte.H2(self.window_D, _(u"Candidats"))
+        self.barreOutils = ToolBar(self.window_D)
+
+        self.label_selection = CTRL_Texte.BodySecondary(self.window_D, u"")
+        self.label_selection.Show(False)
+
+        style_liste = wx.LC_REPORT | wx.LC_SINGLE_SEL | wx.LC_HRULES
+        self.listCtrl_candidats = OL_candidats.ListView(
+            self.window_D, id=-1, name="OL_candidats", style=style_liste
+        )
+        self.listCtrl_candidatures = OL_candidatures.ListView(
+            self.window_D,
+            id=-1,
+            name="OL_candidatures",
+            modeAffichage="avec_nom",
+            style=style_liste,
+        )
+        self.listCtrl_entretiens = OL_entretiens.ListView(
+            self.window_D,
+            id=-1,
+            name="OL_entretiens",
+            modeAffichage="avec_nom",
+            style=style_liste,
+        )
+        self.listCtrl_emplois = OL_emplois.ListView(
+            self.window_D, id=-1, name="OL_emplois", style=style_liste
+        )
+        self.barreRecherche = BarreRecherche(self.window_D, self)
+
+        self.panel_resume = PanelResume(self.window_D)
+
+        self.bouton_ajouter = CTRL_Bouton_image.CTRL(self.window_D, texte=_(u"Ajouter"))
+        self.bouton_modifier = CTRL_Bouton_image.CTRL(self.window_D, texte=_(u"Modifier"))
+        self.bouton_supprimer = CTRL_Bouton_image.CTRL(self.window_D, texte=_(u"Supprimer"))
+        self.bouton_rechercher = CTRL_Bouton_image.CTRL(self.window_D, texte=_(u"Filtres"))
+        self.bouton_affichertout = CTRL_Bouton_image.CTRL(self.window_D, texte=_(u"Tout afficher"))
+        self.bouton_options = CTRL_Bouton_image.CTRL(self.window_D, texte=_(u"Colonnes"))
+        self.bouton_courrier = CTRL_Bouton_image.CTRL(self.window_D, texte=_(u"Courrier"))
+        self.bouton_imprimer = CTRL_Bouton_image.CTRL(self.window_D, texte=_(u"Imprimer"))
+        self.bouton_export_texte = CTRL_Bouton_image.CTRL(self.window_D, texte=_(u"Export texte"))
+        self.bouton_export_excel = CTRL_Bouton_image.CTRL(self.window_D, texte=_(u"Export Excel"))
+        self.bouton_aide = CTRL_Bouton_image.CTRL(self.window_D, texte=_(u"Aide"))
+
+        self._installer_actions()
+        self._installer_layout()
+
+        if "linux" in sys.platform:
+            self.bouton_export_excel.Enable(False)
+
+        self.bouton_modifier.Enable(False)
+        self.bouton_supprimer.Enable(False)
+        self.AffichePanelResume(False)
+
+        self.splitter.SplitVertically(
+            self.window_G,
+            self.window_D,
+            UTILS_Styles.Scale(330),
+        )
+
+        sizer_base = wx.BoxSizer(wx.VERTICAL)
+        sizer_base.Add(self.splitter, 1, wx.EXPAND)
+        self.SetSizer(sizer_base)
+
+        self.init = True
+        self.AfficheListes()
+
+    def _installer_actions(self):
+        bindings = (
+            (self.bouton_ajouter, self.OnBoutonAjouter),
+            (self.bouton_modifier, self.OnBoutonModifier),
+            (self.bouton_supprimer, self.OnBoutonSupprimer),
+            (self.bouton_rechercher, self.OnBoutonRechercher),
+            (self.bouton_affichertout, self.OnBoutonAfficherTout),
+            (self.bouton_options, self.OnBoutonOptions),
+            (self.bouton_courrier, self.OnBoutonCourrier),
+            (self.bouton_imprimer, self.OnBoutonImprimer),
+            (self.bouton_export_texte, self.OnBoutonExportTexte),
+            (self.bouton_export_excel, self.OnBoutonExportExcel),
+            (self.bouton_aide, self.OnBoutonAide),
+        )
+        for bouton, handler in bindings:
+            bouton.Bind(wx.EVT_BUTTON, handler)
+
+        self.barreRecherche.SetToolTip(
+            wx.ToolTip(
+                _(u"Saisissez un nom, un prénom, une ville ou un autre élément "
+                  u"de la fiche candidat.")
+            )
+        )
+
+    def _installer_layout(self):
+        gap = UTILS_Styles.GetLayoutSpacing("control_gap")
+        padding = UTILS_Styles.GetLayoutSpacing("content_padding")
+
+        actions = wx.WrapSizer(wx.HORIZONTAL)
+        for bouton in (
+            self.bouton_ajouter,
+            self.bouton_modifier,
+            self.bouton_supprimer,
+            self.bouton_rechercher,
+            self.bouton_affichertout,
+            self.bouton_options,
+            self.bouton_courrier,
+            self.bouton_imprimer,
+            self.bouton_export_texte,
+            self.bouton_export_excel,
+            self.bouton_aide,
+        ):
+            actions.Add(bouton, 0, wx.RIGHT | wx.BOTTOM, gap)
+
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self.titre_liste, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, padding)
+        sizer.Add(self.barreOutils, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, padding)
+        sizer.Add(self.label_selection, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, padding)
+
+        for liste in (
+            self.listCtrl_candidats,
+            self.listCtrl_candidatures,
+            self.listCtrl_entretiens,
+            self.listCtrl_emplois,
+        ):
+            sizer.Add(liste, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, padding)
+
+        sizer.Add(self.barreRecherche, 0, wx.EXPAND | wx.ALL, padding)
+        sizer.Add(actions, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, padding)
+        sizer.Add(self.panel_resume, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, padding)
+
+        self.window_D.SetSizer(sizer)
+        self.grid_sizer_D = sizer
+
+    def _liste_active(self):
+        return getattr(self, "listCtrl_%s" % MODE_AFFICHAGE)
+
+    def OnBoutonAjouter(self, event):
+        self._liste_active().Ajouter()
+
+    def OnBoutonModifier(self, event):
+        self._liste_active().Modifier()
+
+    def OnBoutonSupprimer(self, event):
+        self._liste_active().Supprimer()
+
+    def OnBoutonRechercher(self, event):
+        self._liste_active().Rechercher()
+
+    def OnBoutonAfficherTout(self, event):
+        self._liste_active().AfficherTout()
+        self.AfficheLabelSelection(False)
+
+    def OnBoutonOptions(self, event):
+        self._liste_active().Options()
+
+    def OnBoutonAide(self, event):
+        from Utils import UTILS_Aide
+        UTILS_Aide.Aide("")
+
+    def OnBoutonCourrier(self, event):
+        self._liste_active().CourrierPublipostage(mode="multiple")
+
+    def OnBoutonImprimer(self, event):
+        self._liste_active().Imprimer()
+
+    def OnBoutonExportTexte(self, event):
+        self._liste_active().ExportTexte()
+
+    def OnBoutonExportExcel(self, event):
+        self._liste_active().ExportExcel()
+
+    def AffichePanelResume(self, etat=True):
+        self.panel_resume.Show(bool(etat))
+        self.window_D.Layout()
+        self.Refresh()
+
+    def AfficheLabelSelection(self, etat=True):
+        self.label_selection.Show(bool(etat))
+        self.window_D.Layout()
+        self.Refresh()
+
+    def AfficheListes(self):
+        titres = {
+            "candidats": _(u"Candidats"),
+            "candidatures": _(u"Candidatures"),
+            "entretiens": _(u"Entretiens"),
+            "emplois": _(u"Offres d'emploi"),
+        }
+        for mode in ("candidats", "candidatures", "entretiens", "emplois"):
+            getattr(self, "listCtrl_%s" % mode).Show(mode == MODE_AFFICHAGE)
+
+        self.titre_liste.SetLabel(titres[MODE_AFFICHAGE])
+        self.barreRecherche.Show(MODE_AFFICHAGE == "candidats")
+        self.bouton_courrier.Show(MODE_AFFICHAGE in ("candidats", "candidatures"))
+        self.bouton_modifier.Enable(False)
+        self.bouton_supprimer.Enable(False)
+
+        self.window_D.Layout()
+        self.Refresh()
+        self._liste_active().MAJ()
+
+    def MAJpanel(self, listeElements=None, MAJpanelResume=True):
+        if listeElements is None:
+            listeElements = []
+        if not self.init:
+            self.InitPage()
+
+        for mode in ("candidats", "candidatures", "entretiens", "emplois"):
+            liste = getattr(self, "listCtrl_%s" % mode)
+            if liste.IsShown():
+                liste.MAJ()
+        self.gadget_entretiens.MAJ()
+        self.gadget_informations.MAJ()
+
+        if MAJpanelResume:
+            self.AffichePanelResume(False)
+
+    def MAJapresVerrouillage(self, OL_gadget=False, OL_principal=False, OL_resume=False):
+        if OL_gadget:
+            self.gadget_entretiens.MAJ()
+        if OL_principal and self.listCtrl_entretiens.IsShown():
+            self.listCtrl_entretiens.MAJ()
+        if OL_resume and self.panel_resume.noteBook.GetPageCount() > 1:
+            if self.panel_resume.listCtrl_entretiens.IsShown():
+                self.panel_resume.listCtrl_entretiens.MAJ()
+
+
 class MyFrame(wx.Frame):
     def __init__(self, *args, **kwds):
         kwds["style"] = wx.DEFAULT_FRAME_STYLE
         wx.Frame.__init__(self, *args, **kwds)
         self.statusbar = self.CreateStatusBar(2, 0)
-        self.statusbar.SetStatusWidths( [360, -1] )
-        panel = Panel(self)
-        panel.InitPage()
-        panel.MAJpanel() 
-        self.SetTitle(_(u"Panel Recrutement"))
-        self.SetSize((800, 690))
+        self.statusbar.SetStatusWidths([360, -1])
+        self.panel = Panel(self)
+        self.panel.InitPage()
+        self.panel.MAJpanel()
+        self.SetTitle(_(u"Recrutement"))
+        UTILS_Styles.ApplyWindowProfile(self, "wide")
         self.Centre()
-
 
 
 if __name__ == "__main__":
     app = wx.App(0)
-    #wx.InitAllImageHandlers()
-    frame_1 = MyFrame(None, -1, "")
-    app.SetTopWindow(frame_1)
-    frame_1.Show()
+    frame = MyFrame(None, -1, "")
+    app.SetTopWindow(frame)
+    frame.Show()
     app.MainLoop()
