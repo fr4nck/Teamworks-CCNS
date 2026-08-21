@@ -3,8 +3,9 @@
 """Feuille de styles sémantique de Teamworks.
 
 L'objectif est volontairement proche du Web : les écrans expriment un rôle
-(display, h1..h6, body, caption...) et non une police/taille/couleur locale.
-Toute évolution visuelle peut ainsi être appliquée depuis un point unique.
+(display, h1..h6, body, caption...), un espacement ou un profil de fenêtre,
+jamais une taille locale arbitraire. Toute évolution visuelle peut ainsi être
+appliquée depuis un point unique.
 """
 
 import wx
@@ -13,138 +14,76 @@ from Utils import UTILS_Customize
 from Utils import UTILS_Interface
 
 
-# La gamme couvre volontairement les tailles historiques rencontrées dans
-# Teamworks (environ 7 à 16 pt) sans conserver leurs valeurs en dur dans les
-# écrans. Les rôles indiquent l'intention ; GetFont() les adapte ensuite à la
-# police native et à l'échelle d'interface.
+# Gamme typographique : elle couvre volontairement les tailles historiques
+# rencontrées dans Teamworks sans conserver leurs valeurs dans les écrans.
 TEXT_STYLES = {
-    "display": {
-        "scale": 1.85,
-        "min_points": 18,
-        "weight": wx.FONTWEIGHT_BOLD,
-        "colour": "on_surface",
-        "space_before": 20,
-        "space_after": 10,
+    "display": {"scale": 1.85, "min_points": 18, "weight": wx.FONTWEIGHT_BOLD, "colour": "on_surface", "space_before": 20, "space_after": 10},
+    "h1": {"scale": 1.60, "min_points": 16, "weight": wx.FONTWEIGHT_BOLD, "colour": "on_surface", "space_before": 16, "space_after": 8},
+    "h2": {"scale": 1.40, "min_points": 14, "weight": wx.FONTWEIGHT_BOLD, "colour": "on_surface", "space_before": 14, "space_after": 7},
+    "h3": {"scale": 1.22, "min_points": 12, "weight": wx.FONTWEIGHT_BOLD, "colour": "on_surface", "space_before": 12, "space_after": 6},
+    "h4": {"scale": 1.12, "min_points": 11, "weight": wx.FONTWEIGHT_BOLD, "colour": "on_surface", "space_before": 10, "space_after": 5},
+    "h5": {"scale": 1.05, "min_points": 10, "weight": wx.FONTWEIGHT_BOLD, "colour": "on_surface", "space_before": 8, "space_after": 4},
+    "h6": {"scale": 1.00, "min_points": 9, "weight": wx.FONTWEIGHT_BOLD, "colour": "on_surface_variant", "space_before": 6, "space_after": 3},
+    "lead": {"scale": 1.12, "min_points": 11, "weight": wx.FONTWEIGHT_NORMAL, "colour": "on_surface", "space_before": 0, "space_after": 8},
+    "body-large": {"scale": 1.06, "min_points": 10, "weight": wx.FONTWEIGHT_NORMAL, "colour": "on_surface", "space_before": 0, "space_after": 5},
+    "body": {"scale": 1.00, "min_points": 9, "weight": wx.FONTWEIGHT_NORMAL, "colour": "on_surface", "space_before": 0, "space_after": 4},
+    "body-secondary": {"scale": 1.00, "min_points": 9, "weight": wx.FONTWEIGHT_NORMAL, "colour": "on_surface_variant", "space_before": 0, "space_after": 4},
+    "body-small": {"scale": 0.90, "min_points": 8, "weight": wx.FONTWEIGHT_NORMAL, "colour": "on_surface", "space_before": 0, "space_after": 3},
+    "label": {"scale": 0.95, "min_points": 9, "weight": wx.FONTWEIGHT_BOLD, "colour": "on_surface_variant", "space_before": 0, "space_after": 2},
+    "caption": {"scale": 0.86, "min_points": 8, "weight": wx.FONTWEIGHT_NORMAL, "colour": "on_surface_variant", "space_before": 0, "space_after": 2},
+    "micro": {"scale": 0.78, "min_points": 7, "weight": wx.FONTWEIGHT_NORMAL, "colour": "on_surface_variant", "space_before": 0, "space_after": 1},
+    "data-large": {"scale": 1.22, "min_points": 12, "weight": wx.FONTWEIGHT_BOLD, "colour": "on_surface", "space_before": 0, "space_after": 2},
+}
+
+# Échelle d'espacement unique, équivalent des variables CSS --space-*.
+SPACING = {
+    "none": 0,
+    "xs": 4,
+    "sm": 8,
+    "md": 12,
+    "lg": 16,
+    "xl": 24,
+    "2xl": 32,
+}
+
+# Rôles d'espacement. Les écrans utilisent l'intention, pas la valeur.
+LAYOUT_SPACING = {
+    "control_gap": "xs",
+    "field_gap": "sm",
+    "section_gap": "lg",
+    "content_padding": "lg",
+    "dialog_padding": "lg",
+    "toolbar_gap": "sm",
+    "page_gap": "xl",
+}
+
+# Profils de fenêtres comparables à des breakpoints/layouts Web. Les ratios
+# s'adaptent à l'écran ; min/max évitent les fenêtres absurdes sur petit écran
+# comme sur 4K.
+WINDOW_PROFILES = {
+    "compact": {
+        "width_ratio": 0.38,
+        "height_ratio": 0.44,
+        "min_size": (420, 320),
+        "max_size": (760, 640),
     },
-    "h1": {
-        "scale": 1.60,
-        "min_points": 16,
-        "weight": wx.FONTWEIGHT_BOLD,
-        "colour": "on_surface",
-        "space_before": 16,
-        "space_after": 8,
+    "standard": {
+        "width_ratio": 0.56,
+        "height_ratio": 0.64,
+        "min_size": (640, 480),
+        "max_size": (1120, 880),
     },
-    "h2": {
-        "scale": 1.40,
-        "min_points": 14,
-        "weight": wx.FONTWEIGHT_BOLD,
-        "colour": "on_surface",
-        "space_before": 14,
-        "space_after": 7,
+    "wide": {
+        "width_ratio": 0.72,
+        "height_ratio": 0.72,
+        "min_size": (820, 560),
+        "max_size": (1520, 1040),
     },
-    "h3": {
-        "scale": 1.22,
-        "min_points": 12,
-        "weight": wx.FONTWEIGHT_BOLD,
-        "colour": "on_surface",
-        "space_before": 12,
-        "space_after": 6,
-    },
-    "h4": {
-        "scale": 1.12,
-        "min_points": 11,
-        "weight": wx.FONTWEIGHT_BOLD,
-        "colour": "on_surface",
-        "space_before": 10,
-        "space_after": 5,
-    },
-    "h5": {
-        "scale": 1.05,
-        "min_points": 10,
-        "weight": wx.FONTWEIGHT_BOLD,
-        "colour": "on_surface",
-        "space_before": 8,
-        "space_after": 4,
-    },
-    "h6": {
-        "scale": 1.00,
-        "min_points": 9,
-        "weight": wx.FONTWEIGHT_BOLD,
-        "colour": "on_surface_variant",
-        "space_before": 6,
-        "space_after": 3,
-    },
-    "lead": {
-        "scale": 1.12,
-        "min_points": 11,
-        "weight": wx.FONTWEIGHT_NORMAL,
-        "colour": "on_surface",
-        "space_before": 0,
-        "space_after": 8,
-    },
-    "body-large": {
-        "scale": 1.06,
-        "min_points": 10,
-        "weight": wx.FONTWEIGHT_NORMAL,
-        "colour": "on_surface",
-        "space_before": 0,
-        "space_after": 5,
-    },
-    "body": {
-        "scale": 1.00,
-        "min_points": 9,
-        "weight": wx.FONTWEIGHT_NORMAL,
-        "colour": "on_surface",
-        "space_before": 0,
-        "space_after": 4,
-    },
-    "body-secondary": {
-        "scale": 1.00,
-        "min_points": 9,
-        "weight": wx.FONTWEIGHT_NORMAL,
-        "colour": "on_surface_variant",
-        "space_before": 0,
-        "space_after": 4,
-    },
-    "body-small": {
-        "scale": 0.90,
-        "min_points": 8,
-        "weight": wx.FONTWEIGHT_NORMAL,
-        "colour": "on_surface",
-        "space_before": 0,
-        "space_after": 3,
-    },
-    "label": {
-        "scale": 0.95,
-        "min_points": 9,
-        "weight": wx.FONTWEIGHT_BOLD,
-        "colour": "on_surface_variant",
-        "space_before": 0,
-        "space_after": 2,
-    },
-    "caption": {
-        "scale": 0.86,
-        "min_points": 8,
-        "weight": wx.FONTWEIGHT_NORMAL,
-        "colour": "on_surface_variant",
-        "space_before": 0,
-        "space_after": 2,
-    },
-    "micro": {
-        "scale": 0.78,
-        "min_points": 7,
-        "weight": wx.FONTWEIGHT_NORMAL,
-        "colour": "on_surface_variant",
-        "space_before": 0,
-        "space_after": 1,
-    },
-    "data-large": {
-        "scale": 1.22,
-        "min_points": 12,
-        "weight": wx.FONTWEIGHT_BOLD,
-        "colour": "on_surface",
-        "space_before": 0,
-        "space_after": 2,
+    "workspace": {
+        "width_ratio": 0.84,
+        "height_ratio": 0.84,
+        "min_size": (960, 640),
+        "max_size": (1900, 1240),
     },
 }
 
@@ -172,6 +111,48 @@ def GetEchelleInterface():
 def Scale(value, minimum=1):
     """Équivalent d'une unité CSS adaptée au zoom de l'interface."""
     return max(minimum, int(round(value * GetEchelleInterface() / 100.0)))
+
+
+def GetSpacing(name="sm"):
+    """Retourne un espacement de la gamme centrale, mis à l'échelle."""
+    return Scale(SPACING.get(name, SPACING["sm"]), minimum=0)
+
+
+def GetLayoutSpacing(role="field_gap"):
+    """Retourne l'espacement associé à un rôle de layout."""
+    return GetSpacing(LAYOUT_SPACING.get(role, "sm"))
+
+
+def GetWindowSize(profile="standard", display_size=None):
+    """Calcule une taille de fenêtre durable à partir d'un profil sémantique."""
+    definition = WINDOW_PROFILES.get(profile, WINDOW_PROFILES["standard"])
+    if display_size is None:
+        try:
+            display_size = wx.GetDisplaySize()
+        except Exception:
+            display_size = (1280, 800)
+
+    width = int(round(display_size[0] * definition["width_ratio"]))
+    height = int(round(display_size[1] * definition["height_ratio"]))
+    min_width, min_height = definition["min_size"]
+    max_width, max_height = definition["max_size"]
+    width = max(Scale(min_width), min(Scale(max_width), width))
+    height = max(Scale(min_height), min(Scale(max_height), height))
+    return width, height
+
+
+def ApplyWindowProfile(window, profile="standard", centre=True):
+    """Applique un profil de dimension à une fenêtre wx redimensionnable."""
+    size = GetWindowSize(profile)
+    window.SetSize(size)
+    definition = WINDOW_PROFILES.get(profile, WINDOW_PROFILES["standard"])
+    window.SetMinSize(tuple(Scale(value) for value in definition["min_size"]))
+    if centre:
+        try:
+            window.CentreOnParent()
+        except Exception:
+            window.CentreOnScreen()
+    return size
 
 
 def GetTextStyle(style="body"):
