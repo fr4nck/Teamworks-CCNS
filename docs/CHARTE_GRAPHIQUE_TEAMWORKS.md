@@ -137,6 +137,10 @@ Dans les écrans `Ctrl` et `Dlg`, éviter toute nouvelle occurrence de :
 
 Les exceptions techniques doivent rester rares, localisées et commentées.
 
+## Gel graphique avant recette
+
+Quand les principaux parcours visibles sont raccordés à la charte, la priorité passe à la stabilité : compilation, tests, parcours critiques Windows et paquet installable. Les retouches purement cosmétiques qui exigeraient une chirurgie importante sont reportées après la recette. Les corrections faciles et transversales restent acceptables si elles consomment les composants centraux sans modifier la logique métier.
+
 ## Objectif de durabilité
 
 Une future évolution de la charte — nouvelle couleur primaire, nouvelle densité, typographie plus grande, nouvelles tailles d'icônes, nouvelle proportion des fenêtres — doit être réalisable principalement dans les modules centraux, sans campagne de retouche manuelle sur l'ensemble du logiciel.
