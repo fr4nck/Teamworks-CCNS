@@ -4,8 +4,8 @@
 
 import wx
 
-from Utils import UTILS_Customize
-from Utils import UTILS_Interface
+from Ctrl import CTRL_Texte
+from Utils import UTILS_Customize, UTILS_Interface, UTILS_Styles
 
 
 class Dialog(wx.Dialog):
@@ -29,27 +29,25 @@ class Dialog(wx.Dialog):
             title="Préférences d'affichage",
             style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER,
         )
-        self.SetMinSize((460, 340))
-        self.SetSize((560, 430))
+        UTILS_Styles.ApplyWindowProfile(self, "compact")
 
         self.panel = wx.Panel(self)
+        self.panel.SetBackgroundColour(UTILS_Interface.GetToken("surface"))
         main = wx.BoxSizer(wx.VERTICAL)
+        padding = UTILS_Styles.GetLayoutSpacing("dialog_padding")
+        field_gap = UTILS_Styles.GetLayoutSpacing("field_gap")
 
-        title = wx.StaticText(self.panel, label="Affichage")
-        font = title.GetFont()
-        font.SetWeight(wx.FONTWEIGHT_BOLD)
-        font.SetPointSize(max(font.GetPointSize() + 3, 12))
-        title.SetFont(font)
-        main.Add(title, 0, wx.LEFT | wx.RIGHT | wx.TOP, 16)
+        title = CTRL_Texte.H1(self.panel, "Affichage")
+        main.Add(title, 0, wx.LEFT | wx.RIGHT | wx.TOP, padding)
 
-        self.intro = wx.StaticText(
+        self.intro = CTRL_Texte.BodySecondary(
             self.panel,
-            label=(
+            (
                 "L'accent colore les actions et sélections. "
                 "L'apparence pilote les surfaces claires ou sombres."
             ),
         )
-        main.Add(self.intro, 0, wx.EXPAND | wx.ALL, 16)
+        main.Add(self.intro, 0, wx.EXPAND | wx.ALL, padding)
 
         self.accent = wx.Choice(
             self.panel,
@@ -64,7 +62,7 @@ class Dialog(wx.Dialog):
             self._ligne(self.panel, "Accent :", self.accent),
             0,
             wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM,
-            16,
+            padding,
         )
 
         self.appearance = wx.Choice(
@@ -82,7 +80,7 @@ class Dialog(wx.Dialog):
             self._ligne(self.panel, "Apparence :", self.appearance),
             0,
             wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM,
-            16,
+            padding,
         )
 
         self.scale = wx.SpinCtrl(self.panel, min=80, max=200, initial=100)
@@ -106,21 +104,21 @@ class Dialog(wx.Dialog):
         scale_control = wx.BoxSizer(wx.HORIZONTAL)
         scale_control.Add(self.scale, 0)
         scale_control.Add(
-            wx.StaticText(self.panel, label=" %"),
+            CTRL_Texte.Body(self.panel, " %"),
             0,
             wx.ALIGN_CENTER_VERTICAL | wx.LEFT,
-            4,
+            field_gap // 2,
         )
         main.Add(
             self._ligne(self.panel, "Échelle de l'interface :", scale_control),
             0,
             wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM,
-            16,
+            padding,
         )
 
-        self.info = wx.StaticText(
+        self.info = CTRL_Texte.BodySecondary(
             self.panel,
-            label=(
+            (
                 "L'échelle agit ensemble sur les textes, les icônes et les dimensions "
                 "des contrôles. Les écrans modernisés redistribuent aussi l'espace disponible."
             ),
@@ -129,7 +127,7 @@ class Dialog(wx.Dialog):
             self.info,
             0,
             wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM,
-            16,
+            padding,
         )
 
         main.AddStretchSpacer()
@@ -140,7 +138,7 @@ class Dialog(wx.Dialog):
         buttons.AddButton(ok_button)
         buttons.AddButton(cancel_button)
         buttons.Realize()
-        main.Add(buttons, 0, wx.EXPAND | wx.ALL, 16)
+        main.Add(buttons, 0, wx.EXPAND | wx.ALL, padding)
         self.panel.SetSizer(main)
 
         shell = wx.BoxSizer(wx.VERTICAL)
@@ -149,19 +147,19 @@ class Dialog(wx.Dialog):
 
         self.Bind(wx.EVT_BUTTON, self.OnOk, id=wx.ID_OK)
         self.Bind(wx.EVT_SIZE, self.OnSize)
-        self.CentreOnParent()
         wx.CallAfter(self._ajuster_textes)
 
     @staticmethod
     def _ligne(parent, label, control):
-        """Ligne sans séparateur à largeur figée : le texte garde son BestSize."""
+        """Ligne flexible : le libellé et le contrôle partagent l'espace."""
         ligne = wx.BoxSizer(wx.HORIZONTAL)
-        etiquette = wx.StaticText(parent, label=label)
-        ligne.Add(etiquette, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 12)
+        etiquette = CTRL_Texte.Label(parent, label)
+        gap = UTILS_Styles.GetLayoutSpacing("field_gap")
+        ligne.Add(etiquette, 2, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, gap)
         if isinstance(control, wx.Sizer):
-            ligne.Add(control, 1, wx.ALIGN_CENTER_VERTICAL)
+            ligne.Add(control, 3, wx.ALIGN_CENTER_VERTICAL | wx.EXPAND)
         else:
-            ligne.Add(control, 1, wx.EXPAND)
+            ligne.Add(control, 3, wx.EXPAND)
         return ligne
 
     def OnSize(self, event):
@@ -170,7 +168,8 @@ class Dialog(wx.Dialog):
 
     def _ajuster_textes(self):
         try:
-            largeur = max(240, self.panel.GetClientSize().GetWidth() - 32)
+            padding = UTILS_Styles.GetLayoutSpacing("dialog_padding") * 2
+            largeur = max(UTILS_Styles.Scale(240), self.panel.GetClientSize().GetWidth() - padding)
             self.intro.Wrap(largeur)
             self.info.Wrap(largeur)
             self.panel.Layout()
