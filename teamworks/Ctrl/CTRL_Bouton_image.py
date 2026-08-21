@@ -8,6 +8,8 @@
 # Licence:         Licence GNU GPL
 #------------------------------------------------------------------------
 
+from pathlib import Path
+
 from Utils import UTILS_Interface, UTILS_Styles
 import wx
 
@@ -32,6 +34,28 @@ def _echelle_marges(marges):
     if isinstance(marges, tuple):
         return tuple(UTILS_Styles.Scale(valeur, minimum=0) for valeur in marges)
     return UTILS_Styles.Scale(marges, minimum=0)
+
+
+def _chemin_image_existant(chemin):
+    """Renvoie une ressource existante, avec repli 32x32 -> 16x16."""
+    if chemin in ("", None):
+        return None
+
+    path = Path(chemin)
+    if path.is_file():
+        return path
+
+    # Quelques écrans historiques demandaient une version 32x32 alors que
+    # seule l'icône 16x16 a toujours été livrée. Le bouton reste fonctionnel
+    # et laisse ensuite Pillow/Teamworks la mettre à l'échelle normalement.
+    parts = list(path.parts)
+    if "32x32" in parts:
+        parts[parts.index("32x32")] = "16x16"
+        fallback = Path(*parts)
+        if fallback.is_file():
+            return fallback
+
+    return None
 
 
 class CTRL(wx.Button):
@@ -63,10 +87,17 @@ class CTRL(wx.Button):
         self.MAJ()
 
     def _bitmap(self):
-        if self.cheminImage in ("", None):
+        chemin = _chemin_image_existant(self.cheminImage)
+        if chemin is None:
             return wx.NullBitmap
 
-        img = Image.open(self.cheminImage)
+        try:
+            img = Image.open(chemin)
+        except (OSError, ValueError):
+            # Une ressource décorative ne doit jamais rendre une action métier
+            # inutilisable. Le libellé du bouton reste affiché.
+            return wx.NullBitmap
+
         try:
             resample_filter = Image.Resampling.LANCZOS
         except AttributeError:
@@ -77,8 +108,9 @@ class CTRL(wx.Button):
         return PILtoWx(img).ConvertToBitmap()
 
     def MAJ(self):
-        self.SetBitmap(self._bitmap(), self.positionImage)
-        if self.cheminImage not in ("", None):
+        bitmap = self._bitmap()
+        self.SetBitmap(bitmap, self.positionImage)
+        if bitmap.IsOk():
             self.SetBitmapMargins(_echelle_marges(self.margesTexte))
 
         self.AppliquerTheme()
@@ -87,7 +119,7 @@ class CTRL(wx.Button):
         best = self.GetBestSize()
         hauteur_min = UTILS_Styles.GetControlMetric("button_min_height")
         largeur_min = best.GetWidth()
-        if self.cheminImage not in ("", None) and not self.texte:
+        if bitmap.IsOk() and not self.texte:
             largeur_min = max(largeur_min, hauteur_min)
         self.SetMinSize((largeur_min, max(best.GetHeight(), hauteur_min)))
 
