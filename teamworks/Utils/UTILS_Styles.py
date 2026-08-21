@@ -3,9 +3,9 @@
 """Feuille de styles sémantique de Teamworks.
 
 L'objectif est volontairement proche du Web : les écrans expriment un rôle
-(display, h1..h6, body, caption...), un espacement ou un profil de fenêtre,
-jamais une taille locale arbitraire. Toute évolution visuelle peut ainsi être
-appliquée depuis un point unique.
+(display, h1..h6, body, caption...), un espacement, une icône, un contrôle ou
+un profil de fenêtre, jamais une taille locale arbitraire. Toute évolution
+visuelle peut ainsi être appliquée depuis un point unique.
 """
 
 import wx
@@ -14,8 +14,6 @@ from Utils import UTILS_Customize
 from Utils import UTILS_Interface
 
 
-# Gamme typographique : elle couvre volontairement les tailles historiques
-# rencontrées dans Teamworks sans conserver leurs valeurs dans les écrans.
 TEXT_STYLES = {
     "display": {"scale": 1.85, "min_points": 18, "weight": wx.FONTWEIGHT_BOLD, "colour": "on_surface", "space_before": 20, "space_after": 10},
     "h1": {"scale": 1.60, "min_points": 16, "weight": wx.FONTWEIGHT_BOLD, "colour": "on_surface", "space_before": 16, "space_after": 8},
@@ -35,7 +33,6 @@ TEXT_STYLES = {
     "data-large": {"scale": 1.22, "min_points": 12, "weight": wx.FONTWEIGHT_BOLD, "colour": "on_surface", "space_before": 0, "space_after": 2},
 }
 
-# Échelle d'espacement unique, équivalent des variables CSS --space-*.
 SPACING = {
     "none": 0,
     "xs": 4,
@@ -46,7 +43,6 @@ SPACING = {
     "2xl": 32,
 }
 
-# Rôles d'espacement. Les écrans utilisent l'intention, pas la valeur.
 LAYOUT_SPACING = {
     "control_gap": "xs",
     "field_gap": "sm",
@@ -57,9 +53,23 @@ LAYOUT_SPACING = {
     "page_gap": "xl",
 }
 
-# Profils de fenêtres comparables à des breakpoints/layouts Web. Les ratios
-# s'adaptent à l'écran ; min/max évitent les fenêtres absurdes sur petit écran
-# comme sur 4K.
+# Échelle d'icônes : aucun écran ne choisit directement 16/20/24/32 px.
+ICON_SIZES = {
+    "micro": 12,
+    "small": 16,
+    "medium": 20,
+    "large": 24,
+    "hero": 32,
+}
+
+# Métriques communes des contrôles natifs.
+CONTROL_METRICS = {
+    "button_min_height": 36,
+    "button_icon_margin": 4,
+    "input_min_height": 32,
+    "toolbar_min_height": 40,
+}
+
 WINDOW_PROFILES = {
     "compact": {
         "width_ratio": 0.38,
@@ -121,6 +131,17 @@ def GetSpacing(name="sm"):
 def GetLayoutSpacing(role="field_gap"):
     """Retourne l'espacement associé à un rôle de layout."""
     return GetSpacing(LAYOUT_SPACING.get(role, "sm"))
+
+
+def GetIconSize(role="medium"):
+    """Retourne une taille carrée d'icône issue de la charte."""
+    value = Scale(ICON_SIZES.get(role, ICON_SIZES["medium"]))
+    return value, value
+
+
+def GetControlMetric(role="button_min_height"):
+    """Retourne une métrique de contrôle native mise à l'échelle."""
+    return Scale(CONTROL_METRICS.get(role, CONTROL_METRICS["button_min_height"]))
 
 
 def GetWindowSize(profile="standard", display_size=None):
