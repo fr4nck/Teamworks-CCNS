@@ -64,15 +64,15 @@ def test_priority_rh_bare_except_inventory_does_not_grow():
             "DeselectionneItem": 1,
         },
         "teamworks/Dlg/DLG_Saisie_presence.py": {
-            "OnBoutonAnnuler": 1,
-            "OnBoutonOk": 1,
+            "OnBoutonAnnuler": 0,
+            "OnBoutonOk": 0,
         },
     }
 
 
-def test_priority_rh_bare_except_total_is_six():
+def test_priority_rh_bare_except_total_is_four():
     total = 0
     for relative_path, (class_name, method_names) in TARGETS.items():
         for method in _target_methods(relative_path, class_name, method_names).values():
             total += _bare_except_count(method)
-    assert total == 6
+    assert total == 4
