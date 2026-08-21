@@ -52,7 +52,8 @@ class CTRL(wx.Button):
         self.parent = parent
         self.texte = texte
         self.cheminImage = cheminImage
-        self.tailleImage = tailleImage or UTILS_Styles.ICON_SIZES["medium"] * 2
+        taille_defaut = UTILS_Styles.ICON_SIZES["medium"]
+        self.tailleImage = tailleImage or (taille_defaut, taille_defaut)
         if isinstance(self.tailleImage, tuple) is False:
             self.tailleImage = (self.tailleImage, self.tailleImage)
         marge_icone = UTILS_Styles.CONTROL_METRICS["button_icon_margin"]
