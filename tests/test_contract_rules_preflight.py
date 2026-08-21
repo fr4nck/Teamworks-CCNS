@@ -176,3 +176,29 @@ def test_reclassification_required_is_blocking():
     )
     assert result.decision is ContractPreflightDecision.BLOCKED
     assert any(issue.code == "CLASSIFICATION_RECLASSIFICATION_REQUIRED" for issue in result.issues)
+
+
+def test_creation_preflight_can_defer_document_mentions_check_without_fake_compliance():
+    timeline, seniority = _seniority()
+    result = PREFLIGHT.evaluate(
+        seniority_timeline=timeline,
+        seniority=seniority,
+        mentions=None,
+        mentions_check_required=False,
+        compensation_compliant=True,
+    )
+    assert result.decision is ContractPreflightDecision.OK
+    assert result.mentions is None
+
+
+def test_document_stage_requests_review_when_mentions_have_not_been_evaluated():
+    timeline, seniority = _seniority()
+    result = PREFLIGHT.evaluate(
+        seniority_timeline=timeline,
+        seniority=seniority,
+        mentions=None,
+        mentions_check_required=True,
+        compensation_compliant=True,
+    )
+    assert result.decision is ContractPreflightDecision.REVIEW
+    assert any(issue.code == "CONTRACT_MENTIONS_NOT_EVALUATED" for issue in result.issues)

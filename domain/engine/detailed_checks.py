@@ -4,6 +4,7 @@ from datetime import date
 from typing import Optional
 
 from domain.contracts.contract import Contract
+from domain.contracts.cee_contract_guardrails import CEEContractGuardrailService
 from domain.engine.anomaly import Anomaly
 from domain.engine.anomaly_level import AnomalyLevel
 from domain.engine.calculation_result import CalculationResult
@@ -132,7 +133,12 @@ def check_seniority_applicability(contract: Contract) -> tuple[CalculationResult
 
 def check_cee_max_days(days_rolling_12_months: int, contract: Contract) -> tuple[CalculationResult, Optional[Anomaly]]:
     limit = 80
-    ok = days_rolling_12_months <= limit
+    guardrail = CEEContractGuardrailService().evaluate(
+        days_rolling_12_months=days_rolling_12_months,
+        worker_age_years=18,
+        require_minor_schedule_check=False,
+    )
+    ok = guardrail.days_limit_compliant is True
     result = CalculationResult(
         object_type="contract",
         object_id=contract.id,

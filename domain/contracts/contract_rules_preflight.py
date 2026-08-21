@@ -51,7 +51,7 @@ class ContractRulesPreflightResult:
     issues: tuple[ContractPreflightIssue, ...]
     seniority_timeline: CCNSContractSeniorityTimelineResult
     seniority: CCNSSeniorityResult
-    mentions: ContractComplianceResult
+    mentions: Optional[ContractComplianceResult]
     part_time_week: Optional[PartTimePlannedWeekResult]
 
     @property
@@ -77,8 +77,9 @@ class CCNSContractRulesPreflightService:
         *,
         seniority_timeline: CCNSContractSeniorityTimelineResult,
         seniority: CCNSSeniorityResult,
-        mentions: ContractComplianceResult,
+        mentions: Optional[ContractComplianceResult] = None,
         part_time_week: Optional[PartTimePlannedWeekResult] = None,
+        mentions_check_required: bool = False,
         compensation_compliant: Optional[bool] = None,
         compensation_message: str = "",
         position_change: Optional[PositionChangeDecision] = None,
@@ -89,8 +90,10 @@ class CCNSContractRulesPreflightService:
             raise TypeError("seniority_timeline doit être un CCNSContractSeniorityTimelineResult.")
         if type(seniority) is not CCNSSeniorityResult:
             raise TypeError("seniority doit être un CCNSSeniorityResult.")
-        if type(mentions) is not ContractComplianceResult:
-            raise TypeError("mentions doit être un ContractComplianceResult.")
+        if mentions is not None and type(mentions) is not ContractComplianceResult:
+            raise TypeError("mentions doit être un ContractComplianceResult ou None.")
+        if type(mentions_check_required) is not bool:
+            raise TypeError("mentions_check_required doit être un booléen strict.")
         if part_time_week is not None and type(part_time_week) is not PartTimePlannedWeekResult:
             raise TypeError("part_time_week doit être un PartTimePlannedWeekResult ou None.")
         if compensation_compliant is not None and type(compensation_compliant) is not bool:
@@ -117,7 +120,16 @@ class CCNSContractRulesPreflightService:
                 )
             )
 
-        if mentions.applicable:
+        if mentions is None:
+            if mentions_check_required:
+                issues.append(
+                    ContractPreflightIssue(
+                        code="CONTRACT_MENTIONS_NOT_EVALUATED",
+                        severity=ContractPreflightSeverity.REVIEW,
+                        message="Le contrôle des mentions obligatoires doit être exécuté avant génération du document final.",
+                    )
+                )
+        elif mentions.applicable:
             if mentions.missing_requirements:
                 missing_labels = ", ".join(item.label for item in mentions.missing_requirements)
                 issues.append(
