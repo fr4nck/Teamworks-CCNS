@@ -12,22 +12,7 @@ import datetime
 
 import wx
 from wx import Control
-from Utils import UTILS_Customize
-from Utils import UTILS_Interface
-
-
-def _echelle_interface():
-    try:
-        valeur = UTILS_Customize.GetValeur(
-            "interface", "echelle_interface", "", ajouter_si_manquant=False
-        )
-        if valeur in (None, ""):
-            valeur = UTILS_Customize.GetValeur(
-                "interface", "echelle_police", "100", type_valeur=int
-            )
-        return max(80, min(200, int(valeur)))
-    except Exception:
-        return 100
+from Utils import UTILS_Interface, UTILS_Styles
 
 
 class Footer(Control):
@@ -48,10 +33,11 @@ class Footer(Control):
 
         Control.__init__(self, parent, id=id, pos=pos, size=size, style=style, name=name)
 
-        font = wx.SystemSettings.GetFont(wx.SYS_DEFAULT_GUI_FONT)
-        self.SetFont(font)
+        self.SetFont(UTILS_Styles.GetFont("caption"))
         hauteur_texte = self.GetTextExtent("Ag")[1]
-        self.hauteur = max(24, int(round((hauteur_texte + 10) * _echelle_interface() / 100.0)))
+        hauteur_min = UTILS_Styles.GetControlMetric("footer_min_height")
+        padding_texte = UTILS_Styles.GetControlMetric("footer_text_padding")
+        self.hauteur = max(hauteur_min, hauteur_texte + padding_texte)
         self.SetMinSize((-1, self.hauteur))
         self.SetInitialSize(size)
         self.AppliquerTheme()
@@ -159,7 +145,7 @@ class Footer(Control):
                 if "couleur" in infoColonne:
                     couleur = infoColonne["couleur"]
 
-            ajustement = 5 if mode != "total" and dernierTexte == "" else 0
+            ajustement = UTILS_Styles.GetSpacing("xs") if mode != "total" and dernierTexte == "" else 0
             self.DrawColonne(dc, x - ajustement, largeur + ajustement, texte, alignement, couleur, font)
             x += largeur
 
