@@ -27,11 +27,12 @@ def test_flexible_columns_keep_historical_widths_as_minima():
 def test_flexible_columns_never_shrink_below_scaled_reference():
     source = _source(HELPER)
 
+    # Les cibles partent toujours des minima et le seul ajustement appliqué aux
+    # colonnes extensibles est un ajout explicitement borné à zéro.
     assert "cibles = list(minima)" in source
-    assert "if largeur_disponible > total_minimum" in source
-    assert "else:" not in source.split("if largeur_disponible > total_minimum", 1)[1].split(
-        "self._ajustement_en_cours = True", 1
-    )[0]
+    assert "if largeur_disponible > total_minimum and indices:" in source
+    assert "cibles[index] += max(0, ajout)" in source
+    assert "cibles[index] -=" not in source
 
 
 def test_candidatures_choose_their_business_columns_explicitly():
