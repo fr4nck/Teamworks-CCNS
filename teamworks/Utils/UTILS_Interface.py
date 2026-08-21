@@ -14,6 +14,11 @@ Ce module conserve l'API historique des thèmes Vert/Bleu/Noir tout en ajoutant
 une couche de rôles sémantiques destinée à la migration progressive de
 l'interface. Les écrans existants peuvent continuer à utiliser GetValeur() ;
 les composants modernisés doivent préférer GetToken().
+
+La charte limite volontairement l'interface à cinq familles visuelles :
+neutre, primaire, succès, avertissement et danger. Les variantes de surface,
+de contraste, de sélection ou de focus sont des nuances de ces familles, pas
+de nouvelles couleurs métier.
 """
 
 import Chemins
@@ -32,6 +37,14 @@ APPEARANCE_MODES = (
     "system",
     "light",
     "dark",
+)
+
+COLOUR_FAMILIES = (
+    "neutral",
+    "primary",
+    "success",
+    "warning",
+    "danger",
 )
 
 # Noms stables à utiliser dans les nouveaux composants. La hiérarchie des
@@ -60,6 +73,34 @@ SEMANTIC_TOKENS = (
     "disabled",
     "focus",
 )
+
+# Chaque token appartient à une et une seule famille. ``info`` reste disponible
+# pour compatibilité avec les écrans déjà migrés mais réutilise la famille
+# primaire afin de ne pas introduire une sixième couleur.
+TOKEN_FAMILY = {
+    "surface": "neutral",
+    "surface_container_lowest": "neutral",
+    "surface_container_low": "neutral",
+    "surface_container": "neutral",
+    "surface_container_high": "neutral",
+    "surface_container_highest": "neutral",
+    "on_surface": "neutral",
+    "on_surface_variant": "neutral",
+    "outline": "neutral",
+    "outline_variant": "neutral",
+    "disabled": "neutral",
+    "selection_text": "neutral",
+    "primary": "primary",
+    "on_primary": "primary",
+    "primary_container": "primary",
+    "on_primary_container": "primary",
+    "info": "primary",
+    "selection": "primary",
+    "focus": "primary",
+    "success": "success",
+    "warning": "warning",
+    "danger": "danger",
+}
 
 
 # Palette historique : ne pas modifier les valeurs sans migration explicite.
@@ -204,11 +245,7 @@ def SetAppearanceMode(appearance="system"):
 
 
 def IsSystemDark():
-    """Détecte le mode sombre de la plateforme lorsque wx le permet.
-
-    La détection est volontairement défensive afin de rester compatible avec
-    les plateformes/versions de wx qui ne fournissent pas GetAppearance().
-    """
+    """Détecte le mode sombre de la plateforme lorsque wx le permet."""
     try:
         get_appearance = getattr(wx.SystemSettings, "GetAppearance", None)
         if get_appearance is None:
@@ -252,7 +289,7 @@ def _build_light_palette(theme):
         "success": wx.Colour(38, 122, 54),
         "warning": wx.Colour(153, 93, 0),
         "danger": wx.Colour(186, 26, 26),
-        "info": wx.Colour(0, 95, 163),
+        "info": accent["primary"],
         "selection": accent["selection"],
         "selection_text": wx.Colour(25, 25, 25),
         "disabled": wx.Colour(160, 160, 160),
@@ -280,7 +317,7 @@ def _build_dark_palette(theme):
         "success": wx.Colour(111, 190, 121),
         "warning": wx.Colour(224, 174, 87),
         "danger": wx.Colour(238, 122, 122),
-        "info": wx.Colour(119, 184, 232),
+        "info": accent["primary"],
         "selection": accent["selection"],
         "selection_text": wx.Colour(245, 245, 245),
         "disabled": wx.Colour(113, 113, 113),
@@ -301,6 +338,11 @@ def GetToken(token, default=None, theme=None, appearance=None):
     """Retourne une couleur à partir de son rôle sémantique."""
     palette = GetPalette(theme=theme, appearance=appearance)
     return palette.get(token, default)
+
+
+def GetTokenFamily(token):
+    """Retourne la famille visuelle stable d'un token sémantique."""
+    return TOKEN_FAMILY.get(token)
 
 
 def GetValeur(cle="", defaut="", theme=None):
