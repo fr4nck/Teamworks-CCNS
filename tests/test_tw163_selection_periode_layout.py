@@ -1,10 +1,16 @@
 from pathlib import Path
 
 
-def test_selection_periode_horizontal_sizers_do_not_use_align_right():
+def test_selection_periode_uses_flexible_semantic_rows_without_align_right():
     source = Path("teamworks/Dlg/DLG_Selection_periode.py").read_text(encoding="utf-8")
 
-    assert "sizerStaticBox_moisAnnee.Add(self.label_mois, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)" in source
-    assert "sizerStaticBox_moisAnnee.Add(self.label_annee, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)" in source
-    assert "sizerStaticBox_dates.Add(self.label_date_debut, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)" in source
-    assert "sizerStaticBox_dates.Add(self.label_date_fin, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)" in source
+    assert "wx.StaticBox" not in source
+    assert "wx.StaticBoxSizer" not in source
+    assert "wx.FlexGridSizer" not in source
+    assert source.count("CTRL_Section.Section(") == 3
+    assert "cal_sizer = wx.BoxSizer(wx.HORIZONTAL)" in source
+    assert "dates_sizer = wx.BoxSizer(wx.HORIZONTAL)" in source
+    assert "bloc.Add(label, 0, wx.EXPAND)" in source
+    assert "cal_sizer.Add(bloc, 1, wx.EXPAND | wx.RIGHT, gap)" in source
+    assert "dates_sizer.Add(bloc, 1, wx.EXPAND | wx.RIGHT, gap)" in source
+    assert "wx.ALIGN_RIGHT" not in source
