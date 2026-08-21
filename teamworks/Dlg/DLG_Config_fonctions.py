@@ -12,9 +12,9 @@ from Utils.UTILS_Traduction import _
 
 
 class ListCtrl(wx.ListCtrl):
-    def __init__(self, parent):
+    def __init__(self, parent, owner):
         wx.ListCtrl.__init__(self, parent, -1, style=wx.LC_REPORT | wx.LC_SINGLE_SEL | wx.LC_HRULES)
-        self.parent = parent
+        self.parent = owner
         self.SetBackgroundColour(UTILS_Interface.GetToken("surface_container_lowest"))
         self.SetForegroundColour(UTILS_Interface.GetToken("on_surface"))
         self.InsertColumn(0, _(u"ID"))
@@ -106,7 +106,7 @@ class Panel(CORE.Panel):
         self.bouton_aide = CTRL_Bouton_image.CTRL(contenu, texte=_(u"Aide"))
         self.bouton_modifier.Enable(False)
         self.bouton_supprimer.Enable(False)
-        self.listCtrl = ListCtrl(contenu)
+        self.listCtrl = ListCtrl(contenu, self)
 
         if parent.GetName() != "treebook_configuration":
             self.bouton_aide.Show(False)
