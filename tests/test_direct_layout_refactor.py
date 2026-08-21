@@ -4,6 +4,7 @@ from pathlib import Path
 
 ROOT = Path("teamworks")
 CUSTOMIZE = ROOT / "Utils" / "UTILS_Customize.py"
+STYLES = ROOT / "Utils" / "UTILS_Styles.py"
 PERSONS = ROOT / "Ctrl" / "CTRL_Personnes.py"
 CONTRACTS = ROOT / "Ctrl" / "CTRL_Page_contrats.py"
 PERSON_DIALOG = ROOT / "Dlg" / "DLG_Fiche_individuelle.py"
@@ -21,6 +22,7 @@ def _source(path):
 def test_refactored_sources_are_valid_python():
     for path in (
         CUSTOMIZE,
+        STYLES,
         PERSONS,
         CONTRACTS,
         PERSON_DIALOG,
@@ -71,8 +73,21 @@ def test_person_dialog_uses_available_display_instead_of_fit():
     assert ".Wrap(largeur)" in source
 
 
-def test_components_read_interface_scale_before_legacy_font_scale():
-    for path in (PERSONS, CONTRACTS, BUTTON, GADGET, NAVIGATION):
+def test_scale_configuration_is_centralized_in_styles():
+    styles = _source(STYLES)
+    assert '"echelle_interface"' in styles
+    assert '"echelle_police"' in styles
+    assert styles.index('"echelle_interface"') < styles.index('"echelle_police"')
+    assert "ajouter_si_manquant=False" in styles
+
+    button = _source(BUTTON)
+    assert "UTILS_Customize" not in button
+    assert "UTILS_Styles.Scale" in button
+    assert "UTILS_Styles.GetControlMetric" in button
+
+
+def test_legacy_components_still_read_interface_scale_before_fallback():
+    for path in (PERSONS, CONTRACTS, GADGET, NAVIGATION):
         source = _source(path)
         assert '"echelle_interface"' in source
         assert '"echelle_police"' in source
@@ -80,7 +95,7 @@ def test_components_read_interface_scale_before_legacy_font_scale():
         assert "ajouter_si_manquant=False" in source
 
 
-def test_icons_scale_in_their_own_components_not_with_a_global_patch():
+def test_icons_scale_in_components_without_global_patch():
     persons = _source(PERSONS)
     contracts = _source(CONTRACTS)
     dialog = _source(PERSON_DIALOG)
@@ -90,7 +105,8 @@ def test_icons_scale_in_their_own_components_not_with_a_global_patch():
     assert "wx.IMAGE_QUALITY_HIGH" in persons
     assert "wx.IMAGE_QUALITY_HIGH" in contracts
     assert "wx.IMAGE_QUALITY_HIGH" in dialog
-    assert "_echelle_valeur(36, 36)" in button
+    assert 'UTILS_Styles.ICON_SIZES["medium"]' in button
+    assert 'GetControlMetric("button_min_height")' in button
     assert "wx.IMAGE_QUALITY_HIGH" in navigation
 
 
