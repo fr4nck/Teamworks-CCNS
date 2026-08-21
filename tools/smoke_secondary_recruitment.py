@@ -51,12 +51,15 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 _smoke_panel.ctrl_entretiens.MAJ()
                 wx.Yield()
 
-                _smoke_candidates.DICT_DISPONIBILITES = {
+                _smoke_candidates.DICT_DISPONIBILITES.clear()
+                _smoke_candidates.DICT_DISPONIBILITES.update({
                     1: [(1, __import__('datetime').date(2026, 1, 1), __import__('datetime').date(2026, 12, 31))],
                     2: [(2, __import__('datetime').date(2026, 1, 1), __import__('datetime').date(2026, 12, 31))],
-                }
-                _smoke_candidates.DICT_CAND_FONCTIONS = {1: [10], 2: [20]}
-                _smoke_candidates.DICT_CAND_AFFECTATIONS = {1: [30], 2: [30]}
+                })
+                _smoke_candidates.DICT_CAND_FONCTIONS.clear()
+                _smoke_candidates.DICT_CAND_FONCTIONS.update({1: [10], 2: [20]})
+                _smoke_candidates.DICT_CAND_AFFECTATIONS.clear()
+                _smoke_candidates.DICT_CAND_AFFECTATIONS.update({1: [30], 2: [30]})
                 _smoke_filters = [
                     {"nomControle": "candidature_dispo", "valeur": (__import__('datetime').date(2026, 6, 1), __import__('datetime').date(2026, 6, 30)), "sql": ""},
                     {"nomControle": "candidature_fonctions", "valeur": [(10, "Animation")], "sql": ""},
