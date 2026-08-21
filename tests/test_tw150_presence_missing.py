@@ -14,5 +14,6 @@ def test_missing_presence_is_guarded_before_indexing():
 
 
 def test_dialog_closes_when_presence_disappeared():
-    assert "if donneesModif is None:" in SOURCE
-    assert "wx.CallAfter(self.parent.EndModal, wx.ID_CANCEL)" in SOURCE
+    assert "if donnees_modif is None:" in SOURCE
+    assert "dialog = _dialog_ancestor(self)" in SOURCE
+    assert "wx.CallAfter(dialog.EndModal, wx.ID_CANCEL)" in SOURCE
