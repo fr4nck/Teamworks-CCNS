@@ -47,3 +47,12 @@ def test_city_management_keeps_search_and_export_contract():
     assert 'self.parent.text_cp_naiss.SetValue' in source
     assert 'self.parent.text_ville.SetValue' in source
     assert "OnItemActivated" in source
+
+
+def test_city_list_finds_dialog_by_ancestor_not_fixed_parent_depth():
+    source = _source()
+    assert "self.dialog = parent" in source
+    assert "while self.dialog is not None and not isinstance(self.dialog, Dialog):" in source
+    assert "self.dialog = self.dialog.GetParent()" in source
+    assert "self.GetGrandParent().exportCP" not in source
+    assert "self.dialog.ExportListeVille" in source
