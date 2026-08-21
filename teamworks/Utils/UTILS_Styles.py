@@ -3,8 +3,8 @@
 """Feuille de styles sémantique de Teamworks.
 
 L'objectif est volontairement proche du Web : les écrans expriment un rôle
-(h1, h2, body, caption...) et non une police/taille/couleur locale. Toute
-évolution visuelle peut ainsi être appliquée depuis un point unique.
+(display, h1..h6, body, caption...) et non une police/taille/couleur locale.
+Toute évolution visuelle peut ainsi être appliquée depuis un point unique.
 """
 
 import wx
@@ -13,30 +13,82 @@ from Utils import UTILS_Customize
 from Utils import UTILS_Interface
 
 
+# La gamme couvre volontairement les tailles historiques rencontrées dans
+# Teamworks (environ 7 à 16 pt) sans conserver leurs valeurs en dur dans les
+# écrans. Les rôles indiquent l'intention ; GetFont() les adapte ensuite à la
+# police native et à l'échelle d'interface.
 TEXT_STYLES = {
+    "display": {
+        "scale": 1.85,
+        "min_points": 18,
+        "weight": wx.FONTWEIGHT_BOLD,
+        "colour": "on_surface",
+        "space_before": 20,
+        "space_after": 10,
+    },
     "h1": {
-        "scale": 1.55,
-        "min_points": 15,
+        "scale": 1.60,
+        "min_points": 16,
         "weight": wx.FONTWEIGHT_BOLD,
         "colour": "on_surface",
         "space_before": 16,
         "space_after": 8,
     },
     "h2": {
-        "scale": 1.30,
-        "min_points": 13,
+        "scale": 1.40,
+        "min_points": 14,
         "weight": wx.FONTWEIGHT_BOLD,
         "colour": "on_surface",
         "space_before": 14,
-        "space_after": 6,
+        "space_after": 7,
     },
     "h3": {
+        "scale": 1.22,
+        "min_points": 12,
+        "weight": wx.FONTWEIGHT_BOLD,
+        "colour": "on_surface",
+        "space_before": 12,
+        "space_after": 6,
+    },
+    "h4": {
         "scale": 1.12,
         "min_points": 11,
         "weight": wx.FONTWEIGHT_BOLD,
         "colour": "on_surface",
         "space_before": 10,
+        "space_after": 5,
+    },
+    "h5": {
+        "scale": 1.05,
+        "min_points": 10,
+        "weight": wx.FONTWEIGHT_BOLD,
+        "colour": "on_surface",
+        "space_before": 8,
         "space_after": 4,
+    },
+    "h6": {
+        "scale": 1.00,
+        "min_points": 9,
+        "weight": wx.FONTWEIGHT_BOLD,
+        "colour": "on_surface_variant",
+        "space_before": 6,
+        "space_after": 3,
+    },
+    "lead": {
+        "scale": 1.12,
+        "min_points": 11,
+        "weight": wx.FONTWEIGHT_NORMAL,
+        "colour": "on_surface",
+        "space_before": 0,
+        "space_after": 8,
+    },
+    "body-large": {
+        "scale": 1.06,
+        "min_points": 10,
+        "weight": wx.FONTWEIGHT_NORMAL,
+        "colour": "on_surface",
+        "space_before": 0,
+        "space_after": 5,
     },
     "body": {
         "scale": 1.00,
@@ -54,6 +106,14 @@ TEXT_STYLES = {
         "space_before": 0,
         "space_after": 4,
     },
+    "body-small": {
+        "scale": 0.90,
+        "min_points": 8,
+        "weight": wx.FONTWEIGHT_NORMAL,
+        "colour": "on_surface",
+        "space_before": 0,
+        "space_after": 3,
+    },
     "label": {
         "scale": 0.95,
         "min_points": 9,
@@ -63,10 +123,26 @@ TEXT_STYLES = {
         "space_after": 2,
     },
     "caption": {
-        "scale": 0.88,
+        "scale": 0.86,
         "min_points": 8,
         "weight": wx.FONTWEIGHT_NORMAL,
         "colour": "on_surface_variant",
+        "space_before": 0,
+        "space_after": 2,
+    },
+    "micro": {
+        "scale": 0.78,
+        "min_points": 7,
+        "weight": wx.FONTWEIGHT_NORMAL,
+        "colour": "on_surface_variant",
+        "space_before": 0,
+        "space_after": 1,
+    },
+    "data-large": {
+        "scale": 1.22,
+        "min_points": 12,
+        "weight": wx.FONTWEIGHT_BOLD,
+        "colour": "on_surface",
         "space_before": 0,
         "space_after": 2,
     },
