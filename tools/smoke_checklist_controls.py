@@ -117,12 +117,11 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 assert _publipost_ctrl.IsItemChecked(0)
 
                 print("TEAMWORKS_SMOKE_CHECKLIST_CONTROLS_READY", flush=True)
-                for _control in reversed(_controls):
-                    if not any(_control is _dialog.panel_contenu.listCtrl for _dialog in _dialogs):
-                        _control.Destroy()
-                for _dialog in reversed(_dialogs):
-                    _dialog.Destroy()
-                _host.Destroy()
+                # Ne détruit pas manuellement les contrôles juste après leur
+                # construction : plusieurs widgets modernes ajustent encore
+                # leurs colonnes via wx.CallAfter. La boucle principale du
+                # smoke s'arrête quelques secondes plus tard et le processus
+                # de recette nettoie alors l'ensemble sans callback orphelin.
             except Exception:
                 import traceback as _smoke_traceback
                 _smoke_traceback.print_exc()
