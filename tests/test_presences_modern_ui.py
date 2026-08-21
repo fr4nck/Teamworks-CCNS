@@ -40,8 +40,9 @@ def test_presence_calendar_has_no_hand_painted_legacy_chrome():
     assert "wx.Font(" not in source
     assert "couleurFondPanneau" not in source
     assert "couleurFondWidgets" not in source
-    assert 'UTILS_Interface.GetToken("primary")' in source
-    assert 'UTILS_Interface.GetToken("warning")' in source
+    assert '"couleurSelect": "primary"' in source
+    assert '"couleurVacances": "warning"' in source
+    assert "UTILS_Interface.GetToken(token)" in source
     assert "def MAJselectionDates" in source
     assert "find_presences_panel" in source
 
