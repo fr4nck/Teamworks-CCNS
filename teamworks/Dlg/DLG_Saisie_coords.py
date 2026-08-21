@@ -8,28 +8,11 @@
 
 import Chemins
 from Utils.UTILS_Traduction import _
-from Utils import UTILS_Interface
+from Utils import UTILS_Interface, UTILS_Styles
 import wx
-from Ctrl import CTRL_Bouton_image
+from Ctrl import CTRL_Bouton_image, CTRL_Texte
 import GestionDB
 from Utils.UTILS_Coordonnees import normaliser_email, normaliser_telephone, normaliser_texte
-
-
-def _dip(window, width, height):
-    try:
-        return window.FromDIP(wx.Size(width, height))
-    except Exception:
-        return wx.Size(width, height)
-
-
-def _section_title(parent, label):
-    ctrl = wx.StaticText(parent, -1, label)
-    font = ctrl.GetFont()
-    font.SetWeight(wx.FONTWEIGHT_BOLD)
-    font.SetPointSize(max(10, font.GetPointSize() + 1))
-    ctrl.SetFont(font)
-    ctrl.SetForegroundColour(UTILS_Interface.GetToken("on_surface"))
-    return ctrl
 
 
 class Dialog(wx.Dialog):
@@ -51,7 +34,7 @@ class Dialog(wx.Dialog):
         self.panel_frame.SetBackgroundColour(UTILS_Interface.GetToken("surface"))
         self.categorieSelect = ""
 
-        self.titre_categories = _section_title(self.panel_frame, _(u"1. Sélectionnez une catégorie"))
+        self.titre_categories = CTRL_Texte.H2(self.panel_frame, _(u"1. Sélectionnez une catégorie"))
         self.bouton_fixe = wx.ToggleButton(self.panel_frame, -1, _(u"Fixe"))
         self.bouton_mobile = wx.ToggleButton(self.panel_frame, -1, _(u"Mobile"))
         self.bouton_fax = wx.ToggleButton(self.panel_frame, -1, _(u"Fax"))
@@ -62,18 +45,21 @@ class Dialog(wx.Dialog):
             "Fax": self.bouton_fax,
             "Email": self.bouton_email,
         }
+        hauteur_action = UTILS_Styles.GetControlMetric("button_min_height")
+        largeur_action = UTILS_Styles.Scale(104)
         for button in self._category_buttons.values():
-            button.SetMinSize(_dip(self, 105, 42))
+            button.SetMinSize((largeur_action, hauteur_action))
+            button.SetFont(UTILS_Styles.GetFont("label"))
 
-        self.titre_infos = _section_title(self.panel_frame, _(u"2. Saisissez les informations"))
-        self.label_info_mail = wx.StaticText(self.panel_frame, -1, _(u"Email"))
+        self.titre_infos = CTRL_Texte.H2(self.panel_frame, _(u"2. Saisissez les informations"))
+        self.label_info_mail = CTRL_Texte.Label(self.panel_frame, _(u"Email"))
         self.text_info_mail = wx.TextCtrl(self.panel_frame, -1, "")
-        self.label_info_tel = wx.StaticText(self.panel_frame, -1, _(u"N° Fixe"))
+        self.label_info_tel = CTRL_Texte.Label(self.panel_frame, _(u"N° Fixe"))
         self.text_info_tel = wx.TextCtrl(self.panel_frame, -1, "", style=wx.TE_CENTRE)
         self.label_info_mail.Hide()
         self.text_info_mail.Hide()
 
-        self.label_intitule = wx.StaticText(self.panel_frame, -1, _(u"Intitulé"))
+        self.label_intitule = CTRL_Texte.Label(self.panel_frame, _(u"Intitulé"))
         self.text_intitule = wx.TextCtrl(self.panel_frame, -1, "")
 
         self.bouton_Ok = CTRL_Bouton_image.CTRL(
@@ -111,40 +97,44 @@ class Dialog(wx.Dialog):
         self.text_info_tel.SetToolTip(wx.ToolTip(_(u"Saisissez ici un numéro de téléphone")))
         self.text_info_mail.SetToolTip(wx.ToolTip(_(u"Saisissez ici une adresse Mail valide")))
         self.text_intitule.SetToolTip(wx.ToolTip(_(u"Vous pouvez, si vous le souhaitez, saisir ici un intitulé. Ex : 'Contact à Rennes' ou 'Domicile des parents'...")))
-        self.SetMinSize(_dip(self, 460, 380))
-        self.SetSize(_dip(self, 560, 450))
+        UTILS_Styles.ApplyWindowProfile(self, "compact")
 
     def __do_layout(self):
+        padding = UTILS_Styles.GetLayoutSpacing("dialog_padding")
+        field_gap = UTILS_Styles.GetLayoutSpacing("field_gap")
+        section_gap = UTILS_Styles.GetLayoutSpacing("section_gap")
+        toolbar_gap = UTILS_Styles.GetLayoutSpacing("toolbar_gap")
+        control_gap = UTILS_Styles.GetLayoutSpacing("control_gap")
+
         sizer_base = wx.BoxSizer(wx.VERTICAL)
-        sizer_base.Add(self.titre_categories, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 16)
+        sizer_base.Add(self.titre_categories, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, padding)
 
         sizer_categories = wx.WrapSizer(wx.HORIZONTAL)
         for button in (self.bouton_fixe, self.bouton_mobile, self.bouton_fax, self.bouton_email):
-            sizer_categories.Add(button, 0, wx.RIGHT | wx.BOTTOM, 8)
-        sizer_base.Add(sizer_categories, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 16)
+            sizer_categories.Add(button, 0, wx.RIGHT | wx.BOTTOM, toolbar_gap)
+        sizer_base.Add(sizer_categories, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, padding)
 
-        sizer_base.Add(self.titre_infos, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 16)
+        sizer_base.Add(self.titre_infos, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, section_gap)
         self.sizer_infos = wx.BoxSizer(wx.VERTICAL)
-        self.sizer_infos.Add(self.label_info_mail, 0, wx.BOTTOM, 4)
-        self.sizer_infos.Add(self.text_info_mail, 0, wx.EXPAND | wx.BOTTOM, 12)
-        self.sizer_infos.Add(self.label_info_tel, 0, wx.BOTTOM, 4)
-        self.sizer_infos.Add(self.text_info_tel, 0, wx.EXPAND | wx.BOTTOM, 12)
-        self.sizer_infos.Add(self.label_intitule, 0, wx.BOTTOM, 4)
+        self.sizer_infos.Add(self.label_info_mail, 0, wx.BOTTOM, control_gap)
+        self.sizer_infos.Add(self.text_info_mail, 0, wx.EXPAND | wx.BOTTOM, field_gap)
+        self.sizer_infos.Add(self.label_info_tel, 0, wx.BOTTOM, control_gap)
+        self.sizer_infos.Add(self.text_info_tel, 0, wx.EXPAND | wx.BOTTOM, field_gap)
+        self.sizer_infos.Add(self.label_intitule, 0, wx.BOTTOM, control_gap)
         self.sizer_infos.Add(self.text_intitule, 0, wx.EXPAND)
-        sizer_base.Add(self.sizer_infos, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 16)
+        sizer_base.Add(self.sizer_infos, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, padding)
 
         sizer_boutons = wx.BoxSizer(wx.HORIZONTAL)
         sizer_boutons.AddStretchSpacer(1)
-        sizer_boutons.Add(self.bouton_Ok, 0, wx.RIGHT, 8)
+        sizer_boutons.Add(self.bouton_Ok, 0, wx.RIGHT, toolbar_gap)
         sizer_boutons.Add(self.bouton_Annuler, 0)
-        sizer_base.Add(sizer_boutons, 0, wx.EXPAND | wx.ALL, 16)
+        sizer_base.Add(sizer_boutons, 0, wx.EXPAND | wx.ALL, padding)
 
         self.panel_frame.SetSizer(sizer_base)
         outer = wx.BoxSizer(wx.VERTICAL)
         outer.Add(self.panel_frame, 1, wx.EXPAND)
         self.SetSizer(outer)
         self.Layout()
-        self.CenterOnScreen()
 
     def _update_category_buttons(self):
         for categorie, button in self._category_buttons.items():
@@ -295,7 +285,7 @@ class Dialog(wx.Dialog):
 
 if __name__ == "__main__":
     app = wx.App(0)
-    dlg = Dialog(None, -1, _(u"Coordonnées"), size=(280, 290))
+    dlg = Dialog(None, -1, _(u"Coordonnées"))
     dlg.ShowModal()
     dlg.Destroy()
     app.MainLoop()
