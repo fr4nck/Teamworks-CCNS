@@ -357,7 +357,7 @@ class Dialog(wx.Dialog):
             jour = int(temp[:2])
             mois = int(temp[3:5])
             annee = int(temp[6:10])
-            date_naiss = datetime.date(annee, mois, annee)
+            date_naiss = datetime.date(annee, mois, jour)
 
         cp_naiss = self.notebook.pageGeneralites.text_cp_naiss.GetValue()
         ville_naiss = self.notebook.pageGeneralites.text_ville_naiss.GetValue()
