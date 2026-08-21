@@ -11,6 +11,7 @@ from typing import Iterable
 
 
 DEFAULT_ENCODINGS = ("utf-8",)
+TIMEOUT_RETURN_CODE = 124
 
 
 def console_safe_text(value: str, encoding: str | None = None) -> str:
@@ -98,14 +99,23 @@ def run_entrypoint(
     log_dir = root / "artifacts" / "runtime-crash" / patched.stem
     env = build_environment(root, teamworks_dir)
     env["TEAMWORKS_LOG_DIR"] = str(log_dir)
-    result = subprocess.run(
-        [sys.executable, str(patched)],
-        cwd=teamworks_dir,
-        env=env,
-        capture_output=True,
-        timeout=timeout,
-        check=False,
-    )
+    try:
+        result = subprocess.run(
+            [sys.executable, str(patched)],
+            cwd=teamworks_dir,
+            env=env,
+            capture_output=True,
+            timeout=timeout,
+            check=False,
+        )
+    except subprocess.TimeoutExpired as exc:
+        stdout = exc.stdout or b""
+        stderr = exc.stderr or b""
+        output = decode_output(stdout) + "\n" + decode_output(stderr)
+        output += f"\nTEAMWORKS_SMOKE_TIMEOUT:{timeout}\n"
+        output = _append_crash_reports(output, log_dir)
+        return TIMEOUT_RETURN_CODE, output
+
     output = decode_output(result.stdout) + "\n" + decode_output(result.stderr)
     output = _append_crash_reports(output, log_dir)
     return result.returncode, output
