@@ -21,12 +21,20 @@ def test_exactly_five_colour_families_are_declared():
     assert '"info": accent["primary"]' in source
 
 
-def test_spacing_scale_and_window_profiles_are_centralised():
+def test_spacing_icons_controls_and_window_profiles_are_centralised():
     source = _read(STYLES)
     for spacing in ("none", "xs", "sm", "md", "lg", "xl", "2xl"):
         assert '"%s"' % spacing in source
     for profile in ("compact", "standard", "wide", "workspace"):
         assert '"%s"' % profile in source
+    for icon in ("micro", "small", "medium", "large", "hero"):
+        assert '"%s"' % icon in source
+    assert "ICON_SIZES" in source
+    assert "CONTROL_METRICS" in source
+    assert '"button_min_height"' in source
+    assert '"footer_min_height"' in source
+    assert "GetIconSize" in source
+    assert "GetControlMetric" in source
     assert "GetLayoutSpacing" in source
     assert "GetWindowSize" in source
     assert "ApplyWindowProfile" in source
@@ -43,3 +51,5 @@ def test_charter_documents_semantic_design_rules():
     assert "compact" in source
     assert "workspace" in source
     assert "H1" in source and "H6" in source
+    assert "Icônes et contrôles" in source
+    assert "CTRL_Section.py" in source
