@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """Contrôles texte sémantiques de Teamworks.
 
-Usage proche des balises HTML : H1, H2, H3, Body, Label et Caption.
+Usage proche du Web : Display, H1 à H6, Lead, Body, Label, Caption, etc.
 Les propriétés visuelles sont centralisées dans Utils.UTILS_Styles.
 """
 
@@ -27,6 +27,10 @@ class Texte(wx.StaticText):
         return UTILS_Styles.GetTextSpacing(self.style_semantique)
 
 
+def Display(parent, texte=u"", **kwargs):
+    return Texte(parent, texte, style="display", **kwargs)
+
+
 def H1(parent, texte=u"", **kwargs):
     return Texte(parent, texte, style="h1", **kwargs)
 
@@ -39,6 +43,26 @@ def H3(parent, texte=u"", **kwargs):
     return Texte(parent, texte, style="h3", **kwargs)
 
 
+def H4(parent, texte=u"", **kwargs):
+    return Texte(parent, texte, style="h4", **kwargs)
+
+
+def H5(parent, texte=u"", **kwargs):
+    return Texte(parent, texte, style="h5", **kwargs)
+
+
+def H6(parent, texte=u"", **kwargs):
+    return Texte(parent, texte, style="h6", **kwargs)
+
+
+def Lead(parent, texte=u"", **kwargs):
+    return Texte(parent, texte, style="lead", **kwargs)
+
+
+def BodyLarge(parent, texte=u"", **kwargs):
+    return Texte(parent, texte, style="body-large", **kwargs)
+
+
 def Body(parent, texte=u"", **kwargs):
     return Texte(parent, texte, style="body", **kwargs)
 
@@ -47,9 +71,21 @@ def BodySecondary(parent, texte=u"", **kwargs):
     return Texte(parent, texte, style="body-secondary", **kwargs)
 
 
+def BodySmall(parent, texte=u"", **kwargs):
+    return Texte(parent, texte, style="body-small", **kwargs)
+
+
 def Label(parent, texte=u"", **kwargs):
     return Texte(parent, texte, style="label", **kwargs)
 
 
 def Caption(parent, texte=u"", **kwargs):
     return Texte(parent, texte, style="caption", **kwargs)
+
+
+def Micro(parent, texte=u"", **kwargs):
+    return Texte(parent, texte, style="micro", **kwargs)
+
+
+def DataLarge(parent, texte=u"", **kwargs):
+    return Texte(parent, texte, style="data-large", **kwargs)
