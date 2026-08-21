@@ -20,11 +20,15 @@ def test_vacation_period_dialog_has_no_rigid_legacy_shell():
     assert "AddStretchSpacer" in source
 
 
-def test_vacation_period_dialog_is_semantic_and_dpi_aware():
+def test_vacation_period_dialog_consumes_graphic_charter():
     source = _source()
     assert 'UTILS_Interface.GetToken("surface")' in source
-    assert 'UTILS_Interface.GetToken("on_surface")' in source
-    assert "FromDIP" in source
+    assert "CTRL_Texte.H2" in source
+    assert "CTRL_Texte.Label" in source
+    assert 'UTILS_Styles.ApplyWindowProfile(self, "compact")' in source
+    assert 'UTILS_Styles.GetLayoutSpacing("dialog_padding")' in source
+    assert "FromDIP" not in source
+    assert "SetPointSize" not in source
 
 
 def test_vacation_period_keeps_persistence_and_validation_contract():
