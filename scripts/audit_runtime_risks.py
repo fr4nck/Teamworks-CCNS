@@ -147,6 +147,193 @@ def module_binding_lines(tree: ast.Module) -> dict[str, int]:
     return bindings
 
 
+def module_name_for_path(root: Path, path: Path) -> str:
+    """Return the import name used by Teamworks for a project Python file."""
+    rel = path.relative_to(root)
+    parts = list(rel.parts)
+    if parts and parts[0] == "teamworks":
+        parts = parts[1:]
+    if not parts:
+        return ""
+    filename = parts[-1]
+    if filename == "__init__.py":
+        parts = parts[:-1]
+    else:
+        parts[-1] = Path(filename).stem
+    return ".".join(parts)
+
+
+def dotted_name(node: ast.AST) -> str | None:
+    if isinstance(node, ast.Name):
+        return node.id
+    if isinstance(node, ast.Attribute):
+        parent = dotted_name(node.value)
+        if parent:
+            return f"{parent}.{node.attr}"
+    return None
+
+
+def module_import_aliases(tree: ast.Module, current_module: str) -> dict[str, str]:
+    """Map module-scope import aliases to fully qualified project references."""
+    aliases: dict[str, str] = {}
+    package = current_module.rsplit(".", 1)[0] if "." in current_module else ""
+
+    for node in tree.body:
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                if alias.asname:
+                    aliases[alias.asname] = alias.name
+                else:
+                    root_name = alias.name.split(".", 1)[0]
+                    aliases[root_name] = root_name
+        elif isinstance(node, ast.ImportFrom):
+            base = node.module or ""
+            if node.level:
+                package_parts = package.split(".") if package else []
+                up = max(0, node.level - 1)
+                if up:
+                    package_parts = package_parts[:-up] if up <= len(package_parts) else []
+                base_parts = package_parts + ([base] if base else [])
+                base = ".".join(part for part in base_parts if part)
+            for alias in node.names:
+                if alias.name == "*":
+                    continue
+                binding = alias.asname or alias.name
+                aliases[binding] = ".".join(part for part in (base, alias.name) if part)
+    return aliases
+
+
+def project_module_path(root: Path, module_name: str) -> Path | None:
+    """Resolve a project import name without importing or executing the module."""
+    if not module_name:
+        return None
+    parts = module_name.split(".")
+    candidates = [
+        root.joinpath(*parts).with_suffix(".py"),
+        root.joinpath(*parts, "__init__.py"),
+        root.joinpath("teamworks", *parts).with_suffix(".py"),
+        root.joinpath("teamworks", *parts, "__init__.py"),
+    ]
+    for candidate in candidates:
+        if candidate.is_file():
+            return candidate
+    return None
+
+
+def resolve_project_base(
+    root: Path,
+    path: Path,
+    tree: ast.Module,
+    base: ast.AST,
+) -> tuple[Path, str] | None:
+    """Resolve a base expression such as CORE.Panel to a project class."""
+    raw = dotted_name(base)
+    if not raw:
+        return None
+
+    current_module = module_name_for_path(root, path)
+    aliases = module_import_aliases(tree, current_module)
+    first, dot, rest = raw.partition(".")
+    if first in aliases:
+        expanded = aliases[first]
+        if dot:
+            expanded = f"{expanded}.{rest}"
+    else:
+        expanded = raw
+
+    if "." not in expanded:
+        module_name = current_module
+        class_name = expanded
+    else:
+        module_name, class_name = expanded.rsplit(".", 1)
+
+    base_path = project_module_path(root, module_name)
+    if base_path is None:
+        return None
+    return base_path, class_name
+
+
+def project_class_methods(
+    root: Path,
+    path: Path,
+    class_name: str,
+    cache: dict[tuple[str, str], frozenset[str]],
+    visiting: set[tuple[str, str]] | None = None,
+) -> frozenset[str]:
+    """Collect methods declared by a project class and its resolvable project bases."""
+    key = (path.resolve().as_posix(), class_name)
+    if key in cache:
+        return cache[key]
+
+    if visiting is None:
+        visiting = set()
+    if key in visiting:
+        return frozenset()
+    visiting.add(key)
+
+    try:
+        lines = source_lines(path)
+        tree = ast.parse("\n".join(lines) + "\n", filename=path.as_posix())
+    except (OSError, SyntaxError):
+        visiting.remove(key)
+        cache[key] = frozenset()
+        return cache[key]
+
+    class_node = next(
+        (
+            node
+            for node in tree.body
+            if isinstance(node, ast.ClassDef) and node.name == class_name
+        ),
+        None,
+    )
+    if class_node is None:
+        visiting.remove(key)
+        cache[key] = frozenset()
+        return cache[key]
+
+    methods = {
+        node.name
+        for node in class_node.body
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+    }
+    for base in class_node.bases:
+        target = resolve_project_base(root, path, tree, base)
+        if target is None:
+            continue
+        base_path, base_class = target
+        methods.update(
+            project_class_methods(
+                root,
+                base_path,
+                base_class,
+                cache,
+                visiting,
+            )
+        )
+
+    visiting.remove(key)
+    cache[key] = frozenset(methods)
+    return cache[key]
+
+
+def inherited_project_methods(
+    root: Path,
+    path: Path,
+    tree: ast.Module,
+    class_node: ast.ClassDef,
+    cache: dict[tuple[str, str], frozenset[str]],
+) -> frozenset[str]:
+    methods: set[str] = set()
+    for base in class_node.bases:
+        target = resolve_project_base(root, path, tree, base)
+        if target is None:
+            continue
+        base_path, base_class = target
+        methods.update(project_class_methods(root, base_path, base_class, cache))
+    return frozenset(methods)
+
+
 def guarded_compatibility_loads(tree: ast.Module) -> set[tuple[str, int]]:
     """Identify ``try/name except NameError/name = replacement`` probes."""
     guarded: set[tuple[str, int]] = set()
@@ -212,13 +399,21 @@ def contains_float_width_risk(node: ast.AST) -> bool:
     return False
 
 
-def audit_ast(root: Path, path: Path, lines: list[str]) -> list[Finding]:
+def audit_ast(
+    root: Path,
+    path: Path,
+    lines: list[str],
+    method_cache: dict[tuple[str, str], frozenset[str]] | None = None,
+) -> list[Finding]:
     rel = path.relative_to(root).as_posix()
     text = "\n".join(lines) + "\n"
     try:
         tree = ast.parse(text, filename=rel)
     except SyntaxError as exc:
         return [Finding("syntax-unparsed", rel, exc.lineno or 0, exc.msg)]
+
+    if method_cache is None:
+        method_cache = {}
 
     findings: list[Finding] = []
     parents = {
@@ -275,6 +470,10 @@ def audit_ast(root: Path, path: Path, lines: list[str]) -> list[Finding]:
             for node in class_node.body
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
         }
+        inherited_methods = inherited_project_methods(
+            root, path, tree, class_node, method_cache
+        )
+        available_methods = methods | set(inherited_methods)
         for node in ast.walk(class_node):
             if not isinstance(node, ast.Call):
                 continue
@@ -288,7 +487,7 @@ def audit_ast(root: Path, path: Path, lines: list[str]) -> list[Finding]:
                 isinstance(handler, ast.Attribute)
                 and isinstance(handler.value, ast.Name)
                 and handler.value.id == "self"
-                and handler.attr not in methods
+                and handler.attr not in available_methods
             ):
                 findings.append(
                     Finding(
@@ -304,11 +503,12 @@ def audit_ast(root: Path, path: Path, lines: list[str]) -> list[Finding]:
 def run(root: Path) -> dict:
     findings: list[Finding] = []
     files = list(iter_python_files(root))
+    method_cache: dict[tuple[str, str], frozenset[str]] = {}
     for path in files:
         lines = source_lines(path)
         findings.extend(audit_text(root, path, lines))
         findings.extend(audit_compile_warnings(root, path, lines))
-        findings.extend(audit_ast(root, path, lines))
+        findings.extend(audit_ast(root, path, lines, method_cache))
 
     counts = Counter(item.category for item in findings)
     top_files = Counter(item.path for item in findings).most_common(25)
