@@ -17,11 +17,15 @@ def test_auto_holidays_dialog_has_no_rigid_legacy_layout():
     assert "AddStretchSpacer" in source
 
 
-def test_auto_holidays_dialog_uses_semantic_dpi_aware_shell():
+def test_auto_holidays_dialog_consumes_semantic_charter():
     source = _source()
     assert 'UTILS_Interface.GetToken("surface")' in source
-    assert 'UTILS_Interface.GetToken("on_surface_variant")' in source
-    assert "FromDIP" in source
+    assert "CTRL_Texte.BodySecondary" in source
+    assert "CTRL_Texte.H2" in source
+    assert "CTRL_Texte.Label" in source
+    assert 'UTILS_Styles.ApplyWindowProfile(self, "compact")' in source
+    assert 'UTILS_Styles.GetLayoutSpacing("dialog_padding")' in source
+    assert "FromDIP" not in source
     assert ".Wrap(" in source
 
 
