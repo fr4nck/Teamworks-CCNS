@@ -8,9 +8,9 @@
 
 import Chemins
 from Utils.UTILS_Traduction import _
-from Utils import UTILS_Interface
+from Utils import UTILS_Interface, UTILS_Styles
 import wx
-from Ctrl import CTRL_Bouton_image
+from Ctrl import CTRL_Bouton_image, CTRL_Texte
 import GestionDB
 import datetime
 import FonctionsPerso
@@ -18,23 +18,6 @@ if 'phoenix' in wx.PlatformInfo:
     from wx.adv import DatePickerCtrl, DP_DROPDOWN
 else:
     from wx import DatePickerCtrl, DP_DROPDOWN
-
-
-def _dip(window, width, height):
-    try:
-        return window.FromDIP(wx.Size(width, height))
-    except Exception:
-        return wx.Size(width, height)
-
-
-def _section_title(parent, label):
-    ctrl = wx.StaticText(parent, -1, label)
-    font = ctrl.GetFont()
-    font.SetWeight(wx.FONTWEIGHT_BOLD)
-    font.SetPointSize(max(10, font.GetPointSize() + 1))
-    ctrl.SetFont(font)
-    ctrl.SetForegroundColour(UTILS_Interface.GetToken("on_surface"))
-    return ctrl
 
 
 class Dialog(wx.Dialog):
@@ -50,19 +33,17 @@ class Dialog(wx.Dialog):
         self.panel_base = wx.Panel(self, -1)
         self.panel_base.SetBackgroundColour(UTILS_Interface.GetToken("surface"))
 
-        self.titre_periode = _section_title(self.panel_base, _(u"Nom de la période"))
+        self.titre_periode = CTRL_Texte.H2(self.panel_base, _(u"Nom de la période"))
         choices = [_(u"Février"), _(u"Pâques"), _(u"Eté"), _(u"Toussaint"), _(u"Noël")]
-        self.label_nom = wx.StaticText(self.panel_base, -1, _(u"Nom"))
+        self.label_nom = CTRL_Texte.Label(self.panel_base, _(u"Nom"))
         self.choice_nom = wx.Choice(self.panel_base, -1, choices=choices)
-        self.choice_nom.SetMinSize(_dip(self, 180, -1))
-        self.label_annee = wx.StaticText(self.panel_base, -1, _(u"Année"))
+        self.label_annee = CTRL_Texte.Label(self.panel_base, _(u"Année"))
         self.text_annee = wx.TextCtrl(self.panel_base, -1, "", style=wx.TE_CENTRE)
-        self.text_annee.SetMinSize(_dip(self, 110, -1))
 
-        self.titre_dates = _section_title(self.panel_base, _(u"Dates de la période"))
-        self.label_dateDebut = wx.StaticText(self.panel_base, -1, _(u"Du"))
+        self.titre_dates = CTRL_Texte.H2(self.panel_base, _(u"Dates de la période"))
+        self.label_dateDebut = CTRL_Texte.Label(self.panel_base, _(u"Du"))
         self.datepicker_dateDebut = DatePickerCtrl(self.panel_base, -1, style=DP_DROPDOWN)
-        self.label_dateFin = wx.StaticText(self.panel_base, -1, _(u"Au"))
+        self.label_dateFin = CTRL_Texte.Label(self.panel_base, _(u"Au"))
         self.datepicker_dateFin = DatePickerCtrl(self.panel_base, -1, style=DP_DROPDOWN)
 
         self.bouton_aide = CTRL_Bouton_image.CTRL(
@@ -103,45 +84,58 @@ class Dialog(wx.Dialog):
         self.bouton_aide.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour obtenir de l'aide")))
         self.bouton_ok.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour valider")))
         self.bouton_annuler.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour annuler la saisie")))
-        self.SetMinSize(_dip(self, 520, 390))
-        self.SetSize(_dip(self, 650, 460))
+        UTILS_Styles.ApplyWindowProfile(self, "compact")
 
     def __do_layout(self):
+        dialog_padding = UTILS_Styles.GetLayoutSpacing("dialog_padding")
+        field_gap = UTILS_Styles.GetLayoutSpacing("field_gap")
+        section_gap = UTILS_Styles.GetLayoutSpacing("section_gap")
+        toolbar_gap = UTILS_Styles.GetLayoutSpacing("toolbar_gap")
+
         sizer_base = wx.BoxSizer(wx.VERTICAL)
 
         sizer_periode = wx.BoxSizer(wx.VERTICAL)
-        sizer_periode.Add(self.titre_periode, 0, wx.BOTTOM, 8)
+        sizer_periode.Add(self.titre_periode, 0, wx.BOTTOM, field_gap)
         row_periode = wx.BoxSizer(wx.HORIZONTAL)
-        row_periode.Add(self.label_nom, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 6)
-        row_periode.Add(self.choice_nom, 1, wx.RIGHT, 16)
-        row_periode.Add(self.label_annee, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 6)
-        row_periode.Add(self.text_annee, 0)
+        row_periode.Add(self.label_nom, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, field_gap)
+        row_periode.Add(self.choice_nom, 2, wx.RIGHT, section_gap)
+        row_periode.Add(self.label_annee, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, field_gap)
+        row_periode.Add(self.text_annee, 1)
         sizer_periode.Add(row_periode, 0, wx.EXPAND)
-        sizer_base.Add(sizer_periode, 0, wx.EXPAND | wx.ALL, 16)
+        sizer_base.Add(sizer_periode, 0, wx.EXPAND | wx.ALL, dialog_padding)
 
         sizer_dates = wx.BoxSizer(wx.VERTICAL)
-        sizer_dates.Add(self.titre_dates, 0, wx.BOTTOM, 8)
+        sizer_dates.Add(self.titre_dates, 0, wx.BOTTOM, field_gap)
         row_dates = wx.BoxSizer(wx.HORIZONTAL)
-        row_dates.Add(self.label_dateDebut, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 6)
-        row_dates.Add(self.datepicker_dateDebut, 1, wx.RIGHT, 16)
-        row_dates.Add(self.label_dateFin, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 6)
+        row_dates.Add(self.label_dateDebut, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, field_gap)
+        row_dates.Add(self.datepicker_dateDebut, 1, wx.RIGHT, section_gap)
+        row_dates.Add(self.label_dateFin, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, field_gap)
         row_dates.Add(self.datepicker_dateFin, 1)
         sizer_dates.Add(row_dates, 0, wx.EXPAND)
-        sizer_base.Add(sizer_dates, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 16)
+        sizer_base.Add(
+            sizer_dates,
+            0,
+            wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM,
+            dialog_padding,
+        )
 
         sizer_boutons = wx.BoxSizer(wx.HORIZONTAL)
-        sizer_boutons.Add(self.bouton_aide, 0, wx.RIGHT, 8)
+        sizer_boutons.Add(self.bouton_aide, 0, wx.RIGHT, toolbar_gap)
         sizer_boutons.AddStretchSpacer(1)
-        sizer_boutons.Add(self.bouton_ok, 0, wx.RIGHT, 8)
+        sizer_boutons.Add(self.bouton_ok, 0, wx.RIGHT, toolbar_gap)
         sizer_boutons.Add(self.bouton_annuler, 0)
-        sizer_base.Add(sizer_boutons, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 16)
+        sizer_base.Add(
+            sizer_boutons,
+            0,
+            wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM,
+            dialog_padding,
+        )
 
         self.panel_base.SetSizer(sizer_base)
         outer = wx.BoxSizer(wx.VERTICAL)
         outer.Add(self.panel_base, 1, wx.EXPAND)
         self.SetSizer(outer)
         self.Layout()
-        self.CenterOnScreen()
 
     def Importation(self):
         DB = GestionDB.DB()
