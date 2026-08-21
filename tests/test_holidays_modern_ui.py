@@ -28,8 +28,12 @@ def test_holidays_dialog_has_no_legacy_tiny_actions_or_sunken_lists():
     assert "CTRL_Bouton_image.CTRL" in source
 
 
-def test_holidays_dialog_uses_semantic_surfaces_and_dpi_sizes():
+def test_holidays_dialog_consumes_graphic_charter():
     source = _source()
     assert 'UTILS_Interface.GetToken("surface")' in source
     assert 'UTILS_Interface.GetToken("surface_container_lowest")' in source
-    assert "FromDIP" in source
+    assert "CTRL_Texte.H2" in source
+    assert 'UTILS_Styles.ApplyWindowProfile(self, "wide")' in source
+    assert 'UTILS_Styles.GetLayoutSpacing("dialog_padding")' in source
+    assert "FromDIP" not in source
+    assert "SetPointSize" not in source
