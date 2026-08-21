@@ -12,10 +12,14 @@ from smoke_runtime import github_error_summary, run_entrypoint, write_diagnostic
 ROOT = Path(__file__).resolve().parents[1]
 TEAMWORKS_DIR = ROOT / "teamworks"
 SOURCE = TEAMWORKS_DIR / "Teamworks.py"
+CORE_SOURCE = TEAMWORKS_DIR / "Teamworks_core.py"
 PATCHED = TEAMWORKS_DIR / "Teamworks_secondary_checklists_smoke.py"
+PATCHED_CORE = TEAMWORKS_DIR / "Teamworks_core_secondary_checklists_smoke.py"
 REPORT_DIR = ROOT / "artifacts" / "checklist-controls-smoke"
 REPORT = REPORT_DIR / "diagnostic.txt"
 MARKER_LINE = '            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)'
+CORE_IMPORT = "import Teamworks_core as CORE"
+PATCHED_CORE_IMPORT = "import Teamworks_core_secondary_checklists_smoke as CORE"
 READY_MARKER = "TEAMWORKS_SMOKE_CHECKLIST_CONTROLS_READY"
 FAILURE_MARKER = "TEAMWORKS_SMOKE_CHECKLIST_CONTROLS_FAILED"
 
@@ -89,7 +93,7 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 _controls.append(_stats.listCtrl_Personnes(_host, listePersonnes=[]))
 
                 print("TEAMWORKS_SMOKE_CHECKLIST_STAGE:modeles", flush=True)
-                _controls.append(_modeles.listCtrl_Modeles(_host))
+                _controls.append(_modeles.listCtrl_Modeles(_host, owner=_host))
 
                 print("TEAMWORKS_SMOKE_CHECKLIST_STAGE:modele-contrat", flush=True)
                 _modele_context = wx.Panel(_host, -1)
@@ -129,13 +133,20 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
 
 
 def build_patched_entrypoint() -> int:
-    source = SOURCE.read_text(encoding="utf-8")
-    marker_count = source.count(MARKER_LINE)
+    core_source = CORE_SOURCE.read_text(encoding="utf-8")
+    marker_count = core_source.count(MARKER_LINE)
     if marker_count < 1:
-        raise RuntimeError(f"marqueur principal introuvable: count={marker_count}")
-    patched = source.replace(MARKER_LINE, INJECTION, 1)
-    if READY_MARKER not in patched or FAILURE_MARKER not in patched:
+        raise RuntimeError(f"marqueur principal introuvable dans le core: count={marker_count}")
+    patched_core = core_source.replace(MARKER_LINE, INJECTION, 1)
+    if READY_MARKER not in patched_core or FAILURE_MARKER not in patched_core:
         raise RuntimeError("marqueurs secondaires absents après injection")
+    compile(patched_core, str(PATCHED_CORE), "exec")
+    PATCHED_CORE.write_text(patched_core, encoding="utf-8")
+
+    source = SOURCE.read_text(encoding="utf-8")
+    if source.count(CORE_IMPORT) != 1:
+        raise RuntimeError("import du core moderne introuvable ou ambigu")
+    patched = source.replace(CORE_IMPORT, PATCHED_CORE_IMPORT, 1)
     compile(patched, str(PATCHED), "exec")
     PATCHED.write_text(patched, encoding="utf-8")
     return marker_count
@@ -182,6 +193,7 @@ def main() -> int:
         return 3
     finally:
         PATCHED.unlink(missing_ok=True)
+        PATCHED_CORE.unlink(missing_ok=True)
 
 
 if __name__ == "__main__":
