@@ -47,8 +47,12 @@ def test_model_application_lists_use_one_checkbox_implementation():
     assert '_CheckboxFallback = object if _PHOENIX else CheckListCtrlMixin' in source
     assert source.count("self.EnableCheckBoxes(True)") == 2
     assert source.count("CheckListCtrlMixin.__init__(self)") == 2
-    assert source.count("EVT_LIST_ITEM_CHECKED") == 2
-    assert source.count("EVT_LIST_ITEM_UNCHECKED") == 2
+    assert source.count(
+        "self.Bind(wx.EVT_LIST_ITEM_CHECKED, self.OnNativeCheckItem)"
+    ) == 2
+    assert source.count(
+        "self.Bind(wx.EVT_LIST_ITEM_UNCHECKED, self.OnNativeCheckItem)"
+    ) == 2
     assert "wx.SUNKEN_BORDER" not in source
 
 
