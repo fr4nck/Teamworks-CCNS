@@ -25,7 +25,7 @@ def test_scenarios_page_is_simple_and_expansive():
     assert 'GetToken("surface")' in source
 
 
-def test_questionnaire_uses_available_width_instead_of_335_pixels():
+def test_questionnaire_uses_available_width_and_semantic_charter():
     source = _source(QUESTIONNAIRE)
     assert "FlexGridSizer" not in source
     assert "largeurReponse=335" not in source
@@ -35,15 +35,22 @@ def test_questionnaire_uses_available_width_instead_of_335_pixels():
     assert "SetColumnWidth(1, largeur_reponse)" in source
     assert "track.largeur = largeur_ctrl" in source
     assert "CalculatePositions" in source
+    assert "CTRL_Texte.H2" in source
+    assert 'UTILS_Styles.GetLayoutSpacing("content_padding")' in source
+    assert "SetPointSize" not in source
 
 
-def test_recruitment_page_uses_labeled_actions_and_no_vertical_button_grids():
+def test_recruitment_page_uses_charter_labeled_actions_and_flexible_tables():
     source = _source(CANDIDATURES)
     assert "FlexGridSizer" not in source
     assert "StaticBoxSizer" not in source
     assert ".Fit(self)" not in source
     assert "wx.WrapSizer" in source
     assert "CTRL_Bouton_image.CTRL" in source
+    assert "CTRL_Texte.H2" in source
+    assert 'UTILS_Styles.GetLayoutSpacing("toolbar_gap")' in source
+    assert 'UTILS_Styles.GetLayoutSpacing("content_padding")' in source
+    assert "Images/16x16/" not in source
     assert 'texte=label' in source
     assert '_(u"Ajouter")' in source
     assert '_(u"Modifier")' in source
