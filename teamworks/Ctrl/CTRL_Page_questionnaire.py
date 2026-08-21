@@ -7,8 +7,8 @@
 #-----------------------------------------------------------
 
 import wx
-from Ctrl import CTRL_Questionnaire
-from Utils import UTILS_Interface
+from Ctrl import CTRL_Questionnaire, CTRL_Texte
+from Utils import UTILS_Interface, UTILS_Styles
 import GestionDB
 
 
@@ -21,28 +21,26 @@ class Panel(wx.Panel):
         self._ajustement_en_cours = False
         self.SetBackgroundColour(UTILS_Interface.GetToken("surface"))
 
-        self.titre = wx.StaticText(self, -1, "Questionnaire")
-        font = self.titre.GetFont()
-        font.SetWeight(wx.FONTWEIGHT_BOLD)
-        font.SetPointSize(max(11, font.GetPointSize() + 2))
-        self.titre.SetFont(font)
+        self.titre = CTRL_Texte.H2(self, "Questionnaire")
 
-        # Les valeurs ne sont que des minima d'initialisation : OnSize répartit
-        # ensuite toute la largeur réellement disponible.
+        # Ces valeurs sont uniquement des minima de construction ; la largeur
+        # visible est redistribuée ensuite par AjusterLargeurs().
         self.ctrl_questionnaire = CTRL_Questionnaire.CTRL(
             self,
             type="individu",
             IDindividu=self.IDpersonne,
-            largeurQuestion=300,
-            largeurReponse=420,
+            largeurQuestion=UTILS_Styles.Scale(300),
+            largeurReponse=UTILS_Styles.Scale(420),
         )
         self.ctrl_questionnaire.SetBackgroundColour(
             UTILS_Interface.GetToken("surface_container_lowest")
         )
 
+        padding = UTILS_Styles.GetLayoutSpacing("content_padding")
+        field_gap = UTILS_Styles.GetLayoutSpacing("field_gap")
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.titre, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 10)
-        sizer.Add(self.ctrl_questionnaire, 1, wx.EXPAND | wx.ALL, 8)
+        sizer.Add(self.titre, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, padding)
+        sizer.Add(self.ctrl_questionnaire, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP | wx.BOTTOM, field_gap)
         self.SetSizer(sizer)
 
         self.Bind(wx.EVT_SIZE, self.OnSize)
@@ -57,16 +55,20 @@ class Panel(wx.Panel):
         """Répartit la largeur entre question et réponse, contrôles compris."""
         if self._ajustement_en_cours:
             return
+        marge = UTILS_Styles.GetLayoutSpacing("content_padding") * 2
         try:
-            largeur = self.ctrl_questionnaire.GetClientSize().GetWidth() - 28
+            largeur = self.ctrl_questionnaire.GetClientSize().GetWidth() - marge
         except Exception:
             return
-        if largeur < 520:
+        if largeur < UTILS_Styles.Scale(520):
             return
 
-        largeur_question = max(240, int(largeur * 0.38))
-        largeur_reponse = max(280, largeur - largeur_question)
-        largeur_ctrl = max(260, largeur_reponse - 12)
+        largeur_question = max(UTILS_Styles.Scale(240), int(largeur * 0.38))
+        largeur_reponse = max(UTILS_Styles.Scale(280), largeur - largeur_question)
+        largeur_ctrl = max(
+            UTILS_Styles.Scale(260),
+            largeur_reponse - UTILS_Styles.GetLayoutSpacing("field_gap"),
+        )
 
         self._ajustement_en_cours = True
         try:
