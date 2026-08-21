@@ -11,13 +11,16 @@ Exemples :
 - un titre de page demande `H1`, pas `16 pt gras` ;
 - un état bloquant demande `danger`, pas `rouge` ;
 - un espace entre deux champs demande `field_gap`, pas `8 px` ;
+- une icône standard demande `medium`, pas `20 x 20` ;
+- un bouton demande `button_min_height`, pas `36 px` ;
 - une grande fenêtre métier demande le profil `wide`, pas `890 x 600`.
 
 Les sources de vérité sont :
 
 - `teamworks/Utils/UTILS_Interface.py` pour les couleurs ;
-- `teamworks/Utils/UTILS_Styles.py` pour la typographie, les espacements et les dimensions ;
-- `teamworks/Ctrl/CTRL_Texte.py` pour les composants texte sémantiques.
+- `teamworks/Utils/UTILS_Styles.py` pour la typographie, les espacements, les icônes, les contrôles et les dimensions ;
+- `teamworks/Ctrl/CTRL_Texte.py` pour les composants texte sémantiques ;
+- `teamworks/Ctrl/CTRL_Section.py` pour les sections visuelles réutilisables.
 
 ## Couleurs : cinq familles maximum
 
@@ -80,6 +83,20 @@ Les écrans préfèrent les rôles :
 - `toolbar_gap`
 - `page_gap`
 
+## Icônes et contrôles
+
+Les tailles d'icônes appartiennent à une gamme unique :
+
+- `micro`
+- `small`
+- `medium`
+- `large`
+- `hero`
+
+Les écrans métier ne fixent pas eux-mêmes la taille d'une icône. `CTRL_Bouton_image` consomme cette gamme et l'échelle d'interface.
+
+Les dimensions communes des contrôles sont également centralisées : hauteur minimale des boutons, marge d'icône, hauteur de toolbar, hauteur de footer, etc. Une évolution de densité doit donc être possible depuis `UTILS_Styles.py`.
+
 ## Dimensions de fenêtres
 
 Les fenêtres ne doivent plus être conçues autour d'une résolution historique précise.
@@ -112,6 +129,7 @@ Dans les écrans `Ctrl` et `Dlg`, éviter toute nouvelle occurrence de :
 - `wx.Font(...)` ou `SetPointSize(...)` ;
 - `wx.Colour(...)` pour le rendu normal ;
 - couleurs nommées comme `RED`, `PINK`, `BLUE` ;
+- tailles d'icônes codées localement ;
 - `SetSize((...))` ou `SetMinSize((...))` arbitraire pour une fenêtre ;
 - colonnes figées qui pourraient absorber l'espace disponible ;
 - `Fit(self)` comme stratégie de dimensionnement d'un dialogue métier ;
@@ -121,4 +139,4 @@ Les exceptions techniques doivent rester rares, localisées et commentées.
 
 ## Objectif de durabilité
 
-Une future évolution de la charte — nouvelle couleur primaire, nouvelle densité, typographie plus grande, nouvelle proportion des fenêtres — doit être réalisable principalement dans les modules centraux, sans campagne de retouche manuelle sur l'ensemble du logiciel.
+Une future évolution de la charte — nouvelle couleur primaire, nouvelle densité, typographie plus grande, nouvelles tailles d'icônes, nouvelle proportion des fenêtres — doit être réalisable principalement dans les modules centraux, sans campagne de retouche manuelle sur l'ensemble du logiciel.
