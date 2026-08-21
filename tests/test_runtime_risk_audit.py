@@ -38,7 +38,7 @@ def test_bound_handler_inherited_from_project_core_is_accepted(tmp_path):
     wrapper = dlg / "sample.py"
 
     core.write_text(
-        """class Base:\n"
+        "class Base:\n"
         "    def OnSave(self, event):\n"
         "        pass\n\n"
         "class Panel(Base):\n"
@@ -46,7 +46,7 @@ def test_bound_handler_inherited_from_project_core_is_accepted(tmp_path):
         encoding="utf-8",
     )
     wrapper.write_text(
-        """from Dlg import sample_core as CORE\n\n"
+        "from Dlg import sample_core as CORE\n\n"
         "class Panel(CORE.Panel):\n"
         "    def __init__(self):\n"
         "        self.Bind(None, self.OnSave)\n",
@@ -69,7 +69,7 @@ def test_genuinely_missing_bound_handler_is_still_reported(tmp_path):
         encoding="utf-8",
     )
     wrapper.write_text(
-        """from Dlg import sample_core as CORE\n\n"
+        "from Dlg import sample_core as CORE\n\n"
         "class Panel(CORE.Panel):\n"
         "    def __init__(self):\n"
         "        self.Bind(None, self.DoesNotExist)\n",
