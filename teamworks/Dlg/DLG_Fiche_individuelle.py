@@ -263,7 +263,7 @@ class Dialog(wx.Dialog):
 
     def __do_layout(self):
         sizer_header_textes = wx.BoxSizer(wx.VERTICAL)
-        sizer_header_textes.Add(self.label_hd_CatId, 0, wx.ALIGN_RIGHT | wx.EXPAND)
+        sizer_header_textes.Add(self.label_hd_CatId, 0, wx.EXPAND)
         sizer_header_textes.Add(self.static_line_1, 0, wx.TOP | wx.BOTTOM | wx.EXPAND, 6)
         sizer_header_textes.Add(self.label_hd_nomPrenom, 0, wx.BOTTOM, 8)
         sizer_header_textes.Add(self.label_hd_adresse, 0, wx.BOTTOM, 3)
@@ -357,7 +357,7 @@ class Dialog(wx.Dialog):
             jour = int(temp[:2])
             mois = int(temp[3:5])
             annee = int(temp[6:10])
-            date_naiss = datetime.date(annee, mois, jour)
+            date_naiss = datetime.date(annee, mois, annee)
 
         cp_naiss = self.notebook.pageGeneralites.text_cp_naiss.GetValue()
         ville_naiss = self.notebook.pageGeneralites.text_ville_naiss.GetValue()
