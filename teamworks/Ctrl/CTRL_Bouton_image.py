@@ -8,8 +8,7 @@
 # Licence:         Licence GNU GPL
 #------------------------------------------------------------------------
 
-from Utils import UTILS_Customize
-from Utils import UTILS_Interface
+from Utils import UTILS_Interface, UTILS_Styles
 import wx
 
 import PIL.Image as Image
@@ -25,43 +24,18 @@ def PILtoWx(image):
     return imagewx
 
 
-def _echelle_interface():
-    """Retourne l'échelle UI, avec lecture de l'ancienne clé en repli."""
-    try:
-        valeur = UTILS_Customize.GetValeur(
-            "interface",
-            "echelle_interface",
-            "",
-            ajouter_si_manquant=False,
-        )
-        if valeur in (None, ""):
-            valeur = UTILS_Customize.GetValeur(
-                "interface", "echelle_police", "100", type_valeur=int
-            )
-        return max(80, min(200, int(valeur)))
-    except Exception:
-        return 100
-
-
-def _echelle_valeur(valeur, minimum=0):
-    return max(minimum, int(round(valeur * _echelle_interface() / 100.0)))
-
-
 def _echelle_taille(taille):
-    return (
-        _echelle_valeur(taille[0], 1),
-        _echelle_valeur(taille[1], 1),
-    )
+    return tuple(UTILS_Styles.Scale(valeur) for valeur in taille)
 
 
 def _echelle_marges(marges):
     if isinstance(marges, tuple):
-        return tuple(_echelle_valeur(valeur) for valeur in marges)
-    return _echelle_valeur(marges)
+        return tuple(UTILS_Styles.Scale(valeur, minimum=0) for valeur in marges)
+    return UTILS_Styles.Scale(marges, minimum=0)
 
 
 class CTRL(wx.Button):
-    """Bouton natif Teamworks avec icône et texte adaptés à l'échelle UI."""
+    """Bouton natif Teamworks consommant la charte graphique centrale."""
 
     def __init__(
         self,
@@ -69,19 +43,22 @@ class CTRL(wx.Button):
         id=-1,
         texte="",
         cheminImage=None,
-        tailleImage=(20, 20),
-        margesImage=(4, 0, 0, 0),
+        tailleImage=None,
+        margesImage=None,
         positionImage=wx.LEFT,
-        margesTexte=(0, 1),
+        margesTexte=None,
     ):
         wx.Button.__init__(self, parent, id=id, label=texte)
         self.parent = parent
         self.texte = texte
         self.cheminImage = cheminImage
-        self.tailleImage = tailleImage
-        self.margesImage = margesImage
+        self.tailleImage = tailleImage or UTILS_Styles.ICON_SIZES["medium"] * 2
+        if isinstance(self.tailleImage, tuple) is False:
+            self.tailleImage = (self.tailleImage, self.tailleImage)
+        marge_icone = UTILS_Styles.CONTROL_METRICS["button_icon_margin"]
+        self.margesImage = margesImage if margesImage is not None else (marge_icone, 0, 0, 0)
         self.positionImage = positionImage
-        self.margesTexte = margesTexte
+        self.margesTexte = margesTexte if margesTexte is not None else (0, 1)
         self.MAJ()
 
     def _bitmap(self):
@@ -106,20 +83,16 @@ class CTRL(wx.Button):
         self.AppliquerTheme()
         self.SetInitialSize()
 
-        # Une augmentation d'échelle doit agrandir la cible complète, pas
-        # uniquement son texte. 36 DIP à 100 % reste compact pour un desktop.
         best = self.GetBestSize()
-        hauteur_min = _echelle_valeur(36, 36)
+        hauteur_min = UTILS_Styles.GetControlMetric("button_min_height")
         largeur_min = best.GetWidth()
         if self.cheminImage not in ("", None) and not self.texte:
             largeur_min = max(largeur_min, hauteur_min)
         self.SetMinSize((largeur_min, max(best.GetHeight(), hauteur_min)))
 
     def AppliquerTheme(self):
-        """Conserve le rendu natif et utilise la typographie de la plateforme."""
-        font = wx.SystemSettings.GetFont(wx.SYS_DEFAULT_GUI_FONT)
-        font.SetWeight(wx.FONTWEIGHT_BOLD)
-        self.SetFont(font)
+        """Conserve le rendu natif et applique la typographie de la charte."""
+        self.SetFont(UTILS_Styles.GetFont("label"))
         self.SetForegroundColour(UTILS_Interface.GetToken("on_surface"))
 
     def SetImage(self, cheminImage=""):
