@@ -100,6 +100,16 @@ def test_common_image_button_consumes_global_icon_and_control_metrics():
     assert "SetMinSize" in source
 
 
+def test_common_image_button_survives_missing_optional_icons():
+    source = _source(BUTTON_PATH)
+    assert "def _chemin_image_existant" in source
+    assert 'if "32x32" in parts:' in source
+    assert 'parts[parts.index("32x32")] = "16x16"' in source
+    assert "except (OSError, ValueError):" in source
+    assert "return wx.NullBitmap" in source
+    assert "if bitmap.IsOk():" in source
+
+
 def test_common_image_button_no_longer_contains_runtime_migration_scripts():
     source = _source(BUTTON_PATH)
     assert "def ModifieFichiers" not in source
