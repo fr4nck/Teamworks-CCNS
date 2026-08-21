@@ -12,6 +12,15 @@ def _source(relative_path):
     return (ROOT / relative_path).read_text(encoding="utf-8")
 
 
+def _is_self_panel(node):
+    return (
+        isinstance(node, ast.Attribute)
+        and isinstance(node.value, ast.Name)
+        and node.value.id == "self"
+        and node.attr == "panel"
+    )
+
+
 def test_preferences_buttons_use_panel_parent():
     source = _source("teamworks/Dlg/DLG_Preferences.py")
     tree = ast.parse(source)
@@ -20,8 +29,7 @@ def test_preferences_buttons_use_panel_parent():
         isinstance(call.func, ast.Attribute)
         and call.func.attr == "Button"
         and call.args
-        and isinstance(call.args[0], ast.Name)
-        and call.args[0].id == "panel"
+        and _is_self_panel(call.args[0])
         for call in calls
     )
     assert not any(
