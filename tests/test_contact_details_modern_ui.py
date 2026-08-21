@@ -21,13 +21,19 @@ def test_contact_details_dialog_has_no_legacy_card_grid():
     assert "wx.WrapSizer" in source
 
 
-def test_contact_category_selection_uses_semantic_states():
+def test_contact_category_selection_uses_semantic_states_and_charter():
     source = _source()
     assert 'UTILS_Interface.GetToken("primary_container")' in source
     assert 'UTILS_Interface.GetToken("on_primary_container")' in source
     assert 'UTILS_Interface.GetToken("surface_container_low")' in source
     assert "_select_category" in source
-    assert "FromDIP" in source
+    assert "CTRL_Texte.H2" in source
+    assert "CTRL_Texte.Label" in source
+    assert 'UTILS_Styles.ApplyWindowProfile(self, "compact")' in source
+    assert 'UTILS_Styles.GetLayoutSpacing("dialog_padding")' in source
+    assert 'UTILS_Styles.GetControlMetric("button_min_height")' in source
+    assert "FromDIP" not in source
+    assert "SetPointSize" not in source
 
 
 def test_contact_details_keep_normalization_and_persistence_contract():
