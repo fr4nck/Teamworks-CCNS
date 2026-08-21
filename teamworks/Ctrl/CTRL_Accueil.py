@@ -14,40 +14,44 @@ from Ctrl import CTRL_Gadgets_flottants
 import GestionDB
 from Utils import UTILS_Config
 from Utils import UTILS_Fichiers
-from Utils import UTILS_Interface
+from Utils import UTILS_Interface, UTILS_Styles
 
+
+GADGET_DEFAULT_SIZE = UTILS_Styles.GetGadgetMetric("default_size", scaled=False)
 
 LISTEGADGETSDEFAUT = [
     ["dossiers_incomplets", {
         "label": _(u"Dossiers incomplets"),
-        "taille": (200, 200),
+        "taille": GADGET_DEFAULT_SIZE,
         "affichage": True,
         "config": False,
     }],
     ["horloge", {
         "label": _(u"Horloge"),
-        "taille": (200, 200),
+        "taille": GADGET_DEFAULT_SIZE,
         "affichage": True,
         "config": True,
+        # Personnalisation du contenu du gadget, hors palette du chrome Teamworks.
         "couleur_face": (214, 223, 247),
     }],
     ["calendrier", {
         "label": _(u"Calendrier"),
-        "taille": (200, 200),
+        "taille": GADGET_DEFAULT_SIZE,
         "affichage": True,
         "config": True,
     }],
     ["updater", {
         "label": _(u"Mises à jour internet"),
-        "taille": (200, 200),
+        "taille": GADGET_DEFAULT_SIZE,
         "affichage": True,
         "config": False,
     }],
     ["notes", {
         "label": _(u"Bloc-notes"),
-        "taille": (200, 200),
+        "taille": GADGET_DEFAULT_SIZE,
         "affichage": True,
         "config": True,
+        # Police du contenu librement personnalisable par l'utilisateur.
         "texte": _(u"Hello !"),
         "taillePolice": 10,
         "familyPolice": 74,
@@ -79,7 +83,7 @@ def ImportListeGadgets():
         dictTmp = {
             "nom": nom,
             "label": label,
-            "taille": _literal(taille, (200, 200)),
+            "taille": _literal(taille, GADGET_DEFAULT_SIZE),
             "affichage": bool(_literal(affichage, True)),
             "ordre": ordre,
             "config": bool(_literal(config, False)),
@@ -162,15 +166,11 @@ class Panel(wx.Panel):
         self.listeGadgets = self.GetListeGadgets()
         self.html = MyHtmlWindow(self, -1, self.listeGadgets)
 
-        # Le dashboard possède toute la surface de travail. L'ancienne bande
-        # blanche/logo n'avait aucune fonction métier et réduisait l'espace utile.
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(self.html, 1, wx.EXPAND)
         self.SetSizer(sizer)
 
     def MAJ_Gadgets(self):
-        # EspaceGadgets.MAJ gère lui-même son cycle Freeze/Thaw. Ne pas geler
-        # une seconde fois toute la page : cela amplifiait les blocages visuels.
         self.listeGadgets = self.GetListeGadgets()
         self.html.MAJ(self.listeGadgets)
 
@@ -205,13 +205,7 @@ class AffichageGadgets(object):
                 preSelection.append(index)
 
         message = _(u"Sélectionnez les gadgets que vous souhaitez afficher sur votre page d'accueil")
-        dlg = wx.MultiChoiceDialog(
-            None,
-            message,
-            _(u"Affichage des gadgets"),
-            listeNoms,
-            wx.CHOICEDLG_STYLE,
-        )
+        dlg = wx.MultiChoiceDialog(None, message, _(u"Affichage des gadgets"), listeNoms, wx.CHOICEDLG_STYLE)
         dlg.SetSelections(preSelection)
 
         if dlg.ShowModal() != wx.ID_OK:
@@ -232,9 +226,7 @@ class AffichageGadgets(object):
         if nomWindow == "general":
             topWindow.userConfig["listeGadgets"] = self.listeGadgets
         else:
-            cfg = UTILS_Config.FichierConfig(
-                nomFichier=UTILS_Fichiers.GetRepUtilisateur("Config.dat")
-            )
+            cfg = UTILS_Config.FichierConfig(nomFichier=UTILS_Fichiers.GetRepUtilisateur("Config.dat"))
             cfg.SetItemConfig("listeGadgets", self.listeGadgets)
         return True
 
@@ -243,14 +235,7 @@ class MyFrame(wx.Frame):
     """Frame de test."""
 
     def __init__(self, parent):
-        wx.Frame.__init__(
-            self,
-            parent,
-            -1,
-            title="",
-            name="frm_accueil",
-            style=wx.DEFAULT_FRAME_STYLE,
-        )
+        wx.Frame.__init__(self, parent, -1, title="", name="frm_accueil", style=wx.DEFAULT_FRAME_STYLE)
         self.parent = parent
         self.panel = Panel(self)
 
