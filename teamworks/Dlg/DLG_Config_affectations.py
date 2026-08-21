@@ -11,9 +11,9 @@ from Utils.UTILS_Traduction import _
 
 
 class ListCtrl(wx.ListCtrl):
-    def __init__(self, parent):
+    def __init__(self, parent, owner):
         wx.ListCtrl.__init__(self, parent, -1, style=wx.LC_REPORT | wx.LC_SINGLE_SEL | wx.LC_HRULES)
-        self.parent = parent
+        self.parent = owner
         self.SetBackgroundColour(UTILS_Interface.GetToken("surface_container_lowest"))
         self.SetForegroundColour(UTILS_Interface.GetToken("on_surface"))
         self.InsertColumn(0, _(u"ID")); self.InsertColumn(1, _(u"Affectation")); self.InsertColumn(2, _(u"Candidatures"))
@@ -60,15 +60,16 @@ class Panel(CORE.Panel):
         wx.Panel.__init__(self, parent, ID, style=wx.TAB_TRAVERSAL)
         self.SetBackgroundColour(UTILS_Interface.GetToken("surface"))
         self.section = CTRL_Section.Section(self, titre=_(u"Affectations de recrutement"), niveau=2, description=_(u"Groupes, lieux ou contextes d'intervention proposés dans les candidatures."))
-        self.barreTitre = self.section.titre; contenu = self.section.GetContentPanel(); self.listCtrl = ListCtrl(contenu)
+        self.barreTitre = self.section.titre; contenu = self.section.GetContentPanel()
         self.bouton_ajouter = CTRL_Bouton_image.CTRL(contenu, texte=_(u"Ajouter")); self.bouton_modifier = CTRL_Bouton_image.CTRL(contenu, texte=_(u"Modifier")); self.bouton_supprimer = CTRL_Bouton_image.CTRL(contenu, texte=_(u"Supprimer")); self.bouton_aide = CTRL_Bouton_image.CTRL(contenu, texte=_(u"Aide"))
+        self.bouton_modifier.Enable(False); self.bouton_supprimer.Enable(False)
+        self.listCtrl = ListCtrl(contenu, self)
         if parent.GetName() != "treebook_configuration": self.bouton_aide.Show(False)
         gap = UTILS_Styles.GetLayoutSpacing("field_gap"); actions = wx.WrapSizer(wx.HORIZONTAL)
         for bouton in (self.bouton_ajouter, self.bouton_modifier, self.bouton_supprimer, self.bouton_aide): actions.Add(bouton, 0, wx.RIGHT | wx.BOTTOM, gap)
         s = wx.BoxSizer(wx.VERTICAL); s.Add(self.listCtrl, 1, wx.EXPAND); s.AddSpacer(gap); s.Add(actions, 0, wx.EXPAND); contenu.SetSizer(s)
         root = wx.BoxSizer(wx.VERTICAL); root.Add(self.section, 1, wx.EXPAND); self.SetSizer(root)
         self.Bind(wx.EVT_BUTTON, self.OnBoutonAjouter, self.bouton_ajouter); self.Bind(wx.EVT_BUTTON, self.OnBoutonModifier, self.bouton_modifier); self.Bind(wx.EVT_BUTTON, self.OnBoutonSupprimer, self.bouton_supprimer); self.Bind(wx.EVT_BUTTON, self.OnBoutonAide, self.bouton_aide)
-        self.bouton_modifier.Enable(False); self.bouton_supprimer.Enable(False)
 
 
 class Dialog(wx.Dialog):
