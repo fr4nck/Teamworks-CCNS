@@ -33,6 +33,8 @@ def decode_output(data: bytes, encodings: Iterable[str] = DEFAULT_ENCODINGS) -> 
 def build_environment(root: Path, teamworks_dir: Path) -> dict[str, str]:
     env = os.environ.copy()
     env["TEAMWORKS_SMOKE_MODE"] = "main-window"
+    env["TEAMWORKS_LOG_DIR"] = str(root / "artifacts" / "runtime-crash")
+    env["PYTHONUTF8"] = "1"
     search_paths = [str(root), str(teamworks_dir)]
     if env.get("PYTHONPATH"):
         search_paths.append(env["PYTHONPATH"])
@@ -44,7 +46,7 @@ def github_error_summary(title: str, output: str, max_lines: int = 40) -> None:
     lines = [line.strip() for line in output.splitlines() if line.strip()]
     summary = " | ".join(lines[-max_lines:])
     summary = summary.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
-    print(f"::error title={title}::{summary}")
+    print(console_safe_text(f"::error title={title}::{summary}"))
 
 
 def write_diagnostic(
