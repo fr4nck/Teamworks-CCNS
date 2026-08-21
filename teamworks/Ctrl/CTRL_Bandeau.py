@@ -9,27 +9,15 @@
 #-----------------------------------------------------------
 
 import Chemins
-from Utils import UTILS_Customize
 from Utils import UTILS_Interface
+from Utils import UTILS_Styles
+from Ctrl import CTRL_Texte
 import wx
 import wx.html as html
 
 
 def _html_colour(colour):
     return "#%02X%02X%02X" % (colour.Red(), colour.Green(), colour.Blue())
-
-
-def _echelle_interface():
-    try:
-        return max(80, min(200, UTILS_Customize.GetValeur(
-            "interface", "echelle_police", "100", type_valeur=int
-        )))
-    except Exception:
-        return 100
-
-
-def _echelle_valeur(valeur, minimum=1):
-    return max(minimum, int(round(valeur * _echelle_interface() / 100.0)))
 
 
 class MyHtml(html.HtmlWindow):
@@ -44,7 +32,7 @@ class MyHtml(html.HtmlWindow):
         )
         self.SetBorders(0)
         self.hauteur_base = hauteur
-        self.SetMinSize((-1, _echelle_valeur(hauteur, 25)))
+        self.SetMinSize((-1, UTILS_Styles.Scale(hauteur, 25)))
         self.SetTexte(texte)
 
     def SetTexte(self, texte=""):
@@ -68,7 +56,7 @@ class Bandeau(wx.Panel):
 
         img = wx.Bitmap(nomImage, wx.BITMAP_TYPE_ANY) if nomImage else wx.NullBitmap
         self.image = wx.StaticBitmap(self, -1, img)
-        self.ctrl_titre = wx.StaticText(self, -1, titre)
+        self.ctrl_titre = CTRL_Texte.H1(self, titre)
         self.ctrl_intro = MyHtml(self, texte, hauteurHtml)
         self.ligne = wx.StaticLine(self, -1)
 
@@ -76,30 +64,25 @@ class Bandeau(wx.Panel):
         self.__do_layout()
 
     def __set_properties(self):
-        font = wx.SystemSettings.GetFont(wx.SYS_DEFAULT_GUI_FONT)
-        font.SetWeight(wx.FONTWEIGHT_BOLD)
-        font.SetPointSize(max(font.GetPointSize() + 2, 11))
-        self.ctrl_titre.SetFont(font)
         self.AppliquerTheme()
 
     def AppliquerTheme(self):
         fond = UTILS_Interface.GetToken("surface_container_high")
-        texte = UTILS_Interface.GetToken("on_surface")
         bordure = UTILS_Interface.GetToken("outline_variant")
 
         self.SetBackgroundColour(fond)
-        self.ctrl_titre.SetForegroundColour(texte)
+        self.ctrl_titre.AppliquerStyle("h1")
         self.ctrl_intro.SetBackgroundColour(fond)
         self.ligne.SetForegroundColour(bordure)
 
     def __do_layout(self):
         textes = wx.BoxSizer(wx.VERTICAL)
-        textes.Add(self.ctrl_titre, 0, wx.EXPAND | wx.TOP | wx.RIGHT, 6)
-        textes.Add(self.ctrl_intro, 0, wx.EXPAND | wx.RIGHT | wx.BOTTOM, 6)
+        textes.Add(self.ctrl_titre, 0, wx.EXPAND | wx.TOP | wx.RIGHT, UTILS_Styles.Scale(6))
+        textes.Add(self.ctrl_intro, 0, wx.EXPAND | wx.RIGHT | wx.BOTTOM, UTILS_Styles.Scale(6))
 
         contenu = wx.BoxSizer(wx.HORIZONTAL)
         if self.image.GetBitmap().IsOk():
-            contenu.Add(self.image, 0, wx.ALL | wx.ALIGN_TOP, 10)
+            contenu.Add(self.image, 0, wx.ALL | wx.ALIGN_TOP, UTILS_Styles.Scale(10))
         contenu.Add(textes, 1, wx.EXPAND)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
