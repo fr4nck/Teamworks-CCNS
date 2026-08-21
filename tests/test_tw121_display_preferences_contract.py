@@ -35,9 +35,12 @@ def test_default_theme_is_system_and_font_scale_is_100_percent():
 def test_preferences_offer_three_modes_and_accessibility_scale_bounds():
     source = _read(PREFERENCES)
     assert 'THEMES = ["Système", "Clair", "Sombre"]' in source
+    assert '("system", "Système")' in source
+    assert '("light", "Clair")' in source
+    assert '("dark", "Sombre")' in source
     assert "min=80" in source
     assert "max=200" in source
-    assert 'values = ["Systeme", "Clair", "Sombre"]' in source
+    assert "appearance_codes = [code for code, label in self.APPEARANCES]" in source
 
 
 def test_theme_service_supports_system_light_dark_and_scale_clamping():
