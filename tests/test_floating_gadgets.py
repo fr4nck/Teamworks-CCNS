@@ -84,6 +84,15 @@ def test_gadget_workspace_consumes_central_gadget_metrics():
     assert ".Position(index % 3)" not in host
 
 
+def test_home_defaults_consume_charter_without_overriding_user_content_options():
+    home = _source(HOME_PATH)
+    assert 'GADGET_DEFAULT_SIZE = UTILS_Styles.GetGadgetMetric("default_size", scaled=False)' in home
+    assert '"taille": GADGET_DEFAULT_SIZE' in home
+    assert '_literal(taille, GADGET_DEFAULT_SIZE)' in home
+    assert '"nomPolice": "Segoe Print"' in home
+    assert "Personnalisation du contenu du gadget" in home
+
+
 def test_gadget_chrome_no_longer_uses_historical_fixed_paint_layout():
     source = _source(GADGET_PATH)
     panel = source.split("class PanelGadget", 1)[1].split("class Gadget_BlocNotes", 1)[0]
