@@ -34,6 +34,8 @@ PATTERNS = (
     ("colour.white", "medium", re.compile(r"SetBackgroundColour\(wx\.WHITE\)")),
     ("colour.literal.background", "high", re.compile(r"SetBackgroundColour\(\s*\(")),
     ("colour.literal.foreground", "high", re.compile(r"SetForegroundColour\(\s*\(")),
+    ("typography.manual_font", "medium", re.compile(r"\.SetFont\(")),
+    ("typography.literal_font", "medium", re.compile(r"\bwx\.Font\(")),
     ("size.literal", "medium", re.compile(r"(?:SetSize|SetMinSize|SetMaxSize)\(\s*\(")),
     ("column.literal", "medium", re.compile(r"SetColumnWidth\(\s*\d+\s*,\s*\d+\s*\)")),
     ("navigation.toolbook", "high", re.compile(r"\bwx\.Toolbook\b")),
