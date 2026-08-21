@@ -26,7 +26,6 @@ else:
     from wx import DatePickerCtrl, DP_DROPDOWN
 
 
-DatetimeDateEnStr = CORE.DatetimeDateEnStr
 _PHOENIX = "phoenix" in wx.PlatformInfo
 _CheckboxFallback = object if _PHOENIX else CheckListCtrlMixin
 
