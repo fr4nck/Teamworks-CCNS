@@ -7,8 +7,7 @@ import wx
 import wx.aui as aui
 
 import Gadget
-from Utils import UTILS_Customize
-from Utils import UTILS_Interface
+from Utils import UTILS_Customize, UTILS_Interface, UTILS_Styles
 
 
 PERSPECTIVE_SECTION = "interface"
@@ -47,7 +46,6 @@ class EspaceGadgets(wx.Panel):
         return self._couleur_tuple(UTILS_Interface.GetToken(token))
 
     def AppliquerThemeGadget(self, gadget):
-        """Applique le thème via l'API du composant quand elle existe."""
         appliquer = getattr(gadget, "AppliquerTheme", None)
         if appliquer is not None:
             try:
@@ -56,7 +54,6 @@ class EspaceGadgets(wx.Panel):
             except Exception:
                 pass
 
-        # Compatibilité pour un éventuel gadget externe encore ancien.
         gadget.couleurFondDC = self._token_tuple("surface")
         gadget.couleurFondTitre = self._token_tuple("surface_container_highest")
         gadget.couleurBord = self._token_tuple("outline_variant")
@@ -68,22 +65,32 @@ class EspaceGadgets(wx.Panel):
         except Exception:
             pass
 
+    def _taille_persisted_or_default(self, taille):
+        if taille in (None, wx.DefaultSize):
+            return UTILS_Styles.GetGadgetMetric("default_size")
+        try:
+            largeur, hauteur = int(taille[0]), int(taille[1])
+        except Exception:
+            return UTILS_Styles.GetGadgetMetric("default_size")
+        min_width, min_height = UTILS_Styles.GetGadgetMetric("min_size")
+        return max(min_width, largeur), max(min_height, hauteur)
+
     def _info_pane(self, nom, label, taille, index):
-        """Crée un pane visible, tuilé, redimensionnable et détachable."""
-        largeur = max(200, int(taille[0]))
-        hauteur = max(150, int(taille[1]))
+        largeur, hauteur = self._taille_persisted_or_default(taille)
+        min_size = UTILS_Styles.GetGadgetMetric("min_size")
+        colonnes = UTILS_Styles.GetGadgetMetric("columns")
         return (
             aui.AuiPaneInfo()
             .Name(nom)
             .Caption(label)
             .CaptionVisible(False)
             .BestSize((largeur, hauteur))
-            .MinSize((180, 120))
+            .MinSize(min_size)
             .FloatingSize((largeur, hauteur))
             .Top()
             .Layer(0)
-            .Row(index // 3)
-            .Position(index % 3)
+            .Row(index // colonnes)
+            .Position(index % colonnes)
             .Floatable(True)
             .Dockable(True)
             .Movable(True)
@@ -95,27 +102,22 @@ class EspaceGadgets(wx.Panel):
         )
 
     def _CreerGadget(self, nom, parametres, index):
+        taille = parametres.get("taille")
         gadget = Gadget.PanelGadget(
             self,
             self.couleur_fond,
             index,
-            size=parametres.get("taille", wx.DefaultSize),
+            size=self._taille_persisted_or_default(taille),
         )
         self.AppliquerThemeGadget(gadget)
         self._gadgets[nom] = gadget
         self.manager.AddPane(
             gadget,
-            self._info_pane(
-                nom,
-                parametres.get("label", nom),
-                parametres.get("taille", (220, 180)),
-                index,
-            ),
+            self._info_pane(nom, parametres.get("label", nom), taille, index),
         )
         return gadget
 
     def _SupprimerGadget(self, nom):
-        """Retire un seul pane sans reconstruire le dashboard complet."""
         gadget = self._gadgets.pop(nom, None)
         if gadget is None or self.manager is None:
             return
@@ -140,27 +142,20 @@ class EspaceGadgets(wx.Panel):
         self._gadgets = {}
 
     def Construire(self):
-        """Construit le dashboard initial puis restaure sa perspective."""
         self.Freeze()
         try:
             self._DetruirePanes()
             self.manager = aui.AuiManager(self)
-
             for index, (nom, parametres) in enumerate(self.listeGadgets):
                 if parametres.get("affichage", True):
                     self._CreerGadget(nom, parametres, index)
-
             self._RestaurerPerspective()
             self.manager.Update()
         finally:
             self.Thaw()
 
     def _RestaurerPerspective(self):
-        perspective = UTILS_Customize.GetValeur(
-            PERSPECTIVE_SECTION,
-            PERSPECTIVE_KEY,
-            "",
-        )
+        perspective = UTILS_Customize.GetValeur(PERSPECTIVE_SECTION, PERSPECTIVE_KEY, "")
         if not perspective:
             return
         try:
@@ -175,16 +170,11 @@ class EspaceGadgets(wx.Panel):
         if self._restauration_en_cours or self.manager is None:
             return
         try:
-            UTILS_Customize.SetValeur(
-                PERSPECTIVE_SECTION,
-                PERSPECTIVE_KEY,
-                self.manager.SavePerspective(),
-            )
+            UTILS_Customize.SetValeur(PERSPECTIVE_SECTION, PERSPECTIVE_KEY, self.manager.SavePerspective())
         except Exception:
             pass
 
     def PlanifierSauvegardePerspective(self, delai=150):
-        """Regroupe les mouvements AUI en une seule écriture disque."""
         try:
             if self._timer_perspective is not None and self._timer_perspective.IsRunning():
                 self._timer_perspective.Stop()
@@ -203,7 +193,6 @@ class EspaceGadgets(wx.Panel):
             pass
 
     def PlanifierVisibilite(self, nom, affichage, delai=80):
-        """Persiste après le repaint pour ne pas bloquer l'événement souris."""
         gadget = self._gadgets.get(nom)
         if gadget is None:
             return
@@ -219,12 +208,7 @@ class EspaceGadgets(wx.Panel):
                 ancien.Stop()
         except Exception:
             pass
-        self._timers_visibilite[nom] = wx.CallLater(
-            delai,
-            self._PersisterVisibilite,
-            nom,
-            affichage,
-        )
+        self._timers_visibilite[nom] = wx.CallLater(delai, self._PersisterVisibilite, nom, affichage)
 
     def ReinitialiserDisposition(self):
         UTILS_Customize.SetValeur(PERSPECTIVE_SECTION, PERSPECTIVE_KEY, "")
@@ -233,24 +217,28 @@ class EspaceGadgets(wx.Panel):
     def ToutRendreFlottant(self):
         if self.manager is None:
             return
+        origin_x, origin_y = UTILS_Styles.GetGadgetMetric("floating_origin")
+        step = UTILS_Styles.GetGadgetMetric("floating_step")
+        min_width, min_height = UTILS_Styles.GetGadgetMetric("floating_min_size")
         for index, (nom, gadget) in enumerate(self._gadgets.items()):
             pane = self.manager.GetPane(nom)
             if not pane.IsOk():
                 continue
             largeur, hauteur = gadget.GetSize()
             pane.Float()
-            pane.FloatingPosition((48 + (32 * index), 72 + (32 * index)))
-            pane.FloatingSize((max(200, largeur), max(150, hauteur)))
+            pane.FloatingPosition((origin_x + (step * index), origin_y + (step * index)))
+            pane.FloatingSize((max(min_width, largeur), max(min_height, hauteur)))
         self.manager.Update()
         self.PlanifierSauvegardePerspective()
 
     def ToutAncrer(self):
         if self.manager is None:
             return
+        colonnes = UTILS_Styles.GetGadgetMetric("columns")
         for index, nom in enumerate(self._gadgets):
             pane = self.manager.GetPane(nom)
             if pane.IsOk():
-                pane.Dock().Top().Layer(0).Row(index // 3).Position(index % 3).Show(True)
+                pane.Dock().Top().Layer(0).Row(index // colonnes).Position(index % colonnes).Show(True)
         self.manager.Update()
         self.PlanifierSauvegardePerspective()
 
@@ -270,7 +258,6 @@ class EspaceGadgets(wx.Panel):
         menu.Destroy()
 
     def MAJ(self, listeGadgets=None):
-        """Applique uniquement les différences de visibilité/configuration."""
         if listeGadgets is not None:
             self.listeGadgets = listeGadgets
         if self.manager is None:
@@ -289,38 +276,32 @@ class EspaceGadgets(wx.Panel):
         try:
             for nom in existants - souhaites:
                 self._SupprimerGadget(nom)
-
             for nom in souhaites - existants:
                 index, parametres = visibles[nom]
                 self._CreerGadget(nom, parametres, index)
-
             for nom in souhaites & existants:
                 index, parametres = visibles[nom]
                 pane = self.manager.GetPane(nom)
                 if not pane.IsOk():
                     continue
                 pane.Caption(parametres.get("label", nom))
-                taille = parametres.get("taille", (220, 180))
-                pane.BestSize((max(200, int(taille[0])), max(150, int(taille[1]))))
+                largeur, hauteur = self._taille_persisted_or_default(parametres.get("taille"))
+                pane.BestSize((largeur, hauteur))
                 pane.Show(True)
                 self.AppliquerThemeGadget(self._gadgets[nom])
-
             self.manager.Update()
         finally:
             self.Thaw()
         self.PlanifierSauvegardePerspective()
 
     def Fermer_Gadget(self, nomGadgetAFermer):
-        """Masque immédiatement un gadget puis persiste son état en différé."""
         gadget = self._gadgets.get(nomGadgetAFermer)
         if gadget is None or self.manager is None:
             return
-
         pane = self.manager.GetPane(nomGadgetAFermer)
         if pane.IsOk():
             pane.Hide()
             self.manager.Update()
-
         self.PlanifierVisibilite(nomGadgetAFermer, False)
         self.PlanifierSauvegardePerspective()
 
@@ -331,13 +312,12 @@ class EspaceGadgets(wx.Panel):
                 if nom != nomGadgetAOuvrir:
                     continue
                 parametres["affichage"] = True
-                gadget = self._CreerGadget(nom, parametres, index)
+                self._CreerGadget(nom, parametres, index)
                 self.manager.Update()
                 self.PlanifierVisibilite(nom, True)
                 self.PlanifierSauvegardePerspective()
                 return
             return
-
         pane = self.manager.GetPane(nomGadgetAOuvrir)
         if pane.IsOk():
             pane.Show(True)
