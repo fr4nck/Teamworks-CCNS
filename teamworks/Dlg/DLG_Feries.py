@@ -11,29 +11,13 @@
 import Chemins
 from Utils import UTILS_Adaptations
 from Utils import UTILS_Interface
+from Utils import UTILS_Styles
 from Utils.UTILS_Traduction import _
 import wx
 from Ctrl import CTRL_Bouton_image
 from Ctrl import CTRL_Bandeau
+from Ctrl import CTRL_Texte
 from Ol import OL_Feries
-
-
-def _dip(window, width, height):
-    """Convertit une taille logique en pixels en respectant le DPI natif."""
-    try:
-        return window.FromDIP(wx.Size(width, height))
-    except Exception:
-        return wx.Size(width, height)
-
-
-def _section_title(parent, label):
-    ctrl = wx.StaticText(parent, -1, label)
-    font = ctrl.GetFont()
-    font.SetWeight(wx.FONTWEIGHT_BOLD)
-    font.SetPointSize(max(10, font.GetPointSize() + 1))
-    ctrl.SetFont(font)
-    ctrl.SetForegroundColour(UTILS_Interface.GetToken("on_surface"))
-    return ctrl
 
 
 class Panel(wx.Panel):
@@ -43,7 +27,7 @@ class Panel(wx.Panel):
         self.type = type
         self.SetBackgroundColour(UTILS_Interface.GetToken("surface_container_lowest"))
 
-        self.label_titre = _section_title(self, _(u"Jours %ss") % self.type)
+        self.label_titre = CTRL_Texte.H2(self, _(u"Jours %ss") % self.type)
         self.ctrl_listview = OL_Feries.ListView(
             self,
             type=self.type,
@@ -75,16 +59,25 @@ class Panel(wx.Panel):
         self.Bind(wx.EVT_BUTTON, self.Supprimer, self.bouton_supprimer)
 
     def __do_layout(self):
+        field_gap = UTILS_Styles.GetLayoutSpacing("field_gap")
+        content_padding = UTILS_Styles.GetLayoutSpacing("content_padding")
+        toolbar_gap = UTILS_Styles.GetLayoutSpacing("toolbar_gap")
+
         sizer_base = wx.BoxSizer(wx.VERTICAL)
-        sizer_base.Add(self.label_titre, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 10)
-        sizer_base.Add(self.ctrl_listview, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 10)
-        sizer_base.Add(self.ctrl_recherche, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 10)
+        sizer_base.Add(self.label_titre, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, content_padding)
+        sizer_base.Add(self.ctrl_listview, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, content_padding)
+        sizer_base.Add(self.ctrl_recherche, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, field_gap)
 
         sizer_actions = wx.WrapSizer(wx.HORIZONTAL)
-        sizer_actions.Add(self.bouton_ajouter, 0, wx.RIGHT | wx.BOTTOM, 6)
-        sizer_actions.Add(self.bouton_modifier, 0, wx.RIGHT | wx.BOTTOM, 6)
-        sizer_actions.Add(self.bouton_supprimer, 0, wx.RIGHT | wx.BOTTOM, 6)
-        sizer_base.Add(sizer_actions, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 10)
+        sizer_actions.Add(self.bouton_ajouter, 0, wx.RIGHT | wx.BOTTOM, toolbar_gap)
+        sizer_actions.Add(self.bouton_modifier, 0, wx.RIGHT | wx.BOTTOM, toolbar_gap)
+        sizer_actions.Add(self.bouton_supprimer, 0, wx.RIGHT | wx.BOTTOM, toolbar_gap)
+        sizer_base.Add(
+            sizer_actions,
+            0,
+            wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP | wx.BOTTOM,
+            content_padding,
+        )
 
         self.SetSizer(sizer_base)
 
@@ -147,28 +140,35 @@ class Dialog(wx.Dialog):
         self.bouton_aide.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour obtenir de l'aide")))
         self.bouton_saisie_auto.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour saisir automatiquement les jours fériés variables")))
         self.bouton_fermer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour fermer")))
-        self.SetMinSize(_dip(self, 680, 620))
-        self.SetSize(_dip(self, 860, 760))
+        UTILS_Styles.ApplyWindowProfile(self, "wide")
 
     def __do_layout(self):
+        dialog_padding = UTILS_Styles.GetLayoutSpacing("dialog_padding")
+        section_gap = UTILS_Styles.GetLayoutSpacing("section_gap")
+        toolbar_gap = UTILS_Styles.GetLayoutSpacing("toolbar_gap")
+
         sizer_base = wx.BoxSizer(wx.VERTICAL)
         sizer_base.Add(self.ctrl_bandeau, 0, wx.EXPAND)
 
         sizer_contenu = wx.BoxSizer(wx.HORIZONTAL)
-        sizer_contenu.Add(self.panel_variables, 1, wx.EXPAND | wx.RIGHT, 6)
-        sizer_contenu.Add(self.panel_fixes, 1, wx.EXPAND | wx.LEFT, 6)
-        sizer_base.Add(sizer_contenu, 1, wx.EXPAND | wx.ALL, 12)
+        sizer_contenu.Add(self.panel_variables, 1, wx.EXPAND | wx.RIGHT, section_gap // 2)
+        sizer_contenu.Add(self.panel_fixes, 1, wx.EXPAND | wx.LEFT, section_gap // 2)
+        sizer_base.Add(sizer_contenu, 1, wx.EXPAND | wx.ALL, dialog_padding)
 
         sizer_boutons = wx.BoxSizer(wx.HORIZONTAL)
-        sizer_boutons.Add(self.bouton_aide, 0, wx.RIGHT, 8)
-        sizer_boutons.Add(self.bouton_saisie_auto, 0, wx.RIGHT, 8)
+        sizer_boutons.Add(self.bouton_aide, 0, wx.RIGHT, toolbar_gap)
+        sizer_boutons.Add(self.bouton_saisie_auto, 0, wx.RIGHT, toolbar_gap)
         sizer_boutons.AddStretchSpacer(1)
         sizer_boutons.Add(self.bouton_fermer, 0)
-        sizer_base.Add(sizer_boutons, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 12)
+        sizer_base.Add(
+            sizer_boutons,
+            0,
+            wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM,
+            dialog_padding,
+        )
 
         self.SetSizer(sizer_base)
         self.Layout()
-        self.CenterOnScreen()
 
     def OnBoutonAide(self, event):
         from Utils import UTILS_Aide
