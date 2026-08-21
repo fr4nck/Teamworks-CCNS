@@ -9,20 +9,13 @@
 
 import Chemins
 from Utils.UTILS_Traduction import _
-from Utils import UTILS_Interface
+from Utils import UTILS_Interface, UTILS_Styles
 import wx
-from Ctrl import CTRL_Bouton_image
+from Ctrl import CTRL_Bouton_image, CTRL_Texte
 import GestionDB
 import datetime
 from dateutil.relativedelta import relativedelta
 from dateutil.easter import easter
-
-
-def _dip(window, width, height):
-    try:
-        return window.FromDIP(wx.Size(width, height))
-    except Exception:
-        return wx.Size(width, height)
 
 
 class MyDialog(wx.Dialog):
@@ -30,19 +23,17 @@ class MyDialog(wx.Dialog):
         wx.Dialog.__init__(self, parent, id=-1, style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
         self.SetBackgroundColour(UTILS_Interface.GetToken("surface"))
 
-        self.label_intro = wx.StaticText(
+        self.label_intro = CTRL_Texte.BodySecondary(
             self,
-            -1,
             _(u"Cette fonctionnalité permet à Teamworks de créer les jours fériés variables d'une ou plusieurs années selon les algorithmes intégrés. Saisissez une ou plusieurs années séparées par un point-virgule, choisissez les jours à créer puis validez."),
         )
-        self.label_intro.SetForegroundColour(UTILS_Interface.GetToken("on_surface_variant"))
 
-        self.label_annees = wx.StaticText(self, -1, _(u"Années"))
+        self.titre_parametres = CTRL_Texte.H2(self, _(u"Paramètres"))
+        self.label_annees = CTRL_Texte.Label(self, _(u"Années"))
         self.ctrl_annees = wx.TextCtrl(self, -1, u"")
-        self.label_jours = wx.StaticText(self, -1, _(u"Jours fériés"))
+        self.label_jours = CTRL_Texte.Label(self, _(u"Jours fériés"))
         listeJours = [_(u"Lundi de Pâques"), _(u"Jeudi de l'ascension"), _(u"Lundi de Pentecôte")]
         self.ctrl_jours = wx.CheckListBox(self, -1, choices=listeJours)
-        self.ctrl_jours.SetMinSize(_dip(self, 320, 110))
 
         self.bouton_aide = CTRL_Bouton_image.CTRL(
             self, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png")
@@ -69,34 +60,44 @@ class MyDialog(wx.Dialog):
         self.bouton_aide.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour obtenir de l'aide")))
         self.bouton_ok.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour créer les jours fériés")))
         self.bouton_annuler.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour annuler")))
-        self.SetMinSize(_dip(self, 520, 400))
-        self.SetSize(_dip(self, 620, 470))
+        UTILS_Styles.ApplyWindowProfile(self, "compact")
 
     def __do_layout(self):
+        dialog_padding = UTILS_Styles.GetLayoutSpacing("dialog_padding")
+        field_gap = UTILS_Styles.GetLayoutSpacing("field_gap")
+        section_gap = UTILS_Styles.GetLayoutSpacing("section_gap")
+        toolbar_gap = UTILS_Styles.GetLayoutSpacing("toolbar_gap")
+
         sizer_base = wx.BoxSizer(wx.VERTICAL)
-        sizer_base.Add(self.label_intro, 0, wx.EXPAND | wx.ALL, 16)
+        sizer_base.Add(self.label_intro, 0, wx.EXPAND | wx.ALL, dialog_padding)
+        sizer_base.Add(
+            self.titre_parametres,
+            0,
+            wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM,
+            dialog_padding,
+        )
 
         sizer_form = wx.BoxSizer(wx.VERTICAL)
-        sizer_form.Add(self.label_annees, 0, wx.BOTTOM, 4)
-        sizer_form.Add(self.ctrl_annees, 0, wx.EXPAND | wx.BOTTOM, 14)
-        sizer_form.Add(self.label_jours, 0, wx.BOTTOM, 4)
+        sizer_form.Add(self.label_annees, 0, wx.BOTTOM, field_gap // 2)
+        sizer_form.Add(self.ctrl_annees, 0, wx.EXPAND | wx.BOTTOM, section_gap)
+        sizer_form.Add(self.label_jours, 0, wx.BOTTOM, field_gap // 2)
         sizer_form.Add(self.ctrl_jours, 1, wx.EXPAND)
-        sizer_base.Add(sizer_form, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, 16)
+        sizer_base.Add(sizer_form, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, dialog_padding)
 
         sizer_boutons = wx.BoxSizer(wx.HORIZONTAL)
-        sizer_boutons.Add(self.bouton_aide, 0, wx.RIGHT, 8)
+        sizer_boutons.Add(self.bouton_aide, 0, wx.RIGHT, toolbar_gap)
         sizer_boutons.AddStretchSpacer(1)
-        sizer_boutons.Add(self.bouton_ok, 0, wx.RIGHT, 8)
+        sizer_boutons.Add(self.bouton_ok, 0, wx.RIGHT, toolbar_gap)
         sizer_boutons.Add(self.bouton_annuler, 0)
-        sizer_base.Add(sizer_boutons, 0, wx.EXPAND | wx.ALL, 16)
+        sizer_base.Add(sizer_boutons, 0, wx.EXPAND | wx.ALL, dialog_padding)
 
         self.SetSizer(sizer_base)
         self.Layout()
-        self.CenterOnScreen()
         wx.CallAfter(self._wrap_intro)
 
     def _wrap_intro(self):
-        width = max(280, self.GetClientSize().width - 32)
+        padding = UTILS_Styles.GetLayoutSpacing("dialog_padding") * 2
+        width = max(UTILS_Styles.Scale(240), self.GetClientSize().width - padding)
         self.label_intro.Wrap(width)
         self.Layout()
 
@@ -159,7 +160,7 @@ class MyDialog(wx.Dialog):
 
         def SauvegarderDate(nom="", date=None):
             if date not in listeJoursExistants:
-                IDferie = DB.ReqInsert("jours_feries", [("type", "variable"), ("nom", nom), ("annee", date.year), ("mois", date.month), ("jour", date.day)])
+                DB.ReqInsert("jours_feries", [("type", "variable"), ("nom", nom), ("annee", date.year), ("mois", date.month), ("jour", date.day)])
 
         # Calcul des jours fériés
         for annee in listeAnnees:
