@@ -7,6 +7,7 @@ on:
   push:
     branches:
       - master
+      - agent/tw-189-ui-theme-foundation
     tags:
       - "v*"
   workflow_dispatch:
@@ -234,6 +235,7 @@ jobs:
         && (
           startsWith(github.ref, 'refs/tags/v')
           || (github.event_name == 'workflow_dispatch' && inputs.build_windows)
+          || (github.ref == 'refs/heads/agent/tw-189-ui-theme-foundation' && contains(github.event.head_commit.message, '[windows]'))
         )
       }}
     runs-on: windows-2022
