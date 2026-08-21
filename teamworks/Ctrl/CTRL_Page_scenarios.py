@@ -7,8 +7,9 @@
 #-----------------------------------------------------------
 
 from Utils.UTILS_Traduction import _
-from Utils import UTILS_Interface
+from Utils import UTILS_Interface, UTILS_Styles
 import wx
+from Ctrl import CTRL_Texte
 from Dlg import DLG_Scenario_gestion
 
 
@@ -19,16 +20,18 @@ class Panel(wx.Panel):
         self.IDpersonne = IDpersonne
         self.SetBackgroundColour(UTILS_Interface.GetToken("surface"))
 
-        self.titre = wx.StaticText(self, -1, _(u"Scénarios"))
-        font = self.titre.GetFont()
-        font.SetWeight(wx.FONTWEIGHT_BOLD)
-        font.SetPointSize(max(11, font.GetPointSize() + 2))
-        self.titre.SetFont(font)
-
+        self.titre = CTRL_Texte.H2(self, _(u"Scénarios"))
         self.panelScenarios = DLG_Scenario_gestion.Panel(self, IDpersonne=self.IDpersonne)
         self.panelScenarios.label_introduction.Show(False)
 
+        padding = UTILS_Styles.GetLayoutSpacing("content_padding")
+        field_gap = UTILS_Styles.GetLayoutSpacing("field_gap")
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.titre, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 10)
-        sizer.Add(self.panelScenarios, 1, wx.EXPAND | wx.ALL, 8)
+        sizer.Add(self.titre, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, padding)
+        sizer.Add(
+            self.panelScenarios,
+            1,
+            wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP | wx.BOTTOM,
+            field_gap,
+        )
         self.SetSizer(sizer)
