@@ -31,10 +31,8 @@ def _class_methods(path, class_name):
 
 def test_bandeau_uses_semantic_theme_tokens():
     source = _source(BANDEAU_PATH)
-
     assert "from Utils import UTILS_Interface" in source
     assert 'GetToken("surface_container_high")' in source
-    assert 'GetToken("on_surface")' in source
     assert 'GetToken("on_surface_variant")' in source
     assert 'GetToken("outline_variant")' in source
     assert "wx.Colour(255, 255, 255)" not in source
@@ -45,21 +43,19 @@ def test_bandeau_keeps_explicit_theme_refresh_api():
     assert "SetTexte" in _class_methods(BANDEAU_PATH, "MyHtml")
 
 
-def test_bandeau_no_longer_uses_fixed_grid_or_fit_geometry():
+def test_bandeau_consumes_semantic_typography_and_spacing():
     source = _source(BANDEAU_PATH)
-
     assert "FlexGridSizer" not in source
     assert ".Fit(self)" not in source
-    assert "wx.BoxSizer" in source
-    assert "SYS_DEFAULT_GUI_FONT" in source
-    assert '"echelle_police"' in source
-    assert "SetMinSize((-1, _echelle_valeur(hauteur, 25)))" in source
+    assert "CTRL_Texte.H1" in source
+    assert 'UTILS_Styles.GetLayoutSpacing("field_gap")' in source
+    assert 'UTILS_Styles.GetLayoutSpacing("content_padding")' in source
+    assert "SetPointSize" not in source
 
 
 def test_footer_uses_semantic_theme_tokens():
     source = _source(FOOTER_PATH)
-
-    assert "from Utils import UTILS_Interface" in source
+    assert "from Utils import UTILS_Interface, UTILS_Styles" in source
     assert 'GetToken("surface_container_high")' in source
     assert 'GetToken("on_surface_variant"' in source
     assert "wx.Colour(140, 140, 140)" in source  # fallback only
@@ -67,48 +63,45 @@ def test_footer_uses_semantic_theme_tokens():
 
 def test_footer_keeps_explicit_theme_refresh_api():
     methods = _class_methods(FOOTER_PATH, "Footer")
-
     assert "AppliquerTheme" in methods
     assert "OnPaint" in methods
 
 
-def test_footer_follows_real_column_widths_and_interface_scale():
+def test_footer_follows_real_columns_and_global_metrics():
     source = _source(FOOTER_PATH)
-
     assert "GetColumnWidth(index)" in source
-    assert "return colonne.width" in source  # fallback only
-    assert '"echelle_interface"' in source
-    assert '"echelle_police"' in source
-    assert "GetTextExtent(\"Ag\")" in source
+    assert "return colonne.width" in source
+    assert 'UTILS_Styles.GetFont("caption")' in source
+    assert 'GetControlMetric("footer_min_height")' in source
+    assert 'GetControlMetric("footer_text_padding")' in source
+    assert 'GetSpacing("xs")' in source
+    assert "UTILS_Customize" not in source
     assert "wx.Font(8" not in source
-    assert "if __name__ == '__main__'" not in source
 
 
 def test_common_image_button_keeps_native_rendering_and_semantic_text():
     source = _source(BUTTON_PATH)
     methods = _class_methods(BUTTON_PATH, "CTRL")
-
-    assert "from Utils import UTILS_Interface" in source
+    assert "from Utils import UTILS_Interface, UTILS_Styles" in source
     assert 'GetToken("on_surface")' in source
-    assert "SYS_DEFAULT_GUI_FONT" in source
+    assert 'UTILS_Styles.GetFont("label")' in source
     assert "wx.Font(9, wx.SWISS" not in source
     assert "AppliquerTheme" in methods
 
 
-def test_common_image_button_scales_image_and_action_target_directly():
+def test_common_image_button_consumes_global_icon_and_control_metrics():
     source = _source(BUTTON_PATH)
-
-    assert "from Utils import UTILS_Customize" in source
-    assert '"echelle_police"' in source
+    assert "UTILS_Customize" not in source
+    assert 'UTILS_Styles.ICON_SIZES["medium"]' in source
+    assert 'UTILS_Styles.CONTROL_METRICS["button_icon_margin"]' in source
+    assert 'GetControlMetric("button_min_height")' in source
     assert "_echelle_taille" in source
     assert "Image.Resampling.LANCZOS" in source
-    assert "hauteur_min = _echelle_valeur(32, 32)" in source
     assert "SetMinSize" in source
 
 
 def test_common_image_button_no_longer_contains_runtime_migration_scripts():
     source = _source(BUTTON_PATH)
-
     assert "def ModifieFichiers" not in source
     assert "class Dialog(wx.Dialog)" not in source
     assert "os.listdir(os.getcwd())" not in source
