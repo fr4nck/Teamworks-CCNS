@@ -21,7 +21,7 @@ def test_exactly_five_colour_families_are_declared():
     assert '"info": accent["primary"]' in source
 
 
-def test_spacing_icons_controls_and_window_profiles_are_centralised():
+def test_spacing_icons_controls_gadgets_and_window_profiles_are_centralised():
     source = _read(STYLES)
     for spacing in ("none", "xs", "sm", "md", "lg", "xl", "2xl"):
         assert '"%s"' % spacing in source
@@ -31,10 +31,14 @@ def test_spacing_icons_controls_and_window_profiles_are_centralised():
         assert '"%s"' % icon in source
     assert "ICON_SIZES" in source
     assert "CONTROL_METRICS" in source
+    assert "GADGET_METRICS" in source
     assert '"button_min_height"' in source
     assert '"footer_min_height"' in source
+    assert '"default_size"' in source
+    assert '"floating_origin"' in source
     assert "GetIconSize" in source
     assert "GetControlMetric" in source
+    assert "GetGadgetMetric" in source
     assert "GetLayoutSpacing" in source
     assert "GetWindowSize" in source
     assert "ApplyWindowProfile" in source
