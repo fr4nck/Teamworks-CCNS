@@ -16,6 +16,16 @@ def _tree(path):
     return ast.parse(_source(path))
 
 
+def _wx_attributes(path):
+    return {
+        node.attr
+        for node in ast.walk(_tree(path))
+        if isinstance(node, ast.Attribute)
+        and isinstance(node.value, ast.Name)
+        and node.value.id == "wx"
+    }
+
+
 def test_display_modules_remain_valid_python():
     _tree(THEME_PATH)
     _tree(CUSTOMIZE_PATH)
@@ -135,6 +145,7 @@ def test_global_theme_targets_dense_desktop_controls():
 
 def test_global_theme_scales_native_metrics_without_reintroducing_toolbook():
     source = _source(THEME_PATH)
+    wx_attributes = _wx_attributes(THEME_PATH)
     assert "BASE_METRICS" in source
     assert "def scale_px" in source
     assert "def metrics" in source
@@ -145,4 +156,4 @@ def test_global_theme_scales_native_metrics_without_reintroducing_toolbook():
     assert "wx.Notebook" in source
     assert "SetToolBitmapSize" in source
     assert "SetPadding" in source
-    assert "wx.Toolbook" not in source
+    assert "Toolbook" not in wx_attributes
