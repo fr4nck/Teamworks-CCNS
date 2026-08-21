@@ -4,11 +4,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 TARGETS = {
-    "teamworks/Ol/OL_candidats.py": (
+    "teamworks/Ol/OL_candidats_core.py": (
         "ListView",
         {"OnItemSelected", "DeselectionneItem"},
     ),
-    "teamworks/Ol/OL_candidatures.py": (
+    "teamworks/Ol/OL_candidatures_core.py": (
         "ListView",
         {"OnItemSelected", "DeselectionneItem"},
     ),
@@ -55,11 +55,11 @@ def test_priority_rh_bare_except_inventory_does_not_grow():
         }
 
     assert inventory == {
-        "teamworks/Ol/OL_candidats.py": {
+        "teamworks/Ol/OL_candidats_core.py": {
             "OnItemSelected": 1,
             "DeselectionneItem": 1,
         },
-        "teamworks/Ol/OL_candidatures.py": {
+        "teamworks/Ol/OL_candidatures_core.py": {
             "OnItemSelected": 1,
             "DeselectionneItem": 1,
         },
