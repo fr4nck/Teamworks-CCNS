@@ -31,6 +31,7 @@ def test_person_smoke_targets_the_real_example_ready_marker() -> None:
     assert 'compile(patched_entrypoint, str(PATCHED), "exec")' in smoke_source
     assert 'compile(patched_core_source, str(PATCHED_CORE), "exec")' in smoke_source
     assert "PATCHED_CORE.unlink(missing_ok=True)" in smoke_source
+    assert "timeout=240" in smoke_source
 
 
 def test_person_smoke_covers_all_individual_pages() -> None:
@@ -50,9 +51,50 @@ def test_person_smoke_covers_all_individual_pages() -> None:
 
     assert "GetPageCount()" in source
     assert "SetSelection(_smoke_index)" in source
+    assert "GetSize().GetWidth() > 0" in source
+    assert "GetSize().GetHeight() > 0" in source
     assert "TEAMWORKS_SMOKE_PERSON_DIALOG_READY" in source
     assert "TEAMWORKS_SMOKE_PERSON_DIALOG_FAILED" in source
     assert "PATCHED.unlink(missing_ok=True)" in source
+
+
+def test_person_smoke_rejects_blank_parameter_dialogs() -> None:
+    source = SMOKE.read_text(encoding="utf-8")
+
+    for marker in (
+        "GetClientSize()",
+        "GetChildren()",
+        "IsShownOnScreen()",
+        "contenu non construit",
+        "aucun contrôle visible",
+        "TEAMWORKS_SMOKE_PERSON_STAGE:parametrage",
+        "TEAMWORKS_SMOKE_PARAMETER_OPEN:",
+        "TEAMWORKS_SMOKE_PARAMETER_OK:",
+    ):
+        assert marker in source
+
+    for label in (
+        "Enregistrement",
+        "Questionnaires",
+        "Qualifications",
+        "Types de pièces",
+        "Situations",
+        "Pays",
+        "Catégories de présences",
+        "Classifications",
+        "Champs de contrats",
+        "Modèles de contrats",
+        "Types de contrats",
+        "Valeurs de points",
+        "Protection des entretiens",
+        "Fonctions",
+        "Affectations",
+        "Diffuseurs",
+        "Offres d'emploi",
+        "Vacances",
+        "Jours fériés",
+    ):
+        assert f'("{label}",' in source
 
 
 def test_blackbox_hooks_real_wx_mainloop_on_windows(tmp_path, monkeypatch) -> None:
