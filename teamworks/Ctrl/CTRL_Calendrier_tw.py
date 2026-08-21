@@ -143,20 +143,42 @@ class Panel(wx.Panel):
 
     def _do_layout(self, bordHaut, bordBas, bordLateral):
         gap = UTILS_Styles.GetLayoutSpacing("control_gap")
-        padding_horizontal = max(
-            UTILS_Styles.GetLayoutSpacing("content_padding"),
-            UTILS_Styles.Scale(bordLateral),
-        ) if bordLateral else UTILS_Styles.GetLayoutSpacing("content_padding")
+        padding_horizontal = (
+            max(
+                UTILS_Styles.GetLayoutSpacing("content_padding"),
+                UTILS_Styles.Scale(bordLateral),
+            )
+            if bordLateral
+            else UTILS_Styles.GetLayoutSpacing("content_padding")
+        )
         top = max(0, UTILS_Styles.Scale(bordHaut))
         bottom = max(0, UTILS_Styles.Scale(bordBas))
 
         navigation = wx.WrapSizer(wx.HORIZONTAL)
-        navigation.SetHGap(gap)
-        navigation.SetVGap(gap)
-        navigation.Add(self.bouton_CalendrierAnnuel, 0, wx.ALIGN_CENTER_VERTICAL)
-        navigation.Add(self.combo_mois, 0, wx.ALIGN_CENTER_VERTICAL)
-        navigation.Add(self.ctrl_annee, 0, wx.ALIGN_CENTER_VERTICAL)
-        navigation.Add(self.spin, 0, wx.ALIGN_CENTER_VERTICAL)
+        navigation.Add(
+            self.bouton_CalendrierAnnuel,
+            0,
+            wx.ALIGN_CENTER_VERTICAL | wx.RIGHT | wx.BOTTOM,
+            gap,
+        )
+        navigation.Add(
+            self.combo_mois,
+            0,
+            wx.ALIGN_CENTER_VERTICAL | wx.RIGHT | wx.BOTTOM,
+            gap,
+        )
+        navigation.Add(
+            self.ctrl_annee,
+            0,
+            wx.ALIGN_CENTER_VERTICAL | wx.RIGHT | wx.BOTTOM,
+            gap,
+        )
+        navigation.Add(
+            self.spin,
+            0,
+            wx.ALIGN_CENTER_VERTICAL | wx.BOTTOM,
+            gap,
+        )
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         if top:
@@ -209,14 +231,14 @@ class Panel(wx.Panel):
         if self.calendrier.GetTypeCalendrier() == "mensuel":
             self.calendrier.SetTypeCalendrier("annuel")
             self.combo_mois.Enable(False)
-            self.bouton_CalendrierAnnuel.SetLabel(_(u"Vue mensuelle"))
+            self.bouton_CalendrierAnnuel.SetTexte(_(u"Vue mensuelle"))
             self.bouton_CalendrierAnnuel.SetToolTip(
                 wx.ToolTip(_(u"Afficher le calendrier mensuel"))
             )
         else:
             self.calendrier.SetTypeCalendrier("mensuel")
             self.combo_mois.Enable(True)
-            self.bouton_CalendrierAnnuel.SetLabel(_(u"Vue annuelle"))
+            self.bouton_CalendrierAnnuel.SetTexte(_(u"Vue annuelle"))
             self.bouton_CalendrierAnnuel.SetToolTip(
                 wx.ToolTip(_(u"Afficher le calendrier annuel"))
             )
