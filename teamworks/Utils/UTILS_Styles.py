@@ -53,7 +53,6 @@ LAYOUT_SPACING = {
     "page_gap": "xl",
 }
 
-# Échelle d'icônes : aucun écran ne choisit directement 16/20/24/32 px.
 ICON_SIZES = {
     "micro": 12,
     "small": 16,
@@ -62,12 +61,13 @@ ICON_SIZES = {
     "hero": 32,
 }
 
-# Métriques communes des contrôles natifs.
 CONTROL_METRICS = {
     "button_min_height": 36,
     "button_icon_margin": 4,
     "input_min_height": 32,
     "toolbar_min_height": 40,
+    "footer_min_height": 28,
+    "footer_text_padding": 10,
 }
 
 WINDOW_PROFILES = {
