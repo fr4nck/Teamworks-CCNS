@@ -58,6 +58,7 @@ def test_person_smoke_covers_all_individual_pages() -> None:
     assert "PATCHED.unlink(missing_ok=True)" in source
 
 
+# Contrat CI : un dialogue de paramétrage exposé ne doit jamais être vide ou non construit.
 def test_person_smoke_rejects_blank_parameter_dialogs() -> None:
     source = SMOKE.read_text(encoding="utf-8")
 
