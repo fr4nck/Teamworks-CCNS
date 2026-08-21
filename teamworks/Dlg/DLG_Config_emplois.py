@@ -14,14 +14,14 @@ from Utils.UTILS_Traduction import _
 class ListCtrl(wx.ListCtrl):
     """Tableau lisible des offres, avec compte fiable des candidatures liées."""
 
-    def __init__(self, parent):
+    def __init__(self, parent, owner):
         wx.ListCtrl.__init__(
             self,
             parent,
             -1,
             style=wx.LC_REPORT | wx.LC_SINGLE_SEL | wx.LC_HRULES,
         )
-        self.parent = parent
+        self.parent = owner
         self.SetBackgroundColour(UTILS_Interface.GetToken("surface_container_lowest"))
         self.SetForegroundColour(UTILS_Interface.GetToken("on_surface"))
         self.InsertColumn(0, _(u"ID"))
@@ -120,11 +120,13 @@ class Panel(CORE.Panel):
         )
         self.barreTitre = self.section.titre
         contenu = self.section.GetContentPanel()
-        self.listCtrl = ListCtrl(contenu)
         self.bouton_ajouter = CTRL_Bouton_image.CTRL(contenu, texte=_(u"Ajouter"))
         self.bouton_modifier = CTRL_Bouton_image.CTRL(contenu, texte=_(u"Modifier"))
         self.bouton_supprimer = CTRL_Bouton_image.CTRL(contenu, texte=_(u"Supprimer"))
         self.bouton_aide = CTRL_Bouton_image.CTRL(contenu, texte=_(u"Aide"))
+        self.bouton_modifier.Enable(False)
+        self.bouton_supprimer.Enable(False)
+        self.listCtrl = ListCtrl(contenu, self)
         if parent.GetName() != "treebook_configuration":
             self.bouton_aide.Show(False)
 
@@ -152,8 +154,6 @@ class Panel(CORE.Panel):
         self.Bind(wx.EVT_BUTTON, self.OnBoutonModifier, self.bouton_modifier)
         self.Bind(wx.EVT_BUTTON, self.OnBoutonSupprimer, self.bouton_supprimer)
         self.Bind(wx.EVT_BUTTON, self.OnBoutonAide, self.bouton_aide)
-        self.bouton_modifier.Enable(False)
-        self.bouton_supprimer.Enable(False)
 
 
 class Dialog(wx.Dialog):
