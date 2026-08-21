@@ -13,15 +13,37 @@ def _source(path=SOURCE):
     return path.read_text(encoding="utf-8")
 
 
+def _dotted_name(node):
+    if isinstance(node, ast.Name):
+        return node.id
+    if isinstance(node, ast.Attribute):
+        parent = _dotted_name(node.value)
+        if parent:
+            return f"{parent}.{node.attr}"
+    return None
+
+
+def _called_names(path=SOURCE):
+    tree = ast.parse(_source(path))
+    return {
+        name
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        for name in [_dotted_name(node.func)]
+        if name
+    }
+
+
 def test_navigation_source_is_valid_python():
     ast.parse(_source())
 
 
 def test_navigation_replaces_fixed_toolbook_geometry():
     source = _source()
+    calls = _called_names()
 
-    assert "wx.Toolbook" not in source
-    assert "wx.Simplebook" not in source
+    assert "wx.Toolbook" not in calls
+    assert "wx.Simplebook" not in calls
     assert "wx.WrapSizer(wx.HORIZONTAL)" in source
     assert "wx.ToggleButton" in source
     assert "self.sizer_pages = wx.BoxSizer(wx.VERTICAL)" in source
