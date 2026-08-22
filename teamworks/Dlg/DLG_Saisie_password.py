@@ -17,10 +17,10 @@ class Dialog(wx.Dialog):
         
         self.panel_base = wx.Panel(self, -1)
         self.staticBox_staticbox = wx.StaticBox(self.panel_base, -1, "")
-        self.label_password1 = wx.StaticText(self.panel_base, -1, "Mot de passe :")
-        self.text_password1 = wx.TextCtrl(self.panel_base, -1, "", style=wx.TE_PASSWORD)
-        self.label_password2 = wx.StaticText(self.panel_base, -1, "Confirmation :")
-        self.text_password2 = wx.TextCtrl(self.panel_base, -1, "", style=wx.TE_PASSWORD)
+        self.label_password1 = wx.StaticText(self.staticBox_staticbox, -1, "Mot de passe :")
+        self.text_password1 = wx.TextCtrl(self.staticBox_staticbox, -1, "", style=wx.TE_PASSWORD)
+        self.label_password2 = wx.StaticText(self.staticBox_staticbox, -1, "Confirmation :")
+        self.text_password2 = wx.TextCtrl(self.staticBox_staticbox, -1, "", style=wx.TE_PASSWORD)
         
         self.bouton_aide = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))
         self.bouton_ok = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Ok"), cheminImage=Chemins.GetStaticPath("Images/32x32/Valider.png"))
