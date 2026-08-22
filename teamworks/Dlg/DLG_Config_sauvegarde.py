@@ -566,7 +566,7 @@ class Saisie_sauvegarde_occasionnelle(wx.Frame):
     def __do_layout(self):
         sizer_base = wx.BoxSizer(wx.VERTICAL)
         sizer_base_2 = wx.BoxSizer(wx.VERTICAL)
-        grid_sizer_base = wx.FlexGridSizer(rows=2, cols=1, vgap=0, hgap=0)
+        grid_sizer_base = wx.FlexGridSizer(rows=3, cols=1, vgap=0, hgap=0)
         grid_sizer_boutons = wx.FlexGridSizer(rows=1, cols=4, vgap=10, hgap=10)
         grid_sizer_base.Add(self.label_introduction, 1, wx.ALL|wx.EXPAND, 10)
         
@@ -890,7 +890,7 @@ class Restauration(wx.Frame):
     def __do_layout(self):
         sizer_base = wx.BoxSizer(wx.VERTICAL)
         sizer_base_2 = wx.BoxSizer(wx.VERTICAL)
-        grid_sizer_base = wx.FlexGridSizer(rows=2, cols=1, vgap=0, hgap=0)
+        grid_sizer_base = wx.FlexGridSizer(rows=3, cols=1, vgap=0, hgap=0)
         grid_sizer_boutons = wx.FlexGridSizer(rows=1, cols=4, vgap=10, hgap=10)
         grid_sizer_base.Add(self.label_introduction, 1, wx.ALL|wx.EXPAND, 10)
         grid_sizer_base.Add(self.treeCtrl, 1, wx.ALL|wx.EXPAND, 10)
