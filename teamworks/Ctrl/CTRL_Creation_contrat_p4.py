@@ -21,8 +21,8 @@ class Page(wx.Panel):
         self.sizer_champs_staticbox = wx.StaticBox(self, -1, _(u"Champs"))
         self.label_titre = wx.StaticText(self, -1, _(u"3. Choix des champs personnalisés"))
         self.label_intro = wx.StaticText(self, -1, _(u"Sélectionnez les données personnalisées que vous souhaitez ajouter aux\ncaractérististiques de ce contrat :"))
-        self.listCtrl_champs = ListCtrl_champs(self)
-        self.bouton_champs = wx.Button(self, -1, "...", style=wx.BU_EXACTFIT)
+        self.listCtrl_champs = ListCtrl_champs(self.sizer_champs_staticbox, controller=self)
+        self.bouton_champs = wx.Button(self.sizer_champs_staticbox, -1, "...", style=wx.BU_EXACTFIT)
 
         self.__set_properties()
         self.__do_layout()
@@ -83,10 +83,10 @@ class Page(wx.Panel):
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------
 
 class ListCtrl_champs(wx.ListCtrl):
-    def __init__(self, parent):
+    def __init__(self, parent, controller):
         wx.ListCtrl.__init__(self, parent, -1, style=wx.LC_REPORT|wx.LC_NO_HEADER)
         self.EnableCheckBoxes(True)
-        self.parent = parent
+        self.parent = controller
             
         self.Remplissage()
         
@@ -100,7 +100,7 @@ class ListCtrl_champs(wx.ListCtrl):
 
     def Remplissage(self):
         
-        listeIDchamps = list(self.GetGrandParent().GetParent().dictChamps.keys())
+        listeIDchamps = list(self.parent.GetGrandParent().dictChamps.keys())
         if len(listeIDchamps) != 0 :
             self.selections = listeIDchamps
         else:

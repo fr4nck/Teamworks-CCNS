@@ -51,14 +51,14 @@ class PanelDefilant(scrolled.ScrolledPanel):
             # TextCtrl pour réponse
             self.sizer_champs = wx.StaticBox(self, -1, label)
             sizer_champ = wx.StaticBoxSizer(self.sizer_champs, wx.VERTICAL)
-            setattr(self, "text_%s" % nom, wx.TextCtrl(self, -1, six.text_type(valeur)))
+            setattr(self, "text_%s" % nom, wx.TextCtrl(self.sizer_champs, -1, six.text_type(valeur)))
             getattr(self, "text_%s" % nom).SetToolTip(wx.ToolTip(infoBulle))
             sizer_champ.Add(getattr(self, "text_%s" % nom), 0, wx.EXPAND, 0)
 
             # Exemple :
             if exemple != "" :
                 txtExemple = "Ex. : " + exemple[:60]
-                setattr(self, "label_%sEX" % nom, wx.StaticText(self, -1, txtExemple))
+                setattr(self, "label_%sEX" % nom, wx.StaticText(self.sizer_champs, -1, txtExemple))
                 getattr(self, "label_%sEX" % nom).SetFont(wx.Font(7, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, ''))
                 getattr(self, "label_%sEX" % nom).SetForegroundColour((120, 120, 120))
                 sizer_champ.Add(getattr(self, "label_%sEX" % nom), 0, wx.ALIGN_RIGHT, 0)
