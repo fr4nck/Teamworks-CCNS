@@ -94,22 +94,13 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 print("TEAMWORKS_SMOKE_PERSON_STAGE:notebook", flush=True)
                 _smoke_notebook = _smoke_dialog.notebook
                 _smoke_expected_pages = (
-                    "Généralités",
-                    "Questionnaire",
-                    "Qualifications",
-                    "Contrats",
-                    "Présences",
-                    "Scénarios",
-                    "Frais",
-                    "Recrutement",
+                    "Généralités", "Questionnaire", "Qualifications", "Contrats",
+                    "Présences", "Scénarios", "Frais", "Recrutement",
                 )
                 assert _smoke_dialog.IDpersonne == _smoke_person_id
                 assert _smoke_dialog.GetTitle() == "Fiche individuelle"
                 assert _smoke_notebook.GetPageCount() == len(_smoke_expected_pages)
-                assert tuple(
-                    _smoke_notebook.GetPageText(_smoke_index)
-                    for _smoke_index in range(_smoke_notebook.GetPageCount())
-                ) == _smoke_expected_pages
+                assert tuple(_smoke_notebook.GetPageText(_smoke_index) for _smoke_index in range(_smoke_notebook.GetPageCount())) == _smoke_expected_pages
 
                 print("TEAMWORKS_SMOKE_PERSON_STAGE:pages", flush=True)
                 for _smoke_index in range(_smoke_notebook.GetPageCount()):
@@ -153,7 +144,7 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                     ("Offres d'emploi", DLG_Config_emplois.Dialog),
                     ("Gadgets", DLG_Config_gadgets.Dialog),
                     ("Protection par mot de passe", DLG_Config_password.Dialog),
-                    ("Sauvegardes automatiques", DLG_Config_sauvegarde.Dialog),
+                    ("Sauvegardes automatiques", DLG_Config_sauvegarde.MyFrame),
                     ("Adresses d'expédition", DLG_Emails_exp.Dialog),
                     ("Registre des contrats", DLG_Liste_contrats.Dialog),
                     ("Vacances", DLG_Vacances.Dialog),
@@ -181,9 +172,7 @@ def build_patched_entrypoint() -> int:
     core_source = CORE_SOURCE.read_text(encoding="utf-8")
     marker_count = core_source.count(MARKER_LINE)
     if marker_count < 1:
-        raise RuntimeError(
-            f"ligne marqueur du smoke principal introuvable: count={marker_count}"
-        )
+        raise RuntimeError(f"ligne marqueur du smoke principal introuvable: count={marker_count}")
     patched_core_source = core_source.replace(MARKER_LINE, INJECTION, 1)
     if READY_MARKER not in patched_core_source or FAILURE_MARKER not in patched_core_source:
         raise RuntimeError("injection des marqueurs de fiche individuelle absente")
@@ -206,20 +195,8 @@ def main() -> int:
     marker_count: int | None = None
     try:
         marker_count = build_patched_entrypoint()
-        return_code, output = run_entrypoint(
-            PATCHED,
-            root=ROOT,
-            teamworks_dir=TEAMWORKS_DIR,
-            timeout=240,
-        )
-        write_diagnostic(
-            REPORT,
-            return_code=return_code,
-            marker_count=marker_count,
-            ready_marker=READY_MARKER,
-            failure_marker=FAILURE_MARKER,
-            output=output,
-        )
+        return_code, output = run_entrypoint(PATCHED, root=ROOT, teamworks_dir=TEAMWORKS_DIR, timeout=240)
+        write_diagnostic(REPORT, return_code=return_code, marker_count=marker_count, ready_marker=READY_MARKER, failure_marker=FAILURE_MARKER, output=output)
         if return_code != 0 or FAILURE_MARKER in output:
             github_error_summary("Person dialog smoke failed", output)
             return return_code or 1
@@ -230,14 +207,7 @@ def main() -> int:
         return 0
     except Exception:
         output = traceback.format_exc()
-        write_diagnostic(
-            REPORT,
-            return_code=3,
-            marker_count=marker_count,
-            ready_marker=READY_MARKER,
-            failure_marker=FAILURE_MARKER,
-            output=output,
-        )
+        write_diagnostic(REPORT, return_code=3, marker_count=marker_count, ready_marker=READY_MARKER, failure_marker=FAILURE_MARKER, output=output)
         github_error_summary("Person dialog smoke failed", output)
         return 3
     finally:
