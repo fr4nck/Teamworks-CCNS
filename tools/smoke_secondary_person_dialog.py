@@ -26,6 +26,9 @@ STATICBOX_PARENT_WARNING = "of wxStaticBoxSizer should be created as child of it
 INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
             try:
                 print("TEAMWORKS_SMOKE_PERSON_STAGE:imports", flush=True)
+                import os as _smoke_os
+                import tempfile as _smoke_tempfile
+                import zipfile as _smoke_zipfile
                 import GestionDB as _smoke_gestiondb
                 from Dlg import DLG_Fiche_individuelle as _smoke_person
                 from Dlg import DLG_Enregistrement
@@ -173,6 +176,17 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                     _smoke_subdialog.Destroy()
                     wx.Yield()
                     print("TEAMWORKS_SMOKE_SUBDIALOG_OK:%s" % _smoke_label, flush=True)
+
+                print("TEAMWORKS_SMOKE_PERSON_STAGE:restore", flush=True)
+                _smoke_restore_dir = _smoke_tempfile.mkdtemp(prefix="teamworks-restore-")
+                _smoke_restore_zip = _smoke_os.path.join(_smoke_restore_dir, "smoke.twz")
+                with _smoke_zipfile.ZipFile(_smoke_restore_zip, "w") as _smoke_archive:
+                    _smoke_archive.writestr("data===smoke.dat", b"smoke")
+                _smoke_restore = DLG_Config_sauvegarde.Restauration(frame, fichierRestauration=_smoke_restore_zip)
+                _smoke_assert_populated(_smoke_restore, "Restauration")
+                _smoke_restore.Destroy()
+                wx.Yield()
+                print("TEAMWORKS_SMOKE_RESTORE_OK", flush=True)
 
                 print("TEAMWORKS_SMOKE_PERSON_DIALOG_READY", flush=True)
             except Exception:
