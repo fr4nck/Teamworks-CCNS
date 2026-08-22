@@ -20,6 +20,7 @@ REPORT = REPORT_DIR / "diagnostic.txt"
 MARKER_LINE = '            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)'
 READY_MARKER = "TEAMWORKS_SMOKE_PERSON_DIALOG_READY"
 FAILURE_MARKER = "TEAMWORKS_SMOKE_PERSON_DIALOG_FAILED"
+STATICBOX_PARENT_WARNING = "of wxStaticBoxSizer should be created as child of its wxStaticBox"
 # Le smoke doit instancier les vraies factories publiques utilisées par l'interface.
 
 INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
@@ -198,6 +199,9 @@ def main() -> int:
         marker_count = build_patched_entrypoint()
         return_code, output = run_entrypoint(PATCHED, root=ROOT, teamworks_dir=TEAMWORKS_DIR, timeout=240)
         write_diagnostic(REPORT, return_code=return_code, marker_count=marker_count, ready_marker=READY_MARKER, failure_marker=FAILURE_MARKER, output=output)
+        if STATICBOX_PARENT_WARNING in output:
+            github_error_summary("Person dialog StaticBox parentage failed", output)
+            return 4
         if return_code != 0 or FAILURE_MARKER in output:
             github_error_summary("Person dialog smoke failed", output)
             return return_code or 1
