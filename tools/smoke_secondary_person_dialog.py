@@ -51,6 +51,7 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 from Dlg import DLG_Config_gadgets
                 from Dlg import DLG_Config_password
                 from Dlg import DLG_Config_sauvegarde
+                from Dlg import DLG_Saisie_password
                 from Dlg import DLG_Saisie_procedure_sauvegarde
                 from Dlg import DLG_Emails_exp
                 from Dlg import DLG_Liste_contrats
@@ -167,6 +168,7 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 print("TEAMWORKS_SMOKE_PERSON_STAGE:subdialogs", flush=True)
                 _smoke_subdialogs = (
                     ("Saisie code de déverrouillage", DLG_Config_verrouillage_entretien.SaisiePassword),
+                    ("Saisie mot de passe", DLG_Saisie_password.Dialog),
                     ("Paramètres sauvegarde automatique", DLG_Config_sauvegarde.Saisie_sauvegarde_auto),
                     ("Sauvegarde occasionnelle", DLG_Config_sauvegarde.Saisie_sauvegarde_occasionnelle),
                     ("Procédure de sauvegarde", lambda _smoke_parent: DLG_Saisie_procedure_sauvegarde.Dialog(_smoke_parent, IDsauvegarde=None)),
