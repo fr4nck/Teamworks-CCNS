@@ -472,7 +472,7 @@ jobs:
             Where-Object { $_.FullName -ne $manifestPath } |
             Sort-Object FullName |
             ForEach-Object {
-              $relative = [System.IO.Path]::GetRelativePath($package.Path, $_.FullName).Replace('\\', '/')
+              $relative = [System.IO.Path]::GetRelativePath($package.Path, $_.FullName).Replace('\', '/')
               $hash = (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
               "$hash  $relative"
             } | Set-Content $manifestPath -Encoding utf8
