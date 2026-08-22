@@ -95,6 +95,17 @@ SaisiePassword = CORE.SaisiePassword
 Redirect = CORE.Redirect
 
 
+def _detruire_fenetres_smoke(app):
+    """Ferme proprement les fenêtres restantes avant la fin d'un smoke wx."""
+    if not os.environ.get("TEAMWORKS_SMOKE_MODE"):
+        return
+    for window in list(wx.GetTopLevelWindows()):
+        if window:
+            window.Destroy()
+    app.ProcessPendingEvents()
+    wx.YieldIfNeeded()
+
+
 def _initialiser_application():
     """Reprend le bootstrap historique en initialisant le cœur partagé."""
     for rep in ("Temp", "Updates", "Sync", "Lang", "Modeles", "Editions"):
@@ -127,6 +138,7 @@ def _initialiser_application():
 
     app = MyApp(redirect=False)
     app.MainLoop()
+    _detruire_fenetres_smoke(app)
 
 
 if __name__ == "__main__":
