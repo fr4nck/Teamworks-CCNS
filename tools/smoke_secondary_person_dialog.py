@@ -160,6 +160,20 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                     wx.Yield()
                     print("TEAMWORKS_SMOKE_PARAMETER_OK:%s" % _smoke_label, flush=True)
 
+                print("TEAMWORKS_SMOKE_PERSON_STAGE:subdialogs", flush=True)
+                _smoke_subdialogs = (
+                    ("Saisie code de déverrouillage", DLG_Config_verrouillage_entretien.SaisiePassword),
+                    ("Paramètres sauvegarde automatique", DLG_Config_sauvegarde.Saisie_sauvegarde_auto),
+                    ("Sauvegarde occasionnelle", DLG_Config_sauvegarde.Saisie_sauvegarde_occasionnelle),
+                )
+                for _smoke_label, _smoke_factory in _smoke_subdialogs:
+                    print("TEAMWORKS_SMOKE_SUBDIALOG_OPEN:%s" % _smoke_label, flush=True)
+                    _smoke_subdialog = _smoke_factory(frame)
+                    _smoke_assert_populated(_smoke_subdialog, _smoke_label)
+                    _smoke_subdialog.Destroy()
+                    wx.Yield()
+                    print("TEAMWORKS_SMOKE_SUBDIALOG_OK:%s" % _smoke_label, flush=True)
+
                 print("TEAMWORKS_SMOKE_PERSON_DIALOG_READY", flush=True)
             except Exception:
                 import traceback as _smoke_traceback
