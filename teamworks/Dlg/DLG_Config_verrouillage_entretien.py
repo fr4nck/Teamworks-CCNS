@@ -24,7 +24,7 @@ class Panel(wx.Panel):
         self.label_introduction = FonctionsPerso.StaticWrapText(self, -1, texteIntro)
         
         self.staticbox = wx.StaticBox(self, -1, _(u"Protection"))
-        self.checkBox = wx.CheckBox(self, -1, _(u"Activer la protection par mot de passe"))
+        self.checkBox = wx.CheckBox(self.staticbox, -1, _(u"Activer la protection par mot de passe"))
         
         self.bouton_aide = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Aide.png"), wx.BITMAP_TYPE_ANY))
         self.bouton_aide.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour obtenir de l'aide")))
@@ -118,8 +118,8 @@ class SaisiePassword(wx.Dialog):
             
         self.sizer_3_staticbox = wx.StaticBox(self, -1, "")
         self.label_2 = wx.StaticText(self, -1, _(u"Pour désactiver le mot de passe, vous devez déjà le saisir :"))
-        self.label_password = wx.StaticText(self, -1, "Mot de passe :")
-        self.text_password = wx.TextCtrl(self, -1, "", size=(200, -1), style=wx.TE_PASSWORD)
+        self.label_password = wx.StaticText(self.sizer_3_staticbox, -1, "Mot de passe :")
+        self.text_password = wx.TextCtrl(self.sizer_3_staticbox, -1, "", size=(200, -1), style=wx.TE_PASSWORD)
 
         self.bouton_ok = wx.BitmapButton(self, wx.ID_OK, wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Ok_L72.png"), wx.BITMAP_TYPE_ANY))
         self.bouton_annuler = CTRL_Bouton_image.CTRL(self, id=wx.ID_CANCEL, texte=_(u"Annuler"), cheminImage=Chemins.GetStaticPath("Images/32x32/Annuler.png"))
