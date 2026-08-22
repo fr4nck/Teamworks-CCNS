@@ -20,6 +20,7 @@ REPORT = REPORT_DIR / "diagnostic.txt"
 MARKER_LINE = '            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)'
 READY_MARKER = "TEAMWORKS_SMOKE_PERSON_DIALOG_READY"
 FAILURE_MARKER = "TEAMWORKS_SMOKE_PERSON_DIALOG_FAILED"
+# Le smoke doit instancier les vraies factories publiques utilisées par l'interface.
 
 INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
             try:
