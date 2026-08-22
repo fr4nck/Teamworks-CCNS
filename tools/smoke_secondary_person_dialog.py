@@ -43,6 +43,7 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 from Dlg import DLG_Config_affectations
                 from Dlg import DLG_Config_diffuseurs
                 from Dlg import DLG_Config_emplois
+                from Dlg import DLG_Config_gadgets
                 from Dlg import DLG_Vacances
                 from Dlg import DLG_Feries
 
@@ -146,6 +147,7 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                     ("Affectations", DLG_Config_affectations.Dialog),
                     ("Diffuseurs", DLG_Config_diffuseurs.Dialog),
                     ("Offres d'emploi", DLG_Config_emplois.Dialog),
+                    ("Gadgets", DLG_Config_gadgets.Dialog),
                     ("Vacances", DLG_Vacances.Dialog),
                     ("Jours fériés", DLG_Feries.Dialog),
                 )
