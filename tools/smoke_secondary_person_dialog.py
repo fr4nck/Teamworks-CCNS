@@ -44,6 +44,10 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 from Dlg import DLG_Config_diffuseurs
                 from Dlg import DLG_Config_emplois
                 from Dlg import DLG_Config_gadgets
+                from Dlg import DLG_Config_password
+                from Dlg import DLG_Config_sauvegarde
+                from Dlg import DLG_Emails_exp
+                from Dlg import DLG_Liste_contrats
                 from Dlg import DLG_Vacances
                 from Dlg import DLG_Feries
 
@@ -148,6 +152,10 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                     ("Diffuseurs", DLG_Config_diffuseurs.Dialog),
                     ("Offres d'emploi", DLG_Config_emplois.Dialog),
                     ("Gadgets", DLG_Config_gadgets.Dialog),
+                    ("Protection par mot de passe", DLG_Config_password.Dialog),
+                    ("Sauvegardes automatiques", DLG_Config_sauvegarde.Dialog),
+                    ("Adresses d'expédition", DLG_Emails_exp.Dialog),
+                    ("Registre des contrats", DLG_Liste_contrats.Dialog),
                     ("Vacances", DLG_Vacances.Dialog),
                     ("Jours fériés", DLG_Feries.Dialog),
                 )
