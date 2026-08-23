@@ -10,10 +10,10 @@
 
 """Fondations visuelles communes de Teamworks.
 
-Ce module conserve l'API historique des thèmes Vert/Bleu/Noir tout en ajoutant
-une couche de rôles sémantiques destinée à la migration progressive de
-l'interface. Les écrans existants peuvent continuer à utiliser GetValeur() ;
-les composants modernisés doivent préférer GetToken().
+Ce module est la source centrale des couleurs de l'interface. Il conserve
+l'API historique Vert/Bleu/Noir tout en exposant des rôles sémantiques stables.
+Les écrans existants peuvent continuer à utiliser ``GetValeur()`` ; les clés
+historiques de couleur sont désormais des alias vers les tokens du thème actif.
 
 La charte limite volontairement l'interface à cinq familles visuelles :
 neutre, primaire, succès, avertissement et danger. Les variantes de surface,
@@ -21,10 +21,10 @@ de contraste, de sélection ou de focus sont des nuances de ces familles, pas
 de nouvelles couleurs métier.
 """
 
-import Chemins
-from Utils.UTILS_Traduction import _
 import wx
+
 from Utils import UTILS_Customize
+from Utils.UTILS_Traduction import _
 
 
 THEMES = [
@@ -33,22 +33,9 @@ THEMES = [
     ("Noir", _(u"Noir")),
 ]
 
-APPEARANCE_MODES = (
-    "system",
-    "light",
-    "dark",
-)
+APPEARANCE_MODES = ("system", "light", "dark")
+COLOUR_FAMILIES = ("neutral", "primary", "success", "warning", "danger")
 
-COLOUR_FAMILIES = (
-    "neutral",
-    "primary",
-    "success",
-    "warning",
-    "danger",
-)
-
-# Noms stables à utiliser dans les nouveaux composants. La hiérarchie des
-# surfaces et les couleurs d'état suivent le design system commun du projet.
 SEMANTIC_TOKENS = (
     "surface",
     "surface_container_lowest",
@@ -74,9 +61,6 @@ SEMANTIC_TOKENS = (
     "focus",
 )
 
-# Chaque token appartient à une et une seule famille. ``info`` reste disponible
-# pour compatibilité avec les écrans déjà migrés mais réutilise la famille
-# primaire afin de ne pas introduire une sixième couleur.
 TOKEN_FAMILY = {
     "surface": "neutral",
     "surface_container_lowest": "neutral",
@@ -102,33 +86,37 @@ TOKEN_FAMILY = {
     "danger": "danger",
 }
 
-
-# Palette historique : ne pas modifier les valeurs sans migration explicite.
+# Valeurs conservées pour compatibilité et documentation de l'ancien thème.
+# ``GetValeur`` ne les renvoie plus directement : les quatre anciennes clés
+# passent par LEGACY_TOKEN_MAP pour suivre aussi clair/sombre et les futurs
+# thèmes centraux.
 DONNEES = {
-
-    "Vert" : {
-        "couleur_tres_foncee" : wx.Colour(33, 104, 0), # Fond Astuces page d'accueil
-        "couleur_claire" : wx.Colour(137, 206, 27), # Texte du splash screen
-        "couleur_tres_claire" : wx.Colour(240, 251, 237), # Lignes des listes
-        "couleur_tres_claire_2" : wx.Colour(214, 250, 199), # Cadre Contacts de la fiche famille
+    "Vert": {
+        "couleur_tres_foncee": wx.Colour(33, 104, 0),
+        "couleur_claire": wx.Colour(137, 206, 27),
+        "couleur_tres_claire": wx.Colour(240, 251, 237),
+        "couleur_tres_claire_2": wx.Colour(214, 250, 199),
     },
-
-    "Bleu" : {
-        "couleur_tres_foncee" : wx.Colour(0, 50, 95),
-        "couleur_claire" : wx.Colour(0, 121, 204),
-        "couleur_tres_claire" : wx.Colour(234, 240, 255),
-        "couleur_tres_claire_2" : wx.Colour(211, 224, 250),
+    "Bleu": {
+        "couleur_tres_foncee": wx.Colour(0, 50, 95),
+        "couleur_claire": wx.Colour(0, 121, 204),
+        "couleur_tres_claire": wx.Colour(234, 240, 255),
+        "couleur_tres_claire_2": wx.Colour(211, 224, 250),
     },
-
-    "Noir" : {
-        "couleur_tres_foncee" : wx.Colour(0, 0, 0),
-        "couleur_claire" : wx.Colour(150, 150, 150),
-        "couleur_tres_claire" : wx.Colour(240, 240, 240),
-        "couleur_tres_claire_2" : wx.Colour(230, 230, 230),
+    "Noir": {
+        "couleur_tres_foncee": wx.Colour(0, 0, 0),
+        "couleur_claire": wx.Colour(150, 150, 150),
+        "couleur_tres_claire": wx.Colour(240, 240, 240),
+        "couleur_tres_claire_2": wx.Colour(230, 230, 230),
     },
-
 }
 
+LEGACY_TOKEN_MAP = {
+    "couleur_tres_foncee": "primary",
+    "couleur_claire": "primary",
+    "couleur_tres_claire": "surface_container_low",
+    "couleur_tres_claire_2": "primary_container",
+}
 
 _LIGHT_ACCENTS = {
     "Vert": {
@@ -186,27 +174,17 @@ _LEGACY_APPEARANCE_NAMES = {
 
 
 def _normalise_theme(theme):
-    if theme in DONNEES:
-        return theme
-    return "Vert"
+    return theme if theme in DONNEES else "Vert"
 
 
 def _normalise_appearance(appearance):
     if appearance in APPEARANCE_MODES:
         return appearance
-    # Tant que tous les écrans historiques ne sont pas migrés, rester en clair
-    # évite une interface hybride sur les machines configurées en sombre.
     return "light"
 
 
 def GetTheme():
-    """Retourne l'accent visuel Vert/Bleu/Noir.
-
-    TW-121 utilisait historiquement ``interface.theme`` pour l'apparence
-    Système/Clair/Sombre. Le nouvel accent est donc stocké séparément. Une
-    ancienne configuration contenant encore Vert/Bleu/Noir dans ``theme`` est
-    néanmoins reconnue pendant la migration.
-    """
+    """Retourne l'accent visuel Vert/Bleu/Noir."""
     accent = UTILS_Customize.GetValeur(
         "interface", "accent", "", ajouter_si_manquant=False
     )
@@ -217,50 +195,36 @@ def GetTheme():
 
 
 def SetTheme(theme="Vert"):
-    """Enregistre l'accent sans détourner la clé TW-121 ``theme``."""
     UTILS_Customize.SetValeur("interface", "accent", _normalise_theme(theme))
 
 
 def GetAppearanceMode():
-    """Retourne la préférence enregistrée : system, light ou dark.
-
-    Le mode clair reste le repli de migration afin de préserver le rendu
-    historique lorsqu'une valeur inconnue est rencontrée. Sur une installation
-    neuve, Customize.ini initialise explicitement ``appearance=system``.
-    """
     return _normalise_appearance(
         UTILS_Customize.GetValeur("interface", "appearance", "light")
     )
 
 
 def SetAppearanceMode(appearance="system"):
-    """Enregistre l'apparence moderne et maintient le contrat TW-121."""
     appearance = _normalise_appearance(appearance)
     UTILS_Customize.SetValeur("interface", "appearance", appearance)
     UTILS_Customize.SetValeur(
-        "interface",
-        "theme",
-        _LEGACY_APPEARANCE_NAMES[appearance],
+        "interface", "theme", _LEGACY_APPEARANCE_NAMES[appearance]
     )
 
 
 def IsSystemDark():
-    """Détecte le mode sombre de la plateforme lorsque wx le permet."""
     try:
         get_appearance = getattr(wx.SystemSettings, "GetAppearance", None)
         if get_appearance is None:
             return False
         appearance = get_appearance()
         is_dark = getattr(appearance, "IsDark", None)
-        if is_dark is None:
-            return False
-        return bool(is_dark())
+        return bool(is_dark and is_dark())
     except Exception:
         return False
 
 
 def ResolveAppearance(appearance=None):
-    """Résout system en light/dark et garantit une valeur utilisable."""
     appearance = _normalise_appearance(
         GetAppearanceMode() if appearance is None else appearance
     )
@@ -326,7 +290,6 @@ def _build_dark_palette(theme):
 
 
 def GetPalette(theme=None, appearance=None):
-    """Retourne une palette sémantique complète pour le contexte demandé."""
     theme = GetTheme() if theme is None else _normalise_theme(theme)
     appearance = ResolveAppearance(appearance)
     if appearance == "dark":
@@ -335,22 +298,26 @@ def GetPalette(theme=None, appearance=None):
 
 
 def GetToken(token, default=None, theme=None, appearance=None):
-    """Retourne une couleur à partir de son rôle sémantique."""
     palette = GetPalette(theme=theme, appearance=appearance)
     return palette.get(token, default)
 
 
 def GetTokenFamily(token):
-    """Retourne la famille visuelle stable d'un token sémantique."""
     return TOKEN_FAMILY.get(token)
 
 
 def GetValeur(cle="", defaut="", theme=None):
-    """API historique, étendue pour accepter également les tokens sémantiques."""
+    """API historique raccordée au design system central.
+
+    Les quatre anciennes clés de couleur sont résolues en tokens sémantiques.
+    Elles suivent donc désormais l'accent, le mode clair/sombre et tout futur
+    thème défini dans ce module, sans modification des écrans appelants.
+    """
     theme = GetTheme() if theme is None else _normalise_theme(theme)
 
-    if cle in DONNEES[theme]:
-        return DONNEES[theme][cle]
+    legacy_token = LEGACY_TOKEN_MAP.get(cle)
+    if legacy_token:
+        return GetToken(legacy_token, default=defaut, theme=theme)
 
     if cle in SEMANTIC_TOKENS:
         return GetToken(cle, default=defaut, theme=theme)
@@ -358,5 +325,5 @@ def GetValeur(cle="", defaut="", theme=None):
     return defaut
 
 
-if __name__ == '__main__':
-    print((GetValeur("couleur_tres_foncee", wx.Colour(255, 0, 0))))
+if __name__ == "__main__":
+    print(GetValeur("couleur_tres_foncee", wx.Colour(255, 0, 0)))
