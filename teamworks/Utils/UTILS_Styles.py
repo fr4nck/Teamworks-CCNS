@@ -52,6 +52,13 @@ WINDOW_PROFILES = {
 }
 
 
+def _clamp_scale(value):
+    return max(
+        UTILS_Interface.INTERFACE_SCALE_MIN,
+        min(UTILS_Interface.INTERFACE_SCALE_MAX, int(value)),
+    )
+
+
 def GetEchelleInterface():
     """Retourne l'échelle UI depuis la source centrale du moteur de thème.
 
@@ -61,7 +68,7 @@ def GetEchelleInterface():
     """
     try:
         from Utils import UTILS_Theme
-        return max(80, min(200, int(UTILS_Theme.interface_scale_percent())))
+        return _clamp_scale(UTILS_Theme.interface_scale_percent())
     except Exception:
         pass
 
@@ -71,14 +78,19 @@ def GetEchelleInterface():
             ajouter_si_manquant=False,
         )
         if valeur:
-            return max(80, min(200, int(valeur)))
+            return _clamp_scale(valeur)
     except Exception:
         pass
     try:
-        valeur = UTILS_Customize.GetValeur("interface", "echelle_police", "100", type_valeur=int)
-        return max(80, min(200, int(valeur)))
+        valeur = UTILS_Customize.GetValeur(
+            "interface",
+            "echelle_police",
+            str(UTILS_Interface.INTERFACE_SCALE_DEFAULT),
+            type_valeur=int,
+        )
+        return _clamp_scale(valeur)
     except Exception:
-        return 100
+        return UTILS_Interface.INTERFACE_SCALE_DEFAULT
 
 
 def Scale(value, minimum=1):
