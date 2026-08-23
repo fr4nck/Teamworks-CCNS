@@ -10,10 +10,11 @@
 
 """Fondations visuelles communes de Teamworks.
 
-Ce module est la source centrale des couleurs de l'interface. Il conserve
-l'API historique Vert/Bleu/Noir tout en exposant des rôles sémantiques stables.
-Les écrans existants peuvent continuer à utiliser ``GetValeur()`` ; les clés
-historiques de couleur sont désormais des alias vers les tokens du thème actif.
+Ce module est la source centrale des couleurs et des préférences visuelles de
+l'interface. Il conserve l'API historique Vert/Bleu/Noir tout en exposant des
+rôles sémantiques stables. Les écrans existants peuvent continuer à utiliser
+``GetValeur()`` ; les clés historiques de couleur sont désormais des alias vers
+les tokens du thème actif.
 
 La charte limite volontairement l'interface à cinq familles visuelles :
 neutre, primaire, succès, avertissement et danger. Les variantes de surface,
@@ -35,6 +36,12 @@ THEMES = [
 
 APPEARANCE_MODES = ("system", "light", "dark")
 COLOUR_FAMILIES = ("neutral", "primary", "success", "warning", "danger")
+
+# Contrat global de mise à l'échelle. Tous les consommateurs (moteur de thème,
+# feuille de styles et dialogue de préférences) doivent utiliser ces valeurs.
+INTERFACE_SCALE_MIN = 80
+INTERFACE_SCALE_DEFAULT = 100
+INTERFACE_SCALE_MAX = 200
 
 SEMANTIC_TOKENS = (
     "surface",
