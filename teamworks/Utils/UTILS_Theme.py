@@ -296,12 +296,25 @@ def _scale_font(window, scale):
 
 
 def _minimum_height(window, height):
+    """Applique une hauteur de thème sans écraser un minimum métier explicite.
+
+    Le minimum d'origine est mémorisé une seule fois. Le minimum effectif peut
+    donc augmenter à 125 % puis redescendre à 100 % sans rester artificiellement
+    gonflé par une ancienne application du thème.
+    """
     try:
         minimum = window.GetMinSize()
         width = minimum.GetWidth() if minimum else -1
         current_height = minimum.GetHeight() if minimum else -1
-        if current_height < height:
-            window.SetMinSize((width, height))
+
+        base_height = getattr(window, "_teamworks_min_height_base", None)
+        if base_height is None:
+            base_height = current_height
+            window._teamworks_min_height_base = base_height
+
+        target_height = max(int(base_height), int(height)) if base_height >= 0 else int(height)
+        if current_height != target_height:
+            window.SetMinSize((width, target_height))
     except Exception:
         pass
 
