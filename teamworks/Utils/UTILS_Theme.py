@@ -245,20 +245,52 @@ def _semantic_palette(dark):
         return _native_palette(dark)
 
 
+def _font_point_size(font):
+    if hasattr(font, "GetFractionalPointSize"):
+        return float(font.GetFractionalPointSize())
+    return float(font.GetPointSize())
+
+
+def _set_font_point_size(font, value):
+    value = max(6.0, float(value))
+    if hasattr(font, "SetFractionalPointSize"):
+        font.SetFractionalPointSize(value)
+    else:
+        font.SetPointSize(int(round(value)))
+
+
 def _scale_font(window, scale):
-    if scale == 100 or getattr(window, "_teamworks_font_scaled", False):
-        return
     try:
-        font = window.GetFont()
-        if font and font.IsOk():
-            current = font.GetFractionalPointSize() if hasattr(font, "GetFractionalPointSize") else font.GetPointSize()
-            new_size = max(6.0, current * scale / 100.0)
-            if hasattr(font, "SetFractionalPointSize"):
-                font.SetFractionalPointSize(new_size)
-            else:
-                font.SetPointSize(int(round(new_size)))
-            window.SetFont(font)
+        semantic_style = getattr(window, "_teamworks_text_style", None)
+        if semantic_style:
+            from Utils import UTILS_Styles
+            window.SetFont(UTILS_Styles.GetFont(semantic_style))
+            window._teamworks_font_scale_percent = scale
             window._teamworks_font_scaled = True
+            return
+
+        font = window.GetFont()
+        if not font or not font.IsOk():
+            return
+
+        last_scale = getattr(window, "_teamworks_font_scale_percent", None)
+        if last_scale == scale:
+            return
+
+        base_points = getattr(window, "_teamworks_font_base_points", None)
+        if base_points is None:
+            current = _font_point_size(font)
+            if getattr(window, "_teamworks_font_scaled", False):
+                previous_scale = last_scale or scale or 100
+                base_points = current * 100.0 / float(previous_scale)
+            else:
+                base_points = current
+            window._teamworks_font_base_points = base_points
+
+        _set_font_point_size(font, base_points * float(scale) / 100.0)
+        window.SetFont(font)
+        window._teamworks_font_scale_percent = scale
+        window._teamworks_font_scaled = True
     except Exception:
         pass
 
