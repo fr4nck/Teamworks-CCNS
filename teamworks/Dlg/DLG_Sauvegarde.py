@@ -33,9 +33,9 @@ LISTE_CATEGORIES = UTILS_Sauvegarde.LISTE_CATEGORIES
 
 
 class CTRL_Donnees(CT.CustomTreeCtrl):
-    def __init__(self, parent, id=wx.ID_ANY, pos=wx.DefaultPosition, size=wx.DefaultSize, style=wx.SUNKEN_BORDER) :
+    def __init__(self, parent, controller=None, id=wx.ID_ANY, pos=wx.DefaultPosition, size=wx.DefaultSize, style=wx.SUNKEN_BORDER) :
         CT.CustomTreeCtrl.__init__(self, parent, id, pos, size, style)
-        self.parent = parent
+        self.parent = controller if controller is not None else parent
         self.root = self.AddRoot(_(u"Données"))
         
         self.SetBackgroundColour(wx.WHITE)
@@ -227,32 +227,32 @@ class CTRL_Parametres(wx.Panel) :
         
         # Nom
         self.box_nom_staticbox = wx.StaticBox(self, -1, labelControleNom)
-        self.label_nom = wx.StaticText(self, -1, u"%s :" % labelControleNom)
-        self.ctrl_nom = wx.TextCtrl(self, -1, u"")
+        self.label_nom = wx.StaticText(self.box_nom_staticbox, -1, u"%s :" % labelControleNom)
+        self.ctrl_nom = wx.TextCtrl(self.box_nom_staticbox, -1, u"")
         
         # Protection
         self.box_mdp_staticbox = wx.StaticBox(self, -1, _(u"Protection"))
-        self.label_cryptage = wx.StaticText(self, -1, _(u"Cryptage :"))
-        self.check_cryptage = wx.CheckBox(self, -1, u"")
-        self.label_mdp = wx.StaticText(self, -1, _(u"Mot de passe :"))
-        self.ctrl_mdp = wx.TextCtrl(self, -1, u"", style=wx.TE_PASSWORD)
-        self.label_confirmation = wx.StaticText(self, -1, _(u"Confirmation :"))
-        self.ctrl_confirmation = wx.TextCtrl(self, -1, u"", style=wx.TE_PASSWORD)
+        self.label_cryptage = wx.StaticText(self.box_mdp_staticbox, -1, _(u"Cryptage :"))
+        self.check_cryptage = wx.CheckBox(self.box_mdp_staticbox, -1, u"")
+        self.label_mdp = wx.StaticText(self.box_mdp_staticbox, -1, _(u"Mot de passe :"))
+        self.ctrl_mdp = wx.TextCtrl(self.box_mdp_staticbox, -1, u"", style=wx.TE_PASSWORD)
+        self.label_confirmation = wx.StaticText(self.box_mdp_staticbox, -1, _(u"Confirmation :"))
+        self.ctrl_confirmation = wx.TextCtrl(self.box_mdp_staticbox, -1, u"", style=wx.TE_PASSWORD)
         
         # Destination
         self.box_destination_staticbox = wx.StaticBox(self, -1, _(u"Destination"))
-        self.check_repertoire = wx.CheckBox(self, -1, _(u"Répertoire :"))
-        self.ctrl_repertoire = wx.TextCtrl(self, -1, u"")
-        self.bouton_repertoire = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath(u"Images/16x16/Repertoire.png"), wx.BITMAP_TYPE_ANY))
-        self.check_email = wx.CheckBox(self, -1, _(u"Envoi par Email :"))
-        self.ctrl_email = wx.TextCtrl(self, -1, u"")
+        self.check_repertoire = wx.CheckBox(self.box_destination_staticbox, -1, _(u"Répertoire :"))
+        self.ctrl_repertoire = wx.TextCtrl(self.box_destination_staticbox, -1, u"")
+        self.bouton_repertoire = wx.BitmapButton(self.box_destination_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath(u"Images/16x16/Repertoire.png"), wx.BITMAP_TYPE_ANY))
+        self.check_email = wx.CheckBox(self.box_destination_staticbox, -1, _(u"Envoi par Email :"))
+        self.ctrl_email = wx.TextCtrl(self.box_destination_staticbox, -1, u"")
         
         # Données
         self.box_donnees_staticbox = wx.StaticBox(self, -1, _(u"Données à sauvegarder"))
-        self.ctrl_donnees = CTRL_Donnees(self)
+        self.ctrl_donnees = CTRL_Donnees(self.box_donnees_staticbox, controller=self)
         self.ctrl_donnees.SetMinSize((300, -1))
-        self.check_locaux = wx.CheckBox(self, -1, _(u"Fichiers locaux"))
-        self.check_reseau = wx.CheckBox(self, -1, _(u"Fichiers réseau"))
+        self.check_locaux = wx.CheckBox(self.box_donnees_staticbox, -1, _(u"Fichiers locaux"))
+        self.check_reseau = wx.CheckBox(self.box_donnees_staticbox, -1, _(u"Fichiers réseau"))
 
         self.__set_properties()
         self.__do_layout()
