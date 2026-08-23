@@ -143,8 +143,14 @@ def GetFont(style="body"):
 
 
 def AppliquerTexte(controle, style="body"):
+    """Applique une typographie sémantique déjà mise à l'échelle.
+
+    Le marqueur évite que ``UTILS_Theme`` applique une seconde fois le zoom
+    global lors de l'affichage du contrôle.
+    """
     definition = GetTextStyle(style)
     controle.SetFont(GetFont(style))
+    controle._teamworks_font_scaled = True
     controle.SetForegroundColour(UTILS_Interface.GetToken(definition["colour"]))
     return controle
 
