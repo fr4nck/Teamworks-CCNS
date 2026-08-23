@@ -12,13 +12,16 @@ class Dialog(wx.Dialog):
     # Contrat historique TW-121 conservé pour compatibilité et tests.
     THEMES = ["Système", "Clair", "Sombre"]
 
-    # Source unique : tout thème ajouté dans UTILS_Interface apparaît ici
-    # automatiquement, sans seconde liste à maintenir dans le dialogue.
+    # Sources uniques : les thèmes et codes d'apparence viennent du socle.
     ACCENTS = list(UTILS_Interface.THEMES)
+    _APPEARANCE_LABELS = {
+        "system": "Système",
+        "light": "Clair",
+        "dark": "Sombre",
+    }
     APPEARANCES = [
-        ("system", "Système"),
-        ("light", "Clair"),
-        ("dark", "Sombre"),
+        (code, _APPEARANCE_LABELS.get(code, code))
+        for code in UTILS_Interface.APPEARANCE_MODES
     ]
 
     def __init__(self, parent):
