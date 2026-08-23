@@ -15,11 +15,16 @@ class Texte(wx.StaticText):
     def __init__(self, parent, texte=u"", style="body", id=-1, **kwargs):
         wx.StaticText.__init__(self, parent, id, texte, **kwargs)
         self.style_semantique = style
+        # Le rôle reste attaché au contrôle : UTILS_Theme peut ainsi
+        # recalculer la police depuis sa définition sémantique lors d'un
+        # changement d'échelle, sans multiplier une taille déjà agrandie.
+        self._teamworks_semantic_text_style = style
         self.AppliquerStyle()
 
     def AppliquerStyle(self, style=None):
         if style is not None:
             self.style_semantique = style
+        self._teamworks_semantic_text_style = self.style_semantique
         UTILS_Styles.AppliquerTexte(self, self.style_semantique)
         return self
 
