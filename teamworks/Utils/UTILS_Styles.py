@@ -53,8 +53,23 @@ WINDOW_PROFILES = {
 
 
 def GetEchelleInterface():
+    """Retourne l'échelle UI depuis la source centrale du moteur de thème.
+
+    L'import est volontairement tardif pour éviter une dépendance circulaire au
+    chargement des modules. L'ancienne lecture via ``UTILS_Customize`` reste un
+    repli pour les contextes partiels (tests, scripts ou import incomplet).
+    """
     try:
-        valeur = UTILS_Customize.GetValeur("interface", "echelle_interface", "", type_valeur=int, ajouter_si_manquant=False)
+        from Utils import UTILS_Theme
+        return max(80, min(200, int(UTILS_Theme.interface_scale_percent())))
+    except Exception:
+        pass
+
+    try:
+        valeur = UTILS_Customize.GetValeur(
+            "interface", "echelle_interface", "", type_valeur=int,
+            ajouter_si_manquant=False,
+        )
         if valeur:
             return max(80, min(200, int(valeur)))
     except Exception:
@@ -143,13 +158,11 @@ def GetFont(style="body"):
 
 
 def AppliquerTexte(controle, style="body"):
-    """Applique une typographie sémantique déjà mise à l'échelle.
-
-    Le marqueur évite que ``UTILS_Theme`` applique une seconde fois le zoom
-    global lors de l'affichage du contrôle.
-    """
+    """Applique une typographie sémantique déjà mise à l'échelle."""
     definition = GetTextStyle(style)
+    controle._teamworks_text_style = style
     controle.SetFont(GetFont(style))
+    controle._teamworks_font_scale_percent = GetEchelleInterface()
     controle._teamworks_font_scaled = True
     controle.SetForegroundColour(UTILS_Interface.GetToken(definition["colour"]))
     return controle
