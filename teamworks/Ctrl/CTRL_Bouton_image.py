@@ -84,7 +84,7 @@ class CTRL(wx.Button):
         self.margesImage = margesImage if margesImage is not None else (marge_icone, 0, 0, 0)
         self.positionImage = positionImage
         self.margesTexte = margesTexte if margesTexte is not None else (0, 1)
-        self._teamworks_semantic_text_style = "label"
+        self._teamworks_text_style = "label"
         self.MAJ()
 
     def _bitmap(self):
@@ -126,7 +126,7 @@ class CTRL(wx.Button):
 
     def AppliquerTheme(self):
         """Conserve le rendu natif et applique la typographie de la charte."""
-        self._teamworks_semantic_text_style = "label"
+        self._teamworks_text_style = "label"
         self.SetFont(UTILS_Styles.GetFont("label"))
         # GetFont() tient déjà compte de l'échelle globale : le thème ne doit
         # pas agrandir une seconde fois ce bouton au moment de Show().
