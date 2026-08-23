@@ -12,11 +12,9 @@ class Dialog(wx.Dialog):
     # Contrat historique TW-121 conservé pour compatibilité et tests.
     THEMES = ["Système", "Clair", "Sombre"]
 
-    ACCENTS = [
-        ("Vert", "Vert"),
-        ("Bleu", "Bleu"),
-        ("Noir", "Neutre"),
-    ]
+    # Source unique : tout thème ajouté dans UTILS_Interface apparaît ici
+    # automatiquement, sans seconde liste à maintenir dans le dialogue.
+    ACCENTS = list(UTILS_Interface.THEMES)
     APPEARANCES = [
         ("system", "Système"),
         ("light", "Clair"),
@@ -169,7 +167,10 @@ class Dialog(wx.Dialog):
     def _ajuster_textes(self):
         try:
             padding = UTILS_Styles.GetLayoutSpacing("dialog_padding") * 2
-            largeur = max(UTILS_Styles.Scale(240), self.panel.GetClientSize().GetWidth() - padding)
+            largeur = max(
+                UTILS_Styles.Scale(240),
+                self.panel.GetClientSize().GetWidth() - padding,
+            )
             self.intro.Wrap(largeur)
             self.info.Wrap(largeur)
             self.panel.Layout()
