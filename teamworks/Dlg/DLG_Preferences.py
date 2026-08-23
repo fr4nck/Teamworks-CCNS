@@ -84,7 +84,15 @@ class Dialog(wx.Dialog):
             padding,
         )
 
-        self.scale = wx.SpinCtrl(self.panel, min=80, max=200, initial=100)
+        scale_min = UTILS_Interface.INTERFACE_SCALE_MIN
+        scale_default = UTILS_Interface.INTERFACE_SCALE_DEFAULT
+        scale_max = UTILS_Interface.INTERFACE_SCALE_MAX
+        self.scale = wx.SpinCtrl(
+            self.panel,
+            min=scale_min,
+            max=scale_max,
+            initial=scale_default,
+        )
         try:
             current_scale = UTILS_Customize.GetValeur(
                 "interface",
@@ -94,13 +102,16 @@ class Dialog(wx.Dialog):
             )
             if current_scale in (None, ""):
                 current_scale = UTILS_Customize.GetValeur(
-                    "interface", "echelle_police", "100", type_valeur=int
+                    "interface",
+                    "echelle_police",
+                    str(scale_default),
+                    type_valeur=int,
                 )
             else:
                 current_scale = int(current_scale)
         except Exception:
-            current_scale = 100
-        self.scale.SetValue(max(80, min(200, current_scale)))
+            current_scale = scale_default
+        self.scale.SetValue(max(scale_min, min(scale_max, current_scale)))
 
         scale_control = wx.BoxSizer(wx.HORIZONTAL)
         scale_control.Add(self.scale, 0)
