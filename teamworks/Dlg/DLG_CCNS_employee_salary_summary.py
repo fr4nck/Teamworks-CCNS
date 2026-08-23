@@ -10,6 +10,7 @@ from application.presentation import (
     ContractSalaryControlEmployeeSummaryViewModel,
 )
 from teamworks.Dlg.DLG_CCNS_salary_control_detail import Dialog as SalaryControlDetailDialog
+from Utils import UTILS_Interface
 
 
 class Dialog(wx.Dialog):
@@ -58,12 +59,20 @@ class Dialog(wx.Dialog):
         self.Layout()
 
     def _section(self, title, rows):
-        box = wx.StaticBoxSizer(wx.StaticBox(self, -1, title), wx.VERTICAL)
+        static_box = wx.StaticBox(self, -1, title)
+        static_box.SetBackgroundColour(UTILS_Interface.GetToken("surface_container"))
+        static_box.SetForegroundColour(UTILS_Interface.GetToken("on_surface"))
+        box = wx.StaticBoxSizer(static_box, wx.VERTICAL)
         grid = wx.FlexGridSizer(cols=2, hgap=10, vgap=6)
         grid.AddGrowableCol(1, 1)
         for label, value in rows:
-            grid.Add(wx.StaticText(self, -1, label + " :"), 0, wx.ALIGN_TOP)
-            text = wx.TextCtrl(self, -1, value or "Non renseigné", style=wx.TE_READONLY | wx.TE_MULTILINE | wx.BORDER_NONE)
+            grid.Add(wx.StaticText(static_box, -1, label + " :"), 0, wx.ALIGN_TOP)
+            text = wx.TextCtrl(
+                static_box,
+                -1,
+                value or "Non renseigné",
+                style=wx.TE_READONLY | wx.TE_MULTILINE | wx.BORDER_NONE,
+            )
             text.SetMinSize((-1, 36))
             grid.Add(text, 1, wx.EXPAND)
         box.Add(grid, 1, wx.ALL | wx.EXPAND, 8)
