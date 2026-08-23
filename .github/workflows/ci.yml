@@ -46,6 +46,8 @@ jobs:
         run: python -m pip install --requirement .github/requirements-ci.txt
 
       - name: Garantir un workflow unique
+        id: workflow_unique
+        continue-on-error: true
         shell: bash
         run: |
           python - <<'PY'
@@ -65,15 +67,23 @@ jobs:
           PY
 
       - name: Compiler tout le code Python
+        id: compile_python
+        continue-on-error: true
         run: python -m compileall -q application domain infrastructure scripts tools teamworks tests
 
       - name: Contrôler la politique UTF-8
+        id: utf8_policy
+        continue-on-error: true
         run: python scripts/check_utf8.py
 
       - name: Contrôler les composants essentiels
+        id: essential_runtime
+        continue-on-error: true
         run: python scripts/check_essential_runtime.py
 
       - name: Auditer les risques de compatibilité
+        id: runtime_risks
+        continue-on-error: true
         run: >-
           python scripts/audit_runtime_risks.py .
           --fail-on-python2-builtins
@@ -81,13 +91,20 @@ jobs:
           --json runtime-risk-audit.json
 
       - name: Refuser de nouveaux chemins SQLite binaires
+        id: sqlite_paths
+        continue-on-error: true
         shell: bash
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
 
-          report = json.loads(Path("runtime-risk-audit.json").read_text(encoding="utf-8"))
+          path = Path("runtime-risk-audit.json")
+          if not path.is_file():
+              raise SystemExit(
+                  "Contrôle SQLite impossible : runtime-risk-audit.json est absent"
+              )
+          report = json.loads(path.read_text(encoding="utf-8"))
           current = report["counts"].get("sqlite-bytes-path", 0)
           historical_ceiling = 4
           if current > historical_ceiling:
@@ -98,19 +115,86 @@ jobs:
           print(f"Chemins SQLite binaires : {current}/{historical_ceiling}")
           PY
 
-      - name: Exécuter les audits de migration
+      - name: Contrôler les branches Phoenix redondantes
+        id: phoenix_branches
+        continue-on-error: true
+        run: python tools/find_redundant_phoenix_branches.py teamworks/Ctrl --check
+
+      - name: Inventorier les valeurs par défaut mutables
+        id: mutable_defaults
+        continue-on-error: true
         shell: bash
-        run: |
-          python tools/find_redundant_phoenix_branches.py teamworks/Ctrl --check
-          python tools/find_mutable_defaults.py teamworks > mutable-defaults.txt
-          python tools/inventory_external_imports.py --path teamworks --json external-imports.json --markdown external-imports.md
-          python tools/inventory_python_compile_errors.py --path teamworks --json python-compile-errors.json --markdown python-compile-errors.md
+        run: python tools/find_mutable_defaults.py teamworks > mutable-defaults.txt
+
+      - name: Inventorier les imports externes
+        id: external_imports
+        continue-on-error: true
+        run: >-
+          python tools/inventory_external_imports.py
+          --path teamworks
+          --json external-imports.json
+          --markdown external-imports.md
+
+      - name: Inventorier les erreurs de compilation Python
+        id: compile_inventory
+        continue-on-error: true
+        run: >-
+          python tools/inventory_python_compile_errors.py
+          --path teamworks
+          --json python-compile-errors.json
+          --markdown python-compile-errors.md
 
       - name: Exécuter les tests
+        id: pytest_suite
+        continue-on-error: true
         shell: bash
         run: |
           set -o pipefail
           python -m pytest -q 2>&1 | tee pytest-output.txt
+
+      - name: Préparer le bilan des contrôles
+        if: always()
+        shell: bash
+        env:
+          WORKFLOW_UNIQUE: ${{ steps.workflow_unique.outcome }}
+          COMPILE_PYTHON: ${{ steps.compile_python.outcome }}
+          UTF8_POLICY: ${{ steps.utf8_policy.outcome }}
+          ESSENTIAL_RUNTIME: ${{ steps.essential_runtime.outcome }}
+          RUNTIME_RISKS: ${{ steps.runtime_risks.outcome }}
+          SQLITE_PATHS: ${{ steps.sqlite_paths.outcome }}
+          PHOENIX_BRANCHES: ${{ steps.phoenix_branches.outcome }}
+          MUTABLE_DEFAULTS: ${{ steps.mutable_defaults.outcome }}
+          EXTERNAL_IMPORTS: ${{ steps.external_imports.outcome }}
+          COMPILE_INVENTORY: ${{ steps.compile_inventory.outcome }}
+          PYTEST_SUITE: ${{ steps.pytest_suite.outcome }}
+        run: |
+          : > ci-failures.txt
+          check() {
+            local label="$1"
+            local outcome="$2"
+            if [[ "$outcome" != "success" ]]; then
+              printf '%s\n' "$label [$outcome]" >> ci-failures.txt
+            fi
+          }
+
+          check "Workflow unique" "$WORKFLOW_UNIQUE"
+          check "Compilation Python" "$COMPILE_PYTHON"
+          check "Politique UTF-8" "$UTF8_POLICY"
+          check "Composants essentiels" "$ESSENTIAL_RUNTIME"
+          check "Audit des risques runtime" "$RUNTIME_RISKS"
+          check "Chemins SQLite binaires" "$SQLITE_PATHS"
+          check "Branches Phoenix redondantes" "$PHOENIX_BRANCHES"
+          check "Valeurs par défaut mutables" "$MUTABLE_DEFAULTS"
+          check "Imports externes" "$EXTERNAL_IMPORTS"
+          check "Inventaire compilation Python" "$COMPILE_INVENTORY"
+          check "Pytest" "$PYTEST_SUITE"
+
+          if [[ -s ci-failures.txt ]]; then
+            echo "Contrôles en échec :"
+            sed 's/^/- /' ci-failures.txt
+          else
+            echo "Tous les contrôles du socle sont passés."
+          fi
 
       - name: Publier les diagnostics
         if: always()
@@ -118,6 +202,7 @@ jobs:
         with:
           name: diagnostics-tests
           path: |
+            ci-failures.txt
             pytest-output.txt
             runtime-risk-audit.json
             mutable-defaults.txt
@@ -127,6 +212,17 @@ jobs:
             python-compile-errors.md
           if-no-files-found: warn
           retention-days: 1
+
+      - name: Bilan CI du socle
+        if: always()
+        shell: bash
+        run: |
+          if [[ -s ci-failures.txt ]]; then
+            echo "::error::Plusieurs contrôles ont échoué. Voir le bilan ci-dessous et l'artefact diagnostics-tests."
+            sed 's/^/- /' ci-failures.txt
+            exit 1
+          fi
+          echo "Bilan CI : tous les contrôles du socle sont verts."
 
   windows-smokes:
     name: Parcours critiques Windows
@@ -152,6 +248,8 @@ jobs:
           python -m pip install pytest
 
       - name: Vérifier les contrats des dialogues
+        id: windows_contracts
+        continue-on-error: true
         shell: pwsh
         run: |
           python -m pytest -q `
@@ -160,6 +258,8 @@ jobs:
             tests/test_secondary_contract_smoke_contract.py
 
       - name: Exécuter tous les parcours critiques
+        id: windows_critical_smokes
+        continue-on-error: true
         shell: pwsh
         run: |
           $failures = @()
@@ -210,7 +310,40 @@ jobs:
           }
 
           if ($failures.Count -gt 0) {
+            $failures | Set-Content windows-smoke-failures.txt
             throw "Parcours en échec : $($failures -join ', ')"
+          }
+
+          Set-Content windows-smoke-failures.txt -Value ""
+
+      - name: Préparer le bilan Windows
+        if: always()
+        shell: pwsh
+        env:
+          CONTRACTS_OUTCOME: ${{ steps.windows_contracts.outcome }}
+          SMOKES_OUTCOME: ${{ steps.windows_critical_smokes.outcome }}
+        run: |
+          $failures = @()
+          if ($env:CONTRACTS_OUTCOME -ne 'success') {
+            $failures += "Contrats des dialogues [$env:CONTRACTS_OUTCOME]"
+          }
+          if ($env:SMOKES_OUTCOME -ne 'success') {
+            $failures += "Parcours critiques [$env:SMOKES_OUTCOME]"
+          }
+
+          if (Test-Path windows-smoke-failures.txt) {
+            $details = @(Get-Content windows-smoke-failures.txt | Where-Object { $_.Trim() })
+            foreach ($detail in $details) {
+              $failures += "Smoke : $detail"
+            }
+          }
+
+          $failures | Set-Content windows-failures.txt
+          if ($failures.Count -gt 0) {
+            Write-Host "Contrôles Windows en échec :"
+            $failures | ForEach-Object { Write-Host "- $_" }
+          } else {
+            Write-Host "Tous les contrôles Windows sont passés."
           }
 
       - name: Publier les diagnostics Windows
@@ -219,10 +352,26 @@ jobs:
         with:
           name: diagnostics-windows
           path: |
+            windows-failures.txt
+            windows-smoke-failures.txt
             artifacts/**
             functional-report/**
           if-no-files-found: warn
           retention-days: 1
+
+      - name: Bilan CI Windows
+        if: always()
+        shell: pwsh
+        run: |
+          $failures = @()
+          if (Test-Path windows-failures.txt) {
+            $failures = @(Get-Content windows-failures.txt | Where-Object { $_.Trim() })
+          }
+          if ($failures.Count -gt 0) {
+            Write-Error "Plusieurs contrôles Windows ont échoué : $($failures -join ', ')"
+            exit 1
+          }
+          Write-Host "Bilan CI Windows : tous les contrôles sont verts."
 
   build-windows:
     name: Paquet Windows portable
