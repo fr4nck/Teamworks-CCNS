@@ -19,6 +19,7 @@ import appdirs
 import wx
 
 import Chemins
+from Utils import UTILS_Interface
 
 DARK_THEME_NAMES = {"sombre", "dark"}
 LIGHT_THEME_NAMES = {"clair", "light", "blanc"}
@@ -122,9 +123,15 @@ def _config_values():
         appearance = "system"
 
     try:
-        interface_scale = max(80, min(200, int(scale or "100")))
+        interface_scale = max(
+            UTILS_Interface.INTERFACE_SCALE_MIN,
+            min(
+                UTILS_Interface.INTERFACE_SCALE_MAX,
+                int(scale or str(UTILS_Interface.INTERFACE_SCALE_DEFAULT)),
+            ),
+        )
     except ValueError:
-        interface_scale = 100
+        interface_scale = UTILS_Interface.INTERFACE_SCALE_DEFAULT
 
     values = (appearance, interface_scale)
     if config_exists and not env_appearance and not env_scale:
@@ -227,7 +234,6 @@ def _native_palette(dark):
 
 def _semantic_palette(dark):
     try:
-        from Utils import UTILS_Interface
         appearance = "dark" if dark else "light"
         return {
             "surface": UTILS_Interface.GetToken("surface", appearance=appearance),
