@@ -320,9 +320,11 @@ def _set_colours(window, background=None, foreground=None):
 
 
 def _apply_objectlistview_theme(window, palette):
-    """Applique uniquement le chrome visuel exposé publiquement par OLV.
+    """Applique le chrome visuel commun aux ObjectListView historiques.
 
-    Aucune colonne, checkbox ni callback métier n'est modifié ici.
+    Aucune colonne, checkbox ni callback métier n'est modifié ici. Les anciennes
+    couleurs de lignes et polices de message vide restent donc sans effet dès
+    que le thème central est appliqué.
     """
     try:
         if hasattr(window, "oddRowsBackColor"):
@@ -337,6 +339,23 @@ def _apply_objectlistview_theme(window, palette):
         if group_font is not None and group_font.IsOk():
             group_font.SetWeight(wx.FONTWEIGHT_BOLD)
             window.groupFont = group_font
+
+        empty = getattr(window, "stEmptyListMsg", None)
+        if empty is not None:
+            _set_colours(empty, background=palette["control"], foreground=palette["text_variant"])
+            try:
+                base_font = window.GetFont()
+                if base_font and base_font.IsOk():
+                    empty.SetFont(base_font)
+            except Exception:
+                pass
+        if hasattr(window, "SetEmptyListMsgFont"):
+            try:
+                base_font = window.GetFont()
+                if base_font and base_font.IsOk():
+                    window.SetEmptyListMsgFont(base_font)
+            except Exception:
+                pass
     except Exception:
         pass
 
