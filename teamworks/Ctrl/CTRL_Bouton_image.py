@@ -126,6 +126,9 @@ class CTRL(wx.Button):
     def AppliquerTheme(self):
         """Conserve le rendu natif et applique la typographie de la charte."""
         self.SetFont(UTILS_Styles.GetFont("label"))
+        # GetFont() tient déjà compte de l'échelle globale : le thème ne doit
+        # pas agrandir une seconde fois ce bouton au moment de Show().
+        self._teamworks_font_scaled = True
         self.SetForegroundColour(UTILS_Interface.GetToken("on_surface"))
 
     def SetImage(self, cheminImage=""):
