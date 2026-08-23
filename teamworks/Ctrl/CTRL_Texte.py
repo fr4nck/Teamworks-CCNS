@@ -18,13 +18,13 @@ class Texte(wx.StaticText):
         # Le rôle reste attaché au contrôle : UTILS_Theme peut ainsi
         # recalculer la police depuis sa définition sémantique lors d'un
         # changement d'échelle, sans multiplier une taille déjà agrandie.
-        self._teamworks_semantic_text_style = style
+        self._teamworks_text_style = style
         self.AppliquerStyle()
 
     def AppliquerStyle(self, style=None):
         if style is not None:
             self.style_semantique = style
-        self._teamworks_semantic_text_style = self.style_semantique
+        self._teamworks_text_style = self.style_semantique
         UTILS_Styles.AppliquerTexte(self, self.style_semantique)
         return self
 
