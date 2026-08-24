@@ -30,14 +30,17 @@ def Procedure(code=""):
     titre = DICT_PROCEDURES[code]
     # Demande de confirmation de lancement
     dlg = wx.MessageDialog(None, _(u"Souhaitez-vous vraiment lancer la procédure suivante ?\n\n   -> %s   ") % titre, _(u"Lancement de la procédure"), wx.YES_NO|wx.YES_DEFAULT|wx.CANCEL|wx.ICON_EXCLAMATION)
-    reponse = dlg.ShowModal() 
+    reponse = dlg.ShowModal()
     dlg.Destroy()
     if reponse != wx.ID_YES :
         return
     # Lancement
     print("Lancement de la procedure '%s'..." % code)
     try :
-        exec("%s()" % code)
+        procedure = globals().get(code)
+        if not callable(procedure):
+            raise RuntimeError(_(u"La procédure demandée n'est pas exécutable."))
+        procedure()
     except Exception as err :
         dlg = wx.MessageDialog(None, _(u"Désolé, une erreur a été rencontrée :\n\n-> %s  ") % err, _(u"Erreur"), wx.OK | wx.ICON_ERROR)
         dlg.ShowModal()
@@ -57,15 +60,15 @@ def Procedure(code=""):
 
 def A2000(nomFichier=None):
     """ Conversion vers version 2 de Teamworks """
-    import os 
+    import os
     from Data import DATA_Tables as Tables
     print("Conversion A2000 : TW1 -> TW2...")
-    
+
     DB = GestionDB.DB(nomFichier=nomFichier)
-    
+
     # Récupération du nom du fichier
     nomFichier = DB.nomFichier
-    
+
     # Récupération de l'IDfichier
     req = """SELECT codeIDfichier
     FROM divers WHERE IDdivers=1;"""
@@ -73,13 +76,13 @@ def A2000(nomFichier=None):
     listeTemp = DB.ResultatReq()
     IDfichier = listeTemp[0][0]
     DB.Close()
-    
+
     # Création du fichier PHOTOS
     print("Creation table Photos...")
     DB = GestionDB.DB(suffixe="PHOTOS", nomFichier=nomFichier, modeCreation=True)
     DB.CreationTables(Tables.DB_PHOTOS)
     DB.Close()
-    
+
     # Création de la base DOCUMENTS
     print("Creation table Documents...")
     DB = GestionDB.DB(suffixe="DOCUMENTS", nomFichier=nomFichier, modeCreation=True)
@@ -104,14 +107,16 @@ def A2000(nomFichier=None):
     DB.Close()
 
     print("Fin de la conversion A2000.")
-    
+
+
 def D1051(nomFichier=None):
     """ Création des champs dans la table DOCUMENTS """
-    DB = GestionDB.DB(suffixe="DOCUMENTS", nomFichier=nomFichier) 
+    DB = GestionDB.DB(suffixe="DOCUMENTS", nomFichier=nomFichier)
     DB.AjoutChamp("documents", "type", "VARCHAR(50)")
     DB.AjoutChamp("documents", "label", "VARCHAR(400)")
     DB.AjoutChamp("documents", "IDreponse", "INTEGER")
     DB.Close()
+
 
 def D1062():
     """ Création des champs dans la table DOCUMENTS """
@@ -119,10 +124,6 @@ def D1062():
     DB = GestionDB.DB()
     DB.CreationTables(Tables.DB_DATA)
     DB.Close()
-
-
-
-
 
 
 if __name__ == _(u"__main__"):

@@ -8,11 +8,18 @@
 # Licence:         Licence GNU GPL
 #------------------------------------------------------------------------
 
+import ast
+
 import Chemins
 import wx
 import GestionDB
 
 TYPE_COULEUR = wx.Colour
+
+
+def _decode_literal(value):
+    """Décode uniquement les littéraux Python stockés historiquement en base."""
+    return ast.literal_eval(value)
 
 
 def ParametresCategorie(mode="get", categorie="", dictParametres=None, nomFichier=""):
@@ -53,9 +60,9 @@ def ParametresCategorie(mode="get", categorie="", dictParametres=None, nomFichie
                     if type_parametre == float:
                         valeur = float(valeur)
                     if type_parametre in (tuple, list, dict, bool):
-                        valeur = eval(valeur)
+                        valeur = _decode_literal(valeur)
                     if type_parametre == TYPE_COULEUR and valeur != "":
-                        valeur = eval(valeur)
+                        valeur = _decode_literal(valeur)
                 except Exception:
                     valeur = None
                 dictFinal[nom] = valeur
@@ -114,7 +121,7 @@ def Parametres(mode="get", categorie="", nom="", valeur=None, nomFichier=""):
             if type_parametre == float:
                 valeurTmp = float(valeurTmp)
             if type_parametre in (tuple, list, dict, bool):
-                valeurTmp = eval(valeurTmp)
+                valeurTmp = _decode_literal(valeurTmp)
         else:
             IDparametre = listeDonnees[0][0]
             listeDonnees = [
