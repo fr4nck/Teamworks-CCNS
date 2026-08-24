@@ -40,28 +40,28 @@ class Page(wx.Panel):
         self.label_titre = wx.StaticText(self, -1, _(u"Création d'un modèle de contrat"))
         self.label_intro = wx.StaticText(self, -1, _(u"Définissez les contrats auxquels ce modèle peut s'appliquer :"))
 
-        self.label_type = wx.StaticText(self, -1, "Type de contrat :")
-        self.choice_type = wx.Choice(self, -1, choices=[])
+        self.label_type = wx.StaticText(self.sizer_caract_staticbox, -1, "Type de contrat :")
+        self.choice_type = wx.Choice(self.sizer_caract_staticbox, -1, choices=[])
         self.Importation_Type()
-        self.bouton_type = wx.Button(self, -1, "...", style=wx.BU_EXACTFIT)
+        self.bouton_type = wx.Button(self.sizer_caract_staticbox, -1, "...", style=wx.BU_EXACTFIT)
 
-        self.label_convention = wx.StaticText(self, -1, "Parcours / convention :")
+        self.label_convention = wx.StaticText(self.sizer_caract_staticbox, -1, "Parcours / convention :")
         self.choice_convention = wx.Choice(
-            self,
+            self.sizer_caract_staticbox,
             -1,
             choices=["Historique / autre", "CCNS", "CEE"],
         )
 
-        self.label_cible = wx.StaticText(self, -1, "Ciblage :")
-        self.choice_cible = wx.Choice(self, -1, choices=[])
+        self.label_cible = wx.StaticText(self.sizer_caract_staticbox, -1, "Ciblage :")
+        self.choice_cible = wx.Choice(self.sizer_caract_staticbox, -1, choices=[])
 
-        self.label_class = wx.StaticText(self, -1, "Classification historique :")
-        self.choice_class = wx.Choice(self, -1, choices=[])
+        self.label_class = wx.StaticText(self.sizer_caract_staticbox, -1, "Classification historique :")
+        self.choice_class = wx.Choice(self.sizer_caract_staticbox, -1, choices=[])
         self.Importation_classifications()
-        self.bouton_class = wx.Button(self, -1, "...", style=wx.BU_EXACTFIT)
+        self.bouton_class = wx.Button(self.sizer_caract_staticbox, -1, "...", style=wx.BU_EXACTFIT)
 
-        self.listCtrl_champs = ListCtrl_champs(self)
-        self.bouton_champs = wx.Button(self, -1, "...", style=wx.BU_EXACTFIT)
+        self.listCtrl_champs = ListCtrl_champs(self.sizer_champs_staticbox)
+        self.bouton_champs = wx.Button(self.sizer_champs_staticbox, -1, "...", style=wx.BU_EXACTFIT)
 
         self.__set_properties()
         self.__do_layout()

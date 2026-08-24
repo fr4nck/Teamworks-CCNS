@@ -33,43 +33,43 @@ class Dialog(wx.Dialog):
         self.Importation()
 
         # Largeur
-        self.largeur_label = wx.StaticText(self.panel_base, -1, _(u"Largeur :"))
-        self.largeur_texte = wx.TextCtrl(self.panel_base, -1, str(self.val_largeur), size=(40, -1))
-        self.largeur_slider = wx.Slider(self.panel_base, -1, self.val_largeur, self.largeur_min, self.largeur_max, size=(-1, -1), style=wx.SL_HORIZONTAL)
+        self.largeur_label = wx.StaticText(self.sizer_contenu_staticbox, -1, _(u"Largeur :"))
+        self.largeur_texte = wx.TextCtrl(self.sizer_contenu_staticbox, -1, str(self.val_largeur), size=(40, -1))
+        self.largeur_slider = wx.Slider(self.sizer_contenu_staticbox, -1, self.val_largeur, self.largeur_min, self.largeur_max, size=(-1, -1), style=wx.SL_HORIZONTAL)
         
         # Hauteur
-        self.hauteur_label = wx.StaticText(self.panel_base, -1, _(u"Hauteur :"))
-        self.hauteur_texte = wx.TextCtrl(self.panel_base, -1, str(self.val_hauteur), size=(40, -1))
-        self.hauteur_slider = wx.Slider(self.panel_base, -1, self.val_hauteur, self.hauteur_min, self.hauteur_max, size=(-1, -1), style=wx.SL_HORIZONTAL)
+        self.hauteur_label = wx.StaticText(self.sizer_contenu_staticbox, -1, _(u"Hauteur :"))
+        self.hauteur_texte = wx.TextCtrl(self.sizer_contenu_staticbox, -1, str(self.val_hauteur), size=(40, -1))
+        self.hauteur_slider = wx.Slider(self.sizer_contenu_staticbox, -1, self.val_hauteur, self.hauteur_min, self.hauteur_max, size=(-1, -1), style=wx.SL_HORIZONTAL)
         
         # Bouton couleur de fond
-        self.label_couleurFond = wx.StaticText(self.panel_base, -1, _(u"Couleur de fond :"))
-        self.bouton_couleurFond = csel.ColourSelect(self.panel_base, -1, "", self.val_couleurFond, size = (40, 23))
+        self.label_couleurFond = wx.StaticText(self.sizer_contenu_staticbox, -1, _(u"Couleur de fond :"))
+        self.bouton_couleurFond = csel.ColourSelect(self.sizer_contenu_staticbox, -1, "", self.val_couleurFond, size = (40, 23))
         
         # Bouton couleur de personnes
-        self.label_couleurPersonne = wx.StaticText(self.panel_base, -1, _(u"Couleur des noms de personne :"))
-        self.bouton_couleurPersonne = csel.ColourSelect(self.panel_base, -1, "", self.val_couleurPersonne, size = (40, 23))
+        self.label_couleurPersonne = wx.StaticText(self.sizer_contenu_staticbox, -1, _(u"Couleur des noms de personne :"))
+        self.bouton_couleurPersonne = csel.ColourSelect(self.sizer_contenu_staticbox, -1, "", self.val_couleurPersonne, size = (40, 23))
         
         # Bouton couleur de type de pb
-        self.label_couleurType = wx.StaticText(self.panel_base, -1, _(u"Couleur des types de problèmes :"))
-        self.bouton_couleurType = csel.ColourSelect(self.panel_base, -1, "", self.val_couleurType, size = (40, 23))
+        self.label_couleurType = wx.StaticText(self.sizer_contenu_staticbox, -1, _(u"Couleur des types de problèmes :"))
+        self.bouton_couleurType = csel.ColourSelect(self.sizer_contenu_staticbox, -1, "", self.val_couleurType, size = (40, 23))
         
         # Bouton couleur de problèmes
-        self.label_couleurProbleme = wx.StaticText(self.panel_base, -1, _(u"Couleur des problèmes :"))
-        self.bouton_couleurProbleme = csel.ColourSelect(self.panel_base, -1, "", self.val_couleurProbleme, size = (40, 23))
+        self.label_couleurProbleme = wx.StaticText(self.sizer_contenu_staticbox, -1, _(u"Couleur des problèmes :"))
+        self.bouton_couleurProbleme = csel.ColourSelect(self.sizer_contenu_staticbox, -1, "", self.val_couleurProbleme, size = (40, 23))
 
         # Bouton couleur de traits
-        self.label_couleurTraits = wx.StaticText(self.panel_base, -1, _(u"Couleur des traits :"))
-        self.bouton_couleurTraits = csel.ColourSelect(self.panel_base, -1, "", self.val_couleurTraits, size = (40, 23))
+        self.label_couleurTraits = wx.StaticText(self.sizer_contenu_staticbox, -1, _(u"Couleur des traits :"))
+        self.bouton_couleurTraits = csel.ColourSelect(self.sizer_contenu_staticbox, -1, "", self.val_couleurTraits, size = (40, 23))
         
         # CheckBox Expand Personnes
-        self.label_expandPersonnes = wx.StaticText(self.panel_base, -1, _(u"Développer les branches Personnes :"))
-        self.checkbox_expandPersonnes = wx.CheckBox(self.panel_base, -1, "")
+        self.label_expandPersonnes = wx.StaticText(self.sizer_contenu_staticbox, -1, _(u"Développer les branches Personnes :"))
+        self.checkbox_expandPersonnes = wx.CheckBox(self.sizer_contenu_staticbox, -1, "")
         self.checkbox_expandPersonnes.SetValue(self.val_expandPersonnes)
         
         # CheckBox Expand Types
-        self.label_expandTypes = wx.StaticText(self.panel_base, -1, _(u"Développer les branches Types :"))
-        self.checkbox_expandTypes = wx.CheckBox(self.panel_base, -1, "")
+        self.label_expandTypes = wx.StaticText(self.sizer_contenu_staticbox, -1, _(u"Développer les branches Types :"))
+        self.checkbox_expandTypes = wx.CheckBox(self.sizer_contenu_staticbox, -1, "")
         self.checkbox_expandTypes.SetValue(self.val_expandTypes)
         
         # Hyperlink_reinit

@@ -34,32 +34,32 @@ class Dialog(wx.Dialog):
         self.Importation()
 
         # Largeur
-        self.largeur_label = wx.StaticText(self.panel_base, -1, _(u"Largeur :"))
-        self.largeur_texte = wx.TextCtrl(self.panel_base, -1, str(self.val_largeur), size=(40, -1))
-        self.largeur_slider = wx.Slider(self.panel_base, -1, self.val_largeur, self.largeur_min, self.largeur_max, size=(-1, -1), style=wx.SL_HORIZONTAL)
+        self.largeur_label = wx.StaticText(self.sizer_contenu_staticbox, -1, _(u"Largeur :"))
+        self.largeur_texte = wx.TextCtrl(self.sizer_contenu_staticbox, -1, str(self.val_largeur), size=(40, -1))
+        self.largeur_slider = wx.Slider(self.sizer_contenu_staticbox, -1, self.val_largeur, self.largeur_min, self.largeur_max, size=(-1, -1), style=wx.SL_HORIZONTAL)
         
         # Hauteur
-        self.hauteur_label = wx.StaticText(self.panel_base, -1, _(u"Hauteur :"))
-        self.hauteur_texte = wx.TextCtrl(self.panel_base, -1, str(self.val_hauteur), size=(40, -1))
-        self.hauteur_slider = wx.Slider(self.panel_base, -1, self.val_hauteur, self.hauteur_min, self.hauteur_max, size=(-1, -1), style=wx.SL_HORIZONTAL)
+        self.hauteur_label = wx.StaticText(self.sizer_contenu_staticbox, -1, _(u"Hauteur :"))
+        self.hauteur_texte = wx.TextCtrl(self.sizer_contenu_staticbox, -1, str(self.val_hauteur), size=(40, -1))
+        self.hauteur_slider = wx.Slider(self.sizer_contenu_staticbox, -1, self.val_hauteur, self.hauteur_min, self.hauteur_max, size=(-1, -1), style=wx.SL_HORIZONTAL)
         
         # Bouton couleur de fond
-        self.label_couleurFond = wx.StaticText(self.panel_base, -1, _(u"Couleur de fond :"))
-        self.bouton_couleurFond = csel.ColourSelect(self.panel_base, -1, "", self.val_couleurFond, size = (40, 23))
+        self.label_couleurFond = wx.StaticText(self.sizer_contenu_staticbox, -1, _(u"Couleur de fond :"))
+        self.bouton_couleurFond = csel.ColourSelect(self.sizer_contenu_staticbox, -1, "", self.val_couleurFond, size = (40, 23))
         
         # Police
-        self.label_police = wx.StaticText(self.panel_base, -1, _(u"Police du texte :"))
-        self.bouton_police = wx.Button(self.panel_base, -1, "")
-        self.bouton_couleurPolice = csel.ColourSelect(self.panel_base, -1, "", self.val_couleurPolice, size = (40, 23))
+        self.label_police = wx.StaticText(self.sizer_contenu_staticbox, -1, _(u"Police du texte :"))
+        self.bouton_police = wx.Button(self.sizer_contenu_staticbox, -1, "")
+        self.bouton_couleurPolice = csel.ColourSelect(self.sizer_contenu_staticbox, -1, "", self.val_couleurPolice, size = (40, 23))
         
         # Apercu de la police
-        self.label_apercu = wx.StaticText(self.panel_base, -1, _(u"Aperçu de la police :"))
-        self.label_exemplePolice = wx.StaticText(self.panel_base, -1, _(u" Exemple "), size=(-1, 30))
+        self.label_apercu = wx.StaticText(self.sizer_contenu_staticbox, -1, _(u"Aperçu de la police :"))
+        self.label_exemplePolice = wx.StaticText(self.sizer_contenu_staticbox, -1, _(u" Exemple "), size=(-1, 30))
         self.MajExemplePolice()
         
         # Multipages
-        self.label_multipages = wx.StaticText(self.panel_base, -1, _(u"Multi-pages :"))
-        self.checkbox_multipages = wx.CheckBox(self.panel_base, -1, "")
+        self.label_multipages = wx.StaticText(self.sizer_contenu_staticbox, -1, _(u"Multi-pages :"))
+        self.checkbox_multipages = wx.CheckBox(self.sizer_contenu_staticbox, -1, "")
         self.checkbox_multipages.SetValue(self.val_multipages)
         
         # Hyperlink_reinit

@@ -66,13 +66,13 @@ class Dialog(wx.Dialog):
 
         # Filtres
         self.staticbox_filtres_staticbox = wx.StaticBox(self, -1, _(u"Liste des filtres"))
-        self.ctrl_filtres = OL_Filtres_listes.ListView(self, ctrl_listview=ctrl_listview, id=-1, name="OL_test", style=wx.LC_REPORT|wx.SUNKEN_BORDER|wx.LC_SINGLE_SEL|wx.LC_HRULES|wx.LC_VRULES)
+        self.ctrl_filtres = OL_Filtres_listes.ListView(self.staticbox_filtres_staticbox, ctrl_listview=ctrl_listview, id=-1, name="OL_test", style=wx.LC_REPORT|wx.SUNKEN_BORDER|wx.LC_SINGLE_SEL|wx.LC_HRULES|wx.LC_VRULES)
         self.ctrl_filtres.MAJ() 
 
-        self.bouton_ajouter = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_modifier = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Modifier.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_supprimer = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_tout_supprimer = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Filtre_supprimer.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_ajouter = wx.BitmapButton(self.staticbox_filtres_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_modifier = wx.BitmapButton(self.staticbox_filtres_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Modifier.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_supprimer = wx.BitmapButton(self.staticbox_filtres_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_tout_supprimer = wx.BitmapButton(self.staticbox_filtres_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Filtre_supprimer.png"), wx.BITMAP_TYPE_ANY))
 
         # Profil
         if self.ctrl_listview != None :
@@ -80,7 +80,7 @@ class Dialog(wx.Dialog):
         else :
             nom_liste = None
         self.staticbox_profil_staticbox = wx.StaticBox(self, -1, _(u"Profil de configuration"))
-        self.ctrl_profil = CTRL_profil_perso(self, categorie=nom_liste, dlg=self)
+        self.ctrl_profil = CTRL_profil_perso(self.staticbox_profil_staticbox, categorie=nom_liste, dlg=self)
         self.ctrl_profil.SetMinSize((100, -1))
         if nom_liste == None :
             self.staticbox_profil_staticbox.Show(False)

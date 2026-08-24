@@ -35,10 +35,10 @@ class Dialog(wx.Dialog):
         
         # Généralités
         self.staticbox_generalites_staticbox = wx.StaticBox(self, -1, _(u"Généralités"))
-        self.label_nom = wx.StaticText(self, -1, _(u"Nom :"))
-        self.ctrl_nom = wx.TextCtrl(self, -1, u"")
-        self.label_description = wx.StaticText(self, -1, _(u"Description :"))
-        self.ctrl_description = wx.TextCtrl(self, -1, u"", style=wx.TE_MULTILINE)
+        self.label_nom = wx.StaticText(self.staticbox_generalites_staticbox, -1, _(u"Nom :"))
+        self.ctrl_nom = wx.TextCtrl(self.staticbox_generalites_staticbox, -1, u"")
+        self.label_description = wx.StaticText(self.staticbox_generalites_staticbox, -1, _(u"Description :"))
+        self.ctrl_description = wx.TextCtrl(self.staticbox_generalites_staticbox, -1, u"", style=wx.TE_MULTILINE)
         
         # Mots-clés
         self.listeMotsCles = []
@@ -47,20 +47,20 @@ class Dialog(wx.Dialog):
             self.listeMotsCles.append(motCle)
 
         self.staticbox_motscles_staticbox = wx.StaticBox(self, -1, _(u"Mots-clés disponibles"))
-        self.ctrl_motscles = wx.ListBox(self, -1, choices=self.listeMotsCles, style=wx.SIMPLE_BORDER)
+        self.ctrl_motscles = wx.ListBox(self.staticbox_motscles_staticbox, -1, choices=self.listeMotsCles, style=wx.SIMPLE_BORDER)
         self.ctrl_motscles.SetBackgroundColour("#F0FBED")
         
         # Expéditeur
-        self.label_exp = wx.StaticText(self, -1, _(u"Expéditeur :"))
-        self.ctrl_exp = CTRL_Editeur_email.Panel_Expediteur(self)
+        self.label_exp = wx.StaticText(self.staticbox_texte_staticbox, -1, _(u"Expéditeur :"))
+        self.ctrl_exp = CTRL_Editeur_email.Panel_Expediteur(self.staticbox_texte_staticbox)
         
         # Objet
-        self.label_objet = wx.StaticText(self, -1, _(u"Objet :"))
-        self.ctrl_objet = wx.TextCtrl(self, -1, u"")
+        self.label_objet = wx.StaticText(self.staticbox_texte_staticbox, -1, _(u"Objet :"))
+        self.ctrl_objet = wx.TextCtrl(self.staticbox_texte_staticbox, -1, u"")
         
         # texte
         self.staticbox_texte_staticbox = wx.StaticBox(self, -1, _(u"Message"))
-        self.ctrl_editeur = CTRL_Editeur_email.CTRL(self)
+        self.ctrl_editeur = CTRL_Editeur_email.CTRL(self.staticbox_texte_staticbox)
         
         # Commandes
         self.bouton_aide = CTRL_Bouton_image.CTRL(self, texte=_(u"Aide"), cheminImage="Images/32x32/Aide.png")

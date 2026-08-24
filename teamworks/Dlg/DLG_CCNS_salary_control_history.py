@@ -17,8 +17,8 @@ class Dialog(wx.Dialog):
         wx.Dialog.__init__(self, parent, -1, "Historique des contrôles salariaux", style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
         self.repository = repository
         self.snapshots = list(list_salary_control_snapshots(repository=repository))
-        self.listbox = wx.ListBox(self, -1, choices=[self._summary(s) for s in self.snapshots], style=wx.LB_EXTENDED)
-        self.details = wx.TextCtrl(self, -1, "", style=wx.TE_MULTILINE | wx.TE_READONLY)
+        self.listbox = wx.ListBox(box_snapshots, -1, choices=[self._summary(s) for s in self.snapshots], style=wx.LB_EXTENDED)
+        self.details = wx.TextCtrl(box_details, -1, "", style=wx.TE_MULTILINE | wx.TE_READONLY)
         self.filter = wx.ComboBox(self, -1, choices=["Tous", "Améliorations", "Dégradations", "Nouveaux contrats", "Contrats absents", "Changements de statut", "Écarts modifiés", "Inchangés"], style=wx.CB_READONLY)
         self.filter.SetSelection(0)
         self.button_compare = wx.Button(self, -1, "Comparer")

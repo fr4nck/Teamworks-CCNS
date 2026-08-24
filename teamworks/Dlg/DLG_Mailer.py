@@ -48,34 +48,34 @@ class Dialog(wx.Dialog):
         
         # Destinataires
         self.box_destinataires_staticbox = wx.StaticBox(self, -1, _(u"Destinataires"))
-        self.ctrl_destinataires = OL_Destinataires_emails.ListView(self, id=-1, style=wx.LC_REPORT|wx.SUNKEN_BORDER|wx.LC_SINGLE_SEL|wx.LC_HRULES|wx.LC_VRULES)
+        self.ctrl_destinataires = OL_Destinataires_emails.ListView(self.box_destinataires_staticbox, id=-1, style=wx.LC_REPORT|wx.SUNKEN_BORDER|wx.LC_SINGLE_SEL|wx.LC_HRULES|wx.LC_VRULES)
         self.ctrl_destinataires.MAJ() 
-        self.bouton_modifier_dest = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Email_destinataires.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_ajouter_piece_spec = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_retirer_piece_spec = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_modifier_dest = wx.BitmapButton(self.box_destinataires_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Email_destinataires.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_ajouter_piece_spec = wx.BitmapButton(self.box_destinataires_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_retirer_piece_spec = wx.BitmapButton(self.box_destinataires_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
         
         # Paramètres
         self.box_param_staticbox = wx.StaticBox(self, -1, _(u"Paramètres"))
-        self.label_exp = wx.StaticText(self, -1, _(u"Exp. :"))
-        self.ctrl_exp = CTRL_Editeur_email.Panel_Expediteur(self)
-        self.check_accuseReception = wx.CheckBox(self, -1, _(u"Accusé de réception"))
+        self.label_exp = wx.StaticText(self.box_param_staticbox, -1, _(u"Exp. :"))
+        self.ctrl_exp = CTRL_Editeur_email.Panel_Expediteur(self.box_param_staticbox)
+        self.check_accuseReception = wx.CheckBox(self.box_param_staticbox, -1, _(u"Accusé de réception"))
         
         # Pièces jointes
         self.box_pieces_staticbox = wx.StaticBox(self, -1, _(u"Pièces jointes communes"))
-        self.ctrl_pieces = OL_Pieces_jointes_emails.ListView(self, id=-1, style=wx.LC_NO_HEADER|wx.LC_REPORT|wx.SUNKEN_BORDER|wx.LC_SINGLE_SEL|wx.LC_HRULES|wx.LC_VRULES)
+        self.ctrl_pieces = OL_Pieces_jointes_emails.ListView(self.box_pieces_staticbox, id=-1, style=wx.LC_NO_HEADER|wx.LC_REPORT|wx.SUNKEN_BORDER|wx.LC_SINGLE_SEL|wx.LC_HRULES|wx.LC_VRULES)
         self.ctrl_pieces.SetMinSize((200, 70))
         self.ctrl_pieces.MAJ() 
         
-        self.bouton_ajouter_piece = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_suppr_piece = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_ajouter_piece = wx.BitmapButton(self.box_pieces_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_suppr_piece = wx.BitmapButton(self.box_pieces_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
 
         # Texte
         self.box_texte_staticbox = wx.StaticBox(self, -1, _(u"Message"))
-        self.label_objet = wx.StaticText(self, -1, _(u"Objet :"))
-        self.ctrl_objet = wx.TextCtrl(self, -1, u"")
+        self.label_objet = wx.StaticText(self.box_texte_staticbox, -1, _(u"Objet :"))
+        self.ctrl_objet = wx.TextCtrl(self.box_texte_staticbox, -1, u"")
         self.ctrl_objet.SetMinSize((200, -1))
 
-        self.ctrl_editeur = CTRL_Editeur_email.CTRL(self)
+        self.ctrl_editeur = CTRL_Editeur_email.CTRL(self.box_texte_staticbox)
         
         # Commandes
         self.bouton_aide = CTRL_Bouton_image.CTRL(self, texte=_(u"Aide"), cheminImage="Images/32x32/Aide.png")

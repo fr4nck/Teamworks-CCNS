@@ -31,7 +31,7 @@ class MyDialog(wx.Dialog):
         
         # listCtrl vacances
         self.staticbox_treeCtrl = wx.StaticBox(self, -1, _(u"Aucune catégorie sélectionnée"))
-        self.ctrl_treeCtrl = TreeCtrl(self, listeSelections, listeDisabledItems)
+        self.ctrl_treeCtrl = TreeCtrl(self.staticbox_treeCtrl, listeSelections, listeDisabledItems)
         
         # Boutons
         self.bouton_ok = CTRL_Bouton_image.CTRL(self, texte=_(u"Ok"), cheminImage=Chemins.GetStaticPath("Images/32x32/Valider.png"))

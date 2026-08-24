@@ -38,37 +38,37 @@ class MyDialog(wx.Dialog):
         self.staticbox_periode = wx.StaticBox(self, -1, u"")
         
         # Manuel
-        self.radio_1 = wx.RadioButton(self, -1, _(u"Manuel"), style = wx.RB_GROUP )
+        self.radio_1 = wx.RadioButton(self.staticbox_periode, -1, _(u"Manuel"), style = wx.RB_GROUP )
                 
         # Type
-        self.label_type = wx.StaticText(self, -1, _(u"Type :"))
-        self.ctrl_type = wx.Choice(self, -1, choices = [_(u"Heures à réaliser (+)"), _(u"Heures déjà réalisées (-)")])
+        self.label_type = wx.StaticText(self.staticbox_periode, -1, _(u"Type :"))
+        self.ctrl_type = wx.Choice(self.staticbox_periode, -1, choices = [_(u"Heures à réaliser (+)"), _(u"Heures déjà réalisées (-)")])
         self.ctrl_type.SetSelection(0)
         
         # Temps
-        self.label_temps = wx.StaticText(self, -1, _(u"Temps :"))
-        self.ctrl_temps_heures = wx.TextCtrl(self, -1, u"0", size=(50, -1), style=wx.TE_RIGHT)
-        self.label_temps_signe = wx.StaticText(self, -1, u"h")
-        self.ctrl_temps_minutes = wx.TextCtrl(self, -1, u"00", size=(30, -1))
+        self.label_temps = wx.StaticText(self.staticbox_periode, -1, _(u"Temps :"))
+        self.ctrl_temps_heures = wx.TextCtrl(self.staticbox_periode, -1, u"0", size=(50, -1), style=wx.TE_RIGHT)
+        self.label_temps_signe = wx.StaticText(self.staticbox_periode, -1, u"h")
+        self.ctrl_temps_minutes = wx.TextCtrl(self.staticbox_periode, -1, u"00", size=(30, -1))
         
         # Mode Heure/décimal
-        self.label_mode = wx.StaticText(self, -1, _(u"Mode :"))
-        self.ctrl_modeHeure = wx.Choice(self, -1, choices = [_(u"Heure"), _(u"Décimal")])
+        self.label_mode = wx.StaticText(self.staticbox_periode, -1, _(u"Mode :"))
+        self.ctrl_modeHeure = wx.Choice(self.staticbox_periode, -1, choices = [_(u"Heure"), _(u"Décimal")])
         self.ctrl_modeHeure.SetSelection(self.mode_heure)
         
         # Automatique
-        self.radio_2 = wx.RadioButton(self, -1, _(u"Automatique"))
+        self.radio_2 = wx.RadioButton(self.staticbox_periode, -1, _(u"Automatique"))
         
         # ListView Scenarios
-        self.label_scenario = wx.StaticText(self, -1, _(u"Scénario :"))
-        self.listview_scenarios = ListView(self, -1, IDscenario=self.IDscenario, IDpersonne=self.IDpersonne, style=wx.LC_REPORT|wx.SUNKEN_BORDER)
-        self.bouton_apercu = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Loupe.png"), wx.BITMAP_TYPE_ANY))
+        self.label_scenario = wx.StaticText(self.staticbox_periode, -1, _(u"Scénario :"))
+        self.listview_scenarios = ListView(self.staticbox_periode, -1, IDscenario=self.IDscenario, IDpersonne=self.IDpersonne, style=wx.LC_REPORT|wx.SUNKEN_BORDER)
+        self.bouton_apercu = wx.BitmapButton(self.staticbox_periode, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Loupe.png"), wx.BITMAP_TYPE_ANY))
         self.bouton_apercu.Enable(False)
         self.listview_scenarios.SetMinSize((50, 50))
         
         # Choix catégorie
-        self.label_categorie = wx.StaticText(self, -1, _(u"Catégorie :"))
-        self.ctrl_categorie = BitmapComboBox(self, style=wx.CB_READONLY)
+        self.label_categorie = wx.StaticText(self.staticbox_periode, -1, _(u"Catégorie :"))
+        self.ctrl_categorie = BitmapComboBox(self.staticbox_periode, style=wx.CB_READONLY)
         self.InitCombo(IDscenario=None)
         
         # Boutons

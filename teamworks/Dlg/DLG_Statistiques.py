@@ -504,12 +504,12 @@ class Dialog(wx.Dialog):
         self.staticbox_tableau = wx.StaticBox(self.panel, -1, _(u"Statistiques"))
         
         # Mode d'affichage
-        self.bouton_mode_tableau = wx.BitmapButton(self.panel, -1, wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Tableau.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_mode_graph = wx.BitmapButton(self.panel, -1, wx.Bitmap(Chemins.GetStaticPath("Images/32x32/GraphNB.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_mode_tableau = wx.BitmapButton(self.staticbox_mode, -1, wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Tableau.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_mode_graph = wx.BitmapButton(self.staticbox_mode, -1, wx.Bitmap(Chemins.GetStaticPath("Images/32x32/GraphNB.png"), wx.BITMAP_TYPE_ANY))
         
         # Période
-        self.radio_dates = wx.RadioButton(self.panel, -1, _(u"Dates sélectionnées"), size=(300, -1), style = wx.RB_GROUP)
-        self.radio_periode = wx.RadioButton(self.panel, -1, _(u"Une période :"))
+        self.radio_dates = wx.RadioButton(self.staticbox_periode, -1, _(u"Dates sélectionnées"), size=(300, -1), style = wx.RB_GROUP)
+        self.radio_periode = wx.RadioButton(self.staticbox_periode, -1, _(u"Une période :"))
         date_debut, date_fin = self.periode
         self.hyperlink_periode = self.Build_Hyperlink_periode(date_debut, date_fin)
         
@@ -528,8 +528,8 @@ class Dialog(wx.Dialog):
         # Options d'affichage
         
         # Choix graph
-        self.label_choix_graph = wx.StaticText(self.panel, -1, _(u"Graphe :"))
-        self.ctrl_choix_graph = wx.Choice(self.panel, -1, size=(490, -1), choices = [
+        self.label_choix_graph = wx.StaticText(self.staticbox_options, -1, _(u"Graphe :"))
+        self.ctrl_choix_graph = wx.Choice(self.staticbox_options, -1, size=(490, -1), choices = [
             _(u"1. Répartition des heures par personne et par catégorie (Histogramme)"), 
             _(u"2. Répartition des heures par personne et par catégorie (Histogramme + tableau de données)"), 
             _(u"3. Répartition des heures par personne et par catégorie (Histogramme polaire)"), 
@@ -540,34 +540,34 @@ class Dialog(wx.Dialog):
         self.ctrl_choix_graph.SetSelection(0)
         
         # Choix affichage détail
-        self.label_detail = wx.StaticText(self.panel, -1, _(u"Détail :"))
-        self.ctrl_detail = wx.Choice(self.panel, -1, choices = [_(u"Aucun"), _(u"Jour"), _(u"Mois"), _(u"Année")])
+        self.label_detail = wx.StaticText(self.staticbox_options, -1, _(u"Détail :"))
+        self.ctrl_detail = wx.Choice(self.staticbox_options, -1, choices = [_(u"Aucun"), _(u"Jour"), _(u"Mois"), _(u"Année")])
         self.ctrl_detail.SetSelection(0)
         
         # Choix Groupement
-        self.label_groupement = wx.StaticText(self.panel, -1, _(u"Grouper par :"))
-        self.ctrl_groupement = wx.Choice(self.panel, -1, choices = [_(u"Personne"), _(u"Jour")])
+        self.label_groupement = wx.StaticText(self.staticbox_options, -1, _(u"Grouper par :"))
+        self.ctrl_groupement = wx.Choice(self.staticbox_options, -1, choices = [_(u"Personne"), _(u"Jour")])
         self.ctrl_groupement.SetSelection(0)
         self.ctrl_groupement.Enable(False)
         
         # Choix affichage heure/décimal
-        self.label_modeHeure = wx.StaticText(self.panel, -1, _(u"Mode minutes :"))
-        self.ctrl_modeHeure = wx.Choice(self.panel, -1, choices = [_(u"Normal"), _(u"Décimal")])
+        self.label_modeHeure = wx.StaticText(self.staticbox_options, -1, _(u"Mode minutes :"))
+        self.ctrl_modeHeure = wx.Choice(self.staticbox_options, -1, choices = [_(u"Normal"), _(u"Décimal")])
         self.ctrl_modeHeure.SetSelection(0)
         
         # Personnes
-        self.ctrl_personnes = listCtrl_Personnes(self.panel, listePersonnes=self.listePersonnes)
+        self.ctrl_personnes = listCtrl_Personnes(self.staticbox_personnes, listePersonnes=self.listePersonnes)
         self.ctrl_personnes.SetMinSize((20, 20)) 
         
         # Commandes listes personnes
         self.hyperlink_select_all = self.Build_Hyperlink_select_all()
-        self.label_separation = wx.StaticText(self.panel, -1, u"|")
+        self.label_separation = wx.StaticText(self.staticbox_personnes, -1, u"|")
         self.hyperlink_deselect_all = self.Build_Hyperlink_deselect_all()
         self.hyperlink_presents = self.Build_Hyperlink_presents()
         
         # Tableau
-        self.ctrl_tableau = Tableau(self.panel)
-        self.ctrl_graph = PanelGraph(self.panel)
+        self.ctrl_tableau = Tableau(self.staticbox_tableau)
+        self.ctrl_graph = PanelGraph(self.staticbox_tableau)
         self.ctrl_graph.Show(False)
         self.label_choix_graph.Show(False)
         self.ctrl_choix_graph.Show(False)

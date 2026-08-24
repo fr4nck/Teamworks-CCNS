@@ -222,7 +222,7 @@ class Dialog(wx.Dialog):
                 
         # Données
         self.box_donnees_staticbox = wx.StaticBox(self, -1, _(u"Données à restaurer"))
-        self.ctrl_donnees = CTRL_Donnees(self, listeFichiers=self.listeFichiers)
+        self.ctrl_donnees = CTRL_Donnees(self.box_donnees_staticbox, listeFichiers=self.listeFichiers)
         self.ctrl_donnees.SetMinSize((250, -1))
         
         # Boutons

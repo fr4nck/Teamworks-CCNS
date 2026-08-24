@@ -362,18 +362,18 @@ class Dialog(wx.Dialog):
         self.sizer_grid_staticbox = wx.StaticBox(self.panel_base, -1, _(u"Liste des personnes de la base de données"))
                
         # Préparation de la grid
-        self.gridChamps = PanelContacts(self.panel_base)
+        self.gridChamps = PanelContacts(self.sizer_grid_staticbox)
         
-        self.label_synchro = wx.StaticText(self.panel_base, -1, _(u"Synchro."))
-        self.label_modif = wx.StaticText(self.panel_base, -1, _(u"Synchro mais modifié"))
-        self.label_non_synchro = wx.StaticText(self.panel_base, -1, _(u"Non synchro."))
+        self.label_synchro = wx.StaticText(self.sizer_grid_staticbox, -1, _(u"Synchro."))
+        self.label_modif = wx.StaticText(self.sizer_grid_staticbox, -1, _(u"Synchro mais modifié"))
+        self.label_non_synchro = wx.StaticText(self.sizer_grid_staticbox, -1, _(u"Non synchro."))
         
         self.label_synchro.SetBackgroundColour(COULEUR_SYNCHRO)
         self.label_modif.SetBackgroundColour(COULEUR_MODIF)
         self.label_non_synchro.SetBackgroundColour(COULEUR_NON_SYNCHRO)
         
-        self.bouton_synchroTout = wx.Button(self.panel_base, -1, _(u"Tout synchroniser"))
-        self.bouton_supprTout = wx.Button(self.panel_base, -1, _(u"Tout désynchroniser"))
+        self.bouton_synchroTout = wx.Button(self.sizer_grid_staticbox, -1, _(u"Tout synchroniser"))
+        self.bouton_supprTout = wx.Button(self.sizer_grid_staticbox, -1, _(u"Tout désynchroniser"))
 
         self.bouton_aide = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))
         self.bouton_annuler = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Fermer"), cheminImage=Chemins.GetStaticPath("Images/32x32/Fermer.png"))

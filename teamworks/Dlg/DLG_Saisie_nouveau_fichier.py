@@ -83,20 +83,20 @@ class MyDialog(wx.Dialog):
         self.listeTablesImportation = DATA_Tables.TABLES_IMPORTATION_OPTIONNELLES
         
         # Radio Local/Réseau
-        self.radio_local = wx.RadioButton(self, -1, _(u"Local"), style = wx.RB_GROUP )
-        self.radio_reseau = wx.RadioButton(self, -1, _(u"Réseau") )
+        self.radio_local = wx.RadioButton(self.sizer_type_staticbox, -1, _(u"Local"), style = wx.RB_GROUP )
+        self.radio_reseau = wx.RadioButton(self.sizer_type_staticbox, -1, _(u"Réseau") )
         
         # Nom à saisir
-        self.label_nom = wx.StaticText(self, -1, _(u"Nom de fichier :"))
-        self.text_nom = wx.TextCtrl(self, -1, "")
+        self.label_nom = wx.StaticText(self.sizer_contenu_staticbox, -1, _(u"Nom de fichier :"))
+        self.text_nom = wx.TextCtrl(self.sizer_contenu_staticbox, -1, "")
         
         # Sélection des tables à importer
-        self.checkbox_details = wx.CheckBox(self, -1, _(u"Importer les données par défaut"))
+        self.checkbox_details = wx.CheckBox(self.sizer_contenu_staticbox, -1, _(u"Importer les données par défaut"))
         self.checkbox_details.SetValue(True)
         self.hyperlink_details = self.Build_Hyperlink()
         
         # Panel Fichier RESEAU
-        self.panelReseau = PanelReseau(self)
+        self.panelReseau = PanelReseau(self.sizer_reseau_staticbox)
         self.panelReseau.Enable(False)
         
         self.bouton_aide = CTRL_Bouton_image.CTRL(self, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))

@@ -99,16 +99,16 @@ class Dialog(wx.Dialog):
         
         # Nom
         self.staticbox_nom_staticbox = wx.StaticBox(self, -1, _(u"Nom de la catégorie"))
-        self.label_nom = wx.StaticText(self, -1, _(u"Nom :"))
-        self.ctrl_nom = wx.TextCtrl(self, -1, u"")
+        self.label_nom = wx.StaticText(self.staticbox_nom_staticbox, -1, _(u"Nom :"))
+        self.ctrl_nom = wx.TextCtrl(self.staticbox_nom_staticbox, -1, u"")
         
         # Options
         self.staticbox_options_staticbox = wx.StaticBox(self, -1, _(u"Options"))
-        self.ctrl_checkVille = wx.CheckBox(self, -1, u"")
-        self.label_ville = wx.StaticText(self, -1, _(u"Lors d'une inscription, attribuer par défaut cette catégorie aux\nindividus dont la ville de résidence figure dans la liste suivante :"))
-        self.ctrl_villes = CTRL_Villes(self, self.IDcategorie_tarif)
-        self.bouton_villes_ajouter = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_villes_supprimer = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
+        self.ctrl_checkVille = wx.CheckBox(self.staticbox_options_staticbox, -1, u"")
+        self.label_ville = wx.StaticText(self.staticbox_options_staticbox, -1, _(u"Lors d'une inscription, attribuer par défaut cette catégorie aux\nindividus dont la ville de résidence figure dans la liste suivante :"))
+        self.ctrl_villes = CTRL_Villes(self.staticbox_options_staticbox, self.IDcategorie_tarif)
+        self.bouton_villes_ajouter = wx.BitmapButton(self.staticbox_options_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_villes_supprimer = wx.BitmapButton(self.staticbox_options_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
         
         # Boutons
         self.bouton_aide = CTRL_Bouton_image.CTRL(self, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))

@@ -61,45 +61,45 @@ class Dialog(wx.Dialog):
         self.staticbox_detail = wx.StaticBox(self.panel, -1, _(u"Détail du scénario"))
         
         # Nom
-        self.label_nom = wx.StaticText(self.panel, -1, _(u"Nom :"))
-        self.ctrl_nom = wx.TextCtrl(self.panel, -1, u"")
+        self.label_nom = wx.StaticText(self.staticbox_param, -1, _(u"Nom :"))
+        self.ctrl_nom = wx.TextCtrl(self.staticbox_param, -1, u"")
         
         # Description
-        self.label_description = wx.StaticText(self.panel, -1, _(u"Description :"))
-        self.ctrl_description = wx.TextCtrl(self.panel, -1, u"", style=wx.TE_MULTILINE)
+        self.label_description = wx.StaticText(self.staticbox_param, -1, _(u"Description :"))
+        self.ctrl_description = wx.TextCtrl(self.staticbox_param, -1, u"", style=wx.TE_MULTILINE)
         
         # Personne
-        self.label_personne = wx.StaticText(self.panel, -1, "Personne :")
+        self.label_personne = wx.StaticText(self.staticbox_param, -1, "Personne :")
         self.listePersonnes, self.dictPersonnes = self.GetListePersonnes()
-        self.ctrl_personne = wx.Choice(self.panel, -1, choices = self.listePersonnes)
+        self.ctrl_personne = wx.Choice(self.staticbox_param, -1, choices = self.listePersonnes)
         if IDpersonne != None :
             self.SetPersonne(IDpersonne)
             self.ctrl_personne.Enable(False)
             
         # Période
-        self.label_date_debut = wx.StaticText(self.panel, -1, _(u"Période du :"))
-        self.ctrl_date_debut = DatePickerCtrl(self.panel, -1, style=DP_DROPDOWN)
-        self.label_date_fin = wx.StaticText(self.panel, -1, "au")
-        self.ctrl_date_fin = DatePickerCtrl(self.panel, -1, style=DP_DROPDOWN)
+        self.label_date_debut = wx.StaticText(self.staticbox_param, -1, _(u"Période du :"))
+        self.ctrl_date_debut = DatePickerCtrl(self.staticbox_param, -1, style=DP_DROPDOWN)
+        self.label_date_fin = wx.StaticText(self.staticbox_param, -1, "au")
+        self.ctrl_date_fin = DatePickerCtrl(self.staticbox_param, -1, style=DP_DROPDOWN)
         
         # Coche toutes catégories
-        self.ctrl_toutes_categories = wx.CheckBox(self.panel, -1, _(u"Inclure toutes les catégories utilisées"))
+        self.ctrl_toutes_categories = wx.CheckBox(self.staticbox_param, -1, _(u"Inclure toutes les catégories utilisées"))
         self.ctrl_toutes_categories.SetValue(True)
         
         # Hyperlink Sélection des catégories
         self.hyperlink_categories = self.Build_Hyperlink()
         
         # Panel Légende
-        self.panelLegende = PanelLegende(self.panel)
+        self.panelLegende = PanelLegende(self.staticbox_legende)
         
         # Choix affichage détail
-        self.label_detail = wx.StaticText(self.panel, -1, _(u"Détail :"))
-        self.ctrl_detail = wx.Choice(self.panel, -1, choices = [_(u"Aucun"), _(u"Jour"), _(u"Mois"), _(u"Année")])
+        self.label_detail = wx.StaticText(self.staticbox_detail, -1, _(u"Détail :"))
+        self.ctrl_detail = wx.Choice(self.staticbox_detail, -1, choices = [_(u"Aucun"), _(u"Jour"), _(u"Mois"), _(u"Année")])
         self.ctrl_detail.SetSelection(0)
         
         # Choix affichage heure/décimal
-        self.label_modeHeure = wx.StaticText(self.panel, -1, _(u"Mode minutes :"))
-        self.ctrl_modeHeure = wx.Choice(self.panel, -1, choices = [_(u"Normal"), _(u"Décimal")])
+        self.label_modeHeure = wx.StaticText(self.staticbox_detail, -1, _(u"Mode minutes :"))
+        self.ctrl_modeHeure = wx.Choice(self.staticbox_detail, -1, choices = [_(u"Normal"), _(u"Décimal")])
         self.ctrl_modeHeure.SetSelection(0)
         
         if IDscenario != None : 
@@ -110,7 +110,7 @@ class Dialog(wx.Dialog):
             self.SetDatePicker(self.ctrl_date_fin, datetime.date(year=anneeEnCours, month=12, day=31))
             
         # Tableau
-        self.ctrl_tableau = Tableau(self.panel)
+        self.ctrl_tableau = Tableau(self.staticbox_detail)
         
         # Boutons
         self.bouton_aide = CTRL_Bouton_image.CTRL(self.panel, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))

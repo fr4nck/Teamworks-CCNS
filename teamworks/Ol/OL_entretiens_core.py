@@ -1088,8 +1088,8 @@ class SaisiePassword(wx.Dialog):
             
         self.sizer_3_staticbox = wx.StaticBox(self, -1, "")
         self.label_2 = wx.StaticText(self, -1, _(u"Les avis et commentaires sont verrouillés.\nPour les afficher, saisissez votre code de déverrouillage :"))
-        self.label_password = wx.StaticText(self, -1, "Mot de passe :")
-        self.text_password = wx.TextCtrl(self, -1, "", size=(200, -1), style=wx.TE_PASSWORD)
+        self.label_password = wx.StaticText(self.sizer_3_staticbox, -1, "Mot de passe :")
+        self.text_password = wx.TextCtrl(self.sizer_3_staticbox, -1, "", size=(200, -1), style=wx.TE_PASSWORD)
         
         self.label_3 = wx.StaticText(self, -1, _(u"Remarque : Le déverrouillage ne sera effectif que jusqu'à la fermeture du logiciel.\nPour désactiver définitivement la protection par mot de passe, rendez-vous dans \nle panneau Configuration (rubrique 'Recrutement')."))
         defaultFont = self.GetFont()

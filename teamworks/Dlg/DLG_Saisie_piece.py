@@ -30,30 +30,30 @@ class Dialog(wx.Dialog):
         self.sizer_date_debut_staticbox = wx.StaticBox(self.panel_base, -1, _(u"2. Saisissez la date de début"))
         self.sizer_date_fin_staticbox = wx.StaticBox(self.panel_base, -1, "3. Saisissez la date de fin")
         self.sizer_type_staticbox = wx.StaticBox(self.panel_base, -1, _(u"1. Sélectionnez un type de pièce"))
-        self.radio_pieces_1 = wx.RadioButton(self.panel_base, -1, _(u"Dans la liste de pièces que la personne doit fournir :"), style = wx.RB_GROUP)
+        self.radio_pieces_1 = wx.RadioButton(self.sizer_type_staticbox, -1, _(u"Dans la liste de pièces que la personne doit fournir :"), style = wx.RB_GROUP)
         
-        self.list_ctrl_pieces = ListCtrl_Pieces(self.panel_base, -1)
+        self.list_ctrl_pieces = ListCtrl_Pieces(self.sizer_type_staticbox, -1)
         
-        self.radio_pieces_2 = wx.RadioButton(self.panel_base, -1, _(u"Dans la liste des autres types de pièces :"))
+        self.radio_pieces_2 = wx.RadioButton(self.sizer_type_staticbox, -1, _(u"Dans la liste des autres types de pièces :"))
 
         # Importe les durées de validité des types de pièces
         self.RemplissageAutresTypes()
 
-        self.combo_box_autres = wx.ComboBox(self.panel_base, -1, choices=self.ListeAutresPourCombo, style=wx.CB_DROPDOWN|wx.CB_READONLY)
-        self.label_date_debut = wx.StaticText(self.panel_base, -1, "Date :")
-        self.text_date_debut = masked.TextCtrl(self.panel_base, -1, "", style=wx.TE_CENTRE, mask = "##/##/####")
-        self.radio_date_fin_1 = wx.RadioButton(self.panel_base, -1, "Date :", style = wx.RB_GROUP)
-        self.text_date_fin = masked.TextCtrl(self.panel_base, -1, "", style=wx.TE_CENTRE, mask = "##/##/####")
-        self.radio_date_fin_2 = wx.RadioButton(self.panel_base, -1, _(u"Validité illimitée"))
+        self.combo_box_autres = wx.ComboBox(self.sizer_type_staticbox, -1, choices=self.ListeAutresPourCombo, style=wx.CB_DROPDOWN|wx.CB_READONLY)
+        self.label_date_debut = wx.StaticText(self.sizer_date_debut_staticbox, -1, "Date :")
+        self.text_date_debut = masked.TextCtrl(self.sizer_date_debut_staticbox, -1, "", style=wx.TE_CENTRE, mask = "##/##/####")
+        self.radio_date_fin_1 = wx.RadioButton(self.sizer_date_fin_staticbox, -1, "Date :", style = wx.RB_GROUP)
+        self.text_date_fin = masked.TextCtrl(self.sizer_date_fin_staticbox, -1, "", style=wx.TE_CENTRE, mask = "##/##/####")
+        self.radio_date_fin_2 = wx.RadioButton(self.sizer_date_fin_staticbox, -1, _(u"Validité illimitée"))
 
         # Pages capturées
         self.sizer_pages_staticbox = wx.StaticBox(self.panel_base, -1, _(u"Documents associés"))
-        self.ctrl_pages = CTRL_Vignettes_documents.CTRL(self.panel_base, IDpiece=self.IDpiece, style=wx.BORDER_SUNKEN)
-        self.bouton_ajouter_page = wx.BitmapButton(self.panel_base, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_supprimer_page = wx.BitmapButton(self.panel_base, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_visualiser_page = wx.BitmapButton(self.panel_base, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Loupe.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_zoom_plus = wx.BitmapButton(self.panel_base, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/zoom_plus.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_zoom_moins = wx.BitmapButton(self.panel_base, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/zoom_moins.png"), wx.BITMAP_TYPE_ANY))
+        self.ctrl_pages = CTRL_Vignettes_documents.CTRL(self.sizer_pages_staticbox, IDpiece=self.IDpiece, style=wx.BORDER_SUNKEN)
+        self.bouton_ajouter_page = wx.BitmapButton(self.sizer_pages_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_supprimer_page = wx.BitmapButton(self.sizer_pages_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_visualiser_page = wx.BitmapButton(self.sizer_pages_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Loupe.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_zoom_plus = wx.BitmapButton(self.sizer_pages_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/zoom_plus.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_zoom_moins = wx.BitmapButton(self.sizer_pages_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/zoom_moins.png"), wx.BITMAP_TYPE_ANY))
 
         self.bouton_aide = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))
         self.bouton_ok = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Ok"), cheminImage=Chemins.GetStaticPath("Images/32x32/Valider.png"))

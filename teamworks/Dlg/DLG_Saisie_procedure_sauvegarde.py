@@ -113,23 +113,23 @@ class CTRL_Conditions(wx.Panel) :
         # Jour
         self.liste_jours = ("lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche")
         self.box_jour_staticbox = wx.StaticBox(self, wx.ID_ANY, _(u"Jour"))
-        self.check_jour = wx.CheckBox(self, wx.ID_ANY, _(u"Si le jour est parmi les jours cochés :"))
-        self.label_jours_scolaire = wx.StaticText(self, wx.ID_ANY, _(u"Sem. scolaires : "))
-        self.check_scolaire_lundi = wx.CheckBox(self, wx.ID_ANY, u"L")
-        self.check_scolaire_mardi = wx.CheckBox(self, wx.ID_ANY, u"M")
-        self.check_scolaire_mercredi = wx.CheckBox(self, wx.ID_ANY, u"M")
-        self.check_scolaire_jeudi = wx.CheckBox(self, wx.ID_ANY, u"J")
-        self.check_scolaire_vendredi = wx.CheckBox(self, wx.ID_ANY, u"V")
-        self.check_scolaire_samedi = wx.CheckBox(self, wx.ID_ANY, u"S")
-        self.check_scolaire_dimanche = wx.CheckBox(self, wx.ID_ANY, u"D")
-        self.label_jours_vacances = wx.StaticText(self, wx.ID_ANY, _(u"Sem. vacances : "))
-        self.check_vacances_lundi = wx.CheckBox(self, wx.ID_ANY, u"L")
-        self.check_vacances_mardi = wx.CheckBox(self, wx.ID_ANY, u"M")
-        self.check_vacances_mercredi = wx.CheckBox(self, wx.ID_ANY, u"M")
-        self.check_vacances_jeudi = wx.CheckBox(self, wx.ID_ANY, u"J")
-        self.check_vacances_vendredi = wx.CheckBox(self, wx.ID_ANY, u"V")
-        self.check_vacances_samedi = wx.CheckBox(self, wx.ID_ANY, u"S")
-        self.check_vacances_dimanche = wx.CheckBox(self, wx.ID_ANY, u"D")
+        self.check_jour = wx.CheckBox(self.box_jour_staticbox, wx.ID_ANY, _(u"Si le jour est parmi les jours cochés :"))
+        self.label_jours_scolaire = wx.StaticText(self.box_jour_staticbox, wx.ID_ANY, _(u"Sem. scolaires : "))
+        self.check_scolaire_lundi = wx.CheckBox(self.box_jour_staticbox, wx.ID_ANY, u"L")
+        self.check_scolaire_mardi = wx.CheckBox(self.box_jour_staticbox, wx.ID_ANY, u"M")
+        self.check_scolaire_mercredi = wx.CheckBox(self.box_jour_staticbox, wx.ID_ANY, u"M")
+        self.check_scolaire_jeudi = wx.CheckBox(self.box_jour_staticbox, wx.ID_ANY, u"J")
+        self.check_scolaire_vendredi = wx.CheckBox(self.box_jour_staticbox, wx.ID_ANY, u"V")
+        self.check_scolaire_samedi = wx.CheckBox(self.box_jour_staticbox, wx.ID_ANY, u"S")
+        self.check_scolaire_dimanche = wx.CheckBox(self.box_jour_staticbox, wx.ID_ANY, u"D")
+        self.label_jours_vacances = wx.StaticText(self.box_jour_staticbox, wx.ID_ANY, _(u"Sem. vacances : "))
+        self.check_vacances_lundi = wx.CheckBox(self.box_jour_staticbox, wx.ID_ANY, u"L")
+        self.check_vacances_mardi = wx.CheckBox(self.box_jour_staticbox, wx.ID_ANY, u"M")
+        self.check_vacances_mercredi = wx.CheckBox(self.box_jour_staticbox, wx.ID_ANY, u"M")
+        self.check_vacances_jeudi = wx.CheckBox(self.box_jour_staticbox, wx.ID_ANY, u"J")
+        self.check_vacances_vendredi = wx.CheckBox(self.box_jour_staticbox, wx.ID_ANY, u"V")
+        self.check_vacances_samedi = wx.CheckBox(self.box_jour_staticbox, wx.ID_ANY, u"S")
+        self.check_vacances_dimanche = wx.CheckBox(self.box_jour_staticbox, wx.ID_ANY, u"D")
         _ReparentToStaticBox(
             self.box_jour_staticbox,
             self.check_jour, self.label_jours_scolaire,
@@ -143,34 +143,34 @@ class CTRL_Conditions(wx.Panel) :
         
         # Heure
         self.box_heure_staticbox = wx.StaticBox(self, wx.ID_ANY, _(u"Heure"))
-        self.check_heure = wx.CheckBox(self, wx.ID_ANY, _(u"Si l'heure est comprise entre"))
-        self.ctrl_heure_debut = CTRL_Saisie_heure.Heure(self)
-        self.label_heure_et = wx.StaticText(self, wx.ID_ANY, _(u"et"))
-        self.ctrl_heure_fin = CTRL_Saisie_heure.Heure(self)
+        self.check_heure = wx.CheckBox(self.box_heure_staticbox, wx.ID_ANY, _(u"Si l'heure est comprise entre"))
+        self.ctrl_heure_debut = CTRL_Saisie_heure.Heure(self.box_heure_staticbox)
+        self.label_heure_et = wx.StaticText(self.box_heure_staticbox, wx.ID_ANY, _(u"et"))
+        self.ctrl_heure_fin = CTRL_Saisie_heure.Heure(self.box_heure_staticbox)
         _ReparentToStaticBox(self.box_heure_staticbox, self.check_heure, self.ctrl_heure_debut, self.label_heure_et, self.ctrl_heure_fin)
 
         # Poste
         self.box_poste_staticbox = wx.StaticBox(self, wx.ID_ANY, _(u"Poste"))
-        self.check_poste = wx.CheckBox(self, wx.ID_ANY, _(u"Si le poste est :"))
+        self.check_poste = wx.CheckBox(self.box_poste_staticbox, wx.ID_ANY, _(u"Si le poste est :"))
         try :
             labelPoste = _(u"Ce poste (%s)") % socket.gethostname()
         except :
             labelPoste = _(u"Ce poste")
-        self.radio_poste_1 = wx.RadioButton(self, wx.ID_ANY, labelPoste, style=wx.RB_GROUP)
-        self.radio_poste_2 = wx.RadioButton(self, wx.ID_ANY, _(u"Parmi les postes suivants :"))
-        self.ctrl_postes = wx.TextCtrl(self, wx.ID_ANY, u"")#, style=wx.TE_MULTILINE)
+        self.radio_poste_1 = wx.RadioButton(self.box_poste_staticbox, wx.ID_ANY, labelPoste, style=wx.RB_GROUP)
+        self.radio_poste_2 = wx.RadioButton(self.box_poste_staticbox, wx.ID_ANY, _(u"Parmi les postes suivants :"))
+        self.ctrl_postes = wx.TextCtrl(self.box_poste_staticbox, wx.ID_ANY, u"")#, style=wx.TE_MULTILINE)
         _ReparentToStaticBox(self.box_poste_staticbox, self.check_poste, self.radio_poste_1, self.radio_poste_2, self.ctrl_postes)
 
         # Dernière sauvegarde
         self.box_derniere_staticbox = wx.StaticBox(self, wx.ID_ANY, _(u"Dernière sauvegarde"))
-        self.check_derniere = wx.CheckBox(self, wx.ID_ANY, _(u"Si dernière sauv. date de plus de"))
+        self.check_derniere = wx.CheckBox(self.box_derniere_staticbox, wx.ID_ANY, _(u"Si dernière sauv. date de plus de"))
         self.listeDelais = [(1, _(u"1 jour")), ]
         for x in range(2, 31) :
             self.listeDelais.append((x, _(u"%d jours") % x))
         listeLabels = []
         for valeur, label in self.listeDelais :
             listeLabels.append(label)
-        self.ctrl_derniere = wx.Choice(self, wx.ID_ANY, choices=listeLabels)
+        self.ctrl_derniere = wx.Choice(self.box_derniere_staticbox, wx.ID_ANY, choices=listeLabels)
         self.ctrl_derniere.SetSelection(0)
         _ReparentToStaticBox(self.box_derniere_staticbox, self.check_derniere, self.ctrl_derniere)
         
@@ -557,20 +557,20 @@ class CTRL_Options(wx.Panel) :
         
         # Interface
         self.box_interface_staticbox = wx.StaticBox(self, wx.ID_ANY, _(u"Interface utilisateur"))
-        self.check_demander = wx.CheckBox(self, wx.ID_ANY, _(u"Demander à l'utilisateur la confirmation du lancement de la sauvegarde"))
+        self.check_demander = wx.CheckBox(self.box_interface_staticbox, wx.ID_ANY, _(u"Demander à l'utilisateur la confirmation du lancement de la sauvegarde"))
         self.check_demander.SetValue(True)
-        self.check_confirmation = wx.CheckBox(self, wx.ID_ANY, _(u"Afficher un message de confirmation si sauvegarde réussie"))
-        self.check_interface = wx.CheckBox(self, wx.ID_ANY, _(u"Afficher l'interface du module de sauvegarde"))
+        self.check_confirmation = wx.CheckBox(self.box_interface_staticbox, wx.ID_ANY, _(u"Afficher un message de confirmation si sauvegarde réussie"))
+        self.check_interface = wx.CheckBox(self.box_interface_staticbox, wx.ID_ANY, _(u"Afficher l'interface du module de sauvegarde"))
         _ReparentToStaticBox(self.box_interface_staticbox, self.check_demander, self.check_confirmation, self.check_interface)
 
         # Suppression
         self.box_suppression_staticbox = wx.StaticBox(self, wx.ID_ANY, _(u"Sauvegardes obsolètes"))
-        self.check_suppression = wx.CheckBox(self, wx.ID_ANY, _(u"Supprimer les sauvegardes présentes dans le répertoire datant de plus de"))
+        self.check_suppression = wx.CheckBox(self.box_suppression_staticbox, wx.ID_ANY, _(u"Supprimer les sauvegardes présentes dans le répertoire datant de plus de"))
         self.listeAnciennete = [(2, _(u"2 jours")), (5, _(u"5 jours")), (7, _(u"1 semaine")), (14, _(u"2 semaines")), (21, _(u"3 semaines")), (30, _(u"1 mois")), (60, _(u"2 mois")), (90, _(u"3 mois")), (180, _(u"6 mois")), (365, _(u"1 année")), (730, _(u"2 années")), (1095, _(u"3 années")),]
         listeLabels = []
         for nbre, label in self.listeAnciennete :
             listeLabels.append(label)
-        self.ctrl_suppression = wx.Choice(self, wx.ID_ANY, choices=listeLabels)
+        self.ctrl_suppression = wx.Choice(self.box_suppression_staticbox, wx.ID_ANY, choices=listeLabels)
         self.ctrl_suppression.SetSelection(0) 
         _ReparentToStaticBox(self.box_suppression_staticbox, self.check_suppression, self.ctrl_suppression)
         
@@ -734,15 +734,15 @@ class Dialog(wx.Dialog):
 
         # Généralités
         self.box_generalites_staticbox = wx.StaticBox(self, -1, _(u"Généralites"))
-        self.label_nom = wx.StaticText(self, -1, _(u"Nom de la procédure :"))
-        self.ctrl_nom = wx.TextCtrl(self, -1, u"")
-        self.label_observations = wx.StaticText(self, -1, _(u"Observations :"))
-        self.ctrl_observations = wx.TextCtrl(self, -1, u"", style=wx.TE_MULTILINE)
+        self.label_nom = wx.StaticText(self.box_generalites_staticbox, -1, _(u"Nom de la procédure :"))
+        self.ctrl_nom = wx.TextCtrl(self.box_generalites_staticbox, -1, u"")
+        self.label_observations = wx.StaticText(self.box_generalites_staticbox, -1, _(u"Observations :"))
+        self.ctrl_observations = wx.TextCtrl(self.box_generalites_staticbox, -1, u"", style=wx.TE_MULTILINE)
         _ReparentToStaticBox(self.box_generalites_staticbox, self.label_nom, self.ctrl_nom, self.label_observations, self.ctrl_observations)
         
         # Paramètres
         self.box_parametres_staticbox = wx.StaticBox(self, -1, _(u"Paramètres"))
-        self.ctrl_parametres = CTRL_Parametres(self)
+        self.ctrl_parametres = CTRL_Parametres(self.box_parametres_staticbox)
         _ReparentToStaticBox(self.box_parametres_staticbox, self.ctrl_parametres)
         
         # Boutons

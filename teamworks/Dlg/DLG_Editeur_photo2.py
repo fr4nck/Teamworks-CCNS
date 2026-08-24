@@ -175,16 +175,16 @@ class MyDialog(wx.Dialog):
         self.imgbox = ImgBox(self,-1, image=image)
         
         self.staticBox_rotation = wx.StaticBox(self, -1, _(u"Rotation"))
-        self.bouton_rotation_gauche = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/22x22/RotationGauche.png"), wx.BITMAP_TYPE_PNG))
-        self.bouton_rotation_droite = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/22x22/RotationDroite.png"), wx.BITMAP_TYPE_PNG))
+        self.bouton_rotation_gauche = wx.BitmapButton(self.staticBox_rotation, -1, wx.Bitmap(Chemins.GetStaticPath("Images/22x22/RotationGauche.png"), wx.BITMAP_TYPE_PNG))
+        self.bouton_rotation_droite = wx.BitmapButton(self.staticBox_rotation, -1, wx.Bitmap(Chemins.GetStaticPath("Images/22x22/RotationDroite.png"), wx.BITMAP_TYPE_PNG))
         
         self.staticBox_ratio = wx.StaticBox(self, -1, _(u"Taille de l'image"))
-        self.slider_ratio = wx.Slider(self, -1,  100, 1, 200, size=(-1, -1), style=wx.SL_HORIZONTAL)
-        self.img_loupe_plus = wx.StaticBitmap(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/22x22/zoomPlus.png"), wx.BITMAP_TYPE_ANY))
-        self.img_loupe_moins = wx.StaticBitmap(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/22x22/zoomMoins.png"), wx.BITMAP_TYPE_ANY))
+        self.slider_ratio = wx.Slider(self.staticBox_ratio, -1,  100, 1, 200, size=(-1, -1), style=wx.SL_HORIZONTAL)
+        self.img_loupe_plus = wx.StaticBitmap(self.staticBox_ratio, -1, wx.Bitmap(Chemins.GetStaticPath("Images/22x22/zoomPlus.png"), wx.BITMAP_TYPE_ANY))
+        self.img_loupe_moins = wx.StaticBitmap(self.staticBox_ratio, -1, wx.Bitmap(Chemins.GetStaticPath("Images/22x22/zoomMoins.png"), wx.BITMAP_TYPE_ANY))
                 
         self.staticBox_reinit = wx.StaticBox(self, -1, _(u"Réinitialisation"))
-        self.bouton_reinit = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/22x22/Photo.png"), wx.BITMAP_TYPE_ANY), size=(70, -1))
+        self.bouton_reinit = wx.BitmapButton(self.staticBox_reinit, -1, wx.Bitmap(Chemins.GetStaticPath("Images/22x22/Photo.png"), wx.BITMAP_TYPE_ANY), size=(70, -1))
         
         # Boutons
         self.bouton_aide = CTRL_Bouton_image.CTRL(self, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))
