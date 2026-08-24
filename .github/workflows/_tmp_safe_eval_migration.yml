@@ -1,0 +1,141 @@
+name: Migration temporaire eval sûrs
+
+on:
+  pull_request:
+    branches:
+      - master
+    types:
+      - synchronize
+    paths:
+      - ".github/workflows/_tmp_safe_eval_migration.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    if: github.head_ref == 'integration/post-tw189-tw182-tw184' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: integration/post-tw189-tw182-tw184
+          fetch-depth: 0
+
+      - name: Remplacer les exécutions dynamiques sûres
+        shell: bash
+        run: |
+          python - <<'PY'
+          from __future__ import annotations
+
+          import ast
+          import re
+          from pathlib import Path
+
+          literal_files = {
+              "teamworks/Dlg/DLG_Filtres_listes.py": 1,
+              "teamworks/Dlg/DLG_Parametres_blocnotes.py": 2,
+              "teamworks/Dlg/DLG_Parametres_calendrier.py": 2,
+              "teamworks/Dlg/DLG_Parametres_dossiers.py": 2,
+              "teamworks/Dlg/DLG_Parametres_horloge.py": 2,
+              "teamworks/Dlg/DLG_Scenario.py": 1,
+              "teamworks/Dlg/DLG_Statistiques.py": 3,
+              "teamworks/FonctionsPerso.py": 3,
+              "teamworks/Ctrl/CTRL_Profil.py": 1,
+          }
+
+          def eval_calls(source, path):
+              tree = ast.parse(source, filename=path)
+              return [
+                  node for node in ast.walk(tree)
+                  if isinstance(node, ast.Call)
+                  and isinstance(node.func, ast.Name)
+                  and node.func.id == "eval"
+              ]
+
+          for relpath, expected in literal_files.items():
+              path = Path(relpath)
+              source = path.read_text(encoding="utf-8")
+              calls = eval_calls(source, relpath)
+              if len(calls) != expected:
+                  raise RuntimeError(f"{relpath}: eval attendus={expected}, trouvés={len(calls)}")
+              if not re.search(r"(?m)^import ast\s*$", source):
+                  source, count = re.subn(
+                      r"(?m)^(?=(?:import|from)\s)",
+                      "import ast\n",
+                      source,
+                      count=1,
+                  )
+                  if count != 1:
+                      raise RuntimeError(f"{relpath}: point d'insertion import ast introuvable")
+              source = re.sub(r"\beval\s*\(", "ast.literal_eval(", source)
+              if eval_calls(source, relpath):
+                  raise RuntimeError(f"{relpath}: eval restant après migration")
+              compile(source, relpath, "exec")
+              path.write_text(source, encoding="utf-8")
+
+          publiposteur = Path("teamworks/Dlg/DLG_Publiposteur.py")
+          source = publiposteur.read_text(encoding="utf-8")
+          old_creation = '''        for numPage in range(1, self.nbrePages+1) :\n            exec( "self.page" + str(numPage) + " = " + self.listePages[numPage-1] + "(self.panel_base)" )\n            exec( "self.sizer_pages.Add(self.page" + str(numPage) + ", 1, wx.EXPAND, 0)" )\n            self.sizer_pages.Layout()\n            exec( "self.page" + str(numPage) + ".Show(False)" )\n'''
+          new_creation = '''        for numPage in range(1, self.nbrePages+1) :\n            page_class = globals().get(self.listePages[numPage-1])\n            if not callable(page_class):\n                raise RuntimeError("Page de publipostage inconnue : %s" % self.listePages[numPage-1])\n            page = page_class(self.panel_base)\n            setattr(self, "page" + str(numPage), page)\n            self.sizer_pages.Add(page, 1, wx.EXPAND, 0)\n            self.sizer_pages.Layout()\n            page.Show(False)\n'''
+          if source.count(old_creation) != 1:
+              raise RuntimeError("Bloc de création dynamique du publiposteur inattendu")
+          source = source.replace(old_creation, new_creation)
+
+          page_eval_pattern = re.compile(r'eval\("self\.page"\+str\(self\.pageVisible\)\)')
+          source, replaced = page_eval_pattern.subn(
+              'getattr(self, "page" + str(self.pageVisible))',
+              source,
+          )
+          if replaced != 4:
+              raise RuntimeError(f"Publiposteur: 4 eval de navigation attendus, {replaced} remplacés")
+
+          tree = ast.parse(source, filename=str(publiposteur))
+          remaining_dynamic = [
+              node for node in ast.walk(tree)
+              if isinstance(node, ast.Call)
+              and isinstance(node.func, ast.Name)
+              and node.func.id in {"eval", "exec"}
+          ]
+          if remaining_dynamic:
+              raise RuntimeError(f"Publiposteur: appels dynamiques restants={len(remaining_dynamic)}")
+          compile(source, str(publiposteur), "exec")
+          publiposteur.write_text(source, encoding="utf-8")
+
+          whitespace_lines = {
+              "teamworks/Dlg/DLG_Config_sauvegarde.py": {424, 618},
+              "teamworks/Dlg/DLG_Saisie_candidat_core.py": {64, 76},
+              "teamworks/Dlg/DLG_Sauvegarde.py": {383},
+          }
+          for relpath, numbers in whitespace_lines.items():
+              path = Path(relpath)
+              lines = path.read_text(encoding="utf-8").splitlines(keepends=True)
+              for number in numbers:
+                  line = lines[number - 1]
+                  ending = "\r\n" if line.endswith("\r\n") else "\n" if line.endswith("\n") else ""
+                  core = line[:-len(ending)] if ending else line
+                  lines[number - 1] = core.rstrip(" \t") + ending
+              updated = "".join(lines)
+              compile(updated, relpath, "exec")
+              path.write_text(updated, encoding="utf-8")
+
+          print("Migration validée: 17 eval littéraux, 7 appels dynamiques publiposteur, 5 fins de ligne nettoyées.")
+          PY
+
+      - name: Vérifier la migration
+        shell: bash
+        run: |
+          git diff --check
+          python -m compileall -q teamworks
+          python scripts/audit_rc_risks.py --fail-on-blockers
+          pytest -q tests/test_dynamic_execution_guards.py
+
+      - name: Publier puis retirer ce workflow temporaire
+        shell: bash
+        run: |
+          rm .github/workflows/_tmp_safe_eval_migration.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Sécurité: remplacer les eval littéraux et le routage dynamique du publiposteur"
+          git push origin HEAD:integration/post-tw189-tw182-tw184
