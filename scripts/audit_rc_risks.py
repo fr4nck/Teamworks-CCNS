@@ -57,8 +57,23 @@ BLOCKER_CODES = {
     "parse-error",
     "wx-staticbox-parent",
     "wx-staticbox-helper-parent",
+    "wx-method-object-comparison",
     "mysql55-add-column-if-not-exists",
     "sql-insert-values-no-columns",
+    "shell-true",
+}
+
+GETTER_METHODS = {
+    "GetValue",
+    "GetSelection",
+    "GetStringSelection",
+    "GetPath",
+    "GetLabel",
+    "GetDate",
+    "GetDateDD",
+    "GetCount",
+    "GetName",
+    "GetText",
 }
 
 
@@ -117,13 +132,7 @@ def _first_parent(call: ast.Call) -> str:
 
 
 def _looks_like_widget_constructor(call: ast.Call) -> bool:
-    """Écarte les appels utilitaires comme ``getattr(...)`` passés à ``Add``.
-
-    Les constructeurs wx sont explicites. Les contrôles maison historiques ont
-    généralement un nom de classe commençant par une majuscule (``CTRL(...)``,
-    ``MyDatePickerCtrl(...)``). Un appel fonctionnel en minuscules ne doit pas
-    être interprété comme la création inline d'un enfant wx.
-    """
+    """Écarte les appels utilitaires comme ``getattr(...)`` passés à ``Add``."""
     callee = call_name(call)
     if not callee:
         return False
@@ -147,18 +156,49 @@ def _descendant_sizers(root_sizer: str, edges: dict[str, set[str]]) -> set[str]:
     return descendants
 
 
-def _scope_staticbox_findings(path: Path, scope: ast.AST) -> list[dict[str, object]]:
+def _collect_shared_wx_objects(methods: list[ast.AST]) -> tuple[
+    dict[str, tuple[str, int]],
+    dict[str, tuple[str, int]],
+]:
+    """Collecte les ``self.*`` créés dans une classe, toutes méthodes confondues."""
+    static_boxes: dict[str, tuple[str, int]] = {}
+    widget_parents: dict[str, tuple[str, int]] = {}
+    for method in methods:
+        for node in ast.walk(method):
+            value = None
+            if isinstance(node, ast.Assign):
+                value = node.value
+            elif isinstance(node, ast.AnnAssign):
+                value = node.value
+            if not isinstance(value, ast.Call) or not value.args:
+                continue
+            callee = call_name(value)
+            for target in assignment_targets(node):
+                if not target.startswith("self."):
+                    continue
+                if callee == "wx.StaticBox":
+                    static_boxes[target] = (_first_parent(value), getattr(node, "lineno", 0))
+                elif not callee.endswith("Sizer"):
+                    widget_parents[target] = (_first_parent(value), getattr(node, "lineno", 0))
+    return static_boxes, widget_parents
+
+
+def _scope_staticbox_findings(
+    path: Path,
+    scope: ast.AST,
+    shared_static_boxes: dict[str, tuple[str, int]] | None = None,
+    shared_widget_parents: dict[str, tuple[str, int]] | None = None,
+) -> list[dict[str, object]]:
     """Détecte parentages directs et helpers alimentant un StaticBoxSizer.
 
-    Exemple indirect couvert : ``self._row(page, grid, ...)`` lorsque ``grid``
-    est contenu dans un StaticBoxSizer créé avec ``page``. Le helper reçoit alors
-    le mauvais parent, même si les wx.StaticText/TextCtrl sont créés ailleurs.
+    Les maps partagées permettent de raccorder un contrôle créé dans ``__init__``
+    à un sizer construit ensuite dans ``__do_layout`` ou une méthode équivalente.
     """
     sizers: dict[str, dict[str, object]] = {}
-    static_boxes: dict[str, tuple[str, int]] = {}
+    static_boxes: dict[str, tuple[str, int]] = dict(shared_static_boxes or {})
     sizer_edges: dict[str, set[str]] = defaultdict(set)
     sizer_widgets: dict[str, list[tuple[str, int]]] = defaultdict(list)
-    widget_parents: dict[str, tuple[str, int]] = {}
+    widget_parents: dict[str, tuple[str, int]] = dict(shared_widget_parents or {})
 
     nodes = list(ast.walk(scope))
 
@@ -208,7 +248,6 @@ def _scope_staticbox_findings(path: Path, scope: ast.AST) -> list[dict[str, obje
                 )
                 continue
 
-            # Une variable ajoutée ensuite à un sizer : mémoriser son parent wx.
             if value.args:
                 widget_parents[target] = (_first_parent(value), getattr(node, "lineno", 0))
 
@@ -281,8 +320,6 @@ def _scope_staticbox_findings(path: Path, scope: ast.AST) -> list[dict[str, obje
             matching_sizers = [s for s in descendants if s != root_sizer and s in arg_keys]
             if not matching_sizers:
                 continue
-            # Restreint aux helpers privés/de construction pour éviter de bloquer
-            # sur des appels métier qui transporteraient ces objets par hasard.
             helper_leaf = callee.split(".")[-1].lower()
             if not (
                 helper_leaf.startswith("_")
@@ -324,14 +361,29 @@ def _parse_tree(path: Path, source: str) -> tuple[ast.AST | None, list[dict[str,
 
 def staticbox_parent_findings(path: Path, tree: ast.AST) -> list[dict[str, object]]:
     findings: list[dict[str, object]] = []
-    scopes = [
-        node for node in ast.walk(tree)
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
-    ]
-    if not scopes:
-        scopes = [tree]
-    for scope in scopes:
-        findings.extend(_scope_staticbox_findings(path, scope))
+
+    # Fonctions de module : analyse locale suffisante.
+    for node in getattr(tree, "body", []):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            findings.extend(_scope_staticbox_findings(path, node))
+
+    # Classes : partage les objets self.* entre méthodes, mais garde les sizers
+    # locaux isolés par méthode pour éviter les collisions de noms historiques.
+    for cls in [node for node in ast.walk(tree) if isinstance(node, ast.ClassDef)]:
+        methods = [
+            node for node in cls.body
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+        ]
+        shared_static_boxes, shared_widget_parents = _collect_shared_wx_objects(methods)
+        for method in methods:
+            findings.extend(
+                _scope_staticbox_findings(
+                    path,
+                    method,
+                    shared_static_boxes=shared_static_boxes,
+                    shared_widget_parents=shared_widget_parents,
+                )
+            )
 
     unique: dict[tuple[object, ...], dict[str, object]] = {}
     for finding in findings:
@@ -348,6 +400,29 @@ def staticbox_parent_findings(path: Path, tree: ast.AST) -> list[dict[str, objec
         unique.values(),
         key=lambda item: (str(item.get("file")), int(item.get("line", 0))),
     )
+
+
+def method_object_comparison_findings(path: Path, tree: ast.AST) -> list[dict[str, object]]:
+    """Détecte les getters wx comparés sans appel, ex. ``GetValue != ''``."""
+    relpath = path.relative_to(ROOT).as_posix()
+    findings: list[dict[str, object]] = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Compare):
+            continue
+        operands = [node.left] + list(node.comparators)
+        for operand in operands:
+            if isinstance(operand, ast.Attribute) and operand.attr in GETTER_METHODS:
+                findings.append(
+                    {
+                        "file": relpath,
+                        "line": getattr(node, "lineno", 0),
+                        "code": "wx-method-object-comparison",
+                        "severity": "critical",
+                        "getter": expr_key(operand),
+                        "text": expr_key(node),
+                    }
+                )
+    return findings
 
 
 def _docstring_nodes(tree: ast.AST) -> set[int]:
@@ -428,6 +503,7 @@ def audit(root: Path = TEAMWORKS) -> dict[str, object]:
         findings.extend(parse_findings)
         if tree is not None:
             findings.extend(staticbox_parent_findings(path, tree))
+            findings.extend(method_object_comparison_findings(path, tree))
             findings.extend(sql_findings(path, tree))
         findings.extend(text_findings(path, source))
 
@@ -470,7 +546,13 @@ def main(argv: list[str] | None = None) -> int:
     if report["blockers"]:
         print("\nBloqueurs :")
         for item in report["blockers"]:
-            detail = item.get("widget") or item.get("helper") or item.get("text") or item.get("detail", "")
+            detail = (
+                item.get("widget")
+                or item.get("helper")
+                or item.get("getter")
+                or item.get("text")
+                or item.get("detail", "")
+            )
             print(f"- {item['file']}:{item['line']} [{item['code']}] {detail}")
 
     if args.json_path:
