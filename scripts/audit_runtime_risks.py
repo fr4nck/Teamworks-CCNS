@@ -389,12 +389,11 @@ def contains_float_width_risk(node: ast.AST) -> bool:
         and node.func.id == "int"
     ):
         return False
-    for child in ast.walk(node):
-        if isinstance(child, ast.BinOp) and isinstance(child.op, ast.Div):
-            return True
-        if isinstance(child, ast.Constant) and isinstance(child.value, float):
-            return True
-    return False
+    if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Div):
+        return True
+    if isinstance(node, ast.Constant) and isinstance(node.value, float):
+        return True
+    return any(contains_float_width_risk(child) for child in ast.iter_child_nodes(node))
 
 
 def audit_ast(

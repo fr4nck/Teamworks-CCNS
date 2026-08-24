@@ -5,9 +5,7 @@
     "bare-except": 181,
     "file-write": 34,
     "gestiondb-open": 566,
-    "sqlite-bytes-path": 4,
-    "sqlite-direct": 10,
-    "wx-column-width-float-risk": 8
+    "sqlite-direct": 10
   },
   "top_files": [
     [
@@ -24,7 +22,7 @@
     ],
     [
       "teamworks/FonctionsPerso.py",
-      19
+      18
     ],
     [
       "teamworks/Teamworks_core.py",
@@ -61,10 +59,6 @@
     [
       "teamworks/Ol/OL_personnes.py",
       12
-    ],
-    [
-      "teamworks/GestionDB.py",
-      11
     ],
     [
       "teamworks/Ol/OL_contrats.py",
@@ -108,6 +102,10 @@
     ],
     [
       "teamworks/Ctrl/CTRL_Photo.py",
+      8
+    ],
+    [
+      "teamworks/GestionDB.py",
       8
     ]
   ],
@@ -1031,12 +1029,6 @@
       "detail": "DB = GestionDB.DB()"
     },
     {
-      "category": "wx-column-width-float-risk",
-      "path": "teamworks/Dlg/DLG_Config_affectations.py",
-      "line": 41,
-      "detail": "max(100, int(largeur * 0.22))"
-    },
-    {
       "category": "gestiondb-open",
       "path": "teamworks/Dlg/DLG_Config_affectations_core.py",
       "line": 103,
@@ -1241,12 +1233,6 @@
       "detail": "self.DeleteAllItems(); DB = GestionDB.DB()"
     },
     {
-      "category": "wx-column-width-float-risk",
-      "path": "teamworks/Dlg/DLG_Config_diffuseurs.py",
-      "line": 33,
-      "detail": "max(110, int(largeur * 0.26))"
-    },
-    {
       "category": "gestiondb-open",
       "path": "teamworks/Dlg/DLG_Config_diffuseurs_core.py",
       "line": 105,
@@ -1295,18 +1281,6 @@
       "detail": "DB = GestionDB.DB()"
     },
     {
-      "category": "wx-column-width-float-risk",
-      "path": "teamworks/Dlg/DLG_Config_emplois.py",
-      "line": 64,
-      "detail": "max(180, int(largeur * 0.30))"
-    },
-    {
-      "category": "wx-column-width-float-risk",
-      "path": "teamworks/Dlg/DLG_Config_emplois.py",
-      "line": 65,
-      "detail": "max(100, int(largeur * 0.16))"
-    },
-    {
       "category": "gestiondb-open",
       "path": "teamworks/Dlg/DLG_Config_emplois_core.py",
       "line": 101,
@@ -1341,12 +1315,6 @@
       "path": "teamworks/Dlg/DLG_Config_fonctions.py",
       "line": 33,
       "detail": "DB = GestionDB.DB()"
-    },
-    {
-      "category": "wx-column-width-float-risk",
-      "path": "teamworks/Dlg/DLG_Config_fonctions.py",
-      "line": 53,
-      "detail": "max(100, int(largeur * 0.22))"
     },
     {
       "category": "gestiondb-open",
@@ -2277,18 +2245,6 @@
       "path": "teamworks/Dlg/DLG_Saisie_candidat.py",
       "line": 144,
       "detail": "con = sqlite3.connect(Chemins.GetStaticPath(\"Databases/Villes.db3\"))"
-    },
-    {
-      "category": "wx-column-width-float-risk",
-      "path": "teamworks/Dlg/DLG_Saisie_candidat.py",
-      "line": 57,
-      "detail": "max(80, int(largeur * 0.18))"
-    },
-    {
-      "category": "wx-column-width-float-risk",
-      "path": "teamworks/Dlg/DLG_Saisie_candidat.py",
-      "line": 58,
-      "detail": "max(140, int(largeur * 0.48))"
     },
     {
       "category": "sqlite-direct",
@@ -3257,12 +3213,6 @@
       "detail": "DB = GestionDB.DB()"
     },
     {
-      "category": "wx-column-width-float-risk",
-      "path": "teamworks/Dlg/DLG_Selection_periode.py",
-      "line": 70,
-      "detail": "max(150, int(largeur * 0.38))"
-    },
-    {
       "category": "gestiondb-open",
       "path": "teamworks/Dlg/DLG_Statistiques.py",
       "line": 927,
@@ -3434,13 +3384,7 @@
       "category": "sqlite-direct",
       "path": "teamworks/FonctionsPerso.py",
       "line": 1153,
-      "detail": "connexion = sqlite3.connect(nomFichier.encode('utf-8'))"
-    },
-    {
-      "category": "sqlite-bytes-path",
-      "path": "teamworks/FonctionsPerso.py",
-      "line": 1153,
-      "detail": "SQLite path encoded to bytes; keep filesystem paths as str on Python 3"
+      "detail": "connexion = sqlite3.connect(nomFichier)"
     },
     {
       "category": "file-write",
@@ -3494,13 +3438,7 @@
       "category": "sqlite-direct",
       "path": "teamworks/GestionDB.py",
       "line": 135,
-      "detail": "self.connexion = sqlite3.connect(nomFichier.encode('utf-8'))"
-    },
-    {
-      "category": "sqlite-bytes-path",
-      "path": "teamworks/GestionDB.py",
-      "line": 135,
-      "detail": "SQLite path encoded to bytes; keep filesystem paths as str on Python 3"
+      "detail": "self.connexion = sqlite3.connect(nomFichier)"
     },
     {
       "category": "bare-except",
@@ -3518,25 +3456,13 @@
       "category": "sqlite-direct",
       "path": "teamworks/GestionDB.py",
       "line": 754,
-      "detail": "connexionDefaut = sqlite3.connect(nomFichierdefault.encode('utf-8'))"
-    },
-    {
-      "category": "sqlite-bytes-path",
-      "path": "teamworks/GestionDB.py",
-      "line": 754,
-      "detail": "SQLite path encoded to bytes; keep filesystem paths as str on Python 3"
+      "detail": "connexionDefaut = sqlite3.connect(nomFichierdefault)"
     },
     {
       "category": "sqlite-direct",
       "path": "teamworks/GestionDB.py",
       "line": 896,
-      "detail": "connexionDefaut = sqlite3.connect(nomFichierdefault.encode('utf-8'))"
-    },
-    {
-      "category": "sqlite-bytes-path",
-      "path": "teamworks/GestionDB.py",
-      "line": 896,
-      "detail": "SQLite path encoded to bytes; keep filesystem paths as str on Python 3"
+      "detail": "connexionDefaut = sqlite3.connect(nomFichierdefault)"
     },
     {
       "category": "bare-except",

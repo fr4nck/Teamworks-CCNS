@@ -1150,7 +1150,7 @@ def PreparationFichierDefaut(nomFichier=""):
         listeTablesObligatoires.append(table)
     
     # Ouverture du fichier de référence
-    connexion = sqlite3.connect(nomFichier.encode('utf-8'))
+    connexion = sqlite3.connect(nomFichier)
     cursor = connexion.cursor()
     
     # Recherche les tables de la base
