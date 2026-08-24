@@ -1,0 +1,81 @@
+name: Fiabilisation temporaire sauvegarde restauration
+
+on:
+  pull_request:
+    branches:
+      - master
+    types:
+      - synchronize
+    paths:
+      - ".github/workflows/_tmp_backup_error_cleanup.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    if: github.head_ref == 'integration/post-tw189-tw182-tw184' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: integration/post-tw189-tw182-tw184
+          fetch-depth: 0
+
+      - name: Corriger les chemins d'erreur historiques
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("teamworks/Dlg/DLG_Config_sauvegarde.py")
+          source = path.read_text(encoding="utf-8")
+
+          old_save = '''        try :                                   \n            # Création du fichier ZIP\n            fichierZip = zipfile.ZipFile(fichierDest, "w", compression=zipfile.ZIP_DEFLATED)\n\n            # Intégration des fichiers dans le ZIP\n            for extension, rep, nomFichier in listeFichiers :\n                cheminFichier = rep + nomFichier\n                nouveauNomFichier = extension + "_" + nomFichier\n                fichierZip.write(cheminFichier, nouveauNomFichier )\n                \n            # Finalise le fichier ZIP\n            fichierZip.close()\n            \n            return None\n\n        except :\n            return "Erreur inconnue"\n'''
+          new_save = '''        try:\n            with zipfile.ZipFile(fichierDest, "w", compression=zipfile.ZIP_DEFLATED) as fichierZip:\n                for extension, rep, nomFichier in listeFichiers:\n                    cheminFichier = os.path.join(rep, nomFichier)\n                    nouveauNomFichier = extension + "_" + nomFichier\n                    fichierZip.write(cheminFichier, nouveauNomFichier)\n            return None\n        except Exception as err:\n            return str(err)\n'''
+          if source.count(old_save) != 1:
+              raise RuntimeError("Bloc Sauvegarde.Save inattendu")
+          source = source.replace(old_save, new_save)
+
+          old_overwrite = '''            dlg = wx.MessageDialog(None, _(u"Un fichier de sauvegarde portant ce nom existe déjà. \\n\\nVoulez-vous le remplacer ?"), "Attention !", wx.YES_NO | wx.NO_DEFAULT | wx.ICON_EXCLAMATION)\n            if dlg.ShowModal() == wx.ID_NO :\n                return False\n                dlg.Destroy()\n            else:\n                dlg.Destroy()\n'''
+          new_overwrite = '''            dlg = wx.MessageDialog(None, _(u"Un fichier de sauvegarde portant ce nom existe déjà. \\n\\nVoulez-vous le remplacer ?"), "Attention !", wx.YES_NO | wx.NO_DEFAULT | wx.ICON_EXCLAMATION)\n            reponse = dlg.ShowModal()\n            dlg.Destroy()\n            if reponse == wx.ID_NO:\n                return False\n'''
+          if source.count(old_overwrite) != 1:
+              raise RuntimeError("Bloc de confirmation d'écrasement inattendu")
+          source = source.replace(old_overwrite, new_overwrite)
+
+          old_save_error = '''            dlg = wx.MessageDialog(self, _(u"L'erreur suivante s'est produit lors de la sauvegarde : \\n\\n") + err, "Erreur de sauvegarde", wx.OK)  \n'''
+          new_save_error = '''            dlg = wx.MessageDialog(self, _(u"L'erreur suivante s'est produit lors de la sauvegarde : \\n\\n") + str(etat), "Erreur de sauvegarde", wx.OK)  \n'''
+          if source.count(old_save_error) != 1:
+              raise RuntimeError("Message d'erreur de sauvegarde inattendu")
+          source = source.replace(old_save_error, new_save_error)
+
+          old_restore = '''                try :\n                    buffer = fichierZip.read(fichier)\n                    f = open (chemin + nomFichier, "wb")\n                    f.write(buffer)\n                    f.close()\n                except err :\n                    dlg = wx.MessageDialog(self, _(u"La restauration du fichier '") + nomFichier + _(u"' a rencontré l'erreur suivante : \\n") + err, "Erreur", wx.OK| wx.ICON_ERROR)  \n                    dlg.ShowModal()\n                    dlg.Destroy()\n'''
+          new_restore = '''                try:\n                    buffer = fichierZip.read(fichier)\n                    with open(chemin + nomFichier, "wb") as destination:\n                        destination.write(buffer)\n                except Exception as err:\n                    dlg = wx.MessageDialog(self, _(u"La restauration du fichier '") + nomFichier + _(u"' a rencontré l'erreur suivante : \\n") + str(err), "Erreur", wx.OK| wx.ICON_ERROR)\n                    dlg.ShowModal()\n                    dlg.Destroy()\n                    fichierZip.close()\n                    return\n'''
+          if source.count(old_restore) != 1:
+              raise RuntimeError("Bloc d'erreur de restauration inattendu")
+          source = source.replace(old_restore, new_restore)
+
+          compile(source, str(path), "exec")
+          path.write_text(source, encoding="utf-8")
+
+          forbidden = ("except err :", ") + err,", ' + err, "Erreur de sauvegarde"')
+          for token in forbidden:
+              if token in source:
+                  raise RuntimeError(f"Motif d'erreur historique encore présent: {token}")
+          print("Sauvegarde/restauration: chemins d'erreur fiabilisés.")
+          PY
+
+      - name: Vérifier
+        shell: bash
+        run: |
+          python -m compileall -q teamworks
+          python scripts/audit_rc_risks.py --fail-on-blockers
+
+      - name: Publier le correctif
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add teamworks/Dlg/DLG_Config_sauvegarde.py
+          git commit -m "Sauvegarde: fiabiliser les erreurs et la restauration"
+          git push origin HEAD:integration/post-tw189-tw182-tw184
