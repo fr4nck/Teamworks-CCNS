@@ -68,6 +68,10 @@ def test_text_helpers_expose_the_complete_semantic_scale():
 def test_typography_remains_driven_by_native_font_and_interface_scale():
     source = _source(STYLES)
     assert "wx.SystemSettings.GetFont(wx.SYS_DEFAULT_GUI_FONT)" in source
-    assert '"interface", "echelle_interface"' in source
-    assert '"interface", "echelle_police"' in source
+    assert '"echelle_interface"' in source
+    # L'ancienne clé reste lue uniquement comme repli de migration, même si
+    # l'interface n'expose désormais qu'une seule échelle globale.
+    assert '"echelle_police"' in source
+    assert "UTILS_Interface.INTERFACE_SCALE_MIN" in source
+    assert "UTILS_Interface.INTERFACE_SCALE_MAX" in source
     assert "font.SetPointSize(points)" in source
