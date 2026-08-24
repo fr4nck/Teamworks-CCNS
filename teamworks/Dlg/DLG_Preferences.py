@@ -142,6 +142,34 @@ class Dialog(wx.Dialog):
             padding,
         )
 
+        organisation_title = CTRL_Texte.Label(self.panel, "Organisation et références RH")
+        main.Add(
+            organisation_title,
+            0,
+            wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP,
+            padding,
+        )
+        self.organisation_button = wx.Button(
+            self.panel,
+            label="Structure / association…",
+        )
+        self.admin_button = wx.Button(
+            self.panel,
+            label="Références administratives RH…",
+        )
+        main.Add(
+            self.organisation_button,
+            0,
+            wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP,
+            padding,
+        )
+        main.Add(
+            self.admin_button,
+            0,
+            wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP,
+            padding,
+        )
+
         main.AddStretchSpacer()
 
         buttons = wx.StdDialogButtonSizer()
@@ -157,6 +185,8 @@ class Dialog(wx.Dialog):
         shell.Add(self.panel, 1, wx.EXPAND)
         self.SetSizer(shell)
 
+        self.Bind(wx.EVT_BUTTON, self.OnOrganisation, self.organisation_button)
+        self.Bind(wx.EVT_BUTTON, self.OnReferencesAdmin, self.admin_button)
         self.Bind(wx.EVT_BUTTON, self.OnOk, id=wx.ID_OK)
         self.Bind(wx.EVT_SIZE, self.OnSize)
         wx.CallAfter(self._ajuster_textes)
@@ -190,6 +220,24 @@ class Dialog(wx.Dialog):
             self.panel.Layout()
         except Exception:
             pass
+
+    def OnOrganisation(self, event):
+        from Dlg import DLG_Organisation
+
+        dialog = DLG_Organisation.Dialog(self)
+        try:
+            dialog.ShowModal()
+        finally:
+            dialog.Destroy()
+
+    def OnReferencesAdmin(self, event):
+        from Dlg import DLG_References_admin
+
+        dialog = DLG_References_admin.Dialog(self)
+        try:
+            dialog.ShowModal()
+        finally:
+            dialog.Destroy()
 
     def OnOk(self, event):
         accent_codes = [code for code, label in self.ACCENTS]
