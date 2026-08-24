@@ -10,8 +10,10 @@ from smoke_runtime import github_error_summary, run_entrypoint, write_diagnostic
 
 ROOT = Path(__file__).resolve().parents[1]
 TEAMWORKS_DIR = ROOT / "teamworks"
-SOURCE = TEAMWORKS_DIR / "Teamworks.py"
+ENTRYPOINT_SOURCE = TEAMWORKS_DIR / "Teamworks.py"
+CORE_SOURCE = TEAMWORKS_DIR / "Teamworks_core.py"
 PATCHED = TEAMWORKS_DIR / "Teamworks_secondary_recruitment_smoke.py"
+PATCHED_CORE = TEAMWORKS_DIR / "Teamworks_core_secondary_recruitment_smoke.py"
 REPORT_DIR = ROOT / "artifacts" / "recruitment-smoke"
 REPORT = REPORT_DIR / "diagnostic.txt"
 MARKER_LINE = '            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)'
@@ -22,7 +24,7 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
             try:
                 import GestionDB as _smoke_gestiondb
                 from Ctrl import CTRL_Page_candidatures as _smoke_recruitment
-                from Ol import OL_candidatures as _smoke_candidates
+                from Ol import OL_candidatures_core as _smoke_candidates_core
 
                 _smoke_db = _smoke_gestiondb.DB()
                 _smoke_db.ExecuterReq("SELECT IDpersonne FROM personnes ORDER BY IDpersonne LIMIT 1")
@@ -49,19 +51,24 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 _smoke_panel.ctrl_entretiens.MAJ()
                 wx.Yield()
 
-                _smoke_candidates.DICT_DISPONIBILITES = {
+                # Cible les dictionnaires du core réellement consultés par
+                # GetListeFiltres après MAJ(), pas les alias historiques du wrapper.
+                _smoke_candidates_core.DICT_DISPONIBILITES.clear()
+                _smoke_candidates_core.DICT_DISPONIBILITES.update({
                     1: [(1, __import__('datetime').date(2026, 1, 1), __import__('datetime').date(2026, 12, 31))],
                     2: [(2, __import__('datetime').date(2026, 1, 1), __import__('datetime').date(2026, 12, 31))],
-                }
-                _smoke_candidates.DICT_CAND_FONCTIONS = {1: [10], 2: [20]}
-                _smoke_candidates.DICT_CAND_AFFECTATIONS = {1: [30], 2: [30]}
+                })
+                _smoke_candidates_core.DICT_CAND_FONCTIONS.clear()
+                _smoke_candidates_core.DICT_CAND_FONCTIONS.update({1: [10], 2: [20]})
+                _smoke_candidates_core.DICT_CAND_AFFECTATIONS.clear()
+                _smoke_candidates_core.DICT_CAND_AFFECTATIONS.update({1: [30], 2: [30]})
                 _smoke_filters = [
                     {"nomControle": "candidature_dispo", "valeur": (__import__('datetime').date(2026, 6, 1), __import__('datetime').date(2026, 6, 30)), "sql": ""},
                     {"nomControle": "candidature_fonctions", "valeur": [(10, "Animation")], "sql": ""},
                     {"nomControle": "candidature_affectations", "valeur": [(30, "ALSH")], "sql": ""},
                 ]
                 _smoke_ids, _smoke_sql = _smoke_panel.ctrl_candidatures.GetListeFiltres(_smoke_filters)
-                assert _smoke_ids == [1]
+                assert _smoke_ids == [1], _smoke_ids
                 assert _smoke_sql == ""
 
                 if _smoke_panel.ctrl_candidatures.GetColumnCount() > 1:
@@ -82,13 +89,25 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
 
 
 def build_patched_entrypoint() -> int:
-    source = SOURCE.read_text(encoding="utf-8")
-    marker_count = source.count(MARKER_LINE)
+    core_source = CORE_SOURCE.read_text(encoding="utf-8")
+    marker_count = core_source.count(MARKER_LINE)
     if marker_count < 1:
         raise RuntimeError(f"marqueur du smoke principal introuvable: {marker_count}")
-    patched_source = source.replace(MARKER_LINE, INJECTION, 1)
-    compile(patched_source, str(PATCHED), "exec")
-    PATCHED.write_text(patched_source, encoding="utf-8")
+
+    patched_core_source = core_source.replace(MARKER_LINE, INJECTION, 1)
+    if READY_MARKER not in patched_core_source or FAILURE_MARKER not in patched_core_source:
+        raise RuntimeError("injection des marqueurs Recrutement absente")
+    compile(patched_core_source, str(PATCHED_CORE), "exec")
+    PATCHED_CORE.write_text(patched_core_source, encoding="utf-8")
+
+    entrypoint_source = ENTRYPOINT_SOURCE.read_text(encoding="utf-8")
+    import_line = "import Teamworks_core as CORE"
+    patched_import = "import Teamworks_core_secondary_recruitment_smoke as CORE"
+    if import_line not in entrypoint_source:
+        raise RuntimeError("import du cœur Teamworks introuvable dans la coque active")
+    patched_entrypoint = entrypoint_source.replace(import_line, patched_import, 1)
+    compile(patched_entrypoint, str(PATCHED), "exec")
+    PATCHED.write_text(patched_entrypoint, encoding="utf-8")
     return marker_count
 
 
@@ -129,6 +148,7 @@ def main() -> int:
         return 3
     finally:
         PATCHED.unlink(missing_ok=True)
+        PATCHED_CORE.unlink(missing_ok=True)
 
 
 if __name__ == "__main__":

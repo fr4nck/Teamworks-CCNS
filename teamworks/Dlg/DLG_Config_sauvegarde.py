@@ -80,14 +80,14 @@ class Panel(wx.Panel):
         # Cadre d'activation
         self.staticbox1 = wx.StaticBox(self, -1, _(u"Procédures de sauvegarde automatique"))
 
-        self.ctrl_listview = OL_Sauvegardes_auto.ListView(self, id=-1, style=wx.LC_REPORT|wx.SUNKEN_BORDER|wx.LC_SINGLE_SEL|wx.LC_HRULES|wx.LC_VRULES)
+        self.ctrl_listview = OL_Sauvegardes_auto.ListView(self.staticbox1, id=-1, style=wx.LC_REPORT|wx.SUNKEN_BORDER|wx.LC_SINGLE_SEL|wx.LC_HRULES|wx.LC_VRULES)
         self.ctrl_listview.MAJ()
-        self.ctrl_recherche = OL_Sauvegardes_auto.CTRL_Outils(self, listview=self.ctrl_listview)
+        self.ctrl_recherche = OL_Sauvegardes_auto.CTRL_Outils(self.staticbox1, listview=self.ctrl_listview)
 
-        self.bouton_ajouter = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_modifier = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Modifier.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_supprimer = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_aide = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Aide.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_ajouter = wx.BitmapButton(self.staticbox1, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_modifier = wx.BitmapButton(self.staticbox1, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Modifier.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_supprimer = wx.BitmapButton(self.staticbox1, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_aide = wx.BitmapButton(self.staticbox1, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Aide.png"), wx.BITMAP_TYPE_ANY))
 
         # Binds
         self.Bind(wx.EVT_BUTTON, self.ctrl_listview.Ajouter, self.bouton_ajouter)
@@ -297,20 +297,20 @@ class Saisie_sauvegarde_auto(wx.Frame):
         wx.Frame.__init__(self, parent, -1, title=title, style=wx.DEFAULT_FRAME_STYLE)
         self.panel_base = wx.Panel(self, -1)
         self.staticbox = wx.StaticBox(self.panel_base, -1, _(u"Paramètres"))
-        self.label_frequence = wx.StaticText(self.panel_base, -1, _(u"Fréquence :"))
+        self.label_frequence = wx.StaticText(self.staticbox, -1, _(u"Fréquence :"))
         listeFrequences = [ _(u"A chaque fermeture du logiciel"), _(u"Toutes les semaines"), _(u"Tous les quinze jours"), _(u"Tous les mois")]
-        self.choice_frequence = wx.Choice(self.panel_base, -1, size=(300, -1), choices = listeFrequences)
+        self.choice_frequence = wx.Choice(self.staticbox, -1, size=(300, -1), choices = listeFrequences)
         listeElements = []
         for source in LISTE_SOURCES :
             listeElements.append(source[0])
-        self.label_elements = wx.StaticText(self.panel_base, -1, _(u"Eléments à sauver :"))
-        self.listBox_elements = wx.CheckListBox(self.panel_base, -1, (-1, -1), wx.DefaultSize, listeElements)
-        self.label_destination = wx.StaticText(self.panel_base, -1, _(u"Destination :"))
-        self.textctrl_destination = wx.TextCtrl(self.panel_base, -1, "", size=(-1, -1))
-        self.bouton_destination = wx.BitmapButton(self.panel_base, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Repertoire.png"), wx.BITMAP_TYPE_ANY))
-        self.label_conservation = wx.StaticText(self.panel_base, -1, _(u"Conservation :"))
-        self.choice_conservation = wx.Choice(self.panel_base, -1, choices = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"])
-        self.label_destination2 = wx.StaticText(self.panel_base, -1, _(u"sauvegardes de sécurité seront conservées en archive."))
+        self.label_elements = wx.StaticText(self.staticbox, -1, _(u"Eléments à sauver :"))
+        self.listBox_elements = wx.CheckListBox(self.staticbox, -1, (-1, -1), wx.DefaultSize, listeElements)
+        self.label_destination = wx.StaticText(self.staticbox, -1, _(u"Destination :"))
+        self.textctrl_destination = wx.TextCtrl(self.staticbox, -1, "", size=(-1, -1))
+        self.bouton_destination = wx.BitmapButton(self.staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Repertoire.png"), wx.BITMAP_TYPE_ANY))
+        self.label_conservation = wx.StaticText(self.staticbox, -1, _(u"Conservation :"))
+        self.choice_conservation = wx.Choice(self.staticbox, -1, choices = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"])
+        self.label_destination2 = wx.StaticText(self.staticbox, -1, _(u"sauvegardes de sécurité seront conservées en archive."))
         
         self.bouton_aide = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))
         self.bouton_ok = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Ok"), cheminImage=Chemins.GetStaticPath("Images/32x32/Valider.png"))
@@ -513,17 +513,17 @@ class Saisie_sauvegarde_occasionnelle(wx.Frame):
         self.label_introduction = FonctionsPerso.StaticWrapText(self.panel_base, -1, texteIntro)
         self.staticbox = wx.StaticBox(self.panel_base, -1, _(u"Paramètres de la sauvegarde"))
         
-        self.label_nomFichier = wx.StaticText(self.panel_base, -1, _(u"Nom sauvegarde :"))
-        self.textctrl_nomFichier = wx.TextCtrl(self.panel_base, -1, "")
+        self.label_nomFichier = wx.StaticText(self.staticbox, -1, _(u"Nom sauvegarde :"))
+        self.textctrl_nomFichier = wx.TextCtrl(self.staticbox, -1, "")
 
-        self.label_elements = wx.StaticText(self.panel_base, -1, _(u"Eléments à sauver :"))
-        self.treeCtrl = TreeCtrl_Sauvegarde(self.panel_base, -1)       
+        self.label_elements = wx.StaticText(self.staticbox, -1, _(u"Eléments à sauver :"))
+        self.treeCtrl = TreeCtrl_Sauvegarde(self.staticbox, -1)       
         
-        self.label_destination = wx.StaticText(self.panel_base, -1, _(u"Destination :"))
+        self.label_destination = wx.StaticText(self.staticbox, -1, _(u"Destination :"))
         standardPath = wx.StandardPaths.Get()
         destination = standardPath.GetDocumentsDir()
-        self.textctrl_destination = wx.TextCtrl(self.panel_base, -1, destination, size=(-1, -1))
-        self.bouton_destination = wx.BitmapButton(self.panel_base, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Repertoire.png"), wx.BITMAP_TYPE_ANY))
+        self.textctrl_destination = wx.TextCtrl(self.staticbox, -1, destination, size=(-1, -1))
+        self.bouton_destination = wx.BitmapButton(self.staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Repertoire.png"), wx.BITMAP_TYPE_ANY))
         
         self.bouton_aide = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))
         self.bouton_ok = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Ok"), cheminImage=Chemins.GetStaticPath("Images/32x32/Valider.png"))
@@ -566,7 +566,7 @@ class Saisie_sauvegarde_occasionnelle(wx.Frame):
     def __do_layout(self):
         sizer_base = wx.BoxSizer(wx.VERTICAL)
         sizer_base_2 = wx.BoxSizer(wx.VERTICAL)
-        grid_sizer_base = wx.FlexGridSizer(rows=2, cols=1, vgap=0, hgap=0)
+        grid_sizer_base = wx.FlexGridSizer(rows=3, cols=1, vgap=0, hgap=0)
         grid_sizer_boutons = wx.FlexGridSizer(rows=1, cols=4, vgap=10, hgap=10)
         grid_sizer_base.Add(self.label_introduction, 1, wx.ALL|wx.EXPAND, 10)
         
@@ -720,7 +720,7 @@ class TreeCtrl_Sauvegarde(CT.CustomTreeCtrl):
             self.SetItemData(item, None)
             
             # Affiche les fichiers existants
-            listeFichiers = os.listdir(rep)
+            listeFichiers = os.listdir(rep) if os.path.isdir(rep) else []
             if len(listeFichiers) > 0 :
                 nbreFichiers = 0
                 for nomFichier in listeFichiers :
@@ -818,6 +818,8 @@ class Sauvegarde_auto():
         listeFichiers = []
         for typeSource, rep, extension in LISTE_SOURCES :
             if extension in listeElements :
+                if not os.path.isdir(rep) :
+                    continue
                 fichiersRep = os.listdir(rep)
                 for nomFichier in fichiersRep :
                     if nomFichier not in LISTE_INDESIRABLES :
@@ -888,7 +890,7 @@ class Restauration(wx.Frame):
     def __do_layout(self):
         sizer_base = wx.BoxSizer(wx.VERTICAL)
         sizer_base_2 = wx.BoxSizer(wx.VERTICAL)
-        grid_sizer_base = wx.FlexGridSizer(rows=2, cols=1, vgap=0, hgap=0)
+        grid_sizer_base = wx.FlexGridSizer(rows=3, cols=1, vgap=0, hgap=0)
         grid_sizer_boutons = wx.FlexGridSizer(rows=1, cols=4, vgap=10, hgap=10)
         grid_sizer_base.Add(self.label_introduction, 1, wx.ALL|wx.EXPAND, 10)
         grid_sizer_base.Add(self.treeCtrl, 1, wx.ALL|wx.EXPAND, 10)

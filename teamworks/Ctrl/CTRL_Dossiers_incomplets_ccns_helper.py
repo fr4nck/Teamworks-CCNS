@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import wx
 
+from Utils import UTILS_Interface
+
 try:
     from Ctrl import CTRL_Page_contrats
 except Exception:
@@ -12,15 +14,33 @@ except Exception:
 
 
 def apply_ccns_item_style(tree_ctrl, item, severity):
+    """Applique la même sémantique visuelle que le reste du contrôle CCNS."""
     try:
-        if severity == "blocking":
-            tree_ctrl.SetItemTextColour(item, wx.Colour(150, 0, 0))
-        elif severity == "warning":
-            tree_ctrl.SetItemTextColour(item, wx.Colour(130, 80, 0))
-        elif severity == "ok":
-            tree_ctrl.SetItemTextColour(item, wx.Colour(0, 110, 0))
+        couleurs = {
+            "blocking": UTILS_Interface.GetToken("danger"),
+            "warning": UTILS_Interface.GetToken("warning"),
+            "ok": UTILS_Interface.GetToken("success"),
+        }
+        tree_ctrl.SetItemTextColour(
+            item,
+            couleurs.get(severity, UTILS_Interface.GetToken("on_surface")),
+        )
     except Exception:
         pass
+
+
+def _taille_dialogue(parent):
+    """Dimensionne le contrat selon l'écran au lieu d'imposer 980x720."""
+    try:
+        display_index = wx.Display.GetFromWindow(parent)
+        if display_index == wx.NOT_FOUND:
+            display_index = 0
+        zone = wx.Display(display_index).GetClientArea()
+        largeur = max(760, min(1180, int(zone.GetWidth() * 0.82)))
+        hauteur = max(540, min(840, int(zone.GetHeight() * 0.82)))
+        return largeur, hauteur
+    except Exception:
+        return 980, 720
 
 
 def open_ccns_target(parent, contract_ids, open_individual_callback=None, IDpersonne=None):
@@ -49,13 +69,18 @@ def open_ccns_target(parent, contract_ids, open_individual_callback=None, IDpers
 
         if not opened and hasattr(CTRL_Page_contrats, "CTRL"):
             try:
-                dlg = wx.Dialog(parent, -1, u"Contrat %s" % id_contrat, style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
+                dlg = wx.Dialog(
+                    parent,
+                    -1,
+                    u"Contrat %s" % id_contrat,
+                    style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER,
+                )
                 ctrl = CTRL_Page_contrats.CTRL(dlg, IDcontrat=id_contrat)
                 sizer = wx.BoxSizer(wx.VERTICAL)
                 sizer.Add(ctrl, 1, wx.EXPAND | wx.ALL, 8)
                 dlg.SetSizer(sizer)
-                dlg.SetSize((980, 720))
-                dlg.CentreOnScreen()
+                dlg.SetSize(_taille_dialogue(parent))
+                dlg.CentreOnParent()
                 dlg.ShowModal()
                 dlg.Destroy()
                 opened = True

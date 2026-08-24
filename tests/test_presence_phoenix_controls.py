@@ -3,7 +3,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 PRESENCE_SOURCES = (
-    ROOT / "teamworks" / "Ctrl" / "CTRL_Presences.py",
+    ROOT / "teamworks" / "Ctrl" / "CTRL_Presences_personnes.py",
     ROOT / "teamworks" / "Dlg" / "DLG_Saisie_presence.py",
 )
 
@@ -28,12 +28,10 @@ def test_presence_lists_use_valid_end_insertion_index() -> None:
 
 
 def test_presence_lists_enable_native_phoenix_checkboxes() -> None:
-    marker = (
-        "if 'phoenix' in wx.PlatformInfo:\n"
-        "            self.EnableCheckBoxes(True)"
-    )
-
     for path in PRESENCE_SOURCES:
         source = path.read_text(encoding="utf-8")
-        assert source.count(marker) == 1, path
-        assert "CheckListCtrlMixin.__init__(self)" in source
+        assert '_PHOENIX = "phoenix" in wx.PlatformInfo' in source, path
+        assert '_CheckboxFallback = object if _PHOENIX else CheckListCtrlMixin' in source, path
+        assert "if _PHOENIX:" in source, path
+        assert "self.EnableCheckBoxes(True)" in source, path
+        assert "CheckListCtrlMixin.__init__(self)" in source, path

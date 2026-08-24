@@ -6,8 +6,9 @@ from __future__ import annotations
 import wx
 
 from teamworks.Utils import UTILS_Diagnostic_performance as DiagnosticPerformance
-
 from teamworks.CcnsCore.home_gadgets_ccns import build_ccns_home_data
+from Utils import UTILS_Colonnes
+from Utils import UTILS_Interface
 
 try:
     from Ctrl import CTRL_Page_contrats
@@ -17,18 +18,38 @@ except Exception:
 
 class Panel(wx.Panel):
     def __init__(self, parent, id=-1):
-        wx.Panel.__init__(self, parent, id)
+        wx.Panel.__init__(self, parent, id, name="gadget_ccns")
+        self.SetBackgroundColour(UTILS_Interface.GetToken("surface"))
 
-        self.staticbox = wx.StaticBox(self, -1, u"Contrôle CCNS")
+        self.titre = wx.StaticText(self, -1, u"Contrôle CCNS")
+        font = self.titre.GetFont()
+        font.SetWeight(wx.FONTWEIGHT_BOLD)
+        font.SetPointSize(max(11, font.GetPointSize() + 1))
+        self.titre.SetFont(font)
+
         self.rows = []
 
-        self.list_stats = wx.ListCtrl(self, style=wx.LC_REPORT | wx.BORDER_SUNKEN)
+        self.list_stats = wx.ListCtrl(
+            self,
+            style=wx.LC_REPORT | wx.LC_SINGLE_SEL | wx.LC_HRULES | wx.LC_VRULES,
+        )
         self.list_stats.InsertColumn(0, u"Indicateur", width=250)
         self.list_stats.InsertColumn(1, u"Valeur", width=100)
+        self.colonnes_stats = UTILS_Colonnes.ColonnesFlexibles(
+            self.list_stats,
+            extensibles=(0,),
+        )
 
-        self.list_alerts = wx.ListCtrl(self, style=wx.LC_REPORT | wx.BORDER_SUNKEN)
+        self.list_alerts = wx.ListCtrl(
+            self,
+            style=wx.LC_REPORT | wx.LC_SINGLE_SEL | wx.LC_HRULES | wx.LC_VRULES,
+        )
         self.list_alerts.InsertColumn(0, u"Alerte", width=420)
         self.list_alerts.InsertColumn(1, u"Détails", width=340)
+        self.colonnes_alerts = UTILS_Colonnes.ColonnesFlexibles(
+            self.list_alerts,
+            extensibles=(0, 1),
+        )
 
         self.button_refresh = wx.Button(self, -1, u"Actualiser")
         self.button_open_contract = wx.Button(self, -1, u"Ouvrir le contrat")
@@ -45,26 +66,35 @@ class Panel(wx.Panel):
         wx.CallAfter(self.MAJ)
 
     def __do_layout(self):
-        sizer_base = wx.StaticBoxSizer(self.staticbox, wx.VERTICAL)
+        sizer_base = wx.BoxSizer(wx.VERTICAL)
+        sizer_base.Add(self.titre, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 10)
         sizer_base.Add(self.list_stats, 0, wx.ALL | wx.EXPAND, 8)
-        sizer_base.Add(self.list_alerts, 1, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, 8)
+        sizer_base.Add(
+            self.list_alerts,
+            1,
+            wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND,
+            8,
+        )
 
-        sizer_buttons = wx.BoxSizer(wx.HORIZONTAL)
-        sizer_buttons.Add(self.button_refresh, 0, wx.RIGHT, 8)
-        sizer_buttons.Add(self.button_open_contract, 0, 0, 0)
-        sizer_base.Add(sizer_buttons, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.ALIGN_RIGHT, 8)
+        sizer_buttons = wx.WrapSizer(wx.HORIZONTAL)
+        sizer_buttons.Add(self.button_refresh, 0, wx.RIGHT | wx.BOTTOM, 8)
+        sizer_buttons.Add(self.button_open_contract, 0, wx.BOTTOM, 8)
+        sizer_base.Add(sizer_buttons, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, 8)
 
         self.SetSizer(sizer_base)
-        self.Layout()
 
     def _apply_alert_style(self, index, severity):
+        """Utilise la sémantique CCNS sans aplats rouge/jaune agressifs."""
         try:
+            background = UTILS_Interface.GetToken("surface_container_low")
             if severity == "blocking":
-                self.list_alerts.SetItemBackgroundColour(index, wx.Colour(255, 228, 228))
-                self.list_alerts.SetItemTextColour(index, wx.Colour(120, 0, 0))
+                foreground = UTILS_Interface.GetToken("danger")
             elif severity == "warning":
-                self.list_alerts.SetItemBackgroundColour(index, wx.Colour(255, 245, 204))
-                self.list_alerts.SetItemTextColour(index, wx.Colour(90, 60, 0))
+                foreground = UTILS_Interface.GetToken("warning")
+            else:
+                foreground = UTILS_Interface.GetToken("on_surface")
+            self.list_alerts.SetItemBackgroundColour(index, background)
+            self.list_alerts.SetItemTextColour(index, foreground)
         except Exception:
             pass
 
@@ -77,7 +107,11 @@ class Panel(wx.Panel):
         self.button_open_contract.Enable(False)
 
     def MAJ(self, force_refresh=False):
-        with DiagnosticPerformance.mesurer("total_action", "CTRL_Gadget_CCNS.MAJ", {"force_refresh": force_refresh}):
+        with DiagnosticPerformance.mesurer(
+            "total_action",
+            "CTRL_Gadget_CCNS.MAJ",
+            {"force_refresh": force_refresh},
+        ):
             with DiagnosticPerformance.mesurer("widget", "CTRL_Gadget_CCNS.vider_listes"):
                 self.list_stats.DeleteAllItems()
                 self.list_alerts.DeleteAllItems()
@@ -94,22 +128,30 @@ class Panel(wx.Panel):
             self.list_stats.SetItem(idx, 1, str(stat["value"]))
             try:
                 if stat["severity"] == "blocking":
-                    self.list_stats.SetItemTextColour(idx, wx.Colour(140, 0, 0))
+                    couleur = UTILS_Interface.GetToken("danger")
                 elif stat["severity"] == "warning":
-                    self.list_stats.SetItemTextColour(idx, wx.Colour(130, 80, 0))
+                    couleur = UTILS_Interface.GetToken("warning")
                 elif stat["severity"] == "ok":
-                    self.list_stats.SetItemTextColour(idx, wx.Colour(0, 110, 0))
+                    couleur = UTILS_Interface.GetToken("success")
+                else:
+                    couleur = UTILS_Interface.GetToken("on_surface")
+                self.list_stats.SetItemTextColour(idx, couleur)
             except Exception:
                 pass
 
         self.rows = home_data["alerts"]
         for row in self.rows:
-            idx = self.list_alerts.InsertItem(self.list_alerts.GetItemCount(), row["label"])
+            idx = self.list_alerts.InsertItem(
+                self.list_alerts.GetItemCount(),
+                row["label"],
+            )
             self.list_alerts.SetItem(idx, 1, row["details"])
             self.list_alerts.SetItemData(idx, int(row["contract_id"]))
             self._apply_alert_style(idx, row["severity"])
 
         self.button_open_contract.Enable(False)
+        wx.CallAfter(self.colonnes_stats.Ajuster)
+        wx.CallAfter(self.colonnes_alerts.Ajuster)
 
     def OnRefresh(self, event):
         self._show_loading()
@@ -155,7 +197,12 @@ class Panel(wx.Panel):
 
         if not opened and hasattr(CTRL_Page_contrats, "CTRL"):
             try:
-                dlg = wx.Dialog(self, -1, u"Contrat %s" % id_contrat, style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
+                dlg = wx.Dialog(
+                    self,
+                    -1,
+                    u"Contrat %s" % id_contrat,
+                    style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER,
+                )
                 ctrl = CTRL_Page_contrats.CTRL(dlg, IDcontrat=id_contrat)
                 sizer = wx.BoxSizer(wx.VERTICAL)
                 sizer.Add(ctrl, 1, wx.EXPAND | wx.ALL, 8)

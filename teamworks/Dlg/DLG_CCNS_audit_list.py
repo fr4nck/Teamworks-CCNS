@@ -18,6 +18,7 @@ from teamworks.CcnsCore.audit_sorting import (
     sort_audit_rows_by_salary,
 )
 from teamworks.Ol.OL_CCNS_audit import ListView
+from Utils import UTILS_Interface, UTILS_Theme
 
 from teamworks.Dlg.DLG_CCNS_employee_salary_summary import Dialog as EmployeeSalarySummaryDialog
 from teamworks.Dlg.DLG_CCNS_salary_control_detail import Dialog as SalaryControlDetailDialog
@@ -35,64 +36,75 @@ class Dialog(wx.Dialog):
 
         self.rows = []
         self.filtered_rows = []
+        self.palette = UTILS_Interface.GetPalette()
+        self.ui = UTILS_Theme.metrics()
 
         self.label_intro = wx.StaticText(
             self,
             -1,
-            "Cet audit relit les contrats Teamworks et applique les premiers controles CCNS.",
+            "Cet audit relit les contrats Teamworks et applique les premiers contrôles CCNS.",
         )
-        self.label_limit = wx.StaticText(self, -1, "Nombre maximal de contrats a auditer :")
-        self.ctrl_limit = wx.SpinCtrl(self, -1, min=1, max=10000, initial=500)
+        self.label_intro.SetForegroundColour(self.palette["on_surface_variant"])
 
-        self.checkbox_anomalies_only = wx.CheckBox(self, -1, "Anomalies seulement")
+        self.box_scope = wx.StaticBox(self, -1, "Périmètre et lancement")
+        self.box_filters = wx.StaticBox(self, -1, "Filtres")
+        self.box_actions = wx.StaticBox(self, -1, "Actions")
+        self.box_dashboard = wx.StaticBox(self, -1, "Tableau de bord salarial")
+        for box in (self.box_scope, self.box_filters, self.box_actions, self.box_dashboard):
+            box.SetBackgroundColour(self.palette["surface_container"])
+            box.SetForegroundColour(self.palette["on_surface"])
 
-        self.label_group = wx.StaticText(self, -1, "Groupe :")
+        self.label_limit = wx.StaticText(self.box_scope, -1, "Nombre maximal de contrats à auditer :")
+        self.ctrl_limit = wx.SpinCtrl(self.box_scope, -1, min=1, max=10000, initial=500)
+        self.button_launch = wx.Button(self.box_scope, -1, "Lancer l'audit")
+
+        self.checkbox_anomalies_only = wx.CheckBox(self.box_filters, -1, "Anomalies seulement")
+        self.label_group = wx.StaticText(self.box_filters, -1, "Groupe :")
         self.ctrl_group = wx.ComboBox(
-            self,
+            self.box_filters,
             -1,
             choices=["", "G1", "G2", "G3", "G4", "G5", "G6", "G7", "G8", "APPRENTI"],
             style=wx.CB_DROPDOWN | wx.CB_READONLY,
         )
         self.ctrl_group.SetSelection(0)
 
-        self.label_type = wx.StaticText(self, -1, "Type contrat :")
+        self.label_type = wx.StaticText(self.box_filters, -1, "Type contrat :")
         self.ctrl_type = wx.ComboBox(
-            self,
+            self.box_filters,
             -1,
             choices=["", "CDI", "CDD", "CDII", "APPRENTISSAGE", "CEE", "AUTRE"],
             style=wx.CB_DROPDOWN | wx.CB_READONLY,
         )
         self.ctrl_type.SetSelection(0)
 
-        self.label_min_salary = wx.StaticText(self, -1, "Salaire min :")
-        self.ctrl_min_salary = wx.TextCtrl(self, -1, "")
-        self.label_max_salary = wx.StaticText(self, -1, "Salaire max :")
-        self.ctrl_max_salary = wx.TextCtrl(self, -1, "")
+        self.label_min_salary = wx.StaticText(self.box_filters, -1, "Salaire min :")
+        self.ctrl_min_salary = wx.TextCtrl(self.box_filters, -1, "")
+        self.label_max_salary = wx.StaticText(self.box_filters, -1, "Salaire max :")
+        self.ctrl_max_salary = wx.TextCtrl(self.box_filters, -1, "")
 
-        self.label_salary_status = wx.StaticText(self, -1, "Statut salarial :")
-        self.ctrl_salary_status = wx.ComboBox(self, -1, choices=["Tous"] + list(SALARY_STATUS_FILTERS), style=wx.CB_READONLY)
+        self.label_salary_status = wx.StaticText(self.box_filters, -1, "Statut salarial :")
+        self.ctrl_salary_status = wx.ComboBox(self.box_filters, -1, choices=["Tous"] + list(SALARY_STATUS_FILTERS), style=wx.CB_READONLY)
         self.ctrl_salary_status.SetSelection(0)
-        self.label_minimum_source = wx.StaticText(self, -1, "Source :")
-        self.ctrl_minimum_source = wx.ComboBox(self, -1, choices=["Toutes"] + list(MINIMUM_SOURCE_FILTERS), style=wx.CB_READONLY)
+        self.label_minimum_source = wx.StaticText(self.box_filters, -1, "Source :")
+        self.ctrl_minimum_source = wx.ComboBox(self.box_filters, -1, choices=["Toutes"] + list(MINIMUM_SOURCE_FILTERS), style=wx.CB_READONLY)
         self.ctrl_minimum_source.SetSelection(0)
-        self.checkbox_positive_shortfall = wx.CheckBox(self, -1, "Écart positif")
-        self.label_salary_sort = wx.StaticText(self, -1, "Trier par :")
-        self.ctrl_salary_sort = wx.ComboBox(self, -1, choices=["Tri historique"] + list(SALARY_SORT_FIELDS), style=wx.CB_READONLY)
+        self.checkbox_positive_shortfall = wx.CheckBox(self.box_filters, -1, "Écart positif")
+        self.label_salary_sort = wx.StaticText(self.box_filters, -1, "Trier par :")
+        self.ctrl_salary_sort = wx.ComboBox(self.box_filters, -1, choices=["Tri historique"] + list(SALARY_SORT_FIELDS), style=wx.CB_READONLY)
         self.ctrl_salary_sort.SetSelection(0)
-        self.ctrl_sort_direction = wx.ComboBox(self, -1, choices=["Croissant", "Décroissant"], style=wx.CB_READONLY)
+        self.ctrl_sort_direction = wx.ComboBox(self.box_filters, -1, choices=["Croissant", "Décroissant"], style=wx.CB_READONLY)
         self.ctrl_sort_direction.SetSelection(0)
+        self.button_apply_filters = wx.Button(self.box_filters, -1, "Appliquer")
+        self.button_reset_filters = wx.Button(self.box_filters, -1, "Réinitialiser")
 
-        self.button_launch = wx.Button(self, -1, "Lancer l'audit")
-        self.button_apply_filters = wx.Button(self, -1, "Appliquer filtres")
-        self.button_reset_filters = wx.Button(self, -1, "Reinitialiser filtres")
-        self.button_open_contract = wx.Button(self, -1, "Ouvrir le contrat")
-        self.button_salary_detail = wx.Button(self, -1, "Détail salarial")
-        self.button_employee_summary = wx.Button(self, -1, "Synthèse salarié")
-        self.button_export = wx.Button(self, -1, "Exporter CSV")
-        self.button_save_snapshot = wx.Button(self, -1, "Enregistrer ce contrôle")
-        self.button_history = wx.Button(self, -1, "Historique salarial")
-        self.button_show_non_compliant = wx.Button(self, -1, "Voir les non conformes")
-        self.button_show_not_evaluated = wx.Button(self, -1, "Voir les non évaluables")
+        self.button_open_contract = wx.Button(self.box_actions, -1, "Ouvrir le contrat")
+        self.button_salary_detail = wx.Button(self.box_actions, -1, "Détail salarial")
+        self.button_employee_summary = wx.Button(self.box_actions, -1, "Synthèse salarié")
+        self.button_export = wx.Button(self.box_actions, -1, "Exporter CSV")
+        self.button_save_snapshot = wx.Button(self.box_actions, -1, "Enregistrer ce contrôle")
+        self.button_history = wx.Button(self.box_actions, -1, "Historique salarial")
+        self.button_show_non_compliant = wx.Button(self.box_actions, -1, "Voir les non conformes")
+        self.button_show_not_evaluated = wx.Button(self.box_actions, -1, "Voir les non évaluables")
         self.button_close = wx.Button(self, wx.ID_CANCEL, "Fermer")
 
         self.button_open_contract.Enable(False)
@@ -103,23 +115,25 @@ class Dialog(wx.Dialog):
         self.button_show_non_compliant.Enable(False)
         self.button_show_not_evaluated.Enable(False)
 
-        self.ctrl_resume = wx.StaticText(self, -1, "Aucun audit lance.")
+        self.ctrl_resume = wx.StaticText(self, -1, "Aucun audit lancé.")
+        self.ctrl_resume.SetForegroundColour(self.palette["on_surface_variant"])
         self.dashboard_labels = {
-            "total": wx.StaticText(self, -1, "Contrats contrôlés : 0"),
-            "compliant": wx.StaticText(self, -1, "Conformes : 0"),
-            "non_compliant": wx.StaticText(self, -1, "Non conformes : 0"),
-            "not_evaluated": wx.StaticText(self, -1, "Non évaluables : 0"),
-            "shortfall": wx.StaticText(self, -1, "Montant total des écarts : 0,00 €"),
-            "compliant_pct": wx.StaticText(self, -1, "% conformes : 0 %"),
-            "non_compliant_pct": wx.StaticText(self, -1, "% non conformes : 0 %"),
-            "reference_date": wx.StaticText(self, -1, "Date de référence : Non disponible"),
-            "summary": wx.StaticText(self, -1, "Aucun contrat salarial contrôlé dans le périmètre courant."),
+            "total": wx.StaticText(self.box_dashboard, -1, "Contrats contrôlés : 0"),
+            "compliant": wx.StaticText(self.box_dashboard, -1, "Conformes : 0"),
+            "non_compliant": wx.StaticText(self.box_dashboard, -1, "Non conformes : 0"),
+            "not_evaluated": wx.StaticText(self.box_dashboard, -1, "Non évaluables : 0"),
+            "shortfall": wx.StaticText(self.box_dashboard, -1, "Montant total des écarts : 0,00 €"),
+            "compliant_pct": wx.StaticText(self.box_dashboard, -1, "% conformes : 0 %"),
+            "non_compliant_pct": wx.StaticText(self.box_dashboard, -1, "% non conformes : 0 %"),
+            "reference_date": wx.StaticText(self.box_dashboard, -1, "Date de référence : Non disponible"),
+            "summary": wx.StaticText(self.box_dashboard, -1, "Aucun contrat salarial contrôlé dans le périmètre courant."),
         }
         self.legend = wx.StaticText(
             self,
             -1,
-            "Tri : individu d'abord, puis gravite. Legende : rouge = bloquant, jaune = a revoir, vert = OK",
+            "Tri : individu d'abord, puis gravité. Légende : rouge = bloquant, jaune = à revoir, vert = OK",
         )
+        self.legend.SetForegroundColour(self.palette["on_surface_variant"])
         self.listview = ListView(self, donnees=[])
 
         self.button_launch.Bind(wx.EVT_BUTTON, self.OnLaunch)
@@ -139,63 +153,78 @@ class Dialog(wx.Dialog):
         self.listview.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.OnOpenSalaryDetail)
 
         self.__do_layout()
-        self.SetSize((1400, 800))
+        self.SetSize((1280, 820))
+        self.SetMinSize((980, 700))
         self.CentreOnScreen()
 
     def __do_layout(self):
         sizer_base = wx.BoxSizer(wx.VERTICAL)
-        sizer_base.Add(self.label_intro, 0, wx.ALL | wx.EXPAND, 10)
+        sizer_base.Add(self.label_intro, 0, wx.LEFT | wx.RIGHT | wx.TOP | wx.EXPAND, self.ui["space_l"])
 
-        sizer_top = wx.BoxSizer(wx.HORIZONTAL)
-        sizer_top.Add(self.label_limit, 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 8)
-        sizer_top.Add(self.ctrl_limit, 0, wx.RIGHT, 12)
-        sizer_top.Add(self.button_launch, 0, wx.RIGHT, 8)
-        sizer_top.Add(self.button_open_contract, 0, wx.RIGHT, 8)
-        sizer_top.Add(self.button_salary_detail, 0, wx.RIGHT, 8)
-        sizer_top.Add(self.button_employee_summary, 0, wx.RIGHT, 8)
-        sizer_top.Add(self.button_export, 0, wx.RIGHT, 8)
-        sizer_top.Add(self.button_save_snapshot, 0, wx.RIGHT, 8)
-        sizer_top.Add(self.button_history, 0, wx.RIGHT, 8)
-        sizer_top.Add(self.button_show_non_compliant, 0, wx.RIGHT, 8)
-        sizer_top.Add(self.button_show_not_evaluated, 0, wx.RIGHT, 8)
-        sizer_top.Add(self.button_close, 0, 0, 0)
-        sizer_base.Add(sizer_top, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
+        sizer_scope = wx.StaticBoxSizer(self.box_scope, wx.HORIZONTAL)
+        sizer_scope.Add(self.label_limit, 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, self.ui["space_s"])
+        sizer_scope.Add(self.ctrl_limit, 0, wx.RIGHT, self.ui["space_m"])
+        sizer_scope.Add(self.button_launch, 0)
+        sizer_base.Add(sizer_scope, 0, wx.ALL | wx.EXPAND, self.ui["space_l"])
 
-        sizer_filters = wx.BoxSizer(wx.HORIZONTAL)
-        sizer_filters.Add(self.checkbox_anomalies_only, 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 10)
-        sizer_filters.Add(self.label_group, 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 4)
-        sizer_filters.Add(self.ctrl_group, 0, wx.RIGHT, 10)
-        sizer_filters.Add(self.label_type, 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 4)
-        sizer_filters.Add(self.ctrl_type, 0, wx.RIGHT, 10)
-        sizer_filters.Add(self.label_min_salary, 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 4)
-        sizer_filters.Add(self.ctrl_min_salary, 0, wx.RIGHT, 10)
-        sizer_filters.Add(self.label_max_salary, 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 4)
-        sizer_filters.Add(self.ctrl_max_salary, 0, wx.RIGHT, 10)
-        sizer_filters.Add(self.button_apply_filters, 0, wx.RIGHT, 8)
-        sizer_filters.Add(self.button_reset_filters, 0, 0, 0)
-        sizer_base.Add(sizer_filters, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
+        sizer_filters = wx.StaticBoxSizer(self.box_filters, wx.VERTICAL)
+        filter_grid = wx.FlexGridSizer(cols=6, vgap=self.ui["space_s"], hgap=self.ui["space_s"])
+        filter_grid.Add(self.checkbox_anomalies_only, 0, wx.ALIGN_CENTER_VERTICAL)
+        filter_grid.Add(self.label_group, 0, wx.ALIGN_CENTER_VERTICAL)
+        filter_grid.Add(self.ctrl_group, 0, wx.EXPAND)
+        filter_grid.Add(self.label_type, 0, wx.ALIGN_CENTER_VERTICAL)
+        filter_grid.Add(self.ctrl_type, 0, wx.EXPAND)
+        filter_grid.AddSpacer(1)
+        filter_grid.Add(self.label_min_salary, 0, wx.ALIGN_CENTER_VERTICAL)
+        filter_grid.Add(self.ctrl_min_salary, 0, wx.EXPAND)
+        filter_grid.Add(self.label_max_salary, 0, wx.ALIGN_CENTER_VERTICAL)
+        filter_grid.Add(self.ctrl_max_salary, 0, wx.EXPAND)
+        filter_grid.Add(self.label_salary_status, 0, wx.ALIGN_CENTER_VERTICAL)
+        filter_grid.Add(self.ctrl_salary_status, 0, wx.EXPAND)
+        filter_grid.Add(self.label_minimum_source, 0, wx.ALIGN_CENTER_VERTICAL)
+        filter_grid.Add(self.ctrl_minimum_source, 0, wx.EXPAND)
+        filter_grid.Add(self.checkbox_positive_shortfall, 0, wx.ALIGN_CENTER_VERTICAL)
+        filter_grid.Add(self.label_salary_sort, 0, wx.ALIGN_CENTER_VERTICAL)
+        filter_grid.Add(self.ctrl_salary_sort, 0, wx.EXPAND)
+        filter_grid.Add(self.ctrl_sort_direction, 0, wx.EXPAND)
+        sizer_filters.Add(filter_grid, 0, wx.ALL | wx.EXPAND, self.ui["space_m"])
+        filter_buttons = wx.BoxSizer(wx.HORIZONTAL)
+        filter_buttons.AddStretchSpacer(1)
+        filter_buttons.Add(self.button_reset_filters, 0, wx.RIGHT, self.ui["space_s"])
+        filter_buttons.Add(self.button_apply_filters, 0)
+        sizer_filters.Add(filter_buttons, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, self.ui["space_m"])
+        sizer_base.Add(sizer_filters, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, self.ui["space_l"])
 
-        sizer_salary_filters = wx.BoxSizer(wx.HORIZONTAL)
-        sizer_salary_filters.Add(self.label_salary_status, 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 4)
-        sizer_salary_filters.Add(self.ctrl_salary_status, 0, wx.RIGHT, 10)
-        sizer_salary_filters.Add(self.label_minimum_source, 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 4)
-        sizer_salary_filters.Add(self.ctrl_minimum_source, 0, wx.RIGHT, 10)
-        sizer_salary_filters.Add(self.checkbox_positive_shortfall, 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 10)
-        sizer_salary_filters.Add(self.label_salary_sort, 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 4)
-        sizer_salary_filters.Add(self.ctrl_salary_sort, 0, wx.RIGHT, 10)
-        sizer_salary_filters.Add(self.ctrl_sort_direction, 0, 0, 0)
-        sizer_base.Add(sizer_salary_filters, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
+        sizer_actions = wx.StaticBoxSizer(self.box_actions, wx.VERTICAL)
+        actions_grid = wx.GridSizer(rows=2, cols=4, vgap=self.ui["space_s"], hgap=self.ui["space_s"])
+        for button in (
+            self.button_open_contract,
+            self.button_salary_detail,
+            self.button_employee_summary,
+            self.button_history,
+            self.button_export,
+            self.button_save_snapshot,
+            self.button_show_non_compliant,
+            self.button_show_not_evaluated,
+        ):
+            actions_grid.Add(button, 0, wx.EXPAND)
+        sizer_actions.Add(actions_grid, 0, wx.ALL | wx.EXPAND, self.ui["space_m"])
+        sizer_base.Add(sizer_actions, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, self.ui["space_l"])
 
-        sizer_dashboard = wx.StaticBoxSizer(wx.StaticBox(self, -1, "Tableau de bord salarial"), wx.VERTICAL)
-        grid_dashboard = wx.FlexGridSizer(rows=0, cols=4, vgap=4, hgap=18)
+        sizer_dashboard = wx.StaticBoxSizer(self.box_dashboard, wx.VERTICAL)
+        grid_dashboard = wx.FlexGridSizer(rows=0, cols=4, vgap=self.ui["space_xs"], hgap=self.ui["space_l"])
         for key in ("total", "compliant", "non_compliant", "not_evaluated", "shortfall", "compliant_pct", "non_compliant_pct", "reference_date"):
-            grid_dashboard.Add(self.dashboard_labels[key], 0, wx.EXPAND, 0)
-        sizer_dashboard.Add(grid_dashboard, 0, wx.ALL | wx.EXPAND, 8)
-        sizer_dashboard.Add(self.dashboard_labels["summary"], 0, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, 8)
-        sizer_base.Add(sizer_dashboard, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, 10)
-        sizer_base.Add(self.ctrl_resume, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, 10)
-        sizer_base.Add(self.legend, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, 10)
-        sizer_base.Add(self.listview, 1, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, 10)
+            grid_dashboard.Add(self.dashboard_labels[key], 0, wx.EXPAND)
+        sizer_dashboard.Add(grid_dashboard, 0, wx.ALL | wx.EXPAND, self.ui["space_m"])
+        sizer_dashboard.Add(self.dashboard_labels["summary"], 0, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, self.ui["space_m"])
+        sizer_base.Add(sizer_dashboard, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, self.ui["space_l"])
+
+        status_row = wx.BoxSizer(wx.HORIZONTAL)
+        status_row.Add(self.ctrl_resume, 1, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, self.ui["space_m"])
+        status_row.Add(self.button_close, 0)
+        sizer_base.Add(status_row, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, self.ui["space_l"])
+        sizer_base.Add(self.legend, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, self.ui["space_l"])
+        sizer_base.Add(self.listview, 1, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, self.ui["space_l"])
 
         self.SetSizer(sizer_base)
         self.Layout()
@@ -226,7 +255,7 @@ class Dialog(wx.Dialog):
         self._update_salary_dashboard(dashboard)
 
         self.ctrl_resume.SetLabel(
-            "Audit charge - %d individu(s), %d ligne(s), %d anomalie(s), %d bloquante(s)." % (
+            "Audit chargé - %d individu(s), %d ligne(s), %d anomalie(s), %d bloquante(s)." % (
                 nb_individus,
                 len(self.filtered_rows),
                 nb_anomalies,
@@ -238,7 +267,6 @@ class Dialog(wx.Dialog):
         self.button_show_non_compliant.Enable(dashboard.non_compliant_contracts > 0)
         self.button_show_not_evaluated.Enable(dashboard.not_evaluated_contracts > 0)
         self.OnSelectionChanged(None)
-
 
     def _format_percentage_label(self, value):
         return str(value.normalize()).replace(".", ",") + " %"
@@ -441,14 +469,13 @@ class Dialog(wx.Dialog):
         if not opened:
             message = "Impossible d'ouvrir directement la fiche contrat %s." % id_contrat
             if errors:
-                message += "\n\nTentatives effectuees :\n- " + "\n- ".join(errors)
+                message += "\n\nTentatives effectuées :\n- " + "\n- ".join(errors)
             wx.MessageBox(
                 message,
                 "Ouverture impossible",
                 wx.OK | wx.ICON_WARNING,
                 self,
             )
-
 
     def _salary_snapshot_signature(self):
         return tuple(
@@ -539,8 +566,8 @@ class Dialog(wx.Dialog):
             return
 
         wx.MessageBox(
-            "Export CSV termine.\n\n%s" % path,
-            "Export termine",
+            "Export CSV terminé.\n\n%s" % path,
+            "Export terminé",
             wx.OK | wx.ICON_INFORMATION,
             self,
         )

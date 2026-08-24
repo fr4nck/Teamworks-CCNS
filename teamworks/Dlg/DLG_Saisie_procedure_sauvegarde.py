@@ -23,6 +23,12 @@ import GestionDB
 from Utils.UTILS_Divers import ConvertChaineEnListe, ConvertListeEnChaine
 
 
+def _ReparentToStaticBox(staticbox, *controls):
+    """Associe les contrôles visuels au wx.StaticBox qui les contient."""
+    for control in controls:
+        if control.GetParent() is not staticbox:
+            control.Reparent(staticbox)
+
 
 
 class CTRL_Utilisateurs(wx.CheckListBox):
@@ -124,6 +130,16 @@ class CTRL_Conditions(wx.Panel) :
         self.check_vacances_vendredi = wx.CheckBox(self, wx.ID_ANY, u"V")
         self.check_vacances_samedi = wx.CheckBox(self, wx.ID_ANY, u"S")
         self.check_vacances_dimanche = wx.CheckBox(self, wx.ID_ANY, u"D")
+        _ReparentToStaticBox(
+            self.box_jour_staticbox,
+            self.check_jour, self.label_jours_scolaire,
+            self.check_scolaire_lundi, self.check_scolaire_mardi, self.check_scolaire_mercredi,
+            self.check_scolaire_jeudi, self.check_scolaire_vendredi, self.check_scolaire_samedi,
+            self.check_scolaire_dimanche, self.label_jours_vacances,
+            self.check_vacances_lundi, self.check_vacances_mardi, self.check_vacances_mercredi,
+            self.check_vacances_jeudi, self.check_vacances_vendredi, self.check_vacances_samedi,
+            self.check_vacances_dimanche,
+        )
         
         # Heure
         self.box_heure_staticbox = wx.StaticBox(self, wx.ID_ANY, _(u"Heure"))
@@ -131,6 +147,7 @@ class CTRL_Conditions(wx.Panel) :
         self.ctrl_heure_debut = CTRL_Saisie_heure.Heure(self)
         self.label_heure_et = wx.StaticText(self, wx.ID_ANY, _(u"et"))
         self.ctrl_heure_fin = CTRL_Saisie_heure.Heure(self)
+        _ReparentToStaticBox(self.box_heure_staticbox, self.check_heure, self.ctrl_heure_debut, self.label_heure_et, self.ctrl_heure_fin)
 
         # Poste
         self.box_poste_staticbox = wx.StaticBox(self, wx.ID_ANY, _(u"Poste"))
@@ -142,6 +159,7 @@ class CTRL_Conditions(wx.Panel) :
         self.radio_poste_1 = wx.RadioButton(self, wx.ID_ANY, labelPoste, style=wx.RB_GROUP)
         self.radio_poste_2 = wx.RadioButton(self, wx.ID_ANY, _(u"Parmi les postes suivants :"))
         self.ctrl_postes = wx.TextCtrl(self, wx.ID_ANY, u"")#, style=wx.TE_MULTILINE)
+        _ReparentToStaticBox(self.box_poste_staticbox, self.check_poste, self.radio_poste_1, self.radio_poste_2, self.ctrl_postes)
 
         # Dernière sauvegarde
         self.box_derniere_staticbox = wx.StaticBox(self, wx.ID_ANY, _(u"Dernière sauvegarde"))
@@ -154,6 +172,7 @@ class CTRL_Conditions(wx.Panel) :
             listeLabels.append(label)
         self.ctrl_derniere = wx.Choice(self, wx.ID_ANY, choices=listeLabels)
         self.ctrl_derniere.SetSelection(0)
+        _ReparentToStaticBox(self.box_derniere_staticbox, self.check_derniere, self.ctrl_derniere)
         
         # Utilisateur
         # self.box_utilisateur_staticbox = wx.StaticBox(self, wx.ID_ANY, _(u"Utilisateur"))
@@ -542,6 +561,7 @@ class CTRL_Options(wx.Panel) :
         self.check_demander.SetValue(True)
         self.check_confirmation = wx.CheckBox(self, wx.ID_ANY, _(u"Afficher un message de confirmation si sauvegarde réussie"))
         self.check_interface = wx.CheckBox(self, wx.ID_ANY, _(u"Afficher l'interface du module de sauvegarde"))
+        _ReparentToStaticBox(self.box_interface_staticbox, self.check_demander, self.check_confirmation, self.check_interface)
 
         # Suppression
         self.box_suppression_staticbox = wx.StaticBox(self, wx.ID_ANY, _(u"Sauvegardes obsolètes"))
@@ -552,6 +572,7 @@ class CTRL_Options(wx.Panel) :
             listeLabels.append(label)
         self.ctrl_suppression = wx.Choice(self, wx.ID_ANY, choices=listeLabels)
         self.ctrl_suppression.SetSelection(0) 
+        _ReparentToStaticBox(self.box_suppression_staticbox, self.check_suppression, self.ctrl_suppression)
         
         self.__set_properties()
         self.__do_layout()
@@ -647,6 +668,27 @@ class CTRL_Parametres(wx.Notebook):
             (_(u"conditions"), _(u"Conditions"), CTRL_Conditions(self), "Cocher.png"),
             (_(u"options"), _(u"Options"), CTRL_Options(self), "Options.png"),
             ]
+
+        # Le contrôle de sauvegarde vient d'un module partagé. On corrige ici
+        # uniquement son parentage visuel, tout en conservant ses références
+        # métier internes vers la page CTRL_Parametres.
+        pageSauvegarde = listePages[0][2]
+        _ReparentToStaticBox(pageSauvegarde.box_nom_staticbox, pageSauvegarde.label_nom, pageSauvegarde.ctrl_nom)
+        _ReparentToStaticBox(
+            pageSauvegarde.box_mdp_staticbox,
+            pageSauvegarde.label_cryptage, pageSauvegarde.check_cryptage,
+            pageSauvegarde.label_mdp, pageSauvegarde.ctrl_mdp,
+            pageSauvegarde.label_confirmation, pageSauvegarde.ctrl_confirmation,
+        )
+        _ReparentToStaticBox(
+            pageSauvegarde.box_destination_staticbox,
+            pageSauvegarde.check_repertoire, pageSauvegarde.ctrl_repertoire,
+            pageSauvegarde.bouton_repertoire, pageSauvegarde.check_email, pageSauvegarde.ctrl_email,
+        )
+        _ReparentToStaticBox(
+            pageSauvegarde.box_donnees_staticbox,
+            pageSauvegarde.ctrl_donnees, pageSauvegarde.check_locaux, pageSauvegarde.check_reseau,
+        )
             
         # ImageList pour le NoteBook
         il = wx.ImageList(16, 16)
@@ -696,10 +738,12 @@ class Dialog(wx.Dialog):
         self.ctrl_nom = wx.TextCtrl(self, -1, u"")
         self.label_observations = wx.StaticText(self, -1, _(u"Observations :"))
         self.ctrl_observations = wx.TextCtrl(self, -1, u"", style=wx.TE_MULTILINE)
+        _ReparentToStaticBox(self.box_generalites_staticbox, self.label_nom, self.ctrl_nom, self.label_observations, self.ctrl_observations)
         
         # Paramètres
         self.box_parametres_staticbox = wx.StaticBox(self, -1, _(u"Paramètres"))
         self.ctrl_parametres = CTRL_Parametres(self)
+        _ReparentToStaticBox(self.box_parametres_staticbox, self.ctrl_parametres)
         
         # Boutons
         self.bouton_aide = CTRL_Bouton_image.CTRL(self, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))

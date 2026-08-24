@@ -4,41 +4,95 @@
 
 import wx
 
-from Utils import UTILS_Customize
+from Ctrl import CTRL_Texte
+from Utils import UTILS_Customize, UTILS_Interface, UTILS_Styles
 
 
 class Dialog(wx.Dialog):
+    # Contrat historique TW-121 conservé pour compatibilité et tests.
     THEMES = ["Système", "Clair", "Sombre"]
 
+    # Sources uniques : les thèmes et codes d'apparence viennent du socle.
+    ACCENTS = list(UTILS_Interface.THEMES)
+    _APPEARANCE_LABELS = {
+        "system": "Système",
+        "light": "Clair",
+        "dark": "Sombre",
+    }
+    APPEARANCES = [
+        (code, _APPEARANCE_LABELS.get(code, code))
+        for code in UTILS_Interface.APPEARANCE_MODES
+    ]
+
     def __init__(self, parent):
-        super().__init__(parent, title="Préférences d'affichage", size=(480, 320))
+        super().__init__(
+            parent,
+            title="Préférences d'affichage",
+            style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER,
+        )
+        UTILS_Styles.ApplyWindowProfile(self, "compact")
 
-        panel = wx.Panel(self)
+        self.panel = wx.Panel(self)
+        self.panel.SetBackgroundColour(UTILS_Interface.GetToken("surface"))
         main = wx.BoxSizer(wx.VERTICAL)
+        padding = UTILS_Styles.GetLayoutSpacing("dialog_padding")
+        field_gap = UTILS_Styles.GetLayoutSpacing("field_gap")
 
-        title = wx.StaticText(panel, label="Affichage")
-        font = title.GetFont()
-        font.SetWeight(wx.FONTWEIGHT_BOLD)
-        title.SetFont(font)
-        main.Add(title, 0, wx.ALL, 12)
+        title = CTRL_Texte.H1(self.panel, "Affichage")
+        main.Add(title, 0, wx.LEFT | wx.RIGHT | wx.TOP, padding)
 
-        grid = wx.FlexGridSizer(2, 2, 12, 12)
-        grid.AddGrowableCol(1, 1)
+        self.intro = CTRL_Texte.BodySecondary(
+            self.panel,
+            (
+                "L'accent colore les actions et sélections. "
+                "L'apparence pilote les surfaces claires ou sombres."
+            ),
+        )
+        main.Add(self.intro, 0, wx.EXPAND | wx.ALL, padding)
 
-        grid.Add(wx.StaticText(panel, label="Thème :"), 0, wx.ALIGN_CENTER_VERTICAL)
-        self.theme = wx.Choice(panel, choices=self.THEMES)
-        current_theme = UTILS_Customize.GetValeur("interface", "theme", "Systeme")
-        normalized = current_theme.lower().replace("è", "e")
-        index = 0
-        if normalized in ("clair", "light", "blanc"):
-            index = 1
-        elif normalized in ("sombre", "dark", "noir"):
-            index = 2
-        self.theme.SetSelection(index)
-        grid.Add(self.theme, 1, wx.EXPAND)
+        self.accent = wx.Choice(
+            self.panel,
+            choices=[label for code, label in self.ACCENTS],
+        )
+        current_accent = UTILS_Interface.GetTheme()
+        accent_codes = [code for code, label in self.ACCENTS]
+        self.accent.SetSelection(
+            accent_codes.index(current_accent) if current_accent in accent_codes else 0
+        )
+        main.Add(
+            self._ligne(self.panel, "Accent :", self.accent),
+            0,
+            wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM,
+            padding,
+        )
 
-        grid.Add(wx.StaticText(panel, label="Échelle de l'interface :"), 0, wx.ALIGN_CENTER_VERTICAL)
-        self.scale = wx.SpinCtrl(panel, min=80, max=200, initial=100)
+        self.appearance = wx.Choice(
+            self.panel,
+            choices=[label for code, label in self.APPEARANCES],
+        )
+        current_appearance = UTILS_Interface.GetAppearanceMode()
+        appearance_codes = [code for code, label in self.APPEARANCES]
+        self.appearance.SetSelection(
+            appearance_codes.index(current_appearance)
+            if current_appearance in appearance_codes
+            else 0
+        )
+        main.Add(
+            self._ligne(self.panel, "Apparence :", self.appearance),
+            0,
+            wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM,
+            padding,
+        )
+
+        scale_min = UTILS_Interface.INTERFACE_SCALE_MIN
+        scale_default = UTILS_Interface.INTERFACE_SCALE_DEFAULT
+        scale_max = UTILS_Interface.INTERFACE_SCALE_MAX
+        self.scale = wx.SpinCtrl(
+            self.panel,
+            min=scale_min,
+            max=scale_max,
+            initial=scale_default,
+        )
         try:
             current_scale = UTILS_Customize.GetValeur(
                 "interface",
@@ -48,66 +102,119 @@ class Dialog(wx.Dialog):
             )
             if current_scale in (None, ""):
                 current_scale = UTILS_Customize.GetValeur(
-                    "interface", "echelle_police", "100", type_valeur=int
+                    "interface",
+                    "echelle_police",
+                    str(scale_default),
+                    type_valeur=int,
                 )
             else:
                 current_scale = int(current_scale)
         except Exception:
-            current_scale = 100
-        self.scale.SetValue(max(80, min(200, current_scale)))
+            current_scale = scale_default
+        self.scale.SetValue(max(scale_min, min(scale_max, current_scale)))
 
-        scale_row = wx.BoxSizer(wx.HORIZONTAL)
-        scale_row.Add(self.scale, 0)
-        scale_row.Add(wx.StaticText(panel, label=" %"), 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 4)
-        grid.Add(scale_row, 0, wx.ALIGN_LEFT)
-
-        main.Add(grid, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 16)
-        main.Add(
-            wx.StaticText(
-                panel,
-                label=(
-                    "L'échelle agit ensemble sur les textes, les icônes, les barres d'outils "
-                    "et la hauteur des contrôles."
-                ),
-            ),
+        scale_control = wx.BoxSizer(wx.HORIZONTAL)
+        scale_control.Add(self.scale, 0)
+        scale_control.Add(
+            CTRL_Texte.Body(self.panel, " %"),
             0,
-            wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP,
-            16,
+            wx.ALIGN_CENTER_VERTICAL | wx.LEFT,
+            field_gap // 2,
         )
         main.Add(
-            wx.StaticText(
-                panel,
-                label="Les changements sont appliqués après redémarrage de Teamworks-CCNS.",
-            ),
+            self._ligne(self.panel, "Échelle de l'interface :", scale_control),
             0,
-            wx.ALL,
-            16,
+            wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM,
+            padding,
         )
+
+        self.info = CTRL_Texte.BodySecondary(
+            self.panel,
+            (
+                "L'échelle agit ensemble sur les textes, les icônes et les dimensions "
+                "des contrôles. Les écrans modernisés redistribuent aussi l'espace disponible."
+            ),
+        )
+        main.Add(
+            self.info,
+            0,
+            wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM,
+            padding,
+        )
+
         main.AddStretchSpacer()
 
         buttons = wx.StdDialogButtonSizer()
-        ok_button = wx.Button(panel, wx.ID_OK)
-        cancel_button = wx.Button(panel, wx.ID_CANCEL)
+        ok_button = wx.Button(self.panel, wx.ID_OK)
+        cancel_button = wx.Button(self.panel, wx.ID_CANCEL)
         buttons.AddButton(ok_button)
         buttons.AddButton(cancel_button)
         buttons.Realize()
-        main.Add(buttons, 0, wx.EXPAND | wx.ALL, 12)
-        panel.SetSizer(main)
+        main.Add(buttons, 0, wx.EXPAND | wx.ALL, padding)
+        self.panel.SetSizer(main)
+
+        shell = wx.BoxSizer(wx.VERTICAL)
+        shell.Add(self.panel, 1, wx.EXPAND)
+        self.SetSizer(shell)
 
         self.Bind(wx.EVT_BUTTON, self.OnOk, id=wx.ID_OK)
-        self.CentreOnParent()
+        self.Bind(wx.EVT_SIZE, self.OnSize)
+        wx.CallAfter(self._ajuster_textes)
+
+    @staticmethod
+    def _ligne(parent, label, control):
+        """Ligne flexible : le libellé et le contrôle partagent l'espace."""
+        ligne = wx.BoxSizer(wx.HORIZONTAL)
+        etiquette = CTRL_Texte.Label(parent, label)
+        gap = UTILS_Styles.GetLayoutSpacing("field_gap")
+        ligne.Add(etiquette, 2, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, gap)
+        if isinstance(control, wx.Sizer):
+            ligne.Add(control, 3, wx.ALIGN_CENTER_VERTICAL | wx.EXPAND)
+        else:
+            ligne.Add(control, 3, wx.EXPAND)
+        return ligne
+
+    def OnSize(self, event):
+        wx.CallAfter(self._ajuster_textes)
+        event.Skip()
+
+    def _ajuster_textes(self):
+        try:
+            padding = UTILS_Styles.GetLayoutSpacing("dialog_padding") * 2
+            largeur = max(
+                UTILS_Styles.Scale(240),
+                self.panel.GetClientSize().GetWidth() - padding,
+            )
+            self.intro.Wrap(largeur)
+            self.info.Wrap(largeur)
+            self.panel.Layout()
+        except Exception:
+            pass
 
     def OnOk(self, event):
-        values = ["Systeme", "Clair", "Sombre"]
-        UTILS_Customize.SetValeur(
-            "interface", "theme", values[max(0, self.theme.GetSelection())]
-        )
+        accent_codes = [code for code, label in self.ACCENTS]
+        appearance_codes = [code for code, label in self.APPEARANCES]
+
+        accent_index = max(0, self.accent.GetSelection())
+        appearance_index = max(0, self.appearance.GetSelection())
+
+        UTILS_Interface.SetTheme(accent_codes[accent_index])
+        UTILS_Interface.SetAppearanceMode(appearance_codes[appearance_index])
+
         scale = str(self.scale.GetValue())
-        # Nouvelle clé explicite + miroir historique pour les versions antérieures.
         UTILS_Customize.SetValeur("interface", "echelle_interface", scale)
         UTILS_Customize.SetValeur("interface", "echelle_police", scale)
+
+        try:
+            from Utils import UTILS_Theme
+            UTILS_Theme.refresh_preferences()
+            top = wx.GetApp().GetTopWindow()
+            UTILS_Theme.apply_to_window(top, True)
+        except Exception:
+            pass
+
         wx.MessageBox(
-            "Les préférences seront appliquées au prochain démarrage.",
+            "Préférences enregistrées. Un redémarrage reste recommandé pour le mode sombre natif.",
             "Préférences enregistrées",
             wx.OK | wx.ICON_INFORMATION,
             parent=self,

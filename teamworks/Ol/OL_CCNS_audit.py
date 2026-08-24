@@ -5,10 +5,35 @@ from __future__ import annotations
 
 import wx
 
+from Utils import UTILS_Interface
+
 try:
     from Ol import OL_Base
 except Exception:
     OL_Base = None
+
+
+def _blend(foreground, background, ratio):
+    """Mélange deux couleurs wx pour produire une surface d'état discrète."""
+    ratio = max(0.0, min(1.0, float(ratio)))
+    inverse = 1.0 - ratio
+    return wx.Colour(
+        int(round(foreground.Red() * ratio + background.Red() * inverse)),
+        int(round(foreground.Green() * ratio + background.Green() * inverse)),
+        int(round(foreground.Blue() * ratio + background.Blue() * inverse)),
+    )
+
+
+def _severity_colours(severity):
+    palette = UTILS_Interface.GetPalette()
+    role = {
+        "blocking": "danger",
+        "warning": "warning",
+        "ok": "success",
+    }.get(severity, "on_surface")
+    foreground = palette[role]
+    background = _blend(foreground, palette["surface_container_lowest"], 0.12)
+    return background, foreground
 
 
 class Track(object):
@@ -39,7 +64,7 @@ class Track(object):
     def GetSeverityLabel(self):
         labels = {
             "blocking": "Bloquant",
-            "warning": "A revoir",
+            "warning": "À revoir",
             "ok": "OK",
         }
         return labels.get(self.severity_label, self.severity_label)
@@ -69,7 +94,7 @@ if OL_Base:
 
             self.SetColumns([
                 OL_Base.ColumnDefn(u"Nom", "left", 180, "nom_complet"),
-                OL_Base.ColumnDefn(u"Gravite", "left", 90, "GetSeverityLabel"),
+                OL_Base.ColumnDefn(u"Gravité", "left", 90, "GetSeverityLabel"),
                 OL_Base.ColumnDefn(u"ID", "left", 60, "IDcontrat"),
                 OL_Base.ColumnDefn(u"Classification", "left", 90, "classification"),
                 OL_Base.ColumnDefn(u"Type", "left", 90, "type_contrat"),
@@ -83,20 +108,14 @@ if OL_Base:
                 OL_Base.ColumnDefn(u"Anomalies", "left", 220, "GetListeAnomalies"),
                 OL_Base.ColumnDefn(u"Messages", "left", 360, "GetMessages"),
             ])
-            self.SetEmptyListMsg(u"Aucun resultat d'audit")
+            self.SetEmptyListMsg(u"Aucun résultat d'audit")
             self.cellEditMode = False
 
         def _apply_row_style(self, index, track):
             try:
-                if track.severity_label == "blocking":
-                    self.SetItemBackgroundColour(index, wx.Colour(255, 228, 228))
-                    self.SetItemTextColour(index, wx.Colour(120, 0, 0))
-                elif track.severity_label == "warning":
-                    self.SetItemBackgroundColour(index, wx.Colour(255, 245, 204))
-                    self.SetItemTextColour(index, wx.Colour(90, 60, 0))
-                else:
-                    self.SetItemBackgroundColour(index, wx.Colour(232, 247, 232))
-                    self.SetItemTextColour(index, wx.Colour(0, 70, 0))
+                background, foreground = _severity_colours(track.severity_label)
+                self.SetItemBackgroundColour(index, background)
+                self.SetItemTextColour(index, foreground)
             except Exception:
                 pass
 
@@ -110,7 +129,7 @@ else:
         def __init__(self, parent, donnees=None):
             wx.ListCtrl.__init__(self, parent, style=wx.LC_REPORT | wx.BORDER_SUNKEN)
             self.InsertColumn(0, "Nom", width=180)
-            self.InsertColumn(1, "Gravite", width=90)
+            self.InsertColumn(1, "Gravité", width=90)
             self.InsertColumn(2, "ID", width=60)
             self.InsertColumn(3, "Classification", width=90)
             self.InsertColumn(4, "Type", width=90)
@@ -127,17 +146,10 @@ else:
             self.MAJ()
 
         def _apply_row_style(self, index, item):
-            severity = item.get("severity_label", "ok")
             try:
-                if severity == "blocking":
-                    self.SetItemBackgroundColour(index, wx.Colour(255, 228, 228))
-                    self.SetItemTextColour(index, wx.Colour(120, 0, 0))
-                elif severity == "warning":
-                    self.SetItemBackgroundColour(index, wx.Colour(255, 245, 204))
-                    self.SetItemTextColour(index, wx.Colour(90, 60, 0))
-                else:
-                    self.SetItemBackgroundColour(index, wx.Colour(232, 247, 232))
-                    self.SetItemTextColour(index, wx.Colour(0, 70, 0))
+                background, foreground = _severity_colours(item.get("severity_label", "ok"))
+                self.SetItemBackgroundColour(index, background)
+                self.SetItemTextColour(index, foreground)
             except Exception:
                 pass
 
@@ -145,7 +157,7 @@ else:
             self.DeleteAllItems()
             for item in self.donnees:
                 idx = self.InsertItem(self.GetItemCount(), item.get("nom_complet", ""))
-                labels = {"blocking": "Bloquant", "warning": "A revoir", "ok": "OK"}
+                labels = {"blocking": "Bloquant", "warning": "À revoir", "ok": "OK"}
                 self.SetItem(idx, 1, labels.get(item.get("severity_label", "ok"), ""))
                 self.SetItem(idx, 2, str(item.get("IDcontrat", "")))
                 self.SetItem(idx, 3, item.get("classification", "") or "")

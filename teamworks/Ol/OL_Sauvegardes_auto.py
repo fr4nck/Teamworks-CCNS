@@ -5,7 +5,7 @@
 # Site internet :  www.noethys.com
 # Auteur:           Ivan LUCAS
 # Copyright:       (c) 2010-13 Ivan LUCAS
-# Licence:         Licence GNU GPL
+# Licence :         Licence GNU GPL
 #------------------------------------------------------------------------
 
 
@@ -75,9 +75,9 @@ class ListView(FastObjectListView):
         return listeListeView
             
     def InitObjectListView(self):            
-        # Couleur en alternance des lignes
-        self.oddRowsBackColor = UTILS_Interface.GetValeur("couleur_tres_claire", wx.Colour(240, 251, 237))
-        self.evenRowsBackColor = wx.Colour(255, 255, 255)
+        # Alternance basée sur les surfaces sémantiques du thème courant.
+        self.oddRowsBackColor = UTILS_Interface.GetToken("surface_container_low")
+        self.evenRowsBackColor = UTILS_Interface.GetToken("surface_container_lowest")
         self.useExpansionColumn = True
 
         def FormateDateCourt(dateDD):
@@ -95,7 +95,9 @@ class ListView(FastObjectListView):
         
         self.SetColumns(liste_Colonnes)
         self.SetEmptyListMsg(_(u"Aucune procédure de sauvegarde"))
-        self.SetEmptyListMsgFont(wx.FFont(11, wx.DEFAULT, False, "Tekton"))
+        empty_font = wx.SystemSettings.GetFont(wx.SYS_DEFAULT_GUI_FONT)
+        empty_font.SetPointSize(max(9, empty_font.GetPointSize()))
+        self.SetEmptyListMsgFont(empty_font)
         self.SetSortColumn(self.columns[1])
         self.SetObjects(self.donnees)
        

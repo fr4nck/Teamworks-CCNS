@@ -9,29 +9,54 @@
 #-----------------------------------------------------------
 
 import Chemins
-from Utils.UTILS_Traduction import _
+from Utils import UTILS_Interface
+from Utils import UTILS_Styles
+from Ctrl import CTRL_Texte
 import wx
 import wx.html as html
 
 
+def _html_colour(colour):
+    return "#%02X%02X%02X" % (colour.Red(), colour.Green(), colour.Blue())
+
+
 class MyHtml(html.HtmlWindow):
+    """Texte enrichi de bandeau dont la hauteur suit l'échelle de l'UI."""
+
     def __init__(self, parent, texte="", hauteur=25):
-        html.HtmlWindow.__init__(self, parent, -1, style=wx.html.HW_NO_SELECTION | wx.html.HW_SCROLLBAR_NEVER | wx.NO_FULL_REPAINT_ON_RESIZE)
+        html.HtmlWindow.__init__(
+            self,
+            parent,
+            -1,
+            style=wx.html.HW_NO_SELECTION | wx.html.HW_SCROLLBAR_NEVER | wx.NO_FULL_REPAINT_ON_RESIZE,
+        )
         self.SetBorders(0)
-        self.SetMinSize((-1, hauteur))
-        self.SetPage(u"<FONT SIZE=-2>%s</FONT>" % texte)
+        self.hauteur_base = hauteur
+        self.SetMinSize((-1, UTILS_Styles.Scale(hauteur, 25)))
+        self.SetTexte(texte)
+
+    def SetTexte(self, texte=""):
+        fond = UTILS_Interface.GetToken("surface_container_high")
+        texte_secondaire = UTILS_Interface.GetToken("on_surface_variant")
+        self.SetBackgroundColour(fond)
+        self.SetPage(
+            u'<BODY BGCOLOR="%s" TEXT="%s"><FONT SIZE=-1>%s</FONT></BODY>'
+            % (_html_colour(fond), _html_colour(texte_secondaire), texte)
+        )
 
 
 class Bandeau(wx.Panel):
+    """Bandeau métier compact, extensible horizontalement et sans hauteur figée."""
+
     def __init__(self, parent, titre="", texte="", hauteurHtml=25, nomImage=None):
         wx.Panel.__init__(self, parent, id=-1, style=wx.TAB_TRAVERSAL)
-        # Vérifie que l'image est bien dans le dossier static
-        if "Static" not in nomImage:
+
+        if nomImage and "Static" not in nomImage:
             nomImage = Chemins.GetStaticPath(nomImage)
 
-        img = wx.Bitmap(nomImage, wx.BITMAP_TYPE_ANY)
+        img = wx.Bitmap(nomImage, wx.BITMAP_TYPE_ANY) if nomImage else wx.NullBitmap
         self.image = wx.StaticBitmap(self, -1, img)
-        self.ctrl_titre = wx.StaticText(self, -1, titre)
+        self.ctrl_titre = CTRL_Texte.H1(self, titre)
         self.ctrl_intro = MyHtml(self, texte, hauteurHtml)
         self.ligne = wx.StaticLine(self, -1)
 
@@ -39,47 +64,32 @@ class Bandeau(wx.Panel):
         self.__do_layout()
 
     def __set_properties(self):
-        self.SetBackgroundColour(wx.Colour(255, 255, 255))
-        self.ctrl_titre.SetFont(wx.Font(10, wx.DEFAULT, wx.NORMAL, wx.BOLD, 0, ""))
+        self.AppliquerTheme()
+
+    def AppliquerTheme(self):
+        fond = UTILS_Interface.GetToken("surface_container_high")
+        bordure = UTILS_Interface.GetToken("outline_variant")
+
+        self.SetBackgroundColour(fond)
+        self.ctrl_titre.AppliquerStyle("h1")
+        self.ctrl_intro.SetBackgroundColour(fond)
+        self.ligne.SetForegroundColour(bordure)
 
     def __do_layout(self):
-        grid_sizer_vertical = wx.FlexGridSizer(rows=2, cols=1, vgap=4, hgap=4)
-        grid_sizer_horizontal = wx.FlexGridSizer(rows=1, cols=2, vgap=0, hgap=0)
-        grid_sizer_texte = wx.FlexGridSizer(rows=2, cols=1, vgap=4, hgap=4)
-        grid_sizer_horizontal.Add(self.image, 0, wx.ALL, 10)
-        grid_sizer_texte.Add(self.ctrl_titre, 0, wx.TOP, 7)
-        grid_sizer_texte.Add(self.ctrl_intro, 0, wx.RIGHT|wx.EXPAND, 5)
-        grid_sizer_texte.AddGrowableRow(1)
-        grid_sizer_texte.AddGrowableCol(0)
-        grid_sizer_horizontal.Add(grid_sizer_texte, 1, wx.EXPAND, 0)
-        grid_sizer_horizontal.AddGrowableRow(0)
-        grid_sizer_horizontal.AddGrowableCol(1)
-        grid_sizer_vertical.Add(grid_sizer_horizontal, 1, wx.EXPAND, 0)
-        grid_sizer_vertical.Add(self.ligne, 0, wx.EXPAND, 0)
-        self.SetSizer(grid_sizer_vertical)
-        grid_sizer_vertical.Fit(self)
-        grid_sizer_vertical.AddGrowableRow(0)
-        grid_sizer_vertical.AddGrowableCol(0)
+        field_gap = UTILS_Styles.GetLayoutSpacing("field_gap")
+        content_padding = UTILS_Styles.GetLayoutSpacing("content_padding")
 
+        textes = wx.BoxSizer(wx.VERTICAL)
+        textes.Add(self.ctrl_titre, 0, wx.EXPAND | wx.TOP | wx.RIGHT, field_gap)
+        textes.Add(self.ctrl_intro, 0, wx.EXPAND | wx.RIGHT | wx.BOTTOM, field_gap)
 
-class MyFrame(wx.Frame):
-    def __init__(self, *args, **kwds):
-        wx.Frame.__init__(self, *args, **kwds)
-        panel = wx.Panel(self, -1)
-        sizer_1 = wx.BoxSizer(wx.VERTICAL)
-        sizer_1.Add(panel, 1, wx.ALL|wx.EXPAND)
-        self.SetSizer(sizer_1)
-        self.ctrl= Bandeau(panel, _(u"COUCOU"), _(u"coincoin"), nomImage="Images/32x32/Femme.png")
-        sizer_2 = wx.BoxSizer(wx.VERTICAL)
-        sizer_2.Add(self.ctrl, 1, wx.ALL|wx.EXPAND, 0)
-        panel.SetSizer(sizer_2)
+        contenu = wx.BoxSizer(wx.HORIZONTAL)
+        if self.image.GetBitmap().IsOk():
+            contenu.Add(self.image, 0, wx.ALL | wx.ALIGN_TOP, content_padding)
+        contenu.Add(textes, 1, wx.EXPAND)
+
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(contenu, 0, wx.EXPAND)
+        sizer.Add(self.ligne, 0, wx.EXPAND)
+        self.SetSizer(sizer)
         self.Layout()
-        self.CentreOnScreen()
-
-if __name__ == '__main__':
-    app = wx.App(0)
-    #wx.InitAllImageHandlers()
-    frame_1 = MyFrame(None, -1, "TEST", size=(800, 200))
-    app.SetTopWindow(frame_1)
-    frame_1.Show()
-    app.MainLoop()

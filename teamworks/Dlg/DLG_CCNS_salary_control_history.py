@@ -9,6 +9,7 @@ from application.control import BuildContractSalaryControlConsolidatedReportUseC
 from application.presentation import ContractSalaryAlertPresenter, ContractSalaryControlConsolidatedExporter, ContractSalaryControlExportFormat, ContractSalaryControlIssueHistoryPresenter, ContractSalaryControlSnapshotComparisonPresenter, format_euro_amount, format_french_date
 from teamworks.CcnsCore.audit_salary_alerts import generate_salary_control_alerts
 from teamworks.CcnsCore.audit_salary_history import compare_salary_control_snapshots, list_salary_control_snapshots, track_salary_control_issues
+from Utils import UTILS_Interface, UTILS_Theme
 
 
 class Dialog(wx.Dialog):
@@ -36,23 +37,64 @@ class Dialog(wx.Dialog):
         self._last_comparison = None
         self._last_issue_history = None
         self._last_alerts = None
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.listbox, 1, wx.ALL | wx.EXPAND, 8)
-        sizer.Add(self.details, 1, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, 8)
-        actions = wx.BoxSizer(wx.HORIZONTAL)
-        actions.Add(self.filter, 0, wx.RIGHT, 8)
-        actions.Add(self.button_compare, 0, wx.RIGHT, 8)
-        actions.Add(self.button_track_issues, 0, wx.RIGHT, 8)
-        actions.Add(self.button_alerts, 0, wx.RIGHT, 8)
-        actions.Add(self.button_export_csv, 0, wx.RIGHT, 8)
-        actions.Add(self.button_export_json, 0, wx.RIGHT, 8)
-        actions.Add(self.button_close, 0)
-        sizer.Add(actions, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.ALIGN_RIGHT, 8)
-        self.SetSizer(sizer)
-        self.SetSize((980, 680))
+        self.__do_layout()
+        self.SetSize((1120, 700))
+        self.SetMinSize((900, 560))
         if self.snapshots:
             self.listbox.SetSelection(0)
             self._show(self.snapshots[0])
+
+    def __do_layout(self):
+        ui = UTILS_Theme.metrics()
+        surface = UTILS_Interface.GetToken("surface_container")
+        text_colour = UTILS_Interface.GetToken("on_surface")
+        text_variant = UTILS_Interface.GetToken("on_surface_variant")
+
+        self.SetBackgroundColour(UTILS_Interface.GetToken("surface"))
+        self.details.SetBackgroundColour(UTILS_Interface.GetToken("surface_container_lowest"))
+        self.details.SetForegroundColour(text_colour)
+        self.listbox.SetBackgroundColour(UTILS_Interface.GetToken("surface_container_lowest"))
+        self.listbox.SetForegroundColour(text_colour)
+
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        intro = wx.StaticText(self, -1, "Comparez les contrôles enregistrés, suivez les anomalies et exportez un rapport consolidé.")
+        intro.SetForegroundColour(text_variant)
+        sizer.Add(intro, 0, wx.LEFT | wx.RIGHT | wx.TOP | wx.EXPAND, ui["space_m"])
+
+        body = wx.BoxSizer(wx.HORIZONTAL)
+
+        box_snapshots = wx.StaticBox(self, -1, "Contrôles enregistrés")
+        box_snapshots.SetBackgroundColour(surface)
+        box_snapshots.SetForegroundColour(text_colour)
+        snapshots_sizer = wx.StaticBoxSizer(box_snapshots, wx.VERTICAL)
+        self.listbox.Reparent(box_snapshots)
+        snapshots_sizer.Add(self.listbox, 1, wx.ALL | wx.EXPAND, ui["space_s"])
+        body.Add(snapshots_sizer, 1, wx.RIGHT | wx.EXPAND, ui["space_m"])
+
+        box_details = wx.StaticBox(self, -1, "Détail et analyse")
+        box_details.SetBackgroundColour(surface)
+        box_details.SetForegroundColour(text_colour)
+        details_sizer = wx.StaticBoxSizer(box_details, wx.VERTICAL)
+        self.details.Reparent(box_details)
+        details_sizer.Add(self.details, 1, wx.ALL | wx.EXPAND, ui["space_s"])
+        body.Add(details_sizer, 2, wx.EXPAND)
+
+        sizer.Add(body, 1, wx.ALL | wx.EXPAND, ui["space_m"])
+
+        actions = wx.BoxSizer(wx.HORIZONTAL)
+        actions.Add(wx.StaticText(self, -1, "Filtrer :"), 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, ui["space_xs"])
+        actions.Add(self.filter, 0, wx.RIGHT, ui["space_m"])
+        actions.Add(self.button_compare, 0, wx.RIGHT, ui["space_s"])
+        actions.Add(self.button_track_issues, 0, wx.RIGHT, ui["space_s"])
+        actions.Add(self.button_alerts, 0, wx.RIGHT, ui["space_m"])
+        actions.AddStretchSpacer(1)
+        actions.Add(self.button_export_csv, 0, wx.RIGHT, ui["space_s"])
+        actions.Add(self.button_export_json, 0, wx.RIGHT, ui["space_m"])
+        actions.Add(self.button_close, 0)
+        sizer.Add(actions, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, ui["space_m"])
+
+        self.SetSizer(sizer)
+        self.Layout()
 
     def _summary(self, snapshot):
         return "%s | exécuté %s | %d contrats | écart %s | %s" % (
@@ -88,7 +130,6 @@ class Dialog(wx.Dialog):
         index = self.listbox.GetSelection()
         if 0 <= index < len(self.snapshots):
             self._show(self.snapshots[index])
-
 
     def _filter_key(self):
         return (
@@ -143,7 +184,6 @@ class Dialog(wx.Dialog):
             ))
         self.details.SetValue("\n".join(lines))
 
-
     def OnTrackIssues(self, event):
         selections = list(self.listbox.GetSelections())
         if len(selections) != 2:
@@ -180,7 +220,6 @@ class Dialog(wx.Dialog):
                 row.before_reason_label, row.after_reason_label, row.before_snapshot_date_label, row.after_snapshot_date_label,
             ))
         self.details.SetValue("\n".join(lines))
-
 
     def OnAlerts(self, event):
         try:

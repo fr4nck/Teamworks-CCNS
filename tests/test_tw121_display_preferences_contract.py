@@ -3,7 +3,8 @@
 """Gardes statiques du contrat d'affichage Teamworks-CCNS.
 
 Ces tests évitent d'importer wxPython : ils doivent donc rester exécutables dans
-la CI générique tout en verrouillant les points de raccord critiques de TW-119.
+la CI générique tout en verrouillant les points de raccord critiques de TW-119
+et la consolidation TW-189.
 """
 
 from pathlib import Path
@@ -35,9 +36,15 @@ def test_default_theme_is_system_and_font_scale_is_100_percent():
 def test_preferences_offer_three_modes_and_accessibility_scale_bounds():
     source = _read(PREFERENCES)
     assert 'THEMES = ["Système", "Clair", "Sombre"]' in source
-    assert "min=80" in source
-    assert "max=200" in source
-    assert 'values = ["Systeme", "Clair", "Sombre"]' in source
+    assert '"system": "Système"' in source
+    assert '"light": "Clair"' in source
+    assert '"dark": "Sombre"' in source
+    assert "for code in UTILS_Interface.APPEARANCE_MODES" in source
+    assert "scale_min = UTILS_Interface.INTERFACE_SCALE_MIN" in source
+    assert "scale_max = UTILS_Interface.INTERFACE_SCALE_MAX" in source
+    assert "min=scale_min" in source
+    assert "max=scale_max" in source
+    assert "appearance_codes = [code for code, label in self.APPEARANCES]" in source
 
 
 def test_theme_service_supports_system_light_dark_and_scale_clamping():
@@ -45,7 +52,9 @@ def test_theme_service_supports_system_light_dark_and_scale_clamping():
     assert "DARK_THEME_NAMES" in source
     assert "LIGHT_THEME_NAMES" in source
     assert "SYSTEM_THEME_NAMES" in source
-    assert "max(80, min(200" in source
+    assert "UTILS_Interface.INTERFACE_SCALE_MIN" in source
+    assert "UTILS_Interface.INTERFACE_SCALE_MAX" in source
+    assert "UTILS_Interface.INTERFACE_SCALE_DEFAULT" in source
     assert "wx.SystemSettings.GetAppearance()" in source
 
 

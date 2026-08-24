@@ -27,7 +27,15 @@ UTILS_Theme.install_auto_theming()
 
 LISTE_DONNEES = [
     ("interface", [
+        # Contrat TW-121 historique : ``theme`` décrit l'apparence.
+        # Les nouveaux composants utilisent ``appearance`` et ``accent`` afin
+        # de ne plus confondre clair/sombre avec Vert/Bleu/Noir.
         ("theme", "Systeme"),
+        ("accent", "Vert"),
+        ("appearance", "system"),
+        # Nouvelle clé explicite. ``echelle_police`` reste le miroir de
+        # compatibilité pour les profils et versions antérieurs.
+        ("echelle_interface", "100"),
         ("echelle_police", "100"),
     ]),
     ("journal", [
@@ -51,11 +59,26 @@ class Customize():
         self.InitFichier()
 
     def InitFichier(self):
-        """ Création d'un nouveau fichier ou vérification du fichier existant """
+        """Création, vérification et migration légère des préférences."""
         if os.path.isfile(self.nomFichier) :
             self.cfg.read(self.nomFichier)
 
         dirty = False
+
+        # Migration TW-189 : un profil ayant déjà choisi 120 % doit rester à
+        # 120 %. On copie donc l'ancienne valeur avant d'ajouter les défauts.
+        if self.cfg.has_section("interface"):
+            if (
+                not self.cfg.has_option("interface", "echelle_interface")
+                and self.cfg.has_option("interface", "echelle_police")
+            ):
+                self.cfg.set(
+                    "interface",
+                    "echelle_interface",
+                    self.cfg.get("interface", "echelle_police"),
+                )
+                dirty = True
+
         for section, valeurs in LISTE_DONNEES :
             if section not in self.cfg.sections() :
                 self.cfg.add_section(section)

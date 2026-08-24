@@ -27,7 +27,7 @@ class Panel(wx.Panel):
         self.label_introduction = FonctionsPerso.StaticWrapText(self, -1, texteIntro)
         
         self.staticbox = wx.StaticBox(self, -1, _(u"Protection"))
-        self.checkBox = wx.CheckBox(self, -1, _(u"Activer la protection par mot de passe"))
+        self.checkBox = wx.CheckBox(self.staticbox, -1, _(u"Activer la protection par mot de passe"))
         self.MAJ_checkBox() 
         
         self.bouton_aide = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Aide.png"), wx.BITMAP_TYPE_ANY))

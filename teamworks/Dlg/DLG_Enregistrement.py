@@ -115,14 +115,14 @@ class Dialog(wx.Dialog):
         
         # Saisie code
         self.staticbox_code_staticbox = wx.StaticBox(self, -1, _(u"Code d'enregistrement"))
-        self.label_identifiant = wx.StaticText(self, -1, _(u"Identifiant :"))
-        self.ctrl_identifiant = wx.TextCtrl(self, -1, "")
-        self.label_code = wx.StaticText(self, -1, _(u"Code :"))
-        self.ctrl_code = masked.TextCtrl(self, -1, "", mask="AAAA-AAAA-AAAA-AAAA-AAAA", formatcodes="F!")
+        self.label_identifiant = wx.StaticText(self.staticbox_code_staticbox, -1, _(u"Identifiant :"))
+        self.ctrl_identifiant = wx.TextCtrl(self.staticbox_code_staticbox, -1, "")
+        self.label_code = wx.StaticText(self.staticbox_code_staticbox, -1, _(u"Code :"))
+        self.ctrl_code = masked.TextCtrl(self.staticbox_code_staticbox, -1, "", mask="AAAA-AAAA-AAAA-AAAA-AAAA", formatcodes="F!")
         self.ctrl_code.SetMinSize((190, -1))
-        self.bouton_validite = wx.Button(self, -1, _(u"Vérifier la validité"))
-        self.ctrl_image = wx.StaticBitmap(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Interdit.png"), wx.BITMAP_TYPE_ANY))
-        self.label_validite = wx.StaticText(self, -1, _(u"Veuillez saisir un code."))
+        self.bouton_validite = wx.Button(self.staticbox_code_staticbox, -1, _(u"Vérifier la validité"))
+        self.ctrl_image = wx.StaticBitmap(self.staticbox_code_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Interdit.png"), wx.BITMAP_TYPE_ANY))
+        self.label_validite = wx.StaticText(self.staticbox_code_staticbox, -1, _(u"Veuillez saisir un code."))
         
         # HTML
         self.ctrl_html = MyHtml(self, texte=TEXTE, hauteur=30)

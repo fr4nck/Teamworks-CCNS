@@ -26,8 +26,8 @@ class Page(wx.Panel):
         self.label_intro = wx.StaticText(self, -1, _(u"Souhaitez-vous utiliser un modèle de contrat pour faciliter votre saisie ?"))
         self.radio_non = wx.RadioButton(self, -1, "Non", style=wx.RB_GROUP)
         self.radio_oui = wx.RadioButton(self, -1, "Oui")
-        self.listCtrl_modeles = ListCtrl(self)
-        self.bouton_modeles = wx.Button(self, -1, "...", style=wx.BU_EXACTFIT)
+        self.listCtrl_modeles = ListCtrl(self.sizer_choix_modele_staticbox, controller=self)
+        self.bouton_modeles = wx.Button(self.sizer_choix_modele_staticbox, -1, "...", style=wx.BU_EXACTFIT)
 
         self.__set_properties()
         self.__do_layout()
@@ -149,11 +149,11 @@ class Page(wx.Panel):
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorterMixin):
-    def __init__(self, parent):
+    def __init__(self, parent, controller):
         wx.ListCtrl.__init__( self, parent, -1, style=wx.LC_REPORT|wx.LC_VIRTUAL|wx.LC_SINGLE_SEL|wx.LC_HRULES|wx.LC_VRULES)
         
         self.criteres = ""
-        self.parent = parent
+        self.parent = controller
 
         # Initialisation des images
         tailleIcones = 16

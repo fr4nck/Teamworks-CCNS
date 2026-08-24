@@ -4,11 +4,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 TARGETS = {
-    "teamworks/Ol/OL_candidats.py": (
+    "teamworks/Ol/OL_candidats_core.py": (
         "ListView",
         {"OnItemSelected", "DeselectionneItem"},
     ),
-    "teamworks/Ol/OL_candidatures.py": (
+    "teamworks/Ol/OL_candidatures_core.py": (
         "ListView",
         {"OnItemSelected", "DeselectionneItem"},
     ),
@@ -55,24 +55,24 @@ def test_priority_rh_bare_except_inventory_does_not_grow():
         }
 
     assert inventory == {
-        "teamworks/Ol/OL_candidats.py": {
+        "teamworks/Ol/OL_candidats_core.py": {
             "OnItemSelected": 1,
             "DeselectionneItem": 1,
         },
-        "teamworks/Ol/OL_candidatures.py": {
+        "teamworks/Ol/OL_candidatures_core.py": {
             "OnItemSelected": 1,
             "DeselectionneItem": 1,
         },
         "teamworks/Dlg/DLG_Saisie_presence.py": {
-            "OnBoutonAnnuler": 1,
-            "OnBoutonOk": 1,
+            "OnBoutonAnnuler": 0,
+            "OnBoutonOk": 0,
         },
     }
 
 
-def test_priority_rh_bare_except_total_is_six():
+def test_priority_rh_bare_except_total_is_four():
     total = 0
     for relative_path, (class_name, method_names) in TARGETS.items():
         for method in _target_methods(relative_path, class_name, method_names).values():
             total += _bare_except_count(method)
-    assert total == 6
+    assert total == 4

@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Système d'affichage centralisé de Teamworks-CCNS.
+"""Gestion centralisée de l'affichage Teamworks-CCNS.
 
-Le réglage historique ``echelle_police`` est désormais interprété comme une
-échelle d'interface : typographie, icônes, barres d'outils, onglets et hauteur
-des contrôles évoluent ensemble. Cela évite le cas classique où un texte à
-120 % reste enfermé dans des composants dimensionnés pour 100 %.
+Le thème d'accent (Vert/Bleu/Noir) et l'apparence (clair/sombre/système) sont
+volontairement séparés. Ce module applique l'apparence aux contrôles wx natifs,
+délègue les couleurs sémantiques à ``UTILS_Interface`` et met à l'échelle les
+métriques d'interface sans réintroduire le ``wx.Toolbook`` historique.
 """
 
 from __future__ import annotations
@@ -19,13 +19,13 @@ import appdirs
 import wx
 
 import Chemins
+from Utils import UTILS_Interface
 
-DARK_THEME_NAMES = {"sombre", "dark", "noir"}
+DARK_THEME_NAMES = {"sombre", "dark"}
 LIGHT_THEME_NAMES = {"clair", "light", "blanc"}
 SYSTEM_THEME_NAMES = {"systeme", "système", "system", "auto"}
 CONFIG_ENCODINGS = ("utf-8-sig", "utf-8", "cp1252")
 
-# Grille de densité desktop. Les valeurs sont des DIP de référence à 100 %.
 BASE_METRICS = {
     "space_xs": 4,
     "space_s": 8,
@@ -33,7 +33,6 @@ BASE_METRICS = {
     "space_l": 16,
     "control_height": 28,
     "toolbar_icon": 24,
-    "navigation_icon": 32,
     "tab_padding_x": 10,
     "tab_padding_y": 6,
 }
@@ -58,46 +57,53 @@ def _read_config(path):
 
 
 def _customize_path():
-    """Retourne exactement le même emplacement que UTILS_Fichiers.GetRepUtilisateur.
-
-    Cette fonction reste autonome pour éviter la dépendance circulaire
-    UTILS_Customize -> UTILS_Theme -> UTILS_Fichiers -> UTILS_Customize.
-    """
     portable = Path(Chemins.GetMainPath("Portable"))
     if portable.is_dir():
         return portable / "Customize.ini"
-
     config_dir = Path(appdirs.user_config_dir(appname=None, appauthor=False, roaming=True))
     return config_dir / "teamworks" / "Customize.ini"
 
 
 def refresh_preferences():
-    """Invalide le cache après migration ou modification des préférences."""
     global _CONFIG_CACHE
     _CONFIG_CACHE = None
 
 
+def _legacy_theme_as_appearance(value):
+    value = (value or "").strip().lower()
+    if value in DARK_THEME_NAMES:
+        return "dark"
+    if value in LIGHT_THEME_NAMES:
+        return "light"
+    if value in SYSTEM_THEME_NAMES:
+        return "system"
+    return ""
+
+
 def _config_values():
     global _CONFIG_CACHE
-    env_theme = os.environ.get("TEAMWORKS_THEME", "").strip()
-    # Nouveau nom explicite ; l'ancien reste accepté pour compatibilité.
+    env_appearance = (
+        os.environ.get("TEAMWORKS_APPEARANCE", "").strip()
+        or os.environ.get("TEAMWORKS_THEME", "").strip()
+    )
     env_scale = (
         os.environ.get("TEAMWORKS_UI_SCALE", "").strip()
         or os.environ.get("TEAMWORKS_FONT_SCALE", "").strip()
     )
-
-    if _CONFIG_CACHE is not None and not env_theme and not env_scale:
+    if _CONFIG_CACHE is not None and not env_appearance and not env_scale:
         return _CONFIG_CACHE
 
-    theme = env_theme
+    appearance = env_appearance
     scale = env_scale
     path = _customize_path()
     config_exists = path.is_file()
     if config_exists:
         try:
             parser = _read_config(path)
-            if not theme and parser.has_option("interface", "theme"):
-                theme = parser.get("interface", "theme")
+            if not appearance and parser.has_option("interface", "appearance"):
+                appearance = parser.get("interface", "appearance")
+            if not appearance and parser.has_option("interface", "theme"):
+                appearance = _legacy_theme_as_appearance(parser.get("interface", "theme"))
             if not scale:
                 if parser.has_option("interface", "echelle_interface"):
                     scale = parser.get("interface", "echelle_interface")
@@ -106,21 +112,39 @@ def _config_values():
         except (OSError, ValueError):
             pass
 
-    try:
-        interface_scale = max(80, min(200, int(scale or "100")))
-    except ValueError:
-        interface_scale = 100
+    appearance = (appearance or "system").strip().lower()
+    if appearance in DARK_THEME_NAMES:
+        appearance = "dark"
+    elif appearance in LIGHT_THEME_NAMES:
+        appearance = "light"
+    elif appearance in SYSTEM_THEME_NAMES:
+        appearance = "system"
+    else:
+        appearance = "system"
 
-    values = (theme or "Systeme", interface_scale)
-    # Ne jamais figer les valeurs par défaut tant que le fichier cible n'existe
-    # pas : il peut être déplacé juste après par la migration de premier lancement.
-    if config_exists and not env_theme and not env_scale:
+    try:
+        interface_scale = max(
+            UTILS_Interface.INTERFACE_SCALE_MIN,
+            min(
+                UTILS_Interface.INTERFACE_SCALE_MAX,
+                int(scale or str(UTILS_Interface.INTERFACE_SCALE_DEFAULT)),
+            ),
+        )
+    except ValueError:
+        interface_scale = UTILS_Interface.INTERFACE_SCALE_DEFAULT
+
+    values = (appearance, interface_scale)
+    if config_exists and not env_appearance and not env_scale:
         _CONFIG_CACHE = values
     return values
 
 
-def requested_theme():
+def requested_appearance():
     return _config_values()[0]
+
+
+def requested_theme():
+    return requested_appearance()
 
 
 def interface_scale_percent():
@@ -128,12 +152,10 @@ def interface_scale_percent():
 
 
 def font_scale_percent():
-    """Alias historique conservé pour les appelants existants."""
     return interface_scale_percent()
 
 
 def scale_px(value, scale=None, minimum=1):
-    """Convertit une métrique de référence en pixels d'interface cohérents."""
     if scale is None:
         scale = interface_scale_percent()
     return max(minimum, int(round(float(value) * scale / 100.0)))
@@ -146,7 +168,7 @@ def metrics(scale=None):
 
 
 def is_dark_theme(theme=None):
-    value = (theme or requested_theme()).strip().lower()
+    value = (theme or requested_appearance()).strip().lower()
     if value in DARK_THEME_NAMES:
         return True
     if value in LIGHT_THEME_NAMES:
@@ -182,156 +204,138 @@ def _colour_luminance(colour):
 
 
 def _native_palette(dark):
-    """Construit des rôles de surface cohérents, inspirés Fluent/Material.
-
-    Les couleurs système restent prioritaires pour la sélection et les actions.
-    Les autres rôles évitent l'ancien grand aplat gris/bleu sans transformer
-    l'application métier en interface mobile.
-    """
-    selection = _system_colour(wx.SYS_COLOUR_HIGHLIGHT, (0, 120, 215))
-    selection_text = _system_colour(wx.SYS_COLOUR_HIGHLIGHTTEXT, (255, 255, 255))
-
-    if dark:
-        return {
-            "surface": wx.Colour(30, 30, 30),
-            "surface_lowest": wx.Colour(25, 25, 25),
-            "surface_low": wx.Colour(36, 36, 36),
-            "surface_container": wx.Colour(40, 40, 40),
-            "surface_high": wx.Colour(46, 46, 46),
-            "surface_highest": wx.Colour(52, 52, 52),
-            "control": wx.Colour(45, 45, 48),
-            "text": wx.Colour(242, 242, 242),
-            "text_variant": wx.Colour(200, 200, 200),
-            "button_text": wx.Colour(242, 242, 242),
-            "selection": selection,
-            "selection_text": selection_text,
-            "outline": wx.Colour(78, 78, 78),
-        }
-
-    system_window = _system_colour(wx.SYS_COLOUR_WINDOW, (255, 255, 255))
-    system_text = _system_colour(wx.SYS_COLOUR_WINDOWTEXT, (27, 26, 25))
-    if _colour_luminance(system_window) < 128:
-        system_window = wx.Colour(255, 255, 255)
-    return {
-        "surface": wx.Colour(243, 243, 243),
-        "surface_lowest": system_window,
-        "surface_low": wx.Colour(250, 250, 250),
-        "surface_container": wx.Colour(247, 247, 247),
-        "surface_high": wx.Colour(238, 238, 238),
-        "surface_highest": wx.Colour(229, 229, 229),
-        "control": system_window,
-        "text": system_text,
-        "text_variant": wx.Colour(96, 94, 92),
-        "button_text": _system_colour(wx.SYS_COLOUR_BTNTEXT, (27, 26, 25)),
-        "selection": selection,
-        "selection_text": selection_text,
-        "outline": wx.Colour(200, 198, 196),
+    palette = {
+        "surface": _system_colour(wx.SYS_COLOUR_BTNFACE, (240, 240, 240)),
+        "surface_low": _system_colour(wx.SYS_COLOUR_BTNFACE, (245, 245, 245)),
+        "surface_high": _system_colour(wx.SYS_COLOUR_3DFACE, (232, 232, 232)),
+        "control": _system_colour(wx.SYS_COLOUR_WINDOW, (255, 255, 255)),
+        "text": _system_colour(wx.SYS_COLOUR_WINDOWTEXT, (0, 0, 0)),
+        "text_variant": _system_colour(wx.SYS_COLOUR_GRAYTEXT, (100, 100, 100)),
+        "button_text": _system_colour(wx.SYS_COLOUR_BTNTEXT, (0, 0, 0)),
+        "selection": _system_colour(wx.SYS_COLOUR_HIGHLIGHT, (0, 120, 215)),
+        "selection_text": _system_colour(wx.SYS_COLOUR_HIGHLIGHTTEXT, (255, 255, 255)),
+        "outline": _system_colour(wx.SYS_COLOUR_3DSHADOW, (180, 180, 180)),
     }
+    if dark and _colour_luminance(palette["control"]) > 128:
+        palette.update({
+            "surface": wx.Colour(32, 32, 32),
+            "surface_low": wx.Colour(37, 37, 38),
+            "surface_high": wx.Colour(52, 52, 52),
+            "control": wx.Colour(45, 45, 48),
+            "text": wx.Colour(240, 240, 240),
+            "text_variant": wx.Colour(190, 190, 190),
+            "button_text": wx.Colour(240, 240, 240),
+            "selection": wx.Colour(0, 95, 184),
+            "selection_text": wx.Colour(255, 255, 255),
+            "outline": wx.Colour(83, 86, 90),
+        })
+    return palette
+
+
+def _semantic_palette(dark):
+    try:
+        appearance = "dark" if dark else "light"
+        return {
+            "surface": UTILS_Interface.GetToken("surface", appearance=appearance),
+            "surface_low": UTILS_Interface.GetToken("surface_container_low", appearance=appearance),
+            "surface_high": UTILS_Interface.GetToken("surface_container_high", appearance=appearance),
+            "control": UTILS_Interface.GetToken("surface_container_lowest", appearance=appearance),
+            "text": UTILS_Interface.GetToken("on_surface", appearance=appearance),
+            "text_variant": UTILS_Interface.GetToken("on_surface_variant", appearance=appearance),
+            "button_text": UTILS_Interface.GetToken("on_surface", appearance=appearance),
+            "selection": UTILS_Interface.GetToken("selection", appearance=appearance),
+            "selection_text": UTILS_Interface.GetToken("selection_text", appearance=appearance),
+            "outline": UTILS_Interface.GetToken("outline_variant", appearance=appearance),
+        }
+    except Exception:
+        return _native_palette(dark)
+
+
+def _font_point_size(font):
+    if hasattr(font, "GetFractionalPointSize"):
+        return float(font.GetFractionalPointSize())
+    return float(font.GetPointSize())
+
+
+def _set_font_point_size(font, value):
+    value = max(6.0, float(value))
+    if hasattr(font, "SetFractionalPointSize"):
+        font.SetFractionalPointSize(value)
+    else:
+        font.SetPointSize(int(round(value)))
 
 
 def _scale_font(window, scale):
-    if scale == 100 or getattr(window, "_teamworks_font_scaled", False):
-        return
     try:
-        font = window.GetFont()
-        if font and font.IsOk():
-            current = (
-                font.GetFractionalPointSize()
-                if hasattr(font, "GetFractionalPointSize")
-                else font.GetPointSize()
-            )
-            new_size = max(6.0, current * scale / 100.0)
-            if hasattr(font, "SetFractionalPointSize"):
-                font.SetFractionalPointSize(new_size)
-            else:
-                font.SetPointSize(int(round(new_size)))
-            window.SetFont(font)
+        semantic_style = getattr(window, "_teamworks_text_style", None)
+        if semantic_style:
+            from Utils import UTILS_Styles
+            window.SetFont(UTILS_Styles.GetFont(semantic_style))
+            window._teamworks_font_scale_percent = scale
             window._teamworks_font_scaled = True
-    except Exception:
-        pass
-
-
-def _resize_bitmap(bitmap, target_size):
-    try:
-        if not bitmap or not bitmap.IsOk():
-            return bitmap
-        image = bitmap.ConvertToImage()
-        if image.GetWidth() == target_size and image.GetHeight() == target_size:
-            return bitmap
-        image.Rescale(target_size, target_size, wx.IMAGE_QUALITY_HIGH)
-        return wx.Bitmap(image)
-    except Exception:
-        return bitmap
-
-
-def _scale_toolbook_images(toolbook, scale):
-    """Redimensionne réellement les icônes du wx.Toolbook.
-
-    Agrandir uniquement la police ou la hauteur de la toolbar laisse des icônes
-    de 32 px minuscules. On reconstruit donc l'ImageList à la bonne échelle en
-    conservant exactement les mêmes index de pages.
-    """
-    if getattr(toolbook, "_teamworks_images_scaled", False):
-        return
-    try:
-        image_list = toolbook.GetImageList()
-        if image_list is None:
             return
-        target = scale_px(BASE_METRICS["navigation_icon"], scale=scale)
-        new_list = wx.ImageList(target, target)
-        for index in range(image_list.GetImageCount()):
-            new_list.Add(_resize_bitmap(image_list.GetBitmap(index), target))
-        toolbook.AssignImageList(new_list)
-        toolbook._teamworks_image_list = new_list
-        toolbook._teamworks_images_scaled = True
+
+        font = window.GetFont()
+        if not font or not font.IsOk():
+            return
+
+        last_scale = getattr(window, "_teamworks_font_scale_percent", None)
+        if last_scale == scale:
+            return
+
+        base_points = getattr(window, "_teamworks_font_base_points", None)
+        if base_points is None:
+            current = _font_point_size(font)
+            if getattr(window, "_teamworks_font_scaled", False):
+                previous_scale = last_scale or scale or 100
+                base_points = current * 100.0 / float(previous_scale)
+            else:
+                base_points = current
+            window._teamworks_font_base_points = base_points
+
+        _set_font_point_size(font, base_points * float(scale) / 100.0)
+        window.SetFont(font)
+        window._teamworks_font_scale_percent = scale
+        window._teamworks_font_scaled = True
     except Exception:
         pass
 
 
 def _minimum_height(window, height):
+    """Applique une hauteur de thème sans écraser un minimum métier explicite.
+
+    Le minimum d'origine est mémorisé une seule fois. Le minimum effectif peut
+    donc augmenter à 125 % puis redescendre à 100 % sans rester artificiellement
+    gonflé par une ancienne application du thème.
+    """
     try:
         minimum = window.GetMinSize()
+        width = minimum.GetWidth() if minimum else -1
         current_height = minimum.GetHeight() if minimum else -1
-        if current_height < height:
-            window.SetMinSize((minimum.GetWidth() if minimum else -1, height))
+
+        base_height = getattr(window, "_teamworks_min_height_base", None)
+        if base_height is None:
+            base_height = current_height
+            window._teamworks_min_height_base = base_height
+
+        target_height = max(int(base_height), int(height)) if base_height >= 0 else int(height)
+        if current_height != target_height:
+            window.SetMinSize((width, target_height))
     except Exception:
         pass
 
 
 def _apply_metrics(window, scale):
     ui = metrics(scale)
-
     try:
         if hasattr(window, "InvalidateBestSize"):
             window.InvalidateBestSize()
     except Exception:
         pass
 
-    if isinstance(window, wx.Toolbook):
-        _scale_toolbook_images(window, scale)
+    if isinstance(window, wx.ToolBar):
         try:
-            toolbar = window.GetToolBar()
-            if toolbar:
-                toolbar._teamworks_navigation_toolbar = True
-                toolbar.SetWindowStyleFlag(wx.TB_HORZ_TEXT | wx.TB_FLAT | wx.TB_NODIVIDER)
-                toolbar.SetToolBitmapSize((ui["navigation_icon"], ui["navigation_icon"]))
-                if hasattr(toolbar, "SetToolPacking"):
-                    toolbar.SetToolPacking(ui["space_xs"])
-                if hasattr(toolbar, "SetMargins"):
-                    toolbar.SetMargins(ui["space_s"], ui["space_xs"])
-                toolbar.Realize()
-                _minimum_height(toolbar, toolbar.GetBestSize().GetHeight())
-        except Exception:
-            pass
-
-    elif isinstance(window, wx.ToolBar):
-        try:
-            icon_size = (
-                ui["navigation_icon"]
-                if getattr(window, "_teamworks_navigation_toolbar", False)
-                else ui["toolbar_icon"]
-            )
-            window.SetToolBitmapSize((icon_size, icon_size))
+            window.SetToolBitmapSize((ui["toolbar_icon"], ui["toolbar_icon"]))
             if hasattr(window, "SetToolPacking"):
                 window.SetToolPacking(ui["space_xs"])
             if hasattr(window, "SetMargins"):
@@ -340,7 +344,6 @@ def _apply_metrics(window, scale):
             _minimum_height(window, window.GetBestSize().GetHeight())
         except Exception:
             pass
-
     elif isinstance(window, wx.Notebook):
         try:
             if hasattr(window, "SetPadding"):
@@ -348,58 +351,115 @@ def _apply_metrics(window, scale):
         except Exception:
             pass
 
-    if isinstance(window, (wx.Button, wx.TextCtrl, wx.ComboBox, wx.Choice, wx.SpinCtrl)):
+    controls = (wx.Button, wx.TextCtrl, wx.ComboBox, wx.Choice, wx.SpinCtrl)
+    if hasattr(wx, "ToggleButton"):
+        controls = controls + (wx.ToggleButton,)
+    if hasattr(wx, "SearchCtrl"):
+        controls = controls + (wx.SearchCtrl,)
+    if isinstance(window, controls):
         _minimum_height(window, ui["control_height"])
+
+
+def _set_colours(window, background=None, foreground=None):
+    try:
+        if background is not None:
+            window.SetBackgroundColour(background)
+        if foreground is not None:
+            window.SetForegroundColour(foreground)
+    except Exception:
+        pass
+
+
+def _apply_objectlistview_theme(window, palette):
+    """Applique le chrome visuel commun aux ObjectListView historiques.
+
+    Aucune colonne, checkbox ni callback métier n'est modifié ici. Les anciennes
+    couleurs de lignes et polices de message vide restent donc sans effet dès
+    que le thème central est appliqué.
+    """
+    try:
+        if hasattr(window, "oddRowsBackColor"):
+            window.oddRowsBackColor = palette["surface_low"]
+        if hasattr(window, "evenRowsBackColor"):
+            window.evenRowsBackColor = palette["control"]
+        if hasattr(window, "groupTextColour"):
+            window.groupTextColour = palette["text"]
+        if hasattr(window, "groupBackgroundColour"):
+            window.groupBackgroundColour = palette["surface_high"]
+        group_font = getattr(window, "groupFont", None)
+        if group_font is not None and group_font.IsOk():
+            group_font.SetWeight(wx.FONTWEIGHT_BOLD)
+            window.groupFont = group_font
+
+        empty = getattr(window, "stEmptyListMsg", None)
+        if empty is not None:
+            _set_colours(empty, background=palette["control"], foreground=palette["text_variant"])
+            try:
+                base_font = window.GetFont()
+                if base_font and base_font.IsOk():
+                    empty.SetFont(base_font)
+            except Exception:
+                pass
+        if hasattr(window, "SetEmptyListMsgFont"):
+            try:
+                base_font = window.GetFont()
+                if base_font and base_font.IsOk():
+                    window.SetEmptyListMsgFont(base_font)
+            except Exception:
+                pass
+    except Exception:
+        pass
 
 
 def _apply_palette(window, palette, dark):
     background = None
-    foreground = palette["text"]
+    foreground = None
+    input_types = (
+        wx.TextCtrl,
+        wx.ComboBox,
+        wx.Choice,
+        wx.ListBox,
+        wx.CheckListBox,
+        wx.ListCtrl,
+        wx.TreeCtrl,
+        wx.SpinCtrl,
+    )
+    if hasattr(wx, "SearchCtrl"):
+        input_types = input_types + (wx.SearchCtrl,)
 
     if isinstance(window, (wx.Frame, wx.Dialog)):
         background = palette["surface"]
-    elif isinstance(window, wx.ToolBar):
-        background = palette["surface_high"]
-    elif isinstance(window, (wx.Toolbook, wx.Notebook)):
-        background = palette["surface_container"]
-    elif isinstance(window, wx.Panel):
-        background = palette["surface_container"]
-    elif isinstance(
-        window,
-        (
-            wx.TextCtrl,
-            wx.ComboBox,
-            wx.Choice,
-            wx.ListBox,
-            wx.CheckListBox,
-            wx.ListCtrl,
-            wx.TreeCtrl,
-            wx.SpinCtrl,
-        ),
-    ):
+        foreground = palette["text"]
+    elif isinstance(window, input_types):
         background = palette["control"]
+        foreground = palette["text"]
+    elif isinstance(window, wx.Panel):
+        background = palette["surface"]
+        foreground = palette["text"]
     elif isinstance(window, wx.Button):
-        # Laisser le moteur natif dessiner le bouton ; on ne force que le texte.
         foreground = palette["button_text"]
+    elif isinstance(window, (wx.StaticText, wx.CheckBox, wx.RadioButton)):
+        foreground = palette["text"]
+    elif isinstance(window, wx.StaticLine):
+        foreground = palette["outline"]
 
-    try:
-        if background is not None:
-            window.SetBackgroundColour(background)
-        window.SetForegroundColour(foreground)
-    except Exception:
-        pass
+    _set_colours(window, background=background, foreground=foreground)
+    _apply_objectlistview_theme(window, palette)
+
+    empty = getattr(window, "stEmptyListMsg", None)
+    if empty is not None:
+        _set_colours(empty, background=palette["control"], foreground=palette["text_variant"])
 
 
 def apply_to_window(window, recursive=True, theme=None, scale=None, palette=None):
     if window is None:
         return
-
     if theme is None or scale is None:
         configured_theme, configured_scale = _config_values()
         theme = configured_theme if theme is None else theme
         scale = configured_scale if scale is None else scale
     dark = is_dark_theme(theme)
-    palette = palette or _native_palette(dark)
+    palette = palette or _semantic_palette(dark)
 
     _scale_font(window, scale)
     _apply_metrics(window, scale)
@@ -436,11 +496,11 @@ def _install_preferences_menu(frame):
 
             def open_preferences(event):
                 from Dlg import DLG_Preferences
-
                 dialog = DLG_Preferences.Dialog(frame)
                 dialog.ShowModal()
                 dialog.Destroy()
                 refresh_preferences()
+                apply_to_window(frame, True)
 
             frame.Bind(wx.EVT_MENU, open_preferences, item)
             _MENU_INSTALLED = True
@@ -448,12 +508,6 @@ def _install_preferences_menu(frame):
 
 
 def install_auto_theming():
-    """Installe le point d'entrée transversal historique du thème.
-
-    Ce hook reste unique et central : aucune retouche locale d'écran n'est
-    nécessaire. L'objectif est précisément d'éviter l'empilement de rustines
-    tout en conservant la compatibilité avec les centaines de dialogues wx.
-    """
     global _PATCHED
     if _PATCHED:
         return

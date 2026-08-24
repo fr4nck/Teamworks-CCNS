@@ -10,8 +10,10 @@ from smoke_runtime import github_error_summary, run_entrypoint, write_diagnostic
 
 ROOT = Path(__file__).resolve().parents[1]
 TEAMWORKS_DIR = ROOT / "teamworks"
-SOURCE = TEAMWORKS_DIR / "Teamworks.py"
+ENTRYPOINT_SOURCE = TEAMWORKS_DIR / "Teamworks.py"
+CORE_SOURCE = TEAMWORKS_DIR / "Teamworks_core.py"
 PATCHED = TEAMWORKS_DIR / "Teamworks_secondary_presence_smoke.py"
+PATCHED_CORE = TEAMWORKS_DIR / "Teamworks_core_secondary_presence_smoke.py"
 REPORT_DIR = ROOT / "artifacts" / "presence-dialog-smoke"
 REPORT = REPORT_DIR / "diagnostic.txt"
 MARKER_LINE = '            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)'
@@ -72,17 +74,26 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
 
 
 def build_patched_entrypoint() -> int:
-    source = SOURCE.read_text(encoding="utf-8")
-    marker_count = source.count(MARKER_LINE)
+    core_source = CORE_SOURCE.read_text(encoding="utf-8")
+    marker_count = core_source.count(MARKER_LINE)
     if marker_count < 1:
         raise RuntimeError(
             f"ligne marqueur du smoke principal introuvable: count={marker_count}"
         )
-    patched_source = source.replace(MARKER_LINE, INJECTION, 1)
-    if SECONDARY_MARKER not in patched_source or FAILURE_MARKER not in patched_source:
+    patched_core_source = core_source.replace(MARKER_LINE, INJECTION, 1)
+    if SECONDARY_MARKER not in patched_core_source or FAILURE_MARKER not in patched_core_source:
         raise RuntimeError("injection des marqueurs du formulaire absente")
-    compile(patched_source, str(PATCHED), "exec")
-    PATCHED.write_text(patched_source, encoding="utf-8")
+    compile(patched_core_source, str(PATCHED_CORE), "exec")
+    PATCHED_CORE.write_text(patched_core_source, encoding="utf-8")
+
+    entrypoint_source = ENTRYPOINT_SOURCE.read_text(encoding="utf-8")
+    import_line = "import Teamworks_core as CORE"
+    patched_import = "import Teamworks_core_secondary_presence_smoke as CORE"
+    if import_line not in entrypoint_source:
+        raise RuntimeError("import du cœur Teamworks introuvable dans la coque active")
+    patched_entrypoint = entrypoint_source.replace(import_line, patched_import, 1)
+    compile(patched_entrypoint, str(PATCHED), "exec")
+    PATCHED.write_text(patched_entrypoint, encoding="utf-8")
     return marker_count
 
 
@@ -128,6 +139,7 @@ def main() -> int:
         return 3
     finally:
         PATCHED.unlink(missing_ok=True)
+        PATCHED_CORE.unlink(missing_ok=True)
 
 
 if __name__ == "__main__":

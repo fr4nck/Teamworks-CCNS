@@ -12,32 +12,46 @@ import wx
 from Ctrl import CTRL_Bouton_image
 import GestionDB
 import FonctionsPerso
-import datetime
 import wx.lib.agw.hypertreelist as HTL
 from Dlg import DLG_Scenario
-from Utils import UTILS_Adaptations, UTILS_Dates
+from Utils import UTILS_Adaptations, UTILS_Dates, UTILS_Interface
 import six
 
+
+def _dip(window, width, height):
+    try:
+        return window.FromDIP(wx.Size(width, height))
+    except Exception:
+        return wx.Size(width, height)
 
 
 class Panel(wx.Panel):
     def __init__(self, parent, ID=-1, IDpersonne=None):
         wx.Panel.__init__(self, parent, ID, name="gestion_scenarios", style=wx.TAB_TRAVERSAL)
         self.IDpersonne = IDpersonne
+        self.SetBackgroundColour(UTILS_Interface.GetToken("surface"))
+
         texteIntro = _(u"Vous pouvez ici créer, modifier ou supprimer des scénarios.")
         self.label_introduction = FonctionsPerso.StaticWrapText(self, -1, texteIntro)
+        self.label_introduction.SetForegroundColour(UTILS_Interface.GetToken("on_surface_variant"))
 
         self.listCtrl = TreeListCtrl(self, -1, IDpersonne=IDpersonne)
-        self.listCtrl.SetMinSize((20, 20))        
-        self.bouton_ajouter = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_modifier = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Modifier.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_supprimer = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_dupliquer = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Dupliquer.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_ajouter = CTRL_Bouton_image.CTRL(
+            self, texte=_(u"Ajouter"), cheminImage="Images/32x32/Ajouter.png"
+        )
+        self.bouton_modifier = CTRL_Bouton_image.CTRL(
+            self, texte=_(u"Modifier"), cheminImage="Images/32x32/Modifier.png"
+        )
+        self.bouton_supprimer = CTRL_Bouton_image.CTRL(
+            self, texte=_(u"Supprimer"), cheminImage="Images/32x32/Supprimer.png"
+        )
+        self.bouton_dupliquer = CTRL_Bouton_image.CTRL(
+            self, texte=_(u"Dupliquer"), cheminImage="Images/32x32/Dupliquer.png"
+        )
 
         self.__set_properties()
         self.__do_layout()
-        
-        # Binds
+
         self.Bind(wx.EVT_BUTTON, self.OnBoutonAjouter, self.bouton_ajouter)
         self.Bind(wx.EVT_BUTTON, self.OnBoutonModifier, self.bouton_modifier)
         self.Bind(wx.EVT_BUTTON, self.OnBoutonSupprimer, self.bouton_supprimer)
@@ -45,41 +59,22 @@ class Panel(wx.Panel):
 
     def __set_properties(self):
         self.bouton_ajouter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour créer un nouveau scénario")))
-        self.bouton_ajouter.SetSize(self.bouton_ajouter.GetBestSize())
         self.bouton_modifier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier le scénario sélectionné dans la liste")))
-        self.bouton_modifier.SetSize(self.bouton_modifier.GetBestSize())
         self.bouton_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer le scénario sélectionné dans la liste")))
-        self.bouton_supprimer.SetSize(self.bouton_supprimer.GetBestSize())
         self.bouton_dupliquer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour dupliquer le scénario sélectionné")))
 
     def __do_layout(self):
-        grid_sizer_base = wx.FlexGridSizer(rows=5, cols=1, vgap=10, hgap=10)
+        sizer_base = wx.BoxSizer(wx.VERTICAL)
+        sizer_base.Add(self.label_introduction, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 10)
+        sizer_base.Add(self.listCtrl, 1, wx.EXPAND | wx.ALL, 10)
 
-        grid_sizer_base.Add(self.label_introduction, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 10)
-
-        grid_sizer_base2 = wx.FlexGridSizer(rows=1, cols=2, vgap=5, hgap=5)
-        grid_sizer_base2.Add(self.listCtrl, 1, wx.EXPAND, 0)
-
-        grid_sizer_boutons = wx.FlexGridSizer(rows=6, cols=1, vgap=5, hgap=10)
-        grid_sizer_boutons.Add(self.bouton_ajouter, 0, 0, 0)
-        grid_sizer_boutons.Add(self.bouton_modifier, 0, 0, 0)
-        grid_sizer_boutons.Add(self.bouton_supprimer, 0, 0, 0)
-        grid_sizer_boutons.Add((5, 5), 0, 0, 0)
-        grid_sizer_boutons.Add(self.bouton_dupliquer, 0, 0, 0)
-        grid_sizer_base2.Add(grid_sizer_boutons, 1, wx.EXPAND, 0)
-        grid_sizer_base2.AddGrowableRow(0)
-        grid_sizer_base2.AddGrowableCol(0)
-
-        if self.GetGrandParent().GetName() == "frm_gestion_scenarios" :
-            grid_sizer_base.Add(grid_sizer_base2, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
-        else:
-            grid_sizer_base.Add(grid_sizer_base2, 1, wx.EXPAND, 0)
-        self.SetSizer(grid_sizer_base)
-        grid_sizer_base.Fit(self)
-        grid_sizer_base.AddGrowableRow(1)
-        grid_sizer_base.AddGrowableRow(2)
-        grid_sizer_base.AddGrowableCol(0)
-        self.SetAutoLayout(True)
+        sizer_actions = wx.WrapSizer(wx.HORIZONTAL)
+        sizer_actions.Add(self.bouton_ajouter, 0, wx.RIGHT | wx.BOTTOM, 6)
+        sizer_actions.Add(self.bouton_modifier, 0, wx.RIGHT | wx.BOTTOM, 6)
+        sizer_actions.Add(self.bouton_supprimer, 0, wx.RIGHT | wx.BOTTOM, 6)
+        sizer_actions.Add(self.bouton_dupliquer, 0, wx.RIGHT | wx.BOTTOM, 6)
+        sizer_base.Add(sizer_actions, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
+        self.SetSizer(sizer_base)
 
     def OnBoutonAjouter(self, event):
         self.Ajouter()
@@ -95,271 +90,252 @@ class Panel(wx.Panel):
     def Modifier(self):
         item = self.listCtrl.GetSelection()
         IDscenario = self.listCtrl.GetItemData(item)
-
-        # Vérifie qu'un item a bien été sélectionné
-        if IDscenario > 100000 or IDscenario == None or IDscenario == -1 :
+        if IDscenario is None or IDscenario > 100000 or IDscenario == -1:
             dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sélectionner un scénario à modifier dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
-        
+
         dlg = DLG_Scenario.Dialog(self, IDscenario=IDscenario, IDpersonne=self.IDpersonne)
         dlg.ShowModal()
         dlg.Destroy()
-        
+
     def OnBoutonSupprimer(self, event):
         self.Supprimer()
 
     def Supprimer(self):
         item = self.listCtrl.GetSelection()
         IDscenario = self.listCtrl.GetItemData(item)
-
-        # Vérifie qu'un item a bien été sélectionné
-        if IDscenario > 100000 or IDscenario == None or IDscenario == -1 :
+        if IDscenario is None or IDscenario > 100000 or IDscenario == -1:
             dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sélectionner un scénario à supprimer dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
-        
-        # Vérifie si un report utilise ce scénario
+
         DB = GestionDB.DB()
         req = "SELECT IDscenario_cat, IDscenario, IDcategorie, prevision, report, date_debut_realise, date_fin_realise FROM scenarios_cat;"
         DB.ExecuterReq(req)
         listeDonnees = DB.ResultatReq()
         DB.Close()
         nbreReports = 0
-        for IDscenario_cat, IDscenarioTmp, IDcategorie, prevision, report, date_debut_realise, date_fin_realise in listeDonnees :
-            if report != "" and report != None :
-                if report[0] == "A" :
+        for IDscenario_cat, IDscenarioTmp, IDcategorie, prevision, report, date_debut_realise, date_fin_realise in listeDonnees:
+            if report != "" and report is not None:
+                if report[0] == "A":
                     IDscenarioReport, IDcategorie = report[1:].split(";")
-                    if int(IDscenarioReport) == IDscenario :
+                    if int(IDscenarioReport) == IDscenario:
                         nbreReports += 1
-        
-        if nbreReports > 0 :
-            if nbreReports == 1 : txtMessage = six.text_type(_(u"Un report utilise ce scénario.\n\nSouhaitez-vous tout de même le supprimer ?"))
-            else : txtMessage = six.text_type(_(u"%d reports utilisent ce scénario.\n\nSouhaitez-vous tout de même le supprimer ?") % nbreReports)
-            dlgConfirm = wx.MessageDialog(self, txtMessage, _(u"Confirmation de suppression"), wx.YES_NO|wx.NO_DEFAULT|wx.ICON_QUESTION)
+
+        if nbreReports > 0:
+            if nbreReports == 1:
+                txtMessage = six.text_type(_(u"Un report utilise ce scénario.\n\nSouhaitez-vous tout de même le supprimer ?"))
+            else:
+                txtMessage = six.text_type(_(u"%d reports utilisent ce scénario.\n\nSouhaitez-vous tout de même le supprimer ?") % nbreReports)
+            dlgConfirm = wx.MessageDialog(self, txtMessage, _(u"Confirmation de suppression"), wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
             reponse = dlgConfirm.ShowModal()
             dlgConfirm.Destroy()
             if reponse == wx.ID_NO:
                 return
-        
-        # Demande de confirmation
+
         Nom = self.listCtrl.GetItemText(item)
         txtMessage = six.text_type((_(u"Voulez-vous vraiment supprimer ce scénario ? \n\n> ") + Nom))
-        dlgConfirm = wx.MessageDialog(self, txtMessage, _(u"Confirmation de suppression"), wx.YES_NO|wx.NO_DEFAULT|wx.ICON_QUESTION)
+        dlgConfirm = wx.MessageDialog(self, txtMessage, _(u"Confirmation de suppression"), wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
         reponse = dlgConfirm.ShowModal()
         dlgConfirm.Destroy()
         if reponse == wx.ID_NO:
             return
-        
-        # Suppression du type de pièce
+
         DB = GestionDB.DB()
         DB.ReqDEL("scenarios", "IDscenario", IDscenario)
         DB.ReqDEL("scenarios_cat", "IDscenario", IDscenario)
         DB.Close()
-        
-        # MàJ du ListCtrl
         self.listCtrl.MAJ()
-    
+
     def OnBoutonDupliquer(self, event):
         item = self.listCtrl.GetSelection()
         IDscenario = self.listCtrl.GetItemData(item)
-        if IDscenario == None:
+        if IDscenario is None:
             return False
-
-        # Vérifie qu'un item a bien été sélectionné
-        if IDscenario > 100000 or IDscenario == None or IDscenario == -1 :
+        if IDscenario > 100000 or IDscenario == -1:
             dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sélectionner un scénario à dupliquer dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
-        
-        # Demande de confirmation
+
         Nom = self.listCtrl.GetItemText(item)
         txtMessage = six.text_type((_(u"Voulez-vous vraiment dupliquer ce scénario ? \n\n> ") + Nom))
-        dlgConfirm = wx.MessageDialog(self, txtMessage, _(u"Confirmation de duplication"), wx.YES_NO|wx.NO_DEFAULT|wx.ICON_QUESTION)
+        dlgConfirm = wx.MessageDialog(self, txtMessage, _(u"Confirmation de duplication"), wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
         reponse = dlgConfirm.ShowModal()
         dlgConfirm.Destroy()
         if reponse == wx.ID_NO:
             return
-        
-        # Récupération des données du scénario à dupliquer
+
         DB = GestionDB.DB()
         req = "SELECT IDpersonne, nom, description, mode_heure, detail_mois, date_debut, date_fin, toutes_categories FROM scenarios WHERE IDscenario=%d ;" % IDscenario
         DB.ExecuterReq(req)
         listeDonnees = DB.ResultatReq()
-        
-        # Enregistrement du scénario
-        for IDpersonne, nom, description, mode_heure, detail_mois, date_debut, date_fin, toutes_categories in listeDonnees :
-            listeDonnees = [ ("IDpersonne",   IDpersonne),  
-                                        ("nom",   _(u"Copie de %s") % nom),  
-                                        ("description",    description),
-                                        ("mode_heure",    mode_heure), 
-                                        ("detail_mois",    detail_mois),
-                                        ("date_debut",    date_debut), 
-                                        ("date_fin",    date_fin),
-                                        ("toutes_categories",    toutes_categories),
-                                         ]
-            newIDscenario = DB.ReqInsert("scenarios", listeDonnees) 
+
+        for IDpersonne, nom, description, mode_heure, detail_mois, date_debut, date_fin, toutes_categories in listeDonnees:
+            listeDonnees = [
+                ("IDpersonne", IDpersonne),
+                ("nom", _(u"Copie de %s") % nom),
+                ("description", description),
+                ("mode_heure", mode_heure),
+                ("detail_mois", detail_mois),
+                ("date_debut", date_debut),
+                ("date_fin", date_fin),
+                ("toutes_categories", toutes_categories),
+            ]
+            newIDscenario = DB.ReqInsert("scenarios", listeDonnees)
             DB.Commit()
 
-        # Enregistrement des catégories de scénarios
         req = "SELECT IDscenario_cat, IDscenario, IDcategorie, prevision, report, date_debut_realise, date_fin_realise FROM scenarios_cat WHERE IDscenario=%d;" % IDscenario
         DB.ExecuterReq(req)
         listeDonnees = DB.ResultatReq()
-        
-        for IDscenario_cat, IDscenario, IDcategorie, prevision, report, date_debut_realise, date_fin_realise in listeDonnees :
-            listeDonnees = [ ("IDscenario",   newIDscenario),  
-                                    ("IDcategorie",   IDcategorie),  
-                                    ("prevision",    prevision),
-                                    ("report",    report), 
-                                    ("date_debut_realise",    date_debut_realise),
-                                    ("date_fin_realise",    date_fin_realise), 
-                                     ]
 
-            IDscenario_cat = DB.ReqInsert("scenarios_cat", listeDonnees) 
+        for IDscenario_cat, IDscenario, IDcategorie, prevision, report, date_debut_realise, date_fin_realise in listeDonnees:
+            listeDonnees = [
+                ("IDscenario", newIDscenario),
+                ("IDcategorie", IDcategorie),
+                ("prevision", prevision),
+                ("report", report),
+                ("date_debut_realise", date_debut_realise),
+                ("date_fin_realise", date_fin_realise),
+            ]
+            IDscenario_cat = DB.ReqInsert("scenarios_cat", listeDonnees)
             DB.Commit()
-        
+
         DB.Close()
-        
-        # Ouverture du scénario dans l'éditeur
         dlg = DLG_Scenario.Dialog(self, IDscenario=newIDscenario, IDpersonne=self.IDpersonne)
         dlg.ShowModal()
         dlg.Destroy()
-            
-        
+
     def MAJ_ListCtrl(self, IDselection=None):
-        self.listCtrl.MAJ(IDselection) 
+        self.listCtrl.MAJ(IDselection)
         self.listCtrl.SetFocus()
 
     def MAJpanel(self):
-        self.listCtrl.MAJ() 
-
-
-
-
+        self.listCtrl.MAJ()
 
 
 class TreeListCtrl(HTL.HyperTreeList):
     def __init__(self, *args, **kwds):
-        # Récupération des paramètres perso
         self.IDpersonne = kwds.pop("IDpersonne", None)
         self.selectionID = kwds.pop("selectionID", None)
-        # Initialisation du listCtrl
+        self._columns_initialized = False
         HTL.HyperTreeList.__init__(self, *args, **kwds)
-        self.SetBackgroundColour(wx.WHITE)
-
-        self.SetAGWWindowStyleFlag(wx.TR_HIDE_ROOT | wx.TR_HAS_BUTTONS | HTL.TR_COLUMN_LINES |wx.TR_HAS_VARIABLE_ROW_HEIGHT | wx.TR_FULL_ROW_HIGHLIGHT | wx.TR_SINGLE)
+        self.SetBackgroundColour(UTILS_Interface.GetToken("surface_container_lowest"))
+        self.SetForegroundColour(UTILS_Interface.GetToken("on_surface"))
+        self.SetAGWWindowStyleFlag(
+            wx.TR_HIDE_ROOT
+            | wx.TR_HAS_BUTTONS
+            | HTL.TR_COLUMN_LINES
+            | wx.TR_HAS_VARIABLE_ROW_HEIGHT
+            | wx.TR_FULL_ROW_HIGHLIGHT
+            | wx.TR_SINGLE
+        )
         self.InitTreeCtrl()
-        
         self.Bind(wx.EVT_TREE_ITEM_ACTIVATED, self.OnActivated)
-        self.Bind(wx.EVT_TREE_ITEM_RIGHT_CLICK, self.OnContextMenu)   
-    
+        self.Bind(wx.EVT_TREE_ITEM_RIGHT_CLICK, self.OnContextMenu)
+        self.Bind(wx.EVT_SIZE, self.OnSize)
+
+    def _init_columns(self):
+        if self._columns_initialized:
+            return
+        if self.IDpersonne is None:
+            self.AddColumn(_(u"Nom personne / nom scénario"))
+        else:
+            self.AddColumn(_(u"Nom du scénario"))
+        self.AddColumn(_(u"Période"))
+        self.AddColumn(_(u"Description"))
+        self.SetMainColumn(0)
+        self._columns_initialized = True
+        self._resize_columns()
+
+    def _resize_columns(self):
+        if not self._columns_initialized:
+            return
+        width = max(430, self.GetClientSize().width - 18)
+        if self.IDpersonne is None:
+            proportions = (0.34, 0.24, 0.42)
+        else:
+            proportions = (0.30, 0.25, 0.45)
+        first = max(130, int(width * proportions[0]))
+        second = max(130, int(width * proportions[1]))
+        third = max(160, width - first - second)
+        self.SetColumnWidth(0, first)
+        self.SetColumnWidth(1, second)
+        self.SetColumnWidth(2, third)
+
+    def OnSize(self, event):
+        self._resize_columns()
+        event.Skip()
+
     def InitTreeCtrl(self):
         self.dict_personnes = self.GetDictPersonnes()
         self.dictScenarios = self.GetDictScenarios()
-        
-        # Création des colonnes
-        if self.IDpersonne == None :
-            self.AddColumn(_(u"Nom personne / nom scénario"))
-            self.SetColumnWidth(0, 250)
-        else:
-            self.AddColumn(_(u"Nom du scénario"))
-            self.SetColumnWidth(0, 200)
-        self.AddColumn(_(u"Période"))
-        self.SetColumnWidth(1, 160)
-        self.AddColumn(_(u"Description"))
-        self.SetColumnWidth(2, 400)
-        self.SetMainColumn(0) 
-        
-        # ImageList
-        il = wx.ImageList(16, 16)
-        self.img_homme  = il.Add(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Homme.png"), wx.BITMAP_TYPE_PNG))
-        self.img_femme  = il.Add(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Femme.png"), wx.BITMAP_TYPE_PNG))
-        self.img_scenario  = il.Add(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Scenario.png"), wx.BITMAP_TYPE_PNG))
-        self.SetImageList(il)
-        self.il = il
-        
-        # Création de la racine
+        self._init_columns()
+
         self.root = self.AddRoot("Racine")
         self.SetItemText(self.root, u"", 1)
         self.SetItemText(self.root, u"", 2)
 
-        # Création des branches
-        if self.IDpersonne == None :
+        if self.IDpersonne is None:
             listeIDPersonnes = list(self.dictScenarios.keys())
             listeNomsPersonnes = []
-            for IDpersonne in listeIDPersonnes :
+            for IDpersonne in listeIDPersonnes:
                 if IDpersonne in self.dict_personnes:
                     IDpersonne, nom, prenom, civilite = self.dict_personnes[IDpersonne]
                     listeNomsPersonnes.append((u"%s %s" % (nom, prenom), civilite, IDpersonne))
             listeNomsPersonnes.sort()
-            
-            for nomPersonne, civilite, IDpersonne in listeNomsPersonnes :
+
+            for nomPersonne, civilite, IDpersonne in listeNomsPersonnes:
                 child = self.AppendItem(self.root, nomPersonne)
                 self.SetItemBold(child, True)
+                self.SetItemTextColour(child, UTILS_Interface.GetToken("on_surface"))
                 self.SetItemText(child, "", 1)
                 self.SetItemText(child, "", 2)
                 self.SetItemData(child, 100000 + IDpersonne)
-                if civilite == "Mr" : 
-                    image = self.img_homme
-                else:
-                    image = self.img_femme
-                self.SetItemImage(child, image, which = wx.TreeItemIcon_Normal)
-                self.SetItemImage(child, image, which = wx.TreeItemIcon_Expanded)
-                
+
                 listeScenarios = self.dictScenarios[IDpersonne]
-                
-                for IDscenario, nom, description, date_debut, date_fin in listeScenarios :
+                for IDscenario, nom, description, date_debut, date_fin in listeScenarios:
                     last = self.AppendItem(child, nom)
                     periode = _(u"Du %s au %s") % (self.FormateDate(date_debut), self.FormateDate(date_fin))
                     self.SetItemText(last, periode, 1)
-                    if description == "" or description == None : description = _(u"Aucune description")
-                    self.SetItemText(last, str(description), 2)
-                    self.SetItemData(last, IDscenario)
-                    self.SetItemImage(last, self.img_scenario, which = wx.TreeItemIcon_Normal)
-                    self.SetItemImage(last, self.img_scenario, which = wx.TreeItemIcon_Expanded)
-                    
-                    if self.selectionID == IDscenario : 
-                        self.EnsureVisible(last)
-                        self.SelectItem(last, last)
-                
-                self.Expand(child)
-        
-        else:
-            
-            # Version pour fiche individuelle
-            if self.IDpersonne in self.dictScenarios :
-                listeScenarios = self.dictScenarios[self.IDpersonne]
-                for IDscenario, nom, description, date_debut, date_fin in listeScenarios :
-                    last = self.AppendItem(self.root, nom)
-                    periode = _(u"Du %s au %s") % (self.FormateDate(date_debut), self.FormateDate(date_fin))
-                    self.SetItemText(last, periode, 1)
-                    if description == "" or description == None:
+                    if description == "" or description is None:
                         description = _(u"Aucune description")
                     self.SetItemText(last, str(description), 2)
                     self.SetItemData(last, IDscenario)
-                    self.SetItemImage(last, self.img_scenario, which = wx.TreeItemIcon_Normal)
-                    self.SetItemImage(last, self.img_scenario, which = wx.TreeItemIcon_Expanded)
-                    
-                    if self.selectionID == IDscenario : 
+                    if self.selectionID == IDscenario:
                         self.EnsureVisible(last)
                         self.SelectItem(last, last)
-            
-        #self.Expand(self.root)
+                self.Expand(child)
+        else:
+            if self.IDpersonne in self.dictScenarios:
+                listeScenarios = self.dictScenarios[self.IDpersonne]
+                for IDscenario, nom, description, date_debut, date_fin in listeScenarios:
+                    last = self.AppendItem(self.root, nom)
+                    periode = _(u"Du %s au %s") % (self.FormateDate(date_debut), self.FormateDate(date_fin))
+                    self.SetItemText(last, periode, 1)
+                    if description == "" or description is None:
+                        description = _(u"Aucune description")
+                    self.SetItemText(last, str(description), 2)
+                    self.SetItemData(last, IDscenario)
+                    if self.selectionID == IDscenario:
+                        self.EnsureVisible(last)
+                        self.SelectItem(last, last)
+        self._resize_columns()
 
     def MAJ(self, selectionID=None):
         self.DeleteAllItems()
         self.selectionID = selectionID
         self.InitTreeCtrl()
-        
+
     def FormateDate(self, dateStr):
-            return UTILS_Dates.DateEngFr(dateStr)
+        return UTILS_Dates.DateEngFr(dateStr)
 
     def GetDictScenarios(self):
         DB = GestionDB.DB()
-        if self.IDpersonne == None : 
+        if self.IDpersonne is None:
             req = "SELECT IDscenario, IDpersonne, nom, description, date_debut, date_fin FROM scenarios ORDER BY date_debut DESC;"
         else:
             req = "SELECT IDscenario, IDpersonne, nom, description, date_debut, date_fin FROM scenarios WHERE IDpersonne=%d ORDER BY date_debut DESC;" % self.IDpersonne
@@ -367,11 +343,11 @@ class TreeListCtrl(HTL.HyperTreeList):
         listeDonnees = DB.ResultatReq()
         DB.Close()
         dictScenarios = {}
-        for IDscenario, IDpersonne, nom, description, date_debut, date_fin in listeDonnees :
-            if IDpersonne in dictScenarios :
-                dictScenarios[IDpersonne].append( (IDscenario, nom, description, date_debut, date_fin) )
+        for IDscenario, IDpersonne, nom, description, date_debut, date_fin in listeDonnees:
+            if IDpersonne in dictScenarios:
+                dictScenarios[IDpersonne].append((IDscenario, nom, description, date_debut, date_fin))
             else:
-                dictScenarios[IDpersonne] = [ (IDscenario, nom, description, date_debut, date_fin), ]
+                dictScenarios[IDpersonne] = [(IDscenario, nom, description, date_debut, date_fin)]
         return dictScenarios
 
     def GetDictPersonnes(self):
@@ -381,140 +357,116 @@ class TreeListCtrl(HTL.HyperTreeList):
         listeDonnees = DB.ResultatReq()
         DB.Close()
         dict_personnes = {}
-        for valeurs in listeDonnees :
+        for valeurs in listeDonnees:
             dict_personnes[valeurs[0]] = valeurs
         return dict_personnes
 
-    def OnActivated(self,event):
+    def OnActivated(self, event):
         item = self.GetSelection()
         data = self.GetItemData(item)
-        if data < 100000 :
+        if data is not None and data < 100000:
             self.GetParent().Modifier()
         else:
             event.Skip()
-    
+
     def OnContextMenu(self, event):
-        """Ouverture du menu contextuel """
-        # Recherche et sélection de l'item pointé avec la souris
         item = event.GetItem()
         data = self.GetItemData(item)
-        if data == None or data > 100000 :
+        if data is None or data > 100000:
             return
         self.SelectItem(item, item)
-        
-        # Création du menu contextuel
-        menuPop = UTILS_Adaptations.Menu()
 
-        # Item Ajouter
+        menuPop = UTILS_Adaptations.Menu()
         item = wx.MenuItem(menuPop, 10, _(u"Ajouter"))
-        bmp = wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_PNG)
-        item.SetBitmap(bmp)
         menuPop.AppendItem(item)
         self.Bind(wx.EVT_MENU, self.GetParent().OnBoutonAjouter, id=10)
 
-        # Item Modifier
         item = wx.MenuItem(menuPop, 20, _(u"Modifier"))
-        bmp = wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Modifier.png"), wx.BITMAP_TYPE_PNG)
-        item.SetBitmap(bmp)
         menuPop.AppendItem(item)
         self.Bind(wx.EVT_MENU, self.GetParent().OnBoutonModifier, id=20)
-        
         menuPop.AppendSeparator()
 
-        # Item Supprimer
         item = wx.MenuItem(menuPop, 30, _(u"Supprimer"))
-        bmp = wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_PNG)
-        item.SetBitmap(bmp)
         menuPop.AppendItem(item)
         self.Bind(wx.EVT_MENU, self.GetParent().OnBoutonSupprimer, id=30)
-        
         menuPop.AppendSeparator()
-        
-        # Item Dupliquer
+
         item = wx.MenuItem(menuPop, 40, _(u"Dupliquer"))
-        bmp = wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Dupliquer.png"), wx.BITMAP_TYPE_PNG)
-        item.SetBitmap(bmp)
         menuPop.AppendItem(item)
         self.Bind(wx.EVT_MENU, self.GetParent().OnBoutonDupliquer, id=40)
-        
+
         self.PopupMenu(menuPop)
         menuPop.Destroy()
 
 
-        
-
-
-
-
 class Dialog(wx.Dialog):
     def __init__(self, parent, title=""):
-        wx.Dialog.__init__(self, parent, -1, name="frm_gestion_scenarios", style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX)
+        wx.Dialog.__init__(
+            self,
+            parent,
+            -1,
+            name="frm_gestion_scenarios",
+            style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER | wx.MAXIMIZE_BOX | wx.MINIMIZE_BOX,
+        )
         self.parent = parent
+        self.SetBackgroundColour(UTILS_Interface.GetToken("surface"))
 
         self.panel_base = wx.Panel(self, -1)
+        self.panel_base.SetBackgroundColour(UTILS_Interface.GetToken("surface"))
         self.panel_contenu = Panel(self.panel_base, IDpersonne=None)
 
-        self.bouton_aide = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))
-        self.bouton_fermer = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Fermer"), cheminImage=Chemins.GetStaticPath("Images/32x32/Fermer.png"))
+        self.bouton_aide = CTRL_Bouton_image.CTRL(
+            self.panel_base,
+            texte=_(u"Aide"),
+            cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"),
+        )
+        self.bouton_fermer = CTRL_Bouton_image.CTRL(
+            self.panel_base,
+            id=wx.ID_CANCEL,
+            texte=_(u"Fermer"),
+            cheminImage=Chemins.GetStaticPath("Images/32x32/Fermer.png"),
+        )
         self.__set_properties()
         self.__do_layout()
-        
+
         self.Bind(wx.EVT_BUTTON, self.Onbouton_aide, self.bouton_aide)
         self.Bind(wx.EVT_BUTTON, self.Onbouton_fermer, self.bouton_fermer)
 
     def __set_properties(self):
         self.SetTitle(_(u"Gestion des scénarios"))
-        if 'phoenix' in wx.PlatformInfo:
-            _icon = wx.Icon()
-        else :
-            _icon = wx.EmptyIcon()
-        _icon.CopyFromBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Logo.png"), wx.BITMAP_TYPE_ANY))
-        self.SetIcon(_icon)
-        self.bouton_aide.SetToolTip(wx.ToolTip("Cliquez ici pour obtenir de l'aide"))
-        self.bouton_aide.SetSize(self.bouton_aide.GetBestSize())
+        self.bouton_aide.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour obtenir de l'aide")))
         self.bouton_fermer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour fermer")))
-        self.bouton_fermer.SetSize(self.bouton_fermer.GetBestSize())        
+        self.SetMinSize(_dip(self, 600, 420))
+        self.SetSize(_dip(self, 980, 680))
 
     def __do_layout(self):
         sizer_base = wx.BoxSizer(wx.VERTICAL)
-        grid_sizer_base = wx.FlexGridSizer(rows=3, cols=1, vgap=0, hgap=0)
+        sizer_base.Add(self.panel_contenu, 1, wx.EXPAND | wx.ALL, 10)
 
-        sizer_pages = wx.BoxSizer(wx.VERTICAL)
-        grid_sizer_base.Add(sizer_pages, 1, wx.ALL|wx.EXPAND, 0)
-        sizer_pages.Add(self.panel_contenu, 1, wx.EXPAND | wx.TOP, 10)
+        sizer_boutons = wx.BoxSizer(wx.HORIZONTAL)
+        sizer_boutons.Add(self.bouton_aide, 0)
+        sizer_boutons.AddStretchSpacer(1)
+        sizer_boutons.Add(self.bouton_fermer, 0)
+        sizer_base.Add(sizer_boutons, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
 
-        grid_sizer_boutons = wx.FlexGridSizer(rows=1, cols=6, vgap=10, hgap=10)
-        grid_sizer_boutons.Add(self.bouton_aide, 0, 0, 0)
-        grid_sizer_boutons.Add((20, 20), 0, wx.EXPAND, 0)
-        grid_sizer_boutons.Add(self.bouton_fermer, 0, 0, 0)
-        grid_sizer_boutons.AddGrowableCol(1)
-        grid_sizer_base.Add(grid_sizer_boutons, 1, wx.LEFT|wx.BOTTOM|wx.RIGHT|wx.EXPAND, 10)
-        self.panel_base.SetSizer(grid_sizer_base)
-        grid_sizer_base.AddGrowableRow(0)
-        grid_sizer_base.AddGrowableCol(0)
-        sizer_base.Add(self.panel_base, 1, wx.EXPAND, 0)
-        self.SetSizer(sizer_base)
+        self.panel_base.SetSizer(sizer_base)
+        outer = wx.BoxSizer(wx.VERTICAL)
+        outer.Add(self.panel_base, 1, wx.EXPAND)
+        self.SetSizer(outer)
         self.Layout()
-        
-        self.SetMinSize((450, 350))
-        self.SetSize((890, 600))
-        
         self.CentreOnScreen()
-        self.sizer_pages = sizer_pages
+        self.sizer_pages = sizer_base
 
     def Onbouton_aide(self, event):
         from Utils import UTILS_Aide
         UTILS_Aide.Aide("Lagestiondesscnarios")
-                
+
     def Onbouton_fermer(self, event):
         self.EndModal(wx.ID_CANCEL)
-        
-
 
 
 if __name__ == "__main__":
     app = wx.App(0)
-    #wx.InitAllImageHandlers()
     dlg = Dialog(None, "")
     dlg.ShowModal()
     dlg.Destroy()

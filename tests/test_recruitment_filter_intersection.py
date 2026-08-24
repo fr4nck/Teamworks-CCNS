@@ -7,7 +7,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 TEAMWORKS = ROOT / "teamworks"
-TARGET = TEAMWORKS / "Ol" / "OL_candidatures.py"
+TARGET = TEAMWORKS / "Ol" / "OL_candidatures_core.py"
 
 
 def _load_filter_method():
