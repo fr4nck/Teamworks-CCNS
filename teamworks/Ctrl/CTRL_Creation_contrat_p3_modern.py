@@ -59,18 +59,22 @@ class Page(LegacyPage):
     # Nature de l'opération et contrat précédent
 
     def _BuildOperationControls(self):
-        self.label_operation = wx.StaticText(self, -1, _(u"Nature de l'opération :"))
-        self.choice_operation = wx.Choice(self, -1, choices=[])
+        # Ces contrôles sont ajoutés dans le StaticBoxSizer « Régime et
+        # caractéristiques ». Sous wxPython Phoenix, ils doivent donc être
+        # enfants du StaticBox lui-même, et non du panel englobant.
+        parent = self.sizer_caract_staticbox
+        self.label_operation = wx.StaticText(parent, -1, _(u"Nature de l'opération :"))
+        self.choice_operation = wx.Choice(parent, -1, choices=[])
         data = self.GetGrandParent().dictContrats
         if data.get("IDcontrat") and not data.get("operation_type"):
             self.choice_operation.Append(_(u"Non renseignée (contrat historique)"), None)
         for operation, label in OPERATION_CHOICES:
             self.choice_operation.Append(_(label), operation.value)
 
-        self.label_previous_contract = wx.StaticText(self, -1, _(u"Contrat précédent :"))
-        self.choice_previous_contract = wx.Choice(self, -1, choices=[])
+        self.label_previous_contract = wx.StaticText(parent, -1, _(u"Contrat précédent :"))
+        self.choice_previous_contract = wx.Choice(parent, -1, choices=[])
         self.previous_contract_hint = wx.StaticText(
-            self, -1,
+            parent, -1,
             _(u"Le contrat précédent permet de contrôler la continuité et de calculer la période d'essai restante."),
         )
         self.previous_contract_hint.SetForegroundColour("Grey")
@@ -200,14 +204,16 @@ class Page(LegacyPage):
         self.periode_essai.Hide()
         self.aide_essai.Hide()
 
-        self.check_trial = wx.CheckBox(self, -1, _(u"Prévoir une période d'essai"))
-        self.label_trial_value = wx.StaticText(self, -1, _(u"Durée :"))
-        self.trial_value = wx.SpinCtrl(self, -1, "", min=0, max=365, initial=0, size=(75, -1))
-        self.choice_trial_unit = wx.Choice(self, -1, choices=[])
+        # Même contrainte Phoenix pour le StaticBoxSizer « Période d'essai ».
+        parent = self.sizer_essai_staticbox
+        self.check_trial = wx.CheckBox(parent, -1, _(u"Prévoir une période d'essai"))
+        self.label_trial_value = wx.StaticText(parent, -1, _(u"Durée :"))
+        self.trial_value = wx.SpinCtrl(parent, -1, "", min=0, max=365, initial=0, size=(75, -1))
+        self.choice_trial_unit = wx.Choice(parent, -1, choices=[])
         for unit, label in TRIAL_UNIT_LABELS:
             self.choice_trial_unit.Append(_(label), unit.value)
         self.SelectChoice(self.choice_trial_unit, ProbationUnit.DAY.value)
-        self.trial_help = wx.StaticText(self, -1, "")
+        self.trial_help = wx.StaticText(parent, -1, "")
         self.trial_help.SetForegroundColour("Grey")
         self.trial_help.Wrap(560)
 
