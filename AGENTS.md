@@ -16,6 +16,94 @@ Respecter l'ordre suivant lors des arbitrages :
 
 Ne jamais améliorer un point technique au prix d'une règle CCNS fausse, d'une régression fonctionnelle ou d'un comportement moins compréhensible.
 
+## Doctrine de ratissage systématique
+
+Un défaut confirmé ne doit pas être traité uniquement comme un incident local lorsqu'il peut révéler une famille de défauts.
+
+Lorsqu'un bug, une assertion, une incompatibilité ou une faiblesse structurelle est identifié :
+
+1. corriger la cause locale proprement ;
+2. identifier la famille technique ou métier à laquelle il appartient ;
+3. rechercher cette famille dans tout le périmètre pertinent du dépôt, et pas seulement dans les fichiers récemment modifiés ;
+4. distinguer explicitement les occurrences détectées des défauts réellement confirmés ;
+5. éliminer les faux positifs avant toute correction massive ;
+6. corriger les occurrences confirmées par lots homogènes et réversibles ;
+7. transformer la détection fiable en garde-fou automatisé lorsque cela est raisonnable ;
+8. relancer les validations Linux et Windows après chaque vague significative.
+
+Exemples de familles à ratisser après découverte d'un cas :
+
+- parentage wxPython / `StaticBoxSizer` ;
+- API wxPython Classic ou Phoenix incompatibles ;
+- appels de getters oubliés (`GetValue`, `GetSelection`, etc.) ;
+- `eval`, `exec` et autres exécutions dynamiques ;
+- SQL dépendant de l'ordre physique des colonnes ou incompatible avec les versions historiques de MySQL/MariaDB ;
+- exceptions silencieuses et erreurs avalées ;
+- écritures de configuration fragiles ;
+- chemins, ressources et fichiers temporaires du portable Windows ;
+- cycles d'import et dépendances de bootstrap ;
+- tailles fixes, DPI, échelle d'interface et layouts non adaptatifs ;
+- sauvegarde, restauration et opérations pouvant affecter l'intégrité des données.
+
+La recherche doit viser la cause générique, pas seulement le symptôme visible.
+
+## Détecté n'est pas confirmé
+
+Un outil statique, une expression régulière ou un audit automatique produit des **candidats**, pas automatiquement des bugs.
+
+Avant une migration large :
+
+- examiner les faux positifs possibles ;
+- vérifier les constructions indirectes, les réaffectations de variables et les anciens patterns de layout ;
+- privilégier l'analyse structurelle/AST lorsqu'elle réduit l'ambiguïté ;
+- contrôler un échantillon représentatif des transformations ;
+- compiler les fichiers transformés ;
+- utiliser `git diff --check` ;
+- exiger que le garde-fou ayant motivé la migration retombe à zéro sur les occurrences bloquantes.
+
+Ne jamais assouplir un test ou un audit uniquement pour obtenir du vert. Si une règle est fausse ou trop large, corriger la règle ; si le défaut est réel, corriger le runtime.
+
+## Automatisation des corrections homogènes
+
+Lorsqu'une famille comporte de nombreuses occurrences mécaniquement équivalentes, préférer une transformation automatisée, déterministe et vérifiable à des dizaines d'éditions manuelles.
+
+Une migration automatique doit :
+
+- avoir des préconditions explicites ;
+- vérifier le nombre d'occurrences attendu ;
+- refuser les cas ambigus ;
+- ne modifier que les expressions ciblées ;
+- recompiler le code transformé ;
+- exécuter le garde-fou correspondant après transformation ;
+- produire un commit thématique lisible ;
+- ne laisser aucun script ou workflow temporaire inutile dans le produit final.
+
+Quand une migration temporaire est nécessaire pour travailler sur un grand lot, son historique doit être nettoyé ou compacté avant la qualification finale de la PR.
+
+## Qualification d'une RC
+
+Ne jamais confondre un CI vert avec une version prête à être remise en recette réelle.
+
+Les niveaux de validation doivent rester distincts :
+
+1. **code modifié** : le correctif existe dans la branche ;
+2. **tests automatisés** : les suites et garde-fous passent ;
+3. **exécutable construit** : le portable Windows est produit depuis le commit exact qualifié ;
+4. **parcours Windows réel** : démarrage et parcours critiques sont exécutés sur Windows ;
+5. **recette utilisateur** : la version est testée sur une copie réelle de la base et sur les flux métier attendus.
+
+Les mots « RC », « prêt à tester », « prêt pour recette » ou équivalents ne doivent être employés qu'en cohérence avec le niveau réellement atteint.
+
+Avant une recette RC, vérifier au minimum :
+
+- branche finale consolidée et CI Linux + Windows verte ;
+- absence de bloqueur connu dans les audits pré-RC ;
+- construction du portable depuis le **commit exact** à qualifier ;
+- présence et cohérence du manifeste, de `BUILD.txt` et des sommes SHA-256 ;
+- démarrage de l'exécutable Windows ;
+- parcours critiques contrats, salariés, présences, recrutement, préférences, sauvegarde/restauration et publipostage ;
+- recette sur copie réelle de la base avant toute qualification stable.
+
 ## Performances
 
 - Mesurer avant d'optimiser.
