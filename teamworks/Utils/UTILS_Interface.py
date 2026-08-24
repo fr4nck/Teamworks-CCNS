@@ -20,18 +20,22 @@ La charte limite volontairement l'interface à cinq familles visuelles :
 neutre, primaire, succès, avertissement et danger. Les variantes de surface,
 de contraste, de sélection ou de focus sont des nuances de ces familles, pas
 de nouvelles couleurs métier.
+
+Ce module de fondation ne dépend volontairement pas de ``UTILS_Traduction`` :
+il est importé très tôt par le moteur de thème et doit rester utilisable pendant
+l'initialisation des utilitaires de fichiers/configuration. Les trois libellés
+d'accents historiques sont donc stockés directement en français.
 """
 
 import wx
 
 from Utils import UTILS_Customize
-from Utils.UTILS_Traduction import _
 
 
 THEMES = [
-    ("Vert", _(u"Vert (Par défaut)")),
-    ("Bleu", _(u"Bleu")),
-    ("Noir", _(u"Noir")),
+    ("Vert", u"Vert (Par défaut)"),
+    ("Bleu", u"Bleu"),
+    ("Noir", u"Noir"),
 ]
 
 APPEARANCE_MODES = ("system", "light", "dark")
