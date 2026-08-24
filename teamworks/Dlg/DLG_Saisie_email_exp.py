@@ -56,27 +56,31 @@ class Page_SMTP(wx.Panel):
 
         self.static_sizer_adresse_staticbox = wx.StaticBox(self, -1, _(u"Adresse de messagerie"))
         self.static_sizer_serveur_staticbox = wx.StaticBox(self, -1, _(u"Serveur de messagerie"))
-        self.radio_predefini = wx.RadioButton(self, -1, "")
-        self.label_predefini = wx.StaticText(self, -1, _(u"Serveur prédéfini :"))
-        self.ctrl_predefinis = wx.Choice(self, -1, choices=listeServeursChoices)
-        self.radio_personnalise = wx.RadioButton(self, -1, "")
-        self.label_personnalise = wx.StaticText(self, -1, _(u"Serveur personnalisé :"))
-        self.label_smtp = wx.StaticText(self, -1, _(u"Serveur SMTP :"))
-        self.ctrl_smtp = wx.TextCtrl(self, -1, "")
-        self.label_port = wx.StaticText(self, -1, _(u"Numéro de port :"))
-        self.ctrl_port = wx.TextCtrl(self, -1, "")
-        self.label_authentification = wx.StaticText(self, -1, _(u"Authentification :"))
-        self.ctrl_authentification = wx.CheckBox(self, -1, "")
-        self.label_startTLS = wx.StaticText(self, -1, _(u"TLS :"))
-        self.ctrl_startTLS = wx.CheckBox(self, -1, "")
-        self.label_adresse = wx.StaticText(self, -1, _(u"Adresse d'envoi :"))
-        self.ctrl_adresse = wx.TextCtrl(self, -1, "")
-        self.label_nom_adresse = wx.StaticText(self, -1, _(u"Nom affiché :"))
-        self.ctrl_nom_adresse = wx.TextCtrl(self, -1, "")
-        self.label_utilisateur = wx.StaticText(self, -1, _(u"Utilisateur :"))
-        self.ctrl_utilisateur = wx.TextCtrl(self, -1, "")
-        self.label_mdp = wx.StaticText(self, -1, _(u"Mot de passe :"))
-        self.ctrl_mdp = wx.TextCtrl(self, -1, "", style=wx.TE_PASSWORD)
+        address_parent = self.static_sizer_adresse_staticbox
+        server_parent = self.static_sizer_serveur_staticbox
+
+        self.radio_predefini = wx.RadioButton(server_parent, -1, "")
+        self.label_predefini = wx.StaticText(server_parent, -1, _(u"Serveur prédéfini :"))
+        self.ctrl_predefinis = wx.Choice(server_parent, -1, choices=listeServeursChoices)
+        self.radio_personnalise = wx.RadioButton(server_parent, -1, "")
+        self.label_personnalise = wx.StaticText(server_parent, -1, _(u"Serveur personnalisé :"))
+        self.label_smtp = wx.StaticText(server_parent, -1, _(u"Serveur SMTP :"))
+        self.ctrl_smtp = wx.TextCtrl(server_parent, -1, "")
+        self.label_port = wx.StaticText(server_parent, -1, _(u"Numéro de port :"))
+        self.ctrl_port = wx.TextCtrl(server_parent, -1, "")
+        self.label_authentification = wx.StaticText(server_parent, -1, _(u"Authentification :"))
+        self.ctrl_authentification = wx.CheckBox(server_parent, -1, "")
+        self.label_startTLS = wx.StaticText(server_parent, -1, _(u"TLS :"))
+        self.ctrl_startTLS = wx.CheckBox(server_parent, -1, "")
+
+        self.label_adresse = wx.StaticText(address_parent, -1, _(u"Adresse d'envoi :"))
+        self.ctrl_adresse = wx.TextCtrl(address_parent, -1, "")
+        self.label_nom_adresse = wx.StaticText(address_parent, -1, _(u"Nom affiché :"))
+        self.ctrl_nom_adresse = wx.TextCtrl(address_parent, -1, "")
+        self.label_utilisateur = wx.StaticText(address_parent, -1, _(u"Utilisateur :"))
+        self.ctrl_utilisateur = wx.TextCtrl(address_parent, -1, "")
+        self.label_mdp = wx.StaticText(address_parent, -1, _(u"Mot de passe :"))
+        self.ctrl_mdp = wx.TextCtrl(address_parent, -1, "", style=wx.TE_PASSWORD)
         self.ctrl_mdp.Enable(False)
 
         # Binds
@@ -377,17 +381,20 @@ class Page_MAILJET(wx.Panel):
         self.parent = parent
 
         self.static_sizer_adresse_staticbox = wx.StaticBox(self, -1, _(u"Paramètres Mailjet"))
-        self.label_adresse = wx.StaticText(self, -1, _(u"Adresse d'envoi :"))
-        self.ctrl_adresse = wx.TextCtrl(self, -1, "")
-        self.label_nom_adresse = wx.StaticText(self, -1, _(u"Nom affiché :"))
-        self.ctrl_nom_adresse = wx.TextCtrl(self, -1, "")
-        self.label_api_key = wx.StaticText(self, -1, _(u"Clé API :"))
-        self.ctrl_api_key = wx.TextCtrl(self, -1, "")
-        self.label_api_secret = wx.StaticText(self, -1, _(u"Clé secrète :"))
-        self.ctrl_api_secret = wx.TextCtrl(self, -1, "")
-
         self.static_sizer_infos_staticbox = wx.StaticBox(self, -1, _(u"Informations"))
-        self.ctrl_infos = CTRL_Infos(self)
+        address_parent = self.static_sizer_adresse_staticbox
+        infos_parent = self.static_sizer_infos_staticbox
+
+        self.label_adresse = wx.StaticText(address_parent, -1, _(u"Adresse d'envoi :"))
+        self.ctrl_adresse = wx.TextCtrl(address_parent, -1, "")
+        self.label_nom_adresse = wx.StaticText(address_parent, -1, _(u"Nom affiché :"))
+        self.ctrl_nom_adresse = wx.TextCtrl(address_parent, -1, "")
+        self.label_api_key = wx.StaticText(address_parent, -1, _(u"Clé API :"))
+        self.ctrl_api_key = wx.TextCtrl(address_parent, -1, "")
+        self.label_api_secret = wx.StaticText(address_parent, -1, _(u"Clé secrète :"))
+        self.ctrl_api_secret = wx.TextCtrl(address_parent, -1, "")
+
+        self.ctrl_infos = CTRL_Infos(infos_parent)
 
         self.ctrl_infos.SetLabel(u"""<FONT SIZE=2><IMG SRC="%s">
         Mailjet est un service d'envoi d'emails que vous pouvez découvrir sur https://fr.mailjet.com.
