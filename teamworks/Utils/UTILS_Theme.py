@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import configparser
 import os
+import sys
 from pathlib import Path
 from configparser import ConfigParser
 
@@ -167,12 +168,39 @@ def metrics(scale=None):
     return {name: scale_px(value, scale=scale) for name, value in BASE_METRICS.items()}
 
 
-def is_dark_theme(theme=None):
+def _theme_kind(theme=None):
     value = (theme or requested_appearance()).strip().lower()
     if value in DARK_THEME_NAMES:
-        return True
+        return "dark"
     if value in LIGHT_THEME_NAMES:
-        return False
+        return "light"
+    return "system"
+
+
+def _windows_apps_dark():
+    """Retourne le choix clair/sombre des applications Windows, ou ``None``.
+
+    wxWidgets peut encore annoncer une apparence claire alors que Windows 10/11
+    est réglé sur « applications sombres ». Dans ce cas, la valeur utilisateur
+    ``AppsUseLightTheme`` est la source de vérité du mode Système.
+    """
+    if sys.platform != "win32":
+        return None
+    try:
+        import winreg
+
+        path = r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, path) as key:
+            value, _ = winreg.QueryValueEx(key, "AppsUseLightTheme")
+        return int(value) == 0
+    except (ImportError, OSError, ValueError, TypeError):
+        return None
+
+
+def _system_dark_from_os():
+    windows_value = _windows_apps_dark()
+    if windows_value is not None:
+        return windows_value
     try:
         appearance = wx.SystemSettings.GetAppearance()
         return bool(hasattr(appearance, "IsDark") and appearance.IsDark())
@@ -180,12 +208,22 @@ def is_dark_theme(theme=None):
         return False
 
 
+def is_dark_theme(theme=None):
+    kind = _theme_kind(theme)
+    if kind == "dark":
+        return True
+    if kind == "light":
+        return False
+    return _system_dark_from_os()
+
+
 def enable_native_dark_mode(theme=None):
     dark = is_dark_theme(theme)
-    try:
-        wx.SystemOptions.SetOption("msw.dark-mode", 2 if dark else 0)
-    except Exception:
-        pass
+    if sys.platform == "win32":
+        try:
+            wx.SystemOptions.SetOption("msw.dark-mode", 2 if dark else 0)
+        except Exception:
+            pass
     return dark
 
 
