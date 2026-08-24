@@ -308,20 +308,21 @@ class Saisie(wx.Dialog):
         self.parent = parent
 
         self.sizer_periode_staticbox = wx.StaticBox(self, -1, _(u"Nom de la période"))
+        self.sizer_dates_staticbox = wx.StaticBox(self, -1, _(u"Dates de la période"))
+
         choices = [_(u"Février"), _(u"Pâques"), _(u"Eté"), _(u"Toussaint"), _(u"Noël")]
-        self.label_nom = wx.StaticText(self, -1, _(u"Nom :"))
-        self.ctrl_nom = wx.Choice(self, -1, choices=choices, size=(100, -1))
-        self.label_annee = wx.StaticText(self, -1, _(u"Année :"))
-        self.ctrl_annee = wx.SpinCtrl(self, -1, "", style=wx.TE_CENTRE, size=(60, -1))
+        self.label_nom = wx.StaticText(self.sizer_periode_staticbox, -1, _(u"Nom :"))
+        self.ctrl_nom = wx.Choice(self.sizer_periode_staticbox, -1, choices=choices, size=(100, -1))
+        self.label_annee = wx.StaticText(self.sizer_periode_staticbox, -1, _(u"Année :"))
+        self.ctrl_annee = wx.SpinCtrl(self.sizer_periode_staticbox, -1, "", style=wx.TE_CENTRE, size=(60, -1))
         self.ctrl_annee.SetRange(2000, 2099)
         anneeEnCours = datetime.date.today().year
         self.ctrl_annee.SetValue(anneeEnCours)
         
-        self.sizer_dates_staticbox = wx.StaticBox(self, -1, _(u"Dates de la période"))
-        self.label_dateDebut = wx.StaticText(self, -1, u"Du")
-        self.ctrl_dateDebut = MyDatePickerCtrl(self)
-        self.label_dateFin = wx.StaticText(self, -1, _(u"au"))
-        self.ctrl_dateFin = MyDatePickerCtrl(self)
+        self.label_dateDebut = wx.StaticText(self.sizer_dates_staticbox, -1, u"Du")
+        self.ctrl_dateDebut = MyDatePickerCtrl(self.sizer_dates_staticbox)
+        self.label_dateFin = wx.StaticText(self.sizer_dates_staticbox, -1, _(u"au"))
+        self.ctrl_dateFin = MyDatePickerCtrl(self.sizer_dates_staticbox)
         
         self.bouton_aide = CTRL_Bouton_image.CTRL(self, texte=_(u"Aide"), cheminImage="Images/32x32/Aide.png")
         self.bouton_ok = CTRL_Bouton_image.CTRL(self, texte=_(u"Ok"), cheminImage="Images/32x32/Valider.png")
@@ -406,7 +407,7 @@ class Saisie(wx.Dialog):
         return self.ctrl_dateFin.GetDate()      
     
     def OnBoutonOk(self, event):
-        if self.ctrl_nom.GetSelection == -1 :
+        if self.ctrl_nom.GetSelection() == -1 :
             dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement sélectionner un nom de période !"), _(u"Erreur de saisie"), wx.OK | wx.ICON_EXCLAMATION)
             dlg.ShowModal()
             dlg.Destroy()
