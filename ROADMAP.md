@@ -1,6 +1,6 @@
 # Teamworks-CCNS — Roadmap officielle et unique
 
-**Mise à jour : 19 août 2026**
+**Mise à jour : 24 août 2026**
 
 Ce fichier est l’unique roadmap de référence du projet. Toute autre documentation peut détailler un domaine, mais ne doit pas porter une roadmap concurrente ni annoncer un niveau de maturité différent.
 
@@ -9,6 +9,8 @@ Ce fichier est l’unique roadmap de référence du projet. Toute autre document
 Teamworks-CCNS est actuellement en **`0.9.0-dev`**.
 
 Le socle Python 3 / wxPython Phoenix, la CI et le packaging Windows sont largement stabilisés. Le dépôt sait construire un portable Windows reproductible, exécuter des parcours critiques Windows automatisés et publier une Release sur tag conforme.
+
+Le chantier TW-189 de modernisation de l’interface a été consolidé et fusionné dans `master` le 24 août 2026 après réalignement sur `master`, correction d’un cycle d’import Windows du moteur de thème et validation automatisée complète de la PR de consolidation : **1 581 tests Linux réussis et parcours critiques Windows réussis**.
 
 La qualification **bêta / RC / stable reste volontairement refusée** tant que le parcours Windows minimal n’a pas été validé manuellement sur une copie de base réelle par l’utilisateur.
 
@@ -44,7 +46,12 @@ Les lots TW historiques ont été traités par PR successives. La quasi-totalit�
 - TW-177 : lanceur diagnostic ;
 - TW-178 : nettoyage des légendes de présence ;
 - TW-179 : robustesse des champs de contrat ;
-- TW-180 : suppression des doubles checkboxes Phoenix.
+- TW-180 : suppression des doubles checkboxes Phoenix ;
+- TW-181 : nettoyage des avertissements et du packaging Windows ;
+- TW-186 : libellés des dossiers incomplets clarifiés ;
+- TW-187 : diagnostics de crash transmissibles ;
+- TW-188 : boîte noire technique et détection des freezes ;
+- TW-189 : fondations UI modernes, thème et apparence séparés, échelle d’interface globale, navigation et layouts flexibles, modernisation progressive des écrans et découpage de plusieurs contrôleurs historiques.
 
 ### PR d’audit historique #209
 
@@ -62,14 +69,15 @@ Ces collisions sont conservées comme faits historiques et ne doivent pas être 
 
 **Un identifiant `TW-*` déjà présent dans une branche, un commit, une issue ou une PR ne doit plus être réattribué.**
 
-## 4. État GitHub au 19 août 2026
+## 4. État GitHub au 24 août 2026
 
-Après consolidation :
+Après consolidation TW-189 :
 
-- aucune PR ouverte ;
-- aucune issue ouverte ;
-- `master` est la seule base de travail à considérer ;
-- le dernier lot fonctionnel fusionné est TW-180 ;
+- `master` est de nouveau la vérité courante ;
+- la branche TW-189 a été réalignée sur `master` par la PR #264 avant consolidation ;
+- la PR #265 « TW-189 — Consolider la refonte UI et le socle d’affichage » a été validée automatiquement puis fusionnée ;
+- le commit d’intégration dans `master` est `91dfb6d` ;
+- le dernier grand lot fonctionnel fusionné est TW-189 ;
 - les anciennes branches peuvent rester comme historique, mais ne doivent pas piloter les décisions de développement.
 
 ## 5. Priorité immédiate — validation réelle avant pré-release
@@ -111,10 +119,13 @@ Chaque étape doit avoir un résultat daté et préciser sa nature : automatique
 
 ## 7. Packaging Windows — état actuel
 
-Le workflow unique `.github/workflows/ci.yml` construit le paquet Windows uniquement :
+Le workflow unique `.github/workflows/ci.yml` construit le paquet Windows uniquement sur demande explicite :
 
-- sur déclenchement manuel explicite avec l’option de build ;
-- sur tag `v*`.
+- déclenchement manuel avec l’option de build ;
+- tag `v*` conforme à `VERSION` ;
+- pendant les chantiers techniques autorisés, commit explicitement marqué `[windows]` sur la branche prévue par le workflow.
+
+Il n’existe donc pas de génération systématique d’un paquet à chaque push ou à chaque PR.
 
 Le packaging est fondé sur Python 3.11, Windows Server 2022 et PyInstaller. Le runtime Windows automatisé utilise désormais wxPython 4.3.1.
 
@@ -147,7 +158,10 @@ Il regroupe :
 - contrôles des checklists Phoenix ;
 - dialogues critiques (personne, présence, recrutement, contrat) ;
 - aller-retour fonctionnel sur base de test ;
-- build portable uniquement sur demande explicite ou tag.
+- build portable uniquement sur demande explicite ou tag ;
+- nettoyage contrôlé de l’historique GitHub Actions sur déclenchement manuel.
+
+La consolidation TW-189 a été validée par la CI #463 avec **1 581 tests Linux réussis** et l’ensemble des **parcours critiques Windows réussis**, notamment après correction du cycle d’import du moteur de thème.
 
 Aucun deuxième workflow ne doit être ajouté pour contourner ou dupliquer ces contrôles.
 
@@ -155,13 +169,29 @@ Aucun deuxième workflow ne doit être ajouté pour contourner ou dupliquer ces 
 
 Le mode `Système` doit reprendre les couleurs natives exposées par wxWidgets. Les modes `Clair` et `Sombre` restent des surcharges explicites.
 
-Le code de préférences, de persistance, de restauration et de thème natif est intégré. La validation manuelle doit encore confirmer sur les écrans prioritaires :
+TW-189 a consolidé :
+
+- un moteur de thème central ;
+- des rôles de couleurs sémantiques ;
+- la séparation accent / apparence ;
+- une échelle unique de l’interface de 80 % à 200 % ;
+- la conservation de `echelle_police` uniquement comme compatibilité de migration ;
+- la mise à l’échelle conjointe des textes, icônes et métriques de contrôles ;
+- des layouts plus flexibles ;
+- une navigation principale modernisée ;
+- des composants et helpers typographiques communs ;
+- des gardes de non-régression sur les écrans modernisés.
+
+Le cycle d’import Windows `UTILS_Traduction -> UTILS_Fichiers -> UTILS_Customize -> UTILS_Theme -> UTILS_Interface -> UTILS_Traduction` découvert pendant la consolidation a été supprimé en rendant le socle `UTILS_Interface` indépendant de l’initialisation du module de traduction. Une garde de non-régression verrouille ce point.
+
+La validation manuelle doit encore confirmer sur les écrans prioritaires :
 
 - lisibilité complète ;
 - absence de panneaux incohérents ;
 - absence de texte tronqué avec l’échelle choisie ;
 - persistance après redémarrage ;
-- comportement correct des sélections et états désactivés.
+- comportement correct des sélections et états désactivés ;
+- absence de réapparition des anciens problèmes de grands espaces, séparateurs rigides ou doubles contrôles.
 
 ## 10. Données, encodages, dates et compatibilité
 
