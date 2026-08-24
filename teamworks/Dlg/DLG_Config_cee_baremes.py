@@ -46,15 +46,16 @@ class Dialog(wx.Dialog):
         main.Add(date_row, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 12)
 
         box = wx.StaticBoxSizer(wx.VERTICAL, panel, u"Montants bruts par jour")
+        box_parent = box.GetStaticBox()
         grid = wx.FlexGridSizer(rows=len(QUALIFICATIONS), cols=3, vgap=7, hgap=8)
         grid.AddGrowableCol(0, 1)
         self.controls = {}
         for code, label in QUALIFICATIONS:
-            grid.Add(wx.StaticText(panel, label=label + u" :"), 0, wx.ALIGN_CENTER_VERTICAL)
-            ctrl = wx.TextCtrl(panel, size=(100, -1))
+            grid.Add(wx.StaticText(box_parent, label=label + u" :"), 0, wx.ALIGN_CENTER_VERTICAL)
+            ctrl = wx.TextCtrl(box_parent, size=(100, -1))
             self.controls[code] = ctrl
             grid.Add(ctrl, 0)
-            grid.Add(wx.StaticText(panel, label=u"€ brut / jour"), 0, wx.ALIGN_CENTER_VERTICAL)
+            grid.Add(wx.StaticText(box_parent, label=u"€ brut / jour"), 0, wx.ALIGN_CENTER_VERTICAL)
         box.Add(grid, 1, wx.EXPAND | wx.ALL, 10)
         main.Add(box, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 12)
 
@@ -66,10 +67,8 @@ class Dialog(wx.Dialog):
         note.Wrap(520)
         main.Add(note, 0, wx.EXPAND | wx.ALL, 12)
 
-        # Sous wxWidgets 3.3.x, tous les contrôles gérés par le sizer d'un panel
-        # doivent avoir ce même panel comme parent. On garde donc un sizer de
-        # boutons explicite et on fournit aussi les libellés français : le
-        # runtime portable n'initialise pas toujours les labels standards wx.
+        # Les contrôles contenus dans un StaticBoxSizer sont parentés au
+        # wx.StaticBox correspondant. Les boutons, eux, appartiennent au panel.
         buttons = wx.StdDialogButtonSizer()
         self.bouton_ok = wx.Button(panel, wx.ID_OK, u"Valider")
         self.bouton_annuler = wx.Button(panel, wx.ID_CANCEL, u"Annuler")
