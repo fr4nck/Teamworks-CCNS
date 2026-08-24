@@ -1,3 +1,4 @@
+# refresh: workflow déjà présent sur la branche avant cet événement
 name: Nettoyage temporaire filtres ObjectListView
 
 on:
@@ -135,14 +136,10 @@ def ConstruirePredicat(dictFiltre, get_inscrits=None):
 
           path = Path("teamworks/Ctrl/CTRL_ObjectListView.py")
           source = path.read_text(encoding="utf-8")
-
           import_anchor = "from Utils import UTILS_Adaptations\n"
           if source.count(import_anchor) != 1:
               raise RuntimeError("Import UTILS_Adaptations inattendu")
-          source = source.replace(
-              import_anchor,
-              import_anchor + "from Utils import UTILS_Filtres_listes\n",
-          )
+          source = source.replace(import_anchor, import_anchor + "from Utils import UTILS_Filtres_listes\n")
 
           old_filter = '''        # Filtres de colonnes\n        for texteFiltre in self.formatageFiltres(self.listeFiltresColonnes) :\n            filtre = Filter.Predicate(lambda track: eval(texteFiltre))\n            listeFiltres.append(filtre)\n'''
           new_filter = '''        # Filtres de colonnes\n        for predicat in self.formatageFiltres(self.listeFiltresColonnes):\n            listeFiltres.append(Filter.Predicate(predicat))\n'''
@@ -152,21 +149,17 @@ def ConstruirePredicat(dictFiltre, get_inscrits=None):
 
           start = source.index("    def formatageFiltres(")
           end = source.index("    def GetInscrits(", start)
-          new_formatter = '''    def formatageFiltres(self, listeFiltres=None):\n        """Transforme les spécifications de filtres en prédicats indépendants."""\n        if listeFiltres is None:\n            listeFiltres = []\n        return [\n            UTILS_Filtres_listes.ConstruirePredicat(\n                dictFiltre,\n                get_inscrits=self.GetInscrits,\n            )\n            for dictFiltre in listeFiltres\n        ]\n\n'''
-          source = source[:start] + new_formatter + source[end:]
+          source = source[:start] + '''    def formatageFiltres(self, listeFiltres=None):\n        """Transforme les spécifications de filtres en prédicats indépendants."""\n        if listeFiltres is None:\n            listeFiltres = []\n        return [\n            UTILS_Filtres_listes.ConstruirePredicat(\n                dictFiltre,\n                get_inscrits=self.GetInscrits,\n            )\n            for dictFiltre in listeFiltres\n        ]\n\n''' + source[end:]
 
-          source = source.replace(
-              "    def SetFiltresColonnes(self, listeFiltresColonnes=[]):\n        self.listeFiltresColonnes = listeFiltresColonnes\n",
-              "    def SetFiltresColonnes(self, listeFiltresColonnes=None):\n        if listeFiltresColonnes is None:\n            listeFiltresColonnes = []\n        self.listeFiltresColonnes = listeFiltresColonnes\n",
-          )
-          source = source.replace(
-              '    def GetInscrits(self, mode="individu", choix="", criteres={}):\n        """ Récupération de la liste des individus inscrits et présents """\n',
-              '    def GetInscrits(self, mode="individu", choix="", criteres=None):\n        """ Récupération de la liste des individus inscrits et présents """\n        if criteres is None:\n            criteres = {}\n',
-          )
-          source = source.replace(
-              "    def SetFooter(self, ctrl=None, dictColonnes={}):\n        self.ctrl_footer = ctrl\n",
-              "    def SetFooter(self, ctrl=None, dictColonnes=None):\n        if dictColonnes is None:\n            dictColonnes = {}\n        self.ctrl_footer = ctrl\n",
-          )
+          replacements = {
+              "    def SetFiltresColonnes(self, listeFiltresColonnes=[]):\n        self.listeFiltresColonnes = listeFiltresColonnes\n": "    def SetFiltresColonnes(self, listeFiltresColonnes=None):\n        if listeFiltresColonnes is None:\n            listeFiltresColonnes = []\n        self.listeFiltresColonnes = listeFiltresColonnes\n",
+              '    def GetInscrits(self, mode="individu", choix="", criteres={}):\n        """ Récupération de la liste des individus inscrits et présents """\n': '    def GetInscrits(self, mode="individu", choix="", criteres=None):\n        """ Récupération de la liste des individus inscrits et présents """\n        if criteres is None:\n            criteres = {}\n',
+              "    def SetFooter(self, ctrl=None, dictColonnes={}):\n        self.ctrl_footer = ctrl\n": "    def SetFooter(self, ctrl=None, dictColonnes=None):\n        if dictColonnes is None:\n            dictColonnes = {}\n        self.ctrl_footer = ctrl\n",
+          }
+          for old, new in replacements.items():
+              if source.count(old) != 1:
+                  raise RuntimeError("Signature mutable inattendue: %r" % old.splitlines()[0])
+              source = source.replace(old, new)
 
           if "eval(" in source:
               raise RuntimeError("CTRL_ObjectListView contient encore eval(")
@@ -182,7 +175,6 @@ from types import SimpleNamespace
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "teamworks"))
-
 from Utils import UTILS_Filtres_listes
 
 
@@ -210,19 +202,14 @@ def test_two_text_predicates_keep_independent_criteria():
 
 
 def test_boolean_filters_preserve_legacy_truth_values():
-    yes = predicate("bool", "TRUE", None)
-    no = predicate("bool", "FALSE", None)
-    assert yes(SimpleNamespace(valeur="1"))
-    assert no(SimpleNamespace(valeur=None))
+    assert predicate("bool", "TRUE", None)(SimpleNamespace(valeur="1"))
+    assert predicate("bool", "FALSE", None)(SimpleNamespace(valeur=None))
 
 
 def test_numeric_filters_and_ranges_use_safe_literals():
-    greater = predicate("montant", "SUP", "10.5")
-    between = predicate("entier", "COMPRIS", "2;4")
-    assert greater(SimpleNamespace(valeur=11.0))
-    assert not greater(SimpleNamespace(valeur=10.5))
-    assert between(SimpleNamespace(valeur=3))
-    assert not between(SimpleNamespace(valeur=5))
+    assert predicate("montant", "SUP", "10.5")(SimpleNamespace(valeur=11.0))
+    assert predicate("entier", "COMPRIS", "2;4")(SimpleNamespace(valeur=3))
+    assert not predicate("entier", "COMPRIS", "2;4")(SimpleNamespace(valeur=5))
 
 
 def test_date_filters_keep_iso_string_comparison_contract():
@@ -251,7 +238,6 @@ def test_objectlistview_no_longer_executes_filter_strings():
           compile(test_source, str(test_path), "exec")
           test_path.write_text(test_source, encoding="utf-8")
 
-          # Mini-vérification sans dépendance wx/pytest.
           namespace = {}
           exec(compile(util_source, str(util_path), "exec"), namespace)
           build = namespace["ConstruirePredicat"]
@@ -259,8 +245,7 @@ def test_objectlistview_no_longer_executes_filter_strings():
               valeur = "Alpha"
           p1 = build({"typeDonnee": "texte", "choix": "EGAL", "criteres": "alpha", "code": "valeur"})
           p2 = build({"typeDonnee": "texte", "choix": "EGAL", "criteres": "beta", "code": "valeur"})
-          assert p1(Track()) is True
-          assert p2(Track()) is False
+          assert p1(Track()) is True and p2(Track()) is False
           print("Moteur de filtres sûr validé.")
           PY
 
