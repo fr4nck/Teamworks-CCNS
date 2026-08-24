@@ -116,6 +116,25 @@ def _first_parent(call: ast.Call) -> str:
     return expr_key(call.args[0]) if call.args else ""
 
 
+def _looks_like_widget_constructor(call: ast.Call) -> bool:
+    """Écarte les appels utilitaires comme ``getattr(...)`` passés à ``Add``.
+
+    Les constructeurs wx sont explicites. Les contrôles maison historiques ont
+    généralement un nom de classe commençant par une majuscule (``CTRL(...)``,
+    ``MyDatePickerCtrl(...)``). Un appel fonctionnel en minuscules ne doit pas
+    être interprété comme la création inline d'un enfant wx.
+    """
+    callee = call_name(call)
+    if not callee:
+        return False
+    leaf = callee.split(".")[-1]
+    if leaf.endswith("Sizer"):
+        return False
+    if callee.startswith("wx."):
+        return True
+    return bool(leaf[:1].isupper())
+
+
 def _descendant_sizers(root_sizer: str, edges: dict[str, set[str]]) -> set[str]:
     descendants = {root_sizer}
     stack = [root_sizer]
@@ -206,11 +225,11 @@ def _scope_staticbox_findings(path: Path, scope: ast.AST) -> list[dict[str, obje
             continue
         if child_key in sizers:
             sizer_edges[owner].add(child_key)
-        elif isinstance(child, ast.Call):
+        elif isinstance(child, ast.Call) and _looks_like_widget_constructor(child):
             pseudo = f"<inline@{getattr(child, 'lineno', 0)}>"
             widget_parents[pseudo] = (_first_parent(child), getattr(child, "lineno", 0))
             sizer_widgets[owner].append((pseudo, getattr(child, "lineno", 0)))
-        elif child_key:
+        elif not isinstance(child, ast.Call) and child_key:
             sizer_widgets[owner].append((child_key, getattr(node, "lineno", 0)))
 
     relpath = path.relative_to(ROOT).as_posix()
