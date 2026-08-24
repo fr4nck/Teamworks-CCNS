@@ -137,3 +137,23 @@ def test_light_mode_is_the_safe_migration_default():
 
     assert 'GetValeur("interface", "appearance", "light")' in source
     assert 'return "light"' in source
+
+
+def test_interface_foundation_does_not_depend_on_translation_initialisation():
+    """Le socle de thème est importé pendant le bootstrap des utilitaires.
+
+    Une dépendance module-level vers UTILS_Traduction recréerait le cycle
+    UTILS_Traduction -> UTILS_Fichiers -> UTILS_Customize -> UTILS_Theme ->
+    UTILS_Interface -> UTILS_Traduction observé sur Windows.
+    """
+    source = SOURCE_PATH.read_text(encoding="utf-8")
+    tree = parse_source()
+    imported_modules = set()
+    for node in tree.body:
+        if isinstance(node, ast.Import):
+            imported_modules.update(alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom):
+            imported_modules.add(node.module or "")
+
+    assert not any("UTILS_Traduction" in module for module in imported_modules)
+    assert 'u"Vert (Par défaut)"' in source
