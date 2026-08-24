@@ -21,7 +21,6 @@ from typing import Iterable
 ROOT = Path(__file__).resolve().parents[1]
 TEAMWORKS = ROOT / "teamworks"
 
-# Inventaire textuel : utile pour prioriser les fouilles, mais non bloquant à lui seul.
 TEXT_PATTERNS = (
     ("dynamic-eval", "high", re.compile(r"\beval\s*\(")),
     ("dynamic-exec", "high", re.compile(r"\bexec\s*\(")),
@@ -38,7 +37,6 @@ TEXT_PATTERNS = (
     ("wx-grandparent-chain", "medium", re.compile(r"\.GetGrandParent\(\)(?:\.Get(?:Grand)?Parent\(\))+")),
 )
 
-# SQL : analysé uniquement dans de vraies constantes Python, hors docstrings.
 SQL_PATTERNS = (
     ("sql-select-star", "medium", re.compile(r"SELECT\s+\*\s+FROM\b", re.IGNORECASE)),
     (
@@ -132,7 +130,6 @@ def _first_parent(call: ast.Call) -> str:
 
 
 def _looks_like_widget_constructor(call: ast.Call) -> bool:
-    """Écarte les appels utilitaires comme ``getattr(...)`` passés à ``Add``."""
     callee = call_name(call)
     if not callee:
         return False
@@ -160,7 +157,6 @@ def _collect_shared_wx_objects(methods: list[ast.AST]) -> tuple[
     dict[str, tuple[str, int]],
     dict[str, tuple[str, int]],
 ]:
-    """Collecte les ``self.*`` créés dans une classe, toutes méthodes confondues."""
     static_boxes: dict[str, tuple[str, int]] = {}
     widget_parents: dict[str, tuple[str, int]] = {}
     for method in methods:
@@ -189,11 +185,6 @@ def _scope_staticbox_findings(
     shared_static_boxes: dict[str, tuple[str, int]] | None = None,
     shared_widget_parents: dict[str, tuple[str, int]] | None = None,
 ) -> list[dict[str, object]]:
-    """Détecte parentages directs et helpers alimentant un StaticBoxSizer.
-
-    Les maps partagées permettent de raccorder un contrôle créé dans ``__init__``
-    à un sizer construit ensuite dans ``__do_layout`` ou une méthode équivalente.
-    """
     sizers: dict[str, dict[str, object]] = {}
     static_boxes: dict[str, tuple[str, int]] = dict(shared_static_boxes or {})
     sizer_edges: dict[str, set[str]] = defaultdict(set)
@@ -202,7 +193,6 @@ def _scope_staticbox_findings(
 
     nodes = list(ast.walk(scope))
 
-    # Premier passage : objets nommés et leurs parents.
     for node in nodes:
         value = None
         if isinstance(node, ast.Assign):
@@ -223,10 +213,8 @@ def _scope_staticbox_findings(
             if callee == "wx.StaticBoxSizer" and value.args:
                 outer_parent = ""
                 if _is_orientation(value.args[0]) and len(value.args) >= 2:
-                    # Phoenix : wx.StaticBoxSizer(orient, parent, label)
                     outer_parent = expr_key(value.args[1])
                 else:
-                    # wx.StaticBoxSizer(static_box, orient)
                     first = value.args[0]
                     if isinstance(first, ast.Call) and call_name(first) == "wx.StaticBox":
                         outer_parent = _first_parent(first)
@@ -251,7 +239,6 @@ def _scope_staticbox_findings(
             if value.args:
                 widget_parents[target] = (_first_parent(value), getattr(node, "lineno", 0))
 
-    # Deuxième passage : graphe des sizers et widgets ajoutés.
     for node in nodes:
         if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Attribute):
             continue
@@ -282,8 +269,6 @@ def _scope_staticbox_findings(
             continue
         descendants = _descendant_sizers(root_sizer, sizer_edges)
 
-        # Cas direct : un contrôle appartenant au sous-arbre du sizer est créé
-        # avec le panel extérieur au lieu du StaticBox.
         for sizer in descendants:
             for widget, add_line in sizer_widgets.get(sizer, []):
                 parent_info = widget_parents.get(widget)
@@ -304,8 +289,6 @@ def _scope_staticbox_findings(
                         }
                     )
 
-        # Cas indirect : un helper reçoit à la fois le panel extérieur et un
-        # sizer descendant. C'est le pattern classique _row(page, grid, ...).
         for node in nodes:
             if not isinstance(node, ast.Call):
                 continue
@@ -362,13 +345,10 @@ def _parse_tree(path: Path, source: str) -> tuple[ast.AST | None, list[dict[str,
 def staticbox_parent_findings(path: Path, tree: ast.AST) -> list[dict[str, object]]:
     findings: list[dict[str, object]] = []
 
-    # Fonctions de module : analyse locale suffisante.
     for node in getattr(tree, "body", []):
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             findings.extend(_scope_staticbox_findings(path, node))
 
-    # Classes : partage les objets self.* entre méthodes, mais garde les sizers
-    # locaux isolés par méthode pour éviter les collisions de noms historiques.
     for cls in [node for node in ast.walk(tree) if isinstance(node, ast.ClassDef)]:
         methods = [
             node for node in cls.body
@@ -403,7 +383,6 @@ def staticbox_parent_findings(path: Path, tree: ast.AST) -> list[dict[str, objec
 
 
 def method_object_comparison_findings(path: Path, tree: ast.AST) -> list[dict[str, object]]:
-    """Détecte les getters wx comparés sans appel, ex. ``GetValue != ''``."""
     relpath = path.relative_to(ROOT).as_posix()
     findings: list[dict[str, object]] = []
     for node in ast.walk(tree):
@@ -426,7 +405,6 @@ def method_object_comparison_findings(path: Path, tree: ast.AST) -> list[dict[st
 
 
 def _docstring_nodes(tree: ast.AST) -> set[int]:
-    """Identifiants AST des constantes utilisées comme docstrings."""
     result: set[int] = set()
     candidates = [tree] + [
         node for node in ast.walk(tree)
@@ -447,7 +425,6 @@ def _docstring_nodes(tree: ast.AST) -> set[int]:
 
 
 def sql_findings(path: Path, tree: ast.AST) -> list[dict[str, object]]:
-    """Scanne le SQL réellement stocké dans le code, jamais les docstrings."""
     relpath = path.relative_to(ROOT).as_posix()
     docs = _docstring_nodes(tree)
     findings: list[dict[str, object]] = []
@@ -514,6 +491,13 @@ def audit(root: Path = TEAMWORKS) -> dict[str, object]:
         by_file[str(finding["file"])] += 1
 
     blockers = [f for f in findings if f["code"] in BLOCKER_CODES]
+    blocker_files = sorted({str(item["file"]) for item in blockers})
+    blocker_sources = {}
+    for relpath in blocker_files:
+        path = ROOT / relpath
+        if path.is_file():
+            blocker_sources[relpath] = decode_source(path)
+
     return {
         "scanned_files": scanned,
         "finding_count": len(findings),
@@ -521,6 +505,7 @@ def audit(root: Path = TEAMWORKS) -> dict[str, object]:
         "by_code": dict(sorted(by_code.items())),
         "by_file": dict(sorted(by_file.items(), key=lambda item: (-item[1], item[0]))),
         "blockers": blockers,
+        "blocker_sources": blocker_sources,
         "findings": findings,
     }
 
