@@ -12,6 +12,7 @@ import wx
 from Ctrl import CTRL_Bouton_image
 import GestionDB
 import FonctionsPerso
+from Utils import UTILS_Contrats_schema
 
 from Ctrl.CTRL_Creation_modele_contrat_p1 import Page as Page1
 from Ctrl.CTRL_Creation_modele_contrat_p2 import Page as Page2
@@ -23,7 +24,6 @@ class Dialog(wx.Dialog):
         wx.Dialog.__init__(self, parent, -1, style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX)
         self.parent = parent
         self.listePages = ("Page1", "Page2", "Page3")
-        
         self.panel_base = wx.Panel(self, -1)
         self.static_line = wx.StaticLine(self.panel_base, -1)
         self.bouton_aide = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))
@@ -32,38 +32,47 @@ class Dialog(wx.Dialog):
         self.bouton_annuler = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Annuler"), cheminImage=Chemins.GetStaticPath("Images/32x32/Annuler.png"))
         self.__set_properties()
         self.__do_layout()
-                
         self.Bind(wx.EVT_BUTTON, self.Onbouton_aide, self.bouton_aide)
         self.Bind(wx.EVT_BUTTON, self.Onbouton_retour, self.bouton_retour)
         self.Bind(wx.EVT_BUTTON, self.Onbouton_suite, self.bouton_suite)
         self.Bind(wx.EVT_BUTTON, self.Onbouton_annuler, self.bouton_annuler)
-
         self.bouton_retour.Enable(False)
-        self.nbrePages = len(self.listePages)    
+        self.nbrePages = len(self.listePages)
         self.pageVisible = 1
-                
-        # Initialisation de la liste de récupération des données
         self.dictModeles = {
-                                            "IDmodele" : IDmodele,
-                                            "IDclassification" : None,
-                                            "IDtype" : None,
-                                            "nom" : "",
-                                            "description" : "",
-                                    }
-                                    
-        self.dictChamps = {} 
-        
-        if IDmodele != 0 : self.Importation(IDmodele)
-        
-        # Création des pages
-        self.Creation_Pages()
-        
-    def Importation(self, IDmodele=0):
-        # Récupération des données
+            "IDmodele": IDmodele,
+            "IDclassification": None,
+            "IDtype": None,
+            "convention_code": None,
+            "ccns_group": None,
+            "cee_qualification": None,
+            "nom": "",
+            "description": "",
+        }
+        self.dictChamps = {}
+
+        # Évolution additive/idempotente : les anciens modèles restent valides.
         DB = GestionDB.DB()
-        
-        # Importe les données MODELES
-        req = "SELECT nom, description, IDclassification, IDtype FROM contrats_modeles WHERE IDmodele=%d ;" % IDmodele
+        UTILS_Contrats_schema.EnsureContractModelColumns(DB)
+        DB.Close()
+
+        if IDmodele != 0:
+            self.Importation(IDmodele)
+        self.Creation_Pages()
+
+    def Importation(self, IDmodele=0):
+        DB = GestionDB.DB()
+        UTILS_Contrats_schema.EnsureContractModelColumns(DB)
+        champs = DB.GetListeChamps2("contrats_modeles")
+        noms_champs = [champ[0] for champ in champs]
+        modernes = all(
+            nom in noms_champs
+            for nom in ("convention_code", "ccns_group", "cee_qualification")
+        )
+        if modernes:
+            req = "SELECT nom, description, IDclassification, IDtype, convention_code, ccns_group, cee_qualification FROM contrats_modeles WHERE IDmodele=%d ;" % IDmodele
+        else:
+            req = "SELECT nom, description, IDclassification, IDtype FROM contrats_modeles WHERE IDmodele=%d ;" % IDmodele
         DB.ExecuterReq(req)
         resultats = DB.ResultatReq()
         if not resultats:
@@ -72,28 +81,26 @@ class Dialog(wx.Dialog):
             return False
         listeDonnees = resultats[0]
         self.dictModeles["nom"] = listeDonnees[0]
-        self.dictModeles["description"] = listeDonnees[1]        
+        self.dictModeles["description"] = listeDonnees[1]
         self.dictModeles["IDclassification"] = listeDonnees[2]
         self.dictModeles["IDtype"] = listeDonnees[3]
-        
-        # Importe les données CHAMPS
-        req = "SELECT IDchamp, valeur FROM contrats_valchamps WHERE (IDmodele=%d AND type='modele')  ;" % IDmodele
+        if modernes:
+            self.dictModeles["convention_code"] = listeDonnees[4]
+            self.dictModeles["ccns_group"] = listeDonnees[5]
+            self.dictModeles["cee_qualification"] = listeDonnees[6]
+        req = "SELECT IDchamp, valeur FROM contrats_valchamps WHERE (IDmodele=%d AND type='modele') ;" % IDmodele
         DB.ExecuterReq(req)
-        listeDonnees = DB.ResultatReq()
-
-        for item in listeDonnees :
-            self.dictChamps[item[0]] = item[1]
-
+        for IDchamp, valeur in DB.ResultatReq():
+            self.dictChamps[IDchamp] = valeur
         DB.Close()
         return True
 
     def Creation_Pages(self):
-        """ Creation des pages """
-        for numPage in range(1, self.nbrePages+1) :
-            exec( "self.page" + str(numPage) + " = " + self.listePages[numPage-1] + "(self.panel_base)" )
-            exec( "self.sizer_pages.Add(self.page" + str(numPage) + ", 1, wx.EXPAND, 0)" )
-            self.sizer_pages.Layout()
-            exec( "self.page" + str(numPage) + ".Show(False)" )
+        for numPage in range(1, self.nbrePages+1):
+            page = (Page1, Page2, Page3)[numPage-1](self.panel_base)
+            setattr(self, "page%d" % numPage, page)
+            self.sizer_pages.Add(page, 1, wx.EXPAND, 0)
+            page.Show(False)
         self.page1.Show(True)
         self.sizer_pages.Layout()
 
@@ -106,7 +113,7 @@ class Dialog(wx.Dialog):
         self.bouton_retour.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour revenir à la page précédente")))
         self.bouton_suite.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour passer à l'étape suivante")))
         self.bouton_annuler.SetToolTip(wx.ToolTip(_(u"Cliquez pour annuler la création du contrat")))
-        self.SetMinSize((470, 500))
+        self.SetMinSize((520, 520))
 
     def __do_layout(self):
         sizer_base = wx.BoxSizer(wx.VERTICAL)
@@ -137,57 +144,41 @@ class Dialog(wx.Dialog):
         UTILS_Aide.Aide("Lesmodlesdecontrats")
 
     def Onbouton_retour(self, event):
-        # rend invisible la page affichée
-        pageCible = eval("self.page"+str(self.pageVisible))
-        pageCible.Show(False)
-        # Fait apparaître nouvelle page
+        getattr(self, "page%d" % self.pageVisible).Show(False)
         self.pageVisible -= 1
-        pageCible = eval("self.page"+str(self.pageVisible))
-        pageCible.Show(True)
+        getattr(self, "page%d" % self.pageVisible).Show(True)
         self.sizer_pages.Layout()
-        # Si on quitte la dernière page, on active le bouton Suivant
-        if self.pageVisible == self.nbrePages-1 :
+        if self.pageVisible == self.nbrePages-1:
             self.bouton_suite.Enable(True)
             self.bouton_suite.SetBitmapLabel(wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Suite_L72.png"), wx.BITMAP_TYPE_ANY))
-        # Si on revient à la première page, on désactive le bouton Retour
-        if self.pageVisible == 1 :
+        if self.pageVisible == 1:
             self.bouton_retour.Enable(False)
 
     def Onbouton_suite(self, event):
-        # Vérifie que les données de la page en cours sont valides
-        validation = self.ValidationPages()
-        if validation == False : return
-        # Si on est déjà sur la dernière page : on termine
-        if self.pageVisible == self.nbrePages :
+        if self.ValidationPages() is False:
+            return
+        if self.pageVisible == self.nbrePages:
             self.Terminer()
             return
-        # Rend invisible la page affichée
-        pageCible = eval("self.page"+str(self.pageVisible))
-        pageCible.Show(False)
-        # Fait apparaître nouvelle page
+        getattr(self, "page%d" % self.pageVisible).Show(False)
         self.pageVisible += 1
-        pageCible = eval("self.page"+str(self.pageVisible))
-        pageCible.Show(True)
+        getattr(self, "page%d" % self.pageVisible).Show(True)
         self.sizer_pages.Layout()
-        # Si on arrive à la dernière page, on désactive le bouton Suivant
-        if self.pageVisible == self.nbrePages :
+        if self.pageVisible == self.nbrePages:
             self.bouton_suite.SetBitmapLabel(wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Valider_L72.png"), wx.BITMAP_TYPE_ANY))
-        # Si on quitte la première page, on active le bouton Retour
-        if self.pageVisible > 1 :
+        if self.pageVisible > 1:
             self.bouton_retour.Enable(True)
-            
+
     def Onbouton_annuler(self, event):
         self.EndModal(wx.ID_CANCEL)
-        
-    def ValidationPages(self) :
-        """ Validation des données avant changement de pages """
-        validation = getattr(self, "page%s" % self.pageVisible).Validation()
-        return validation
-    
+
+    def ValidationPages(self):
+        return getattr(self, "page%s" % self.pageVisible).Validation()
+
     def Terminer(self):
         self.EndModal(wx.ID_OK)
 
-        
+
 if __name__ == "__main__":
     app = wx.App(0)
     dlg = Dialog(None, "", IDmodele=4)

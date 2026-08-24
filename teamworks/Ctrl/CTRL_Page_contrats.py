@@ -17,7 +17,33 @@ from Dlg import DLG_Creation_contrat
 from Utils import UTILS_Adaptations
 from Utils import UTILS_Customize
 from Utils import UTILS_Interface
+from Utils import UTILS_Contrats_schema
 import six
+
+
+CEE_QUALIFICATION_LABELS = {
+    "BAFA_HOLDER": u"BAFA titulaire",
+    "BAFA_TRAINEE": u"BAFA stagiaire",
+    "UNQUALIFIED": u"Non diplômé",
+    "EQUIVALENT": u"Qualification équivalente",
+    "BAFD_HOLDER": u"BAFD titulaire",
+    "BAFD_TRAINEE": u"BAFD stagiaire",
+}
+
+
+def BuildContractDisplayLabel(IDclassification=None, convention_code=None, ccns_group=None,
+                              cee_qualification=None, legacy_labels=None):
+    """Construit un libellé lisible pour contrats historiques, CCNS et CEE."""
+    legacy_labels = legacy_labels or {}
+    if cee_qualification:
+        return u"CEE — %s" % CEE_QUALIFICATION_LABELS.get(cee_qualification, cee_qualification)
+    if convention_code == "CCNS" and ccns_group:
+        return u"CCNS — %s" % ccns_group
+    if IDclassification not in (None, ""):
+        return legacy_labels.get(IDclassification, u"Classification #%s" % IDclassification)
+    if convention_code:
+        return six.text_type(convention_code)
+    return _(u"Contrat")
 
 
 def DateEngFr(textDate):
@@ -242,8 +268,8 @@ class Panel_Contrats(wx.Panel):
 
         from Utils import UTILS_Publipostage_donnees
         dictDonnees = UTILS_Publipostage_donnees.GetDictDonnees(categorie="contrat", listeID=[IDcontrat])
-        from Dlg import DLG_Publiposteur
-        dlg = DLG_Publiposteur.Dialog(self, "", dictDonnees=dictDonnees)
+        from Dlg import DLG_Publiposteur_contrat
+        dlg = DLG_Publiposteur_contrat.Dialog(self, "", dictDonnees=dictDonnees)
         dlg.ShowModal()
         dlg.Destroy()
 
@@ -270,7 +296,7 @@ class ListCtrl_contrats(wx.ListCtrl):
         self.InsertColumn(0, _(u"ID"))
         self.InsertColumn(1, _(u"Date de début"))
         self.InsertColumn(2, _(u"Date de fin"))
-        self.InsertColumn(3, _(u"Classification"))
+        self.InsertColumn(3, _(u"Régime / classement"))
         self.InsertColumn(4, _(u"Signé"))
         self.InsertColumn(5, _(u"DUE"))
 
@@ -321,13 +347,7 @@ class ListCtrl_contrats(wx.ListCtrl):
 
         index = 0
         for IDcontrat, valeurs in self.DictContrats.items():
-            etat = valeurs[0]
-            classification = valeurs[1]
-            date_debut = valeurs[2]
-            date_fin = valeurs[3]
-            date_rupture = valeurs[4]
-            signature = valeurs[5]
-            due = valeurs[6]
+            etat, classification, date_debut, date_fin, date_rupture, signature, due = valeurs
 
             self.InsertItem(index, str(IDcontrat))
             if etat == "Perim":
@@ -337,15 +357,15 @@ class ListCtrl_contrats(wx.ListCtrl):
 
             self.SetItem(index, 1, DateEngFr(date_debut))
             if date_fin == "2999-01-01":
-                date_fin = _(u"Indétermin.")
+                date_fin_affichee = _(u"Indétermin.")
             else:
-                date_fin = DateEngFr(date_fin)
+                date_fin_affichee = DateEngFr(date_fin)
             if date_rupture != "":
-                date_fin = DateEngFr(date_rupture) + "-R"
-            self.SetItem(index, 2, date_fin)
+                date_fin_affichee = DateEngFr(date_rupture) + "-R"
+            self.SetItem(index, 2, date_fin_affichee)
             self.SetItem(index, 3, classification)
-            self.SetItem(index, 4, signature)
-            self.SetItem(index, 5, "" if due is None else due)
+            self.SetItem(index, 4, signature or "")
+            self.SetItem(index, 5, due or "")
             self.SetItemData(index, IDcontrat)
             index += 1
 
@@ -368,9 +388,11 @@ class ListCtrl_contrats(wx.ListCtrl):
 
         date_jour = datetime.date.today()
         DB = GestionDB.DB()
+        UTILS_Contrats_schema.EnsureContractEngineColumns(DB)
         self.DictContrats = {}
         req = """
-        SELECT IDcontrat, IDclassification, date_debut, date_fin, date_rupture, signature, due
+        SELECT IDcontrat, IDclassification, cee_qualification, convention_code, ccns_group,
+               date_debut, date_fin, date_rupture, signature, due
         FROM contrats
         WHERE IDpersonne=%d ORDER BY date_debut;
         """ % self.IDpersonne
@@ -378,40 +400,36 @@ class ListCtrl_contrats(wx.ListCtrl):
         listeContrats = DB.ResultatReq()
 
         for contrat in listeContrats:
-            IDcontrat = contrat[0]
-            classification = self.DictClass[contrat[1]]
-            date_debut = contrat[2]
-            date_fin = contrat[3]
-            date_rupture = contrat[4]
-            signature = contrat[5]
-            due = contrat[6]
-            date_fin_2 = datetime.date(int(date_fin[:4]), int(date_fin[5:7]), int(date_fin[8:10]))
-            reste = str(date_fin_2 - date_jour)
-            if reste != "0:00:00":
-                jours = int(reste[:reste.index("day")])
-                if jours > 0:
-                    etat = "Ok"
-                    self.parent.GetGrandParent().GetParent().contratEnCours = (classification, date_debut, date_fin, date_rupture)
-                    self.parent.GetGrandParent().GetParent().MaJ_header()
-                else:
-                    etat = "Perim"
-            else:
-                etat = "Ok"
-                self.parent.GetGrandParent().GetParent().contratEnCours = (classification, date_debut, date_fin, date_rupture)
-                self.parent.GetGrandParent().GetParent().MaJ_header()
+            (IDcontrat, IDclassification, cee_qualification, convention_code, ccns_group,
+             date_debut, date_fin, date_rupture, signature, due) = contrat
+            classification = BuildContractDisplayLabel(
+                IDclassification=IDclassification,
+                convention_code=convention_code,
+                ccns_group=ccns_group,
+                cee_qualification=cee_qualification,
+                legacy_labels=self.DictClass,
+            )
 
-            self.DictContrats[IDcontrat] = (etat, classification, date_debut, date_fin, date_rupture, signature, due)
+            date_fin_2 = datetime.date(int(date_fin[:4]), int(date_fin[5:7]), int(date_fin[8:10]))
+            if date_fin_2 >= date_jour:
+                etat = "Ok"
+                self.parent.GetGrandParent().GetParent().contratEnCours = (
+                    classification, date_debut, date_fin, date_rupture
+                )
+                self.parent.GetGrandParent().GetParent().MaJ_header()
+            else:
+                etat = "Perim"
+
+            self.DictContrats[IDcontrat] = (
+                etat, classification, date_debut, date_fin, date_rupture, signature, due
+            )
 
         DB.Close()
 
     def Importation_Classifications(self):
         DB = GestionDB.DB()
         self.DictClass = {}
-        req = """
-        SELECT IDclassification, nom
-        FROM contrats_class
-        """
-        DB.ExecuterReq(req)
+        DB.ExecuterReq("SELECT IDclassification, nom FROM contrats_class")
         listeClassifications = DB.ResultatReq()
         for classification in listeClassifications:
             self.DictClass[classification[0]] = classification[1]
