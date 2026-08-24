@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 """Audit statique des risques susceptibles de casser une RC Teamworks-CCNS.
 
-Le rapport couvre tout ``teamworks/``. Les catégories larges restent informatives ;
-le contrôle ``wx-staticbox-parent`` est volontairement à haute confiance et peut
-servir de garde-fou CI.
+Le rapport couvre tout ``teamworks/``. Les catégories larges servent d'inventaire ;
+les bloqueurs sont volontairement limités à des règles structurelles à haute
+confiance afin de ne pas confondre dette historique, commentaire et défaut actif.
 """
 
 from __future__ import annotations
@@ -21,6 +21,7 @@ from typing import Iterable
 ROOT = Path(__file__).resolve().parents[1]
 TEAMWORKS = ROOT / "teamworks"
 
+# Inventaire textuel : utile pour prioriser les fouilles, mais non bloquant à lui seul.
 TEXT_PATTERNS = (
     ("dynamic-eval", "high", re.compile(r"\beval\s*\(")),
     ("dynamic-exec", "high", re.compile(r"\bexec\s*\(")),
@@ -29,9 +30,6 @@ TEXT_PATTERNS = (
     ("todo-marker", "low", re.compile(r"\b(?:TODO|FIXME|XXX|HACK)\b", re.IGNORECASE)),
     ("not-implemented", "high", re.compile(r"\bNotImplementedError\b")),
     ("assert-runtime", "medium", re.compile(r"^\s*assert\s+")),
-    ("sql-select-star", "medium", re.compile(r"SELECT\s+\*\s+FROM\b", re.IGNORECASE)),
-    ("sql-insert-values-no-columns", "high", re.compile(r"INSERT\s+INTO\s+[A-Za-z0-9_]+\s+VALUES\s*\(", re.IGNORECASE)),
-    ("mysql55-add-column-if-not-exists", "high", re.compile(r"ADD\s+COLUMN\s+IF\s+NOT\s+EXISTS", re.IGNORECASE)),
     ("shell-true", "high", re.compile(r"shell\s*=\s*True")),
     ("sys-path-mutation", "medium", re.compile(r"sys\.path\.(?:append|insert)\s*\(")),
     ("wx-yield", "medium", re.compile(r"\bwx\.Yield\s*\(")),
@@ -39,6 +37,29 @@ TEXT_PATTERNS = (
     ("wx-literal-min-size", "medium", re.compile(r"\.SetMinSize\(\s*\(\s*-?\d+\s*,\s*-?\d+")),
     ("wx-grandparent-chain", "medium", re.compile(r"\.GetGrandParent\(\)(?:\.Get(?:Grand)?Parent\(\))+")),
 )
+
+# SQL : analysé uniquement dans de vraies constantes Python, hors docstrings.
+SQL_PATTERNS = (
+    ("sql-select-star", "medium", re.compile(r"SELECT\s+\*\s+FROM\b", re.IGNORECASE)),
+    (
+        "sql-insert-values-no-columns",
+        "critical",
+        re.compile(r"INSERT\s+INTO\s+[A-Za-z0-9_]+\s+VALUES\s*\(", re.IGNORECASE),
+    ),
+    (
+        "mysql55-add-column-if-not-exists",
+        "critical",
+        re.compile(r"ADD\s+COLUMN\s+IF\s+NOT\s+EXISTS", re.IGNORECASE),
+    ),
+)
+
+BLOCKER_CODES = {
+    "parse-error",
+    "wx-staticbox-parent",
+    "wx-staticbox-helper-parent",
+    "mysql55-add-column-if-not-exists",
+    "sql-insert-values-no-columns",
+}
 
 
 def iter_python_files(root: Path = TEAMWORKS) -> Iterable[Path]:
@@ -88,33 +109,41 @@ def assignment_targets(node: ast.AST) -> list[str]:
 
 
 def _is_orientation(node: ast.AST) -> bool:
-    key = expr_key(node)
-    return key in {"wx.VERTICAL", "wx.HORIZONTAL"}
-
-
-def _staticbox_spec(call: ast.Call) -> tuple[str, str] | None:
-    """Retourne (parent_externe, parent_attendu) pour wx.StaticBoxSizer."""
-    if call_name(call) != "wx.StaticBoxSizer" or not call.args:
-        return None
-    args = call.args
-    # Phoenix : wx.StaticBoxSizer(orient, parent, label)
-    if _is_orientation(args[0]) and len(args) >= 2:
-        return expr_key(args[1]), "@GET_STATIC_BOX@"
-    # Variante : wx.StaticBoxSizer(static_box, orient)
-    return "", expr_key(args[0])
+    return expr_key(node) in {"wx.VERTICAL", "wx.HORIZONTAL"}
 
 
 def _first_parent(call: ast.Call) -> str:
     return expr_key(call.args[0]) if call.args else ""
 
 
+def _descendant_sizers(root_sizer: str, edges: dict[str, set[str]]) -> set[str]:
+    descendants = {root_sizer}
+    stack = [root_sizer]
+    while stack:
+        current = stack.pop()
+        for child in edges.get(current, set()):
+            if child not in descendants:
+                descendants.add(child)
+                stack.append(child)
+    return descendants
+
+
 def _scope_staticbox_findings(path: Path, scope: ast.AST) -> list[dict[str, object]]:
+    """Détecte parentages directs et helpers alimentant un StaticBoxSizer.
+
+    Exemple indirect couvert : ``self._row(page, grid, ...)`` lorsque ``grid``
+    est contenu dans un StaticBoxSizer créé avec ``page``. Le helper reçoit alors
+    le mauvais parent, même si les wx.StaticText/TextCtrl sont créés ailleurs.
+    """
     sizers: dict[str, dict[str, object]] = {}
+    static_boxes: dict[str, tuple[str, int]] = {}
     sizer_edges: dict[str, set[str]] = defaultdict(set)
     sizer_widgets: dict[str, list[tuple[str, int]]] = defaultdict(list)
     widget_parents: dict[str, tuple[str, int]] = {}
 
     nodes = list(ast.walk(scope))
+
+    # Premier passage : objets nommés et leurs parents.
     for node in nodes:
         value = None
         if isinstance(node, ast.Assign):
@@ -128,21 +157,43 @@ def _scope_staticbox_findings(path: Path, scope: ast.AST) -> list[dict[str, obje
             continue
         callee = call_name(value)
         for target in targets:
-            spec = _staticbox_spec(value)
-            if spec is not None:
-                outer_parent, expected = spec
+            if callee == "wx.StaticBox" and value.args:
+                static_boxes[target] = (_first_parent(value), getattr(node, "lineno", 0))
+                continue
+
+            if callee == "wx.StaticBoxSizer" and value.args:
+                outer_parent = ""
+                if _is_orientation(value.args[0]) and len(value.args) >= 2:
+                    # Phoenix : wx.StaticBoxSizer(orient, parent, label)
+                    outer_parent = expr_key(value.args[1])
+                else:
+                    # wx.StaticBoxSizer(static_box, orient)
+                    first = value.args[0]
+                    if isinstance(first, ast.Call) and call_name(first) == "wx.StaticBox":
+                        outer_parent = _first_parent(first)
+                    else:
+                        outer_parent = static_boxes.get(expr_key(first), ("", 0))[0]
                 sizers[target] = {
                     "outer_parent": outer_parent,
-                    "expected_parent": expected,
+                    "is_staticbox": True,
                     "line": getattr(node, "lineno", 0),
                 }
                 continue
-            if callee.endswith("Sizer") or callee.startswith("wx.") and callee.split(".")[-1].endswith("Sizer"):
-                sizers.setdefault(target, {"outer_parent": "", "expected_parent": "", "line": getattr(node, "lineno", 0)})
+
+            if callee.endswith("Sizer") or (
+                callee.startswith("wx.") and callee.split(".")[-1].endswith("Sizer")
+            ):
+                sizers.setdefault(
+                    target,
+                    {"outer_parent": "", "is_staticbox": False, "line": getattr(node, "lineno", 0)},
+                )
                 continue
+
+            # Une variable ajoutée ensuite à un sizer : mémoriser son parent wx.
             if value.args:
                 widget_parents[target] = (_first_parent(value), getattr(node, "lineno", 0))
 
+    # Deuxième passage : graphe des sizers et widgets ajoutés.
     for node in nodes:
         if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Attribute):
             continue
@@ -156,55 +207,94 @@ def _scope_staticbox_findings(path: Path, scope: ast.AST) -> list[dict[str, obje
         if child_key in sizers:
             sizer_edges[owner].add(child_key)
         elif isinstance(child, ast.Call):
-            parent = _first_parent(child)
             pseudo = f"<inline@{getattr(child, 'lineno', 0)}>"
-            widget_parents[pseudo] = (parent, getattr(child, "lineno", 0))
+            widget_parents[pseudo] = (_first_parent(child), getattr(child, "lineno", 0))
             sizer_widgets[owner].append((pseudo, getattr(child, "lineno", 0)))
         elif child_key:
             sizer_widgets[owner].append((child_key, getattr(node, "lineno", 0)))
 
-    findings: list[dict[str, object]] = []
     relpath = path.relative_to(ROOT).as_posix()
+    findings: list[dict[str, object]] = []
+
     for root_sizer, info in sizers.items():
+        if not info.get("is_staticbox"):
+            continue
         outer_parent = str(info.get("outer_parent") or "")
         if not outer_parent:
             continue
-        descendants = {root_sizer}
-        stack = [root_sizer]
-        while stack:
-            current = stack.pop()
-            for child_sizer in sizer_edges.get(current, set()):
-                if child_sizer not in descendants:
-                    descendants.add(child_sizer)
-                    stack.append(child_sizer)
+        descendants = _descendant_sizers(root_sizer, sizer_edges)
+
+        # Cas direct : un contrôle appartenant au sous-arbre du sizer est créé
+        # avec le panel extérieur au lieu du StaticBox.
         for sizer in descendants:
             for widget, add_line in sizer_widgets.get(sizer, []):
                 parent_info = widget_parents.get(widget)
                 if not parent_info:
                     continue
                 parent, create_line = parent_info
-                if parent != outer_parent:
-                    continue
-                findings.append(
-                    {
-                        "file": relpath,
-                        "line": create_line or add_line,
-                        "code": "wx-staticbox-parent",
-                        "severity": "critical",
-                        "sizer": root_sizer,
-                        "widget": widget,
-                        "actual_parent": parent,
-                        "expected_parent": f"{root_sizer}.GetStaticBox()",
-                    }
-                )
+                if parent == outer_parent:
+                    findings.append(
+                        {
+                            "file": relpath,
+                            "line": create_line or add_line,
+                            "code": "wx-staticbox-parent",
+                            "severity": "critical",
+                            "sizer": root_sizer,
+                            "widget": widget,
+                            "actual_parent": parent,
+                            "expected_parent": f"{root_sizer}.GetStaticBox()",
+                        }
+                    )
+
+        # Cas indirect : un helper reçoit à la fois le panel extérieur et un
+        # sizer descendant. C'est le pattern classique _row(page, grid, ...).
+        for node in nodes:
+            if not isinstance(node, ast.Call):
+                continue
+            callee = call_name(node)
+            if not callee or callee.startswith("wx."):
+                continue
+            if isinstance(node.func, ast.Attribute) and node.func.attr in {"Add", "Insert", "Prepend"}:
+                continue
+            arg_keys = [expr_key(arg) for arg in node.args]
+            if outer_parent not in arg_keys:
+                continue
+            matching_sizers = [s for s in descendants if s != root_sizer and s in arg_keys]
+            if not matching_sizers:
+                continue
+            # Restreint aux helpers privés/de construction pour éviter de bloquer
+            # sur des appels métier qui transporteraient ces objets par hasard.
+            helper_leaf = callee.split(".")[-1].lower()
+            if not (
+                helper_leaf.startswith("_")
+                or "row" in helper_leaf
+                or "ligne" in helper_leaf
+                or "field" in helper_leaf
+                or "champ" in helper_leaf
+            ):
+                continue
+            findings.append(
+                {
+                    "file": relpath,
+                    "line": getattr(node, "lineno", 0),
+                    "code": "wx-staticbox-helper-parent",
+                    "severity": "critical",
+                    "sizer": root_sizer,
+                    "helper": callee,
+                    "actual_parent": outer_parent,
+                    "descendant_sizer": matching_sizers[0],
+                    "expected_parent": f"{root_sizer}.GetStaticBox()",
+                }
+            )
+
     return findings
 
 
-def staticbox_parent_findings(path: Path, source: str) -> list[dict[str, object]]:
+def _parse_tree(path: Path, source: str) -> tuple[ast.AST | None, list[dict[str, object]]]:
     try:
-        tree = ast.parse(source, filename=str(path))
+        return ast.parse(source, filename=str(path)), []
     except SyntaxError as exc:
-        return [{
+        return None, [{
             "file": path.relative_to(ROOT).as_posix(),
             "line": exc.lineno or 0,
             "code": "parse-error",
@@ -212,22 +302,83 @@ def staticbox_parent_findings(path: Path, source: str) -> list[dict[str, object]
             "detail": exc.msg,
         }]
 
+
+def staticbox_parent_findings(path: Path, tree: ast.AST) -> list[dict[str, object]]:
     findings: list[dict[str, object]] = []
-    # Analyse chaque fonction/méthode séparément pour éviter les collisions de noms.
-    scopes = [node for node in ast.walk(tree) if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))]
+    scopes = [
+        node for node in ast.walk(tree)
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+    ]
     if not scopes:
         scopes = [tree]
     for scope in scopes:
         findings.extend(_scope_staticbox_findings(path, scope))
-    # Déduplication stable.
+
     unique: dict[tuple[object, ...], dict[str, object]] = {}
     for finding in findings:
         key = (
-            finding.get("file"), finding.get("line"), finding.get("code"),
-            finding.get("sizer"), finding.get("widget"),
+            finding.get("file"),
+            finding.get("line"),
+            finding.get("code"),
+            finding.get("sizer"),
+            finding.get("widget"),
+            finding.get("helper"),
         )
         unique[key] = finding
-    return sorted(unique.values(), key=lambda item: (str(item.get("file")), int(item.get("line", 0))))
+    return sorted(
+        unique.values(),
+        key=lambda item: (str(item.get("file")), int(item.get("line", 0))),
+    )
+
+
+def _docstring_nodes(tree: ast.AST) -> set[int]:
+    """Identifiants AST des constantes utilisées comme docstrings."""
+    result: set[int] = set()
+    candidates = [tree] + [
+        node for node in ast.walk(tree)
+        if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef))
+    ]
+    for owner in candidates:
+        body = getattr(owner, "body", None)
+        if not body:
+            continue
+        first = body[0]
+        if (
+            isinstance(first, ast.Expr)
+            and isinstance(first.value, ast.Constant)
+            and isinstance(first.value.value, str)
+        ):
+            result.add(id(first.value))
+    return result
+
+
+def sql_findings(path: Path, tree: ast.AST) -> list[dict[str, object]]:
+    """Scanne le SQL réellement stocké dans le code, jamais les docstrings."""
+    relpath = path.relative_to(ROOT).as_posix()
+    docs = _docstring_nodes(tree)
+    findings: list[dict[str, object]] = []
+    for node in ast.walk(tree):
+        if not (
+            isinstance(node, ast.Constant)
+            and isinstance(node.value, str)
+            and id(node) not in docs
+        ):
+            continue
+        value = node.value
+        for code, severity, regex in SQL_PATTERNS:
+            match = regex.search(value)
+            if not match:
+                continue
+            findings.append(
+                {
+                    "file": relpath,
+                    "line": getattr(node, "lineno", 0),
+                    "code": code,
+                    "severity": severity,
+                    "text": match.group(0)[:240],
+                }
+            )
+    return findings
 
 
 def text_findings(path: Path, source: str) -> list[dict[str, object]]:
@@ -236,13 +387,15 @@ def text_findings(path: Path, source: str) -> list[dict[str, object]]:
     for lineno, line in enumerate(source.splitlines(), 1):
         for code, severity, regex in TEXT_PATTERNS:
             if regex.search(line):
-                findings.append({
-                    "file": relpath,
-                    "line": lineno,
-                    "code": code,
-                    "severity": severity,
-                    "text": line.strip()[:240],
-                })
+                findings.append(
+                    {
+                        "file": relpath,
+                        "line": lineno,
+                        "code": code,
+                        "severity": severity,
+                        "text": line.strip()[:240],
+                    }
+                )
     return findings
 
 
@@ -252,7 +405,11 @@ def audit(root: Path = TEAMWORKS) -> dict[str, object]:
     for path in sorted(iter_python_files(root)):
         scanned += 1
         source = decode_source(path)
-        findings.extend(staticbox_parent_findings(path, source))
+        tree, parse_findings = _parse_tree(path, source)
+        findings.extend(parse_findings)
+        if tree is not None:
+            findings.extend(staticbox_parent_findings(path, tree))
+            findings.extend(sql_findings(path, tree))
         findings.extend(text_findings(path, source))
 
     by_code: dict[str, int] = defaultdict(int)
@@ -261,7 +418,7 @@ def audit(root: Path = TEAMWORKS) -> dict[str, object]:
         by_code[str(finding["code"])] += 1
         by_file[str(finding["file"])] += 1
 
-    blockers = [f for f in findings if f["code"] in {"wx-staticbox-parent", "parse-error", "mysql55-add-column-if-not-exists", "sql-insert-values-no-columns"}]
+    blockers = [f for f in findings if f["code"] in BLOCKER_CODES]
     return {
         "scanned_files": scanned,
         "finding_count": len(findings),
@@ -275,7 +432,12 @@ def audit(root: Path = TEAMWORKS) -> dict[str, object]:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Audit pré-RC de Teamworks-CCNS")
-    parser.add_argument("--json", dest="json_path", default="", help="Écrit le rapport JSON dans ce fichier")
+    parser.add_argument(
+        "--json",
+        dest="json_path",
+        default="",
+        help="Écrit le rapport JSON dans ce fichier",
+    )
     parser.add_argument("--fail-on-staticbox", action="store_true")
     parser.add_argument("--fail-on-blockers", action="store_true")
     args = parser.parse_args(argv)
@@ -289,12 +451,18 @@ def main(argv: list[str] | None = None) -> int:
     if report["blockers"]:
         print("\nBloqueurs :")
         for item in report["blockers"]:
-            print(f"- {item['file']}:{item['line']} [{item['code']}] {item.get('widget') or item.get('text') or item.get('detail', '')}")
+            detail = item.get("widget") or item.get("helper") or item.get("text") or item.get("detail", "")
+            print(f"- {item['file']}:{item['line']} [{item['code']}] {detail}")
 
     if args.json_path:
-        Path(args.json_path).write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+        Path(args.json_path).write_text(
+            json.dumps(report, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
 
-    if args.fail_on_staticbox and any(item["code"] == "wx-staticbox-parent" for item in report["findings"]):
+    if args.fail_on_staticbox and any(
+        str(item["code"]).startswith("wx-staticbox") for item in report["findings"]
+    ):
         return 1
     if args.fail_on_blockers and report["blocker_count"]:
         return 1
