@@ -214,10 +214,14 @@ class Dialog(wx.Dialog):
     def Creation_Pages(self):
         """ Creation des pages """
         for numPage in range(1, self.nbrePages+1):
-            exec("self.page" + str(numPage) + " = " + self.listePages[numPage-1] + "(self.panel_base)")
-            exec("self.sizer_pages.Add(self.page" + str(numPage) + ", 1, wx.EXPAND, 0)")
+            page_class = globals().get(self.listePages[numPage-1])
+            if not callable(page_class):
+                raise RuntimeError("Page de contrat inconnue : %s" % self.listePages[numPage-1])
+            page = page_class(self.panel_base)
+            setattr(self, "page" + str(numPage), page)
+            self.sizer_pages.Add(page, 1, wx.EXPAND, 0)
             self.sizer_pages.Layout()
-            exec("self.page" + str(numPage) + ".Show(False)")
+            page.Show(False)
         self.page1.Show(True)
         self.sizer_pages.Layout()
 

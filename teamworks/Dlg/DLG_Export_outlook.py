@@ -165,12 +165,14 @@ class PanelContacts(scrolled.ScrolledPanel):
         for IDpersonne, civilite, nom, prenom, date_naiss, adresse_resid, cp_resid, ville_resid, emails, fixes, fax, mobile in self.listeContacts:
             
             # Création des contrôles
-            exec("self.bouton_synchro_" + str(IDpersonne) + " = wx.BitmapButton(self, 10000+IDpersonne, wx.Bitmap('Images/16x16/Ok_2.png', wx.BITMAP_TYPE_ANY))")
-            exec("self.bouton_synchro_" + str(IDpersonne) + ".SetBitmapDisabled(wx.Bitmap('Images/16x16/Ok_3.png', wx.BITMAP_TYPE_ANY))")
-            exec("self.bouton_synchro_" + str(IDpersonne) + ".SetToolTip(wx.ToolTip(u'Cliquez ici pour synchroniser la fiche de ' + prenom + ' ' + nom + '.'))")
-            exec("self.bouton_suppr_" + str(IDpersonne) + " = wx.BitmapButton(self, 20000+IDpersonne, wx.Bitmap('Images/16x16/Supprimer_2.png', wx.BITMAP_TYPE_ANY))")
-            exec("self.bouton_suppr_" + str(IDpersonne) + ".SetBitmapDisabled(wx.Bitmap('Images/16x16/Supprimer_3.png', wx.BITMAP_TYPE_ANY))")
-            exec("self.bouton_suppr_" + str(IDpersonne) + ".SetToolTip(wx.ToolTip(u'Cliquez ici pour supprimer la fiche de ' + prenom + ' ' + nom + ' de Outlook.'))")
+            bouton_synchro = wx.BitmapButton(self, 10000 + IDpersonne, wx.Bitmap('Images/16x16/Ok_2.png', wx.BITMAP_TYPE_ANY))
+            setattr(self, "bouton_synchro_%s" % IDpersonne, bouton_synchro)
+            bouton_synchro.SetBitmapDisabled(wx.Bitmap('Images/16x16/Ok_3.png', wx.BITMAP_TYPE_ANY))
+            bouton_synchro.SetToolTip(wx.ToolTip(u'Cliquez ici pour synchroniser la fiche de ' + prenom + ' ' + nom + '.'))
+            bouton_suppr = wx.BitmapButton(self, 20000 + IDpersonne, wx.Bitmap('Images/16x16/Supprimer_2.png', wx.BITMAP_TYPE_ANY))
+            setattr(self, "bouton_suppr_%s" % IDpersonne, bouton_suppr)
+            bouton_suppr.SetBitmapDisabled(wx.Bitmap('Images/16x16/Supprimer_3.png', wx.BITMAP_TYPE_ANY))
+            bouton_suppr.SetToolTip(wx.ToolTip(u'Cliquez ici pour supprimer la fiche de ' + prenom + ' ' + nom + ' de Outlook.'))
             
             coords = []
             texte_coords = ""
@@ -182,10 +184,14 @@ class PanelContacts(scrolled.ScrolledPanel):
                 if coord != "" : texte_coords += coord + ", "
             texte_coords = texte_coords[:-2]
             
-            exec("self.text_nom_" + str(IDpersonne) + " = wx.TextCtrl(self, -1, nom + ', ' + prenom, size=(190,-1))")
-            exec("self.text_adresse_" + str(IDpersonne) + " = wx.TextCtrl(self, -1, adresse_resid + ' ' + cp_resid + ' ' + ville_resid, size=(250,-1))")
-            exec("self.text_coords_" + str(IDpersonne) + " = wx.TextCtrl(self, -1, texte_coords, size=(200,-1))")
-            exec("self.text_datenaiss_" + str(IDpersonne) + " = wx.TextCtrl(self, -1, date_naiss, size=(75,-1))")
+            text_nom = wx.TextCtrl(self, -1, nom + ', ' + prenom, size=(190,-1))
+            setattr(self, "text_nom_%s" % IDpersonne, text_nom)
+            text_adresse = wx.TextCtrl(self, -1, adresse_resid + ' ' + cp_resid + ' ' + ville_resid, size=(250,-1))
+            setattr(self, "text_adresse_%s" % IDpersonne, text_adresse)
+            text_coords = wx.TextCtrl(self, -1, texte_coords, size=(200,-1))
+            setattr(self, "text_coords_%s" % IDpersonne, text_coords)
+            text_datenaiss = wx.TextCtrl(self, -1, date_naiss, size=(75,-1))
+            setattr(self, "text_datenaiss_%s" % IDpersonne, text_datenaiss)
             
             # Définition de l'état
             etat = "non synchro"
@@ -198,16 +204,16 @@ class PanelContacts(scrolled.ScrolledPanel):
             self.Affiche_controles(IDpersonne, etat)
             
             # Layout des contrôles
-            exec("gridSizer.Add(self.bouton_synchro_" + str(IDpersonne) + ", flag=wx.ALIGN_CENTER_VERTICAL, border=0)")
-            exec("gridSizer.Add(self.bouton_suppr_" + str(IDpersonne) + ", flag=wx.ALIGN_CENTER_VERTICAL, border=0)")
-            exec("gridSizer.Add(self.text_nom_" + str(IDpersonne) + ", flag=wx.ALIGN_CENTER_VERTICAL, border=0)")
-            exec("gridSizer.Add(self.text_adresse_" + str(IDpersonne) + ", flag=wx.ALIGN_CENTER_VERTICAL, border=0)")
-            exec("gridSizer.Add(self.text_coords_" + str(IDpersonne) + ", flag=wx.ALIGN_CENTER_VERTICAL, border=0)")
-            exec("gridSizer.Add(self.text_datenaiss_" + str(IDpersonne) + ", flag=wx.ALIGN_CENTER_VERTICAL, border=0)")
+            gridSizer.Add(bouton_synchro, flag=wx.ALIGN_CENTER_VERTICAL, border=0)
+            gridSizer.Add(bouton_suppr, flag=wx.ALIGN_CENTER_VERTICAL, border=0)
+            gridSizer.Add(text_nom, flag=wx.ALIGN_CENTER_VERTICAL, border=0)
+            gridSizer.Add(text_adresse, flag=wx.ALIGN_CENTER_VERTICAL, border=0)
+            gridSizer.Add(text_coords, flag=wx.ALIGN_CENTER_VERTICAL, border=0)
+            gridSizer.Add(text_datenaiss, flag=wx.ALIGN_CENTER_VERTICAL, border=0)
             
             # Bind
-            exec("self.Bind(wx.EVT_BUTTON, self.OnBoutonSynchro, self.bouton_synchro_" + str(IDpersonne) + ")")
-            exec("self.Bind(wx.EVT_BUTTON, self.OnBoutonSuppr, self.bouton_suppr_" + str(IDpersonne) + ")")
+            self.Bind(wx.EVT_BUTTON, self.OnBoutonSynchro, bouton_synchro)
+            self.Bind(wx.EVT_BUTTON, self.OnBoutonSuppr, bouton_suppr)
 
         self.SetSizer(gridSizer)
         self.SetAutoLayout(1)
@@ -216,26 +222,26 @@ class PanelContacts(scrolled.ScrolledPanel):
         
     def Affiche_controles(self, IDpersonne, etat):
         if etat == "synchro" :
-            exec("self.bouton_synchro_" + str(IDpersonne) + ".Enable(False)")
-            exec("self.bouton_suppr_" + str(IDpersonne) + ".Enable(True)")
-            exec("self.text_nom_" + str(IDpersonne) + ".SetBackgroundColour(COULEUR_SYNCHRO)") # Vert
-            exec("self.text_adresse_" + str(IDpersonne) + ".SetBackgroundColour(COULEUR_SYNCHRO)") # Vert
-            exec("self.text_coords_" + str(IDpersonne) + ".SetBackgroundColour(COULEUR_SYNCHRO)") # Vert
-            exec("self.text_datenaiss_" + str(IDpersonne) + ".SetBackgroundColour(COULEUR_SYNCHRO)") # Vert
+            getattr(self, "bouton_synchro_%s" % IDpersonne).Enable(False)
+            getattr(self, "bouton_suppr_%s" % IDpersonne).Enable(True)
+            getattr(self, "text_nom_%s" % IDpersonne).SetBackgroundColour(COULEUR_SYNCHRO) # Vert
+            getattr(self, "text_adresse_%s" % IDpersonne).SetBackgroundColour(COULEUR_SYNCHRO) # Vert
+            getattr(self, "text_coords_%s" % IDpersonne).SetBackgroundColour(COULEUR_SYNCHRO) # Vert
+            getattr(self, "text_datenaiss_%s" % IDpersonne).SetBackgroundColour(COULEUR_SYNCHRO) # Vert
         if etat == "modif" :
-            exec("self.bouton_synchro_" + str(IDpersonne) + ".Enable(True)")
-            exec("self.bouton_suppr_" + str(IDpersonne) + ".Enable(True)")
-            exec("self.text_nom_" + str(IDpersonne) + ".SetBackgroundColour(COULEUR_MODIF)") # Orange
-            exec("self.text_adresse_" + str(IDpersonne) + ".SetBackgroundColour(COULEUR_MODIF)") # Orange
-            exec("self.text_coords_" + str(IDpersonne) + ".SetBackgroundColour(COULEUR_MODIF)") # Orange
-            exec("self.text_datenaiss_" + str(IDpersonne) + ".SetBackgroundColour(COULEUR_MODIF)") # Orange
+            getattr(self, "bouton_synchro_%s" % IDpersonne).Enable(True)
+            getattr(self, "bouton_suppr_%s" % IDpersonne).Enable(True)
+            getattr(self, "text_nom_%s" % IDpersonne).SetBackgroundColour(COULEUR_MODIF) # Orange
+            getattr(self, "text_adresse_%s" % IDpersonne).SetBackgroundColour(COULEUR_MODIF) # Orange
+            getattr(self, "text_coords_%s" % IDpersonne).SetBackgroundColour(COULEUR_MODIF) # Orange
+            getattr(self, "text_datenaiss_%s" % IDpersonne).SetBackgroundColour(COULEUR_MODIF) # Orange
         if etat == "non synchro" :
-            exec("self.bouton_synchro_" + str(IDpersonne) + ".Enable(True)")
-            exec("self.bouton_suppr_" + str(IDpersonne) + ".Enable(False)")
-            exec("self.text_nom_" + str(IDpersonne) + ".SetBackgroundColour(COULEUR_NON_SYNCHRO)") # Rouge
-            exec("self.text_adresse_" + str(IDpersonne) + ".SetBackgroundColour(COULEUR_NON_SYNCHRO)") # Rouge
-            exec("self.text_coords_" + str(IDpersonne) + ".SetBackgroundColour(COULEUR_NON_SYNCHRO)") # Rouge
-            exec("self.text_datenaiss_" + str(IDpersonne) + ".SetBackgroundColour(COULEUR_NON_SYNCHRO)") # Rouge
+            getattr(self, "bouton_synchro_%s" % IDpersonne).Enable(True)
+            getattr(self, "bouton_suppr_%s" % IDpersonne).Enable(False)
+            getattr(self, "text_nom_%s" % IDpersonne).SetBackgroundColour(COULEUR_NON_SYNCHRO) # Rouge
+            getattr(self, "text_adresse_%s" % IDpersonne).SetBackgroundColour(COULEUR_NON_SYNCHRO) # Rouge
+            getattr(self, "text_coords_%s" % IDpersonne).SetBackgroundColour(COULEUR_NON_SYNCHRO) # Rouge
+            getattr(self, "text_datenaiss_%s" % IDpersonne).SetBackgroundColour(COULEUR_NON_SYNCHRO) # Rouge
         self.Refresh()
         
 
@@ -246,7 +252,7 @@ class PanelContacts(scrolled.ScrolledPanel):
     
     def OnBoutonSuppr(self, event):
         IDpersonne = event.GetId() - 20000
-        exec("nometprenom = self.text_nom_" + str(IDpersonne) + ".GetValue()")
+        nometprenom = getattr(self, "text_nom_%s" % IDpersonne).GetValue()
         self.outlook.Suppression(nometprenom)
         self.Affiche_controles(IDpersonne, "non synchro")
 

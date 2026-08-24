@@ -66,8 +66,6 @@ def audit_text(root: Path, path: Path, lines: list[str]) -> list[Finding]:
                         "SQLite path encoded to bytes; keep filesystem paths as str on Python 3",
                     )
                 )
-        if re.search(r"\b(eval|exec)\s*\(", line) or "__import__(" in line:
-            findings.append(Finding("dynamic-execution", rel, number, stripped))
         if re.search(r"open\([^\n]*[\"'](?:w|a|x)b?[\"']", line):
             findings.append(Finding("file-write", rel, number, stripped))
     return findings
@@ -426,6 +424,11 @@ def audit_ast(
     for node in ast.walk(tree):
         if isinstance(node, ast.Call):
             func = node.func
+            if isinstance(func, ast.Name) and func.id in {"eval", "exec", "__import__"}:
+                detail = ast.get_source_segment(text, node) or f"{func.id}(...)"
+                findings.append(
+                    Finding("dynamic-execution", rel, node.lineno, detail.strip())
+                )
             if (
                 isinstance(func, ast.Attribute)
                 and func.attr == "SetColumnWidth"

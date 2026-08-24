@@ -239,7 +239,7 @@ class TreeCtrlCategories(wx.TreeCtrl):
             r = couleur[0]
             v = couleur[1]
             b = couleur[2]
-            exec("self.img" + str(ID) +  "= il.Add(self.CreationImage(tailleImages, " + str(r) + ", " + str(v) + ", " + str(b) + "))")
+            setattr(self, "img%s" % ID, il.Add(self.CreationImage(tailleImages, r, v, b)))
 
         self.SetImageList(il)
         self.il = il
@@ -286,7 +286,7 @@ class TreeCtrlCategories(wx.TreeCtrl):
                     self.SetItemData(newItem, item[0])
                 else:
                     self.SetItemData(newItem, item[0])
-                exec("self.SetItemImage(newItem, self.img" + str(item[0]) + ", wx.TreeItemIcon_Normal)")
+                self.SetItemImage(newItem, getattr(self, "img%s" % item[0]), wx.TreeItemIcon_Normal)
 
                 # Sélection de l'item s'il sélectionné est par défaut
                 if int(item[0]) == self.IDcat_parent :

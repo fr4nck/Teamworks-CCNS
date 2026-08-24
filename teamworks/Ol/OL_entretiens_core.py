@@ -255,15 +255,12 @@ class ListView(ObjectListView):
         elif nbreListes == 1 :
             listeID = listeListes[0]
         else :
-            # Si plusieurs listes 
-            texteFonction = ""
-            index = 0
-            for liste in listeListes :
-                texteFonction += "set(listeListes[%d]) & " % index
-                index += 1
-            texteFonction = texteFonction[:-3]
-            exec("listeID=%s" % texteFonction)
-            listeID = list(listeID)
+            # Si plusieurs listes, intersection explicite sans génération de code.
+            listeID = list(
+                set(listeListes[0]).intersection(
+                    *(set(liste) for liste in listeListes[1:])
+                )
+            )
             
         # Traitement des requetes SQL
         if nbreFiltres > 0 :
