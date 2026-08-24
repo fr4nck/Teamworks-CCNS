@@ -6,6 +6,7 @@
 # Licence:      Licence GNU GPL
 #-----------------------------------------------------------
 
+import ast
 import Chemins
 from Utils.UTILS_Traduction import _
 import wx
@@ -190,7 +191,7 @@ class PanelGraph(wx.Panel):
             nom_colonne = dictCategories[IDcategorie][0]
             rowLabels.append(nom_colonne)
             # liste des couleurs
-            couleur_colonne= eval(dictCategories[IDcategorie][3])
+            couleur_colonne= ast.literal_eval(dictCategories[IDcategorie][3])
             listeCouleurs.append(self.convertCouleur(couleur_colonne))
             
             dataTemp = []
@@ -354,7 +355,7 @@ class PanelGraph(wx.Panel):
                     for IDcategorie, valeur in dictLignes[IDpersonne]["total"].items() :
                         if IDcategorie != "total" :
                             labelCategorie = dictCategories[IDcategorie][0]
-                            couleur_categorie = eval(dictCategories[IDcategorie][3])
+                            couleur_categorie = ast.literal_eval(dictCategories[IDcategorie][3])
                             listeCouleurs.append(self.convertCouleur(couleur_categorie))
                             listeLabels.append(labelCategorie)
                             listeHeures.append(self.FormateHeure(valeur, "decimal"))
@@ -1569,7 +1570,7 @@ class Tableau(gridlib.Grid):
         for IDcategorie in self.listeCategories :
             nom_colonne = self.dictCategories[IDcategorie][0]
             couleur_colonne = self.dictCategories[IDcategorie][3]
-            couleur_colonne = eval(couleur_colonne)
+            couleur_colonne = ast.literal_eval(couleur_colonne)
             self.SetCellBackgroundColour(0, index_col, couleur_colonne)
             self.SetCellValue(0, index_col, nom_colonne)
             self.SetReadOnly(0, index_col, True)

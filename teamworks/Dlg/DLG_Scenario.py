@@ -6,6 +6,7 @@
 # Licence:      Licence GNU GPL
 #-----------------------------------------------------------
 
+import ast
 import Chemins
 from Utils.UTILS_Traduction import _
 import wx
@@ -748,7 +749,7 @@ class Tableau(gridlib.Grid):
                 if IDcategorie in self.listeCategoriesNonPrevues :
                     nom_colonne += "*"
                 couleur_colonne = self.dictCategories[IDcategorie][3]
-                couleur_colonne = eval(couleur_colonne)
+                couleur_colonne = ast.literal_eval(couleur_colonne)
                 self.SetCellBackgroundColour(0, index_col, couleur_colonne)
             self.SetCellValue(0, index_col, nom_colonne)
             self.SetReadOnly(0, index_col, True)

@@ -9,6 +9,7 @@
 #------------------------------------------------------------------------
 
 
+import ast
 import Chemins
 from Utils import UTILS_Adaptations
 from Utils.UTILS_Traduction import _
@@ -32,7 +33,7 @@ class CTRL_profil_perso(CTRL_Profil.CTRL):
         listeFiltres = []
         if dictParametres != None :
             for index, dictFiltreStr in list(dictParametres.items()) :
-                dictFiltre = eval(dictFiltreStr)
+                dictFiltre = ast.literal_eval(dictFiltreStr)
                 listeFiltres.append(dictFiltre)
         self.dlg.SetDonnees(listeFiltres)
 

@@ -6,6 +6,7 @@
 # Licence:      Licence GNU GPL
 #-----------------------------------------------------------
 
+import ast
 import Chemins
 from Utils.UTILS_Traduction import _
 import wx
@@ -271,8 +272,8 @@ class Dialog(wx.Dialog):
     
     def InitValeurs(self, donnees):
         # Place les valeurs dans les controles
-        taille = eval(donnees[0])
-        self.dictParametres = eval(donnees[1])
+        taille = ast.literal_eval(donnees[0])
+        self.dictParametres = ast.literal_eval(donnees[1])
         self.val_largeur = taille[0]
         self.val_hauteur = taille[1]
         self.val_couleurFace = self.dictParametres["couleur_face"]

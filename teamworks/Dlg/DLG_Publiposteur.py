@@ -70,10 +70,14 @@ class Dialog(wx.Dialog):
     def Creation_Pages(self):
         """ Creation des pages """
         for numPage in range(1, self.nbrePages+1) :
-            exec( "self.page" + str(numPage) + " = " + self.listePages[numPage-1] + "(self.panel_base)" )
-            exec( "self.sizer_pages.Add(self.page" + str(numPage) + ", 1, wx.EXPAND, 0)" )
+            page_class = globals().get(self.listePages[numPage-1])
+            if not callable(page_class):
+                raise RuntimeError("Page de publipostage inconnue : %s" % self.listePages[numPage-1])
+            page = page_class(self.panel_base)
+            setattr(self, "page" + str(numPage), page)
+            self.sizer_pages.Add(page, 1, wx.EXPAND, 0)
             self.sizer_pages.Layout()
-            exec( "self.page" + str(numPage) + ".Show(False)" )
+            page.Show(False)
         self.page1.Show(True)
         self.sizer_pages.Layout()
 
@@ -128,11 +132,11 @@ class Dialog(wx.Dialog):
 
     def Onbouton_retour(self, event):
         # rend invisible la page affichée
-        pageCible = eval("self.page"+str(self.pageVisible))
+        pageCible = getattr(self, "page" + str(self.pageVisible))
         pageCible.Show(False)
         # Fait apparaître nouvelle page
         self.pageVisible -= 1
-        pageCible = eval("self.page"+str(self.pageVisible))
+        pageCible = getattr(self, "page" + str(self.pageVisible))
         pageCible.Show(True)
         self.sizer_pages.Layout()
         # Si on quitte la dernière page, on active le bouton Suivant
@@ -157,11 +161,11 @@ class Dialog(wx.Dialog):
             self.Terminer()
             return
         # Rend invisible la page affichée
-        pageCible = eval("self.page"+str(self.pageVisible))
+        pageCible = getattr(self, "page" + str(self.pageVisible))
         pageCible.Show(False)
         # Fait apparaître nouvelle page
         self.pageVisible += 1
-        pageCible = eval("self.page"+str(self.pageVisible))
+        pageCible = getattr(self, "page" + str(self.pageVisible))
         pageCible.Show(True)
         self.sizer_pages.Layout()
         # Si on arrive à l'avant-dernière page, on désactive le bouton Suivant

@@ -61,7 +61,7 @@ class Panel(wx.Panel):
         self.ctrl_prenom = wx.TextCtrl(self.sizer_identite_staticbox, -1, u"")
         self.label_date_naiss = wx.StaticText(self.sizer_identite_staticbox, -1, _(u"Date naiss. :"))
         self.ctrl_radio_1 = wx.RadioButton(self.sizer_identite_staticbox, -1, u"", style=wx.RB_GROUP)
-        self.ctrl_date_naiss = masked.TextCtrl(self.sizer_identite_staticbox, -1, "", style=wx.TE_CENTRE, mask = "##/##/####") 
+        self.ctrl_date_naiss = masked.TextCtrl(self.sizer_identite_staticbox, -1, "", style=wx.TE_CENTRE, mask = "##/##/####")
         self.ctrl_age_1 = wx.TextCtrl(self.sizer_identite_staticbox, -1, "", style=wx.TE_CENTRE, size=(46,-1))
         self.ctrl_radio_2 = wx.RadioButton(self.sizer_identite_staticbox, -1, u"")
         self.label_age = wx.StaticText(self.sizer_identite_staticbox, -1, _(u"ou âge :"))
@@ -73,7 +73,7 @@ class Panel(wx.Panel):
         self.label_adresse = wx.StaticText(self.sizer_adresse_staticbox, -1, _(u"     Adresse :"))
         self.ctrl_adresse = wx.TextCtrl(self.sizer_adresse_staticbox, -1, u"", style=wx.TE_MULTILINE)
         self.label_cp = wx.StaticText(self.sizer_adresse_staticbox, -1, _(u"C.P. :"))
-        self.ctrl_cp = TextCtrlCp(self.sizer_adresse_staticbox, value="", listeVilles=self.listeVilles, size=(55, -1), style=wx.TE_CENTRE, mask = "#####") 
+        self.ctrl_cp = TextCtrlCp(self.sizer_adresse_staticbox, value="", listeVilles=self.listeVilles, size=(55, -1), style=wx.TE_CENTRE, mask = "#####")
         self.label_ville = wx.StaticText(self.sizer_adresse_staticbox, -1, _(u"Ville :"))
         self.ctrl_ville = TextCtrlVille(self.sizer_adresse_staticbox, value="", ctrlCp=self.ctrl_cp, listeVilles=self.listeVilles, listeNomsVilles=self.listeNomsVilles)
         self.ctrl_cp.ctrlVille = self.ctrl_ville
