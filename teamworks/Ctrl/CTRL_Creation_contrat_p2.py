@@ -3,7 +3,7 @@
 #-----------------------------------------------------------
 # Auteur:        Ivan LUCAS
 # Copyright:    (c) 2008-09 Ivan LUCAS
-# Licence:      Licence GNU GPL
+# Licence GNU GPL
 #-----------------------------------------------------------
 
 import Chemins
@@ -11,10 +11,19 @@ from Utils.UTILS_Traduction import _
 import wx
 import six
 import FonctionsPerso
-import wx.lib.mixins.listctrl  as  listmix
+import wx.lib.mixins.listctrl as listmix
 from Dlg import DLG_Config_modeles_contrats as ConfigModeles
 import GestionDB
-from Utils import UTILS_Adaptations
+from Utils import UTILS_Adaptations, UTILS_Contrats_schema
+
+
+def _resolve_model_convention(current_convention, model_convention, is_legacy_model, is_cee_model):
+    """Résout la convention sans confondre régime CEE et convention collective."""
+    if is_cee_model and model_convention in (None, ""):
+        return current_convention
+    if is_legacy_model:
+        return "OTHER"
+    return model_convention
 
 
 class Page(wx.Panel):
@@ -32,12 +41,11 @@ class Page(wx.Panel):
         self.__set_properties()
         self.__do_layout()
 
-        self.Bind(wx.EVT_RADIOBUTTON, self.OnRadioNon, self.radio_non )
-        self.Bind(wx.EVT_RADIOBUTTON, self.OnRadioOui, self.radio_oui )
+        self.Bind(wx.EVT_RADIOBUTTON, self.OnRadioNon, self.radio_non)
+        self.Bind(wx.EVT_RADIOBUTTON, self.OnRadioOui, self.radio_oui)
         self.Bind(wx.EVT_BUTTON, self.OnBoutonModeles, self.bouton_modeles)
-        
+
         self.Init_radio(position="non")
-        
 
     def __set_properties(self):
         self.label_titre.SetFont(wx.Font(8, wx.DEFAULT, wx.NORMAL, wx.BOLD, 0, ""))
@@ -75,156 +83,156 @@ class Page(wx.Panel):
     def OnRadioOui(self, event):
         self.Init_radio(position="oui")
         self.listCtrl_modeles.SetFocus()
-        if self.listCtrl_modeles.GetItemCount() > 0 :
+        if self.listCtrl_modeles.GetItemCount() > 0:
             self.listCtrl_modeles.Select(0)
 
     def OnBoutonModeles(self, event):
         dlg = ConfigModeles.Dialog(self)
         dlg.ShowModal()
         dlg.Destroy()
-                        
+
     def Init_radio(self, position="non"):
-        if position == "non" :
+        if position == "non":
             self.radio_non.SetValue(True)
             self.listCtrl_modeles.Enable(False)
-            self.bouton_modeles.Enable(False)     
-        else :
+            self.bouton_modeles.Enable(False)
+        else:
             self.radio_oui.SetValue(True)
             self.listCtrl_modeles.Enable(True)
-            self.bouton_modeles.Enable(True)         
+            self.bouton_modeles.Enable(True)
 
     def MAJ_ListCtrl(self):
-        self.listCtrl_modeles.MAJListeCtrl()    
-
-
+        self.listCtrl_modeles.MAJListeCtrl()
 
     def Validation(self):
-        
-        # Si "non", on passe à la page suivante
-        if self.radio_oui.GetValue() == False : return True
-        
-        # Si "oui", on valide le choix dans le ListCtrl
+        if self.radio_oui.GetValue() == False:
+            return True
+
         index = self.listCtrl_modeles.GetFirstSelected()
-        # Vérifie qu'un item a bien été sélectionné dans la liste
         if index == -1:
             dlg = wx.MessageDialog(self, _(u"Vous devez sélectionner un modèle dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return False
-        
-        # Transmission des données
-        IDmodele = int(self.listCtrl_modeles.GetItem(index, 0).GetText())
-        
-        # Récupération des données du MODELE
-        DB = GestionDB.DB()        
-        req = """SELECT IDclassification, IDtype
-        FROM contrats_modeles WHERE IDmodele=%d; """ % IDmodele
-        DB.ExecuterReq(req)
-        listeDonnees = DB.ResultatReq()[0]
-        
 
-        self.GetGrandParent().dictContrats["IDclassification"] = listeDonnees[0]
-        self.GetGrandParent().dictContrats["IDtype"] = listeDonnees[1]
-        
-        # Récupération des données CHAMPS du MODELE
-        req = "SELECT IDchamp, valeur FROM contrats_valchamps WHERE (IDmodele=%d AND type='modele')  ;" % IDmodele
+        IDmodele = int(self.listCtrl_modeles.GetItem(index, 0).GetText())
+
+        DB = GestionDB.DB()
+        UTILS_Contrats_schema.EnsureContractModelColumns(DB)
+        req = """
+        SELECT IDclassification, IDtype, convention_code, ccns_group, cee_qualification
+        FROM contrats_modeles WHERE IDmodele=%d;
+        """ % IDmodele
+        DB.ExecuterReq(req)
+        rows = DB.ResultatReq()
+        if not rows:
+            DB.Close()
+            wx.MessageBox(
+                _(u"Le modèle sélectionné n'existe plus."),
+                _(u"Modèle de contrat"),
+                wx.OK | wx.ICON_ERROR,
+                parent=self,
+            )
+            self.MAJ_ListCtrl()
+            return False
+
+        IDclassification, IDtype, convention_code, ccns_group, cee_qualification = rows[0]
+        contrat = self.GetGrandParent().dictContrats
+        current_convention = contrat.get("convention_code")
+        contrat["IDclassification"] = IDclassification
+        contrat["IDtype"] = IDtype
+
+        is_legacy_model = (
+            convention_code in (None, "")
+            and ccns_group in (None, "")
+            and cee_qualification in (None, "")
+            and IDclassification not in (None, "")
+        )
+        is_cee_model = self.GetGrandParent().page3.dictTypeCodes.get(IDtype) == "CEE"
+        contrat["convention_code"] = _resolve_model_convention(
+            current_convention,
+            convention_code,
+            is_legacy_model,
+            is_cee_model,
+        )
+        contrat["ccns_group"] = ccns_group
+        contrat["cee_qualification"] = cee_qualification
+
+        req = "SELECT IDchamp, valeur FROM contrats_valchamps WHERE (IDmodele=%d AND type='modele');" % IDmodele
         DB.ExecuterReq(req)
         listeDonnees = DB.ResultatReq()
-        
-        for item in listeDonnees :
-            self.GetGrandParent().dictChamps[item[0]] = item[1]
-            
+
+        self.GetGrandParent().dictChamps.clear()
+        for IDchamp, valeur in listeDonnees:
+            self.GetGrandParent().dictChamps[IDchamp] = valeur
+
         DB.Close()
-        
-        # MAJ des contrôles des pages suivantes avec les données importées des modèles
-        self.GetGrandParent().page3.Importation() 
+
+        self.GetGrandParent().page3.Importation()
+        self.GetGrandParent().page3.RefreshContractRules()
         self.GetGrandParent().page4.MAJ_ListCtrl()
-        
         return True
 
 
-
-
-
-# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorterMixin):
     def __init__(self, parent, controller):
-        wx.ListCtrl.__init__( self, parent, -1, style=wx.LC_REPORT|wx.LC_VIRTUAL|wx.LC_SINGLE_SEL|wx.LC_HRULES|wx.LC_VRULES)
-        
+        wx.ListCtrl.__init__(self, parent, -1, style=wx.LC_REPORT|wx.LC_VIRTUAL|wx.LC_SINGLE_SEL|wx.LC_HRULES|wx.LC_VRULES)
+
         self.criteres = ""
         self.parent = controller
 
-        # Initialisation des images
         tailleIcones = 16
         self.il = wx.ImageList(tailleIcones, tailleIcones)
-        self.imgTriAz= self.il.Add(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Tri_az.png"), wx.BITMAP_TYPE_PNG))
-        self.imgTriZa= self.il.Add(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Tri_za.png"), wx.BITMAP_TYPE_PNG))
+        self.imgTriAz = self.il.Add(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Tri_az.png"), wx.BITMAP_TYPE_PNG))
+        self.imgTriZa = self.il.Add(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Tri_za.png"), wx.BITMAP_TYPE_PNG))
         self.SetImageList(self.il, wx.IMAGE_LIST_SMALL)
 
-        #adding some attributes (colourful background for each item rows)
         self.attr1 = wx.ItemAttr()
-        self.attr1.SetBackgroundColour("#EEF4FB") # Vert = #F0FBED
-
-        # Remplissage du ListCtrl
+        self.attr1.SetBackgroundColour("#EEF4FB")
         self.Remplissage()
-        
-        #events
+
         self.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.OnItemActivated)
-##        self.Bind(wx.EVT_CONTEXT_MENU, self.OnContextMenu)
         self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.OnItemSelected)
         self.Bind(wx.EVT_LIST_ITEM_DESELECTED, self.OnItemDeselected)
-        #self.Bind(wx.EVT_SIZE, self.OnSize)
 
     def OnSize(self, event):
         self.Refresh()
         event.Skip()
 
     def Remplissage(self):
-        
-        # Récupération des données dans la base de données
         self.Importation()
-        
-        # Création des colonnes
-        self.nbreColonnes =2
+        self.nbreColonnes = 2
         self.InsertColumn(0, _(u"     ID"))
         self.SetColumnWidth(0, 0)
         self.InsertColumn(1, _(u"Nom"))
-        self.SetColumnWidth(1, 200)  
+        self.SetColumnWidth(1, 200)
         self.InsertColumn(2, _(u"Description"))
-        self.SetColumnWidth(2, 100)  
-        
-        #These two should probably be passed to init more cleanly
-        #setting the numbers of items = number of elements in the dictionary
+        self.SetColumnWidth(2, 100)
+
         self.itemDataMap = self.donnees
         self.itemIndexMap = list(self.donnees.keys())
         self.SetItemCount(self.nbreLignes)
-        
-        #mixins
+
         listmix.ListCtrlAutoWidthMixin.__init__(self)
         listmix.ColumnSorterMixin.__init__(self, self.nbreColonnes)
-
-        #sort by genre (column 1), A->Z ascending order (1)
         self.SortListItems(1, 1)
 
     def OnItemSelected(self, event):
         pass
-        
+
     def OnItemDeselected(self, event):
         pass
-        
+
     def Importation(self):
-        # Récupération des données
-        DB = GestionDB.DB()        
+        DB = GestionDB.DB()
         req = """SELECT IDmodele, nom, description
         FROM contrats_modeles ORDER BY nom; """
         DB.ExecuterReq(req)
         liste = DB.ResultatReq()
         DB.Close()
         self.nbreLignes = len(liste)
-        # Création du dictionnaire de données
         self.donnees = self.listeEnDict(liste)
-            
+
     def MAJListeCtrl(self):
         self.ClearAll()
         self.Remplissage()
@@ -235,103 +243,68 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
         dictio = {}
         x = 1
         for ligne in liste:
-            index = x # Donne un entier comme clé
-            dictio[index] = ligne
+            dictio[x] = ligne
             x += 1
         return dictio
-           
+
     def OnItemActivated(self, event):
         self.parent.OnBoutonModeles(None)
-        
+
     def getColumnText(self, index, col):
         item = self.GetItem(index, col)
         return item.GetText()
 
-    #---------------------------------------------------
-    # These methods are callbacks for implementing the
-    # "virtualness" of the list...
-
     def OnGetItemText(self, item, col):
-        """ Affichage des valeurs dans chaque case du ListCtrl """
-        index=self.itemIndexMap[item]
-        valeur = six.text_type(self.itemDataMap[index][col])
-        return valeur
+        index = self.itemIndexMap[item]
+        return six.text_type(self.itemDataMap[index][col])
 
     def OnGetItemImage(self, item):
-        """ Affichage des images en début de ligne """
         return -1
 
     def OnGetItemAttr(self, item):
-        """ Application d'une couleur de fond pour une ligne sur deux """
-        # Création d'une ligne de couleur 1 ligne sur 2
         if item % 2 == 1:
             return self.attr1
-        else:
-            return None
-       
-    #-----------------------------------------------------------
-    # Matt C, 2006/02/22
-    # Here's a better SortItems() method --
-    # the ColumnSorterMixin.__ColumnSorter() method already handles the ascending/descending,
-    # and it knows to sort on another column if the chosen columns have the same value.
+        return None
 
-    def SortItems(self,sorter=FonctionsPerso.cmp):
+    def SortItems(self, sorter=FonctionsPerso.cmp):
         items = list(self.itemDataMap.keys())
         items = FonctionsPerso.SortItems(items, sorter)
         self.itemIndexMap = items
-        # redraw the list
         self.Refresh()
 
-    # Used by the ColumnSorterMixin, see wx/lib/mixins/listctrl.py
     def GetListCtrl(self):
         return self
 
-    # Used by the ColumnSorterMixin, see wx/lib/mixins/listctrl.py
     def GetSortImages(self):
         return (self.imgTriAz, self.imgTriZa)
 
-    # ---------------------------------------------------------
-
     def OnContextMenu(self, event):
-        """Ouverture du menu contextuel """
-        
         if self.GetFirstSelected() == -1:
             return False
-        index = self.GetFirstSelected()
-        key = int(self.getColumnText(index, 0))
-        
-        # Création du menu contextuel
         menuPop = UTILS_Adaptations.Menu()
 
-        # Item Modifier
         item = wx.MenuItem(menuPop, 10, _(u"Ajouter"))
-        bmp = wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_PNG)
-        item.SetBitmap(bmp)
+        item.SetBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_PNG))
         menuPop.AppendItem(item)
         self.Bind(wx.EVT_MENU, self.Menu_Ajouter, id=10)
-        
-        menuPop.AppendSeparator()
 
-        # Item Ajouter
+        menuPop.AppendSeparator()
         item = wx.MenuItem(menuPop, 20, _(u"Modifier"))
-        bmp = wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Modifier.png"), wx.BITMAP_TYPE_PNG)
-        item.SetBitmap(bmp)
+        item.SetBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Modifier.png"), wx.BITMAP_TYPE_PNG))
         menuPop.AppendItem(item)
         self.Bind(wx.EVT_MENU, self.Menu_Modifier, id=20)
 
-        # Item Supprimer
         item = wx.MenuItem(menuPop, 30, _(u"Supprimer"))
-        bmp = wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_PNG)
-        item.SetBitmap(bmp)
+        item.SetBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_PNG))
         menuPop.AppendItem(item)
         self.Bind(wx.EVT_MENU, self.Menu_Supprimer, id=30)
-        
+
         self.PopupMenu(menuPop)
         menuPop.Destroy()
 
     def Menu_Ajouter(self, event):
         self.parent.Ajouter()
-        
+
     def Menu_Modifier(self, event):
         self.parent.Modifier()
 
