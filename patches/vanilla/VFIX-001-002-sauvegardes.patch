@@ -1,0 +1,14 @@
+--- a/teamworks/Dlg/DLG_Config_sauvegarde.py
++++ b/teamworks/Dlg/DLG_Config_sauvegarde.py
+@@ -567 +567 @@
+-        grid_sizer_base = wx.FlexGridSizer(rows=2, cols=1, vgap=0, hgap=0)
++        grid_sizer_base = wx.FlexGridSizer(rows=3, cols=1, vgap=0, hgap=0)
+@@ -721 +721 @@
+-            listeFichiers = os.listdir(rep)
++            listeFichiers = os.listdir(rep) if os.path.isdir(rep) else []
+@@ -818,0 +819,2 @@
++                if not os.path.isdir(rep) :
++                    continue
+@@ -889 +891 @@
+-        grid_sizer_base = wx.FlexGridSizer(rows=2, cols=1, vgap=0, hgap=0)
++        grid_sizer_base = wx.FlexGridSizer(rows=3, cols=1, vgap=0, hgap=0)
