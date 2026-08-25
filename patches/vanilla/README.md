@@ -11,7 +11,8 @@ Ils ne contiennent ni migration Python 3/Phoenix, ni thème moderne, ni CCNS.
 - `VFIX-001-002-sauvegardes.patch` — dossiers sources absents + grilles de sauvegarde ;
 - `VFIX-003-gadgets.patch` — sélection et bornes de déplacement ;
 - `VFIX-004-apercu-email.patch` — navigation hors limites ;
-- `VFIX-005-boutons-image.patch` — tolérance aux ressources image absentes.
+- `VFIX-005-boutons-image.patch` — tolérance aux ressources image absentes ;
+- `VFIX-006-007-gestiondb.patch` — erreur INSERT masquée + suppression de colonne SQLite destructive.
 
 ## Application
 
@@ -22,6 +23,7 @@ git apply --unidiff-zero patches/vanilla/VFIX-001-002-sauvegardes.patch
 git apply --unidiff-zero patches/vanilla/VFIX-003-gadgets.patch
 git apply --unidiff-zero patches/vanilla/VFIX-004-apercu-email.patch
 git apply --unidiff-zero patches/vanilla/VFIX-005-boutons-image.patch
+git apply --unidiff-zero patches/vanilla/VFIX-006-007-gestiondb.patch
 ```
 
 Le format à contexte nul est volontaire : les sources Vanilla historiques sont en `iso-8859-15` et les patches ne doivent pas provoquer une conversion globale d'encodage des fichiers.
@@ -30,12 +32,14 @@ Le format à contexte nul est volontaire : les sources Vanilla historiques sont 
 
 Sur une copie exacte du snapshot Vanilla fourni :
 
-- les quatre patches passent `git apply --unidiff-zero --check` ;
-- les quatre patches s'appliquent sans conversion d'encodage ;
-- les quatre fichiers modifiés passent la compilation Python (`py_compile`) ;
+- les cinq patches passent le contrôle d'application à blanc ;
+- les cinq patches s'appliquent sans conversion d'encodage ;
+- les fichiers modifiés passent la compilation Python (`py_compile`) ;
 - `git diff --check` est propre après application.
 
-Cette validation est **statique**. Elle ne remplace pas un démarrage réel de Teamworks dans son environnement historique ni le test manuel des quatre parcours concernés.
+Le patch `VFIX-006-007-gestiondb.patch` a en plus été comparé byte-à-byte avec la cible reconstruite après application.
+
+Cette validation est **statique**. Elle ne remplace pas un démarrage réel de Teamworks dans son environnement historique ni le test manuel des parcours concernés.
 
 ## Règle
 
