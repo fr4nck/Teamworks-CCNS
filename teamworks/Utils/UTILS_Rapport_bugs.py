@@ -239,7 +239,7 @@ def Activer_boite_noire_wx(app=None):
 def Activer_rapport_erreurs(version=""):
     """Active crash reports, boîte noire technique, wx, threads et faulthandler."""
     global _VERSION_ACTIVE, _BLACKBOX_MAINLOOP_WRAPPED
-    _VERSION_ACTIVE = version or ""
+    _VERSION_ACTIVE = UTILS_Crash.GetVersionApplication(version)
 
     # Si Chemins.py ne l'a pas déjà fait, active aussi la capture des erreurs
     # fatales C/Python (segfault, abort, etc.).

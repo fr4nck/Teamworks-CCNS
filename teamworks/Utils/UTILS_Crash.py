@@ -86,6 +86,28 @@ def _version_python() -> str:
     return platform.python_version()
 
 
+def GetVersionApplication(fallback: str = "") -> str:
+    """Lit la version moderne du dépôt/portable avant la version historique."""
+    # Les versions explicites de test ou de diagnostic restent prioritaires.
+    # Seule la version Vanilla connue (ou l'absence de version) est remplacée
+    # par la version moderne distribuée dans VERSION.
+    if fallback and fallback != "2.1.3.1":
+        return fallback
+    principal = _repertoire_principal()
+    for chemin in (
+        os.path.join(principal, "VERSION"),
+        os.path.join(os.path.dirname(principal), "VERSION"),
+    ):
+        try:
+            with open(chemin, "r", encoding="utf-8", errors="replace") as fichier:
+                version = fichier.read().strip()
+            if version:
+                return version
+        except OSError:
+            pass
+    return fallback or ""
+
+
 def _informations_build() -> list[str]:
     principal = _repertoire_principal()
     lignes: list[str] = []
@@ -193,6 +215,7 @@ def ConstruireRapport(
     version_wx: str = "",
 ) -> str:
     pile = _formater_exception_sans_donnees(exctype, value, tb)
+    version = GetVersionApplication(version)
     lignes = [
         "=" * 78,
         f"{_NOM_APPLICATION} — rapport de crash",

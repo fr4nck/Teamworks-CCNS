@@ -45,6 +45,29 @@ def test_exception_report_is_written_with_runtime_context(tmp_path: Path) -> Non
     assert "contenu de base de données" in text
 
 
+def test_crash_report_prefers_modern_version_file(tmp_path: Path, monkeypatch) -> None:
+    runtime = tmp_path / "teamworks"
+    runtime.mkdir()
+    (tmp_path / "VERSION").write_text("0.9.0-dev\n", encoding="utf-8")
+    monkeypatch.setattr(UTILS_Crash, "_repertoire_principal", lambda: str(runtime))
+
+    try:
+        raise RuntimeError("version-check")
+    except RuntimeError:
+        exctype, value, tb = sys.exc_info()
+        path = UTILS_Crash.EcrireRapportException(
+            exctype,
+            value,
+            tb,
+            version="2.1.3.1",
+            repertoire=str(tmp_path / "logs"),
+        )
+
+    text = Path(path).read_text(encoding="utf-8")
+    assert "Version application: 0.9.0-dev" in text
+    assert "Version application: 2.1.3.1" not in text
+
+
 def test_early_hook_captures_import_time_style_crash_without_message(tmp_path: Path) -> None:
     marker = "TW187_EARLY_SENSITIVE"
     code = "\n".join(
