@@ -1,8 +1,11 @@
 from pathlib import Path
+import subprocess
+import sys
 
 
 ROOT = Path(__file__).resolve().parents[1]
 SMOKE = ROOT / "tools" / "smoke_secondary_presence_dialog.py"
+PDF_SMOKE = ROOT / "tools" / "smoke_planning_pdf.py"
 RUNTIME = ROOT / "tools" / "smoke_runtime.py"
 ENTRYPOINT = ROOT / "teamworks" / "Teamworks.py"
 CORE = ROOT / "teamworks" / "Teamworks_core.py"
@@ -47,6 +50,39 @@ def test_presence_smoke_qualifies_planning_lifecycle() -> None:
     assert "DELETE FROM presences" in smoke_source
     assert "__TEAMWORKS_SMOKE_PLANNING_CREATE__" in smoke_source
     assert "__TEAMWORKS_SMOKE_PLANNING_EDIT__" in smoke_source
+
+
+def test_planning_pdf_smoke_targets_real_grid_and_three_formats() -> None:
+    source = PDF_SMOKE.read_text(encoding="utf-8")
+
+    assert 'dict_pages_by_index["presences"]' in source
+    assert "panelPlanning.DCplanning" in source
+    assert "_smoke_grid.Impression(afficher=False)" in source
+    assert '(1, "planning-texte.pdf")' in source
+    assert '(2, "planning-portrait.pdf")' in source
+    assert '(3, "planning-paysage.pdf")' in source
+    assert 'startswith(b"%PDF-")' in source
+    assert 'endswith(b"%%EOF")' in source
+    assert "TEAMWORKS_SMOKE_PLANNING_PDF_READY" in source
+    assert "DELETE FROM presences" in source
+
+
+def test_planning_pdf_runs_in_real_windows_application() -> None:
+    if sys.platform != "win32":
+        return
+
+    completed = subprocess.run(
+        [sys.executable, str(PDF_SMOKE)],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        timeout=300,
+        check=False,
+    )
+    output = "\n".join(part for part in (completed.stdout, completed.stderr) if part)
+    assert completed.returncode == 0, output
+    assert "TEAMWORKS_SMOKE_PLANNING_PDF_READY" in output, output
+    assert "TEAMWORKS_SMOKE_PLANNING_PDF_FAILED" not in output, output
 
 
 def test_presence_smoke_always_writes_a_diagnostic() -> None:
