@@ -9,6 +9,7 @@
 #------------------------------------------------------------------------
 
 
+import copy
 import Chemins
 from Utils import UTILS_Adaptations
 from Utils.UTILS_Traduction import _
@@ -27,11 +28,13 @@ LISTE_EXTENSIONS = ["bmp", "doc", "docx", "gif", "jpeg", "jpg", "pdf", "png", "t
 
 
 class Track(object):
-    def __init__(self, parent, dictDonnees={}):
+    def __init__(self, parent, dictDonnees=None):
+        if dictDonnees is None:
+            dictDonnees = {}
         self.parent = parent
         self.adresse = dictDonnees["adresse"]
-        self.pieces = dictDonnees["pieces"]
-        self.champs = dictDonnees["champs"]
+        self.pieces = list(dictDonnees.get("pieces") or [])
+        self.champs = dict(dictDonnees.get("champs") or {})
         
         if "IDfamille" in dictDonnees :
             self.IDfamille = dictDonnees["IDfamille"]
@@ -292,8 +295,10 @@ class ListView(FastObjectListView):
             listeTemp.append(dictTemp)
         self.SetDonnees(listeTemp)
 
-    def SetDonnees(self, listeDonnees=[]):
+    def SetDonnees(self, listeDonnees=None):
         """ Remplit la liste des mails """
+        if listeDonnees is None:
+            listeDonnees = []
         self.listeDonnees = listeDonnees
         self.MAJ()
         try :
@@ -304,7 +309,9 @@ class ListView(FastObjectListView):
         except :
             pass
     
-    def SetDonneesManuelles(self, listeDonnees=[], modificationAutorisee=None):
+    def SetDonneesManuelles(self, listeDonnees=None, modificationAutorisee=None):
+        if listeDonnees is None:
+            listeDonnees = []
         # Autorisation des modifications
         if modificationAutorisee != None :
             self.modificationAutorisee = modificationAutorisee
@@ -524,14 +531,25 @@ class ListView(FastObjectListView):
 
 
     def GetDonnees(self):
-        """ Renvoie les données au format track """
-        return self.donnees
+        """Renvoie des tracks de travail isolés de l'état affiché.
+
+        Le mailer historique complète la liste des pièces avec les pièces
+        communes. Une copie est donc indispensable pour qu'une préparation ou
+        un second envoi ne modifie jamais les pièces personnelles mémorisées.
+        """
+        resultat = []
+        for track in self.donnees:
+            clone = copy.copy(track)
+            clone.pieces = list(track.pieces)
+            clone.champs = dict(track.champs)
+            resultat.append(clone)
+        return resultat
 
     def GetDonneesDict(self):
         """ Renvoie les données au format dict """
         listeTemp = []
         for track in self.donnees :
-            dictTemp = {"adresse":track.adresse, "pieces":track.pieces, "champs":track.champs}
+            dictTemp = {"adresse":track.adresse, "pieces":list(track.pieces), "champs":dict(track.champs)}
             listeTemp.append(dictTemp)
         return listeTemp
 
@@ -563,7 +581,6 @@ class MyFrame(wx.Frame):
 
 if __name__ == '__main__':
     app = wx.App(0)
-    #wx.InitAllImageHandlers()
     frame_1 = MyFrame(None, -1, "OL TEST")
     app.SetTopWindow(frame_1)
     frame_1.Show()
