@@ -2,9 +2,9 @@
   "root": "/home/runner/work/Teamworks-CCNS/Teamworks-CCNS",
   "python_files": 529,
   "counts": {
-    "bare-except": 180,
+    "bare-except": 177,
     "file-write": 34,
-    "gestiondb-open": 566,
+    "gestiondb-open": 565,
     "sqlite-direct": 10
   },
   "top_files": [
@@ -29,10 +29,6 @@
       17
     ],
     [
-      "teamworks/Utils/UTILS_Publipostage_donnees.py",
-      17
-    ],
-    [
       "teamworks/Dlg/DLG_Scenario.py",
       15
     ],
@@ -51,6 +47,10 @@
     [
       "teamworks/Ol/OL_entretiens_core.py",
       14
+    ],
+    [
+      "teamworks/Utils/UTILS_Publipostage_donnees.py",
+      13
     ],
     [
       "teamworks/Ctrl/CTRL_Questionnaire.py",
@@ -4631,103 +4631,79 @@
     {
       "category": "gestiondb-open",
       "path": "teamworks/Utils/UTILS_Publipostage_donnees.py",
-      "line": 123,
-      "detail": "DB = GestionDB.DB()"
-    },
-    {
-      "category": "bare-except",
-      "path": "teamworks/Utils/UTILS_Publipostage_donnees.py",
-      "line": 150,
-      "detail": "except :"
-    },
-    {
-      "category": "gestiondb-open",
-      "path": "teamworks/Utils/UTILS_Publipostage_donnees.py",
-      "line": 180,
+      "line": 59,
       "detail": "DB = GestionDB.DB()"
     },
     {
       "category": "gestiondb-open",
       "path": "teamworks/Utils/UTILS_Publipostage_donnees.py",
-      "line": 199,
+      "line": 173,
       "detail": "DB = GestionDB.DB()"
     },
     {
       "category": "gestiondb-open",
       "path": "teamworks/Utils/UTILS_Publipostage_donnees.py",
-      "line": 237,
+      "line": 221,
       "detail": "DB = GestionDB.DB()"
     },
     {
       "category": "gestiondb-open",
       "path": "teamworks/Utils/UTILS_Publipostage_donnees.py",
-      "line": 267,
+      "line": 240,
       "detail": "DB = GestionDB.DB()"
     },
     {
       "category": "gestiondb-open",
       "path": "teamworks/Utils/UTILS_Publipostage_donnees.py",
-      "line": 281,
+      "line": 278,
       "detail": "DB = GestionDB.DB()"
     },
     {
       "category": "gestiondb-open",
       "path": "teamworks/Utils/UTILS_Publipostage_donnees.py",
-      "line": 298,
+      "line": 308,
       "detail": "DB = GestionDB.DB()"
     },
     {
       "category": "gestiondb-open",
       "path": "teamworks/Utils/UTILS_Publipostage_donnees.py",
-      "line": 334,
+      "line": 322,
       "detail": "DB = GestionDB.DB()"
     },
     {
       "category": "gestiondb-open",
       "path": "teamworks/Utils/UTILS_Publipostage_donnees.py",
-      "line": 362,
-      "detail": "DB = GestionDB.DB()"
-    },
-    {
-      "category": "bare-except",
-      "path": "teamworks/Utils/UTILS_Publipostage_donnees.py",
-      "line": 405,
-      "detail": "except :"
-    },
-    {
-      "category": "gestiondb-open",
-      "path": "teamworks/Utils/UTILS_Publipostage_donnees.py",
-      "line": 412,
+      "line": 339,
       "detail": "DB = GestionDB.DB()"
     },
     {
       "category": "gestiondb-open",
       "path": "teamworks/Utils/UTILS_Publipostage_donnees.py",
-      "line": 423,
-      "detail": "DB = GestionDB.DB()"
-    },
-    {
-      "category": "bare-except",
-      "path": "teamworks/Utils/UTILS_Publipostage_donnees.py",
-      "line": 448,
-      "detail": "except :"
-    },
-    {
-      "category": "gestiondb-open",
-      "path": "teamworks/Utils/UTILS_Publipostage_donnees.py",
-      "line": 456,
+      "line": 378,
       "detail": "DB = GestionDB.DB()"
     },
     {
       "category": "gestiondb-open",
       "path": "teamworks/Utils/UTILS_Publipostage_donnees.py",
-      "line": 472,
+      "line": 406,
       "detail": "DB = GestionDB.DB()"
     },
     {
       "category": "gestiondb-open",
       "path": "teamworks/Utils/UTILS_Publipostage_donnees.py",
-      "line": 520,
+      "line": 464,
+      "detail": "DB = GestionDB.DB()"
+    },
+    {
+      "category": "gestiondb-open",
+      "path": "teamworks/Utils/UTILS_Publipostage_donnees.py",
+      "line": 480,
+      "detail": "DB = GestionDB.DB()"
+    },
+    {
+      "category": "gestiondb-open",
+      "path": "teamworks/Utils/UTILS_Publipostage_donnees.py",
+      "line": 528,
       "detail": "DB = GestionDB.DB()"
     },
     {
