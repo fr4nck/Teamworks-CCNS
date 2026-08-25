@@ -1,0 +1,21 @@
+--- a/teamworks/Ctrl/CTRL_Bouton_image.py
++++ b/teamworks/Ctrl/CTRL_Bouton_image.py
+@@ -48 +48 @@
+-        if "Static" not in self.cheminImage:
++        if self.cheminImage not in ("", None) and "Static" not in self.cheminImage:
+@@ -56,6 +56,9 @@
+-        if self.cheminImage not in ("", None) :
+-            img = Image.open(self.cheminImage)
+-            img = img.resize(self.tailleImage, Image.ANTIALIAS)
+-            img = ImageOps.expand(img, border=self.margesImage)
+-            img = PILtoWx(img) 
+-            bmp = img.ConvertToBitmap()
++        if self.cheminImage not in ("", None) and os.path.isfile(self.cheminImage) :
++            try :
++                img = Image.open(self.cheminImage)
++                img = img.resize(self.tailleImage, Image.ANTIALIAS)
++                img = ImageOps.expand(img, border=self.margesImage)
++                img = PILtoWx(img)
++                bmp = img.ConvertToBitmap()
++            except (IOError, OSError) :
++                bmp = wx.NullBitmap
