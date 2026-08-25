@@ -293,7 +293,7 @@ class ListCtrl_personnes(
         listeDeplacements = DB.ResultatReq()
         DB.Close()
 
-        for _, IDpersonne, distance, tarif_km, IDremboursement in listeDeplacements:
+        for IDdeplacement, IDpersonne, distance, tarif_km, IDremboursement in listeDeplacements:
             if IDpersonne not in dictDonnees:
                 continue
             montant = float(distance or 0) * float(tarif_km or 0)
