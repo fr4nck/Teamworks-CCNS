@@ -63,6 +63,41 @@ Avant une migration large :
 
 Ne jamais assouplir un test ou un audit uniquement pour obtenir du vert. Si une règle est fausse ou trop large, corriger la règle ; si le défaut est réel, corriger le runtime.
 
+## Classification obligatoire des anomalies et évolutions
+
+Toute anomalie ou correction rencontrée pendant le développement doit être classée selon sa **provenance réelle**, et non selon le contexte dans lequel elle a été découverte.
+
+Quatre chantiers de suivi sont maintenus séparément :
+
+1. **Vanilla / Bugfix** — `docs/01_VANILLA_BUGFIX.md` : défaut déjà présent dans `Noethys/Teamworks` et correction compatible avec le socle original ;
+2. **Python 3 / wxPython Phoenix** — `docs/02_PYTHON3_PHOENIX.md` : adaptations et régressions liées à la migration technique ;
+3. **UI/UX / thème graphique** — `docs/03_UI_UX_MODERNISATION.md` : design system, composants, zoom, tailles, couleurs, icônes, layouts et ergonomie modernes ;
+4. **CCNS / extensions** — `docs/04_CCNS_EXTENSIONS.md` : règles CCNS, fonctions métier et fonctionnalités ajoutées dans notre fork.
+
+Lorsqu'un bug est découvert :
+
+1. rechercher le code correspondant dans la base originale `Noethys/Teamworks` ;
+2. vérifier si le défaut y existe réellement ;
+3. ne jamais conclure à un bug Vanilla uniquement parce qu'un commit du fork porte le préfixe `fix` ;
+4. s'il existe dans Vanilla, préparer un correctif minimal compatible avec la technologie d'origine, sans introduire Python 3/Phoenix, thème moderne ou CCNS ;
+5. s'il a été introduit ou seulement rendu nécessaire par la migration, le classer Python 3/Phoenix ;
+6. s'il provient de la refonte graphique, le classer UI/UX ;
+7. s'il concerne une fonction créée par notre fork, le classer CCNS/extensions ;
+8. mettre à jour le fichier de suivi correspondant dans le même lot documentaire que le correctif.
+
+Un même problème peut nécessiter deux corrections distinctes : un **backport Vanilla minimal** et une adaptation supplémentaire dans le fork moderne. Ces deux corrections doivent rester traçables séparément.
+
+### Mesure de progression
+
+Les quatre chantiers ont leur propre pourcentage. Ne pas confondre :
+
+- pourcentage d'audit/tri des candidats ;
+- pourcentage de correctifs identifiés ;
+- pourcentage de correctifs réellement backportés et testés ;
+- pourcentage d'avancement fonctionnel global du produit.
+
+Le pourcentage global, lorsqu'il est utilisé, doit être **pondéré par la taille et l'importance des lots** et ne doit pas être la simple moyenne des quatre axes.
+
 ## Automatisation des corrections homogènes
 
 Lorsqu'une famille comporte de nombreuses occurrences mécaniquement équivalentes, préférer une transformation automatisée, déterministe et vérifiable à des dizaines d'éditions manuelles.
