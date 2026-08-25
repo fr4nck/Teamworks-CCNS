@@ -64,7 +64,10 @@ class Dialog(wx.Dialog):
         )
         self.ctrl_check_nonRembourses.SetValue(True)
 
-        self.ctrl_personnes = ListCtrl_personnes(self.staticBox_selection)
+        self.ctrl_personnes = ListCtrl_personnes(
+            self.staticBox_selection,
+            owner=self,
+        )
         self.panel_pageFrais = CTRL_Page_frais.Panel(
             self.panel_base, IDpersonne=self.IDpersonne
         )
@@ -92,7 +95,6 @@ class Dialog(wx.Dialog):
             self.ctrl_check_nonRembourses,
         )
 
-        # Si aucune personne n'a de déplacement à rembourser, afficher tout le monde.
         if len(self.ctrl_personnes.donnees) == 0:
             self.ctrl_check_tous.SetValue(True)
             self.ctrl_personnes.MAJListeCtrl()
@@ -199,7 +201,7 @@ class ListCtrl_personnes(
     listmix.ListCtrlAutoWidthMixin,
     listmix.ColumnSorterMixin,
 ):
-    def __init__(self, parent, IDpersonne=None):
+    def __init__(self, parent, owner, IDpersonne=None):
         wx.ListCtrl.__init__(
             self,
             parent,
@@ -212,6 +214,7 @@ class ListCtrl_personnes(
                 | wx.LC_VRULES
             ),
         )
+        self.owner = owner
         self.IDpersonne = IDpersonne
         self.parent = parent
         self.selection = (0, None)
@@ -259,12 +262,9 @@ class ListCtrl_personnes(
         index = self.GetFirstSelected()
         if index == -1:
             return False
-        IDpersonne = int(self.getColumnText(index, 0))
-        nomPersonne = self.getColumnText(index, 1)
-        dialog = self.GetGrandParent()
-        dialog.IDpersonne = IDpersonne
-        dialog.nomPersonne = nomPersonne
-        dialog.MAJlistes()
+        self.owner.IDpersonne = int(self.getColumnText(index, 0))
+        self.owner.nomPersonne = self.getColumnText(index, 1)
+        self.owner.MAJlistes()
         event.Skip()
 
     def Importation(self):
@@ -275,7 +275,14 @@ class ListCtrl_personnes(
             reader.close()
 
         dictDonnees = {
-            IDpersonne: [IDpersonne, "%s %s" % (nom or "", prenom or ""), 0, 0.0, 0, 0.0]
+            IDpersonne: [
+                IDpersonne,
+                "%s %s" % (nom or "", prenom or ""),
+                0,
+                0.0,
+                0,
+                0.0,
+            ]
             for IDpersonne, nom, prenom in listePersonnes
         }
 
@@ -287,7 +294,6 @@ class ListCtrl_personnes(
         DB.Close()
 
         for _, IDpersonne, distance, tarif_km, IDremboursement in listeDeplacements:
-            # Une ancienne donnée orpheline ne doit pas empêcher l'ouverture de la fenêtre.
             if IDpersonne not in dictDonnees:
                 continue
             montant = float(distance or 0) * float(tarif_km or 0)
@@ -298,7 +304,7 @@ class ListCtrl_personnes(
                 dictDonnees[IDpersonne][2] += 1
                 dictDonnees[IDpersonne][3] += montant
 
-        afficher_non_rembourses = self.GetGrandParent().ctrl_check_nonRembourses.GetValue()
+        afficher_non_rembourses = self.owner.ctrl_check_nonRembourses.GetValue()
         self.donnees = {}
         index = 0
         for IDpersonne, valeurs in dictDonnees.items():
@@ -306,12 +312,16 @@ class ListCtrl_personnes(
             nbreRembourses, montantRembourses = valeurs[2], valeurs[3]
             nbreNonRembourses, montantNonRembourses = valeurs[4], valeurs[5]
             txtRembourses = (
-                "" if nbreRembourses == 0
-                else str(nbreRembourses) + _(u" (soit %.2f €) ") % montantRembourses
+                ""
+                if nbreRembourses == 0
+                else str(nbreRembourses)
+                + _(u" (soit %.2f €) ") % montantRembourses
             )
             txtNonRembourses = (
-                "" if nbreNonRembourses == 0
-                else str(nbreNonRembourses) + _(u" (soit %.2f €) ") % montantNonRembourses
+                ""
+                if nbreNonRembourses == 0
+                else str(nbreNonRembourses)
+                + _(u" (soit %.2f €) ") % montantNonRembourses
             )
             if afficher_non_rembourses and nbreNonRembourses == 0:
                 continue
