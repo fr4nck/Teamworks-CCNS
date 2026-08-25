@@ -1194,8 +1194,11 @@ class MyFrame(wx.Frame):
             else:
                 # Version TW2
                 dlg = DLG_Restauration.Dialog(self, fichier=fichier)
-                dlg.ShowModal()
-                dlg.Destroy()
+                try:
+                    dlg.ShowModal()
+                finally:
+                    dlg.Destroy()
+                    DLG_Restauration.NettoyerFichierDecrypteTemporaire(fichier)
 
     def On_param_preferences(self, event):
         from Dlg import DLG_Preferences

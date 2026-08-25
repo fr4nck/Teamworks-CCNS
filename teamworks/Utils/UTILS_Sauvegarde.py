@@ -273,16 +273,14 @@ def VerificationZip(fichier=""):
     return zipfile.is_zipfile(fichier)
     
 def GetListeFichiersZIP(fichier):
-    """ Récupère la liste des fichiers du ZIP """
-    listeFichiers = []
-    fichierZip = zipfile.ZipFile(fichier, "r")
-    for fichier in fichierZip.namelist() :
-        listeFichiers.append(fichier)
-    return listeFichiers
+    """ Récupère la liste des fichiers du ZIP sans conserver le fichier ouvert. """
+    with zipfile.ZipFile(fichier, "r") as fichierZip:
+        return list(fichierZip.namelist())
     
 def Restauration(parent=None, fichier="", listeFichiersLocaux=[], listeFichiersReseau=[], dictConnexion=None, inclure_modeles=False, inclure_editions=False):
     """ Restauration à partir des listes de fichiers locaux et réseau """
     listeFichiersRestaures = [] 
+    dlgprogress = None
     
     # Initialisation de la barre de progression
     fichierZip = zipfile.ZipFile(fichier, "r")
@@ -438,10 +436,8 @@ def Restauration(parent=None, fichier="", listeFichiersLocaux=[], listeFichiersR
         shutil.rmtree(UTILS_Fichiers.GetRepEditions("Editions"))
 
     # Fin de la procédure
-    try:
+    if dlgprogress is not None:
         dlgprogress.Destroy()
-    except:
-        pass
     fichierZip.close()
     return listeFichiersRestaures
     

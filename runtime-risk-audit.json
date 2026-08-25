@@ -2,7 +2,7 @@
   "root": "/home/runner/work/Teamworks-CCNS/Teamworks-CCNS",
   "python_files": 529,
   "counts": {
-    "bare-except": 177,
+    "bare-except": 176,
     "file-write": 34,
     "gestiondb-open": 565,
     "sqlite-direct": 10
@@ -93,10 +93,6 @@
       9
     ],
     [
-      "teamworks/Utils/UTILS_Sauvegarde.py",
-      9
-    ],
-    [
       "teamworks/Ctrl/CTRL_Page_qualifications.py",
       8
     ],
@@ -106,6 +102,10 @@
     ],
     [
       "teamworks/GestionDB.py",
+      8
+    ],
+    [
+      "teamworks/Utils/UTILS_Export.py",
       8
     ]
   ],
@@ -2201,7 +2201,7 @@
     {
       "category": "gestiondb-open",
       "path": "teamworks/Dlg/DLG_Restauration.py",
-      "line": 302,
+      "line": 324,
       "detail": "DB = GestionDB.DB()"
     },
     {
@@ -4343,19 +4343,19 @@
     {
       "category": "bare-except",
       "path": "teamworks/Teamworks_core.py",
-      "line": 1584,
+      "line": 1587,
       "detail": "except :"
     },
     {
       "category": "file-write",
       "path": "teamworks/Teamworks_core.py",
-      "line": 1798,
+      "line": 1801,
       "detail": "with open(source, \"rb\") as source_file, open(destination, \"wb\") as destination_file:"
     },
     {
       "category": "file-write",
       "path": "teamworks/Teamworks_core.py",
-      "line": 1841,
+      "line": 1844,
       "detail": "self.filename = open(nomJournal, \"a\")"
     },
     {
@@ -4715,49 +4715,43 @@
     {
       "category": "gestiondb-open",
       "path": "teamworks/Utils/UTILS_Sauvegarde.py",
-      "line": 383,
+      "line": 381,
       "detail": "DB = GestionDB.DB(suffixe=None, nomFichier=nomFichier, modeCreation=True)"
-    },
-    {
-      "category": "bare-except",
-      "path": "teamworks/Utils/UTILS_Sauvegarde.py",
-      "line": 443,
-      "detail": "except:"
     },
     {
       "category": "gestiondb-open",
       "path": "teamworks/Utils/UTILS_Sauvegarde.py",
-      "line": 458,
+      "line": 454,
       "detail": "DB = GestionDB.DB(nomFichier=u\"%s;%s;%s;%s[RESEAU]\" % (port, hote, utilisateur, motdepasse))"
     },
     {
       "category": "bare-except",
       "path": "teamworks/Utils/UTILS_Sauvegarde.py",
-      "line": 520,
+      "line": 516,
       "detail": "except :"
     },
     {
       "category": "bare-except",
       "path": "teamworks/Utils/UTILS_Sauvegarde.py",
-      "line": 529,
+      "line": 525,
       "detail": "except :"
     },
     {
       "category": "bare-except",
       "path": "teamworks/Utils/UTILS_Sauvegarde.py",
-      "line": 545,
+      "line": 541,
       "detail": "except :"
     },
     {
       "category": "bare-except",
       "path": "teamworks/Utils/UTILS_Sauvegarde.py",
-      "line": 552,
+      "line": 548,
       "detail": "except :"
     },
     {
       "category": "file-write",
       "path": "teamworks/Utils/UTILS_Sauvegarde.py",
-      "line": 561,
+      "line": 557,
       "detail": "fichier = open(nomFichier, \"w\")"
     },
     {
