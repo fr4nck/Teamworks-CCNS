@@ -207,10 +207,26 @@ def Sauvegarde(listeFichiersLocaux=[], listeFichiersReseau=[], nom="", repertoir
     # Copie le fichier obtenu dans le répertoire donné
     if repertoire != None :
         dlgprogress.Update(numEtape, _(u"Création du fichier dans le répertoire cible..."));numEtape += 1
+        fichier_source = UTILS_Fichiers.GetRepTemp(fichier=nomFichierTemp)
         try :
-            shutil.copy2(UTILS_Fichiers.GetRepTemp(fichier=nomFichierTemp), fichierDest)
-        except :
-            print("Le repertoire de destination de sauvegarde n'existe pas.")
+            shutil.copy2(fichier_source, fichierDest)
+        except OSError as err:
+            dlgprogress.Destroy()
+            print(("Echec de la copie de sauvegarde :", err))
+            if os.path.isfile(fichier_source):
+                try:
+                    os.remove(fichier_source)
+                except OSError:
+                    pass
+            dlgErreur = wx.MessageDialog(
+                None,
+                _(u"La sauvegarde n'a pas pu être copiée dans le répertoire cible.\n\nErreur : %s") % err,
+                _(u"Erreur"),
+                wx.OK | wx.ICON_ERROR,
+            )
+            dlgErreur.ShowModal()
+            dlgErreur.Destroy()
+            return False
 
     # Envoi par Email
     if listeEmails != None :
