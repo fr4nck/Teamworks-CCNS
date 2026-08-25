@@ -5,6 +5,20 @@
 import wx
 
 from Utils import UTILS_References_admin
+from Utils import UTILS_Styles
+
+
+FIELD_ROLES = {
+    "medecine_identifiant": UTILS_Styles.FIELD_CODE,
+    "medecine_telephone": UTILS_Styles.FIELD_PHONE,
+    "urssaf_identifiant": UTILS_Styles.FIELD_CODE,
+    "mutuelle_reference": UTILS_Styles.FIELD_CODE,
+    "prevoyance_reference": UTILS_Styles.FIELD_CODE,
+    "opco_identifiant": UTILS_Styles.FIELD_CODE,
+    "retraite_identifiant": UTILS_Styles.FIELD_CODE,
+    "assurance_reference": UTILS_Styles.FIELD_CODE,
+    "assurance_telephone": UTILS_Styles.FIELD_PHONE,
+}
 
 
 class Dialog(wx.Dialog):
@@ -54,12 +68,21 @@ class Dialog(wx.Dialog):
 
     def _text(self, parent, key, style=0):
         ctrl = wx.TextCtrl(parent, value=self.profile.get(key, ""), style=style)
+        role = UTILS_Styles.FIELD_LONG_TEXT if style & wx.TE_MULTILINE else FIELD_ROLES.get(
+            key, UTILS_Styles.FIELD_TEXT
+        )
+        UTILS_Styles.ApplyFieldRole(ctrl, role)
         self.controls[key] = ctrl
         return ctrl
 
     def _row(self, parent, grid, label, key):
         grid.Add(wx.StaticText(parent, label=label), 0, wx.ALIGN_CENTER_VERTICAL)
-        grid.Add(self._text(parent, key), 1, wx.EXPAND)
+        role = FIELD_ROLES.get(key, UTILS_Styles.FIELD_TEXT)
+        grid.Add(
+            self._text(parent, key),
+            1 if UTILS_Styles.FieldExpands(role) else 0,
+            UTILS_Styles.GetFieldSizerFlag(role),
+        )
 
     def _grid_page(self, parent, rows):
         page = wx.Panel(parent)

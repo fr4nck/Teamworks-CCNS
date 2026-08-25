@@ -39,10 +39,48 @@ CONTROL_METRICS = {
 GADGET_METRICS = {
     "default_size": (220, 180),
     "min_size": (180, 120),
-    "floating_min_size": (200, 150),
     "columns": 3,
-    "floating_origin": (48, 72),
-    "floating_step": 32,
+}
+FIELD_XS = "xs"
+FIELD_CODE = "code"
+FIELD_POSTAL_CODE = "postal_code"
+FIELD_DATE = "date"
+FIELD_TIME = "time"
+FIELD_NUMBER = "number"
+FIELD_PERCENT = "percent"
+FIELD_MONEY = "money"
+FIELD_PHONE = "phone"
+FIELD_NIR = "nir"
+FIELD_SIRET = "siret"
+FIELD_IBAN = "iban"
+FIELD_NAME = "name"
+FIELD_CITY = "city"
+FIELD_EMAIL = "email"
+FIELD_ADDRESS = "address"
+FIELD_TEXT = "text"
+FIELD_LONG_TEXT = "long_text"
+
+# Nombre de caractères usuels et comportement de layout. La largeur réelle est
+# mesurée avec la police du contrôle, donc suit le DPI et l'échelle d'interface.
+FIELD_METRICS = {
+    FIELD_XS: {"characters": 4, "expand": False},
+    FIELD_CODE: {"characters": 8, "expand": False},
+    FIELD_POSTAL_CODE: {"characters": 7, "expand": False},
+    FIELD_DATE: {"characters": 12, "expand": False},
+    FIELD_TIME: {"characters": 7, "expand": False},
+    FIELD_NUMBER: {"characters": 10, "expand": False},
+    FIELD_PERCENT: {"characters": 8, "expand": False},
+    FIELD_MONEY: {"characters": 14, "expand": False},
+    FIELD_PHONE: {"characters": 16, "expand": False},
+    FIELD_NIR: {"characters": 18, "expand": False},
+    FIELD_SIRET: {"characters": 17, "expand": False},
+    FIELD_IBAN: {"characters": 30, "expand": False},
+    FIELD_NAME: {"characters": 24, "expand": False},
+    FIELD_CITY: {"characters": 24, "expand": False},
+    FIELD_EMAIL: {"characters": 36, "expand": True},
+    FIELD_ADDRESS: {"characters": 42, "expand": True},
+    FIELD_TEXT: {"characters": 32, "expand": True},
+    FIELD_LONG_TEXT: {"characters": 48, "expand": True},
 }
 WINDOW_PROFILES = {
     "compact": {"width_ratio": 0.38, "height_ratio": 0.44, "min_size": (420, 320), "max_size": (760, 640)},
@@ -123,6 +161,38 @@ def GetGadgetMetric(role="default_size", scaled=True):
     if role == "columns":
         return int(value)
     return Scale(value)
+
+
+def GetFieldMetric(role=FIELD_TEXT):
+    return dict(FIELD_METRICS.get(role, FIELD_METRICS[FIELD_TEXT]))
+
+
+def FieldExpands(role=FIELD_TEXT):
+    return bool(GetFieldMetric(role)["expand"])
+
+
+def GetFieldWidth(control, role=FIELD_TEXT):
+    """Calcule une largeur sémantique avec la police/DPI réels du contrôle."""
+    characters = GetFieldMetric(role)["characters"]
+    try:
+        text_width, _ = control.GetTextExtent("0" * characters)
+        return max(Scale(48), text_width + Scale(24))
+    except Exception:
+        return Scale((characters * 8) + 24)
+
+
+def ApplyFieldRole(control, role=FIELD_TEXT):
+    width = GetFieldWidth(control, role)
+    height = max(control.GetBestSize().GetHeight(), GetControlMetric("input_min_height"))
+    control.SetMinSize((width, height))
+    control._teamworks_field_role = role
+    if not FieldExpands(role):
+        control.SetMaxSize((width, -1))
+    return control
+
+
+def GetFieldSizerFlag(role=FIELD_TEXT):
+    return wx.EXPAND if FieldExpands(role) else wx.ALIGN_CENTER_VERTICAL
 
 
 def GetWindowSize(profile="standard", display_size=None):

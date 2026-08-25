@@ -109,9 +109,21 @@ Lorsqu'un défaut apparaît sur plusieurs fenêtres, la correction doit être re
 
 Les tests et smokes doivent couvrir les primitives transversales lorsque c'est possible. La recette Windows doit inclure plusieurs échelles d'interface et vérifier troncatures, grands vides, ordre clavier et densité.
 
+## Implémentation dans Teamworks CCNS
+
+- les rôles `FIELD_*`, leur longueur attendue, leur expansion et leur calcul à
+  partir de la police/DPI sont centralisés dans `teamworks/Utils/UTILS_Styles.py` ;
+- `ApplyFieldRole()` et `GetFieldSizerFlag()` portent la première migration
+  transversale des champs administratifs courts (Structure et Références RH) ;
+- l'hôte AUI des gadgets interdit les fenêtres flottantes : leur propriétaire
+  reste le panneau Accueil, y compris après restauration d'une perspective ;
+- les migrations suivantes doivent consommer ces primitives, sans ajouter de
+  largeurs pixel ni de `Hide()` locaux par écran.
+
 ## Références
 
-- PMSL-Arch : `docs/ADR/ADR-005-formulaires-densite-informationnelle.md`
+- [PMSL-Arch PR #3 — ADR-005 et raccordement au design system](https://github.com/fr4nck/PMSL-Arch/pull/3)
+- [Teamworks-CCNS PR #274 — adoption de la norme applicative](https://github.com/fr4nck/Teamworks-CCNS/pull/274)
 - `docs/CHARTE_GRAPHIQUE_TEAMWORKS.md`
 - `docs/03_UI_UX_MODERNISATION.md`
 - Bastien & Scapin

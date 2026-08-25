@@ -9,6 +9,20 @@ import wx
 
 from Utils import UTILS_Branding
 from Utils import UTILS_Organisation
+from Utils import UTILS_Styles
+
+
+FIELD_ROLES = {
+    "code_postal": UTILS_Styles.FIELD_POSTAL_CODE,
+    "telephone": UTILS_Styles.FIELD_PHONE,
+    "rna": UTILS_Styles.FIELD_CODE,
+    "siren": UTILS_Styles.FIELD_CODE,
+    "siret": UTILS_Styles.FIELD_SIRET,
+    "ape_naf": UTILS_Styles.FIELD_CODE,
+    "agrement_js_date": UTILS_Styles.FIELD_DATE,
+    "assurance_echeance": UTILS_Styles.FIELD_DATE,
+    "police_assurance": UTILS_Styles.FIELD_CODE,
+}
 
 
 class Dialog(wx.Dialog):
@@ -64,12 +78,19 @@ class Dialog(wx.Dialog):
 
     def _text(self, parent, key):
         ctrl = wx.TextCtrl(parent, value=self.profile.get(key, ""))
+        role = FIELD_ROLES.get(key, UTILS_Styles.FIELD_TEXT)
+        UTILS_Styles.ApplyFieldRole(ctrl, role)
         self.controls[key] = ctrl
         return ctrl
 
     def _row(self, parent, grid, label, key):
         grid.Add(wx.StaticText(parent, label=label), 0, wx.ALIGN_CENTER_VERTICAL)
-        grid.Add(self._text(parent, key), 1, wx.EXPAND)
+        role = FIELD_ROLES.get(key, UTILS_Styles.FIELD_TEXT)
+        grid.Add(
+            self._text(parent, key),
+            1 if UTILS_Styles.FieldExpands(role) else 0,
+            UTILS_Styles.GetFieldSizerFlag(role),
+        )
 
     def _build_identity_page(self, parent):
         page = wx.Panel(parent)
