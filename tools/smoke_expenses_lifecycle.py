@@ -290,7 +290,7 @@ def main() -> int:
             PATCHED,
             root=ROOT,
             teamworks_dir=TEAMWORKS_DIR,
-            timeout=240,
+            timeout=90,
         )
         write_diagnostic(
             REPORT,
