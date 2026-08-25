@@ -1,47 +1,56 @@
 # Teamworks-CCNS — suivi CCNS et extensions
 
+**Mise à jour : 25 août 2026**
+
 ## Objectif
 
 Ce fichier suit les **fonctionnalités ajoutées par notre fork** : règles CCNS, contrôles métier, nouveaux services, tableaux de bord, exports et extensions propres au produit.
 
-## Périmètre
-
-Entrent notamment ici :
-
-- moteur de règles CCNS ;
-- classifications et minima conventionnels ;
-- contrôles salariaux ;
-- contrats et régimes d'emploi enrichis ;
-- historique, alertes et traçabilité réglementaire ;
-- planning, disponibilités et contrôles ajoutés ;
-- habilitations et sécurité ajoutées ;
-- exports et tableaux de bord CCNS ;
-- fonctionnalités propres aux besoins PMSL ou à l'évolution fonctionnelle du fork.
-
 ## Règle de classement
 
-Un bug déjà présent dans Teamworks original appartient à `01_VANILLA_BUGFIX.md`.
+- bug déjà présent dans Teamworks original → `01_VANILLA_BUGFIX.md` ;
+- adaptation imposée par Python 3/Phoenix → `02_PYTHON3_PHOENIX.md` ;
+- régression purement graphique → `03_UI_UX_MODERNISATION.md` ;
+- comportement inexistant dans l'original et ajouté par notre fork → ce fichier.
 
-Une adaptation imposée par Python 3/Phoenix appartient à `02_PYTHON3_PHOENIX.md`.
+## Méthode de mesure
 
-Une régression purement graphique appartient à `03_UI_UX_MODERNISATION.md`.
+Le chantier est découpé en **9 jalons fonctionnels de poids égal**. `Terminé` vaut 1 point, `Partiel` vaut 0,5 point et `À valider` vaut 0.
 
-Tout comportement inexistant dans le Teamworks original et introduit par notre extension métier appartient ici.
+| Jalon | État | Situation actuelle |
+|---|---|---|
+| 1. Domaine et règles CCNS | Terminé | entités, classifications, grilles, minima et contrôles métier isolés et testés |
+| 2. Schéma additif et accès aux données réelles | Terminé | schéma compatible historique, `CcnsDataReader`, `PersonReader`, raccords `GestionDB` |
+| 3. Création et lecture des contrats CCNS modernes | Terminé au niveau automatisé | chemins dédiés, préflights et règles de création intégrés |
+| 4. Contrats CEE | Terminé au niveau automatisé | chemin CEE et contrôles dédiés intégrés |
+| 5. Opérations de contrats | Terminé au niveau automatisé | renouvellement CDD, transformation CDD→CDI et période d'essai couverts |
+| 6. Contrôle salarial / minima / synthèses | Terminé au niveau automatisé | audit transverse, détail, synthèse individuelle et contrôles de rémunération |
+| 7. Historique, alertes, exports et publipostage | Terminé au niveau automatisé | snapshots/rapports, CSV/JSON, modèles et publipostage raccordés |
+| 8. Architecture d'intégration et versionnement réglementaire | Partiel | readers et adaptateurs réels présents ; date de référence injectable, persistance des versions de grille et certaines frontières restent à consolider |
+| 9. Recette métier réelle sur copie PMSL | À valider | le parcours complet, notamment création réelle de contrats, doit encore être validé sur le portable exact de `master` |
+
+## Avancement
+
+7 jalons terminés + 1 jalon partiel sur 9 :
+
+**CCNS & extensions : 7,5 / 9 = 83,3 %, arrondi à 83 %.**
+
+Ce pourcentage mesure le développement fonctionnel et son intégration automatisée. Il ne remplace pas la recette utilisateur : une fonction couverte par tests n'est pas déclarée prête en production tant que le parcours réel n'a pas été validé sur une copie de base.
+
+## Restant prioritaire
+
+- produire et lancer le portable Windows du `master` exact ;
+- créer/modifier réellement des contrats CCNS et CEE sur une copie de base ;
+- vérifier renouvellement CDD et transformation CDD→CDI lorsque les données le permettent ;
+- valider contrôle salarial, synthèses, historique et exports avec des données réelles ;
+- injecter explicitement une date de référence dans l'audit avant d'activer davantage de logique réglementaire datée ;
+- stabiliser la lecture persistée des versions de grille seulement dans un lot dédié et testé ;
+- conserver la veille réglementaire descriptive tant qu'une validation métier/juridique n'a pas autorisé son activation automatique.
 
 ## Références principales
 
 - `ROADMAP.md`
-- documentation `docs/40-*` à `docs/65-*`
 - `docs/48-revue-architecture-ccns.md`
 - `docs/50-scope-metier.md`
 - `docs/60-scenario-utilisation-controle-salarial.md`
-
-## État initial
-
-Le socle métier CCNS est déjà conséquent : domaine, services de contrôle, règles conventionnelles, présentateurs, exports et documentation sont présents. L'inventaire détaillé devra distinguer implémentation, couverture de tests, raccordement réel à l'interface et recette utilisateur.
-
-## Pourcentage
-
-**À recalculer après inventaire détaillé.**
-
-La progression doit être pondérée par lot fonctionnel et par niveau de validation : code, tests, intégration UI et recette réelle.
+- documentation `docs/40-*` à `docs/65-*`
