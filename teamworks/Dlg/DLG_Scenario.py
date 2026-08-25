@@ -142,7 +142,7 @@ class Dialog(wx.Dialog):
         
         
     def __set_properties(self):
-        if self.IDscenario == 0 :
+        if self.IDscenario in (None, 0) :
             self.SetTitle(_(u"Création d'un scénario"))
         else:
             self.SetTitle(_(u"Modification d'un scénario"))
@@ -235,7 +235,7 @@ class Dialog(wx.Dialog):
         grid_sizer_boutons.Add(self.bouton_aide, 0, 0, 0)
         grid_sizer_boutons.Add(self.bouton_excel, 0, 0, 0)
         grid_sizer_boutons.Add(self.bouton_imprimer_tableau, 0, 0, 0)
-        grid_sizer_boutons.Add((20, 20), 0, 0, 0)
+        grid_sizer_boutons.Add((20, 20), 0, wx.EXPAND, 0)
         grid_sizer_boutons.Add(self.bouton_ok, 0, 0, 0)
         grid_sizer_boutons.Add(self.bouton_annuler, 0, 0, 0)
         grid_sizer_boutons.AddGrowableCol(3)
@@ -427,7 +427,7 @@ class Dialog(wx.Dialog):
             if self.ctrl_tableau.nbreErreursReport == 1 :
                 texte = _(u"Une erreur de report a été trouvée. \n\nVeuillez modifier le report en question avant de sauvegarder ce scénario.")
             else:
-                texte = _(u"%d erreurs de report ont été trouvées. \n\nVeuillez modifier les reports en question avant de sauvegarder ce scénario.") % nbreErreursReport
+                texte = _(u"%d erreurs de report ont été trouvées. \n\nVeuillez modifier les reports en question avant de sauvegarder ce scénario.") % self.ctrl_tableau.nbreErreursReport
             dlg = wx.MessageDialog(self, texte, "Erreur de report", wx.OK|wx.ICON_ERROR)  
             dlg.ShowModal()
             dlg.Destroy()
