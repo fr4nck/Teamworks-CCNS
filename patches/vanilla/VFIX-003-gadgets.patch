@@ -1,0 +1,17 @@
+--- a/teamworks/Dlg/DLG_Config_gadgets.py
++++ b/teamworks/Dlg/DLG_Config_gadgets.py
+@@ -94 +93,0 @@
+-        IDgadget = self.listCtrl.GetItemData(index)
+@@ -100,0 +100,2 @@
++
++        IDgadget = self.listCtrl.GetItemData(index)
+@@ -140,0 +142,2 @@
++        if index <= 0 :
++            return
+@@ -156,0 +160,2 @@
++        if index == -1 or index >= self.listCtrl.GetItemCount() - 1 :
++            return
+@@ -248,0 +254,3 @@
++        if index == -1 or index >= len(self.listeGadgets) :
++            self.OnItemDeselected(event)
++            return
