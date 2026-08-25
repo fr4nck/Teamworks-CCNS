@@ -21,7 +21,8 @@ def test_contract_dialog_wraps_page3_decimal_quantization_in_local_context() -> 
     assert 'class Page3(LegacyPage3):' in dialog_source
     assert 'def _MonthlySalaryDecimal(self):' in dialog_source
     assert 'def Validation(self):' in dialog_source
-    assert dialog_source.count('context.prec = max(28, context.prec)') == 2
+    assert 'def _MaybePrefillSalary(self, amount):' in dialog_source
+    assert dialog_source.count('context.prec = max(28, context.prec)') == 3
     assert page_source.count('.quantize(Decimal("0.01"))') >= 2
 
 
