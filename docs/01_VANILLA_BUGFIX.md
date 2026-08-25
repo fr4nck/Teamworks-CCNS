@@ -4,13 +4,14 @@
 
 ## Objectif
 
-Ce fichier recense uniquement les anomalies réellement présentes dans la version originale de Teamworks (`Noethys/Teamworks`) que nous avons rencontrées ou mises en évidence pendant le développement de Teamworks-CCNS.
+Ce fichier recense uniquement les anomalies réellement présentes dans la version originale de Teamworks (`Noethys/Teamworks`) que nous rencontrons ou retrouvons pendant le développement de Teamworks-CCNS.
 
 Objectifs :
 
 1. disposer d'un **Teamworks Vanilla corrigé et utilisable** pendant que Teamworks-CCNS continue son développement ;
 2. séparer strictement les bugs historiques des régressions de migration, de la modernisation UI et des extensions CCNS ;
-3. préparer des correctifs minimaux éventuellement transmissibles au projet d'origine.
+3. préparer des correctifs minimaux éventuellement transmissibles au projet d'origine ;
+4. effectuer un **ratissage exhaustif de l'historique du fork et du code Vanilla**, sans confondre candidat et bug confirmé.
 
 ## Référence amont
 
@@ -19,23 +20,20 @@ Objectifs :
 - Base commune : `00bd52ef85853eb617361a15c2f0cc0cfa1b898e`
 - Branche de préparation : `vanilla-bugfix`
 - Fork moderne : `fr4nck/Teamworks-CCNS`
+- Historique à analyser : environ **1 237 commits** entre la base et le fork moderne.
 
-## Résultat du premier tri
+## Méthode d'audit
 
-L'audit des **8 familles candidates initiales est terminé**.
+L'audit combine deux voies complémentaires :
 
-| Famille initiale | Classement | Conclusion |
-|---|---|---|
-| Parentage `StaticBox` / contrôles | Python 3 / Phoenix | Les corrections rencontrées correspondent au comportement plus strict de Phoenix ; pas de backport Vanilla sans preuve dans l'environnement historique. |
-| Sizers / layouts | Mixte | Les warnings de flags sont plutôt Phoenix ; les deux grilles de sauvegarde à 2 lignes recevant 3 éléments sont un vrai bug Vanilla. |
-| Parsing des dates personne | Régression du fork | Vanilla contient bien `datetime.date(annee, mois, jour)` ; la mauvaise expression avait été introduite puis corrigée chez nous. |
-| Sauvegardes / sources absentes | Vanilla | `os.listdir(rep)` est appelé sans vérifier que le répertoire existe. |
-| Gadgets / absence de sélection | Vanilla | Lecture de `GetItemData(-1)` et déplacements non bornés. |
-| Aperçu e-mail / navigation | Vanilla | Condition d'avance décalée et indices/liste vide insuffisamment protégés. |
-| Listes / contrôleurs recrutement | UI/UX moderne | Les correctifs concernent notre architecture refondue, pas le code Vanilla. |
-| Icônes / ressources absentes | Vanilla — robustesse | Le bouton historique ouvre directement la ressource et peut casser si elle manque ou est illisible. |
+1. **historique Git** : ratissage des commits ayant corrigé, sécurisé, fiabilisé ou durci un comportement, puis comparaison du diff avec le fichier exact de Teamworks 2.1.3.1 ;
+2. **analyse statique du Vanilla** : recherche de familles à risque (`eval`/`exec`, erreurs avalées, index avant garde, chemins absents, getters oubliés, code inaccessible, sauvegarde/restauration, etc.), chaque occurrence restant un simple candidat tant qu'un défaut observable n'est pas démontré.
 
-## Backlog Vanilla confirmé
+Un commit `fix` dans Teamworks-CCNS n'est jamais une preuve suffisante. Le défaut doit être présent dans le code Vanilla et indépendant de Python 3/Phoenix, de la nouvelle UI ou des extensions CCNS.
+
+## Premier tri terminé
+
+Le premier audit de 8 familles candidates est terminé. Il a produit les cinq correctifs `VFIX-001` à `VFIX-005` et plusieurs exclusions (Phoenix, UI moderne, régression du fork).
 
 ### VFIX-001 — Répertoires de sauvegarde absents
 
@@ -49,7 +47,7 @@ Le code original utilise `os.listdir(rep)` sans contrôle préalable. Le backpor
 
 **Fichier :** `teamworks/Dlg/DLG_Config_sauvegarde.py`
 
-Deux `wx.FlexGridSizer(rows=2, cols=1, ...)` reçoivent réellement trois éléments. Les deux déclarations concernées passent à `rows=3` ; la grille à deux éléments reste volontairement inchangée.
+Deux `wx.FlexGridSizer(rows=2, cols=1, ...)` reçoivent réellement trois éléments.
 
 **Patch préparé :** `patches/vanilla/VFIX-001-002-sauvegardes.patch`.
 
@@ -57,7 +55,7 @@ Deux `wx.FlexGridSizer(rows=2, cols=1, ...)` reçoivent réellement trois élém
 
 **Fichier :** `teamworks/Dlg/DLG_Config_gadgets.py`
 
-Le backport vérifie la sélection avant `GetItemData`, interdit le déplacement au-delà du premier/dernier élément et protège `OnItemSelected` contre un index invalide.
+Le code original peut lire `GetItemData(-1)` avant la garde de sélection et ne protège pas toutes les bornes de déplacement.
 
 **Patch préparé :** `patches/vanilla/VFIX-003-gadgets.patch`.
 
@@ -65,7 +63,7 @@ Le backport vérifie la sélection avant `GetItemData`, interdit le déplacement
 
 **Fichier :** `teamworks/Dlg/DLG_Apercu_fusion_emails.py`
 
-Le backport protège les listes vides, borne l'avance au dernier élément et vérifie le nouvel index avant sélection.
+La condition d'avance autorise un dépassement du dernier élément et les listes vides / nouveaux indices ne sont pas suffisamment protégés.
 
 **Patch préparé :** `patches/vanilla/VFIX-004-apercu-email.patch`.
 
@@ -73,51 +71,131 @@ Le backport protège les listes vides, borne l'avance au dernier élément et v�
 
 **Fichier :** `teamworks/Ctrl/CTRL_Bouton_image.py`
 
-Le backport reste compatible avec le Python historique : pas de `pathlib`, pas de design system. Il protège `None`/chaîne vide, vérifie `os.path.isfile` et tolère `IOError`/`OSError` lors de l'ouverture de l'image.
+Le contrôle historique ouvre directement la ressource avec PIL et peut casser si le fichier manque ou est illisible.
 
 **Patch préparé :** `patches/vanilla/VFIX-005-boutons-image.patch`.
 
-## Validation du backport préparé
+## Nouveaux défauts confirmés par le ratissage exhaustif
 
-Les quatre fichiers ont été reconstruits sur une **copie exacte du snapshot Vanilla 2.1.3.1**, en conservant l'encodage historique `iso-8859-15`.
+Le ratissage de l'historique complet a commencé après le premier lot. Il démontre déjà que les cinq VFIX initiaux ne constituaient pas l'inventaire complet.
 
-Validation effectuée :
+### VFIX-006 — Sauvegarde : faux succès après échec de copie
 
-- `git apply --unidiff-zero --check` : **OK** pour les quatre patches ;
-- application des quatre patches sur une copie propre : **OK** ;
-- compilation Python des quatre fichiers modifiés via `py_compile` : **OK** ;
-- `git diff --check` : **OK**.
+**Fichier :** `teamworks/Utils/UTILS_Sauvegarde.py`
 
-Cette validation est statique. Il reste à exécuter Teamworks dans son environnement historique et à parcourir réellement sauvegarde/restauration, gadgets, aperçu e-mail et boutons avec ressource absente.
+**Commit de référence côté fork :** `c9974ee94f934f0a4cde4c45e9c0347eab2f76ac`.
 
-Le format patch à contexte nul est volontaire : il permet de préserver l'encodage historique sans convertir tout le fichier en UTF-8 et sans polluer le diff avec des dizaines de changements artificiels.
+Le code Vanilla peut terminer une tentative de copie en échec puis afficher malgré tout le message de réussite. Le correctif doit conditionner le succès final au résultat réel de la copie et conserver l'erreur finale.
+
+**État :** bug Vanilla confirmé ; correction minimale connue ; backport historique à préparer.
+
+### VFIX-007 — Sauvegarde / restauration : gestion d'erreur incohérente
+
+**Fichiers :** `teamworks/Dlg/DLG_Config_sauvegarde.py`, `teamworks/Utils/UTILS_Sauvegarde.py`.
+
+**Commit de référence côté fork :** `181122a7a86c38140c93e3ae14939fedf5805077`.
+
+Plusieurs défauts sont présents dans le Vanilla :
+
+- message d'erreur utilisant `err` alors que la valeur retournée est stockée dans `etat` ;
+- gestionnaire `except err:` invalide / dépendant d'un nom qui n'est pas une classe d'exception définie ;
+- certains chemins de restauration peuvent annoncer une réussite après un échec ;
+- un `dlg.Destroy()` est placé après un `return`, donc inaccessible.
+
+**État :** famille de bugs Vanilla confirmée ; correctif minimal à découper proprement et tester.
+
+### VFIX-008 — Publipostage : enrichissement silencieusement cassé et type de réponse appelé comme une fonction
+
+**Fichier :** `teamworks/Utils/UTILS_Publipostage_donnees.py`.
+
+**Commit de référence côté fork :** `7ed2268065c5fb6eccbb2e69f971efcdf529af8c`.
+
+Deux défauts Vanilla indépendants sont confirmés :
+
+- le bloc d'informations de naissance teste `cp_naiss` alors que la variable n'est pas définie à cet endroit ; un `except` large masque ensuite l'erreur et l'enrichissement disparaît silencieusement ;
+- `listeTypesReponses` est une liste mais est appelée comme une fonction dans un test de type, ce qui peut produire un `TypeError`.
+
+**État :** bugs Vanilla confirmés ; backport minimal à préparer sans reprendre les autres évolutions modernes du publiposteur.
+
+### VFIX-009 — Restauration : fichiers temporaires / archives et nom logique
+
+**Fichiers :** `teamworks/Dlg/DLG_Restauration.py`, `teamworks/Utils/UTILS_Sauvegarde.py`.
+
+**Commit de référence côté fork :** `d7491135c5109145d78df336d7115678eda5fd0c`.
+
+Le code original ne garantit pas le nettoyage de certains fichiers déchiffrés temporaires, ne ferme pas explicitement toutes les archives ZIP utilisées pour l'inventaire et reconstruit imparfaitement le nom logique d'une base portant le suffixe `_TDATA`.
+
+**État :** défauts de robustesse Vanilla confirmés ; correctif historique à isoler.
+
+## Sécurité / durcissement Vanilla — piste séparée
+
+Les faiblesses de sécurité ne doivent pas être mélangées artificiellement avec les bugs fonctionnels. Elles sont suivies comme `VSEC-*` jusqu'à qualification complète.
+
+### VSEC-001 — Sauvegarde / restauration MySQL : exécution et fichier d'identifiants temporaires
+
+**Fichier :** `teamworks/Utils/UTILS_Sauvegarde.py`.
+
+**Commit de référence côté fork :** `1fa4cbdc886a3c0de563a68220f4c9a8357f12b9`.
+
+Le Vanilla utilise notamment un fichier temporaire d'identifiants MySQL sans durcissement explicite des permissions, `subprocess.Popen(..., shell=True, ...)` et une détection de succès qui ne repose pas proprement sur le code retour du processus.
+
+**État :** faiblesse Vanilla confirmée ; portée et backport de sécurité à qualifier séparément avant intégration.
+
+### VSEC-002 — `eval` / `exec` historiques
+
+Plusieurs commits modernes ont remplacé des évaluations littérales ou routages dynamiques historiques (`f05162da`, `544bb369`, `aa90dad4`, `3eb7217f`). Le code Vanilla contient effectivement des usages `eval`/`exec`, mais chaque occurrence doit encore être examinée : une présence d'`eval` n'est pas à elle seule une vulnérabilité exploitable.
+
+**État :** audit sécurité en cours ; aucun backport massif autorisé sans qualification occurrence par occurrence.
+
+## Candidat explicitement non confirmé
+
+### Getter `GetValue` sans parenthèses dans le choix de destination
+
+Une occurrence historique compare `self.textctrl_destination.GetValue` à une chaîne au lieu d'appeler `GetValue()`. C'est une construction erronée, mais dans le chemin actuellement étudié les deux branches aboutissent au même chemin par défaut lorsque le champ est vide. Elle reste donc **candidate**, pas VFIX confirmé, tant qu'un comportement incorrect distinct n'est pas démontré.
+
+Ce cas illustre la règle : détecté ≠ bug confirmé.
 
 ## Éléments sortis du backlog Vanilla
 
 - **Python 3/Phoenix :** parentages `StaticBox` et warnings de flags uniquement révélés/endurcis par Phoenix.
-- **Régression de notre fork :** parsing de date corrigé par `416d98b`.
+- **Régression de notre fork :** parsing de date corrigé par `416d98b` ; le Vanilla avait déjà la bonne expression.
 - **UI/UX moderne :** contrôleurs/listes recrutement après refonte des sections et tokens.
 
-## Mesure d'avancement
+## Validation du premier lot de backports
 
-Chaque correctif vaut 4 étapes :
+Les patches `VFIX-001` à `VFIX-005` ont été reconstruits sur une copie exacte du snapshot Vanilla 2.1.3.1 en conservant l'encodage historique `iso-8859-15`.
 
-1. bug confirmé dans Vanilla ;
-2. correction minimale identifiée ;
-3. backport construit et applicable sur le socle Vanilla ;
-4. test runtime dans l'environnement historique.
+Validation effectuée :
 
-| Correctif | Confirmé | Solution connue | Backport préparé | Runtime Vanilla | Avancement |
-|---|---:|---:|---:|---:|---:|
-| VFIX-001 Sauvegarde / dossier absent | Oui | Oui | Oui | Non | 75 % |
-| VFIX-002 Grilles sauvegarde | Oui | Oui | Oui | Non | 75 % |
-| VFIX-003 Gadgets | Oui | Oui | Oui | Non | 75 % |
-| VFIX-004 Aperçu e-mail | Oui | Oui | Oui | Non | 75 % |
-| VFIX-005 Icônes absentes | Oui | Oui | Oui | Non | 75 % |
+- `git apply --unidiff-zero --check` : **OK** ;
+- application sur copie propre : **OK** ;
+- compilation Python via `py_compile` : **OK** ;
+- `git diff --check` : **OK**.
 
-**Progression du lot Vanilla connu : 75 %.**
+Il reste leur test runtime dans l'environnement historique.
 
-Le dernier quart correspond au test réel du logiciel historique, pas à davantage de développement théorique.
+## Mesure d'avancement — deux pourcentages distincts
+
+### 1. Premier lot de cinq correctifs
+
+`VFIX-001` à `VFIX-005` restent à **75 %** chacun : confirmation, solution et patch réalisés ; test runtime historique restant.
+
+Ce pourcentage ne doit plus être présenté comme l'avancement global du chantier Vanilla.
+
+### 2. Audit exhaustif de l'historique et du code
+
+Le ratissage porte sur environ **1 237 commits** et sur une analyse statique complémentaire du source Vanilla. La première tranche d'environ 100 commits a été examinée en profondeur ; la tranche suivante est en cours.
+
+**Avancement indicatif du ratissage historique : environ 8 %.**
+
+À ce stade :
+
+- VFIX fonctionnels confirmés : **9 familles** (`VFIX-001` à `VFIX-009`) ;
+- pistes sécurité confirmées / en qualification : **2** (`VSEC-001` et `VSEC-002`) ;
+- plusieurs candidats ont déjà été rejetés ou reclassés Phoenix/UI/fork ;
+- le nombre final de bugs n'est volontairement pas figé tant que le ratissage n'est pas terminé.
+
+Il serait trompeur de calculer maintenant un « pourcentage de Teamworks Vanilla corrigé » définitif : le dénominateur continue d'augmenter au fur et à mesure de l'audit.
 
 ## Principe du futur Teamworks Vanilla corrigé
 
@@ -125,4 +203,4 @@ Le dernier quart correspond au test réel du logiciel historique, pas à davanta
 
 Pas de migration Python 3, pas de nouveau thème, pas de CCNS et pas de fonctionnalités supplémentaires.
 
-La branche `vanilla-bugfix` part directement de la base 2.1.3.1 et sert de zone de préparation jusqu'à création éventuelle d'un dépôt/fork dédié. Les patches propres restent également conservés dans `patches/vanilla/` afin d'être auditables et transmissibles indépendamment du fork moderne.
+La branche `vanilla-bugfix` part directement de la base 2.1.3.1 et sert de zone de préparation. Les patches propres restent également conservés dans `patches/vanilla/` afin d'être auditables et transmissibles indépendamment du fork moderne.
