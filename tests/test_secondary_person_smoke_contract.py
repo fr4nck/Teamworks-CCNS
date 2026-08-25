@@ -6,6 +6,8 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 SMOKE = ROOT / "tools" / "smoke_secondary_person_dialog.py"
 MAILING_SMOKE = ROOT / "tools" / "smoke_mailing_preparation.py"
+SENDER_CONFIG_SMOKE = ROOT / "tools" / "smoke_sender_config.py"
+SENDER_CONFIG = ROOT / "teamworks" / "Dlg" / "DLG_Saisie_email_exp.py"
 RUNTIME = ROOT / "tools" / "smoke_runtime.py"
 ENTRYPOINT = ROOT / "teamworks" / "Teamworks.py"
 CORE = ROOT / "teamworks" / "Teamworks_core.py"
@@ -140,6 +142,40 @@ def test_mailing_preparation_runs_in_real_windows_application() -> None:
 
     completed = subprocess.run(
         [sys.executable, str(MAILING_SMOKE)],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        timeout=240,
+        check=False,
+    )
+    output = "\n".join(part for part in (completed.stdout, completed.stderr) if part)
+    assert completed.returncode == 0, output
+
+
+def test_sender_config_ui_uses_shared_backend_helpers() -> None:
+    source = SENDER_CONFIG.read_text(encoding="utf-8")
+    smoke_source = SENDER_CONFIG_SMOKE.read_text(encoding="utf-8")
+
+    assert "from Utils import UTILS_Mailing" in source
+    assert "UTILS_Mailing.NormalizeEmail(" in source
+    assert "UTILS_Mailing.ValidateBackendConfig(" in source
+    assert "UTILS_Mailing.SerializeBackendParameters(" in source
+    assert "UTILS_Mailing.ParseBackendParameters(" in source
+    assert "strict=False" in source
+    assert "TEAMWORKS_SMOKE_SENDER_CONFIG_STAGE:mailjet-legacy" in smoke_source
+    assert "TEAMWORKS_SMOKE_SENDER_CONFIG_STAGE:smtp-port" in smoke_source
+    assert "fragment-corrompu" in smoke_source
+    assert "key==suffix" in smoke_source
+    assert "Port SMTP hors plage" in smoke_source
+    assert "TEAMWORKS_SMOKE_SENDER_CONFIG_READY" in smoke_source
+
+
+def test_sender_config_runs_in_real_windows_application() -> None:
+    if sys.platform != "win32":
+        return
+
+    completed = subprocess.run(
+        [sys.executable, str(SENDER_CONFIG_SMOKE)],
         cwd=ROOT,
         text=True,
         capture_output=True,
