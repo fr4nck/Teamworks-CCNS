@@ -6,6 +6,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 SMOKE = ROOT / "tools" / "smoke_secondary_person_dialog.py"
 PERSON_LIFECYCLE_SMOKE = ROOT / "tools" / "smoke_person_lifecycle.py"
+EXPENSES_LIFECYCLE_SMOKE = ROOT / "tools" / "smoke_expenses_lifecycle.py"
 MAILING_SMOKE = ROOT / "tools" / "smoke_mailing_preparation.py"
 SENDER_CONFIG_SMOKE = ROOT / "tools" / "smoke_sender_config.py"
 SENDER_CONFIG = ROOT / "teamworks" / "Dlg" / "DLG_Saisie_email_exp.py"
@@ -138,6 +139,52 @@ def test_person_lifecycle_runs_in_real_windows_application() -> None:
 
     completed = subprocess.run(
         [sys.executable, str(PERSON_LIFECYCLE_SMOKE)],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        timeout=240,
+        check=False,
+    )
+    output = "\n".join(part for part in (completed.stdout, completed.stderr) if part)
+    assert completed.returncode == 0, output
+
+
+def test_expenses_lifecycle_smoke_qualifies_move_refund_manager_and_cleanup() -> None:
+    source = EXPENSES_LIFECYCLE_SMOKE.read_text(encoding="utf-8")
+
+    for marker in (
+        "TEAMWORKS_SMOKE_EXPENSES_STAGE:fixture",
+        "TEAMWORKS_SMOKE_EXPENSES_STAGE:create-move-save",
+        "TEAMWORKS_SMOKE_EXPENSES_STAGE:create-move-readback",
+        "TEAMWORKS_SMOKE_EXPENSES_STAGE:edit-move-save",
+        "TEAMWORKS_SMOKE_EXPENSES_STAGE:create-refund-save",
+        "TEAMWORKS_SMOKE_EXPENSES_STAGE:refund-readback",
+        "TEAMWORKS_SMOKE_EXPENSES_STAGE:edit-refund-dialog",
+        "TEAMWORKS_SMOKE_EXPENSES_STAGE:manager",
+        "TEAMWORKS_SMOKE_EXPENSES_STAGE:cleanup",
+        "TEAMWORKS_SMOKE_EXPENSES_LIFECYCLE_READY",
+        "TEAMWORKS_SMOKE_EXPENSES_LIFECYCLE_FAILED",
+    ):
+        assert marker in source
+
+    assert "DLG_Saisie_deplacement" in source
+    assert "DLG_Saisie_remboursement" in source
+    assert "DLG_Gestion_frais" in source
+    assert ".SauvegardeDeplacement()" in source
+    assert ".Sauvegarde()" in source
+    assert "ListeItemsCoches()" in source
+    assert "_set_checked(" in source
+    assert 'ReqDEL("deplacements"' in source
+    assert 'ReqDEL("remboursements"' in source
+    assert 'ReqDEL("personnes"' in source
+
+
+def test_expenses_lifecycle_runs_in_real_windows_application() -> None:
+    if sys.platform != "win32":
+        return
+
+    completed = subprocess.run(
+        [sys.executable, str(EXPENSES_LIFECYCLE_SMOKE)],
         cwd=ROOT,
         text=True,
         capture_output=True,
