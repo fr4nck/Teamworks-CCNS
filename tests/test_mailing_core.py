@@ -2,6 +2,8 @@ import datetime
 from pathlib import Path
 import sys
 
+import pytest
+
 
 ROOT = Path(__file__).resolve().parents[1]
 TEAMWORKS = ROOT / "teamworks"
@@ -76,3 +78,108 @@ def test_prepare_payload_reports_unresolved_keywords():
     )
 
     assert payload["motscles_non_resolus"] == ["{INCONNU}"]
+
+
+def test_backend_parameters_preserve_equal_signs_and_roundtrip():
+    raw = "api_key==public==part##api_secret==secret=value"
+
+    parsed = UTILS_Mailing.ParseBackendParameters(raw)
+
+    assert parsed == {
+        "api_key": "public==part",
+        "api_secret": "secret=value",
+    }
+    assert UTILS_Mailing.SerializeBackendParameters(
+        parsed,
+        ordered_names=["api_key", "api_secret"],
+    ) == raw
+
+
+def test_backend_parameters_can_ignore_a_corrupt_fragment_for_recovery_ui():
+    assert UTILS_Mailing.ParseBackendParameters(
+        "api_key==abc##fragment-casse##api_secret==def",
+        strict=False,
+    ) == {"api_key": "abc", "api_secret": "def"}
+
+    with pytest.raises(ValueError, match="Paramètre de messagerie invalide"):
+        UTILS_Mailing.ParseBackendParameters(
+            "api_key==abc##fragment-casse##api_secret==def",
+            strict=True,
+        )
+
+
+def test_smtp_backend_configuration_is_normalized_before_network_access():
+    config = UTILS_Mailing.ValidateBackendConfig(
+        " SMTP ",
+        " Direction@PMSL.Association ",
+        host=" smtp.example.fr ",
+        port="587",
+        username="direction@example.fr",
+        password="secret",
+        use_tls=1,
+    )
+
+    assert config == {
+        "backend": "smtp",
+        "email_exp": "Direction@pmsl.association",
+        "host": "smtp.example.fr",
+        "port": 587,
+        "username": "direction@example.fr",
+        "password": "secret",
+        "use_tls": True,
+        "parameters": {},
+    }
+
+
+def test_smtp_backend_rejects_incoherent_credentials_and_port():
+    with pytest.raises(ValueError, match="renseignés ensemble"):
+        UTILS_Mailing.ValidateBackendConfig(
+            "smtp",
+            "direction@example.fr",
+            host="smtp.example.fr",
+            port=587,
+            username="direction@example.fr",
+            password=None,
+        )
+
+    with pytest.raises(ValueError, match="Port SMTP hors plage"):
+        UTILS_Mailing.ValidateBackendConfig(
+            "smtp",
+            "direction@example.fr",
+            host="smtp.example.fr",
+            port=70000,
+        )
+
+
+def test_mailjet_backend_requires_complete_keys_before_network_access():
+    config = UTILS_Mailing.ValidateBackendConfig(
+        "mailjet",
+        "direction@example.fr",
+        parameters="api_key==public##api_secret==secret==suffix",
+    )
+    assert config["parameters"] == {
+        "api_key": "public",
+        "api_secret": "secret==suffix",
+    }
+
+    with pytest.raises(ValueError, match="clés API Mailjet"):
+        UTILS_Mailing.ValidateBackendConfig(
+            "mailjet",
+            "direction@example.fr",
+            parameters="api_key==public##api_secret==   ",
+        )
+
+
+def test_unknown_backend_and_invalid_sender_are_rejected_explicitly():
+    with pytest.raises(ValueError, match="Backend de messagerie inconnu"):
+        UTILS_Mailing.ValidateBackendConfig(
+            "exchange",
+            "direction@example.fr",
+        )
+
+    with pytest.raises(ValueError, match="Adresse d'expédition invalide"):
+        UTILS_Mailing.ValidateBackendConfig(
+            "smtp",
+            "direction@localhost",
+            host="smtp.example.fr",
+        )
