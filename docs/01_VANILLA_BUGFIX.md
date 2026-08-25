@@ -127,6 +127,16 @@ Le code original ne garantit pas le nettoyage de certains fichiers déchiffrés 
 
 **État :** défauts de robustesse Vanilla confirmés ; correctif historique à isoler.
 
+### VFIX-010 — Vacances : validation obligatoire de la période inopérante
+
+**Fichier :** `teamworks/Ol/OL_Vacances.py`.
+
+L'analyse statique du source original a trouvé `if self.ctrl_nom.GetSelection == -1` au lieu de `GetSelection()`. La comparaison porte donc sur l'objet méthode et la garde prévue pour empêcher la validation sans nom de période ne peut pas jouer correctement. Le dialogue peut atteindre `EndModal(wx.ID_OK)` alors qu'aucune période n'est sélectionnée.
+
+Ce défaut est indépendant de Python 3/Phoenix et de nos extensions.
+
+**Patch préparé et vérifié statiquement :** `patches/vanilla/VFIX-010-vacances-selection.patch`.
+
 ## Sécurité / durcissement Vanilla — piste séparée
 
 Les faiblesses de sécurité ne doivent pas être mélangées artificiellement avec les bugs fonctionnels. Elles sont suivies comme `VSEC-*` jusqu'à qualification complète.
@@ -143,15 +153,26 @@ Le Vanilla utilise notamment un fichier temporaire d'identifiants MySQL sans dur
 
 ### VSEC-002 — `eval` / `exec` historiques
 
-Plusieurs commits modernes ont remplacé des évaluations littérales ou routages dynamiques historiques (`f05162da`, `544bb369`, `aa90dad4`, `3eb7217f`). Le code Vanilla contient effectivement des usages `eval`/`exec`, mais chaque occurrence doit encore être examinée : une présence d'`eval` n'est pas à elle seule une vulnérabilité exploitable.
+Plusieurs commits modernes ont remplacé des évaluations littérales ou routages dynamiques historiques (`f05162da`, `544bb369`, `aa90dad4`, `3eb7217f`). Le code Vanilla contient effectivement de nombreuses occurrences `eval`/`exec`, mais chaque occurrence doit encore être examinée : une présence d'`eval` n'est pas à elle seule une vulnérabilité exploitable.
 
 **État :** audit sécurité en cours ; aucun backport massif autorisé sans qualification occurrence par occurrence.
+
+## Analyse statique — première passe ciblée
+
+Une première passe sur les **243 fichiers Python** du snapshot Vanilla a recherché les getters wx utilisés comme objets méthode au lieu d'être appelés.
+
+Quatre occurrences ont été trouvées :
+
+- trois `GetValue` sans parenthèses dans les dialogues de sauvegarde ; dans les chemins étudiés, leur branche de repli produit actuellement le même chemin par défaut et elles restent donc candidates ;
+- un `GetSelection` sans parenthèses dans `OL_Vacances.py`, qui neutralise réellement une validation obligatoire : **VFIX-010 confirmé**.
+
+Cette passe ne vaut pas audit statique complet ; d'autres familles sont encore à ratisser.
 
 ## Candidat explicitement non confirmé
 
 ### Getter `GetValue` sans parenthèses dans le choix de destination
 
-Une occurrence historique compare `self.textctrl_destination.GetValue` à une chaîne au lieu d'appeler `GetValue()`. C'est une construction erronée, mais dans le chemin actuellement étudié les deux branches aboutissent au même chemin par défaut lorsque le champ est vide. Elle reste donc **candidate**, pas VFIX confirmé, tant qu'un comportement incorrect distinct n'est pas démontré.
+Des occurrences historiques comparent un getter `GetValue` à une chaîne au lieu d'appeler `GetValue()`. La construction est erronée, mais dans les chemins déjà étudiés les deux branches aboutissent au même chemin par défaut lorsque le champ est vide. Elles restent donc **candidates**, pas VFIX confirmés, tant qu'un comportement incorrect distinct n'est pas démontré.
 
 Ce cas illustre la règle : détecté ≠ bug confirmé.
 
@@ -172,7 +193,9 @@ Validation effectuée :
 - compilation Python via `py_compile` : **OK** ;
 - `git diff --check` : **OK**.
 
-Il reste leur test runtime dans l'environnement historique.
+`VFIX-010` a également été reproduit sur le fichier historique, corrigé par une modification d'une seule ligne et compilé avec succès ; son patch minimal est conservé séparément.
+
+Il reste le test runtime dans l'environnement historique.
 
 ## Mesure d'avancement — deux pourcentages distincts
 
@@ -190,7 +213,7 @@ Le ratissage porte sur environ **1 237 commits** et sur une analyse statique com
 
 À ce stade :
 
-- VFIX fonctionnels confirmés : **9 familles** (`VFIX-001` à `VFIX-009`) ;
+- VFIX fonctionnels confirmés : **10 familles** (`VFIX-001` à `VFIX-010`) ;
 - pistes sécurité confirmées / en qualification : **2** (`VSEC-001` et `VSEC-002`) ;
 - plusieurs candidats ont déjà été rejetés ou reclassés Phoenix/UI/fork ;
 - le nombre final de bugs n'est volontairement pas figé tant que le ratissage n'est pas terminé.
