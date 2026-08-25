@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Construit l'assistant de contrat réel et parcourt ses six étapes sous Windows."""
+"""Crée, valide et relit un nouveau contrat CCNS dans l'application Windows."""
 
 from __future__ import annotations
 
@@ -23,24 +23,35 @@ FAILURE_MARKER = "TEAMWORKS_SMOKE_CONTRACT_DIALOG_FAILED"
 STATICBOX_PARENT_WARNING = "of wxStaticBoxSizer should be created as child of its wxStaticBox"
 
 INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
+            _smoke_created_contract_id = None
             try:
                 print("TEAMWORKS_SMOKE_CONTRACT_STAGE:imports", flush=True)
                 import GestionDB as _smoke_gestiondb
                 from Dlg import DLG_Creation_contrat as _smoke_contract
 
-                print("TEAMWORKS_SMOKE_CONTRACT_STAGE:database", flush=True)
+                print("TEAMWORKS_SMOKE_CONTRACT_STAGE:employee", flush=True)
                 _smoke_db = _smoke_gestiondb.DB()
-                _smoke_db.ExecuterReq("SELECT IDcontrat, IDpersonne FROM contrats ORDER BY IDcontrat LIMIT 1")
+                _smoke_db.ExecuterReq(
+                    "SELECT p.IDpersonne FROM personnes p "
+                    "LEFT JOIN contrats c ON c.IDpersonne=p.IDpersonne "
+                    "GROUP BY p.IDpersonne HAVING COUNT(c.IDcontrat)=0 "
+                    "ORDER BY p.IDpersonne LIMIT 1"
+                )
                 _smoke_rows = _smoke_db.ResultatReq()
+                if not _smoke_rows:
+                    _smoke_db.ExecuterReq("SELECT IDpersonne FROM personnes ORDER BY IDpersonne LIMIT 1")
+                    _smoke_rows = _smoke_db.ResultatReq()
+                _smoke_db.ExecuterReq("SELECT COALESCE(MAX(IDcontrat), 0) FROM contrats")
+                _smoke_contract_baseline = int(_smoke_db.ResultatReq()[0][0])
                 _smoke_db.Close()
                 if not _smoke_rows:
-                    raise RuntimeError("aucun contrat disponible pour le smoke contrat")
-                _smoke_contract_id, _smoke_person_id = _smoke_rows[0]
+                    raise RuntimeError("aucun salarié disponible pour le smoke contrat")
+                _smoke_person_id = int(_smoke_rows[0][0])
 
                 print("TEAMWORKS_SMOKE_CONTRACT_STAGE:dialog", flush=True)
                 _smoke_dialog = _smoke_contract.Dialog(
                     frame,
-                    IDcontrat=_smoke_contract_id,
+                    IDcontrat=0,
                     IDpersonne=_smoke_person_id,
                 )
                 _smoke_dialog.Show()
@@ -56,32 +67,73 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 assert not _smoke_dialog.bouton_retour.IsEnabled()
                 assert _smoke_dialog.bouton_suite.IsEnabled()
                 assert _smoke_dialog.bouton_annuler.IsEnabled()
-                assert _smoke_dialog.dictContrats["IDcontrat"] == _smoke_contract_id
+                assert _smoke_dialog.dictContrats["IDcontrat"] == 0
                 assert _smoke_dialog.dictContrats["IDpersonne"] == _smoke_person_id
-                assert _smoke_dialog.GetTitle() == "Modification d'un contrat"
+                assert _smoke_dialog.GetTitle() == "Création d'un contrat"
 
-                print("TEAMWORKS_SMOKE_CONTRACT_STAGE:forward", flush=True)
-                for _smoke_target_page in range(2, 7):
-                    _smoke_dialog.Onbouton_suite(None)
-                    wx.Yield()
-                    assert _smoke_dialog.pageVisible == _smoke_target_page
-                    assert getattr(_smoke_dialog, "page%d" % _smoke_target_page).IsShown()
-                    assert _smoke_dialog.bouton_retour.IsEnabled()
+                print("TEAMWORKS_SMOKE_CONTRACT_STAGE:new-contract", flush=True)
+                _smoke_dialog.Onbouton_suite(None)
+                wx.Yield()
+                assert _smoke_dialog.pageVisible == 2
+                assert _smoke_dialog.page2.radio_non.GetValue()
 
+                _smoke_dialog.Onbouton_suite(None)
+                wx.Yield()
+                assert _smoke_dialog.pageVisible == 3
+
+                print("TEAMWORKS_SMOKE_CONTRACT_STAGE:ccns", flush=True)
+                assert _smoke_dialog.page3._SelectContractTypeCode("CDI")
+                _smoke_dialog.page3.OnChoiceType(None)
+                _smoke_dialog.page3._SelectConvention("CCNS")
+                _smoke_dialog.page3.OnChoiceConvention(None)
+                assert _smoke_dialog.page3.IsCCNSSelected()
+
+                print("TEAMWORKS_SMOKE_CONTRACT_STAGE:group", flush=True)
+                _smoke_dialog.page3.SelectChoice(_smoke_dialog.page3.choice_ccns_group, "G1")
+                assert _smoke_dialog.page3.GetChoiceData(_smoke_dialog.page3.choice_ccns_group) == "G1"
+                _smoke_dialog.page3.OnCCNSFieldChanged(None)
+                _smoke_dialog.page3.RefreshTrialProposal(force=True)
+                assert _smoke_dialog.page3.check_trial.GetValue()
+                assert _smoke_dialog.page3.trial_value.GetValue() > 0
+
+                print("TEAMWORKS_SMOKE_CONTRACT_STAGE:salary", flush=True)
+                _smoke_salary = _smoke_dialog.page3._MonthlySalaryDecimal()
+                assert _smoke_salary is not None and _smoke_salary > 0
+                assert _smoke_dialog.page3.last_ccns_preview is not None
+                assert _smoke_dialog.page3.last_ccns_preview.compliant
+
+                print("TEAMWORKS_SMOKE_CONTRACT_STAGE:validation", flush=True)
+                _smoke_dialog.Onbouton_suite(None)
+                wx.Yield()
+                assert _smoke_dialog.pageVisible == 4
+                assert _smoke_dialog.dictContrats["convention_code"] == "CCNS"
+                assert _smoke_dialog.dictContrats["ccns_group"] == "G1"
+                assert _smoke_dialog.dictContrats["gross_monthly_salary"] == float(_smoke_salary)
+
+                _smoke_dialog.Onbouton_suite(None)
+                wx.Yield()
                 assert _smoke_dialog.pageVisible == 6
                 assert _smoke_dialog.page6.IsShown()
 
-                print("TEAMWORKS_SMOKE_CONTRACT_STAGE:backward", flush=True)
-                for _smoke_target_page in range(5, 0, -1):
-                    _smoke_dialog.Onbouton_retour(None)
-                    wx.Yield()
-                    assert _smoke_dialog.pageVisible == _smoke_target_page
-                    assert getattr(_smoke_dialog, "page%d" % _smoke_target_page).IsShown()
+                print("TEAMWORKS_SMOKE_CONTRACT_STAGE:save", flush=True)
+                assert _smoke_dialog.ValidationPages()
 
-                assert _smoke_dialog.pageVisible == 1
-                assert _smoke_dialog.page1.IsShown()
-                assert not _smoke_dialog.bouton_retour.IsEnabled()
-                assert _smoke_dialog.bouton_suite.IsEnabled()
+                print("TEAMWORKS_SMOKE_CONTRACT_STAGE:database-readback", flush=True)
+                _smoke_db = _smoke_gestiondb.DB()
+                _smoke_db.ExecuterReq(
+                    "SELECT IDcontrat, convention_code, ccns_group, gross_monthly_salary "
+                    "FROM contrats WHERE IDpersonne=%d AND IDcontrat>%d "
+                    "ORDER BY IDcontrat DESC LIMIT 1"
+                    % (_smoke_person_id, _smoke_contract_baseline)
+                )
+                _smoke_saved_rows = _smoke_db.ResultatReq()
+                _smoke_db.Close()
+                assert len(_smoke_saved_rows) == 1
+                _smoke_created_contract_id, _smoke_convention, _smoke_group, _smoke_saved_salary = _smoke_saved_rows[0]
+                assert _smoke_convention == "CCNS"
+                assert _smoke_group == "G1"
+                assert abs(float(_smoke_saved_salary) - float(_smoke_salary)) < 0.01
+
                 print("TEAMWORKS_SMOKE_CONTRACT_DIALOG_READY", flush=True)
                 _smoke_dialog.Destroy()
             except Exception:
@@ -90,6 +142,13 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 print("TEAMWORKS_SMOKE_CONTRACT_DIALOG_FAILED", flush=True)
                 wx.CallAfter(self.ExitMainLoop)
                 return True
+            finally:
+                if _smoke_created_contract_id is not None:
+                    _smoke_cleanup = _smoke_gestiondb.DB()
+                    _smoke_cleanup.ReqDEL("contrats_valchamps", "IDcontrat", _smoke_created_contract_id)
+                    _smoke_cleanup.ReqDEL("contrats", "IDcontrat", _smoke_created_contract_id)
+                    _smoke_cleanup.Commit()
+                    _smoke_cleanup.Close()
 '''
 
 

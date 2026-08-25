@@ -32,13 +32,28 @@ def test_contract_smoke_targets_real_application_context() -> None:
     assert "PATCHED_CORE.unlink(missing_ok=True)" in source
 
 
-def test_contract_smoke_exercises_forward_and_backward_navigation() -> None:
+def test_contract_smoke_exercises_ccns_creation_and_database_readback() -> None:
     source = SMOKE.read_text(encoding="utf-8")
 
-    assert "for _smoke_target_page in range(2, 7):" in source
+    assert "TEAMWORKS_SMOKE_CONTRACT_STAGE:employee" in source
+    assert "TEAMWORKS_SMOKE_CONTRACT_STAGE:new-contract" in source
+    assert "TEAMWORKS_SMOKE_CONTRACT_STAGE:ccns" in source
+    assert "TEAMWORKS_SMOKE_CONTRACT_STAGE:group" in source
+    assert "TEAMWORKS_SMOKE_CONTRACT_STAGE:salary" in source
+    assert "TEAMWORKS_SMOKE_CONTRACT_STAGE:validation" in source
+    assert "TEAMWORKS_SMOKE_CONTRACT_STAGE:save" in source
+    assert "TEAMWORKS_SMOKE_CONTRACT_STAGE:database-readback" in source
+    assert 'IDcontrat=0' in source
+    assert '_SelectContractTypeCode("CDI")' in source
+    assert '_SelectConvention("CCNS")' in source
+    assert 'choice_ccns_group, "G1"' in source
+    assert "_MonthlySalaryDecimal()" in source
+    assert "RefreshTrialProposal(force=True)" in source
+    assert "trial_value.GetValue() > 0" in source
     assert "_smoke_dialog.Onbouton_suite(None)" in source
-    assert "for _smoke_target_page in range(5, 0, -1):" in source
-    assert "_smoke_dialog.Onbouton_retour(None)" in source
+    assert "_smoke_dialog.ValidationPages()" in source
+    assert "SELECT IDcontrat, convention_code, ccns_group, gross_monthly_salary" in source
+    assert 'ReqDEL("contrats", "IDcontrat", _smoke_created_contract_id)' in source
     assert "TEAMWORKS_SMOKE_CONTRACT_DIALOG_READY" in source
     assert "TEAMWORKS_SMOKE_CONTRACT_DIALOG_FAILED" in source
     assert "PATCHED.unlink(missing_ok=True)" in source
