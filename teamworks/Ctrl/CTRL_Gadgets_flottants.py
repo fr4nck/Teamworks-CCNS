@@ -11,7 +11,7 @@ from Utils import UTILS_Customize, UTILS_Interface, UTILS_Styles
 
 
 PERSPECTIVE_SECTION = "interface"
-PERSPECTIVE_KEY = "gadgets_perspective_v2"
+PERSPECTIVE_KEY = "gadgets_dashboard_perspective_v3"
 
 
 class EspaceGadgets(wx.Panel):
@@ -86,12 +86,13 @@ class EspaceGadgets(wx.Panel):
             .CaptionVisible(False)
             .BestSize((largeur, hauteur))
             .MinSize(min_size)
-            .FloatingSize((largeur, hauteur))
             .Top()
             .Layer(0)
             .Row(index // colonnes)
             .Position(index % colonnes)
-            .Floatable(True)
+            # Un gadget appartient au dashboard. Interdire le détachement AUI
+            # évite une fenêtre flottante qui survivrait au masquage de l'accueil.
+            .Floatable(False)
             .Dockable(True)
             .Movable(True)
             .Resizable(True)
@@ -161,10 +162,22 @@ class EspaceGadgets(wx.Panel):
         try:
             self._restauration_en_cours = True
             self.manager.LoadPerspective(perspective, update=False)
+            self._AncrerDansDashboard()
         except Exception:
             pass
         finally:
             self._restauration_en_cours = False
+
+    def _AncrerDansDashboard(self):
+        """Réaffirme la frontière dashboard après toute restauration AUI."""
+        if self.manager is None:
+            return
+        colonnes = UTILS_Styles.GetGadgetMetric("columns")
+        for index, nom in enumerate(self._gadgets):
+            pane = self.manager.GetPane(nom)
+            if pane.IsOk():
+                pane.Dock().Top().Layer(0).Row(index // colonnes).Position(index % colonnes)
+                pane.Floatable(False).Show(True)
 
     def SauverPerspective(self):
         if self._restauration_en_cours or self.manager is None:
@@ -214,44 +227,20 @@ class EspaceGadgets(wx.Panel):
         UTILS_Customize.SetValeur(PERSPECTIVE_SECTION, PERSPECTIVE_KEY, "")
         self.Construire()
 
-    def ToutRendreFlottant(self):
-        if self.manager is None:
-            return
-        origin_x, origin_y = UTILS_Styles.GetGadgetMetric("floating_origin")
-        step = UTILS_Styles.GetGadgetMetric("floating_step")
-        min_width, min_height = UTILS_Styles.GetGadgetMetric("floating_min_size")
-        for index, (nom, gadget) in enumerate(self._gadgets.items()):
-            pane = self.manager.GetPane(nom)
-            if not pane.IsOk():
-                continue
-            largeur, hauteur = gadget.GetSize()
-            pane.Float()
-            pane.FloatingPosition((origin_x + (step * index), origin_y + (step * index)))
-            pane.FloatingSize((max(min_width, largeur), max(min_height, hauteur)))
-        self.manager.Update()
-        self.PlanifierSauvegardePerspective()
-
     def ToutAncrer(self):
         if self.manager is None:
             return
-        colonnes = UTILS_Styles.GetGadgetMetric("columns")
-        for index, nom in enumerate(self._gadgets):
-            pane = self.manager.GetPane(nom)
-            if pane.IsOk():
-                pane.Dock().Top().Layer(0).Row(index // colonnes).Position(index % colonnes).Show(True)
+        self._AncrerDansDashboard()
         self.manager.Update()
         self.PlanifierSauvegardePerspective()
 
     def OnContextMenu(self, event):
         menu = wx.Menu()
-        id_flottants = wx.NewIdRef()
         id_ancrer = wx.NewIdRef()
         id_reset = wx.NewIdRef()
-        menu.Append(id_flottants, u"Tout rendre flottant")
-        menu.Append(id_ancrer, u"Tout ancrer dans l'accueil")
+        menu.Append(id_ancrer, u"Rétablir la disposition du dashboard")
         menu.AppendSeparator()
         menu.Append(id_reset, u"Réinitialiser la disposition")
-        self.Bind(wx.EVT_MENU, lambda evt: self.ToutRendreFlottant(), id=id_flottants)
         self.Bind(wx.EVT_MENU, lambda evt: self.ToutAncrer(), id=id_ancrer)
         self.Bind(wx.EVT_MENU, lambda evt: self.ReinitialiserDisposition(), id=id_reset)
         self.PopupMenu(menu)

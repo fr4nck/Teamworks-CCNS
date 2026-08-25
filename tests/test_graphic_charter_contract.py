@@ -35,7 +35,7 @@ def test_spacing_icons_controls_gadgets_and_window_profiles_are_centralised():
     assert '"button_min_height"' in source
     assert '"footer_min_height"' in source
     assert '"default_size"' in source
-    assert '"floating_origin"' in source
+    assert '"floating_origin"' not in source
     assert "GetIconSize" in source
     assert "GetControlMetric" in source
     assert "GetGadgetMetric" in source

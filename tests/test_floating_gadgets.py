@@ -21,11 +21,11 @@ def test_gadget_modules_are_valid_python():
         _tree(path)
 
 
-def test_floating_workspace_uses_native_aui_capabilities():
+def test_dashboard_workspace_uses_native_aui_without_top_level_floats():
     source = _source(FLOATING_PATH)
     assert "import wx.aui as aui" in source
-    assert ".Float()" in source
-    assert ".Floatable(True)" in source
+    assert ".Float()" not in source
+    assert ".Floatable(False)" in source
     assert ".Dockable(True)" in source
     assert ".Movable(True)" in source
     assert ".Resizable(True)" in source
@@ -41,21 +41,20 @@ def test_gadgets_start_visible_and_docked_instead_of_forced_floating():
     assert ".Float()" not in pane_builder
 
 
-def test_floating_workspace_persists_versioned_perspective():
+def test_dashboard_workspace_persists_versioned_perspective():
     source = _source(FLOATING_PATH)
     assert "SavePerspective" in source
     assert "LoadPerspective" in source
-    assert 'PERSPECTIVE_KEY = "gadgets_perspective_v2"' in source
+    assert 'PERSPECTIVE_KEY = "gadgets_dashboard_perspective_v3"' in source
     assert "ReinitialiserDisposition" in source
 
 
-def test_floating_workspace_has_recovery_commands():
+def test_dashboard_workspace_has_recovery_commands():
     source = _source(FLOATING_PATH)
-    assert "ToutRendreFlottant" in source
+    assert "ToutRendreFlottant" not in source
     assert "ToutAncrer" in source
     assert "OnContextMenu" in source
-    assert "Tout rendre flottant" in source
-    assert "Tout ancrer dans l'accueil" in source
+    assert "Rétablir la disposition du dashboard" in source
     assert "Réinitialiser la disposition" in source
 
 
@@ -75,7 +74,7 @@ def test_gadget_workspace_consumes_central_gadget_metrics():
     host = _source(FLOATING_PATH)
     styles = _source(STYLES_PATH)
     assert "GADGET_METRICS" in styles
-    for metric in ("default_size", "min_size", "floating_min_size", "columns", "floating_origin", "floating_step"):
+    for metric in ("default_size", "min_size", "columns"):
         assert '"%s"' % metric in styles
     assert "UTILS_Styles.GetGadgetMetric" in host
     assert "max(200" not in host
