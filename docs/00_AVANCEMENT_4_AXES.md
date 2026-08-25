@@ -8,7 +8,7 @@ Ce document est un **tableau de lecture dérivé**, pas une roadmap concurrente.
 
 | Axe | Avancement | Nature du restant |
 |---|---:|---|
-| **Vanilla / Bugfix** | **50 %** | 5 correctifs confirmés : diagnostic et solution connus ; backport/test sur socle historique à réaliser |
+| **Vanilla / Bugfix** | **75 %** | 5 correctifs confirmés, patches minimaux préparés et validés statiquement ; test runtime historique restant |
 | **Python 3 / wxPython Phoenix** | **88 %** | qualification du portable exact de `master` et validation Windows réelle |
 | **UI/UX / thème graphique** | **78 %** | migration/finitions des écrans historiques et validation visuelle réelle |
 | **CCNS & extensions** | **83 %** | consolidation de quelques frontières d'architecture et surtout recette métier réelle |
@@ -48,7 +48,9 @@ Une branche de préparation **`vanilla-bugfix`** a été créée à partir de la
 
 `00bd52ef85853eb617361a15c2f0cc0cfa1b898e` — Teamworks 2.1.3.1.
 
-Elle est volontairement séparée du `master` moderne. Les correctifs Vanilla doivent y rester minimaux et ne jamais importer Python 3/Phoenix, le design system, la CCNS ou les extensions PMSL.
+Les backports minimaux sont conservés dans `patches/vanilla/`. Ils ont été appliqués sur une copie exacte du snapshot historique, passent `git apply --unidiff-zero --check`, compilent via `py_compile` et passent `git diff --check`.
+
+Il reste le test réel dans l'environnement historique avant de considérer le lot Vanilla à 100 %.
 
 ## Fichiers détaillés
 
@@ -56,5 +58,6 @@ Elle est volontairement séparée du `master` moderne. Les correctifs Vanilla do
 - `docs/02_PYTHON3_PHOENIX.md`
 - `docs/03_UI_UX_MODERNISATION.md`
 - `docs/04_CCNS_EXTENSIONS.md`
+- `patches/vanilla/README.md`
 
 Les pourcentages sont recalculés uniquement lorsque l'état d'un jalon change réellement. Un commit, une CI verte ou une impression de progression ne suffisent pas à eux seuls à faire monter un axe.
