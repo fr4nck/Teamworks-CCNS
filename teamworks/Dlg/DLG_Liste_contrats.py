@@ -14,7 +14,6 @@ from Ctrl import CTRL_Bandeau
 from Ol import OL_contrats
 
 
-
 class Dialog(wx.Dialog):
     def __init__(self, parent):
         wx.Dialog.__init__(self, parent, -1, name="DLG_Liste_contrats", style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX)
@@ -33,7 +32,6 @@ class Dialog(wx.Dialog):
         self.bouton_apercu = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Apercu.png"), wx.BITMAP_TYPE_ANY))
         self.bouton_imprimer = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Imprimante.png"), wx.BITMAP_TYPE_ANY))
         self.bouton_publipostage = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Mail.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_due = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Document.png"), wx.BITMAP_TYPE_ANY))
         self.bouton_texte = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Texte2.png"), wx.BITMAP_TYPE_ANY))
         self.bouton_excel = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Excel.png"), wx.BITMAP_TYPE_ANY))
 
@@ -46,7 +44,6 @@ class Dialog(wx.Dialog):
         self.Bind(wx.EVT_BUTTON, self.ctrl_listview.Apercu, self.bouton_apercu)
         self.Bind(wx.EVT_BUTTON, self.ctrl_listview.Imprimer, self.bouton_imprimer)
         self.Bind(wx.EVT_BUTTON, self.OnBoutonPublipostage, self.bouton_publipostage)
-        self.Bind(wx.EVT_BUTTON, self.OnBoutonDUE, self.bouton_due)
         self.Bind(wx.EVT_BUTTON, self.ctrl_listview.ExportTexte, self.bouton_texte)
         self.Bind(wx.EVT_BUTTON, self.ctrl_listview.ExportExcel, self.bouton_excel)
         self.Bind(wx.EVT_BUTTON, self.OnBoutonAide, self.bouton_aide)
@@ -55,7 +52,6 @@ class Dialog(wx.Dialog):
         self.bouton_apercu.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour créer un aperçu de la liste")))
         self.bouton_imprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour imprimer la liste")))
         self.bouton_publipostage.SetToolTip(wx.ToolTip(_(u"Créer un document à partir du contrat sélectionné")))
-        self.bouton_due.SetToolTip(wx.ToolTip(_(u"Préparer la DPAE / DUE du contrat sélectionné")))
         self.bouton_texte.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour exporter la liste au format Texte")))
         self.bouton_excel.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour exporter la liste au format Excel")))
         self.bouton_aide.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour obtenir de l'aide")))
@@ -75,13 +71,11 @@ class Dialog(wx.Dialog):
         grid_sizer_gauche.AddGrowableCol(0)
         grid_sizer_contenu.Add(grid_sizer_gauche, 1, wx.EXPAND, 0)
 
-        # Commandes
-        grid_sizer_droit = wx.FlexGridSizer(rows=12, cols=1, vgap=5, hgap=5)
+        grid_sizer_droit = wx.FlexGridSizer(rows=11, cols=1, vgap=5, hgap=5)
         grid_sizer_droit.Add(self.bouton_apercu, 0, 0, 0)
         grid_sizer_droit.Add(self.bouton_imprimer, 0, 0, 0)
         grid_sizer_droit.Add((5, 5), 0, 0, 0)
         grid_sizer_droit.Add(self.bouton_publipostage, 0, 0, 0)
-        grid_sizer_droit.Add(self.bouton_due, 0, 0, 0)
         grid_sizer_droit.Add((5, 5), 0, 0, 0)
         grid_sizer_droit.Add(self.bouton_texte, 0, 0, 0)
         grid_sizer_droit.Add(self.bouton_excel, 0, 0, 0)
@@ -137,20 +131,9 @@ class Dialog(wx.Dialog):
         dlg.Destroy()
         return True
 
-    def OnBoutonDUE(self, event):
-        IDcontrat = self.GetSelectedContractID()
-        if IDcontrat is None:
-            return False
-        from Dlg import DLG_Edition_DUE_modern
-        dlg = DLG_Edition_DUE_modern.Dialog(self, IDcontrat=IDcontrat)
-        dlg.ShowModal()
-        dlg.Destroy()
-        return True
-
     def OnBoutonAide(self, event):
         from Utils import UTILS_Aide
         UTILS_Aide.Aide("")
-
 
 
 if __name__ == "__main__":
