@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SMOKES = (
     ("candidature", ROOT / "tools" / "smoke_recruitment_candidate.py"),
     ("entretien", ROOT / "tools" / "smoke_recruitment_interview.py"),
+    ("emploi", ROOT / "tools" / "smoke_recruitment_job.py"),
 )
 READY_MARKER = "TEAMWORKS_SMOKE_RECRUITMENT_READY"
 FAILURE_MARKER = "TEAMWORKS_SMOKE_RECRUITMENT_FAILED"
