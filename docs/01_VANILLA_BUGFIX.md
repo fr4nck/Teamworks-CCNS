@@ -77,18 +77,36 @@ Le backport reste compatible avec le Python historique : pas de `pathlib`, pas d
 
 **Patch préparé :** `patches/vanilla/VFIX-005-boutons-image.patch`.
 
+### VFIX-006 — `GestionDB.ReqInsert` masque l'erreur SQL réelle
+
+**Fichier :** `teamworks/GestionDB.py`
+
+Lorsque l'INSERT échoue avant l'affectation de `newID`, Vanilla affiche l'erreur SQL puis tente quand même `return newID`. Un `UnboundLocalError` masque alors l'erreur initiale. Le correctif initialise explicitement `newID` à `None` avant la tentative d'INSERT.
+
+**Patch préparé :** `patches/vanilla/VFIX-006-007-gestiondb.patch`.
+
+### VFIX-007 — `GestionDB.SupprChamp` tronque le schéma SQLite
+
+**Fichier :** `teamworks/GestionDB.py`
+
+La reconstruction SQLite s'arrête dès que la colonne cible est rencontrée. Les colonnes situées après elle ne sont donc ni recréées ni recopiées, ce qui peut provoquer une perte silencieuse de données. Le correctif reconstruit toutes les colonnes sauf la cible et refuse une colonne inexistante ou la suppression de l'unique colonne.
+
+**Patch préparé :** `patches/vanilla/VFIX-006-007-gestiondb.patch`.
+
 ## Validation du backport préparé
 
-Les quatre fichiers ont été reconstruits sur une **copie exacte du snapshot Vanilla 2.1.3.1**, en conservant l'encodage historique `iso-8859-15`.
+Les cinq fichiers concernés ont été reconstruits sur une **copie exacte du snapshot Vanilla 2.1.3.1**, en conservant l'encodage historique `iso-8859-15`.
 
 Validation effectuée :
 
-- `git apply --unidiff-zero --check` : **OK** pour les quatre patches ;
-- application des quatre patches sur une copie propre : **OK** ;
-- compilation Python des quatre fichiers modifiés via `py_compile` : **OK** ;
+- contrôle d'application à blanc : **OK** pour les cinq patches ;
+- application des cinq patches sur une copie propre : **OK** ;
+- compilation Python des cinq fichiers modifiés via `py_compile` : **OK** ;
 - `git diff --check` : **OK**.
 
-Cette validation est statique. Il reste à exécuter Teamworks dans son environnement historique et à parcourir réellement sauvegarde/restauration, gadgets, aperçu e-mail et boutons avec ressource absente.
+Le patch `VFIX-006-007-gestiondb.patch` a en plus été comparé byte-à-byte avec la cible reconstruite après application. Dans Teamworks-CCNS, les deux comportements sont également couverts par des tests dédiés, dont un test SQLite en mémoire qui vérifie que les colonnes placées après la colonne supprimée conservent leurs données.
+
+Cette validation reste statique pour le socle Vanilla. Il reste à exécuter Teamworks dans son environnement historique et à parcourir réellement les fonctions concernées.
 
 Le format patch à contexte nul est volontaire : il permet de préserver l'encodage historique sans convertir tout le fichier en UTF-8 et sans polluer le diff avec des dizaines de changements artificiels.
 
@@ -114,6 +132,8 @@ Chaque correctif vaut 4 étapes :
 | VFIX-003 Gadgets | Oui | Oui | Oui | Non | 75 % |
 | VFIX-004 Aperçu e-mail | Oui | Oui | Oui | Non | 75 % |
 | VFIX-005 Icônes absentes | Oui | Oui | Oui | Non | 75 % |
+| VFIX-006 ReqInsert / erreur SQL masquée | Oui | Oui | Oui | Non | 75 % |
+| VFIX-007 SupprChamp / schéma SQLite tronqué | Oui | Oui | Oui | Non | 75 % |
 
 **Progression du lot Vanilla connu : 75 %.**
 
