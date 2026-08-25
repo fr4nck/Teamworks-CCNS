@@ -84,6 +84,15 @@ class Grid_donnees(_base.Grid_donnees):
 
 
 class ListCtrl_fichiers(_base.ListCtrl_fichiers):
+    def __init__(self, parent):
+        # Phoenix impose que le contrôle soit enfant du StaticBox. Le code
+        # historique utilisait toutefois ``parent`` comme contrôleur Page4.
+        # On conserve le parent wx correct, puis on restaure explicitement le
+        # propriétaire fonctionnel attendu par les handlers vanilla.
+        super(ListCtrl_fichiers, self).__init__(parent)
+        owner = parent.GetParent() if isinstance(parent, wx.StaticBox) else parent
+        self.parent = owner
+
     def GetListeDocuments(self):
         fichiers = super(ListCtrl_fichiers, self).GetListeDocuments()
         if _base.DICT_DONNEES.get("CATEGORIE") != "contrat":
