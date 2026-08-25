@@ -141,8 +141,8 @@ class Dialog(wx.Dialog):
         IDcontrat = self.GetSelectedContractID()
         if IDcontrat is None:
             return False
-        from Dlg import DLG_Edition_DUE
-        dlg = DLG_Edition_DUE.Dialog(self, IDcontrat=IDcontrat)
+        from Dlg import DLG_Edition_DUE_modern
+        dlg = DLG_Edition_DUE_modern.Dialog(self, IDcontrat=IDcontrat)
         dlg.ShowModal()
         dlg.Destroy()
         return True
