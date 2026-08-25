@@ -203,11 +203,12 @@ class Dialog(_legacy.Dialog):
         ]
 
         image_list = wx.ImageList(32, 32)
-        for _, _, _, image in self.listePages:
+        for code, label, ctrl, image in self.listePages:
             image_list.Add(image)
         self.ctrl_labelbook.AssignImageList(image_list)
 
-        for index, (_, label, ctrl, _) in enumerate(self.listePages):
+        for index, page_data in enumerate(self.listePages):
+            code, label, ctrl, image = page_data
             self.ctrl_labelbook.AddPage(ctrl, label, imageId=index)
 
 
