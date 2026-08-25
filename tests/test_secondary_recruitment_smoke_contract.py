@@ -5,16 +5,18 @@ ROOT = Path(__file__).resolve().parents[1]
 ORCHESTRATOR = ROOT / "tools" / "smoke_secondary_recruitment.py"
 CANDIDATE_SMOKE = ROOT / "tools" / "smoke_recruitment_candidate.py"
 INTERVIEW_SMOKE = ROOT / "tools" / "smoke_recruitment_interview.py"
+JOB_SMOKE = ROOT / "tools" / "smoke_recruitment_job.py"
 RUNTIME = ROOT / "tools" / "smoke_runtime.py"
 ENTRYPOINT = ROOT / "teamworks" / "Teamworks.py"
 CORE = ROOT / "teamworks" / "Teamworks_core.py"
 
 
-def test_recruitment_orchestrator_runs_candidate_then_interview() -> None:
+def test_recruitment_orchestrator_runs_all_business_flows() -> None:
     source = ORCHESTRATOR.read_text(encoding="utf-8")
 
     assert '"candidature", ROOT / "tools" / "smoke_recruitment_candidate.py"' in source
     assert '"entretien", ROOT / "tools" / "smoke_recruitment_interview.py"' in source
+    assert '"emploi", ROOT / "tools" / "smoke_recruitment_job.py"' in source
     assert "subprocess.run(" in source
     assert "TEAMWORKS_SMOKE_RECRUITMENT_CHILD_FAILED" in source
     assert "TEAMWORKS_SMOKE_RECRUITMENT_READY" in source
