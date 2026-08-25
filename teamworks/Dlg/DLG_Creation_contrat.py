@@ -32,6 +32,15 @@ class Page3(LegacyPage3):
             context.prec = max(28, context.prec)
             return super()._MonthlySalaryDecimal()
 
+    def _MaybePrefillSalary(self, amount):
+        # Le runtime historique peut laisser un contexte Decimal de précision
+        # insuffisante. Le préremplissage d'un minimum CCNS doit être aussi
+        # isolé que la lecture/validation du salaire afin qu'un montant valide
+        # (ex. 1848,42 €) ne déclenche jamais decimal.InvalidOperation.
+        with localcontext() as context:
+            context.prec = max(28, context.prec)
+            return super()._MaybePrefillSalary(amount)
+
     def Validation(self):
         with localcontext() as context:
             context.prec = max(28, context.prec)
