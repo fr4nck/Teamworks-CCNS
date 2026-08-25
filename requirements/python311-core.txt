@@ -14,3 +14,4 @@ feedparser>=6,<7
 icalendar>=6,<7
 mailjet-rest>=1.3,<2
 mysql-connector-python>=9,<10
+pywin32>=311,<400; sys_platform == "win32"
