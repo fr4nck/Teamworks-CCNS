@@ -5,6 +5,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 SMOKE = ROOT / "tools" / "smoke_secondary_person_dialog.py"
+PERSON_LIFECYCLE_SMOKE = ROOT / "tools" / "smoke_person_lifecycle.py"
 MAILING_SMOKE = ROOT / "tools" / "smoke_mailing_preparation.py"
 SENDER_CONFIG_SMOKE = ROOT / "tools" / "smoke_sender_config.py"
 SENDER_CONFIG = ROOT / "teamworks" / "Dlg" / "DLG_Saisie_email_exp.py"
@@ -101,6 +102,50 @@ def test_person_smoke_rejects_blank_parameter_dialogs() -> None:
         "Jours fériés",
     ):
         assert f'("{label}",' in source
+
+
+def test_person_lifecycle_smoke_qualifies_create_edit_list_and_cleanup() -> None:
+    source = PERSON_LIFECYCLE_SMOKE.read_text(encoding="utf-8")
+
+    for marker in (
+        "TEAMWORKS_SMOKE_PERSON_LIFECYCLE_STAGE:create-dialog",
+        "TEAMWORKS_SMOKE_PERSON_LIFECYCLE_STAGE:create-save",
+        "TEAMWORKS_SMOKE_PERSON_LIFECYCLE_STAGE:create-readback",
+        "TEAMWORKS_SMOKE_PERSON_LIFECYCLE_STAGE:edit-dialog",
+        "TEAMWORKS_SMOKE_PERSON_LIFECYCLE_STAGE:edit-save",
+        "TEAMWORKS_SMOKE_PERSON_LIFECYCLE_STAGE:edit-readback",
+        "TEAMWORKS_SMOKE_PERSON_LIFECYCLE_STAGE:list-readback",
+        "TEAMWORKS_SMOKE_PERSON_LIFECYCLE_STAGE:cleanup",
+        "TEAMWORKS_SMOKE_PERSON_LIFECYCLE_READY",
+        "TEAMWORKS_SMOKE_PERSON_LIFECYCLE_FAILED",
+    ):
+        assert marker in source
+
+    assert "DLG_Fiche_individuelle" in source
+    assert "OL_personnes" in source
+    assert "IDpersonne=0" in source
+    assert ".Sauvegarde()" in source
+    assert 'ReqDEL("personnes", "IDpersonne"' in source
+    assert "__TEAMWORKS_SMOKE_PERSON_CREATE__" in source
+    assert "__TEAMWORKS_SMOKE_PERSON_EDIT__" in source
+    assert "PATCHED.unlink(missing_ok=True)" in source
+    assert "PATCHED_CORE.unlink(missing_ok=True)" in source
+
+
+def test_person_lifecycle_runs_in_real_windows_application() -> None:
+    if sys.platform != "win32":
+        return
+
+    completed = subprocess.run(
+        [sys.executable, str(PERSON_LIFECYCLE_SMOKE)],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        timeout=240,
+        check=False,
+    )
+    output = "\n".join(part for part in (completed.stdout, completed.stderr) if part)
+    assert completed.returncode == 0, output
 
 
 def test_mailing_factory_uses_the_shared_configuration_guardrails() -> None:
