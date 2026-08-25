@@ -11,11 +11,11 @@
 
 import Chemins
 from Utils import UTILS_Adaptations
+from Utils import UTILS_Mailing
 from Utils.UTILS_Traduction import _
 import wx
 from Ctrl import CTRL_Bouton_image
 import GestionDB
-import re
 import wx.lib.dialogs
 import wx.lib.dialogs as dialogs
 from Ol import OL_personnes
@@ -54,7 +54,7 @@ class Page_Saisie_manuelle(wx.Panel):
         self.ctrl = wx.TextCtrl(self, -1, style=wx.TE_MULTILINE)
         self.ctrl.SetMinSize((10, 10))
         self.Bind(wx.EVT_TEXT, self.OnCheck, self.ctrl)
-        self.ctrl.SetToolTip(wx.ToolTip(_(u"Saisissez manuellement des adresses emails en les séparant par des points-virgules (;)")))
+        self.ctrl.SetToolTip(wx.ToolTip(_(u"Saisissez manuellement des adresses emails en les séparant par des points-virgules (;), virgules ou retours à la ligne")))
         
         # Layout
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -69,12 +69,7 @@ class Page_Saisie_manuelle(wx.Panel):
         self.parent.SetInfos("saisie_manuelle", self.GetDonnees())
     
     def GetAdresses(self):
-        listeTemp = self.ctrl.GetValue().split(";")
-        listeAdresses = []
-        for texte in listeTemp :
-            if re.match("^.+\\@(\\[?)[a-zA-Z0-9\\-\\.]+\\.([a-zA-Z]{2,3}|[0-9]{1,3})(\\]?)$", texte) != None:
-                listeAdresses.append(texte)
-        return listeAdresses
+        return UTILS_Mailing.SplitEmailAddresses(self.ctrl.GetValue())
     
     def Validation(self):
         return True
@@ -166,7 +161,7 @@ class Page_Individus(wx.Panel):
     def Validation(self):
         listeNonValides = []
         for track in self.listview.GetCheckedObjects() :
-            if track.email in (None, "") :
+            if not UTILS_Mailing.SplitEmailAddresses(track.email):
                 nom = track.nom
                 if track.prenom not in (None, "") :
                     nom += u" " + track.prenom
@@ -188,11 +183,10 @@ class Page_Individus(wx.Panel):
         listeID = []
         listeAdresses = []
         for track in self.listview.GetCheckedObjects() :
-            if track.email not in (None, "") :
-                ID = track.IDpersonne
-                listeID.append(ID)
-                for email in track.email.split(", "):
-                    listeAdresses.append(email)
+            adresses = UTILS_Mailing.SplitEmailAddresses(track.email)
+            if adresses:
+                listeID.append(track.IDpersonne)
+                listeAdresses.extend(adresses)
         listeFiltres = self.listview.listeFiltresColonnes
         dictDonnees = {
             "liste_adresses" : listeAdresses,
@@ -342,9 +336,12 @@ class CTRL_Pages(wx.Notebook):
 
     def GetListeAdressesUniques(self):
         listeAdressesUniques = []
+        adresses_vues = set()
         for code, dictDonnees in self.donnees.items() :
             for adresse in dictDonnees["liste_adresses"] :
-                if adresse not in listeAdressesUniques :
+                cle = adresse.casefold()
+                if cle not in adresses_vues:
+                    adresses_vues.add(cle)
                     listeAdressesUniques.append(adresse)
         return listeAdressesUniques
     
@@ -465,7 +462,6 @@ class Dialog(wx.Dialog):
 
 if __name__ == u"__main__":
     app = wx.App(0)
-    #wx.InitAllImageHandlers()
     dialog_1 = Dialog(None)
     app.SetTopWindow(dialog_1)
     dialog_1.ShowModal()
