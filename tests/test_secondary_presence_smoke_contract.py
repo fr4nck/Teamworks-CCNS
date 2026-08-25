@@ -33,6 +33,22 @@ def test_presence_smoke_targets_real_main_window_contract() -> None:
     assert "TEAMWORKS_SMOKE_PRESENCE_DIALOG_READY" in smoke_source
 
 
+def test_presence_smoke_qualifies_planning_lifecycle() -> None:
+    smoke_source = SMOKE.read_text(encoding="utf-8")
+
+    assert "DLG_Saisie_presence" in smoke_source
+    assert "SauvegardeNouveau()" in smoke_source
+    assert "SauvegardeModif()" in smoke_source
+    assert "create-readback" in smoke_source
+    assert "edit-readback" in smoke_source
+    assert "grid-readback" in smoke_source
+    assert 'dict_pages_by_index["presences"]' in smoke_source
+    assert "panelPlanning.DCplanning.dictPresences" in smoke_source
+    assert "DELETE FROM presences" in smoke_source
+    assert "__TEAMWORKS_SMOKE_PLANNING_CREATE__" in smoke_source
+    assert "__TEAMWORKS_SMOKE_PLANNING_EDIT__" in smoke_source
+
+
 def test_presence_smoke_always_writes_a_diagnostic() -> None:
     smoke_source = SMOKE.read_text(encoding="utf-8")
 
