@@ -153,7 +153,7 @@ class Dialog(wx.Dialog):
         _icon.CopyFromBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Logo.png"), wx.BITMAP_TYPE_ANY))
         self.SetIcon(_icon)
         self.ctrl_nom.SetToolTip(wx.ToolTip(_(u"Saisissez ici un nom pour le scénario")))
-        self.ctrl_description.SetToolTip(wx.ToolTip(_(u"Saisissez ici une description claire pour le scénario (optionnel)")))
+        self.ctrl_description.SetToolTip(wx.ToolTip(_(u"Saisissez ici une description claire du scénario (optionnel)")))
         self.ctrl_personne.SetToolTip(wx.ToolTip(_(u"Sélectionnez un individu dans la liste proposée")))
         self.ctrl_date_debut.SetToolTip(wx.ToolTip(_(u"Saisissez la date de début de période")))
         self.ctrl_date_fin.SetToolTip(wx.ToolTip(_(u"Saisissez la date de fin de période")))
