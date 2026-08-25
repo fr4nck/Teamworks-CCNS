@@ -72,10 +72,8 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 wx.Yield()
                 _smoke_create_move.SetDate(_smoke_datetime.date(2026, 9, 2))
                 _smoke_create_move.ctrl_objet.SetValue("__TEAMWORKS_SMOKE_TRAJET_CREATE__")
-                _smoke_create_move.ctrl_cp_depart.SetValue("35000")
-                _smoke_create_move.ctrl_ville_depart.SetValue("RENNES")
-                _smoke_create_move.ctrl_cp_arrivee.SetValue("35500")
-                _smoke_create_move.ctrl_ville_arrivee.SetValue("VITRE")
+                _smoke_create_move.SetVilleDepart(cp="35000", ville="RENNES")
+                _smoke_create_move.SetVilleArrivee(cp="35500", ville="VITRE")
                 _smoke_create_move.ctrl_distance.SetValue("42")
                 _smoke_create_move.ctrl_aller_retour.SetValue(False)
                 _smoke_create_move.ctrl_tarif.SetValue("0.50")
@@ -97,9 +95,9 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 assert _smoke_created[0] == _smoke_person_id
                 assert str(_smoke_created[1]) == "2026-09-02"
                 assert _smoke_created[2] == "__TEAMWORKS_SMOKE_TRAJET_CREATE__"
-                assert str(_smoke_created[3]) == "35000"
+                assert str(_smoke_created[3]).strip() == "35000"
                 assert _smoke_created[4] == "RENNES"
-                assert str(_smoke_created[5]) == "35500"
+                assert str(_smoke_created[5]).strip() == "35500"
                 assert _smoke_created[6] == "VITRE"
                 assert float(_smoke_created[7]) == 42.0
                 assert float(_smoke_created[9]) == 0.50
@@ -242,8 +240,7 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 except Exception:
                     _smoke_traceback.print_exc()
                 print("TEAMWORKS_SMOKE_EXPENSES_LIFECYCLE_FAILED", flush=True)
-                wx.CallAfter(self.ExitMainLoop)
-                return True
+                raise
             finally:
                 for _window in (
                     _smoke_create_move,
