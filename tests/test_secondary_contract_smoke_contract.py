@@ -8,7 +8,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 SMOKE = ROOT / "tools" / "smoke_secondary_contract_dialog.py"
 OPERATIONS_SMOKE = ROOT / "tools" / "smoke_contract_cee_cdd_operations.py"
-DOCUMENTS_SMOKE = ROOT / "tools" / "smoke_contract_documents_due.py"
+DOCUMENTS_SMOKE = ROOT / "tools" / "smoke_contract_documents.py"
 RUNTIME = ROOT / "tools" / "smoke_runtime.py"
 ENTRYPOINT = ROOT / "teamworks" / "Teamworks.py"
 CORE = ROOT / "teamworks" / "Teamworks_core.py"
@@ -81,7 +81,7 @@ def test_contract_cee_and_cdd_operations_run_in_real_windows_application() -> No
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="smoke wxPython réservé à la qualification Windows")
-def test_contract_documents_and_due_run_in_real_windows_application() -> None:
+def test_contract_documents_run_in_real_windows_application() -> None:
     completed = subprocess.run(
         [sys.executable, str(DOCUMENTS_SMOKE)],
         cwd=ROOT,
