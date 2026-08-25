@@ -29,11 +29,32 @@ def test_recruitment_smoke_runs_the_active_shell_with_instrumented_core() -> Non
     assert "PATCHED_CORE.unlink(missing_ok=True)" in source
 
 
-def test_recruitment_smoke_exercises_lists_filters_and_actions() -> None:
+def test_recruitment_smoke_exercises_candidate_lifecycle() -> None:
+    source = SMOKE.read_text(encoding="utf-8")
+
+    assert "DLG_Saisie_candidature" in source
+    assert "create-dialog" in source
+    assert "create-save" in source
+    assert "create-readback" in source
+    assert "edit-dialog" in source
+    assert "edit-save" in source
+    assert "edit-readback" in source
+    assert "list-readback" in source
+    assert ".Sauvegarde()" in source
+    assert 'ReqDEL("candidatures"' in source
+    assert 'ReqDEL("disponibilites"' in source
+    assert 'ReqDEL("cand_fonctions"' in source
+    assert 'ReqDEL("cand_affectations"' in source
+    assert "__TEAMWORKS_SMOKE_RECRUTEMENT_CREATE__" in source
+    assert "__TEAMWORKS_SMOKE_RECRUTEMENT_EDIT__" in source
+    assert 'getattr(track, "IDcandidature", None)' in source
+
+
+def test_recruitment_smoke_keeps_lists_filters_and_actions_covered() -> None:
     source = SMOKE.read_text(encoding="utf-8")
 
     assert "CTRL_Page_candidatures" in source
-    assert "OL_candidatures" in source
+    assert "OL_candidatures_core" in source
     assert "GetListeFiltres" in source
     assert "SortBy(1)" in source
     assert "bouton_candidatures_ajouter.IsEnabled()" in source
