@@ -18,7 +18,7 @@ Ce document est un **tableau de lecture dérivé**, pas une roadmap concurrente.
 
 Le **75 %** ne décrit que le premier lot de cinq correctifs déjà isolés (`VFIX-001` à `VFIX-005`). Il ne doit plus être lu comme « Teamworks Vanilla est corrigé à 75 % ».
 
-L'analyse exhaustive a commencé ensuite et a déjà confirmé de nouvelles familles (`VFIX-006` à `VFIX-009`) ainsi que des pistes de sécurité `VSEC-*`. Tant que ce ratissage n'est pas terminé, le nombre total de corrections à apporter n'est pas connu.
+L'analyse exhaustive a commencé ensuite et a déjà confirmé de nouvelles familles (`VFIX-006` à `VFIX-010`) ainsi que des pistes de sécurité `VSEC-*`. Tant que ce ratissage n'est pas terminé, le nombre total de corrections à apporter n'est pas connu.
 
 Le seul pourcentage pertinent pour la **complétude de l'inventaire Vanilla** est donc actuellement l'avancement du ratissage historique, soit environ **8 %** du volume de commits, complété par une analyse statique du source original.
 
@@ -54,9 +54,9 @@ La branche **`vanilla-bugfix`** part directement de :
 
 `00bd52ef85853eb617361a15c2f0cc0cfa1b898e` — Teamworks 2.1.3.1.
 
-Les backports du premier lot sont conservés dans `patches/vanilla/` et validés statiquement sur une copie exacte du snapshot historique.
+Les backports du premier lot sont conservés dans `patches/vanilla/` et validés statiquement sur une copie exacte du snapshot historique. `VFIX-010` dispose également déjà de son patch minimal.
 
-Le ratissage exhaustif a déjà porté le backlog fonctionnel confirmé de **5 à 9 familles VFIX**. Des faiblesses de sécurité sont suivies séparément sous `VSEC-*` afin de ne pas confondre bugs fonctionnels et durcissement.
+Le ratissage exhaustif a déjà porté le backlog fonctionnel confirmé de **5 à 10 familles VFIX**. Des faiblesses de sécurité sont suivies séparément sous `VSEC-*` afin de ne pas confondre bugs fonctionnels et durcissement.
 
 ## Fichiers détaillés
 
