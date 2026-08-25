@@ -8,7 +8,7 @@ Ce document est un **tableau de lecture dérivé**, pas une roadmap concurrente.
 
 | Axe | Avancement | Nature du restant |
 |---|---:|---|
-| **Vanilla / Bugfix** | **75 %** | 5 correctifs confirmés, patches minimaux préparés et validés statiquement ; test runtime historique restant |
+| **Vanilla / Bugfix** | **75 %** | 7 correctifs confirmés, patches minimaux préparés et validés statiquement ; test runtime historique restant |
 | **Python 3 / wxPython Phoenix** | **88 %** | qualification du portable exact de `master` et validation Windows réelle |
 | **UI/UX / thème graphique** | **78 %** | migration/finitions des écrans historiques et validation visuelle réelle |
 | **CCNS & extensions** | **83 %** | consolidation de quelques frontières d'architecture et surtout recette métier réelle |
