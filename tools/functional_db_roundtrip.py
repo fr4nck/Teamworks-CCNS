@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Recette fonctionnelle transactionnelle sur un jeu SQLite synthétique.
+"""Recette fonctionnelle transactionnelle sur une copie des bases d'exemple.
 
-Le test ne dépend d'aucune base historique ni d'aucune donnée personnelle. Il
-crée trois bases temporaires minimales, exerce les opérations CRUD principales
-sur TDATA, crée une sauvegarde, puis contrôle l'intégrité SQLite.
+Ce test ne touche jamais aux fichiers fournis avec Teamworks. Il copie les trois
+bases Exemple dans un répertoire temporaire, exerce les opérations CRUD
+principales sur TDATA, crée une sauvegarde, puis contrôle l'intégrité SQLite.
 """
 
 from __future__ import annotations
@@ -15,73 +15,22 @@ import sqlite3
 import tempfile
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parents[1]
+EXAMPLE_DIR = ROOT / "teamworks" / "Static" / "Exemples"
 SUFFIXES = ("TDATA", "TDOCUMENTS", "TPHOTOS")
 
 
-def create_synthetic_set(target_dir: Path) -> dict[str, Path]:
+def copy_example_set(target_dir: Path) -> dict[str, Path]:
     target_dir.mkdir(parents=True, exist_ok=True)
-    paths = {suffix: target_dir / f"Exemple_{suffix}.dat" for suffix in SUFFIXES}
-
-    with sqlite3.connect(paths["TDATA"]) as connection:
-        connection.executescript(
-            """
-            CREATE TABLE personnes (
-                IDpersonne INTEGER PRIMARY KEY AUTOINCREMENT,
-                civilite TEXT,
-                nom TEXT,
-                prenom TEXT,
-                date_naiss TEXT,
-                adresse_resid TEXT,
-                cp_resid INTEGER,
-                ville_resid TEXT,
-                memo TEXT
-            );
-            CREATE TABLE cat_presences (
-                IDcategorie INTEGER PRIMARY KEY AUTOINCREMENT,
-                nom TEXT
-            );
-            CREATE TABLE presences (
-                IDpresence INTEGER PRIMARY KEY AUTOINCREMENT,
-                IDpersonne INTEGER,
-                date TEXT,
-                heure_debut TEXT,
-                heure_fin TEXT,
-                IDcategorie INTEGER,
-                intitule TEXT
-            );
-            CREATE TABLE contrats_types (
-                IDtype INTEGER PRIMARY KEY AUTOINCREMENT,
-                nom TEXT
-            );
-            CREATE TABLE contrats_class (
-                IDclassification INTEGER PRIMARY KEY AUTOINCREMENT,
-                nom TEXT
-            );
-            CREATE TABLE contrats (
-                IDcontrat INTEGER PRIMARY KEY AUTOINCREMENT,
-                IDpersonne INTEGER,
-                IDclassification INTEGER,
-                IDtype INTEGER,
-                date_debut TEXT,
-                essai INTEGER,
-                signature TEXT,
-                due TEXT
-            );
-            INSERT INTO cat_presences (nom) VALUES ('Travail');
-            INSERT INTO contrats_types (nom) VALUES ('CDD');
-            INSERT INTO contrats_class (nom) VALUES ('Groupe 1');
-            """
-        )
-        connection.commit()
-
-    for suffix in ("TDOCUMENTS", "TPHOTOS"):
-        with sqlite3.connect(paths[suffix]) as connection:
-            connection.execute(
-                "CREATE TABLE meta (id INTEGER PRIMARY KEY AUTOINCREMENT, valeur TEXT)"
-            )
-            connection.commit()
-
-    return paths
+    copied: dict[str, Path] = {}
+    for suffix in SUFFIXES:
+        source = EXAMPLE_DIR / f"Exemple_{suffix}.dat"
+        if not source.is_file():
+            raise FileNotFoundError(source)
+        destination = target_dir / source.name
+        shutil.copy2(source, destination)
+        copied[suffix] = destination
+    return copied
 
 
 def integrity_check(path: Path) -> str:
@@ -112,7 +61,7 @@ def exercise_tdata(path: Path) -> dict[str, int | str]:
                 "1 rue du Test",
                 35000,
                 "Rennes",
-                "Créé automatiquement sur une base temporaire synthétique",
+                "Créé automatiquement sur une copie temporaire",
             ),
         )
         person_id = int(cursor.lastrowid)
@@ -207,7 +156,7 @@ def run(output_dir: Path | None = None) -> dict[str, object]:
         workdir = output_dir
 
     try:
-        databases = create_synthetic_set(workdir)
+        databases = copy_example_set(workdir)
         initial_integrity = {suffix: integrity_check(path) for suffix, path in databases.items()}
         if set(initial_integrity.values()) != {"ok"}:
             raise AssertionError(f"Intégrité initiale invalide: {initial_integrity}")
