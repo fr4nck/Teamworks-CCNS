@@ -25,27 +25,27 @@ class MyDialog(wx.Dialog):
 
         # Mode
         self.box_mode_staticbox = wx.StaticBox(self, -1, _(u"Mode"))
-        self.radio_local = wx.RadioButton(self, -1, _(u"Local"), style=wx.RB_GROUP)
-        self.radio_reseau = wx.RadioButton(self, -1, _(u"Réseau"))
+        self.radio_local = wx.RadioButton(self.box_mode_staticbox, -1, _(u"Local"), style=wx.RB_GROUP)
+        self.radio_reseau = wx.RadioButton(self.box_mode_staticbox, -1, _(u"Réseau"))
         
         # Codes d'accès
         self.box_codes_staticbox = wx.StaticBox(self, -1, _(u"Codes d'accès réseau"))
-        self.label_port = wx.StaticText(self, -1, _(u"Port :"))
-        self.ctrl_port = wx.TextCtrl(self, -1, u"3306", style=wx.TE_CENTRE)
-        self.label_hote = wx.StaticText(self, -1, _(u"Hôte :"))
-        self.ctrl_hote = wx.TextCtrl(self, -1, u"")
-        self.label_utilisateur = wx.StaticText(self, -1, _(u"Utilisateur :"))
-        self.ctrl_utilisateur = wx.TextCtrl(self, -1, u"")
-        self.label_motdepasse = wx.StaticText(self, -1, _(u"Mot de passe :"))
-        self.ctrl_motdepasse = wx.TextCtrl(self, -1, u"", style=wx.TE_PASSWORD)
-        self.bouton_valider_codes = wx.Button(self, -1, _(u"Valider"), style=wx.BU_EXACTFIT)
+        self.label_port = wx.StaticText(self.box_codes_staticbox, -1, _(u"Port :"))
+        self.ctrl_port = wx.TextCtrl(self.box_codes_staticbox, -1, u"3306", style=wx.TE_CENTRE)
+        self.label_hote = wx.StaticText(self.box_codes_staticbox, -1, _(u"Hôte :"))
+        self.ctrl_hote = wx.TextCtrl(self.box_codes_staticbox, -1, u"")
+        self.label_utilisateur = wx.StaticText(self.box_codes_staticbox, -1, _(u"Utilisateur :"))
+        self.ctrl_utilisateur = wx.TextCtrl(self.box_codes_staticbox, -1, u"")
+        self.label_motdepasse = wx.StaticText(self.box_codes_staticbox, -1, _(u"Mot de passe :"))
+        self.ctrl_motdepasse = wx.TextCtrl(self.box_codes_staticbox, -1, u"", style=wx.TE_PASSWORD)
+        self.bouton_valider_codes = wx.Button(self.box_codes_staticbox, -1, _(u"Valider"), style=wx.BU_EXACTFIT)
         
         # Liste fichiers
         self.box_fichiers_staticbox = wx.StaticBox(self, -1, _(u"Liste des fichiers"))
-        self.ctrl_fichiers = CTRL_Liste_fichiers.CTRL(self, mode="local")
+        self.ctrl_fichiers = CTRL_Liste_fichiers.CTRL(self.box_fichiers_staticbox, mode="local")
         self.ctrl_fichiers.SetMinSize((-1, 400))
-        self.bouton_modifier_fichier = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Modifier.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_supprimer_fichier = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_modifier_fichier = wx.BitmapButton(self.box_fichiers_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Modifier.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_supprimer_fichier = wx.BitmapButton(self.box_fichiers_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
 
         # Boutons
         self.bouton_aide = CTRL_Bouton_image.CTRL(self, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))

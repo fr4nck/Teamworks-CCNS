@@ -281,14 +281,14 @@ class Dialog(wx.Dialog):
         self.sizer_staticbox = wx.StaticBox(self.panel, -1, u"")
         
         # Panel
-        self.toolBook = ToolBook(self.panel)
+        self.toolBook = ToolBook(self.sizer_staticbox)
         self.toolBook.SetMinSize((500, 400))
         
         # Commandes
-        self.imgFiltrer = wx.StaticBitmap(self.panel, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Loupe.png"), wx.BITMAP_TYPE_ANY))
-        self.texteFiltrer = Hyperlink(self.panel, id=100,  label=_(u"Rechercher"), infobulle=_(u"Rechercher"))
-        self.imgActualiser = wx.StaticBitmap(self.panel, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Actualiser.png"), wx.BITMAP_TYPE_ANY))
-        self.texteActualiser = Hyperlink(self.panel, id=200, label=_(u"Afficher tout"), infobulle=_(u"Afficher tout"))
+        self.imgFiltrer = wx.StaticBitmap(self.sizer_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Loupe.png"), wx.BITMAP_TYPE_ANY))
+        self.texteFiltrer = Hyperlink(self.sizer_staticbox, id=100,  label=_(u"Rechercher"), infobulle=_(u"Rechercher"))
+        self.imgActualiser = wx.StaticBitmap(self.sizer_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Actualiser.png"), wx.BITMAP_TYPE_ANY))
+        self.texteActualiser = Hyperlink(self.sizer_staticbox, id=200, label=_(u"Afficher tout"), infobulle=_(u"Afficher tout"))
         
         # Boutons de commande
         self.bouton_aide = CTRL_Bouton_image.CTRL(self.panel, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))

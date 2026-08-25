@@ -1194,8 +1194,11 @@ class MyFrame(wx.Frame):
             else:
                 # Version TW2
                 dlg = DLG_Restauration.Dialog(self, fichier=fichier)
-                dlg.ShowModal()
-                dlg.Destroy()
+                try:
+                    dlg.ShowModal()
+                finally:
+                    dlg.Destroy()
+                    DLG_Restauration.NettoyerFichierDecrypteTemporaire(fichier)
 
     def On_param_preferences(self, event):
         from Dlg import DLG_Preferences
@@ -1721,8 +1724,8 @@ class SaisiePassword(wx.Dialog):
         else:
             nomFichierTmp = nomFichier
         self.label_2 = wx.StaticText(self, -1, _(u"Le fichier '") + self.FormateNomFichier(nomFichierTmp) + _(u"' est protégé."))
-        self.label_password = wx.StaticText(self, -1, "Mot de passe :")
-        self.text_password = wx.TextCtrl(self, -1, "", size=(200, -1), style=wx.TE_PASSWORD)
+        self.label_password = wx.StaticText(self.sizer_3_staticbox, -1, "Mot de passe :")
+        self.text_password = wx.TextCtrl(self.sizer_3_staticbox, -1, "", size=(200, -1), style=wx.TE_PASSWORD)
         self.bouton_ok = CTRL_Bouton_image.CTRL(self, id=wx.ID_OK, texte=_(u"Ok"), cheminImage=Chemins.GetStaticPath("Images/32x32/Valider.png"))
         self.bouton_annuler = CTRL_Bouton_image.CTRL(self, id=wx.ID_CANCEL, texte=_(u"Annuler"), cheminImage=Chemins.GetStaticPath("Images/32x32/Annuler.png"))
         self.__set_properties()

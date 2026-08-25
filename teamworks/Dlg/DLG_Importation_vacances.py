@@ -226,23 +226,23 @@ class Dialog(wx.Dialog):
         
         # Zone
         self.box_zone_staticbox = wx.StaticBox(self, -1, _(u"1. Sélectionnez votre zone"))
-        self.label_zone = wx.StaticText(self, -1, _(u"Zone géographique :"))
-        self.ctrl_zone = wx.Choice(self, -1, choices=[u"Zone A", u"Zone B", u"Zone C"])
-        self.hyper_zone = Hyperlien(self, label=_(u"Rechercher la zone de l'organisateur sur internet"), infobulle=_(u"Cliquez ici pour rechercher la zone de l'organisateur sur internet"), URL="zone")
+        self.label_zone = wx.StaticText(self.box_zone_staticbox, -1, _(u"Zone géographique :"))
+        self.ctrl_zone = wx.Choice(self.box_zone_staticbox, -1, choices=[u"Zone A", u"Zone B", u"Zone C"])
+        self.hyper_zone = Hyperlien(self.box_zone_staticbox, label=_(u"Rechercher la zone de l'organisateur sur internet"), infobulle=_(u"Cliquez ici pour rechercher la zone de l'organisateur sur internet"), URL="zone")
         self.hyper_zone.Show(False)
 
         # Périodes
         self.box_periodes_staticbox = wx.StaticBox(self, -1, _(u"2. Cochez les périodes à importer"))
-        self.label_periodes = wx.StaticText(self, -1, _(u"Sélectionnez une zone..."))
+        self.label_periodes = wx.StaticText(self.box_periodes_staticbox, -1, _(u"Sélectionnez une zone..."))
         self.label_periodes.SetFont(wx.Font(7, wx.FONTFAMILY_DEFAULT, wx.NORMAL, wx.BOLD))
                 
-        self.ctrl_periodes = ListView(self, id=-1, style=wx.LC_REPORT|wx.SUNKEN_BORDER|wx.LC_SINGLE_SEL|wx.LC_HRULES|wx.LC_VRULES)
+        self.ctrl_periodes = ListView(self.box_periodes_staticbox, id=-1, style=wx.LC_REPORT|wx.SUNKEN_BORDER|wx.LC_SINGLE_SEL|wx.LC_HRULES|wx.LC_VRULES)
 
-        self.hyper_tout = Hyperlien(self, label=_(u"Tout sélectionner"), infobulle=_(u"Cliquez ici pour tout sélectionner"), URL="tout")
-        self.label_separation_1 = wx.StaticText(self, -1, u" | ")
-        self.hyper_rien = Hyperlien(self, label=_(u"Tout désélectionner"), infobulle=_(u"Cliquez ici pour tout désélectionner"), URL="rien")
-        self.label_separation_2 = wx.StaticText(self, -1, u" | ")
-        self.hyper_suggestions = Hyperlien(self, label=_(u"Sélectionner les suggestions"), infobulle=_(u"Cliquez ici pour sélectionner uniquement les suggestions"), URL="suggestions")
+        self.hyper_tout = Hyperlien(self.box_periodes_staticbox, label=_(u"Tout sélectionner"), infobulle=_(u"Cliquez ici pour tout sélectionner"), URL="tout")
+        self.label_separation_1 = wx.StaticText(self.box_periodes_staticbox, -1, u" | ")
+        self.hyper_rien = Hyperlien(self.box_periodes_staticbox, label=_(u"Tout désélectionner"), infobulle=_(u"Cliquez ici pour tout désélectionner"), URL="rien")
+        self.label_separation_2 = wx.StaticText(self.box_periodes_staticbox, -1, u" | ")
+        self.hyper_suggestions = Hyperlien(self.box_periodes_staticbox, label=_(u"Sélectionner les suggestions"), infobulle=_(u"Cliquez ici pour sélectionner uniquement les suggestions"), URL="suggestions")
 
         self.bouton_aide = CTRL_Bouton_image.CTRL(self, texte=_(u"Aide"), cheminImage="Images/32x32/Aide.png")
         self.bouton_ok = CTRL_Bouton_image.CTRL(self, texte=_(u"Importer"), cheminImage="Images/32x32/Fleche_bas.png")

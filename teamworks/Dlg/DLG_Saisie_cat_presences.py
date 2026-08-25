@@ -43,13 +43,13 @@ class Dialog(wx.Dialog):
         self.sizer_nom_staticbox = wx.StaticBox(self.panel_base, -1, _(u"Nom de la catégorie"))
         self.sizer_couleur_staticbox = wx.StaticBox(self.panel_base, -1, _(u"Couleur"))
         self.sizer_tree_staticbox = wx.StaticBox(self.panel_base, -1, _(u"Sélection de la catégorie parente"))
-        self.treeCtrl_categories = TreeCtrlCategories(self.panel_base, self.IDcat_parent)
-        self.text_nom = wx.TextCtrl(self.panel_base, -1, self.nom_categorie)
+        self.treeCtrl_categories = TreeCtrlCategories(self.sizer_tree_staticbox, self.IDcat_parent)
+        self.text_nom = wx.TextCtrl(self.sizer_nom_staticbox, -1, self.nom_categorie)
         self.bouton_aide = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))
         self.bouton_ok = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Ok"), cheminImage=Chemins.GetStaticPath("Images/32x32/Valider.png"))
         self.bouton_annuler = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Annuler"), cheminImage=Chemins.GetStaticPath("Images/32x32/Annuler.png"))
 
-        self.bouton_couleur = csel.ColourSelect(self.panel_base, -1, "", self.couleur, size = (40, 22))
+        self.bouton_couleur = csel.ColourSelect(self.sizer_couleur_staticbox, -1, "", self.couleur, size = (40, 22))
         self.bouton_couleur.Bind(csel.EVT_COLOURSELECT, self.OnSelectColour)
         self.Bind(wx.EVT_BUTTON, self.OnBouton_aide, self.bouton_aide)
         self.Bind(wx.EVT_BUTTON, self.OnBouton_ok, self.bouton_ok)
@@ -239,7 +239,7 @@ class TreeCtrlCategories(wx.TreeCtrl):
             r = couleur[0]
             v = couleur[1]
             b = couleur[2]
-            exec("self.img" + str(ID) +  "= il.Add(self.CreationImage(tailleImages, " + str(r) + ", " + str(v) + ", " + str(b) + "))")
+            setattr(self, "img%s" % ID, il.Add(self.CreationImage(tailleImages, r, v, b)))
 
         self.SetImageList(il)
         self.il = il
@@ -286,7 +286,7 @@ class TreeCtrlCategories(wx.TreeCtrl):
                     self.SetItemData(newItem, item[0])
                 else:
                     self.SetItemData(newItem, item[0])
-                exec("self.SetItemImage(newItem, self.img" + str(item[0]) + ", wx.TreeItemIcon_Normal)")
+                self.SetItemImage(newItem, getattr(self, "img%s" % item[0]), wx.TreeItemIcon_Normal)
 
                 # Sélection de l'item s'il sélectionné est par défaut
                 if int(item[0]) == self.IDcat_parent :

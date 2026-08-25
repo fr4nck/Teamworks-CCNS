@@ -70,10 +70,14 @@ class Dialog(wx.Dialog):
     def Creation_Pages(self):
         """ Creation des pages """
         for numPage in range(1, self.nbrePages+1) :
-            exec( "self.page" + str(numPage) + " = " + self.listePages[numPage-1] + "(self.panel_base)" )
-            exec( "self.sizer_pages.Add(self.page" + str(numPage) + ", 1, wx.EXPAND, 0)" )
+            page_class = globals().get(self.listePages[numPage-1])
+            if not callable(page_class):
+                raise RuntimeError("Page de publipostage inconnue : %s" % self.listePages[numPage-1])
+            page = page_class(self.panel_base)
+            setattr(self, "page" + str(numPage), page)
+            self.sizer_pages.Add(page, 1, wx.EXPAND, 0)
             self.sizer_pages.Layout()
-            exec( "self.page" + str(numPage) + ".Show(False)" )
+            page.Show(False)
         self.page1.Show(True)
         self.sizer_pages.Layout()
 
@@ -128,11 +132,11 @@ class Dialog(wx.Dialog):
 
     def Onbouton_retour(self, event):
         # rend invisible la page affichée
-        pageCible = eval("self.page"+str(self.pageVisible))
+        pageCible = getattr(self, "page" + str(self.pageVisible))
         pageCible.Show(False)
         # Fait apparaître nouvelle page
         self.pageVisible -= 1
-        pageCible = eval("self.page"+str(self.pageVisible))
+        pageCible = getattr(self, "page" + str(self.pageVisible))
         pageCible.Show(True)
         self.sizer_pages.Layout()
         # Si on quitte la dernière page, on active le bouton Suivant
@@ -157,11 +161,11 @@ class Dialog(wx.Dialog):
             self.Terminer()
             return
         # Rend invisible la page affichée
-        pageCible = eval("self.page"+str(self.pageVisible))
+        pageCible = getattr(self, "page" + str(self.pageVisible))
         pageCible.Show(False)
         # Fait apparaître nouvelle page
         self.pageVisible += 1
-        pageCible = eval("self.page"+str(self.pageVisible))
+        pageCible = getattr(self, "page" + str(self.pageVisible))
         pageCible.Show(True)
         self.sizer_pages.Layout()
         # Si on arrive à l'avant-dernière page, on désactive le bouton Suivant
@@ -245,17 +249,17 @@ class Page2(wx.Panel):
         
         self.ImportationChampsPerso()
         
-        self.grid = Grid_donnees(self)
+        self.grid = Grid_donnees(self.sizer_champs_staticbox)
         self.grid.SetSize((50, 50))
         self.grid.Remplissage() 
         
-        self.label_remarque = wx.StaticText(self, -1, _(u"*Champs personnalisés"))
+        self.label_remarque = wx.StaticText(self.sizer_champs_staticbox, -1, _(u"*Champs personnalisés"))
         self.label_remarque.SetFont(wx.Font(7, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, ""))
         
-        self.bouton_imprimer = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Imprimante.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_ajouter = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_modifier = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Modifier.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_supprimer = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_imprimer = wx.BitmapButton(self.sizer_champs_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Imprimante.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_ajouter = wx.BitmapButton(self.sizer_champs_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_modifier = wx.BitmapButton(self.sizer_champs_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Modifier.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_supprimer = wx.BitmapButton(self.sizer_champs_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
 
         self.Bind(wx.EVT_BUTTON, self.OnBoutonImprimer, self.bouton_imprimer)
         self.Bind(wx.EVT_BUTTON, self.OnBoutonAjouter, self.bouton_ajouter)
@@ -840,24 +844,24 @@ class Page3(wx.Panel):
         self.sizer_staticbox_1 = wx.StaticBox(self, -1, _(u"Création d'un courrier"))
         self.label_titre = wx.StaticText(self, -1, _(u"2. Choix du logiciel de publipostage"))
         self.label_intro = wx.StaticText(self, -1, _(u"Sélectionnez le logiciel qui sera utilisé pour l'édition du document :"))
-        self.radio_1 = wx.RadioButton(self, -1, "", style=wx.RB_GROUP)
-        self.bitmap_1 = wx.StaticBitmap(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/48x48/MsWord.png"), wx.BITMAP_TYPE_ANY))
-        self.label_choix_1_titre = wx.StaticText(self, -1, "Microsoft WORD")
-        self.label_choix_1_description = wx.StaticText(self, -1, "Suite Microsoft Office")
-        self.radio_2 = wx.RadioButton(self, -1, "")
-        self.bitmap_2 = wx.StaticBitmap(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/48x48/Writer.png"), wx.BITMAP_TYPE_ANY))
-        self.label_choix_2_titre = wx.StaticText(self, -1, "WRITER")
-        self.label_choix_2_description = wx.StaticText(self, -1, "Suite OpenOffice")
-        self.radio_3 = wx.RadioButton(self, -1, "")
-        self.bitmap_3 = wx.StaticBitmap(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/48x48/Texte.png"), wx.BITMAP_TYPE_ANY))
-        self.label_choix_3_titre = wx.StaticText(self, -1, _(u"Traitement de texte intégré"))
-        self.label_choix_3_description = wx.StaticText(self, -1, _(u"Ecrivez et imprimer des documents directement dans Teamworks \ngrâce à Teamword, le traitement de texte intégré"))
+        self.radio_1 = wx.RadioButton(self.sizer_staticbox_1, -1, "", style=wx.RB_GROUP)
+        self.bitmap_1 = wx.StaticBitmap(self.sizer_staticbox_1, -1, wx.Bitmap(Chemins.GetStaticPath("Images/48x48/MsWord.png"), wx.BITMAP_TYPE_ANY))
+        self.label_choix_1_titre = wx.StaticText(self.sizer_staticbox_1, -1, "Microsoft WORD")
+        self.label_choix_1_description = wx.StaticText(self.sizer_staticbox_1, -1, "Suite Microsoft Office")
+        self.radio_2 = wx.RadioButton(self.sizer_staticbox_1, -1, "")
+        self.bitmap_2 = wx.StaticBitmap(self.sizer_staticbox_1, -1, wx.Bitmap(Chemins.GetStaticPath("Images/48x48/Writer.png"), wx.BITMAP_TYPE_ANY))
+        self.label_choix_2_titre = wx.StaticText(self.sizer_staticbox_1, -1, "WRITER")
+        self.label_choix_2_description = wx.StaticText(self.sizer_staticbox_1, -1, "Suite OpenOffice")
+        self.radio_3 = wx.RadioButton(self.sizer_staticbox_1, -1, "")
+        self.bitmap_3 = wx.StaticBitmap(self.sizer_staticbox_1, -1, wx.Bitmap(Chemins.GetStaticPath("Images/48x48/Texte.png"), wx.BITMAP_TYPE_ANY))
+        self.label_choix_3_titre = wx.StaticText(self.sizer_staticbox_1, -1, _(u"Traitement de texte intégré"))
+        self.label_choix_3_description = wx.StaticText(self.sizer_staticbox_1, -1, _(u"Ecrivez et imprimer des documents directement dans Teamworks \ngrâce à Teamword, le traitement de texte intégré"))
         
         self.sizer_staticbox_2 = wx.StaticBox(self, -1, _(u"Création d'un Email"))
-        self.radio_4 = wx.RadioButton(self, -1, "")
-        self.bitmap_4 = wx.StaticBitmap(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/48x48/Email.png"), wx.BITMAP_TYPE_ANY))
-        self.label_choix_4_titre = wx.StaticText(self, -1, _(u"Editeur d'Email"))
-        self.label_choix_4_description = wx.StaticText(self, -1, "Ecrivez et envoyez des Emails directement dans Teamworks \ngrâce à Teamword, l'éditeur d'Email intégré")
+        self.radio_4 = wx.RadioButton(self.sizer_staticbox_2, -1, "")
+        self.bitmap_4 = wx.StaticBitmap(self.sizer_staticbox_2, -1, wx.Bitmap(Chemins.GetStaticPath("Images/48x48/Email.png"), wx.BITMAP_TYPE_ANY))
+        self.label_choix_4_titre = wx.StaticText(self.sizer_staticbox_2, -1, _(u"Editeur d'Email"))
+        self.label_choix_4_description = wx.StaticText(self.sizer_staticbox_2, -1, "Ecrivez et envoyez des Emails directement dans Teamworks \ngrâce à Teamword, l'éditeur d'Email intégré")
         
 ##        self.radio_3.Enable(False)
 ##        self.bitmap_3.Enable(False)
@@ -1022,13 +1026,13 @@ class Page4(wx.Panel):
         self.label_titre = wx.StaticText(self, -1, _(u"3. Choix du document de publipostage"))
         self.label_intro = wx.StaticText(self, -1, _(u"Sélectionnez un fichier dans la liste ou importez-en un en cliquant sur 'importer'."))
         
-        self.listCtrl = ListCtrl_fichiers(self)
+        self.listCtrl = ListCtrl_fichiers(self.sizer_choix_staticbox)
         
-        self.bouton_importer = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Inbox.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_actualiser = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Actualiser.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_ajouter = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_modifier = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Modifier.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_supprimer = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_importer = wx.BitmapButton(self.sizer_choix_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Inbox.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_actualiser = wx.BitmapButton(self.sizer_choix_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Actualiser.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_ajouter = wx.BitmapButton(self.sizer_choix_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_modifier = wx.BitmapButton(self.sizer_choix_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Modifier.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_supprimer = wx.BitmapButton(self.sizer_choix_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
 ##        self.texte_aide = FonctionsPerso.TexteHtml(self, texte="", Enabled=True)
 
         self.__set_properties()
@@ -1646,31 +1650,31 @@ class Page5(wx.Panel):
         self.label_titre = wx.StaticText(self, -1, _(u"4. Edition du document"))
         self.label_intro = wx.StaticText(self, -1, _(u"Vous pouvez définir les options d'édition ci-dessous puis cliquez sur 'Valider'."))
         
-        self.label_envoi_mail = wx.StaticText(self, -1, _(u"Paramètres d'envoi des Emails :"))
-        self.panel_param_mail = DLG_Parametres_mail.Panel(self, activer_a=False, activer_cci=False, activer_bouton_envoyer=False)
-        self.ctrl_apercu_avant_envoi = wx.CheckBox(self, -1, _(u"Aperçu du document avant l'envoi par mail"))
+        self.label_envoi_mail = wx.StaticText(self.sizer_contenu_staticbox, -1, _(u"Paramètres d'envoi des Emails :"))
+        self.panel_param_mail = DLG_Parametres_mail.Panel(self.sizer_contenu_staticbox, activer_a=False, activer_cci=False, activer_bouton_envoyer=False)
+        self.ctrl_apercu_avant_envoi = wx.CheckBox(self.sizer_contenu_staticbox, -1, _(u"Aperçu du document avant l'envoi par mail"))
         
-        self.checkbox_impression = wx.CheckBox(self, -1, "")
-        self.label_impress1 = wx.StaticText(self, -1, "Impression en")
-        self.combo_box_exemplaires = wx.Choice(self, -1, choices=["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"])
-        self.label_impress2 = wx.StaticText(self, -1, "exemplaire(s)")
-        self.label_imprimante = wx.StaticText(self, -1, _(u"     Imprimante :"))
+        self.checkbox_impression = wx.CheckBox(self.sizer_contenu_staticbox, -1, "")
+        self.label_impress1 = wx.StaticText(self.sizer_contenu_staticbox, -1, "Impression en")
+        self.combo_box_exemplaires = wx.Choice(self.sizer_contenu_staticbox, -1, choices=["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"])
+        self.label_impress2 = wx.StaticText(self.sizer_contenu_staticbox, -1, "exemplaire(s)")
+        self.label_imprimante = wx.StaticText(self.sizer_contenu_staticbox, -1, _(u"     Imprimante :"))
         nomImprimanteDefaut, listeImprimantes, a, b = FonctionsPerso.ListeImprimantes()
-        self.combo_box_imprimante = wx.Choice(self, -1, choices=listeImprimantes)
+        self.combo_box_imprimante = wx.Choice(self.sizer_contenu_staticbox, -1, choices=listeImprimantes)
         self.combo_box_imprimante.SetStringSelection(nomImprimanteDefaut)
-        self.checkbox_save = wx.CheckBox(self, -1, "")
-        self.label_save = wx.StaticText(self, -1, "Sauvegarde :")
-        self.label_repertoire = wx.StaticText(self, -1, _(u"Répertoire :"))
-        self.text_repertoire = wx.TextCtrl(self, -1, "")
-        self.bouton_repertoire = wx.Button(self, -1, "...")
-        self.label_nom_fichier = wx.StaticText(self, -1, "Noms des fichiers :")
-        self.ctrl_nom_fichiers = Grid_noms_fichiers(self)
-        self.label_prefixe = wx.StaticText(self, -1, _(u"Préfixe des noms :"))
-        self.text_prefixe = wx.TextCtrl(self, -1, "")
+        self.checkbox_save = wx.CheckBox(self.sizer_contenu_staticbox, -1, "")
+        self.label_save = wx.StaticText(self.sizer_contenu_staticbox, -1, "Sauvegarde :")
+        self.label_repertoire = wx.StaticText(self.sizer_contenu_staticbox, -1, _(u"Répertoire :"))
+        self.text_repertoire = wx.TextCtrl(self.sizer_contenu_staticbox, -1, "")
+        self.bouton_repertoire = wx.Button(self.sizer_contenu_staticbox, -1, "...")
+        self.label_nom_fichier = wx.StaticText(self.sizer_contenu_staticbox, -1, "Noms des fichiers :")
+        self.ctrl_nom_fichiers = Grid_noms_fichiers(self.sizer_contenu_staticbox)
+        self.label_prefixe = wx.StaticText(self.sizer_contenu_staticbox, -1, _(u"Préfixe des noms :"))
+        self.text_prefixe = wx.TextCtrl(self.sizer_contenu_staticbox, -1, "")
         self.text_prefixe.Enable(False)
-        self.bouton_prefixe = wx.Button(self, -1, "...")
-        self.checkbox_apercu = wx.CheckBox(self, -1, "")
-        self.label_apercu = wx.StaticText(self, -1, _(u"Aperçu avant impression"))
+        self.bouton_prefixe = wx.Button(self.sizer_contenu_staticbox, -1, "...")
+        self.checkbox_apercu = wx.CheckBox(self.sizer_contenu_staticbox, -1, "")
+        self.label_apercu = wx.StaticText(self.sizer_contenu_staticbox, -1, _(u"Aperçu avant impression"))
         
         self.__set_properties()
         self.__do_layout()

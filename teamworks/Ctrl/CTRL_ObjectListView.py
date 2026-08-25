@@ -25,6 +25,7 @@ sys.path.append("..")
 import six
 
 from Utils import UTILS_Adaptations
+from Utils import UTILS_Filtres_listes
 from Utils.UTILS_Traduction import _
 
 import ObjectListView as OLV
@@ -363,7 +364,9 @@ class ObjectListView(OLV.ObjectListView):
 ##        self.modelObjects.append(track)
         self.AddObject(track)
     
-    def SetFooter(self, ctrl=None, dictColonnes={}):
+    def SetFooter(self, ctrl=None, dictColonnes=None):
+        if dictColonnes is None:
+            dictColonnes = {}
         self.ctrl_footer = ctrl
         self.ctrl_footer.listview = self
         self.ctrl_footer.dictColonnes = dictColonnes
@@ -398,110 +401,38 @@ class ObjectListView(OLV.ObjectListView):
             listeFiltres.append(filtre)
         
         # Filtres de colonnes
-        for texteFiltre in self.formatageFiltres(self.listeFiltresColonnes) :
-            filtre = Filter.Predicate(lambda track: eval(texteFiltre))
-            listeFiltres.append(filtre)
+        for predicat in self.formatageFiltres(self.listeFiltresColonnes):
+            listeFiltres.append(Filter.Predicate(predicat))
             
         self.SetFilter(Filter.Chain(*listeFiltres))
         self.RepopulateList()
         self.Refresh() 
         self.OnCheck(None) 
     
-    def SetFiltresColonnes(self, listeFiltresColonnes=[]):
+    def SetFiltresColonnes(self, listeFiltresColonnes=None):
+        if listeFiltresColonnes is None:
+            listeFiltresColonnes = []
         self.listeFiltresColonnes = listeFiltresColonnes
         if self.barreRecherche != None :
             self.barreRecherche.Cancel()
         self.Filtrer() 
     
-    def formatageFiltres(self, listeFiltres=[]):
-        # Formatage du filtre
-        listeFiltresFinale = []
-        for dictFiltre in listeFiltres :
-            code = dictFiltre["code"]
-            choix = dictFiltre["choix"]
-            criteres = dictFiltre["criteres"]
-            typeDonnee = dictFiltre["typeDonnee"]
-            
-            # Texte
-            if typeDonnee == "texte" :
-                if choix == "EGAL" :
-                    filtre = "track.%s != None and track.%s.lower() == '%s'.lower()" % (code, code, criteres)
-                if choix == "DIFFERENT" :
-                    filtre = "track.%s != None and track.%s.lower() != '%s'.lower()" % (code, code, criteres)
-                if choix == "CONTIENT" :
-                    filtre = "track.%s != None and '%s'.lower() in track.%s.lower()" % (code, criteres, code)
-                if choix == "CONTIENTPAS" :
-                    filtre = "track.%s != None and '%s'.lower() not in track.%s.lower()" % (code, criteres, code)
-                if choix == "VIDE" :
-                    filtre = "track.%s == '' or track.%s == None" % (code, code)
-                if choix == "PASVIDE" :
-                    filtre = "track.%s != '' and track.%s != None" % (code, code)
+    def formatageFiltres(self, listeFiltres=None):
+        """Transforme les spécifications de filtres en prédicats indépendants."""
+        if listeFiltres is None:
+            listeFiltres = []
+        return [
+            UTILS_Filtres_listes.ConstruirePredicat(
+                dictFiltre,
+                get_inscrits=self.GetInscrits,
+            )
+            for dictFiltre in listeFiltres
+        ]
 
-            # Bool
-            if typeDonnee == "bool" :
-                if choix == "TRUE" :
-                    filtre = "track.%s in (True, 'True', 1, '1')" % code
-                if choix == "FALSE" :
-                    filtre = "track.%s in (False, 'False', 0, '0', None, '')" % code
-
-            # Entier, montant
-            if typeDonnee in ("entier", "montant") :
-                
-                if choix == "COMPRIS" :
-                    min = str(criteres.split(";")[0])
-                    max = str(criteres.split(";")[1])
-                else :
-                    criteres = str(criteres)
-                        
-                if choix == "EGAL" :
-                    filtre = "track.%s == %s" % (code, criteres)
-                if choix == "DIFFERENT" :
-                    filtre = "track.%s != %s" % (code, criteres)
-                if choix == "SUP" :
-                    filtre = "track.%s > %s" % (code, criteres)
-                if choix == "SUPEGAL" :
-                    filtre = "track.%s >= %s" % (code, criteres)
-                if choix == "INF" :
-                    filtre = "track.%s < %s" % (code, criteres)
-                if choix == "INFEGAL" :
-                    filtre = "track.%s <= %s" % (code, criteres)
-                if choix == "COMPRIS" :
-                    filtre = "track.%s >= %s and track.%s <= %s" % (code, min, code, max)
-
-            # Date
-            if typeDonnee in ("date", "dateheure") :
-                        
-                if choix == "EGAL" :
-                    filtre = "track.%s != None and str(track.%s) == '%s'" % (code, code, criteres)
-                if choix == "DIFFERENT" :
-                    filtre = "track.%s != None and str(track.%s) != '%s'" % (code, code, criteres)
-                if choix == "SUP" :
-                    filtre = "track.%s != None and str(track.%s) > '%s'" % (code, code, criteres)
-                if choix == "SUPEGAL" :
-                    filtre = "track.%s != None and str(track.%s) >= '%s'" % (code, code, criteres)
-                if choix == "INF" :
-                    filtre = "track.%s != None and str(track.%s) < '%s'" % (code, code, criteres)
-                if choix == "INFEGAL" :
-                    filtre = "track.%s != None and str(track.%s) <= '%s'" % (code, code, criteres)
-                if choix == "COMPRIS" :
-                    min = criteres.split(";")[0]
-                    max = criteres.split(";")[1]
-                    filtre = "track.%s != None and str(track.%s) >= '%s' and str(track.%s) <= '%s'" % (code, code, min, code, max)
-            
-            # Inscrits
-            if typeDonnee == "inscrits" :
-                if choix == "INSCRITS" :
-                    filtre = "track.ID%s in %s" % (code, self.GetInscrits(mode=code, choix=choix, criteres=criteres))
-                if choix == "PRESENTS" :
-                    filtre = "track.ID%s in %s" % (code, self.GetInscrits(mode=code, choix=choix, criteres=criteres))
-                    
-            # Mémorisation
-            listeFiltresFinale.append(filtre) 
-        
-        return listeFiltresFinale
-
-    def GetInscrits(self, mode="individu", choix="", criteres={}):
+    def GetInscrits(self, mode="individu", choix="", criteres=None):
         """ Récupération de la liste des individus inscrits et présents """
+        if criteres is None:
+            criteres = {}
         listeActivites = criteres["listeActivites"]
         listeGroupes = criteres["listeGroupes"]
         if choix == "PRESENTS":

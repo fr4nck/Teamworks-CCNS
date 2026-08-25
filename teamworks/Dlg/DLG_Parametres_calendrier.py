@@ -6,6 +6,7 @@
 # Licence:      Licence GNU GPL
 #-----------------------------------------------------------
 
+import ast
 import Chemins
 from Utils.UTILS_Traduction import _
 import wx
@@ -33,50 +34,50 @@ class Dialog(wx.Dialog):
         self.Importation()
         
         # Largeur
-        self.largeur_label = wx.StaticText(self.panel_base, -1, _(u"Largeur :"))
-        self.largeur_texte = wx.TextCtrl(self.panel_base, -1, str(self.val_largeur), size=(40, -1))
-        self.largeur_slider = wx.Slider(self.panel_base, -1, self.val_largeur, self.largeur_min, self.largeur_max, size=(-1, -1), style=wx.SL_HORIZONTAL)
+        self.largeur_label = wx.StaticText(self.sizer_contenu_staticbox, -1, _(u"Largeur :"))
+        self.largeur_texte = wx.TextCtrl(self.sizer_contenu_staticbox, -1, str(self.val_largeur), size=(40, -1))
+        self.largeur_slider = wx.Slider(self.sizer_contenu_staticbox, -1, self.val_largeur, self.largeur_min, self.largeur_max, size=(-1, -1), style=wx.SL_HORIZONTAL)
         
         # Hauteur
-        self.hauteur_label = wx.StaticText(self.panel_base, -1, _(u"Hauteur :"))
-        self.hauteur_texte = wx.TextCtrl(self.panel_base, -1, str(self.val_hauteur), size=(40, -1))
-        self.hauteur_slider = wx.Slider(self.panel_base, -1, self.val_hauteur, self.hauteur_min, self.hauteur_max, size=(-1, -1), style=wx.SL_HORIZONTAL)
+        self.hauteur_label = wx.StaticText(self.sizer_contenu_staticbox, -1, _(u"Hauteur :"))
+        self.hauteur_texte = wx.TextCtrl(self.sizer_contenu_staticbox, -1, str(self.val_hauteur), size=(40, -1))
+        self.hauteur_slider = wx.Slider(self.sizer_contenu_staticbox, -1, self.val_hauteur, self.hauteur_min, self.hauteur_max, size=(-1, -1), style=wx.SL_HORIZONTAL)
 
         # Bouton couleur de fond
-        self.label_couleurFond = wx.StaticText(self.panel_base, -1, _(u"Couleur de fond :"))
-        self.bouton_couleurFond = csel.ColourSelect(self.panel_base, -1, "", self.val_couleurFond, size = (40, 23))
+        self.label_couleurFond = wx.StaticText(self.sizer_contenu_staticbox, -1, _(u"Couleur de fond :"))
+        self.bouton_couleurFond = csel.ColourSelect(self.sizer_contenu_staticbox, -1, "", self.val_couleurFond, size = (40, 23))
         
         # Bouton couleur de cases
-        self.label_couleurCases = wx.StaticText(self.panel_base, -1, _(u"Couleur des cases (semaine):"))
-        self.bouton_couleurCases = csel.ColourSelect(self.panel_base, -1, "", self.val_couleurCases, size = (40, 23))
+        self.label_couleurCases = wx.StaticText(self.sizer_contenu_staticbox, -1, _(u"Couleur des cases (semaine):"))
+        self.bouton_couleurCases = csel.ColourSelect(self.sizer_contenu_staticbox, -1, "", self.val_couleurCases, size = (40, 23))
         
         # Bouton couleur des Week-ends
-        self.label_couleurWE = wx.StaticText(self.panel_base, -1, _(u"Couleur des cases (week-end) :"))
-        self.bouton_couleurWE = csel.ColourSelect(self.panel_base, -1, "", self.val_couleurWE, size = (40, 23))
+        self.label_couleurWE = wx.StaticText(self.sizer_contenu_staticbox, -1, _(u"Couleur des cases (week-end) :"))
+        self.bouton_couleurWE = csel.ColourSelect(self.sizer_contenu_staticbox, -1, "", self.val_couleurWE, size = (40, 23))
         
         # Bouton couleur des jours de vacances
-        self.label_couleurVacances = wx.StaticText(self.panel_base, -1, _(u"Couleur des cases (vacances) :"))
-        self.bouton_couleurVacances = csel.ColourSelect(self.panel_base, -1, "", self.val_couleurVacances, size = (40, 23))
+        self.label_couleurVacances = wx.StaticText(self.sizer_contenu_staticbox, -1, _(u"Couleur des cases (vacances) :"))
+        self.bouton_couleurVacances = csel.ColourSelect(self.sizer_contenu_staticbox, -1, "", self.val_couleurVacances, size = (40, 23))
         
         # Bouton couleur des jours fériés
-        self.label_couleurFerie = wx.StaticText(self.panel_base, -1, _(u"Couleur des cases (fériés) :"))
-        self.bouton_couleurFerie = csel.ColourSelect(self.panel_base, -1, "", self.val_couleurFerie, size = (40, 23))
+        self.label_couleurFerie = wx.StaticText(self.sizer_contenu_staticbox, -1, _(u"Couleur des cases (fériés) :"))
+        self.bouton_couleurFerie = csel.ColourSelect(self.sizer_contenu_staticbox, -1, "", self.val_couleurFerie, size = (40, 23))
         
         # Bouton couleur des cases sélectionnées
-        self.label_couleurSelect = wx.StaticText(self.panel_base, -1, _(u"Couleur des cases sélectionnées :"))
-        self.bouton_couleurSelect = csel.ColourSelect(self.panel_base, -1, "", self.val_couleurSelect, size = (40, 23))
+        self.label_couleurSelect = wx.StaticText(self.sizer_contenu_staticbox, -1, _(u"Couleur des cases sélectionnées :"))
+        self.bouton_couleurSelect = csel.ColourSelect(self.sizer_contenu_staticbox, -1, "", self.val_couleurSelect, size = (40, 23))
 
         # Bouton couleur du bord de la case survolée
-        self.label_couleurSurvol = wx.StaticText(self.panel_base, -1, _(u"Couleur des bords des cases survolées :"))
-        self.bouton_couleurSurvol = csel.ColourSelect(self.panel_base, -1, "", self.val_couleurSurvol, size = (40, 23))
+        self.label_couleurSurvol = wx.StaticText(self.sizer_contenu_staticbox, -1, _(u"Couleur des bords des cases survolées :"))
+        self.bouton_couleurSurvol = csel.ColourSelect(self.sizer_contenu_staticbox, -1, "", self.val_couleurSurvol, size = (40, 23))
         
         # Bouton couleur de police des numéros de jour
-        self.label_couleurFontJours = wx.StaticText(self.panel_base, -1, _(u"Couleur de police des numéros de jour :"))
-        self.bouton_couleurFontJours = csel.ColourSelect(self.panel_base, -1, "", self.val_couleurFontJours, size = (40, 23))
+        self.label_couleurFontJours = wx.StaticText(self.sizer_contenu_staticbox, -1, _(u"Couleur de police des numéros de jour :"))
+        self.bouton_couleurFontJours = csel.ColourSelect(self.sizer_contenu_staticbox, -1, "", self.val_couleurFontJours, size = (40, 23))
         
         # Bouton couleur de police des jours avec des présents
-        self.label_couleurFontJoursAvecPresents = wx.StaticText(self.panel_base, -1, _(u"Couleur de police si présences :"))
-        self.bouton_couleurFontJoursAvecPresents = csel.ColourSelect(self.panel_base, -1, "", self.val_couleurFontJoursAvecPresents, size = (40, 23))
+        self.label_couleurFontJoursAvecPresents = wx.StaticText(self.sizer_contenu_staticbox, -1, _(u"Couleur de police si présences :"))
+        self.bouton_couleurFontJoursAvecPresents = csel.ColourSelect(self.sizer_contenu_staticbox, -1, "", self.val_couleurFontJoursAvecPresents, size = (40, 23))
 
         # Hyperlink_reinit
         self.bouton_reinit = self.Build_Hyperlink()
@@ -367,8 +368,8 @@ class Dialog(wx.Dialog):
     
     def InitValeurs(self, donnees):
         # Place les valeurs dans les controles
-        taille = eval(donnees[0])
-        self.dictParametres = eval(donnees[1])
+        taille = ast.literal_eval(donnees[0])
+        self.dictParametres = ast.literal_eval(donnees[1])
         self.val_largeur = taille[0]
         self.val_hauteur = taille[1]
         self.val_couleurFond = self.dictParametres["colFond"]

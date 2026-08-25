@@ -39,9 +39,9 @@ class Panel(wx.Panel):
         # Acte
         self.sizer_acte_staticbox = wx.StaticBox(self, -1, _(u"1. Dépôt de candidature"))
         self.label_introduction = wx.StaticText(self, -1, _(u"Vous pouvez ici saisir les informations concernant le dépôt de candidature."))
-        self.label_date = wx.StaticText(self, -1, _(u"Date :"))
-        self.ctrl_date = DatePickerCtrl(self, -1, style=DP_DROPDOWN)
-        self.label_type = wx.StaticText(self, -1, _(u"Type :"))
+        self.label_date = wx.StaticText(self.sizer_acte_staticbox, -1, _(u"Date :"))
+        self.ctrl_date = DatePickerCtrl(self.sizer_acte_staticbox, -1, style=DP_DROPDOWN)
+        self.label_type = wx.StaticText(self.sizer_acte_staticbox, -1, _(u"Type :"))
         listeImages = [ (_(u"De vive voix"), "Dialogue.png"),
                                 (_(u"Courrier"), "Mail.png"), 
                                 (_(u"Téléphone"), "Mobile.png"),
@@ -52,55 +52,55 @@ class Panel(wx.Panel):
                                 (_(u"Fédération"), "Etoile.png"),
                                 (_(u"Autre"), "Etoile.png"),
                                 ] 
-        self.ctrl_type = MyBitmapComboBox(self, listeImages)
-        self.label_acte_remarques = wx.StaticText(self, -1, _(u"Remarques :"))
+        self.ctrl_type = MyBitmapComboBox(self.sizer_acte_staticbox, listeImages)
+        self.label_acte_remarques = wx.StaticText(self.sizer_acte_staticbox, -1, _(u"Remarques :"))
         largeurTmp = self.label_acte_remarques.GetSize()[0]
-        self.ctrl_acte_remarques = wx.TextCtrl(self, -1, u"")
+        self.ctrl_acte_remarques = wx.TextCtrl(self.sizer_acte_staticbox, -1, u"")
         
         # Offre d'emploi
         self.sizer_emploi_staticbox = wx.StaticBox(self, -1, _(u"2. Offre d'emploi"))
-        self.label_emploi = wx.StaticText(self, -1, _(u"         Offre :"))
-        self.ctrl_emploi = ChoiceEmploi(self)
+        self.label_emploi = wx.StaticText(self.sizer_emploi_staticbox, -1, _(u"         Offre :"))
+        self.ctrl_emploi = ChoiceEmploi(self.sizer_emploi_staticbox)
         self.ctrl_emploi.Remplissage(self.Importation_emplois())
-        self.bouton_emplois = wx.Button(self, -1, "...", size=(20, 20))
+        self.bouton_emplois = wx.Button(self.sizer_emploi_staticbox, -1, "...", size=(20, 20))
         
         # Disponibilités
         self.sizer_disponibilites_staticbox = wx.StaticBox(self, -1, _(u"3. Disponibilités"))
-        self.label_periodes = wx.StaticText(self, -1, _(u"Périodes :"))
-        self.ctrl_periodes = ListBoxDisponibilites(self)
+        self.label_periodes = wx.StaticText(self.sizer_disponibilites_staticbox, -1, _(u"Périodes :"))
+        self.ctrl_periodes = ListBoxDisponibilites(self.sizer_disponibilites_staticbox)
         self.ctrl_periodes.SetMinSize((200, -1))
-        self.bouton_ajouter_periode = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_modifier_periode = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Modifier.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_supprimer_periode = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
-        self.label_periodes_remarques = wx.StaticText(self, -1, _(u"Remarques :"))
-        self.ctrl_periodes_remarques = wx.TextCtrl(self, -1, u"")
+        self.bouton_ajouter_periode = wx.BitmapButton(self.sizer_disponibilites_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_modifier_periode = wx.BitmapButton(self.sizer_disponibilites_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Modifier.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_supprimer_periode = wx.BitmapButton(self.sizer_disponibilites_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
+        self.label_periodes_remarques = wx.StaticText(self.sizer_disponibilites_staticbox, -1, _(u"Remarques :"))
+        self.ctrl_periodes_remarques = wx.TextCtrl(self.sizer_disponibilites_staticbox, -1, u"")
         
         # Poste
         self.sizer_poste_staticbox = wx.StaticBox(self, -1, _(u"4. Poste souhaité"))
-        self.label_fonction = wx.StaticText(self, -1, _(u"Fonction :"))
-        self.ctrl_fonction = CheckListBox(self)
+        self.label_fonction = wx.StaticText(self.sizer_poste_staticbox, -1, _(u"Fonction :"))
+        self.ctrl_fonction = CheckListBox(self.sizer_poste_staticbox)
         self.ctrl_fonction.Remplissage(self.Importation_fonctions())
-        self.bouton_fonctions = wx.Button(self, -1, "...", size=(20, 20))
-        self.label_affectation = wx.StaticText(self, -1, _(u"Affectation :"))
-        self.ctrl_affectations = CheckListBox(self)
+        self.bouton_fonctions = wx.Button(self.sizer_poste_staticbox, -1, "...", size=(20, 20))
+        self.label_affectation = wx.StaticText(self.sizer_poste_staticbox, -1, _(u"Affectation :"))
+        self.ctrl_affectations = CheckListBox(self.sizer_poste_staticbox)
         self.ctrl_affectations.Remplissage(self.Importation_affectations())
-        self.bouton_affectations = wx.Button(self, -1, "...", size=(20, 20))
-        self.label_poste_remarques = wx.StaticText(self, -1, _(u"Remarques :"))
-        self.ctrl_poste_remarques = wx.TextCtrl(self, -1, "")
+        self.bouton_affectations = wx.Button(self.sizer_poste_staticbox, -1, "...", size=(20, 20))
+        self.label_poste_remarques = wx.StaticText(self.sizer_poste_staticbox, -1, _(u"Remarques :"))
+        self.ctrl_poste_remarques = wx.TextCtrl(self.sizer_poste_staticbox, -1, "")
         
         # Réponse
         self.sizer_reponse_staticbox = wx.StaticBox(self, -1, _(u"5. Réponse"))
-        self.label_decision = wx.StaticText(self, -1, _(u"Décision :"))
+        self.label_decision = wx.StaticText(self.sizer_reponse_staticbox, -1, _(u"Décision :"))
         listeImages = [ (_(u"Décision non prise"), "Question.png"), (_(u"Oui"), "Ok_2.png"), (_(u"Non"), "Supprimer_2.png") ]
-        self.ctrl_decision = MyBitmapComboBox(self, listeImages=listeImages)
-        self.label_reponse_remarques = wx.StaticText(self, -1, _(u"Remarques :"))
-        self.ctrl_reponse_remarques = wx.TextCtrl(self, -1, "")
-        self.label_reponse = wx.StaticText(self, -1, _(u"Réponse :"))
-        self.ctrl_reponse_obligatoire = wx.CheckBox(self, -1, _(u"Réponse obligatoire"))
-        self.ctrl_reponse_communiquee = wx.CheckBox(self, -1, _(u"Réponse communiquée au candidat"))
-        self.label_reponse1 = wx.StaticText(self, -1, _(u"le"))
-        self.date_envoi_reponse = DatePickerCtrl(self, -1, style=DP_DROPDOWN)
-        self.label_reponse2 = wx.StaticText(self, -1, _(u"par"))
+        self.ctrl_decision = MyBitmapComboBox(self.sizer_reponse_staticbox, listeImages=listeImages)
+        self.label_reponse_remarques = wx.StaticText(self.sizer_reponse_staticbox, -1, _(u"Remarques :"))
+        self.ctrl_reponse_remarques = wx.TextCtrl(self.sizer_reponse_staticbox, -1, "")
+        self.label_reponse = wx.StaticText(self.sizer_reponse_staticbox, -1, _(u"Réponse :"))
+        self.ctrl_reponse_obligatoire = wx.CheckBox(self.sizer_reponse_staticbox, -1, _(u"Réponse obligatoire"))
+        self.ctrl_reponse_communiquee = wx.CheckBox(self.sizer_reponse_staticbox, -1, _(u"Réponse communiquée au candidat"))
+        self.label_reponse1 = wx.StaticText(self.sizer_reponse_staticbox, -1, _(u"le"))
+        self.date_envoi_reponse = DatePickerCtrl(self.sizer_reponse_staticbox, -1, style=DP_DROPDOWN)
+        self.label_reponse2 = wx.StaticText(self.sizer_reponse_staticbox, -1, _(u"par"))
         listeImages = [ (_(u"De vive voix"), "Dialogue.png"),
                                 (_(u"Courrier"), "Mail.png"), 
                                 (_(u"Téléphone"), "Mobile.png"),
@@ -108,7 +108,7 @@ class Panel(wx.Panel):
                                 (_(u"Email"), "Mail2.png"),
                                 (_(u"Autre"), "Etoile.png"),
                                 ] 
-        self.ctrl_type_reponse = MyBitmapComboBox(self, listeImages, size=(140, -1))
+        self.ctrl_type_reponse = MyBitmapComboBox(self.sizer_reponse_staticbox, listeImages, size=(140, -1))
         
         self.label_reponse1.Enable(False)
         self.date_envoi_reponse.Enable(False)

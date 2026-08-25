@@ -132,7 +132,7 @@ class DB:
                 return
         # Initialisation de la connexion
         try :
-            self.connexion = sqlite3.connect(nomFichier.encode('utf-8'))
+            self.connexion = sqlite3.connect(nomFichier)
             self.cursor = self.connexion.cursor()
         except Exception as err:
             print("La connexion avec la base de donnees SQLITE a echouee : \nErreur detectee :%s" % err)
@@ -751,7 +751,7 @@ class DB:
                 return (False, _(u"Le fichier n'existe pas"))
 
             try:
-                connexionDefaut = sqlite3.connect(nomFichierdefault.encode('utf-8'))
+                connexionDefaut = sqlite3.connect(nomFichierdefault)
             except Exception as err:
                 print("Echec Importation table. Erreur detectee :%s" % err)
                 return (False, "Echec Importation table. Erreur detectee :%s" % err)
@@ -893,7 +893,7 @@ class DB:
         """ Exporte toutes les données d'une table donnée vers la base défaut """
         """ ATTENTION, la TABLE défaut sera supprimée !!! """
         # Ouverture de la base par défaut
-        connexionDefaut = sqlite3.connect(nomFichierdefault.encode('utf-8'))
+        connexionDefaut = sqlite3.connect(nomFichierdefault)
         cursorDefaut = connexionDefaut.cursor()
         
         # Supprime la table

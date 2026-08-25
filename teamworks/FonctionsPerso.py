@@ -6,6 +6,7 @@
 # Licence:      Licence GNU GPL
 #-----------------------------------------------------------
 
+import ast
 import Chemins
 from Utils.UTILS_Traduction import _
 import six
@@ -851,9 +852,9 @@ def Parametres(mode="get", categorie="", nom="", valeur=None):
             if type_parametre == float : valeurTmp = float(valeurTmp)
             if type_parametre == str : valeurTmp = valeurTmp
             if type_parametre == six.text_type : valeurTmp = valeurTmp
-            if type_parametre == tuple : valeurTmp = eval(valeurTmp)
-            if type_parametre == list : valeurTmp = eval(valeurTmp)
-            if type_parametre == dict : valeurTmp = eval(valeurTmp)
+            if type_parametre == tuple : valeurTmp = ast.literal_eval(valeurTmp)
+            if type_parametre == list : valeurTmp = ast.literal_eval(valeurTmp)
+            if type_parametre == dict : valeurTmp = ast.literal_eval(valeurTmp)
             if type_parametre == bool : valeurTmp = True if valeurTmp in ("True", True, 1, "1") else False
 
         else:
@@ -1149,7 +1150,7 @@ def PreparationFichierDefaut(nomFichier=""):
         listeTablesObligatoires.append(table)
     
     # Ouverture du fichier de référence
-    connexion = sqlite3.connect(nomFichier.encode('utf-8'))
+    connexion = sqlite3.connect(nomFichier)
     cursor = connexion.cursor()
     
     # Recherche les tables de la base

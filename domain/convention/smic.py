@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import date
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal, ROUND_HALF_UP, localcontext
 from enum import Enum
 from typing import Optional
 from uuid import UUID, uuid4
@@ -32,7 +32,10 @@ def _strict_decimal(value: object, field_name: str) -> Decimal:
 
 
 def _quantize_decimal(value: Decimal) -> Decimal:
-    return value.quantize(_CENT, rounding=ROUND_HALF_UP)
+    """Quantifie indépendamment du contexte Decimal laissé par le runtime historique."""
+    with localcontext() as context:
+        context.prec = max(28, len(value.as_tuple().digits) + 4)
+        return value.quantize(_CENT, rounding=ROUND_HALF_UP)
 
 
 @dataclass(frozen=True, slots=True)

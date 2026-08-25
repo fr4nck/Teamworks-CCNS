@@ -323,16 +323,17 @@ class Saisie(wx.Dialog):
         self.type = type
 
         self.staticBox_staticbox = wx.StaticBox(self, -1, "")
-        self.label_nom = wx.StaticText(self, -1, _(u"Nom :"))
-        self.text_ctrl_nom = wx.TextCtrl(self, -1, "")
-        self.label_jour_fixe = wx.StaticText(self, -1, _(u"Jour :"))
+        content_parent = self.staticBox_staticbox
+        self.label_nom = wx.StaticText(content_parent, -1, _(u"Nom :"))
+        self.text_ctrl_nom = wx.TextCtrl(content_parent, -1, "")
+        self.label_jour_fixe = wx.StaticText(content_parent, -1, _(u"Jour :"))
         choices=[]
         for x in range(1, 32) : choices.append(str(x))
-        self.choice_jour_fixe = wx.Choice(self, -1, choices=choices)
-        self.label_mois_fixe = wx.StaticText(self, -1, _(u"Mois :"))
-        self.choice_mois_fixe = wx.Choice(self, -1, choices=[_(u"Janvier"), _(u"Février"), _(u"Mars"), _(u"Avril"), _(u"Mai"), _(u"Juin"), _(u"Juillet"), _(u"Août"), _(u"Septembre"), _(u"Octobre"), _(u"Novembre"), _(u"Décembre")])
-        self.label_date_variable = wx.StaticText(self, -1, _(u"Date :"))
-        self.datepicker_date_variable = MyDatePickerCtrl(self)
+        self.choice_jour_fixe = wx.Choice(content_parent, -1, choices=choices)
+        self.label_mois_fixe = wx.StaticText(content_parent, -1, _(u"Mois :"))
+        self.choice_mois_fixe = wx.Choice(content_parent, -1, choices=[_(u"Janvier"), _(u"Février"), _(u"Mars"), _(u"Avril"), _(u"Mai"), _(u"Juin"), _(u"Juillet"), _(u"Août"), _(u"Septembre"), _(u"Octobre"), _(u"Novembre"), _(u"Décembre")])
+        self.label_date_variable = wx.StaticText(content_parent, -1, _(u"Date :"))
+        self.datepicker_date_variable = MyDatePickerCtrl(content_parent)
         
         self.bouton_aide = CTRL_Bouton_image.CTRL(self, texte=_(u"Aide"), cheminImage="Images/32x32/Aide.png")
         self.bouton_ok = CTRL_Bouton_image.CTRL(self, texte=_(u"Ok"), cheminImage="Images/32x32/Valider.png")

@@ -21,12 +21,12 @@ class Dialog(wx.Dialog):
         
         self.box_contenu_staticbox = wx.StaticBox(self, -1, u"")
         
-        self.label_label = wx.StaticText(self, -1, _(u"Label :"))
-        self.ctrl_label = wx.TextCtrl(self, -1, u"")
+        self.label_label = wx.StaticText(self.box_contenu_staticbox, -1, _(u"Label :"))
+        self.ctrl_label = wx.TextCtrl(self.box_contenu_staticbox, -1, u"")
         self.ctrl_label.SetMinSize((300, -1)) 
         
-        self.label_visible = wx.StaticText(self, -1, _(u"Visible :"))
-        self.ctrl_visible = wx.CheckBox(self, -1, u"")
+        self.label_visible = wx.StaticText(self.box_contenu_staticbox, -1, _(u"Visible :"))
+        self.ctrl_visible = wx.CheckBox(self.box_contenu_staticbox, -1, u"")
         self.ctrl_visible.SetValue(True) 
         
         self.bouton_ok = CTRL_Bouton_image.CTRL(self, texte=_(u"Ok"), cheminImage=Chemins.GetStaticPath("Images/32x32/Valider.png"))

@@ -390,26 +390,26 @@ class CTRL(wx.Panel):
         
         # Orientation
         self.box_orientation_staticbox = wx.StaticBox(self, -1, _(u"Orientation"))
-        self.ctrl_radio_portrait = wx.RadioButton(self, -1, u"", style=wx.RB_GROUP)
-        self.ctrl_image_portrait = wx.StaticBitmap(self, -1, wx.Bitmap(Chemins.GetStaticPath(u"Images/32x32/Orientation_vertical.png"), wx.BITMAP_TYPE_ANY))
-        self.ctrl_radio_paysage = wx.RadioButton(self, -1, u"")
-        self.ctrl_image_paysage = wx.StaticBitmap(self, -1, wx.Bitmap(Chemins.GetStaticPath(u"Images/32x32/Orientation_horizontal.png"), wx.BITMAP_TYPE_ANY))
+        self.ctrl_radio_portrait = wx.RadioButton(self.box_orientation_staticbox, -1, u"", style=wx.RB_GROUP)
+        self.ctrl_image_portrait = wx.StaticBitmap(self.box_orientation_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath(u"Images/32x32/Orientation_vertical.png"), wx.BITMAP_TYPE_ANY))
+        self.ctrl_radio_paysage = wx.RadioButton(self.box_orientation_staticbox, -1, u"")
+        self.ctrl_image_paysage = wx.StaticBitmap(self.box_orientation_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath(u"Images/32x32/Orientation_horizontal.png"), wx.BITMAP_TYPE_ANY))
         
         # Textes
         self.box_document_staticbox = wx.StaticBox(self, -1, _(u"Document"))
-        self.label_titre = wx.StaticText(self, -1, _(u"Titre :"))
-        self.ctrl_titre = wx.TextCtrl(self, -1, u"")
-        self.label_introduction = wx.StaticText(self, -1, _(u"Introduction :"))
-        self.ctrl_introduction = wx.TextCtrl(self, -1, u"")
-        self.label_conclusion = wx.StaticText(self, -1, _(u"Conclusion :"))
-        self.ctrl_conclusion = wx.TextCtrl(self, -1, u"")
+        self.label_titre = wx.StaticText(self.box_document_staticbox, -1, _(u"Titre :"))
+        self.ctrl_titre = wx.TextCtrl(self.box_document_staticbox, -1, u"")
+        self.label_introduction = wx.StaticText(self.box_document_staticbox, -1, _(u"Introduction :"))
+        self.ctrl_introduction = wx.TextCtrl(self.box_document_staticbox, -1, u"")
+        self.label_conclusion = wx.StaticText(self.box_document_staticbox, -1, _(u"Conclusion :"))
+        self.ctrl_conclusion = wx.TextCtrl(self.box_document_staticbox, -1, u"")
         
         # Paramètres généraux
         self.box_options_staticbox = wx.StaticBox(self, -1, _(u"Options d'impression"))
-        self.ctrl_parametres = CTRL_Parametres(self)
+        self.ctrl_parametres = CTRL_Parametres(self.box_options_staticbox)
         self.ctrl_parametres.Importation() 
-        self.bouton_reinitialisation = CTRL_Propertygrid.Bouton_reinitialisation(self, self.ctrl_parametres)
-        self.bouton_sauvegarde = CTRL_Propertygrid.Bouton_sauvegarde(self, self.ctrl_parametres)
+        self.bouton_reinitialisation = CTRL_Propertygrid.Bouton_reinitialisation(self.box_options_staticbox, self.ctrl_parametres)
+        self.bouton_sauvegarde = CTRL_Propertygrid.Bouton_sauvegarde(self.box_options_staticbox, self.ctrl_parametres)
         self.ctrl_parametres.SetMinSize((440, 120)) 
         
         self.__do_layout()

@@ -243,15 +243,12 @@ class ListView(ObjectListView):
         elif nbreListes == 1 :
             listeID = listeListes[0]
         else :
-            # Si plusieurs listes 
-            texteFonction = ""
-            index = 0
-            for liste in listeListes :
-                texteFonction += "set(listeListes[%d]) & " % index
-                index += 1
-            texteFonction = texteFonction[:-3]
-            exec("listeID=%s" % texteFonction)
-            listeID = list(listeID)
+            # Si plusieurs listes, intersection explicite sans génération de code.
+            listeID = list(
+                set(listeListes[0]).intersection(
+                    *(set(liste) for liste in listeListes[1:])
+                )
+            )
             
         # Traitement des requetes SQL
         if nbreFiltres > 0 :
@@ -1115,21 +1112,26 @@ class Popup(wx.PopupWindow):
         index = 0
         for indexCol, label, img, donnee in listeColonnes :
             # Label
-            exec("self.label_" + str(index) + " = wx.StaticText(self.panel, -1, u'%s :' % label)")
-            exec("self.label_" + str(index) + ".SetForegroundColour(wx.Colour(127, 0, 255))")
-            exec("grid_sizer_base.Add(self.label_" + str(index) + ", 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL, 0)")
+            label_ctrl = wx.StaticText(self.panel, -1, u'%s :' % label)
+            setattr(self, "label_%s" % index, label_ctrl)
+            label_ctrl.SetForegroundColour(wx.Colour(127, 0, 255))
+            grid_sizer_base.Add(label_ctrl, 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL, 0)
             # Détail : Image et valeur
-            if img != None : exec("self.image_" + str(index) + " = wx.StaticBitmap(self.panel, -1, img)")
-            exec("self.ctrl_" + str(index) + " = wx.StaticText(self.panel, -1, donnee)")
+            image_ctrl = None
+            if img != None :
+                image_ctrl = wx.StaticBitmap(self.panel, -1, img)
+                setattr(self, "image_%s" % index, image_ctrl)
+            valeur_ctrl = wx.StaticText(self.panel, -1, donnee)
+            setattr(self, "ctrl_%s" % index, valeur_ctrl)
             # Sizer détail
             if img != None : 
-                exec("grid_sizer_" + str(index) + " = wx.FlexGridSizer(rows=1, cols=2, vgap=5, hgap=5)")
-                exec("grid_sizer_" + str(index) + ".Add(self.image_" + str(index) + ", 0, wx.ALIGN_CENTER_VERTICAL, 0)")
-                exec("grid_sizer_" + str(index) + ".Add(self.ctrl_" + str(index) + ", 0, wx.ALIGN_CENTER_VERTICAL, 0)")
-                exec("grid_sizer_" + str(index) + ".AddGrowableCol(1)")
-                exec("grid_sizer_base.Add(grid_sizer_" + str(index) + ", 1, wx.EXPAND, 0)")
+                grid_sizer_detail = wx.FlexGridSizer(rows=1, cols=2, vgap=5, hgap=5)
+                grid_sizer_detail.Add(image_ctrl, 0, wx.ALIGN_CENTER_VERTICAL, 0)
+                grid_sizer_detail.Add(valeur_ctrl, 0, wx.ALIGN_CENTER_VERTICAL, 0)
+                grid_sizer_detail.AddGrowableCol(1)
+                grid_sizer_base.Add(grid_sizer_detail, 1, wx.EXPAND, 0)
             else:
-                exec("grid_sizer_base.Add(self.ctrl_" + str(index) + ", 1, wx.EXPAND, 0)")
+                grid_sizer_base.Add(valeur_ctrl, 1, wx.EXPAND, 0)
             index += 1
             
         grid_sizer_base.AddGrowableCol(1)

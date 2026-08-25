@@ -7,8 +7,8 @@
 #-----------------------------------------------------------
 
 from Utils.UTILS_Traduction import _
+from Utils import UTILS_Contrats_schema
 import wx
-from Ctrl import CTRL_Bouton_image
 import GestionDB
 import FonctionsPerso
 
@@ -16,21 +16,15 @@ import FonctionsPerso
 class Page(wx.Panel):
     def __init__(self, *args, **kwds):
         kwds["style"] = wx.TAB_TRAVERSAL
-        wx.Panel.__init__(self, *args, **kwds)       
-
+        wx.Panel.__init__(self, *args, **kwds)
         self.label_titre = wx.StaticText(self, -1, _(u"Création d'un modèle de contrat"))
         self.label_intro = wx.StaticText(self, -1, _(u"Saisissez un nom et une description pour ce modèle :"))
-        
         self.label_nom = wx.StaticText(self, -1, "Nom :")
         self.text_nom = wx.TextCtrl(self, -1, "")
-        
         self.label_description = wx.StaticText(self, -1, "Description :")
-        self.text_description = wx.TextCtrl(self, -1, "", style = wx.TE_MULTILINE)
-
+        self.text_description = wx.TextCtrl(self, -1, "", style=wx.TE_MULTILINE)
         self.__set_properties()
         self.__do_layout()
-        
-        # Importation des données
         self.Importation()
 
     def __set_properties(self):
@@ -40,109 +34,77 @@ class Page(wx.Panel):
         grid_sizer_base = wx.FlexGridSizer(rows=3, cols=1, vgap=10, hgap=10)
         grid_sizer_base.Add(self.label_titre, 0, 0, 0)
         grid_sizer_base.Add(self.label_intro, 0, wx.LEFT, 20)
-        grid_sizer_contenu = wx.FlexGridSizer(rows=2, cols=2, vgap=10, hgap=10)
-        grid_sizer_contenu.Add(self.label_nom, 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL, 0)
-        grid_sizer_contenu.Add(self.text_nom, 1, wx.EXPAND, 0)
-        grid_sizer_contenu.Add(self.label_description, 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL, 0)
-        grid_sizer_contenu.Add(self.text_description, 1, wx.EXPAND, 0)
-        grid_sizer_base.Add(grid_sizer_contenu, 1, wx.LEFT|wx.EXPAND, 20)
-        grid_sizer_contenu.AddGrowableCol(1)
+        grid = wx.FlexGridSizer(rows=2, cols=2, vgap=10, hgap=10)
+        grid.Add(self.label_nom, 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL, 0)
+        grid.Add(self.text_nom, 1, wx.EXPAND, 0)
+        grid.Add(self.label_description, 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL, 0)
+        grid.Add(self.text_description, 1, wx.EXPAND, 0)
+        grid.AddGrowableCol(1)
+        grid_sizer_base.Add(grid, 1, wx.LEFT|wx.EXPAND, 20)
         self.SetSizer(grid_sizer_base)
         grid_sizer_base.Fit(self)
         grid_sizer_base.AddGrowableCol(0)
-        
-    
+
     def Importation(self):
-        """ Remplit les controles avec les données importées si c'est une modification """
-        dictModeles = self.GetGrandParent().dictModeles
-        nom = dictModeles["nom"]
-        self.text_nom.SetValue(nom)
-        description= dictModeles["description"]
-        self.text_description.SetValue(description)
-                        
+        d = self.GetGrandParent().dictModeles
+        self.text_nom.SetValue(d["nom"])
+        self.text_description.SetValue(d["description"])
+
     def Validation(self):
-        
-        # Vérifie qu'un nom a été saisi
-        if self.text_nom.GetValue() == "" :
-            dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement saisir un nom pour ce modèle !"), "Erreur", wx.OK)  
+        if self.text_nom.GetValue() == "":
+            dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement saisir un nom pour ce modèle !"), "Erreur", wx.OK)
             dlg.ShowModal()
             dlg.Destroy()
             self.text_nom.SetFocus()
-            return False     
-        
-        # Enregistrement des données
+            return False
+
         dictModeles = self.GetGrandParent().dictModeles
         dictChamps = self.GetGrandParent().dictChamps
         DB = GestionDB.DB()
-        
-        # Enregistrement des données du MODELE 
-        listeDonnees = [    
-                                    ("IDclassification",    dictModeles["IDclassification"]),
-                                    ("IDtype",                  dictModeles["IDtype"]),
-                                    ("nom",                  self.text_nom.GetValue()),
-                                    ("description",            self.text_description.GetValue()),
-                                   
-                                ]
-        
-        if dictModeles["IDmodele"] == 0 :
-            # Ajout
+        UTILS_Contrats_schema.EnsureContractModelColumns(DB)
+        noms_champs = [champ[0] for champ in DB.GetListeChamps2("contrats_modeles")]
+        listeDonnees = [
+            ("IDclassification", dictModeles.get("IDclassification")),
+            ("IDtype", dictModeles.get("IDtype")),
+            ("nom", self.text_nom.GetValue()),
+            ("description", self.text_description.GetValue()),
+        ]
+        for nom in ("convention_code", "ccns_group", "cee_qualification"):
+            if nom in noms_champs:
+                listeDonnees.append((nom, dictModeles.get(nom)))
+
+        if dictModeles["IDmodele"] == 0:
             IDmodele = DB.ReqInsert("contrats_modeles", listeDonnees)
             DB.Commit()
         else:
-            # Modification
             DB.ReqMAJ("contrats_modeles", listeDonnees, "IDmodele", dictModeles["IDmodele"])
             DB.Commit()
             IDmodele = dictModeles["IDmodele"]
 
-        # Enregistrement des données des CHAMPS 
-        
-        # Crée une liste des champs existants déjà pour ce contrat
-        req = "SELECT IDval_champ, IDchamp FROM contrats_valchamps WHERE (IDmodele=%d AND type='modele')  ;" % IDmodele
+        req = "SELECT IDval_champ, IDchamp FROM contrats_valchamps WHERE (IDmodele=%d AND type='modele');" % IDmodele
         DB.ExecuterReq(req)
-        listeChampsDB = DB.ResultatReq()
-        nbreResultats = len(listeChampsDB)
-        
-        # On regarde chaque champ un par un
-        for IDchamp, valeur in dictChamps.items() :
-            
-            listeDonnees = [ ("IDchamp",     IDchamp),
-                                    ("type",            "modele"),
-                                    ("valeur",          valeur),
-                                    ("IDmodele",     IDmodele),
-                                    ("IDcontrat",     0),
-                                ]
-            
-            # Recherche si le champ existe déjà dans la base
-            modif = False
-            for IDval_champDB, IDchampDB in listeChampsDB :
-                if IDchampDB == IDchamp :
-                    # Le champ existe déjà, alors on le modifie :
-                    DB.ReqMAJ("contrats_valchamps", listeDonnees, "IDval_champ", IDval_champDB)
-                    DB.Commit()
-                    modif = True
-                    
-            if modif == False :
-                # Le champ n'existe pas dans la base, alors on le créée :
-                ID = DB.ReqInsert("contrats_valchamps", listeDonnees)
-                DB.Commit()
-        
-        # On efface les champs déjà créés qui ne sont plus utilisés :
-        for IDval_champDB, IDchampDB in listeChampsDB :
-            
+        existants = DB.ResultatReq()
+        for IDchamp, valeur in dictChamps.items():
+            ligne = [
+                ("IDchamp", IDchamp),
+                ("type", "modele"),
+                ("valeur", valeur),
+                ("IDmodele", IDmodele),
+                ("IDcontrat", 0),
+            ]
             trouve = False
-            for IDchamp, valeur in dictChamps.items() : 
-                if IDchampDB == IDchamp : trouve = True
-            
-            if trouve == False :
-                # On l'efface :
-                DB.ReqDEL("contrats_valchamps", "IDval_champ", IDval_champDB)
-                
-        # Fermeture de la DB
+            for IDval, IDchampDB in existants:
+                if IDchampDB == IDchamp:
+                    DB.ReqMAJ("contrats_valchamps", ligne, "IDval_champ", IDval)
+                    DB.Commit()
+                    trouve = True
+            if not trouve:
+                DB.ReqInsert("contrats_valchamps", ligne)
+                DB.Commit()
+        for IDval, IDchampDB in existants:
+            if IDchampDB not in dictChamps:
+                DB.ReqDEL("contrats_valchamps", "IDval_champ", IDval)
         DB.Close()
-        
-        # Recherche si un parent est à mettre à jour
-        if FonctionsPerso.FrameOuverte("panel_config_Modeles_Contrats") != None :
-            self.GetGrandParent().GetParent().MAJ_ListCtrl()         
-           
+        if FonctionsPerso.FrameOuverte("panel_config_Modeles_Contrats") is not None:
+            self.GetGrandParent().GetParent().MAJ_ListCtrl()
         return True
-

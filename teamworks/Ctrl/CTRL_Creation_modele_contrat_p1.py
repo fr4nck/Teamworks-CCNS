@@ -6,7 +6,6 @@
 # Licence:      Licence GNU GPL
 #-----------------------------------------------------------
 
-import sys
 import Chemins
 from Utils.UTILS_Traduction import _
 import wx
@@ -17,34 +16,57 @@ from Dlg import DLG_Config_champs_contrats
 from Utils import UTILS_Adaptations
 
 
+CCNS_GROUPS = ["G%d" % n for n in range(1, 9)]
+CEE_QUALIFICATIONS = [
+    ("BAFA_HOLDER", "BAFA titulaire"),
+    ("BAFA_TRAINEE", "BAFA stagiaire"),
+    ("UNQUALIFIED", "Non diplômé"),
+    ("EQUIVALENT", "Équivalence"),
+    ("BAFD_HOLDER", "BAFD titulaire"),
+    ("BAFD_TRAINEE", "BAFD stagiaire"),
+]
+
+
 class Page(wx.Panel):
     def __init__(self, *args, **kwds):
         kwds["style"] = wx.TAB_TRAVERSAL
         wx.Panel.__init__(self, *args, **kwds)
 
         self.dictTypes = {}
+        self.dictTypeCodes = {}
 
         self.sizer_champs_staticbox = wx.StaticBox(self, -1, _(u"Champs personnalisés"))
         self.sizer_caract_staticbox = wx.StaticBox(self, -1, _(u"Caractéristiques générales"))
         self.label_titre = wx.StaticText(self, -1, _(u"Création d'un modèle de contrat"))
-        self.label_intro = wx.StaticText(self, -1, _(u"Saisissez les caractéristiques générales du contrat :"))
+        self.label_intro = wx.StaticText(self, -1, _(u"Définissez les contrats auxquels ce modèle peut s'appliquer :"))
 
-        self.label_type = wx.StaticText(self, -1, "Type de contrat :")
-        self.choice_type = wx.Choice(self, -1, choices=[])
+        self.label_type = wx.StaticText(self.sizer_caract_staticbox, -1, "Type de contrat :")
+        self.choice_type = wx.Choice(self.sizer_caract_staticbox, -1, choices=[])
         self.Importation_Type()
-        self.bouton_type = wx.Button(self, -1, "...", style=wx.BU_EXACTFIT)
+        self.bouton_type = wx.Button(self.sizer_caract_staticbox, -1, "...", style=wx.BU_EXACTFIT)
 
-        self.label_class = wx.StaticText(self, -1, "Classification :")
-        self.choice_class = wx.Choice(self, -1, choices=[])
+        self.label_convention = wx.StaticText(self.sizer_caract_staticbox, -1, "Parcours / convention :")
+        self.choice_convention = wx.Choice(
+            self.sizer_caract_staticbox,
+            -1,
+            choices=["Historique / autre", "CCNS", "CEE"],
+        )
+
+        self.label_cible = wx.StaticText(self.sizer_caract_staticbox, -1, "Ciblage :")
+        self.choice_cible = wx.Choice(self.sizer_caract_staticbox, -1, choices=[])
+
+        self.label_class = wx.StaticText(self.sizer_caract_staticbox, -1, "Classification historique :")
+        self.choice_class = wx.Choice(self.sizer_caract_staticbox, -1, choices=[])
         self.Importation_classifications()
-        self.bouton_class = wx.Button(self, -1, "...", style=wx.BU_EXACTFIT)
+        self.bouton_class = wx.Button(self.sizer_caract_staticbox, -1, "...", style=wx.BU_EXACTFIT)
 
-        self.listCtrl_champs = ListCtrl_champs(self)
-        self.bouton_champs = wx.Button(self, -1, "...", style=wx.BU_EXACTFIT)
+        self.listCtrl_champs = ListCtrl_champs(self.sizer_champs_staticbox)
+        self.bouton_champs = wx.Button(self.sizer_champs_staticbox, -1, "...", style=wx.BU_EXACTFIT)
 
         self.__set_properties()
         self.__do_layout()
 
+        self.Bind(wx.EVT_CHOICE, self.OnConvention, self.choice_convention)
         self.Bind(wx.EVT_BUTTON, self.OnBoutonClassifications, self.bouton_class)
         self.Bind(wx.EVT_BUTTON, self.OnBoutonType, self.bouton_type)
         self.Bind(wx.EVT_BUTTON, self.OnBoutonChamps, self.bouton_champs)
@@ -66,7 +88,7 @@ class Page(wx.Panel):
         grid_sizer_champs = wx.FlexGridSizer(rows=1, cols=2, vgap=5, hgap=5)
         grid_sizer_boutons = wx.FlexGridSizer(rows=3, cols=1, vgap=5, hgap=5)
         sizer_caract = wx.StaticBoxSizer(self.sizer_caract_staticbox, wx.VERTICAL)
-        grid_sizer_caract = wx.FlexGridSizer(rows=3, cols=3, vgap=5, hgap=5)
+        grid_sizer_caract = wx.FlexGridSizer(rows=4, cols=3, vgap=5, hgap=5)
 
         grid_sizer_base.Add(self.label_titre, 0, 0, 0)
         grid_sizer_base.Add(self.label_intro, 0, wx.LEFT, 20)
@@ -74,12 +96,22 @@ class Page(wx.Panel):
         grid_sizer_caract.Add(self.label_type, 0, wx.ALIGN_RIGHT | wx.ALIGN_CENTER_VERTICAL, 0)
         grid_sizer_caract.Add(self.choice_type, 0, wx.EXPAND, 0)
         grid_sizer_caract.Add(self.bouton_type, 0, 0, 0)
+
+        grid_sizer_caract.Add(self.label_convention, 0, wx.ALIGN_RIGHT | wx.ALIGN_CENTER_VERTICAL, 0)
+        grid_sizer_caract.Add(self.choice_convention, 0, wx.EXPAND, 0)
+        grid_sizer_caract.Add((1, 1), 0, 0, 0)
+
+        grid_sizer_caract.Add(self.label_cible, 0, wx.ALIGN_RIGHT | wx.ALIGN_CENTER_VERTICAL, 0)
+        grid_sizer_caract.Add(self.choice_cible, 0, wx.EXPAND, 0)
+        grid_sizer_caract.Add((1, 1), 0, 0, 0)
+
         grid_sizer_caract.Add(self.label_class, 0, wx.ALIGN_RIGHT | wx.ALIGN_CENTER_VERTICAL, 0)
         grid_sizer_caract.Add(self.choice_class, 0, wx.EXPAND, 0)
         grid_sizer_caract.Add(self.bouton_class, 0, 0, 0)
+
         grid_sizer_caract.AddGrowableCol(1)
         sizer_caract.Add(grid_sizer_caract, 1, wx.ALL | wx.EXPAND, 5)
-        grid_sizer_base.Add(sizer_caract, 1, wx.LEFT | wx.EXPAND, 20)
+        grid_sizer_base.Add(sizer_caract, 0, wx.LEFT | wx.EXPAND, 20)
 
         grid_sizer_champs.Add(self.listCtrl_champs, 1, wx.EXPAND, 0)
         grid_sizer_boutons.Add(self.bouton_champs, 0, 0, 0)
@@ -94,10 +126,78 @@ class Page(wx.Panel):
         grid_sizer_base.AddGrowableCol(0)
         grid_sizer_base.AddGrowableRow(3)
 
+    @staticmethod
+    def _GetContractTypeCode(nom, nom_abrege):
+        abrege = (nom_abrege or "").strip().upper()
+        texte = (nom or "").strip().lower()
+        if abrege == "CEE" or "engagement educatif" in texte or "engagement éducatif" in texte:
+            return "CEE"
+        return abrege
+
+    def IsCEEType(self, IDtype=None):
+        if IDtype is None:
+            IDtype = self.GetChoiceData(self.choice_type)
+        return self.dictTypeCodes.get(IDtype) == "CEE"
+
     def Importation(self):
         dictModeles = self.GetGrandParent().dictModeles
-        self.SelectChoice(self.choice_type, data=dictModeles["IDtype"])
-        self.SelectChoice(self.choice_class, data=dictModeles["IDclassification"])
+        IDtype = dictModeles.get("IDtype")
+        self.SelectChoice(self.choice_type, data=IDtype)
+        self.SelectChoice(self.choice_class, data=dictModeles.get("IDclassification"))
+
+        convention = dictModeles.get("convention_code")
+        cee_qualification = dictModeles.get("cee_qualification")
+        classification = dictModeles.get("IDclassification")
+
+        # Un modèle CEE générique moderne a qualification=None, mais il se
+        # distingue d'un ancien modèle CEE par l'absence de classification.
+        if cee_qualification is not None or (
+            self.IsCEEType(IDtype)
+            and classification in (None, "")
+            and convention in (None, "")
+        ):
+            self.choice_convention.SetSelection(2)
+        elif convention == "CCNS":
+            self.choice_convention.SetSelection(1)
+        else:
+            self.choice_convention.SetSelection(0)
+
+        self.MAJ_Cible()
+        if self.choice_convention.GetSelection() == 1:
+            cible = dictModeles.get("ccns_group")
+        elif self.choice_convention.GetSelection() == 2:
+            cible = cee_qualification
+        else:
+            cible = None
+        self.SelectChoice(self.choice_cible, data=cible)
+        self.MAJ_Visibilite()
+
+    def OnConvention(self, event):
+        self.MAJ_Cible()
+        self.MAJ_Visibilite()
+
+    def MAJ_Cible(self):
+        self.choice_cible.Clear()
+        mode = self.choice_convention.GetSelection()
+        if mode == 1:
+            self.choice_cible.Append("Tous les groupes CCNS", None)
+            for groupe in CCNS_GROUPS:
+                self.choice_cible.Append(groupe, groupe)
+        elif mode == 2:
+            self.choice_cible.Append("Toutes les qualifications CEE", None)
+            for code, label in CEE_QUALIFICATIONS:
+                self.choice_cible.Append(label, code)
+        else:
+            self.choice_cible.Append("Classification historique", None)
+        self.choice_cible.SetSelection(0)
+
+    def MAJ_Visibilite(self):
+        historique = self.choice_convention.GetSelection() == 0
+        for ctrl in (self.label_class, self.choice_class, self.bouton_class):
+            ctrl.Show(historique)
+        self.label_cible.Show(not historique)
+        self.choice_cible.Show(not historique)
+        self.Layout()
 
     def OnBoutonChamps(self, event):
         dlg = DLG_Config_champs_contrats.Dialog(self)
@@ -154,8 +254,10 @@ class Page(wx.Panel):
 
         controle.Clear()
         self.dictTypes = {}
+        self.dictTypeCodes = {}
         for index, (key, nom, nom_abrege, duree_indeterminee) in enumerate(liste):
             self.dictTypes[key] = duree_indeterminee
+            self.dictTypeCodes[key] = self._GetContractTypeCode(nom, nom_abrege)
             controle.Append(nom, key)
             if IDselection == key:
                 controle.SetSelection(index)
@@ -172,25 +274,68 @@ class Page(wx.Panel):
 
     def Validation(self):
         type_contrat = self.GetChoiceData(self.choice_type)
-        classification = self.GetChoiceData(self.choice_class)
-
         if type_contrat is None:
-            dlg = wx.MessageDialog(self, _(u"Vous devez sélectionner un type de contrat dans la liste proposée."), "Erreur", wx.OK)
+            dlg = wx.MessageDialog(
+                self,
+                _(u"Vous devez sélectionner un type de contrat dans la liste proposée."),
+                "Erreur",
+                wx.OK,
+            )
             dlg.ShowModal()
             dlg.Destroy()
             self.choice_type.SetFocus()
             return False
 
-        if classification is None:
-            dlg = wx.MessageDialog(self, _(u"Vous devez sélectionner une classification dans la liste proposée."), "Erreur", wx.OK)
-            dlg.ShowModal()
-            dlg.Destroy()
-            self.choice_class.SetFocus()
+        dictModeles = self.GetGrandParent().dictModeles
+        mode = self.choice_convention.GetSelection()
+        cible = self.GetChoiceData(self.choice_cible)
+
+        if mode == 2 and not self.IsCEEType(type_contrat):
+            wx.MessageBox(
+                _(u"Le ciblage CEE nécessite un type de contrat CEE."),
+                _(u"Modèle de contrat"),
+                wx.OK | wx.ICON_ERROR,
+                parent=self,
+            )
+            self.choice_type.SetFocus()
+            return False
+        if mode == 1 and self.IsCEEType(type_contrat):
+            wx.MessageBox(
+                _(u"Un CEE ne doit pas être ciblé comme un groupe CCNS classique."),
+                _(u"Modèle de contrat"),
+                wx.OK | wx.ICON_ERROR,
+                parent=self,
+            )
+            self.choice_convention.SetFocus()
             return False
 
-        dictModeles = self.GetGrandParent().dictModeles
         dictModeles["IDtype"] = type_contrat
-        dictModeles["IDclassification"] = classification
+        dictModeles["IDclassification"] = None
+        dictModeles["convention_code"] = None
+        dictModeles["ccns_group"] = None
+        dictModeles["cee_qualification"] = None
+
+        if mode == 0:
+            classification = self.GetChoiceData(self.choice_class)
+            if classification is None:
+                dlg = wx.MessageDialog(
+                    self,
+                    _(u"Vous devez sélectionner une classification historique dans la liste proposée."),
+                    "Erreur",
+                    wx.OK,
+                )
+                dlg.ShowModal()
+                dlg.Destroy()
+                self.choice_class.SetFocus()
+                return False
+            dictModeles["IDclassification"] = classification
+        elif mode == 1:
+            dictModeles["convention_code"] = "CCNS"
+            dictModeles["ccns_group"] = cible
+        else:
+            # CEE est un type/régime de contrat et non une convention collective.
+            # Le type sélectionné reste donc le discriminant principal du modèle.
+            dictModeles["cee_qualification"] = cible
 
         if len(self.listCtrl_champs.selections) == 0:
             dlg = wx.MessageDialog(
@@ -313,10 +458,10 @@ class ListCtrl_champs(wx.ListCtrl):
         menuPop.Destroy()
 
     def Menu_Ajouter(self, event):
-        self.parent.OnBoutonAjouter(None)
+        self.parent.OnBoutonChamps(None)
 
     def Menu_Modifier(self, event):
-        self.parent.OnBoutonModifier(None)
+        self.parent.OnBoutonChamps(None)
 
     def Menu_Supprimer(self, event):
-        self.parent.OnBoutonSupprimer(None)
+        self.parent.OnBoutonChamps(None)

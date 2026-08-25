@@ -22,10 +22,10 @@ class MyDialog(wx.Dialog):
         
         self.static_sizer_staticbox = wx.StaticBox(self, -1, _(u"Amplitude horaire"))
         self.label_intro = wx.StaticText(self, -1, _(u"Veuillez saisir l'amplitude horaire à afficher par défaut\ndans le planning (Min=0:00 / max=23:55) :"))
-        self.label_de = wx.StaticText(self, -1, _(u"De"))
-        self.ctrl_heure_min = masked.TextCtrl(self, -1, "", style=wx.TE_CENTRE, mask = "##:##", validRegex   = "[0-2][0-9]:[0-5][0-9]")
-        self.label_a = wx.StaticText(self, -1, u"à")
-        self.ctrl_heure_max = masked.TextCtrl(self, -1, "", style=wx.TE_CENTRE, mask = "##:##", validRegex   = "[0-2][0-9]:[0-5][0-9]")
+        self.label_de = wx.StaticText(self.static_sizer_staticbox, -1, _(u"De"))
+        self.ctrl_heure_min = masked.TextCtrl(self.static_sizer_staticbox, -1, "", style=wx.TE_CENTRE, mask = "##:##", validRegex   = "[0-2][0-9]:[0-5][0-9]")
+        self.label_a = wx.StaticText(self.static_sizer_staticbox, -1, u"à")
+        self.ctrl_heure_max = masked.TextCtrl(self.static_sizer_staticbox, -1, "", style=wx.TE_CENTRE, mask = "##:##", validRegex   = "[0-2][0-9]:[0-5][0-9]")
         
         self.bouton_ok = CTRL_Bouton_image.CTRL(self, texte=_(u"Ok"), cheminImage=Chemins.GetStaticPath("Images/32x32/Valider.png"))
         self.bouton_annuler = CTRL_Bouton_image.CTRL(self, id=wx.ID_CANCEL, texte=_(u"Annuler"), cheminImage=Chemins.GetStaticPath("Images/32x32/Annuler.png"))

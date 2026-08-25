@@ -34,35 +34,35 @@ class MyDialog(wx.Dialog):
         
         self.staticbox_periode = wx.StaticBox(self, -1, u"")
         
-        self.radio_1 = wx.RadioButton(self, -1, u"", size=(-1, 20), style = wx.RB_GROUP )
-        self.radio_2 = wx.RadioButton(self, -1, u"", size=(-1, 20))
-        self.radio_3 = wx.RadioButton(self, -1, u"", size=(-1, 20))
-        self.radio_4 = wx.RadioButton(self, -1, u"", size=(-1, 20))
-        self.radio_5 = wx.RadioButton(self, -1, u"", size=(-1, 20))
+        self.radio_1 = wx.RadioButton(self.staticbox_periode, -1, u"", size=(-1, 20), style = wx.RB_GROUP )
+        self.radio_2 = wx.RadioButton(self.staticbox_periode, -1, u"", size=(-1, 20))
+        self.radio_3 = wx.RadioButton(self.staticbox_periode, -1, u"", size=(-1, 20))
+        self.radio_4 = wx.RadioButton(self.staticbox_periode, -1, u"", size=(-1, 20))
+        self.radio_5 = wx.RadioButton(self.staticbox_periode, -1, u"", size=(-1, 20))
         
         # Période : Début et Fin
-        self.label_date_debut = wx.StaticText(self, -1, u"Du")
-        self.ctrl_date_debut = DatePickerCtrl(self, -1, style=DP_DROPDOWN)
-        self.label_date_fin = wx.StaticText(self, -1, "au")
-        self.ctrl_date_fin = DatePickerCtrl(self, -1, style=DP_DROPDOWN)
+        self.label_date_debut = wx.StaticText(self.staticbox_periode, -1, u"Du")
+        self.ctrl_date_debut = DatePickerCtrl(self.staticbox_periode, -1, style=DP_DROPDOWN)
+        self.label_date_fin = wx.StaticText(self.staticbox_periode, -1, "au")
+        self.ctrl_date_fin = DatePickerCtrl(self.staticbox_periode, -1, style=DP_DROPDOWN)
         self.ctrl_date_debut.Enable(False)
         self.ctrl_date_fin.Enable(False)
         
         # Période : A partir
-        self.label_date_aPartir = wx.StaticText(self, -1, _(u"A partir du"))
-        self.ctrl_date_aPartir = DatePickerCtrl(self, -1, style=DP_DROPDOWN)
+        self.label_date_aPartir = wx.StaticText(self.staticbox_periode, -1, _(u"A partir du"))
+        self.ctrl_date_aPartir = DatePickerCtrl(self.staticbox_periode, -1, style=DP_DROPDOWN)
         self.ctrl_date_aPartir.Enable(False)
         
         # Période : Jusq'au
-        self.label_date_jusque = wx.StaticText(self, -1, _(u"Jusqu'au"))
-        self.ctrl_date_jusque = DatePickerCtrl(self, -1, style=DP_DROPDOWN)
+        self.label_date_jusque = wx.StaticText(self.staticbox_periode, -1, _(u"Jusqu'au"))
+        self.ctrl_date_jusque = DatePickerCtrl(self.staticbox_periode, -1, style=DP_DROPDOWN)
         self.ctrl_date_jusque.Enable(False)
         
         # Période : Tout
-        self.label_date_tout= wx.StaticText(self, -1, _(u"Tout"))
+        self.label_date_tout= wx.StaticText(self.staticbox_periode, -1, _(u"Tout"))
         
         # Période : Rien
-        self.label_date_rien= wx.StaticText(self, -1, _(u"Rien"))
+        self.label_date_rien= wx.StaticText(self.staticbox_periode, -1, _(u"Rien"))
         
         # Boutons
         self.bouton_ok = CTRL_Bouton_image.CTRL(self, texte=_(u"Ok"), cheminImage=Chemins.GetStaticPath("Images/32x32/Valider.png"))

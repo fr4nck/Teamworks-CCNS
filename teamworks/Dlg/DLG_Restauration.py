@@ -32,6 +32,27 @@ from Dlg import DLG_Saisie_param_reseau
 LISTE_CATEGORIES = UTILS_Sauvegarde.LISTE_CATEGORIES
 
 
+def GetFichierDecrypteTemporaire():
+    return UTILS_Fichiers.GetRepTemp(fichier="savedecrypte.zip")
+
+
+def NettoyerFichierDecrypteTemporaire(fichier):
+    if not fichier:
+        return False
+    try:
+        temporaire = os.path.abspath(fichier) == os.path.abspath(GetFichierDecrypteTemporaire())
+    except (OSError, TypeError, ValueError):
+        return False
+    if not temporaire or not os.path.isfile(fichier):
+        return False
+    try:
+        os.remove(fichier)
+    except OSError as err:
+        print(("Impossible de supprimer le fichier de restauration déchiffré temporaire :", err))
+        return False
+    return True
+
+
 def SelectionFichier():
     """ Sélectionner le fichier à restaurer """
     # Demande l'emplacement du fichier
@@ -54,7 +75,7 @@ def SelectionFichier():
             dlg.Destroy()
             return None
         dlg.Destroy()
-        fichierTemp = UTILS_Fichiers.GetRepTemp(fichier="savedecrypte.zip")
+        fichierTemp = GetFichierDecrypteTemporaire()
         resultat = UTILS_Cryptage_fichier.DecrypterFichier(fichier, fichierTemp, motdepasse)
         fichier = fichierTemp
         messageErreur = _(u"Le mot de passe que vous avez saisi semble erroné !")
@@ -64,6 +85,7 @@ def SelectionFichier():
     # Vérifie que le ZIP est ok
     valide = UTILS_Sauvegarde.VerificationZip(fichier)
     if valide == False :
+        NettoyerFichierDecrypteTemporaire(fichier)
         dlg = wx.MessageDialog(None, messageErreur, _(u"Erreur"), wx.OK | wx.ICON_ERROR)
         dlg.ShowModal()
         dlg.Destroy()
@@ -222,7 +244,7 @@ class Dialog(wx.Dialog):
                 
         # Données
         self.box_donnees_staticbox = wx.StaticBox(self, -1, _(u"Données à restaurer"))
-        self.ctrl_donnees = CTRL_Donnees(self, listeFichiers=self.listeFichiers)
+        self.ctrl_donnees = CTRL_Donnees(self.box_donnees_staticbox, listeFichiers=self.listeFichiers)
         self.ctrl_donnees.SetMinSize((250, -1))
         
         # Boutons
@@ -345,7 +367,7 @@ class Dialog(wx.Dialog):
         listeTemp = []
         for fichier in self.listeFichiersRestaures :
             if fichier[-6:] in ("_TDATA", "_tdata") :
-                nomFichier = fichier[:-5]
+                nomFichier = fichier[:-6]
                 listeTemp.append(nomFichier)
         return listeTemp
         
@@ -359,5 +381,9 @@ if __name__ == u"__main__":
     if fichier != None :
         dialog_1 = Dialog(None, fichier=fichier)
         app.SetTopWindow(dialog_1)
-        dialog_1.ShowModal()
+        try:
+            dialog_1.ShowModal()
+        finally:
+            dialog_1.Destroy()
+            NettoyerFichierDecrypteTemporaire(fichier)
     app.MainLoop()

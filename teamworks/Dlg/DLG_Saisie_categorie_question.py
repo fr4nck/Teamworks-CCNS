@@ -30,17 +30,17 @@ class Dialog(wx.Dialog):
         
         self.box_contenu_staticbox = wx.StaticBox(self, -1, u"")
         
-        self.label_label = wx.StaticText(self, -1, _(u"Label :"))
-        self.ctrl_label = wx.TextCtrl(self, -1, u"")
+        self.label_label = wx.StaticText(self.box_contenu_staticbox, -1, _(u"Label :"))
+        self.ctrl_label = wx.TextCtrl(self.box_contenu_staticbox, -1, u"")
         self.ctrl_label.SetMinSize((300, -1)) 
         
-        self.label_visible = wx.StaticText(self, -1, _(u"Visible :"))
-        self.ctrl_visible = wx.CheckBox(self, -1, u"")
+        self.label_visible = wx.StaticText(self.box_contenu_staticbox, -1, _(u"Visible :"))
+        self.ctrl_visible = wx.CheckBox(self.box_contenu_staticbox, -1, u"")
         self.ctrl_visible.SetValue(True) 
         
-        self.label_couleur = wx.StaticText(self, -1, _(u"Couleur :"))
+        self.label_couleur = wx.StaticText(self.box_contenu_staticbox, -1, _(u"Couleur :"))
         couleur_defaut = (174, 255, 174)
-        self.ctrl_couleur = csel.ColourSelect(self, -1, u"", couleur_defaut, size=(60, 20))
+        self.ctrl_couleur = csel.ColourSelect(self.box_contenu_staticbox, -1, u"", couleur_defaut, size=(60, 20))
 
         self.bouton_ok = CTRL_Bouton_image.CTRL(self, texte=_(u"Ok"), cheminImage=Chemins.GetStaticPath("Images/32x32/Valider.png"))
         self.bouton_annuler = CTRL_Bouton_image.CTRL(self, texte=_(u"Annuler"), cheminImage=Chemins.GetStaticPath("Images/32x32/Annuler.png"))

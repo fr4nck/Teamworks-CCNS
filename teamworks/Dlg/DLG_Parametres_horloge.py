@@ -6,6 +6,7 @@
 # Licence:      Licence GNU GPL
 #-----------------------------------------------------------
 
+import ast
 import Chemins
 from Utils.UTILS_Traduction import _
 import wx
@@ -33,22 +34,22 @@ class Dialog(wx.Dialog):
         self.Importation()
 
         # Largeur
-        self.largeur_label = wx.StaticText(self.panel_base, -1, _(u"Largeur :"))
-        self.largeur_texte = wx.TextCtrl(self.panel_base, -1, str(self.val_largeur), size=(40, -1))
-        self.largeur_slider = wx.Slider(self.panel_base, -1, self.val_largeur, self.largeur_min, self.largeur_max, size=(-1, -1), style=wx.SL_HORIZONTAL)
+        self.largeur_label = wx.StaticText(self.sizer_contenu_staticbox, -1, _(u"Largeur :"))
+        self.largeur_texte = wx.TextCtrl(self.sizer_contenu_staticbox, -1, str(self.val_largeur), size=(40, -1))
+        self.largeur_slider = wx.Slider(self.sizer_contenu_staticbox, -1, self.val_largeur, self.largeur_min, self.largeur_max, size=(-1, -1), style=wx.SL_HORIZONTAL)
         
         # Hauteur
-        self.hauteur_label = wx.StaticText(self.panel_base, -1, _(u"Hauteur :"))
-        self.hauteur_texte = wx.TextCtrl(self.panel_base, -1, str(self.val_hauteur), size=(40, -1))
-        self.hauteur_slider = wx.Slider(self.panel_base, -1, self.val_hauteur, self.hauteur_min, self.hauteur_max, size=(-1, -1), style=wx.SL_HORIZONTAL)
+        self.hauteur_label = wx.StaticText(self.sizer_contenu_staticbox, -1, _(u"Hauteur :"))
+        self.hauteur_texte = wx.TextCtrl(self.sizer_contenu_staticbox, -1, str(self.val_hauteur), size=(40, -1))
+        self.hauteur_slider = wx.Slider(self.sizer_contenu_staticbox, -1, self.val_hauteur, self.hauteur_min, self.hauteur_max, size=(-1, -1), style=wx.SL_HORIZONTAL)
         
         # Bouton couleur de face
-        self.label_couleurFace = wx.StaticText(self.panel_base, -1, _(u"Couleur de face :"))
-        self.bouton_couleurFace = csel.ColourSelect(self.panel_base, -1, "", self.val_couleurFace, size = (40, 23))
+        self.label_couleurFace = wx.StaticText(self.sizer_contenu_staticbox, -1, _(u"Couleur de face :"))
+        self.bouton_couleurFace = csel.ColourSelect(self.sizer_contenu_staticbox, -1, "", self.val_couleurFace, size = (40, 23))
         
         # Bouton couleur de fond
-        self.label_couleurFond = wx.StaticText(self.panel_base, -1, _(u"Couleur de fond :"))
-        self.bouton_couleurFond = csel.ColourSelect(self.panel_base, -1, "", self.val_couleurFond, size = (40, 23))
+        self.label_couleurFond = wx.StaticText(self.sizer_contenu_staticbox, -1, _(u"Couleur de fond :"))
+        self.bouton_couleurFond = csel.ColourSelect(self.sizer_contenu_staticbox, -1, "", self.val_couleurFond, size = (40, 23))
         
         # Hyperlink_reinit
         self.bouton_reinit = self.Build_Hyperlink()
@@ -271,8 +272,8 @@ class Dialog(wx.Dialog):
     
     def InitValeurs(self, donnees):
         # Place les valeurs dans les controles
-        taille = eval(donnees[0])
-        self.dictParametres = eval(donnees[1])
+        taille = ast.literal_eval(donnees[0])
+        self.dictParametres = ast.literal_eval(donnees[1])
         self.val_largeur = taille[0]
         self.val_hauteur = taille[1]
         self.val_couleurFace = self.dictParametres["couleur_face"]

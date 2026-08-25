@@ -31,9 +31,10 @@ class Dialog(wx.Dialog):
         # Création des boutons de commandes
         index = 1
         for image, infobulle in self.listeBoutons :
-            exec("self.bouton_" + str(index) + " = wx.BitmapButton(self, " + str(index) + ", wx.Bitmap(image, wx.BITMAP_TYPE_ANY))")
-            exec("self.bouton_" + str(index) + ".SetToolTip(wx.ToolTip(infobulle))")
-            exec("self.Bind(wx.EVT_BUTTON, self.OnBoutonClic, self.bouton_" + str(index) + ")")
+            bouton = wx.BitmapButton(self, index, wx.Bitmap(image, wx.BITMAP_TYPE_ANY))
+            setattr(self, "bouton_%s" % index, bouton)
+            bouton.SetToolTip(wx.ToolTip(infobulle))
+            self.Bind(wx.EVT_BUTTON, self.OnBoutonClic, bouton)
             index += 1
         
         self.bouton_aide = CTRL_Bouton_image.CTRL(self, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))
@@ -58,7 +59,7 @@ class Dialog(wx.Dialog):
         
         grid_sizer_commandes = wx.FlexGridSizer(1, len(self.listeBoutons), 2, 2)
         for index in range(1, len(self.listeBoutons)+1) :
-            exec("grid_sizer_commandes.Add(self.bouton_" + str(index) + ", 0, wx.EXPAND, 10)")
+            grid_sizer_commandes.Add(getattr(self, "bouton_%s" % index), 0, wx.EXPAND, 10)
         grid_sizer_commandes.AddGrowableCol(0)
         grid_sizer_commandes.AddGrowableCol(1)
         if len(self.listeBoutons) > 2 :

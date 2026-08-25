@@ -71,6 +71,9 @@ htmlcov/
 nosetests.xml
 coverage.xml
 
+# CI diagnostics
+/runtime-risk-audit.json
+
 # Translations
 *.mo
 *.pot

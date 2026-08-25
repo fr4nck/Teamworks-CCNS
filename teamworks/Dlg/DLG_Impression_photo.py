@@ -203,7 +203,7 @@ class Dialog(wx.Dialog):
         
         # Paramètres de la page
         self.staticbox_page = wx.StaticBox(self.panel_base, -1, _(u"Paramètres de la page"))
-        self.ctrl_disposition = BitmapComboBox(self.panel_base, size=(320,-1), style=wx.CB_READONLY)
+        self.ctrl_disposition = BitmapComboBox(self.staticbox_page, size=(320,-1), style=wx.CB_READONLY)
         
         # Images pour le bitmapComboBox
         listePhotos = [ (0, _(u"Pleine page (15.9cm x 15.9cm)")), (1, _(u"2 photos par page (10.9cm x 10.9cm)")), (2, _(u"4 photos par page (8.1cm x 8.1cm)")), (3, _(u"12 photos par page (5.3cm x 5.3cm)")), (4, _(u"20 photos par page (3.8cm x 3.8cm)")), (5, _(u"35 photos par page (3.1cm x 3.1cm)"))]
@@ -215,18 +215,18 @@ class Dialog(wx.Dialog):
         # Paramètres de l'impression
         self.staticbox_param = wx.StaticBox(self.panel_base, -1, _(u"Paramètres de l'impression"))
 
-        self.label_bordure = wx.StaticText(self.panel_base, -1, _(u"Bordures :"), style=wx.ALIGN_RIGHT)
-        self.bordure = wx.CheckBox(self.panel_base, -1, u"")
+        self.label_bordure = wx.StaticText(self.staticbox_param, -1, _(u"Bordures :"), style=wx.ALIGN_RIGHT)
+        self.bordure = wx.CheckBox(self.staticbox_param, -1, u"")
         self.bordure.SetValue(self.dictAffichage["bordure"])
-        self.label_nbre_copies = wx.StaticText(self.panel_base, -1, _(u"Nbre de copies :"), style=wx.ALIGN_RIGHT)
-        self.nbre_copies = wx.SpinCtrl(self.panel_base, -1, "", size=(60, -1))
+        self.label_nbre_copies = wx.StaticText(self.staticbox_param, -1, _(u"Nbre de copies :"), style=wx.ALIGN_RIGHT)
+        self.nbre_copies = wx.SpinCtrl(self.staticbox_param, -1, "", size=(60, -1))
         self.nbre_copies.SetRange(1,100)
         self.nbre_copies.SetValue(self.dictAffichage["nbre_copies"])
         
         # Liste des photos
         self.sizer_grid_staticbox = wx.StaticBox(self.panel_base, -1, _(u"Paramètres des photos"))
         self.label_intro = wx.StaticText(self.panel_base, -1, _(u"Sélectionnez les paramètres de votre choix et cliquez sur 'Aperçu'."))
-        self.listBook = ListBookPhotos(self.panel_base)
+        self.listBook = ListBookPhotos(self.sizer_grid_staticbox)
         
         # Boutons
         self.bouton_aide = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))

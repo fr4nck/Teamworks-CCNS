@@ -19,10 +19,10 @@ class MyDialog(wx.Dialog):
         wx.Dialog.__init__(self, parent, id=-1, title=title, size=(-1, -1))
         
         self.staticBox_staticbox = wx.StaticBox(self, -1, "")
-        self.label_label = wx.StaticText(self, -1, _(u"Label :"))
-        self.ctrl_label = wx.TextCtrl(self, -1, "", size=(300, -1))
-        self.label_url = wx.StaticText(self, -1, _(u"URL :"))
-        self.ctrl_url = wx.TextCtrl(self, -1, "")
+        self.label_label = wx.StaticText(self.staticBox_staticbox, -1, _(u"Label :"))
+        self.ctrl_label = wx.TextCtrl(self.staticBox_staticbox, -1, "", size=(300, -1))
+        self.label_url = wx.StaticText(self.staticBox_staticbox, -1, _(u"URL :"))
+        self.ctrl_url = wx.TextCtrl(self.staticBox_staticbox, -1, "")
         
         self.bouton_ok = CTRL_Bouton_image.CTRL(self, texte=_(u"Ok"), cheminImage=Chemins.GetStaticPath("Images/32x32/Valider.png"))
         self.bouton_annuler = CTRL_Bouton_image.CTRL(self, id=wx.ID_CANCEL, texte=_(u"Annuler"), cheminImage=Chemins.GetStaticPath("Images/32x32/Annuler.png"))

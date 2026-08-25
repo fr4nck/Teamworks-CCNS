@@ -40,6 +40,15 @@ EXTENSIONS = {
     }
 
 
+def _mysql_executable(rep_mysql, nom):
+    suffixe = ".exe" if os.name == "nt" else ""
+    return os.path.join(rep_mysql, "bin", nom + suffixe)
+
+
+def _decode_process_output(output):
+    if isinstance(output, bytes):
+        return output.decode("utf-8", errors="replace")
+    return output or ""
 
 
 def Sauvegarde(listeFichiersLocaux=[], listeFichiersReseau=[], nom="", repertoire=None, motdepasse=None, listeEmails=None, dictConnexion=None, inclure_modeles=False, inclure_editions=False):
@@ -111,51 +120,62 @@ def Sauvegarde(listeFichiersLocaux=[], listeFichiersReseau=[], nom="", repertoir
         if os.path.isdir(repTemp) == True :
             shutil.rmtree(repTemp)
         os.mkdir(repTemp)
-        
-        # Recherche du répertoire d'installation de MySQL
-        repMySQL = GetRepertoireMySQL(dictConnexion) 
-        if repMySQL == None :
-            dlgprogress.Destroy()
-            dlgErreur = wx.MessageDialog(None, _(u"Teamworks n'a pas réussi à localiser MySQL sur votre ordinateur.\n\nNotez bien que MySQL doit être installé obligatoirement pour créer une sauvegarde réseau."), _(u"Erreur"), wx.OK | wx.ICON_ERROR)
-            dlgErreur.ShowModal() 
-            dlgErreur.Destroy()
-            return False
-        
-        # Création du fichier de login
-        nomFichierLoginTemp = repTemp + "/logintemp.cnf" #os.path.abspath(os.curdir) + "/" + repTemp + "/logintemp.cnf"
-        CreationFichierLoginTemp(host=dictConnexion["host"], port=dictConnexion["port"], user=dictConnexion["user"], password=dictConnexion["password"], nomFichier=nomFichierLoginTemp)
-        
-        # Création du backup pour chaque fichier MySQL
-        for nomFichier in listeFichiersReseau :
-            dlgprogress.Update(numEtape, _(u"Compression du fichier %s...") % nomFichier);numEtape += 1
-            fichierSave = u"%s/%s.sql" % (repTemp, nomFichier)
 
-            args = u""""%sbin/mysqldump" --defaults-extra-file="%s" --single-transaction --opt --databases %s > "%s" """ % (repMySQL, nomFichierLoginTemp, nomFichier, fichierSave)
-            print(("Chemin mysqldump =", args))
-            proc = subprocess.Popen(args, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.PIPE)
-            out, temp = proc.communicate()
+        try:
+            # Recherche du répertoire d'installation de MySQL
+            repMySQL = GetRepertoireMySQL(dictConnexion) 
+            if repMySQL == None :
+                dlgprogress.Destroy()
+                dlgErreur = wx.MessageDialog(None, _(u"Teamworks n'a pas réussi à localiser MySQL sur votre ordinateur.\n\nNotez bien que MySQL doit être installé obligatoirement pour créer une sauvegarde réseau."), _(u"Erreur"), wx.OK | wx.ICON_ERROR)
+                dlgErreur.ShowModal() 
+                dlgErreur.Destroy()
+                return False
             
-            if out not in ("", b""):
-                print((out,))
-                dlgprogress.Destroy()
-                dlgErreur = wx.MessageDialog(None, _(u"Une erreur a été détectée dans la procédure de sauvegarde !\n\nErreur : %s") % out, _(u"Erreur"), wx.OK | wx.ICON_ERROR)
-                dlgErreur.ShowModal() 
-                dlgErreur.Destroy()
-                return False
+            # Création du fichier de login
+            nomFichierLoginTemp = repTemp + "/logintemp.cnf"
+            CreationFichierLoginTemp(host=dictConnexion["host"], port=dictConnexion["port"], user=dictConnexion["user"], password=dictConnexion["password"], nomFichier=nomFichierLoginTemp)
+            
+            # Création du backup pour chaque fichier MySQL
+            for nomFichier in listeFichiersReseau :
+                dlgprogress.Update(numEtape, _(u"Compression du fichier %s...") % nomFichier);numEtape += 1
+                fichierSave = u"%s/%s.sql" % (repTemp, nomFichier)
 
-            # Insère le fichier Sql dans le ZIP
-            try :
-                fichierZip.write(fichierSave, u"%s.sql" % nomFichier)
-            except Exception as err :
-                dlgprogress.Destroy()
-                print(("insertion sql dans zip : ", err,))
-                dlgErreur = wx.MessageDialog(None, _(u"Une erreur est survenue dans la sauvegarde !\n\nErreur : %s") % err, _(u"Erreur"), wx.OK | wx.ICON_ERROR)
-                dlgErreur.ShowModal() 
-                dlgErreur.Destroy()
-                return False
+                args = [
+                    _mysql_executable(repMySQL, "mysqldump"),
+                    "--defaults-extra-file=%s" % nomFichierLoginTemp,
+                    "--single-transaction",
+                    "--opt",
+                    "--databases",
+                    nomFichier,
+                ]
+                print(("Chemin mysqldump =", args[0]))
+                with open(fichierSave, "wb") as sortie_sql:
+                    proc = subprocess.Popen(args, stdout=sortie_sql, stderr=subprocess.PIPE)
+                    _stdout, stderr = proc.communicate()
+                erreur = _decode_process_output(stderr)
 
-        # Supprime le répertoire temp
-        shutil.rmtree(repTemp)
+                if proc.returncode != 0:
+                    print((erreur,))
+                    dlgprogress.Destroy()
+                    dlgErreur = wx.MessageDialog(None, _(u"Une erreur a été détectée dans la procédure de sauvegarde !\n\nErreur : %s") % erreur, _(u"Erreur"), wx.OK | wx.ICON_ERROR)
+                    dlgErreur.ShowModal() 
+                    dlgErreur.Destroy()
+                    return False
+                if erreur:
+                    print(("Avertissement mysqldump :", erreur))
+
+                # Insère le fichier Sql dans le ZIP
+                try :
+                    fichierZip.write(fichierSave, u"%s.sql" % nomFichier)
+                except Exception as err :
+                    dlgprogress.Destroy()
+                    print(("insertion sql dans zip : ", err,))
+                    dlgErreur = wx.MessageDialog(None, _(u"Une erreur est survenue dans la sauvegarde !\n\nErreur : %s") % err, _(u"Erreur"), wx.OK | wx.ICON_ERROR)
+                    dlgErreur.ShowModal() 
+                    dlgErreur.Destroy()
+                    return False
+        finally:
+            shutil.rmtree(repTemp, ignore_errors=True)
 
     # Intégration des modèles de documents
     if inclure_modeles == True:
@@ -187,10 +207,26 @@ def Sauvegarde(listeFichiersLocaux=[], listeFichiersReseau=[], nom="", repertoir
     # Copie le fichier obtenu dans le répertoire donné
     if repertoire != None :
         dlgprogress.Update(numEtape, _(u"Création du fichier dans le répertoire cible..."));numEtape += 1
+        fichier_source = UTILS_Fichiers.GetRepTemp(fichier=nomFichierTemp)
         try :
-            shutil.copy2(UTILS_Fichiers.GetRepTemp(fichier=nomFichierTemp), fichierDest)
-        except :
-            print("Le repertoire de destination de sauvegarde n'existe pas.")
+            shutil.copy2(fichier_source, fichierDest)
+        except OSError as err:
+            dlgprogress.Destroy()
+            print(("Echec de la copie de sauvegarde :", err))
+            if os.path.isfile(fichier_source):
+                try:
+                    os.remove(fichier_source)
+                except OSError:
+                    pass
+            dlgErreur = wx.MessageDialog(
+                None,
+                _(u"La sauvegarde n'a pas pu être copiée dans le répertoire cible.\n\nErreur : %s") % err,
+                _(u"Erreur"),
+                wx.OK | wx.ICON_ERROR,
+            )
+            dlgErreur.ShowModal()
+            dlgErreur.Destroy()
+            return False
 
     # Envoi par Email
     if listeEmails != None :
@@ -237,16 +273,14 @@ def VerificationZip(fichier=""):
     return zipfile.is_zipfile(fichier)
     
 def GetListeFichiersZIP(fichier):
-    """ Récupère la liste des fichiers du ZIP """
-    listeFichiers = []
-    fichierZip = zipfile.ZipFile(fichier, "r")
-    for fichier in fichierZip.namelist() :
-        listeFichiers.append(fichier)
-    return listeFichiers
+    """ Récupère la liste des fichiers du ZIP sans conserver le fichier ouvert. """
+    with zipfile.ZipFile(fichier, "r") as fichierZip:
+        return list(fichierZip.namelist())
     
 def Restauration(parent=None, fichier="", listeFichiersLocaux=[], listeFichiersReseau=[], dictConnexion=None, inclure_modeles=False, inclure_editions=False):
     """ Restauration à partir des listes de fichiers locaux et réseau """
     listeFichiersRestaures = [] 
+    dlgprogress = None
     
     # Initialisation de la barre de progression
     fichierZip = zipfile.ZipFile(fichier, "r")
@@ -328,52 +362,56 @@ def Restauration(parent=None, fichier="", listeFichiersLocaux=[], listeFichiersR
             shutil.rmtree(repTemp)
         os.mkdir(repTemp)
 
-        # Création du fichier de login
-        nomFichierLoginTemp = repTemp + "/logintemp.cnf" #os.path.abspath(os.curdir) + "/" + repTemp + "/logintemp.cnf"
-        CreationFichierLoginTemp(host=dictConnexion["host"], port=dictConnexion["port"], user=dictConnexion["user"], password=dictConnexion["password"], nomFichier=nomFichierLoginTemp)
+        try:
+            # Création du fichier de login
+            nomFichierLoginTemp = repTemp + "/logintemp.cnf"
+            CreationFichierLoginTemp(host=dictConnexion["host"], port=dictConnexion["port"], user=dictConnexion["user"], password=dictConnexion["password"], nomFichier=nomFichierLoginTemp)
 
-        # Restauration
-        nbreEtapes = len(listeFichiersReseau)
-        dlgprogress = wx.ProgressDialog(_(u"Merci de patienter"), _(u"Lancement de la restauration..."), maximum=nbreEtapes, parent=parent, style= wx.PD_SMOOTH | wx.PD_AUTO_HIDE | wx.PD_APP_MODAL)
-        numEtape = 1
+            # Restauration
+            nbreEtapes = len(listeFichiersReseau)
+            dlgprogress = wx.ProgressDialog(_(u"Merci de patienter"), _(u"Lancement de la restauration..."), maximum=nbreEtapes, parent=parent, style= wx.PD_SMOOTH | wx.PD_AUTO_HIDE | wx.PD_APP_MODAL)
+            numEtape = 1
 
-        for fichier_temp in listeFichiersReseau :
-            fichier_temp = fichier_temp[:-4]
-            
-            # Création de la base si elle n'existe pas
-            if fichier_temp not in listeFichiersExistants :
-                nomFichier = u"%s;%s;%s;%s[RESEAU]%s" % (dictConnexion["port"], dictConnexion["host"], dictConnexion["user"], dictConnexion["password"], fichier_temp)
-                DB = GestionDB.DB(suffixe=None, nomFichier=nomFichier, modeCreation=True)
-                DB.Close()
+            for fichier_temp in listeFichiersReseau :
+                fichier_temp = fichier_temp[:-4]
+                
+                # Création de la base si elle n'existe pas
+                if fichier_temp not in listeFichiersExistants :
+                    nomFichier = u"%s;%s;%s;%s[RESEAU]%s" % (dictConnexion["port"], dictConnexion["host"], dictConnexion["user"], dictConnexion["password"], fichier_temp)
+                    DB = GestionDB.DB(suffixe=None, nomFichier=nomFichier, modeCreation=True)
+                    DB.Close()
 
-            # Copie du fichier SQL dans le répertoire Temp / restoretemp
-            # buffer = fichierZip.read(u"%s.sql" % fichier)
-            # f = open(fichierRestore, "wb")
-            # f.write(buffer)
-            # f.close()
-            fichierZip.extract(u"%s.sql" % fichier_temp, repTemp)
-            fichierRestore = u"%s/%s.sql" % (repTemp, fichier_temp)
+                # Copie du fichier SQL dans le répertoire Temp / restoretemp
+                fichierZip.extract(u"%s.sql" % fichier_temp, repTemp)
+                fichierRestore = u"%s/%s.sql" % (repTemp, fichier_temp)
 
-            # Importation du fichier SQL dans MySQL
-            dlgprogress.Update(numEtape, _(u"Restauration du fichier %s...") % fichier_temp);numEtape += 1
+                # Importation du fichier SQL dans MySQL
+                dlgprogress.Update(numEtape, _(u"Restauration du fichier %s...") % fichier_temp);numEtape += 1
 
-            args = u""""%sbin/mysql" --defaults-extra-file="%s" %s < "%s" """ % (repMySQL, nomFichierLoginTemp, fichier_temp, fichierRestore)
-            print(("Chemin mysql =", args))
-            proc = subprocess.Popen(args, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.PIPE)
-            out, temp = proc.communicate()
+                args = [
+                    _mysql_executable(repMySQL, "mysql"),
+                    "--defaults-extra-file=%s" % nomFichierLoginTemp,
+                    fichier_temp,
+                ]
+                print(("Chemin mysql =", args[0]))
+                with open(fichierRestore, "rb") as entree_sql:
+                    proc = subprocess.Popen(args, stdin=entree_sql, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                    out, _stderr = proc.communicate()
+                sortie = _decode_process_output(out)
 
-            if out not in ("", b"") :
-                print(("subprocess de restauration mysql :", out))
-                dlgprogress.Destroy()
-                dlgErreur = wx.MessageDialog(None, _(u"Une erreur a été détectée dans la procédure de restauration !\n\nErreur : %s") % out, _(u"Erreur"), wx.OK | wx.ICON_ERROR)
-                dlgErreur.ShowModal()
-                dlgErreur.Destroy()
-                return False
+                if proc.returncode != 0:
+                    print(("subprocess de restauration mysql :", sortie))
+                    dlgprogress.Destroy()
+                    dlgErreur = wx.MessageDialog(None, _(u"Une erreur a été détectée dans la procédure de restauration !\n\nErreur : %s") % sortie, _(u"Erreur"), wx.OK | wx.ICON_ERROR)
+                    dlgErreur.ShowModal()
+                    dlgErreur.Destroy()
+                    return False
+                if sortie:
+                    print(("Sortie mysql :", sortie))
 
-            listeFichiersRestaures.append(fichier_temp)
-            
-        # Supprime le répertoire temp
-        shutil.rmtree(repTemp)
+                listeFichiersRestaures.append(fichier_temp)
+        finally:
+            shutil.rmtree(repTemp, ignore_errors=True)
 
     # Restauration des modèles de documents
     if inclure_modeles == True:
@@ -398,10 +436,8 @@ def Restauration(parent=None, fichier="", listeFichiersLocaux=[], listeFichiersR
         shutil.rmtree(UTILS_Fichiers.GetRepEditions("Editions"))
 
     # Fin de la procédure
-    try:
+    if dlgprogress is not None:
         dlgprogress.Destroy()
-    except:
-        pass
     fichierZip.close()
     return listeFichiersRestaures
     
@@ -521,6 +557,10 @@ def CreationFichierLoginTemp(host="", user="", port="3306", password="", nomFich
     fichier = open(nomFichier, "w")
     fichier.write(u"[client]\nhost=%s\nuser=%s\nport=%s\npassword=%s" % (host, user, port, password))
     fichier.close()
+    try:
+        os.chmod(nomFichier, 0o600)
+    except OSError:
+        pass
 
 
 if __name__ == u"__main__":

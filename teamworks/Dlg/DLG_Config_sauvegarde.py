@@ -176,23 +176,15 @@ class Sauvegarde():
             listeFichiers = []
         if len(listeFichiers) == 0 : return "Rien à sauvegarder !"
                 
-        try :                                   
-            # Création du fichier ZIP
-            fichierZip = zipfile.ZipFile(fichierDest, "w", compression=zipfile.ZIP_DEFLATED)
-
-            # Intégration des fichiers dans le ZIP
-            for extension, rep, nomFichier in listeFichiers :
-                cheminFichier = rep + nomFichier
-                nouveauNomFichier = extension + "_" + nomFichier
-                fichierZip.write(cheminFichier, nouveauNomFichier )
-                
-            # Finalise le fichier ZIP
-            fichierZip.close()
-            
+        try:
+            with zipfile.ZipFile(fichierDest, "w", compression=zipfile.ZIP_DEFLATED) as fichierZip:
+                for extension, rep, nomFichier in listeFichiers:
+                    cheminFichier = os.path.join(rep, nomFichier)
+                    nouveauNomFichier = extension + "_" + nomFichier
+                    fichierZip.write(cheminFichier, nouveauNomFichier)
             return None
-
-        except :
-            return "Erreur inconnue"
+        except Exception as err:
+            return str(err)
 
 
 
@@ -421,7 +413,7 @@ class Saisie_sauvegarde_auto(wx.Frame):
             self.choice_conservation.Select(self.conservation)
 
     def OnBoutonDestination(self, event):
-        if self.textctrl_destination.GetValue != "" : 
+        if self.textctrl_destination.GetValue() != "" :
             cheminDefaut = self.textctrl_destination.GetValue()
             if os.path.isdir(cheminDefaut) == False :
                 cheminDefaut = ""
@@ -615,7 +607,7 @@ class Saisie_sauvegarde_occasionnelle(wx.Frame):
 
 
     def OnBoutonDestination(self, event):
-        if self.textctrl_destination.GetValue != "" : 
+        if self.textctrl_destination.GetValue() != "" :
             cheminDefaut = self.textctrl_destination.GetValue()
             if os.path.isdir(cheminDefaut) == False :
                 cheminDefaut = ""
@@ -677,11 +669,10 @@ class Saisie_sauvegarde_occasionnelle(wx.Frame):
         # Le fichier de destination existe déjà :
         if os.path.isfile(fichierDest) == True :
             dlg = wx.MessageDialog(None, _(u"Un fichier de sauvegarde portant ce nom existe déjà. \n\nVoulez-vous le remplacer ?"), "Attention !", wx.YES_NO | wx.NO_DEFAULT | wx.ICON_EXCLAMATION)
-            if dlg.ShowModal() == wx.ID_NO :
+            reponse = dlg.ShowModal()
+            dlg.Destroy()
+            if reponse == wx.ID_NO:
                 return False
-                dlg.Destroy()
-            else:
-                dlg.Destroy()
                     
         save = Sauvegarde()
         etat = save.Save(fichierDest, listeElements)
@@ -696,7 +687,7 @@ class Saisie_sauvegarde_occasionnelle(wx.Frame):
             return
         else :
             # Message d'erreur
-            dlg = wx.MessageDialog(self, _(u"L'erreur suivante s'est produit lors de la sauvegarde : \n\n") + err, "Erreur de sauvegarde", wx.OK)  
+            dlg = wx.MessageDialog(self, _(u"L'erreur suivante s'est produit lors de la sauvegarde : \n\n") + str(etat), "Erreur de sauvegarde", wx.OK)  
             dlg.ShowModal()
             dlg.Destroy()
             return
@@ -978,15 +969,16 @@ class Restauration(wx.Frame):
             
             # On restaure le fichier
             if validation == True :
-                try :
+                try:
                     buffer = fichierZip.read(fichier)
-                    f = open (chemin + nomFichier, "wb")
-                    f.write(buffer)
-                    f.close()
-                except err :
-                    dlg = wx.MessageDialog(self, _(u"La restauration du fichier '") + nomFichier + _(u"' a rencontré l'erreur suivante : \n") + err, "Erreur", wx.OK| wx.ICON_ERROR)  
+                    with open(chemin + nomFichier, "wb") as destination:
+                        destination.write(buffer)
+                except Exception as err:
+                    dlg = wx.MessageDialog(self, _(u"La restauration du fichier '") + nomFichier + _(u"' a rencontré l'erreur suivante : \n") + str(err), "Erreur", wx.OK| wx.ICON_ERROR)
                     dlg.ShowModal()
                     dlg.Destroy()
+                    fichierZip.close()
+                    return
             
         fichierZip.close()
         

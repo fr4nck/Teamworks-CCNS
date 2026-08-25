@@ -27,19 +27,19 @@ class MyDialog(wx.Dialog):
         self.staticbox_periode = wx.StaticBox(self, -1, u"")
                 
         # Type
-        self.label_type = wx.StaticText(self, -1, _(u"Type :"))
-        self.ctrl_type = wx.Choice(self, -1, choices = [_(u"Heures à réaliser (+)"), _(u"Heures déjà réalisées (-)")])
+        self.label_type = wx.StaticText(self.staticbox_periode, -1, _(u"Type :"))
+        self.ctrl_type = wx.Choice(self.staticbox_periode, -1, choices = [_(u"Heures à réaliser (+)"), _(u"Heures déjà réalisées (-)")])
         self.ctrl_type.SetSelection(0)
         
         # Temps
-        self.label_temps = wx.StaticText(self, -1, _(u"Temps :"))
-        self.ctrl_temps_heures = wx.TextCtrl(self, -1, u"0", size=(50, -1), style=wx.TE_RIGHT)
-        self.label_temps_signe = wx.StaticText(self, -1, u"h")
-        self.ctrl_temps_minutes = wx.TextCtrl(self, -1, u"00", size=(30, -1))
+        self.label_temps = wx.StaticText(self.staticbox_periode, -1, _(u"Temps :"))
+        self.ctrl_temps_heures = wx.TextCtrl(self.staticbox_periode, -1, u"0", size=(50, -1), style=wx.TE_RIGHT)
+        self.label_temps_signe = wx.StaticText(self.staticbox_periode, -1, u"h")
+        self.ctrl_temps_minutes = wx.TextCtrl(self.staticbox_periode, -1, u"00", size=(30, -1))
         
         # Mode Heure/décimal
-        self.label_mode = wx.StaticText(self, -1, _(u"Mode :"))
-        self.ctrl_modeHeure = wx.Choice(self, -1, choices = [_(u"Heure"), _(u"Décimal")])
+        self.label_mode = wx.StaticText(self.staticbox_periode, -1, _(u"Mode :"))
+        self.ctrl_modeHeure = wx.Choice(self.staticbox_periode, -1, choices = [_(u"Heure"), _(u"Décimal")])
         self.ctrl_modeHeure.SetSelection(self.mode_heure)
         
         # Boutons

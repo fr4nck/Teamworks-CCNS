@@ -26,8 +26,8 @@ class MyDialog(wx.Dialog):
         self.label_intro = wx.StaticText(self, -1, _(u"Veuillez sélectionner les destinataires :"))
         
         self.staticbox = wx.StaticBox(self, -1, _(u"Catégorie de destinataires"))
-        self.radio_salaries = wx.RadioButton(self, -1, _(u"Salariés"))
-        self.radio_candidats = wx.RadioButton(self, -1, _(u"Candidats"))
+        self.radio_salaries = wx.RadioButton(self.staticbox, -1, _(u"Salariés"))
+        self.radio_candidats = wx.RadioButton(self.staticbox, -1, _(u"Candidats"))
         
         # CheckListBox
         self.checkListBox = wx.CheckListBox(self,  choices=[], size=(50, 50))

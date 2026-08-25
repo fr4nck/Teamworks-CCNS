@@ -255,15 +255,12 @@ class ListView(ObjectListView):
         elif nbreListes == 1 :
             listeID = listeListes[0]
         else :
-            # Si plusieurs listes 
-            texteFonction = ""
-            index = 0
-            for liste in listeListes :
-                texteFonction += "set(listeListes[%d]) & " % index
-                index += 1
-            texteFonction = texteFonction[:-3]
-            exec("listeID=%s" % texteFonction)
-            listeID = list(listeID)
+            # Si plusieurs listes, intersection explicite sans génération de code.
+            listeID = list(
+                set(listeListes[0]).intersection(
+                    *(set(liste) for liste in listeListes[1:])
+                )
+            )
             
         # Traitement des requetes SQL
         if nbreFiltres > 0 :
@@ -1088,8 +1085,8 @@ class SaisiePassword(wx.Dialog):
             
         self.sizer_3_staticbox = wx.StaticBox(self, -1, "")
         self.label_2 = wx.StaticText(self, -1, _(u"Les avis et commentaires sont verrouillés.\nPour les afficher, saisissez votre code de déverrouillage :"))
-        self.label_password = wx.StaticText(self, -1, "Mot de passe :")
-        self.text_password = wx.TextCtrl(self, -1, "", size=(200, -1), style=wx.TE_PASSWORD)
+        self.label_password = wx.StaticText(self.sizer_3_staticbox, -1, "Mot de passe :")
+        self.text_password = wx.TextCtrl(self.sizer_3_staticbox, -1, "", size=(200, -1), style=wx.TE_PASSWORD)
         
         self.label_3 = wx.StaticText(self, -1, _(u"Remarque : Le déverrouillage ne sera effectif que jusqu'à la fermeture du logiciel.\nPour désactiver définitivement la protection par mot de passe, rendez-vous dans \nle panneau Configuration (rubrique 'Recrutement')."))
         defaultFont = self.GetFont()

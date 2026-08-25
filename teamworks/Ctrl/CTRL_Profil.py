@@ -9,6 +9,7 @@
 #-----------------------------------------------------------
 
 
+import ast
 import Chemins
 from Utils import UTILS_Adaptations
 import six
@@ -273,7 +274,7 @@ def GetParametres(IDprofil=None):
         if type_donnee == "texte":
             parametre = parametre
         else :
-            parametre = eval(parametre)
+            parametre = ast.literal_eval(parametre)
         dictResultats[nom] = parametre
 
     return dictResultats

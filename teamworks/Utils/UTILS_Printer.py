@@ -32,30 +32,30 @@ class PreviewControlBar(wx.PyPreviewControlBar):
         
         # Impression
         self.staticbox_impression_staticbox = wx.StaticBox(self, -1, _(u"Impression"))
-        self.bouton_imprimer = wx.BitmapButton(self, wx.ID_PREVIEW_PRINT, wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Imprimante.png"), wx.BITMAP_TYPE_ANY), size=(80, -1))
+        self.bouton_imprimer = wx.BitmapButton(self.staticbox_impression_staticbox, wx.ID_PREVIEW_PRINT, wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Imprimante.png"), wx.BITMAP_TYPE_ANY), size=(80, -1))
         
         # Impression rapide
         self.staticbox_rapide_staticbox = wx.StaticBox(self, -1, _(u"Impression rapide"))
-        self.bouton_rapide_x1 = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Imprimer-x1.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_rapide_x2 = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Imprimer-x2.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_rapide_x1 = wx.BitmapButton(self.staticbox_rapide_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Imprimer-x1.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_rapide_x2 = wx.BitmapButton(self.staticbox_rapide_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Imprimer-x2.png"), wx.BITMAP_TYPE_ANY))
 
         # Navigation
         self.staticbox_navigation_staticbox = wx.StaticBox(self, -1, _(u"Navigation"))
-        self.bouton_premier = wx.BitmapButton(self, wx.ID_PREVIEW_FIRST, wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Premier.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_precedent = wx.BitmapButton(self, wx.ID_PREVIEW_PREVIOUS, wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Precedent.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_suivant = wx.BitmapButton(self, wx.ID_PREVIEW_NEXT, wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Suivant.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_dernier = wx.BitmapButton(self, wx.ID_PREVIEW_LAST, wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Dernier.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_premier = wx.BitmapButton(self.staticbox_navigation_staticbox, wx.ID_PREVIEW_FIRST, wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Premier.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_precedent = wx.BitmapButton(self.staticbox_navigation_staticbox, wx.ID_PREVIEW_PREVIOUS, wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Precedent.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_suivant = wx.BitmapButton(self.staticbox_navigation_staticbox, wx.ID_PREVIEW_NEXT, wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Suivant.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_dernier = wx.BitmapButton(self.staticbox_navigation_staticbox, wx.ID_PREVIEW_LAST, wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Dernier.png"), wx.BITMAP_TYPE_ANY))
 
         # Zoom
         self.staticbox_zoom_staticbox = wx.StaticBox(self, -1, _(u"Zoom"))
-        self.bouton_zoom_moins = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/32x32/zoom_moins.png"), wx.BITMAP_TYPE_ANY))
-        self.ctrl_zoom = wx.Slider(self, -1, zoomDefaut, 1, 200, style=wx.SL_HORIZONTAL)
+        self.bouton_zoom_moins = wx.BitmapButton(self.staticbox_zoom_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/32x32/zoom_moins.png"), wx.BITMAP_TYPE_ANY))
+        self.ctrl_zoom = wx.Slider(self.staticbox_zoom_staticbox, -1, zoomDefaut, 1, 200, style=wx.SL_HORIZONTAL)
         self.ctrl_zoom.SetTickFreq(5, 1)
-        self.bouton_zoom_plus = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/32x32/zoom_plus.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_zoom_plus = wx.BitmapButton(self.staticbox_zoom_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/32x32/zoom_plus.png"), wx.BITMAP_TYPE_ANY))
 
         # Fermer
         self.staticbox_fermer_staticbox = wx.StaticBox(self, -1, _(u"Fermer"))
-        self.bouton_fermer = wx.BitmapButton(self, wx.ID_PREVIEW_CLOSE, wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Fermer.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_fermer = wx.BitmapButton(self.staticbox_fermer_staticbox, wx.ID_PREVIEW_CLOSE, wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Fermer.png"), wx.BITMAP_TYPE_ANY))
 
         self.__set_properties()
         self.__do_layout()

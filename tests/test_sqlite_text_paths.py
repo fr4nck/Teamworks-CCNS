@@ -42,14 +42,23 @@ def test_sqlite_compatibility_survives_module_reload():
             sys.path.pop(0)
 
 
-def test_legacy_byte_path_calls_are_covered_by_early_chemins_import():
+def test_runtime_sqlite_calls_use_native_text_paths():
     gestion = GESTION_DB.read_text(encoding="utf-8")
     fonctions = FONCTIONS_PERSO.read_text(encoding="utf-8")
 
+    # Chemins reste importé tôt pour la compatibilité de lecture d'anciennes
+    # extensions appelant encore sqlite3 avec des bytes, mais le runtime
+    # Teamworks lui-même ne doit plus produire ces chemins binaires.
     assert gestion.index("import Chemins") < gestion.index("import sqlite3")
     assert fonctions.index("import Chemins") < fonctions.index("import sqlite3")
-    assert "sqlite3.connect(nomFichier.encode('utf-8'))" in gestion
-    assert "sqlite3.connect(nomFichier.encode('utf-8'))" in fonctions
+
+    assert "sqlite3.connect(nomFichier)" in gestion
+    assert "sqlite3.connect(nomFichierdefault)" in gestion
+    assert "sqlite3.connect(nomFichier)" in fonctions
+
+    assert "sqlite3.connect(nomFichier.encode('utf-8'))" not in gestion
+    assert "sqlite3.connect(nomFichierdefault.encode('utf-8'))" not in gestion
+    assert "sqlite3.connect(nomFichier.encode('utf-8'))" not in fonctions
 
 
 def test_text_paths_and_sqlite_special_names_are_not_rewritten():

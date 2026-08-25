@@ -518,13 +518,13 @@ class Dialog(wx.Dialog):
         self.panel_base = wx.Panel(self, -1)
         self.sizer_grid_staticbox = wx.StaticBox(self.panel_base, -1, "Champs")
         self.label_intro = wx.StaticText(self.panel_base, -1, _(u"Vérifiez, modifiez ou ajoutez les données puis cliquez sur 'Ok'."))
-        self.label_info = wx.StaticText(self.panel_base, -1, _(u"Remarque : Les champs marqués d'un astérique * sont mémorisés."))
+        self.label_info = wx.StaticText(self.sizer_grid_staticbox, -1, _(u"Remarque : Les champs marqués d'un astérique * sont mémorisés."))
         font = wx.Font(7, wx.SWISS, wx.NORMAL, wx.NORMAL)
         self.label_info.SetFont(font)
                
         # Préparation de la grid
         self.Import_Donnees()
-        self.gridChamps = Grid(self.panel_base)
+        self.gridChamps = Grid(self.sizer_grid_staticbox)
 
         self.bouton_aide = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))
         self.bouton_ok = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Aperçu"), cheminImage=Chemins.GetStaticPath("Images/32x32/Apercu.png"))

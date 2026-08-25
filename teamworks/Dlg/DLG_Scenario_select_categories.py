@@ -31,7 +31,7 @@ class MyDialog(wx.Dialog):
         
         # listCtrl vacances
         self.staticbox_treeCtrl = wx.StaticBox(self, -1, _(u"Aucune catégorie sélectionnée"))
-        self.ctrl_treeCtrl = TreeCtrl(self, listeSelections, listeDisabledItems)
+        self.ctrl_treeCtrl = TreeCtrl(self.staticbox_treeCtrl, listeSelections, listeDisabledItems)
         
         # Boutons
         self.bouton_ok = CTRL_Bouton_image.CTRL(self, texte=_(u"Ok"), cheminImage=Chemins.GetStaticPath("Images/32x32/Valider.png"))
@@ -146,7 +146,7 @@ class TreeCtrl(CT.CustomTreeCtrl):
             r = couleur[0]
             v = couleur[1]
             b = couleur[2]
-            exec("self.img" + str(ID) +  "= il.Add(self.CreationImage(tailleImages, " + str(r) + ", " + str(v) + ", " + str(b) + "))")
+            setattr(self, "img%s" % ID, il.Add(self.CreationImage(tailleImages, r, v, b)))
         self.SetImageList(il)
         self.il = il
         self.root = self.AddRoot(_(u"Catégories"))
@@ -170,7 +170,7 @@ class TreeCtrl(CT.CustomTreeCtrl):
                 self.SetItemData(newItem, item[0])
                 
                 if item[0] not in self.listeDisabledItems :
-                    exec("self.SetItemImage(newItem, self.img" + str(item[0]) + ", wx.TreeItemIcon_Normal)")
+                    self.SetItemImage(newItem, getattr(self, "img%s" % item[0]), wx.TreeItemIcon_Normal)
                 
                 if item[0] in self.listeSelections :
                     self.CheckItem(newItem, checked=True)

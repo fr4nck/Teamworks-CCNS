@@ -7,7 +7,6 @@ on:
   push:
     branches:
       - master
-      - agent/tw-189-ui-theme-foundation
     tags:
       - "v*"
   workflow_dispatch:
@@ -163,7 +162,7 @@ jobs:
               )
           report = json.loads(path.read_text(encoding="utf-8"))
           current = report["counts"].get("sqlite-bytes-path", 0)
-          historical_ceiling = 4
+          historical_ceiling = 0
           if current > historical_ceiling:
               raise SystemExit(
                   f"Les chemins SQLite binaires passent de "
@@ -434,14 +433,16 @@ jobs:
     name: Paquet Windows portable
     needs:
       - tests
+      - windows-smokes
     if: >-
       ${{
         always()
         && needs.tests.result == 'success'
+        && (startsWith(github.ref, 'refs/tags/v') || needs.windows-smokes.result == 'success')
         && (
           startsWith(github.ref, 'refs/tags/v')
           || (github.event_name == 'workflow_dispatch' && inputs.build_windows)
-          || (github.ref == 'refs/heads/agent/tw-189-ui-theme-foundation' && contains(github.event.head_commit.message, '[windows]'))
+          || (github.ref == 'refs/heads/master' && contains(github.event.head_commit.message, '[windows]'))
         )
       }}
     runs-on: windows-2022

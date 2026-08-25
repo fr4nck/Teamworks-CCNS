@@ -30,26 +30,26 @@ class Dialog(wx.Dialog):
         
         # Nom Utilisateur
         self.sizer_nom_staticbox = wx.StaticBox(self, -1, _(u"Nom de l'utilisateur"))
-        self.label_nom = wx.StaticText(self, -1, "Nom :")
-        self.ctrl_nom = wx.TextCtrl(self, -1, self.nomUtilisateur)
+        self.label_nom = wx.StaticText(self.sizer_nom_staticbox, -1, "Nom :")
+        self.ctrl_nom = wx.TextCtrl(self.sizer_nom_staticbox, -1, self.nomUtilisateur)
         
         # Mot de passe
         self.sizer_mdp_staticbox = wx.StaticBox(self, -1, _(u"Mot de passe"))
-        self.label_mdp_1 = wx.StaticText(self, -1, "Mot de passe :")
-        self.ctrl_mdp_1 = wx.TextCtrl(self, -1, "", style=wx.TE_PASSWORD)
-        self.label_mdp_2 = wx.StaticText(self, -1, "Confirmation :")
-        self.ctrl_mdp_2 = wx.TextCtrl(self, -1, "", style=wx.TE_PASSWORD)
+        self.label_mdp_1 = wx.StaticText(self.sizer_mdp_staticbox, -1, "Mot de passe :")
+        self.ctrl_mdp_1 = wx.TextCtrl(self.sizer_mdp_staticbox, -1, "", style=wx.TE_PASSWORD)
+        self.label_mdp_2 = wx.StaticText(self.sizer_mdp_staticbox, -1, "Confirmation :")
+        self.ctrl_mdp_2 = wx.TextCtrl(self.sizer_mdp_staticbox, -1, "", style=wx.TE_PASSWORD)
         
         # Hotes utilisateur
         self.sizer_hotes_staticbox = wx.StaticBox(self, -1, _(u"Hôtes de connexion"))
-        self.radio_1 = wx.RadioButton(self, -1, _(u"Connexion depuis n'importe quel hôte (recommandé)"), style=wx.RB_GROUP)
-        self.radio_2 = wx.RadioButton(self, -1, _(u"Connexion uniquement depuis le serveur principal"))
-        self.radio_3 = wx.RadioButton(self, -1, _(u"Connexion uniquement depuis l'hôte suivant :"))
-        self.ctrl_hote = wx.TextCtrl(self, -1, "")
+        self.radio_1 = wx.RadioButton(self.sizer_hotes_staticbox, -1, _(u"Connexion depuis n'importe quel hôte (recommandé)"), style=wx.RB_GROUP)
+        self.radio_2 = wx.RadioButton(self.sizer_hotes_staticbox, -1, _(u"Connexion uniquement depuis le serveur principal"))
+        self.radio_3 = wx.RadioButton(self.sizer_hotes_staticbox, -1, _(u"Connexion uniquement depuis l'hôte suivant :"))
+        self.ctrl_hote = wx.TextCtrl(self.sizer_hotes_staticbox, -1, "")
         
         # Autorisation d'accès au fichier
         self.sizer_autorisation_staticbox = wx.StaticBox(self, -1, _(u"Autorisation d'accès au fichier '%s'") % self.nomBase)
-        self.ctrl_autorisation = wx.CheckBox(self, -1, _(u"Cet utilisateur est autorisé à se connecter au fichier"))
+        self.ctrl_autorisation = wx.CheckBox(self.sizer_autorisation_staticbox, -1, _(u"Cet utilisateur est autorisé à se connecter au fichier"))
         
         self.bouton_aide = CTRL_Bouton_image.CTRL(self, texte=_(u"Aide"), cheminImage="Images/32x32/Aide.png")
         self.bouton_ok = CTRL_Bouton_image.CTRL(self, texte=_(u"Ok"), cheminImage="Images/32x32/Valider.png")

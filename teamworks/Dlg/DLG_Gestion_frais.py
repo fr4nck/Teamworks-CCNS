@@ -30,14 +30,14 @@ class Dialog(wx.Dialog):
         self.staticBox_selection = wx.StaticBox(self.panel_base, -1, _(u"Sélection"))
         
         # Filtres d'affichage
-        self.label_check_tous = wx.StaticText(self.panel_base, -1, _(u"Afficher toutes les personnes") )
-        self.ctrl_check_tous = wx.RadioButton(self.panel_base, -1, "", style = wx.RB_GROUP )
-        self.label_check_nonRembourses = wx.StaticText(self.panel_base, -1, _(u"Afficher uniquement les \npersonnes ayant au moins un \ndéplacement non remboursé") )
-        self.ctrl_check_nonRembourses = wx.RadioButton(self.panel_base, -1, "")
+        self.label_check_tous = wx.StaticText(self.staticBox_selection, -1, _(u"Afficher toutes les personnes") )
+        self.ctrl_check_tous = wx.RadioButton(self.staticBox_selection, -1, "", style = wx.RB_GROUP )
+        self.label_check_nonRembourses = wx.StaticText(self.staticBox_selection, -1, _(u"Afficher uniquement les \npersonnes ayant au moins un \ndéplacement non remboursé") )
+        self.ctrl_check_nonRembourses = wx.RadioButton(self.staticBox_selection, -1, "")
         self.ctrl_check_nonRembourses.SetValue(True)
         
         # ListCtrl Personnes
-        self.ctrl_personnes = ListCtrl_personnes(self.panel_base)
+        self.ctrl_personnes = ListCtrl_personnes(self.staticBox_selection)
         
         # Page Frais à importer
         self.panel_pageFrais = CTRL_Page_frais.Panel(self.panel_base,  IDpersonne=self.IDpersonne)
