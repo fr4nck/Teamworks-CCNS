@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Exécute le smoke principal avec construction réelle du formulaire de présence."""
+"""Exécute un cycle planning réel dans Teamworks : création, modification et relecture."""
 
 from __future__ import annotations
 
@@ -22,6 +22,13 @@ FAILURE_MARKER = "TEAMWORKS_SMOKE_PRESENCE_DIALOG_FAILED"
 ERROR_TITLE = "Presence dialog smoke failed"
 
 INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
+            _smoke_create_dialog = None
+            _smoke_edit_dialog = None
+            _smoke_presence_id = None
+            _smoke_person_id = None
+            _smoke_fixture_date = None
+            _smoke_label_new = "__TEAMWORKS_SMOKE_PLANNING_CREATE__"
+            _smoke_label_edit = "__TEAMWORKS_SMOKE_PLANNING_EDIT__"
             try:
                 print("TEAMWORKS_SMOKE_PRESENCE_STAGE:imports", flush=True)
                 import datetime as _smoke_datetime
@@ -31,45 +38,182 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 print("TEAMWORKS_SMOKE_PRESENCE_STAGE:database", flush=True)
                 _smoke_db = _smoke_gestiondb.DB()
                 _smoke_db.ExecuterReq("SELECT IDpersonne FROM personnes ORDER BY IDpersonne LIMIT 1")
-                _smoke_rows = _smoke_db.ResultatReq()
+                _smoke_person_rows = _smoke_db.ResultatReq()
+                _smoke_db.ExecuterReq("SELECT IDcategorie FROM cat_presences ORDER BY IDcategorie LIMIT 1")
+                _smoke_category_rows = _smoke_db.ResultatReq()
                 _smoke_db.Close()
-                if not _smoke_rows:
-                    raise RuntimeError("aucune personne disponible pour le smoke présence")
+                if not _smoke_person_rows:
+                    raise RuntimeError("aucune personne disponible pour le smoke planning")
+                if not _smoke_category_rows:
+                    raise RuntimeError("aucune catégorie de présence disponible pour le smoke planning")
+                _smoke_person_id = _smoke_person_rows[0][0]
+                _smoke_category_id = _smoke_category_rows[0][0]
+                _smoke_fixture_date = _smoke_datetime.date(2099, 12, 30)
 
-                print("TEAMWORKS_SMOKE_PRESENCE_STAGE:panel", flush=True)
-                _smoke_dialog = wx.Dialog(frame, title="Smoke présence")
-                _smoke_panel = _smoke_presence.Panel(
-                    _smoke_dialog,
-                    listeDonnees=[(_smoke_rows[0][0], _smoke_datetime.date.today())],
+                def _smoke_cleanup_fixture():
+                    _db = _smoke_gestiondb.DB()
+                    _db.ExecuterReq(
+                        "DELETE FROM presences WHERE IDpersonne=%d AND date='%s' AND intitule IN ('%s', '%s')"
+                        % (
+                            _smoke_person_id,
+                            str(_smoke_fixture_date),
+                            _smoke_label_new,
+                            _smoke_label_edit,
+                        )
+                    )
+                    _db.Commit()
+                    _db.Close()
+
+                def _smoke_select_category(tree, wanted):
+                    def _walk(parent):
+                        child, cookie = tree.GetFirstChild(parent)
+                        while child.IsOk():
+                            if tree.GetItemData(child) == wanted:
+                                tree.SelectItem(child)
+                                return True
+                            if _walk(child):
+                                return True
+                            child, cookie = tree.GetNextChild(parent, cookie)
+                        return False
+                    return _walk(tree.GetRootItem())
+
+                _smoke_cleanup_fixture()
+
+                print("TEAMWORKS_SMOKE_PRESENCE_STAGE:create-dialog", flush=True)
+                _smoke_create_dialog = _smoke_presence.Dialog(
+                    frame,
+                    listeDonnees=[(_smoke_person_id, _smoke_fixture_date)],
                     mode="planning",
                 )
-                print("TEAMWORKS_SMOKE_PRESENCE_STAGE:fields", flush=True)
+                _smoke_create_dialog.Show()
+                wx.Yield()
+                _smoke_panel = _smoke_create_dialog.panel
+                assert _smoke_select_category(_smoke_panel.treeCtrl_categories, _smoke_category_id)
                 _smoke_panel.text_heure_debut.SetValue("09:00")
                 _smoke_panel.text_heure_fin.SetValue("10:00")
-                _smoke_panel.text_intitule.SetValue("Recette automatisée")
-                _smoke_dialog.SetSizer(wx.BoxSizer(wx.VERTICAL))
-                _smoke_dialog.GetSizer().Add(_smoke_panel, 1, wx.EXPAND)
-                _smoke_dialog.GetSizer().Fit(_smoke_dialog)
-                _smoke_dialog.Layout()
-                _smoke_dialog.Show()
+                _smoke_panel.text_intitule.SetValue(_smoke_label_new)
+
+                print("TEAMWORKS_SMOKE_PRESENCE_STAGE:create-validation", flush=True)
+                assert _smoke_panel.ValidationDonnees() is True
+                assert _smoke_panel.SauvegardeNouveau() == "Ok"
+
+                print("TEAMWORKS_SMOKE_PRESENCE_STAGE:create-readback", flush=True)
+                _smoke_db = _smoke_gestiondb.DB()
+                _smoke_db.ExecuterReq(
+                    "SELECT IDpresence, IDpersonne, date, heure_debut, heure_fin, IDcategorie, intitule "
+                    "FROM presences WHERE IDpersonne=%d AND date='%s' AND intitule='%s' "
+                    "ORDER BY IDpresence DESC LIMIT 1"
+                    % (_smoke_person_id, str(_smoke_fixture_date), _smoke_label_new)
+                )
+                _smoke_created_rows = _smoke_db.ResultatReq()
+                _smoke_db.Close()
+                assert len(_smoke_created_rows) == 1
+                _smoke_created = _smoke_created_rows[0]
+                _smoke_presence_id = _smoke_created[0]
+                assert _smoke_created[1] == _smoke_person_id
+                assert str(_smoke_created[2]) == str(_smoke_fixture_date)
+                assert str(_smoke_created[3])[:5] == "09:00"
+                assert str(_smoke_created[4])[:5] == "10:00"
+                assert _smoke_created[5] == _smoke_category_id
+                assert _smoke_created[6] == _smoke_label_new
+
+                _smoke_create_dialog.Destroy()
+                _smoke_create_dialog = None
                 wx.Yield()
 
-                print("TEAMWORKS_SMOKE_PRESENCE_STAGE:assertions", flush=True)
-                assert _smoke_panel.text_heure_debut.GetValue() == "09:00"
-                assert _smoke_panel.text_heure_fin.GetValue() == "10:00"
-                assert _smoke_panel.text_intitule.GetValue() == "Recette automatisée"
-                assert _smoke_panel.listCtrl_donnees.GetItemCount() >= 1
-                assert _smoke_panel.treeCtrl_categories.GetCount() >= 1
-                assert _smoke_panel.bouton_ok.IsEnabled()
-                assert _smoke_panel.bouton_annuler.IsEnabled()
+                print("TEAMWORKS_SMOKE_PRESENCE_STAGE:edit-dialog", flush=True)
+                _smoke_edit_dialog = _smoke_presence.Dialog(
+                    frame,
+                    IDmodif=_smoke_presence_id,
+                    mode="planning",
+                )
+                _smoke_edit_dialog.Show()
+                wx.Yield()
+                _smoke_edit_panel = _smoke_edit_dialog.panel
+                assert _smoke_edit_panel.treeCtrl_categories.GetDataSelection() == _smoke_category_id
+                _smoke_edit_panel.text_heure_debut.SetValue("10:15")
+                _smoke_edit_panel.text_heure_fin.SetValue("11:45")
+                _smoke_edit_panel.text_intitule.SetValue(_smoke_label_edit)
+
+                print("TEAMWORKS_SMOKE_PRESENCE_STAGE:edit-validation", flush=True)
+                assert _smoke_edit_panel.ValidationDonnees() is True
+                assert _smoke_edit_panel.SauvegardeModif() == _smoke_presence_id
+
+                print("TEAMWORKS_SMOKE_PRESENCE_STAGE:edit-readback", flush=True)
+                _smoke_db = _smoke_gestiondb.DB()
+                _smoke_db.ExecuterReq(
+                    "SELECT IDpersonne, date, heure_debut, heure_fin, IDcategorie, intitule "
+                    "FROM presences WHERE IDpresence=%d" % _smoke_presence_id
+                )
+                _smoke_modified_rows = _smoke_db.ResultatReq()
+                _smoke_db.Close()
+                assert len(_smoke_modified_rows) == 1
+                _smoke_modified = _smoke_modified_rows[0]
+                assert _smoke_modified[0] == _smoke_person_id
+                assert str(_smoke_modified[1]) == str(_smoke_fixture_date)
+                assert str(_smoke_modified[2])[:5] == "10:15"
+                assert str(_smoke_modified[3])[:5] == "11:45"
+                assert _smoke_modified[4] == _smoke_category_id
+                assert _smoke_modified[5] == _smoke_label_edit
+
+                print("TEAMWORKS_SMOKE_PRESENCE_STAGE:grid-readback", flush=True)
+                _smoke_presence_page = frame.toolBook.GetPage(
+                    frame.toolBook.dict_pages_by_index["presences"]
+                )
+                _smoke_presence_page.MAJpanel()
+                _smoke_presence_page.SetSelectionDates([_smoke_fixture_date])
+                _smoke_presence_page.SetSelectionPersonnes([_smoke_person_id])
+                _smoke_presence_page.MAJpanelPlanning(reinitSelectionPersonnes=False)
+                assert _smoke_presence_id in _smoke_presence_page.panelPlanning.DCplanning.dictPresences
+                _smoke_grid_record = _smoke_presence_page.panelPlanning.DCplanning.dictPresences[_smoke_presence_id]
+                assert _smoke_label_edit in [str(value) for value in _smoke_grid_record]
+
+                _smoke_edit_dialog.Destroy()
+                _smoke_edit_dialog = None
+                wx.Yield()
+
+                print("TEAMWORKS_SMOKE_PRESENCE_STAGE:cleanup", flush=True)
+                _smoke_cleanup_fixture()
+                _smoke_db = _smoke_gestiondb.DB()
+                _smoke_db.ExecuterReq("SELECT COUNT(*) FROM presences WHERE IDpresence=%d" % _smoke_presence_id)
+                _smoke_remaining = _smoke_db.ResultatReq()[0][0]
+                _smoke_db.Close()
+                assert _smoke_remaining == 0
+
                 print("TEAMWORKS_SMOKE_PRESENCE_DIALOG_READY", flush=True)
-                _smoke_dialog.Destroy()
             except Exception:
                 import traceback as _smoke_traceback
                 _smoke_traceback.print_exc()
                 print("TEAMWORKS_SMOKE_PRESENCE_DIALOG_FAILED", flush=True)
                 wx.CallAfter(self.ExitMainLoop)
                 return True
+            finally:
+                try:
+                    if _smoke_create_dialog is not None:
+                        _smoke_create_dialog.Destroy()
+                except Exception:
+                    pass
+                try:
+                    if _smoke_edit_dialog is not None:
+                        _smoke_edit_dialog.Destroy()
+                except Exception:
+                    pass
+                try:
+                    if _smoke_person_id is not None and _smoke_fixture_date is not None:
+                        _smoke_db = _smoke_gestiondb.DB()
+                        _smoke_db.ExecuterReq(
+                            "DELETE FROM presences WHERE IDpersonne=%d AND date='%s' AND intitule IN ('%s', '%s')"
+                            % (
+                                _smoke_person_id,
+                                str(_smoke_fixture_date),
+                                _smoke_label_new,
+                                _smoke_label_edit,
+                            )
+                        )
+                        _smoke_db.Commit()
+                        _smoke_db.Close()
+                except Exception:
+                    pass
 '''
 
 
@@ -106,7 +250,7 @@ def main() -> int:
             PATCHED,
             root=ROOT,
             teamworks_dir=TEAMWORKS_DIR,
-            timeout=120,
+            timeout=180,
         )
         write_diagnostic(
             REPORT,
@@ -118,10 +262,10 @@ def main() -> int:
             ready_label="secondary_marker",
         )
         if return_code != 0 or FAILURE_MARKER in output:
-            github_error_summary(ERROR_TITLE, output, max_lines=32)
+            github_error_summary(ERROR_TITLE, output, max_lines=48)
             return return_code or 1
         if SECONDARY_MARKER not in output:
-            github_error_summary(ERROR_TITLE, output, max_lines=32)
+            github_error_summary(ERROR_TITLE, output, max_lines=48)
             return 2
         return 0
     except Exception:
@@ -135,7 +279,7 @@ def main() -> int:
             output=output,
             ready_label="secondary_marker",
         )
-        github_error_summary(ERROR_TITLE, output, max_lines=32)
+        github_error_summary(ERROR_TITLE, output, max_lines=48)
         return 3
     finally:
         PATCHED.unlink(missing_ok=True)
