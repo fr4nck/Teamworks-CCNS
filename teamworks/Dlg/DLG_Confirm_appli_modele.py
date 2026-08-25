@@ -227,7 +227,7 @@ class Dialog(wx.Dialog):
         self.label_confirmation.SetLabel(message)
         
     def Importation_Feries(self):
-        """ Importation des dates de jours fériés """
+        """ Importation des dates des jours fériés """
 
         req = "SELECT * FROM jours_feries;"
         DB = GestionDB.DB()
