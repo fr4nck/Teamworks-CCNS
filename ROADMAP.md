@@ -1,6 +1,6 @@
 # Teamworks-CCNS — Roadmap officielle et unique
 
-**Mise à jour : 24 août 2026**
+**Mise à jour : 25 août 2026**
 
 Ce fichier est l’unique roadmap de référence du projet. Toute autre documentation peut détailler un domaine, mais ne doit pas porter une roadmap concurrente ni annoncer un niveau de maturité différent.
 
@@ -10,9 +10,13 @@ Teamworks-CCNS est actuellement en **`0.9.0-dev`**.
 
 Le socle Python 3 / wxPython Phoenix, la CI et le packaging Windows sont largement stabilisés. Le dépôt sait construire un portable Windows reproductible, exécuter des parcours critiques Windows automatisés et publier une Release sur tag conforme.
 
-Le chantier TW-189 de modernisation de l’interface a été consolidé et fusionné dans `master` le 24 août 2026 après réalignement sur `master`, correction d’un cycle d’import Windows du moteur de thème et validation automatisée complète de la PR de consolidation : **1 581 tests Linux réussis et parcours critiques Windows réussis**.
+Le chantier TW-189 de modernisation de l’interface a été fusionné dans `master` le 24 août 2026. Le 25 août 2026, la PR #268 a ensuite consolidé sélectivement les deltas encore utiles de TW-182 et TW-184 sans réintroduire les anciennes versions des fichiers refactorés par TW-189.
 
-La qualification **bêta / RC / stable reste volontairement refusée** tant que le parcours Windows minimal n’a pas été validé manuellement sur une copie de base réelle par l’utilisateur.
+La qualification automatisée finale de cette consolidation, CI **#571**, a réussi avec **1 785 tests pytest**, **0 chemin SQLite binaire** et l’ensemble des **parcours critiques Windows réussis**. La PR #268 a été fusionnée dans `master` par le commit **`8074a1a`**.
+
+Le nouveau portable Windows correspondant à ce `master` fusionné **n’est pas encore construit ni qualifié** à la date de cette mise à jour.
+
+La qualification **bêta / RC / stable reste volontairement refusée** tant que le portable exact de `master` n’a pas franchi ses contrôles machine puis que le parcours Windows minimal n’a pas été validé manuellement sur une copie de base réelle par l’utilisateur.
 
 Aucune CI verte, aucun pourcentage d’avancement et aucun ZIP généré ne suffisent à qualifier une version.
 
@@ -48,14 +52,25 @@ Les lots TW historiques ont été traités par PR successives. La quasi-totalit�
 - TW-179 : robustesse des champs de contrat ;
 - TW-180 : suppression des doubles checkboxes Phoenix ;
 - TW-181 : nettoyage des avertissements et du packaging Windows ;
+- TW-182 : branding Teamworks CCNS, organisation, références administratives RH et comportement du thème Système Windows, intégré sélectivement après TW-189 ;
+- TW-184 : moteur de contrats, règles CCNS/CEE, schéma additif, modèles, opérations de contrat, publipostage et gardes métier, intégré sélectivement après TW-189 ;
 - TW-186 : libellés des dossiers incomplets clarifiés ;
 - TW-187 : diagnostics de crash transmissibles ;
 - TW-188 : boîte noire technique et détection des freezes ;
 - TW-189 : fondations UI modernes, thème et apparence séparés, échelle d’interface globale, navigation et layouts flexibles, modernisation progressive des écrans et découpage de plusieurs contrôleurs historiques.
 
+### Durcissements post-intégration
+
+Avant fusion de #268, les parcours critiques ont aussi été durcis sur des défauts runtime réels :
+
+- une copie finale de sauvegarde en échec ne peut plus être annoncée comme réussie ;
+- le publipostage tolère les dossiers incomplets, références pays absentes et sélections vides sans faux succès ni plantage ;
+- la restauration nettoie le fichier déchiffré temporaire, ferme les archives d’inventaire et restitue correctement le nom logique sans suffixe `_TDATA` parasite ;
+- les rapports d’audit runtime générés par la CI ne sont plus versionnés dans le dépôt.
+
 ### PR d’audit historique #209
 
-La PR #209 « TW-139 — Auditer et stabiliser les parcours runtime » a servi de chantier d’exploration et d’audit global. Son contenu utile a ensuite été extrait en lots ciblés, testés et fusionnés individuellement dans `master` (notamment TW-149 à TW-170, puis les corrections runtime suivantes).
+La PR #209 « TW-139 — Auditer et stabiliser les parcours runtime » a servi de chantier d’exploration et d’audit global. Son contenu utile a ensuite été extrait en lots ciblés, testés et fusionnés individuellement dans `master`.
 
 **La PR #209 est fermée comme supersédée depuis le 19 août 2026 et ne doit plus être utilisée comme branche de travail ni comme prérequis de merge.**
 
@@ -69,27 +84,30 @@ Ces collisions sont conservées comme faits historiques et ne doivent pas être 
 
 **Un identifiant `TW-*` déjà présent dans une branche, un commit, une issue ou une PR ne doit plus être réattribué.**
 
-## 4. État GitHub au 24 août 2026
+## 4. État GitHub au 25 août 2026
 
-Après consolidation TW-189 :
+Après consolidation TW-189 puis reprise sélective TW-182/TW-184 :
 
-- `master` est de nouveau la vérité courante ;
-- la branche TW-189 a été réalignée sur `master` par la PR #264 avant consolidation ;
-- la PR #265 « TW-189 — Consolider la refonte UI et le socle d’affichage » a été validée automatiquement puis fusionnée ;
-- le commit d’intégration dans `master` est `91dfb6d` ;
-- le dernier grand lot fonctionnel fusionné est TW-189 ;
+- `master` est la vérité courante ;
+- la PR #264 a réaligné la branche TW-189 sur `master` avant consolidation ;
+- la PR #265 a fusionné TW-189 dans `master`, commit d’intégration `91dfb6d` ;
+- les anciennes PR techniques #254, #255, #266 et #267 ont servi de références pour la reprise sélective des deltas TW-182/TW-184 ;
+- la PR #268 « Consolidation post-TW-189 — réintégrer TW-182 et TW-184 » a été validée puis fusionnée ;
+- son commit de fusion dans `master` est **`8074a1a`** ;
+- la qualification de PR finale est la CI **#571** ;
 - les anciennes branches peuvent rester comme historique, mais ne doivent pas piloter les décisions de développement.
 
 ## 5. Priorité immédiate — validation réelle avant pré-release
 
 Aucune nouvelle fonction métier, convention collective ou refonte visuelle importante ne doit passer devant les validations suivantes :
 
-1. produire un portable Windows depuis le `master` courant ;
-2. vérifier le démarrage et les smoke tests automatisés sur ce build ;
-3. exécuter le parcours minimal sur une copie de base réelle ;
-4. corriger uniquement les anomalies bloquantes réellement constatées ;
-5. documenter les résultats ;
-6. décider ensuite seulement si la version mérite une qualification bêta ou RC.
+1. qualifier le `master` final après mise à jour documentaire ;
+2. produire un portable Windows depuis **l’arbre exact de ce `master` qualifié** ;
+3. vérifier l’archive, les checksums, `BUILD.txt`, le démarrage de l’exécutable et les smoke tests machine ;
+4. exécuter le parcours minimal sur une copie de base réelle ;
+5. corriger uniquement les anomalies bloquantes réellement constatées ;
+6. documenter les résultats ;
+7. décider ensuite seulement si la version mérite une qualification bêta ou RC.
 
 ## 6. Parcours minimal de validation Windows
 
@@ -108,14 +126,18 @@ Un build n’est qualifiable en pré-release que si le parcours suivant est enti
 - création d’une sauvegarde ;
 - restauration d’une copie ;
 - contrats / DUE ;
+- création d’un contrat CCNS moderne ;
+- création d’un contrat CEE ;
+- renouvellement CDD / transformation CDD vers CDI lorsque le jeu de données le permet ;
+- modèle de contrat et publipostage / impression ;
 - présences ;
 - recrutement ;
 - frais ;
-- paramètres ;
+- paramètres, organisation et références administratives RH ;
 - rapports / publipostage / impression ;
 - fermeture sans processus résiduel.
 
-Chaque étape doit avoir un résultat daté et préciser sa nature : automatique, CI Windows, test manuel développeur ou validation utilisateur.
+Chaque étape doit avoir un résultat daté et préciser sa nature : automatique, CI Windows, test machine sur exécutable ou validation utilisateur.
 
 ## 7. Packaging Windows — état actuel
 
@@ -123,22 +145,25 @@ Le workflow unique `.github/workflows/ci.yml` construit le paquet Windows unique
 
 - déclenchement manuel avec l’option de build ;
 - tag `v*` conforme à `VERSION` ;
-- pendant les chantiers techniques autorisés, commit explicitement marqué `[windows]` sur la branche prévue par le workflow.
+- commit `master` explicitement marqué `[windows]` pour une construction technique contrôlée.
 
 Il n’existe donc pas de génération systématique d’un paquet à chaque push ou à chaque PR.
 
-Le packaging est fondé sur Python 3.11, Windows Server 2022 et PyInstaller. Le runtime Windows automatisé utilise désormais wxPython 4.3.1.
+Le job portable dépend maintenant des tests Linux et, hors tag, des parcours critiques Windows. L’ancienne exception de build liée à la branche TW-189 a été supprimée.
+
+Le packaging est fondé sur Python 3.11, Windows Server 2022 et PyInstaller. Le runtime Windows automatisé utilise wxPython 4.3.1.
 
 Le build :
 
 - inventorie les modules internes ;
 - inclut les paquets chargés dynamiquement ;
 - inclut ressources et fichiers de version essentiels ;
-- exécute un smoke test de démarrage ;
-- produit un manifeste UTF-8 ;
+- exécute un smoke test de démarrage de l’exécutable ;
+- produit un manifeste d’intégrité du paquet ;
 - vérifie les empreintes SHA-256 des fichiers ;
 - produit la somme SHA-256 du ZIP ;
 - conserve la liste des dépendances réellement utilisées ;
+- écrit `BUILD.txt` avec le SHA de construction ;
 - publie une GitHub Release uniquement lorsqu’un tag correspond exactement à `VERSION`.
 
 Ce niveau de packaging est une condition nécessaire mais non suffisante pour une RC.
@@ -154,22 +179,34 @@ Il regroupe :
 - compilation et audits sur Ubuntu 24.04 / Python 3.11 ;
 - politique UTF-8 ;
 - tests automatisés ;
+- refus de tout chemin SQLite binaire avec plafond **0** ;
 - parcours critiques Windows ;
 - contrôles des checklists Phoenix ;
 - dialogues critiques (personne, présence, recrutement, contrat) ;
+- sauvegarde / restauration ;
+- exports et impression PDF ;
 - aller-retour fonctionnel sur base de test ;
 - build portable uniquement sur demande explicite ou tag ;
 - nettoyage contrôlé de l’historique GitHub Actions sur déclenchement manuel.
 
-La consolidation TW-189 a été validée par la CI #463 avec **1 581 tests Linux réussis** et l’ensemble des **parcours critiques Windows réussis**, notamment après correction du cycle d’import du moteur de thème.
+La consolidation TW-189 avait été validée par la CI #463 avec **1 581 tests Linux** et les parcours critiques Windows réussis.
+
+La consolidation post-TW-189 a été qualifiée par la CI **#571** sur le head de PR `4b65688b2a18b7f841c5a20509080f99ff5dde60` avec :
+
+- **1 785 tests pytest réussis** ;
+- **323/323 fichiers Python de l’inventaire compilables** ;
+- **0/0 chemin SQLite binaire** ;
+- tous les contrôles du socle réussis ;
+- tous les parcours critiques Windows réussis ;
+- paquet Windows volontairement sauté sur la PR.
 
 Aucun deuxième workflow ne doit être ajouté pour contourner ou dupliquer ces contrôles.
 
-## 9. Thèmes et affichage
+## 9. Thèmes, affichage et branding
 
-Le mode `Système` doit reprendre les couleurs natives exposées par wxWidgets. Les modes `Clair` et `Sombre` restent des surcharges explicites.
+Le mode `Système` suit le système d’exploitation. Sous Windows, le moteur consulte notamment la préférence `AppsUseLightTheme`. Les modes `Clair` et `Sombre` restent des surcharges explicites.
 
-TW-189 a consolidé :
+Le socle consolidé comprend :
 
 - un moteur de thème central ;
 - des rôles de couleurs sémantiques ;
@@ -180,9 +217,12 @@ TW-189 a consolidé :
 - des layouts plus flexibles ;
 - une navigation principale modernisée ;
 - des composants et helpers typographiques communs ;
-- des gardes de non-régression sur les écrans modernisés.
+- le branding Teamworks CCNS ;
+- un logo d’organisation configurable ;
+- les écrans Structure / association et Références administratives RH accessibles depuis les préférences ;
+- des gardes de non-régression sur le thème Système Windows et les assets de branding.
 
-Le cycle d’import Windows `UTILS_Traduction -> UTILS_Fichiers -> UTILS_Customize -> UTILS_Theme -> UTILS_Interface -> UTILS_Traduction` découvert pendant la consolidation a été supprimé en rendant le socle `UTILS_Interface` indépendant de l’initialisation du module de traduction. Une garde de non-régression verrouille ce point.
+Le cycle d’import Windows `UTILS_Traduction -> UTILS_Fichiers -> UTILS_Customize -> UTILS_Theme -> UTILS_Interface -> UTILS_Traduction` découvert pendant la consolidation TW-189 reste supprimé et verrouillé par test.
 
 La validation manuelle doit encore confirmer sur les écrans prioritaires :
 
@@ -190,20 +230,24 @@ La validation manuelle doit encore confirmer sur les écrans prioritaires :
 - absence de panneaux incohérents ;
 - absence de texte tronqué avec l’échelle choisie ;
 - persistance après redémarrage ;
+- comportement correct du mode Système en clair et sombre ;
 - comportement correct des sélections et états désactivés ;
+- affichage du branding et du logo d’organisation ;
 - absence de réapparition des anciens problèmes de grands espaces, séparateurs rigides ou doubles contrôles.
 
-## 10. Données, encodages, dates et compatibilité
+## 10. Données, contrats et compatibilité
 
 État consolidé :
 
-- sources et ressources textuelles suivies migrées vers UTF-8 ;
+- sources et ressources textuelles suivies en UTF-8 ;
 - compatibilité avec certains anciens encodages conservée aux frontières d’import ;
 - normalisation centrale des dates historiques ;
-- suppression des découpages manuels de dates recensés ;
 - champs masqués de dates fiabilisés ;
 - connexion MySQL/MariaDB historique maintenue sans migration du serveur ;
-- aucune migration destructive de la base réalisée dans ces lots.
+- schéma du moteur de contrats ajouté de manière additive, compatible avec MariaDB 5.5 ;
+- aucune migration destructive de la base réalisée dans ces lots ;
+- contrats historiques, CCNS modernes et CEE disposent de chemins de lecture / affichage et de publipostage dédiés ;
+- les règles de création, période d’essai, opérations CDD, préflights et contrôles de rémunération disposent de tests dédiés.
 
 Toute future migration de données devra rester séparée, sauvegardée et réversible.
 
@@ -213,12 +257,14 @@ Les audits de dette technique restent des outils de prévention, pas des prétex
 
 Restent notamment à suivre :
 
-- bare-excepts RH inventoriés par TW-147 ;
-- avertissements wxWidgets non bloquants encore visibles dans certains `StaticBoxSizer` ;
+- bare-excepts historiques hors parcours critiques ;
 - dette Phoenix résiduelle hors parcours critique ;
+- avertissements wxWidgets non bloquants ;
 - validations multiplateformes non prioritaires par rapport au poste Windows cible.
 
-Ces sujets ne bloquent une pré-release que s’ils provoquent une anomalie réelle sur le parcours minimal.
+L’audit pré-RC à haute confiance exécuté pendant la consolidation post-TW-189 a rendu **0 bloqueur**. L’inventaire large de dette n’est pas assimilé à un échec de qualification.
+
+Ces sujets ne bloquent une pré-release que s’ils provoquent une anomalie réelle sur le parcours minimal ou enfreignent un gate automatisé explicite.
 
 ## 12. Socle RH neutre après stabilisation
 
@@ -330,8 +376,8 @@ Aucune intégration ne doit fragiliser le socle local.
 
 ## 18. Prochain jalon
 
-Le prochain jalon est **la validation Windows réelle du `master` actuel**.
+Le prochain jalon est **la construction et la qualification machine du portable Windows depuis le `master` actuel**.
 
 Séquence :
 
-**build portable `master` → smoke tests Windows → parcours minimal sur copie réelle → correction des seuls blocages → décision de qualification pré-release.**
+**CI du master final → build portable sur arbre identique → vérification ZIP / SHA-256 / `BUILD.txt` / démarrage exécutable → parcours minimal sur copie réelle → correction des seuls blocages → décision de qualification pré-release.**
