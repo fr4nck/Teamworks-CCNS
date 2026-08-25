@@ -9,6 +9,7 @@ MAILING_SMOKE = ROOT / "tools" / "smoke_mailing_preparation.py"
 RUNTIME = ROOT / "tools" / "smoke_runtime.py"
 ENTRYPOINT = ROOT / "teamworks" / "Teamworks.py"
 CORE = ROOT / "teamworks" / "Teamworks_core.py"
+EMAIL_CORE = ROOT / "teamworks" / "Utils" / "UTILS_Envoi_email.py"
 
 
 def test_person_smoke_targets_the_real_example_ready_marker() -> None:
@@ -100,11 +101,32 @@ def test_person_smoke_rejects_blank_parameter_dialogs() -> None:
         assert f'("{label}",' in source
 
 
-def test_mailing_smoke_uses_real_mailer_without_network() -> None:
+def test_mailing_factory_uses_the_shared_configuration_guardrails() -> None:
+    source = EMAIL_CORE.read_text(encoding="utf-8")
+
+    assert "from Utils import UTILS_Mailing" in source
+    assert "return UTILS_Mailing.IsValidEmail(email)" in source
+    assert "UTILS_Mailing.ValidateBackendConfig(" in source
+    assert "UTILS_Mailing.ParseBackendParameters(parametres, strict=True)" in source
+    assert '"smtp_obsolete": SmtpV1' in source
+    assert '"smtp": SmtpV2' in source
+    assert '"mailjet": Mailjet' in source
+
+
+def test_mailing_smoke_uses_real_mailer_and_real_backend_factory_without_network() -> None:
     source = MAILING_SMOKE.read_text(encoding="utf-8")
 
     assert "from Dlg import DLG_Mailer" in source
     assert "_smoke_dialog.OnBoutonEnvoyer(None)" in source
+    assert "TEAMWORKS_SMOKE_MAILING_STAGE:backend-factory" in source
+    assert "_smoke_email.mail.get_connection" in source
+    assert "_smoke_email.smtplib.SMTP" in source
+    assert "import mailjet_rest as _smoke_mailjet_rest" in source
+    assert '_smoke_email.Messagerie(\n                        backend=" SMTP "' in source
+    assert 'backend="smtp_obsolete"' in source
+    assert 'backend=" MAILJET "' in source
+    assert "Backend de messagerie inconnu" in source
+    assert "Adresse d'expédition invalide" in source
     assert "_smoke_email.Messagerie = lambda" in source
     assert "TEAMWORKS_SMOKE_MAILING_STAGE:first-send" in source
     assert "TEAMWORKS_SMOKE_MAILING_STAGE:second-send" in source

@@ -31,6 +31,151 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 from Dlg import DLG_Mailer as _smoke_mailer
                 from Utils import UTILS_Envoi_email as _smoke_email
 
+                print("TEAMWORKS_SMOKE_MAILING_STAGE:backend-factory", flush=True)
+                _smoke_original_parametres = _smoke_email.UTILS_Parametres.Parametres
+                _smoke_original_get_connection = _smoke_email.mail.get_connection
+                _smoke_original_smtp_class = _smoke_email.smtplib.SMTP
+                import mailjet_rest as _smoke_mailjet_rest
+                _smoke_original_mailjet_client = _smoke_mailjet_rest.Client
+                try:
+                    _smoke_email.UTILS_Parametres.Parametres = lambda *args, **kwargs: None
+
+                    _smoke_smtp_connections = []
+
+                    class _SmokeSMTPConnection:
+                        def __init__(self, **kwargs):
+                            self.kwargs = kwargs
+                            self.opened = False
+                            self.closed = False
+
+                        def open(self):
+                            self.opened = True
+                            return 1
+
+                        def close(self):
+                            self.closed = True
+
+                    def _smoke_get_connection(**kwargs):
+                        connection = _SmokeSMTPConnection(**kwargs)
+                        _smoke_smtp_connections.append(connection)
+                        return connection
+
+                    _smoke_email.mail.get_connection = _smoke_get_connection
+                    _smoke_smtp = _smoke_email.Messagerie(
+                        backend=" SMTP ",
+                        hote=" smtp.example.fr ",
+                        port="587",
+                        utilisateur="direction@example.fr",
+                        motdepasse="secret",
+                        email_exp=" Direction@PMSL.Association ",
+                        nom_exp="PMSL",
+                        timeout=20,
+                        use_tls=1,
+                        parametres=None,
+                    )
+                    assert isinstance(_smoke_smtp, _smoke_email.SmtpV2)
+                    assert _smoke_smtp.hote == "smtp.example.fr"
+                    assert _smoke_smtp.port == 587
+                    assert _smoke_smtp.email_exp == "Direction@pmsl.association"
+                    _smoke_smtp.Connecter()
+                    assert len(_smoke_smtp_connections) == 1
+                    assert _smoke_smtp_connections[0].opened is True
+                    assert _smoke_smtp_connections[0].kwargs["host"] == "smtp.example.fr"
+                    assert _smoke_smtp_connections[0].kwargs["port"] == 587
+                    assert _smoke_smtp_connections[0].kwargs["username"] == "direction@example.fr"
+                    assert _smoke_smtp_connections[0].kwargs["password"] == "secret"
+                    assert _smoke_smtp_connections[0].kwargs["use_tls"] is True
+                    _smoke_smtp.Fermer()
+                    assert _smoke_smtp_connections[0].closed is True
+
+                    _smoke_legacy_calls = []
+
+                    class _SmokeLegacySMTP:
+                        def __init__(self, *args, **kwargs):
+                            _smoke_legacy_calls.append((args, kwargs))
+                            self.closed = False
+
+                        def close(self):
+                            self.closed = True
+
+                    _smoke_email.smtplib.SMTP = _SmokeLegacySMTP
+                    _smoke_legacy = _smoke_email.Messagerie(
+                        backend="smtp_obsolete",
+                        hote="smtp.legacy.fr",
+                        port=25,
+                        utilisateur=None,
+                        motdepasse=None,
+                        email_exp="direction@example.fr",
+                        nom_exp="PMSL",
+                        timeout=10,
+                        use_tls=False,
+                        parametres=None,
+                    )
+                    assert isinstance(_smoke_legacy, _smoke_email.SmtpV1)
+                    _smoke_legacy.Connecter()
+                    assert len(_smoke_legacy_calls) == 1
+                    assert _smoke_legacy_calls[0][0] == ("smtp.legacy.fr", 25)
+                    assert _smoke_legacy_calls[0][1]["timeout"] == 10
+                    _smoke_legacy.Fermer()
+
+                    _smoke_mailjet_calls = []
+
+                    class _SmokeMailjetClient:
+                        def __init__(self, auth=None, version=None):
+                            self.auth = auth
+                            self.version = version
+                            _smoke_mailjet_calls.append((auth, version))
+
+                    _smoke_mailjet_rest.Client = _SmokeMailjetClient
+                    _smoke_mailjet = _smoke_email.Messagerie(
+                        backend=" MAILJET ",
+                        hote=None,
+                        port=None,
+                        utilisateur=None,
+                        motdepasse=None,
+                        email_exp=" Direction@PMSL.Association ",
+                        nom_exp="PMSL",
+                        timeout=20,
+                        use_tls=False,
+                        parametres="api_key==public==part##api_secret==secret=value",
+                    )
+                    assert isinstance(_smoke_mailjet, _smoke_email.Mailjet)
+                    assert _smoke_mailjet.dict_parametres == {
+                        "api_key": "public==part",
+                        "api_secret": "secret=value",
+                    }
+                    _smoke_mailjet.Connecter()
+                    assert _smoke_mailjet_calls == [
+                        (("public==part", "secret=value"), "v3.1")
+                    ]
+
+                    try:
+                        _smoke_email.Messagerie(
+                            backend="exchange",
+                            hote="smtp.example.fr",
+                            email_exp="direction@example.fr",
+                        )
+                    except ValueError as _smoke_err:
+                        assert "Backend de messagerie inconnu" in str(_smoke_err)
+                    else:
+                        raise AssertionError("backend inconnu accepté")
+
+                    try:
+                        _smoke_email.Messagerie(
+                            backend="smtp",
+                            hote="smtp.example.fr",
+                            email_exp="direction@localhost",
+                        )
+                    except ValueError as _smoke_err:
+                        assert "Adresse d'expédition invalide" in str(_smoke_err)
+                    else:
+                        raise AssertionError("adresse expéditeur invalide acceptée")
+                finally:
+                    _smoke_email.UTILS_Parametres.Parametres = _smoke_original_parametres
+                    _smoke_email.mail.get_connection = _smoke_original_get_connection
+                    _smoke_email.smtplib.SMTP = _smoke_original_smtp_class
+                    _smoke_mailjet_rest.Client = _smoke_original_mailjet_client
+
                 print("TEAMWORKS_SMOKE_MAILING_STAGE:fixtures", flush=True)
                 _smoke_tempdir = _smoke_Path(_smoke_tempfile.mkdtemp(prefix="teamworks-mailing-"))
                 _smoke_personal = _smoke_tempdir / "piece-personnelle.txt"

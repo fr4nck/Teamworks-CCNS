@@ -23,6 +23,7 @@ import traceback
 import base64
 from Utils import UTILS_Html2text
 from Utils import UTILS_Parametres
+from Utils import UTILS_Mailing
 from Dlg import DLG_Messagebox
 
 import smtplib
@@ -111,10 +112,8 @@ def EnvoiEmailFamille(parent=None, IDfamille=None, nomDoc="", categorie="", list
 
 
 def ValidationEmail(email):
-    if re.match("^.+\\@(\\[?)[a-zA-Z0-9\\-\\.]+\\.([a-zA-Z]{2,3}|[0-9]{1,3})(\\]?)$", email) != None:
-        return True
-    else :
-        return False
+    """Compatibilité historique : délègue au validateur moderne unique."""
+    return UTILS_Mailing.IsValidEmail(email)
 
 
 def GetAdresseExpDefaut():
@@ -296,16 +295,32 @@ class Message():
 
 
 def Messagerie(backend='smtp', **kwds):
-    # Ancien moteur SMTP
-    if backend == "smtp_obsolete":
-        klass = SmtpV1(**kwds)
-    # Nouveau moteur SMTP
-    if backend == "smtp":
-        klass = SmtpV2(**kwds)
-    # Mailjet
-    if backend == "mailjet":
-        klass = Mailjet(**kwds)
-    return klass
+    """Construit un backend après validation déterministe de sa configuration."""
+    config = UTILS_Mailing.ValidateBackendConfig(
+        backend=backend,
+        email_exp=kwds.get("email_exp"),
+        host=kwds.get("hote"),
+        port=kwds.get("port"),
+        username=kwds.get("utilisateur"),
+        password=kwds.get("motdepasse"),
+        use_tls=kwds.get("use_tls", False),
+        parameters=kwds.get("parametres"),
+    )
+
+    kwds["hote"] = config["host"]
+    kwds["port"] = config["port"]
+    kwds["utilisateur"] = config["username"]
+    kwds["motdepasse"] = config["password"]
+    kwds["email_exp"] = config["email_exp"]
+    kwds["use_tls"] = config["use_tls"]
+    kwds["parametres"] = UTILS_Mailing.SerializeBackendParameters(config["parameters"])
+
+    classes = {
+        "smtp_obsolete": SmtpV1,
+        "smtp": SmtpV2,
+        "mailjet": Mailjet,
+    }
+    return classes[config["backend"]](**kwds)
 
 
 
@@ -338,12 +353,7 @@ class Base_messagerie():
             self.from_email = self.email_exp
 
         # Formatage des paramètres
-        self.dict_parametres = {}
-        if parametres not in ("", None):
-            liste_parametres = parametres.split("##")
-            for texte in liste_parametres:
-                nom, valeur = texte.split("==")
-                self.dict_parametres[nom] = valeur
+        self.dict_parametres = UTILS_Mailing.ParseBackendParameters(parametres, strict=True)
 
 
     def Connecter(self):
@@ -365,12 +375,11 @@ class SmtpV1(Base_messagerie):
 
     def Connecter(self):
         try :
-            if self.motdepasse == None: self.motdepasse = ""
-            if self.utilisateur == None: self.utilisateur = ""
-
-            if self.utilisateur == None and self.motdepasse == None:
-                # Envoi standard
-                self.connection = smtplib.SMTP(self.hote, timeout=self.timeout)
+            if self.utilisateur is None and self.motdepasse is None:
+                if self.port is None:
+                    self.connection = smtplib.SMTP(self.hote, timeout=self.timeout)
+                else:
+                    self.connection = smtplib.SMTP(self.hote, self.port, timeout=self.timeout)
             else:
                 # Si identification SSL nécessaire :
                 self.connection = smtplib.SMTP(self.hote, self.port, timeout=self.timeout)
@@ -595,7 +604,7 @@ class Mailjet(Base_messagerie):
         # Récupération des clés Mailjet
         api_key = self.dict_parametres.get("api_key", None)
         api_secret = self.dict_parametres.get("api_secret", None)
-        if api_key == None or api_secret == None:
+        if not api_key or not api_secret:
             raise ValueError(u"Les codes MAILJET ne sont pas valides.")
 
         # Connexion à Mailjet
@@ -621,6 +630,8 @@ class Mailjet(Base_messagerie):
         index = 0
         for fichier in message.images:
             ctype, encoding = mimetypes.guess_type(fichier)
+            if ctype is None or encoding is not None:
+                ctype = "application/octet-stream"
             with open(fichier, "rb") as file:
                 Base64Content = base64.b64encode(file.read())
             nom_fichier = os.path.basename(fichier)
@@ -637,6 +648,8 @@ class Mailjet(Base_messagerie):
         # Intégration des pièces jointes
         for fichier in message.fichiers:
             ctype, encoding = mimetypes.guess_type(fichier)
+            if ctype is None or encoding is not None:
+                ctype = "application/octet-stream"
             with open(fichier, "rb") as file:
                 Base64Content = base64.b64encode(file.read())
             nom_fichier = os.path.basename(fichier)
