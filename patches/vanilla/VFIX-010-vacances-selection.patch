@@ -1,0 +1,5 @@
+--- a/teamworks/Ol/OL_Vacances.py
++++ b/teamworks/Ol/OL_Vacances.py
+@@ -409,1 +409,1 @@
+-        if self.ctrl_nom.GetSelection == -1 :
++        if self.ctrl_nom.GetSelection() == -1 :
