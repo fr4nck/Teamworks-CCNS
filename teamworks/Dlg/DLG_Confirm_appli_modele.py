@@ -93,7 +93,7 @@ class Dialog(wx.Dialog):
 
     def OnBoutonAnnuler(self, event):
         if hasattr(self, "thread1"):
-            if self.thread1.isAlive():
+            if self.thread1.is_alive():
                 self.thread1.abort()
         self.EndModal(wx.ID_CANCEL)
 
@@ -227,7 +227,7 @@ class Dialog(wx.Dialog):
         self.label_confirmation.SetLabel(message)
         
     def Importation_Feries(self):
-        """ Importation des dates des jours fériés """
+        """ Importation des dates de jours fériés """
 
         req = "SELECT * FROM jours_feries;"
         DB = GestionDB.DB()
