@@ -348,6 +348,7 @@ class DB:
         champs = champs[:-2] + ")"
         interr = interr[:-2] + ")"
         req = "INSERT INTO %s %s VALUES %s" % (nomTable, champs, interr)
+        newID = None
         
         try:
             # Enregistrement
@@ -650,19 +651,19 @@ class DB:
             
             listeChamps = self.GetListeChamps2(nomTable)
         
-            index = 0
-            varChamps = ""
-            varNomsChamps = ""
+            listeChampsConserves = []
+            champTrouve = False
             for nomTmp, typeTmp in listeChamps :
                 if nomTmp == nomChamp :
-                    listeChamps.pop(index)
-                    break
-                else:
-                    varChamps += "%s %s, " % (nomTmp, typeTmp)
-                    varNomsChamps += nomTmp + ", "
-                index += 1
-            varChamps = varChamps[:-2]
-            varNomsChamps = varNomsChamps[:-2]
+                    champTrouve = True
+                    continue
+                listeChampsConserves.append((nomTmp, typeTmp))
+
+            if champTrouve == False or len(listeChampsConserves) == 0 :
+                return False
+
+            varChamps = ", ".join(["%s %s" % (nomTmp, typeTmp) for nomTmp, typeTmp in listeChampsConserves])
+            varNomsChamps = ", ".join([nomTmp for nomTmp, typeTmp in listeChampsConserves])
         
             # Procédure de mise à jour de la table                
             req = ""
