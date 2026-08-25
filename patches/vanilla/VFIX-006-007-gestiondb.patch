@@ -1,0 +1,28 @@
+--- a/teamworks/GestionDB.py
++++ b/teamworks/GestionDB.py
+@@ -341,0 +342 @@
++        newID = None
+@@ -644,3 +645,2 @@
+-            index = 0
+-            varChamps = ""
+-            varNomsChamps = ""
++            listeChampsConserves = []
++            champTrouve = False
+@@ -649,8 +649,9 @@
+-                    listeChamps.pop(index)
+-                    break
+-                else:
+-                    varChamps += "%s %s, " % (nomTmp, typeTmp)
+-                    varNomsChamps += nomTmp + ", "
+-                index += 1
+-            varChamps = varChamps[:-2]
+-            varNomsChamps = varNomsChamps[:-2]
++                    champTrouve = True
++                    continue
++                listeChampsConserves.append((nomTmp, typeTmp))
++
++            if champTrouve == False or len(listeChampsConserves) == 0 :
++                return False
++
++            varChamps = ", ".join(["%s %s" % (nomTmp, typeTmp) for nomTmp, typeTmp in listeChampsConserves])
++            varNomsChamps = ", ".join([nomTmp for nomTmp, typeTmp in listeChampsConserves])
