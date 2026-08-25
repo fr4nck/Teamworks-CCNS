@@ -1,9 +1,11 @@
 from pathlib import Path
+import subprocess
 import sys
 
 
 ROOT = Path(__file__).resolve().parents[1]
 SMOKE = ROOT / "tools" / "smoke_secondary_person_dialog.py"
+MAILING_SMOKE = ROOT / "tools" / "smoke_mailing_preparation.py"
 RUNTIME = ROOT / "tools" / "smoke_runtime.py"
 ENTRYPOINT = ROOT / "teamworks" / "Teamworks.py"
 CORE = ROOT / "teamworks" / "Teamworks_core.py"
@@ -96,6 +98,34 @@ def test_person_smoke_rejects_blank_parameter_dialogs() -> None:
         "Jours fériés",
     ):
         assert f'("{label}",' in source
+
+
+def test_mailing_smoke_uses_real_mailer_without_network() -> None:
+    source = MAILING_SMOKE.read_text(encoding="utf-8")
+
+    assert "from Dlg import DLG_Mailer" in source
+    assert "_smoke_dialog.OnBoutonEnvoyer(None)" in source
+    assert "_smoke_email.Messagerie = lambda" in source
+    assert "TEAMWORKS_SMOKE_MAILING_STAGE:first-send" in source
+    assert "TEAMWORKS_SMOKE_MAILING_STAGE:second-send" in source
+    assert "TEAMWORKS_SMOKE_MAILING_PREPARATION_READY" in source
+    assert "ctrl_destinataires.donnees[0].pieces" in source
+
+
+def test_mailing_preparation_runs_in_real_windows_application() -> None:
+    if sys.platform != "win32":
+        return
+
+    completed = subprocess.run(
+        [sys.executable, str(MAILING_SMOKE)],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        timeout=240,
+        check=False,
+    )
+    output = "\n".join(part for part in (completed.stdout, completed.stderr) if part)
+    assert completed.returncode == 0, output
 
 
 def test_blackbox_hooks_real_wx_mainloop_on_windows(tmp_path, monkeypatch) -> None:
