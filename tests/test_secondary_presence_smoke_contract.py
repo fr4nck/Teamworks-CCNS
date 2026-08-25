@@ -6,6 +6,8 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 SMOKE = ROOT / "tools" / "smoke_secondary_presence_dialog.py"
 PDF_SMOKE = ROOT / "tools" / "smoke_planning_pdf.py"
+MODEL_SMOKE = ROOT / "tools" / "smoke_planning_models.py"
+CONFIRM_MODEL_DIALOG = ROOT / "teamworks" / "Dlg" / "DLG_Confirm_appli_modele.py"
 RUNTIME = ROOT / "tools" / "smoke_runtime.py"
 ENTRYPOINT = ROOT / "teamworks" / "Teamworks.py"
 CORE = ROOT / "teamworks" / "Teamworks_core.py"
@@ -83,6 +85,51 @@ def test_planning_pdf_runs_in_real_windows_application() -> None:
     assert completed.returncode == 0, output
     assert "TEAMWORKS_SMOKE_PLANNING_PDF_READY" in output, output
     assert "TEAMWORKS_SMOKE_PLANNING_PDF_FAILED" not in output, output
+
+
+def test_planning_models_smoke_qualifies_recurrence_and_guards() -> None:
+    source = MODEL_SMOKE.read_text(encoding="utf-8")
+
+    assert "DLG_Application_modele" in source
+    assert "DLG_Confirm_appli_modele" in source
+    assert 'date(2099, 12, 21)' in source
+    assert 'date(2099, 12, 28)' in source
+    assert '("type", "hebdo")' in source
+    assert '("jour", 1)' in source
+    assert "EnregistrementTaches(_smoke_generated_tasks)" in source
+    assert "anti-duplicate" in source
+    assert "overlap" in source
+    assert '"chevauch" in message.lower()' in source
+    assert "grid-readback" in source
+    assert "TEAMWORKS_SMOKE_PLANNING_MODELS_READY" in source
+    assert "DELETE FROM modeles_taches" in source
+    assert "DELETE FROM modeles_planning" in source
+    assert "DELETE FROM presences" in source
+
+
+def test_model_confirmation_uses_python3_thread_api() -> None:
+    source = CONFIRM_MODEL_DIALOG.read_text(encoding="utf-8")
+
+    assert ".isAlive()" not in source
+    assert ".is_alive()" in source
+
+
+def test_planning_models_runs_in_real_windows_application() -> None:
+    if sys.platform != "win32":
+        return
+
+    completed = subprocess.run(
+        [sys.executable, str(MODEL_SMOKE)],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        timeout=300,
+        check=False,
+    )
+    output = "\n".join(part for part in (completed.stdout, completed.stderr) if part)
+    assert completed.returncode == 0, output
+    assert "TEAMWORKS_SMOKE_PLANNING_MODELS_READY" in output, output
+    assert "TEAMWORKS_SMOKE_PLANNING_MODELS_FAILED" not in output, output
 
 
 def test_presence_smoke_always_writes_a_diagnostic() -> None:
