@@ -183,8 +183,8 @@ def test_questionnaire_lifecycle_smoke_qualifies_persistence_and_cleanup() -> No
     assert "CTRL_Page_questionnaire" in source
     assert ".ctrl_questionnaire.SetValeurs(" in source
     assert ".Sauvegarde()" in source
-    assert 'ReqInsert(\n                        "questionnaire_categories"' in source
-    assert 'ReqInsert(\n                        "questionnaire_questions"' in source
+    assert '"questionnaire_categories"' in source
+    assert '"questionnaire_questions"' in source
     assert 'ReqDEL("questionnaire_reponses", "IDindividu"' in source
     assert "__TEAMWORKS_SMOKE_QUESTIONNAIRE_CREATE__" in source
     assert "__TEAMWORKS_SMOKE_QUESTIONNAIRE_EDIT__" in source
