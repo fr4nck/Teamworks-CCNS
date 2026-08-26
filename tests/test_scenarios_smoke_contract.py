@@ -71,6 +71,15 @@ def test_scenario_grid_resolves_its_dialog_without_staticbox_hierarchy_assumptio
     assert "self.parent = parent.GetParent()" not in source
 
 
+def test_scenario_dialog_loads_text_controls_with_values_under_phoenix() -> None:
+    source = SCENARIO_DIALOG.read_text(encoding="utf-8")
+
+    assert "self.ctrl_nom.SetValue(nom)" in source
+    assert "self.ctrl_description.SetValue(str(description))" in source
+    assert "self.ctrl_nom.SetLabel(nom)" not in source
+    assert "self.ctrl_description.SetLabel(str(description))" not in source
+
+
 def test_scenarios_lifecycle_runs_in_real_windows_application() -> None:
     if sys.platform != "win32":
         return
