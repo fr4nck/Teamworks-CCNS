@@ -7,6 +7,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SMOKE = ROOT / "tools" / "smoke_secondary_person_dialog.py"
 PERSON_LIFECYCLE_SMOKE = ROOT / "tools" / "smoke_person_lifecycle.py"
 EXPENSES_LIFECYCLE_SMOKE = ROOT / "tools" / "smoke_expenses_lifecycle.py"
+SCENARIOS_LIFECYCLE_SMOKE = ROOT / "tools" / "smoke_scenarios_lifecycle.py"
 MAILING_SMOKE = ROOT / "tools" / "smoke_mailing_preparation.py"
 SENDER_CONFIG_SMOKE = ROOT / "tools" / "smoke_sender_config.py"
 SENDER_CONFIG = ROOT / "teamworks" / "Dlg" / "DLG_Saisie_email_exp.py"
@@ -189,6 +190,22 @@ def test_expenses_lifecycle_runs_in_real_windows_application() -> None:
         text=True,
         capture_output=True,
         timeout=240,
+        check=False,
+    )
+    output = "\n".join(part for part in (completed.stdout, completed.stderr) if part)
+    assert completed.returncode == 0, output
+
+
+def test_scenarios_lifecycle_runs_in_real_windows_application() -> None:
+    if sys.platform != "win32":
+        return
+
+    completed = subprocess.run(
+        [sys.executable, str(SCENARIOS_LIFECYCLE_SMOKE)],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        timeout=180,
         check=False,
     )
     output = "\n".join(part for part in (completed.stdout, completed.stderr) if part)
