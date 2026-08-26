@@ -30,6 +30,7 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 import tempfile as _smoke_tempfile
                 import zipfile as _smoke_zipfile
                 import GestionDB as _smoke_gestiondb
+                from Utils import UTILS_Rapport_bugs as _smoke_bug_reports
                 from Dlg import DLG_Fiche_individuelle as _smoke_person
                 from Dlg import DLG_Enregistrement
                 from Dlg import DLG_Config_questionnaires
@@ -128,6 +129,24 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 assert _smoke_dialog.AnnulationImpossible is True
                 assert not _smoke_dialog.bitmap_button_annuler.IsEnabled()
                 _smoke_dialog.Destroy()
+                wx.Yield()
+
+                print("TEAMWORKS_SMOKE_PERSON_STAGE:bug-report", flush=True)
+                _smoke_crash_dir = _smoke_tempfile.mkdtemp(prefix="teamworks-crash-dialog-")
+                _smoke_crash_path = _smoke_os.path.join(_smoke_crash_dir, "crash-smoke.txt")
+                with open(_smoke_crash_path, "w", encoding="utf-8") as _smoke_file:
+                    _smoke_file.write("rapport technique smoke")
+                _smoke_crash_dialog = _smoke_bug_reports.DLG_Rapport(
+                    frame,
+                    texte="rapport technique smoke",
+                    chemin_rapport=_smoke_crash_path,
+                )
+                _smoke_assert_populated(_smoke_crash_dialog, "Rapport de crash")
+                assert _smoke_crash_dialog.bouton_envoyer.GetLabel() == "Envoyer le rapport"
+                assert _smoke_crash_dialog.bouton_envoyer.IsEnabled()
+                _smoke_crash_dialog.Destroy()
+                _smoke_os.remove(_smoke_crash_path)
+                _smoke_os.rmdir(_smoke_crash_dir)
                 wx.Yield()
 
                 print("TEAMWORKS_SMOKE_PERSON_STAGE:parametrage", flush=True)
