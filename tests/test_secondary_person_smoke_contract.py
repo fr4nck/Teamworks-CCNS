@@ -6,6 +6,8 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 SMOKE = ROOT / "tools" / "smoke_secondary_person_dialog.py"
 PERSON_LIFECYCLE_SMOKE = ROOT / "tools" / "smoke_person_lifecycle.py"
+QUESTIONNAIRE_LIFECYCLE_SMOKE = ROOT / "tools" / "smoke_questionnaire_lifecycle.py"
+QUESTIONNAIRE_CORE = ROOT / "teamworks" / "Ctrl" / "CTRL_Questionnaire.py"
 EXPENSES_LIFECYCLE_SMOKE = ROOT / "tools" / "smoke_expenses_lifecycle.py"
 SCENARIOS_LIFECYCLE_SMOKE = ROOT / "tools" / "smoke_scenarios_lifecycle.py"
 MAILING_SMOKE = ROOT / "tools" / "smoke_mailing_preparation.py"
@@ -140,6 +142,62 @@ def test_person_lifecycle_runs_in_real_windows_application() -> None:
 
     completed = subprocess.run(
         [sys.executable, str(PERSON_LIFECYCLE_SMOKE)],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        timeout=240,
+        check=False,
+    )
+    output = "\n".join(part for part in (completed.stdout, completed.stderr) if part)
+    assert completed.returncode == 0, output
+
+
+def test_questionnaire_set_values_iterates_all_categories() -> None:
+    source = QUESTIONNAIRE_CORE.read_text(encoding="utf-8")
+    method = source.split("    def SetValeurs(self", 1)[1].split("    def OnContextMenu", 1)[0]
+
+    assert "for IDcategorie in self.listeIDcategorie" in method
+    assert 'self.dictCategories[IDcategorie]["questions"]' in method
+    assert "if track.IDquestion in dictValeurs" in method
+
+
+def test_questionnaire_lifecycle_smoke_qualifies_persistence_and_cleanup() -> None:
+    source = QUESTIONNAIRE_LIFECYCLE_SMOKE.read_text(encoding="utf-8")
+
+    for marker in (
+        "TEAMWORKS_SMOKE_QUESTIONNAIRE_STAGE:fixtures",
+        "TEAMWORKS_SMOKE_QUESTIONNAIRE_STAGE:create-page",
+        "TEAMWORKS_SMOKE_QUESTIONNAIRE_STAGE:set-values",
+        "TEAMWORKS_SMOKE_QUESTIONNAIRE_STAGE:create-save",
+        "TEAMWORKS_SMOKE_QUESTIONNAIRE_STAGE:create-readback",
+        "TEAMWORKS_SMOKE_QUESTIONNAIRE_STAGE:reopen-readback",
+        "TEAMWORKS_SMOKE_QUESTIONNAIRE_STAGE:edit-save",
+        "TEAMWORKS_SMOKE_QUESTIONNAIRE_STAGE:edit-readback",
+        "TEAMWORKS_SMOKE_QUESTIONNAIRE_STAGE:final-reopen",
+        "TEAMWORKS_SMOKE_QUESTIONNAIRE_STAGE:cleanup",
+        "TEAMWORKS_SMOKE_QUESTIONNAIRE_LIFECYCLE_READY",
+        "TEAMWORKS_SMOKE_QUESTIONNAIRE_LIFECYCLE_FAILED",
+    ):
+        assert marker in source
+
+    assert "CTRL_Page_questionnaire" in source
+    assert ".ctrl_questionnaire.SetValeurs(" in source
+    assert ".Sauvegarde()" in source
+    assert 'ReqInsert(\n                        "questionnaire_categories"' in source
+    assert 'ReqInsert(\n                        "questionnaire_questions"' in source
+    assert 'ReqDEL("questionnaire_reponses", "IDindividu"' in source
+    assert "__TEAMWORKS_SMOKE_QUESTIONNAIRE_CREATE__" in source
+    assert "__TEAMWORKS_SMOKE_QUESTIONNAIRE_EDIT__" in source
+    assert "PATCHED.unlink(missing_ok=True)" in source
+    assert "PATCHED_CORE.unlink(missing_ok=True)" in source
+
+
+def test_questionnaire_lifecycle_runs_in_real_windows_application() -> None:
+    if sys.platform != "win32":
+        return
+
+    completed = subprocess.run(
+        [sys.executable, str(QUESTIONNAIRE_LIFECYCLE_SMOKE)],
         cwd=ROOT,
         text=True,
         capture_output=True,
