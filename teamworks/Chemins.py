@@ -63,7 +63,7 @@ except Exception:
 
 
 def GetStaticPath(fichier=""):
-    """Retourne le chemin Static ou l'asset de marque généré au runtime."""
+    """Retourne le chemin Static ou un override runtime sûr."""
     normalized = str(fichier).replace("\\", "/")
     if normalized in ("Images/Special/Logo_splash.png", "Images/16x16/Logo.png"):
         try:
@@ -76,6 +76,17 @@ def GetStaticPath(fichier=""):
                 return override
         except Exception:
             pass
+
+    # Style B : ne remplace qu'un ancien pictogramme dont le rôle sémantique
+    # est univoque et seulement si l'asset SVG correspondant est présent.
+    # Toute erreur ou absence d'asset retombe silencieusement sur le PNG legacy.
+    try:
+        from Utils import UTILS_Icones_pmsl
+        override = UTILS_Icones_pmsl.GetLegacyOverridePath(normalized)
+        if override:
+            return override
+    except Exception:
+        pass
 
     chemin = os.path.join(REP_COURANT, "Static")
     return os.path.join(chemin, fichier)
