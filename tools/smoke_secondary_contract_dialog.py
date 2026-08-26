@@ -134,6 +134,52 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 assert _smoke_group == "G1"
                 assert abs(float(_smoke_saved_salary) - float(_smoke_salary)) < 0.01
 
+                print("TEAMWORKS_SMOKE_CONTRACT_STAGE:document-selector", flush=True)
+                import Chemins as _smoke_paths
+                from Dlg import DLG_Selection_type_document as _smoke_document_selector
+                _smoke_document_buttons = [
+                    (
+                        _smoke_paths.GetStaticPath("Images/BoutonsImages/Imprimer_doc_DUE.png"),
+                        "DUE",
+                    ),
+                    (
+                        _smoke_paths.GetStaticPath("Images/BoutonsImages/Imprimer_doc_contrat.png"),
+                        "Contrat",
+                    ),
+                ]
+                _smoke_selector = _smoke_document_selector.Dialog(
+                    frame,
+                    size=(450, 335),
+                    listeBoutons=_smoke_document_buttons,
+                    type="contrats",
+                )
+                _smoke_selector.Show()
+                wx.Yield()
+                assert _smoke_selector.GetSize().GetWidth() >= 450
+                assert _smoke_selector.GetSize().GetHeight() >= 335
+                for _smoke_button_index in range(1, 3):
+                    _smoke_button = getattr(_smoke_selector, "bouton_%d" % _smoke_button_index)
+                    assert _smoke_button.GetSize().GetHeight() >= 200
+                _smoke_selector.Destroy()
+
+                print("TEAMWORKS_SMOKE_CONTRACT_STAGE:mailmerge", flush=True)
+                from Utils import UTILS_Publipostage_donnees as _smoke_mailmerge_data
+                from Dlg import DLG_Publiposteur_contrat as _smoke_mailmerge
+                _smoke_print_data = _smoke_mailmerge_data.GetDictDonnees(
+                    categorie="contrat",
+                    listeID=[_smoke_created_contract_id],
+                )
+                _smoke_mailmerge_dialog = _smoke_mailmerge.Dialog(
+                    frame,
+                    "",
+                    dictDonnees=_smoke_print_data,
+                )
+                assert _smoke_mailmerge_dialog.page4.listCtrl.parent is _smoke_mailmerge_dialog.page4
+                _smoke_mailmerge_dialog.page3.numChoix = 1
+                _smoke_mailmerge_dialog.page4.MAJaffichage()
+                assert _smoke_mailmerge_dialog.page4.choixLogiciel == 1
+                _smoke_mailmerge_dialog.Destroy()
+
                 print("TEAMWORKS_SMOKE_CONTRACT_DIALOG_READY", flush=True)
                 _smoke_dialog.Destroy()
             except Exception:
