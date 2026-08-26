@@ -611,7 +611,7 @@ class Dialog(wx.Dialog):
 class Tableau(gridlib.Grid): 
     def __init__(self, parent):
         gridlib.Grid.__init__(self, parent, -1, size=(200, 200), style=wx.WANTS_CHARS)
-        self.parent = parent.GetParent()
+        self.parent = wx.GetTopLevelParent(self)
         self.IDscenario = self.parent.IDscenario
         self.nbreErreursReport = 0
         self.moveTo = None
