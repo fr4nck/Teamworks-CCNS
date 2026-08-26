@@ -370,10 +370,10 @@ class Dialog(wx.Dialog):
         for IDscenario, IDpersonne, nom, description, mode_heure, detail_mois, date_debut, date_fin, toutes_categories in listeDonnees :
             # Nom
             if nom == None : nom = ""
-            self.ctrl_nom.SetLabel(nom)
+            self.ctrl_nom.SetValue(nom)
             # Description
             if description == None : description = ""
-            self.ctrl_description.SetLabel(str(description))
+            self.ctrl_description.SetValue(str(description))
             # Personne
             self.SetPersonne(IDpersonne)
             # Période
