@@ -47,6 +47,14 @@ Ce pourcentage mesure le développement fonctionnel et son intégration automati
 - stabiliser la lecture persistée des versions de grille seulement dans un lot dédié et testé ;
 - conserver la veille réglementaire descriptive tant qu'une validation métier/juridique n'a pas autorisé son activation automatique.
 
+## Rapports de crash
+
+Le dialogue de crash peut envoyer, après confirmation explicite, le seul rapport
+technique `.txt` à `multimedia@pelemele.org`. L'envoi utilise l'adresse expéditeur
+par défaut déjà configurée dans Teamworks ; en son absence, aucun envoi n'a lieu et
+le fichier reste disponible dans le dossier `Logs`. Le destinataire est centralisé
+dans `UTILS_Envoi_rapport_bug.py` afin d'être remplacé lors du passage en release.
+
 ## Références principales
 
 - `ROADMAP.md`

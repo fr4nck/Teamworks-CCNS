@@ -108,6 +108,16 @@ def test_person_smoke_rejects_blank_parameter_dialogs() -> None:
         assert f'("{label}",' in source
 
 
+def test_person_smoke_opens_the_bug_report_dialog_with_send_enabled() -> None:
+    source = SMOKE.read_text(encoding="utf-8")
+
+    assert "TEAMWORKS_SMOKE_PERSON_STAGE:bug-report" in source
+    assert "UTILS_Rapport_bugs" in source
+    assert "DLG_Rapport(" in source
+    assert 'bouton_envoyer.GetLabel() == "Envoyer le rapport"' in source
+    assert "bouton_envoyer.IsEnabled()" in source
+
+
 def test_person_lifecycle_smoke_qualifies_create_edit_list_and_cleanup() -> None:
     source = PERSON_LIFECYCLE_SMOKE.read_text(encoding="utf-8")
 

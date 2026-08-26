@@ -15,6 +15,7 @@ from Utils.UTILS_Traduction import _
 from Utils import UTILS_Blackbox
 from Utils import UTILS_Config
 from Utils import UTILS_Crash
+from Utils import UTILS_Envoi_rapport_bug
 from Utils import UTILS_Fichiers
 
 
@@ -348,6 +349,7 @@ class DLG_Rapport(wx.Dialog):
 
         self.bouton_dossier = wx.Button(self, wx.ID_ANY, _(u"Ouvrir le dossier Logs"))
         self.bouton_copier = wx.Button(self, wx.ID_ANY, _(u"Copier le rapport"))
+        self.bouton_envoyer = wx.Button(self, wx.ID_ANY, _(u"Envoyer le rapport"))
         self.bouton_fermer = wx.Button(self, wx.ID_CANCEL, _(u"Fermer"))
 
         self.label_titre.SetFont(self.label_titre.GetFont().Bold())
@@ -355,7 +357,10 @@ class DLG_Rapport(wx.Dialog):
 
         self.Bind(wx.EVT_BUTTON, self.OnBoutonDossier, self.bouton_dossier)
         self.Bind(wx.EVT_BUTTON, self.OnBoutonCopier, self.bouton_copier)
+        self.Bind(wx.EVT_BUTTON, self.OnBoutonEnvoyer, self.bouton_envoyer)
         self.Bind(wx.EVT_BUTTON, self.OnBoutonFermer, self.bouton_fermer)
+
+        self.bouton_envoyer.Enable(bool(chemin_rapport and os.path.isfile(chemin_rapport)))
 
         self.__do_layout()
         _copier_texte(texte)
@@ -370,6 +375,7 @@ class DLG_Rapport(wx.Dialog):
         boutons = wx.BoxSizer(wx.HORIZONTAL)
         boutons.Add(self.bouton_dossier, 0, wx.RIGHT, 8)
         boutons.Add(self.bouton_copier, 0, wx.RIGHT, 8)
+        boutons.Add(self.bouton_envoyer, 0, wx.RIGHT, 8)
         boutons.AddStretchSpacer(1)
         boutons.Add(self.bouton_fermer, 0)
         sizer.Add(boutons, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, 12)
@@ -395,6 +401,50 @@ class DLG_Rapport(wx.Dialog):
 
     def OnBoutonCopier(self, event):
         _copier_texte(self.ctrl_rapport.GetValue())
+
+    def OnBoutonEnvoyer(self, event):
+        destinataire = UTILS_Envoi_rapport_bug.DESTINATAIRE_RAPPORTS_BUGS
+        confirmation = wx.MessageDialog(
+            self,
+            _(
+                u"Envoyer le rapport technique à %s ?\n\n"
+                u"Seul le fichier .txt affiché sera joint. Il ne contient ni donnée "
+                u"métier ni contenu de la base. L'adresse expéditeur par défaut de "
+                u"Teamworks sera utilisée."
+            ) % destinataire,
+            _(u"Envoi du rapport de crash"),
+            wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION,
+        )
+        reponse = confirmation.ShowModal()
+        confirmation.Destroy()
+        if reponse != wx.ID_YES:
+            return
+
+        self.bouton_envoyer.Enable(False)
+        try:
+            wx.BeginBusyCursor()
+            UTILS_Envoi_rapport_bug.EnvoyerRapport(
+                self.chemin_rapport,
+                version=_VERSION_ACTIVE,
+            )
+        except UTILS_Envoi_rapport_bug.ErreurEnvoiRapport as err:
+            wx.MessageBox(
+                _(u"Le rapport n'a pas été envoyé.\n\n%s\n\nLe fichier reste disponible dans Logs.") % err,
+                _(u"Envoi impossible"),
+                wx.OK | wx.ICON_ERROR,
+                parent=self,
+            )
+        else:
+            wx.MessageBox(
+                _(u"Le rapport a bien été envoyé à %s.") % destinataire,
+                _(u"Rapport envoyé"),
+                wx.OK | wx.ICON_INFORMATION,
+                parent=self,
+            )
+        finally:
+            if wx.IsBusy():
+                wx.EndBusyCursor()
+            self.bouton_envoyer.Enable(True)
 
     def OnBoutonFermer(self, event):
         self.EndModal(wx.ID_CANCEL)

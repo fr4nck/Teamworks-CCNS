@@ -13,6 +13,7 @@ if str(TEAMWORKS) not in sys.path:
 
 from Utils import UTILS_Blackbox  # noqa: E402
 from Utils import UTILS_Crash  # noqa: E402
+from Utils import UTILS_Envoi_rapport_bug  # noqa: E402
 
 
 def test_exception_report_is_written_with_runtime_context(tmp_path: Path) -> None:
@@ -165,5 +166,82 @@ def test_crash_dialog_source_exposes_logs_folder() -> None:
     source = (TEAMWORKS / "Utils" / "UTILS_Rapport_bugs.py").read_text(encoding="utf-8")
     assert "Ouvrir le dossier Logs" in source
     assert "Copier le rapport" in source
+    assert "Envoyer le rapport" in source
+    assert "UTILS_Envoi_rapport_bug.EnvoyerRapport" in source
     assert "Boucle wxPython" in source
     assert "threading.excepthook" in source
+
+
+def test_bug_report_email_uses_fixed_recipient_and_safe_attachment(tmp_path: Path) -> None:
+    report = tmp_path / "crash-test.txt"
+    report.write_text("rapport technique sûr", encoding="utf-8")
+    calls = []
+
+    class FakeMessage:
+        def __init__(self, **kwargs):
+            self.__dict__.update(kwargs)
+
+    class FakeMailer:
+        def Connecter(self):
+            calls.append("connect")
+
+        def Envoyer(self, message):
+            calls.append(message)
+            return True
+
+        def Fermer(self):
+            calls.append("close")
+
+    class FakeEmailModule:
+        Message = FakeMessage
+
+        @staticmethod
+        def GetAdresseExpDefaut():
+            return {
+                "moteur": "smtp",
+                "smtp": "smtp.example.test",
+                "port": 587,
+                "utilisateur": "sender",
+                "motdepasse": "secret",
+                "adresse": "sender@example.test",
+                "nom_adresse": "Teamworks",
+                "startTLS": True,
+                "parametres": None,
+            }
+
+        @staticmethod
+        def Messagerie(**kwargs):
+            calls.append(kwargs)
+            return FakeMailer()
+
+    recipient = UTILS_Envoi_rapport_bug.EnvoyerRapport(
+        str(report),
+        version="0.9-test",
+        module_email=FakeEmailModule,
+    )
+
+    assert recipient == "multimedia@pelemele.org"
+    message = next(call for call in calls if isinstance(call, FakeMessage))
+    assert message.destinataires == ["multimedia@pelemele.org"]
+    assert message.fichiers == [str(report)]
+    assert "0.9-test" in message.sujet
+    assert calls[-1] == "close"
+
+
+def test_bug_report_email_requires_configured_sender(tmp_path: Path) -> None:
+    report = tmp_path / "crash-test.txt"
+    report.write_text("rapport", encoding="utf-8")
+
+    class NoSenderEmailModule:
+        @staticmethod
+        def GetAdresseExpDefaut():
+            return None
+
+    try:
+        UTILS_Envoi_rapport_bug.EnvoyerRapport(
+            str(report), module_email=NoSenderEmailModule
+        )
+    except UTILS_Envoi_rapport_bug.ErreurEnvoiRapport as err:
+        assert "expéditeur" in str(err)
+    else:
+        raise AssertionError("Une configuration expéditeur absente doit bloquer l'envoi")
