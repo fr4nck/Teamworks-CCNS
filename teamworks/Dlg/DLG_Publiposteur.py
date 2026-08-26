@@ -1026,7 +1026,7 @@ class Page4(wx.Panel):
         self.label_titre = wx.StaticText(self, -1, _(u"3. Choix du document de publipostage"))
         self.label_intro = wx.StaticText(self, -1, _(u"Sélectionnez un fichier dans la liste ou importez-en un en cliquant sur 'importer'."))
         
-        self.listCtrl = ListCtrl_fichiers(self.sizer_choix_staticbox)
+        self.listCtrl = ListCtrl_fichiers(self.sizer_choix_staticbox, controller=self)
         
         self.bouton_importer = wx.BitmapButton(self.sizer_choix_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Inbox.png"), wx.BITMAP_TYPE_ANY))
         self.bouton_actualiser = wx.BitmapButton(self.sizer_choix_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Actualiser.png"), wx.BITMAP_TYPE_ANY))
@@ -1381,11 +1381,14 @@ La liste des mots-clés disponibles est présentée dans le cadre ci-contre. Dou
 
 
 class ListCtrl_fichiers(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorterMixin):
-    def __init__(self, parent):
+    def __init__(self, parent, controller=None):
         wx.ListCtrl.__init__( self, parent, -1, style=wx.LC_REPORT|wx.LC_VIRTUAL|wx.LC_SINGLE_SEL)
         
         self.criteres = ""
-        self.parent = parent
+        # ``parent`` doit être le wx.StaticBox pour respecter le parentage
+        # Phoenix. Le contrôleur métier reste toutefois la Page4 : les actions
+        # et le filtrage ne doivent jamais chercher choixLogiciel sur le cadre.
+        self.parent = controller or parent
 
         # Initialisation des images
         tailleIcones = 16
@@ -1468,7 +1471,7 @@ class ListCtrl_fichiers(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.Col
         self.SelectionChoixModele()
         
     def SelectionChoixModele(self):
-        choixModele = self.GetParent().choixModele
+        choixModele = self.parent.choixModele
         if choixModele == "" : return
         
         for index in range(self.GetItemCount()) :

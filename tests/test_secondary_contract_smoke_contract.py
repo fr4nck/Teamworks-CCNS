@@ -49,6 +49,8 @@ def test_contract_smoke_exercises_ccns_creation_and_database_readback() -> None:
     assert "TEAMWORKS_SMOKE_CONTRACT_STAGE:validation" in source
     assert "TEAMWORKS_SMOKE_CONTRACT_STAGE:save" in source
     assert "TEAMWORKS_SMOKE_CONTRACT_STAGE:database-readback" in source
+    assert "TEAMWORKS_SMOKE_CONTRACT_STAGE:document-selector" in source
+    assert "TEAMWORKS_SMOKE_CONTRACT_STAGE:mailmerge" in source
     assert 'IDcontrat=0' in source
     assert '_SelectContractTypeCode("CDI")' in source
     assert '_SelectConvention("CCNS")' in source
@@ -60,6 +62,9 @@ def test_contract_smoke_exercises_ccns_creation_and_database_readback() -> None:
     assert "_smoke_dialog.ValidationPages()" in source
     assert "SELECT IDcontrat, convention_code, ccns_group, gross_monthly_salary" in source
     assert 'ReqDEL("contrats", "IDcontrat", _smoke_created_contract_id)' in source
+    assert "_smoke_button.GetSize().GetHeight() >= 200" in source
+    assert "page4.listCtrl.parent is _smoke_mailmerge_dialog.page4" in source
+    assert "_smoke_mailmerge_dialog.page4.MAJaffichage()" in source
     assert "TEAMWORKS_SMOKE_CONTRACT_DIALOG_READY" in source
     assert "TEAMWORKS_SMOKE_CONTRACT_DIALOG_FAILED" in source
     assert "PATCHED.unlink(missing_ok=True)" in source

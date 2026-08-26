@@ -21,7 +21,13 @@ class Dialog(wx.Dialog):
     def __init__(self, parent, size=(550, 335), listeBoutons=None, type=None):
         if listeBoutons is None:
             listeBoutons = []
-        wx.Dialog.__init__(self, parent, -1, title=_(u"Sélection du type de document"))
+        wx.Dialog.__init__(
+            self,
+            parent,
+            -1,
+            title=_(u"Sélection du type de document"),
+            size=size,
+        )
         self.parent = parent
         self.choix = None
         self.type = type
@@ -31,7 +37,12 @@ class Dialog(wx.Dialog):
         # Création des boutons de commandes
         index = 1
         for image, infobulle in self.listeBoutons :
-            bouton = wx.BitmapButton(self, index, wx.Bitmap(image, wx.BITMAP_TYPE_ANY))
+            bitmap = wx.Bitmap(image, wx.BITMAP_TYPE_ANY)
+            bouton = wx.BitmapButton(self, index, bitmap)
+            # wxPython 4.3 ne déduit plus toujours la hauteur d'un BitmapButton
+            # depuis son image. Sans taille minimale, les aperçus 155x200 sont
+            # écrasés en bandelettes d'une vingtaine de pixels sous Windows.
+            bouton.SetMinSize((bitmap.GetWidth() + 12, bitmap.GetHeight() + 12))
             setattr(self, "bouton_%s" % index, bouton)
             bouton.SetToolTip(wx.ToolTip(infobulle))
             self.Bind(wx.EVT_BUTTON, self.OnBoutonClic, bouton)
@@ -49,22 +60,27 @@ class Dialog(wx.Dialog):
 
     def __set_properties(self):
         self.bouton_annuler.SetToolTip(wx.ToolTip("Cliquez ici pour annuler"))
-        self.SetMinSize((500, -1))
+        self.SetMinSize(self.GetSize())
 
     def __do_layout(self):
-        sizer_base = wx.BoxSizer(wx.VERTICAL)
         grid_sizer_base = wx.FlexGridSizer(rows=4, cols=1, vgap=0, hgap=0)
         
         grid_sizer_base.Add(self.label_intro, 1, wx.ALL|wx.EXPAND, 10)
         
-        grid_sizer_commandes = wx.FlexGridSizer(1, len(self.listeBoutons), 2, 2)
+        grid_sizer_commandes = wx.FlexGridSizer(1, len(self.listeBoutons), 10, 10)
         for index in range(1, len(self.listeBoutons)+1) :
-            grid_sizer_commandes.Add(getattr(self, "bouton_%s" % index), 0, wx.EXPAND, 10)
-        grid_sizer_commandes.AddGrowableCol(0)
-        grid_sizer_commandes.AddGrowableCol(1)
-        if len(self.listeBoutons) > 2 :
-            grid_sizer_commandes.AddGrowableCol(2)
-        grid_sizer_base.Add(grid_sizer_commandes, 1, wx.LEFT|wx.RIGHT|wx.BOTTOM|wx.EXPAND, 10)
+            grid_sizer_commandes.Add(
+                getattr(self, "bouton_%s" % index),
+                0,
+                wx.ALIGN_CENTER,
+                0,
+            )
+        grid_sizer_base.Add(
+            grid_sizer_commandes,
+            0,
+            wx.LEFT|wx.RIGHT|wx.BOTTOM|wx.ALIGN_CENTER_HORIZONTAL,
+            10,
+        )
         
         grid_sizer_base.Add((10, 10), 1, wx.EXPAND | wx.ALL, 0)
         
@@ -77,8 +93,6 @@ class Dialog(wx.Dialog):
         grid_sizer_base.AddGrowableCol(0)
         grid_sizer_base.Add(grid_sizer_boutons, 1, wx.LEFT|wx.RIGHT|wx.BOTTOM|wx.EXPAND, 10)
         self.SetSizer(grid_sizer_base)
-        sizer_base.Add(self, 1, wx.EXPAND, 0)
-        grid_sizer_base.Fit(self)
         self.Layout()
         self.CentreOnScreen()       
 
