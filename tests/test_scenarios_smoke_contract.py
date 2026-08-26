@@ -64,6 +64,13 @@ def test_scenario_report_error_uses_the_grid_counter() -> None:
     assert "% self.ctrl_tableau.nbreErreursReport" in source
 
 
+def test_scenario_grid_resolves_its_dialog_without_staticbox_hierarchy_assumptions() -> None:
+    source = SCENARIO_DIALOG.read_text(encoding="utf-8")
+
+    assert "self.parent = wx.GetTopLevelParent(self)" in source
+    assert "self.parent = parent.GetParent()" not in source
+
+
 def test_scenarios_lifecycle_runs_in_real_windows_application() -> None:
     if sys.platform != "win32":
         return
