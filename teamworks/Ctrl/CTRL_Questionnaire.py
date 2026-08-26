@@ -541,7 +541,7 @@ class CTRL_couleur(wx.lib.colourselect.ColourSelect):
 ##    def SetValeur(self, valeur=None):
 ##        if valeur == None : valeur = u""
 ##        self.ctrl_poten.SetValue(valeur)
-##        self.OnKnob(None)
+##        self.OnSlider(None)
 ##
 ##    def SetValeurStr(self, valeur=None):
 ##        if valeur == None or valeur == "" : return
@@ -927,11 +927,14 @@ class CTRL(HTL.HyperTreeList):
                     dictValeurs[track.IDquestion] = track.GetValeurStr()
         return dictValeurs
 
-    def SetValeurs(self, dictValeurs={}):
+    def SetValeurs(self, dictValeurs=None):
         # Remplit le ctrl avec les valeurs données. Ex : {IDquestion : valeur} """
-        for track in self.dictCategories[IDcategorie]["questions"] :
-            if track.IDquestion in dictValeurs :
-                track.SetValeurStr(dictValeurs[track.IDquestion])
+        if dictValeurs is None:
+            return
+        for IDcategorie in self.listeIDcategorie:
+            for track in self.dictCategories[IDcategorie]["questions"]:
+                if track.IDquestion in dictValeurs:
+                    track.SetValeurStr(dictValeurs[track.IDquestion])
 
     def OnContextMenu(self, event):
         """Ouverture du menu contextuel """      
