@@ -1,0 +1,364 @@
+name: Temporary configurable bug recipient
+
+on:
+  push:
+    branches:
+      - diagnostics/configurable-bug-recipient
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: diagnostics/configurable-bug-recipient
+          fetch-depth: 0
+
+      - name: Appliquer le correctif
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new):
+              p = Path(path)
+              text = p.read_text(encoding="utf-8")
+              if new in text:
+                  return
+              if text.count(old) != 1:
+                  raise SystemExit(f"Précondition invalide dans {path}: {text.count(old)} occurrence(s)")
+              p.write_text(text.replace(old, new, 1), encoding="utf-8", newline="\n")
+
+          # Helper d'envoi : valeur configurée en base + fallback historique.
+          replace_once(
+              "teamworks/Utils/UTILS_Envoi_rapport_bug.py",
+              'DESTINATAIRE_RAPPORTS_BUGS = "multimedia@pelemele.org"\nTAILLE_MAX_RAPPORT = 2 * 1024 * 1024\n',
+              'DESTINATAIRE_RAPPORTS_BUGS_HISTORIQUE = "noethys@gmail.com"\n'
+              'CATEGORIE_PARAMETRE_RAPPORTS_BUGS = "maintenance"\n'
+              'NOM_PARAMETRE_RAPPORTS_BUGS = "adresse_rapport_bugs"\n'
+              'TAILLE_MAX_RAPPORT = 2 * 1024 * 1024\n',
+          )
+          replace_once(
+              "teamworks/Utils/UTILS_Envoi_rapport_bug.py",
+              'class ErreurEnvoiRapport(Exception):\n    """Erreur présentable à l\'utilisateur sans exposer la configuration mail."""\n\n\n',
+              '''class ErreurEnvoiRapport(Exception):
+              """Erreur présentable à l'utilisateur sans exposer la configuration mail."""
+
+
+          def _module_parametres(module_parametres=None):
+              if module_parametres is not None:
+                  return module_parametres
+              from Utils import UTILS_Parametres
+              return UTILS_Parametres
+
+
+          def GetAdresseRapportBugsConfiguree(module_parametres=None):
+              """Retourne uniquement la valeur explicitement configurée en base.
+
+              Une absence de paramètre, une valeur vide ou une base indisponible renvoie
+              une chaîne vide. La lecture ne crée pas le paramètre pendant un crash.
+              """
+              try:
+                  parametres = _module_parametres(module_parametres)
+                  if not parametres.TestParametre(
+                      categorie=CATEGORIE_PARAMETRE_RAPPORTS_BUGS,
+                      nom=NOM_PARAMETRE_RAPPORTS_BUGS,
+                  ):
+                      return ""
+                  valeur = parametres.Parametres(
+                      mode="get",
+                      categorie=CATEGORIE_PARAMETRE_RAPPORTS_BUGS,
+                      nom=NOM_PARAMETRE_RAPPORTS_BUGS,
+                      valeur="",
+                  )
+              except Exception:
+                  return ""
+              return valeur.strip() if isinstance(valeur, str) else ""
+
+
+          def SetAdresseRapportBugsConfiguree(adresse, module_parametres=None):
+              """Enregistre le destinataire partagé ; vide signifie fallback historique."""
+              valeur = adresse.strip() if isinstance(adresse, str) else ""
+              parametres = _module_parametres(module_parametres)
+              parametres.Parametres(
+                  mode="set",
+                  categorie=CATEGORIE_PARAMETRE_RAPPORTS_BUGS,
+                  nom=NOM_PARAMETRE_RAPPORTS_BUGS,
+                  valeur=valeur,
+              )
+              return valeur
+
+
+          def GetDestinataireRapportsBugs(module_parametres=None):
+              """Résout le destinataire effectif avec le comportement historique."""
+              return (
+                  GetAdresseRapportBugsConfiguree(module_parametres=module_parametres)
+                  or DESTINATAIRE_RAPPORTS_BUGS_HISTORIQUE
+              )
+
+
+          '''.replace("          ", ""),
+          )
+          replace_once(
+              "teamworks/Utils/UTILS_Envoi_rapport_bug.py",
+              'def EnvoyerRapport(chemin_rapport, version="", module_email=None):\n',
+              'def EnvoyerRapport(\n'
+              '    chemin_rapport,\n'
+              '    version="",\n'
+              '    module_email=None,\n'
+              '    destinataire=None,\n'
+              '    module_parametres=None,\n'
+              '):\n',
+          )
+          replace_once(
+              "teamworks/Utils/UTILS_Envoi_rapport_bug.py",
+              '    message = module_email.Message(\n        destinataires=[DESTINATAIRE_RAPPORTS_BUGS],\n',
+              '    destinataire = destinataire.strip() if isinstance(destinataire, str) else ""\n'
+              '    if not destinataire:\n'
+              '        destinataire = GetDestinataireRapportsBugs(\n'
+              '            module_parametres=module_parametres\n'
+              '        )\n\n'
+              '    message = module_email.Message(\n'
+              '        destinataires=[destinataire],\n',
+          )
+          replace_once(
+              "teamworks/Utils/UTILS_Envoi_rapport_bug.py",
+              '    return DESTINATAIRE_RAPPORTS_BUGS\n',
+              '    return destinataire\n',
+          )
+
+          # Dialogue de crash : confirmer et envoyer exactement au même destinataire résolu.
+          replace_once(
+              "teamworks/Utils/UTILS_Rapport_bugs.py",
+              '        destinataire = UTILS_Envoi_rapport_bug.DESTINATAIRE_RAPPORTS_BUGS\n',
+              '        destinataire = UTILS_Envoi_rapport_bug.GetDestinataireRapportsBugs()\n',
+          )
+          replace_once(
+              "teamworks/Utils/UTILS_Rapport_bugs.py",
+              '            UTILS_Envoi_rapport_bug.EnvoyerRapport(\n                self.chemin_rapport,\n                version=_VERSION_ACTIVE,\n            )\n',
+              '            UTILS_Envoi_rapport_bug.EnvoyerRapport(\n'
+              '                self.chemin_rapport,\n'
+              '                version=_VERSION_ACTIVE,\n'
+              '                destinataire=destinataire,\n'
+              '            )\n',
+          )
+
+          # Préférences : section Maintenance / Diagnostic, valeur partagée en base.
+          replace_once(
+              "teamworks/Dlg/DLG_Preferences.py",
+              'from Utils import UTILS_Customize, UTILS_Interface, UTILS_Styles\n',
+              'from Utils import (\n'
+              '    UTILS_Customize,\n'
+              '    UTILS_Envoi_rapport_bug,\n'
+              '    UTILS_Interface,\n'
+              '    UTILS_Styles,\n'
+              ')\n',
+          )
+          replace_once(
+              "teamworks/Dlg/DLG_Preferences.py",
+              '            title="Préférences d\'affichage",\n',
+              '            title="Préférences Teamworks-CCNS",\n',
+          )
+          replace_once(
+              "teamworks/Dlg/DLG_Preferences.py",
+              '        organisation_title = CTRL_Texte.Label(self.panel, "Organisation et références RH")\n',
+              '''        maintenance_title = CTRL_Texte.Label(self.panel, "Maintenance / Diagnostic")
+          main.Add(
+              maintenance_title,
+              0,
+              wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP,
+              padding,
+          )
+          self.adresse_rapport_bugs = wx.TextCtrl(self.panel)
+          self.adresse_rapport_bugs.SetValue(
+              UTILS_Envoi_rapport_bug.GetAdresseRapportBugsConfiguree()
+          )
+          main.Add(
+              self._ligne(
+                  self.panel,
+                  "Adresse de réception des rapports d'erreurs :",
+                  self.adresse_rapport_bugs,
+              ),
+              0,
+              wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP,
+              padding,
+          )
+          self.maintenance_info = CTRL_Texte.BodySecondary(
+              self.panel,
+              (
+                  "Laissez ce champ vide pour conserver le destinataire historique "
+                  "de l'auteur : noethys@gmail.com. Ce réglage est partagé par la base."
+              ),
+          )
+          main.Add(
+              self.maintenance_info,
+              0,
+              wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.TOP,
+              padding,
+          )
+
+          organisation_title = CTRL_Texte.Label(self.panel, "Organisation et références RH")
+          '''.replace("          ", ""),
+          )
+          replace_once(
+              "teamworks/Dlg/DLG_Preferences.py",
+              '        UTILS_Customize.SetValeur("interface", "echelle_police", scale)\n\n        try:\n',
+              '        UTILS_Customize.SetValeur("interface", "echelle_police", scale)\n\n'
+              '        try:\n'
+              '            UTILS_Envoi_rapport_bug.SetAdresseRapportBugsConfiguree(\n'
+              '                self.adresse_rapport_bugs.GetValue()\n'
+              '            )\n'
+              '        except Exception:\n'
+              '            wx.MessageBox(\n'
+              '                "Impossible d’enregistrer le destinataire des rapports d’erreurs dans la base.",\n'
+              '                "Préférences non enregistrées",\n'
+              '                wx.OK | wx.ICON_ERROR,\n'
+              '                parent=self,\n'
+              '            )\n'
+              '            return\n\n'
+              '        try:\n',
+          )
+
+          # Documentation.
+          replace_once(
+              "docs/04_CCNS_EXTENSIONS.md",
+              '''Le dialogue de crash peut envoyer, après confirmation explicite, le seul rapport
+          technique `.txt` à `multimedia@pelemele.org`. L'envoi utilise l'adresse expéditeur
+          par défaut déjà configurée dans Teamworks ; en son absence, aucun envoi n'a lieu et
+          le fichier reste disponible dans le dossier `Logs`. Le destinataire est centralisé
+          dans `UTILS_Envoi_rapport_bug.py` afin d'être remplacé lors du passage en release.
+          '''.replace("          ", ""),
+              '''Le dialogue de crash peut envoyer, après confirmation explicite, le seul rapport
+          technique `.txt` au destinataire partagé défini dans **Préférences → Maintenance /
+          Diagnostic**. Ce réglage est stocké dans la base sous `maintenance /
+          adresse_rapport_bugs`. Si le champ est vide ou absent, Teamworks conserve le
+          comportement historique et utilise `noethys@gmail.com`, l'adresse d'origine d'Ivan.
+          L'envoi utilise l'adresse expéditeur par défaut déjà configurée dans Teamworks ; en
+          son absence, aucun envoi n'a lieu et le fichier reste disponible dans `Logs`.
+          '''.replace("          ", ""),
+          )
+
+          # Tests : destinataire personnalisé, fallback historique et contrat UI.
+          test_path = Path("tests/test_tw187_crash_diagnostics.py")
+          test = test_path.read_text(encoding="utf-8")
+          test = test.replace(
+              'def test_bug_report_email_uses_fixed_recipient_and_safe_attachment(tmp_path: Path) -> None:\n',
+              'def test_bug_report_email_uses_configured_recipient_and_safe_attachment(tmp_path: Path) -> None:\n',
+              1,
+          )
+          old_call = '''    recipient = UTILS_Envoi_rapport_bug.EnvoyerRapport(
+              str(report),
+              version="0.9-test",
+              module_email=FakeEmailModule,
+          )
+
+          assert recipient == "multimedia@pelemele.org"
+          message = next(call for call in calls if isinstance(call, FakeMessage))
+          assert message.destinataires == ["multimedia@pelemele.org"]
+          '''.replace("          ", "")
+          new_call = '''    class FakeParams:
+              @staticmethod
+              def TestParametre(**kwargs):
+                  return True
+
+              @staticmethod
+              def Parametres(**kwargs):
+                  return "  bugs@example.org  "
+
+          recipient = UTILS_Envoi_rapport_bug.EnvoyerRapport(
+              str(report),
+              version="0.9-test",
+              module_email=FakeEmailModule,
+              module_parametres=FakeParams,
+          )
+
+          assert recipient == "bugs@example.org"
+          message = next(call for call in calls if isinstance(call, FakeMessage))
+          assert message.destinataires == ["bugs@example.org"]
+          '''.replace("          ", "")
+          if new_call not in test:
+              if old_call not in test:
+                  raise SystemExit("Bloc test d'envoi introuvable")
+              test = test.replace(old_call, new_call, 1)
+
+          extra = '''
+
+          def test_bug_report_recipient_falls_back_to_historical_address() -> None:
+              class MissingParams:
+                  @staticmethod
+                  def TestParametre(**kwargs):
+                      return False
+
+              assert (
+                  UTILS_Envoi_rapport_bug.GetDestinataireRapportsBugs(
+                      module_parametres=MissingParams
+                  )
+                  == "noethys@gmail.com"
+              )
+
+
+          def test_bug_report_recipient_blank_value_falls_back_to_historical_address() -> None:
+              class BlankParams:
+                  @staticmethod
+                  def TestParametre(**kwargs):
+                      return True
+
+                  @staticmethod
+                  def Parametres(**kwargs):
+                      return "   "
+
+              assert (
+                  UTILS_Envoi_rapport_bug.GetAdresseRapportBugsConfiguree(
+                      module_parametres=BlankParams
+                  )
+                  == ""
+              )
+              assert (
+                  UTILS_Envoi_rapport_bug.GetDestinataireRapportsBugs(
+                      module_parametres=BlankParams
+                  )
+                  == "noethys@gmail.com"
+              )
+
+
+          def test_bug_report_recipient_preference_contract_is_exposed() -> None:
+              preferences = (TEAMWORKS / "Dlg" / "DLG_Preferences.py").read_text(
+                  encoding="utf-8"
+              )
+              report_dialog = (TEAMWORKS / "Utils" / "UTILS_Rapport_bugs.py").read_text(
+                  encoding="utf-8"
+              )
+              assert "Maintenance / Diagnostic" in preferences
+              assert "Adresse de réception des rapports d'erreurs" in preferences
+              assert "SetAdresseRapportBugsConfiguree" in preferences
+              assert "GetDestinataireRapportsBugs()" in report_dialog
+              assert "destinataire=destinataire" in report_dialog
+          '''.replace("          ", "")
+          if "test_bug_report_recipient_falls_back_to_historical_address" not in test:
+              test += extra
+          test_path.write_text(test, encoding="utf-8", newline="\n")
+          PY
+
+      - name: Vérifier le lot
+        shell: bash
+        run: |
+          python -m pip install -q pytest
+          python -m compileall -q teamworks/Utils/UTILS_Envoi_rapport_bug.py teamworks/Utils/UTILS_Rapport_bugs.py teamworks/Dlg/DLG_Preferences.py
+          python -m pytest -q tests/test_tw187_crash_diagnostics.py
+          git diff --check
+
+      - name: Commit du correctif
+        shell: bash
+        run: |
+          if git diff --quiet -- teamworks/Utils/UTILS_Envoi_rapport_bug.py teamworks/Utils/UTILS_Rapport_bugs.py teamworks/Dlg/DLG_Preferences.py tests/test_tw187_crash_diagnostics.py docs/04_CCNS_EXTENSIONS.md; then
+            echo "Aucun changement à committer"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add teamworks/Utils/UTILS_Envoi_rapport_bug.py teamworks/Utils/UTILS_Rapport_bugs.py teamworks/Dlg/DLG_Preferences.py tests/test_tw187_crash_diagnostics.py docs/04_CCNS_EXTENSIONS.md
+          git commit -m "Diagnostics: rendre le destinataire des rapports configurable"
+          git push origin HEAD:diagnostics/configurable-bug-recipient
