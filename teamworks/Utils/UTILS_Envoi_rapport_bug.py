@@ -6,12 +6,66 @@
 import os
 
 
-DESTINATAIRE_RAPPORTS_BUGS = "multimedia@pelemele.org"
+DESTINATAIRE_RAPPORTS_BUGS_HISTORIQUE = "noethys@gmail.com"
+CATEGORIE_PARAMETRE_RAPPORTS_BUGS = "maintenance"
+NOM_PARAMETRE_RAPPORTS_BUGS = "adresse_rapport_bugs"
 TAILLE_MAX_RAPPORT = 2 * 1024 * 1024
 
 
 class ErreurEnvoiRapport(Exception):
     """Erreur présentable à l'utilisateur sans exposer la configuration mail."""
+
+
+def _module_parametres(module_parametres=None):
+    if module_parametres is not None:
+        return module_parametres
+    from Utils import UTILS_Parametres
+    return UTILS_Parametres
+
+
+def GetAdresseRapportBugsConfiguree(module_parametres=None):
+    """Retourne uniquement la valeur explicitement configurée en base.
+
+    Une absence de paramètre, une valeur vide ou une base indisponible renvoie
+    une chaîne vide. La lecture ne crée pas le paramètre pendant un crash.
+    """
+    try:
+        parametres = _module_parametres(module_parametres)
+        if not parametres.TestParametre(
+            categorie=CATEGORIE_PARAMETRE_RAPPORTS_BUGS,
+            nom=NOM_PARAMETRE_RAPPORTS_BUGS,
+        ):
+            return ""
+        valeur = parametres.Parametres(
+            mode="get",
+            categorie=CATEGORIE_PARAMETRE_RAPPORTS_BUGS,
+            nom=NOM_PARAMETRE_RAPPORTS_BUGS,
+            valeur="",
+        )
+    except Exception:
+        return ""
+    return valeur.strip() if isinstance(valeur, str) else ""
+
+
+def SetAdresseRapportBugsConfiguree(adresse, module_parametres=None):
+    """Enregistre le destinataire partagé ; vide signifie fallback historique."""
+    valeur = adresse.strip() if isinstance(adresse, str) else ""
+    parametres = _module_parametres(module_parametres)
+    parametres.Parametres(
+        mode="set",
+        categorie=CATEGORIE_PARAMETRE_RAPPORTS_BUGS,
+        nom=NOM_PARAMETRE_RAPPORTS_BUGS,
+        valeur=valeur,
+    )
+    return valeur
+
+
+def GetDestinataireRapportsBugs(module_parametres=None):
+    """Résout le destinataire effectif avec le comportement historique."""
+    return (
+        GetAdresseRapportBugsConfiguree(module_parametres=module_parametres)
+        or DESTINATAIRE_RAPPORTS_BUGS_HISTORIQUE
+    )
 
 
 def _valider_rapport(chemin_rapport):
@@ -30,7 +84,13 @@ def ConstruireSujet(version=""):
     return "Teamworks CCNS - rapport de crash - %s" % version
 
 
-def EnvoyerRapport(chemin_rapport, version="", module_email=None):
+def EnvoyerRapport(
+    chemin_rapport,
+    version="",
+    module_email=None,
+    destinataire=None,
+    module_parametres=None,
+):
     """Envoie un rapport sûr avec l'expéditeur par défaut de Teamworks.
 
     Aucun envoi n'est tenté sans adresse expéditeur configurée. ``module_email``
@@ -46,8 +106,14 @@ def EnvoyerRapport(chemin_rapport, version="", module_email=None):
             "Aucune adresse expéditeur par défaut n'est configurée dans Teamworks."
         )
 
+    destinataire = destinataire.strip() if isinstance(destinataire, str) else ""
+    if not destinataire:
+        destinataire = GetDestinataireRapportsBugs(
+            module_parametres=module_parametres
+        )
+
     message = module_email.Message(
-        destinataires=[DESTINATAIRE_RAPPORTS_BUGS],
+        destinataires=[destinataire],
         sujet=ConstruireSujet(version),
         texte_html=(
             "<p>Rapport technique automatique de Teamworks CCNS.</p>"
@@ -88,4 +154,4 @@ def EnvoyerRapport(chemin_rapport, version="", module_email=None):
             except Exception:
                 pass
 
-    return DESTINATAIRE_RAPPORTS_BUGS
+    return destinataire

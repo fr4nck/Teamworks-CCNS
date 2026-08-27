@@ -403,7 +403,7 @@ class DLG_Rapport(wx.Dialog):
         _copier_texte(self.ctrl_rapport.GetValue())
 
     def OnBoutonEnvoyer(self, event):
-        destinataire = UTILS_Envoi_rapport_bug.DESTINATAIRE_RAPPORTS_BUGS
+        destinataire = UTILS_Envoi_rapport_bug.GetDestinataireRapportsBugs()
         confirmation = wx.MessageDialog(
             self,
             _(
@@ -426,6 +426,7 @@ class DLG_Rapport(wx.Dialog):
             UTILS_Envoi_rapport_bug.EnvoyerRapport(
                 self.chemin_rapport,
                 version=_VERSION_ACTIVE,
+                destinataire=destinataire,
             )
         except UTILS_Envoi_rapport_bug.ErreurEnvoiRapport as err:
             wx.MessageBox(

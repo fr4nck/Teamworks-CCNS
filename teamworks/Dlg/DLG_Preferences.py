@@ -5,7 +5,12 @@
 import wx
 
 from Ctrl import CTRL_Texte
-from Utils import UTILS_Customize, UTILS_Interface, UTILS_Styles
+from Utils import (
+    UTILS_Customize,
+    UTILS_Envoi_rapport_bug,
+    UTILS_Interface,
+    UTILS_Styles,
+)
 
 
 class Dialog(wx.Dialog):
@@ -27,7 +32,7 @@ class Dialog(wx.Dialog):
     def __init__(self, parent):
         super().__init__(
             parent,
-            title="Préférences d'affichage",
+            title="Préférences Teamworks-CCNS",
             style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER,
         )
         UTILS_Styles.ApplyWindowProfile(self, "compact")
@@ -142,6 +147,41 @@ class Dialog(wx.Dialog):
             padding,
         )
 
+        maintenance_title = CTRL_Texte.Label(self.panel, "Maintenance / Diagnostic")
+        main.Add(
+            maintenance_title,
+            0,
+            wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP,
+            padding,
+        )
+        self.adresse_rapport_bugs = wx.TextCtrl(self.panel)
+        self.adresse_rapport_bugs.SetValue(
+            UTILS_Envoi_rapport_bug.GetAdresseRapportBugsConfiguree()
+        )
+        main.Add(
+            self._ligne(
+                self.panel,
+                "Adresse de réception des rapports d'erreurs :",
+                self.adresse_rapport_bugs,
+            ),
+            0,
+            wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP,
+            padding,
+        )
+        self.maintenance_info = CTRL_Texte.BodySecondary(
+            self.panel,
+            (
+                "Laissez ce champ vide pour conserver le destinataire historique "
+                "de l'auteur : noethys@gmail.com. Ce réglage est partagé par la base."
+            ),
+        )
+        main.Add(
+            self.maintenance_info,
+            0,
+            wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.TOP,
+            padding,
+        )
+
         organisation_title = CTRL_Texte.Label(self.panel, "Organisation et références RH")
         main.Add(
             organisation_title,
@@ -252,6 +292,19 @@ class Dialog(wx.Dialog):
         scale = str(self.scale.GetValue())
         UTILS_Customize.SetValeur("interface", "echelle_interface", scale)
         UTILS_Customize.SetValeur("interface", "echelle_police", scale)
+
+        try:
+            UTILS_Envoi_rapport_bug.SetAdresseRapportBugsConfiguree(
+                self.adresse_rapport_bugs.GetValue()
+            )
+        except Exception:
+            wx.MessageBox(
+                "Impossible d’enregistrer le destinataire des rapports d’erreurs dans la base.",
+                "Préférences non enregistrées",
+                wx.OK | wx.ICON_ERROR,
+                parent=self,
+            )
+            return
 
         try:
             from Utils import UTILS_Theme
