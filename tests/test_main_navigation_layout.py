@@ -44,7 +44,9 @@ def test_navigation_replaces_fixed_toolbook_geometry():
 
     assert "wx.Toolbook" not in calls
     assert "wx.Simplebook" not in calls
-    assert "wx.WrapSizer(wx.HORIZONTAL)" in source
+    assert "wx.WrapSizer(" in source
+    assert "wx.REMOVE_LEADING_SPACES" in source
+    assert "EXTEND_LAST_ON_EACH_LINE" in source
     assert "class BoutonNavigation(wx.Control)" in source
     assert "wx.ToggleButton" not in calls
     assert "self.sizer_pages = wx.BoxSizer(wx.VERTICAL)" in source
@@ -119,6 +121,7 @@ def test_navigation_wraps_instead_of_truncating_labels():
     source = _source()
 
     assert "wx.WrapSizer" in source
+    assert "wx.REMOVE_LEADING_SPACES" in source
     assert "Ellips" not in source
     assert "SetToolBitmapSize" not in source
 

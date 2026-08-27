@@ -177,7 +177,14 @@ class NavigationPrincipale(wx.Panel):
         self._active = True
 
         self.barre = wx.Panel(self, -1, name="barre_navigation_principale")
-        self.sizer_barre = wx.WrapSizer(wx.HORIZONTAL)
+        # Le drapeau par défaut de WrapSizer contient
+        # EXTEND_LAST_ON_EACH_LINE : sous Windows, la dernière entrée occupait
+        # donc tout le reliquat de la ligne. On conserve uniquement la gestion
+        # propre des espaces lors d'un retour à la ligne.
+        self.sizer_barre = wx.WrapSizer(
+            wx.HORIZONTAL,
+            wx.REMOVE_LEADING_SPACES,
+        )
         self.barre.SetSizer(self.sizer_barre)
 
         # Les pages restent directement enfants de NavigationPrincipale afin de

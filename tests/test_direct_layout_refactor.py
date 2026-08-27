@@ -157,7 +157,8 @@ def test_new_navigation_is_a_direct_replacement_component():
     calls = _called_names(NAVIGATION)
     assert "wx.Toolbook" not in calls
     assert "wx.Simplebook" not in calls
-    assert "wx.WrapSizer(wx.HORIZONTAL)" in source
+    assert "wx.WrapSizer(" in source
+    assert "wx.REMOVE_LEADING_SPACES" in source
     assert "class BoutonNavigation(wx.Control)" in source
     assert "SetMaxSize((largeur, hauteur))" in source
     assert "self.sizer_pages = wx.BoxSizer(wx.VERTICAL)" in source
