@@ -91,13 +91,13 @@ class Panel(wx.Panel):
 
     def Options(self):
         index = self.listCtrl.GetFirstSelected()
-        IDgadget = self.listCtrl.GetItemData(index)
-        
         if index == -1:
             dlg = wx.MessageDialog(self, _(u"Vous devez d'abord sélectionner un gadget dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
+
+        IDgadget = self.listCtrl.GetItemData(index)
         
         if IDgadget == 1 : # Dossiers incomplets
             from Dlg import DLG_Parametres_dossiers
@@ -138,6 +138,8 @@ class Panel(wx.Panel):
 
     def OnBoutonHaut(self, event):
         index = self.listCtrl.GetFirstSelected()
+        if index <= 0:
+            return
         IDgadget = self.listCtrl.GetItemData(index)
         position = index + 1
         
@@ -154,6 +156,8 @@ class Panel(wx.Panel):
 
     def OnBoutonBas(self, event):
         index = self.listCtrl.GetFirstSelected()
+        if index == -1 or index >= self.listCtrl.GetItemCount() - 1:
+            return
         IDgadget = self.listCtrl.GetItemData(index)
         position = index + 1
         
@@ -246,6 +250,10 @@ class ListCtrl(wx.ListCtrl, CheckListCtrlMixin):
 
     def OnItemSelected(self, event):
         index = self.GetFirstSelected()
+        if index == -1 or index >= len(self.listeGadgets):
+            self.OnItemDeselected(event)
+            return
+
         # Règle bouton haut
         if index == 0 :
             self.parent.bouton_haut.Enable(False)

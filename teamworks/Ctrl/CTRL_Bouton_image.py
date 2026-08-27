@@ -45,7 +45,7 @@ class CTRL(wx.Button):
         self.margesTexte = margesTexte
 
         # Vérifie que l'image est bien dans le dossier static
-        if "Static" not in self.cheminImage:
+        if self.cheminImage not in ("", None) and "Static" not in self.cheminImage:
             self.cheminImage = Chemins.GetStaticPath(self.cheminImage)
 
         # MAJ
@@ -53,12 +53,15 @@ class CTRL(wx.Button):
     
     def MAJ(self):
         # Redimensionne et ajoute des marges autour de l'image
-        if self.cheminImage not in ("", None) :
-            img = Image.open(self.cheminImage)
-            img = img.resize(self.tailleImage, Image.ANTIALIAS)
-            img = ImageOps.expand(img, border=self.margesImage)
-            img = PILtoWx(img) 
-            bmp = img.ConvertToBitmap()
+        if self.cheminImage not in ("", None) and os.path.isfile(self.cheminImage) :
+            try :
+                img = Image.open(self.cheminImage)
+                img = img.resize(self.tailleImage, Image.ANTIALIAS)
+                img = ImageOps.expand(img, border=self.margesImage)
+                img = PILtoWx(img) 
+                bmp = img.ConvertToBitmap()
+            except (IOError, OSError, ValueError) :
+                bmp = wx.NullBitmap
         else :
             bmp = wx.NullBitmap
             
