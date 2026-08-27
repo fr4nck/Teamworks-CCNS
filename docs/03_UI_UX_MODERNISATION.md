@@ -1,6 +1,6 @@
 # Teamworks — suivi UI/UX / thème graphique
 
-**Mise à jour : 25 août 2026**
+**Mise à jour : 27 août 2026**
 
 ## Objectif
 
@@ -48,9 +48,29 @@ Ce pourcentage ne signifie pas que tous les écrans sont visuellement parfaits. 
 - ne corriger que via les composants/tokens centraux lorsqu'un défaut est transversal ;
 - geler les retouches purement cosmétiques lourdes jusqu'après la première recette exploitable.
 
+## Fond d’accueil personnalisable — principe retenu
+
+Teamworks devra pouvoir reprendre le principe transversal défini dans `PMSL-Arch/docs/DESIGN_SYSTEM.md` pour les applications desktop.
+
+Cette fonction est **cosmétique et locale** ; elle ne doit pas modifier le métier, le thème global ni les données RH.
+
+Cadrage retenu :
+
+- choix entre fond Teamworks d’origine, éventuels fonds intégrés, `Aucun` et `Image personnalisée…` ;
+- image personnalisée stockée comme préférence locale utilisateur/poste, pas comme donnée partagée dans la base ;
+- curseur d’**atténuation / intensité** pour casser les grandes surfaces blanches ou adapter le confort visuel ;
+- pas de vraie transparence de fenêtre : utiliser un voile ou un mélange appliqué au fond pour rester robuste sous Windows/wxPython ;
+- si le fichier choisi est manquant ou illisible, retour automatique au fond d’origine ;
+- bouton explicite **Réinitialiser / Rétablir le fond d’origine** ;
+- aucune image personnelle ne doit être intégrée automatiquement à un paquet, une release ou une synchronisation ;
+- le réglage doit rester indépendant des thèmes Clair / Sombre / Système et ne jamais dégrader les contrastes fonctionnels des contrôles.
+
+**Statut : cadré, non implémenté.** À intégrer après la première recette exploitable, sauf opportunité technique à très faible risque.
+
 ## Références
 
 - `docs/CHARTE_GRAPHIQUE_TEAMWORKS.md`
 - `docs/33-modernisation-optimisation-sobriete-teamworks-ccns.md`
+- `PMSL-Arch/docs/DESIGN_SYSTEM.md`
 - `AGENTS.md`
 - chantier TW-189 et garde-fous associés
