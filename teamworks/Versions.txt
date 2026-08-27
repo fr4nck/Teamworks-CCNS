@@ -2,6 +2,17 @@ Version 2.1.3.1 :
 
 - Correction des valeurs float dans le publiposteur
 
+Vanilla bug-fix PMSL - 27/08/2026 :
+
+- Sécurisation des sauvegardes lorsque certains répertoires sont absents
+- Sécurisation des actions sur les gadgets lorsqu’aucun élément valide n’est sélectionné
+- Sécurisation de la navigation dans l’aperçu des emails aux limites de la liste ou lorsque celle-ci est vide
+- Absence ou chemin invalide d’une image décorative : le bouton ne provoque plus de plantage
+- Correction du contrôle de sélection dans la gestion des vacances (GetSelection())
+- Correction des appels GetValue() pour les répertoires de destination des sauvegardes
+- Aucun changement du schéma de base de données
+- Aucun ajout CCNS/PMSL, Python 3/Phoenix ou thème graphique : branche Vanilla historique uniquement corrigée
+
 Version 2.1.3.0 :
 
 - Correction de la légende dans les éditions annuelles et mensuelles
