@@ -158,11 +158,23 @@ class Dialog(wx.Dialog):
         self.adresse_rapport_bugs.SetValue(
             UTILS_Envoi_rapport_bug.GetAdresseRapportBugsConfiguree()
         )
+        self.reset_adresse_rapport_bugs = wx.Button(
+            self.panel,
+            label="Rétablir le réglage d'origine",
+        )
+        adresse_rapport_bugs = wx.BoxSizer(wx.HORIZONTAL)
+        adresse_rapport_bugs.Add(self.adresse_rapport_bugs, 1, wx.EXPAND)
+        adresse_rapport_bugs.Add(
+            self.reset_adresse_rapport_bugs,
+            0,
+            wx.LEFT,
+            field_gap,
+        )
         main.Add(
             self._ligne(
                 self.panel,
                 "Adresse de réception des rapports d'erreurs :",
-                self.adresse_rapport_bugs,
+                adresse_rapport_bugs,
             ),
             0,
             wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP,
@@ -227,6 +239,11 @@ class Dialog(wx.Dialog):
 
         self.Bind(wx.EVT_BUTTON, self.OnOrganisation, self.organisation_button)
         self.Bind(wx.EVT_BUTTON, self.OnReferencesAdmin, self.admin_button)
+        self.Bind(
+            wx.EVT_BUTTON,
+            self.OnResetAdresseRapportBugs,
+            self.reset_adresse_rapport_bugs,
+        )
         self.Bind(wx.EVT_BUTTON, self.OnOk, id=wx.ID_OK)
         self.Bind(wx.EVT_SIZE, self.OnSize)
         wx.CallAfter(self._ajuster_textes)
@@ -278,6 +295,11 @@ class Dialog(wx.Dialog):
             dialog.ShowModal()
         finally:
             dialog.Destroy()
+
+    def OnResetAdresseRapportBugs(self, event):
+        """Revient au comportement historique sans figer l'adresse dans la base."""
+        self.adresse_rapport_bugs.SetValue("")
+        self.adresse_rapport_bugs.SetFocus()
 
     def OnOk(self, event):
         accent_codes = [code for code, label in self.ACCENTS]

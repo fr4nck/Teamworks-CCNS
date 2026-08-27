@@ -313,5 +313,8 @@ def test_bug_report_recipient_preference_contract_is_exposed() -> None:
     assert "Maintenance / Diagnostic" in preferences
     assert "Adresse de réception des rapports d'erreurs" in preferences
     assert "SetAdresseRapportBugsConfiguree" in preferences
+    assert "Rétablir le réglage d'origine" in preferences
+    assert "def OnResetAdresseRapportBugs" in preferences
+    assert 'self.adresse_rapport_bugs.SetValue("")' in preferences
     assert "GetDestinataireRapportsBugs()" in report_dialog
     assert "destinataire=destinataire" in report_dialog
