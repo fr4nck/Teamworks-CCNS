@@ -162,7 +162,6 @@ jobs:
               '            title="Préférences d\'affichage",\n',
               '            title="Préférences Teamworks-CCNS",\n',
           )
-
           maintenance = textwrap.indent(textwrap.dedent('''\
           maintenance_title = CTRL_Texte.Label(self.panel, "Maintenance / Diagnostic")
           main.Add(
@@ -250,24 +249,8 @@ jobs:
               'def test_bug_report_email_uses_configured_recipient_and_safe_attachment(tmp_path: Path) -> None:',
               1,
           )
-          marker = '    recipient = UTILS_Envoi_rapport_bug.EnvoyerRapport(\n'
-          fake_params = textwrap.dedent('''\
-              class FakeParams:
-                  @staticmethod
-                  def TestParametre(**kwargs):
-                      return True
-
-                  @staticmethod
-                  def Parametres(**kwargs):
-                      return "  bugs@example.org  "
-
-          ''')
-          if "class FakeParams:" not in test:
-              if test.count(marker) != 1:
-                  raise SystemExit("Appel d'envoi test introuvable")
-              test = test.replace(marker, fake_params + marker, 1)
           target = '        module_email=FakeEmailModule,\n    )\n\n    assert recipient == "multimedia@pelemele.org"\n'
-          replacement = '        module_email=FakeEmailModule,\n        module_parametres=FakeParams,\n    )\n\n    assert recipient == "bugs@example.org"\n'
+          replacement = '        module_email=FakeEmailModule,\n        destinataire="bugs@example.org",\n    )\n\n    assert recipient == "bugs@example.org"\n'
           if replacement not in test:
               if target not in test:
                   raise SystemExit("Arguments test d'envoi introuvables")
@@ -305,16 +288,34 @@ jobs:
                       return "   "
 
               assert (
-                  UTILS_Envoi_rapport_bug.GetAdresseRapportBugsConfiguree(
-                      module_parametres=BlankParams
-                  )
-                  == ""
-              )
-              assert (
                   UTILS_Envoi_rapport_bug.GetDestinataireRapportsBugs(
                       module_parametres=BlankParams
                   )
                   == "noethys@gmail.com"
+              )
+
+
+          def test_bug_report_recipient_reads_configured_address() -> None:
+              class CustomParams:
+                  @staticmethod
+                  def TestParametre(**kwargs):
+                      return True
+
+                  @staticmethod
+                  def Parametres(**kwargs):
+                      return "  bugs@example.org  "
+
+              assert (
+                  UTILS_Envoi_rapport_bug.GetAdresseRapportBugsConfiguree(
+                      module_parametres=CustomParams
+                  )
+                  == "bugs@example.org"
+              )
+              assert (
+                  UTILS_Envoi_rapport_bug.GetDestinataireRapportsBugs(
+                      module_parametres=CustomParams
+                  )
+                  == "bugs@example.org"
               )
 
 
