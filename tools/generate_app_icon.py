@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Génère l'icône Teamworks-CCNS depuis la charte de pelemele.org."""
+"""Décline le master du logo Teamworks-CCNS pour Windows et wxPython."""
 
 from __future__ import annotations
 
 from pathlib import Path
 import shutil
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -20,58 +20,18 @@ PELEMELE_SLATE = "#314666"
 PELEMELE_DEEP_BLUE = "#044576"
 OFF_WHITE = "#FFFDF7"
 
-
-def _font_path() -> Path:
-    candidates = (
-        Path("C:/Windows/Fonts/seguisb.ttf"),
-        Path("C:/Windows/Fonts/arialbd.ttf"),
-        Path("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"),
-    )
-    for candidate in candidates:
-        if candidate.is_file():
-            return candidate
-    raise FileNotFoundError("Aucune police sans serif grasse adaptée à l'icône")
-
-
-def _centered_text(draw, area, text, font, fill):
-    left, top, right, bottom = area
-    bounds = draw.textbbox((0, 0), text, font=font)
-    width = bounds[2] - bounds[0]
-    height = bounds[3] - bounds[1]
-    x = left + (right - left - width) / 2 - bounds[0]
-    y = top + (bottom - top - height) / 2 - bounds[1]
-    draw.text((x, y), text, font=font, fill=fill)
+# Le master approuvé porte les libellés exacts "TW" et "CCNS". Il reste la
+# source de vérité afin que les déclinaisons ne dépendent pas des polices de la
+# machine qui exécute le packaging.
 
 
 def generate():
-    font_path = _font_path()
-    image = Image.new("RGBA", (1024, 1024), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(image)
+    if not MASTER.is_file():
+        raise FileNotFoundError(f"Master du logo introuvable : {MASTER}")
 
-    draw.rounded_rectangle(
-        (48, 48, 976, 976),
-        radius=210,
-        fill=PELEMELE_SLATE,
-        outline=PELEMELE_DEEP_BLUE,
-        width=22,
-    )
-    _centered_text(
-        draw,
-        (110, 125, 914, 660),
-        "TW",
-        ImageFont.truetype(str(font_path), 470),
-        PELEMELE_ORANGE,
-    )
-    _centered_text(
-        draw,
-        (150, 650, 874, 865),
-        "CCNS",
-        ImageFont.truetype(str(font_path), 170),
-        OFF_WHITE,
-    )
+    with Image.open(MASTER) as source:
+        image = source.convert("RGBA")
 
-    MASTER.parent.mkdir(parents=True, exist_ok=True)
-    image.save(MASTER, optimize=True)
     image.save(
         STATIC_ICO,
         format="ICO",
