@@ -718,7 +718,7 @@ class TreeCtrl_Sauvegarde(CT.CustomTreeCtrl):
             self.SetPyData(item, None)
             
             # Affiche les fichiers existants
-            listeFichiers = os.listdir(rep)
+            listeFichiers = os.listdir(rep) if os.path.isdir(rep) else []
             if len(listeFichiers) > 0 :
                 nbreFichiers = 0
                 for nomFichier in listeFichiers :
@@ -816,6 +816,8 @@ class Sauvegarde_auto():
         listeFichiers = []
         for typeSource, rep, extension in LISTE_SOURCES :
             if extension in listeElements :
+                if not os.path.isdir(rep) :
+                    continue
                 fichiersRep = os.listdir(rep)
                 for nomFichier in fichiersRep :
                     if nomFichier not in LISTE_INDESIRABLES :

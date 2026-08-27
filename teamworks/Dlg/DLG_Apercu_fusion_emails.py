@@ -111,6 +111,8 @@ class Dialog(wx.Dialog):
         self.CenterOnScreen() 
 
     def OnBoutonPremier(self, event): 
+        if not self.donnees:
+            return
         self.ctrl_adresse.Select(0)
         self.MAJ_apercu()
 
@@ -124,10 +126,12 @@ class Dialog(wx.Dialog):
 
     def OnBoutonAvancer(self, event): 
         index = self.ctrl_adresse.GetSelection()
-        if index < len(self.donnees) :
+        if 0 <= index < len(self.donnees) - 1 :
             self.Navigation(+1)
 
     def OnBoutonDernier(self, event): 
+        if not self.donnees:
+            return
         self.ctrl_adresse.Select(len(self.donnees)-1)
         self.MAJ_apercu()
 
@@ -140,8 +144,9 @@ class Dialog(wx.Dialog):
     
     def Navigation(self, sens=1):
         index = self.ctrl_adresse.GetSelection()
-        if index != -1 :
-            self.ctrl_adresse.Select(index+sens)
+        nouvel_index = index + sens
+        if index != -1 and 0 <= nouvel_index < len(self.donnees):
+            self.ctrl_adresse.Select(nouvel_index)
             self.MAJ_apercu()
     
     def MAJ_apercu(self):
