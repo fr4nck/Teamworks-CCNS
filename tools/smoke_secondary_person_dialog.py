@@ -56,6 +56,7 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 from Dlg import DLG_Saisie_procedure_sauvegarde
                 from Dlg import DLG_Emails_exp
                 from Dlg import DLG_Liste_contrats
+                from Dlg import DLG_Preferences
                 from Dlg import DLG_Vacances
                 from Dlg import DLG_Feries
 
@@ -151,6 +152,7 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
 
                 print("TEAMWORKS_SMOKE_PERSON_STAGE:parametrage", flush=True)
                 _smoke_parameter_dialogs = (
+                    ("Préférences d'affichage", DLG_Preferences.Dialog),
                     ("Enregistrement", DLG_Enregistrement.Dialog),
                     ("Questionnaires", DLG_Config_questionnaires.Dialog),
                     ("Qualifications", DLG_Config_types_diplomes.Dialog),

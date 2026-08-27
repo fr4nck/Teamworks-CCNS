@@ -48,6 +48,16 @@ Ce pourcentage ne signifie pas que tous les écrans sont visuellement parfaits. 
 - ne corriger que via les composants/tokens centraux lorsqu'un défaut est transversal ;
 - geler les retouches purement cosmétiques lourdes jusqu'après la première recette exploitable.
 
+## Préférences d'affichage
+
+Le crash de la version `0.9.0` à l'ouverture des préférences provenait d'une
+compréhension Python 3 placée dans la classe du dialogue et référençant une
+table de libellés définie dans cette même portée de classe. La table est désormais
+au niveau du module, le dialogue est ouvert par le parcours Windows réel et un
+garde AST recherche cette famille de défauts dans toutes les sources Python. Ce
+parcours réel a également détecté puis éliminé une combinaison contradictoire
+`wx.EXPAND` / alignement dans un `BoxSizer`, devenue bloquante avec wxPython 4.3.
+
 ## Fond d’accueil personnalisable — principe retenu
 
 Teamworks devra pouvoir reprendre le principe transversal défini dans `PMSL-Arch/docs/DESIGN_SYSTEM.md` pour les applications desktop.

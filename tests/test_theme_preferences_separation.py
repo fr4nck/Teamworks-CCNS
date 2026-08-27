@@ -96,7 +96,9 @@ def test_interface_stores_accent_separately_and_syncs_legacy_appearance():
 
 def test_preferences_expose_accent_appearance_and_interface_scale():
     source = _source(PREFERENCES_PATH)
+    module_scope = source.split("class Dialog", 1)[0]
     assert 'THEMES = ["Système", "Clair", "Sombre"]' in source
+    assert "_APPEARANCE_LABELS =" in module_scope
     assert "ACCENTS =" in source
     assert "APPEARANCES =" in source
     assert '"Accent :"' in source
@@ -129,6 +131,8 @@ def test_preferences_use_charter_typography_spacing_and_window_profile():
     assert 'UTILS_Styles.GetLayoutSpacing("dialog_padding")' in source
     assert "SetPointSize" not in source
     assert "SetSize((560, 430))" not in source
+    assert "wx.ALIGN_CENTER_VERTICAL | wx.EXPAND" not in source
+    assert "ligne.Add(control, 3, wx.EXPAND)" in source
 
 
 def test_global_theme_targets_dense_desktop_controls():

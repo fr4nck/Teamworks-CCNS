@@ -85,6 +85,7 @@ def test_person_smoke_rejects_blank_parameter_dialogs() -> None:
         assert marker in source
 
     for label in (
+        "Préférences d'affichage",
         "Enregistrement",
         "Questionnaires",
         "Qualifications",
