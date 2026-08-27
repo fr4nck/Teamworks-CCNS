@@ -172,7 +172,7 @@ def test_crash_dialog_source_exposes_logs_folder() -> None:
     assert "threading.excepthook" in source
 
 
-def test_bug_report_email_uses_fixed_recipient_and_safe_attachment(tmp_path: Path) -> None:
+def test_bug_report_email_uses_configured_recipient_and_safe_attachment(tmp_path: Path) -> None:
     report = tmp_path / "crash-test.txt"
     report.write_text("rapport technique sûr", encoding="utf-8")
     calls = []
@@ -218,11 +218,12 @@ def test_bug_report_email_uses_fixed_recipient_and_safe_attachment(tmp_path: Pat
         str(report),
         version="0.9-test",
         module_email=FakeEmailModule,
+        destinataire="bugs@example.org",
     )
 
-    assert recipient == "multimedia@pelemele.org"
+    assert recipient == "bugs@example.org"
     message = next(call for call in calls if isinstance(call, FakeMessage))
-    assert message.destinataires == ["multimedia@pelemele.org"]
+    assert message.destinataires == ["bugs@example.org"]
     assert message.fichiers == [str(report)]
     assert "0.9-test" in message.sujet
     assert calls[-1] == "close"
@@ -245,3 +246,75 @@ def test_bug_report_email_requires_configured_sender(tmp_path: Path) -> None:
         assert "expéditeur" in str(err)
     else:
         raise AssertionError("Une configuration expéditeur absente doit bloquer l'envoi")
+
+def test_bug_report_recipient_falls_back_to_historical_address() -> None:
+    class MissingParams:
+        @staticmethod
+        def TestParametre(**kwargs):
+            return False
+
+    assert (
+        UTILS_Envoi_rapport_bug.GetDestinataireRapportsBugs(
+            module_parametres=MissingParams
+        )
+        == "noethys@gmail.com"
+    )
+
+
+def test_bug_report_recipient_blank_value_falls_back_to_historical_address() -> None:
+    class BlankParams:
+        @staticmethod
+        def TestParametre(**kwargs):
+            return True
+
+        @staticmethod
+        def Parametres(**kwargs):
+            return "   "
+
+    assert (
+        UTILS_Envoi_rapport_bug.GetDestinataireRapportsBugs(
+            module_parametres=BlankParams
+        )
+        == "noethys@gmail.com"
+    )
+
+
+def test_bug_report_recipient_reads_configured_address() -> None:
+    class CustomParams:
+        @staticmethod
+        def TestParametre(**kwargs):
+            return True
+
+        @staticmethod
+        def Parametres(**kwargs):
+            return "  bugs@example.org  "
+
+    assert (
+        UTILS_Envoi_rapport_bug.GetAdresseRapportBugsConfiguree(
+            module_parametres=CustomParams
+        )
+        == "bugs@example.org"
+    )
+    assert (
+        UTILS_Envoi_rapport_bug.GetDestinataireRapportsBugs(
+            module_parametres=CustomParams
+        )
+        == "bugs@example.org"
+    )
+
+
+def test_bug_report_recipient_preference_contract_is_exposed() -> None:
+    preferences = (TEAMWORKS / "Dlg" / "DLG_Preferences.py").read_text(
+        encoding="utf-8"
+    )
+    report_dialog = (TEAMWORKS / "Utils" / "UTILS_Rapport_bugs.py").read_text(
+        encoding="utf-8"
+    )
+    assert "Maintenance / Diagnostic" in preferences
+    assert "Adresse de réception des rapports d'erreurs" in preferences
+    assert "SetAdresseRapportBugsConfiguree" in preferences
+    assert "Rétablir le réglage d'origine" in preferences
+    assert "def OnResetAdresseRapportBugs" in preferences
+    assert 'self.adresse_rapport_bugs.SetValue("")' in preferences
+    assert "GetDestinataireRapportsBugs()" in report_dialog
+    assert "destinataire=destinataire" in report_dialog

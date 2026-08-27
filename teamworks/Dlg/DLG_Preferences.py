@@ -5,7 +5,12 @@
 import wx
 
 from Ctrl import CTRL_Texte
-from Utils import UTILS_Customize, UTILS_Interface, UTILS_Styles
+from Utils import (
+    UTILS_Customize,
+    UTILS_Envoi_rapport_bug,
+    UTILS_Interface,
+    UTILS_Styles,
+)
 
 
 class Dialog(wx.Dialog):
@@ -27,7 +32,7 @@ class Dialog(wx.Dialog):
     def __init__(self, parent):
         super().__init__(
             parent,
-            title="Préférences d'affichage",
+            title="Préférences Teamworks-CCNS",
             style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER,
         )
         UTILS_Styles.ApplyWindowProfile(self, "compact")
@@ -142,6 +147,53 @@ class Dialog(wx.Dialog):
             padding,
         )
 
+        maintenance_title = CTRL_Texte.Label(self.panel, "Maintenance / Diagnostic")
+        main.Add(
+            maintenance_title,
+            0,
+            wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP,
+            padding,
+        )
+        self.adresse_rapport_bugs = wx.TextCtrl(self.panel)
+        self.adresse_rapport_bugs.SetValue(
+            UTILS_Envoi_rapport_bug.GetAdresseRapportBugsConfiguree()
+        )
+        self.reset_adresse_rapport_bugs = wx.Button(
+            self.panel,
+            label="Rétablir le réglage d'origine",
+        )
+        adresse_rapport_bugs = wx.BoxSizer(wx.HORIZONTAL)
+        adresse_rapport_bugs.Add(self.adresse_rapport_bugs, 1, wx.EXPAND)
+        adresse_rapport_bugs.Add(
+            self.reset_adresse_rapport_bugs,
+            0,
+            wx.LEFT,
+            field_gap,
+        )
+        main.Add(
+            self._ligne(
+                self.panel,
+                "Adresse de réception des rapports d'erreurs :",
+                adresse_rapport_bugs,
+            ),
+            0,
+            wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP,
+            padding,
+        )
+        self.maintenance_info = CTRL_Texte.BodySecondary(
+            self.panel,
+            (
+                "Laissez ce champ vide pour conserver le destinataire historique "
+                "de l'auteur : noethys@gmail.com. Ce réglage est partagé par la base."
+            ),
+        )
+        main.Add(
+            self.maintenance_info,
+            0,
+            wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.TOP,
+            padding,
+        )
+
         organisation_title = CTRL_Texte.Label(self.panel, "Organisation et références RH")
         main.Add(
             organisation_title,
@@ -187,6 +239,11 @@ class Dialog(wx.Dialog):
 
         self.Bind(wx.EVT_BUTTON, self.OnOrganisation, self.organisation_button)
         self.Bind(wx.EVT_BUTTON, self.OnReferencesAdmin, self.admin_button)
+        self.Bind(
+            wx.EVT_BUTTON,
+            self.OnResetAdresseRapportBugs,
+            self.reset_adresse_rapport_bugs,
+        )
         self.Bind(wx.EVT_BUTTON, self.OnOk, id=wx.ID_OK)
         self.Bind(wx.EVT_SIZE, self.OnSize)
         wx.CallAfter(self._ajuster_textes)
@@ -239,6 +296,11 @@ class Dialog(wx.Dialog):
         finally:
             dialog.Destroy()
 
+    def OnResetAdresseRapportBugs(self, event):
+        """Revient au comportement historique sans figer l'adresse dans la base."""
+        self.adresse_rapport_bugs.SetValue("")
+        self.adresse_rapport_bugs.SetFocus()
+
     def OnOk(self, event):
         accent_codes = [code for code, label in self.ACCENTS]
         appearance_codes = [code for code, label in self.APPEARANCES]
@@ -252,6 +314,19 @@ class Dialog(wx.Dialog):
         scale = str(self.scale.GetValue())
         UTILS_Customize.SetValeur("interface", "echelle_interface", scale)
         UTILS_Customize.SetValeur("interface", "echelle_police", scale)
+
+        try:
+            UTILS_Envoi_rapport_bug.SetAdresseRapportBugsConfiguree(
+                self.adresse_rapport_bugs.GetValue()
+            )
+        except Exception:
+            wx.MessageBox(
+                "Impossible d’enregistrer le destinataire des rapports d’erreurs dans la base.",
+                "Préférences non enregistrées",
+                wx.OK | wx.ICON_ERROR,
+                parent=self,
+            )
+            return
 
         try:
             from Utils import UTILS_Theme

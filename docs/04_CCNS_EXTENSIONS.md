@@ -50,10 +50,12 @@ Ce pourcentage mesure le développement fonctionnel et son intégration automati
 ## Rapports de crash
 
 Le dialogue de crash peut envoyer, après confirmation explicite, le seul rapport
-technique `.txt` à `multimedia@pelemele.org`. L'envoi utilise l'adresse expéditeur
-par défaut déjà configurée dans Teamworks ; en son absence, aucun envoi n'a lieu et
-le fichier reste disponible dans le dossier `Logs`. Le destinataire est centralisé
-dans `UTILS_Envoi_rapport_bug.py` afin d'être remplacé lors du passage en release.
+technique `.txt` au destinataire partagé défini dans **Préférences → Maintenance /
+Diagnostic**. Ce réglage est stocké dans la base sous `maintenance /
+adresse_rapport_bugs`. Si le champ est vide ou absent, Teamworks conserve le
+comportement historique et utilise `noethys@gmail.com`, l'adresse d'origine d'Ivan.
+L'envoi utilise l'adresse expéditeur par défaut déjà configurée dans Teamworks ; en
+son absence, aucun envoi n'a lieu et le fichier reste disponible dans `Logs`.
 
 ## Références principales
 
