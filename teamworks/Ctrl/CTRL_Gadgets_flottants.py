@@ -45,6 +45,23 @@ class EspaceGadgets(wx.Panel):
     def _token_tuple(self, token):
         return self._couleur_tuple(UTILS_Interface.GetToken(token))
 
+    def _AppliquerThemeManager(self):
+        """Raccorde le fond et les séparateurs AUI à la palette centrale."""
+        surface = UTILS_Interface.GetToken("surface")
+        self.couleur_fond = self._couleur_tuple(surface)
+        self.SetBackgroundColour(surface)
+        if self.manager is None:
+            return
+        art = self.manager.GetArtProvider()
+        couleurs = (
+            (aui.AUI_DOCKART_BACKGROUND_COLOUR, "surface"),
+            (aui.AUI_DOCKART_SASH_COLOUR, "surface_container_high"),
+            (aui.AUI_DOCKART_BORDER_COLOUR, "outline_variant"),
+            (aui.AUI_DOCKART_GRIPPER_COLOUR, "outline"),
+        )
+        for identifiant, token in couleurs:
+            art.SetColour(identifiant, UTILS_Interface.GetToken(token))
+
     def AppliquerThemeGadget(self, gadget):
         appliquer = getattr(gadget, "AppliquerTheme", None)
         if appliquer is not None:
@@ -147,6 +164,7 @@ class EspaceGadgets(wx.Panel):
         try:
             self._DetruirePanes()
             self.manager = aui.AuiManager(self)
+            self._AppliquerThemeManager()
             for index, (nom, parametres) in enumerate(self.listeGadgets):
                 if parametres.get("affichage", True):
                     self._CreerGadget(nom, parametres, index)
@@ -263,6 +281,7 @@ class EspaceGadgets(wx.Panel):
 
         self.Freeze()
         try:
+            self._AppliquerThemeManager()
             for nom in existants - souhaites:
                 self._SupprimerGadget(nom)
             for nom in souhaites - existants:

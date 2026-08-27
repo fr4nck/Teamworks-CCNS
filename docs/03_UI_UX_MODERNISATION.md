@@ -58,6 +58,20 @@ garde AST recherche cette famille de défauts dans toutes les sources Python. Ce
 parcours réel a également détecté puis éliminé une combinaison contradictoire
 `wx.EXPAND` / alignement dans un `BoxSizer`, devenue bloquante avec wxPython 4.3.
 
+## Cohérence du dashboard sombre
+
+La recette Windows de la version `0.9.1` a révélé deux défauts du composant
+d'accueil moderne : le dernier bouton de navigation pouvait absorber toute la
+largeur disponible et le fond libre du gestionnaire AUI conservait le gris
+natif Windows au milieu de surfaces sombres. Ces anomalies sont propres à la
+modernisation UI/UX, pas au socle Vanilla.
+
+La navigation principale utilise désormais un contrôle compact peint avec les
+tokens sémantiques, indépendant du chrome natif des `ToggleButton`. Le fond,
+les séparateurs, les bordures et les poignées AUI sont raccordés à la même
+palette centrale. Le correctif reste transversal au dashboard et ne modifie
+aucune couleur de contenu personnalisée par l'utilisateur dans un gadget.
+
 ## Fond d’accueil personnalisable — principe retenu
 
 Teamworks devra pouvoir reprendre le principe transversal défini dans `PMSL-Arch/docs/DESIGN_SYSTEM.md` pour les applications desktop.

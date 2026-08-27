@@ -47,36 +47,123 @@ def BitmapNavigation(chemin, taille_base=24):
     return bitmap
 
 
-class BoutonNavigation(wx.ToggleButton):
-    """Bouton de section dont la taille suit réellement son contenu."""
+class BoutonNavigation(wx.Control):
+    """Bouton de section compact, dessiné avec la palette Teamworks.
+
+    Les ``ToggleButton`` natifs ne respectent pas toujours leur couleur sous
+    Windows et peuvent absorber la largeur restante dans un ``WrapSizer``.
+    Ce contrôle garde donc une géométrie déterministe et un rendu identique
+    pour les apparences claire et sombre.
+    """
 
     def __init__(self, parent, label, bitmap=wx.NullBitmap):
-        wx.ToggleButton.__init__(self, parent, -1, label=label)
-        if bitmap is not None and bitmap.IsOk():
-            self.SetBitmap(bitmap)
-            self.SetBitmapPosition(wx.LEFT)
-            self.SetBitmapMargins((_dimension(6), 0))
+        wx.Control.__init__(
+            self, parent, -1, name="bouton_navigation_%s" % label.lower(),
+            style=wx.BORDER_NONE | wx.WANTS_CHARS,
+        )
+        self.label = label
+        self.bitmap = bitmap if bitmap is not None else wx.NullBitmap
+        self._actif = False
+        self._survol = False
+        self.SetBackgroundStyle(wx.BG_STYLE_PAINT)
         self._AjusterTaille()
         self.AppliquerTheme(False)
+        self.Bind(wx.EVT_PAINT, self.OnPaint)
+        self.Bind(wx.EVT_ENTER_WINDOW, self.OnEnter)
+        self.Bind(wx.EVT_LEAVE_WINDOW, self.OnLeave)
+        self.Bind(wx.EVT_LEFT_UP, self.OnClick)
+        self.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
 
     def _AjusterTaille(self):
-        # GetBestSize mesure le libellé complet avec la police courante : aucun
-        # texte n'est volontairement rogné lorsque l'utilisateur passe à 120 %.
-        best = self.GetBestSize()
-        hauteur = max(best.GetHeight(), _dimension(40, minimum=40))
-        largeur = max(best.GetWidth(), _dimension(92, minimum=80))
+        dc = wx.ClientDC(self)
+        dc.SetFont(self.GetFont())
+        largeur_texte, hauteur_texte = dc.GetTextExtent(self.label)
+        largeur_icone = self.bitmap.GetWidth() if self.bitmap.IsOk() else 0
+        hauteur_icone = self.bitmap.GetHeight() if self.bitmap.IsOk() else 0
+        espace_icone = _dimension(8) if largeur_icone else 0
+        largeur = max(
+            largeur_texte + largeur_icone + espace_icone + 2 * _dimension(14),
+            _dimension(92, minimum=80),
+        )
+        hauteur = max(
+            hauteur_texte + 2 * _dimension(8),
+            hauteur_icone + 2 * _dimension(6),
+            _dimension(40, minimum=40),
+        )
         self.SetMinSize((largeur, hauteur))
+        self.SetMaxSize((largeur, hauteur))
+
+    def SetValue(self, actif):
+        self._actif = bool(actif)
+        self.Refresh()
+
+    def GetValue(self):
+        return self._actif
 
     def AppliquerTheme(self, actif=False):
-        if actif:
-            fond = UTILS_Interface.GetToken("primary_container")
-            texte = UTILS_Interface.GetToken("on_primary_container")
-        else:
-            fond = UTILS_Interface.GetToken("surface")
-            texte = UTILS_Interface.GetToken("on_surface")
-        self.SetBackgroundColour(fond)
-        self.SetForegroundColour(texte)
         self.SetValue(bool(actif))
+
+    def _Couleurs(self):
+        if not self.IsEnabled():
+            return (
+                UTILS_Interface.GetToken("surface_container_low"),
+                UTILS_Interface.GetToken("disabled"),
+                UTILS_Interface.GetToken("outline_variant"),
+            )
+        if self._actif:
+            return (
+                UTILS_Interface.GetToken("primary_container"),
+                UTILS_Interface.GetToken("on_primary_container"),
+                UTILS_Interface.GetToken("primary"),
+            )
+        fond = "surface_container_high" if self._survol else "surface_container_low"
+        return (
+            UTILS_Interface.GetToken(fond),
+            UTILS_Interface.GetToken("on_surface"),
+            UTILS_Interface.GetToken("outline_variant"),
+        )
+
+    def OnPaint(self, event):
+        dc = wx.AutoBufferedPaintDC(self)
+        fond, texte, contour = self._Couleurs()
+        dc.SetBackground(wx.Brush(self.GetParent().GetBackgroundColour()))
+        dc.Clear()
+        largeur, hauteur = self.GetClientSize()
+        dc.SetPen(wx.Pen(contour, 1))
+        dc.SetBrush(wx.Brush(fond))
+        dc.DrawRoundedRectangle(0, 0, max(1, largeur), max(1, hauteur), _dimension(5))
+
+        dc.SetFont(self.GetFont())
+        dc.SetTextForeground(texte)
+        largeur_texte, hauteur_texte = dc.GetTextExtent(self.label)
+        largeur_icone = self.bitmap.GetWidth() if self.bitmap.IsOk() else 0
+        espace = _dimension(8) if largeur_icone else 0
+        largeur_contenu = largeur_icone + espace + largeur_texte
+        x = max(_dimension(10), (largeur - largeur_contenu) // 2)
+        if self.bitmap.IsOk():
+            dc.DrawBitmap(self.bitmap, x, (hauteur - self.bitmap.GetHeight()) // 2, True)
+            x += largeur_icone + espace
+        dc.DrawText(self.label, x, (hauteur - hauteur_texte) // 2)
+
+    def OnEnter(self, event):
+        self._survol = True
+        self.Refresh()
+
+    def OnLeave(self, event):
+        self._survol = False
+        self.Refresh()
+
+    def OnClick(self, event):
+        if self.IsEnabled():
+            commande = wx.CommandEvent(wx.wxEVT_BUTTON, self.GetId())
+            commande.SetEventObject(self)
+            self.GetEventHandler().ProcessEvent(commande)
+
+    def OnKeyDown(self, event):
+        if event.GetKeyCode() in (wx.WXK_RETURN, wx.WXK_SPACE):
+            self.OnClick(event)
+            return
+        event.Skip()
 
 
 class NavigationPrincipale(wx.Panel):
@@ -125,7 +212,7 @@ class NavigationPrincipale(wx.Panel):
         page.Hide()
 
         bouton = BoutonNavigation(self.barre, label, bitmap)
-        bouton.Bind(wx.EVT_TOGGLEBUTTON, lambda event, i=index: self.SetSelection(i))
+        bouton.Bind(wx.EVT_BUTTON, lambda event, i=index: self.SetSelection(i))
         self._boutons.append(bouton)
         self.sizer_barre.Add(bouton, 0, wx.RIGHT | wx.BOTTOM, _dimension(6))
 
