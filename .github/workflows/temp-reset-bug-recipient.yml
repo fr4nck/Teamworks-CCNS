@@ -1,0 +1,81 @@
+name: Temporary reset bug recipient
+
+on:
+  push:
+    branches:
+      - diagnostics/configurable-bug-recipient
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: diagnostics/configurable-bug-recipient
+          fetch-depth: 0
+
+      - name: Ajouter le retour au réglage d'origine
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          prefs = Path("teamworks/Dlg/DLG_Preferences.py")
+          text = prefs.read_text(encoding="utf-8")
+
+          old = '''        self.adresse_rapport_bugs = wx.TextCtrl(self.panel)\n        self.adresse_rapport_bugs.SetValue(\n            UTILS_Envoi_rapport_bug.GetAdresseRapportBugsConfiguree()\n        )\n        main.Add(\n            self._ligne(\n                self.panel,\n                "Adresse de réception des rapports d'erreurs :",\n                self.adresse_rapport_bugs,\n            ),\n            0,\n            wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP,\n            padding,\n        )\n'''
+          new = '''        self.adresse_rapport_bugs = wx.TextCtrl(self.panel)\n        self.adresse_rapport_bugs.SetValue(\n            UTILS_Envoi_rapport_bug.GetAdresseRapportBugsConfiguree()\n        )\n        self.reset_adresse_rapport_bugs = wx.Button(\n            self.panel,\n            label="Rétablir le réglage d'origine",\n        )\n        adresse_rapport_bugs = wx.BoxSizer(wx.HORIZONTAL)\n        adresse_rapport_bugs.Add(self.adresse_rapport_bugs, 1, wx.EXPAND)\n        adresse_rapport_bugs.Add(\n            self.reset_adresse_rapport_bugs,\n            0,\n            wx.LEFT,\n            field_gap,\n        )\n        main.Add(\n            self._ligne(\n                self.panel,\n                "Adresse de réception des rapports d'erreurs :",\n                adresse_rapport_bugs,\n            ),\n            0,\n            wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP,\n            padding,\n        )\n'''
+          if new not in text:
+              if text.count(old) != 1:
+                  raise SystemExit("Bloc destinataire introuvable")
+              text = text.replace(old, new, 1)
+
+          old_bind = '''        self.Bind(wx.EVT_BUTTON, self.OnReferencesAdmin, self.admin_button)\n        self.Bind(wx.EVT_BUTTON, self.OnOk, id=wx.ID_OK)\n'''
+          new_bind = '''        self.Bind(wx.EVT_BUTTON, self.OnReferencesAdmin, self.admin_button)\n        self.Bind(\n            wx.EVT_BUTTON,\n            self.OnResetAdresseRapportBugs,\n            self.reset_adresse_rapport_bugs,\n        )\n        self.Bind(wx.EVT_BUTTON, self.OnOk, id=wx.ID_OK)\n'''
+          if new_bind not in text:
+              if text.count(old_bind) != 1:
+                  raise SystemExit("Bloc de bindings introuvable")
+              text = text.replace(old_bind, new_bind, 1)
+
+          marker = '''    def OnReferencesAdmin(self, event):\n        from Dlg import DLG_References_admin\n\n        dialog = DLG_References_admin.Dialog(self)\n        try:\n            dialog.ShowModal()\n        finally:\n            dialog.Destroy()\n\n'''
+          method = marker + '''    def OnResetAdresseRapportBugs(self, event):\n        """Revient au comportement historique sans figer l'adresse dans la base."""\n        self.adresse_rapport_bugs.SetValue("")\n        self.adresse_rapport_bugs.SetFocus()\n\n'''
+          if "def OnResetAdresseRapportBugs" not in text:
+              if text.count(marker) != 1:
+                  raise SystemExit("Point d'insertion méthode introuvable")
+              text = text.replace(marker, method, 1)
+
+          prefs.write_text(text, encoding="utf-8", newline="\n")
+
+          tests = Path("tests/test_tw187_crash_diagnostics.py")
+          t = tests.read_text(encoding="utf-8")
+          old_assert = '''    assert "SetAdresseRapportBugsConfiguree" in preferences\n    assert "GetDestinataireRapportsBugs()" in report_dialog\n'''
+          new_assert = '''    assert "SetAdresseRapportBugsConfiguree" in preferences\n    assert "Rétablir le réglage d'origine" in preferences\n    assert "def OnResetAdresseRapportBugs" in preferences\n    assert 'self.adresse_rapport_bugs.SetValue("")' in preferences\n    assert "GetDestinataireRapportsBugs()" in report_dialog\n'''
+          if new_assert not in t:
+              if t.count(old_assert) != 1:
+                  raise SystemExit("Contrat de test UI introuvable")
+              t = t.replace(old_assert, new_assert, 1)
+          tests.write_text(t, encoding="utf-8", newline="\n")
+          PY
+
+      - name: Vérifier
+        shell: bash
+        run: |
+          python -m pip install -q pytest
+          python -m compileall -q teamworks/Dlg/DLG_Preferences.py
+          python -m pytest -q tests/test_tw187_crash_diagnostics.py
+          git diff --check
+
+      - name: Commit
+        shell: bash
+        run: |
+          if git diff --quiet -- teamworks/Dlg/DLG_Preferences.py tests/test_tw187_crash_diagnostics.py; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add teamworks/Dlg/DLG_Preferences.py tests/test_tw187_crash_diagnostics.py
+          git commit -m "Diagnostics: permettre le retour au réglage d'origine"
+          git push origin HEAD:diagnostics/configurable-bug-recipient
