@@ -6,6 +6,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 import sys
+import traceback
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -34,6 +35,7 @@ def main() -> int:
         return 0
 
     app = wx.App(False)
+    print("TEAMWORKS_SMOKE_MAIN_NAVIGATION_STAGE:navigation", flush=True)
     frame = wx.Frame(None, title="Navigation sombre", size=(1200, 700))
     navigation = CTRL_Navigation_principale.NavigationPrincipale(frame)
     for label in ("Accueil", "Individus", "Présences", "Recrutement"):
@@ -47,6 +49,11 @@ def main() -> int:
     widths = [button.GetSize().GetWidth() for button in navigation._boutons]
     minimums = [button.GetMinSize().GetWidth() for button in navigation._boutons]
     maximums = [button.GetMaxSize().GetWidth() for button in navigation._boutons]
+    print(
+        "TEAMWORKS_SMOKE_MAIN_NAVIGATION_SIZES:%s:%s:%s:%s"
+        % (widths, minimums, maximums, navigation.barre.GetClientSize().GetWidth()),
+        flush=True,
+    )
     assert len(widths) == 4
     assert widths == minimums == maximums
     assert max(widths) < min(widths) * 1.75
@@ -62,6 +69,7 @@ def main() -> int:
         UTILS_Interface.GetToken("on_surface", appearance="dark"),
     )
 
+    print("TEAMWORKS_SMOKE_MAIN_NAVIGATION_STAGE:dashboard", flush=True)
     dashboard_frame = wx.Frame(None, title="Dashboard sombre", size=(900, 600))
     dashboard = CTRL_Gadgets_flottants.EspaceGadgets(dashboard_frame, [])
     art = dashboard.manager.GetArtProvider()
@@ -82,4 +90,8 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    try:
+        raise SystemExit(main())
+    except Exception:
+        traceback.print_exc()
+        raise
