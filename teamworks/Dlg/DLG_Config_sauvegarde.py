@@ -419,7 +419,7 @@ class Saisie_sauvegarde_auto(wx.Frame):
             self.choice_conservation.Select(self.conservation)
 
     def OnBoutonDestination(self, event):
-        if self.textctrl_destination.GetValue != "" : 
+        if self.textctrl_destination.GetValue() != "" : 
             cheminDefaut = self.textctrl_destination.GetValue()
             if os.path.isdir(cheminDefaut) == False :
                 cheminDefaut = ""
@@ -613,7 +613,7 @@ class Saisie_sauvegarde_occasionnelle(wx.Frame):
 
 
     def OnBoutonDestination(self, event):
-        if self.textctrl_destination.GetValue != "" : 
+        if self.textctrl_destination.GetValue() != "" : 
             cheminDefaut = self.textctrl_destination.GetValue()
             if os.path.isdir(cheminDefaut) == False :
                 cheminDefaut = ""
