@@ -529,6 +529,7 @@ jobs:
             '--windowed',
             '--onedir',
             '--name', 'Teamworks-CCNS',
+            '--icon', 'teamworks/Static/Images/Branding/Teamworks-CCNS.ico',
             '--paths', '.',
             '--paths', 'teamworks',
             '--distpath', 'dist',

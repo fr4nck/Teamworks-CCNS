@@ -72,6 +72,12 @@ les séparateurs, les bordures et les poignées AUI sont raccordés à la même
 palette centrale. Le correctif reste transversal au dashboard et ne modifie
 aucune couleur de contenu personnalisée par l'utilisateur dans un gadget.
 
+L'icône Windows abandonne le visuel générique Python/disquette et l'ancien
+rond bleu. Elle reprend le monogramme `TW`, la mention `CCNS` et les couleurs
+publiques de pelemele.org : orange `#FFBD59`, bleu ardoise `#314666` et bleu
+profond `#044576`. La même source multi-résolution est utilisée par la fenêtre,
+l'exécutable PyInstaller, les raccourcis et l'installateur Inno Setup.
+
 ## Fond d’accueil personnalisable — principe retenu
 
 Teamworks devra pouvoir reprendre le principe transversal défini dans `PMSL-Arch/docs/DESIGN_SYSTEM.md` pour les applications desktop.

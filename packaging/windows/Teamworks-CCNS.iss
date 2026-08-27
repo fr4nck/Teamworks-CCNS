@@ -21,6 +21,7 @@ DisableProgramGroupPage=yes
 DirExistsWarning=no
 OutputDir=..\..\dist\installer
 OutputBaseFilename=Teamworks-CCNS-{#AppVersion}-windows-x64-setup
+SetupIconFile=..\..\teamworks\Static\Images\Branding\Teamworks-CCNS.ico
 Compression=lzma2/max
 SolidCompression=yes
 WizardStyle=modern

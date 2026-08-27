@@ -48,6 +48,7 @@ def test_installer_has_stable_identity_and_uninstaller():
     assert "AppId={{4D07F1CF-3352-4CE3-8CD8-37BE85E51D28}" in text
     assert "UninstallDisplayIcon={app}\\{#AppExeName}" in text
     assert "UsePreviousAppDir=yes" in text
+    assert "SetupIconFile=..\\..\\teamworks\\Static\\Images\\Branding\\Teamworks-CCNS.ico" in text
 
 
 def test_windows_packages_are_not_built_on_every_commit():
@@ -57,3 +58,4 @@ def test_windows_packages_are_not_built_on_every_commit():
     assert "github.event_name == 'workflow_dispatch' && inputs.build_windows" in build
     assert "github.ref == 'refs/heads/master' && contains(github.event.head_commit.message, '[windows]')" in build
     assert "Teamworks-CCNS-*-windows-x64-setup.exe" in build
+    assert "'--icon', 'teamworks/Static/Images/Branding/Teamworks-CCNS.ico'" in build
