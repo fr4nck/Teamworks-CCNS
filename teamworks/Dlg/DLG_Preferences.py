@@ -13,17 +13,19 @@ from Utils import (
 )
 
 
+_APPEARANCE_LABELS = {
+    "system": "Système",
+    "light": "Clair",
+    "dark": "Sombre",
+}
+
+
 class Dialog(wx.Dialog):
     # Contrat historique TW-121 conservé pour compatibilité et tests.
     THEMES = ["Système", "Clair", "Sombre"]
 
     # Sources uniques : les thèmes et codes d'apparence viennent du socle.
     ACCENTS = list(UTILS_Interface.THEMES)
-    _APPEARANCE_LABELS = {
-        "system": "Système",
-        "light": "Clair",
-        "dark": "Sombre",
-    }
     APPEARANCES = [
         (code, _APPEARANCE_LABELS.get(code, code))
         for code in UTILS_Interface.APPEARANCE_MODES
@@ -256,7 +258,7 @@ class Dialog(wx.Dialog):
         gap = UTILS_Styles.GetLayoutSpacing("field_gap")
         ligne.Add(etiquette, 2, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, gap)
         if isinstance(control, wx.Sizer):
-            ligne.Add(control, 3, wx.ALIGN_CENTER_VERTICAL | wx.EXPAND)
+            ligne.Add(control, 3, wx.EXPAND)
         else:
             ligne.Add(control, 3, wx.EXPAND)
         return ligne
