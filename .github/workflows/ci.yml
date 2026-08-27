@@ -430,7 +430,7 @@ jobs:
           Write-Host "Bilan CI Windows : tous les contrôles sont verts."
 
   build-windows:
-    name: Paquet Windows portable
+    name: Paquets Windows portable et installable
     needs:
       - tests
       - windows-smokes
@@ -661,12 +661,38 @@ jobs:
           $hash = (Get-FileHash $archive -Algorithm SHA256).Hash.ToLowerInvariant()
           "$hash  $archive" | Set-Content SHA256SUMS.txt -Encoding ascii
 
-      - name: Publier l'artefact Windows
+      - name: Créer l'installateur Windows
+        shell: pwsh
+        run: |
+          $version = (Get-Content VERSION -Raw).Trim()
+          $iscc = Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6\ISCC.exe'
+          if (-not (Test-Path $iscc)) {
+            choco install innosetup --no-progress -y
+          }
+          if (-not (Test-Path $iscc)) {
+            throw "Compilateur Inno Setup introuvable : $iscc"
+          }
+
+          & $iscc "/DAppVersion=$version" 'packaging/windows/Teamworks-CCNS.iss'
+          if ($LASTEXITCODE -ne 0) {
+            throw "La compilation de l'installateur a échoué avec le code $LASTEXITCODE"
+          }
+
+          $installer = Get-ChildItem 'dist/installer/Teamworks-CCNS-*-windows-x64-setup.exe' |
+            Select-Object -First 1
+          if (-not $installer) {
+            throw "L'installateur Windows est absent"
+          }
+          $hash = (Get-FileHash $installer.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  $($installer.Name)" | Add-Content SHA256SUMS.txt -Encoding ascii
+
+      - name: Publier les artefacts Windows
         uses: actions/upload-artifact@v6
         with:
-          name: Teamworks-CCNS-Windows-portable
+          name: Teamworks-CCNS-Windows
           path: |
             Teamworks-CCNS-*-windows-x64.zip
+            dist/installer/Teamworks-CCNS-*-windows-x64-setup.exe
             SHA256SUMS.txt
           if-no-files-found: error
           retention-days: 3
@@ -682,8 +708,14 @@ jobs:
           if (-not $archive) {
             throw "L'archive portable est absente"
           }
+          $installer = Get-ChildItem 'dist/installer/Teamworks-CCNS-*-windows-x64-setup.exe' |
+            Select-Object -First 1
+          if (-not $installer) {
+            throw "L'installateur Windows est absent"
+          }
           gh release create $env:GITHUB_REF_NAME `
             $archive.FullName `
+            $installer.FullName `
             SHA256SUMS.txt `
             --title "Teamworks-CCNS $env:GITHUB_REF_NAME" `
             --generate-notes `
