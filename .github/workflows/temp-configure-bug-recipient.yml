@@ -22,6 +22,7 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
+          import textwrap
 
           def replace_once(path, old, new):
               p = Path(path)
@@ -32,19 +33,18 @@ jobs:
                   raise SystemExit(f"Précondition invalide dans {path}: {text.count(old)} occurrence(s)")
               p.write_text(text.replace(old, new, 1), encoding="utf-8", newline="\n")
 
-          # Helper d'envoi : valeur configurée en base + fallback historique.
+          helper = "teamworks/Utils/UTILS_Envoi_rapport_bug.py"
           replace_once(
-              "teamworks/Utils/UTILS_Envoi_rapport_bug.py",
+              helper,
               'DESTINATAIRE_RAPPORTS_BUGS = "multimedia@pelemele.org"\nTAILLE_MAX_RAPPORT = 2 * 1024 * 1024\n',
               'DESTINATAIRE_RAPPORTS_BUGS_HISTORIQUE = "noethys@gmail.com"\n'
               'CATEGORIE_PARAMETRE_RAPPORTS_BUGS = "maintenance"\n'
               'NOM_PARAMETRE_RAPPORTS_BUGS = "adresse_rapport_bugs"\n'
               'TAILLE_MAX_RAPPORT = 2 * 1024 * 1024\n',
           )
-          replace_once(
-              "teamworks/Utils/UTILS_Envoi_rapport_bug.py",
-              'class ErreurEnvoiRapport(Exception):\n    """Erreur présentable à l\'utilisateur sans exposer la configuration mail."""\n\n\n',
-              '''class ErreurEnvoiRapport(Exception):
+
+          fonctions = textwrap.dedent('''\
+          class ErreurEnvoiRapport(Exception):
               """Erreur présentable à l'utilisateur sans exposer la configuration mail."""
 
 
@@ -100,10 +100,14 @@ jobs:
               )
 
 
-          '''.replace("          ", ""),
+          ''')
+          replace_once(
+              helper,
+              'class ErreurEnvoiRapport(Exception):\n    """Erreur présentable à l\'utilisateur sans exposer la configuration mail."""\n\n\n',
+              fonctions,
           )
           replace_once(
-              "teamworks/Utils/UTILS_Envoi_rapport_bug.py",
+              helper,
               'def EnvoyerRapport(chemin_rapport, version="", module_email=None):\n',
               'def EnvoyerRapport(\n'
               '    chemin_rapport,\n'
@@ -114,7 +118,7 @@ jobs:
               '):\n',
           )
           replace_once(
-              "teamworks/Utils/UTILS_Envoi_rapport_bug.py",
+              helper,
               '    message = module_email.Message(\n        destinataires=[DESTINATAIRE_RAPPORTS_BUGS],\n',
               '    destinataire = destinataire.strip() if isinstance(destinataire, str) else ""\n'
               '    if not destinataire:\n'
@@ -124,20 +128,16 @@ jobs:
               '    message = module_email.Message(\n'
               '        destinataires=[destinataire],\n',
           )
-          replace_once(
-              "teamworks/Utils/UTILS_Envoi_rapport_bug.py",
-              '    return DESTINATAIRE_RAPPORTS_BUGS\n',
-              '    return destinataire\n',
-          )
+          replace_once(helper, '    return DESTINATAIRE_RAPPORTS_BUGS\n', '    return destinataire\n')
 
-          # Dialogue de crash : confirmer et envoyer exactement au même destinataire résolu.
+          report = "teamworks/Utils/UTILS_Rapport_bugs.py"
           replace_once(
-              "teamworks/Utils/UTILS_Rapport_bugs.py",
+              report,
               '        destinataire = UTILS_Envoi_rapport_bug.DESTINATAIRE_RAPPORTS_BUGS\n',
               '        destinataire = UTILS_Envoi_rapport_bug.GetDestinataireRapportsBugs()\n',
           )
           replace_once(
-              "teamworks/Utils/UTILS_Rapport_bugs.py",
+              report,
               '            UTILS_Envoi_rapport_bug.EnvoyerRapport(\n                self.chemin_rapport,\n                version=_VERSION_ACTIVE,\n            )\n',
               '            UTILS_Envoi_rapport_bug.EnvoyerRapport(\n'
               '                self.chemin_rapport,\n'
@@ -146,9 +146,9 @@ jobs:
               '            )\n',
           )
 
-          # Préférences : section Maintenance / Diagnostic, valeur partagée en base.
+          prefs = "teamworks/Dlg/DLG_Preferences.py"
           replace_once(
-              "teamworks/Dlg/DLG_Preferences.py",
+              prefs,
               'from Utils import UTILS_Customize, UTILS_Interface, UTILS_Styles\n',
               'from Utils import (\n'
               '    UTILS_Customize,\n'
@@ -158,14 +158,13 @@ jobs:
               ')\n',
           )
           replace_once(
-              "teamworks/Dlg/DLG_Preferences.py",
+              prefs,
               '            title="Préférences d\'affichage",\n',
               '            title="Préférences Teamworks-CCNS",\n',
           )
-          replace_once(
-              "teamworks/Dlg/DLG_Preferences.py",
-              '        organisation_title = CTRL_Texte.Label(self.panel, "Organisation et références RH")\n',
-              '''        maintenance_title = CTRL_Texte.Label(self.panel, "Maintenance / Diagnostic")
+
+          maintenance = textwrap.indent(textwrap.dedent('''\
+          maintenance_title = CTRL_Texte.Label(self.panel, "Maintenance / Diagnostic")
           main.Add(
               maintenance_title,
               0,
@@ -201,10 +200,14 @@ jobs:
           )
 
           organisation_title = CTRL_Texte.Label(self.panel, "Organisation et références RH")
-          '''.replace("          ", ""),
+          '''), "        ")
+          replace_once(
+              prefs,
+              '        organisation_title = CTRL_Texte.Label(self.panel, "Organisation et références RH")\n',
+              maintenance,
           )
           replace_once(
-              "teamworks/Dlg/DLG_Preferences.py",
+              prefs,
               '        UTILS_Customize.SetValeur("interface", "echelle_police", scale)\n\n        try:\n',
               '        UTILS_Customize.SetValeur("interface", "echelle_police", scale)\n\n'
               '        try:\n'
@@ -222,69 +225,60 @@ jobs:
               '        try:\n',
           )
 
-          # Documentation.
-          replace_once(
-              "docs/04_CCNS_EXTENSIONS.md",
-              '''Le dialogue de crash peut envoyer, après confirmation explicite, le seul rapport
+          old_doc = textwrap.dedent('''\
+          Le dialogue de crash peut envoyer, après confirmation explicite, le seul rapport
           technique `.txt` à `multimedia@pelemele.org`. L'envoi utilise l'adresse expéditeur
           par défaut déjà configurée dans Teamworks ; en son absence, aucun envoi n'a lieu et
           le fichier reste disponible dans le dossier `Logs`. Le destinataire est centralisé
           dans `UTILS_Envoi_rapport_bug.py` afin d'être remplacé lors du passage en release.
-          '''.replace("          ", ""),
-              '''Le dialogue de crash peut envoyer, après confirmation explicite, le seul rapport
+          ''')
+          new_doc = textwrap.dedent('''\
+          Le dialogue de crash peut envoyer, après confirmation explicite, le seul rapport
           technique `.txt` au destinataire partagé défini dans **Préférences → Maintenance /
           Diagnostic**. Ce réglage est stocké dans la base sous `maintenance /
           adresse_rapport_bugs`. Si le champ est vide ou absent, Teamworks conserve le
           comportement historique et utilise `noethys@gmail.com`, l'adresse d'origine d'Ivan.
           L'envoi utilise l'adresse expéditeur par défaut déjà configurée dans Teamworks ; en
           son absence, aucun envoi n'a lieu et le fichier reste disponible dans `Logs`.
-          '''.replace("          ", ""),
-          )
+          ''')
+          replace_once("docs/04_CCNS_EXTENSIONS.md", old_doc, new_doc)
 
-          # Tests : destinataire personnalisé, fallback historique et contrat UI.
           test_path = Path("tests/test_tw187_crash_diagnostics.py")
           test = test_path.read_text(encoding="utf-8")
           test = test.replace(
-              'def test_bug_report_email_uses_fixed_recipient_and_safe_attachment(tmp_path: Path) -> None:\n',
-              'def test_bug_report_email_uses_configured_recipient_and_safe_attachment(tmp_path: Path) -> None:\n',
+              'def test_bug_report_email_uses_fixed_recipient_and_safe_attachment(tmp_path: Path) -> None:',
+              'def test_bug_report_email_uses_configured_recipient_and_safe_attachment(tmp_path: Path) -> None:',
               1,
           )
-          old_call = '''    recipient = UTILS_Envoi_rapport_bug.EnvoyerRapport(
-              str(report),
-              version="0.9-test",
-              module_email=FakeEmailModule,
+          marker = '    recipient = UTILS_Envoi_rapport_bug.EnvoyerRapport(\n'
+          fake_params = textwrap.dedent('''\
+              class FakeParams:
+                  @staticmethod
+                  def TestParametre(**kwargs):
+                      return True
+
+                  @staticmethod
+                  def Parametres(**kwargs):
+                      return "  bugs@example.org  "
+
+          ''')
+          if "class FakeParams:" not in test:
+              if test.count(marker) != 1:
+                  raise SystemExit("Appel d'envoi test introuvable")
+              test = test.replace(marker, fake_params + marker, 1)
+          target = '        module_email=FakeEmailModule,\n    )\n\n    assert recipient == "multimedia@pelemele.org"\n'
+          replacement = '        module_email=FakeEmailModule,\n        module_parametres=FakeParams,\n    )\n\n    assert recipient == "bugs@example.org"\n'
+          if replacement not in test:
+              if target not in test:
+                  raise SystemExit("Arguments test d'envoi introuvables")
+              test = test.replace(target, replacement, 1)
+          test = test.replace(
+              '    assert message.destinataires == ["multimedia@pelemele.org"]\n',
+              '    assert message.destinataires == ["bugs@example.org"]\n',
+              1,
           )
 
-          assert recipient == "multimedia@pelemele.org"
-          message = next(call for call in calls if isinstance(call, FakeMessage))
-          assert message.destinataires == ["multimedia@pelemele.org"]
-          '''.replace("          ", "")
-          new_call = '''    class FakeParams:
-              @staticmethod
-              def TestParametre(**kwargs):
-                  return True
-
-              @staticmethod
-              def Parametres(**kwargs):
-                  return "  bugs@example.org  "
-
-          recipient = UTILS_Envoi_rapport_bug.EnvoyerRapport(
-              str(report),
-              version="0.9-test",
-              module_email=FakeEmailModule,
-              module_parametres=FakeParams,
-          )
-
-          assert recipient == "bugs@example.org"
-          message = next(call for call in calls if isinstance(call, FakeMessage))
-          assert message.destinataires == ["bugs@example.org"]
-          '''.replace("          ", "")
-          if new_call not in test:
-              if old_call not in test:
-                  raise SystemExit("Bloc test d'envoi introuvable")
-              test = test.replace(old_call, new_call, 1)
-
-          extra = '''
+          extra = textwrap.dedent('''\
 
           def test_bug_report_recipient_falls_back_to_historical_address() -> None:
               class MissingParams:
@@ -336,7 +330,7 @@ jobs:
               assert "SetAdresseRapportBugsConfiguree" in preferences
               assert "GetDestinataireRapportsBugs()" in report_dialog
               assert "destinataire=destinataire" in report_dialog
-          '''.replace("          ", "")
+          ''')
           if "test_bug_report_recipient_falls_back_to_historical_address" not in test:
               test += extra
           test_path.write_text(test, encoding="utf-8", newline="\n")
