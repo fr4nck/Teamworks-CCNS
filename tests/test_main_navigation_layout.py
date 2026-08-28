@@ -44,8 +44,11 @@ def test_navigation_replaces_fixed_toolbook_geometry():
 
     assert "wx.Toolbook" not in calls
     assert "wx.Simplebook" not in calls
-    assert "wx.WrapSizer(wx.HORIZONTAL)" in source
-    assert "wx.ToggleButton" in source
+    assert "wx.WrapSizer(" in source
+    assert "wx.REMOVE_LEADING_SPACES" in source
+    assert "EXTEND_LAST_ON_EACH_LINE" in source
+    assert "class BoutonNavigation(wx.Control)" in source
+    assert "wx.ToggleButton" not in calls
     assert "self.sizer_pages = wx.BoxSizer(wx.VERTICAL)" in source
 
 
@@ -61,13 +64,24 @@ def test_navigation_pages_keep_historical_parent_depth():
 def test_navigation_buttons_keep_full_labels_and_scale_their_targets():
     source = _source()
 
-    assert "GetBestSize()" in source
+    assert "GetTextExtent(self.label)" in source
     assert '"echelle_interface"' in source
     assert '"echelle_police"' in source
     assert source.index('"echelle_interface"') < source.index('"echelle_police"')
     assert "ajouter_si_manquant=False" in source
     assert "wx.IMAGE_QUALITY_HIGH" in source
     assert "SetMinSize((largeur, hauteur))" in source
+    assert "SetMaxSize((largeur, hauteur))" in source
+
+
+def test_navigation_is_painted_with_semantic_tokens_instead_of_native_chrome():
+    source = _source()
+
+    assert "wx.AutoBufferedPaintDC" in source
+    assert 'GetToken("surface_container_low")' in source
+    assert 'GetToken("primary_container")' in source
+    assert 'GetToken("on_primary_container")' in source
+    assert "bouton.Bind(wx.EVT_BUTTON" in source
 
 
 def test_navigation_uses_semantic_active_and_inactive_states():
@@ -107,6 +121,7 @@ def test_navigation_wraps_instead_of_truncating_labels():
     source = _source()
 
     assert "wx.WrapSizer" in source
+    assert "wx.REMOVE_LEADING_SPACES" in source
     assert "Ellips" not in source
     assert "SetToolBitmapSize" not in source
 

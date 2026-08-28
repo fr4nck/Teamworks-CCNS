@@ -70,6 +70,17 @@ def test_gadget_chrome_is_owned_by_the_component_and_uses_semantic_tokens():
     assert 'GetToken("outline_variant")' in gadget
 
 
+def test_dashboard_aui_background_uses_the_same_semantic_palette():
+    source = _source(FLOATING_PATH)
+
+    assert "def _AppliquerThemeManager" in source
+    assert "AUI_DOCKART_BACKGROUND_COLOUR" in source
+    assert "AUI_DOCKART_SASH_COLOUR" in source
+    assert "AUI_DOCKART_BORDER_COLOUR" in source
+    assert "AUI_DOCKART_GRIPPER_COLOUR" in source
+    assert 'UTILS_Interface.GetToken("surface")' in source
+
+
 def test_gadget_workspace_consumes_central_gadget_metrics():
     host = _source(FLOATING_PATH)
     styles = _source(STYLES_PATH)

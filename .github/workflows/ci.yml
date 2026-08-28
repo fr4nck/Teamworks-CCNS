@@ -341,6 +341,7 @@ jobs:
           Invoke-Smoke "Dialogue contrat" @("tools/smoke_secondary_contract_dialog.py")
           Invoke-Smoke "Exports" @("tools/smoke_exports.py")
           Invoke-Smoke "Impression PDF" @("tools/smoke_pdf_impression.py")
+          Invoke-Smoke "Navigation et thème sombre" @("tools/smoke_main_navigation.py")
           Invoke-Smoke "Fiche personne" @("tools/smoke_secondary_person_dialog.py")
           Invoke-Smoke "Saisie présence" @("tools/smoke_secondary_presence_dialog.py")
           Invoke-Smoke "Recrutement" @("tools/smoke_secondary_recruitment.py")
@@ -528,6 +529,7 @@ jobs:
             '--windowed',
             '--onedir',
             '--name', 'Teamworks-CCNS',
+            '--icon', 'teamworks/Static/Images/Branding/Teamworks-CCNS.ico',
             '--paths', '.',
             '--paths', 'teamworks',
             '--distpath', 'dist',

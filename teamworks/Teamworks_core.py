@@ -226,7 +226,10 @@ class MyFrame(wx.Frame):
             _icon = wx.Icon()
         else:
             _icon = wx.EmptyIcon()
-        _icon.CopyFromBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Logo.png"), wx.BITMAP_TYPE_ANY))
+        _icon.CopyFromBitmap(wx.Bitmap(
+            Chemins.GetStaticPath("Images/Branding/Teamworks-CCNS.ico"),
+            wx.BITMAP_TYPE_ICO,
+        ))
         self.SetIcon(_icon)
         self.SetMinSize((800, 600))
         sizer_base = wx.BoxSizer(wx.HORIZONTAL)
