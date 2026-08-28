@@ -118,11 +118,18 @@ class ListCtrl_fichiers(_base.ListCtrl_fichiers):
         if _base.DICT_DONNEES.get("CATEGORIE") != "contrat":
             return fichiers
         contrat = _base.DICT_DONNEES.get(1, {})
+        document_kind = _base.DICT_DONNEES.get("DOCUMENT_KIND")
         noms = [valeurs[0] for _, valeurs in sorted(fichiers.items())]
         DB = GestionDB.DB()
         try:
             compatibles = set(
-                UTILS_Contrats_modeles_documents.FilterFilenames(DB, noms, contrat)
+                UTILS_Contrats_modeles_documents.FilterFilenames(
+                    DB,
+                    noms,
+                    contrat,
+                    document_kind=document_kind,
+                    include_legacy=True,
+                )
             )
         finally:
             DB.Close()
@@ -297,7 +304,11 @@ class Dialog(_base.Dialog):
         dict_donnees = kwargs.get("dictDonnees")
         if dict_donnees is None and len(args) >= 3:
             dict_donnees = args[2]
-        UTILS_Documents_RH.EnrichirDictDonneesContrat(dict_donnees)
+        document_code = (dict_donnees or {}).get("DOCUMENT_KIND") or "contract"
+        UTILS_Documents_RH.EnrichirDictDonneesContrat(
+            dict_donnees,
+            document_code=document_code,
+        )
         _apply_legacy_cee_aliases(dict_donnees)
 
         original_list = _base.ListCtrl_fichiers
