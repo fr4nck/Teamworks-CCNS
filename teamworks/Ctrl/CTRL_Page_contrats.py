@@ -264,12 +264,15 @@ class Panel_Contrats(wx.Panel):
 
     def ImprimerContrat(self):
         index = self.list_ctrl_contrats.GetFirstSelected()
+        if index == -1:
+            return
         IDcontrat = self.list_ctrl_contrats.GetItemData(index)
-
-        from Utils import UTILS_Publipostage_donnees
-        dictDonnees = UTILS_Publipostage_donnees.GetDictDonnees(categorie="contrat", listeID=[IDcontrat])
-        from Dlg import DLG_Publiposteur_contrat
-        dlg = DLG_Publiposteur_contrat.Dialog(self, "", dictDonnees=dictDonnees)
+        from Dlg import DLG_Documents_RH
+        dlg = DLG_Documents_RH.Dialog(
+            self,
+            IDpersonne=self.IDpersonne,
+            IDcontrat=IDcontrat,
+        )
         dlg.ShowModal()
         dlg.Destroy()
 
