@@ -182,6 +182,7 @@ class Dialog(wx.Dialog):
         self.bitmap_button_aide = CTRL_Bouton_image.CTRL(
             self.panel_1, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png")
         )
+        self.bouton_documents_rh = wx.Button(self.panel_1, label=_(u"Documents RH"))
         self.bitmap_button_Ok = CTRL_Bouton_image.CTRL(
             self.panel_1, texte=_(u"Ok"), cheminImage=Chemins.GetStaticPath("Images/32x32/Valider.png")
         )
@@ -192,6 +193,7 @@ class Dialog(wx.Dialog):
         self.notebook = Notebook(self.panel_1, IDpersonne=self.IDpersonne)
         if self.nouvelleFiche:
             self.notebook.AfficheAutresPages(False)
+            self.bouton_documents_rh.Enable(False)
 
         self.barre_problemes = self.IDpersonne in FonctionsPerso.Recherche_ContratsEnCoursOuAVenir()
 
@@ -214,6 +216,7 @@ class Dialog(wx.Dialog):
         self.MaJ_header()
 
         self.Bind(wx.EVT_BUTTON, self.OnBoutonAide, self.bitmap_button_aide)
+        self.Bind(wx.EVT_BUTTON, self.OnDocumentsRH, self.bouton_documents_rh)
         self.Bind(wx.EVT_BUTTON, self.OnBoutonOk, self.bitmap_button_Ok)
         self.Bind(wx.EVT_BUTTON, self.OnBoutonAnnuler, self.bitmap_button_annuler)
         self.txtDefilant.Bind(wx.EVT_MOTION, self.OnMotionTxtDefilant)
@@ -249,6 +252,7 @@ class Dialog(wx.Dialog):
         self.txtDefilant.SetToolTip(wx.ToolTip(_(u"Cette barre d'information recense les points\nà contrôler sur le dossier de cette personne.")))
         self.bitmap_photo.SetToolTip(wx.ToolTip("Cliquez sur le bouton droit de votre souris pour modifier cette image"))
         self.bitmap_button_aide.SetToolTip(wx.ToolTip("Cliquez ici pour obtenir de l'aide"))
+        self.bouton_documents_rh.SetToolTip(wx.ToolTip(_(u"Préparer une attestation, une dispense, une autorisation ou un autre document RH")))
         self.bitmap_button_Ok.SetToolTip(wx.ToolTip("Cliquez ici pour valider"))
         self.bitmap_button_annuler.SetToolTip(wx.ToolTip("Cliquez ici pour annuler"))
 
@@ -280,7 +284,8 @@ class Dialog(wx.Dialog):
         sizer_header.Add(self.bitmap_photo, 0, wx.ALIGN_TOP)
 
         sizer_boutons = wx.BoxSizer(wx.HORIZONTAL)
-        sizer_boutons.Add(self.bitmap_button_aide, 0)
+        sizer_boutons.Add(self.bitmap_button_aide, 0, wx.RIGHT, 8)
+        sizer_boutons.Add(self.bouton_documents_rh, 0)
         sizer_boutons.AddStretchSpacer(1)
         sizer_boutons.Add(self.bitmap_button_Ok, 0, wx.RIGHT, 8)
         sizer_boutons.Add(self.bitmap_button_annuler, 0)
@@ -430,6 +435,20 @@ class Dialog(wx.Dialog):
     def OnBoutonAide(self, event):
         from Utils import UTILS_Aide
         UTILS_Aide.Aide("Laficheindividuelle")
+
+    def OnDocumentsRH(self, event):
+        if self.nouvelleFiche:
+            return
+        if not self.Verifie_validite_donnees():
+            return
+        self.notebook.pageGeneralites.Sauvegarde()
+        from Dlg import DLG_Documents_RH
+        dlg = DLG_Documents_RH.Dialog(
+            self,
+            IDpersonne=self.notebook.IDpersonne,
+        )
+        dlg.ShowModal()
+        dlg.Destroy()
 
     def OnBoutonOk(self, event):
         self.AnnulationImpossible = False
