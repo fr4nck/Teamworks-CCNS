@@ -1,6 +1,6 @@
 # Teamworks — suivi Python 3 / wxPython Phoenix
 
-**Mise à jour : 25 août 2026**
+**Mise à jour : 28 août 2026**
 
 ## Objectif
 
@@ -46,6 +46,11 @@ Ce pourcentage mesure la **migration technique**, pas la maturité d'une release
 2. vérifier archive, manifeste, `BUILD.txt`, sommes SHA-256 et démarrage ;
 3. exécuter le parcours Windows minimal réel ;
 4. reclasser toute anomalie rencontrée : Vanilla, Python/Phoenix, UI/UX ou CCNS avant correction.
+
+Le build manuel du 28 août a confirmé une anomalie de packaging Python 3 :
+avec un `--specpath` distinct, PyInstaller résolvait le chemin relatif de
+l'icône depuis le dossier du fichier `.spec`. Le workflow utilise désormais le
+chemin absolu résolu avant l'appel à PyInstaller, avec un test de contrat dédié.
 
 ## Références
 
