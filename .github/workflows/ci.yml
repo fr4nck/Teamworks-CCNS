@@ -522,6 +522,7 @@ jobs:
         run: |
           $version = (Get-Content VERSION -Raw).Trim()
           $modules = Get-Content build/internal-modules.txt
+          $icon = (Resolve-Path 'teamworks/Static/Images/Branding/Teamworks-CCNS.ico').Path
           $pyinstallerArgs = @(
             '-m', 'PyInstaller',
             '--noconfirm',
@@ -529,7 +530,7 @@ jobs:
             '--windowed',
             '--onedir',
             '--name', 'Teamworks-CCNS',
-            '--icon', 'teamworks/Static/Images/Branding/Teamworks-CCNS.ico',
+            '--icon', $icon,
             '--paths', '.',
             '--paths', 'teamworks',
             '--distpath', 'dist',

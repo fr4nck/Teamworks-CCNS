@@ -58,4 +58,5 @@ def test_windows_packages_are_not_built_on_every_commit():
     assert "github.event_name == 'workflow_dispatch' && inputs.build_windows" in build
     assert "github.ref == 'refs/heads/master' && contains(github.event.head_commit.message, '[windows]')" in build
     assert "Teamworks-CCNS-*-windows-x64-setup.exe" in build
-    assert "'--icon', 'teamworks/Static/Images/Branding/Teamworks-CCNS.ico'" in build
+    assert "$icon = (Resolve-Path 'teamworks/Static/Images/Branding/Teamworks-CCNS.ico').Path" in build
+    assert "'--icon', $icon" in build
