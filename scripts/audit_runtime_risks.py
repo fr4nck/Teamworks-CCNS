@@ -51,8 +51,6 @@ def audit_text(root: Path, path: Path, lines: list[str]) -> list[Finding]:
     findings: list[Finding] = []
     for number, line in enumerate(lines, 1):
         stripped = line.strip()
-        if re.match(r"except\s*:\s*$", stripped):
-            findings.append(Finding("bare-except", rel, number, stripped))
         if "GestionDB.DB(" in line:
             findings.append(Finding("gestiondb-open", rel, number, stripped))
         if "sqlite3.connect(" in line:
@@ -421,6 +419,10 @@ def audit_ast(
     binding_lines = module_binding_lines(tree)
     guarded_loads = guarded_compatibility_loads(tree)
     for node in ast.walk(tree):
+        if isinstance(node, ast.ExceptHandler) and node.type is None:
+            detail = ast.get_source_segment(text, node) or "except:"
+            findings.append(Finding("bare-except", rel, node.lineno, detail.strip()))
+
         if isinstance(node, ast.Call):
             func = node.func
             if isinstance(func, ast.Name) and func.id in {"eval", "exec", "__import__"}:
@@ -552,7 +554,7 @@ def main() -> int:
         return 1
     if args.fail_on_sqlite_bytes_paths and sqlite_bytes:
         return 1
-    if args.fail_on_python2_builtins and python2_builtins:
+    if args.fail_on_python2-builtins and python2_builtins:
         return 1
     return 0
 
