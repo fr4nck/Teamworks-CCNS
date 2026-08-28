@@ -51,18 +51,11 @@ def _contract_values(legacy_values):
     }
 
 
-def PrepareDocument(document_code, IDpersonne=None, IDcontrat=None):
-    """Prépare un document RH en conservant tous les mots-clés historiques.
-
-    Les nouveaux modèles disposent en plus de STRUCTURE_*, SALARIE_* et CONTRAT_*.
-    """
+def _prepare_from_values(document_code, legacy_values):
     document_type = get_document_type(document_code)
-    legacy_values = _load_legacy_values(IDpersonne=IDpersonne, IDcontrat=IDcontrat)
-
     contract_values = _contract_values(legacy_values)
-    if document_type.scope is DocumentScope.EMPLOYEE and IDcontrat in (None, 0, ""):
+    if document_type.scope is DocumentScope.EMPLOYEE and not contract_values["date_debut"]:
         contract_values = None
-
     return prepare_hr_document(
         document_type.code,
         structure=UTILS_Organisation.GetProfilPublipostage(),
@@ -70,6 +63,15 @@ def PrepareDocument(document_code, IDpersonne=None, IDcontrat=None):
         contract=contract_values,
         extra=legacy_values,
     )
+
+
+def PrepareDocument(document_code, IDpersonne=None, IDcontrat=None):
+    """Prépare un document RH en conservant tous les mots-clés historiques.
+
+    Les nouveaux modèles disposent en plus de STRUCTURE_*, SALARIE_* et CONTRAT_*.
+    """
+    legacy_values = _load_legacy_values(IDpersonne=IDpersonne, IDcontrat=IDcontrat)
+    return _prepare_from_values(document_code, legacy_values)
 
 
 def GetDonneesPublipostage(document_code, IDpersonne=None, IDcontrat=None):
@@ -82,3 +84,31 @@ def GetDonneesPublipostage(document_code, IDpersonne=None, IDcontrat=None):
     values = prepared.merge_context.as_dict()
     keywords = tuple(sorted(values))
     return keywords, values, prepared
+
+
+def EnrichirDictDonneesContrat(dict_donnees):
+    """Ajoute les mots-clés génériques RH à un dictionnaire vanilla existant.
+
+    Cette fonction conserve intégralement les mots-clés historiques et ne change
+    pas la sélection des modèles. Elle permet aux nouveaux modèles d'utiliser
+    immédiatement STRUCTURE_*, SALARIE_* et CONTRAT_*.
+    """
+    if not dict_donnees or dict_donnees.get("CATEGORIE") != "contrat":
+        return dict_donnees
+
+    motcles = list(dict_donnees.get("MOTSCLES", []))
+    connus = {motcle for motcle, _type in motcles}
+    nombre = int(dict_donnees.get("NBREDOCUMENTS", 0) or 0)
+
+    for index in range(1, nombre + 1):
+        legacy_values = dict(dict_donnees.get(index, {}) or {})
+        prepared = _prepare_from_values("contract", legacy_values)
+        values = prepared.merge_context.as_dict()
+        dict_donnees[index] = values
+        for motcle in values:
+            if motcle not in connus:
+                motcles.append((motcle, "base"))
+                connus.add(motcle)
+
+    dict_donnees["MOTSCLES"] = motcles
+    return dict_donnees
