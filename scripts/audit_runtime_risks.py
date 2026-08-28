@@ -554,7 +554,7 @@ def main() -> int:
         return 1
     if args.fail_on_sqlite_bytes_paths and sqlite_bytes:
         return 1
-    if args.fail_on_python2-builtins and python2_builtins:
+    if args.fail_on_python2_builtins and python2_builtins:
         return 1
     return 0
 
