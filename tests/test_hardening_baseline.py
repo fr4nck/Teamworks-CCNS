@@ -3,6 +3,8 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
+from scripts.audit_runtime_risks import audit_text, iter_python_files, source_lines
+
 
 ROOT = Path(__file__).resolve().parents[1]
 RUNTIME_ROOTS = ("teamworks", "application", "domain", "infrastructure")
@@ -48,11 +50,11 @@ def test_no_dynamic_execution_in_runtime() -> None:
 
 def test_bare_except_debt_does_not_increase() -> None:
     count = 0
-    for path in _python_files(*RUNTIME_ROOTS):
-        tree = _parse(path)
-        for node in ast.walk(tree):
-            if isinstance(node, ast.ExceptHandler) and node.type is None:
-                count += 1
+    for path in iter_python_files(ROOT):
+        count += sum(
+            finding.category == "bare-except"
+            for finding in audit_text(ROOT, path, source_lines(path))
+        )
     assert count <= BARE_EXCEPT_CEILING, (
         f"dette bare except en hausse : {count} > {BARE_EXCEPT_CEILING}"
     )
