@@ -14,6 +14,7 @@ FIELDS = {
     "ville": "",
     "telephone": "",
     "email": "",
+    "email_rh": "",
     "site_web": "",
     "rna": "",
     "siren": "",
@@ -77,6 +78,51 @@ def SetProfil(values):
     for key, value in values.items():
         if key in FIELDS or key in DOCUMENT_FLAGS:
             SetValeur(key, value)
+
+
+def BuildProfilPublipostage(profile=None, logo_path=""):
+    """Normalise l'identité de la structure pour le moteur documentaire RH.
+
+    Aucun nom d'association n'est codé en dur. L'email RH retombe sur l'adresse
+    générale uniquement lorsqu'aucune adresse RH dédiée n'a été renseignée.
+    """
+    p = dict(FIELDS)
+    p.update(profile or {})
+    return {
+        "raison_sociale": p["nom_officiel"] or p["nom_usage"],
+        "nom_usage": p["nom_usage"],
+        "adresse": p["adresse"],
+        "code_postal": p["code_postal"],
+        "ville": p["ville"],
+        "telephone": p["telephone"],
+        "email": p["email"],
+        "email_rh": p["email_rh"] or p["email"],
+        "site_web": p["site_web"],
+        "rna": p["rna"],
+        "siren": p["siren"],
+        "siret": p["siret"],
+        "ape_naf": p["ape_naf"],
+        "agrement_js": p["agrement_js"],
+        "agrement_js_date": p["agrement_js_date"],
+        "assureur": p["assureur"],
+        "police_assurance": p["police_assurance"],
+        "assurance_echeance": p["assurance_echeance"],
+        "representant_legal": p["representant_legal"],
+        "representant_fonction": p["representant_fonction"],
+        "declaration_prefecture": p["declaration_prefecture"],
+        "reference_joafe": p["reference_joafe"],
+        "logo": logo_path or "",
+    }
+
+
+def GetProfilPublipostage():
+    """Retourne le profil structure courant, logo compris, pour les documents."""
+    from Utils import UTILS_Branding
+
+    return BuildProfilPublipostage(
+        GetProfil(),
+        logo_path=UTILS_Branding.GetAssociationLogoPath(),
+    )
 
 
 def BuildLignesEnteteDocument(profile):

@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Adaptateur du publiposteur pour les contrats TW-184.
+"""Adaptateur du publiposteur pour les contrats TW-184 et le catalogue RH.
 
 Le publiposteur vanilla reste inchangé pour toutes les autres catégories.
-Seule la liste des fichiers de modèles est filtrée selon le régime du contrat.
 Les fichiers sans métadonnées restent visibles comme modèles historiques.
 """
 
@@ -13,7 +12,13 @@ import Chemins
 import GestionDB
 from Utils.UTILS_Traduction import _
 from Dlg import DLG_Publiposteur as _base
-from Utils import UTILS_Adaptations, UTILS_Contrats_modeles_documents, UTILS_Fichiers
+from domain.documents import DocumentScope, list_document_types
+from Utils import (
+    UTILS_Adaptations,
+    UTILS_Contrats_modeles_documents,
+    UTILS_Documents_RH,
+    UTILS_Fichiers,
+)
 
 
 _TARGETS = [
@@ -31,6 +36,14 @@ _TARGETS = [
     (u"CEE — BAFD stagiaire", "CEE", None, "BAFD_TRAINEE"),
 ]
 
+_DOCUMENT_TYPES = [(u"Historique / non classé", None)] + [
+    (item.label, item.code)
+    for item in list_document_types(
+        scope=DocumentScope.CONTRACT,
+        generated_by_teamworks=True,
+    )
+]
+
 
 def _target_index(metadata):
     if metadata is None:
@@ -46,14 +59,24 @@ def _target_index(metadata):
     return 0
 
 
-def _apply_legacy_cee_aliases(dict_donnees):
-    """Alimente les mots-clés historiques depuis la source moderne unique.
+def _document_type_index(metadata):
+    current = (metadata or {}).get("document_kind")
+    for index, (_label, code) in enumerate(_DOCUMENT_TYPES):
+        if code == current:
+            return index
+    return 0
 
-    Le modèle CEE livré historiquement avec Teamworks utilise ``{BRUTJOUR}``.
-    TW-184 expose désormais ``{BAREMECEE}``, calculé à partir du barème
-    employeur historisé. Pour éviter une deuxième saisie contradictoire, on
-    fournit BRUTJOUR comme alias de BAREMECEE uniquement pour les CEE modernes.
-    """
+
+def _has_contract_target(metadata):
+    metadata = metadata or {}
+    return any(
+        metadata.get(key)
+        for key in ("convention_code", "ccns_group", "cee_qualification")
+    )
+
+
+def _apply_legacy_cee_aliases(dict_donnees):
+    """Alimente les mots-clés historiques depuis la source moderne unique."""
     if not dict_donnees or dict_donnees.get("CATEGORIE") != "contrat":
         return
     motcles = dict_donnees.setdefault("MOTSCLES", [])
@@ -85,9 +108,6 @@ class Grid_donnees(_base.Grid_donnees):
 
 class ListCtrl_fichiers(_base.ListCtrl_fichiers):
     def __init__(self, parent, controller=None):
-        # Phoenix impose que le contrôle soit enfant du StaticBox. Le code
-        # historique utilisait toutefois ``parent`` comme contrôleur Page4.
-        # On transmet donc séparément le parent wx et le contrôleur métier.
         owner = controller
         if owner is None:
             owner = parent.GetParent() if isinstance(parent, wx.StaticBox) else parent
@@ -145,11 +165,13 @@ class ListCtrl_fichiers(_base.ListCtrl_fichiers):
         menuPop.AppendItem(item)
         self.Bind(wx.EVT_MENU, self.Menu_CiblageContrat, id=184)
 
+        item = wx.MenuItem(menuPop, 185, _(u"Type de document RH…"))
+        menuPop.AppendItem(item)
+        self.Bind(wx.EVT_MENU, self.Menu_TypeDocumentRH, id=185)
+
         self.PopupMenu(menuPop)
         menuPop.Destroy()
 
-    # L'audit de handlers est volontairement statique et ne suit pas
-    # l'héritage : ces relais rendent explicites les actions vanilla conservées.
     def Menu_Ajouter(self, event):
         return super(ListCtrl_fichiers, self).Menu_Ajouter(event)
 
@@ -160,9 +182,6 @@ class ListCtrl_fichiers(_base.ListCtrl_fichiers):
         index = self.GetFirstSelected()
         nom_fichier = self.getColumnText(index, 0) if index != -1 else None
         resultat = super(ListCtrl_fichiers, self).Menu_Supprimer(event)
-
-        # Le dialogue vanilla gère la confirmation. On ne retire les métadonnées
-        # que si le fichier a réellement disparu ; une annulation ne change rien.
         if nom_fichier:
             chemin = os.path.join(UTILS_Fichiers.GetRepModeles(), nom_fichier)
             if not os.path.isfile(chemin):
@@ -201,10 +220,11 @@ class ListCtrl_fichiers(_base.ListCtrl_fichiers):
         selection = dlg.GetSelection()
         dlg.Destroy()
         _, convention, group, qualification = _TARGETS[selection]
+        document_kind = (metadata or {}).get("document_kind")
 
         DB = GestionDB.DB()
         try:
-            if selection == 0:
+            if selection == 0 and not document_kind:
                 UTILS_Contrats_modeles_documents.DeleteMetadata(DB, nom_fichier)
             else:
                 UTILS_Contrats_modeles_documents.SaveMetadata(
@@ -213,24 +233,71 @@ class ListCtrl_fichiers(_base.ListCtrl_fichiers):
                     convention_code=convention,
                     ccns_group=group,
                     cee_qualification=qualification,
+                    document_kind=document_kind,
                 )
                 DB.Commit()
         finally:
             DB.Close()
 
-        # Le fichier peut disparaître de la liste s'il vient d'être ciblé pour
-        # un autre régime que le contrat actuellement imprimé.
+        self.parent.nomFichier = ""
+        self.parent.MAJ_ListCtrl()
+
+    def Menu_TypeDocumentRH(self, event):
+        index = self.GetFirstSelected()
+        if index == -1:
+            return
+        nom_fichier = self.getColumnText(index, 0)
+        DB = GestionDB.DB()
+        try:
+            metadata = UTILS_Contrats_modeles_documents.GetMetadata(DB, nom_fichier)
+        finally:
+            DB.Close()
+
+        choices = [label for label, _code in _DOCUMENT_TYPES]
+        dlg = wx.SingleChoiceDialog(
+            self,
+            _(u"Classez ce modèle dans le catalogue documentaire RH."),
+            _(u"Type de document RH"),
+            choices,
+        )
+        dlg.SetSelection(_document_type_index(metadata))
+        if dlg.ShowModal() != wx.ID_OK:
+            dlg.Destroy()
+            return
+        selection = dlg.GetSelection()
+        dlg.Destroy()
+        document_kind = _DOCUMENT_TYPES[selection][1]
+
+        metadata = metadata or {}
+        DB = GestionDB.DB()
+        try:
+            if document_kind is None and not _has_contract_target(metadata):
+                UTILS_Contrats_modeles_documents.DeleteMetadata(DB, nom_fichier)
+            else:
+                UTILS_Contrats_modeles_documents.SaveMetadata(
+                    DB,
+                    nom_fichier,
+                    convention_code=metadata.get("convention_code"),
+                    ccns_group=metadata.get("ccns_group"),
+                    cee_qualification=metadata.get("cee_qualification"),
+                    document_kind=document_kind,
+                )
+                DB.Commit()
+        finally:
+            DB.Close()
+
         self.parent.nomFichier = ""
         self.parent.MAJ_ListCtrl()
 
 
 class Dialog(_base.Dialog):
-    """Publiposteur standard avec ergonomie et modèles filtrés pour un contrat."""
+    """Publiposteur standard enrichi pour contrats et documents RH."""
 
     def __init__(self, *args, **kwargs):
         dict_donnees = kwargs.get("dictDonnees")
         if dict_donnees is None and len(args) >= 3:
             dict_donnees = args[2]
+        UTILS_Documents_RH.EnrichirDictDonneesContrat(dict_donnees)
         _apply_legacy_cee_aliases(dict_donnees)
 
         original_list = _base.ListCtrl_fichiers
@@ -240,6 +307,5 @@ class Dialog(_base.Dialog):
         try:
             _base.Dialog.__init__(self, *args, **kwargs)
         finally:
-            # Les autres usages du publiposteur restent strictement vanilla.
             _base.ListCtrl_fichiers = original_list
             _base.Grid_donnees = original_grid

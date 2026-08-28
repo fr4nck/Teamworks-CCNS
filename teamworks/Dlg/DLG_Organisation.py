@@ -109,13 +109,14 @@ class Dialog(wx.Dialog):
 
         contact_box = wx.StaticBoxSizer(wx.VERTICAL, page, "Coordonnées")
         contact_parent = contact_box.GetStaticBox()
-        contact_grid = wx.FlexGridSizer(7, 2, 8, 12)
+        contact_grid = wx.FlexGridSizer(8, 2, 8, 12)
         contact_grid.AddGrowableCol(1, 1)
         self._row(contact_parent, contact_grid, "Adresse :", "adresse")
         self._row(contact_parent, contact_grid, "Code postal :", "code_postal")
         self._row(contact_parent, contact_grid, "Ville :", "ville")
         self._row(contact_parent, contact_grid, "Téléphone :", "telephone")
-        self._row(contact_parent, contact_grid, "Email :", "email")
+        self._row(contact_parent, contact_grid, "Email général :", "email")
+        self._row(contact_parent, contact_grid, "Email RH / recrutement :", "email_rh")
         self._row(contact_parent, contact_grid, "Site web :", "site_web")
         contact_box.Add(contact_grid, 0, wx.EXPAND | wx.ALL, 10)
         main.Add(contact_box, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
@@ -249,9 +250,10 @@ class Dialog(wx.Dialog):
         siret = re.sub(r"\s", "", values.get("siret", ""))
         if siret and not (siret.isdigit() and len(siret) == 14):
             errors.append("Le SIRET doit contenir 14 chiffres.")
-        email = values.get("email", "")
-        if email and "@" not in email:
-            errors.append("L’adresse email semble invalide.")
+        for key, label in (("email", "générale"), ("email_rh", "RH / recrutement")):
+            email = values.get(key, "")
+            if email and "@" not in email:
+                errors.append("L’adresse email %s semble invalide." % label)
         return errors
 
     def _refresh_preview(self):
