@@ -13,7 +13,12 @@ import Chemins
 import GestionDB
 from Utils.UTILS_Traduction import _
 from Dlg import DLG_Publiposteur as _base
-from Utils import UTILS_Adaptations, UTILS_Contrats_modeles_documents, UTILS_Fichiers
+from Utils import (
+    UTILS_Adaptations,
+    UTILS_Contrats_modeles_documents,
+    UTILS_Documents_RH,
+    UTILS_Fichiers,
+)
 
 
 _TARGETS = [
@@ -231,6 +236,7 @@ class Dialog(_base.Dialog):
         dict_donnees = kwargs.get("dictDonnees")
         if dict_donnees is None and len(args) >= 3:
             dict_donnees = args[2]
+        UTILS_Documents_RH.EnrichirDictDonneesContrat(dict_donnees)
         _apply_legacy_cee_aliases(dict_donnees)
 
         original_list = _base.ListCtrl_fichiers
