@@ -20,6 +20,7 @@ REPORT = REPORT_DIR / "diagnostic.txt"
 MARKER_LINE = '            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)'
 READY_MARKER = "TEAMWORKS_SMOKE_PERSON_LIFECYCLE_READY"
 FAILURE_MARKER = "TEAMWORKS_SMOKE_PERSON_LIFECYCLE_FAILED"
+SQL_ERROR_MARKER = "Requete sql de suppression incorrecte"
 
 INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
             _smoke_create_dialog = None
@@ -38,17 +39,20 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                     if _smoke_person_id is None:
                         return
                     _db = _smoke_gestiondb.DB()
-                    for _table in (
-                        "coordonnees", "diplomes", "questionnaires_reponses",
-                        "presences", "frais", "candidatures", "contrats",
-                    ):
-                        try:
-                            _db.ReqDEL(_table, "IDpersonne", _smoke_person_id)
-                        except Exception:
-                            pass
-                    _db.ReqDEL("personnes", "IDpersonne", _smoke_person_id)
-                    _db.Commit()
-                    _db.Close()
+                    try:
+                        _db.ExecuterReq("SELECT name FROM sqlite_master WHERE type='table'")
+                        _tables = {row[0] for row in _db.ResultatReq()}
+                        for _table in (
+                            "coordonnees", "diplomes", "questionnaires_reponses",
+                            "presences", "frais", "candidatures", "contrats",
+                        ):
+                            if _table in _tables:
+                                _db.ReqDEL(_table, "IDpersonne", _smoke_person_id)
+                        if "personnes" in _tables:
+                            _db.ReqDEL("personnes", "IDpersonne", _smoke_person_id)
+                        _db.Commit()
+                    finally:
+                        _db.Close()
 
                 print("TEAMWORKS_SMOKE_PERSON_LIFECYCLE_STAGE:reference", flush=True)
                 _smoke_db = _smoke_gestiondb.DB()
@@ -237,6 +241,10 @@ def main() -> int:
         if return_code != 0 or FAILURE_MARKER in output:
             github_error_summary("Person lifecycle smoke failed", output)
             return return_code or 1
+        if SQL_ERROR_MARKER in output:
+            github_error_summary("Person lifecycle smoke SQL cleanup failed", output)
+            print("erreur SQL tolérée détectée pendant le cycle Individu", file=sys.stderr)
+            return 4
         if READY_MARKER not in output:
             github_error_summary("Person lifecycle smoke failed", output)
             print("marqueur de cycle Individu absent", file=sys.stderr)
