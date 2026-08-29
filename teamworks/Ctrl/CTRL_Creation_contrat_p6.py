@@ -10,7 +10,7 @@ import datetime
 from decimal import Decimal
 
 from Utils.UTILS_Traduction import _
-from Utils import UTILS_Contrats_schema, UTILS_CEE_baremes
+from Utils import UTILS_Contrats_schema, UTILS_CEE_baremes, UTILS_Dates
 import wx
 import FonctionsPerso
 import GestionDB
@@ -61,12 +61,7 @@ def _decimal_or_none(value):
 def _date_or_none(value):
     if value in (None, "", "2999-01-01"):
         return None
-    if type(value) is datetime.date:
-        return value
-    try:
-        return datetime.date.fromisoformat(str(value))
-    except (TypeError, ValueError):
-        return None
+    return UTILS_Dates.DateEnDateDD(value)
 
 
 def _age_on(birth_date, reference_date):
@@ -107,8 +102,14 @@ class Page(wx.Panel):
         grid_sizer_base.AddGrowableCol(0)
         grid_sizer_base.AddGrowableRow(1)
 
+    def _ContractStartDate(self, dictContrats):
+        reference_date = _date_or_none(dictContrats.get("date_debut"))
+        if reference_date is None:
+            raise ValueError("La date de début du contrat n'est pas exploitable.")
+        return reference_date
+
     def _BuildCompensationPreflight(self, DB, dictContrats):
-        reference_date = datetime.date.fromisoformat(dictContrats["date_debut"])
+        reference_date = self._ContractStartDate(dictContrats)
         is_cee = _is_cee_type(DB, dictContrats.get("IDtype"))
 
         if is_cee:
@@ -226,7 +227,7 @@ class Page(wx.Panel):
         if not group or weekly is None or weekly <= Decimal("0.00"):
             return None
 
-        start = datetime.date.fromisoformat(dictContrats["date_debut"])
+        start = self._ContractStartDate(dictContrats)
         end = _date_or_none(dictContrats.get("date_fin"))
         evaluation_date = datetime.date.today()
         if evaluation_date < start:
@@ -261,7 +262,7 @@ class Page(wx.Panel):
         if compensation.control_scope == "CEE_LEGACY":
             return None
 
-        start = datetime.date.fromisoformat(dictContrats["date_debut"])
+        start = self._ContractStartDate(dictContrats)
         birth_date = None
         person_id = dictContrats.get("IDpersonne")
         if person_id:
@@ -309,13 +310,13 @@ class Page(wx.Panel):
 
         if result.decision is ContractFinalPreflightDecision.BLOCKED:
             detail = "\n".join("• %s" % message for message in result.blocking_messages())
-            wx.MessageBox(
-                _(u"Le contrat ne peut pas être validé :\n%s") % detail,
-                _(u"Contrôle final du contrat"),
-                wx.OK | wx.ICON_ERROR,
+            answer = wx.MessageBox(
+                _(u"Le contrôle final signale une non-conformité :\n%s\n\nEnregistrer quand même ce contrat ?") % detail,
+                _(u"Alerte sur le contrat"),
+                wx.YES_NO | wx.NO_DEFAULT | wx.ICON_WARNING,
                 parent=self,
             )
-            return False
+            return answer == wx.YES
 
         if result.decision is ContractFinalPreflightDecision.REVIEW:
             detail = "\n".join("• %s" % message for message in result.review_messages())
@@ -328,13 +329,28 @@ class Page(wx.Panel):
             return answer == wx.YES
         return True
 
+    def _UpdateRecord(self, DB, table, data, id_field, record_id):
+        placeholder = "%s" if DB.isNetwork else "?"
+        assignments = ", ".join("%s=%s" % (field, placeholder) for field, _value in data)
+        query = "UPDATE %s SET %s WHERE %s=%s" % (table, assignments, id_field, placeholder)
+        values = [value for _field, value in data]
+        values.append(record_id)
+        DB.cursor.execute(query, tuple(values))
+
+    def _DeleteRecord(self, DB, table, id_field, record_id):
+        placeholder = "%s" if DB.isNetwork else "?"
+        query = "DELETE FROM %s WHERE %s=%s" % (table, id_field, placeholder)
+        DB.cursor.execute(query, (record_id,))
+
     def Validation(self):
         dictContrats = self.GetGrandParent().dictContrats
         dictChamps = self.GetGrandParent().dictChamps
         DB = GestionDB.DB()
         UTILS_Contrats_schema.EnsureContractEngineColumns(DB)
 
-        # Défense en profondeur : le résultat métier agrégé pilote la validation.
+        # Défense en profondeur : le résultat métier agrégé informe la validation,
+        # mais l'utilisateur garde la décision finale lorsqu'il n'y a pas de risque
+        # technique pour les données.
         try:
             if not self._RunFinalPreflight(DB, dictContrats):
                 DB.Close()
@@ -368,45 +384,70 @@ class Page(wx.Panel):
             ("essai", dictContrats["essai"]),
         ]
 
-        if dictContrats["IDcontrat"] == 0:
-            listeDonnees.append(("signature", ""))
-            listeDonnees.append(("due", ""))
-            IDcontrat = DB.ReqInsert("contrats", listeDonnees)
-            DB.Commit()
-        else:
-            DB.ReqMAJ("contrats", listeDonnees, "IDcontrat", dictContrats["IDcontrat"])
-            DB.Commit()
-            IDcontrat = dictContrats["IDcontrat"]
+        try:
+            if dictContrats["IDcontrat"] == 0:
+                listeDonnees.append(("signature", ""))
+                listeDonnees.append(("due", ""))
+                IDcontrat = DB.ReqInsert("contrats", listeDonnees, commit=False)
+                if IDcontrat is None:
+                    raise RuntimeError("Le contrat principal n'a pas pu être créé.")
+            else:
+                IDcontrat = dictContrats["IDcontrat"]
+                self._UpdateRecord(DB, "contrats", listeDonnees, "IDcontrat", IDcontrat)
 
-        req = "SELECT IDval_champ, IDchamp FROM contrats_valchamps WHERE (IDcontrat=%d AND type='contrat')  ;" % IDcontrat
-        DB.ExecuterReq(req)
-        listeChampsDB = DB.ResultatReq()
+            req = "SELECT IDval_champ, IDchamp FROM contrats_valchamps WHERE (IDcontrat=%d AND type='contrat')  ;" % IDcontrat
+            if DB.ExecuterReq(req) != 1:
+                raise RuntimeError("Les champs complémentaires existants n'ont pas pu être lus.")
+            listeChampsDB = DB.ResultatReq()
 
-        for IDchamp, valeur in dictChamps.items():
-            donneesChamp = [
-                ("IDchamp", IDchamp),
-                ("type", "contrat"),
-                ("valeur", valeur),
-                ("IDcontrat", IDcontrat),
-                ("IDmodele", 0),
-            ]
-            modif = False
-            for IDval_champDB, IDchampDB in listeChampsDB:
-                if IDchampDB == IDchamp:
-                    DB.ReqMAJ("contrats_valchamps", donneesChamp, "IDval_champ", IDval_champDB)
-                    DB.Commit()
-                    modif = True
-            if modif == False:
-                DB.ReqInsert("contrats_valchamps", donneesChamp)
-                DB.Commit()
-
-        for IDval_champDB, IDchampDB in listeChampsDB:
-            trouve = False
             for IDchamp, valeur in dictChamps.items():
-                if IDchampDB == IDchamp:
-                    trouve = True
-            if trouve == False:
-                DB.ReqDEL("contrats_valchamps", "IDval_champ", IDval_champDB)
+                donneesChamp = [
+                    ("IDchamp", IDchamp),
+                    ("type", "contrat"),
+                    ("valeur", valeur),
+                    ("IDcontrat", IDcontrat),
+                    ("IDmodele", 0),
+                ]
+                correspondances = [
+                    IDval_champDB
+                    for IDval_champDB, IDchampDB in listeChampsDB
+                    if IDchampDB == IDchamp
+                ]
+                if correspondances:
+                    for IDval_champDB in correspondances:
+                        self._UpdateRecord(
+                            DB,
+                            "contrats_valchamps",
+                            donneesChamp,
+                            "IDval_champ",
+                            IDval_champDB,
+                        )
+                else:
+                    inserted = DB.ReqInsert("contrats_valchamps", donneesChamp, commit=False)
+                    if inserted is None:
+                        raise RuntimeError(
+                            "Le champ complémentaire %s n'a pas pu être enregistré." % IDchamp
+                        )
+
+            champs_conserves = set(dictChamps)
+            for IDval_champDB, IDchampDB in listeChampsDB:
+                if IDchampDB not in champs_conserves:
+                    self._DeleteRecord(DB, "contrats_valchamps", "IDval_champ", IDval_champDB)
+
+            DB.Commit()
+        except Exception as err:
+            try:
+                DB.connexion.rollback()
+            except Exception:
+                pass
+            DB.Close()
+            wx.MessageBox(
+                _(u"Le contrat n'a pas pu être enregistré. Aucune modification n'a été validée :\n%s") % err,
+                _(u"Enregistrement du contrat"),
+                wx.OK | wx.ICON_ERROR,
+                parent=self,
+            )
+            return False
 
         DB.Close()
 
