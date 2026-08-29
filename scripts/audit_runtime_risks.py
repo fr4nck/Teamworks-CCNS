@@ -547,9 +547,12 @@ def main() -> int:
             json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8"
         )
 
+    unparsed = result["counts"].get("syntax-unparsed", 0)
     missing = result["counts"].get("missing-bound-handler", 0)
     sqlite_bytes = result["counts"].get("sqlite-bytes-path", 0)
     python2_builtins = result["counts"].get("python2-removed-builtin", 0)
+    if unparsed:
+        return 1
     if args.fail_on_missing_handlers and missing:
         return 1
     if args.fail_on_sqlite_bytes_paths and sqlite_bytes:
