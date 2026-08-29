@@ -645,6 +645,11 @@ def Importation_contrat(IDcontrat=None):
     listeChamps = DB.ResultatReq()
     dictChamps = {}
     for IDchamp, mot_cle in listeChamps :
+        if not isinstance(mot_cle, str):
+            continue
+        mot_cle = mot_cle.strip()
+        if not mot_cle:
+            continue
         dictChamps[IDchamp] = mot_cle
         listeMotscles.append(mot_cle)
 
