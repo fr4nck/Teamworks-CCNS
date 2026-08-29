@@ -20,7 +20,7 @@ NOMS_EDITION = {
     "contrat" : "NOM_PRENOM*1_DATEDEBUT_DATEFIN",
     "candidat" : "NOM_PRENOM*1",
     "candidature" : "NOM_PRENOM*1_DATEDEPOT",
-    }
+    } # EXEMPLE -> "candidature" : "NOM_PRENOM*2_IDdocument_datedujour",
 
 
 def _format_postal_code(value):
@@ -68,6 +68,7 @@ def _get_country_value(country_id, field):
 
 
 def GetDictDonnees(categorie=None, listeID=None):
+    # Paramètres standards
     if listeID is None:
         listeID = []
     dict_donnees = {}
@@ -75,7 +76,8 @@ def GetDictDonnees(categorie=None, listeID=None):
     dict_donnees["NBREDOCUMENTS"] = len(listeID)
     dict_donnees["NOMEDITION"] = NOMS_EDITION[categorie]
     listeMotscles = []
-
+    
+    # Importe les données uniques pour chaque document
     numDoc = 1
     for ID in listeID :
         listeMotsclesDocument, dictDonneesDocument = GetDonneesDocument(categorie, ID)
@@ -83,17 +85,20 @@ def GetDictDonnees(categorie=None, listeID=None):
             listeMotscles = listeMotsclesDocument
         dict_donnees[numDoc] = dictDonneesDocument
         numDoc += 1
-
+    
+    # Préparation de la liste des mots-clés
     listeMotsclesTemp = []
     for motcle in listeMotscles :
         listeMotsclesTemp.append( (motcle, "base") )
     dict_donnees["MOTSCLES"] = listeMotsclesTemp
-
+    
     return dict_donnees
+
 
 
 def GetDonneesDocument(categorie=None, ID=None):
     """ categorie = candidat, candidature, personne... """
+    
     if categorie == "personne" :
         listeMotscles, dictDonnees = Importation_personne(IDpersonne=ID)
         return listeMotscles, dictDonnees
@@ -104,7 +109,7 @@ def GetDonneesDocument(categorie=None, ID=None):
             return [], {}
         IDpersonne = dictDonneesContrat["_IDPERSONNE"]
         listeMotsclesPersonne, dictDonneesPersonne = Importation_personne(IDpersonne=IDpersonne)
-
+        
         listeMotscles = []
         for motcle in listeMotsclesPersonne :
             if not motcle.startswith("_") :
@@ -112,7 +117,7 @@ def GetDonneesDocument(categorie=None, ID=None):
         for motcle in listeMotsclesContrat :
             if not motcle.startswith("_") :
                 listeMotscles.append(motcle)
-
+        
         dictDonnees = {}
         for motcle, valeur in dictDonneesPersonne.items() :
             if not motcle.startswith("_") :
@@ -120,13 +125,13 @@ def GetDonneesDocument(categorie=None, ID=None):
         for motcle, valeur in dictDonneesContrat.items() :
             if not motcle.startswith("_") :
                 dictDonnees[motcle] = valeur
-
+        
         return listeMotscles, dictDonnees
-
+            
     if categorie == "candidat" :
         listeMotscles, dictDonnees = Importation_candidat(IDcandidat=ID)
         return listeMotscles, dictDonnees
-
+    
     if categorie == "candidature" :
         listeMotsclesCandidature, dictDonneesCandidature = Importation_candidature(IDcandidature=ID)
         if not dictDonneesCandidature:
@@ -137,7 +142,7 @@ def GetDonneesDocument(categorie=None, ID=None):
             listeMotsclesPersonne, dictDonneesPersonne = Importation_candidat(IDcandidat=IDcandidat)
         else:
             listeMotsclesPersonne, dictDonneesPersonne = Importation_personne(IDpersonne=IDpersonne)
-
+        
         listeMotscles = []
         for motcle in listeMotsclesPersonne :
             if not motcle.startswith("_") :
@@ -145,7 +150,7 @@ def GetDonneesDocument(categorie=None, ID=None):
         for motcle in listeMotsclesCandidature :
             if not motcle.startswith("_") :
                 listeMotscles.append(motcle)
-
+        
         dictDonnees = {}
         for motcle, valeur in dictDonneesPersonne.items() :
             if not motcle.startswith("_") :
@@ -153,23 +158,28 @@ def GetDonneesDocument(categorie=None, ID=None):
         for motcle, valeur in dictDonneesCandidature.items() :
             if not motcle.startswith("_") :
                 dictDonnees[motcle] = valeur
-
+        
         return listeMotscles, dictDonnees
+    
+    
 
+    
+# -----------------------------------------------------------------------------------------------------------------------------------------------------------
 
 def Importation_candidat(IDcandidat=None):
+    # Données CANDIDAT
     dictDonnees = {}
-
-    DB = GestionDB.DB()
-    req = """SELECT IDcandidat, civilite, nom, prenom, date_naiss, age, adresse_resid, cp_resid, ville_resid, memo
+    
+    DB = GestionDB.DB()        
+    req = """SELECT IDcandidat, civilite, nom, prenom, date_naiss, age, adresse_resid, cp_resid, ville_resid, memo 
     FROM candidats WHERE IDcandidat=%d; """ % IDcandidat
     DB.ExecuterReq(req)
     listeDonnees = DB.ResultatReq()
     DB.Close()
     if len(listeDonnees) == 0 : return [], {}
-
+    
     IDcandidat, civilite, nom, prenom, date_naiss, age, adresse_resid, cp_resid, ville_resid, memo = listeDonnees[0]
-
+    
     dictDonnees["_IDCANDIDAT"] = IDcandidat
     dictDonnees["CIVILITE"] = civilite
     dictDonnees["NOM"] = nom
@@ -177,8 +187,11 @@ def Importation_candidat(IDcandidat=None):
     dictDonnees["ADRESSERESID"] = adresse_resid
     dictDonnees["VILLERESID"] = ville_resid
     dictDonnees["MEMO"] = memo
+    
+    # Champs spéciaux
     dictDonnees["CPRESID"] = _format_postal_code(cp_resid)
 
+    # Date de naissance
     dictDonnees["DATENAISS"] = ""
     temp = date_naiss
     if temp == "  /  /    " or temp == '' or temp == None:
@@ -186,12 +199,14 @@ def Importation_candidat(IDcandidat=None):
     else:
         temp = FonctionsPerso.DateEngFr(temp)
     dictDonnees["DATENAISS"] = temp
-
+    
+    # Age
     dictDonnees["AGE"] = ""
     if age != "" and age != None and age != 0 :
         dictDonnees["AGE"] = str(age)
     else:
         if dictDonnees["DATENAISS"] != "" :
+            # Calcul de l'age de la personne
             datenaissanceTmp = dictDonnees["DATENAISS"]
             jour = int(datenaissanceTmp[:2])
             mois = int(datenaissanceTmp[3:5])
@@ -200,9 +215,10 @@ def Importation_candidat(IDcandidat=None):
             datedujour = datetime.date.today()
             age = (datedujour.year - bday.year) - int((datedujour.month, datedujour.day) < (bday.month, bday.day))
             dictDonnees["AGE"] = str(age)
-
+        
+    # Qualifications
     dictDonnees["QUALIFICATIONS"] = ""
-    DB = GestionDB.DB()
+    DB = GestionDB.DB()       
     req = """
     SELECT types_diplomes.nom_diplome, types_diplomes.IDtype_diplome
     FROM types_diplomes LEFT JOIN diplomes_candidats ON types_diplomes.IDtype_diplome = diplomes_candidats.IDtype_diplome
@@ -216,11 +232,12 @@ def Importation_candidat(IDcandidat=None):
         for nom_diplome, IDtype_diplome in listeDonnees :
             texteTemp += nom_diplome + "; "
         dictDonnees["QUALIFICATIONS"] = texteTemp[:-2]
-
+    
+    # Coordonnées
     dictDonnees["TELEPHONES"] = ""
     dictDonnees["FAX"] = ""
     dictDonnees["EMAILS"] = ""
-    DB = GestionDB.DB()
+    DB = GestionDB.DB()        
     req = """SELECT IDcoord, categorie, texte, intitule
     FROM coords_candidats
     WHERE IDcandidat=%d; """ % IDcandidat
@@ -247,41 +264,48 @@ def Importation_candidat(IDcandidat=None):
         if nbreTel > 0 : dictDonnees["TELEPHONES"] = texteTel[:-2]
         if nbreEmails > 0 : dictDonnees["EMAILS"] = texteEmails[:-2]
         if nbreFax > 0 : dictDonnees["FAX"] = texteFax[:-2]
-
+    
+    # Liste des mots-clés
     listeMotscles = [ "CIVILITE", "NOM", "PRENOM", "DATENAISS", "AGE", "ADRESSERESID", "CPRESID", "VILLERESID", "QUALIFICATIONS", "TELEPHONES", "FAX", "EMAILS", "MEMO"]
-
+    
     return listeMotscles, dictDonnees
-
+    
 
 def Importation_candidature(IDcandidature=None):
+    # Importation des données de la candidature
     dictDonnees = {}
-
-    DB = GestionDB.DB()
+    
+    DB = GestionDB.DB()        
     req = """SELECT IDcandidat, IDpersonne, date_depot, IDtype, acte_remarques, IDemploi, periodes_remarques, poste_remarques,
-    IDdecision, decision_remarques, reponse_obligatoire, reponse, date_reponse, IDtype_reponse
+    IDdecision, decision_remarques, reponse_obligatoire, reponse, date_reponse, IDtype_reponse 
     FROM candidatures WHERE IDcandidature=%d; """ % IDcandidature
     DB.ExecuterReq(req)
     listeDonnees = DB.ResultatReq()
     DB.Close()
     if len(listeDonnees) == 0 : return [], {}
-    IDcandidat, IDpersonne, date_depot, IDtype, acte_remarques, IDemploi, periodes_remarques, poste_remarques, IDdecision, decision_remarques, reponse_obligatoire, reponse, date_reponse, IDtype_reponse = listeDonnees[0]
-
+    IDcandidat, IDpersonne, date_depot, IDtype, acte_remarques, IDemploi, periodes_remarques, poste_remarques, IDdecision, decision_remarques, reponse_obligatoire, reponse, date_reponse, IDtype_reponse  = listeDonnees[0]
+    
     dictDonnees["_IDCANDIDAT"] = IDcandidat
     dictDonnees["_IDPERSONNE"] = IDpersonne
+    
+    # Date de dépôt
     dictDonnees["DATEDEPOT"] = FonctionsPerso.DateEngFr(date_depot)
-
+    
+    # Type dépôt
     listeTypes = [_(u"De vive voix"), _(u"Courrier"), _(u"Téléphone"), _(u"Main à main"), _(u"Email"), _(u"Pôle Emploi"), _(u"Organisateur"), _(u"Fédération"), _(u"Autre")]
     dictDonnees["TYPEDEPOT"] = _choice_label(listeTypes, IDtype)
-
+    
+    # Offre d'emploi
     dictDonnees["OFFREDEMPLOI"] = ""
     if IDemploi in (0, None, "") :
         dictDonnees["OFFREDEMPLOI"] = _(u"Candidature spontanée")
     else:
         listeMotsclesEmmplois, dictDonneesEmplois = Importation_offre_emploi(IDemploi=IDemploi)
         dictDonnees["OFFREDEMPLOI"] = dictDonneesEmplois.get("OFFRE_INTITULE", "")
-
+    
+    # Disponibilités
     dictDonnees["DISPONIBILITES"] = ""
-    DB = GestionDB.DB()
+    DB = GestionDB.DB()        
     req = """SELECT IDdisponibilite, date_debut, date_fin
     FROM disponibilites WHERE IDcandidature=%d ORDER BY date_debut; """ % IDcandidature
     DB.ExecuterReq(req)
@@ -292,9 +316,10 @@ def Importation_candidature(IDcandidature=None):
         for IDdisponibilite, date_debut, date_fin in listeDonnees :
             texteTemp += _(u"du %s au %s") % (FonctionsPerso.DateEngFr(date_debut), FonctionsPerso.DateEngFr(date_fin)) + "; "
         dictDonnees["DISPONIBILITES"] = texteTemp[:-2]
-
+        
+    # Fonctions
     dictDonnees["FONCTIONS"] = ""
-    DB = GestionDB.DB()
+    DB = GestionDB.DB()        
     req = """
     SELECT fonctions.IDfonction, fonctions.fonction
     FROM fonctions LEFT JOIN cand_fonctions ON fonctions.IDfonction = cand_fonctions.IDfonction
@@ -308,9 +333,10 @@ def Importation_candidature(IDcandidature=None):
         for IDfonction, nomFonction in listeDonnees :
             texteTemp += nomFonction + "; "
         dictDonnees["FONCTIONS"] = texteTemp[:-2]
-
+    
+    # Fonctions
     dictDonnees["AFFECTATIONS"] = ""
-    DB = GestionDB.DB()
+    DB = GestionDB.DB()        
     req = """
     SELECT affectations.IDaffectation, affectations.affectation
     FROM affectations LEFT JOIN cand_affectations ON affectations.IDaffectation = cand_affectations.IDaffectation
@@ -324,24 +350,30 @@ def Importation_candidature(IDcandidature=None):
         for IDfonction, nomAffectation in listeDonnees :
             texteTemp += nomAffectation + "; "
         dictDonnees["AFFECTATIONS"] = texteTemp[:-2]
-
+    
+    # Décision
     typesDecision = [_(u"Décision non prise"), _(u"Oui"), _(u"Non")]
     dictDonnees["DECISION"] = _choice_label(typesDecision, IDdecision)
-
-    listeTypesReponses = [_(u"De vive voix"), _(u"Courrier"), _(u"Téléphone"), _(u"Main à main"), _(u"Email"), _(u"Autre")]
+    
+    # Réponse
+    listeTypesReponses = [_(u"De vive voix"), _(u"Courrier"), _(u"Téléphone"), _(u"Main à main"), _(u"Email"), _(u"Autre")] 
     dictDonnees["DATEREPONSE"] = ""
     dictDonnees["TYPEREPONSE"] = ""
     if reponse == 1 :
         if date_reponse not in (None, ""):
             dictDonnees["DATEREPONSE"] = FonctionsPerso.DateEngFr(date_reponse)
         dictDonnees["TYPEREPONSE"] = _choice_label(listeTypesReponses, IDtype_reponse)
-
-    listeMotscles = [ "DATEDEPOT", "TYPEDEPOT", "OFFREDEMPLOI", "DISPONIBILITES", "FONCTIONS", "AFFECTATIONS", "DECISION", "DATEREPONSE", "TYPEREPONSE"]
+    
+    # Liste des mots-clés
+    listeMotscles = [ "DATEDEPOT", "TYPEDEPOT", "OFFREDEMPLOI",  "DISPONIBILITES", "FONCTIONS", "AFFECTATIONS", "DECISION", "DATEREPONSE", "TYPEREPONSE"]
+    
     return listeMotscles, dictDonnees
 
 
 def Importation_offre_emploi(IDemploi=None):
+    # Importation des données d'une offre d'emploi
     dictDonnees = {}
+
     dictDonnees["OFFREDEMPLOI"] = ""
     DB = GestionDB.DB()
     req = """
@@ -354,20 +386,23 @@ def Importation_offre_emploi(IDemploi=None):
     DB.Close()
     if len(listeDonnees) == 0 : return [], {}
     IDemploi, date_debut, date_fin, intitule, detail, reference_anpe = listeDonnees[0]
-
+    
     dictDonnees["OFFRE_DATEDEBUT"] = date_debut
     dictDonnees["OFFRE_DATEFIN"] = date_fin
     dictDonnees["OFFRE_INTITULE"] = intitule
     dictDonnees["OFFRE_DETAIL"] = detail
     dictDonnees["OFFRE_REFERENCE_ANPE"] = reference_anpe
-
+    
+    # Liste des mots-clés
     listeMotscles = [ "OFFRE_INTITULE", "OFFRE_DETAIL", "OFFRE_DATEDEBUT", "OFFRE_DATEFIN", "OFFRE_REFERENCE_ANPE"]
+    
     return listeMotscles, dictDonnees
-
-
+                                        
+                                    
 def Importation_personne(IDpersonne=None):
+    # Importation des données d'une personne
     dictDonnees = {}
-
+    
     DB = GestionDB.DB()
     req = """
     SELECT civilite, nom, nom_jfille, prenom, date_naiss, cp_naiss, ville_naiss, nationalite, num_secu, adresse_resid, cp_resid, ville_resid, IDsituation, pays_naiss
@@ -377,19 +412,22 @@ def Importation_personne(IDpersonne=None):
     listeDonnees = DB.ResultatReq()
     DB.Close()
     if len(listeDonnees) == 0 : return [], {}
-
+    
     civilite, nom, nom_jfille, prenom, date_naiss, cp_naiss, ville_naiss, nationalite, num_secu, adresse_resid, cp_resid, ville_resid, IDsituation, pays_naiss = listeDonnees[0]
-
+    
     dictDonnees["CIVILITE"] = civilite
     dictDonnees["NOM"] = nom
     dictDonnees["NOMJFILLE"] = nom_jfille
     dictDonnees["PRENOM"] = prenom
-
+    
+    # Date de naissance
     dictDonnees["DATENAISS"] = ""
     if date_naiss not in ("", None) : dictDonnees["DATENAISS"] = UTILS_Dates.DateEngFr(date_naiss)
-
+    
+    # Age
     dictDonnees["AGE"] = ""
     if dictDonnees["DATENAISS"] != "" :
+        # Calcul de l'age de la personne
         datenaissanceTmp = dictDonnees["DATENAISS"]
         jour = int(datenaissanceTmp[:2])
         mois = int(datenaissanceTmp[3:5])
@@ -398,16 +436,30 @@ def Importation_personne(IDpersonne=None):
         datedujour = datetime.date.today()
         age = (datedujour.year - bday.year) - int((datedujour.month, datedujour.day) < (bday.month, bday.day))
         dictDonnees["AGE"] = str(age)
-
+            
+    # CP naissance
     dictDonnees["CPNAISS"] = _format_postal_code(cp_naiss)
+    
+    # Ville de naissance
     dictDonnees["VILLENAISS"] = ville_naiss
+    
+    # Nationalité et pays de naissance
     dictDonnees["NATIONALITE"] = _get_country_value(nationalite, "nationalite")
     dictDonnees["PAYSNAISS"] = _get_country_value(pays_naiss, "nom")
+    
+    # Num sécu
     dictDonnees["NUMSECU"] = num_secu
+    
+    # Adresse
     dictDonnees["ADRESSERESID"] = adresse_resid
+    
+    # CP
     dictDonnees["CPRESID"] = _format_postal_code(cp_resid)
+        
+    # Ville
     dictDonnees["VILLERESID"] = ville_resid
-
+    
+    # Situation
     dictDonnees["SITUATION"] = ""
     DB = GestionDB.DB()
     req = """
@@ -420,10 +472,12 @@ def Importation_personne(IDpersonne=None):
     if len(listeSituations) > 0 :
         dictDonnees["SITUATION"] = listeSituations[0][0]
 
+    
+    # Coordonnées
     dictDonnees["TELEPHONES"] = ""
     dictDonnees["FAX"] = ""
     dictDonnees["EMAILS"] = ""
-    DB = GestionDB.DB()
+    DB = GestionDB.DB()        
     req = """SELECT IDcoord, categorie, texte, intitule
     FROM coordonnees
     WHERE IDpersonne=%d; """ % IDpersonne
@@ -451,11 +505,12 @@ def Importation_personne(IDpersonne=None):
         if nbreEmails > 0 : dictDonnees["EMAILS"] = texteEmails[:-2]
         if nbreFax > 0 : dictDonnees["FAX"] = texteFax[:-2]
 
+    # Liste des mots-clés
     listeMotscles = [ "CIVILITE", "NOM", "NOMJFILLE", "PRENOM", "DATENAISS", "AGE", "CPNAISS", "VILLENAISS",
-    "PAYSNAISS", "NATIONALITE", "NUMSECU", "ADRESSERESID", "CPRESID", "VILLERESID", "SITUATION", "TELEPHONES", "EMAILS", "FAX"]
+    "PAYSNAISS", "NATIONALITE", "NUMSECU", "ADRESSERESID", "CPRESID", "VILLERESID", "SITUATION",
+    "TELEPHONES", "EMAILS", "FAX"]
 
     return listeMotscles, dictDonnees
-
 
 def Importation_contrat(IDcontrat=None):
     """Importe un contrat historique ou TW-184 pour le publipostage.
@@ -491,6 +546,7 @@ def Importation_contrat(IDcontrat=None):
     dictDonnees["DATEFIN"] = FonctionsPerso.DateEngFr(date_fin) if date_fin else ""
     dictDonnees["ESSAI"] = str(essai or 0)
 
+    # Champs historiques : présents pour les anciens modèles, vides sinon.
     dictDonnees["CLASSIFICATION"] = ""
     if IDclassification not in (None, ""):
         DB.ExecuterReq("SELECT nom FROM contrats_class WHERE IDclassification=%d;" % int(IDclassification))
@@ -514,6 +570,7 @@ def Importation_contrat(IDcontrat=None):
         if rows:
             dictDonnees["VALEURPOINT"] = u"%s €" % rows[0][0]
 
+    # Mots-clés TW-184 utilisables dans les nouveaux modèles.
     qualification_labels = {
         "BAFA_HOLDER": u"BAFA titulaire",
         "BAFA_TRAINEE": u"BAFA stagiaire",
@@ -539,7 +596,7 @@ def Importation_contrat(IDcontrat=None):
     dictDonnees["BAREMECEE"] = ""
     dictDonnees["MINIMUMCEE"] = ""
 
-    reference_date = UTILS_Dates.DateEnDateDD(date_debut)
+    reference_date = datetime.date.fromisoformat(str(date_debut)) if date_debut else None
     is_cee = type_abrege == "CEE" or "engagement educatif" in dictDonnees["TYPECONTRAT"].lower() or "engagement éducatif" in dictDonnees["TYPECONTRAT"].lower()
 
     if reference_date is not None and is_cee and cee_qualification:
@@ -583,6 +640,7 @@ def Importation_contrat(IDcontrat=None):
         "BAREMECEE", "MINIMUMCEE",
     ]
 
+    # Champs personnalisés des contrats
     DB.ExecuterReq("SELECT IDchamp, mot_cle FROM contrats_champs;")
     listeChamps = DB.ResultatReq()
     dictChamps = {}
@@ -605,6 +663,9 @@ def Importation_contrat(IDcontrat=None):
     DB.Close()
     return listeMotscles, dictDonnees
 
-
+# --------------------------------------------------------------------------------------------------------------------------
 if __name__ == "__main__":
     print(GetDictDonnees(categorie="candidat", listeID=[2, 5]))
+    
+    
+    
