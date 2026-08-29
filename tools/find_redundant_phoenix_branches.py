@@ -49,10 +49,7 @@ def _read_source(path: Path) -> str:
 def find_redundant_phoenix_branches(root: Path = DEFAULT_ROOT) -> list[Finding]:
     findings: list[Finding] = []
     for path in sorted(root.rglob("*.py")):
-        try:
-            tree = ast.parse(_read_source(path))
-        except (OSError, UnicodeDecodeError, SyntaxError):
-            continue
+        tree = ast.parse(_read_source(path), filename=str(path))
 
         for node in ast.walk(tree):
             if not isinstance(node, ast.If) or not node.orelse:

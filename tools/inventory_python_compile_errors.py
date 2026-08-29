@@ -97,7 +97,7 @@ def main() -> int:
             indent=2,
         )
     )
-    return 0
+    return 1 if report["failed_files"] else 0
 
 
 if __name__ == "__main__":

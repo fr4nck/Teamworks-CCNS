@@ -34,10 +34,10 @@ def inventory(root: Path) -> dict:
     files_by_module: dict[str, set[str]] = defaultdict(set)
 
     for path in sorted(root.rglob("*.py")):
-        try:
-            tree = ast.parse(path.read_text(encoding="utf-8", errors="replace"), filename=str(path))
-        except SyntaxError:
-            continue
+        tree = ast.parse(
+            path.read_text(encoding="utf-8", errors="replace"),
+            filename=str(path),
+        )
         for node in ast.walk(tree):
             for module, line in imported_root(node):
                 if module in stdlib or module in local or module == "__future__":

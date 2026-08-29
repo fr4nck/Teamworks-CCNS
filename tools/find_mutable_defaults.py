@@ -35,10 +35,7 @@ def read_source(path: Path) -> str:
 def find_mutable_defaults(root: Path) -> list[Finding]:
     findings: list[Finding] = []
     for path in sorted(root.rglob("*.py")):
-        try:
-            tree = ast.parse(read_source(path))
-        except (OSError, UnicodeDecodeError, SyntaxError):
-            continue
+        tree = ast.parse(read_source(path), filename=str(path))
 
         for node in ast.walk(tree):
             if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
