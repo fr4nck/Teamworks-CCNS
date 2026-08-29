@@ -596,7 +596,7 @@ def Importation_contrat(IDcontrat=None):
     dictDonnees["BAREMECEE"] = ""
     dictDonnees["MINIMUMCEE"] = ""
 
-    reference_date = datetime.date.fromisoformat(str(date_debut)) if date_debut else None
+    reference_date = UTILS_Dates.DateEnDateDD(date_debut)
     is_cee = type_abrege == "CEE" or "engagement educatif" in dictDonnees["TYPECONTRAT"].lower() or "engagement éducatif" in dictDonnees["TYPECONTRAT"].lower()
 
     if reference_date is not None and is_cee and cee_qualification:
