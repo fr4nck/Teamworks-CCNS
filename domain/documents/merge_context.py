@@ -66,7 +66,9 @@ def build_merge_context(
         for key, value in extra.items():
             normalized_key = str(key).strip().upper()
             if normalized_key:
-                values[normalized_key] = _clean_value(value)
+                # Les mots-clés historiques restent disponibles, mais ne doivent
+                # jamais écraser les espaces de noms canoniques construits ci-dessus.
+                values.setdefault(normalized_key, _clean_value(value))
 
     return MergeContext(values=values)
 

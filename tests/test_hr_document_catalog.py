@@ -75,6 +75,26 @@ def test_merge_context_prefixes_structure_employee_and_contract_without_defaults
     assert "PMSL" not in values
 
 
+def test_legacy_extra_values_cannot_override_canonical_namespaces() -> None:
+    context = build_merge_context(
+        structure={"raison_sociale": "Structure canonique"},
+        employee={"nom": "Martin"},
+        contract={"date_debut": "2026-09-01"},
+        extra={
+            "STRUCTURE_RAISON_SOCIALE": "Ancienne structure",
+            "SALARIE_NOM": "Ancien nom",
+            "CONTRAT_DATE_DEBUT": "01/01/1900",
+            "NOM": "Mot-clé historique conservé",
+        },
+    )
+    values = context.as_dict()
+
+    assert values["STRUCTURE_RAISON_SOCIALE"] == "Structure canonique"
+    assert values["SALARIE_NOM"] == "Martin"
+    assert values["CONTRAT_DATE_DEBUT"] == "2026-09-01"
+    assert values["NOM"] == "Mot-clé historique conservé"
+
+
 def test_required_fields_report_their_source() -> None:
     context = build_merge_context(
         structure={"raison_sociale": "Structure", "adresse": "Adresse"},
