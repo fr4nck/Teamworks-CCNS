@@ -53,6 +53,91 @@ class ListView(CORE.ListView):
         self.SetEmptyListMsgFont(UTILS_Styles.GetFont("body-secondary"))
         self.SetObjects(self.donnees)
 
+    def Supprimer(self):
+        if len(self.Selection()) == 0:
+            dlg = wx.MessageDialog(
+                self,
+                _(u"Vous devez d'abord sélectionner une offre d'emploi à supprimer dans la liste."),
+                "Information",
+                wx.OK | wx.ICON_INFORMATION,
+            )
+            dlg.ShowModal()
+            dlg.Destroy()
+            return False
+
+        try:
+            if self.GetGrandParent().GetParent().GetName() == "Recrutement":
+                self.GetGrandParent().GetParent().AffichePanelResume(False)
+        except Exception:
+            pass
+
+        track = self.Selection()[0]
+        IDemploi = track.IDemploi
+        nom = track.intitule
+
+        # Conserve le garde-fou historique : une offre déjà rattachée à une
+        # candidature doit d'abord être détachée explicitement par l'utilisateur.
+        DB = CORE.GestionDB.DB()
+        DB.ExecuterReq("SELECT IDcandidature FROM candidatures WHERE IDemploi=%d;" % IDemploi)
+        candidatures = DB.ResultatReq()
+        DB.Close()
+        if candidatures:
+            dlg = wx.MessageDialog(
+                self,
+                _(u"Vous avez déjà enregistré %s candidature(s) rattachée(s) à cette offre d'emploi. "
+                  u"Vous ne pouvez donc pas la supprimer.") % len(candidatures),
+                "Information",
+                wx.OK | wx.ICON_ERROR,
+            )
+            dlg.ShowModal()
+            dlg.Destroy()
+            return False
+
+        dlgConfirm = wx.MessageDialog(
+            self,
+            _(u"Voulez-vous vraiment supprimer l'offre d'emploi : %s ?") % nom,
+            _(u"Confirmation de suppression"),
+            wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION,
+        )
+        reponse = dlgConfirm.ShowModal()
+        dlgConfirm.Destroy()
+        if reponse != wx.ID_YES:
+            return False
+
+        DB = CORE.GestionDB.DB()
+        placeholder = "%s" if DB.isNetwork else "?"
+        try:
+            # Les tables dépendantes sont vidées avant l'offre principale et
+            # l'ensemble n'est validé qu'une fois toutes les requêtes réussies.
+            for table in (
+                "emplois_dispo",
+                "emplois_fonctions",
+                "emplois_affectations",
+                "emplois_diffuseurs",
+                "emplois",
+            ):
+                DB.cursor.execute(
+                    "DELETE FROM %s WHERE IDemploi=%s" % (table, placeholder),
+                    (IDemploi,),
+                )
+            DB.Commit()
+        except Exception as err:
+            try:
+                DB.connexion.rollback()
+            except Exception:
+                pass
+            DB.Close()
+            wx.MessageBox(
+                _(u"L'offre d'emploi n'a pas pu être supprimée. Aucune suppression n'a été validée.\n\nDétail technique : %s") % err,
+                _(u"Suppression annulée"),
+                wx.OK | wx.ICON_ERROR,
+            )
+            return False
+        DB.Close()
+
+        self.MAJ()
+        return True
+
     def OnContextMenu(self, event):
         selection = bool(self.Selection())
         menu = wx.Menu()
