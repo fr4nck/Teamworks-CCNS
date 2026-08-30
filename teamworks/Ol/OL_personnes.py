@@ -11,7 +11,7 @@ from Utils.UTILS_Traduction import _
 LISTE_COLONNES = CORE.LISTE_COLONNES
 
 
-class Track(object):
+class Track(CORE.Track):
     """Ligne personne tolérante aux références historiques orphelines."""
 
     def __init__(self, donnees):
