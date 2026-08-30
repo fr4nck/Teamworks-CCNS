@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 """ObjectListView Candidatures modernisé sans pictogrammes décoratifs."""
 
-import datetime
 import wx
 
 from Ol import OL_candidatures_core as CORE
@@ -44,16 +43,86 @@ LISTE_COLONNES_3 = CORE.LISTE_COLONNES_3
 
 
 class Track(CORE.Track):
-    """Même modèle métier, informations anciennement pictographiques rendues textuelles."""
+    """Modèle métier tolérant aux références et dates historiques incomplètes."""
 
     def __init__(self, donnees):
-        CORE.Track.__init__(self, donnees)
-        date = UTILS_Dates.DateEngFr(self.date_depot) or ""
-        canal = DEPOT_LABELS.get(self.IDtype, _(u"Autre"))
-        self.depot = u"%s · %s" % (date, canal) if date else canal
+        self.IDcandidature = donnees[0]
+        self.IDcandidat = donnees[1]
+        self.date_depot = donnees[2]
+        self.IDtype = donnees[3]
+        self.acte_remarques = donnees[4]
+        self.IDemploi = donnees[5]
+        self.periodes_remarques = donnees[6]
+        self.IDdecision = donnees[7]
+        self.decision_remarques = donnees[8]
+        self.reponse_obligatoire = donnees[9]
+        self.reponse = donnees[10]
+        self.date_reponse = donnees[11]
+        self.IDtype_reponse = donnees[12]
+        self.IDpersonne = donnees[13]
 
-        if self.IDpersonne not in (None, 0):
-            self.nom_candidat = u"%s · %s" % (self.nom_candidat, _(u"salarié"))
+        if self.IDpersonne in (None, 0):
+            candidat = CORE.NOMS_CANDIDATS.get(self.IDcandidat)
+            if candidat:
+                _civilite, nom, prenom = candidat
+                self.nom_candidat = u"%s %s" % (nom or "", prenom or "")
+            else:
+                self.nom_candidat = _(u"Candidat introuvable (réf. %s)") % self.IDcandidat
+        else:
+            personne = CORE.NOMS_PERSONNES.get(self.IDpersonne)
+            if personne:
+                _civilite, nom, prenom = personne
+                self.nom_candidat = u"%s %s · %s" % (nom or "", prenom or "", _(u"salarié"))
+            else:
+                self.nom_candidat = _(u"Salarié introuvable (réf. %s)") % self.IDpersonne
+
+        date_depot = UTILS_Dates.DateEnDateDD(self.date_depot)
+        date_label = UTILS_Dates.DateEngFr(date_depot) if date_depot else ""
+        canal = DEPOT_LABELS.get(self.IDtype, _(u"Autre"))
+        self.depot = u"%s · %s" % (date_label, canal) if date_label else canal
+        self.depot_long = date_depot.strftime("%A %d %B %Y") if date_depot else ""
+
+        if self.IDemploi in (None, 0):
+            self.offre_emploi = _(u"Candidature spontanée")
+        else:
+            emploi = CORE.DICT_EMPLOIS.get(self.IDemploi)
+            self.offre_emploi = (
+                emploi[2]
+                if emploi
+                else _(u"Offre introuvable (réf. %s)") % self.IDemploi
+            )
+
+        disponibilites = CORE.DICT_DISPONIBILITES.get(self.IDcandidature, [])
+        textes_disponibilites = []
+        for _IDdisponibilite, date_debut, date_fin in disponibilites:
+            if date_debut and date_fin:
+                textes_disponibilites.append(
+                    _(u"du %s au %s") % (
+                        date_debut.strftime("%d/%m/%Y"),
+                        date_fin.strftime("%d/%m/%Y"),
+                    )
+                )
+        self.disponibilites = "; \n".join(textes_disponibilites) if textes_disponibilites else _(u"Inconnu")
+
+        fonctions = []
+        for IDfonction in CORE.DICT_CAND_FONCTIONS.get(self.IDcandidature, []):
+            fonctions.append(
+                CORE.DICT_FONCTIONS.get(
+                    IDfonction,
+                    _(u"Fonction introuvable (réf. %s)") % IDfonction,
+                )
+            )
+        self.fonctions = "; \n".join(fonctions) if fonctions else _(u"Inconnu")
+
+        affectations = []
+        for IDaffectation in CORE.DICT_CAND_AFFECTATIONS.get(self.IDcandidature, []):
+            affectations.append(
+                CORE.DICT_AFFECTATIONS.get(
+                    IDaffectation,
+                    _(u"Affectation introuvable (réf. %s)") % IDaffectation,
+                )
+            )
+        self.affectations = "; \n".join(affectations) if affectations else _(u"Inconnu")
 
         decision = DECISION_LABELS.get(self.IDdecision, _(u"À décider"))
         if self.decision_remarques:
@@ -63,21 +132,47 @@ class Track(CORE.Track):
 
         if self.reponse == 1:
             canal_reponse = REPONSE_LABELS.get(self.IDtype_reponse, _(u"Autre"))
-            date_reponse = ""
-            if self.date_reponse:
-                date_reponse = UTILS_Dates.DateEngFr(self.date_reponse) or ""
+            date_reponse = UTILS_Dates.DateEnDateDD(self.date_reponse)
+            date_reponse_label = UTILS_Dates.DateEngFr(date_reponse) if date_reponse else ""
             self.texte_reponse = (
-                u"%s · %s" % (date_reponse, canal_reponse)
-                if date_reponse else canal_reponse
+                u"%s · %s" % (date_reponse_label, canal_reponse)
+                if date_reponse_label else canal_reponse
+            )
+            self.texte_reponse_long = (
+                date_reponse.strftime("%A %d %B %Y") if date_reponse else ""
             )
         elif self.reponse_obligatoire == 1:
             self.texte_reponse = _(u"À envoyer")
+            self.texte_reponse_long = ""
         else:
             self.texte_reponse = _(u"Non requise")
+            self.texte_reponse_long = ""
 
 
 class ListView(CORE.ListView):
     """Liste métier historique avec rendu neutre et états textuels."""
+
+    def Importation_disponibilites(self):
+        DB = CORE.GestionDB.DB()
+        req = """SELECT IDdisponibilite, IDcandidature, date_debut, date_fin
+        FROM disponibilites;"""
+        DB.ExecuterReq(req)
+        rows = DB.ResultatReq()
+        DB.Close()
+
+        CORE.DICT_DISPONIBILITES = {}
+        for IDdisponibilite, IDcandidature, date_debut, date_fin in rows:
+            debut = UTILS_Dates.DateEnDateDD(date_debut)
+            fin = UTILS_Dates.DateEnDateDD(date_fin)
+            # Une période historique invalide ne doit pas empêcher l'ouverture
+            # de toute la vue. Elle reste en base, mais n'entre pas dans les
+            # comparaisons de dates tant qu'elle n'est pas corrigée.
+            if debut is None or fin is None:
+                continue
+            CORE.DICT_DISPONIBILITES.setdefault(IDcandidature, []).append(
+                (IDdisponibilite, debut, fin)
+            )
+        return CORE.DICT_DISPONIBILITES
 
     def GetTracks(self):
         listeID = None
