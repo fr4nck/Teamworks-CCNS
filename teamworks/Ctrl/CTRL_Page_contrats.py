@@ -43,6 +43,7 @@ class Panel_Contrats(CORE.Panel_Contrats):
         DB = CORE.GestionDB.DB()
         placeholder = "%s" if DB.isNetwork else "?"
         try:
+            # Suppression enfants -> parent, validée par une transaction unique.
             DB.cursor.execute(
                 "DELETE FROM contrats_valchamps WHERE IDcontrat=%s" % placeholder,
                 (IDcontrat,),
