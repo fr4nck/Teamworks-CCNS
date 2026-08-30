@@ -93,7 +93,3 @@ class ListView(CORE.ListView):
             if self.selectionID == row[0]:
                 self.selectionTrack = track
         return objets
-
-
-if __name__ == "__main__":
-    CORE.MyFrame
