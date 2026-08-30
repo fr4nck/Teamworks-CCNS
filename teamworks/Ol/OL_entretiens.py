@@ -30,10 +30,37 @@ AVIS_LABELS = {
 
 class Track(CORE.Track):
     def __init__(self, donnees):
-        CORE.Track.__init__(self, donnees)
-        if self.IDpersonne not in (None, 0) and self.nom_candidat:
-            self.nom_candidat = u"%s · %s" % (self.nom_candidat, _(u"salarié"))
-            self.date_heure_nom = self.date_heure + ";" + self.nom_candidat
+        self.IDentretien = donnees[0]
+        self.IDcandidat = donnees[1]
+        self.date = donnees[2]
+        self.heure = donnees[3]
+        self.date_heure = (self.date or "") + ";" + (self.heure or "")
+        if CORE.VERROUILLAGE:
+            self.avis = 999
+            self.remarques = _(u"Commentaire verrouillé")
+        else:
+            self.avis = donnees[4]
+            self.remarques = donnees[5]
+        self.IDpersonne = donnees[6]
+
+        self.nom_candidat = ""
+        if self.IDpersonne in (None, 0):
+            candidat = CORE.NOMS_CANDIDATS.get(self.IDcandidat)
+            if candidat:
+                _civilite, nom, prenom = candidat
+                self.nom_candidat = u"%s %s" % (nom or "", prenom or "")
+            else:
+                self.nom_candidat = _(u"Candidat introuvable (réf. %s)") % self.IDcandidat
+        else:
+            personne = CORE.NOMS_PERSONNES.get(self.IDpersonne)
+            if personne:
+                _civilite, nom, prenom = personne
+                self.nom_candidat = u"%s %s" % (nom or "", prenom or "")
+                self.nom_candidat = u"%s · %s" % (self.nom_candidat, _(u"salarié"))
+            else:
+                self.nom_candidat = _(u"Salarié introuvable (réf. %s)") % self.IDpersonne
+
+        self.date_heure_nom = self.date_heure + ";" + self.nom_candidat
 
 
 class ListView(CORE.ListView):
