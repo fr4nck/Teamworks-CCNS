@@ -29,9 +29,9 @@ class ListView(CORE.ListView):
         ):
             if not affiche:
                 continue
-            # L'ancien pictogramme de civilité était redondant avec la colonne texte.
-            # En mode cases à cocher on garde cependant cette colonne support.
-            if args == "image_civilite" and not self.activeCheckBoxes:
+            # Le pictogramme historique de civilité est redondant avec la colonne
+            # texte et, en mode sélection, avec la colonne checkbox dédiée.
+            if args == "image_civilite":
                 continue
             colonnes.append(ColumnDefn(labelCol, alignement, largeur, nomChamp))
 
@@ -40,8 +40,8 @@ class ListView(CORE.ListView):
         self.SetEmptyListMsgFont(UTILS_Styles.GetFont("body-secondary"))
         if self.activeCheckBoxes:
             self.CreateCheckStateColumn(0)
-            if len(self.columns) > 3:
-                self.SetSortColumn(self.columns[3])
+            if len(self.columns) > 2:
+                self.SetSortColumn(self.columns[2])
         elif len(self.columns) > 1:
             self.SetSortColumn(self.columns[1])
         self.SetObjects(self.donnees)
