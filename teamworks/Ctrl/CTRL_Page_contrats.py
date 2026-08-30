@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Page contrats modernisée : cœur historique conservé, suppression atomique active."""
+"""Page contrats modernisée : cœur historique conservé et suppression atomique validée."""
 
 import wx
 
