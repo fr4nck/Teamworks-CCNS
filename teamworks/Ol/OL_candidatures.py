@@ -147,6 +147,68 @@ class ListView(CORE.ListView):
             self.SetSortColumn(self.columns[1])
         self.SetObjects(self.donnees)
 
+    def Supprimer(self):
+        if len(self.Selection()) == 0:
+            dlg = wx.MessageDialog(
+                self,
+                _(u"Vous devez d'abord sélectionner une candidature à supprimer dans la liste."),
+                "Information",
+                wx.OK | wx.ICON_INFORMATION,
+            )
+            dlg.ShowModal()
+            dlg.Destroy()
+            return False
+
+        try:
+            if self.GetGrandParent().GetParent().GetName() == "Recrutement":
+                self.GetGrandParent().GetParent().AffichePanelResume(False)
+        except Exception:
+            pass
+
+        IDcandidature = self.Selection()[0].IDcandidature
+        date_depot = self.Selection()[0].depot
+        dlgConfirm = wx.MessageDialog(
+            self,
+            _(u"Voulez-vous vraiment supprimer la candidature du %s ?") % date_depot,
+            _(u"Confirmation de suppression"),
+            wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION,
+        )
+        reponse = dlgConfirm.ShowModal()
+        dlgConfirm.Destroy()
+        if reponse != wx.ID_YES:
+            return False
+
+        DB = CORE.GestionDB.DB()
+        placeholder = "%s" if DB.isNetwork else "?"
+        try:
+            for table in (
+                "disponibilites",
+                "cand_fonctions",
+                "cand_affectations",
+                "candidatures",
+            ):
+                DB.cursor.execute(
+                    "DELETE FROM %s WHERE IDcandidature=%s" % (table, placeholder),
+                    (IDcandidature,),
+                )
+            DB.Commit()
+        except Exception as err:
+            try:
+                DB.connexion.rollback()
+            except Exception:
+                pass
+            DB.Close()
+            wx.MessageBox(
+                _(u"La candidature n'a pas pu être supprimée. Aucune suppression n'a été validée.\n\nDétail technique : %s") % err,
+                _(u"Suppression annulée"),
+                wx.OK | wx.ICON_ERROR,
+            )
+            return False
+        DB.Close()
+
+        self.MAJ()
+        return True
+
     def OnContextMenu(self, event):
         selection = bool(self.Selection())
         menu = wx.Menu()
