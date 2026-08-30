@@ -35,7 +35,8 @@ def test_candidates_list_drops_redundant_civility_icons_and_blue_zebra():
     assert "Femme.png" not in source
     assert "#EEF4FB" not in source
     assert "Tekton" not in source
-    assert "if args == \"image_civilite\" and not self.activeCheckBoxes" in source
+    assert 'if args == "image_civilite":' in source
+    assert 'if args == "image_civilite" and not self.activeCheckBoxes' not in source
 
 
 def test_candidates_menu_is_textual_and_keeps_both_mail_paths():
