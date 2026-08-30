@@ -322,11 +322,16 @@ class ListView(FastObjectListView):
         liste_Colonnes = []
         for labelCol, alignement, largeur, nomChamp, args, description, affiche, ordre in liste_ColonnesTmp :
             if affiche == True :
+                # ObjectListView insère une colonne dédiée pour la case à cocher.
+                # Le pictogramme historique de civilité ne doit pas créer une
+                # deuxième colonne étroite dans ce mode.
+                if args == "image_civilite" and self.activeCheckBoxes:
+                    continue
                 if args == "date" :
                     # Formatage d'une date
                     colonne = ColumnDefn(labelCol, alignement, largeur, nomChamp, stringConverter=FormateDate)
                 elif args == "image_civilite" :
-                    # Formatage d'une date
+                    # Formatage de la civilité
                     colonne = ColumnDefn(labelCol, alignement, largeur, nomChamp, imageGetter=ImageGetter_civilite)
                 else:
                     colonne = ColumnDefn(labelCol, alignement, largeur, nomChamp)
@@ -339,9 +344,9 @@ class ListView(FastObjectListView):
 
         if self.activeCheckBoxes == True :
             self.CreateCheckStateColumn(0)
-            self.SetSortColumn(self.columns[3])
-        else:
-            self.SetSortColumn(self.columns[2])
+        # Dans les deux modes la colonne Nom est à l'index 2 :
+        # pictogramme/civilité/nom ou checkbox/civilité/nom.
+        self.SetSortColumn(self.columns[2])
         self.SetEmptyListMsg(_(u"Aucune personne"))
         self.SetEmptyListMsgFont(wx.FFont(11, wx.DEFAULT, False, "Tekton"))
         self.SetObjects(self.donnees)
