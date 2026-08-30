@@ -94,6 +94,101 @@ class ListView(CORE.ListView):
         self.PopupMenu(menu)
         menu.Destroy()
 
+    def Supprimer(self):
+        if len(self.Selection()) == 0:
+            dlg = wx.MessageDialog(
+                self,
+                _(u"Vous devez d'abord sélectionner un candidat à supprimer dans la liste."),
+                "Information",
+                wx.OK | wx.ICON_INFORMATION,
+            )
+            dlg.ShowModal()
+            dlg.Destroy()
+            return False
+        IDcandidat = self.Selection()[0].IDcandidat
+
+        try:
+            if self.GetGrandParent().GetParent().GetName() == "Recrutement":
+                self.GetGrandParent().GetParent().AffichePanelResume(False)
+        except Exception:
+            pass
+
+        # Conserve les garde-fous historiques : une fiche liée à une candidature
+        # ou à un entretien doit d'abord être détachée explicitement par l'utilisateur.
+        for table, id_field, label in (
+            ("candidatures", "IDcandidature", _(u"candidature(s)")),
+            ("entretiens", "IDentretien", _(u"entretien(s)")),
+        ):
+            DB = CORE.GestionDB.DB()
+            req = "SELECT %s FROM %s WHERE IDcandidat = %%d" % (id_field, table)
+            DB.ExecuterReq(req % IDcandidat)
+            rows = DB.ResultatReq()
+            DB.Close()
+            if rows:
+                dlg = wx.MessageDialog(
+                    self,
+                    _(u"%s %s existe(nt) pour ce candidat. Vous ne pouvez donc pas supprimer sa fiche.\n\n"
+                      u"Si vous souhaitez vraiment supprimer cette fiche, supprimez d'abord les éléments liés.")
+                    % (len(rows), label),
+                    _(u"Impossible de supprimer"),
+                    wx.OK | wx.ICON_EXCLAMATION,
+                )
+                dlg.ShowModal()
+                dlg.Destroy()
+                return False
+
+        nom_complet = self.Selection()[0].nom_complet
+        dlgConfirm = wx.MessageDialog(
+            self,
+            CORE.six.text_type(_(u"Voulez-vous vraiment supprimer le candidat : %s ?") % nom_complet),
+            _(u"Confirmation de suppression"),
+            wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION,
+        )
+        reponse = dlgConfirm.ShowModal()
+        dlgConfirm.Destroy()
+        if reponse != wx.ID_YES:
+            return False
+
+        DB = CORE.GestionDB.DB()
+        placeholder = "%s" if DB.isNetwork else "?"
+        try:
+            # Les enfants sont supprimés avant la fiche principale. Aucun DELETE
+            # n'est validé avant que toute l'opération ait réussi.
+            for table in (
+                "coords_candidats",
+                "diplomes_candidats",
+                "candidatures",
+                "entretiens",
+                "candidats",
+            ):
+                DB.cursor.execute(
+                    "DELETE FROM %s WHERE IDcandidat=%s" % (table, placeholder),
+                    (IDcandidat,),
+                )
+            DB.Commit()
+        except Exception as err:
+            try:
+                DB.connexion.rollback()
+            except Exception:
+                pass
+            DB.Close()
+            wx.MessageBox(
+                _(u"Le candidat n'a pas pu être supprimé. Aucune suppression n'a été validée.\n\nDétail technique : %s") % err,
+                _(u"Suppression annulée"),
+                wx.OK | wx.ICON_ERROR,
+            )
+            return False
+        DB.Close()
+
+        self.MAJ()
+        try:
+            if self.GetGrandParent().GetParent().GetName() == "Recrutement":
+                self.GetGrandParent().GetParent().gadget_entretiens.MAJ()
+                self.GetGrandParent().GetParent().gadget_informations.MAJ()
+        except Exception:
+            pass
+        return True
+
     def _mail_interne(self, event):
         from Dlg import DLG_Mailer
         dlg = DLG_Mailer.Dialog(self)
