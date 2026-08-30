@@ -31,7 +31,7 @@ class CompatibilityTests(unittest.TestCase):
         self.assertTrue(module.IsCompatible({"CONVENTION": "CCNS"}, {"convention_code": None, "ccns_group": None, "cee_qualification": None}))
 
     def test_employee_contract_print_uses_filtered_adapter(self):
-        source = (ROOT / "teamworks" / "Ctrl" / "CTRL_Page_contrats.py").read_text(encoding="utf-8")
+        source = (ROOT / "teamworks" / "Ctrl" / "CTRL_Page_contrats_core.py").read_text(encoding="utf-8")
         self.assertIn("from Dlg import DLG_Publiposteur_contrat", source)
         self.assertIn("DLG_Publiposteur_contrat.Dialog", source)
 
