@@ -5,6 +5,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 LAZY = ROOT / "teamworks" / "Dlg" / "DLG_Fiche_individuelle_lazy.py"
 PACKAGE = ROOT / "teamworks" / "Dlg" / "__init__.py"
+CORE = ROOT / "teamworks" / "Dlg" / "DLG_Fiche_individuelle_core.py"
+WRAPPER = ROOT / "teamworks" / "Dlg" / "DLG_Fiche_individuelle.py"
 
 
 def test_individual_form_is_patched_only_when_requested():
@@ -44,8 +46,12 @@ def test_unopened_questionnaire_is_not_saved():
     assert "self.notebook.pageQuestionnaire.Sauvegarde()" in source
 
 
-def test_historical_dialog_is_not_rewritten():
-    historical = ROOT / "teamworks" / "Dlg" / "DLG_Fiche_individuelle.py"
-    raw = historical.read_bytes()
-    assert b"class Notebook(wx.Notebook):" in raw
-    assert b"DLG_Fiche_individuelle_lazy" not in raw
+def test_historical_core_is_preserved_behind_active_wrapper():
+    core = CORE.read_text(encoding="utf-8")
+    wrapper = WRAPPER.read_text(encoding="utf-8")
+
+    assert "class Notebook(wx.Notebook):" in core
+    assert "class Dialog(wx.Dialog):" in core
+    assert "from Dlg import DLG_Fiche_individuelle_core as CORE" in wrapper
+    assert "class Dialog(CORE.Dialog):" in wrapper
+    assert "DLG_Fiche_individuelle_lazy" not in wrapper
