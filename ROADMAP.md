@@ -10,17 +10,30 @@ En cas de divergence sur l’architecture ou les flux entre Teamworks, Noethys, 
 
 ## 1. État réel du projet
 
-Teamworks-CCNS est actuellement en **`0.9.0-dev`**.
+Teamworks-CCNS porte actuellement la version **`0.9.1b`**, telle qu'indiquée par le fichier `VERSION`. Cette chaîne de version identifie le build courant mais ne vaut pas, à elle seule, qualification bêta : les critères de maturité du présent document restent seuls décisionnaires.
 
-Le socle Python 3 / wxPython Phoenix, la CI et le packaging Windows sont largement stabilisés. Le dépôt sait construire un portable Windows reproductible, exécuter des parcours critiques Windows automatisés et publier une Release sur tag conforme.
+Le socle Python 3 / wxPython Phoenix, la CI et le packaging Windows sont largement stabilisés. Le dépôt sait construire un portable Windows reproductible, un installateur Windows, exécuter les parcours critiques Windows automatisés et publier une Release sur tag conforme.
 
 Le chantier TW-189 de modernisation de l’interface a été fusionné dans `master` le 24 août 2026. Le 25 août 2026, la PR #268 a ensuite consolidé sélectivement les deltas encore utiles de TW-182 et TW-184 sans réintroduire les anciennes versions des fichiers refactorés par TW-189.
 
-La qualification automatisée finale de cette consolidation, CI **#571**, a réussi avec **1 785 tests pytest**, **0 chemin SQLite binaire** et l’ensemble des **parcours critiques Windows réussis**. La PR #268 a été fusionnée dans `master` par le commit **`8074a1a`**.
+Le 31 août 2026, la PR #314 a remis en cohérence la garde de non-régression de la fiche individuelle avec l’extraction déjà effective de son cœur historique. Elle a été fusionnée dans `master` par le commit **`4a226af71facf4fe201e022086e6dd00a46ecbf0`**.
 
-Le nouveau portable Windows correspondant à ce `master` fusionné **n’est pas encore construit ni qualifié** à la date de cette mise à jour.
+La CI **#789** exécutée sur ce commit a réussi : **1 893 tests pytest réussis, 3 ignorés**, **332/332 fichiers Python de l’inventaire compilables**, **0/0 chemin SQLite binaire**, parcours critiques Windows réussis, construction du portable et de l’installateur réussie, démarrage automatisé de l’exécutable réussi et manifeste d’intégrité vérifié.
 
-La qualification **bêta / RC / stable reste volontairement refusée** tant que le portable exact de `master` n’a pas franchi ses contrôles machine puis que le parcours Windows minimal n’a pas été validé manuellement sur une copie de base réelle par l’utilisateur.
+L’artefact Windows de cette qualification machine contient :
+
+- `Teamworks-CCNS-0.9.1b-windows-x64.zip` ;
+- `Teamworks-CCNS-0.9.1b-windows-x64-setup.exe` ;
+- `SHA256SUMS.txt`.
+
+Les empreintes publiées par le build sont :
+
+- portable ZIP : `b53aad8bda071165b6696e120f17f86001445057b7f6be931a5053fe218fe65f` ;
+- installateur : `98917d083cb5cda827e4a8bb1b00985a8146d325a62e2030a53be53b8d2380ec`.
+
+Le `BUILD.txt` inclus dans le portable confirme la version `0.9.1b` et le commit `4a226af71facf4fe201e022086e6dd00a46ecbf0`.
+
+La qualification **bêta / RC / stable reste volontairement refusée** tant que le parcours Windows minimal n’a pas été validé manuellement sur une copie de base réelle par l’utilisateur. La qualification machine est désormais acquise ; la validation réelle reste le verrou suivant.
 
 Aucune CI verte, aucun pourcentage d’avancement et aucun ZIP généré ne suffisent à qualifier une version.
 
@@ -88,30 +101,37 @@ Ces collisions sont conservées comme faits historiques et ne doivent pas être 
 
 **Un identifiant `TW-*` déjà présent dans une branche, un commit, une issue ou une PR ne doit plus être réattribué.**
 
-## 4. État GitHub au 25 août 2026
+## 4. État GitHub au 31 août 2026
 
-Après consolidation TW-189 puis reprise sélective TW-182/TW-184 :
+État de référence :
 
 - `master` est la vérité courante ;
-- la PR #264 a réaligné la branche TW-189 sur `master` avant consolidation ;
 - la PR #265 a fusionné TW-189 dans `master`, commit d’intégration `91dfb6d` ;
-- les anciennes PR techniques #254, #255, #266 et #267 ont servi de références pour la reprise sélective des deltas TW-182/TW-184 ;
-- la PR #268 « Consolidation post-TW-189 — réintégrer TW-182 et TW-184 » a été validée puis fusionnée ;
-- son commit de fusion dans `master` est **`8074a1a`** ;
-- la qualification de PR finale est la CI **#571** ;
-- les anciennes branches peuvent rester comme historique, mais ne doivent pas piloter les décisions de développement.
+- la PR #268 a consolidé les deltas encore utiles de TW-182/TW-184, commit d’intégration `8074a1a` ;
+- la PR #314 a corrigé la garde de non-régression devenue obsolète après l’extraction de `DLG_Fiche_individuelle_core.py` ;
+- la PR #314 a été fusionnée par le commit **`4a226af71facf4fe201e022086e6dd00a46ecbf0`** ;
+- la qualification automatisée de ce commit est la CI **#789** ;
+- les tests du socle, les parcours critiques Windows et le job de packaging Windows de la CI #789 sont tous réussis ;
+- l’artefact `Teamworks-CCNS-Windows` a été produit depuis ce même commit ;
+- aucune Release GitHub n’a été publiée : le run n’était pas déclenché par un tag de version ;
+- les anciennes branches peuvent rester comme historique, mais ne doivent pas piloter les décisions de développement ;
+- la PR #270 reste un profil de compatibilité MySQL 5.5 isolé et n’est pas un prérequis de qualification du produit courant.
 
 ## 5. Priorité immédiate — validation réelle avant pré-release
 
-Aucune nouvelle fonction métier, convention collective ou refonte visuelle importante ne doit passer devant les validations suivantes :
+Les trois étapes de qualification machine sont désormais franchies sur le commit `4a226af71facf4fe201e022086e6dd00a46ecbf0` :
 
-1. qualifier le `master` final après mise à jour documentaire ;
-2. produire un portable Windows depuis **l’arbre exact de ce `master` qualifié** ;
-3. vérifier l’archive, les checksums, `BUILD.txt`, le démarrage de l’exécutable et les smoke tests machine ;
-4. exécuter le parcours minimal sur une copie de base réelle ;
+1. **fait** — qualifier le code par la CI complète ;
+2. **fait** — produire le portable et l’installateur Windows depuis le même commit ;
+3. **fait** — vérifier archive, checksums, `BUILD.txt`, contenu du paquet, démarrage automatisé de l’exécutable et parcours critiques Windows ;
+4. **à faire** — exécuter le parcours minimal sur une copie de base réelle ;
 5. corriger uniquement les anomalies bloquantes réellement constatées ;
 6. documenter les résultats ;
 7. décider ensuite seulement si la version mérite une qualification bêta ou RC.
+
+La recette manuelle doit être enregistrée dans [`docs/VALIDATION_WINDOWS_0.9.1b.md`](docs/VALIDATION_WINDOWS_0.9.1b.md).
+
+Aucune nouvelle fonction métier, convention collective ou refonte visuelle importante ne passe devant cette validation réelle. Les corrections de qualification et les outils nécessaires à cette recette peuvent en revanche être traités immédiatement.
 
 ## 6. Parcours minimal de validation Windows
 
@@ -190,19 +210,26 @@ Il regroupe :
 - sauvegarde / restauration ;
 - exports et impression PDF ;
 - aller-retour fonctionnel sur base de test ;
-- build portable uniquement sur demande explicite ou tag ;
+- build portable et installateur uniquement sur demande explicite, marqueur `[windows]` sur `master` ou tag ;
 - nettoyage contrôlé de l’historique GitHub Actions sur déclenchement manuel.
 
-La consolidation TW-189 avait été validée par la CI #463 avec **1 581 tests Linux** et les parcours critiques Windows réussis.
+Qualification courante, CI **#789**, commit `4a226af71facf4fe201e022086e6dd00a46ecbf0` :
 
-La consolidation post-TW-189 a été qualifiée par la CI **#571** sur le head de PR `4b65688b2a18b7f841c5a20509080f99ff5dde60` avec :
-
-- **1 785 tests pytest réussis** ;
-- **323/323 fichiers Python de l’inventaire compilables** ;
+- **1 893 tests pytest réussis, 3 ignorés** ;
+- **332/332 fichiers Python de l’inventaire compilables** ;
 - **0/0 chemin SQLite binaire** ;
 - tous les contrôles du socle réussis ;
 - tous les parcours critiques Windows réussis ;
-- paquet Windows volontairement sauté sur la PR.
+- construction du portable réussie ;
+- contrôle du contenu du paquet réussi ;
+- démarrage automatisé de l’exécutable réussi ;
+- manifeste d’intégrité réussi ;
+- archive portable créée ;
+- installateur Windows créé ;
+- artefact Windows publié par GitHub Actions ;
+- Release GitHub volontairement non publiée hors tag.
+
+Les anciennes qualifications, dont #463 et #571, restent des jalons historiques mais ne décrivent plus l’état courant du `master`.
 
 Aucun deuxième workflow ne doit être ajouté pour contourner ou dupliquer ces contrôles.
 
@@ -380,8 +407,12 @@ Aucune intégration ne doit fragiliser le socle local.
 
 ## 18. Prochain jalon
 
-Le prochain jalon est **la construction et la qualification machine du portable Windows depuis le `master` actuel**.
+Le prochain jalon est **la validation manuelle de Teamworks-CCNS 0.9.1b sur une copie de base réelle sous Windows**.
+
+Le build machine de référence est celui issu du commit `4a226af71facf4fe201e022086e6dd00a46ecbf0`, CI #789. Le test peut être réalisé avec l’installateur ou le portable issus du même artefact, en vérifiant l’empreinte correspondante avant la recette.
 
 Séquence :
 
-**CI du master final → build portable sur arbre identique → vérification ZIP / SHA-256 / `BUILD.txt` / démarrage exécutable → parcours minimal sur copie réelle → correction des seuls blocages → décision de qualification pré-release.**
+**installer ou décompresser le build qualifié → ouvrir une copie de base réelle → exécuter `docs/VALIDATION_WINDOWS_0.9.1b.md` → consigner chaque résultat → corriger uniquement les blocages constatés → reconstruire si du code change → décider ensuite de la qualification pré-release.**
+
+Tant que cette recette n’est pas terminée, le développement fonctionnel majeur reste derrière ce jalon.
