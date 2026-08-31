@@ -1,8 +1,12 @@
 # Teamworks-CCNS — Roadmap officielle et unique
 
-**Mise à jour : 25 août 2026**
+**Mise à jour : 31 août 2026**
 
 Ce fichier est l’unique roadmap de référence du projet. Toute autre documentation peut détailler un domaine, mais ne doit pas porter une roadmap concurrente ni annoncer un niveau de maturité différent.
+
+Les décisions d’architecture transverses, le partage des responsabilités entre applications et les priorités interapplications sont définis dans **`fr4nck/PMSL-Arch`**. `ROADMAP.md` reste l’unique roadmap d’exécution propre à Teamworks-CCNS : elle traduit ces décisions en lots d’implémentation, tests, packaging et qualification du produit.
+
+En cas de divergence sur l’architecture ou les flux entre Teamworks, Noethys, Connecthys/Portail, PMSL Équipe ou un service externe, **PMSL-Arch fait foi**. En cas de divergence sur l’état d’implémentation, la maturité ou la qualification de Teamworks-CCNS, **le présent fichier fait foi**. Les priorités interapplications ne doivent donc pas être redéfinies ici sous la forme d’une roadmap concurrente.
 
 ## 1. État réel du projet
 
