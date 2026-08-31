@@ -1,6 +1,6 @@
 # Teamworks-CCNS — suivi CCNS et extensions
 
-**Mise à jour : 25 août 2026**
+**Mise à jour : 31 août 2026**
 
 ## Objectif
 
@@ -37,6 +37,18 @@ Le chantier est découpé en **9 jalons fonctionnels de poids égal**. `Terminé
 
 Ce pourcentage mesure le développement fonctionnel et son intégration automatisée. Il ne remplace pas la recette utilisateur : une fonction couverte par tests n'est pas déclarée prête en production tant que le parcours réel n'a pas été validé sur une copie de base.
 
+## Direction après stabilisation — socle RH « paie-ready »
+
+La direction fonctionnelle retenue est de **ne pas lancer maintenant un véritable moteur de paie**. Teamworks doit d'abord exécuter correctement et durablement ses fonctions RH actuelles.
+
+En revanche, les futurs lots RH doivent conserver, lorsqu'elles sont utiles au besoin traité, les données qui pourraient servir plus tard à la préparation ou au contrôle d'un bulletin : historique contractuel, rémunération, temps, absences, variables, avantages, protection sociale, organismes, dates d'effet, sources et justificatifs.
+
+Cette discipline vise à éviter une reconstruction ultérieure du modèle RH si une paie native est décidée un jour. Elle ne vaut ni décision de produire des bulletins, ni décision de générer la DSN, ni remplacement du système de paie actuel.
+
+Le cadrage détaillé est défini dans `docs/67-fondations-rh-paie-ready.md`.
+
+Cette orientation **ne modifie pas le calcul d'avancement ci-dessus** et ne passe pas devant la recette réelle de la version 0.9.1b.
+
 ## Restant prioritaire
 
 - produire et lancer le portable Windows du `master` exact ;
@@ -63,4 +75,5 @@ son absence, aucun envoi n'a lieu et le fichier reste disponible dans `Logs`.
 - `docs/48-revue-architecture-ccns.md`
 - `docs/50-scope-metier.md`
 - `docs/60-scenario-utilisation-controle-salarial.md`
+- `docs/67-fondations-rh-paie-ready.md`
 - documentation `docs/40-*` à `docs/65-*`
