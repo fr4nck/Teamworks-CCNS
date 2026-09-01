@@ -3,6 +3,10 @@ from .employee_protection import (
     EmployeeProtectionService,
     EmployeeProtectionView,
 )
+from .employee_protection_actions import (
+    EmployeeProtectionActionService,
+    EmployeeProtectionCreateRequest,
+)
 from .employee_protection_summary import (
     EmployeeProtectionSummary,
     EmployeeProtectionSummaryRow,
@@ -30,6 +34,8 @@ from .structure_configuration import (
 __all__ = [
     "ConnectionProfileRepository",
     "ConnectorConfigurationView",
+    "EmployeeProtectionActionService",
+    "EmployeeProtectionCreateRequest",
     "EmployeeProtectionRepository",
     "EmployeeProtectionService",
     "EmployeeProtectionSummary",
