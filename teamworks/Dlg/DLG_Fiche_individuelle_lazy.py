@@ -17,6 +17,7 @@ from Ctrl import CTRL_Page_presences
 from Ctrl import CTRL_Page_frais
 from Ctrl import CTRL_Page_scenarios
 from Ctrl import CTRL_Page_candidatures
+from Ctrl import CTRL_Page_protection_sociale_runtime
 
 
 class LazyNotebook(wx.Notebook):
@@ -60,6 +61,7 @@ class LazyNotebook(wx.Notebook):
         self.pageScenarios = None
         self.pageFrais = None
         self.pageCandidatures = None
+        self.pageProtectionSociale = None
 
         self._page_specs = [
             ("pageQuestionnaire", _(u"Questionnaire"), self.img8,
@@ -76,6 +78,12 @@ class LazyNotebook(wx.Notebook):
              lambda: CTRL_Page_frais.Panel(self, IDpersonne=self.IDpersonne)),
             ("pageCandidatures", _(u"Recrutement"), self.img7,
              lambda: CTRL_Page_candidatures.Panel(self, IDpersonne=self.IDpersonne)),
+            # Le nouvel onglet est ajouté en dernier afin de préserver tous les index
+            # historiques. Sa factory ne s'exécute qu'au premier affichage.
+            ("pageProtectionSociale", _(u"Protection sociale"), self.img8,
+             lambda: CTRL_Page_protection_sociale_runtime.Panel(
+                 self, IDpersonne=self.IDpersonne
+             )),
         ]
         self._add_secondary_pages()
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnPageChanged)
