@@ -136,6 +136,18 @@ def test_structure_identity_does_not_derive_from_connection_configuration():
         assert token not in source
 
 
+def test_structure_identity_keeps_sqlite_mysql_parameter_contract():
+    source = Path(
+        "infrastructure/persistence/teamworks_structure_identity_repository.py"
+    ).read_text(encoding="utf-8")
+
+    assert "isNetwork" in source
+    assert 'statement.replace("?", "%s")' in source
+    assert 'statement.replace("%s", "?")' in source
+    assert "ON CONFLICT" not in source
+    assert "INSERT OR IGNORE" not in source
+
+
 def test_composition_layer_stays_out_of_wxpython_and_historical_ui():
     source = Path(
         "application/bootstrap/employee_protection_summary_factory.py"
