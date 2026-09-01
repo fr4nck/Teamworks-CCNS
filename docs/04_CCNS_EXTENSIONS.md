@@ -46,7 +46,8 @@ Le chantier **Connexions RH** progresse séparément du build 0.9.1b en cours de
 - `CRH-03` : dossiers de démarches RH, sujets personne/structure, pièces attendues, échéances et machine d'états métier distincte du statut technique d'échange ;
 - `CRH-04` : événements d'audit immuables, journal append-only, cibles typées, horodatage avec fuseau et garde-fous contre les métadonnées manifestement secrètes ou médicales ;
 - `CRH-05` : frontière d'échange de fichiers, formats versionnés, empreinte SHA-256, métadonnées d'artefacts sans payload, validation structurée et protocole d'adaptateur sans I/O implicite ;
-- aucune persistance, UI, authentification, ouverture de navigateur ou communication réseau n'est introduite dans ces cinq lots ;
+- `CRH-06` : handles opaques de secrets, besoins de credentials et associations typées ; le domaine peut vérifier la disponibilité d'un handle sans lire la valeur secrète et ne définit encore aucun backend réel de coffre ;
+- aucune persistance, UI, authentification réelle, ouverture de navigateur ou communication réseau n'est introduite dans ces six lots ;
 - ces travaux ne modifient pas le pourcentage des 9 jalons CCNS ci-dessus et ne valent pas qualification fonctionnelle tant que leurs PR ne sont pas validées et fusionnées.
 
 ## Restant prioritaire

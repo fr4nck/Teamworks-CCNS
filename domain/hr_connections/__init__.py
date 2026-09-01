@@ -36,15 +36,27 @@ from .organizations import (
 )
 from .profiles import ConnectionProfile
 from .registry import ConnectorRegistry
+from .secrets import (
+    ConnectorCredentialProfile,
+    CredentialBinding,
+    CredentialRequirement,
+    SecretHandle,
+    SecretKind,
+    SecretStore,
+    unavailable_secret_handles,
+)
 
 __all__ = [
     "ConfigurationCheck",
     "ConnectionProfile",
     "ConnectorCapability",
+    "ConnectorCredentialProfile",
     "ConnectorDescriptor",
     "ConnectorMode",
     "ConnectorRegistry",
     "ConnectorState",
+    "CredentialBinding",
+    "CredentialRequirement",
     "EffectivePeriod",
     "ExchangeArtifact",
     "ExchangeDirection",
@@ -71,5 +83,9 @@ __all__ = [
     "OrganizationKind",
     "OrganizationReference",
     "PortalLink",
+    "SecretHandle",
+    "SecretKind",
+    "SecretStore",
     "ValidationSeverity",
+    "unavailable_secret_handles",
 ]
