@@ -40,6 +40,7 @@ class HrCaseDashboardRow:
     overdue: bool
     business_attention: bool
     technical_attention: bool
+    configuration_attention: bool
     expected_document_count: int
     required_document_count: int
     result: str | None
@@ -47,7 +48,12 @@ class HrCaseDashboardRow:
 
     @property
     def needs_attention(self) -> bool:
-        return self.overdue or self.business_attention or self.technical_attention
+        return (
+            self.overdue
+            or self.business_attention
+            or self.technical_attention
+            or self.configuration_attention
+        )
 
 
 @dataclass(frozen=True)
@@ -86,6 +92,10 @@ class HrCaseDashboardService:
     axes distincts. Un échange technique réussi ne signifie jamais que l'organisme
     a accepté la démarche ; inversement, une anomalie métier n'est pas transformée
     en panne technique.
+
+    Les alertes du cockpit ne concernent que les dossiers encore ouverts. L'historique
+    conserve toutefois le dernier statut technique et les références d'organismes
+    supprimées, qui restent visibles dans les compteurs descriptifs dédiés.
     """
 
     _BUSINESS_ATTENTION = frozenset(
@@ -153,9 +163,7 @@ class HrCaseDashboardService:
             regularization_count=by_status[HrCaseStatus.REGULARIZATION],
             accepted_count=by_status[HrCaseStatus.ACCEPTED],
             cancelled_count=by_status[HrCaseStatus.CANCELLED],
-            exchange_failed_count=sum(
-                1 for case in cases if case.exchange_status is ExchangeStatus.FAILED
-            ),
+            exchange_failed_count=sum(1 for row in rows if row.technical_attention),
             orphan_organization_count=sum(
                 1 for row in rows if not row.organization_configured
             ),
@@ -169,6 +177,8 @@ class HrCaseDashboardService:
         as_of: date,
         organization_label: str | None,
     ) -> HrCaseDashboardRow:
+        open_case = not case.is_closed
+        organization_configured = organization_label is not None
         return HrCaseDashboardRow(
             case_id=case.case_id,
             case_type_code=case.case_type.code,
@@ -177,14 +187,17 @@ class HrCaseDashboardService:
             subject_identifier=case.subject.identifier,
             organization_code=case.organization_code,
             organization_label=organization_label,
-            organization_configured=organization_label is not None,
+            organization_configured=organization_configured,
             opened_on=case.opened_on,
             due_on=case.due_on,
             status=case.status,
             exchange_status=case.exchange_status,
             overdue=case.is_overdue(as_of=as_of),
-            business_attention=case.status in cls._BUSINESS_ATTENTION,
-            technical_attention=case.exchange_status is ExchangeStatus.FAILED,
+            business_attention=open_case and case.status in cls._BUSINESS_ATTENTION,
+            technical_attention=(
+                open_case and case.exchange_status is ExchangeStatus.FAILED
+            ),
+            configuration_attention=open_case and not organization_configured,
             expected_document_count=len(case.expected_documents),
             required_document_count=sum(
                 1 for document in case.expected_documents if document.required
