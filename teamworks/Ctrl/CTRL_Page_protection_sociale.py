@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Panneau wxPython descriptif « Protection sociale & organismes ».
+"""Panneau wxPython « Protection sociale & organismes ».
 
 Le panneau rend une ``EmployeeProtectionSummary`` déjà construite par la couche
-applicative. Il ne choisit aucun backend, n'ouvre aucun portail et n'effectue
-aucun calcul de cotisation ou de conformité réglementaire.
+applicative et expose seulement des intentions d'action. Il ne choisit aucun
+backend, n'ouvre aucun portail et n'effectue aucun calcul de cotisation ou de
+conformité réglementaire.
 """
 
 import wx
@@ -12,6 +13,7 @@ import wx
 from application.services.hr_connections.employee_protection_summary import (
     EmployeeProtectionSummary,
 )
+from Ctrl import CTRL_Bouton_image
 from Ctrl import CTRL_Section
 from Utils import UTILS_Interface
 from Utils import UTILS_Styles
@@ -53,7 +55,7 @@ def _enum_label(mapping, value):
 
 
 class Panel(wx.Panel):
-    """Vue en lecture seule d'une synthèse de protection sociale salarié."""
+    """Vue descriptive et frontière d'intentions de la protection sociale salarié."""
 
     def __init__(self, parent, id=-1, IDpersonne=0):
         wx.Panel.__init__(
@@ -65,6 +67,7 @@ class Panel(wx.Panel):
         )
         self.IDpersonne = IDpersonne
         self._summary = None
+        self._rows = ()
         self.SetBackgroundColour(UTILS_Interface.GetToken("surface"))
 
         self.section_synthese = CTRL_Section.Section(
@@ -87,6 +90,22 @@ class Panel(wx.Panel):
         self.compteurs.SetFont(font)
         self.compteurs.SetForegroundColour(UTILS_Interface.GetToken("on_surface"))
 
+        self.bouton_ajouter = CTRL_Bouton_image.CTRL(
+            panel_synthese,
+            texte=_(u"Ajouter"),
+        )
+        self.bouton_cloturer = CTRL_Bouton_image.CTRL(
+            panel_synthese,
+            texte=_(u"Clôturer"),
+        )
+        self.bouton_nouvelle_periode = CTRL_Bouton_image.CTRL(
+            panel_synthese,
+            texte=_(u"Nouvelle période"),
+        )
+        self.bouton_ajouter.Bind(wx.EVT_BUTTON, self.OnAjouter)
+        self.bouton_cloturer.Bind(wx.EVT_BUTTON, self.OnCloturer)
+        self.bouton_nouvelle_periode.Bind(wx.EVT_BUTTON, self.OnNouvellePeriode)
+
         self.liste = wx.ListCtrl(
             panel_synthese,
             -1,
@@ -96,6 +115,8 @@ class Panel(wx.Panel):
             UTILS_Interface.GetToken("surface_container_lowest")
         )
         self.liste.SetTextColour(UTILS_Interface.GetToken("on_surface"))
+        self.liste.Bind(wx.EVT_LIST_ITEM_SELECTED, self.OnSelectionChanged)
+        self.liste.Bind(wx.EVT_LIST_ITEM_DESELECTED, self.OnSelectionChanged)
 
         for index, (label, width) in enumerate(
             (
@@ -116,14 +137,21 @@ class Panel(wx.Panel):
             )
 
         self._do_layout(panel_synthese)
+        self._update_action_state()
 
     def _do_layout(self, panel_synthese):
         gap = UTILS_Styles.GetLayoutSpacing("field_gap")
         page_gap = UTILS_Styles.GetLayoutSpacing("page_gap")
 
+        actions = wx.BoxSizer(wx.HORIZONTAL)
+        actions.Add(self.bouton_ajouter, 0, wx.RIGHT, gap)
+        actions.Add(self.bouton_cloturer, 0, wx.RIGHT, gap)
+        actions.Add(self.bouton_nouvelle_periode, 0)
+
         contenu = wx.BoxSizer(wx.VERTICAL)
         contenu.Add(self.info, 0, wx.EXPAND | wx.BOTTOM, gap)
         contenu.Add(self.compteurs, 0, wx.EXPAND | wx.BOTTOM, gap)
+        contenu.Add(actions, 0, wx.EXPAND | wx.BOTTOM, gap)
         contenu.Add(self.liste, 1, wx.EXPAND)
         panel_synthese.SetSizer(contenu)
 
@@ -140,12 +168,14 @@ class Panel(wx.Panel):
         """Affiche explicitement l'absence de données sans simuler un état métier."""
 
         self._summary = None
+        self._rows = ()
         self.compteurs.SetLabel(u"")
         self.liste.DeleteAllItems()
         self.info.SetLabel(
             message
             or _(u"Le suivi de protection sociale n'est pas encore raccordé pour ce salarié.")
         )
+        self._update_action_state()
         self.Layout()
 
     def SetSummary(self, summary):
@@ -155,6 +185,7 @@ class Panel(wx.Panel):
             raise TypeError("La synthèse de protection sociale salarié est invalide.")
 
         self._summary = summary
+        self._rows = tuple(summary.rows)
         self.info.SetLabel(
             _(u"Situation descriptive au %s. Les obligations réglementaires restent contrôlées séparément.")
             % _date_fr(summary.as_of)
@@ -174,7 +205,7 @@ class Panel(wx.Panel):
         self.liste.Freeze()
         try:
             self.liste.DeleteAllItems()
-            for row in summary.rows:
+            for row in self._rows:
                 famille = _enum_label(_ORGANIZATION_LABELS, row.organization_kind)
                 organisme = row.organization_label or u"%s · %s" % (
                     famille,
@@ -194,11 +225,48 @@ class Panel(wx.Panel):
                 for column, value in enumerate(values[1:], 1):
                     self.liste.SetItem(index, column, value)
                 if row.due or not row.organization_configured:
-                    self.liste.SetItemTextColour(index, UTILS_Interface.GetToken("warning"))
+                    self.liste.SetItemTextColour(
+                        index,
+                        UTILS_Interface.GetToken("warning"),
+                    )
         finally:
             self.liste.Thaw()
 
+        self._update_action_state()
         self.Layout()
 
     def GetSummary(self):
         return self._summary
+
+    def GetSelectedSummaryRow(self):
+        """Renvoie la ligne sélectionnée sans exposer le contrôle wx à la couche runtime."""
+        index = self.liste.GetFirstSelected()
+        if index < 0 or index >= len(self._rows):
+            return None
+        return self._rows[index]
+
+    def _update_action_state(self):
+        loaded = self._summary is not None and bool(self.IDpersonne)
+        self.bouton_ajouter.Enable(loaded)
+
+        selected = self.GetSelectedSummaryRow() if loaded else None
+        status = getattr(getattr(selected, "status", None), "value", None)
+        active = status == "active"
+        self.bouton_cloturer.Enable(active)
+        self.bouton_nouvelle_periode.Enable(active)
+
+    def OnSelectionChanged(self, event):
+        self._update_action_state()
+        event.Skip()
+
+    def OnAjouter(self, event):
+        """Point d'extension : le panneau de présentation n'exécute pas l'action."""
+        event.Skip()
+
+    def OnCloturer(self, event):
+        """Point d'extension : le panneau de présentation n'exécute pas l'action."""
+        event.Skip()
+
+    def OnNouvellePeriode(self, event):
+        """Point d'extension : le panneau de présentation n'exécute pas l'action."""
+        event.Skip()

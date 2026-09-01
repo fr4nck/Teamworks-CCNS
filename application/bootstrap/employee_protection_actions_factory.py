@@ -11,6 +11,7 @@ from application.services.hr_connections import (
     EmployeeProtectionSuccessionResult,
     EmployeeProtectionView,
 )
+from domain.hr_connections import EmployeeProtectionRecord, OrganizationKind
 from infrastructure.persistence.teamworks_employee_protection_succession_repository import (
     TeamworksEmployeeProtectionSuccessionRepository,
 )
@@ -19,12 +20,32 @@ from infrastructure.persistence.teamworks_structure_identity_repository import (
 )
 
 
+_EMPLOYEE_PROTECTION_ORGANIZATION_KINDS = frozenset(
+    {
+        OrganizationKind.MUTUELLE,
+        OrganizationKind.PREVOYANCE,
+        OrganizationKind.RETRAITE_COMPLEMENTAIRE,
+        OrganizationKind.SPST,
+    }
+)
+
+
+@dataclass(frozen=True)
+class EmployeeProtectionOrganizationOption:
+    """Organisme configuré pouvant être proposé à l'interface salarié."""
+
+    code: str
+    label: str
+    kind: OrganizationKind
+
+
 @dataclass(frozen=True)
 class EmployeeProtectionActionsRuntime:
     """Façade d'écriture verrouillée sur la structure Teamworks active."""
 
     structure_ref: str
     _action_service: EmployeeProtectionActionService
+    _repository: TeamworksEmployeeProtectionSuccessionRepository
 
     def register(
         self,
@@ -66,9 +87,66 @@ class EmployeeProtectionActionsRuntime:
             request=request,
         )
 
+    def available_organizations(self) -> tuple[EmployeeProtectionOrganizationOption, ...]:
+        """Liste les organismes configurés qui acceptent un suivi salarié permanent."""
+        profiles = self._repository.list_profiles(structure_ref=self.structure_ref)
+        options = (
+            EmployeeProtectionOrganizationOption(
+                code=profile.organization.code,
+                label=profile.organization.label,
+                kind=profile.organization.kind,
+            )
+            for profile in profiles
+            if profile.organization.kind in _EMPLOYEE_PROTECTION_ORGANIZATION_KINDS
+        )
+        return tuple(
+            sorted(
+                options,
+                key=lambda option: (
+                    option.kind.value,
+                    option.label.casefold(),
+                    option.code,
+                ),
+            )
+        )
+
+    def get_record(
+        self,
+        *,
+        employee_ref: str,
+        record_id: str,
+    ) -> EmployeeProtectionRecord:
+        """Relit un suivi sélectionné sans exposer le repository au code wxPython."""
+        employee_ref = _required_text(
+            employee_ref,
+            "La référence du salarié est obligatoire.",
+        )
+        record_id = _required_text(
+            record_id,
+            "L'identifiant du suivi de protection sociale est obligatoire.",
+        )
+        record = self._repository.get_employee_protection(
+            structure_ref=self.structure_ref,
+            record_id=record_id,
+        )
+        if record is None:
+            raise LookupError("Le suivi de protection sociale sélectionné est introuvable.")
+        if record.employee_ref != employee_ref:
+            raise ValueError("Le suivi de protection sociale n'appartient pas à ce salarié.")
+        return record
+
+
+def _required_text(value: str, message: str) -> str:
+    if not isinstance(value, str):
+        raise TypeError(message)
+    normalized = value.strip()
+    if not normalized:
+        raise ValueError(message)
+    return normalized
+
 
 class EmployeeProtectionActionsRuntimeFactory:
-    """Compose les actions CRH-18/19 sur la base Teamworks active."""
+    """Compose les actions CRH-18/19/20 sur la base Teamworks active."""
 
     def __init__(
         self,
@@ -98,4 +176,5 @@ class EmployeeProtectionActionsRuntimeFactory:
         return EmployeeProtectionActionsRuntime(
             structure_ref=structure_ref,
             _action_service=action_service,
+            _repository=repository,
         )
