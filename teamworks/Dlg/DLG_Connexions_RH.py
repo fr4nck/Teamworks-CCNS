@@ -102,6 +102,7 @@ class ProfileDialog(wx.Dialog):
         title = _(u"Modifier un organisme RH") if configuration else _(u"Ajouter un organisme RH")
         wx.Dialog.__init__(
             self,
+            parent,
             -1,
             title,
             style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER,
@@ -138,6 +139,7 @@ class ProfileDialog(wx.Dialog):
                 UTILS_Styles.Scale(620, minimum=500),
             )
         )
+        self.SetSize(self.GetMinSize())
         self.CentreOnParent()
 
     def _prefill(self):
@@ -268,6 +270,7 @@ class Dialog(wx.Dialog):
     def __init__(self, parent, *, runtime_factory=None):
         wx.Dialog.__init__(
             self,
+            parent,
             -1,
             _(u"Organismes & connexions RH"),
             style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER,
@@ -318,6 +321,7 @@ class Dialog(wx.Dialog):
                 UTILS_Styles.Scale(520, minimum=420),
             )
         )
+        self.SetSize(self.GetMinSize())
         self.CentreOnParent()
 
     def _layout(self):
