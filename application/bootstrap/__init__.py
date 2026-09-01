@@ -10,6 +10,11 @@ from application.bootstrap.employee_protection_summary_factory import (
     EmployeeProtectionSummaryRuntime,
     EmployeeProtectionSummaryRuntimeFactory,
 )
+from application.bootstrap.structure_hr_connections_factory import (
+    StructureHrConnectionsRuntime,
+    StructureHrConnectionsRuntimeFactory,
+    StructureOrganizationProfileRequest,
+)
 
 __all__ = [
     "ContractSalaryControlControllerFactory",
@@ -18,4 +23,7 @@ __all__ = [
     "EmployeeProtectionOrganizationOption",
     "EmployeeProtectionSummaryRuntime",
     "EmployeeProtectionSummaryRuntimeFactory",
+    "StructureHrConnectionsRuntime",
+    "StructureHrConnectionsRuntimeFactory",
+    "StructureOrganizationProfileRequest",
 ]
