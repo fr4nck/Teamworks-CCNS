@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, timedelta
 from typing import Protocol
 
 from domain.hr_connections import (
     ConnectionProfile,
     EmployeeProtectionRecord,
     EmployeeProtectionRelationKind,
+    EmployeeProtectionStatus,
     OrganizationKind,
 )
 
@@ -37,6 +38,14 @@ class EmployeeProtectionRepository(Protocol):
         structure_ref: str,
         employee_ref: str,
     ) -> tuple[EmployeeProtectionRecord, ...]:
+        ...
+
+    def supersede_employee_protection(
+        self,
+        *,
+        ended_record: EmployeeProtectionRecord,
+        successor_record: EmployeeProtectionRecord,
+    ) -> tuple[EmployeeProtectionRecord, EmployeeProtectionRecord]:
         ...
 
 
@@ -88,20 +97,35 @@ class EmployeeProtectionService:
         self._profile_repository = profile_repository
 
     def save(self, record: EmployeeProtectionRecord) -> EmployeeProtectionView:
-        if not isinstance(record, EmployeeProtectionRecord):
-            raise TypeError("Le suivi de protection sociale à enregistrer est invalide.")
-        profile = self._profile_repository.get_profile(
-            structure_ref=record.structure_ref,
-            organization_code=record.organization_code,
-        )
-        if profile is None:
-            raise ValueError(
-                "L'organisme doit être configuré pour la structure avant de rattacher "
-                "un suivi salarié."
-            )
-        self._check_organization_kind(record=record, profile=profile)
+        profile = self._validated_profile(record)
         saved = self._repository.save_employee_protection(record)
         return self._view(saved, profile)
+
+    def supersede(
+        self,
+        *,
+        ended_record: EmployeeProtectionRecord,
+        successor_record: EmployeeProtectionRecord,
+    ) -> tuple[EmployeeProtectionView, EmployeeProtectionView]:
+        """Remplace une période active par sa période successeure en une transaction.
+
+        Le profil de l'ancien organisme peut avoir été retiré : l'historique doit
+        rester clôturable. En revanche, l'organisme de la période successeure doit
+        être configuré au moment de l'écriture.
+        """
+        self._validate_succession_pair(
+            ended_record=ended_record,
+            successor_record=successor_record,
+        )
+        successor_profile = self._validated_profile(successor_record)
+        saved_ended, saved_successor = self._repository.supersede_employee_protection(
+            ended_record=ended_record,
+            successor_record=successor_record,
+        )
+        return (
+            self._view(saved_ended, self._profile_for(saved_ended)),
+            self._view(saved_successor, successor_profile),
+        )
 
     def get(
         self,
@@ -179,6 +203,49 @@ class EmployeeProtectionService:
             )
             if view.payroll_relevant
         )
+
+    def _validated_profile(self, record: EmployeeProtectionRecord) -> ConnectionProfile:
+        if not isinstance(record, EmployeeProtectionRecord):
+            raise TypeError("Le suivi de protection sociale à enregistrer est invalide.")
+        profile = self._profile_repository.get_profile(
+            structure_ref=record.structure_ref,
+            organization_code=record.organization_code,
+        )
+        if profile is None:
+            raise ValueError(
+                "L'organisme doit être configuré pour la structure avant de rattacher "
+                "un suivi salarié."
+            )
+        self._check_organization_kind(record=record, profile=profile)
+        return profile
+
+    @staticmethod
+    def _validate_succession_pair(
+        *,
+        ended_record: EmployeeProtectionRecord,
+        successor_record: EmployeeProtectionRecord,
+    ) -> None:
+        if not isinstance(ended_record, EmployeeProtectionRecord):
+            raise TypeError("La période à clôturer est invalide.")
+        if not isinstance(successor_record, EmployeeProtectionRecord):
+            raise TypeError("La période successeure est invalide.")
+        if ended_record.status is not EmployeeProtectionStatus.ENDED:
+            raise ValueError("La période précédente doit être préparée comme terminée.")
+        if successor_record.status is not EmployeeProtectionStatus.ACTIVE:
+            raise ValueError("La période successeure doit être active.")
+        if ended_record.structure_ref != successor_record.structure_ref:
+            raise ValueError("Les deux périodes doivent appartenir à la même structure.")
+        if ended_record.employee_ref != successor_record.employee_ref:
+            raise ValueError("Les deux périodes doivent appartenir au même salarié.")
+        if ended_record.record_id == successor_record.record_id:
+            raise ValueError("La période successeure doit recevoir un nouvel identifiant.")
+
+        ended_on = ended_record.effective_period.ends_on
+        successor_starts_on = successor_record.effective_period.starts_on
+        if ended_on is None or successor_starts_on is None:
+            raise ValueError("La succession exige des dates de fin et de début explicites.")
+        if ended_on + timedelta(days=1) != successor_starts_on:
+            raise ValueError("Les périodes successives doivent être contiguës et sans chevauchement.")
 
     def _profile_for(self, record: EmployeeProtectionRecord) -> ConnectionProfile | None:
         return self._profile_repository.get_profile(
