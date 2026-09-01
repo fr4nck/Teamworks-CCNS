@@ -31,6 +31,7 @@ from .structure_configuration import (
     OrganizationConfigurationView,
     StructureHrConnectionsService,
 )
+from .structure_profile_actions import StructureConnectionProfileRequest
 
 __all__ = [
     "ConnectionProfileRepository",
@@ -50,6 +51,7 @@ __all__ = [
     "OrganizationConfigurationView",
     "PortalOpenRequest",
     "ReferenceManualConnectorSpec",
+    "StructureConnectionProfileRequest",
     "StructureHrConnectionsService",
     "build_reference_connector_registry",
     "build_reference_manual_connectors",
