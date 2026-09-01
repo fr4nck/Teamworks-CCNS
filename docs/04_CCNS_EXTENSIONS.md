@@ -1,6 +1,6 @@
 # Teamworks-CCNS — suivi CCNS et extensions
 
-**Mise à jour : 25 août 2026**
+**Mise à jour : 1er septembre 2026**
 
 ## Objectif
 
@@ -36,6 +36,15 @@ Le chantier est découpé en **9 jalons fonctionnels de poids égal**. `Terminé
 **CCNS & extensions : 7,5 / 9 = 83,3 %, arrondi à 83 %.**
 
 Ce pourcentage mesure le développement fonctionnel et son intégration automatisée. Il ne remplace pas la recette utilisateur : une fonction couverte par tests n'est pas déclarée prête en production tant que le parcours réel n'a pas été validé sur une copie de base.
+
+## Extensions satellites en cours
+
+Le chantier **Connexions RH** progresse séparément du build 0.9.1b en cours de qualification.
+
+- `CRH-01` : modèle domaine des organismes, références non secrètes, périodes d'effet, liens de portail et profils de connexion ;
+- `CRH-02` : descripteur de connecteur, capacités, modes, états et registre de découverte sans effet de bord ;
+- aucune persistance, UI, authentification, ouverture de navigateur ou communication réseau n'est introduite dans ces deux lots ;
+- ces travaux ne modifient pas le pourcentage des 9 jalons CCNS ci-dessus et ne valent pas qualification fonctionnelle tant que leur PR n'est pas validée et fusionnée.
 
 ## Restant prioritaire
 
