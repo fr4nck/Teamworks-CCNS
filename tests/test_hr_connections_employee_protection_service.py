@@ -109,6 +109,24 @@ def test_save_rejects_orphan_organization():
         service.save(_record())
 
 
+def test_save_does_not_reuse_same_organization_code_from_another_structure():
+    other_structure_profile = ConnectionProfile.create(
+        structure_ref="structure-2",
+        organization=HrOrganization.create(
+            code="unimutuelle",
+            label="Unimutuelle",
+            kind=OrganizationKind.MUTUELLE,
+        ),
+    )
+    service = EmployeeProtectionService(
+        repository=FakeEmployeeProtectionRepository(),
+        profile_repository=FakeProfileRepository([other_structure_profile]),
+    )
+
+    with pytest.raises(ValueError, match="configuré"):
+        service.save(_record())
+
+
 def test_save_rejects_organization_kind_mismatch():
     service = EmployeeProtectionService(
         repository=FakeEmployeeProtectionRepository(),
