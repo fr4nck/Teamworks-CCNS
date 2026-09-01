@@ -1,6 +1,6 @@
 # Fondations RH « paie-ready »
 
-**Décision du 31 août 2026**
+**Décision du 31 août 2026, précisée le 1er septembre 2026**
 
 ## Objet
 
@@ -8,7 +8,37 @@ Teamworks-CCNS doit d'abord exécuter correctement et durablement son périmètr
 
 En revanche, chaque évolution RH doit éviter de perdre une information qui pourrait devenir utile, plus tard, à la préparation ou au calcul d'un bulletin de paie.
 
-Cette orientation est une **règle d'architecture et de modélisation**, pas une nouvelle roadmap concurrente. `ROADMAP.md` reste la seule roadmap d'exécution et la validation réelle de la version 0.9.1b reste prioritaire sur tout nouveau développement fonctionnel majeur.
+Cette orientation est une **règle d'architecture et de modélisation**, pas une nouvelle roadmap concurrente. `ROADMAP.md` reste la seule roadmap d'exécution et la validation réelle de la version 0.9.1b reste le jalon prioritaire de qualification.
+
+Cette priorité **n'est pas un gel du développement**. Des lots satellites peuvent avancer en parallèle dès lors qu'ils sont isolés, réversibles, testés et qu'ils ne fragilisent ni le parcours de recette ni les chemins runtime critiques du build qualifié.
+
+## Développement satellite pendant la qualification
+
+La validation Windows de la 0.9.1b est un **verrou de qualification**, pas une interdiction de développer en parallèle.
+
+Un lot peut avancer pendant cette phase lorsqu'il respecte les principes suivants :
+
+- il est développé dans une branche ou une PR dédiée ;
+- il ne modifie pas sans nécessité les parcours critiques en cours de recette ;
+- il reste découplé du build 0.9.1b déjà qualifié par la CI ;
+- il dispose de tests adaptés à son niveau de risque ;
+- il est réversible sans migration destructive ;
+- il n'introduit pas une dépendance obligatoire pour utiliser les fonctions RH déjà qualifiées ;
+- s'il est fusionné dans `master`, toute future pré-release fondée sur ce nouveau `master` devra être reconstruite et requalifiée normalement.
+
+Sont typiquement compatibles avec cette progression parallèle, sous réserve d'examen du lot réel :
+
+- documentation et architecture ;
+- objets domaine et services purs sans branchement sur les parcours critiques ;
+- catalogues, référentiels et registres génériques ;
+- parseurs, imports/exports ou adaptateurs isolés ;
+- tests et garde-fous ;
+- connecteurs externes non activés par défaut ;
+- nouvelles fonctions derrière une frontière claire et sans effet sur le comportement historique tant qu'elles ne sont pas utilisées.
+
+En revanche, une modification touchant directement la persistance critique, la sauvegarde/restauration, les fiches salariés, les contrats, les présences, le bootstrap, les migrations destructives ou les chemins actuellement testés en recette doit être traitée comme un lot à risque normal et ne bénéficie pas du simple statut « satellite ».
+
+La règle est donc : **ne pas arrêter l'innovation ; empêcher seulement qu'un développement parallèle brouille ou invalide la qualification en cours.**
 
 ## Principe directeur
 
