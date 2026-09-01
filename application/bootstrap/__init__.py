@@ -10,6 +10,10 @@ from application.bootstrap.employee_protection_summary_factory import (
     EmployeeProtectionSummaryRuntime,
     EmployeeProtectionSummaryRuntimeFactory,
 )
+from application.bootstrap.hr_case_creation_factory import (
+    HrCaseCreationRuntime,
+    HrCaseCreationRuntimeFactory,
+)
 from application.bootstrap.hr_case_dashboard_factory import (
     HrCaseDashboardRuntime,
     HrCaseDashboardRuntimeFactory,
@@ -34,6 +38,8 @@ __all__ = [
     "EmployeeProtectionOrganizationOption",
     "EmployeeProtectionSummaryRuntime",
     "EmployeeProtectionSummaryRuntimeFactory",
+    "HrCaseCreationRuntime",
+    "HrCaseCreationRuntimeFactory",
     "HrCaseDashboardRuntime",
     "HrCaseDashboardRuntimeFactory",
     "HrCaseHistoryRuntime",
