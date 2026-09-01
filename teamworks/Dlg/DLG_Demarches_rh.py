@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Cockpit CRH-24/26 des démarches RH.
+"""Cockpit CRH-24/26/28 des démarches RH.
 
 La consultation reste portée par la façade CRH-23. CRH-26 ajoute uniquement des
-transitions métier explicitement autorisées par la frontière CRH-25. L'écran ne
+transitions métier explicitement autorisées par la frontière CRH-25. CRH-28
+raccorde la consultation du journal CRH-27 par chargement paresseux. L'écran ne
 connaît ni GestionDB, ni les repositories, ni l'identité logique de la structure
 et ne modifie jamais le statut technique d'échange.
 """
@@ -299,7 +300,7 @@ class TransitionDialog(wx.Dialog):
 
 
 class Dialog(wx.Dialog):
-    """Cockpit structure CRH-24/26 sur la base Teamworks active."""
+    """Cockpit structure CRH-24/26/28 sur la base Teamworks active."""
 
     def __init__(
         self,
@@ -378,13 +379,16 @@ class Dialog(wx.Dialog):
 
         self.refresh = wx.Button(self, -1, _(u"Actualiser"))
         self.details = wx.Button(self, -1, _(u"Voir le détail"))
+        self.history = wx.Button(self, -1, _(u"Historique"))
         self.advance = wx.Button(self, -1, _(u"Faire évoluer"))
         self.close = wx.Button(self, wx.ID_CLOSE, _(u"Fermer"))
         self.details.Enable(False)
+        self.history.Enable(False)
         self.advance.Enable(False)
 
         self.refresh.Bind(wx.EVT_BUTTON, self.OnRefresh)
         self.details.Bind(wx.EVT_BUTTON, self.OnDetails)
+        self.history.Bind(wx.EVT_BUTTON, self.OnHistory)
         self.advance.Bind(wx.EVT_BUTTON, self.OnAdvance)
         self.close.Bind(wx.EVT_BUTTON, lambda event: self.EndModal(wx.ID_CLOSE))
         self.list.Bind(wx.EVT_LIST_ITEM_SELECTED, self.OnSelection)
@@ -420,6 +424,7 @@ class Dialog(wx.Dialog):
         buttons = wx.BoxSizer(wx.HORIZONTAL)
         buttons.Add(self.refresh, 0, wx.RIGHT, gap)
         buttons.Add(self.details, 0, wx.RIGHT, gap)
+        buttons.Add(self.history, 0, wx.RIGHT, gap)
         buttons.Add(self.advance, 0, wx.RIGHT, gap)
         buttons.AddStretchSpacer(1)
         buttons.Add(self.close, 0)
@@ -441,6 +446,7 @@ class Dialog(wx.Dialog):
         row = self._selected_row()
         has_selection = row is not None
         self.details.Enable(has_selection)
+        self.history.Enable(has_selection)
         self.advance.Enable(has_selection and row.status not in {
             HrCaseStatus.ACCEPTED,
             HrCaseStatus.CANCELLED,
@@ -546,6 +552,33 @@ class Dialog(wx.Dialog):
         if row is None:
             return
         dlg = DetailDialog(self, row)
+        try:
+            dlg.ShowModal()
+        finally:
+            dlg.Destroy()
+
+    def OnHistory(self, event):
+        row = self._selected_row()
+        if row is None:
+            return
+
+        try:
+            from Dlg import DLG_Demarches_rh_historique
+
+            dlg = DLG_Demarches_rh_historique.Dialog(
+                self,
+                case_id=row.case_id,
+            )
+        except Exception as exc:
+            wx.MessageBox(
+                _(u"L'historique de cette démarche est momentanément indisponible.\n\n%s")
+                % str(exc),
+                _(u"Historique de la démarche RH"),
+                wx.OK | wx.ICON_ERROR,
+                self,
+            )
+            return
+
         try:
             dlg.ShowModal()
         finally:
