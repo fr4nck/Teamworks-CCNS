@@ -95,7 +95,9 @@ def _request(
 
 def _service(*, profiles=None, record_id="generated-1"):
     repository = FakeEmployeeProtectionRepository()
-    profile_repository = FakeProfileRepository(profiles or [_profile()])
+    profile_repository = FakeProfileRepository(
+        profiles if profiles is not None else [_profile()]
+    )
     protection_service = EmployeeProtectionService(
         repository=repository,
         profile_repository=profile_repository,
