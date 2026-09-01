@@ -126,8 +126,8 @@ class Panel(CTRL_Page_protection_sociale.Panel):
                 wx.MessageBox(
                     _(
                         u"Aucun organisme compatible n'est configuré pour la structure. "
-                        u"Configurez d'abord la mutuelle, la prévoyance, la retraite "
-                        u"complémentaire ou le service de santé au travail."
+                        u"Utilisez « Organismes RH… » pour ajouter la mutuelle, la prévoyance, "
+                        u"la retraite complémentaire ou le service de santé au travail."
                     ),
                     _(u"Protection sociale"),
                     wx.OK | wx.ICON_INFORMATION,
@@ -234,5 +234,24 @@ class Panel(CTRL_Page_protection_sociale.Panel):
         except Exception as exc:
             self._show_action_error(
                 _(u"La nouvelle période de protection sociale n'a pas pu être créée."),
+                exc,
+            )
+
+    def OnOrganismes(self, event):
+        """Ouvre explicitement la configuration structure sans la charger avec la fiche."""
+        try:
+            from Dlg import DLG_Connexions_RH
+
+            dlg = DLG_Connexions_RH.Dialog(self)
+            try:
+                dlg.ShowModal()
+            finally:
+                dlg.Destroy()
+            if self.IDpersonne:
+                self.LoadSummary()
+            self._actions_runtime = None
+        except Exception as exc:
+            self._show_action_error(
+                _(u"La configuration des organismes RH n'a pas pu être ouverte."),
                 exc,
             )
