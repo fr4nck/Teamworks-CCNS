@@ -48,7 +48,8 @@ Le chantier **Connexions RH** progresse séparément du build 0.9.1b en cours de
 - `CRH-05` : frontière d'échange de fichiers, formats versionnés, empreinte SHA-256, métadonnées d'artefacts sans payload, validation structurée et protocole d'adaptateur sans I/O implicite ;
 - `CRH-06` : handles opaques de secrets, besoins de credentials et associations typées ; le domaine peut vérifier la disponibilité d'un handle sans lire la valeur secrète et ne définit encore aucun backend réel de coffre ;
 - `CRH-07` : connecteur générique de portail manuel, préparation des références et pièces, demande d'ouverture uniquement après confirmation explicite, mise à jour manuelle de statut et événement d'audit sans simuler de transmission externe ;
-- aucune persistance, UI wxPython, authentification réelle, ouverture de navigateur effective ou communication réseau n'est introduite dans ces sept lots ;
+- `CRH-08` : catalogue de connecteurs manuels de référence pour URSSAF, Net-entreprises, mutuelle, prévoyance, retraite complémentaire, OPCO, SPST et France Travail, sans annoncer d'API, de dépôt ou de synchronisation inexistants ;
+- aucune persistance, UI wxPython, authentification réelle, ouverture de navigateur effective ou communication réseau n'est introduite dans ces huit lots ;
 - ces travaux ne modifient pas le pourcentage des 9 jalons CCNS ci-dessus et ne valent pas qualification fonctionnelle tant que leurs PR ne sont pas validées et fusionnées.
 
 ## Restant prioritaire
