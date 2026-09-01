@@ -162,6 +162,12 @@ def test_portal_open_request_rejects_invalid_portal_index():
         connector.request_portal_open(
             profile=profile,
             user_confirmed=True,
+            portal_index=-1,
+        )
+    with pytest.raises(IndexError):
+        connector.request_portal_open(
+            profile=profile,
+            user_confirmed=True,
             portal_index=9,
         )
 
@@ -218,4 +224,26 @@ def test_manual_status_update_requires_identified_actor():
             event_id="EVT-INVALID",
             occurred_at=datetime(2026, 9, 1, 9, 30, tzinfo=timezone.utc),
             actor_ref=" ",
+        )
+    with pytest.raises(TypeError):
+        connector.record_manual_status(
+            case=_case(status=HrCaseStatus.PREPARED),
+            new_status=HrCaseStatus.SUBMITTED,
+            event_id="EVT-INVALID-TYPE",
+            occurred_at=datetime(2026, 9, 1, 9, 30, tzinfo=timezone.utc),
+            actor_ref=42,  # type: ignore[arg-type]
+        )
+
+
+def test_manual_status_update_rejects_non_text_external_reference():
+    connector = ManualPortalConnector()
+
+    with pytest.raises(TypeError):
+        connector.record_manual_status(
+            case=_case(status=HrCaseStatus.PREPARED),
+            new_status=HrCaseStatus.SUBMITTED,
+            event_id="EVT-INVALID-REF",
+            occurred_at=datetime(2026, 9, 1, 9, 30, tzinfo=timezone.utc),
+            actor_ref="direction",
+            external_reference=1234,  # type: ignore[arg-type]
         )
