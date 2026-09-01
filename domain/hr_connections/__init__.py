@@ -9,6 +9,12 @@ from .cases import (
     HrCaseType,
 )
 from .connector import ConfigurationCheck, ConnectorDescriptor, HrConnector
+from .employee_protection import (
+    EmployeeProtectionPortfolio,
+    EmployeeProtectionRecord,
+    EmployeeProtectionRelationKind,
+    EmployeeProtectionStatus,
+)
 from .events import (
     HrAuditEvent,
     HrAuditField,
@@ -58,6 +64,10 @@ __all__ = [
     "CredentialBinding",
     "CredentialRequirement",
     "EffectivePeriod",
+    "EmployeeProtectionPortfolio",
+    "EmployeeProtectionRecord",
+    "EmployeeProtectionRelationKind",
+    "EmployeeProtectionStatus",
     "ExchangeArtifact",
     "ExchangeDirection",
     "ExchangeFormat",
