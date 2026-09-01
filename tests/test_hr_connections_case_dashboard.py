@@ -138,6 +138,30 @@ def test_dashboard_counts_business_and_technical_attention_separately():
     assert technical.technical_attention is True
 
 
+def test_closed_case_keeps_failed_exchange_history_without_remaining_actionable():
+    service, _, _ = _service(
+        (
+            _case(
+                "accepted-after-failure",
+                status=HrCaseStatus.ACCEPTED,
+                exchange_status=ExchangeStatus.FAILED,
+            ),
+        )
+    )
+
+    dashboard = service.build(
+        structure_ref="structure-1",
+        as_of=date(2026, 9, 10),
+    )
+
+    row = dashboard.rows[0]
+    assert row.exchange_status is ExchangeStatus.FAILED
+    assert row.technical_attention is False
+    assert row.needs_attention is False
+    assert dashboard.exchange_failed_count == 0
+    assert dashboard.attention_count == 0
+
+
 def test_dashboard_marks_only_open_past_due_cases_as_overdue():
     service, _, _ = _service(
         (
@@ -164,7 +188,7 @@ def test_dashboard_marks_only_open_past_due_cases_as_overdue():
     assert next(row for row in dashboard.rows if row.case_id == "today").overdue is False
 
 
-def test_dashboard_keeps_orphan_organization_visible_without_inventing_label():
+def test_open_orphan_organization_is_configuration_attention():
     service, _, _ = _service(
         (_case("orphan", organization_code="ancien-organisme"),)
     )
@@ -178,7 +202,34 @@ def test_dashboard_keeps_orphan_organization_visible_without_inventing_label():
     assert row.organization_code == "ancien-organisme"
     assert row.organization_label is None
     assert row.organization_configured is False
+    assert row.configuration_attention is True
+    assert row.needs_attention is True
     assert dashboard.orphan_organization_count == 1
+    assert dashboard.attention_count == 1
+
+
+def test_closed_orphan_organization_stays_descriptive_without_attention():
+    service, _, _ = _service(
+        (
+            _case(
+                "closed-orphan",
+                status=HrCaseStatus.ACCEPTED,
+                organization_code="ancien-organisme",
+            ),
+        )
+    )
+
+    dashboard = service.build(
+        structure_ref="structure-1",
+        as_of=date(2026, 9, 10),
+    )
+
+    row = dashboard.rows[0]
+    assert row.organization_configured is False
+    assert row.configuration_attention is False
+    assert row.needs_attention is False
+    assert dashboard.orphan_organization_count == 1
+    assert dashboard.attention_count == 0
 
 
 def test_dashboard_exposes_expected_document_counts_without_claiming_presence():
