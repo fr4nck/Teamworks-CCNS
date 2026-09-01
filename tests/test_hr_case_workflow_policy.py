@@ -1,3 +1,4 @@
+import ast
 from pathlib import Path
 
 
@@ -10,6 +11,15 @@ RUNTIME = Path("application/bootstrap/hr_case_workflow_factory.py")
 
 def _source(path):
     return path.read_text(encoding="utf-8")
+
+
+def _runtime_class():
+    tree = ast.parse(_source(RUNTIME), filename=str(RUNTIME))
+    return next(
+        node
+        for node in tree.body
+        if isinstance(node, ast.ClassDef) and node.name == "HrCaseWorkflowRuntime"
+    )
 
 
 def test_workflow_service_stays_ui_sql_and_transport_agnostic():
@@ -84,13 +94,35 @@ def test_atomic_repository_requires_optimistic_concurrency_and_append_only_audit
 
 
 def test_workflow_runtime_hides_structure_identity_and_technical_exchange_axis():
-    source = _source(RUNTIME)
+    runtime = _runtime_class()
+    fields = {
+        node.target.id
+        for node in runtime.body
+        if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name)
+    }
+    public_methods = {
+        node.name: node
+        for node in runtime.body
+        if isinstance(node, ast.FunctionDef) and not node.name.startswith("_")
+    }
 
-    assert "_structure_ref: str" in source
-    assert "structure_ref: str\n" not in source
-    assert "available_transitions(self, *, case_id: str)" in source
-    assert "case_id: str,\n        status: HrCaseStatus" in source
-    assert "exchange_status" not in source
+    assert "_structure_ref" in fields
+    assert "structure_ref" not in fields
+    assert set(public_methods) == {"available_transitions", "transition"}
+
+    for method in public_methods.values():
+        arguments = {
+            argument.arg
+            for argument in (
+                list(method.args.posonlyargs)
+                + list(method.args.args)
+                + list(method.args.kwonlyargs)
+            )
+        }
+        assert "structure_ref" not in arguments
+        assert "exchange_status" not in arguments
+
+    source = _source(RUNTIME)
     assert "with_exchange_status" not in source
 
 
