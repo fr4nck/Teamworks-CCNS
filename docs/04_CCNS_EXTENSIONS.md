@@ -64,7 +64,8 @@ Le chantier **Connexions RH** progresse séparément du build 0.9.1b en cours de
 - `CRH-19` : succession transactionnelle des périodes de protection sociale : clôture du prédécesseur et insertion du successeur dans une seule unité de travail, avec rollback intégral en cas d'échec ;
 - `CRH-20` : actions wxPython « Ajouter », « Clôturer » et « Nouvelle période » raccordées à l'onglet salarié. Le dialogue reste séparé de la persistance et les écritures sont chargées uniquement au premier clic ;
 - `CRH-21` : projection UI-agnostique du cockpit structure des démarches RH. Elle distingue compteurs métier et échecs techniques, dossiers échus, organismes orphelins et nombres de pièces attendues sans inventer de présence documentaire ni de conformité ; elle reste indépendante de wxPython et de la persistance de production des dossiers ;
-- CRH-01 à CRH-08 restent sans persistance ; CRH-09 et CRH-13 restent des stores de qualification isolés, tandis que CRH-16 fournit l'adaptateur destiné à la base Teamworks active pour les profils et suivis salarié. CRH-17A verrouille l'identité logique de cette base. CRH-10A orchestre la structure et CRH-10B l'expose au paramétrage ; CRH-11 à CRH-20 construisent le suivi salarié jusqu'aux actions historisées ; CRH-21 prépare le cockpit des démarches avant leur raccordement à la persistance de production. Aucune authentification réelle, ouverture de navigateur effective ou communication réseau n'est ajoutée ;
+- `CRH-22` : adaptateur de persistance de production `TeamworksHrCasesRepository` pour les dossiers CRH-03, pièces attendues et événements CRH-04. Il s'appuie sur `GestionDB`, conserve la compatibilité SQLite/MySQL, versionne un schéma strictement additif et maintient le journal d'audit append-only sans clé étrangère vers les données historiques ;
+- CRH-01 à CRH-08 restent sans persistance ; CRH-09 et CRH-13 restent des stores de qualification isolés. CRH-16 fournit l'adaptateur de production pour les profils et suivis salarié, CRH-22 celui des démarches et événements. CRH-17A verrouille l'identité logique de la base. CRH-10A orchestre la structure et CRH-10B l'expose au paramétrage ; CRH-11 à CRH-20 construisent le suivi salarié jusqu'aux actions historisées ; CRH-21 prépare le cockpit désormais raccordable au store de production CRH-22. Aucune authentification réelle, ouverture de navigateur effective ou communication réseau n'est ajoutée ;
 - ces travaux ne modifient pas le pourcentage des 9 jalons CCNS ci-dessus et ne valent pas qualification fonctionnelle tant que leurs PR ne sont pas validées et fusionnées.
 
 ## Restant prioritaire
@@ -93,4 +94,4 @@ son absence, aucun envoi n'a lieu et le fichier reste disponible dans `Logs`.
 - `docs/48-revue-architecture-ccns.md`
 - `docs/50-scope-metier.md`
 - `docs/60-scenario-utilisation-controle-salarial.md`
-- documentation `docs/40-*` à `docs/73-*`
+- documentation `docs/40-*` à `docs/74-*`
