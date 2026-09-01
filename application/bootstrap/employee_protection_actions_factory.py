@@ -8,10 +8,11 @@ from application.services.hr_connections import (
     EmployeeProtectionActionService,
     EmployeeProtectionCreateRequest,
     EmployeeProtectionService,
+    EmployeeProtectionSuccessionResult,
     EmployeeProtectionView,
 )
-from infrastructure.persistence.teamworks_hr_connections_repository import (
-    TeamworksHrConnectionsRepository,
+from infrastructure.persistence.teamworks_employee_protection_succession_repository import (
+    TeamworksEmployeeProtectionSuccessionRepository,
 )
 from infrastructure.persistence.teamworks_structure_identity_repository import (
     TeamworksStructureIdentityRepository,
@@ -51,9 +52,23 @@ class EmployeeProtectionActionsRuntime:
             ends_on=ends_on,
         )
 
+    def supersede(
+        self,
+        *,
+        employee_ref: str,
+        record_id: str,
+        request: EmployeeProtectionCreateRequest,
+    ) -> EmployeeProtectionSuccessionResult:
+        return self._action_service.supersede(
+            structure_ref=self.structure_ref,
+            employee_ref=employee_ref,
+            record_id=record_id,
+            request=request,
+        )
+
 
 class EmployeeProtectionActionsRuntimeFactory:
-    """Compose les actions CRH-18 sur la base Teamworks active."""
+    """Compose les actions CRH-18/19 sur la base Teamworks active."""
 
     def __init__(
         self,
@@ -69,7 +84,7 @@ class EmployeeProtectionActionsRuntimeFactory:
             db_factory=self._db_factory,
         )
         structure_ref = identity_repository.get_or_create_structure_ref()
-        repository = TeamworksHrConnectionsRepository(
+        repository = TeamworksEmployeeProtectionSuccessionRepository(
             db_factory=self._db_factory,
         )
         protection_service = EmployeeProtectionService(
