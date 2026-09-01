@@ -58,6 +58,11 @@ class FakeEmployeeProtectionRepository:
             if ref == structure_ref and record.employee_ref == employee_ref
         )
 
+    def supersede_employee_protection(self, *, ended_record, successor_record):
+        self._records[(ended_record.structure_ref, ended_record.record_id)] = ended_record
+        self._records[(successor_record.structure_ref, successor_record.record_id)] = successor_record
+        return ended_record, successor_record
+
 
 def _profile(kind=OrganizationKind.MUTUELLE, code="mutuelle-demo"):
     return ConnectionProfile.create(
@@ -268,7 +273,7 @@ def test_action_service_exposes_no_free_form_edit_or_delete_operation():
         if not name.startswith("_")
     }
 
-    assert public_names == {"end", "register"}
+    assert public_names == {"end", "register", "supersede"}
 
     source = Path(
         "application/services/hr_connections/employee_protection_actions.py"
