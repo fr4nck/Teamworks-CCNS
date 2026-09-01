@@ -13,13 +13,19 @@ from infrastructure.persistence.hr_connections_repository import (
     SCHEMA_VERSION as HR_CONNECTIONS_SCHEMA_VERSION,
     SqliteHrConnectionsRepository,
 )
+from infrastructure.persistence.teamworks_hr_connections_repository import (
+    TEAMWORKS_HR_SCHEMA_VERSION,
+    TeamworksHrConnectionsRepository,
+)
 
 __all__ = [
     "DuplicateContractSalaryControlSnapshotError",
     "DuplicateHrAuditEventError",
     "EMPLOYEE_PROTECTION_SCHEMA_VERSION",
     "HR_CONNECTIONS_SCHEMA_VERSION",
+    "TEAMWORKS_HR_SCHEMA_VERSION",
     "SqliteContractSalaryControlSnapshotRepository",
     "SqliteEmployeeProtectionRepository",
     "SqliteHrConnectionsRepository",
+    "TeamworksHrConnectionsRepository",
 ]
