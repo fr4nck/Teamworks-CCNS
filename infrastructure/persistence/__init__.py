@@ -17,6 +17,10 @@ from infrastructure.persistence.teamworks_hr_connections_repository import (
     TEAMWORKS_HR_SCHEMA_VERSION,
     TeamworksHrConnectionsRepository,
 )
+from infrastructure.persistence.teamworks_structure_identity_repository import (
+    TEAMWORKS_STRUCTURE_IDENTITY_SCHEMA_VERSION,
+    TeamworksStructureIdentityRepository,
+)
 
 __all__ = [
     "DuplicateContractSalaryControlSnapshotError",
@@ -24,8 +28,10 @@ __all__ = [
     "EMPLOYEE_PROTECTION_SCHEMA_VERSION",
     "HR_CONNECTIONS_SCHEMA_VERSION",
     "TEAMWORKS_HR_SCHEMA_VERSION",
+    "TEAMWORKS_STRUCTURE_IDENTITY_SCHEMA_VERSION",
     "SqliteContractSalaryControlSnapshotRepository",
     "SqliteEmployeeProtectionRepository",
     "SqliteHrConnectionsRepository",
     "TeamworksHrConnectionsRepository",
+    "TeamworksStructureIdentityRepository",
 ]
