@@ -69,17 +69,24 @@ def test_factory_charge_le_runtime_uniquement_a_l_ouverture_de_l_onglet():
 def test_runtime_preserve_la_fiche_si_la_synthese_rh_echoue():
     source = _source(RUNTIME)
     tree = _tree(RUNTIME)
-    init = _find_method(tree, "Panel", "__init__")
+    load_summary = _find_method(tree, "Panel", "LoadSummary")
 
-    handlers = [handler for node in ast.walk(init) if isinstance(node, ast.Try) for handler in node.handlers]
+    handlers = [
+        handler
+        for node in ast.walk(load_summary)
+        if isinstance(node, ast.Try)
+        for handler in node.handlers
+    ]
     assert any(
         isinstance(handler.type, ast.Name) and handler.type.id == "Exception"
         for handler in handlers
         if handler.type is not None
     )
-    assert "summary = build_employee_protection_summary(IDpersonne)" in source
-    assert "load_error = error" in source
-    assert "load_error=load_error" in source
+    assert "self._runtime = self._runtime_factory().create()" in source
+    assert "summary = self._runtime.build(" in source
+    assert "self.SetUnavailable(" in source
+    assert "La fiche salarié reste utilisable." in source
+    assert "return False" in source
 
 
 def test_raccordement_ui_ne_reintroduit_pas_un_store_sqlite_local():
