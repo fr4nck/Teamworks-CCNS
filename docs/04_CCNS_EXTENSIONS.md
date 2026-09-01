@@ -67,7 +67,8 @@ Le chantier **Connexions RH** progresse séparément du build 0.9.1b en cours de
 - `CRH-22` : adaptateur de persistance de production `TeamworksHrCasesRepository` pour les dossiers CRH-03, pièces attendues et événements CRH-04. Il s'appuie sur `GestionDB`, conserve la compatibilité SQLite/MySQL, versionne un schéma strictement additif et maintient le journal d'audit append-only sans clé étrangère vers les données historiques ;
 - `CRH-23` : runtime de lecture du cockpit sur la base Teamworks active. Il compose l'identité stable de la structure, la persistance des démarches, les organismes configurés et la projection CRH-21 derrière une façade qui exige une date de référence explicite et n'expose aucune opération d'écriture ;
 - `CRH-24` : premier cockpit wxPython « Démarches RH » en lecture seule. Il affiche compteurs, échéances, anomalies métier, échecs techniques, organismes non configurés et détail descriptif des dossiers sans connaître la persistance ni proposer de transition de workflow ;
-- CRH-01 à CRH-08 restent sans persistance ; CRH-09 et CRH-13 restent des stores de qualification isolés. CRH-16 fournit l'adaptateur de production pour les profils et suivis salarié, CRH-22 celui des démarches et événements. CRH-17A verrouille l'identité logique de la base. CRH-10A orchestre la structure et CRH-10B l'expose au paramétrage ; CRH-11 à CRH-20 construisent le suivi salarié jusqu'aux actions historisées ; CRH-21 à CRH-24 construisent le cockpit structure depuis sa projection jusqu'à son premier écran de consultation. Aucune authentification réelle, ouverture de navigateur effective ou communication réseau n'est ajoutée ;
+- `CRH-25` : service et runtime de workflow contrôlé des démarches. Les transitions autorisées restent définies par `HrCase`, la projection courante et l'événement d'audit sont persistés atomiquement, et un contrôle optimiste sur les statuts métier/technique refuse les écrasements concurrents ;
+- CRH-01 à CRH-08 restent sans persistance ; CRH-09 et CRH-13 restent des stores de qualification isolés. CRH-16 fournit l'adaptateur de production pour les profils et suivis salarié, CRH-22 celui des démarches et événements. CRH-17A verrouille l'identité logique de la base. CRH-10A orchestre la structure et CRH-10B l'expose au paramétrage ; CRH-11 à CRH-20 construisent le suivi salarié jusqu'aux actions historisées ; CRH-21 à CRH-25 construisent le cockpit structure, sa persistance et la frontière transactionnelle de ses futures actions. Aucune authentification réelle, ouverture de navigateur effective ou communication réseau n'est ajoutée ;
 - ces travaux ne modifient pas le pourcentage des 9 jalons CCNS ci-dessus et ne valent pas qualification fonctionnelle tant que leurs PR ne sont pas validées et fusionnées.
 
 ## Restant prioritaire
@@ -96,4 +97,4 @@ son absence, aucun envoi n'a lieu et le fichier reste disponible dans `Logs`.
 - `docs/48-revue-architecture-ccns.md`
 - `docs/50-scope-metier.md`
 - `docs/60-scenario-utilisation-controle-salarial.md`
-- documentation `docs/40-*` à `docs/76-*`
+- documentation `docs/40-*` à `docs/77-*`
