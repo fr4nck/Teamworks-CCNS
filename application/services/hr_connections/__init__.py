@@ -19,6 +19,12 @@ from .hr_case_dashboard import (
     HrCaseDashboardRow,
     HrCaseDashboardService,
 )
+from .hr_case_workflow import (
+    HrCaseTransitionOptions,
+    HrCaseTransitionResult,
+    HrCaseWorkflowRepository,
+    HrCaseWorkflowService,
+)
 from .manual_portal import (
     ManualPortalConnector,
     ManualPortalPlan,
@@ -55,6 +61,10 @@ __all__ = [
     "HrCaseDashboardRepository",
     "HrCaseDashboardRow",
     "HrCaseDashboardService",
+    "HrCaseTransitionOptions",
+    "HrCaseTransitionResult",
+    "HrCaseWorkflowRepository",
+    "HrCaseWorkflowService",
     "ManualPortalConnector",
     "ManualPortalPlan",
     "ManualStatusUpdate",
