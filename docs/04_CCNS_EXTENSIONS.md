@@ -45,7 +45,8 @@ Le chantier **Connexions RH** progresse séparément du build 0.9.1b en cours de
 - `CRH-02` : descripteur de connecteur, capacités, modes, états et registre de découverte sans effet de bord ;
 - `CRH-03` : dossiers de démarches RH, sujets personne/structure, pièces attendues, échéances et machine d'états métier distincte du statut technique d'échange ;
 - `CRH-04` : événements d'audit immuables, journal append-only, cibles typées, horodatage avec fuseau et garde-fous contre les métadonnées manifestement secrètes ou médicales ;
-- aucune persistance, UI, authentification, ouverture de navigateur ou communication réseau n'est introduite dans ces quatre lots ;
+- `CRH-05` : frontière d'échange de fichiers, formats versionnés, empreinte SHA-256, métadonnées d'artefacts sans payload, validation structurée et protocole d'adaptateur sans I/O implicite ;
+- aucune persistance, UI, authentification, ouverture de navigateur ou communication réseau n'est introduite dans ces cinq lots ;
 - ces travaux ne modifient pas le pourcentage des 9 jalons CCNS ci-dessus et ne valent pas qualification fonctionnelle tant que leurs PR ne sont pas validées et fusionnées.
 
 ## Restant prioritaire

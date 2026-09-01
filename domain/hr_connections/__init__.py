@@ -16,6 +16,17 @@ from .events import (
     HrEventKind,
     HrEventTargetKind,
 )
+from .file_exchange import (
+    ExchangeArtifact,
+    ExchangeDirection,
+    ExchangeFormat,
+    ExchangeValidationIssue,
+    ExchangeValidationResult,
+    FileExchangeAdapter,
+    FileExchangeDescriptor,
+    FileFingerprint,
+    ValidationSeverity,
+)
 from .organizations import (
     EffectivePeriod,
     HrOrganization,
@@ -35,8 +46,16 @@ __all__ = [
     "ConnectorRegistry",
     "ConnectorState",
     "EffectivePeriod",
+    "ExchangeArtifact",
+    "ExchangeDirection",
+    "ExchangeFormat",
     "ExchangeStatus",
+    "ExchangeValidationIssue",
+    "ExchangeValidationResult",
     "ExpectedDocument",
+    "FileExchangeAdapter",
+    "FileExchangeDescriptor",
+    "FileFingerprint",
     "HrAuditEvent",
     "HrAuditField",
     "HrCase",
@@ -52,4 +71,5 @@ __all__ = [
     "OrganizationKind",
     "OrganizationReference",
     "PortalLink",
+    "ValidationSeverity",
 ]
