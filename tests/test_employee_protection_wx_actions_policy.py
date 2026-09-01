@@ -69,11 +69,27 @@ def test_actions_runtime_reste_importe_uniquement_au_premier_clic():
 
 def test_dialogue_ne_connait_ni_structure_ni_persistance():
     source = _source(DIALOG)
+    tree = _tree(DIALOG)
 
-    for forbidden in (
+    imported_modules = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            imported_modules.extend(alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom):
+            imported_modules.append(node.module or "")
+
+    for forbidden_module in (
         "GestionDB",
         "sqlite3",
-        "Repository",
+        "infrastructure.persistence",
+    ):
+        assert all(
+            module != forbidden_module
+            and not module.startswith(forbidden_module + ".")
+            for module in imported_modules
+        )
+
+    for forbidden in (
         "structure_ref",
         "record_id",
         "requests.",
