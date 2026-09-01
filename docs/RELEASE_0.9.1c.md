@@ -29,6 +29,8 @@ La PR documentaire #315 a ensuite été fusionnée dans `master` sans modificati
 - aucune modification volontaire du schéma métier ;
 - aucune qualification bêta/RC implicite.
 
+Le rebuild Windows de publication est déclenché explicitement depuis `master`, sans modification fonctionnelle supplémentaire.
+
 ## Validation restante
 
 La publication de `0.9.1c` ne remplace pas la recette utilisateur sur copie de base réelle. La qualification bêta / RC / stable reste conditionnée au parcours de validation décrit dans `docs/VALIDATION_WINDOWS_0.9.1b.md` (applicable à `0.9.1c` tant qu'aucun changement fonctionnel n'est introduit).
