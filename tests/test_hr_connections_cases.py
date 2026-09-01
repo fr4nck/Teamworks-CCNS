@@ -117,6 +117,23 @@ def test_case_rejects_invalid_identity_dates_and_expected_documents():
         )
 
 
+def test_case_rejects_ambiguous_expected_document_codes():
+    case_type = HrCaseType.create(code="dpae", label="DPAE")
+    subject = HrCaseSubject.create(kind=HrCaseSubjectKind.PERSON, identifier="42")
+    first = ExpectedDocument.create(code="identity", label="Pièce d'identité")
+    second = ExpectedDocument.create(code="identity", label="Autre libellé")
+
+    with pytest.raises(ValueError):
+        HrCase.create(
+            case_id="CASE",
+            case_type=case_type,
+            subject=subject,
+            organization_code="urssaf",
+            opened_on=date(2026, 9, 1),
+            expected_documents=[first, second],
+        )
+
+
 def test_nominal_workflow_reaches_acceptance_without_mutating_previous_versions():
     todo = _case()
     prepared = todo.transition_to(HrCaseStatus.PREPARED, comment="Pièces réunies")
