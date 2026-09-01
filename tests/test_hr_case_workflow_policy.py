@@ -5,6 +5,7 @@ SERVICE = Path("application/services/hr_connections/hr_case_workflow.py")
 REPOSITORY = Path(
     "infrastructure/persistence/teamworks_hr_case_workflow_repository.py"
 )
+RUNTIME = Path("application/bootstrap/hr_case_workflow_factory.py")
 
 
 def _source(path):
@@ -80,3 +81,31 @@ def test_atomic_repository_requires_optimistic_concurrency_and_append_only_audit
     assert "INSERT INTO tw_hr_audit_events" in source
     assert "UPDATE tw_hr_audit_events" not in source
     assert "DELETE FROM tw_hr_audit_events" not in source
+
+
+def test_workflow_runtime_hides_structure_identity_and_technical_exchange_axis():
+    source = _source(RUNTIME)
+
+    assert "_structure_ref: str" in source
+    assert "structure_ref: str\n" not in source
+    assert "available_transitions(self, *, case_id: str)" in source
+    assert "case_id: str,\n        status: HrCaseStatus" in source
+    assert "exchange_status" not in source
+    assert "with_exchange_status" not in source
+
+
+def test_workflow_runtime_factory_stays_ui_and_transport_agnostic():
+    source = _source(RUNTIME)
+
+    for forbidden in (
+        "import wx",
+        "from wx",
+        "from Dlg",
+        "from Ctrl",
+        "webbrowser",
+        "requests",
+        "urllib",
+        "socket",
+        "subprocess",
+    ):
+        assert forbidden not in source
