@@ -33,6 +33,12 @@ La future interface wxPython n'a pas besoin de connaître :
 
 L'identité de structure est conservée dans un attribut interne `_structure_ref` et n'est pas exposée comme donnée à saisir ou à afficher.
 
+## Lecture seule
+
+La composition CRH-23 est volontairement asymétrique : elle connaît les adaptateurs nécessaires à la lecture mais n'appelle aucune opération de création, transition ou journalisation. Cette frontière empêche le futur écran de cockpit de devenir par accident un second moteur de workflow.
+
+Les actions sur les dossiers resteront donc un lot distinct, avec leurs propres règles de transition et d'audit.
+
 ## Limites
 
 CRH-23 reste un lot de composition et de lecture :
