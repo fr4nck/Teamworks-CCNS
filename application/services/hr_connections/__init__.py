@@ -1,3 +1,8 @@
+from .employee_protection import (
+    EmployeeProtectionRepository,
+    EmployeeProtectionService,
+    EmployeeProtectionView,
+)
 from .manual_portal import (
     ManualPortalConnector,
     ManualPortalPlan,
@@ -20,6 +25,9 @@ from .structure_configuration import (
 __all__ = [
     "ConnectionProfileRepository",
     "ConnectorConfigurationView",
+    "EmployeeProtectionRepository",
+    "EmployeeProtectionService",
+    "EmployeeProtectionView",
     "ManualPortalConnector",
     "ManualPortalPlan",
     "ManualStatusUpdate",
