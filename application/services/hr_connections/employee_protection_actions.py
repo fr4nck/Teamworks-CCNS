@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
-from datetime import date
+from datetime import date, timedelta
 from typing import Callable
 from uuid import uuid4
 
@@ -83,6 +83,14 @@ class EmployeeProtectionCreateRequest:
         )
 
 
+@dataclass(frozen=True)
+class EmployeeProtectionSuccessionResult:
+    """Résultat explicite d'une clôture et création atomiques de périodes."""
+
+    previous: EmployeeProtectionView
+    successor: EmployeeProtectionView
+
+
 def _new_record_id() -> str:
     return str(uuid4())
 
@@ -100,9 +108,9 @@ class EmployeeProtectionActionService:
     """Frontière d'écriture contrôlée du suivi de protection sociale salarié.
 
     Le service ne fournit volontairement ni édition libre ni suppression. Une création
-    reçoit un identifiant opaque généré par l'application. La seule mutation d'un
-    enregistrement existant est sa clôture, qui conserve son identité et ses
-    métadonnées tout en fixant la fin de sa période d'effet.
+    reçoit un identifiant opaque généré par l'application. Une clôture conserve les
+    métadonnées de la période. Une modification structurante passe par ``supersede`` :
+    l'ancienne période est clôturée et la nouvelle est créée atomiquement.
     """
 
     def __init__(
@@ -134,15 +142,7 @@ class EmployeeProtectionActionService:
         if not isinstance(request, EmployeeProtectionCreateRequest):
             raise TypeError("La demande de création du suivi salarié est invalide.")
 
-        record_id = self._next_record_id()
-        if self._protection_service.get(
-            structure_ref=structure_ref,
-            record_id=record_id,
-        ) is not None:
-            raise RuntimeError(
-                "Collision d'identifiant lors de la création du suivi de protection sociale."
-            )
-
+        record_id = self._unused_record_id(structure_ref=structure_ref)
         return self._protection_service.save(
             request.to_record(
                 record_id=record_id,
@@ -174,19 +174,109 @@ class EmployeeProtectionActionService:
         if not isinstance(ends_on, date):
             raise TypeError("La date de fin du suivi de protection sociale est invalide.")
 
+        current = self._active_record(
+            structure_ref=structure_ref,
+            employee_ref=employee_ref,
+            record_id=record_id,
+            purpose="clôturer",
+        )
+        ended = self._ended_record(current=current, ends_on=ends_on)
+        return self._protection_service.save(ended)
+
+    def supersede(
+        self,
+        *,
+        structure_ref: str,
+        employee_ref: str,
+        record_id: str,
+        request: EmployeeProtectionCreateRequest,
+    ) -> EmployeeProtectionSuccessionResult:
+        """Clôture une période et crée sa successeure sans fenêtre d'état intermédiaire."""
+        structure_ref = _required_text(
+            structure_ref,
+            "La référence de structure est obligatoire.",
+        )
+        employee_ref = _required_text(
+            employee_ref,
+            "La référence du salarié est obligatoire.",
+        )
+        record_id = _required_text(
+            record_id,
+            "L'identifiant du suivi de protection sociale est obligatoire.",
+        )
+        if not isinstance(request, EmployeeProtectionCreateRequest):
+            raise TypeError("La demande de succession du suivi salarié est invalide.")
+        if request.status is not EmployeeProtectionStatus.ACTIVE:
+            raise ValueError("Une période successeure doit être créée avec le statut actif.")
+        if request.starts_on is None:
+            raise ValueError("La période successeure doit avoir une date d'effet explicite.")
+
+        current = self._active_record(
+            structure_ref=structure_ref,
+            employee_ref=employee_ref,
+            record_id=record_id,
+            purpose="remplacer",
+        )
+        current_start = current.effective_period.starts_on
+        if current_start is None:
+            raise RuntimeError("Un suivi actif doit conserver sa date d'effet.")
+        if request.starts_on <= current_start:
+            raise ValueError(
+                "La période successeure doit commencer après la date d'effet de la période active."
+            )
+
+        previous_end = request.starts_on - timedelta(days=1)
+        current_end = current.effective_period.ends_on
+        if current_end is not None and previous_end > current_end:
+            raise ValueError(
+                "Une succession ne peut pas prolonger une période qui possède déjà une date de fin."
+            )
+
+        successor_id = self._unused_record_id(structure_ref=structure_ref)
+        successor = request.to_record(
+            record_id=successor_id,
+            structure_ref=structure_ref,
+            employee_ref=employee_ref,
+        )
+        ended = self._ended_record(current=current, ends_on=previous_end)
+        previous_view, successor_view = self._protection_service.supersede(
+            ended_record=ended,
+            successor_record=successor,
+        )
+        return EmployeeProtectionSuccessionResult(
+            previous=previous_view,
+            successor=successor_view,
+        )
+
+    def _active_record(
+        self,
+        *,
+        structure_ref: str,
+        employee_ref: str,
+        record_id: str,
+        purpose: str,
+    ) -> EmployeeProtectionRecord:
         current_view = self._protection_service.get(
             structure_ref=structure_ref,
             record_id=record_id,
         )
         if current_view is None:
-            raise LookupError("Le suivi de protection sociale à clôturer est introuvable.")
-
+            raise LookupError(
+                f"Le suivi de protection sociale à {purpose} est introuvable."
+            )
         current = current_view.record
         if current.employee_ref != employee_ref:
             raise ValueError("Le suivi de protection sociale n'appartient pas à ce salarié.")
         if current.status is not EmployeeProtectionStatus.ACTIVE:
-            raise ValueError("Seul un suivi actif peut être clôturé.")
+            raise ValueError("Seul un suivi actif peut être modifié par cette action.")
+        return current
 
+    @staticmethod
+    def _ended_record(
+        *,
+        current: EmployeeProtectionRecord,
+        ends_on: date,
+    ) -> EmployeeProtectionRecord:
         starts_on = current.effective_period.starts_on
         if starts_on is None:
             raise RuntimeError("Un suivi actif doit conserver sa date d'effet.")
@@ -197,8 +287,7 @@ class EmployeeProtectionActionService:
             raise ValueError(
                 "La clôture ne peut pas prolonger une date de fin déjà enregistrée."
             )
-
-        ended = replace(
+        return replace(
             current,
             status=EmployeeProtectionStatus.ENDED,
             effective_period=EffectivePeriod(
@@ -206,7 +295,17 @@ class EmployeeProtectionActionService:
                 ends_on=ends_on,
             ),
         )
-        return self._protection_service.save(ended)
+
+    def _unused_record_id(self, *, structure_ref: str) -> str:
+        record_id = self._next_record_id()
+        if self._protection_service.get(
+            structure_ref=structure_ref,
+            record_id=record_id,
+        ) is not None:
+            raise RuntimeError(
+                "Collision d'identifiant lors de la création du suivi de protection sociale."
+            )
+        return record_id
 
     def _next_record_id(self) -> str:
         record_id = self._record_id_factory()
