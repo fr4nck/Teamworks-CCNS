@@ -20,13 +20,13 @@ from infrastructure.persistence.teamworks_structure_identity_repository import (
 class HrCaseDashboardRuntime:
     """Façade de lecture du cockpit RH pour la base Teamworks active."""
 
-    structure_ref: str
+    _structure_ref: str
     _service: HrCaseDashboardService
 
     def build(self, *, as_of: date) -> HrCaseDashboard:
         if not isinstance(as_of, date):
             raise TypeError("La date du cockpit des démarches RH est invalide.")
-        return self._service.build(structure_ref=self.structure_ref, as_of=as_of)
+        return self._service.build(structure_ref=self._structure_ref, as_of=as_of)
 
 
 class HrCaseDashboardRuntimeFactory:
@@ -60,6 +60,6 @@ class HrCaseDashboardRuntimeFactory:
             profile_repository=profile_repository,
         )
         return HrCaseDashboardRuntime(
-            structure_ref=structure_ref,
+            _structure_ref=structure_ref,
             _service=service,
         )
