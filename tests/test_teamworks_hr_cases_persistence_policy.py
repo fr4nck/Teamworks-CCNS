@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 
@@ -10,20 +11,27 @@ def _source():
 
 def test_production_case_store_stays_additive_and_legacy_decoupled():
     source = _source()
+    upper = source.upper()
 
-    assert "ALTER TABLE" not in source.upper()
-    assert "FOREIGN KEY" not in source.upper()
-    assert "ON CONFLICT" not in source.upper()
-    assert "INSERT OR REPLACE" not in source.upper()
-    assert "INSERT OR IGNORE" not in source.upper()
+    assert "ALTER TABLE" not in upper
+    assert "FOREIGN KEY" not in upper
+    assert "ON CONFLICT" not in upper
+    assert "INSERT OR REPLACE" not in upper
+    assert "INSERT OR IGNORE" not in upper
 
+    # On contrôle les références SQL réelles et non les commentaires/docstrings
+    # qui expliquent explicitement que le repository ne touche pas ces tables.
     for historical_table in (
         "individus",
         "contrats",
         "employes",
         "salaries",
     ):
-        assert historical_table not in source.lower()
+        sql_reference = re.compile(
+            rf"\b(?:FROM|JOIN|INTO|UPDATE|TABLE)\s+{historical_table}\b",
+            re.IGNORECASE,
+        )
+        assert sql_reference.search(source) is None
 
 
 def test_production_case_store_does_not_persist_secrets_or_medical_content():
