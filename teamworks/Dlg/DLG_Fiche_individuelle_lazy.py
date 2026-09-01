@@ -17,7 +17,6 @@ from Ctrl import CTRL_Page_presences
 from Ctrl import CTRL_Page_frais
 from Ctrl import CTRL_Page_scenarios
 from Ctrl import CTRL_Page_candidatures
-from Ctrl import CTRL_Page_protection_sociale_runtime
 
 
 class LazyNotebook(wx.Notebook):
@@ -81,12 +80,18 @@ class LazyNotebook(wx.Notebook):
             # Le nouvel onglet est ajouté en dernier afin de préserver tous les index
             # historiques. Sa factory ne s'exécute qu'au premier affichage.
             ("pageProtectionSociale", _(u"Protection sociale"), self.img8,
-             lambda: CTRL_Page_protection_sociale_runtime.Panel(
-                 self, IDpersonne=self.IDpersonne
-             )),
+             self._create_protection_sociale_page),
         ]
         self._add_secondary_pages()
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnPageChanged)
+
+    def _create_protection_sociale_page(self):
+        """Charge le sous-système RH uniquement à l'ouverture réelle de l'onglet."""
+        from Ctrl import CTRL_Page_protection_sociale_runtime
+
+        return CTRL_Page_protection_sociale_runtime.Panel(
+            self, IDpersonne=self.IDpersonne
+        )
 
     def _load_contract_summary(self):
         dialog = self.GetGrandParent()
