@@ -16,6 +16,10 @@ from infrastructure.persistence.hr_connections_repository import (
 from infrastructure.persistence.teamworks_employee_protection_succession_repository import (
     TeamworksEmployeeProtectionSuccessionRepository,
 )
+from infrastructure.persistence.teamworks_hr_case_workflow_repository import (
+    StaleTeamworksHrCaseTransitionError,
+    TeamworksHrCaseWorkflowRepository,
+)
 from infrastructure.persistence.teamworks_hr_cases_repository import (
     TEAMWORKS_HR_CASES_SCHEMA_VERSION,
     DuplicateTeamworksHrAuditEventError,
@@ -42,7 +46,9 @@ __all__ = [
     "SqliteContractSalaryControlSnapshotRepository",
     "SqliteEmployeeProtectionRepository",
     "SqliteHrConnectionsRepository",
+    "StaleTeamworksHrCaseTransitionError",
     "TeamworksEmployeeProtectionSuccessionRepository",
+    "TeamworksHrCaseWorkflowRepository",
     "TeamworksHrCasesRepository",
     "TeamworksHrConnectionsRepository",
     "TeamworksStructureIdentityRepository",
