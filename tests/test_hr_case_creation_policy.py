@@ -72,6 +72,16 @@ def test_creation_adapter_reuses_crh22_schema_without_ddl():
     assert "_rollback(db)" in source
 
 
+def test_creation_adapter_locks_initial_business_state_and_audit_kind():
+    source = _source(ADAPTER)
+
+    assert "case.status is not HrCaseStatus.TODO" in source
+    assert "event.kind is not HrEventKind.CASE_CREATED" in source
+    assert "event.target_ref != case.case_id" in source
+    assert "with_exchange_status" not in source
+    assert "exchange_status =" not in source
+
+
 def test_creation_runtime_hides_structure_identity_and_db_from_callers():
     source = _source(RUNTIME)
     tree = ast.parse(source, filename=str(RUNTIME))
