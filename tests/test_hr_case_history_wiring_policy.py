@@ -22,6 +22,13 @@ def _find_method(class_name, method_name):
     raise AssertionError("%s.%s introuvable" % (class_name, method_name))
 
 
+def _find_class(class_name):
+    for node in _tree().body:
+        if isinstance(node, ast.ClassDef) and node.name == class_name:
+            return node
+    raise AssertionError("classe %s introuvable" % class_name)
+
+
 def test_history_component_is_loaded_only_from_explicit_handler():
     tree = _tree()
     handler = _find_method("Dialog", "OnHistory")
@@ -41,6 +48,21 @@ def test_history_component_is_loaded_only_from_explicit_handler():
                 alias.name != "DLG_Demarches_rh_historique"
                 for alias in node.names
             )
+
+
+def test_no_other_dialog_method_loads_history_component():
+    dialog = _find_class("Dialog")
+    for method in dialog.body:
+        if not isinstance(method, ast.FunctionDef) or method.name == "OnHistory":
+            continue
+        imported = [
+            alias.name
+            for node in ast.walk(method)
+            if isinstance(node, ast.ImportFrom)
+            and node.module == "Dlg"
+            for alias in node.names
+        ]
+        assert "DLG_Demarches_rh_historique" not in imported
 
 
 def test_history_button_is_selection_scoped_but_available_on_closed_cases():
