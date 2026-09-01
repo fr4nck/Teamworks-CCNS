@@ -14,10 +14,12 @@ def test_dashboard_runtime_factory_remains_ui_agnostic():
 
     for forbidden in (
         "import wx",
+        "from wx",
         "from Dlg",
         "from Ctrl",
         "webbrowser",
         "requests",
+        "urllib",
         "socket",
         "subprocess",
     ):
@@ -51,3 +53,22 @@ def test_dashboard_runtime_requires_caller_supplied_date():
     assert "date.today" not in source
     assert "datetime.now" not in source
     assert "def build(self, *, as_of: date)" in source
+
+
+def test_dashboard_runtime_is_read_only_composition():
+    source = _source()
+
+    assert "TeamworksStructureIdentityRepository" in source
+    assert "TeamworksHrCasesRepository" in source
+    assert "TeamworksHrConnectionsRepository" in source
+    assert "HrCaseDashboardService" in source
+
+    for forbidden_action in (
+        ".save_case(",
+        ".append_event(",
+        ".transition_to(",
+        ".record_manual_status(",
+        ".save_profile(",
+        ".save_employee_protection(",
+    ):
+        assert forbidden_action not in source
