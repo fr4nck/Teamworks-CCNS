@@ -77,12 +77,13 @@ def test_atomic_transition_updates_projection_and_appends_event(tmp_path):
     path = tmp_path / "workflow.sqlite"
     factory = _factory(path)
     cases = TeamworksHrCasesRepository(db_factory=factory)
-    cases.save_case(structure_ref="structure-a", case=_case())
+    initial = _case()
+    cases.save_case(structure_ref="structure-a", case=initial)
     repository = TeamworksHrCaseWorkflowRepository(db_factory=factory)
 
-    updated = _case(status=HrCaseStatus.PREPARED)
-    updated = HrCase(
-        **{**updated.__dict__, "comment": "Dossier prêt"}
+    updated = initial.transition_to(
+        HrCaseStatus.PREPARED,
+        comment="Dossier prêt",
     )
     event = _event()
 
