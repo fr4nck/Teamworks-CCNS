@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Cockpit CRH-24 des démarches RH, strictement en lecture seule.
+"""Cockpit CRH-24/26 des démarches RH.
 
-L'écran consomme la façade applicative CRH-23. Il ne connaît ni GestionDB, ni les
-repositories, ni l'identité logique de la structure et ne déclenche aucune
-transition de workflow ou communication externe.
+La consultation reste portée par la façade CRH-23. CRH-26 ajoute uniquement des
+transitions métier explicitement autorisées par la frontière CRH-25. L'écran ne
+connaît ni GestionDB, ni les repositories, ni l'identité logique de la structure
+et ne modifie jamais le statut technique d'échange.
 """
 
 from datetime import date
@@ -75,6 +76,11 @@ def _pieces_label(row):
     )
 
 
+def _optional_text(value):
+    value = value.strip()
+    return value or None
+
+
 class CounterPanel(wx.Panel):
     """Petit compteur descriptif sans logique métier propre."""
 
@@ -103,7 +109,7 @@ class CounterPanel(wx.Panel):
 
 
 class DetailDialog(wx.Dialog):
-    """Détail descriptif d'une ligne du cockpit, sans action de workflow."""
+    """Détail descriptif d'une ligne du cockpit."""
 
     def __init__(self, parent, row):
         wx.Dialog.__init__(
@@ -124,13 +130,18 @@ class DetailDialog(wx.Dialog):
             (_(u"Ouverture"), _format_date(row.opened_on)),
             (_(u"Échéance"), _format_date(row.due_on)),
             (_(u"Statut métier"), _STATUS_LABELS.get(row.status, row.status.value)),
-            (_(u"Échange"), _EXCHANGE_LABELS.get(row.exchange_status, row.exchange_status.value)),
+            (
+                _(u"Échange"),
+                _EXCHANGE_LABELS.get(row.exchange_status, row.exchange_status.value),
+            ),
             (_(u"Pièces attendues"), _pieces_label(row)),
             (_(u"Attention"), _attention_label(row)),
         )
         for label, value in fields:
             label_ctrl = wx.StaticText(self, -1, label)
-            label_ctrl.SetForegroundColour(UTILS_Interface.GetToken("on_surface_variant"))
+            label_ctrl.SetForegroundColour(
+                UTILS_Interface.GetToken("on_surface_variant")
+            )
             value_ctrl = wx.StaticText(self, -1, value)
             value_ctrl.SetForegroundColour(UTILS_Interface.GetToken("on_surface"))
             grid.Add(label_ctrl, 0, wx.ALIGN_TOP)
@@ -149,7 +160,9 @@ class DetailDialog(wx.Dialog):
             or _(u"Aucun résultat ou commentaire enregistré."),
             style=wx.TE_MULTILINE | wx.TE_READONLY | wx.BORDER_SIMPLE,
         )
-        notes.SetBackgroundColour(UTILS_Interface.GetToken("surface_container_lowest"))
+        notes.SetBackgroundColour(
+            UTILS_Interface.GetToken("surface_container_lowest")
+        )
         notes.SetForegroundColour(UTILS_Interface.GetToken("on_surface"))
 
         close = wx.Button(self, wx.ID_CLOSE, _(u"Fermer"))
@@ -159,7 +172,12 @@ class DetailDialog(wx.Dialog):
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(grid, 0, wx.EXPAND | wx.ALL, page_gap)
         sizer.Add(notes, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, page_gap)
-        sizer.Add(close, 0, wx.ALIGN_RIGHT | wx.LEFT | wx.RIGHT | wx.BOTTOM, page_gap)
+        sizer.Add(
+            close,
+            0,
+            wx.ALIGN_RIGHT | wx.LEFT | wx.RIGHT | wx.BOTTOM,
+            page_gap,
+        )
         self.SetSizer(sizer)
         self.SetMinSize(
             (
@@ -170,10 +188,126 @@ class DetailDialog(wx.Dialog):
         self.CentreOnParent()
 
 
-class Dialog(wx.Dialog):
-    """Cockpit structure CRH-24, lecture seule sur la base Teamworks active."""
+class TransitionDialog(wx.Dialog):
+    """Saisie d'une transition métier parmi celles autorisées par CRH-25."""
 
-    def __init__(self, parent, runtime_factory=None, today_provider=None):
+    def __init__(self, parent, case, allowed_statuses):
+        allowed_statuses = tuple(allowed_statuses)
+        if not allowed_statuses:
+            raise ValueError("Aucune transition métier n'est disponible pour ce dossier RH.")
+
+        wx.Dialog.__init__(
+            self,
+            parent,
+            -1,
+            _(u"Faire évoluer la démarche RH"),
+            style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER,
+        )
+        self._case = case
+        self._allowed_statuses = allowed_statuses
+        self.SetBackgroundColour(UTILS_Interface.GetToken("surface"))
+
+        title = wx.StaticText(
+            self,
+            -1,
+            _(u"Statut actuel : %s")
+            % _STATUS_LABELS.get(case.status, case.status.value),
+        )
+        title_font = title.GetFont()
+        title_font.SetWeight(wx.FONTWEIGHT_BOLD)
+        title.SetFont(title_font)
+        title.SetForegroundColour(UTILS_Interface.GetToken("on_surface"))
+
+        exchange = wx.StaticText(
+            self,
+            -1,
+            _(u"État technique inchangé : %s")
+            % _EXCHANGE_LABELS.get(case.exchange_status, case.exchange_status.value),
+        )
+        exchange.SetForegroundColour(UTILS_Interface.GetToken("on_surface_variant"))
+
+        self.status = wx.Choice(
+            self,
+            choices=[
+                _STATUS_LABELS.get(status, status.value)
+                for status in self._allowed_statuses
+            ],
+        )
+        self.status.SetSelection(0)
+
+        self.result = wx.TextCtrl(self, value=case.result or u"")
+        self.comment = wx.TextCtrl(
+            self,
+            value=case.comment or u"",
+            style=wx.TE_MULTILINE | wx.BORDER_SIMPLE,
+        )
+
+        grid = wx.FlexGridSizer(cols=2, vgap=10, hgap=12)
+        grid.AddGrowableCol(1, 1)
+        grid.Add(wx.StaticText(self, -1, _(u"Nouveau statut")), 0, wx.ALIGN_CENTER_VERTICAL)
+        grid.Add(self.status, 1, wx.EXPAND)
+        grid.Add(wx.StaticText(self, -1, _(u"Résultat / référence")), 0, wx.ALIGN_TOP)
+        grid.Add(self.result, 1, wx.EXPAND)
+        grid.Add(wx.StaticText(self, -1, _(u"Commentaire")), 0, wx.ALIGN_TOP)
+        grid.Add(self.comment, 1, wx.EXPAND)
+
+        info = wx.StaticText(
+            self,
+            -1,
+            _(
+                u"Seul le statut métier sera modifié. La transition sera journalisée "
+                u"et devra être confirmée avant enregistrement."
+            ),
+        )
+        info.Wrap(UTILS_Styles.Scale(560, minimum=420))
+        info.SetForegroundColour(UTILS_Interface.GetToken("on_surface_variant"))
+
+        validate = wx.Button(self, wx.ID_OK, _(u"Continuer"))
+        cancel = wx.Button(self, wx.ID_CANCEL, _(u"Annuler"))
+        validate.SetDefault()
+
+        buttons = wx.BoxSizer(wx.HORIZONTAL)
+        buttons.AddStretchSpacer(1)
+        buttons.Add(cancel, 0, wx.RIGHT, UTILS_Styles.GetLayoutSpacing("field_gap"))
+        buttons.Add(validate, 0)
+
+        page_gap = UTILS_Styles.GetLayoutSpacing("page_gap")
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(title, 0, wx.EXPAND | wx.ALL, page_gap)
+        sizer.Add(exchange, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, page_gap)
+        sizer.Add(grid, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, page_gap)
+        sizer.Add(info, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, page_gap)
+        sizer.Add(buttons, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, page_gap)
+        self.SetSizer(sizer)
+        self.SetMinSize(
+            (
+                UTILS_Styles.Scale(650, minimum=560),
+                UTILS_Styles.Scale(430, minimum=360),
+            )
+        )
+        self.CentreOnParent()
+
+    def GetValues(self):
+        selection = self.status.GetSelection()
+        if selection < 0 or selection >= len(self._allowed_statuses):
+            raise ValueError("Le nouveau statut métier n'est pas sélectionné.")
+        return (
+            self._allowed_statuses[selection],
+            _optional_text(self.result.GetValue()),
+            _optional_text(self.comment.GetValue()),
+        )
+
+
+class Dialog(wx.Dialog):
+    """Cockpit structure CRH-24/26 sur la base Teamworks active."""
+
+    def __init__(
+        self,
+        parent,
+        runtime_factory=None,
+        today_provider=None,
+        workflow_runtime_factory=None,
+    ):
         wx.Dialog.__init__(
             self,
             parent,
@@ -183,7 +317,9 @@ class Dialog(wx.Dialog):
         )
         self._runtime_factory = runtime_factory or HrCaseDashboardRuntimeFactory
         self._today_provider = today_provider or date.today
+        self._workflow_runtime_factory = workflow_runtime_factory
         self._runtime = self._runtime_factory().create()
+        self._workflow_runtime = None
         self._rows = []
         self.SetBackgroundColour(UTILS_Interface.GetToken("surface"))
 
@@ -197,11 +333,13 @@ class Dialog(wx.Dialog):
         self.subtitle = wx.StaticText(
             self,
             -1,
-            _(u"Vue descriptive des démarches, échéances et anomalies de la structure."),
+            _(u"Démarches, échéances, anomalies et suivi administratif de la structure."),
         )
         self.subtitle.SetForegroundColour(UTILS_Interface.GetToken("on_surface_variant"))
         self.snapshot = wx.StaticText(self, -1, u"")
         self.snapshot.SetForegroundColour(UTILS_Interface.GetToken("on_surface_variant"))
+        self.feedback = wx.StaticText(self, -1, u"")
+        self.feedback.SetForegroundColour(UTILS_Interface.GetToken("success"))
 
         self.counters = {
             "open": CounterPanel(self, _(u"Ouverts")),
@@ -217,7 +355,9 @@ class Dialog(wx.Dialog):
             -1,
             style=wx.LC_REPORT | wx.LC_SINGLE_SEL | wx.BORDER_SIMPLE,
         )
-        self.list.SetBackgroundColour(UTILS_Interface.GetToken("surface_container_lowest"))
+        self.list.SetBackgroundColour(
+            UTILS_Interface.GetToken("surface_container_lowest")
+        )
         self.list.SetTextColour(UTILS_Interface.GetToken("on_surface"))
         columns = (
             (_(u"Démarche"), 190),
@@ -238,11 +378,14 @@ class Dialog(wx.Dialog):
 
         self.refresh = wx.Button(self, -1, _(u"Actualiser"))
         self.details = wx.Button(self, -1, _(u"Voir le détail"))
+        self.advance = wx.Button(self, -1, _(u"Faire évoluer"))
         self.close = wx.Button(self, wx.ID_CLOSE, _(u"Fermer"))
         self.details.Enable(False)
+        self.advance.Enable(False)
 
         self.refresh.Bind(wx.EVT_BUTTON, self.OnRefresh)
         self.details.Bind(wx.EVT_BUTTON, self.OnDetails)
+        self.advance.Bind(wx.EVT_BUTTON, self.OnAdvance)
         self.close.Bind(wx.EVT_BUTTON, lambda event: self.EndModal(wx.ID_CLOSE))
         self.list.Bind(wx.EVT_LIST_ITEM_SELECTED, self.OnSelection)
         self.list.Bind(wx.EVT_LIST_ITEM_DESELECTED, self.OnSelection)
@@ -253,7 +396,7 @@ class Dialog(wx.Dialog):
         self.SetMinSize(
             (
                 UTILS_Styles.Scale(1180, minimum=920),
-                UTILS_Styles.Scale(650, minimum=520),
+                UTILS_Styles.Scale(680, minimum=540),
             )
         )
         self.CentreOnParent()
@@ -265,7 +408,8 @@ class Dialog(wx.Dialog):
         heading = wx.BoxSizer(wx.VERTICAL)
         heading.Add(self.title, 0, wx.BOTTOM, max(2, gap // 2))
         heading.Add(self.subtitle, 0, wx.BOTTOM, max(2, gap // 2))
-        heading.Add(self.snapshot, 0)
+        heading.Add(self.snapshot, 0, wx.BOTTOM, max(2, gap // 2))
+        heading.Add(self.feedback, 0)
 
         counters = wx.FlexGridSizer(cols=6, vgap=gap, hgap=gap)
         for panel in self.counters.values():
@@ -276,6 +420,7 @@ class Dialog(wx.Dialog):
         buttons = wx.BoxSizer(wx.HORIZONTAL)
         buttons.Add(self.refresh, 0, wx.RIGHT, gap)
         buttons.Add(self.details, 0, wx.RIGHT, gap)
+        buttons.Add(self.advance, 0, wx.RIGHT, gap)
         buttons.AddStretchSpacer(1)
         buttons.Add(self.close, 0)
 
@@ -286,7 +431,36 @@ class Dialog(wx.Dialog):
         sizer.Add(buttons, 0, wx.EXPAND | wx.ALL, page_gap)
         self.SetSizer(sizer)
 
-    def RefreshData(self):
+    def _selected_row(self):
+        index = self.list.GetFirstSelected()
+        if index < 0 or index >= len(self._rows):
+            return None
+        return self._rows[index]
+
+    def _update_action_state(self):
+        row = self._selected_row()
+        has_selection = row is not None
+        self.details.Enable(has_selection)
+        self.advance.Enable(has_selection and row.status not in {
+            HrCaseStatus.ACCEPTED,
+            HrCaseStatus.CANCELLED,
+        })
+
+    def _get_workflow_runtime(self):
+        if self._workflow_runtime is not None:
+            return self._workflow_runtime
+
+        factory = self._workflow_runtime_factory
+        if factory is None:
+            from application.bootstrap.hr_case_workflow_factory import (
+                HrCaseWorkflowRuntimeFactory,
+            )
+
+            factory = HrCaseWorkflowRuntimeFactory
+        self._workflow_runtime = factory().create()
+        return self._workflow_runtime
+
+    def RefreshData(self, select_case_id=None):
         as_of = self._today_provider()
         if not isinstance(as_of, date):
             raise TypeError("La date de référence du cockpit RH est invalide.")
@@ -303,10 +477,11 @@ class Dialog(wx.Dialog):
         self.counters["technical"].SetValue(dashboard.exchange_failed_count)
         self.counters["orphan"].SetValue(dashboard.orphan_organization_count)
 
+        selected_index = -1
         self.list.Freeze()
         try:
             self.list.DeleteAllItems()
-            for row in self._rows:
+            for row_index, row in enumerate(self._rows):
                 values = (
                     row.case_type_label,
                     _subject_label(row),
@@ -322,22 +497,37 @@ class Dialog(wx.Dialog):
                     self.list.SetItem(item, column, value)
 
                 if row.business_attention or row.technical_attention:
-                    self.list.SetItemTextColour(item, UTILS_Interface.GetToken("danger"))
+                    self.list.SetItemTextColour(
+                        item,
+                        UTILS_Interface.GetToken("danger"),
+                    )
                 elif row.needs_attention:
-                    self.list.SetItemTextColour(item, UTILS_Interface.GetToken("warning"))
+                    self.list.SetItemTextColour(
+                        item,
+                        UTILS_Interface.GetToken("warning"),
+                    )
                 elif row.status in {HrCaseStatus.ACCEPTED, HrCaseStatus.CANCELLED}:
                     self.list.SetItemTextColour(
                         item,
                         UTILS_Interface.GetToken("on_surface_variant"),
                     )
+                if select_case_id is not None and row.case_id == select_case_id:
+                    selected_index = row_index
         finally:
             self.list.Thaw()
-        self.details.Enable(False)
+
+        if selected_index >= 0:
+            self.list.Select(selected_index)
+            self.list.Focus(selected_index)
+            self.list.EnsureVisible(selected_index)
+        self._update_action_state()
         self.Layout()
 
     def OnRefresh(self, event):
+        self.feedback.SetLabel(u"")
         try:
-            self.RefreshData()
+            row = self._selected_row()
+            self.RefreshData(select_case_id=row.case_id if row else None)
         except Exception as exc:
             wx.MessageBox(
                 _(u"Le cockpit des démarches RH n'a pas pu être actualisé.\n\n%s")
@@ -348,15 +538,113 @@ class Dialog(wx.Dialog):
             )
 
     def OnSelection(self, event):
-        self.details.Enable(self.list.GetFirstSelected() >= 0)
+        self._update_action_state()
         event.Skip()
 
     def OnDetails(self, event):
-        index = self.list.GetFirstSelected()
-        if index < 0 or index >= len(self._rows):
+        row = self._selected_row()
+        if row is None:
             return
-        dlg = DetailDialog(self, self._rows[index])
+        dlg = DetailDialog(self, row)
         try:
             dlg.ShowModal()
         finally:
             dlg.Destroy()
+
+    def OnAdvance(self, event):
+        row = self._selected_row()
+        if row is None:
+            return
+
+        self.feedback.SetLabel(u"")
+        try:
+            workflow = self._get_workflow_runtime()
+            options = workflow.available_transitions(case_id=row.case_id)
+        except Exception as exc:
+            self._show_transition_error(row.case_id, exc)
+            return
+
+        if options.case.status is not row.status:
+            self.RefreshData(select_case_id=row.case_id)
+            wx.MessageBox(
+                _(
+                    u"Cette démarche a changé depuis l'affichage du cockpit. "
+                    u"La liste vient d'être actualisée ; vérifiez son nouveau statut avant de continuer."
+                ),
+                _(u"Démarches RH"),
+                wx.OK | wx.ICON_INFORMATION,
+                self,
+            )
+            return
+
+        if not options.allowed_statuses:
+            self.RefreshData(select_case_id=row.case_id)
+            wx.MessageBox(
+                _(u"Aucune transition métier n'est autorisée depuis le statut actuel."),
+                _(u"Démarches RH"),
+                wx.OK | wx.ICON_INFORMATION,
+                self,
+            )
+            return
+
+        dlg = TransitionDialog(self, options.case, options.allowed_statuses)
+        try:
+            if dlg.ShowModal() != wx.ID_OK:
+                return
+            status, result, comment = dlg.GetValues()
+        finally:
+            dlg.Destroy()
+
+        current_label = _STATUS_LABELS.get(options.case.status, options.case.status.value)
+        target_label = _STATUS_LABELS.get(status, status.value)
+        confirm = wx.MessageDialog(
+            self,
+            _(
+                u"Confirmer le passage de « %s » à « %s » ?\n\n"
+                u"Cette action modifiera le statut métier du dossier et ajoutera "
+                u"une trace d'audit. L'état technique d'échange ne sera pas modifié."
+            )
+            % (current_label, target_label),
+            _(u"Confirmer la transition RH"),
+            wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION,
+        )
+        try:
+            if confirm.ShowModal() != wx.ID_YES:
+                return
+        finally:
+            confirm.Destroy()
+
+        try:
+            workflow.transition(
+                case_id=row.case_id,
+                status=status,
+                result=result,
+                comment=comment,
+            )
+            self.RefreshData(select_case_id=row.case_id)
+            self.feedback.SetForegroundColour(UTILS_Interface.GetToken("success"))
+            self.feedback.SetLabel(
+                _(u"Démarche mise à jour : nouveau statut « %s ».") % target_label
+            )
+            self.Layout()
+        except Exception as exc:
+            self._show_transition_error(row.case_id, exc)
+
+    def _show_transition_error(self, case_id, exc):
+        try:
+            self.RefreshData(select_case_id=case_id)
+        except Exception:
+            pass
+        self.feedback.SetForegroundColour(UTILS_Interface.GetToken("danger"))
+        self.feedback.SetLabel(_(u"La transition n'a pas été enregistrée."))
+        self.Layout()
+        wx.MessageBox(
+            _(
+                u"La transition n'a pas pu être enregistrée. Le cockpit a été "
+                u"actualisé afin de tenir compte d'une éventuelle modification concurrente.\n\n%s"
+            )
+            % str(exc),
+            _(u"Démarches RH"),
+            wx.OK | wx.ICON_ERROR,
+            self,
+        )
