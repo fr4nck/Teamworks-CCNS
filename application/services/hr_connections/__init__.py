@@ -13,6 +13,12 @@ from .employee_protection_summary import (
     EmployeeProtectionSummaryRow,
     EmployeeProtectionSummaryService,
 )
+from .hr_case_dashboard import (
+    HrCaseDashboard,
+    HrCaseDashboardRepository,
+    HrCaseDashboardRow,
+    HrCaseDashboardService,
+)
 from .manual_portal import (
     ManualPortalConnector,
     ManualPortalPlan,
@@ -45,6 +51,10 @@ __all__ = [
     "EmployeeProtectionSummaryRow",
     "EmployeeProtectionSummaryService",
     "EmployeeProtectionView",
+    "HrCaseDashboard",
+    "HrCaseDashboardRepository",
+    "HrCaseDashboardRow",
+    "HrCaseDashboardService",
     "ManualPortalConnector",
     "ManualPortalPlan",
     "ManualStatusUpdate",
