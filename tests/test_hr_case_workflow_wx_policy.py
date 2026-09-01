@@ -22,6 +22,16 @@ def _find_method(class_name, method_name):
     raise AssertionError("%s.%s introuvable" % (class_name, method_name))
 
 
+def _imported_modules():
+    modules = []
+    for node in ast.walk(_tree()):
+        if isinstance(node, ast.Import):
+            modules.extend(alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom):
+            modules.append(node.module or "")
+    return modules
+
+
 def test_workflow_runtime_is_loaded_only_when_user_requests_an_action():
     tree = _tree()
     method = _find_method("Dialog", "_get_workflow_runtime")
@@ -42,26 +52,35 @@ def test_workflow_runtime_is_loaded_only_when_user_requests_an_action():
 
 def test_workflow_ui_uses_only_application_facades_and_never_persistence():
     source = _source()
+    imported = _imported_modules()
 
-    for forbidden in (
+    for forbidden_module in (
         "GestionDB",
         "sqlite3",
         "infrastructure.persistence",
+        "requests",
+        "urllib",
+        "webbrowser",
+        "socket",
+        "subprocess",
+    ):
+        assert all(
+            module != forbidden_module
+            and not module.startswith(forbidden_module + ".")
+            for module in imported
+        )
+
+    for forbidden_call in (
         "save_case(",
         "append_event(",
         "persist_case_transition(",
         "transition_to(",
         "with_exchange_status(",
         "record_manual_status(",
-        "requests",
-        "urllib",
-        "webbrowser",
-        "socket",
-        "subprocess",
-        "structure_ref",
     ):
-        assert forbidden not in source
+        assert forbidden_call not in source
 
+    assert "structure_ref" not in source
     assert "workflow.available_transitions(case_id=row.case_id)" in source
     assert "workflow.transition(" in source
 
