@@ -18,6 +18,8 @@ Le cockpit conserve deux axes distincts :
 
 Un échange technique réussi ne vaut jamais acceptation par l'organisme. Un échec technique ne transforme pas non plus automatiquement un dossier en anomalie métier.
 
+Les **alertes actives** ne concernent que les dossiers encore ouverts. Un dossier déjà accepté ou annulé peut conserver dans son historique un dernier statut technique `FAILED` ou la référence d'un organisme supprimé sans revenir artificiellement dans la file de travail. Les compteurs descriptifs peuvent néanmoins conserver ces références historiques lorsqu'elles restent utiles à l'audit.
+
 ## Projection
 
 `HrCaseDashboardService` construit, pour une structure et une date de référence explicites :
@@ -25,9 +27,9 @@ Un échange technique réussi ne vaut jamais acceptation par l'organisme. Un éc
 - le nombre total et le nombre de dossiers ouverts ;
 - les compteurs par statut métier ;
 - les dossiers échus non clos ;
-- les anomalies et régularisations ;
-- les échecs techniques d'échange ;
-- les références à un organisme qui n'est plus configuré ;
+- les anomalies et régularisations actives ;
+- les échecs techniques encore actionnables ;
+- les références à un organisme qui n'est plus configuré, avec alerte seulement si le dossier est encore ouvert ;
 - le nombre de pièces attendues et de pièces déclarées obligatoires par dossier.
 
 Le service **ne calcule pas** de pièces manquantes : CRH-03 décrit les pièces attendues mais ne porte pas encore un état fiable de présence/validation des documents. Le cockpit refuse donc d'inventer cette information.
