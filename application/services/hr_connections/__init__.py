@@ -6,6 +6,7 @@ from .employee_protection import (
 from .employee_protection_actions import (
     EmployeeProtectionActionService,
     EmployeeProtectionCreateRequest,
+    EmployeeProtectionSuccessionResult,
 )
 from .employee_protection_summary import (
     EmployeeProtectionSummary,
@@ -38,6 +39,7 @@ __all__ = [
     "EmployeeProtectionCreateRequest",
     "EmployeeProtectionRepository",
     "EmployeeProtectionService",
+    "EmployeeProtectionSuccessionResult",
     "EmployeeProtectionSummary",
     "EmployeeProtectionSummaryRow",
     "EmployeeProtectionSummaryService",
