@@ -73,6 +73,21 @@ def test_history_service_is_ui_and_persistence_agnostic():
     assert "reverse=True" in source
 
 
+def test_history_service_never_invents_or_retimestamps_events():
+    source = _source(SERVICE)
+
+    for forbidden in (
+        "HrAuditEvent.create(",
+        "datetime.now(",
+        "datetime.utcnow(",
+        "uuid4(",
+        "CASE_CREATED",
+    ):
+        assert forbidden not in source
+    assert "occurred_at=event.occurred_at" in source
+    assert "fields=tuple(" in source
+
+
 def test_history_runtime_hides_structure_identity():
     source = _source(RUNTIME)
     tree = ast.parse(source, filename=str(RUNTIME))
