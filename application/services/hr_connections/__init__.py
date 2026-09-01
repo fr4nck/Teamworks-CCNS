@@ -13,6 +13,12 @@ from .employee_protection_summary import (
     EmployeeProtectionSummaryRow,
     EmployeeProtectionSummaryService,
 )
+from .hr_case_creation import (
+    HrCaseCreationRepository,
+    HrCaseCreationRequest,
+    HrCaseCreationResult,
+    HrCaseCreationService,
+)
 from .hr_case_dashboard import (
     HrCaseDashboard,
     HrCaseDashboardRepository,
@@ -64,6 +70,10 @@ __all__ = [
     "EmployeeProtectionSummaryRow",
     "EmployeeProtectionSummaryService",
     "EmployeeProtectionView",
+    "HrCaseCreationRepository",
+    "HrCaseCreationRequest",
+    "HrCaseCreationResult",
+    "HrCaseCreationService",
     "HrCaseDashboard",
     "HrCaseDashboardRepository",
     "HrCaseDashboardRow",
