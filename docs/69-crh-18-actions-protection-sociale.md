@@ -47,20 +47,20 @@ Il n'existe volontairement aucune opération publique `edit`, `update`, `delete`
 
 ## Historisation
 
-CRH-18 évite l'écrasement métier par défaut. Une modification future de régime, option, profil de cotisation, organisme ou nature du lien devra être traitée comme une **nouvelle période** avec un nouvel identifiant, après clôture de la période précédente.
+CRH-18 évite l'écrasement métier par défaut. Une modification future de régime, option, profil de cotisation, organisme ou nature du lien doit être traitée comme une **nouvelle période** avec un nouvel identifiant, après clôture de la période précédente.
 
-L'opération atomique « clôturer puis créer la période successeure » n'est pas introduite dans ce lot : elle devra disposer d'une frontière transactionnelle explicite avant d'être exposée à l'interface.
+La frontière transactionnelle « clôturer puis créer la période successeure » est désormais fournie par **CRH-19** ; voir `docs/70-crh-19-succession-protection-sociale.md`. CRH-18 reste volontairement le socle des actions élémentaires.
 
 ## Composition sur la base active
 
 `EmployeeProtectionActionsRuntimeFactory` reprend la composition CRH-17A :
 
 - identité opaque de la structure stockée dans la base Teamworks active ;
-- `TeamworksHrConnectionsRepository` via `GestionDB` ;
+- persistance `GestionDB` des suivis salarié ;
 - `EmployeeProtectionService` ;
 - `EmployeeProtectionActionService`.
 
-La façade runtime verrouille `structure_ref`. Le futur panneau ne fournira que `employee_ref` et la demande métier.
+La façade runtime verrouille `structure_ref`. Le futur panneau ne fournit que `employee_ref` et la demande métier.
 
 ## Garde-fous
 
@@ -76,6 +76,6 @@ Ce lot n'ajoute :
 
 Les tests couvrent les créations, collisions d'identifiants, organismes manquants, dispenses, clôtures, isolement salarié et composition réelle sur une base Teamworks SQLite simulant le contrat `GestionDB`.
 
-## Suite proposée
+## Suite
 
-Le prochain lot peut ajouter l'opération transactionnelle de **succession de période** puis seulement les dialogues wxPython de création/clôture. Cela maintient la règle : on ne remplace pas l'historique par une valeur courante mutable.
+CRH-19 ajoute la succession atomique de périodes. L'étape suivante peut donc se concentrer sur les dialogues wxPython de création, clôture et succession sans réintroduire une édition libre de l'historique.
