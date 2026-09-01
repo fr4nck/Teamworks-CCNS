@@ -40,11 +40,26 @@ Le schéma `tw_hr_*` est **additif et versionné**. Il ne modifie aucune table h
 
 Les écritures utilisent des transactions explicites et un contrat de paramètres adapté selon `db.isNetwork` : `?` pour SQLite, `%s` pour MySQL. Les upserts spécifiques à SQLite (`ON CONFLICT`, `INSERT OR IGNORE`) sont volontairement exclus de l'adaptateur de production. Les stores SQLite CRH-09 et CRH-13 restent des adaptateurs de qualification ; ils ne sont pas utilisés comme stockage de production par le panneau wxPython.
 
+## Identité stable de la structure active
+
+CRH-17A ajoute `TeamworksStructureIdentityRepository` et un point de composition applicatif pour la synthèse de protection sociale.
+
+La référence de structure **n'est volontairement pas dérivée** du chemin du fichier local, du nom de la base réseau, de l'hôte ou des paramètres de connexion historiques. Ces informations peuvent varier d'un poste à l'autre et, dans le format réseau historique de Teamworks, certaines peuvent contenir des éléments d'authentification. Le premier accès crée donc un UUID opaque dans `tw_hr_structure_identity`, puis tous les postes utilisant cette même base réemploient cette identité.
+
+`EmployeeProtectionSummaryRuntimeFactory` assemble ensuite :
+
+1. l'identité stable de la base Teamworks active ;
+2. `TeamworksHrConnectionsRepository` ;
+3. `EmployeeProtectionService` ;
+4. `EmployeeProtectionSummaryService`.
+
+La façade résultante ne demande à l'interface que la référence du salarié et la date de consultation. Le futur panneau wxPython n'a ainsi ni à sélectionner un backend, ni à fabriquer un `structure_ref`, ni à manipuler la configuration de connexion.
+
 ## Ce qui reste historique
 
 Cette évolution ne remplace pas `GestionDB.py` et ne modifie pas ses API. Les autres écrans et modules continuent d'utiliser les accès historiques.
 
-`CcnsDataReader` et `TeamworksHrConnectionsRepository` sont donc deux façades progressives au-dessus de `GestionDB`, compatibles avec la stratégie de migration par périmètres limités : le premier centralise des lectures CCNS, le second implémente des ports de persistance RH nouveaux sans disperser de SQL dans l'interface.
+`CcnsDataReader`, `TeamworksHrConnectionsRepository` et le résolveur d'identité sont donc des façades progressives au-dessus de `GestionDB`, compatibles avec la stratégie de migration par périmètres limités : les lectures et écritures nouvelles sont isolées sans disperser de SQL dans l'interface.
 
 ## Mesures et performance
 
@@ -63,6 +78,6 @@ Pour Connexions RH, les listes de profils sont chargées par ensembles (en-tête
 1. Étendre progressivement cette couche aux autres lectures CCNS transverses identifiées par les audits.
 2. Ajouter des mesures centralisées de temps SQL et temps Python autour du lecteur, désactivées par défaut.
 3. Stabiliser des contrats de données plus complets pour les écrans contrats et les tableaux d'audit.
-4. Raccorder le point de composition de la fiche salarié au repository CRH-16, sans donner au panneau wxPython la responsabilité de choisir son backend.
+4. Injecter la façade CRH-17A dans la fiche salarié par un raccordement lazy et en lecture seule, sans déplacer le choix du backend dans wxPython.
 5. Étendre ensuite la persistance de production aux dossiers `HrCase` et au journal d'audit seulement lorsque les cas d'usage correspondants seront raccordés.
 6. Introduire, uniquement si les mesures le justifient, des caches courts et invalidables pour les référentiels CCNS.
