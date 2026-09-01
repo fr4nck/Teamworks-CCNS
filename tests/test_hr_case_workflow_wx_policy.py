@@ -49,6 +49,11 @@ def test_workflow_runtime_is_loaded_only_when_user_requests_an_action():
         if isinstance(node, ast.ImportFrom):
             assert node.module != "application.bootstrap.hr_case_workflow_factory"
 
+    init_method = _find_method("Dialog", "__init__")
+    init_source = ast.unparse(init_method)
+    assert "self._workflow_runtime = None" in init_source
+    assert "HrCaseWorkflowRuntimeFactory" not in init_source
+
 
 def test_workflow_ui_uses_only_application_facades_and_never_persistence():
     source = _source()
@@ -85,6 +90,20 @@ def test_workflow_ui_uses_only_application_facades_and_never_persistence():
     assert "workflow.transition(" in source
 
 
+def test_ui_never_forges_audit_events_itself():
+    source = _source()
+
+    for forbidden in (
+        "HrAuditEvent",
+        "HrAuditField",
+        "HrEventKind",
+        "CASE_STATUS_CHANGED",
+        "uuid4",
+        "datetime.now",
+    ):
+        assert forbidden not in source
+
+
 def test_transition_choices_come_from_domain_allowed_statuses():
     source = _source()
 
@@ -92,6 +111,18 @@ def test_transition_choices_come_from_domain_allowed_statuses():
     assert "for status in self._allowed_statuses" in source
     assert "options.allowed_statuses" in source
     assert "_ALLOWED_TRANSITIONS" not in source
+
+
+def test_displayed_status_is_revalidated_before_transition_dialog():
+    source = _source()
+
+    read_marker = "options = workflow.available_transitions(case_id=row.case_id)"
+    stale_marker = "if options.case.status is not row.status:"
+    dialog_marker = "dlg = TransitionDialog(self, options.case, options.allowed_statuses)"
+    assert read_marker in source
+    assert stale_marker in source
+    assert dialog_marker in source
+    assert source.index(read_marker) < source.index(stale_marker) < source.index(dialog_marker)
 
 
 def test_transition_requires_explicit_confirmation_and_preserves_technical_axis():
