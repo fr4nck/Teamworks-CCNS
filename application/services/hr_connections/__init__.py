@@ -3,6 +3,11 @@ from .employee_protection import (
     EmployeeProtectionService,
     EmployeeProtectionView,
 )
+from .employee_protection_summary import (
+    EmployeeProtectionSummary,
+    EmployeeProtectionSummaryRow,
+    EmployeeProtectionSummaryService,
+)
 from .manual_portal import (
     ManualPortalConnector,
     ManualPortalPlan,
@@ -27,6 +32,9 @@ __all__ = [
     "ConnectorConfigurationView",
     "EmployeeProtectionRepository",
     "EmployeeProtectionService",
+    "EmployeeProtectionSummary",
+    "EmployeeProtectionSummaryRow",
+    "EmployeeProtectionSummaryService",
     "EmployeeProtectionView",
     "ManualPortalConnector",
     "ManualPortalPlan",
