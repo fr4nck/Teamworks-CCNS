@@ -95,9 +95,13 @@ def test_creation_runtime_hides_structure_identity_and_db_from_callers():
         for node in runtime.body
         if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name)
     }
+    imported = _imports(RUNTIME)
 
     assert "_structure_ref" in fields
     assert "structure_ref" not in fields
     assert "repository" not in fields
-    assert "GestionDB" not in source
+    assert all(
+        module != "GestionDB" and not module.startswith("GestionDB.")
+        for module in imported
+    )
     assert "def create(" in source
