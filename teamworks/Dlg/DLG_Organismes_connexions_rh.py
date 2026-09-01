@@ -16,11 +16,7 @@ from application.bootstrap.hr_connections_structure_factory import (
     StructureHrConnectionsRuntimeFactory,
 )
 from application.services.hr_connections import StructureConnectionProfileRequest
-from domain.hr_connections import (
-    OrganizationKind,
-    OrganizationReference,
-    PortalLink,
-)
+from domain.hr_connections import OrganizationKind, OrganizationReference, PortalLink
 from Ctrl import CTRL_Bouton_image
 from Utils import UTILS_Interface, UTILS_Styles
 from Utils.UTILS_Traduction import _
@@ -76,16 +72,13 @@ class ReferenceDialog(wx.Dialog):
         )
         self._value = None
         self.ctrl_type = wx.TextCtrl(
-            self,
-            value=current.reference_type if current is not None else u"",
+            self, value=current.reference_type if current is not None else u""
         )
         self.ctrl_label = wx.TextCtrl(
-            self,
-            value=(current.label or u"") if current is not None else u"",
+            self, value=(current.label or u"") if current is not None else u""
         )
         self.ctrl_value = wx.TextCtrl(
-            self,
-            value=current.value if current is not None else u"",
+            self, value=current.value if current is not None else u""
         )
         self.info = wx.StaticText(
             self,
@@ -156,12 +149,10 @@ class PortalDialog(wx.Dialog):
         )
         self._value = None
         self.ctrl_label = wx.TextCtrl(
-            self,
-            value=current.label if current is not None else u"",
+            self, value=current.label if current is not None else u""
         )
         self.ctrl_url = wx.TextCtrl(
-            self,
-            value=current.url if current is not None else u"https://",
+            self, value=current.url if current is not None else u"https://"
         )
         self.info = wx.StaticText(
             self,
@@ -203,8 +194,7 @@ class PortalDialog(wx.Dialog):
     def OnOk(self, event):
         try:
             self._value = PortalLink.create(
-                url=self.ctrl_url.GetValue(),
-                label=self.ctrl_label.GetValue(),
+                url=self.ctrl_url.GetValue(), label=self.ctrl_label.GetValue()
             )
         except (TypeError, ValueError) as exc:
             _message(self, str(exc))
@@ -241,36 +231,37 @@ class ProfileDialog(wx.Dialog):
         self._portals = list(profile.portal_links if profile is not None else ())
 
         self.ctrl_code = wx.TextCtrl(
-            self,
-            value=profile.organization.code if profile is not None else u"",
+            self, value=profile.organization.code if profile is not None else u""
         )
         self.ctrl_label = wx.TextCtrl(
-            self,
-            value=profile.organization.label if profile is not None else u"",
+            self, value=profile.organization.label if profile is not None else u""
         )
         self.choice_kind = wx.Choice(
-            self,
-            choices=[_KIND_LABELS[value] for value in _KIND_VALUES],
+            self, choices=[_KIND_LABELS[value] for value in _KIND_VALUES]
         )
         kind = profile.organization.kind if profile is not None else OrganizationKind.OTHER
         self.choice_kind.SetSelection(_KIND_VALUES.index(kind))
         self.ctrl_start = wx.TextCtrl(
-            self,
-            value=_format_date(period.starts_on if period is not None else None),
+            self, value=_format_date(period.starts_on if period is not None else None)
         )
         self.ctrl_end = wx.TextCtrl(
-            self,
-            value=_format_date(period.ends_on if period is not None else None),
+            self, value=_format_date(period.ends_on if period is not None else None)
         )
 
         if profile is not None:
-            # Code et famille participent aux historiques salariés : CRH-10B ne
-            # permet pas de les réécrire sous un enregistrement existant.
             self.ctrl_code.Enable(False)
             self.choice_kind.Enable(False)
 
+        # Les contrôles contenus dans un StaticBoxSizer doivent appartenir au
+        # StaticBox lui-même et non au dialogue. Ce parentage est requis par
+        # wxWidgets/Phoenix et vérifié par le ratissage RC.
+        self.references_static_box = wx.StaticBox(
+            self, -1, _(u"Références administratives")
+        )
+        self.portals_static_box = wx.StaticBox(self, -1, _(u"Portails"))
+
         self.list_references = wx.ListCtrl(
-            self,
+            self.references_static_box,
             -1,
             style=wx.LC_REPORT | wx.LC_SINGLE_SEL | wx.BORDER_SIMPLE,
         )
@@ -282,13 +273,11 @@ class ProfileDialog(wx.Dialog):
             )
         ):
             self.list_references.InsertColumn(
-                index,
-                label,
-                width=UTILS_Styles.Scale(width, minimum=75),
+                index, label, width=UTILS_Styles.Scale(width, minimum=75)
             )
 
         self.list_portals = wx.ListCtrl(
-            self,
+            self.portals_static_box,
             -1,
             style=wx.LC_REPORT | wx.LC_SINGLE_SEL | wx.BORDER_SIMPLE,
         )
@@ -299,17 +288,15 @@ class ProfileDialog(wx.Dialog):
             )
         ):
             self.list_portals.InsertColumn(
-                index,
-                label,
-                width=UTILS_Styles.Scale(width, minimum=90),
+                index, label, width=UTILS_Styles.Scale(width, minimum=90)
             )
 
-        self.ref_add = wx.Button(self, -1, _(u"Ajouter"))
-        self.ref_edit = wx.Button(self, -1, _(u"Modifier"))
-        self.ref_remove = wx.Button(self, -1, _(u"Retirer"))
-        self.portal_add = wx.Button(self, -1, _(u"Ajouter"))
-        self.portal_edit = wx.Button(self, -1, _(u"Modifier"))
-        self.portal_remove = wx.Button(self, -1, _(u"Retirer"))
+        self.ref_add = wx.Button(self.references_static_box, -1, _(u"Ajouter"))
+        self.ref_edit = wx.Button(self.references_static_box, -1, _(u"Modifier"))
+        self.ref_remove = wx.Button(self.references_static_box, -1, _(u"Retirer"))
+        self.portal_add = wx.Button(self.portals_static_box, -1, _(u"Ajouter"))
+        self.portal_edit = wx.Button(self.portals_static_box, -1, _(u"Modifier"))
+        self.portal_remove = wx.Button(self.portals_static_box, -1, _(u"Retirer"))
         self.ok = wx.Button(self, wx.ID_OK, _(u"Enregistrer"))
         self.cancel = wx.Button(self, wx.ID_CANCEL, _(u"Annuler"))
 
@@ -360,7 +347,7 @@ class ProfileDialog(wx.Dialog):
         )
         info.Wrap(UTILS_Styles.Scale(650, minimum=540))
 
-        references_box = wx.StaticBoxSizer(wx.VERTICAL, self, _(u"Références administratives"))
+        references_box = wx.StaticBoxSizer(self.references_static_box, wx.VERTICAL)
         references_box.Add(self.list_references, 1, wx.EXPAND | wx.ALL, gap)
         ref_buttons = wx.BoxSizer(wx.HORIZONTAL)
         ref_buttons.Add(self.ref_add, 0, wx.RIGHT, gap)
@@ -368,7 +355,7 @@ class ProfileDialog(wx.Dialog):
         ref_buttons.Add(self.ref_remove, 0)
         references_box.Add(ref_buttons, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, gap)
 
-        portals_box = wx.StaticBoxSizer(wx.VERTICAL, self, _(u"Portails"))
+        portals_box = wx.StaticBoxSizer(self.portals_static_box, wx.VERTICAL)
         portals_box.Add(self.list_portals, 1, wx.EXPAND | wx.ALL, gap)
         portal_buttons = wx.BoxSizer(wx.HORIZONTAL)
         portal_buttons.Add(self.portal_add, 0, wx.RIGHT, gap)
@@ -393,8 +380,7 @@ class ProfileDialog(wx.Dialog):
         self.list_references.DeleteAllItems()
         for item in self._references:
             index = self.list_references.InsertItem(
-                self.list_references.GetItemCount(),
-                item.reference_type,
+                self.list_references.GetItemCount(), item.reference_type
             )
             self.list_references.SetItem(index, 1, item.label or u"")
             self.list_references.SetItem(index, 2, item.value)
@@ -403,8 +389,7 @@ class ProfileDialog(wx.Dialog):
         self.list_portals.DeleteAllItems()
         for item in self._portals:
             index = self.list_portals.InsertItem(
-                self.list_portals.GetItemCount(),
-                item.label,
+                self.list_portals.GetItemCount(), item.label
             )
             self.list_portals.SetItem(index, 1, item.url)
 
@@ -427,8 +412,7 @@ class ProfileDialog(wx.Dialog):
     def OnEditReference(self, event):
         try:
             index = self._selected_index(
-                self.list_references,
-                _(u"Sélectionnez une référence à modifier."),
+                self.list_references, _(u"Sélectionnez une référence à modifier.")
             )
         except ValueError as exc:
             _message(self, str(exc))
@@ -445,8 +429,7 @@ class ProfileDialog(wx.Dialog):
     def OnRemoveReference(self, event):
         try:
             index = self._selected_index(
-                self.list_references,
-                _(u"Sélectionnez une référence à retirer."),
+                self.list_references, _(u"Sélectionnez une référence à retirer.")
             )
         except ValueError as exc:
             _message(self, str(exc))
@@ -466,8 +449,7 @@ class ProfileDialog(wx.Dialog):
     def OnEditPortal(self, event):
         try:
             index = self._selected_index(
-                self.list_portals,
-                _(u"Sélectionnez un portail à modifier."),
+                self.list_portals, _(u"Sélectionnez un portail à modifier.")
             )
         except ValueError as exc:
             _message(self, str(exc))
@@ -484,8 +466,7 @@ class ProfileDialog(wx.Dialog):
     def OnRemovePortal(self, event):
         try:
             index = self._selected_index(
-                self.list_portals,
-                _(u"Sélectionnez un portail à retirer."),
+                self.list_portals, _(u"Sélectionnez un portail à retirer.")
             )
         except ValueError as exc:
             _message(self, str(exc))
@@ -530,8 +511,8 @@ class Dialog(wx.Dialog):
             _(u"Organismes & connexions RH"),
             style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER,
         )
-        self._runtime_factory = runtime_factory or StructureHrConnectionsRuntimeFactory
-        self._runtime = self._runtime_factory().create()
+        factory = runtime_factory or StructureHrConnectionsRuntimeFactory
+        self._runtime = factory().create()
         self._row_codes = []
         self.SetBackgroundColour(UTILS_Interface.GetToken("surface"))
 
@@ -563,9 +544,7 @@ class Dialog(wx.Dialog):
             )
         ):
             self.list.InsertColumn(
-                index,
-                label,
-                width=UTILS_Styles.Scale(width, minimum=70),
+                index, label, width=UTILS_Styles.Scale(width, minimum=70)
             )
 
         self.add = CTRL_Bouton_image.CTRL(
@@ -634,10 +613,7 @@ class Dialog(wx.Dialog):
                 )
                 values = (
                     profile.organization.label,
-                    _KIND_LABELS.get(
-                        profile.organization.kind,
-                        profile.organization.kind.value,
-                    ),
+                    _KIND_LABELS.get(profile.organization.kind, profile.organization.kind.value),
                     str(len(profile.references)),
                     str(len(profile.portal_links)),
                     connector_text,
@@ -647,10 +623,7 @@ class Dialog(wx.Dialog):
                 for column, value in enumerate(values[1:], 1):
                     self.list.SetItem(row, column, value)
                 if not configuration.has_configured_connector:
-                    self.list.SetItemTextColour(
-                        row,
-                        UTILS_Interface.GetToken("warning"),
-                    )
+                    self.list.SetItemTextColour(row, UTILS_Interface.GetToken("warning"))
                 self._row_codes.append(profile.organization.code)
         finally:
             self.list.Thaw()
