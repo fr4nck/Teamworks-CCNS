@@ -27,7 +27,7 @@ Le comportement métier reste porté par le moteur existant : contrôles simples
 
 ## Persistance RH additive via GestionDB
 
-Le chantier Connexions RH introduit également `TeamworksHrConnectionsRepository` dans `infrastructure/persistence/teamworks_hr_connections_repository.py`.
+Le chantier Connexions RH introduit `TeamworksHrConnectionsRepository` dans `infrastructure/persistence/teamworks_hr_connections_repository.py`.
 
 Cet adaptateur ne remplace pas `GestionDB` : il l'utilise comme fournisseur de connexion afin de conserver le contrat historique local SQLite / réseau MySQL. Son périmètre CRH-16 est volontairement limité aux données nécessaires au raccordement « Protection sociale & organismes » :
 
@@ -53,13 +53,23 @@ La référence de structure **n'est volontairement pas dérivée** du chemin du 
 3. `EmployeeProtectionService` ;
 4. `EmployeeProtectionSummaryService`.
 
-La façade résultante ne demande à l'interface que la référence du salarié et la date de consultation. Le futur panneau wxPython n'a ainsi ni à sélectionner un backend, ni à fabriquer un `structure_ref`, ni à manipuler la configuration de connexion.
+La façade résultante ne demande à l'interface que la référence du salarié et la date de consultation. Le panneau wxPython n'a ainsi ni à sélectionner un backend, ni à fabriquer un `structure_ref`, ni à manipuler la configuration de connexion.
+
+## Persistance des démarches RH et du journal
+
+CRH-22 ajoute `TeamworksHrCasesRepository` dans `infrastructure/persistence/teamworks_hr_cases_repository.py` pour raccorder les modèles CRH-03 et CRH-04 à la base Teamworks active.
+
+Son composant de schéma `hr_cases_runtime` reste indépendant de `hr_connections_runtime`. Il ajoute uniquement les tables `tw_hr_cases`, `tw_hr_case_expected_documents`, `tw_hr_audit_events` et `tw_hr_audit_fields` ainsi que les index de recherche par statut, sujet, organisme et cible d'audit.
+
+Les dossiers conservent séparément leur statut métier et leur statut technique d'échange. Les pièces attendues restent des métadonnées ; aucun document n'est stocké dans ces tables. Le journal est append-only : une collision d'identifiant est refusée au lieu d'écraser un événement existant.
+
+Comme CRH-16, l'adaptateur utilise `GestionDB`, adapte les placeholders SQLite/MySQL et évite les constructions SQL propres à SQLite dans le chemin de production. Il ne crée aucune clé étrangère vers les tables historiques.
 
 ## Ce qui reste historique
 
 Cette évolution ne remplace pas `GestionDB.py` et ne modifie pas ses API. Les autres écrans et modules continuent d'utiliser les accès historiques.
 
-`CcnsDataReader`, `TeamworksHrConnectionsRepository` et le résolveur d'identité sont donc des façades progressives au-dessus de `GestionDB`, compatibles avec la stratégie de migration par périmètres limités : les lectures et écritures nouvelles sont isolées sans disperser de SQL dans l'interface.
+`CcnsDataReader`, les repositories `TeamworksHrConnectionsRepository` / `TeamworksHrCasesRepository` et le résolveur d'identité sont donc des façades progressives au-dessus de `GestionDB`, compatibles avec la stratégie de migration par périmètres limités : les lectures et écritures nouvelles sont isolées sans disperser de SQL dans l'interface.
 
 ## Mesures et performance
 
@@ -71,13 +81,13 @@ Le chemin audit conserve le même volume de requêtes que l'implémentation pré
 
 La connexion `GestionDB.DB()` est ouverte une seule fois par lecteur et réutilisée pour ces lectures, ce qui évite d'introduire des ouvertures supplémentaires. La nouvelle séparation améliore surtout la testabilité et prépare des mesures plus fines sans changer le comportement utilisateur.
 
-Pour Connexions RH, les listes de profils sont chargées par ensembles (en-têtes, capacités, références, liens) afin d'éviter un schéma N+1. Des index additifs ciblent les recherches par structure, salarié, organisme et échéance.
+Pour Connexions RH, les listes de profils sont chargées par ensembles (en-têtes, capacités, références, liens) afin d'éviter un schéma N+1. Les listes de dossiers et leurs pièces utilisent la même stratégie. Des index additifs ciblent les recherches par structure, salarié, organisme, statut, sujet, échéance et cible d'audit.
 
 ## Prochaines étapes recommandées
 
 1. Étendre progressivement cette couche aux autres lectures CCNS transverses identifiées par les audits.
 2. Ajouter des mesures centralisées de temps SQL et temps Python autour du lecteur, désactivées par défaut.
 3. Stabiliser des contrats de données plus complets pour les écrans contrats et les tableaux d'audit.
-4. Injecter la façade CRH-17A dans la fiche salarié par un raccordement lazy et en lecture seule, sans déplacer le choix du backend dans wxPython.
-5. Étendre ensuite la persistance de production aux dossiers `HrCase` et au journal d'audit seulement lorsque les cas d'usage correspondants seront raccordés.
+4. Construire au-dessus de `TeamworksHrCasesRepository` une projection applicative des démarches à faire, échéances, anomalies et régularisations.
+5. Raccorder ensuite cette projection à un cockpit structure sans SQL ni règles de transition dans wxPython.
 6. Introduire, uniquement si les mesures le justifient, des caches courts et invalidables pour les référentiels CCNS.
