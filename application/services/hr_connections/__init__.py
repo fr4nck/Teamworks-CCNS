@@ -19,6 +19,13 @@ from .hr_case_dashboard import (
     HrCaseDashboardRow,
     HrCaseDashboardService,
 )
+from .hr_case_history import (
+    HrCaseHistory,
+    HrCaseHistoryField,
+    HrCaseHistoryRepository,
+    HrCaseHistoryRow,
+    HrCaseHistoryService,
+)
 from .hr_case_workflow import (
     HrCaseTransitionOptions,
     HrCaseTransitionResult,
@@ -61,6 +68,11 @@ __all__ = [
     "HrCaseDashboardRepository",
     "HrCaseDashboardRow",
     "HrCaseDashboardService",
+    "HrCaseHistory",
+    "HrCaseHistoryField",
+    "HrCaseHistoryRepository",
+    "HrCaseHistoryRow",
+    "HrCaseHistoryService",
     "HrCaseTransitionOptions",
     "HrCaseTransitionResult",
     "HrCaseWorkflowRepository",
