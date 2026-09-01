@@ -162,6 +162,8 @@ class ManualPortalConnector:
             raise ValueError("Le connecteur manuel n'est pas correctement configuré.")
         if not isinstance(portal_index, int) or isinstance(portal_index, bool):
             raise TypeError("L'index du portail est invalide.")
+        if portal_index < 0:
+            raise IndexError("L'index du portail ne peut pas être négatif.")
         try:
             portal_link = profile.portal_links[portal_index]
         except IndexError as exc:
@@ -186,8 +188,12 @@ class ManualPortalConnector:
     ) -> ManualStatusUpdate:
         """Enregistre une déclaration utilisateur sans simuler de transmission externe."""
 
+        if not isinstance(actor_ref, str):
+            raise TypeError("L'auteur de la mise à jour manuelle est invalide.")
         if not actor_ref.strip():
             raise ValueError("L'auteur de la mise à jour manuelle est obligatoire.")
+        if external_reference is not None and not isinstance(external_reference, str):
+            raise TypeError("La référence externe de la démarche est invalide.")
         normalized_reference = (
             external_reference.strip() if external_reference is not None else None
         )
