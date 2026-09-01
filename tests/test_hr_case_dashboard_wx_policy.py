@@ -113,3 +113,14 @@ def test_dashboard_ui_keeps_business_and_technical_statuses_distinct():
     assert "row.technical_attention" in source
     assert "Échecs techniques" in source
     assert "Anomalies" in source
+
+
+def test_dashboard_ui_uses_design_tokens_and_avoids_staticbox_parenting_risk():
+    source = _source(DIALOG)
+
+    assert 'GetToken("surface")' in source
+    assert 'GetToken("on_surface")' in source
+    assert 'GetToken("warning")' in source
+    assert 'GetToken("danger")' in source
+    assert "wx.StaticBoxSizer" not in source
+    assert "wx.StaticBox(" not in source
