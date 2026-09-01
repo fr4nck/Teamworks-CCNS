@@ -109,7 +109,11 @@ class Panel(wx.Panel):
                 (_(u"Configuration"), 120),
             )
         ):
-            self.liste.InsertColumn(index, label, width=width)
+            self.liste.InsertColumn(
+                index,
+                label,
+                width=UTILS_Styles.Scale(width, minimum=60),
+            )
 
         self._do_layout(panel_synthese)
 
@@ -171,7 +175,11 @@ class Panel(wx.Panel):
         try:
             self.liste.DeleteAllItems()
             for row in summary.rows:
-                organisme = row.organization_label or row.organization_code
+                famille = _enum_label(_ORGANIZATION_LABELS, row.organization_kind)
+                organisme = row.organization_label or u"%s · %s" % (
+                    famille,
+                    row.organization_code,
+                )
                 values = (
                     organisme,
                     _enum_label(_RELATION_LABELS, row.relation_kind),
