@@ -137,6 +137,27 @@ def test_schema_is_additive_versioned_and_indexed(tmp_path):
     assert foreign_keys == []
 
 
+def test_schema_creation_is_idempotent_and_refuses_unknown_version(tmp_path):
+    repository, path = _repository(tmp_path)
+
+    repository.ensure_schema()
+    assert repository.schema_version() == 1
+
+    with sqlite3.connect(path) as conn:
+        conn.execute(
+            "UPDATE tw_hr_schema_versions SET schema_version = 99 "
+            "WHERE component = 'hr_cases_runtime'"
+        )
+        conn.commit()
+
+    incompatible = TeamworksHrCasesRepository(
+        db_factory=lambda: LocalGestionDb(path),
+        ensure_schema=False,
+    )
+    with pytest.raises(RuntimeError, match="Version de schéma"):
+        incompatible.ensure_schema()
+
+
 def test_case_round_trip_update_and_expected_documents(tmp_path):
     repository, _path = _repository(tmp_path)
     original = _case()
