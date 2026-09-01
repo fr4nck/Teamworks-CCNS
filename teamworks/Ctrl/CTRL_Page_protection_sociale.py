@@ -102,9 +102,14 @@ class Panel(wx.Panel):
             panel_synthese,
             texte=_(u"Nouvelle période"),
         )
+        self.bouton_organismes = CTRL_Bouton_image.CTRL(
+            panel_synthese,
+            texte=_(u"Organismes RH…"),
+        )
         self.bouton_ajouter.Bind(wx.EVT_BUTTON, self.OnAjouter)
         self.bouton_cloturer.Bind(wx.EVT_BUTTON, self.OnCloturer)
         self.bouton_nouvelle_periode.Bind(wx.EVT_BUTTON, self.OnNouvellePeriode)
+        self.bouton_organismes.Bind(wx.EVT_BUTTON, self.OnOrganismes)
 
         self.liste = wx.ListCtrl(
             panel_synthese,
@@ -146,7 +151,9 @@ class Panel(wx.Panel):
         actions = wx.BoxSizer(wx.HORIZONTAL)
         actions.Add(self.bouton_ajouter, 0, wx.RIGHT, gap)
         actions.Add(self.bouton_cloturer, 0, wx.RIGHT, gap)
-        actions.Add(self.bouton_nouvelle_periode, 0)
+        actions.Add(self.bouton_nouvelle_periode, 0, wx.RIGHT, gap)
+        actions.AddStretchSpacer(1)
+        actions.Add(self.bouton_organismes, 0)
 
         contenu = wx.BoxSizer(wx.VERTICAL)
         contenu.Add(self.info, 0, wx.EXPAND | wx.BOTTOM, gap)
@@ -248,6 +255,7 @@ class Panel(wx.Panel):
     def _update_action_state(self):
         loaded = self._summary is not None and bool(self.IDpersonne)
         self.bouton_ajouter.Enable(loaded)
+        self.bouton_organismes.Enable(True)
 
         selected = self.GetSelectedSummaryRow() if loaded else None
         status = getattr(getattr(selected, "status", None), "value", None)
@@ -269,4 +277,8 @@ class Panel(wx.Panel):
 
     def OnNouvellePeriode(self, event):
         """Point d'extension : le panneau de présentation n'exécute pas l'action."""
+        event.Skip()
+
+    def OnOrganismes(self, event):
+        """Point d'extension de navigation vers la configuration structure."""
         event.Skip()
