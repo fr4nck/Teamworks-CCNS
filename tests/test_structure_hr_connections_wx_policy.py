@@ -12,9 +12,33 @@ def _source(path):
     return path.read_text(encoding="utf-8")
 
 
+def _tree(path):
+    return ast.parse(_source(path), filename=str(path))
+
+
+def _dialog_init_call(tree, class_name):
+    for node in tree.body:
+        if isinstance(node, ast.ClassDef) and node.name == class_name:
+            for child in ast.walk(node):
+                if not isinstance(child, ast.Call):
+                    continue
+                func = child.func
+                if not isinstance(func, ast.Attribute) or func.attr != "__init__":
+                    continue
+                owner = func.value
+                if (
+                    isinstance(owner, ast.Attribute)
+                    and owner.attr == "Dialog"
+                    and isinstance(owner.value, ast.Name)
+                    and owner.value.id == "wx"
+                ):
+                    return child
+    raise AssertionError("Initialisation wx.Dialog introuvable pour %s" % class_name)
+
+
 def test_dialogue_structure_ne_fait_aucun_acces_direct_aux_donnees_ou_reseau():
     source = _source(DIALOG)
-    tree = ast.parse(source, filename=str(DIALOG))
+    tree = _tree(DIALOG)
     imported_modules = []
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
@@ -40,6 +64,16 @@ def test_dialogue_structure_ne_fait_aucun_acces_direct_aux_donnees_ou_reseau():
     assert "DELETE FROM" not in source
 
 
+def test_dialogues_structure_conservent_le_parent_wx():
+    tree = _tree(DIALOG)
+
+    for class_name in ("ProfileDialog", "Dialog"):
+        call = _dialog_init_call(tree, class_name)
+        assert len(call.args) >= 2
+        assert isinstance(call.args[0], ast.Name) and call.args[0].id == "self"
+        assert isinstance(call.args[1], ast.Name) and call.args[1].id == "parent"
+
+
 def test_modification_verrouille_code_et_famille_stables():
     source = _source(DIALOG)
 
@@ -61,7 +95,7 @@ def test_page_salarie_separe_navigation_structure_et_trois_actions_metier():
 
 def test_dialogue_structure_est_importe_seulement_sur_action_explicite():
     source = _source(RUNTIME)
-    tree = ast.parse(source, filename=str(RUNTIME))
+    tree = _tree(RUNTIME)
 
     top_level_modules = [
         node.module or ""
