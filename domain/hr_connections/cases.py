@@ -167,6 +167,9 @@ class HrCase:
             raise TypeError("Le statut technique du dossier RH est invalide.")
         if any(not isinstance(item, ExpectedDocument) for item in self.expected_documents):
             raise TypeError("La liste des pièces attendues du dossier RH est invalide.")
+        document_codes = tuple(item.code for item in self.expected_documents)
+        if len(document_codes) != len(set(document_codes)):
+            raise ValueError("Deux pièces attendues ne peuvent pas partager le même code.")
 
     @classmethod
     def create(
