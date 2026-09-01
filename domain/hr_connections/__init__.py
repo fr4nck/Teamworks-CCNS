@@ -9,6 +9,13 @@ from .cases import (
     HrCaseType,
 )
 from .connector import ConfigurationCheck, ConnectorDescriptor, HrConnector
+from .events import (
+    HrAuditEvent,
+    HrAuditField,
+    HrEventJournal,
+    HrEventKind,
+    HrEventTargetKind,
+)
 from .organizations import (
     EffectivePeriod,
     HrOrganization,
@@ -30,12 +37,17 @@ __all__ = [
     "EffectivePeriod",
     "ExchangeStatus",
     "ExpectedDocument",
+    "HrAuditEvent",
+    "HrAuditField",
     "HrCase",
     "HrCaseStatus",
     "HrCaseSubject",
     "HrCaseSubjectKind",
     "HrCaseType",
     "HrConnector",
+    "HrEventJournal",
+    "HrEventKind",
+    "HrEventTargetKind",
     "HrOrganization",
     "OrganizationKind",
     "OrganizationReference",
