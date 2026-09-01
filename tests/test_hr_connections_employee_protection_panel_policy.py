@@ -50,11 +50,12 @@ def test_employee_protection_panel_does_not_claim_automatic_legal_compliance():
         assert claim not in source
 
 
-def test_employee_protection_panel_uses_semantic_theme_tokens():
+def test_employee_protection_panel_uses_semantic_theme_and_scale_contracts():
     source = _source()
 
     assert 'GetToken("surface")' in source
     assert 'GetToken("surface_container_lowest")' in source
     assert 'GetToken("on_surface")' in source
     assert 'GetToken("warning")' in source
+    assert "UTILS_Styles.Scale(" in source
     assert "wx.Colour(" not in source
