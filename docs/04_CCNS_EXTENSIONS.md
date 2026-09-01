@@ -50,7 +50,8 @@ Le chantier **Connexions RH** progresse séparément du build 0.9.1b en cours de
 - `CRH-07` : connecteur générique de portail manuel, préparation des références et pièces, demande d'ouverture uniquement après confirmation explicite, mise à jour manuelle de statut et événement d'audit sans simuler de transmission externe ;
 - `CRH-08` : catalogue de connecteurs manuels de référence pour URSSAF, Net-entreprises, mutuelle, prévoyance, retraite complémentaire, OPCO, SPST et France Travail, sans annoncer d'API, de dépôt ou de synchronisation inexistants ;
 - `CRH-09` : persistance additive de référence pour les profils non secrets, dossiers RH et événements append-only. Elle utilise un store SQLite dédié et versionné, sans modifier les bases historiques ni créer de clé étrangère vers les tables salariés/contrats ; ce store sert à qualifier le modèle persistant avant tout raccordement éventuel à la base principale ;
-- CRH-01 à CRH-08 restent sans persistance ; CRH-09 introduit uniquement ce store isolé. Aucune UI wxPython, authentification réelle, ouverture de navigateur effective ou communication réseau n'est ajoutée par ce lot ;
+- `CRH-10A` : service applicatif de configuration d'une structure, avec port de repository et projections UI-agnostiques des organismes et connecteurs disponibles/configurés. Il prépare l'écran « Organismes & connexions RH » sans encore toucher à wxPython ;
+- CRH-01 à CRH-08 restent sans persistance ; CRH-09 introduit uniquement le store isolé et CRH-10A l'orchestration applicative. Aucune authentification réelle, ouverture de navigateur effective ou communication réseau n'est ajoutée ;
 - ces travaux ne modifient pas le pourcentage des 9 jalons CCNS ci-dessus et ne valent pas qualification fonctionnelle tant que leurs PR ne sont pas validées et fusionnées.
 
 ## Restant prioritaire
