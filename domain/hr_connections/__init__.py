@@ -1,4 +1,13 @@
 from .capabilities import ConnectorCapability, ConnectorMode, ConnectorState
+from .cases import (
+    ExchangeStatus,
+    ExpectedDocument,
+    HrCase,
+    HrCaseStatus,
+    HrCaseSubject,
+    HrCaseSubjectKind,
+    HrCaseType,
+)
 from .connector import ConfigurationCheck, ConnectorDescriptor, HrConnector
 from .organizations import (
     EffectivePeriod,
@@ -19,6 +28,13 @@ __all__ = [
     "ConnectorRegistry",
     "ConnectorState",
     "EffectivePeriod",
+    "ExchangeStatus",
+    "ExpectedDocument",
+    "HrCase",
+    "HrCaseStatus",
+    "HrCaseSubject",
+    "HrCaseSubjectKind",
+    "HrCaseType",
     "HrConnector",
     "HrOrganization",
     "OrganizationKind",
