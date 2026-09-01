@@ -1,5 +1,7 @@
+import inspect
 import sqlite3
 
+import infrastructure.persistence.hr_connections_repository as persistence_module
 from infrastructure.persistence.hr_connections_repository import SqliteHrConnectionsRepository
 
 
@@ -25,3 +27,11 @@ def test_hr_connections_schema_does_not_define_credential_columns(tmp_path):
 
     forbidden = {"password", "token", "cookie", "api_key", "private_key", "secret_value"}
     assert forbidden.isdisjoint(columns)
+
+
+def test_reference_persistence_adapter_does_not_import_legacy_database_layer():
+    source = inspect.getsource(persistence_module)
+
+    assert "GestionDB" not in source
+    assert "UTILS_" not in source
+    assert "teamworks." not in source
