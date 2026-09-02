@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import date
+from hashlib import sha256
 from typing import Callable
 
 from domain.hr_connections import (
@@ -30,6 +31,7 @@ _SCHEMA_COMPONENT = "hr_case_documents_runtime"
 
 _COLUMNS = (
     "structure_ref",
+    "receipt_key",
     "case_id",
     "document_code",
     "state",
@@ -49,6 +51,7 @@ _SCHEMA_STATEMENTS = (
     """
     CREATE TABLE IF NOT EXISTS tw_hr_case_document_receipts (
         structure_ref VARCHAR(80) NOT NULL,
+        receipt_key VARCHAR(64) NOT NULL,
         case_id VARCHAR(100) NOT NULL,
         document_code VARCHAR(100) NOT NULL,
         state VARCHAR(30) NOT NULL,
@@ -56,7 +59,7 @@ _SCHEMA_STATEMENTS = (
         withdrawn_on VARCHAR(10),
         artifact_ref VARCHAR(240),
         source VARCHAR(120),
-        PRIMARY KEY (structure_ref, case_id, document_code)
+        PRIMARY KEY (structure_ref, receipt_key)
     )
     """,
 )
@@ -64,8 +67,8 @@ _SCHEMA_STATEMENTS = (
 _INDEXES = (
     (
         "tw_hr_case_document_receipts",
-        "idx_tw_hr_case_document_state",
-        "structure_ref, case_id, state",
+        "idx_tw_hr_case_document_case",
+        "structure_ref, case_id",
     ),
 )
 
@@ -81,6 +84,11 @@ class TeamworksHrCaseDocumentRepository:
     n'est ajoutée aux tables historiques. Une modification de réception et son
     événement d'audit sont écrits dans une même transaction. La projection de
     réception n'est jamais supprimée : un retrait est un état explicite et audité.
+
+    La clé primaire utilise un hash déterministe du couple ``case_id/document_code``
+    afin de ne pas dépasser les limites d'index des anciens serveurs MySQL lorsque
+    les colonnes texte utilisent un encodage multioctet. Les valeurs métier restent
+    conservées intégralement dans leurs colonnes dédiées.
     """
 
     def __init__(
@@ -183,12 +191,17 @@ class TeamworksHrCaseDocumentRepository:
                 "SELECT "
                 + ", ".join(_COLUMNS)
                 + " FROM tw_hr_case_document_receipts "
-                "WHERE structure_ref = ? AND case_id = ? AND document_code = ?",
-                (structure_ref, case_id, document_code),
+                "WHERE structure_ref = ? AND receipt_key = ?",
+                (structure_ref, _receipt_key(case_id, document_code)),
             )
         finally:
             _close(db)
-        return _receipt_from_row(row) if row is not None else None
+        if row is None:
+            return None
+        receipt = _receipt_from_row(row)
+        if receipt.case_id != case_id or receipt.document_code != document_code:
+            raise RuntimeError("Collision de clé technique dans le suivi des pièces RH.")
+        return receipt
 
     def list_receipts(
         self,
@@ -235,6 +248,7 @@ class TeamworksHrCaseDocumentRepository:
             raise TypeError("L'événement de pièce RH à persister est invalide.")
         self._validate_event(receipt=receipt, event=event)
 
+        receipt_key = _receipt_key(receipt.case_id, receipt.document_code)
         db = self._db_factory()
         try:
             case_row = _fetchone(
@@ -270,13 +284,17 @@ class TeamworksHrCaseDocumentRepository:
             current = _fetchone(
                 db,
                 """
-                SELECT state
+                SELECT case_id, document_code, state
                 FROM tw_hr_case_document_receipts
-                WHERE structure_ref = ? AND case_id = ? AND document_code = ?
+                WHERE structure_ref = ? AND receipt_key = ?
                 """,
-                (structure_ref, receipt.case_id, receipt.document_code),
+                (structure_ref, receipt_key),
             )
-            current_state = HrCaseDocumentState(current[0]) if current is not None else None
+            if current is not None and (
+                current[0] != receipt.case_id or current[1] != receipt.document_code
+            ):
+                raise RuntimeError("Collision de clé technique dans le suivi des pièces RH.")
+            current_state = HrCaseDocumentState(current[2]) if current is not None else None
             if current_state is not expected_state:
                 raise StaleTeamworksHrCaseDocumentStateError(
                     "L'état de la pièce RH a changé depuis sa lecture ; actualisez la démarche."
@@ -295,8 +313,8 @@ class TeamworksHrCaseDocumentRepository:
                     f"L'événement RH '{event.event_id}' est déjà persisté."
                 )
 
-            values = _receipt_values(structure_ref, receipt)
-            key = (structure_ref, receipt.case_id, receipt.document_code)
+            values = _receipt_values(structure_ref, receipt_key, receipt)
+            key = (structure_ref, receipt_key)
             if current is None:
                 placeholders = ", ".join("?" for _ in _COLUMNS)
                 _execute(
@@ -307,13 +325,13 @@ class TeamworksHrCaseDocumentRepository:
                     values,
                 )
             else:
-                update_columns = _COLUMNS[3:]
+                update_columns = _COLUMNS[2:]
                 assignments = ", ".join(f"{column} = ?" for column in update_columns)
                 _execute(
                     db,
                     f"UPDATE tw_hr_case_document_receipts SET {assignments} "
-                    "WHERE structure_ref = ? AND case_id = ? AND document_code = ?",
-                    values[3:] + key,
+                    "WHERE structure_ref = ? AND receipt_key = ?",
+                    values[2:] + key,
                 )
 
             _execute(
@@ -385,9 +403,19 @@ class TeamworksHrCaseDocumentRepository:
             raise ValueError("L'événement d'audit ne décrit pas la pièce RH persistée.")
 
 
-def _receipt_values(structure_ref: str, receipt: HrCaseDocumentReceipt) -> tuple:
+def _receipt_key(case_id: str, document_code: str) -> str:
+    payload = (case_id + "\0" + document_code).encode("utf-8")
+    return sha256(payload).hexdigest()
+
+
+def _receipt_values(
+    structure_ref: str,
+    receipt_key: str,
+    receipt: HrCaseDocumentReceipt,
+) -> tuple:
     return (
         structure_ref,
+        receipt_key,
         receipt.case_id,
         receipt.document_code,
         receipt.state.value,
@@ -400,11 +428,11 @@ def _receipt_values(structure_ref: str, receipt: HrCaseDocumentReceipt) -> tuple
 
 def _receipt_from_row(row) -> HrCaseDocumentReceipt:
     return HrCaseDocumentReceipt(
-        case_id=row[1],
-        document_code=row[2],
-        state=HrCaseDocumentState(row[3]),
-        received_on=date.fromisoformat(row[4]),
-        withdrawn_on=date.fromisoformat(row[5]) if row[5] else None,
-        artifact_ref=row[6],
-        source=row[7],
+        case_id=row[2],
+        document_code=row[3],
+        state=HrCaseDocumentState(row[4]),
+        received_on=date.fromisoformat(row[5]),
+        withdrawn_on=date.fromisoformat(row[6]) if row[6] else None,
+        artifact_ref=row[7],
+        source=row[8],
     )
