@@ -11,6 +11,8 @@ from application.bootstrap.employee_protection_summary_factory import (
     EmployeeProtectionSummaryRuntimeFactory,
 )
 from application.bootstrap.hr_case_creation_factory import (
+    HrCaseCreationOrganizationOption,
+    HrCaseCreationPersonOption,
     HrCaseCreationRuntime,
     HrCaseCreationRuntimeFactory,
 )
@@ -38,6 +40,8 @@ __all__ = [
     "EmployeeProtectionOrganizationOption",
     "EmployeeProtectionSummaryRuntime",
     "EmployeeProtectionSummaryRuntimeFactory",
+    "HrCaseCreationOrganizationOption",
+    "HrCaseCreationPersonOption",
     "HrCaseCreationRuntime",
     "HrCaseCreationRuntimeFactory",
     "HrCaseDashboardRuntime",
