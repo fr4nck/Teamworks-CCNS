@@ -3,6 +3,7 @@ from pathlib import Path
 
 SOURCE = Path("teamworks/Dlg/DLG_Saisie_coords.py")
 STYLES = Path("teamworks/Utils/UTILS_Styles.py")
+GENERALITES = Path("teamworks/Ctrl/CTRL_Page_generalites.py")
 
 
 def _read(path: Path) -> str:
@@ -27,3 +28,15 @@ def test_compact_form_window_profile_is_available():
     source = _read(STYLES)
     assert '"form_compact"' in source
     assert '"min_size": (520, 320)' in source
+
+
+def test_generalites_is_the_primary_home_for_contact_details():
+    source = _read(GENERALITES)
+    # Le dialogue autonome reste un composant de compatibilité (notamment
+    # candidats), mais la fiche salarié doit porter directement la vue et les
+    # actions de téléphones/e-mails.
+    assert 'self.section_coords = CTRL_Section.Section(' in source
+    assert 'self.list_ctrl_coords = ListCtrlCoords(' in source
+    assert 'self.button_coords_ajout' in source
+    assert 'self.button_coords_modif' in source
+    assert 'self.button_coords_suppr' in source
