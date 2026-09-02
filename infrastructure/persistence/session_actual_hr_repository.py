@@ -331,7 +331,7 @@ class SessionActualHrRepository:
                         actual.actual_revision,
                         int(current[3]) if current[3] is not None else None,
                     )
-                raise SessionActualHrPersistenceError("révision courante incompatible avec le payload reçu")
+                raise SessionActualHrPersistenceError("révision déjà reçue avec un autre payload")
 
         # Pour une révision qui n'est pas obsolète, l'inbox protège aussi contre
         # une seconde livraison divergente de la même révision.
