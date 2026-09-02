@@ -37,6 +37,12 @@ _TEMPLATE_COLUMNS = (
 
 _SCHEMA_STATEMENTS = (
     """
+    CREATE TABLE IF NOT EXISTS tw_hr_schema_versions (
+        component VARCHAR(50) NOT NULL PRIMARY KEY,
+        schema_version INTEGER NOT NULL
+    )
+    """,
+    """
     CREATE TABLE IF NOT EXISTS tw_hr_lifecycle_templates (
         structure_ref VARCHAR(80) NOT NULL,
         template_id VARCHAR(100) NOT NULL,
