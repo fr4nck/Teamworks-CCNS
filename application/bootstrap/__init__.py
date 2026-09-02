@@ -20,6 +20,10 @@ from application.bootstrap.hr_case_dashboard_factory import (
     HrCaseDashboardRuntime,
     HrCaseDashboardRuntimeFactory,
 )
+from application.bootstrap.hr_case_documents_factory import (
+    HrCaseDocumentTrackingRuntime,
+    HrCaseDocumentTrackingRuntimeFactory,
+)
 from application.bootstrap.hr_case_history_factory import (
     HrCaseHistoryRuntime,
     HrCaseHistoryRuntimeFactory,
@@ -46,6 +50,8 @@ __all__ = [
     "HrCaseCreationRuntimeFactory",
     "HrCaseDashboardRuntime",
     "HrCaseDashboardRuntimeFactory",
+    "HrCaseDocumentTrackingRuntime",
+    "HrCaseDocumentTrackingRuntimeFactory",
     "HrCaseHistoryRuntime",
     "HrCaseHistoryRuntimeFactory",
     "HrCaseWorkflowRuntime",
