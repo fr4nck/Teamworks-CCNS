@@ -1,4 +1,5 @@
 from .capabilities import ConnectorCapability, ConnectorMode, ConnectorState
+from .case_documents import HrCaseDocumentReceipt, HrCaseDocumentState
 from .cases import (
     ExchangeStatus,
     ExpectedDocument,
@@ -81,6 +82,8 @@ __all__ = [
     "HrAuditEvent",
     "HrAuditField",
     "HrCase",
+    "HrCaseDocumentReceipt",
+    "HrCaseDocumentState",
     "HrCaseStatus",
     "HrCaseSubject",
     "HrCaseSubjectKind",
