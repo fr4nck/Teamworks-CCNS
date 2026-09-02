@@ -66,13 +66,13 @@ def _optional_time(value: Any, field_name: str) -> Optional[str]:
 
 
 def _positive_revision(value: Any) -> int:
-    try:
-        revision = int(value)
-    except (TypeError, ValueError) as error:
-        raise SessionActualContractError("actual_revision invalide") from error
-    if revision < 1:
+    # Le contrat JSON porte une révision entière. Ne pas convertir silencieusement
+    # 1.9 en 1 (ni True en 1), car cela aliaserait les clés d'idempotence.
+    if type(value) is not int:
         raise SessionActualContractError("actual_revision invalide")
-    return revision
+    if value < 1:
+        raise SessionActualContractError("actual_revision invalide")
+    return value
 
 
 def _duration_minutes(start_time: str, end_time: str) -> int:
