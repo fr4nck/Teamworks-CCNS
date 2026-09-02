@@ -285,6 +285,8 @@ class SessionActualHrRepository:
             raise SessionActualHrPersistenceError("date_reception invalide")
         received_at_sql = received_at.strftime("%Y-%m-%d %H:%M:%S")
 
+        # Un replay portant exactement la même clé de livraison reste un no-op
+        # réussi, y compris si une révision plus récente a été appliquée depuis.
         inbox_by_key = self._fetchone(
             f"SELECT session_uid, actual_revision, payload_sha256 FROM {INBOX_TABLE} WHERE idempotence_key=?",
             (idempotence_key,),
@@ -295,32 +297,22 @@ class SessionActualHrRepository:
                 and int(inbox_by_key[1]) == actual.actual_revision
                 and inbox_by_key[2] == payload_hash
             ):
-                current = self._fetchone(
+                current_person = self._fetchone(
                     f"SELECT IDpersonne FROM {WORK_TABLE} WHERE session_uid=?",
                     (actual.session_uid,),
                 )
                 return SessionActualReceiveResult(
-                    "replayed", actual.session_uid, actual.actual_revision,
-                    int(current[0]) if current is not None and current[0] is not None else None,
+                    "replayed",
+                    actual.session_uid,
+                    actual.actual_revision,
+                    int(current_person[0])
+                    if current_person is not None and current_person[0] is not None
+                    else None,
                 )
             raise SessionActualHrPersistenceError("clé d'idempotence déjà utilisée avec un autre payload")
 
-        inbox_by_revision = self._fetchone(
-            f"SELECT payload_sha256 FROM {INBOX_TABLE} WHERE revision_key=?",
-            (revision_key,),
-        )
-        if inbox_by_revision is not None:
-            if inbox_by_revision[0] == payload_hash:
-                current = self._fetchone(
-                    f"SELECT IDpersonne FROM {WORK_TABLE} WHERE session_uid=?",
-                    (actual.session_uid,),
-                )
-                return SessionActualReceiveResult(
-                    "replayed", actual.session_uid, actual.actual_revision,
-                    int(current[0]) if current is not None and current[0] is not None else None,
-                )
-            raise SessionActualHrPersistenceError("révision déjà reçue avec un autre payload")
-
+        # Le journal courant arbitre ensuite la fraîcheur. Une ancienne révision
+        # renvoyée sous une nouvelle clé n'est pas un replay : elle est obsolète.
         current = self._fetchone(
             f"SELECT actual_uuid, actual_revision, payload_sha256, IDpersonne FROM {WORK_TABLE} WHERE session_uid=?",
             (actual.session_uid,),
@@ -334,10 +326,34 @@ class SessionActualHrRepository:
             if actual.actual_revision == current_revision:
                 if current[2] == payload_hash:
                     return SessionActualReceiveResult(
-                        "replayed", actual.session_uid, actual.actual_revision,
+                        "replayed",
+                        actual.session_uid,
+                        actual.actual_revision,
                         int(current[3]) if current[3] is not None else None,
                     )
                 raise SessionActualHrPersistenceError("révision courante incompatible avec le payload reçu")
+
+        # Pour une révision qui n'est pas obsolète, l'inbox protège aussi contre
+        # une seconde livraison divergente de la même révision.
+        inbox_by_revision = self._fetchone(
+            f"SELECT payload_sha256 FROM {INBOX_TABLE} WHERE revision_key=?",
+            (revision_key,),
+        )
+        if inbox_by_revision is not None:
+            if inbox_by_revision[0] == payload_hash:
+                current_person = self._fetchone(
+                    f"SELECT IDpersonne FROM {WORK_TABLE} WHERE session_uid=?",
+                    (actual.session_uid,),
+                )
+                return SessionActualReceiveResult(
+                    "replayed",
+                    actual.session_uid,
+                    actual.actual_revision,
+                    int(current_person[0])
+                    if current_person is not None and current_person[0] is not None
+                    else None,
+                )
+            raise SessionActualHrPersistenceError("révision déjà reçue avec un autre payload")
 
         person_id: Optional[int] = None
         if actual.session_status == "realisee":
