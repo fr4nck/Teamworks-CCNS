@@ -34,6 +34,7 @@ from .file_exchange import (
     FileFingerprint,
     ValidationSeverity,
 )
+from .lifecycle import HrLifecycleEvent, HrLifecycleEventKind, HrLifecycleTemplate
 from .organizations import (
     EffectivePeriod,
     HrOrganization,
@@ -92,6 +93,9 @@ __all__ = [
     "HrEventJournal",
     "HrEventKind",
     "HrEventTargetKind",
+    "HrLifecycleEvent",
+    "HrLifecycleEventKind",
+    "HrLifecycleTemplate",
     "HrOrganization",
     "OrganizationKind",
     "OrganizationReference",
