@@ -11,6 +11,21 @@ La 0.9.1e reste une corrective/UX. Elle doit rendre la fiche Généralités expl
 - `DLG_Saisie_coords` ne doit plus être invoqué depuis Généralités. Il reste temporairement disponible pour les écrans historiques qui en dépendent encore ; suppression définitive après migration de tous ses consommateurs.
 - Les champs utilisent les rôles sémantiques de `UTILS_Styles` afin que leur largeur soit cohérente avec leur contenu.
 
+## Mise en page responsive / Windows 11 Snap
+
+La fiche ne doit pas supposer que Teamworks-CCNS occupe tout l’écran. Le cas d’usage de référence inclut explicitement une fenêtre ancrée sur une moitié d’écran avec, à côté, Noethys, un navigateur ou un PDF servant de source de saisie.
+
+- Le nombre de colonnes dépend de la largeur réellement disponible dans la fenêtre, pas de la résolution totale de l’écran.
+- Le calcul utilise une largeur logique corrigée de l’échelle d’interface : un écran très large à 200–220 % peut nécessiter une disposition plus compacte qu’à 100 %.
+- À largeur confortable : conserver une composition en deux colonnes lisible.
+- À largeur réduite : empiler les sections sur une seule colonne au lieu de comprimer les champs ou tronquer les libellés.
+- Le changement de disposition doit suivre `EVT_SIZE` et fonctionner pendant un Snap/unsnap Windows 11 sans redémarrer la fiche.
+- Les formulaires étroits doivent devenir défilables verticalement si leur hauteur dépasse la zone de travail ; aucune donnée ne doit être inaccessible.
+- Les champs extensibles (adresse, e-mail, texte long) utilisent l’espace supplémentaire ; les champs courts (date, CP, téléphone, NIR) restent bornés à leur contenu utile.
+- Les boutons d’action doivent se regrouper/revenir à la ligne plutôt que créer une largeur minimale artificielle.
+
+Le seuil de bascule doit être exprimé en largeur logique et centralisé, afin d’éviter des valeurs différentes dans chaque écran. Le comportement visé est notamment : demi-écran ultrawide à 100 % = deux colonnes si l’espace le permet ; demi-écran standard ou fort zoom = une colonne propre.
+
 ## Lieux et codes postaux
 
 ### Naissance
@@ -51,5 +66,8 @@ Le logiciel doit fonctionner hors ligne et accepter une saisie libre. La recherc
 - Le mode France conserve sa recherche assistée.
 - Les fenêtres `fit` ne rognent pas les contrôles après application du zoom/thème.
 - Les champs date, CP, ville, téléphone, e-mail et adresse ont des dimensions sémantiques cohérentes.
+- Snap Windows 11 sur demi-écran ultrawide : fiche exploitable et équilibrée sans grands vides ni champs écrasés.
+- Snap sur demi-écran standard : bascule automatique en une colonne et défilement vertical propre.
+- Zoom fort (200 % et comportement prêt pour 220 %) : la décision une/deux colonnes tient compte de la largeur logique et aucun texte n’est tronqué.
 
 La refonte structurante contrats/temps de travail reste ciblée 0.9.2.
