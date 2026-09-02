@@ -105,14 +105,16 @@ class SessionActualHrRepository:
     @staticmethod
     def _schema_statements(network: bool) -> tuple[str, ...]:
         auto_id = "INTEGER PRIMARY KEY AUTO_INCREMENT" if network else "INTEGER PRIMARY KEY AUTOINCREMENT"
+        # Les horodatages sont fournis explicitement par l'application. Cela évite
+        # DATETIME DEFAULT CURRENT_TIMESTAMP, non portable vers le MySQL 5.5 historique.
         return (
             f"""CREATE TABLE IF NOT EXISTS {MAPPING_TABLE} (
                 IDmapping {auto_id},
                 person_uid VARCHAR(100) NOT NULL UNIQUE,
                 IDpersonne INTEGER NOT NULL UNIQUE,
                 is_active BOOLEAN NOT NULL DEFAULT 1,
-                date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
-                date_modification DATETIME DEFAULT CURRENT_TIMESTAMP
+                date_creation DATETIME,
+                date_modification DATETIME
             )""",
             f"""CREATE TABLE IF NOT EXISTS {INBOX_TABLE} (
                 IDinbox {auto_id},
@@ -144,8 +146,8 @@ class SessionActualHrRepository:
                 validated_at VARCHAR(64) NOT NULL,
                 source_domain VARCHAR(64) NOT NULL,
                 payload_sha256 VARCHAR(64) NOT NULL,
-                date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
-                date_modification DATETIME DEFAULT CURRENT_TIMESTAMP
+                date_creation DATETIME,
+                date_modification DATETIME
             )""",
         )
 
@@ -196,6 +198,13 @@ class SessionActualHrRepository:
             raise SessionActualHrPersistenceError(f"{field_name} invalide")
         return normalized
 
+    @staticmethod
+    def _timestamp_sql(value: Optional[datetime] = None) -> str:
+        value = value or datetime.now()
+        if not isinstance(value, datetime):
+            raise SessionActualHrPersistenceError("horodatage invalide")
+        return value.strftime("%Y-%m-%d %H:%M:%S")
+
     def register_person_uid(self, person_uid: str, person_id: int) -> int:
         """Associe explicitement un UID RH stable à une personne Teamworks existante."""
         self._require_schema()
@@ -215,14 +224,15 @@ class SessionActualHrRepository:
             f"SELECT IDpersonne, is_active FROM {MAPPING_TABLE} WHERE person_uid=?",
             (person_uid,),
         )
+        now_sql = self._timestamp_sql()
         if by_uid is not None:
             if int(by_uid[0]) != person_id:
                 raise SessionActualHrPersistenceError("Cet UID RH est déjà associé à une autre personne")
             if int(by_uid[1]) == 1:
                 return person_id
             self._execute(
-                f"UPDATE {MAPPING_TABLE} SET is_active=1, date_modification=CURRENT_TIMESTAMP WHERE person_uid=?",
-                (person_uid,),
+                f"UPDATE {MAPPING_TABLE} SET is_active=1, date_modification=? WHERE person_uid=?",
+                (now_sql, person_uid),
             )
             self._commit()
             return person_id
@@ -236,8 +246,10 @@ class SessionActualHrRepository:
 
         try:
             self._execute(
-                f"INSERT INTO {MAPPING_TABLE} (person_uid, IDpersonne, is_active) VALUES (?, ?, 1)",
-                (person_uid, person_id),
+                f"""INSERT INTO {MAPPING_TABLE}
+                    (person_uid, IDpersonne, is_active, date_creation, date_modification)
+                    VALUES (?, ?, 1, ?, ?)""",
+                (person_uid, person_id, now_sql, now_sql),
             )
             self._commit()
         except Exception:
@@ -281,9 +293,7 @@ class SessionActualHrRepository:
         if len(revision_key) > 255:
             raise SessionActualHrPersistenceError("revision_key invalide")
         received_at = received_at or datetime.now()
-        if not isinstance(received_at, datetime):
-            raise SessionActualHrPersistenceError("date_reception invalide")
-        received_at_sql = received_at.strftime("%Y-%m-%d %H:%M:%S")
+        received_at_sql = self._timestamp_sql(received_at)
 
         # Un replay portant exactement la même clé de livraison reste un no-op
         # réussi, y compris si une révision plus récente a été appliquée depuis.
@@ -388,9 +398,9 @@ class SessionActualHrRepository:
                         assignment_date, session_status, actual_place_uid,
                         actual_start_time, actual_end_time, actual_duration_minutes,
                         actual_comment, actual_revision, validated_at, source_domain,
-                        payload_sha256
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                    (actual.session_uid,) + work_values,
+                        payload_sha256, date_creation, date_modification
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    (actual.session_uid,) + work_values + (received_at_sql, received_at_sql),
                 )
             else:
                 self._execute(
@@ -399,10 +409,14 @@ class SessionActualHrRepository:
                         session_status=?, actual_place_uid=?, actual_start_time=?,
                         actual_end_time=?, actual_duration_minutes=?, actual_comment=?,
                         actual_revision=?, validated_at=?, source_domain=?, payload_sha256=?,
-                        date_modification=CURRENT_TIMESTAMP
-                    WHERE session_uid=?""",
-                    work_values + (actual.session_uid,),
+                        date_modification=?
+                    WHERE session_uid=? AND actual_revision < ?""",
+                    work_values + (received_at_sql, actual.session_uid, actual.actual_revision),
                 )
+                if getattr(self.db.cursor, "rowcount", None) != 1:
+                    raise SessionActualHrPersistenceError(
+                        "révision du réalisé obsolète ou mise à jour concurrente"
+                    )
 
             self._execute(
                 f"""INSERT INTO {INBOX_TABLE} (
