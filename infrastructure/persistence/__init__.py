@@ -20,6 +20,11 @@ from infrastructure.persistence.teamworks_hr_case_creation_repository import (
     DuplicateTeamworksHrCaseError,
     TeamworksHrCaseCreationRepository,
 )
+from infrastructure.persistence.teamworks_hr_case_document_repository import (
+    TEAMWORKS_HR_CASE_DOCUMENTS_SCHEMA_VERSION,
+    StaleTeamworksHrCaseDocumentStateError,
+    TeamworksHrCaseDocumentRepository,
+)
 from infrastructure.persistence.teamworks_hr_case_workflow_repository import (
     StaleTeamworksHrCaseTransitionError,
     TeamworksHrCaseWorkflowRepository,
@@ -45,15 +50,18 @@ __all__ = [
     "DuplicateTeamworksHrCaseError",
     "EMPLOYEE_PROTECTION_SCHEMA_VERSION",
     "HR_CONNECTIONS_SCHEMA_VERSION",
+    "TEAMWORKS_HR_CASE_DOCUMENTS_SCHEMA_VERSION",
     "TEAMWORKS_HR_CASES_SCHEMA_VERSION",
     "TEAMWORKS_HR_SCHEMA_VERSION",
     "TEAMWORKS_STRUCTURE_IDENTITY_SCHEMA_VERSION",
     "SqliteContractSalaryControlSnapshotRepository",
     "SqliteEmployeeProtectionRepository",
     "SqliteHrConnectionsRepository",
+    "StaleTeamworksHrCaseDocumentStateError",
     "StaleTeamworksHrCaseTransitionError",
     "TeamworksEmployeeProtectionSuccessionRepository",
     "TeamworksHrCaseCreationRepository",
+    "TeamworksHrCaseDocumentRepository",
     "TeamworksHrCaseWorkflowRepository",
     "TeamworksHrCasesRepository",
     "TeamworksHrConnectionsRepository",
