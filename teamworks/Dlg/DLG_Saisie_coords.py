@@ -34,7 +34,13 @@ class Dialog(wx.Dialog):
         self.panel_frame.SetBackgroundColour(UTILS_Interface.GetToken("surface"))
         self.categorieSelect = ""
 
-        self.titre_categories = CTRL_Texte.H2(self.panel_frame, _(u"1. Sélectionnez une catégorie"))
+        # Hiérarchie volontairement compacte : ce dialogue est un formulaire
+        # métier court, pas un assistant multi-étapes.
+        self.titre_categories = CTRL_Texte.H3(self.panel_frame, _(u"Type de coordonnée"))
+        self.aide_categories = CTRL_Texte.BodySecondary(
+            self.panel_frame,
+            _(u"Choisissez le type de coordonnée à enregistrer."),
+        )
         self.bouton_fixe = wx.ToggleButton(self.panel_frame, -1, _(u"Fixe"))
         self.bouton_mobile = wx.ToggleButton(self.panel_frame, -1, _(u"Mobile"))
         self.bouton_fax = wx.ToggleButton(self.panel_frame, -1, _(u"Fax"))
@@ -46,20 +52,19 @@ class Dialog(wx.Dialog):
             "Email": self.bouton_email,
         }
         hauteur_action = UTILS_Styles.GetControlMetric("button_min_height")
-        largeur_action = UTILS_Styles.Scale(104)
         for button in self._category_buttons.values():
-            button.SetMinSize((largeur_action, hauteur_action))
+            button.SetMinSize((-1, hauteur_action))
             button.SetFont(UTILS_Styles.GetFont("label"))
 
-        self.titre_infos = CTRL_Texte.H2(self.panel_frame, _(u"2. Saisissez les informations"))
+        self.titre_infos = CTRL_Texte.H3(self.panel_frame, _(u"Informations"))
         self.label_info_mail = CTRL_Texte.Label(self.panel_frame, _(u"Email"))
         self.text_info_mail = wx.TextCtrl(self.panel_frame, -1, "")
         self.label_info_tel = CTRL_Texte.Label(self.panel_frame, _(u"N° Fixe"))
-        self.text_info_tel = wx.TextCtrl(self.panel_frame, -1, "", style=wx.TE_CENTRE)
+        self.text_info_tel = wx.TextCtrl(self.panel_frame, -1, "")
         self.label_info_mail.Hide()
         self.text_info_mail.Hide()
 
-        self.label_intitule = CTRL_Texte.Label(self.panel_frame, _(u"Intitulé"))
+        self.label_intitule = CTRL_Texte.Label(self.panel_frame, _(u"Intitulé (optionnel)"))
         self.text_intitule = wx.TextCtrl(self.panel_frame, -1, "")
 
         self.bouton_Ok = CTRL_Bouton_image.CTRL(
@@ -102,6 +107,13 @@ class Dialog(wx.Dialog):
         self.text_info_tel.SetToolTip(wx.ToolTip(_(u"Saisissez ici un numéro de téléphone")))
         self.text_info_mail.SetToolTip(wx.ToolTip(_(u"Saisissez ici une adresse Mail valide")))
         self.text_intitule.SetToolTip(wx.ToolTip(_(u"Vous pouvez, si vous le souhaitez, saisir ici un intitulé. Ex : 'Contact à Rennes' ou 'Domicile des parents'...")))
+
+        # Rôles de champs partagés par le design system : largeur, hauteur,
+        # densité et mise à l'échelle sont centralisées dans UTILS_Styles.
+        UTILS_Styles.ApplyFieldRole(self.text_info_tel, UTILS_Styles.FIELD_PHONE)
+        UTILS_Styles.ApplyFieldRole(self.text_info_mail, UTILS_Styles.FIELD_EMAIL)
+        UTILS_Styles.ApplyFieldRole(self.text_intitule, UTILS_Styles.FIELD_TEXT)
+
         UTILS_Styles.ApplyWindowProfile(self, "compact")
 
     def __do_layout(self):
@@ -113,11 +125,24 @@ class Dialog(wx.Dialog):
 
         sizer_base = wx.BoxSizer(wx.VERTICAL)
         sizer_base.Add(self.titre_categories, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, padding)
+        sizer_base.Add(
+            self.aide_categories,
+            0,
+            wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP,
+            padding,
+        )
 
-        sizer_categories = wx.WrapSizer(wx.HORIZONTAL)
+        # Les quatre types forment un groupe exclusif ; des largeurs égales
+        # rendent le choix plus lisible qu'un WrapSizer aux boutons disparates.
+        sizer_categories = wx.GridSizer(rows=1, cols=4, vgap=0, hgap=toolbar_gap)
         for button in (self.bouton_fixe, self.bouton_mobile, self.bouton_fax, self.bouton_email):
-            sizer_categories.Add(button, 0, wx.RIGHT | wx.BOTTOM, toolbar_gap)
-        sizer_base.Add(sizer_categories, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, padding)
+            sizer_categories.Add(button, 1, wx.EXPAND)
+        sizer_base.Add(
+            sizer_categories,
+            0,
+            wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP,
+            padding,
+        )
 
         sizer_base.Add(self.titre_infos, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, section_gap)
         self.sizer_infos = wx.BoxSizer(wx.VERTICAL)
@@ -127,8 +152,16 @@ class Dialog(wx.Dialog):
         self.sizer_infos.Add(self.text_info_tel, 0, wx.EXPAND | wx.BOTTOM, field_gap)
         self.sizer_infos.Add(self.label_intitule, 0, wx.BOTTOM, control_gap)
         self.sizer_infos.Add(self.text_intitule, 0, wx.EXPAND)
-        sizer_base.Add(self.sizer_infos, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, padding)
+        sizer_base.Add(
+            self.sizer_infos,
+            0,
+            wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP,
+            padding,
+        )
 
+        # Le contenu reste dense ; l'espace résiduel appartient au dialogue,
+        # pas aux champs eux-mêmes. Le pied d'actions reste stable en bas.
+        sizer_base.AddStretchSpacer(1)
         sizer_boutons = wx.BoxSizer(wx.HORIZONTAL)
         sizer_boutons.AddStretchSpacer(1)
         sizer_boutons.Add(self.bouton_Ok, 0, wx.RIGHT, toolbar_gap)
@@ -164,6 +197,7 @@ class Dialog(wx.Dialog):
         self._update_category_buttons()
         self.sizer_infos.Layout()
         self.panel_frame.Layout()
+        self.Layout()
         if email:
             self.text_info_mail.SetFocus()
         else:
