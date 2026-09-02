@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Cockpit CRH-24/26/28/30 des démarches RH.
+"""Cockpit CRH-24/26/28/30/32 des démarches RH.
 
 La consultation reste portée par la façade CRH-23. CRH-26 ajoute uniquement des
 transitions métier explicitement autorisées par la frontière CRH-25. CRH-28
 raccorde la consultation du journal CRH-27 par chargement paresseux. CRH-30
-raccorde de la même manière la création contrôlée CRH-29. L'écran ne connaît ni
-GestionDB, ni les repositories, ni l'identité logique de la structure et ne
+raccorde de la même manière la création contrôlée CRH-29. CRH-32 ouvre la
+checklist des pièces CRH-31 uniquement sur action explicite. L'écran ne connaît
+ni GestionDB, ni les repositories, ni l'identité logique de la structure et ne
 modifie jamais le statut technique d'échange.
 """
 
@@ -301,7 +302,7 @@ class TransitionDialog(wx.Dialog):
 
 
 class Dialog(wx.Dialog):
-    """Cockpit structure CRH-24/26/28/30 sur la base Teamworks active."""
+    """Cockpit structure CRH-24/26/28/30/32 sur la base Teamworks active."""
 
     def __init__(
         self,
@@ -384,16 +385,19 @@ class Dialog(wx.Dialog):
         self.refresh = wx.Button(self, -1, _(u"Actualiser"))
         self.new_case = wx.Button(self, -1, _(u"Nouvelle démarche"))
         self.details = wx.Button(self, -1, _(u"Voir le détail"))
+        self.documents = wx.Button(self, -1, _(u"Pièces"))
         self.history = wx.Button(self, -1, _(u"Historique"))
         self.advance = wx.Button(self, -1, _(u"Faire évoluer"))
         self.close = wx.Button(self, wx.ID_CLOSE, _(u"Fermer"))
         self.details.Enable(False)
+        self.documents.Enable(False)
         self.history.Enable(False)
         self.advance.Enable(False)
 
         self.refresh.Bind(wx.EVT_BUTTON, self.OnRefresh)
         self.new_case.Bind(wx.EVT_BUTTON, self.OnNewCase)
         self.details.Bind(wx.EVT_BUTTON, self.OnDetails)
+        self.documents.Bind(wx.EVT_BUTTON, self.OnDocuments)
         self.history.Bind(wx.EVT_BUTTON, self.OnHistory)
         self.advance.Bind(wx.EVT_BUTTON, self.OnAdvance)
         self.close.Bind(wx.EVT_BUTTON, lambda event: self.EndModal(wx.ID_CLOSE))
@@ -431,6 +435,7 @@ class Dialog(wx.Dialog):
         buttons.Add(self.refresh, 0, wx.RIGHT, gap)
         buttons.Add(self.new_case, 0, wx.RIGHT, gap)
         buttons.Add(self.details, 0, wx.RIGHT, gap)
+        buttons.Add(self.documents, 0, wx.RIGHT, gap)
         buttons.Add(self.history, 0, wx.RIGHT, gap)
         buttons.Add(self.advance, 0, wx.RIGHT, gap)
         buttons.AddStretchSpacer(1)
@@ -453,6 +458,11 @@ class Dialog(wx.Dialog):
         row = self._selected_row()
         has_selection = row is not None
         self.details.Enable(has_selection)
+        self.documents.Enable(
+            has_selection and row.expected_document_count > 0
+            if row is not None
+            else False
+        )
         self.history.Enable(has_selection)
         self.advance.Enable(has_selection and row.status not in {
             HrCaseStatus.ACCEPTED,
@@ -647,6 +657,42 @@ class Dialog(wx.Dialog):
             dlg.ShowModal()
         finally:
             dlg.Destroy()
+
+    def OnDocuments(self, event):
+        row = self._selected_row()
+        if row is None or row.expected_document_count <= 0:
+            return
+
+        try:
+            from Dlg import DLG_Demarches_rh_pieces
+
+            dlg = DLG_Demarches_rh_pieces.Dialog(
+                self,
+                case_id=row.case_id,
+                read_only=row.status in {
+                    HrCaseStatus.ACCEPTED,
+                    HrCaseStatus.CANCELLED,
+                },
+            )
+        except Exception as exc:
+            wx.MessageBox(
+                _(u"Le suivi des pièces de cette démarche est momentanément indisponible.\n\n%s")
+                % str(exc),
+                _(u"Pièces de la démarche RH"),
+                wx.OK | wx.ICON_ERROR,
+                self,
+            )
+            return
+
+        try:
+            dlg.ShowModal()
+        finally:
+            dlg.Destroy()
+
+        try:
+            self.RefreshData(select_case_id=row.case_id)
+        except Exception:
+            pass
 
     def OnHistory(self, event):
         row = self._selected_row()
