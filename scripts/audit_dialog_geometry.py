@@ -25,6 +25,15 @@ EXPANDABLE_MARKERS = (
     "HtmlWindow", "wx.html", "wx.richtext",
 )
 
+FIT_MARKERS = (
+    "self.Fit(",
+    "FitWindowToContent(",
+    "ApplyWindowProfile(self, \"fit\"",
+    "ApplyWindowProfile(self, 'fit'",
+)
+
+REFIT_MARKERS = FIT_MARKERS + ("RefitWindow(",)
+
 
 def _read(path):
     try:
@@ -62,7 +71,8 @@ def classify(block):
     resizable = "wx.RESIZE_BORDER" in block
     expandable = _has_any(block, EXPANDABLE_MARKERS)
     dynamic = ".Show(" in block or ".Hide(" in block
-    fit = bool(re.search(r"(?:\bself\.)?Fit\s*\(", block))
+    fit = _has_any(block, FIT_MARKERS)
+    refit = _has_any(block, REFIT_MARKERS)
     fixed_min = "SetMinSize(" in block
     fixed_max = "SetMaxSize(" in block
     literal_size = bool(LITERAL_SIZE.search(block))
@@ -75,13 +85,13 @@ def classify(block):
     if stretch and not expandable:
         findings.append(("high", "stretch-without-expandable-content", "supprimer l'espace élastique qui ne sert aucun contrôle"))
     if literal_size and not window_profile:
-        findings.append(("medium", "literal-window-size", "remplacer la taille arbitraire par Fit() ou un profil sémantique"))
+        findings.append(("medium", "literal-window-size", "remplacer la taille arbitraire par le profil fit ou un profil sémantique"))
     if not resizable and expandable and not fixed_min:
         findings.append(("medium", "fixed-workspace-without-minimum", "vérifier qu'une vraie zone de travail peut grandir et possède un minimum"))
-    if dynamic and not (fit or "Layout(" in block):
-        findings.append(("medium", "dynamic-content-without-relayout", "recalculer la géométrie après Show/Hide"))
+    if dynamic and not refit:
+        findings.append(("medium", "dynamic-content-without-refit", "appeler RefitWindow après Show/Hide ou ajout/retrait dynamique"))
     if resizable and fit and not expandable:
-        findings.append(("medium", "fit-but-still-resizable", "Fit() ne suffit pas si l'utilisateur peut étirer la boîte"))
+        findings.append(("medium", "fit-but-still-resizable", "un formulaire fit ne doit pas rester librement étirable"))
 
     if expandable:
         kind = "workspace"
@@ -96,6 +106,7 @@ def classify(block):
         "expandable": expandable,
         "dynamic": dynamic,
         "fit": fit,
+        "refit": refit,
         "set_min_size": fixed_min,
         "set_max_size": fixed_max,
         "literal_size": literal_size,
