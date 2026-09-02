@@ -32,10 +32,8 @@ def test_compact_form_window_profile_is_available():
 
 def test_generalites_is_the_primary_home_for_contact_details():
     source = _read(GENERALITES)
-    # Le dialogue autonome reste un composant de compatibilité (notamment
-    # candidats), mais la fiche salarié doit porter directement la vue et les
-    # actions de téléphones/e-mails.
-    assert 'self.section_coords = CTRL_Section.Section(' in source
+    assert 'titre=_(u"Adresse postale")' in source
+    assert 'titre=_(u"Téléphones et e-mails")' in source
     assert 'self.list_ctrl_coords = ListCtrlCoords(' in source
     assert 'self.button_coords_ajout' in source
     assert 'self.button_coords_modif' in source
