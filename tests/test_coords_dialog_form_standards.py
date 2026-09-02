@@ -24,7 +24,16 @@ def test_coords_dialog_uses_semantic_form_primitives():
     assert "primary_container" in source
 
 
-def test_compact_form_window_profile_is_available():
+def test_short_coords_dialog_is_bounded_to_its_content():
+    source = _read(SOURCE)
+    assert "style=wx.DEFAULT_DIALOG_STYLE)" in source
+    assert "wx.RESIZE_BORDER" not in source
+    assert "self._fit_to_content()" in source
+    assert "self.Fit()" in source
+    assert "self.SetMaxSize((largeur, hauteur))" in source
+
+
+def test_compact_form_window_profile_remains_available_for_other_forms():
     source = _read(STYLES)
     assert '"form_compact"' in source
     assert '"min_size": (520, 320)' in source
