@@ -114,7 +114,7 @@ class Dialog(wx.Dialog):
         UTILS_Styles.ApplyFieldRole(self.text_info_mail, UTILS_Styles.FIELD_EMAIL)
         UTILS_Styles.ApplyFieldRole(self.text_intitule, UTILS_Styles.FIELD_TEXT)
 
-        UTILS_Styles.ApplyWindowProfile(self, "compact")
+        UTILS_Styles.ApplyWindowProfile(self, "form_compact")
 
     def __do_layout(self):
         padding = UTILS_Styles.GetLayoutSpacing("dialog_padding")
