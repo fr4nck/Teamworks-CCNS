@@ -1,6 +1,6 @@
 # Teamworks-CCNS — suivi CCNS et extensions
 
-**Mise à jour : 1er septembre 2026**
+**Mise à jour : 2 septembre 2026**
 
 ## Objectif
 
@@ -72,7 +72,8 @@ Le chantier **Connexions RH** progresse séparément du build 0.9.1b en cours de
 - `CRH-27` : projection, runtime et composant wxPython de consultation du journal d'une démarche. Les événements réellement persistés sont filtrés par dossier, triés du plus récent au plus ancien et affichent horodatage avec fuseau, acteur, source et métadonnées d'audit ; le composant reste en lecture seule ;
 - `CRH-28` : raccordement du bouton « Historique » au cockpit. Il est disponible dès qu'un dossier est sélectionné, y compris lorsqu'il est accepté ou annulé, charge paresseusement le dialogue CRH-27 et ne lui transmet que l'identifiant du dossier. Aucune écriture, transition ou modification du statut technique n'est ajoutée ;
 - `CRH-29` : frontière de création contrôlée des démarches RH. Le service reçoit explicitement type, sujet, organisme, dates, pièces attendues et commentaire, exige un organisme déjà configuré, crée le dossier au statut `TODO` / `NOT_APPLICABLE` et persiste atomiquement le dossier, ses pièces et l'événement `CASE_CREATED`. Aucun catalogue juridique, règle automatique d'échéance ou transport externe n'est introduit ;
-- CRH-01 à CRH-08 restent sans persistance ; CRH-09 et CRH-13 restent des stores de qualification isolés. CRH-16 fournit l'adaptateur de production pour les profils et suivis salarié, CRH-22 celui des démarches et événements. CRH-17A verrouille l'identité logique de la base. CRH-10A orchestre la structure et CRH-10B l'expose au paramétrage ; CRH-11 à CRH-20 construisent le suivi salarié jusqu'aux actions historisées ; CRH-21 à CRH-29 construisent le cockpit structure, sa persistance, ses actions métier, son journal et la frontière transactionnelle de création. Aucune authentification réelle, ouverture de navigateur effective ou communication réseau n'est ajoutée ;
+- `CRH-30` : formulaire wxPython « Nouvelle démarche » raccordé au cockpit. Il charge la frontière CRH-29 au premier clic, propose les personnes lues via `PersonReader` et uniquement les organismes déjà configurés, exige la saisie explicite du type, des dates et du caractère obligatoire/facultatif de chaque pièce, puis demande une seconde confirmation avant création. Le dossier créé est rechargé et sélectionné sans modifier le statut technique ni déclencher de transmission externe ;
+- CRH-01 à CRH-08 restent sans persistance ; CRH-09 et CRH-13 restent des stores de qualification isolés. CRH-16 fournit l'adaptateur de production pour les profils et suivis salarié, CRH-22 celui des démarches et événements. CRH-17A verrouille l'identité logique de la base. CRH-10A orchestre la structure et CRH-10B l'expose au paramétrage ; CRH-11 à CRH-20 construisent le suivi salarié jusqu'aux actions historisées ; CRH-21 à CRH-30 construisent le cockpit structure, sa persistance, ses actions métier, son journal et la création transactionnelle désormais raccordée à l'interface. Aucune authentification réelle, ouverture de navigateur effective ou communication réseau n'est ajoutée ;
 - ces travaux ne modifient pas le pourcentage des 9 jalons CCNS ci-dessus et ne valent pas qualification fonctionnelle tant que leurs PR ne sont pas validées et fusionnées.
 
 ## Restant prioritaire
@@ -101,4 +102,4 @@ son absence, aucun envoi n'a lieu et le fichier reste disponible dans `Logs`.
 - `docs/48-revue-architecture-ccns.md`
 - `docs/50-scope-metier.md`
 - `docs/60-scenario-utilisation-controle-salarial.md`
-- documentation `docs/40-*` à `docs/81-*`
+- documentation `docs/40-*` à `docs/82-*`
