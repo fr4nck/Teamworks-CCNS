@@ -1,6 +1,6 @@
 # Teamworks-CCNS — suivi CCNS et extensions
 
-**Mise à jour : 25 août 2026**
+**Mise à jour : 2 septembre 2026**
 
 ## Objectif
 
@@ -46,6 +46,34 @@ Ce pourcentage mesure le développement fonctionnel et son intégration automati
 - injecter explicitement une date de référence dans l'audit avant d'activer davantage de logique réglementaire datée ;
 - stabiliser la lecture persistée des versions de grille seulement dans un lot dédié et testé ;
 - conserver la veille réglementaire descriptive tant qu'une validation métier/juridique n'a pas autorisé son activation automatique.
+
+## Interopérabilité — réalisé validé des séances
+
+Le domaine `hr_employment` dispose désormais d'un consommateur du contrat
+`session-actual/1`, émis par le domaine stable `operations_portal` avec le type
+d'événement `session_actual_validated`.
+
+Principes du lot :
+
+- inbox idempotente avec empreinte SHA-256, clé d'idempotence et unicité
+  domaine + séance + révision ;
+- journal RH additif du réalisé, distinct du planning prévisionnel, des contrats
+  et de la paie ;
+- résolution de `actual_staff_uid` par un mapping explicite vers une
+  `IDpersonne` Teamworks existante ;
+- aucun salarié n'est créé implicitement lorsqu'un UID RH est inconnu ;
+- une séance annulée reste traçable mais ne porte ni intervenant, ni lieu, ni
+  horaires ni durée réels ;
+- une révision plus récente peut corriger le journal ; une révision obsolète ou
+  divergente est refusée ;
+- l'identité `actual_uuid` d'un réalisé ne peut pas changer pour une même
+  `session_uid` ;
+- les écritures du journal et de l'inbox sont atomiques ;
+- aucun effet direct sur la production de bulletins de paie.
+
+Le transport réseau reste un adaptateur séparé : ce consommateur constitue le
+point d'entrée métier/persistance et ne lie pas Teamworks à un nom de produit ou
+à une API HTTP particulière.
 
 ## Rapports de crash
 
