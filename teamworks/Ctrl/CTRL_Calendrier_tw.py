@@ -12,15 +12,112 @@ import datetime
 import sys
 import wx
 
+import GestionDB
 from Ctrl import CTRL_Bouton_image
 from Ctrl import CTRL_Calendrier_tw_core as CORE
+from teamworks.CcnsCore.calendar_hr import build_birthdays_index, format_birthday_names
 from Utils import UTILS_Interface
 from Utils import UTILS_Styles
 from Utils.UTILS_Traduction import _
 
 
-# Le moteur métier/dessin est conservé tel quel.
-Calendrier = CORE.Calendrier
+class CalendrierRh(CORE.Calendrier):
+    """Calendrier historique enrichi d'informations issues du registre RH.
+
+    Le moteur de sélection reste intact. Cette sous-classe ajoute uniquement
+    une projection en lecture seule des anniversaires enregistrés dans
+    ``personnes.date_naiss``.
+    """
+
+    def __init__(self, *args, **kwargs):
+        self.dictAnniversaires = {}
+        self._anneeAnniversaires = None
+        self.couleurAnniversaire = UTILS_Interface.GetToken("primary")
+        CORE.Calendrier.__init__(self, *args, **kwargs)
+
+    def _charger_anniversaires(self, annee, force=False):
+        annee = int(annee)
+        if not force and self._anneeAnniversaires == annee:
+            return
+
+        rows = []
+        DB = None
+        try:
+            DB = GestionDB.DB()
+            DB.ExecuterReq(
+                """
+                SELECT IDpersonne, nom, prenom, date_naiss
+                FROM personnes
+                WHERE date_naiss IS NOT NULL AND date_naiss <> ''
+                ORDER BY prenom, nom, IDpersonne;
+                """
+            )
+            rows = DB.ResultatReq()
+        except Exception:
+            # Le calendrier reste utilisable même si aucune base de personnel
+            # n'est ouverte (dialogues autonomes, démarrage, tests manuels).
+            rows = []
+        finally:
+            if DB is not None:
+                try:
+                    DB.Close()
+                except Exception:
+                    pass
+
+        self.dictAnniversaires = build_birthdays_index(rows, annee)
+        self._anneeAnniversaires = annee
+
+    def SetMoisAnneeCalendrier(self, mois=0, annee=0):
+        annee_cible = int(annee or self.anneeCalendrier)
+        self._charger_anniversaires(annee_cible)
+        CORE.Calendrier.SetMoisAnneeCalendrier(self, mois, annee)
+
+    def MAJpanel(self):
+        self._charger_anniversaires(self.anneeCalendrier, force=True)
+        CORE.Calendrier.MAJpanel(self)
+
+    def DrawCase(self, dc, texteDate, x, y, l, h, survol=False):
+        CORE.Calendrier.DrawCase(self, dc, texteDate, x, y, l, h, survol=survol)
+        if texteDate not in self.dictAnniversaires:
+            return
+
+        # Petit repère visuel discret en bas à droite de la journée. Le texte
+        # complet reste disponible dans la barre d'état au survol.
+        couleur = self.couleurAnniversaire
+        rayon = max(2, min(4, int(round(min(l, h) / 10.0))))
+        centre_x = int(x + l - rayon - 4)
+        centre_y = int(y + h - rayon - 4)
+        dc.SetId(self.DateEnIDobjet(texteDate))
+        dc.SetBrush(wx.Brush(couleur))
+        dc.SetPen(wx.Pen(couleur, 1))
+        dc.DrawCircle(centre_x, centre_y, rayon)
+
+    def OnMotion(self, event):
+        CORE.Calendrier.OnMotion(self, event)
+        if self.caseSurvol is None:
+            return
+
+        try:
+            date = self.IDobjetEnDate(self.caseSurvol)
+        except Exception:
+            return
+        people = self.dictAnniversaires.get(date, [])
+        if not people:
+            return
+
+        try:
+            top = wx.GetApp().GetTopWindow()
+            actuel = top.GetStatusText(0)
+            marqueur = _(u" | Anniversaire : ")
+            if marqueur not in actuel:
+                top.SetStatusText(actuel + marqueur + format_birthday_names(people), 0)
+        except Exception:
+            pass
+
+
+# Le moteur métier/dessin reste celui de l'historique ; l'enrichissement RH
+# est volontairement contenu dans cette coque moderne.
+Calendrier = CalendrierRh
 
 
 class CTRL_Annee(wx.SpinCtrl):
@@ -136,6 +233,7 @@ class Panel(wx.Panel):
             "couleurVacances": "warning",
             "couleurFontJoursAvecPresents": "primary",
             "couleurFerie": "surface_container_high",
+            "couleurAnniversaire": "primary",
         }
         for attribut, token in couleurs.items():
             setattr(self.calendrier, attribut, UTILS_Interface.GetToken(token))
