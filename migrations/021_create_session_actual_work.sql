@@ -15,6 +15,6 @@ CREATE TABLE IF NOT EXISTS tw_session_actual_work (
     validated_at VARCHAR(64) NOT NULL,
     source_domain VARCHAR(64) NOT NULL,
     payload_sha256 VARCHAR(64) NOT NULL,
-    date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
-    date_modification DATETIME DEFAULT CURRENT_TIMESTAMP
+    date_creation DATETIME,
+    date_modification DATETIME
 );
