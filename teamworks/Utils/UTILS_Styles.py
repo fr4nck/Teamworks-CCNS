@@ -211,16 +211,56 @@ def GetWindowSize(profile="standard", display_size=None):
     return width, height
 
 
+def _CentreWindow(window):
+    try:
+        window.CentreOnParent()
+    except Exception:
+        window.CentreOnScreen()
+
+
+def FitWindowToContent(window, centre=True, lock=False):
+    """Dimensionne une fenêtre sur son contenu réel.
+
+    Ce profil est destiné aux formulaires et boîtes de dialogue dont l'espace
+    supplémentaire n'apporte rien. Un contrôle ajouté au sizer avant cet appel
+    est automatiquement pris en compte par ``Fit()``. Pour un contenu modifié
+    après affichage (Show/Hide, ajout dynamique), appeler ``RefitWindow``.
+
+    ``lock=True`` fige la taille obtenue ; par défaut la fonction ne modifie pas
+    les bornes min/max afin de ne pas transformer une vraie fenêtre de travail
+    en boîte rigide par accident.
+    """
+    try:
+        window.Layout()
+    except Exception:
+        pass
+    window.Fit()
+    size = window.GetSize()
+    width, height = size.GetWidth(), size.GetHeight()
+    if lock:
+        window.SetMinSize((width, height))
+        window.SetMaxSize((width, height))
+    window._teamworks_window_profile = "fit"
+    if centre:
+        _CentreWindow(window)
+    return width, height
+
+
+def RefitWindow(window, centre=False, lock=False):
+    """Recalcule un profil ``fit`` après une mutation du contenu."""
+    return FitWindowToContent(window, centre=centre, lock=lock)
+
+
 def ApplyWindowProfile(window, profile="standard", centre=True):
+    if profile == "fit":
+        return FitWindowToContent(window, centre=centre)
     size = GetWindowSize(profile)
     window.SetSize(size)
     definition = WINDOW_PROFILES.get(profile, WINDOW_PROFILES["standard"])
     window.SetMinSize(tuple(Scale(value) for value in definition["min_size"]))
+    window._teamworks_window_profile = profile
     if centre:
-        try:
-            window.CentreOnParent()
-        except Exception:
-            window.CentreOnScreen()
+        _CentreWindow(window)
     return size
 
 
