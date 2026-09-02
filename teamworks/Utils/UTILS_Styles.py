@@ -83,6 +83,7 @@ FIELD_METRICS = {
     FIELD_LONG_TEXT: {"characters": 48, "expand": True},
 }
 WINDOW_PROFILES = {
+    "form_compact": {"width_ratio": 0.32, "height_ratio": 0.34, "min_size": (520, 320), "max_size": (720, 480)},
     "compact": {"width_ratio": 0.38, "height_ratio": 0.44, "min_size": (420, 320), "max_size": (760, 640)},
     "standard": {"width_ratio": 0.56, "height_ratio": 0.64, "min_size": (640, 480), "max_size": (1120, 880)},
     "wide": {"width_ratio": 0.72, "height_ratio": 0.72, "min_size": (820, 560), "max_size": (1520, 1040)},
