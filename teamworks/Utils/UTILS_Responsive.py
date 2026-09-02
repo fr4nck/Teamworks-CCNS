@@ -25,7 +25,9 @@ def logical_width(pixel_width, scale_percent=100):
     except (TypeError, ValueError):
         width = 0.0
     try:
-        scale = max(1.0, float(scale_percent))
+        scale = float(scale_percent)
+        if scale <= 0:
+            scale = 100.0
     except (TypeError, ValueError):
         scale = 100.0
     return width * 100.0 / scale
