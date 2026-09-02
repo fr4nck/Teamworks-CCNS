@@ -14,7 +14,13 @@ import FonctionsPerso
 import wx.lib.mixins.listctrl as listmix
 from Dlg import DLG_Config_modeles_contrats as ConfigModeles
 import GestionDB
-from Utils import UTILS_Adaptations, UTILS_Contrats_schema
+from Ctrl import CTRL_Texte
+from Utils import (
+    UTILS_Adaptations,
+    UTILS_Contrats_schema,
+    UTILS_Interface,
+    UTILS_Styles,
+)
 
 
 def _resolve_model_convention(current_convention, model_convention, is_legacy_model, is_cee_model):
@@ -30,13 +36,47 @@ class Page(wx.Panel):
     def __init__(self, *args, **kwds):
         kwds["style"] = wx.TAB_TRAVERSAL
         wx.Panel.__init__(self, *args, **kwds)
-        self.sizer_choix_modele_staticbox = wx.StaticBox(self, -1, _(u"Choix du modèle"))
-        self.label_titre = wx.StaticText(self, -1, _(u"1. Importation d'un modèle de contrat"))
-        self.label_intro = wx.StaticText(self, -1, _(u"Souhaitez-vous utiliser un modèle de contrat pour faciliter votre saisie ?"))
-        self.radio_non = wx.RadioButton(self, -1, "Non", style=wx.RB_GROUP)
-        self.radio_oui = wx.RadioButton(self, -1, "Oui")
-        self.listCtrl_modeles = ListCtrl(self.sizer_choix_modele_staticbox, controller=self)
-        self.bouton_modeles = wx.Button(self.sizer_choix_modele_staticbox, -1, "...", style=wx.BU_EXACTFIT)
+
+        self.label_titre = CTRL_Texte.H2(self, _(u"1. Point de départ"))
+        self.label_intro = CTRL_Texte.BodySecondary(
+            self,
+            _(u"Choisissez simplement comment démarrer. Vous pourrez modifier tous les éléments du contrat ensuite."),
+        )
+
+        self.radio_non = wx.RadioButton(
+            self,
+            -1,
+            _(u"Créer le contrat sans modèle"),
+            style=wx.RB_GROUP,
+        )
+        self.radio_oui = wx.RadioButton(
+            self,
+            -1,
+            _(u"Utiliser un modèle existant"),
+        )
+        self.aide_sans_modele = CTRL_Texte.BodySecondary(
+            self,
+            _(u"Recommandé pour un contrat ponctuel ou lorsque vous voulez repartir d'une saisie propre."),
+        )
+        self.aide_avec_modele = CTRL_Texte.BodySecondary(
+            self,
+            _(u"Pratique pour reprendre une structure de contrat déjà utilisée sans ressaisir les mêmes paramètres."),
+        )
+
+        self.sizer_choix_modele_staticbox = wx.StaticBox(
+            self,
+            -1,
+            _(u"Modèles disponibles"),
+        )
+        self.listCtrl_modeles = ListCtrl(
+            self.sizer_choix_modele_staticbox,
+            controller=self,
+        )
+        self.bouton_modeles = wx.Button(
+            self.sizer_choix_modele_staticbox,
+            -1,
+            _(u"Gérer les modèles"),
+        )
 
         self.__set_properties()
         self.__do_layout()
@@ -48,34 +88,61 @@ class Page(wx.Panel):
         self.Init_radio(position="non")
 
     def __set_properties(self):
-        self.label_titre.SetFont(wx.Font(8, wx.DEFAULT, wx.NORMAL, wx.BOLD, 0, ""))
-        self.bouton_modeles.SetMinSize((20, 20))
-        self.bouton_modeles.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour ajouter, modifier ou supprimer des modèles de contrat")))
+        self.bouton_modeles.SetMinSize(
+            (-1, UTILS_Styles.GetControlMetric("button_min_height"))
+        )
+        self.bouton_modeles.SetToolTip(
+            wx.ToolTip(
+                _(u"Ajouter, modifier ou supprimer les modèles de contrat")
+            )
+        )
+        self.listCtrl_modeles.SetMinSize(
+            (-1, UTILS_Styles.Scale(180))
+        )
 
     def __do_layout(self):
-        grid_sizer_base = wx.FlexGridSizer(rows=4, cols=1, vgap=10, hgap=10)
-        grid_sizer_question = wx.FlexGridSizer(rows=3, cols=1, vgap=5, hgap=5)
-        sizer_choix_modele = wx.StaticBoxSizer(self.sizer_choix_modele_staticbox, wx.VERTICAL)
-        grid_sizer_choix = wx.FlexGridSizer(rows=1, cols=2, vgap=5, hgap=5)
-        grid_sizer_boutons = wx.FlexGridSizer(rows=3, cols=1, vgap=5, hgap=5)
-        grid_sizer_base.Add(self.label_titre, 0, 0, 0)
-        grid_sizer_base.Add(self.label_intro, 0, wx.LEFT, 20)
-        grid_sizer_question.Add(self.radio_non, 0, 0)
-        grid_sizer_question.Add(self.radio_oui, 0, 0)
-        grid_sizer_choix.Add(self.listCtrl_modeles, 1, wx.EXPAND, 0)
-        grid_sizer_boutons.Add(self.bouton_modeles, 0, 0, 0)
-        grid_sizer_choix.Add(grid_sizer_boutons, 1, wx.EXPAND, 0)
-        grid_sizer_choix.AddGrowableRow(0)
-        grid_sizer_choix.AddGrowableCol(0)
-        sizer_choix_modele.Add(grid_sizer_choix, 1, wx.ALL|wx.EXPAND, 5)
-        grid_sizer_question.Add(sizer_choix_modele, 1, wx.LEFT|wx.EXPAND, 18)
-        grid_sizer_question.AddGrowableRow(2)
-        grid_sizer_question.AddGrowableCol(0)
-        grid_sizer_base.Add(grid_sizer_question, 1, wx.EXPAND|wx.LEFT, 35)
-        self.SetSizer(grid_sizer_base)
-        grid_sizer_base.Fit(self)
-        grid_sizer_base.AddGrowableRow(2)
-        grid_sizer_base.AddGrowableCol(0)
+        page_gap = UTILS_Styles.GetLayoutSpacing("page_gap")
+        section_gap = UTILS_Styles.GetLayoutSpacing("section_gap")
+        field_gap = UTILS_Styles.GetLayoutSpacing("field_gap")
+        control_gap = UTILS_Styles.GetLayoutSpacing("control_gap")
+
+        sizer_base = wx.BoxSizer(wx.VERTICAL)
+        sizer_base.Add(self.label_titre, 0, wx.EXPAND | wx.BOTTOM, field_gap)
+        sizer_base.Add(self.label_intro, 0, wx.EXPAND | wx.BOTTOM, section_gap)
+
+        bloc_sans = wx.BoxSizer(wx.VERTICAL)
+        bloc_sans.Add(self.radio_non, 0, wx.BOTTOM, control_gap)
+        bloc_sans.Add(self.aide_sans_modele, 0, wx.LEFT, UTILS_Styles.GetSpacing("lg"))
+        sizer_base.Add(bloc_sans, 0, wx.EXPAND | wx.BOTTOM, section_gap)
+
+        bloc_avec = wx.BoxSizer(wx.VERTICAL)
+        bloc_avec.Add(self.radio_oui, 0, wx.BOTTOM, control_gap)
+        bloc_avec.Add(self.aide_avec_modele, 0, wx.LEFT, UTILS_Styles.GetSpacing("lg"))
+        sizer_base.Add(bloc_avec, 0, wx.EXPAND | wx.BOTTOM, field_gap)
+
+        sizer_choix_modele = wx.BoxSizer(wx.VERTICAL)
+        sizer_choix_modele.Add(
+            self.listCtrl_modeles,
+            1,
+            wx.EXPAND | wx.BOTTOM,
+            field_gap,
+        )
+        ligne_actions = wx.BoxSizer(wx.HORIZONTAL)
+        ligne_actions.AddStretchSpacer(1)
+        ligne_actions.Add(self.bouton_modeles, 0)
+        sizer_choix_modele.Add(ligne_actions, 0, wx.EXPAND)
+        self.sizer_choix_modele_staticbox.SetSizer(sizer_choix_modele)
+
+        sizer_base.Add(
+            self.sizer_choix_modele_staticbox,
+            1,
+            wx.EXPAND | wx.TOP,
+            field_gap,
+        )
+
+        outer = wx.BoxSizer(wx.VERTICAL)
+        outer.Add(sizer_base, 1, wx.EXPAND | wx.ALL, page_gap)
+        self.SetSizer(outer)
 
     def OnRadioNon(self, event):
         self.Init_radio(position="non")
@@ -92,14 +159,13 @@ class Page(wx.Panel):
         dlg.Destroy()
 
     def Init_radio(self, position="non"):
-        if position == "non":
-            self.radio_non.SetValue(True)
-            self.listCtrl_modeles.Enable(False)
-            self.bouton_modeles.Enable(False)
-        else:
-            self.radio_oui.SetValue(True)
-            self.listCtrl_modeles.Enable(True)
-            self.bouton_modeles.Enable(True)
+        utilise_modele = position == "oui"
+        self.radio_non.SetValue(not utilise_modele)
+        self.radio_oui.SetValue(utilise_modele)
+        self.listCtrl_modeles.Enable(utilise_modele)
+        self.bouton_modeles.Enable(utilise_modele)
+        self.sizer_choix_modele_staticbox.Show(utilise_modele)
+        self.Layout()
 
     def MAJ_ListCtrl(self):
         self.listCtrl_modeles.MAJListeCtrl()
@@ -110,7 +176,12 @@ class Page(wx.Panel):
 
         index = self.listCtrl_modeles.GetFirstSelected()
         if index == -1:
-            dlg = wx.MessageDialog(self, _(u"Vous devez sélectionner un modèle dans la liste."), "Information", wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(
+                self,
+                _(u"Sélectionnez un modèle de contrat pour continuer."),
+                _(u"Modèle de contrat"),
+                wx.OK | wx.ICON_INFORMATION,
+            )
             dlg.ShowModal()
             dlg.Destroy()
             return False
@@ -176,19 +247,36 @@ class Page(wx.Panel):
 
 class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorterMixin):
     def __init__(self, parent, controller):
-        wx.ListCtrl.__init__(self, parent, -1, style=wx.LC_REPORT|wx.LC_VIRTUAL|wx.LC_SINGLE_SEL|wx.LC_HRULES|wx.LC_VRULES)
+        wx.ListCtrl.__init__(
+            self,
+            parent,
+            -1,
+            style=wx.LC_REPORT | wx.LC_VIRTUAL | wx.LC_SINGLE_SEL | wx.LC_HRULES,
+        )
 
         self.criteres = ""
         self.parent = controller
 
-        tailleIcones = 16
+        tailleIcones = UTILS_Styles.GetIconSize("small")[0]
         self.il = wx.ImageList(tailleIcones, tailleIcones)
-        self.imgTriAz = self.il.Add(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Tri_az.png"), wx.BITMAP_TYPE_PNG))
-        self.imgTriZa = self.il.Add(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Tri_za.png"), wx.BITMAP_TYPE_PNG))
+        self.imgTriAz = self.il.Add(
+            wx.Bitmap(
+                Chemins.GetStaticPath("Images/16x16/Tri_az.png"),
+                wx.BITMAP_TYPE_PNG,
+            )
+        )
+        self.imgTriZa = self.il.Add(
+            wx.Bitmap(
+                Chemins.GetStaticPath("Images/16x16/Tri_za.png"),
+                wx.BITMAP_TYPE_PNG,
+            )
+        )
         self.SetImageList(self.il, wx.IMAGE_LIST_SMALL)
 
         self.attr1 = wx.ItemAttr()
-        self.attr1.SetBackgroundColour("#EEF4FB")
+        self.attr1.SetBackgroundColour(
+            UTILS_Interface.GetToken("surface_container_low")
+        )
         self.Remplissage()
 
         self.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.OnItemActivated)
@@ -202,12 +290,12 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
     def Remplissage(self):
         self.Importation()
         self.nbreColonnes = 2
-        self.InsertColumn(0, _(u"     ID"))
+        self.InsertColumn(0, _(u"ID"))
         self.SetColumnWidth(0, 0)
         self.InsertColumn(1, _(u"Nom"))
-        self.SetColumnWidth(1, 200)
+        self.SetColumnWidth(1, UTILS_Styles.Scale(220))
         self.InsertColumn(2, _(u"Description"))
-        self.SetColumnWidth(2, 100)
+        self.SetColumnWidth(2, UTILS_Styles.Scale(320))
 
         self.itemDataMap = self.donnees
         self.itemIndexMap = list(self.donnees.keys())
@@ -284,18 +372,33 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
         menuPop = UTILS_Adaptations.Menu()
 
         item = wx.MenuItem(menuPop, 10, _(u"Ajouter"))
-        item.SetBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_PNG))
+        item.SetBitmap(
+            wx.Bitmap(
+                Chemins.GetStaticPath("Images/16x16/Ajouter.png"),
+                wx.BITMAP_TYPE_PNG,
+            )
+        )
         menuPop.AppendItem(item)
         self.Bind(wx.EVT_MENU, self.Menu_Ajouter, id=10)
 
         menuPop.AppendSeparator()
         item = wx.MenuItem(menuPop, 20, _(u"Modifier"))
-        item.SetBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Modifier.png"), wx.BITMAP_TYPE_PNG))
+        item.SetBitmap(
+            wx.Bitmap(
+                Chemins.GetStaticPath("Images/16x16/Modifier.png"),
+                wx.BITMAP_TYPE_PNG,
+            )
+        )
         menuPop.AppendItem(item)
         self.Bind(wx.EVT_MENU, self.Menu_Modifier, id=20)
 
         item = wx.MenuItem(menuPop, 30, _(u"Supprimer"))
-        item.SetBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_PNG))
+        item.SetBitmap(
+            wx.Bitmap(
+                Chemins.GetStaticPath("Images/16x16/Supprimer.png"),
+                wx.BITMAP_TYPE_PNG,
+            )
+        )
         menuPop.AppendItem(item)
         self.Bind(wx.EVT_MENU, self.Menu_Supprimer, id=30)
 
