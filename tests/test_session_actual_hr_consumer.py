@@ -90,9 +90,9 @@ def cancelled_payload(**overrides):
     return data
 
 
-def ready_repository():
+def ready_repository(repository_class=SessionActualHrRepository):
     db = SQLiteTestDB()
-    repository = SessionActualHrRepository(db_factory=lambda: db)
+    repository = repository_class(db_factory=lambda: db)
     assert set(repository.ensure_schema()) == {MAPPING_TABLE, INBOX_TABLE, WORK_TABLE}
     assert repository.ensure_schema(apply=True) == ()
     db.cursor.execute("INSERT INTO personnes VALUES (1, 'Lovelace', 'Ada')")
@@ -111,6 +111,12 @@ def test_contrat_session_actual_1_est_aligne_sur_le_producteur():
     assert actual.actual_duration_minutes == 90
     assert actual.canonical_payload() == payload()
     assert len(actual.payload_sha256()) == 64
+
+
+@pytest.mark.parametrize("revision", [1.9, True, "1"])
+def test_contrat_refuse_les_revisions_non_entieres(revision):
+    with pytest.raises(SessionActualContractError, match="actual_revision invalide"):
+        SessionActual.from_payload(payload(actual_revision=revision))
 
 
 def test_contrat_refuse_duree_incoherente_et_annulation_avec_intervenant():
@@ -139,6 +145,7 @@ def test_schema_mysql_utilise_auto_increment_sans_sqlite_autoincrement():
     assert "AUTO_INCREMENT" in mysql_sql
     assert "AUTOINCREMENT" not in mysql_sql
     assert "AUTOINCREMENT" in sqlite_sql
+    assert "DATETIME DEFAULT CURRENT_TIMESTAMP" not in mysql_sql
 
 
 def test_mapping_uid_exige_une_personne_existante_et_ne_cree_rien():
@@ -173,6 +180,10 @@ def test_realise_est_applique_une_fois_sans_effet_planning_contrat_ou_paie():
         f"SELECT session_uid, IDpersonne, actual_duration_minutes, actual_place_uid FROM {WORK_TABLE}"
     ).fetchone()
     assert work == ("INT-SESSION-001", 1, 90, "PLACE-UID-001")
+    timestamps = db.cursor.execute(
+        f"SELECT date_creation, date_modification FROM {WORK_TABLE}"
+    ).fetchone()
+    assert timestamps == ("2026-09-02 08:21:00", "2026-09-02 08:21:00")
     assert db.cursor.execute("SELECT marqueur FROM contrats").fetchone()[0] == "contrat-intact"
     assert db.cursor.execute("SELECT marqueur FROM assignments").fetchone()[0] == "planning-intact"
     assert db.cursor.execute("SELECT marqueur FROM tw_payroll_sentinel").fetchone()[0] == "paie-intacte"
@@ -219,6 +230,48 @@ def test_revision_plus_recente_met_a_jour_et_revision_ancienne_est_refusee():
 
     with pytest.raises(SessionActualHrPersistenceError, match="obsolète"):
         repository.receive(payload(), "idem-old")
+
+
+class ConcurrentAdvanceRepository(SessionActualHrRepository):
+    """Simule une révision 3 validée juste avant l'UPDATE de la révision 2."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.concurrent_advance_done = False
+
+    def _execute(self, sql, params=()):
+        normalized = sql.lstrip()
+        if (
+            not self.concurrent_advance_done
+            and normalized.startswith(f"UPDATE {WORK_TABLE} SET")
+            and "actual_revision < ?" in sql
+        ):
+            self.concurrent_advance_done = True
+            session_uid = params[-2]
+            self.db.cursor.execute(
+                f"UPDATE {WORK_TABLE} SET actual_revision=3 WHERE session_uid=?",
+                (session_uid,),
+            )
+            self.db.connexion.commit()
+        return super()._execute(sql, params)
+
+
+def test_update_concurrent_ne_peut_pas_retablir_une_revision_plus_ancienne():
+    db, repository = ready_repository(ConcurrentAdvanceRepository)
+    repository.receive(payload(), "idem-001")
+    revision_2 = payload(
+        actual_revision=2,
+        actual_staff_uid="EMP-UID-002",
+        actual_comment="Révision 2",
+    )
+
+    with pytest.raises(SessionActualHrPersistenceError, match="concurrente"):
+        repository.receive(revision_2, "idem-002")
+
+    assert db.cursor.execute(
+        f"SELECT actual_revision FROM {WORK_TABLE} WHERE session_uid='INT-SESSION-001'"
+    ).fetchone()[0] == 3
+    assert db.cursor.execute(f"SELECT COUNT(*) FROM {INBOX_TABLE}").fetchone()[0] == 1
 
 
 def test_annulation_revisionnee_efface_le_realise_sans_supprimer_sa_trace_rh():
