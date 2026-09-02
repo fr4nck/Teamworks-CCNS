@@ -78,10 +78,13 @@ class Dialog(wx.Dialog):
         self.__set_properties()
         self.__do_layout()
 
-        self.Bind(wx.EVT_BUTTON, self.OnBouton_Fixe, self.bouton_fixe)
-        self.Bind(wx.EVT_BUTTON, self.OnBouton_Mobile, self.bouton_mobile)
-        self.Bind(wx.EVT_BUTTON, self.OnBouton_Fax, self.bouton_fax)
-        self.Bind(wx.EVT_BUTTON, self.OnBouton_Email, self.bouton_email)
+        # wx.ToggleButton émet EVT_TOGGLEBUTTON (et non EVT_BUTTON sous Phoenix).
+        # Avec EVT_BUTTON les boutons semblaient cliquables mais la catégorie
+        # n'était jamais sélectionnée : les champs restaient donc désactivés.
+        self.Bind(wx.EVT_TOGGLEBUTTON, self.OnBouton_Fixe, self.bouton_fixe)
+        self.Bind(wx.EVT_TOGGLEBUTTON, self.OnBouton_Mobile, self.bouton_mobile)
+        self.Bind(wx.EVT_TOGGLEBUTTON, self.OnBouton_Fax, self.bouton_fax)
+        self.Bind(wx.EVT_TOGGLEBUTTON, self.OnBouton_Email, self.bouton_email)
         self.Bind(wx.EVT_BUTTON, self.OnBouton_Ok, self.bouton_Ok)
         self.Bind(wx.EVT_BUTTON, self.OnBouton_Annuler, self.bouton_Annuler)
 
@@ -89,6 +92,8 @@ class Dialog(wx.Dialog):
             self.Importation()
         else:
             self.ActivationChamps(False)
+            # Premier contrôle logique pour une saisie clavier immédiate.
+            self.bouton_fixe.SetFocus()
         self._update_category_buttons()
 
     def __set_properties(self):
