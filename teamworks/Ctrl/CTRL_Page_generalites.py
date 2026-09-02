@@ -148,7 +148,7 @@ class Panel_general(wx.Panel):
         # ------------------------------------------------------------------
         # Adresse
         self.section_adresse = CTRL_Section.Section(
-            self, titre=_(u"Adresse"), niveau=2
+            self, titre=_(u"Adresse postale"), niveau=2
         )
         panel_adresse = self.section_adresse.GetContentPanel()
         self.label_adresse = CTRL_Texte.Label(panel_adresse, _(u"Adresse"))
@@ -166,9 +166,12 @@ class Panel_general(wx.Panel):
         )
 
         # ------------------------------------------------------------------
-        # Coordonnées
+        # Téléphones et e-mails
+        # Cette information appartient à la fiche Généralités : le dialogue
+        # DLG_Saisie_coords reste pour l'instant un éditeur de compatibilité,
+        # mais il ne constitue pas une page métier autonome.
         self.section_coords = CTRL_Section.Section(
-            self, titre=_(u"Coordonnées"), niveau=2
+            self, titre=_(u"Téléphones et e-mails"), niveau=2
         )
         panel_coords = self.section_coords.GetContentPanel()
         self.list_ctrl_coords = ListCtrlCoords(
@@ -349,13 +352,13 @@ class Panel_general(wx.Panel):
             wx.ToolTip(_(u"Rechercher ou saisir une ville de résidence"))
         )
         self.button_coords_ajout.SetToolTip(
-            wx.ToolTip(_(u"Créer une coordonnée"))
+            wx.ToolTip(_(u"Créer un téléphone ou un e-mail"))
         )
         self.button_coords_modif.SetToolTip(
-            wx.ToolTip(_(u"Modifier la coordonnée sélectionnée"))
+            wx.ToolTip(_(u"Modifier le téléphone ou l'e-mail sélectionné"))
         )
         self.button_coords_suppr.SetToolTip(
-            wx.ToolTip(_(u"Supprimer la coordonnée sélectionnée"))
+            wx.ToolTip(_(u"Supprimer le téléphone ou l'e-mail sélectionné"))
         )
         self.bouton_situations.SetToolTip(
             wx.ToolTip(_(u"Gérer les situations sociales"))
@@ -524,7 +527,7 @@ class Panel_general(wx.Panel):
         adresse.Add(ligne_ville, 0, wx.EXPAND)
         panel_adresse.SetSizer(adresse)
 
-        # Coordonnées ------------------------------------------------------
+        # Téléphones et e-mails -------------------------------------------
         coords = wx.BoxSizer(wx.VERTICAL)
         actions_coords = wx.WrapSizer(wx.HORIZONTAL)
         for bouton in (
@@ -661,7 +664,7 @@ class Panel_general(wx.Panel):
         if index == -1:
             dlg = wx.MessageDialog(
                 self,
-                _(u"Vous devez d'abord sélectionner un item à modifier dans la liste des coordonnées"),
+                _(u"Vous devez d'abord sélectionner un item à modifier dans la liste des téléphones et e-mails"),
                 "Information",
                 wx.OK | wx.ICON_INFORMATION,
             )
@@ -684,7 +687,7 @@ class Panel_general(wx.Panel):
         if index == -1:
             dlg = wx.MessageDialog(
                 self,
-                _(u"Vous devez d'abord sélectionner un item à supprimer dans la liste des coordonnées"),
+                _(u"Vous devez d'abord sélectionner un item à supprimer dans la liste des téléphones et e-mails"),
                 "Information",
                 wx.OK | wx.ICON_INFORMATION,
             )
@@ -959,13 +962,13 @@ class Panel_general(wx.Panel):
             if nomControle == "cp" or nomControle == "cp_naiss":
                 controle.SetToolTip(
                     wx.ToolTip(
-                        _(u"Le code postal saisi ne figure pas dans la base de données de TeamWorks")
+                        _(u"Le code postal saisi ne figure pas dans la base de données de Teamworks-CCNS")
                     )
                 )
             else:
                 controle.SetToolTip(
                     wx.ToolTip(
-                        _(u"Le nom de ville saisi ne figure pas dans la base de données de TeamWorks")
+                        _(u"Le nom de ville saisi ne figure pas dans la base de données de Teamworks-CCNS")
                     )
                 )
 
@@ -1806,7 +1809,7 @@ class ListCtrlCoords(wx.ListCtrl):
 
         if self.DictCoords[key][2] == "Email":
             menuPop.AppendSeparator()
-            item = wx.MenuItem(menuPop, 40, _(u"Envoyer un E-mail"))
+            item = wx.MenuItem(menuPop, 40, _(u"Envoyer un e-mail"))
             menuPop.AppendItem(item)
             self.Bind(wx.EVT_MENU, self.Menu_Envoyer_Email, id=40)
 
