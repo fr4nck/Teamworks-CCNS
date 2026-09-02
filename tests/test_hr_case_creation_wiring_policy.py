@@ -4,6 +4,7 @@ from pathlib import Path
 
 COCKPIT = Path("teamworks/Dlg/DLG_Demarches_rh.py")
 FORM = Path("teamworks/Dlg/DLG_Demarches_rh_creation.py")
+FACTORY = Path("application/bootstrap/hr_case_creation_factory.py")
 
 
 def _source(path):
@@ -51,6 +52,28 @@ def test_creation_runtime_and_dialog_stay_lazy_loaded():
             assert node.module != "application.bootstrap.hr_case_creation_factory"
             if node.module == "Dlg":
                 assert all(alias.name != "DLG_Demarches_rh_creation" for alias in node.names)
+
+
+def test_person_reader_stays_lazy_inside_creation_factory():
+    factory_tree = _tree(FACTORY)
+    top_level_imports = [
+        node.module
+        for node in factory_tree.body
+        if isinstance(node, ast.ImportFrom)
+    ]
+    assert "infrastructure.persistence.person_reader" not in top_level_imports
+
+    builder = _find_method(FACTORY, "HrCaseCreationRuntimeFactory", "_build_person_reader_factory")
+    imports = [
+        alias.name
+        for node in ast.walk(builder)
+        if isinstance(node, ast.ImportFrom)
+        and node.module == "infrastructure.persistence.person_reader"
+        for alias in node.names
+    ]
+    assert "PersonReader" in imports
+    assert "PersonReader" not in _source(COCKPIT)
+    assert "PersonReader" not in _source(FORM)
 
 
 def test_new_case_button_is_explicit_and_independent_from_selection():
