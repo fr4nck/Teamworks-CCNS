@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Cockpit CRH-24/26/28 des démarches RH.
+"""Cockpit CRH-24/26/28/30 des démarches RH.
 
 La consultation reste portée par la façade CRH-23. CRH-26 ajoute uniquement des
 transitions métier explicitement autorisées par la frontière CRH-25. CRH-28
-raccorde la consultation du journal CRH-27 par chargement paresseux. L'écran ne
-connaît ni GestionDB, ni les repositories, ni l'identité logique de la structure
-et ne modifie jamais le statut technique d'échange.
+raccorde la consultation du journal CRH-27 par chargement paresseux. CRH-30
+raccorde de la même manière la création contrôlée CRH-29. L'écran ne connaît ni
+GestionDB, ni les repositories, ni l'identité logique de la structure et ne
+modifie jamais le statut technique d'échange.
 """
 
 from datetime import date
@@ -300,7 +301,7 @@ class TransitionDialog(wx.Dialog):
 
 
 class Dialog(wx.Dialog):
-    """Cockpit structure CRH-24/26/28 sur la base Teamworks active."""
+    """Cockpit structure CRH-24/26/28/30 sur la base Teamworks active."""
 
     def __init__(
         self,
@@ -308,6 +309,7 @@ class Dialog(wx.Dialog):
         runtime_factory=None,
         today_provider=None,
         workflow_runtime_factory=None,
+        creation_runtime_factory=None,
     ):
         wx.Dialog.__init__(
             self,
@@ -319,8 +321,10 @@ class Dialog(wx.Dialog):
         self._runtime_factory = runtime_factory or HrCaseDashboardRuntimeFactory
         self._today_provider = today_provider or date.today
         self._workflow_runtime_factory = workflow_runtime_factory
+        self._creation_runtime_factory = creation_runtime_factory
         self._runtime = self._runtime_factory().create()
         self._workflow_runtime = None
+        self._creation_runtime = None
         self._rows = []
         self.SetBackgroundColour(UTILS_Interface.GetToken("surface"))
 
@@ -378,6 +382,7 @@ class Dialog(wx.Dialog):
             )
 
         self.refresh = wx.Button(self, -1, _(u"Actualiser"))
+        self.new_case = wx.Button(self, -1, _(u"Nouvelle démarche"))
         self.details = wx.Button(self, -1, _(u"Voir le détail"))
         self.history = wx.Button(self, -1, _(u"Historique"))
         self.advance = wx.Button(self, -1, _(u"Faire évoluer"))
@@ -387,6 +392,7 @@ class Dialog(wx.Dialog):
         self.advance.Enable(False)
 
         self.refresh.Bind(wx.EVT_BUTTON, self.OnRefresh)
+        self.new_case.Bind(wx.EVT_BUTTON, self.OnNewCase)
         self.details.Bind(wx.EVT_BUTTON, self.OnDetails)
         self.history.Bind(wx.EVT_BUTTON, self.OnHistory)
         self.advance.Bind(wx.EVT_BUTTON, self.OnAdvance)
@@ -423,6 +429,7 @@ class Dialog(wx.Dialog):
 
         buttons = wx.BoxSizer(wx.HORIZONTAL)
         buttons.Add(self.refresh, 0, wx.RIGHT, gap)
+        buttons.Add(self.new_case, 0, wx.RIGHT, gap)
         buttons.Add(self.details, 0, wx.RIGHT, gap)
         buttons.Add(self.history, 0, wx.RIGHT, gap)
         buttons.Add(self.advance, 0, wx.RIGHT, gap)
@@ -465,6 +472,20 @@ class Dialog(wx.Dialog):
             factory = HrCaseWorkflowRuntimeFactory
         self._workflow_runtime = factory().create()
         return self._workflow_runtime
+
+    def _get_creation_runtime(self):
+        if self._creation_runtime is not None:
+            return self._creation_runtime
+
+        factory = self._creation_runtime_factory
+        if factory is None:
+            from application.bootstrap.hr_case_creation_factory import (
+                HrCaseCreationRuntimeFactory,
+            )
+
+            factory = HrCaseCreationRuntimeFactory
+        self._creation_runtime = factory().create()
+        return self._creation_runtime
 
     def RefreshData(self, select_case_id=None):
         as_of = self._today_provider()
@@ -546,6 +567,76 @@ class Dialog(wx.Dialog):
     def OnSelection(self, event):
         self._update_action_state()
         event.Skip()
+
+    def OnNewCase(self, event):
+        self.feedback.SetLabel(u"")
+        try:
+            runtime = self._get_creation_runtime()
+            organizations = runtime.list_organizations()
+            people = runtime.list_people()
+            opened_on = self._today_provider()
+            if not isinstance(opened_on, date):
+                raise TypeError("La date de référence du cockpit RH est invalide.")
+        except Exception as exc:
+            self._show_creation_error(exc)
+            return
+
+        if not organizations:
+            wx.MessageBox(
+                _(
+                    u"Aucun organisme RH n'est configuré. Ouvrez d'abord « Organismes & connexions RH » "
+                    u"dans les paramètres de Teamworks."
+                ),
+                _(u"Nouvelle démarche RH"),
+                wx.OK | wx.ICON_INFORMATION,
+                self,
+            )
+            return
+
+        try:
+            from Dlg import DLG_Demarches_rh_creation
+
+            dlg = DLG_Demarches_rh_creation.Dialog(
+                self,
+                people=people,
+                organizations=organizations,
+                opened_on=opened_on,
+            )
+        except Exception as exc:
+            self._show_creation_error(exc)
+            return
+
+        try:
+            if dlg.ShowModal() != wx.ID_OK:
+                return
+            request = dlg.GetRequest()
+        finally:
+            dlg.Destroy()
+
+        confirm = wx.MessageDialog(
+            self,
+            _(
+                u"Créer cette démarche RH ?\n\n"
+                u"Le dossier sera ouvert au statut « À faire » et la création sera journalisée. "
+                u"Aucune transmission externe ne sera déclenchée."
+            ),
+            _(u"Confirmer la création RH"),
+            wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION,
+        )
+        try:
+            if confirm.ShowModal() != wx.ID_YES:
+                return
+        finally:
+            confirm.Destroy()
+
+        try:
+            result = runtime.create(request)
+            self.RefreshData(select_case_id=result.case.case_id)
+            self.feedback.SetForegroundColour(UTILS_Interface.GetToken("success"))
+            self.feedback.SetLabel(_(u"Démarche RH créée et journalisée."))
+            self.Layout()
+        except Exception as exc:
+            self._show_creation_error(exc)
 
     def OnDetails(self, event):
         row = self._selected_row()
@@ -662,6 +753,17 @@ class Dialog(wx.Dialog):
             self.Layout()
         except Exception as exc:
             self._show_transition_error(row.case_id, exc)
+
+    def _show_creation_error(self, exc):
+        self.feedback.SetForegroundColour(UTILS_Interface.GetToken("danger"))
+        self.feedback.SetLabel(_(u"La démarche RH n'a pas été créée."))
+        self.Layout()
+        wx.MessageBox(
+            _(u"La démarche RH n'a pas pu être créée.\n\n%s") % str(exc),
+            _(u"Nouvelle démarche RH"),
+            wx.OK | wx.ICON_ERROR,
+            self,
+        )
 
     def _show_transition_error(self, case_id, exc):
         try:
