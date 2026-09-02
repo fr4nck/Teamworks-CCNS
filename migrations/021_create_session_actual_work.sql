@@ -1,0 +1,20 @@
+CREATE TABLE IF NOT EXISTS tw_session_actual_work (
+    IDactual INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_uid VARCHAR(128) NOT NULL UNIQUE,
+    actual_uuid VARCHAR(64) NOT NULL UNIQUE,
+    IDpersonne INTEGER,
+    actual_staff_uid VARCHAR(100),
+    assignment_date DATE NOT NULL,
+    session_status VARCHAR(32) NOT NULL,
+    actual_place_uid VARCHAR(128),
+    actual_start_time VARCHAR(5),
+    actual_end_time VARCHAR(5),
+    actual_duration_minutes INTEGER,
+    actual_comment TEXT,
+    actual_revision INTEGER NOT NULL,
+    validated_at VARCHAR(64) NOT NULL,
+    source_domain VARCHAR(64) NOT NULL,
+    payload_sha256 VARCHAR(64) NOT NULL,
+    date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
+    date_modification DATETIME DEFAULT CURRENT_TIMESTAMP
+);
