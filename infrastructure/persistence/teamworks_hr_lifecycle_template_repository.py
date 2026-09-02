@@ -299,6 +299,38 @@ class TeamworksHrLifecycleTemplateRepository:
             for row in rows
         )
 
+    def list_all_templates(
+        self,
+        *,
+        structure_ref: str,
+    ) -> tuple[HrLifecycleTemplate, ...]:
+        """Relit tous les modèles de la structure avec les pièces en une lecture groupée."""
+        structure_ref = _required_text(
+            structure_ref,
+            "La référence de structure est obligatoire.",
+        )
+        db = self._db_factory()
+        try:
+            rows = _fetchall(
+                db,
+                "SELECT "
+                + ", ".join(_TEMPLATE_COLUMNS)
+                + " FROM tw_hr_lifecycle_templates "
+                "WHERE structure_ref = ? ORDER BY event_kind, template_id",
+                (structure_ref,),
+            )
+            documents = self._load_documents(
+                db,
+                structure_ref=structure_ref,
+                template_ids=tuple(row[1] for row in rows),
+            )
+        finally:
+            _close(db)
+        return tuple(
+            _template_from_row(row, documents.get(row[1], ()))
+            for row in rows
+        )
+
     @staticmethod
     def _load_documents(
         db,
