@@ -6,56 +6,80 @@
 # Licence:      Licence GNU GPL
 #-----------------------------------------------------------
 
-import Chemins
 from Utils.UTILS_Traduction import _
 import wx
-from Ctrl import CTRL_Bouton_image
-import FonctionsPerso
 
+from Ctrl import CTRL_Texte
+from Utils import UTILS_Styles
 
-def getRGB(winColor):
-    b = winColor >> 16
-    g = winColor >> 8 & 255
-    r = winColor & 255
-    return (r,g,b)
 
 class Page(wx.Panel):
+    """Page d'accueil de l'assistant contrat.
+
+    Cette première étape doit rassurer et orienter. Elle ne contient donc plus
+    de bandeau décoratif massif ni de HTML typographié en dur : la hiérarchie,
+    les espacements et les textes suivent le design system Teamworks.
+    """
+
     def __init__(self, *args, **kwds):
         kwds["style"] = wx.TAB_TRAVERSAL
         wx.Panel.__init__(self, *args, **kwds)
         self.parent = self.GetGrandParent()
-        
-        self.imgBandeau = wx.StaticBitmap(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/Bandeaux/Contrat.png"), wx.BITMAP_TYPE_ANY) )
-        
-        self.label_titre = wx.StaticText(self, -1, _(u"Bienvenue dans l'assistant de création de contrat"))
-        
-        # Label Html
-        txtIntro = u"""
-        <FONT face="Arial" color="#000000" size=2>
-        <P>Grâce à cet assistant, vous pouvez créer ou modifier des contrats. Cette étape est essentielle pour permettre au logiciel de savoir si tel salarié doit travailler sur une période donnée.</P>
-        <p>Vous devrez donc saisir dans cet assistant les caractéristiques de son contrat. Vous avez ensuite la possibilité d'imprimer le contrat et une D.U.E. </p>
-        <p><b><u>Remarque :</u></b> Si vous avez l'occasion d'établir des contrats souvent identiques (pour les saisonniers par exemple), vous pouvez utiliser les modèles de contrats qui faciliteront fortement la saisie des données.</p>
-        </FONT>
-        """ 
-        self.label_intro = FonctionsPerso.TexteHtml(self, texte=txtIntro, Enabled=False)
-        
-        self.__set_properties()
+
+        self.label_titre = CTRL_Texte.H1(
+            self,
+            _(u"Créer un contrat"),
+        )
+        self.label_intro = CTRL_Texte.Lead(
+            self,
+            _(u"Teamworks vous guide étape par étape jusqu'au contrat prêt à relire et à imprimer."),
+        )
+        self.label_reassurance = CTRL_Texte.BodySecondary(
+            self,
+            _(u"Vous pouvez revenir à l'étape précédente à tout moment. Les contrôles CCNS et SMIC sont effectués pendant la saisie."),
+        )
+
+        self.label_avant = CTRL_Texte.H3(self, _(u"Ce parcours va vérifier"))
+        self.label_point_identite = CTRL_Texte.BodyLarge(
+            self,
+            _(u"• les informations du salarié et le type de contrat"),
+        )
+        self.label_point_regles = CTRL_Texte.BodyLarge(
+            self,
+            _(u"• la durée du travail, la rémunération et les règles conventionnelles"),
+        )
+        self.label_point_document = CTRL_Texte.BodyLarge(
+            self,
+            _(u"• les éléments nécessaires à la génération du document final"),
+        )
+
+        self.label_conseil = CTRL_Texte.BodySecondary(
+            self,
+            _(u"Si vous créez souvent des contrats similaires, vous pourrez partir d'un modèle à l'étape suivante."),
+        )
+
         self.__do_layout()
-        
-    def __set_properties(self):
-        self.label_titre.SetFont(wx.Font(8, wx.DEFAULT, wx.NORMAL, wx.BOLD, 0, ""))
 
     def __do_layout(self):
-        grid_sizer_base = wx.FlexGridSizer(rows=6, cols=1, vgap=10, hgap=10)
-        grid_sizer_boutons = wx.FlexGridSizer(rows=3, cols=1, vgap=5, hgap=5)
-        grid_sizer_base.Add(self.label_titre, 0, 0, 0)
-        grid_sizer_base.Add(self.imgBandeau, 0, wx.LEFT|wx.RIGHT, 30)
-        grid_sizer_base.Add(self.label_intro, 0, wx.LEFT|wx.RIGHT|wx.EXPAND, 20)
-        self.SetSizer(grid_sizer_base)
-        grid_sizer_base.AddGrowableCol(0)
-        grid_sizer_base.AddGrowableRow(2)
-        
+        page_gap = UTILS_Styles.GetLayoutSpacing("page_gap")
+        section_gap = UTILS_Styles.GetLayoutSpacing("section_gap")
+        field_gap = UTILS_Styles.GetLayoutSpacing("field_gap")
+
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self.label_titre, 0, wx.EXPAND | wx.BOTTOM, field_gap)
+        sizer.Add(self.label_intro, 0, wx.EXPAND | wx.BOTTOM, field_gap)
+        sizer.Add(self.label_reassurance, 0, wx.EXPAND | wx.BOTTOM, section_gap)
+
+        sizer.Add(self.label_avant, 0, wx.EXPAND | wx.BOTTOM, field_gap)
+        sizer.Add(self.label_point_identite, 0, wx.EXPAND | wx.BOTTOM, field_gap)
+        sizer.Add(self.label_point_regles, 0, wx.EXPAND | wx.BOTTOM, field_gap)
+        sizer.Add(self.label_point_document, 0, wx.EXPAND | wx.BOTTOM, section_gap)
+        sizer.Add(self.label_conseil, 0, wx.EXPAND)
+        sizer.AddStretchSpacer(1)
+
+        outer = wx.BoxSizer(wx.VERTICAL)
+        outer.Add(sizer, 1, wx.EXPAND | wx.ALL, page_gap)
+        self.SetSizer(outer)
 
     def Validation(self):
         return True
-
