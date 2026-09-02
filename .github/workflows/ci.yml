@@ -164,7 +164,7 @@ jobs:
           current = report["counts"].get("sqlite-bytes-path", 0)
           historical_ceiling = 0
           if current > historical_ceiling:
-            raise SystemExit(
+              raise SystemExit(
                   f"Les chemins SQLite binaires passent de "
                   f"{historical_ceiling} à {current}"
               )
