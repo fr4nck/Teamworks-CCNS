@@ -5,6 +5,9 @@ from datetime import date
 from typing import Callable
 
 from application.services.hr_connections import HrCaseDashboard, HrCaseDashboardService
+from infrastructure.persistence.teamworks_hr_case_dashboard_documents_repository import (
+    TeamworksHrCaseDashboardDocumentRepository,
+)
 from infrastructure.persistence.teamworks_hr_cases_repository import (
     TeamworksHrCasesRepository,
 )
@@ -30,11 +33,11 @@ class HrCaseDashboardRuntime:
 
 
 class HrCaseDashboardRuntimeFactory:
-    """Compose CRH-21/22 sur l'identité stable de la base active.
+    """Compose le cockpit et son suivi documentaire sur la base active.
 
-    La factory choisit les adaptateurs de production. La future interface wxPython
-    consommera uniquement ``HrCaseDashboardRuntime`` et n'aura donc aucune raison
-    de connaître ``GestionDB`` ni l'identifiant logique de la structure.
+    La factory choisit les adaptateurs de production. L'interface wxPython
+    consomme uniquement ``HrCaseDashboardRuntime`` et ne connaît donc ni
+    ``GestionDB`` ni l'identifiant logique de la structure.
     """
 
     def __init__(
@@ -55,9 +58,13 @@ class HrCaseDashboardRuntimeFactory:
         profile_repository = TeamworksHrConnectionsRepository(
             db_factory=self._db_factory,
         )
+        document_repository = TeamworksHrCaseDashboardDocumentRepository(
+            db_factory=self._db_factory,
+        )
         service = HrCaseDashboardService(
             case_repository=case_repository,
             profile_repository=profile_repository,
+            document_repository=document_repository,
         )
         return HrCaseDashboardRuntime(
             _structure_ref=structure_ref,
