@@ -17,5 +17,5 @@ def test_future_220_percent_zoom_is_already_supported_by_the_rule():
     assert UTILS_Responsive.form_column_count(1720, 220) == 1
 
 
-def test_invalid_scale_never_divides_by_zero():
-    assert UTILS_Responsive.logical_width(1000, 0) == 100000.0
+def test_invalid_scale_falls_back_to_100_percent():
+    assert UTILS_Responsive.logical_width(1000, 0) == 1000.0
