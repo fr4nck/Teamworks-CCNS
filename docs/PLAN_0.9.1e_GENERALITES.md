@@ -26,6 +26,18 @@ La fiche ne doit pas supposer que Teamworks-CCNS occupe tout l’écran. Le cas 
 
 Le seuil de bascule doit être exprimé en largeur logique et centralisé, afin d’éviter des valeurs différentes dans chaque écran. Le comportement visé est notamment : demi-écran ultrawide à 100 % = deux colonnes si l’espace le permet ; demi-écran standard ou fort zoom = une colonne propre.
 
+## Icônes
+
+Les icônes font partie du contrat responsive : elles ne doivent ni rester minuscules lorsque le texte est agrandi, ni devenir floues parce qu’une source 16x16 est étirée artificiellement.
+
+- Les tailles d’icônes restent sémantiques et centralisées (`micro`, `small`, `medium`, `large`, `hero`) au lieu d’être décidées écran par écran.
+- La taille affichée suit l’échelle d’interface exactement comme le texte et les contrôles.
+- Pour les anciens PNG, le moteur choisit automatiquement la meilleure variante disponible parmi 16, 22, 32, 48, 80 et 128 px avant redimensionnement final.
+- Les boutons d’action utilisent par défaut la taille sémantique `medium`; les barres d’outils et navigations conservent des rôles plus généreux lorsqu’ils existent.
+- Une icône seule doit conserver une cible cliquable cohérente avec la hauteur minimale du contrôle ; on ne doit pas obtenir une minuscule cible juste parce que le pictogramme est petit.
+- Le zoom 200 % et les futurs zooms supérieurs doivent augmenter l’icône, ses marges et sa cible d’interaction sans doubler l’échelle.
+- La migration vers une famille d’icônes cohérente (Fluent System Icons selon le design system) reste progressive : la 0.9.1e corrige d’abord dimensionnement, netteté et cohérence des ressources existantes sans casser les écrans historiques.
+
 ## Lieux et codes postaux
 
 ### Naissance
@@ -69,5 +81,7 @@ Le logiciel doit fonctionner hors ligne et accepter une saisie libre. La recherc
 - Snap Windows 11 sur demi-écran ultrawide : fiche exploitable et équilibrée sans grands vides ni champs écrasés.
 - Snap sur demi-écran standard : bascule automatique en une colonne et défilement vertical propre.
 - Zoom fort (200 % et comportement prêt pour 220 %) : la décision une/deux colonnes tient compte de la largeur logique et aucun texte n’est tronqué.
+- Les icônes grandissent avec le zoom et restent nettes en sélectionnant une ressource source suffisamment grande.
+- Les boutons à icône seule conservent une cible cliquable cohérente avec la hauteur minimale des contrôles.
 
 La refonte structurante contrats/temps de travail reste ciblée 0.9.2.
