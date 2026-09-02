@@ -109,11 +109,18 @@ def test_schema_is_additive_versioned_and_idempotent(tmp_path):
                 "SELECT name FROM sqlite_master WHERE type = 'index'"
             ).fetchall()
         }
+        columns = {
+            row[1]
+            for row in db.cursor.execute(
+                "PRAGMA table_info(tw_hr_case_document_receipts)"
+            ).fetchall()
+        }
     finally:
         db.Close()
 
     assert "tw_hr_case_document_receipts" in tables
-    assert "idx_tw_hr_case_document_state" in indexes
+    assert "idx_tw_hr_case_document_case" in indexes
+    assert "receipt_key" in columns
 
 
 def test_received_projection_and_case_history_are_persisted_atomically(tmp_path):
