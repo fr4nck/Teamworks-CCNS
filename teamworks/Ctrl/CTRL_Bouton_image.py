@@ -17,6 +17,9 @@ import PIL.Image as Image
 import PIL.ImageOps as ImageOps
 
 
+ICON_RESOURCE_SIZES = (16, 22, 32, 48, 80, 128)
+
+
 def PILtoWx(image):
     """Convertit une image PIL en wx.Image avec canal alpha."""
     largeur, hauteur = image.size
@@ -36,26 +39,54 @@ def _echelle_marges(marges):
     return UTILS_Styles.Scale(marges, minimum=0)
 
 
-def _chemin_image_existant(chemin):
-    """Renvoie une ressource existante, avec repli 32x32 -> 16x16."""
+def _chemin_image_existant(chemin, taille_cible=None):
+    """Renvoie la variante raster la plus adaptée à la taille réellement affichée.
+
+    Teamworks possède encore plusieurs générations d'icônes PNG rangées dans
+    des répertoires 16x16, 22x22, 32x32, 48x48, 80x80 et 128x128. Agrandir une
+    source 16x16 à 40 px au zoom 200 % produit une icône floue et donne
+    l'impression que l'interface ne suit pas le zoom. Quand plusieurs variantes
+    d'un même fichier existent, on choisit donc la plus petite résolution au
+    moins égale à la cible, ou la plus grande disponible en dernier recours.
+    """
     if chemin in ("", None):
         return None
 
     path = Path(chemin)
-    if path.is_file():
-        return path
-
-    # Quelques écrans historiques demandaient une version 32x32 alors que
-    # seule l'icône 16x16 a toujours été livrée. Le bouton reste fonctionnel
-    # et laisse ensuite Pillow/Teamworks la mettre à l'échelle normalement.
     parts = list(path.parts)
-    if "32x32" in parts:
-        parts[parts.index("32x32")] = "16x16"
-        fallback = Path(*parts)
-        if fallback.is_file():
-            return fallback
+    size_index = None
+    for index, part in enumerate(parts):
+        if part in {"%dx%d" % (size, size) for size in ICON_RESOURCE_SIZES}:
+            size_index = index
+            break
 
-    return None
+    # Ressource hors arborescence multi-résolution : comportement historique.
+    if size_index is None:
+        return path if path.is_file() else None
+
+    candidates = []
+    for size in ICON_RESOURCE_SIZES:
+        variant_parts = list(parts)
+        variant_parts[size_index] = "%dx%d" % (size, size)
+        variant = Path(*variant_parts)
+        if variant.is_file():
+            candidates.append((size, variant))
+
+    if not candidates:
+        return path if path.is_file() else None
+
+    try:
+        target = max(1, int(round(float(taille_cible))))
+    except (TypeError, ValueError):
+        target = 0
+
+    if target <= 0:
+        return path if path.is_file() else candidates[0][1]
+
+    larger = [(size, variant) for size, variant in candidates if size >= target]
+    if larger:
+        return min(larger, key=lambda item: item[0])[1]
+    return max(candidates, key=lambda item: item[0])[1]
 
 
 class CTRL(wx.Button):
@@ -88,7 +119,8 @@ class CTRL(wx.Button):
         self.MAJ()
 
     def _bitmap(self):
-        chemin = _chemin_image_existant(self.cheminImage)
+        taille_cible = _echelle_taille(self.tailleImage)
+        chemin = _chemin_image_existant(self.cheminImage, max(taille_cible))
         if chemin is None:
             return wx.NullBitmap
 
@@ -104,7 +136,7 @@ class CTRL(wx.Button):
         except AttributeError:
             resample_filter = getattr(Image, "LANCZOS", Image.BICUBIC)
 
-        img = img.resize(_echelle_taille(self.tailleImage), resample_filter)
+        img = img.resize(taille_cible, resample_filter)
         img = ImageOps.expand(img, border=_echelle_marges(self.margesImage))
         return PILtoWx(img).ConvertToBitmap()
 
