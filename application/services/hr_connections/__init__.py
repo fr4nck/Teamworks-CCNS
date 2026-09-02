@@ -25,6 +25,13 @@ from .hr_case_dashboard import (
     HrCaseDashboardRow,
     HrCaseDashboardService,
 )
+from .hr_case_documents import (
+    HrCaseDocumentChecklist,
+    HrCaseDocumentChecklistRow,
+    HrCaseDocumentRepository,
+    HrCaseDocumentTrackingResult,
+    HrCaseDocumentTrackingService,
+)
 from .hr_case_history import (
     HrCaseHistory,
     HrCaseHistoryField,
@@ -78,6 +85,11 @@ __all__ = [
     "HrCaseDashboardRepository",
     "HrCaseDashboardRow",
     "HrCaseDashboardService",
+    "HrCaseDocumentChecklist",
+    "HrCaseDocumentChecklistRow",
+    "HrCaseDocumentRepository",
+    "HrCaseDocumentTrackingResult",
+    "HrCaseDocumentTrackingService",
     "HrCaseHistory",
     "HrCaseHistoryField",
     "HrCaseHistoryRepository",
