@@ -45,6 +45,12 @@ from .hr_case_workflow import (
     HrCaseWorkflowRepository,
     HrCaseWorkflowService,
 )
+from .hr_lifecycle_planning import (
+    HrLifecyclePlan,
+    HrLifecyclePlanningService,
+    HrLifecycleSuggestion,
+    HrLifecycleTemplateRepository,
+)
 from .manual_portal import (
     ManualPortalConnector,
     ManualPortalPlan,
@@ -99,6 +105,10 @@ __all__ = [
     "HrCaseTransitionResult",
     "HrCaseWorkflowRepository",
     "HrCaseWorkflowService",
+    "HrLifecyclePlan",
+    "HrLifecyclePlanningService",
+    "HrLifecycleSuggestion",
+    "HrLifecycleTemplateRepository",
     "ManualPortalConnector",
     "ManualPortalPlan",
     "ManualStatusUpdate",
