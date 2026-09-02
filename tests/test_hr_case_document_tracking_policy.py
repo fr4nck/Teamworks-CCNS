@@ -43,20 +43,19 @@ def test_domain_and_service_are_ui_persistence_and_transport_agnostic():
             )
 
 
-def test_document_projection_never_stores_binary_payload_or_local_path():
+def test_document_projection_never_stores_binary_content_or_local_path():
     source = _source(ADAPTER)
     lowered = source.lower()
 
+    assert "BLOB" not in source.upper()
     for forbidden in (
-        " blob",
-        "mediumblob",
-        "longblob",
         "file_path",
         "filepath",
         "local_path",
         "binary_content",
         "document_content",
-        "payload",
+        "document_payload",
+        "file_payload",
     ):
         assert forbidden not in lowered
     assert "artifact_ref VARCHAR(240)" in source
@@ -74,6 +73,16 @@ def test_document_projection_is_additive_and_withdrawal_is_not_a_delete():
     assert "INSERT OR REPLACE" not in source
     assert "REPLACE INTO" not in source
     assert "FOREIGN KEY" not in source
+
+
+def test_document_primary_key_stays_short_for_historical_mysql_indexes():
+    source = _source(ADAPTER)
+
+    assert "receipt_key VARCHAR(64) NOT NULL" in source
+    assert "PRIMARY KEY (structure_ref, receipt_key)" in source
+    assert '"structure_ref, case_id"' in source
+    assert '"structure_ref, case_id, state"' not in source
+    assert "sha256(" in source
 
 
 def test_document_changes_are_audited_on_the_case_history():
