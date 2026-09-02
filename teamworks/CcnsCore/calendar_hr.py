@@ -73,7 +73,13 @@ def build_birthdays_index(rows, year):
         result.setdefault(event_date, []).append(person)
 
     for people in result.values():
-        people.sort(key=lambda item: (item["prenom"].casefold(), item["nom"].casefold(), item["IDpersonne"] or 0))
+        people.sort(
+            key=lambda item: (
+                item["prenom"].casefold(),
+                item["nom"].casefold(),
+                str(item["IDpersonne"] or ""),
+            )
+        )
     return result
 
 
