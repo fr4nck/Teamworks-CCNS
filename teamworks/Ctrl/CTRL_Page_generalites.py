@@ -211,7 +211,13 @@ class Panel_general(wx.Panel):
         self.text_date_naiss.SetMinSize((95, -1))
         self.text_date_naiss.SetToolTip(wx.ToolTip("Saissez la date de naissance"))       
         self.text_numsecu.SetMinSize((170, -1))
+        # wxPython/Phoenix peut calculer une hauteur quasi nulle pour un TextCtrl
+        # multiligne dans un FlexGridSizer. Une hauteur minimale garantit que le
+        # champ d'adresse reste réellement saisissable, y compris avec le zoom
+        # d'interface Windows.
+        self.text_adresse.SetMinSize((-1, 60))
         self.text_adresse.SetToolTip(wx.ToolTip("Saisissez l'adresse"))
+        self.text_memo.SetMinSize((-1, 45))
 ##        self.label_age.Enable(False)
         self.text_age.Enable(False)
         self.text_cp_naiss.SetMinSize((50, -1))
@@ -365,6 +371,7 @@ class Panel_general(wx.Panel):
         grid_sizer_ville.AddGrowableCol(2)
         grid_sizer_adresse.Add(grid_sizer_ville, 1, wx.EXPAND, 0)
         grid_sizer_adresse.AddGrowableCol(1)
+        grid_sizer_adresse.AddGrowableRow(0)
         sizer_adresse.Add(grid_sizer_adresse, 1, wx.ALL|wx.EXPAND, 5)
         grid_sizer_1.Add(sizer_adresse, 1, wx.LEFT|wx.BOTTOM|wx.EXPAND, 5)
 
