@@ -17,7 +17,10 @@ from Utils.UTILS_Coordonnees import normaliser_email, normaliser_telephone, norm
 
 class Dialog(wx.Dialog):
     def __init__(self, parent, ID=-1, title=_(u"Coordonnées"), size=(280, 290), IDcoord=0, IDpersonne=0):
-        wx.Dialog.__init__(self, parent, -1, style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
+        # Dialogue conservé pour les écrans qui n'ont pas encore d'édition
+        # intégrée (notamment les candidats). Un formulaire aussi court ne doit
+        # pas être librement redimensionnable : il épouse son contenu.
+        wx.Dialog.__init__(self, parent, -1, style=wx.DEFAULT_DIALOG_STYLE)
         self.parent = parent
         self.IDpersonne = IDpersonne
         self.IDcoord = IDcoord
@@ -34,8 +37,6 @@ class Dialog(wx.Dialog):
         self.panel_frame.SetBackgroundColour(UTILS_Interface.GetToken("surface"))
         self.categorieSelect = ""
 
-        # Hiérarchie volontairement compacte : ce dialogue est un formulaire
-        # métier court, pas un assistant multi-étapes.
         self.titre_categories = CTRL_Texte.H3(self.panel_frame, _(u"Type de coordonnée"))
         self.aide_categories = CTRL_Texte.BodySecondary(
             self.panel_frame,
@@ -83,9 +84,6 @@ class Dialog(wx.Dialog):
         self.__set_properties()
         self.__do_layout()
 
-        # wx.ToggleButton émet EVT_TOGGLEBUTTON (et non EVT_BUTTON sous Phoenix).
-        # Avec EVT_BUTTON les boutons semblaient cliquables mais la catégorie
-        # n'était jamais sélectionnée : les champs restaient donc désactivés.
         self.Bind(wx.EVT_TOGGLEBUTTON, self.OnBouton_Fixe, self.bouton_fixe)
         self.Bind(wx.EVT_TOGGLEBUTTON, self.OnBouton_Mobile, self.bouton_mobile)
         self.Bind(wx.EVT_TOGGLEBUTTON, self.OnBouton_Fax, self.bouton_fax)
@@ -97,7 +95,6 @@ class Dialog(wx.Dialog):
             self.Importation()
         else:
             self.ActivationChamps(False)
-            # Premier contrôle logique pour une saisie clavier immédiate.
             self.bouton_fixe.SetFocus()
         self._update_category_buttons()
 
@@ -108,13 +105,9 @@ class Dialog(wx.Dialog):
         self.text_info_mail.SetToolTip(wx.ToolTip(_(u"Saisissez ici une adresse Mail valide")))
         self.text_intitule.SetToolTip(wx.ToolTip(_(u"Vous pouvez, si vous le souhaitez, saisir ici un intitulé. Ex : 'Contact à Rennes' ou 'Domicile des parents'...")))
 
-        # Rôles de champs partagés par le design system : largeur, hauteur,
-        # densité et mise à l'échelle sont centralisées dans UTILS_Styles.
         UTILS_Styles.ApplyFieldRole(self.text_info_tel, UTILS_Styles.FIELD_PHONE)
         UTILS_Styles.ApplyFieldRole(self.text_info_mail, UTILS_Styles.FIELD_EMAIL)
         UTILS_Styles.ApplyFieldRole(self.text_intitule, UTILS_Styles.FIELD_TEXT)
-
-        UTILS_Styles.ApplyWindowProfile(self, "form_compact")
 
     def __do_layout(self):
         padding = UTILS_Styles.GetLayoutSpacing("dialog_padding")
@@ -125,24 +118,12 @@ class Dialog(wx.Dialog):
 
         sizer_base = wx.BoxSizer(wx.VERTICAL)
         sizer_base.Add(self.titre_categories, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, padding)
-        sizer_base.Add(
-            self.aide_categories,
-            0,
-            wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP,
-            padding,
-        )
+        sizer_base.Add(self.aide_categories, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, padding)
 
-        # Les quatre types forment un groupe exclusif ; des largeurs égales
-        # rendent le choix plus lisible qu'un WrapSizer aux boutons disparates.
         sizer_categories = wx.GridSizer(rows=1, cols=4, vgap=0, hgap=toolbar_gap)
         for button in (self.bouton_fixe, self.bouton_mobile, self.bouton_fax, self.bouton_email):
             sizer_categories.Add(button, 1, wx.EXPAND)
-        sizer_base.Add(
-            sizer_categories,
-            0,
-            wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP,
-            padding,
-        )
+        sizer_base.Add(sizer_categories, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, padding)
 
         sizer_base.Add(self.titre_infos, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, section_gap)
         self.sizer_infos = wx.BoxSizer(wx.VERTICAL)
@@ -152,16 +133,8 @@ class Dialog(wx.Dialog):
         self.sizer_infos.Add(self.text_info_tel, 0, wx.EXPAND | wx.BOTTOM, field_gap)
         self.sizer_infos.Add(self.label_intitule, 0, wx.BOTTOM, control_gap)
         self.sizer_infos.Add(self.text_intitule, 0, wx.EXPAND)
-        sizer_base.Add(
-            self.sizer_infos,
-            0,
-            wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP,
-            padding,
-        )
+        sizer_base.Add(self.sizer_infos, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, padding)
 
-        # Le contenu reste dense ; l'espace résiduel appartient au dialogue,
-        # pas aux champs eux-mêmes. Le pied d'actions reste stable en bas.
-        sizer_base.AddStretchSpacer(1)
         sizer_boutons = wx.BoxSizer(wx.HORIZONTAL)
         sizer_boutons.AddStretchSpacer(1)
         sizer_boutons.Add(self.bouton_Ok, 0, wx.RIGHT, toolbar_gap)
@@ -170,9 +143,29 @@ class Dialog(wx.Dialog):
 
         self.panel_frame.SetSizer(sizer_base)
         outer = wx.BoxSizer(wx.VERTICAL)
-        outer.Add(self.panel_frame, 1, wx.EXPAND)
+        outer.Add(self.panel_frame, 0, wx.EXPAND)
         self.SetSizer(outer)
         self.Layout()
+        self._fit_to_content()
+
+    def _fit_to_content(self):
+        """Borne le dialogue à son contenu réel, DPI et zoom compris."""
+        self.panel_frame.Layout()
+        self.Layout()
+        self.Fit()
+        padding = UTILS_Styles.GetLayoutSpacing("dialog_padding")
+        largeur_email = UTILS_Styles.GetFieldWidth(
+            self.text_info_mail, UTILS_Styles.FIELD_EMAIL
+        ) + (2 * padding)
+        largeur = max(self.GetSize().GetWidth(), largeur_email)
+        hauteur = self.GetSize().GetHeight()
+        self.SetSize((largeur, hauteur))
+        self.SetMinSize((largeur, hauteur))
+        self.SetMaxSize((largeur, hauteur))
+        try:
+            self.CentreOnParent()
+        except Exception:
+            self.CentreOnScreen()
 
     def _update_category_buttons(self):
         for categorie, button in self._category_buttons.items():
