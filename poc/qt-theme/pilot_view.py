@@ -6,10 +6,10 @@ from PySide6.QtWidgets import (
     QFormLayout,
     QFrame,
     QHeaderView,
-    QHBoxLayout,
     QLabel,
     QLineEdit,
     QMainWindow,
+    QSizePolicy,
     QSplitter,
     QTabWidget,
     QTableView,
@@ -68,14 +68,21 @@ class PeopleContractsPilot(QMainWindow):
         self.search.textChanged.connect(self.people_proxy.setFilterFixedString)
         root.addWidget(self.search)
 
-        splitter = QSplitter(Qt.Orientation.Horizontal)
-        splitter.setChildrenCollapsible(False)
-        splitter.addWidget(self._build_people_panel())
-        splitter.addWidget(self._build_detail_panel())
-        splitter.setStretchFactor(0, 3)
-        splitter.setStretchFactor(1, 4)
-        splitter.setSizes([600, 760])
-        root.addWidget(splitter, 1)
+        people_panel = self._build_people_panel()
+        detail_panel = self._build_detail_panel()
+        people_panel.setMinimumWidth(380)
+        detail_panel.setMinimumWidth(440)
+        people_panel.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        detail_panel.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+
+        self.splitter = QSplitter(Qt.Orientation.Horizontal)
+        self.splitter.setChildrenCollapsible(False)
+        self.splitter.addWidget(people_panel)
+        self.splitter.addWidget(detail_panel)
+        self.splitter.setStretchFactor(0, 3)
+        self.splitter.setStretchFactor(1, 5)
+        self.splitter.setSizes([480, 800])
+        root.addWidget(self.splitter, 1)
 
         self.setCentralWidget(central)
         self._select_first_row()
@@ -101,15 +108,22 @@ class PeopleContractsPilot(QMainWindow):
         self.people_table.setAlternatingRowColors(True)
         self.people_table.verticalHeader().setVisible(False)
         header = self.people_table.horizontalHeader()
-        header.setStretchLastSection(True)
-        header.setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        header.resizeSection(0, 95)
+        header.resizeSection(2, 130)
+        header.resizeSection(3, 120)
+        header.resizeSection(4, 95)
+        header.resizeSection(5, 75)
+        header.resizeSection(6, 95)
+        header.resizeSection(7, 130)
         self.people_table.selectionModel().selectionChanged.connect(self._on_person_selection)
         layout.addWidget(self.people_table, 1)
         return frame
 
     def _build_detail_panel(self) -> QWidget:
         tabs = QTabWidget()
+        tabs.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         tabs.addTab(self._build_general_tab(), "Généralités")
         tabs.addTab(self._build_contracts_tab(), "Contrats")
         return tabs
@@ -156,8 +170,13 @@ class PeopleContractsPilot(QMainWindow):
         self.contracts_table.setAlternatingRowColors(True)
         self.contracts_table.verticalHeader().setVisible(False)
         header = self.contracts_table.horizontalHeader()
-        header.setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
-        header.setStretchLastSection(True)
+        header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+        header.setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)
+        header.resizeSection(0, 100)
+        header.resizeSection(1, 95)
+        header.resizeSection(2, 95)
+        header.resizeSection(4, 90)
+        header.resizeSection(5, 110)
         layout.addWidget(self.contracts_table)
         return widget
 
