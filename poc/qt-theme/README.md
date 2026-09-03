@@ -1,75 +1,37 @@
 # POC isolé — moteur de thème Qt
 
-Objectif : tester sérieusement une nouvelle couche UI sans toucher au code wxPython de Teamworks.
+Objectif : tester une nouvelle couche UI sans toucher au code wxPython de Teamworks.
 
-Le POC est volontairement plus gros qu'une simple maquette : il doit mettre Qt sous contrainte avec les composants qui posent problème dans une vraie application RH dense.
-
-## Ce que le stress-test contient maintenant
-
-### Coquille principale
+Le POC est désormais un vrai stress-test métier :
 
 - navigation Accueil / Individus / Présences / Planning / Recrutement / Documents RH ;
-- barre d'état ;
-- panneau latéral dense ;
-- changement clair/sombre à chaud ;
-- redimensionnement à partir de 1100×720 jusqu'aux grands écrans ;
-- préférences d'affichage factices pour tester les dialogues.
+- tableau de bord avec alertes et accès rapides ;
+- fiche salarié maître/détail avec 8 onglets ;
+- formulaires denses, combobox, checkboxes, scroll, statuts ;
+- tableau de contrats multi-colonnes avec sélection, filtres et actions ;
+- dialogue de création de contrat ;
+- tableau temps de travail sur plusieurs semaines ;
+- documents RH et contrôles associés ;
+- thème clair/sombre à chaud.
 
-### Tableau de bord
+Le prototype n'importe aucun module de production et n'accède à aucune base Teamworks. Il peut être supprimé intégralement sans impact sur l'application.
 
-- cartes de synthèse ;
-- alertes métier ;
-- accès rapides ;
-- panneaux juxtaposés et splitter redimensionnable.
+## Architecture testée
 
-### Individus / fiche salarié
+```text
+launcher.py
+  ├─ ThemeEngine          -> thème central et tokens sémantiques
+  ├─ TeamworksReadAdapter -> frontière vers le métier
+  └─ app.py               -> stress-test UI jetable
+```
 
-- liste filtrable ;
-- navigation maître/détail ;
-- résumé du salarié sélectionné ;
-- formulaire dense ;
-- combobox ;
-- checkboxes ;
-- statut visuel ;
-- scroll ;
-- huit onglets : Généralités, Qualifications, Contrats, Présences/temps, Scénarios, Frais, Documents RH et Recrutement.
+`theme_engine.py` porte les rôles de couleur et de surface (`primary`, `surface`, `surface_container`, `outline`, `warning`, `danger`, `selection`, etc.). Qt Material ne sert plus que de couche QSS de base interchangeable.
 
-### Contrats
+`data_adapter.py` définit la frontière de lecture que devra respecter une future UI de production. Aucun objet wxPython, SQL brut ou widget ne doit la franchir. Le `DemoAdapter` alimente le POC ; le `ProductionAdapterStub` reste volontairement désactivé.
 
-- barre de commandes ;
-- tableau dense multi-colonnes ;
-- sélection de lignes par checkbox ;
-- filtre Actifs uniquement ;
-- états de contrôle ;
-- sélection multiple ;
-- dialogue Nouveau contrat ;
-- champs, listes, spinbox, texte multiligne et contrôles de conformité.
+Cette organisation sert à tester la stratégie de migration progressive : conserver le domaine et les services Teamworks, remplacer la présentation sans injecter de logique métier dans Qt.
 
-### Temps de travail
-
-- tableau de 18 semaines ;
-- volumes prévus/réalisés ;
-- écarts ;
-- repos, pauses, amplitudes et états ;
-- filtre de période et commandes.
-
-### Documents RH
-
-- tableau de documents ;
-- cases à cocher ;
-- états ;
-- boutons d'action intégrés aux lignes.
-
-Tout cela utilise exclusivement des données factices. Le POC n'importe **aucun module de production** et n'accède à **aucune base Teamworks**.
-
-## Stack testée
-
-- PySide6 : bindings Qt officiels pour Python ;
-- qt-material : moteur QSS open source utilisé comme moteur de thème interchangeable.
-
-Material n'est pas la direction graphique finale. Le but est de vérifier le principe : une couche Qt peut-elle recevoir un thème global et rester cohérente sur les tableaux, dialogues, formulaires et widgets complexes ? Si oui, le moteur pourra être remplacé ou complété par une couche Fluent/tokens propre à Teamworks.
-
-## Lancer sous Windows
+## Lancer le POC sous Windows
 
 Double-cliquer sur :
 
@@ -79,29 +41,27 @@ poc\qt-theme\run_windows.cmd
 
 Le lanceur :
 
-1. crée un environnement virtuel local au POC ;
-2. installe ses dépendances ;
-3. compile `app.py` pour détecter une erreur de syntaxe ;
-4. lance l'interface.
+1. crée un environnement virtuel isolé si nécessaire ;
+2. installe les seules dépendances du POC ;
+3. compile les quatre modules Python pour détecter les erreurs de syntaxe ;
+4. lance `launcher.py`.
 
-Rien n'est installé globalement dans Teamworks.
+## Critères GO / NO-GO
 
-## Critères Go / No-Go
+Le verdict porte sur :
 
-Après essai, regarder surtout :
+1. qualité des tableaux, formulaires, onglets, boutons et dialogues ;
+2. densité d'information desktop ;
+3. thème sombre sans zones blanches résiduelles ;
+4. changement global de thème sans retouche écran par écran ;
+5. HiDPI et redimensionnement ;
+6. facilité de migration progressive depuis wxPython ;
+7. possibilité de brancher les services métier existants derrière un adaptateur stable.
 
-1. **Densité** — peut-on afficher beaucoup d'informations sans fabriquer des cartes géantes ?
-2. **Tableaux** — sélection, colonnes, scroll, lignes, alternance, checkboxes : est-ce propre et rapide ?
-3. **Formulaires** — alignement, focus, clavier, lisibilité et ergonomie.
-4. **Dark mode** — reste-t-il des zones blanches ou des widgets incohérents ?
-5. **Dialogues** — donnent-ils immédiatement un résultat plus propre que les dialogues wx historiques ?
-6. **HiDPI / redimensionnement** — comportement sur écran Windows réel.
-7. **Cohérence globale** — le thème agit-il sur l'application entière sans retouche écran par écran ?
-8. **Performance perçue** — démarrage, navigation entre onglets, scroll et rafraîchissement.
+### GO
 
-## Règle de décision
+Préparer un adaptateur de lecture réel vers les services/repositories Teamworks existants, sans dépendance à wxPython, puis migrer un seul écran de production pilote.
 
-- **GO** si le gain visuel et ergonomique est net tout en conservant la densité métier : prochaine étape = adaptateur en lecture seule vers les services métier existants.
-- **NO-GO** si Qt ne fait qu'embellir sans résoudre les problèmes de cohérence, densité et thème global : suppression de `poc/qt-theme` sans impact sur le produit.
+### NO-GO
 
-Aucune fusion dans `master` ne doit être faite avant ce verdict.
+Fermer la PR et supprimer `poc/qt-theme/`. Aucun autre code n'est affecté.
