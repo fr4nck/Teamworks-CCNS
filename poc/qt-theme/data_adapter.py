@@ -52,7 +52,7 @@ class TeamworksReadAdapter(Protocol):
 
     def list_people(self) -> Sequence[PersonView]: ...
 
-    def list_contracts(self, person_id: str) -> Sequence[ContractView]: ...
+    def list_contracts(self, person_id: str | int) -> Sequence[ContractView]: ...
 
 
 class DemoAdapter:
@@ -104,7 +104,7 @@ class DemoAdapter:
             ),
         )
 
-    def list_contracts(self, person_id: str) -> Sequence[ContractView]:
+    def list_contracts(self, person_id: str | int) -> Sequence[ContractView]:
         return (
             ContractView("CDI", "01/09/2024", "—", "Groupe 4", "35 h", "Actif"),
             ContractView("Avenant", "01/09/2026", "31/08/2027", "Groupe 4", "24 h", "À vérifier"),
@@ -118,5 +118,5 @@ class ProductionAdapterStub:
     def list_people(self) -> Sequence[PersonView]:
         raise RuntimeError("Utiliser TeamworksProductionReadAdapter pour la lecture réelle")
 
-    def list_contracts(self, person_id: str) -> Sequence[ContractView]:
+    def list_contracts(self, person_id: str | int) -> Sequence[ContractView]:
         raise RuntimeError("Utiliser TeamworksProductionReadAdapter pour la lecture réelle")
