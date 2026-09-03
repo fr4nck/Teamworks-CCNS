@@ -8,6 +8,20 @@ La première phase transpose fidèlement l'organisation fonctionnelle et la disp
 
 Aucune règle métier ne doit être dupliquée dans les widgets Qt. Les widgets émettent des intentions ; contrôleurs, presenters, services et repositories restent responsables des validations, autorisations et écritures.
 
+## Décisions consolidées après recette Windows
+
+La recette du 3 septembre 2026 a validé les points suivants :
+
+- le premier affichage Qt ne doit jamais attendre la connexion réseau historique ; la liste initiale des personnes est chargée sur un worker Qt avec son propre reader/sa propre connexion puis injectée dans le modèle sur le thread principal ;
+- les contrats restent chargés à la demande après sélection d'une personne ;
+- la couche Qt reste strictement en lecture seule pendant le POC ;
+- le chemin MySQL historique reste la source des données : aucune nouvelle pile SQL n'est introduite dans l'UI ;
+- la page Généralités utilise une densité `compact` fournie par les composants communs et par le thème, pas des hauteurs locales dispersées ;
+- Généralités reprend le comportement responsive du wrapper wx actuel : deux colonnes 3/5 + 2/5 sur largeur desktop, puis une colonne scrollable dans l'ordre Identité, Situation sociale, Adresse, Coordonnées, Mémo lorsque la largeur devient insuffisante ;
+- le NIR conserve sa place historique mais n'est volontairement pas chargé dans le POC Qt.
+
+Mesure de référence observée sous Windows après chargement différé : premier affichage 1,31 s, données des 96 personnes prêtes à 1,79 s, RSS 130 Mo, deux dépendances UI directes. Ces valeurs sont des points de recette et non des garanties de production.
+
 ## Ordre de transposition des satellites de Généralités
 
 1. Coordonnées : fixe/mobile/fax/email, champs conditionnels, intitulé, validation et pied de dialogue.
@@ -38,18 +52,18 @@ Interface cible :
 - signal `triggered(action_id)`
 
 ### `TwFormSection`
-Bloc nommé d'un formulaire, avec titre, description facultative et contenu.
+Bloc nommé d'un formulaire, avec titre, description facultative et contenu. Le paramètre `compact=True` réduit uniquement la géométrie commune ; il ne change ni les états, ni les couleurs, ni la logique métier.
 
 Interface cible :
-- `TwFormSection(title, description=None)`
+- `TwFormSection(title, description=None, compact=False)`
 - `add_row(row)`
 - `add_widget(widget)`
 
 ### `TwFieldRow`
-Géométrie standard d'un champ : label, editor, suffixe/unité, aide ou action annexe.
+Géométrie standard d'un champ : label, editor, suffixe/unité, aide ou action annexe. La densité compacte est propagée à l'éditeur et à son action via la propriété dynamique Qt `twDensity="compact"`.
 
 Interface cible :
-- `TwFieldRow(label, editor, suffix=None, action=None, help_text=None)`
+- `TwFieldRow(label, editor, suffix=None, action=None, help_text=None, compact=False)`
 - `set_validation(state, message="")`
 
 ### `TwDataTable`
@@ -106,6 +120,8 @@ Rôles usuels : marge de dialogue 16 px, champ à champ 8 px, label vers contrô
 - ligne de tableau dense = 26 px
 - en-tête de tableau = 32 px
 
+Le thème applique ces hauteurs via les rôles et propriétés dynamiques (`twDensity`) afin qu'une fiche dense n'ait pas à imposer elle-même des `setFixedHeight()` arbitraires.
+
 ### Rayons
 - champ = 4 px
 - bouton = 4 px
@@ -160,4 +176,4 @@ Pour obtenir rapidement une cohérence visible :
 7. `TwSearchPicker` ;
 8. `TwChoiceStrip` et états de validation.
 
-Le premier écran d'application de ce socle est la fiche Coordonnées.
+Le premier écran d'application de ce socle est désormais la vraie page Généralités, avec ses quatre familles de satellites comme terrain de validation du kit commun.
