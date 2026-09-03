@@ -63,15 +63,18 @@ class CcnsDataReader:
         return self._lire_contrats(where_clause=where_clause, limit=limit, nom="contrats_personne")
 
     def _lire_contrats(self, where_clause: str, limit: Optional[int], nom: str) -> list[CcnsContratRecord]:
+        # Le schema historique canonique de DATA_Tables.py ne porte pas salaire_base,
+        # temps_hebdo ni prime_anciennete dans la table contrats. Ces champs restent
+        # donc explicitement neutres tant qu'une source canonique n'est pas raccordee.
         req = """
     SELECT
         contrats.IDcontrat,
         contrats.IDpersonne,
         contrats.date_debut,
         contrats.date_fin,
-        contrats.salaire_base,
-        contrats.temps_hebdo,
-        contrats.prime_anciennete,
+        NULL AS salaire_base,
+        NULL AS temps_hebdo,
+        NULL AS prime_anciennete,
         personnes.prenom,
         personnes.nom,
         contrats_class.nom AS classification,
