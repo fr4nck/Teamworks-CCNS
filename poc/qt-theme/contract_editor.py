@@ -9,8 +9,8 @@ from PySide6.QtWidgets import (
     QDialog,
     QDialogButtonBox,
     QDoubleSpinBox,
-    QFormLayout,
     QFrame,
+    QGridLayout,
     QLabel,
     QLineEdit,
     QVBoxLayout,
@@ -58,7 +58,7 @@ class ContractComplianceDialog(QDialog):
         self._presenter = CCNSContractCompliancePresenter()
 
         self.setWindowTitle("Contrôle contrat CCNS — POC")
-        self.setMinimumWidth(520)
+        self.setMinimumWidth(560)
 
         root = QVBoxLayout(self)
         root.setContentsMargins(16, 16, 16, 16)
@@ -70,10 +70,10 @@ class ContractComplianceDialog(QDialog):
 
         panel = QFrame()
         panel.setObjectName("panel")
-        form = QFormLayout(panel)
-        form.setContentsMargins(12, 12, 12, 12)
-        form.setHorizontalSpacing(12)
-        form.setVerticalSpacing(8)
+        grid = QGridLayout(panel)
+        grid.setContentsMargins(12, 12, 12, 12)
+        grid.setHorizontalSpacing(12)
+        grid.setVerticalSpacing(8)
 
         self.group = QComboBox()
         for choice in self._presenter.group_choices(self._reference_date):
@@ -90,12 +90,18 @@ class ContractComplianceDialog(QDialog):
 
         self.monthly_salary = QLineEdit()
         self.monthly_salary.setPlaceholderText("ex. 1 850,00")
+        self.monthly_salary.setMinimumWidth(100)
         self.monthly_salary.setMaximumWidth(120)
         self.monthly_salary.setAlignment(Qt.AlignmentFlag.AlignRight)
 
-        form.addRow("Groupe CCNS", self.group)
-        form.addRow("Durée hebdomadaire", self.weekly_hours)
-        form.addRow("Salaire brut mensuel", self.monthly_salary)
+        grid.addWidget(QLabel("Groupe CCNS"), 0, 0)
+        grid.addWidget(self.group, 0, 1, 1, 3)
+        grid.addWidget(QLabel("Durée hebdomadaire"), 1, 0)
+        grid.addWidget(self.weekly_hours, 1, 1)
+        grid.addWidget(QLabel("Salaire brut mensuel"), 1, 2)
+        grid.addWidget(self.monthly_salary, 1, 3)
+        grid.setColumnStretch(1, 1)
+        grid.setColumnStretch(3, 1)
         root.addWidget(panel)
 
         self.status = QLabel()
@@ -120,8 +126,8 @@ class ContractComplianceDialog(QDialog):
         style.polish(self.status)
         self.status.update()
 
-    def _set_pending(self) -> None:
-        self._set_status(PENDING, "Contrôle en attente — renseignez un salaire brut mensuel valide.")
+    def _set_pending(self, text: str = "Contrôle en attente — renseignez un salaire brut mensuel valide.") -> None:
+        self._set_status(PENDING, text)
 
     def _refresh_compliance(self, *_args) -> None:
         remuneration = parse_decimal_text(self.monthly_salary.text())
@@ -131,12 +137,19 @@ class ContractComplianceDialog(QDialog):
             return
 
         weekly_hours = decimal_from_qt_number(self.weekly_hours.value())
-        preview = self._presenter.evaluate_monthly(
-            group_code=str(group_code),
-            reference_date=self._reference_date,
-            weekly_hours=weekly_hours,
-            remuneration_amount=remuneration,
-        )
+        try:
+            preview = self._presenter.evaluate_monthly(
+                group_code=str(group_code),
+                reference_date=self._reference_date,
+                weekly_hours=weekly_hours,
+                remuneration_amount=remuneration,
+            )
+        except ValueError as exc:
+            if "minimum annuel" not in str(exc):
+                raise
+            self._set_pending("Contrôle mensuel indisponible — ce groupe CCNS est défini par un minimum annuel.")
+            return
+
         state = COMPLIANT if preview.compliant else NON_COMPLIANT
         verdict = "Conforme" if preview.compliant else "Non conforme"
         self._set_status(
