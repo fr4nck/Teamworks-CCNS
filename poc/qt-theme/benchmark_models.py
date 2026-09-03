@@ -27,7 +27,9 @@ def build_people(count: int) -> tuple[PersonView, ...]:
     return tuple(
         PersonView(
             id=f"BENCH-{index:04d}",
+            id_historique=None,
             name=f"Personne {index:04d}",
+            birth_date="",
             role="",
             classification="",
             contract="",
@@ -89,7 +91,6 @@ def benchmark_domain_adaptation() -> tuple[float, float, int]:
     through_adapter = adapter.list_contracts(person_id)
     adapter_ms = (time.perf_counter() - adapter_started) * 1000.0
 
-    # Le jeu couvre explicitement les deux branches de date de fin.
     assert any(item.end == "—" for item in mapped)
     assert any(item.end != "—" for item in mapped)
     assert len(through_adapter) == DOMAIN_CONTRACT_COUNT
@@ -119,8 +120,6 @@ def main() -> None:
     contracts_view = QTableView()
     contracts_view.setModel(contracts_model)
 
-    # Force la création/résolution du premier écran de données sans afficher
-    # 1000 widgets : QTableView reste virtualisé et interroge le modèle à la demande.
     people_view.resize(1100, 650)
     contracts_view.resize(900, 320)
     people_view.show()
