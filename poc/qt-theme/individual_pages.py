@@ -34,6 +34,25 @@ def _open_preview(dialog_cls, owner: QWidget) -> None:
     dialog_cls(owner.window()).exec()
 
 
+class QuestionnairePage(QWidget):
+    """Questionnaire historique : questions à gauche, réponses à droite."""
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        root = QVBoxLayout(self)
+        root.setContentsMargins(TOKENS.spacing.sm, TOKENS.spacing.sm, TOKENS.spacing.sm, TOKENS.spacing.sm)
+
+        section = TwFormSection("Questionnaire")
+        self.model = _empty_model(("Question", "Réponse"), self)
+        self.table = _table(self.model)
+        header = self.table.horizontalHeader()
+        header.setStretchLastSection(False)
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        section.add_widget(self.table, 1)
+        root.addWidget(section, 1)
+
+
 class QualificationsPage(QWidget):
     """Transposition de ``CTRL_Page_qualifications`` sans persistance.
 
@@ -170,7 +189,6 @@ class PresencesPage(QWidget):
         header.setSectionResizeMode(2, QHeaderView.ResizeMode.Interactive)
         header.setSectionResizeMode(3, QHeaderView.ResizeMode.Interactive)
         header.setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)
-        self.table.selectionKeyChanged.connect(self._on_selection)
         section.add_widget(self.table, 1)
 
         self.search.textChanged.connect(self._filter)
@@ -179,13 +197,6 @@ class PresencesPage(QWidget):
     def _on_action(self, action_id: str) -> None:
         if action_id == "add":
             _open_preview(PresencePreviewDialog, self)
-
-    def _on_selection(self, key) -> None:
-        selected = key is not None
-        # Les écritures restent interdites dans le POC : conserver les actions
-        # de modification/suppression désactivées même si une ligne est choisie.
-        self.actions.set_enabled("edit", False and selected)
-        self.actions.set_enabled("delete", False and selected)
 
     def _filter(self, text: str) -> None:
         self.proxy_model.setFilterFixedString(text)
