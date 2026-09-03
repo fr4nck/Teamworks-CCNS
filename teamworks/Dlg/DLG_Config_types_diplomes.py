@@ -29,9 +29,9 @@ class Panel(wx.Panel):
         self.listCtrl_TypesDiplomes = ListCtrlTypesDiplomes(self)
         self.listCtrl_TypesDiplomes.SetMinSize((20, 20)) 
         
-        self.bouton_ajouter = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_modifier = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Modifier.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_supprimer = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_ajouter = CTRL_Bouton_image.CTRL(self, texte=_(u"Ajouter"), cheminImage=Chemins.GetStaticPath("Images/32x32/Ajouter.png"))
+        self.bouton_modifier = CTRL_Bouton_image.CTRL(self, texte=_(u"Modifier"), cheminImage=Chemins.GetStaticPath("Images/32x32/Modifier.png"))
+        self.bouton_supprimer = CTRL_Bouton_image.CTRL(self, texte=_(u"Supprimer"), cheminImage=Chemins.GetStaticPath("Images/32x32/Supprimer.png"), role="danger")
 
         self.__set_properties()
         self.__do_layout()
@@ -396,8 +396,8 @@ class Dialog(wx.Dialog):
         self.panel_base = wx.Panel(self, -1)
         self.panel_contenu = Panel(self.panel_base)
         self.panel_contenu.barreTitre.Show(False)
-        self.bouton_aide = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))
-        self.bouton_fermer = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Fermer"), cheminImage=Chemins.GetStaticPath("Images/32x32/Fermer.png"))
+        self.bouton_aide = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"), role="quiet")
+        self.bouton_fermer = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Fermer"), cheminImage=Chemins.GetStaticPath("Images/32x32/Fermer.png"), role="quiet")
         self.__set_properties()
         self.__do_layout()
 
