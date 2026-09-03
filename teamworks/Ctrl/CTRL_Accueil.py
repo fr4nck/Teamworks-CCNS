@@ -155,6 +155,9 @@ class Panel(wx.Panel):
             name="panel_accueil",
             style=wx.NO_FULL_REPAINT_ON_RESIZE,
         )
+        if "wxMSW" in wx.PlatformInfo:
+            self.SetDoubleBuffered(True)
+
         couleur_surface = UTILS_Interface.GetToken("surface")
         self.couleur_fond = (
             couleur_surface.Red(),
