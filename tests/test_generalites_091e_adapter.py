@@ -20,4 +20,6 @@ def test_cp_naissance_devient_libre_hors_france_sans_couper_la_residence():
     source = ADAPTER.read_text(encoding="utf-8")
     assert 'SetCtrlParameters(mask="#####" if france else "")' in source
     assert "self.autoComplete = True" in source
-    assert "seuls les\n        # gestionnaires du lieu de naissance" in source
+    assert "def _configurer_cp_residence_libre(self):" in source
+    assert 'self.text_cp.SetCtrlParameters(mask="")' in source
+    assert "def VilleText2(self, event):" in source
