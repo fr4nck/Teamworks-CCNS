@@ -20,13 +20,18 @@ class PersonView:
 
 @dataclass(frozen=True)
 class ContractView:
+    """Projection de consultation d'un contrat pour l'UI Qt.
+
+    Tous les champs sont déjà prêts à afficher. Aucune sémantique d'activité n'est
+    exposée tant que le domaine ne fournit pas de règle canonique pour la dériver.
+    """
+
     kind: str
     start: str
     end: str
     classification: str
     duration: str
     status: str
-    active: bool
 
 
 class TeamworksReadAdapter(Protocol):
@@ -52,9 +57,9 @@ class DemoAdapter:
 
     def list_contracts(self, person_id: str) -> Sequence[ContractView]:
         return (
-            ContractView("CDI", "01/09/2024", "—", "Groupe 4", "35 h", "Actif", True),
-            ContractView("Avenant", "01/09/2026", "31/08/2027", "Groupe 4", "24 h", "À vérifier", True),
-            ContractView("CDD saisonnier", "06/07/2026", "31/07/2026", "Groupe 2", "35 h", "Terminé", False),
+            ContractView("CDI", "01/09/2024", "—", "Groupe 4", "35 h", "Actif"),
+            ContractView("Avenant", "01/09/2026", "31/08/2027", "Groupe 4", "24 h", "À vérifier"),
+            ContractView("CDD saisonnier", "06/07/2026", "31/07/2026", "Groupe 2", "35 h", "Terminé"),
         )
 
 
