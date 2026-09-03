@@ -17,7 +17,9 @@ from Utils.UTILS_Coordonnees import normaliser_email, normaliser_telephone, norm
 
 class Dialog(wx.Dialog):
     def __init__(self, parent, ID=-1, title=_(u"Coordonnées"), size=(280, 290), IDcoord=0, IDpersonne=0):
-        wx.Dialog.__init__(self, parent, -1, style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
+        # ``size`` est conservé uniquement pour compatibilité avec les anciens
+        # appels. La géométrie réelle est désormais calculée depuis le contenu.
+        wx.Dialog.__init__(self, parent, -1, style=wx.DEFAULT_DIALOG_STYLE)
         self.parent = parent
         self.IDpersonne = IDpersonne
         self.IDcoord = IDcoord
@@ -34,24 +36,19 @@ class Dialog(wx.Dialog):
         self.panel_frame.SetBackgroundColour(UTILS_Interface.GetToken("surface"))
         self.categorieSelect = ""
 
-        self.titre_categories = CTRL_Texte.H2(self.panel_frame, _(u"1. Sélectionnez une catégorie"))
-        self.bouton_fixe = wx.ToggleButton(self.panel_frame, -1, _(u"Fixe"))
-        self.bouton_mobile = wx.ToggleButton(self.panel_frame, -1, _(u"Mobile"))
-        self.bouton_fax = wx.ToggleButton(self.panel_frame, -1, _(u"Fax"))
-        self.bouton_email = wx.ToggleButton(self.panel_frame, -1, _(u"Email"))
+        self.titre_categories = CTRL_Texte.H3(self.panel_frame, _(u"1. Sélectionnez une catégorie"))
+        self.bouton_fixe = CTRL_Bouton_image.Toggle(self.panel_frame, texte=_(u"Fixe"))
+        self.bouton_mobile = CTRL_Bouton_image.Toggle(self.panel_frame, texte=_(u"Mobile"))
+        self.bouton_fax = CTRL_Bouton_image.Toggle(self.panel_frame, texte=_(u"Fax"))
+        self.bouton_email = CTRL_Bouton_image.Toggle(self.panel_frame, texte=_(u"Email"))
         self._category_buttons = {
             "Fixe": self.bouton_fixe,
             "Mobile": self.bouton_mobile,
             "Fax": self.bouton_fax,
             "Email": self.bouton_email,
         }
-        hauteur_action = UTILS_Styles.GetControlMetric("button_min_height")
-        largeur_action = UTILS_Styles.Scale(104)
-        for button in self._category_buttons.values():
-            button.SetMinSize((largeur_action, hauteur_action))
-            button.SetFont(UTILS_Styles.GetFont("label"))
 
-        self.titre_infos = CTRL_Texte.H2(self.panel_frame, _(u"2. Saisissez les informations"))
+        self.titre_infos = CTRL_Texte.H3(self.panel_frame, _(u"2. Saisissez les informations"))
         self.label_info_mail = CTRL_Texte.Label(self.panel_frame, _(u"Email"))
         self.text_info_mail = wx.TextCtrl(self.panel_frame, -1, "")
         self.label_info_tel = CTRL_Texte.Label(self.panel_frame, _(u"N° Fixe"))
@@ -67,20 +64,22 @@ class Dialog(wx.Dialog):
             id=wx.ID_OK,
             texte=_(u"Valider"),
             cheminImage=Chemins.GetStaticPath("Images/32x32/Valider.png"),
+            role="primary",
         )
         self.bouton_Annuler = CTRL_Bouton_image.CTRL(
             self.panel_frame,
             id=wx.ID_CANCEL,
             texte=_(u"Annuler"),
             cheminImage=Chemins.GetStaticPath("Images/32x32/Annuler.png"),
+            role="quiet",
         )
 
         self.__set_properties()
         self.__do_layout()
+        UTILS_Styles.ApplyWindowProfile(self, "fit")
 
-        # wx.ToggleButton émet EVT_TOGGLEBUTTON (et non EVT_BUTTON sous Phoenix).
-        # Avec EVT_BUTTON les boutons semblaient cliquables mais la catégorie
-        # n'était jamais sélectionnée : les champs restaient donc désactivés.
+        # CTRL_Bouton_image.Toggle relaie EVT_TOGGLEBUTTON après avoir mis à
+        # jour son état visuel centralisé.
         self.Bind(wx.EVT_TOGGLEBUTTON, self.OnBouton_Fixe, self.bouton_fixe)
         self.Bind(wx.EVT_TOGGLEBUTTON, self.OnBouton_Mobile, self.bouton_mobile)
         self.Bind(wx.EVT_TOGGLEBUTTON, self.OnBouton_Fax, self.bouton_fax)
@@ -92,9 +91,12 @@ class Dialog(wx.Dialog):
             self.Importation()
         else:
             self.ActivationChamps(False)
-            # Premier contrôle logique pour une saisie clavier immédiate.
             self.bouton_fixe.SetFocus()
         self._update_category_buttons()
+
+        # Le thème et le DPI peuvent ajuster la police après la construction :
+        # on refait donc un fit différé avant la première interaction.
+        wx.CallAfter(UTILS_Styles.RefitWindow, self)
 
     def __set_properties(self):
         self.bouton_Ok.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour valider")))
@@ -102,7 +104,9 @@ class Dialog(wx.Dialog):
         self.text_info_tel.SetToolTip(wx.ToolTip(_(u"Saisissez ici un numéro de téléphone")))
         self.text_info_mail.SetToolTip(wx.ToolTip(_(u"Saisissez ici une adresse Mail valide")))
         self.text_intitule.SetToolTip(wx.ToolTip(_(u"Vous pouvez, si vous le souhaitez, saisir ici un intitulé. Ex : 'Contact à Rennes' ou 'Domicile des parents'...")))
-        UTILS_Styles.ApplyWindowProfile(self, "compact")
+        UTILS_Styles.ApplyFieldRole(self.text_info_tel, UTILS_Styles.FIELD_PHONE)
+        UTILS_Styles.ApplyFieldRole(self.text_info_mail, UTILS_Styles.FIELD_EMAIL)
+        UTILS_Styles.ApplyFieldRole(self.text_intitule, UTILS_Styles.FIELD_TEXT)
 
     def __do_layout(self):
         padding = UTILS_Styles.GetLayoutSpacing("dialog_padding")
@@ -124,10 +128,10 @@ class Dialog(wx.Dialog):
         self.sizer_infos.Add(self.label_info_mail, 0, wx.BOTTOM, control_gap)
         self.sizer_infos.Add(self.text_info_mail, 0, wx.EXPAND | wx.BOTTOM, field_gap)
         self.sizer_infos.Add(self.label_info_tel, 0, wx.BOTTOM, control_gap)
-        self.sizer_infos.Add(self.text_info_tel, 0, wx.EXPAND | wx.BOTTOM, field_gap)
+        self.sizer_infos.Add(self.text_info_tel, 0, wx.BOTTOM, field_gap)
         self.sizer_infos.Add(self.label_intitule, 0, wx.BOTTOM, control_gap)
         self.sizer_infos.Add(self.text_intitule, 0, wx.EXPAND)
-        sizer_base.Add(self.sizer_infos, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, padding)
+        sizer_base.Add(self.sizer_infos, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, padding)
 
         sizer_boutons = wx.BoxSizer(wx.HORIZONTAL)
         sizer_boutons.AddStretchSpacer(1)
@@ -137,21 +141,13 @@ class Dialog(wx.Dialog):
 
         self.panel_frame.SetSizer(sizer_base)
         outer = wx.BoxSizer(wx.VERTICAL)
-        outer.Add(self.panel_frame, 1, wx.EXPAND)
+        outer.Add(self.panel_frame, 0, wx.EXPAND)
         self.SetSizer(outer)
         self.Layout()
 
     def _update_category_buttons(self):
         for categorie, button in self._category_buttons.items():
-            selected = categorie == self.categorieSelect
-            button.SetValue(selected)
-            if selected:
-                button.SetBackgroundColour(UTILS_Interface.GetToken("primary_container"))
-                button.SetForegroundColour(UTILS_Interface.GetToken("on_primary_container"))
-            else:
-                button.SetBackgroundColour(UTILS_Interface.GetToken("surface_container_low"))
-                button.SetForegroundColour(UTILS_Interface.GetToken("on_surface"))
-            button.Refresh()
+            button.SetValue(categorie == self.categorieSelect)
 
     def _select_category(self, categorie, label, email=False):
         self.categorieSelect = categorie
@@ -164,6 +160,7 @@ class Dialog(wx.Dialog):
         self._update_category_buttons()
         self.sizer_infos.Layout()
         self.panel_frame.Layout()
+        UTILS_Styles.RefitWindow(self, centre=False)
         if email:
             self.text_info_mail.SetFocus()
         else:
