@@ -7,7 +7,8 @@ from PySide6.QtWidgets import QWidget
 
 class ValidationLevel(StrEnum):
     NEUTRAL = "neutral"
-    VALID = "valid"
+    SUCCESS = "success"
+    VALID = "valid"  # compatibilité des premiers composants du POC
     WARNING = "warning"
     ERROR = "error"
 
