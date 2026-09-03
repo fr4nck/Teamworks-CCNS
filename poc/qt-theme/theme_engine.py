@@ -71,7 +71,7 @@ DARK = ThemeTokens(
 
 
 class ThemeEngine:
-    """Petit moteur de thème isolé du POC.
+    """Moteur de thème isolé du POC.
 
     Qt Material n'est utilisé que comme couche de base. Les rôles métier, les
     surfaces et les états Teamworks vivent ici afin de pouvoir remplacer le
@@ -169,6 +169,13 @@ class ThemeEngine:
                 background: {t.surface_container_high};
                 border-color: {t.outline};
             }}
+            QToolButton#legacyToolButton:pressed,
+            QToolButton#twActionButton:pressed,
+            QToolButton#twChoiceButton:pressed,
+            QPushButton#twSecondaryButton:pressed {{
+                background: {t.selection};
+                border-color: {t.focus};
+            }}
             QToolButton#twChoiceButton:checked {{
                 background: {t.selection};
                 color: {t.selection_text};
@@ -204,6 +211,10 @@ class ThemeEngine:
             QPushButton#twPrimaryButton:hover {{
                 border-color: {t.focus};
             }}
+            QPushButton#twPrimaryButton:pressed {{
+                background: {t.selection};
+                color: {t.selection_text};
+            }}
             QPushButton#twPrimaryButton:disabled {{
                 background: {t.surface_container_high};
                 color: {t.disabled};
@@ -215,19 +226,30 @@ class ThemeEngine:
             QDateEdit,
             QTimeEdit,
             QSpinBox,
-            QDoubleSpinBox {{
+            QDoubleSpinBox,
+            QPlainTextEdit,
+            QTextEdit {{
                 min-height: {c.height_standard}px;
                 background: {t.surface_container_lowest};
                 color: {t.on_surface};
                 border: 1px solid {t.outline_variant};
                 border-radius: {r.field}px;
+                selection-background-color: {t.selection};
+                selection-color: {t.selection_text};
+            }}
+            QLineEdit[twReadOnly="true"],
+            QPlainTextEdit[twReadOnly="true"],
+            QTextEdit[twReadOnly="true"] {{
+                background: {t.surface_container};
             }}
             QLineEdit:hover,
             QComboBox:hover,
             QDateEdit:hover,
             QTimeEdit:hover,
             QSpinBox:hover,
-            QDoubleSpinBox:hover {{
+            QDoubleSpinBox:hover,
+            QPlainTextEdit:hover,
+            QTextEdit:hover {{
                 background: {t.surface_container_high};
                 border-color: {t.outline};
             }}
@@ -236,7 +258,9 @@ class ThemeEngine:
             QDateEdit:focus,
             QTimeEdit:focus,
             QSpinBox:focus,
-            QDoubleSpinBox:focus {{
+            QDoubleSpinBox:focus,
+            QPlainTextEdit:focus,
+            QTextEdit:focus {{
                 border: 2px solid {t.focus};
             }}
             QLineEdit:disabled,
@@ -244,35 +268,63 @@ class ThemeEngine:
             QDateEdit:disabled,
             QTimeEdit:disabled,
             QSpinBox:disabled,
-            QDoubleSpinBox:disabled {{
+            QDoubleSpinBox:disabled,
+            QPlainTextEdit:disabled,
+            QTextEdit:disabled {{
                 background: {t.surface_container_high};
                 color: {t.disabled};
                 border-color: {t.outline_variant};
             }}
+
             QLineEdit[validationState="error"],
             QComboBox[validationState="error"],
             QDateEdit[validationState="error"],
             QSpinBox[validationState="error"],
-            QDoubleSpinBox[validationState="error"] {{
-                border-color: {t.danger};
-            }}
+            QDoubleSpinBox[validationState="error"],
+            QPlainTextEdit[validationState="error"],
+            QTextEdit[validationState="error"] {{ border-color: {t.danger}; }}
+
             QLineEdit[validationState="warning"],
             QComboBox[validationState="warning"],
             QDateEdit[validationState="warning"],
             QSpinBox[validationState="warning"],
-            QDoubleSpinBox[validationState="warning"] {{
-                border-color: {t.warning};
-            }}
+            QDoubleSpinBox[validationState="warning"],
+            QPlainTextEdit[validationState="warning"],
+            QTextEdit[validationState="warning"] {{ border-color: {t.warning}; }}
+
             QLineEdit[validationState="valid"],
+            QLineEdit[validationState="success"],
             QComboBox[validationState="valid"],
+            QComboBox[validationState="success"],
             QDateEdit[validationState="valid"],
+            QDateEdit[validationState="success"],
             QSpinBox[validationState="valid"],
-            QDoubleSpinBox[validationState="valid"] {{
-                border-color: {t.success};
-            }}
+            QSpinBox[validationState="success"],
+            QDoubleSpinBox[validationState="valid"],
+            QDoubleSpinBox[validationState="success"],
+            QPlainTextEdit[validationState="valid"],
+            QPlainTextEdit[validationState="success"],
+            QTextEdit[validationState="valid"],
+            QTextEdit[validationState="success"] {{ border-color: {t.success}; }}
+
+            /* Focus reste perceptible même lorsqu'un état métier est présent. */
+            QLineEdit[validationState="error"]:focus,
+            QPlainTextEdit[validationState="error"]:focus,
+            QTextEdit[validationState="error"]:focus {{ border: 2px solid {t.danger}; }}
+            QLineEdit[validationState="warning"]:focus,
+            QPlainTextEdit[validationState="warning"]:focus,
+            QTextEdit[validationState="warning"]:focus {{ border: 2px solid {t.warning}; }}
+            QLineEdit[validationState="valid"]:focus,
+            QLineEdit[validationState="success"]:focus,
+            QPlainTextEdit[validationState="valid"]:focus,
+            QPlainTextEdit[validationState="success"]:focus,
+            QTextEdit[validationState="valid"]:focus,
+            QTextEdit[validationState="success"]:focus {{ border: 2px solid {t.success}; }}
+
             QLabel#twValidationMessage[validationState="error"] {{ color: {t.danger}; }}
             QLabel#twValidationMessage[validationState="warning"] {{ color: {t.warning}; }}
-            QLabel#twValidationMessage[validationState="valid"] {{ color: {t.success}; }}
+            QLabel#twValidationMessage[validationState="valid"],
+            QLabel#twValidationMessage[validationState="success"] {{ color: {t.success}; }}
 
             QFrame#alertRow {{
                 background: {t.surface_container_high};
@@ -318,6 +370,22 @@ class ThemeEngine:
                 selection-color: {t.selection_text};
                 border: 0;
             }}
+            QTableView::item:hover,
+            QTableWidget::item:hover {{
+                background: {t.surface_container_high};
+            }}
+            QTableView::item:selected,
+            QTableWidget::item:selected {{
+                background: {t.selection};
+                color: {t.selection_text};
+            }}
+            QTableView:focus, QTableWidget:focus {{
+                border: 2px solid {t.focus};
+            }}
+            QTableView:disabled, QTableWidget:disabled {{
+                color: {t.disabled};
+                background: {t.surface_container_high};
+            }}
             QTableView#twDataTable {{
                 border: 1px solid {t.outline_variant};
                 border-radius: {r.field}px;
@@ -338,6 +406,13 @@ class ThemeEngine:
             }}
             QTabBar::tab {{
                 padding: 7px 9px;
+            }}
+            QTabBar::tab:hover {{
+                background: {t.surface_container_high};
+            }}
+            QTabBar::tab:selected {{
+                background: {t.selection};
+                color: {t.selection_text};
             }}
             """
         )
