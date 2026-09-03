@@ -12,7 +12,7 @@ from PySide6.QtWidgets import QApplication
 
 from domain_read_adapter import build_domain_smoke_adapter
 from frugality import DIRECT_DEPENDENCIES, FrugalityProbe
-from pilot_view import PeopleContractsPilot
+from pilot_generalities import PeopleContractsGeneralitiesPilot
 from theme_engine import ThemeEngine
 
 
@@ -41,7 +41,7 @@ def main() -> None:
     window = None
     try:
         before_window = time.perf_counter()
-        window = PeopleContractsPilot(adapter)
+        window = PeopleContractsGeneralitiesPilot(adapter)
         after_window = time.perf_counter()
         window.show()
         shown_at = time.perf_counter()
