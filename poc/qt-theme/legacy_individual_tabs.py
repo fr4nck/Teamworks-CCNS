@@ -101,13 +101,24 @@ class LegacyIndividualTabs:
         page = QWidget()
         root = QVBoxLayout(page)
         root.setContentsMargins(5, 5, 5, 5)
-        group = QGroupBox("Questionnaire")
-        layout = QVBoxLayout(group)
-        message = QLabel("Questions et réponses de la fiche individuelle")
-        message.setProperty("muted", True)
-        message.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(message, 1)
-        root.addWidget(group, 1)
+        root.setSpacing(6)
+
+        title = QLabel("Questionnaire")
+        font = title.font()
+        font.setBold(True)
+        font.setPointSize(max(font.pointSize(), 11))
+        title.setFont(font)
+        root.addWidget(title)
+
+        note = QLabel("Disposition historique : questions à gauche, réponses à droite.")
+        note.setProperty("muted", True)
+        root.addWidget(note)
+
+        table = self._table(["Question", "Réponse"])
+        table.horizontalHeader().setStretchLastSection(False)
+        table.horizontalHeader().setSectionResizeMode(0, table.horizontalHeader().ResizeMode.Stretch)
+        table.horizontalHeader().setSectionResizeMode(1, table.horizontalHeader().ResizeMode.Stretch)
+        root.addWidget(table, 1)
         return page
 
     def qualifications(self) -> QWidget:
