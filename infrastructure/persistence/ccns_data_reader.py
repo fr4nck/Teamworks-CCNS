@@ -72,12 +72,12 @@ class CcnsDataReader:
         contrats.salaire_base,
         contrats.temps_hebdo,
         contrats.prime_anciennete,
-        individus.prenom,
-        individus.nom,
+        personnes.prenom,
+        personnes.nom,
         contrats_class.nom AS classification,
         contrats_types.nom AS type_contrat
     FROM contrats
-    LEFT JOIN individus ON individus.IDindividu = contrats.IDpersonne
+    LEFT JOIN personnes ON personnes.IDpersonne = contrats.IDpersonne
     LEFT JOIN contrats_class ON contrats_class.IDclassification = contrats.IDclassification
     LEFT JOIN contrats_types ON contrats_types.IDtype = contrats.IDtype
     %s
