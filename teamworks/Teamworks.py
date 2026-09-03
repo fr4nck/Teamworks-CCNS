@@ -13,6 +13,13 @@ import sys
 
 import wx
 
+from Utils import UTILS_RenderTransaction
+
+# Le contrat de rendu doit être installé avant l'import du cœur historique :
+# Windows reçoit ainsi le thème natif avant la création des premiers contrôles
+# et aucun écran intermédiaire n'est peint pendant sa construction.
+UTILS_RenderTransaction.install()
+
 import Chemins
 import Teamworks_core as CORE
 from Ctrl import CTRL_Accueil
