@@ -15,7 +15,7 @@ import FonctionsPerso
 from Utils import UTILS_Dates
 from Utils import UTILS_Customize
 from Utils import UTILS_Interface
-from Ctrl import CTRL_Gadget_pb_personnes
+from Ctrl import CTRL_Bouton_image, CTRL_Gadget_pb_personnes
 import sys
 
 from Ol import OL_personnes
@@ -38,23 +38,12 @@ def _echelle_interface():
         return 100
 
 
-def _bitmap_action(nom_image):
-    """Charge une icône historique dans une taille adaptée à l'interface."""
-    taille = max(24, min(32, int(round(24 * _echelle_interface() / 100.0))))
-    bitmap = wx.Bitmap(Chemins.GetStaticPath("Images/16x16/%s" % nom_image), wx.BITMAP_TYPE_ANY)
-    if bitmap.IsOk() and (bitmap.GetWidth() != taille or bitmap.GetHeight() != taille):
-        image = bitmap.ConvertToImage()
-        image = image.Scale(taille, taille, wx.IMAGE_QUALITY_HIGH)
-        bitmap = wx.Bitmap(image)
-    return bitmap
-
-
 def _bouton_action(parent, nom_image):
-    bitmap = _bitmap_action(nom_image)
-    bouton = wx.BitmapButton(parent, -1, bitmap)
-    cote = max(36, bitmap.GetWidth() + 12)
-    bouton.SetMinSize((cote, cote))
-    return bouton
+    """Crée une action iconique via le contrat commun Teamworks-CCNS."""
+    return CTRL_Bouton_image.CTRL(
+        parent,
+        cheminImage=Chemins.GetStaticPath("Images/32x32/%s" % nom_image),
+    )
 
 
 class PanelDossiers(wx.Panel):
@@ -139,7 +128,6 @@ class PanelResume(wx.Panel):
         event.Skip()
 
     def RecupIDfichier(self):
-        """ Récupère le code identifiant unique du fichier """
         DB = GestionDB.DB()
         req = "SELECT codeIDfichier FROM divers WHERE IDdivers=1;"
         DB.ExecuterReq(req)
@@ -149,8 +137,6 @@ class PanelResume(wx.Panel):
         return codeIDfichier
 
     def OnSelectPersonne(self, IDpersonne=0):
-        """ Met à jour le cadre résumé identité """
-
         DB = GestionDB.DB()
         req = """SELECT civilite, nom, prenom, date_naiss, ville_naiss, adresse_resid, cp_resid, ville_resid
         FROM personnes WHERE IDpersonne=%d; """ % IDpersonne
@@ -391,9 +377,6 @@ class PanelPersonnes(wx.Panel):
         self.window_D.SetSizer(sizer_droite)
         self.sizer_D = sizer_droite
 
-        # Valeur provisoire minimale : la vraie proportion est calculée une fois
-        # que le panneau connaît sa largeur réelle. L'utilisateur garde ensuite
-        # la main sur le séparateur.
         self.splitter.SplitVertically(self.window_G, self.window_D, 220)
 
         sizer_base = wx.BoxSizer(wx.VERTICAL)
@@ -417,7 +400,6 @@ class PanelPersonnes(wx.Panel):
         event.Skip()
 
     def AjusterColonnes(self):
-        """Distribue l'espace disponible aux colonnes utiles de la liste."""
         liste = self.listCtrl_personnes
         try:
             nbre = liste.GetColumnCount()
