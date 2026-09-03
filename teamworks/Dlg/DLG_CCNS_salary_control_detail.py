@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import wx
 
+from Ctrl import CTRL_Bouton_image
 from application.presentation import ContractSalaryControlDetailViewModel, detail_from_audit_row
 from Utils import UTILS_Interface
 
@@ -21,7 +22,7 @@ class Dialog(wx.Dialog):
             style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER | wx.MAXIMIZE_BOX,
         )
         self.detail = detail
-        self.button_close = wx.Button(self, wx.ID_CANCEL, "Fermer")
+        self.button_close = CTRL_Bouton_image.CTRL(self, id=wx.ID_CANCEL, texte="Fermer", role="quiet")
         self.__do_layout()
         self.SetSize((760, 620))
         self.CentreOnParent()
