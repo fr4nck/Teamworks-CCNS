@@ -21,9 +21,12 @@ def test_adaptateur_cable_reellement_le_helper_responsive():
     assert "UTILS_Generalites_international" in source
     assert "UTILS_Responsive.form_column_count(" in source
     assert "self.Bind(wx.EVT_SIZE, self._on_responsive_size)" in source
-    assert "wx.CallAfter(self._appliquer_layout_responsive)" in source
+    assert "self._appliquer_layout_responsive(force=True)" in source
+    assert "wx.CallAfter(self._appliquer_layout_responsive)" not in source
+    assert "wx.ScrolledWindow" in source
+    assert "self._scroll_host.FitInside()" in source
     assert "if colonnes == 1:" in source
-    assert "self.SetSizer(sizer, deleteOld=True)" in source
+    assert "self._scroll_host.SetSizer(sizer, deleteOld=True)" in source
 
 
 def test_basculement_responsive_detache_les_sections_avant_reemploi():
