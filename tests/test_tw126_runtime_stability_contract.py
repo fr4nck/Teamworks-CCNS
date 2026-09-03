@@ -12,26 +12,18 @@ def _source(relative_path):
     return (ROOT / relative_path).read_text(encoding="utf-8")
 
 
-def _is_self_panel(node):
-    return (
-        isinstance(node, ast.Attribute)
-        and isinstance(node.value, ast.Name)
-        and node.value.id == "self"
-        and node.attr == "panel"
-    )
-
-
-def test_preferences_buttons_use_panel_parent():
+def test_preferences_keep_actions_outside_scrollable_body():
     source = _source("teamworks/Dlg/DLG_Preferences.py")
     tree = ast.parse(source)
     calls = [node for node in ast.walk(tree) if isinstance(node, ast.Call)]
-    assert any(
-        isinstance(call.func, ast.Attribute)
-        and call.func.attr == "Button"
-        and call.args
-        and _is_self_panel(call.args[0])
-        for call in calls
-    )
+
+    # Le corps peut défiler, mais Valider/Annuler appartiennent à un footer
+    # distinct afin de rester accessibles même à fort zoom ou petite hauteur.
+    assert "self.body = wx.ScrolledWindow(" in source
+    assert "self.footer = wx.Panel(self.panel)" in source
+    assert "wx.Button(self.footer, wx.ID_OK)" in source
+    assert "wx.Button(self.footer, wx.ID_CANCEL)" in source
+    assert "shell.Add(self.footer, 0, wx.EXPAND)" in source
     assert not any(
         isinstance(call.func, ast.Attribute)
         and call.func.attr == "CreateStdDialogButtonSizer"
