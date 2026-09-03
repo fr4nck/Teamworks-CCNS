@@ -60,9 +60,6 @@ def test_responsive_helper_does_not_reintroduce_runtime_overlay():
     customize = _source(CUSTOMIZE)
     responsive = _source(RESPONSIVE)
 
-    # Le helper responsive est désormais une règle pure de calcul de largeur.
-    # Il ne doit surtout pas redevenir l'ancienne surcouche qui parcourait et
-    # modifiait les fenêtres à l'exécution depuis Customize.
     assert RESPONSIVE.exists()
     assert "UTILS_Responsive" not in customize
     assert "install_auto_layout" not in customize
@@ -135,7 +132,8 @@ def test_icons_scale_in_components_without_global_patch():
     button = _source(BUTTON)
     navigation = _source(NAVIGATION)
 
-    assert "wx.IMAGE_QUALITY_HIGH" in persons
+    assert "CTRL_Bouton_image.CTRL(" in persons
+    assert "wx.BitmapButton(" not in persons
     assert "wx.IMAGE_QUALITY_HIGH" in contracts
     assert "wx.IMAGE_QUALITY_HIGH" in dialog
     assert 'UTILS_Styles.ICON_SIZES["medium"]' in button
