@@ -17,7 +17,10 @@ def test_qualifications_patch_never_reparses_piece_dates_by_slicing():
 
 def test_invalid_piece_date_is_not_rewritten_or_treated_as_unlimited():
     source = PATCH.read_text(encoding="utf-8")
-    invalid_branch = source.split("if date_fin_dd is None:", 1)[1].split(
+    importation = source.split("def _importation_dossier", 1)[1].split(
+        "def install", 1
+    )[0]
+    invalid_branch = importation.split("if date_fin_dd is None:", 1)[1].split(
         "elif date_fin_dd < date_jour:", 1
     )[0]
     assert 'etat = "Invalide"' in invalid_branch
