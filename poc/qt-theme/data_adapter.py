@@ -12,11 +12,17 @@ class PersonView:
     conserve séparément l'identifiant entier de la base historique lorsqu'il est
     réellement disponible. Les valeurs absentes d'une source métier canonique
     sont neutralisées par ``—`` dans l'adaptateur, jamais inventées dans la vue Qt.
+
+    ``first_name`` et ``last_name`` sont conservés séparément afin que la page
+    Généralités respecte les champs historiques Nom / Prénom sans tenter de
+    redécouper artificiellement ``name``.
     """
 
     id: str
     id_historique: int | None
     name: str
+    first_name: str
+    last_name: str
     birth_date: str
     role: str
     classification: str
@@ -64,6 +70,8 @@ class DemoAdapter:
                 id="SAL-001",
                 id_historique=None,
                 name="Gaëlle Desson",
+                first_name="Gaëlle",
+                last_name="Desson",
                 birth_date="12/02/1990",
                 role="Animatrice",
                 classification="Groupe 3",
@@ -78,6 +86,8 @@ class DemoAdapter:
                 id="SAL-002",
                 id_historique=None,
                 name="Thomas Loddé",
+                first_name="Thomas",
+                last_name="Loddé",
                 birth_date="04/11/1988",
                 role="Éducateur sportif",
                 classification="Groupe 4",
@@ -92,6 +102,8 @@ class DemoAdapter:
                 id="SAL-003",
                 id_historique=None,
                 name="Léa Drouillé",
+                first_name="Léa",
+                last_name="Drouillé",
                 birth_date="19/06/2002",
                 role="Animatrice",
                 classification="Groupe 2",
