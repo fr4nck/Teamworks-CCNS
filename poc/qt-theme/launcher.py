@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import sys
 import time
+import traceback
 
 STARTED_AT = time.perf_counter()
 
@@ -58,4 +59,9 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception:
+        print("[Teamworks Qt POC] Erreur fatale : traceback complet ci-dessous", file=sys.stderr)
+        traceback.print_exc()
+        raise SystemExit(1)
