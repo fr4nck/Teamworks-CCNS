@@ -96,21 +96,35 @@ class ThemeEngine:
                 border-radius: 7px;
             }}
             QFrame#personSummary {{
-                background: {t.surface_container_high};
-                border: 1px solid {t.outline};
-                border-radius: 8px;
+                background: {t.surface_container};
+                border: 0;
+                border-bottom: 1px solid {t.outline};
+                border-radius: 0;
             }}
             QLabel#personAvatar {{
                 background: {t.selection};
                 color: {t.primary};
                 border: 1px solid {t.outline};
-                border-radius: 29px;
-                font-size: 17px;
+                border-radius: 48px;
+                font-size: 22px;
                 font-weight: 700;
             }}
             QLabel#personSummaryName {{
-                font-size: 16px;
+                font-size: 18px;
                 font-weight: 600;
+            }}
+            QToolButton#legacyToolButton {{
+                background: {t.surface_container};
+                border: 1px solid {t.outline};
+                border-radius: 4px;
+                padding: 4px;
+            }}
+            QToolButton#legacyToolButton:hover {{
+                background: {t.surface_container_high};
+            }}
+            QToolButton#legacyToolButton:disabled {{
+                background: {t.surface_container_high};
+                border-color: {t.outline};
             }}
             QFrame#alertRow {{
                 background: {t.surface_container_high};
@@ -168,7 +182,12 @@ class ThemeEngine:
                 font-weight: 600;
             }}
             QTabWidget::pane {{
-                border: 0;
+                border: 1px solid {t.outline};
+                border-radius: 4px;
+                top: -1px;
+            }}
+            QTabBar::tab {{
+                padding: 7px 9px;
             }}
             """
         )
