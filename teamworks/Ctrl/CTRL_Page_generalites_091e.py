@@ -33,9 +33,24 @@ class Panel_general(LEGACY.Panel_general):
     def _naissance_en_france(self):
         return INTERNATIONAL.est_france(self._nom_pays_naissance())
 
+    def _configurer_masque_cp_naissance(self, france):
+        """Le CP de naissance est français ou libre/facultatif à l'étranger."""
+        try:
+            valeur = self.text_cp_naiss.GetValue().strip()
+            self.text_cp_naiss.SetCtrlParameters(mask="#####" if france else "")
+            if valeur:
+                self.text_cp_naiss.SetValue(valeur)
+        except Exception:
+            # Les anciennes variantes de wx.lib.masked ne proposent pas toutes
+            # le même setter. La ville libre reste dans tous les cas non bloquante.
+            pass
+
     def _appliquer_mode_pays_naissance(self):
         france = self._naissance_en_france()
-        self.autoComplete = france
+        # L'autocomplétion de résidence reste française et active : seuls les
+        # gestionnaires du lieu de naissance sont court-circuités à l'étranger.
+        self.autoComplete = True
+        self._configurer_masque_cp_naissance(france)
         if france:
             self.text_cp_naiss.SetToolTip(wx.ToolTip(_(u"Saisissez le code postal français")))
             self.text_ville_naiss.SetToolTip(wx.ToolTip(_(u"Choisissez une ville dans la liste proposée")))
