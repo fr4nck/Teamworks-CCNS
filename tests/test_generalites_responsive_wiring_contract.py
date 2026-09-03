@@ -24,3 +24,15 @@ def test_adaptateur_cable_reellement_le_helper_responsive():
     assert "wx.CallAfter(self._appliquer_layout_responsive)" in source
     assert "if colonnes == 1:" in source
     assert "self.SetSizer(sizer, deleteOld=True)" in source
+
+
+def test_basculement_responsive_detache_les_sections_avant_reemploi():
+    source = ADAPTER.read_text(encoding="utf-8")
+    assert "def _detach_window_from_sizer" in source
+    assert "sizer.Detach(window)" in source
+    assert "def _detacher_sections_du_layout_courant" in source
+    assert "self._detacher_sections_du_layout_courant()" in source
+    assert source.index("self._detacher_sections_du_layout_courant()") < source.index(
+        "sizer = wx.BoxSizer(wx.VERTICAL)",
+        source.index("def _appliquer_layout_responsive"),
+    )
