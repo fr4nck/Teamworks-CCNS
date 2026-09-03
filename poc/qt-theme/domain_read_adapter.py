@@ -57,6 +57,8 @@ class DomainPeopleReadAdapter(TeamworksReadAdapter):
             id=person.code_internal or person.id or EMPTY,
             id_historique=None,
             name=person.display_name or EMPTY,
+            first_name=person.first_name or EMPTY,
+            last_name=person.last_name or EMPTY,
             birth_date=_format_date(person.birth_date),
             role=EMPTY,
             classification=(
