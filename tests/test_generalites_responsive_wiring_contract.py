@@ -15,7 +15,12 @@ def test_helper_responsive_couvre_snap_et_zoom():
     assert columns(1720, 220) == 1
 
 
-def test_adaptateur_reste_point_unique_pour_generalites_091e():
+def test_adaptateur_cable_reellement_le_helper_responsive():
     source = ADAPTER.read_text(encoding="utf-8")
     assert "LEGACY.Panel_general" in source
     assert "UTILS_Generalites_international" in source
+    assert "UTILS_Responsive.form_column_count(" in source
+    assert "self.Bind(wx.EVT_SIZE, self._on_responsive_size)" in source
+    assert "wx.CallAfter(self._appliquer_layout_responsive)" in source
+    assert "if colonnes == 1:" in source
+    assert "self.SetSizer(sizer, deleteOld=True)" in source
