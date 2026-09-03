@@ -42,7 +42,6 @@ def build_contracts(count: int) -> tuple[ContractView, ...]:
             classification="",
             duration="",
             status="Lecture seule",
-            active=True,
         )
         for _ in range(count)
     )
