@@ -28,6 +28,19 @@ from data_adapter import TeamworksReadAdapter
 from models import ContractsTableModel, PeopleTableModel
 
 
+def _initials(name: str) -> str:
+    parts = [part for part in (name or "").replace("-", " ").split() if part]
+    return "".join(part[0].upper() for part in parts[:2]) or "—"
+
+
+def _contract_count_text(count: int) -> str:
+    if count == 0:
+        return "Aucun contrat enregistré"
+    if count == 1:
+        return "1 contrat enregistré"
+    return f"{count} contrats enregistrés"
+
+
 class ReadValue(QLabel):
     def __init__(self, text: str = "—"):
         super().__init__(text or "—")
@@ -82,7 +95,7 @@ class PeopleContractsPilot(QMainWindow):
         self.search = QLineEdit()
         self.search.setPlaceholderText("Rechercher une personne, un site, un statut…")
         self.search.setClearButtonEnabled(True)
-        self.search.textChanged.connect(self.people_proxy.setFilterFixedString)
+        self.search.textChanged.connect(self._on_search_changed)
         search_layout.addWidget(self.search, 1)
 
         self.people_count = QLabel(self._people_count_text())
@@ -110,8 +123,15 @@ class PeopleContractsPilot(QMainWindow):
         self._show_empty_detail()
 
     def _people_count_text(self) -> str:
-        count = self.people_model.rowCount()
-        return f"{count} personne" if count == 1 else f"{count} personnes"
+        total = self.people_model.rowCount()
+        visible = self.people_proxy.rowCount()
+        if visible != total:
+            return f"{visible} / {total} personnes"
+        return f"{total} personne" if total == 1 else f"{total} personnes"
+
+    def _on_search_changed(self, text: str) -> None:
+        self.people_proxy.setFilterFixedString(text)
+        self.people_count.setText(self._people_count_text())
 
     def _build_people_panel(self) -> QWidget:
         frame = QFrame()
@@ -171,16 +191,38 @@ class PeopleContractsPilot(QMainWindow):
         detail_layout.setContentsMargins(0, 0, 0, 0)
         detail_layout.setSpacing(8)
 
+        person_summary = QFrame()
+        person_summary.setObjectName("personSummary")
+        summary_layout = QHBoxLayout(person_summary)
+        summary_layout.setContentsMargins(10, 8, 10, 8)
+        summary_layout.setSpacing(12)
+
+        self.person_avatar = QLabel("—")
+        self.person_avatar.setObjectName("personAvatar")
+        self.person_avatar.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.person_avatar.setFixedSize(58, 58)
+        summary_layout.addWidget(self.person_avatar, 0, Qt.AlignmentFlag.AlignVCenter)
+
+        summary_text = QWidget()
+        summary_text_layout = QVBoxLayout(summary_text)
+        summary_text_layout.setContentsMargins(0, 0, 0, 0)
+        summary_text_layout.setSpacing(2)
+
         self.detail_title = QLabel("Fiche individuelle")
+        self.detail_title.setObjectName("personSummaryName")
         title_font = self.detail_title.font()
         title_font.setPointSize(14)
         title_font.setBold(True)
         self.detail_title.setFont(title_font)
-        detail_layout.addWidget(self.detail_title)
+        summary_text_layout.addWidget(self.detail_title)
 
         self.detail_subtitle = QLabel("Lecture seule")
         self.detail_subtitle.setProperty("muted", True)
-        detail_layout.addWidget(self.detail_subtitle)
+        summary_text_layout.addWidget(self.detail_subtitle)
+        summary_text_layout.addStretch(1)
+        summary_layout.addWidget(summary_text, 1)
+
+        detail_layout.addWidget(person_summary)
 
         self.tabs = QTabWidget()
         self.tabs.addTab(self._build_general_tab(), "Généralités")
@@ -348,10 +390,8 @@ class PeopleContractsPilot(QMainWindow):
         self.contracts_model.replace(self.adapter.list_contracts(contract_key))
         contract_count = self.contracts_model.rowCount()
         self.contracts_stack.setCurrentIndex(1 if contract_count else 0)
-        self.detail_title.setText(person.name)
-        self.detail_subtitle.setText(
-            f"Fiche individuelle · {contract_count} contrat" if contract_count == 1
-            else f"Fiche individuelle · {contract_count} contrats"
-        )
+        self.person_avatar.setText(_initials(person.name))
+        self.detail_title.setText(person.name or "—")
+        self.detail_subtitle.setText(f"{_contract_count_text(contract_count)} · lecture seule")
         self.detail_stack.setCurrentIndex(1)
         self.statusBar().showMessage(f"Lecture seule · {person.name} · {contract_count} contrat(s)")
