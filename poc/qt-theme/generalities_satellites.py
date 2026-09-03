@@ -1,8 +1,34 @@
 from __future__ import annotations
 
-from PySide6.QtWidgets import QLabel, QLineEdit, QWidget
+from PySide6.QtGui import QStandardItemModel
+from PySide6.QtWidgets import QLabel, QLineEdit, QVBoxLayout, QWidget
 
-from ui.common import ChoiceSpec, TwChoiceStrip, TwDialogShell, TwFieldRow, TwFormSection
+from ui.common import (
+    ChoiceSpec,
+    SearchModeSpec,
+    TwChoiceStrip,
+    TwCrudPanel,
+    TwDialogShell,
+    TwFieldRow,
+    TwFormSection,
+    TwSearchPicker,
+)
+
+
+_READONLY_NOTE = "Aperçu Qt de la fiche historique · aucune écriture en base"
+
+
+def _readonly_note() -> QLabel:
+    note = QLabel(_READONLY_NOTE)
+    note.setProperty("muted", True)
+    note.setWordWrap(True)
+    return note
+
+
+def _empty_model(headers: list[str]) -> QStandardItemModel:
+    model = QStandardItemModel(0, len(headers))
+    model.setHorizontalHeaderLabels(headers)
+    return model
 
 
 class CoordinatesPreviewDialog(TwDialogShell):
@@ -18,14 +44,9 @@ class CoordinatesPreviewDialog(TwDialogShell):
         )
 
         host = QWidget()
-        from PySide6.QtWidgets import QVBoxLayout
-
         root = QVBoxLayout(host)
         root.setContentsMargins(0, 0, 0, 0)
-
-        note = QLabel("Aperçu Qt de la fiche historique · aucune écriture en base")
-        note.setProperty("muted", True)
-        root.addWidget(note)
+        root.addWidget(_readonly_note())
 
         category_section = TwFormSection("1. Sélectionnez une catégorie")
         self.category = TwChoiceStrip(
@@ -61,7 +82,6 @@ class CoordinatesPreviewDialog(TwDialogShell):
 
         self.set_content(host)
         self._set_fields_enabled(False)
-        # Tant que la persistance Qt n'est pas raccordée, aucun bouton ne peut écrire.
         self.set_primary_enabled(False)
 
     def _set_fields_enabled(self, enabled: bool) -> None:
@@ -79,3 +99,134 @@ class CoordinatesPreviewDialog(TwDialogShell):
         else:
             self.phone.setPlaceholderText(f"N° {category}")
             self.phone.setFocus()
+
+
+class CitiesPreviewDialog(TwDialogShell):
+    """Transposition de DLG_Gestion_villes : rechercher, choisir ou saisir manuellement."""
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(
+            "Gestion des villes",
+            parent,
+            profile="wide",
+            primary_label="Valider",
+            cancel_label="Fermer",
+        )
+        host = QWidget()
+        root = QVBoxLayout(host)
+        root.setContentsMargins(0, 0, 0, 0)
+        root.addWidget(_readonly_note())
+
+        search_section = TwFormSection(
+            "Recherche",
+            description="Recherchez une ville ou un code postal dans la base française, puis sélectionnez le résultat.",
+        )
+        self.search_picker = TwSearchPicker(
+            model=_empty_model(["Code postal", "Nom de la ville"]),
+            modes=[
+                SearchModeSpec("contains", "Une partie du nom"),
+                SearchModeSpec("phonetic", "Recherche phonétique"),
+            ],
+            placeholder="Ville ou code postal",
+        )
+        search_section.add_widget(self.search_picker, 1)
+        root.addWidget(search_section, 1)
+
+        manual = TwFormSection(
+            "Saisie manuelle",
+            description="À utiliser uniquement si la ville n'est pas présente dans la base.",
+        )
+        self.manual_postcode = QLineEdit()
+        self.manual_city = QLineEdit()
+        manual.add_row(TwFieldRow("Code postal", self.manual_postcode))
+        manual.add_row(TwFieldRow("Nom de la ville", self.manual_city))
+        root.addWidget(manual)
+
+        self.set_content(host)
+        self.set_primary_enabled(False)
+
+
+class CountryEditPreviewDialog(TwDialogShell):
+    """Transposition de DLG_Saisie_pays."""
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(
+            "Pays et nationalité",
+            parent,
+            profile="compact",
+            primary_label="Valider",
+            cancel_label="Fermer",
+        )
+        host = QWidget()
+        root = QVBoxLayout(host)
+        root.setContentsMargins(0, 0, 0, 0)
+        root.addWidget(_readonly_note())
+
+        form = TwFormSection("Pays et nationalité")
+        self.country = QLineEdit()
+        self.nationality = QLineEdit()
+        form.add_row(TwFieldRow("Nom du pays", self.country))
+        form.add_row(TwFieldRow("Nationalité", self.nationality))
+        root.addWidget(form)
+        root.addStretch(1)
+
+        self.set_content(host)
+        self.set_primary_enabled(False)
+
+
+class CountriesPreviewDialog(TwDialogShell):
+    """Transposition de DLG_Config_pays avec le patron CRUD commun."""
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(
+            "Pays et nationalités",
+            parent,
+            profile="wide",
+            primary_label="Fermer",
+            cancel_label="Fermer",
+        )
+        self.primary_button.setVisible(False)
+        host = QWidget()
+        root = QVBoxLayout(host)
+        root.setContentsMargins(0, 0, 0, 0)
+        root.addWidget(_readonly_note())
+
+        model = _empty_model(["Nom", "Nationalité", "Nb titulaires"])
+        self.crud = TwCrudPanel(
+            "Pays et nationalités",
+            model=model,
+            description="Ajoutez, modifiez ou supprimez les pays et les nationalités correspondantes.",
+        )
+        self.crud.addRequested.connect(self._open_editor)
+        root.addWidget(self.crud, 1)
+        self.set_content(host)
+
+    def _open_editor(self) -> None:
+        CountryEditPreviewDialog(self).exec()
+
+
+class SocialSituationsPreviewDialog(TwDialogShell):
+    """Transposition de DLG_Config_situations avec le même patron CRUD."""
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(
+            "Situations sociales",
+            parent,
+            profile="wide",
+            primary_label="Fermer",
+            cancel_label="Fermer",
+        )
+        self.primary_button.setVisible(False)
+        host = QWidget()
+        root = QVBoxLayout(host)
+        root.setContentsMargins(0, 0, 0, 0)
+        root.addWidget(_readonly_note())
+
+        model = _empty_model(["Nom de la situation sociale", "Nb titulaires"])
+        self.crud = TwCrudPanel(
+            "Situations sociales",
+            model=model,
+            description="Types de situations utilisés dans les fiches personnes : étudiant, retraité, employé…",
+        )
+        root.addWidget(self.crud, 1)
+        self.set_content(host)
