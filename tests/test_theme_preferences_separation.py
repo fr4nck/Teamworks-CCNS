@@ -119,7 +119,7 @@ def test_preferences_do_not_overwrite_accent_with_legacy_appearance():
     assert "values = [" not in on_ok
 
 
-def test_preferences_use_charter_typography_spacing_and_window_profile():
+def test_preferences_use_charter_typography_spacing_and_scrollable_window():
     source = _source(PREFERENCES_PATH)
     assert "FlexGridSizer" not in source
     assert "wx.BoxSizer" in source
@@ -127,7 +127,11 @@ def test_preferences_use_charter_typography_spacing_and_window_profile():
     assert "CTRL_Texte.H1" in source
     assert "CTRL_Texte.Label" in source
     assert "CTRL_Texte.BodySecondary" in source
-    assert 'UTILS_Styles.ApplyWindowProfile(self, "compact")' in source
+    assert 'UTILS_Styles.ApplyWindowProfile(self, "standard")' in source
+    assert 'UTILS_Styles.ApplyWindowProfile(self, "compact")' not in source
+    assert "wx.ScrolledWindow" in source
+    assert "self.body.FitInside()" in source
+    assert "self.footer = wx.Panel(self.panel)" in source
     assert 'UTILS_Styles.GetLayoutSpacing("dialog_padding")' in source
     assert "SetPointSize" not in source
     assert "SetSize((560, 430))" not in source
