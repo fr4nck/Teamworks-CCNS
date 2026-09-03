@@ -5,10 +5,12 @@ from PySide6.QtWidgets import (
     QAbstractItemView,
     QFrame,
     QGridLayout,
+    QHBoxLayout,
     QHeaderView,
     QLabel,
     QLineEdit,
     QMainWindow,
+    QPushButton,
     QScrollArea,
     QSizePolicy,
     QSplitter,
@@ -19,6 +21,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from contract_editor import ContractComplianceDialog
 from data_adapter import TeamworksReadAdapter
 from models import ContractsTableModel, PeopleTableModel
 
@@ -218,6 +221,21 @@ class PeopleContractsPilot(QMainWindow):
         widget = QWidget()
         layout = QVBoxLayout(widget)
         layout.setContentsMargins(12, 12, 12, 12)
+        layout.setSpacing(8)
+
+        command_bar = QFrame()
+        command_bar.setObjectName("commandBar")
+        command_layout = QHBoxLayout(command_bar)
+        command_layout.setContentsMargins(8, 6, 8, 6)
+        simulate_button = QPushButton("Simuler un contrat")
+        simulate_button.clicked.connect(self._open_contract_compliance_dialog)
+        command_layout.addWidget(simulate_button)
+        command_layout.addStretch(1)
+        readonly = QLabel("POC · aucune écriture")
+        readonly.setProperty("muted", True)
+        command_layout.addWidget(readonly)
+        layout.addWidget(command_bar)
+
         self.contracts_stack = QStackedWidget()
         empty_page = QWidget()
         empty_layout = QVBoxLayout(empty_page)
@@ -238,6 +256,10 @@ class PeopleContractsPilot(QMainWindow):
         self.contracts_stack.setCurrentIndex(0)
         layout.addWidget(self.contracts_stack, 1)
         return widget
+
+    def _open_contract_compliance_dialog(self) -> None:
+        dialog = ContractComplianceDialog(self)
+        dialog.exec()
 
     def _show_empty_detail(self) -> None:
         self.detail_stack.setCurrentIndex(0)
