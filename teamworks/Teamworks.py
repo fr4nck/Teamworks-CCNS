@@ -23,7 +23,13 @@ from Ctrl import CTRL_Recrutement
 from Utils import UTILS_Customize
 from Utils import UTILS_Fichiers
 from Utils import UTILS_Rapport_bugs
+from Utils import UTILS_Qualifications_091g
 from Utils.UTILS_Traduction import _
+
+
+# Correctif de lecture des pièces historiques : installé avant l'ouverture de
+# toute fiche individuelle afin qu'une date invalide ne bloque jamais la fiche.
+UTILS_Qualifications_091g.install()
 
 
 VERSION_APPLICATION = CORE.VERSION_APPLICATION
