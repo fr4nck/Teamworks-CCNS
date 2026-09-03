@@ -42,13 +42,15 @@ def test_persons_splitter_starts_proportional_then_stays_user_controlled():
     assert "self._separateur_initialise = True" in init
 
 
-def test_persons_actions_scale_directly_in_the_screen():
+def test_persons_actions_use_the_common_scaled_button_contract():
     source = _source()
     assert "_bouton_action" in source
-    assert "wx.IMAGE_QUALITY_HIGH" in source
-    assert "SetMinSize((cote, cote))" in source
+    assert "CTRL_Bouton_image.CTRL(" in source
+    assert 'Chemins.GetStaticPath("Images/32x32/%s" % nom_image)' in source
+    assert "wx.BitmapButton(" not in source
+    assert "SetMinSize((cote, cote))" not in source
     assert '"echelle_interface"' in source
-    assert '"echelle_police"' in source  # repli de migration uniquement
+    assert '"echelle_police"' in source
     assert "ajouter_si_manquant=False" in source
 
 
