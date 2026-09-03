@@ -20,27 +20,58 @@ class TeamworksProductionReadAdapter(TeamworksReadAdapter):
     présentation attendus par Qt.
 
     ``startup_timings`` ne modifie aucun comportement métier : il expose
-    uniquement des mesures monotones permettant de distinguer construction des
-    readers, connexion/SQL et mapping Python pendant la recette du POC.
+    uniquement des mesures monotones permettant de distinguer import de
+    ``GestionDB``, ouverture de connexion, lecture SQL et mapping Python.
     """
 
     def __init__(self, person_reader=None, contract_reader=None):
-        started = time.perf_counter()
-        self._person_reader = person_reader or PersonReader()
-        person_ready = time.perf_counter()
-        self._contract_reader = contract_reader or CcnsDataReader()
-        contract_ready = time.perf_counter()
         self._closed = False
-        self.startup_timings: dict[str, float | int] = {
-            "person_reader_construction_seconds": person_ready - started,
-            "contract_reader_construction_seconds": contract_ready - person_ready,
+        self.startup_timings: dict[str, float | int | bool] = {
+            "person_reader_construction_seconds": 0.0,
+            "contract_reader_construction_seconds": 0.0,
+            "people_gestiondb_import_seconds": 0.0,
+            "people_db_open_seconds": 0.0,
+            "people_db_is_network": False,
             "people_reader_seconds": 0.0,
             "people_mapping_seconds": 0.0,
             "people_count": 0,
         }
 
+        started = time.perf_counter()
+        self._person_reader = person_reader or PersonReader(
+            db_factory=lambda: self._profiled_db_factory("people")
+        )
+        person_ready = time.perf_counter()
+        self._contract_reader = contract_reader or CcnsDataReader(
+            db_factory=lambda: self._profiled_db_factory("contracts")
+        )
+        contract_ready = time.perf_counter()
+        self.startup_timings.update(
+            {
+                "person_reader_construction_seconds": person_ready - started,
+                "contract_reader_construction_seconds": contract_ready - person_ready,
+            }
+        )
+
+    def _profiled_db_factory(self, prefix: str):
+        phase = time.perf_counter()
+        import GestionDB
+        imported = time.perf_counter()
+        db = GestionDB.DB()
+        opened = time.perf_counter()
+
+        self.startup_timings[f"{prefix}_gestiondb_import_seconds"] = imported - phase
+        self.startup_timings[f"{prefix}_db_open_seconds"] = opened - imported
+        self.startup_timings[f"{prefix}_db_is_network"] = bool(getattr(db, "isNetwork", False))
+        return db
+
     def list_people(self) -> Sequence[PersonView]:
         self._ensure_open()
+
+        # Force explicitement la première ouverture afin de ne pas mélanger le
+        # coût d'import/connexion historique avec celui du SELECT lui-même.
+        _ = self._person_reader.db
+
         reader_started = time.perf_counter()
         records = self._person_reader.lire_identites()
         reader_finished = time.perf_counter()
