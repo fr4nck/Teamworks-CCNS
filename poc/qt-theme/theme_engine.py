@@ -95,6 +95,23 @@ class ThemeEngine:
                 border: 1px solid {t.outline};
                 border-radius: 7px;
             }}
+            QFrame#personSummary {{
+                background: {t.surface_container_high};
+                border: 1px solid {t.outline};
+                border-radius: 8px;
+            }}
+            QLabel#personAvatar {{
+                background: {t.selection};
+                color: {t.primary};
+                border: 1px solid {t.outline};
+                border-radius: 29px;
+                font-size: 17px;
+                font-weight: 700;
+            }}
+            QLabel#personSummaryName {{
+                font-size: 16px;
+                font-weight: 600;
+            }}
             QFrame#alertRow {{
                 background: {t.surface_container_high};
                 border-radius: 6px;
