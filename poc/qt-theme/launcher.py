@@ -118,7 +118,11 @@ def main() -> None:
 
             def on_people_loaded(people, timings) -> None:
                 window.people_model.replace(tuple(people))
-                window.people_count.setText(window._people_count_text())
+                # Le proxy reçoit le reset du modèle de façon différée. On force son
+                # invalidation puis on met à jour le compteur au prochain tour de boucle
+                # pour éviter l'état transitoire « 0 / N personnes » visible sous Windows.
+                window.people_proxy.invalidate()
+                QTimer.singleShot(0, lambda: window.people_count.setText(window._people_count_text()))
                 ready_total = time.perf_counter() - STARTED_AT
                 after_show = max(0.0, ready_total - total_to_show_seconds)
                 _print_data_profile(
