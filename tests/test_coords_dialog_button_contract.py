@@ -11,7 +11,12 @@ def _source():
 def test_coords_dialog_uses_common_toggle_contract_only():
     source = _source()
     assert "wx.ToggleButton(" not in source
-    assert source.count("CTRL_Bouton_image.Toggle") == 4
+    constructors = [
+        line
+        for line in source.splitlines()
+        if "= CTRL_Bouton_image.Toggle(" in line
+    ]
+    assert len(constructors) == 4
     assert "SetBackgroundColour(UTILS_Interface.GetToken(\"primary_container\"))" not in source
 
 
