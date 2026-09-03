@@ -8,7 +8,7 @@ import traceback
 STARTED_AT = time.perf_counter()
 
 _phase_started = time.perf_counter()
-from PySide6.QtCore import QTimer
+from PySide6.QtCore import QThread, QTimer
 from PySide6.QtWidgets import QApplication
 PYSIDE_IMPORT_SECONDS = time.perf_counter() - _phase_started
 
@@ -36,6 +36,23 @@ def build_adapter(source: str, timings: dict[str, float]):
     return adapter
 
 
+def _print_data_profile(prefix: str, timings: dict, *, ready_total: float | None = None, after_show: float | None = None) -> None:
+    db_mode = "réseau" if bool(timings.get("people_db_is_network", False)) else "local"
+    suffix = ""
+    if ready_total is not None:
+        suffix += f" · données prêtes {ready_total:.2f}s"
+    if after_show is not None:
+        suffix += f" · +{after_show:.2f}s après affichage"
+    print(
+        f"[Teamworks Qt POC] {prefix} · "
+        f"import GestionDB {float(timings.get('people_gestiondb_import_seconds', 0.0)):.2f}s · "
+        f"ouverture DB {float(timings.get('people_db_open_seconds', 0.0)):.2f}s ({db_mode}) · "
+        f"SELECT/fetch {float(timings.get('people_reader_seconds', 0.0)):.2f}s · "
+        f"mapping {float(timings.get('people_mapping_seconds', 0.0)):.3f}s · "
+        f"{int(timings.get('people_count', 0))} personnes{suffix}"
+    )
+
+
 def main() -> None:
     startup_timings: dict[str, float] = {"pyside_import": PYSIDE_IMPORT_SECONDS}
 
@@ -61,15 +78,25 @@ def main() -> None:
 
     source = os.environ.get("TEAMWORKS_QT_SOURCE", "smoke").strip().lower()
     adapter = build_adapter(source, startup_timings)
+    ui_adapter = adapter
+
+    people_loader_class = None
+    if source == "production":
+        phase = time.perf_counter()
+        from deferred_people import DeferredPeopleAdapter, ProductionPeopleLoader
+        startup_timings["deferred_people_import"] = time.perf_counter() - phase
+        ui_adapter = DeferredPeopleAdapter(adapter)
+        people_loader_class = ProductionPeopleLoader
 
     phase = time.perf_counter()
     from pilot_generalities import PeopleContractsGeneralitiesPilot
     startup_timings["pilot_module_import"] = time.perf_counter() - phase
 
     window = None
+    people_thread = None
     try:
         before_window = time.perf_counter()
-        window = PeopleContractsGeneralitiesPilot(adapter)
+        window = PeopleContractsGeneralitiesPilot(ui_adapter)
         after_window = time.perf_counter()
         window.show()
         shown_at = time.perf_counter()
@@ -80,11 +107,48 @@ def main() -> None:
         foundation_seconds = max(0.0, before_window - STARTED_AT)
         total_to_show_seconds = shown_at - STARTED_AT
 
+        if people_loader_class is not None:
+            window.statusBar().showMessage("Lecture seule · chargement des personnes en arrière-plan…")
+            people_thread = QThread(window)
+            people_worker = people_loader_class()
+            people_worker.moveToThread(people_thread)
+            # Références explicites : le worker doit survivre jusqu'à la fin du chargement.
+            window._people_loader_thread = people_thread
+            window._people_loader_worker = people_worker
+
+            def on_people_loaded(people, timings) -> None:
+                window.people_model.replace(tuple(people))
+                window.people_count.setText(window._people_count_text())
+                ready_total = time.perf_counter() - STARTED_AT
+                after_show = max(0.0, ready_total - total_to_show_seconds)
+                _print_data_profile(
+                    "profil données asynchrone",
+                    dict(timings or {}),
+                    ready_total=ready_total,
+                    after_show=after_show,
+                )
+                window.statusBar().showMessage(
+                    f"Lecture seule · {window.people_model.rowCount()} personnes · données prêtes en {ready_total:.2f}s"
+                )
+                people_thread.quit()
+
+            def on_people_failed(details: str) -> None:
+                print("[Teamworks Qt POC] Échec du chargement asynchrone des personnes :", file=sys.stderr)
+                print(details, file=sys.stderr)
+                window.statusBar().showMessage("Lecture seule · échec du chargement des personnes")
+                people_thread.quit()
+
+            people_worker.loaded.connect(on_people_loaded)
+            people_worker.failed.connect(on_people_failed)
+            people_thread.started.connect(people_worker.run)
+            people_thread.start()
+
         def report_frugality() -> None:
             snapshot = probe.snapshot(direct_dependencies=len(DIRECT_DEPENDENCIES))
+            data_label = "données bloquantes" if source == "production" else "données"
             timing = (
-                f"socle {foundation_seconds:.2f}s · données serveur {data_seconds:.2f}s · "
-                f"construction UI {ui_constructor_seconds:.2f}s · fenêtre {total_to_show_seconds:.2f}s"
+                f"socle {foundation_seconds:.2f}s · {data_label} {data_seconds:.2f}s · "
+                f"construction UI {ui_constructor_seconds:.2f}s · premier affichage {total_to_show_seconds:.2f}s"
             )
             print(f"[Teamworks Qt POC] source={source} · {snapshot.compact()}")
             print(f"[Teamworks Qt POC] détail démarrage · {timing}")
@@ -100,24 +164,20 @@ def main() -> None:
             )
 
             adapter_timings = getattr(adapter, "startup_timings", None)
-            if isinstance(adapter_timings, dict):
-                db_mode = "réseau" if bool(adapter_timings.get("people_db_is_network", False)) else "local"
-                print(
-                    "[Teamworks Qt POC] profil données · "
-                    f"import GestionDB {float(adapter_timings.get('people_gestiondb_import_seconds', 0.0)):.2f}s · "
-                    f"ouverture DB {float(adapter_timings.get('people_db_open_seconds', 0.0)):.2f}s ({db_mode}) · "
-                    f"SELECT/fetch {float(adapter_timings.get('people_reader_seconds', 0.0)):.2f}s · "
-                    f"mapping {float(adapter_timings.get('people_mapping_seconds', 0.0)):.3f}s · "
-                    f"{int(adapter_timings.get('people_count', 0))} personnes"
-                )
+            if source != "production" and isinstance(adapter_timings, dict):
+                _print_data_profile("profil données", adapter_timings)
 
-            window.statusBar().showMessage(
-                f"{snapshot.compact()} · {timing} · lecture seule · source {source}"
-            )
+            if source != "production":
+                window.statusBar().showMessage(
+                    f"{snapshot.compact()} · {timing} · lecture seule · source {source}"
+                )
 
         QTimer.singleShot(350, report_frugality)
         raise SystemExit(qt_app.exec())
     finally:
+        if people_thread is not None and people_thread.isRunning():
+            people_thread.quit()
+            people_thread.wait(12000)
         close = getattr(adapter, "close", None)
         if callable(close):
             close()
