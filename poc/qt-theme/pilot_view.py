@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import time
+
 from PySide6.QtCore import QSortFilterProxyModel, Qt
 from PySide6.QtWidgets import (
     QAbstractItemView,
@@ -42,7 +44,11 @@ class PeopleContractsPilot(QMainWindow):
         self.resize(1380, 860)
         self.setMinimumSize(900, 620)
 
-        self.people_model = PeopleTableModel(adapter.list_people(), self)
+        people_load_started = time.perf_counter()
+        initial_people = adapter.list_people()
+        self.initial_people_load_seconds = time.perf_counter() - people_load_started
+
+        self.people_model = PeopleTableModel(initial_people, self)
         self.people_proxy = QSortFilterProxyModel(self)
         self.people_proxy.setSourceModel(self.people_model)
         self.people_proxy.setFilterCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
@@ -63,11 +69,26 @@ class PeopleContractsPilot(QMainWindow):
         heading.setFont(font)
         root.addWidget(heading)
 
+        subheading = QLabel("Consultation des personnes et de leur historique contractuel")
+        subheading.setProperty("muted", True)
+        root.addWidget(subheading)
+
+        search_bar = QFrame()
+        search_bar.setObjectName("commandBar")
+        search_layout = QHBoxLayout(search_bar)
+        search_layout.setContentsMargins(8, 6, 8, 6)
+        search_layout.setSpacing(10)
+
         self.search = QLineEdit()
         self.search.setPlaceholderText("Rechercher une personne, un site, un statut…")
         self.search.setClearButtonEnabled(True)
         self.search.textChanged.connect(self.people_proxy.setFilterFixedString)
-        root.addWidget(self.search)
+        search_layout.addWidget(self.search, 1)
+
+        self.people_count = QLabel(self._people_count_text())
+        self.people_count.setProperty("muted", True)
+        search_layout.addWidget(self.people_count)
+        root.addWidget(search_bar)
 
         people_panel = self._build_people_panel()
         detail_panel = self._build_detail_panel()
@@ -88,10 +109,15 @@ class PeopleContractsPilot(QMainWindow):
         self.setCentralWidget(central)
         self._show_empty_detail()
 
+    def _people_count_text(self) -> str:
+        count = self.people_model.rowCount()
+        return f"{count} personne" if count == 1 else f"{count} personnes"
+
     def _build_people_panel(self) -> QWidget:
         frame = QFrame()
+        frame.setObjectName("panel")
         layout = QVBoxLayout(frame)
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setContentsMargins(10, 10, 10, 10)
         layout.setSpacing(6)
 
         label = QLabel("Liste des personnes")
@@ -127,6 +153,12 @@ class PeopleContractsPilot(QMainWindow):
         return frame
 
     def _build_detail_panel(self) -> QWidget:
+        frame = QFrame()
+        frame.setObjectName("panel")
+        layout = QVBoxLayout(frame)
+        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setSpacing(8)
+
         self.detail_stack = QStackedWidget()
         empty_page = QWidget()
         empty_layout = QVBoxLayout(empty_page)
@@ -134,13 +166,31 @@ class PeopleContractsPilot(QMainWindow):
         empty_message.setAlignment(Qt.AlignmentFlag.AlignCenter)
         empty_layout.addWidget(empty_message, 1)
 
+        detail_page = QWidget()
+        detail_layout = QVBoxLayout(detail_page)
+        detail_layout.setContentsMargins(0, 0, 0, 0)
+        detail_layout.setSpacing(8)
+
+        self.detail_title = QLabel("Fiche individuelle")
+        title_font = self.detail_title.font()
+        title_font.setPointSize(14)
+        title_font.setBold(True)
+        self.detail_title.setFont(title_font)
+        detail_layout.addWidget(self.detail_title)
+
+        self.detail_subtitle = QLabel("Lecture seule")
+        self.detail_subtitle.setProperty("muted", True)
+        detail_layout.addWidget(self.detail_subtitle)
+
         self.tabs = QTabWidget()
         self.tabs.addTab(self._build_general_tab(), "Généralités")
         self.tabs.addTab(self._build_contracts_tab(), "Contrats")
+        detail_layout.addWidget(self.tabs, 1)
 
         self.detail_stack.addWidget(empty_page)
-        self.detail_stack.addWidget(self.tabs)
-        return self.detail_stack
+        self.detail_stack.addWidget(detail_page)
+        layout.addWidget(self.detail_stack, 1)
+        return frame
 
     def _build_general_tab(self) -> QWidget:
         page = QWidget()
@@ -296,6 +346,12 @@ class PeopleContractsPilot(QMainWindow):
             widget.setText(value or "—")
         contract_key = person.id_historique if person.id_historique is not None else person.id
         self.contracts_model.replace(self.adapter.list_contracts(contract_key))
-        self.contracts_stack.setCurrentIndex(1 if self.contracts_model.rowCount() else 0)
+        contract_count = self.contracts_model.rowCount()
+        self.contracts_stack.setCurrentIndex(1 if contract_count else 0)
+        self.detail_title.setText(person.name)
+        self.detail_subtitle.setText(
+            f"Fiche individuelle · {contract_count} contrat" if contract_count == 1
+            else f"Fiche individuelle · {contract_count} contrats"
+        )
         self.detail_stack.setCurrentIndex(1)
-        self.statusBar().showMessage(f"Lecture seule · {person.name} · {self.contracts_model.rowCount()} contrat(s)")
+        self.statusBar().showMessage(f"Lecture seule · {person.name} · {contract_count} contrat(s)")
