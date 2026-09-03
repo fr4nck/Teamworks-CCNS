@@ -134,12 +134,13 @@ class ThemeEngine:
                 border-radius: 12px;
                 font-weight: 700;
             }}
-            QTableWidget {{
+            QTableView, QTableWidget {{
                 background: {t.surface_container};
                 alternate-background-color: {t.surface_container_high};
                 gridline-color: {t.outline};
                 selection-background-color: {t.selection};
                 selection-color: {t.on_surface};
+                border: 0;
             }}
             QHeaderView::section {{
                 background: {t.surface_container_high};
@@ -148,6 +149,9 @@ class ThemeEngine:
                 border-bottom: 1px solid {t.outline};
                 padding: 6px;
                 font-weight: 600;
+            }}
+            QTabWidget::pane {{
+                border: 0;
             }}
             """
         )
