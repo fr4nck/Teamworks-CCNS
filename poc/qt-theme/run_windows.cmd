@@ -18,7 +18,7 @@ echo [Teamworks Qt POC] Chargement des dependances Teamworks necessaires aux rea
 ".venv\Scripts\python.exe" -m pip install -q --disable-pip-version-check -r "%REPO_ROOT%\requirements\python311-core.txt" || goto :error
 
 echo [Teamworks Qt POC] Verification de la syntaxe...
-".venv\Scripts\python.exe" -m py_compile app.py launcher.py theme_engine.py data_adapter.py domain_read_adapter.py production_read_adapter.py models.py pilot_view.py legacy_individual_tabs.py legacy_sheets.py contract_editor.py frugality.py || goto :error
+".venv\Scripts\python.exe" -m py_compile app.py launcher.py theme_engine.py data_adapter.py domain_read_adapter.py production_read_adapter.py models.py pilot_view.py legacy_individual_tabs.py legacy_sheets.py legacy_contract_wizard.py contract_editor.py frugality.py || goto :error
 
 echo [Teamworks Qt POC] Lancement lecture seule sur les readers Teamworks reels...
 ".venv\Scripts\python.exe" launcher.py
