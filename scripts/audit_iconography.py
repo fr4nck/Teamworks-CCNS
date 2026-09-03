@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Audit statique de l'iconographie Teamworks-CCNS.
+"""Audit statique des boutons et de l'iconographie Teamworks-CCNS.
 
-Le but est de rendre mesurable la dette d'icônes historiques avant migration
-progressive vers les composants sémantiques et, à terme, Fluent System Icons.
-Le contrôle est volontairement non bloquant au premier passage : il produit un
-inventaire exploitable par lots sans casser les écrans historiques.
+Le but est de rendre mesurable toute la dette des actions cliquables : boutons
+natifs recréés localement, toggles, BitmapButton, toolbars et anciennes icônes.
+Le contrôle reste non bloquant pendant la migration, mais l'inventaire est assez
+précis pour réduire la dette par lots jusqu'à disparition des exceptions.
 """
 from __future__ import print_function
 
@@ -21,16 +21,40 @@ ENCODINGS = ("utf-8-sig", "utf-8", "cp1252", "latin-1")
 
 PATTERNS = (
     (
+        "action.raw-button",
+        "high",
+        re.compile(r"\bwx\.Button\b"),
+        "migrer l'action vers CTRL_Bouton_image.CTRL pour partager zoom, typo, densité et état",
+    ),
+    (
+        "action.raw-toggle-button",
+        "high",
+        re.compile(r"\bwx\.ToggleButton\b"),
+        "migrer le bouton à état vers CTRL_Bouton_image.Toggle",
+    ),
+    (
         "action.bitmap-button",
         "high",
         re.compile(r"\bwx\.BitmapButton\b"),
         "migrer l'action vers CTRL_Bouton_image ou un composant sémantique",
     ),
     (
+        "action.command-link-button",
+        "high",
+        re.compile(r"\bwx\.CommandLinkButton\b"),
+        "vérifier le besoin puis raccorder l'action au contrat commun de bouton",
+    ),
+    (
         "action.toolbar-bitmap",
         "high",
         re.compile(r"\.(?:AddTool|AddLabelTool|InsertTool)\b"),
         "faire passer l'icône de barre d'outils par le moteur d'icônes responsive",
+    ),
+    (
+        "layout.button-fixed-size",
+        "medium",
+        re.compile(r"\b(?:bouton|button)[A-Za-z0-9_]*\.Set(?:Min|Max)?Size\(\(\s*\d+"),
+        "remplacer la taille locale par les métriques sémantiques du composant commun",
     ),
     (
         "asset.fixed-raster-path",
@@ -66,9 +90,19 @@ PATTERNS = (
 
 CENTRAL_MARKERS = (
     "CTRL_Bouton_image.CTRL",
+    "CTRL_Bouton_image.Toggle",
     "UTILS_Styles.ICON_SIZES",
     "_chemin_image_existant(",
 )
+
+CENTRAL_BUTTON_FILE = "teamworks/Ctrl/CTRL_Bouton_image.py"
+CENTRAL_ALLOWED_CODES = {
+    "action.raw-button",
+    "action.raw-toggle-button",
+    "asset.fixed-raster-path",
+    "asset.direct-wx-bitmap",
+    "layout.button-fixed-size",
+}
 
 
 def _read_text(path):
@@ -103,12 +137,9 @@ def scan(path=DEFAULT_PATH):
             for code, severity, regex, recommendation in PATTERNS:
                 if not regex.search(line):
                     continue
-                # Le composant central est précisément l'endroit où wx.Bitmap
-                # et les chemins multi-résolution sont autorisés et maîtrisés.
-                if relpath.endswith("teamworks/Ctrl/CTRL_Bouton_image.py") and code in (
-                    "asset.fixed-raster-path",
-                    "asset.direct-wx-bitmap",
-                ):
+                # Le composant commun est précisément l'endroit où les classes
+                # wx natives et le chargement raster restent autorisés.
+                if relpath.endswith(CENTRAL_BUTTON_FILE) and code in CENTRAL_ALLOWED_CODES:
                     continue
                 hits.append({
                     "file": relpath,
@@ -150,9 +181,9 @@ def summarize(hits, files):
 def render_markdown(report):
     summary = report["summary"]
     lines = [
-        "# Peigne iconographique Teamworks-CCNS",
+        "# Peigne boutons et iconographie Teamworks-CCNS",
         "",
-        "Inventaire statique non bloquant. L'objectif est de réduire la dette par familles homogènes.",
+        "Inventaire statique non bloquant. La cible est simple : aucune action métier ne doit réinventer localement sa géométrie, sa typographie ou son comportement au zoom.",
         "",
         "- Occurrences : **%d**" % summary["total"],
         "- Fichiers concernés : **%d**" % summary["files"],
@@ -179,11 +210,13 @@ def render_markdown(report):
         "",
         "## Règle de migration",
         "",
-        "1. Actions cliquables : supprimer progressivement `wx.BitmapButton` au profit du composant commun.",
-        "2. Barres d'outils et ImageList : taille pilotée par le zoom/DPI, pas par le dossier raster d'origine.",
-        "3. Ressources multi-résolution : choisir la meilleure source puis redimensionner, jamais agrandir aveuglément un 16 px.",
-        "4. Décorations et photos : ne pas les confondre avec les icônes d'action ; elles sont auditées mais moins prioritaires.",
-        "5. À terme : remplacer les pictogrammes d'action disparates par le référentiel Fluent System Icons sans modifier le métier.",
+        "1. Tous les boutons d'action texte, texte+icône ou icône seule passent par `CTRL_Bouton_image.CTRL`.",
+        "2. Tous les boutons à état passent par `CTRL_Bouton_image.Toggle`, sauf exception documentée.",
+        "3. Aucun écran métier ne fixe localement hauteur, police ou taille d'icône d'un bouton sans justification.",
+        "4. Barres d'outils et ImageList suivent le zoom/DPI et le même référentiel iconographique.",
+        "5. Ressources multi-résolution : choisir la meilleure source puis redimensionner, jamais agrandir aveuglément un 16 px.",
+        "6. Décorations et photos restent séparées des icônes d'action.",
+        "7. À terme : remplacer les pictogrammes d'action disparates par Fluent System Icons sans modifier le métier.",
         "",
     ])
     return "\n".join(lines)
@@ -195,7 +228,7 @@ def build_report(path=DEFAULT_PATH):
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description="Peigne iconographique Teamworks-CCNS")
+    parser = argparse.ArgumentParser(description="Peigne boutons et iconographie Teamworks-CCNS")
     parser.add_argument("--path", default=DEFAULT_PATH, help="Racine à analyser")
     parser.add_argument("--json", dest="json_path", help="Écrire le rapport JSON")
     parser.add_argument("--markdown", dest="markdown_path", help="Écrire le rapport Markdown")
@@ -211,7 +244,7 @@ def main(argv=None):
 
     summary = report["summary"]
     print(
-        "Iconographie : {total} occurrence(s), {files} fichier(s), "
+        "Boutons/iconographie : {total} occurrence(s), {files} fichier(s), "
         "{high} haute(s), {medium} moyenne(s)".format(
             total=summary["total"],
             files=summary["files"],
