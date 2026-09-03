@@ -178,17 +178,11 @@ def _theme_kind(theme=None):
 
 
 def _windows_apps_dark():
-    """Retourne le choix clair/sombre des applications Windows, ou ``None``.
-
-    wxWidgets peut encore annoncer une apparence claire alors que Windows 10/11
-    est réglé sur « applications sombres ». Dans ce cas, la valeur utilisateur
-    ``AppsUseLightTheme`` est la source de vérité du mode Système.
-    """
+    """Retourne le choix clair/sombre des applications Windows, ou ``None``."""
     if sys.platform != "win32":
         return None
     try:
         import winreg
-
         path = r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"
         with winreg.OpenKey(winreg.HKEY_CURRENT_USER, path) as key:
             value, _ = winreg.QueryValueEx(key, "AppsUseLightTheme")
@@ -312,15 +306,12 @@ def _scale_font(window, scale):
             window._teamworks_font_scale_percent = scale
             window._teamworks_font_scaled = True
             return
-
         font = window.GetFont()
         if not font or not font.IsOk():
             return
-
         last_scale = getattr(window, "_teamworks_font_scale_percent", None)
         if last_scale == scale:
             return
-
         base_points = getattr(window, "_teamworks_font_base_points", None)
         if base_points is None:
             current = _font_point_size(font)
@@ -330,7 +321,6 @@ def _scale_font(window, scale):
             else:
                 base_points = current
             window._teamworks_font_base_points = base_points
-
         _set_font_point_size(font, base_points * float(scale) / 100.0)
         window.SetFont(font)
         window._teamworks_font_scale_percent = scale
@@ -340,22 +330,14 @@ def _scale_font(window, scale):
 
 
 def _minimum_height(window, height):
-    """Applique une hauteur de thème sans écraser un minimum métier explicite.
-
-    Le minimum d'origine est mémorisé une seule fois. Le minimum effectif peut
-    donc augmenter à 125 % puis redescendre à 100 % sans rester artificiellement
-    gonflé par une ancienne application du thème.
-    """
     try:
         minimum = window.GetMinSize()
         width = minimum.GetWidth() if minimum else -1
         current_height = minimum.GetHeight() if minimum else -1
-
         base_height = getattr(window, "_teamworks_min_height_base", None)
         if base_height is None:
             base_height = current_height
             window._teamworks_min_height_base = base_height
-
         target_height = max(int(base_height), int(height)) if base_height >= 0 else int(height)
         if current_height != target_height:
             window.SetMinSize((width, target_height))
@@ -370,7 +352,6 @@ def _apply_metrics(window, scale):
             window.InvalidateBestSize()
     except Exception:
         pass
-
     if isinstance(window, wx.ToolBar):
         try:
             window.SetToolBitmapSize((ui["toolbar_icon"], ui["toolbar_icon"]))
@@ -388,7 +369,6 @@ def _apply_metrics(window, scale):
                 window.SetPadding((ui["tab_padding_x"], ui["tab_padding_y"]))
         except Exception:
             pass
-
     controls = (wx.Button, wx.TextCtrl, wx.ComboBox, wx.Choice, wx.SpinCtrl)
     if hasattr(wx, "ToggleButton"):
         controls = controls + (wx.ToggleButton,)
@@ -409,12 +389,6 @@ def _set_colours(window, background=None, foreground=None):
 
 
 def _apply_objectlistview_theme(window, palette):
-    """Applique le chrome visuel commun aux ObjectListView historiques.
-
-    Aucune colonne, checkbox ni callback métier n'est modifié ici. Les anciennes
-    couleurs de lignes et polices de message vide restent donc sans effet dès
-    que le thème central est appliqué.
-    """
     try:
         if hasattr(window, "oddRowsBackColor"):
             window.oddRowsBackColor = palette["surface_low"]
@@ -428,7 +402,6 @@ def _apply_objectlistview_theme(window, palette):
         if group_font is not None and group_font.IsOk():
             group_font.SetWeight(wx.FONTWEIGHT_BOLD)
             window.groupFont = group_font
-
         empty = getattr(window, "stEmptyListMsg", None)
         if empty is not None:
             _set_colours(empty, background=palette["control"], foreground=palette["text_variant"])
@@ -445,6 +418,15 @@ def _apply_objectlistview_theme(window, palette):
                     window.SetEmptyListMsgFont(base_font)
             except Exception:
                 pass
+        # Les couleurs OLV ne sont pas rétroactives sur les lignes déjà créées.
+        # Rafraîchir les objets matérialisés évite le tableau blanc/texte clair.
+        if hasattr(window, "GetObjects") and hasattr(window, "RefreshObjects"):
+            try:
+                objects = list(window.GetObjects() or [])
+                if objects:
+                    window.RefreshObjects(objects)
+            except Exception:
+                pass
     except Exception:
         pass
 
@@ -453,18 +435,11 @@ def _apply_palette(window, palette, dark):
     background = None
     foreground = None
     input_types = (
-        wx.TextCtrl,
-        wx.ComboBox,
-        wx.Choice,
-        wx.ListBox,
-        wx.CheckListBox,
-        wx.ListCtrl,
-        wx.TreeCtrl,
-        wx.SpinCtrl,
+        wx.TextCtrl, wx.ComboBox, wx.Choice, wx.ListBox, wx.CheckListBox,
+        wx.ListCtrl, wx.TreeCtrl, wx.SpinCtrl,
     )
     if hasattr(wx, "SearchCtrl"):
         input_types = input_types + (wx.SearchCtrl,)
-
     if isinstance(window, (wx.Frame, wx.Dialog)):
         background = palette["surface"]
         foreground = palette["text"]
@@ -480,10 +455,8 @@ def _apply_palette(window, palette, dark):
         foreground = palette["text"]
     elif isinstance(window, wx.StaticLine):
         foreground = palette["outline"]
-
     _set_colours(window, background=background, foreground=foreground)
     _apply_objectlistview_theme(window, palette)
-
     empty = getattr(window, "stEmptyListMsg", None)
     if empty is not None:
         _set_colours(empty, background=palette["control"], foreground=palette["text_variant"])
@@ -498,10 +471,17 @@ def apply_to_window(window, recursive=True, theme=None, scale=None, palette=None
         scale = configured_scale if scale is None else scale
     dark = is_dark_theme(theme)
     palette = palette or _semantic_palette(dark)
-
     _scale_font(window, scale)
     _apply_metrics(window, scale)
     _apply_palette(window, palette, dark)
+
+    # Le contrôle commun reconstruit son bitmap après métriques/thème définitifs.
+    refresh_visual = getattr(window, "RafraichirVisuel", None)
+    if callable(refresh_visual):
+        try:
+            refresh_visual()
+        except Exception:
+            pass
 
     if recursive:
         try:
@@ -510,10 +490,9 @@ def apply_to_window(window, recursive=True, theme=None, scale=None, palette=None
             children = []
         for child in children:
             apply_to_window(child, True, theme=theme, scale=scale, palette=palette)
-
     try:
         window.Layout()
-        window.Refresh()
+        window.Refresh(False)
     except Exception:
         pass
 
@@ -535,10 +514,13 @@ def _install_preferences_menu(frame):
             def open_preferences(event):
                 from Dlg import DLG_Preferences
                 dialog = DLG_Preferences.Dialog(frame)
-                dialog.ShowModal()
-                dialog.Destroy()
+                try:
+                    dialog.ShowModal()
+                finally:
+                    dialog.Destroy()
+                # Le thème natif Windows ne doit pas être changé sur une frame
+                # déjà peinte : le nouveau choix sera appliqué au redémarrage.
                 refresh_preferences()
-                apply_to_window(frame, True)
 
             frame.Bind(wx.EVT_MENU, open_preferences, item)
             _MENU_INSTALLED = True
