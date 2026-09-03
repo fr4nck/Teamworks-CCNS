@@ -61,7 +61,7 @@ class PeopleContractsPilot(QMainWindow):
         root.addWidget(heading)
 
         self.search = QLineEdit()
-        self.search.setPlaceholderText("Rechercher un salarié, un site, un statut…")
+        self.search.setPlaceholderText("Rechercher une personne, un site, un statut…")
         self.search.setClearButtonEnabled(True)
         self.search.textChanged.connect(self.people_proxy.setFilterFixedString)
         root.addWidget(self.search)
@@ -91,7 +91,7 @@ class PeopleContractsPilot(QMainWindow):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(6)
 
-        label = QLabel("Salariés")
+        label = QLabel("Liste des personnes")
         font = label.font()
         font.setBold(True)
         label.setFont(font)
@@ -127,7 +127,7 @@ class PeopleContractsPilot(QMainWindow):
         self.detail_stack = QStackedWidget()
         empty_page = QWidget()
         empty_layout = QVBoxLayout(empty_page)
-        empty_message = QLabel("Sélectionnez un salarié pour afficher sa fiche")
+        empty_message = QLabel("Sélectionnez une personne pour afficher sa fiche")
         empty_message.setAlignment(Qt.AlignmentFlag.AlignCenter)
         empty_layout.addWidget(empty_message, 1)
 
@@ -221,7 +221,7 @@ class PeopleContractsPilot(QMainWindow):
         self.contracts_stack = QStackedWidget()
         empty_page = QWidget()
         empty_layout = QVBoxLayout(empty_page)
-        empty_message = QLabel("Aucun contrat enregistré pour ce salarié")
+        empty_message = QLabel("Aucun contrat enregistré pour cette personne")
         empty_message.setAlignment(Qt.AlignmentFlag.AlignCenter)
         empty_layout.addWidget(empty_message, 1)
         self.contracts_table = QTableView()
@@ -272,7 +272,8 @@ class PeopleContractsPilot(QMainWindow):
             (self.value_mutual, person.mutual),
         ):
             widget.setText(value or "—")
-        self.contracts_model.replace(self.adapter.list_contracts(person.id))
+        contract_key = person.id_historique if person.id_historique is not None else person.id
+        self.contracts_model.replace(self.adapter.list_contracts(contract_key))
         self.contracts_stack.setCurrentIndex(1 if self.contracts_model.rowCount() else 0)
         self.detail_stack.setCurrentIndex(1)
         self.statusBar().showMessage(f"Lecture seule · {person.name} · {self.contracts_model.rowCount()} contrat(s)")
