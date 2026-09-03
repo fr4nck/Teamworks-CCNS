@@ -7,37 +7,65 @@ import traceback
 
 STARTED_AT = time.perf_counter()
 
+_phase_started = time.perf_counter()
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QApplication
-
-from domain_read_adapter import build_domain_smoke_adapter
-from frugality import DIRECT_DEPENDENCIES, FrugalityProbe
-from pilot_generalities import PeopleContractsGeneralitiesPilot
-from theme_engine import ThemeEngine
+PYSIDE_IMPORT_SECONDS = time.perf_counter() - _phase_started
 
 
-def build_adapter():
-    source = os.environ.get("TEAMWORKS_QT_SOURCE", "smoke").strip().lower()
+def build_adapter(source: str, timings: dict[str, float]):
+    phase = time.perf_counter()
     if source == "production":
         from production_read_adapter import build_production_adapter
 
-        return build_production_adapter(), "production"
+        timings["adapter_module_import"] = time.perf_counter() - phase
+        phase = time.perf_counter()
+        adapter = build_production_adapter()
+        timings["adapter_build"] = time.perf_counter() - phase
+        return adapter
+
     if source != "smoke":
         raise ValueError("TEAMWORKS_QT_SOURCE doit valoir 'smoke' ou 'production'")
-    return build_domain_smoke_adapter(), "smoke"
+
+    from domain_read_adapter import build_domain_smoke_adapter
+
+    timings["adapter_module_import"] = time.perf_counter() - phase
+    phase = time.perf_counter()
+    adapter = build_domain_smoke_adapter()
+    timings["adapter_build"] = time.perf_counter() - phase
+    return adapter
 
 
 def main() -> None:
+    startup_timings: dict[str, float] = {"pyside_import": PYSIDE_IMPORT_SECONDS}
+
+    phase = time.perf_counter()
+    from frugality import DIRECT_DEPENDENCIES, FrugalityProbe
+    startup_timings["frugality_import"] = time.perf_counter() - phase
     probe = FrugalityProbe(started_at=STARTED_AT)
 
+    phase = time.perf_counter()
     qt_app = QApplication(sys.argv)
     qt_app.setApplicationName("Teamworks Qt POC")
     qt_app.setOrganizationName("Pêle-Mêle Sports et Loisirs")
+    startup_timings["qapplication"] = time.perf_counter() - phase
 
+    phase = time.perf_counter()
+    from theme_engine import ThemeEngine
+    startup_timings["theme_module_import"] = time.perf_counter() - phase
+
+    phase = time.perf_counter()
     theme_engine = ThemeEngine(qt_app)
     theme_engine.apply(dark=False)
+    startup_timings["theme_apply"] = time.perf_counter() - phase
 
-    adapter, source = build_adapter()
+    source = os.environ.get("TEAMWORKS_QT_SOURCE", "smoke").strip().lower()
+    adapter = build_adapter(source, startup_timings)
+
+    phase = time.perf_counter()
+    from pilot_generalities import PeopleContractsGeneralitiesPilot
+    startup_timings["pilot_module_import"] = time.perf_counter() - phase
+
     window = None
     try:
         before_window = time.perf_counter()
@@ -60,6 +88,26 @@ def main() -> None:
             )
             print(f"[Teamworks Qt POC] source={source} · {snapshot.compact()}")
             print(f"[Teamworks Qt POC] détail démarrage · {timing}")
+            print(
+                "[Teamworks Qt POC] profil socle · "
+                f"PySide6 {startup_timings.get('pyside_import', 0.0):.2f}s · "
+                f"QApplication {startup_timings.get('qapplication', 0.0):.2f}s · "
+                f"import thème {startup_timings.get('theme_module_import', 0.0):.2f}s · "
+                f"application thème {startup_timings.get('theme_apply', 0.0):.2f}s · "
+                f"import adaptateur {startup_timings.get('adapter_module_import', 0.0):.2f}s · "
+                f"construction adaptateur {startup_timings.get('adapter_build', 0.0):.2f}s · "
+                f"import pilote {startup_timings.get('pilot_module_import', 0.0):.2f}s"
+            )
+
+            adapter_timings = getattr(adapter, "startup_timings", None)
+            if isinstance(adapter_timings, dict):
+                print(
+                    "[Teamworks Qt POC] profil données · "
+                    f"PersonReader {float(adapter_timings.get('people_reader_seconds', 0.0)):.2f}s · "
+                    f"mapping {float(adapter_timings.get('people_mapping_seconds', 0.0)):.3f}s · "
+                    f"{int(adapter_timings.get('people_count', 0))} personnes"
+                )
+
             window.statusBar().showMessage(
                 f"{snapshot.compact()} · {timing} · lecture seule · source {source}"
             )
