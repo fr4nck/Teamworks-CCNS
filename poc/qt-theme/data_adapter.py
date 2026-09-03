@@ -8,12 +8,14 @@ from typing import Protocol, Sequence
 class PersonView:
     """Projection de présentation agrégée pour l'écran Individus / Contrats.
 
-    Tous les champs sont des chaînes prêtes à afficher. Les valeurs absentes d'une
-    source métier canonique sont neutralisées par ``—`` dans l'adaptateur, jamais
-    inventées dans la vue Qt.
+    Tous les champs affichés sont des chaînes prêtes à rendre. ``id_historique``
+    conserve séparément l'identifiant entier de la base historique lorsqu'il est
+    réellement disponible. Les valeurs absentes d'une source métier canonique
+    sont neutralisées par ``—`` dans l'adaptateur, jamais inventées dans la vue Qt.
     """
 
     id: str
+    id_historique: int | None
     name: str
     birth_date: str
     role: str
@@ -54,13 +56,52 @@ class TeamworksReadAdapter(Protocol):
 
 
 class DemoAdapter:
-    """Source factice du POC, remplaçable plus tard par un adaptateur métier réel."""
+    """Source factice du POC, remplaçable par un adaptateur métier réel."""
 
     def list_people(self) -> Sequence[PersonView]:
         return (
-            PersonView("SAL-001", "Gaëlle Desson", "12/02/1990", "Animatrice", "Groupe 3", "CDI", "35 h", "Dossier complet", "La Guerche-de-Bretagne", "À jour", "Affiliée"),
-            PersonView("SAL-002", "Thomas Loddé", "04/11/1988", "Éducateur sportif", "Groupe 4", "CDI intermittent", "24 h", "À contrôler", "Bais", "Échéance proche", "Affilié"),
-            PersonView("SAL-003", "Léa Drouillé", "19/06/2002", "Animatrice", "Groupe 2", "CDD", "21 h", "Pièce manquante", "Moutiers", "À planifier", "Dispense"),
+            PersonView(
+                id="SAL-001",
+                id_historique=None,
+                name="Gaëlle Desson",
+                birth_date="12/02/1990",
+                role="Animatrice",
+                classification="Groupe 3",
+                contract="CDI",
+                weekly_hours="35 h",
+                status="Dossier complet",
+                site="La Guerche-de-Bretagne",
+                medical="À jour",
+                mutual="Affiliée",
+            ),
+            PersonView(
+                id="SAL-002",
+                id_historique=None,
+                name="Thomas Loddé",
+                birth_date="04/11/1988",
+                role="Éducateur sportif",
+                classification="Groupe 4",
+                contract="CDI intermittent",
+                weekly_hours="24 h",
+                status="À contrôler",
+                site="Bais",
+                medical="Échéance proche",
+                mutual="Affilié",
+            ),
+            PersonView(
+                id="SAL-003",
+                id_historique=None,
+                name="Léa Drouillé",
+                birth_date="19/06/2002",
+                role="Animatrice",
+                classification="Groupe 2",
+                contract="CDD",
+                weekly_hours="21 h",
+                status="Pièce manquante",
+                site="Moutiers",
+                medical="À planifier",
+                mutual="Dispense",
+            ),
         )
 
     def list_contracts(self, person_id: str) -> Sequence[ContractView]:
@@ -72,14 +113,10 @@ class DemoAdapter:
 
 
 class ProductionAdapterStub:
-    """Emplacement volontairement inactif du futur branchement Teamworks.
-
-    Le jour où le POC passe GO, cette classe devra appeler les services applicatifs
-    ou repositories existants. Elle ne doit jamais importer la couche wxPython.
-    """
+    """Emplacement historique conservé pour compatibilité du POC."""
 
     def list_people(self) -> Sequence[PersonView]:
-        raise RuntimeError("Adaptateur production désactivé dans le POC isolé")
+        raise RuntimeError("Utiliser TeamworksProductionReadAdapter pour la lecture réelle")
 
     def list_contracts(self, person_id: str) -> Sequence[ContractView]:
-        raise RuntimeError("Adaptateur production désactivé dans le POC isolé")
+        raise RuntimeError("Utiliser TeamworksProductionReadAdapter pour la lecture réelle")
