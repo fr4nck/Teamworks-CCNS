@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 from typing import Sequence
 
 from data_adapter import ContractView, PersonView, TeamworksReadAdapter
@@ -17,16 +18,33 @@ class TeamworksProductionReadAdapter(TeamworksReadAdapter):
     Cette classe ne contient aucun SQL. Elle coordonne exclusivement les API
     actuelles de ``PersonReader`` et ``CcnsDataReader`` puis produit les DTO de
     présentation attendus par Qt.
+
+    ``startup_timings`` ne modifie aucun comportement métier : il expose
+    uniquement des mesures monotones permettant de distinguer construction des
+    readers, connexion/SQL et mapping Python pendant la recette du POC.
     """
 
     def __init__(self, person_reader=None, contract_reader=None):
+        started = time.perf_counter()
         self._person_reader = person_reader or PersonReader()
+        person_ready = time.perf_counter()
         self._contract_reader = contract_reader or CcnsDataReader()
+        contract_ready = time.perf_counter()
         self._closed = False
+        self.startup_timings: dict[str, float | int] = {
+            "person_reader_construction_seconds": person_ready - started,
+            "contract_reader_construction_seconds": contract_ready - person_ready,
+            "people_reader_seconds": 0.0,
+            "people_mapping_seconds": 0.0,
+            "people_count": 0,
+        }
 
     def list_people(self) -> Sequence[PersonView]:
         self._ensure_open()
+        reader_started = time.perf_counter()
         records = self._person_reader.lire_identites()
+        reader_finished = time.perf_counter()
+
         views = []
         for record in records:
             historical_id = self._require_historical_id(record.IDpersonne)
@@ -51,6 +69,14 @@ class TeamworksProductionReadAdapter(TeamworksReadAdapter):
                     mutual=EMPTY,
                 )
             )
+        mapping_finished = time.perf_counter()
+        self.startup_timings.update(
+            {
+                "people_reader_seconds": reader_finished - reader_started,
+                "people_mapping_seconds": mapping_finished - reader_finished,
+                "people_count": len(records),
+            }
+        )
         return tuple(views)
 
     def list_contracts(self, person_id: str | int) -> Sequence[ContractView]:
