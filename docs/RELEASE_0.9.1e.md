@@ -25,4 +25,4 @@
 
 La PR #364 est validée par la CI Windows avant fusion. Le paquet Windows `0.9.1e` ne doit être publié qu'après validation de `master`, afin que les binaires installable et portable correspondent exactement à la version publiée.
 
-La publication Windows de cette corrective est explicitement déclenchée après validation verte de `master`.
+La publication Windows de cette corrective est explicitement déclenchée après validation verte de `master`. Une première tentative a été annulée automatiquement par un push de maintenance concurrent sur `master`; la relance est effectuée depuis le dernier état validé de `master`.
