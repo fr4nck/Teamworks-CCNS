@@ -55,6 +55,7 @@ class DomainPeopleReadAdapter(TeamworksReadAdapter):
 
         return PersonView(
             id=person.code_internal or person.id or EMPTY,
+            id_historique=None,
             name=person.display_name or EMPTY,
             birth_date=_format_date(person.birth_date),
             role=EMPTY,
