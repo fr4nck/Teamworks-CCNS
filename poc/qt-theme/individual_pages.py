@@ -4,7 +4,16 @@ from collections.abc import Callable
 
 from PySide6.QtCore import QSortFilterProxyModel, Qt
 from PySide6.QtGui import QIcon, QStandardItemModel
-from PySide6.QtWidgets import QHBoxLayout, QHeaderView, QLabel, QLineEdit, QVBoxLayout, QWidget
+from PySide6.QtWidgets import (
+    QAbstractItemView,
+    QHBoxLayout,
+    QHeaderView,
+    QLabel,
+    QLineEdit,
+    QListWidget,
+    QVBoxLayout,
+    QWidget,
+)
 
 from legacy_sheets import (
     ApplicationPreviewDialog,
@@ -12,7 +21,14 @@ from legacy_sheets import (
     PiecePreviewDialog,
     PresencePreviewDialog,
 )
-from ui.common import ActionSpec, TOKENS, TwActionBar, TwDataTable, TwFormSection
+from ui.common import (
+    ActionSpec,
+    TOKENS,
+    TwActionBar,
+    TwDataTable,
+    TwDialogShell,
+    TwFormSection,
+)
 
 
 IconLoader = Callable[[str], QIcon]
@@ -32,6 +48,42 @@ def _table(model, *, hide_header: bool = False) -> TwDataTable:
 
 def _open_preview(dialog_cls, owner: QWidget) -> None:
     dialog_cls(owner.window()).exec()
+
+
+class QualificationsSelectionPreviewDialog(TwDialogShell):
+    """Aperçu du `MultiChoiceDialog` historique, sans données ni écriture."""
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(
+            "Sélection des qualifications",
+            parent,
+            profile="standard",
+            primary_label="Valider",
+            cancel_label="Fermer",
+        )
+        body = QWidget(self)
+        layout = QVBoxLayout(body)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(TOKENS.spacing.sm)
+
+        message = QLabel(
+            "Sélectionnez les qualifications que possède la personne dans la liste proposée :"
+        )
+        message.setWordWrap(True)
+        layout.addWidget(message)
+
+        choices = QListWidget()
+        choices.setSelectionMode(QAbstractItemView.SelectionMode.MultiSelection)
+        layout.addWidget(choices, 1)
+
+        note = QLabel("Aucune qualification métier n'est chargée dans cet aperçu Qt.")
+        note.setProperty("muted", True)
+        note.setWordWrap(True)
+        layout.addWidget(note)
+
+        self.set_content(body)
+        self.help_button.setEnabled(False)
+        self.set_primary_enabled(False)
 
 
 class QuestionnairePage(QWidget):
@@ -58,7 +110,7 @@ class QualificationsPage(QWidget):
 
     La structure suit le source courant : Pièces à fournir et Qualifications en
     deux colonnes, puis Pièces reçues en dessous. Les actions sont placées sous
-    les listes comme dans wx ; seule l'ouverture des aperçus locaux est active.
+    les listes comme dans wx ; seules les ouvertures d'aperçus locaux sont actives.
     """
 
     def __init__(self, icon_loader: IconLoader, parent: QWidget | None = None) -> None:
@@ -88,12 +140,13 @@ class QualificationsPage(QWidget):
                     "edit_qualifications",
                     "Modifier les qualifications",
                     "Modifier.png",
-                    "Modifier la liste des qualifications",
-                    enabled=False,
+                    "Ouvrir l'aperçu de sélection des qualifications",
+                    enabled=True,
                 )
             ],
             icon_loader=icon_loader,
         )
+        self.qualifications_actions.triggered.connect(self._on_qualifications_action)
         qualifications.add_widget(self.qualifications_actions)
         top.addWidget(qualifications, 1)
         root.addLayout(top, 1)
@@ -122,6 +175,10 @@ class QualificationsPage(QWidget):
         self.received_actions.triggered.connect(self._on_received_action)
         received.add_widget(self.received_actions)
         root.addWidget(received, 1)
+
+    def _on_qualifications_action(self, action_id: str) -> None:
+        if action_id == "edit_qualifications":
+            QualificationsSelectionPreviewDialog(self.window()).exec()
 
     def _on_received_action(self, action_id: str) -> None:
         if action_id == "add":
