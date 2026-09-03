@@ -205,6 +205,7 @@ class Dialog(wx.Dialog):
         self.dictContrats["operation_type"] = values[9]
         self.dictContrats["previous_contract_id"] = values[10]
         self.dictContrats["trial_period_value"] = values[11]
+        self.dictContrats["trial_period_value"] = values[11]
         self.dictContrats["trial_period_unit"] = values[12]
         self.dictContrats["date_debut"] = values[13]
         self.dictContrats["date_fin"] = values[14]
@@ -304,17 +305,20 @@ class Dialog(wx.Dialog):
     def __do_layout(self):
         sizer_base = wx.BoxSizer(wx.VERTICAL)
         grid_sizer_base = wx.FlexGridSizer(rows=3, cols=1, vgap=0, hgap=0)
-        grid_sizer_boutons = wx.FlexGridSizer(rows=1, cols=6, vgap=10, hgap=10)
+        sizer_boutons = wx.BoxSizer(wx.HORIZONTAL)
         sizer_pages = wx.BoxSizer(wx.VERTICAL)
         grid_sizer_base.Add(sizer_pages, 1, wx.ALL|wx.EXPAND, 10)
         grid_sizer_base.Add(self.static_line, 0, wx.LEFT|wx.RIGHT|wx.EXPAND, 10)
-        grid_sizer_boutons.Add(self.bouton_aide, 0, 0, 0)
-        grid_sizer_boutons.Add((20, 20), 0, wx.EXPAND, 0)
-        grid_sizer_boutons.Add(self.bouton_retour, 0, 0, 0)
-        grid_sizer_boutons.Add(self.bouton_suite, 0, 0, 0)
-        grid_sizer_boutons.Add(self.bouton_annuler, 0, wx.LEFT, 10)
-        grid_sizer_boutons.AddGrowableCol(1)
-        grid_sizer_base.Add(grid_sizer_boutons, 1, wx.ALL|wx.EXPAND, 10)
+
+        # Toutes les actions du wizard restent groupées : Aide est secondaire,
+        # mais n'a aucune raison d'être isolée à l'extrémité opposée de la fenêtre.
+        sizer_boutons.AddStretchSpacer(1)
+        sizer_boutons.Add(self.bouton_aide, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 10)
+        sizer_boutons.Add(self.bouton_retour, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 10)
+        sizer_boutons.Add(self.bouton_suite, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 10)
+        sizer_boutons.Add(self.bouton_annuler, 0, wx.ALIGN_CENTER_VERTICAL)
+        grid_sizer_base.Add(sizer_boutons, 0, wx.ALL|wx.EXPAND, 10)
+
         self.panel_base.SetSizer(grid_sizer_base)
         grid_sizer_base.AddGrowableRow(0)
         grid_sizer_base.AddGrowableCol(0)
