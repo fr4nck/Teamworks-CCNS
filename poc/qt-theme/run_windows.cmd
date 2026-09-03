@@ -3,7 +3,7 @@ setlocal
 cd /d "%~dp0"
 
 for %%I in ("%~dp0..\..\") do set "REPO_ROOT=%%~fI"
-set "PYTHONPATH=%REPO_ROOT%;%PYTHONPATH%"
+set "PYTHONPATH=%REPO_ROOT%\teamworks;%REPO_ROOT%;%PYTHONPATH%"
 set "TEAMWORKS_QT_SOURCE=production"
 
 if not exist ".venv\Scripts\python.exe" (
