@@ -10,7 +10,7 @@ import Chemins
 from Utils.UTILS_Traduction import _
 import wx
 from Ctrl import CTRL_Bouton_image
-from Ctrl import CTRL_Page_generalites
+from Ctrl import CTRL_Page_generalites_091e as CTRL_Page_generalites
 from Ctrl import CTRL_Page_questionnaire
 from Ctrl import CTRL_Page_qualifications
 from Ctrl import CTRL_Page_contrats
