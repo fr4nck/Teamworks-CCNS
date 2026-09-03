@@ -3,21 +3,28 @@
 """Adaptateur 0.9.1e de la page Généralités.
 
 La page historique reste la source de la logique métier. Cette sous-classe
-retire les hypothèses françaises bloquantes sans dupliquer le formulaire.
+retire les hypothèses françaises bloquantes et adapte la disposition à la
+largeur réellement disponible sans dupliquer le formulaire.
 """
 
 import wx
 
 from Ctrl import CTRL_Page_generalites as LEGACY
 from Utils import UTILS_Generalites_international as INTERNATIONAL
+from Utils import UTILS_Interface
+from Utils import UTILS_Responsive
+from Utils import UTILS_Styles
 from Utils.UTILS_Traduction import _
 
 
 class Panel_general(LEGACY.Panel_general):
     def __init__(self, *args, **kwargs):
+        self._responsive_columns = None
         LEGACY.Panel_general.__init__(self, *args, **kwargs)
         self._appliquer_mode_pays_naissance()
         self.text_cp.Bind(wx.EVT_TEXT, self._on_cp_residence_libre)
+        self.Bind(wx.EVT_SIZE, self._on_responsive_size)
+        wx.CallAfter(self._appliquer_layout_responsive)
 
     def _nom_pays_naissance(self):
         pays = self.Recherche_Pays(IDpays=self.IDpays_naiss)
@@ -35,6 +42,80 @@ class Panel_general(LEGACY.Panel_general):
         else:
             self.text_cp_naiss.SetToolTip(wx.ToolTip(_(u"Code postal de naissance facultatif")))
             self.text_ville_naiss.SetToolTip(wx.ToolTip(_(u"Saisissez librement la ville de naissance")))
+
+    def _scale_percent(self):
+        try:
+            return max(80, min(220, int(round(UTILS_Styles.Scale(100)))))
+        except Exception:
+            return 100
+
+    def _appliquer_layout_responsive(self):
+        largeur = self.GetClientSize().GetWidth()
+        if largeur <= 0:
+            return
+        colonnes = UTILS_Responsive.form_column_count(
+            largeur,
+            scale_percent=self._scale_percent(),
+        )
+        if colonnes == self._responsive_columns:
+            return
+
+        section_gap = UTILS_Styles.GetLayoutSpacing("section_gap")
+        page_gap = UTILS_Styles.GetLayoutSpacing("page_gap")
+        sizer = wx.BoxSizer(wx.VERTICAL)
+
+        if colonnes == 1:
+            for section in (
+                self.section_identite,
+                self.section_situation,
+                self.section_adresse,
+                self.section_coords,
+                self.section_memo,
+            ):
+                sizer.Add(
+                    section,
+                    0 if section is self.section_situation else 1,
+                    wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP,
+                    page_gap,
+                )
+            sizer.AddSpacer(page_gap)
+        else:
+            gauche = wx.BoxSizer(wx.VERTICAL)
+            gauche.Add(
+                self.section_identite,
+                3,
+                wx.EXPAND | wx.BOTTOM,
+                section_gap,
+            )
+            gauche.Add(self.section_adresse, 2, wx.EXPAND)
+
+            droite = wx.BoxSizer(wx.VERTICAL)
+            droite.Add(
+                self.section_situation,
+                0,
+                wx.EXPAND | wx.BOTTOM,
+                section_gap,
+            )
+            droite.Add(
+                self.section_coords,
+                3,
+                wx.EXPAND | wx.BOTTOM,
+                section_gap,
+            )
+            droite.Add(self.section_memo, 2, wx.EXPAND)
+
+            contenu = wx.BoxSizer(wx.HORIZONTAL)
+            contenu.Add(gauche, 3, wx.EXPAND | wx.RIGHT, section_gap)
+            contenu.Add(droite, 2, wx.EXPAND)
+            sizer.Add(contenu, 1, wx.EXPAND | wx.ALL, page_gap)
+
+        self.SetSizer(sizer, deleteOld=True)
+        self._responsive_columns = colonnes
+        self.Layout()
+
+    def _on_responsive_size(self, event):
+        wx.CallAfter(self._appliquer_layout_responsive)
+        event.Skip()
 
     def SetPaysNaiss(self, IDpays):
         LEGACY.Panel_general.SetPaysNaiss(self, IDpays)
@@ -75,18 +156,21 @@ class Panel_general(LEGACY.Panel_general):
         )
         if validation is False:
             self.ctrl_etat_numsecu.SetLabel(_(u"À vérifier"))
-            from Utils import UTILS_Interface
-            self.ctrl_etat_numsecu.SetForegroundColour(UTILS_Interface.GetToken("danger"))
+            self.ctrl_etat_numsecu.SetForegroundColour(
+                UTILS_Interface.GetToken("danger")
+            )
             if self.remplissageEnCours is False:
                 wx.MessageBox(message, _(u"Numéro de sécurité sociale erroné"))
         elif validation is None:
-            from Utils import UTILS_Interface
             self.ctrl_etat_numsecu.SetLabel(_(u"Non renseigné"))
-            self.ctrl_etat_numsecu.SetForegroundColour(UTILS_Interface.GetToken("on_surface_variant"))
+            self.ctrl_etat_numsecu.SetForegroundColour(
+                UTILS_Interface.GetToken("on_surface_variant")
+            )
         else:
-            from Utils import UTILS_Interface
             self.ctrl_etat_numsecu.SetLabel(_(u"Valide"))
-            self.ctrl_etat_numsecu.SetForegroundColour(UTILS_Interface.GetToken("success"))
+            self.ctrl_etat_numsecu.SetForegroundColour(
+                UTILS_Interface.GetToken("success")
+            )
         self.grid_sizer_identite.Layout()
 
     def Importation(self):
