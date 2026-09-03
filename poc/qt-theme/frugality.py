@@ -95,7 +95,6 @@ def _windows_rss_mb() -> float | None:
                 ("QuotaPagedPoolUsage", ctypes.c_size_t),
                 ("QuotaPeakNonPagedPoolUsage", ctypes.c_size_t),
                 ("QuotaNonPagedPoolUsage", ctypes.c_size_t),
-                ("QuotaNonPagedPoolUsage", ctypes.c_size_t),
                 ("PagefileUsage", ctypes.c_size_t),
                 ("PeakPagefileUsage", ctypes.c_size_t),
             ]
