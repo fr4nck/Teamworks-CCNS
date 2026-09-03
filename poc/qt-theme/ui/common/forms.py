@@ -8,14 +8,31 @@ from .validation import ValidationLevel, set_validation_state
 
 
 class TwFormSection(QFrame):
-    """Section nommée de formulaire avec géométrie commune."""
+    """Section nommée de formulaire avec géométrie commune.
 
-    def __init__(self, title: str, parent: QWidget | None = None, *, description: str | None = None) -> None:
+    ``compact=True`` conserve exactement le même langage visuel tout en réduisant
+    les marges/espacements pour les fiches historiques très denses. La densité
+    reste donc centralisée dans le composant commun plutôt que décidée écran par
+    écran.
+    """
+
+    def __init__(
+        self,
+        title: str,
+        parent: QWidget | None = None,
+        *,
+        description: str | None = None,
+        compact: bool = False,
+    ) -> None:
         super().__init__(parent)
         self.setObjectName("twFormSection")
+        self.setProperty("twDensity", "compact" if compact else "standard")
+        margin = TOKENS.spacing.sm if compact else TOKENS.spacing.md
+        spacing = TOKENS.spacing.xs if compact else TOKENS.spacing.sm
+
         root = QVBoxLayout(self)
-        root.setContentsMargins(TOKENS.spacing.md, TOKENS.spacing.md, TOKENS.spacing.md, TOKENS.spacing.md)
-        root.setSpacing(TOKENS.spacing.sm)
+        root.setContentsMargins(margin, margin, margin, margin)
+        root.setSpacing(spacing)
 
         title_label = QLabel(title)
         title_label.setObjectName("twSectionTitle")
@@ -32,7 +49,7 @@ class TwFormSection(QFrame):
         self.body = QWidget(self)
         self.body_layout = QVBoxLayout(self.body)
         self.body_layout.setContentsMargins(0, 0, 0, 0)
-        self.body_layout.setSpacing(TOKENS.spacing.sm)
+        self.body_layout.setSpacing(spacing)
         root.addWidget(self.body)
 
     def add_row(self, row: QWidget) -> None:
@@ -57,9 +74,15 @@ class TwFieldRow(QWidget):
         suffix: str | None = None,
         action: QWidget | None = None,
         help_text: str | None = None,
+        compact: bool = False,
     ) -> None:
         super().__init__(parent)
+        self.setProperty("twDensity", "compact" if compact else "standard")
         self.editor = editor
+        self.editor.setProperty("twDensity", "compact" if compact else "standard")
+        if action is not None:
+            action.setProperty("twDensity", "compact" if compact else "standard")
+
         self._validation = QLabel("")
         self._validation.setObjectName("twValidationMessage")
         self._validation.setWordWrap(True)
@@ -70,15 +93,17 @@ class TwFieldRow(QWidget):
         root.setSpacing(TOKENS.spacing.xs)
 
         line = QHBoxLayout()
-        line.setSpacing(TOKENS.spacing.sm)
+        line.setSpacing(TOKENS.spacing.xs if compact else TOKENS.spacing.sm)
         label_widget = QLabel(label)
-        label_widget.setMinimumWidth(130)
+        label_widget.setMinimumWidth(122 if compact else 130)
         label_widget.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         apply_typography(label_widget, TOKENS.typography.label)
         line.addWidget(label_widget)
 
         if hasattr(editor, "setMinimumHeight"):
-            editor.setMinimumHeight(TOKENS.controls.height_standard)
+            editor.setMinimumHeight(
+                TOKENS.controls.height_compact if compact else TOKENS.controls.height_standard
+            )
         line.addWidget(editor, 1)
 
         if suffix:
