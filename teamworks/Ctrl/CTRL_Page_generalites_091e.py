@@ -64,6 +64,36 @@ class Panel_general(LEGACY.Panel_general):
         except Exception:
             return 100
 
+    def _detach_window_from_sizer(self, sizer, window):
+        """Retire une section de son ancien sizer avant de la réutiliser.
+
+        wx interdit qu'une fenêtre soit gérée simultanément par deux sizers.
+        La page historique imbrique plusieurs BoxSizer ; on les parcourt donc
+        récursivement avant de reconstruire le layout responsive.
+        """
+        if sizer is None:
+            return False
+        for item in list(sizer.GetChildren()):
+            if item.IsWindow() and item.GetWindow() is window:
+                sizer.Detach(window)
+                return True
+            if item.IsSizer() and self._detach_window_from_sizer(item.GetSizer(), window):
+                return True
+        return False
+
+    def _detacher_sections_du_layout_courant(self):
+        courant = self.GetSizer()
+        if courant is None:
+            return
+        for section in (
+            self.section_identite,
+            self.section_situation,
+            self.section_adresse,
+            self.section_coords,
+            self.section_memo,
+        ):
+            self._detach_window_from_sizer(courant, section)
+
     def _appliquer_layout_responsive(self):
         largeur = self.GetClientSize().GetWidth()
         if largeur <= 0:
@@ -75,6 +105,7 @@ class Panel_general(LEGACY.Panel_general):
         if colonnes == self._responsive_columns:
             return
 
+        self._detacher_sections_du_layout_courant()
         section_gap = UTILS_Styles.GetLayoutSpacing("section_gap")
         page_gap = UTILS_Styles.GetLayoutSpacing("page_gap")
         sizer = wx.BoxSizer(wx.VERTICAL)
