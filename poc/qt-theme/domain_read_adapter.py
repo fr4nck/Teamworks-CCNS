@@ -33,15 +33,20 @@ class DomainPeopleReadAdapter(TeamworksReadAdapter):
         self._qualifications_repository = qualifications_repository
         self._regulatory_repository = regulatory_repository
         self._sites_repository = sites_repository
+        self._person_ids_by_view_id: dict[str, str] = {}
 
     def list_people(self) -> Sequence[PersonView]:
-        people = self._people_repository.list_all()
+        people = tuple(self._people_repository.list_all())
+        self._person_ids_by_view_id = {
+            (person.code_internal or person.id): person.id for person in people
+        }
         return tuple(self._person_to_view(person) for person in people)
 
     def list_contracts(self, person_id: str) -> Sequence[ContractView]:
         if self._contracts_repository is None:
             return ()
-        contracts = self._contracts_repository.list_by_person_id(person_id)
+        domain_person_id = self._person_ids_by_view_id.get(person_id, person_id)
+        contracts = self._contracts_repository.list_by_person_id(domain_person_id)
         return tuple(self._contract_to_view(contract) for contract in contracts)
 
     def _person_to_view(self, person: Person) -> PersonView:
