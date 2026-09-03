@@ -30,12 +30,16 @@ class TeamworksProductionReadAdapter(TeamworksReadAdapter):
         views = []
         for record in records:
             historical_id = self._require_historical_id(record.IDpersonne)
+            first_name = (record.prenom or "").strip() or EMPTY
+            last_name = (record.nom or "").strip() or EMPTY
             name = " ".join(part for part in (record.prenom, record.nom) if part).strip() or EMPTY
             views.append(
                 PersonView(
                     id=EMPTY,
                     id_historique=historical_id,
                     name=name,
+                    first_name=first_name,
+                    last_name=last_name,
                     birth_date=EMPTY,
                     role=EMPTY,
                     classification=EMPTY,
