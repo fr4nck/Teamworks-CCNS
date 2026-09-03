@@ -7,6 +7,7 @@ AUDIT = ROOT / "teamworks" / "Dlg" / "DLG_CCNS_audit.py"
 AUDIT_LIST = ROOT / "teamworks" / "Dlg" / "DLG_CCNS_audit_list.py"
 SALARY_SUMMARY = ROOT / "teamworks" / "Dlg" / "DLG_CCNS_employee_salary_summary.py"
 SALARY_DETAIL = ROOT / "teamworks" / "Dlg" / "DLG_CCNS_salary_control_detail.py"
+SALARY_HISTORY = ROOT / "teamworks" / "Dlg" / "DLG_CCNS_salary_control_history.py"
 GADGET = ROOT / "teamworks" / "Ctrl" / "CTRL_Gadget_CCNS.py"
 
 
@@ -55,6 +56,16 @@ def test_ccns_salary_detail_uses_common_button_contract():
     source = _source(SALARY_DETAIL)
     assert "wx.Button(" not in source
     assert source.count("CTRL_Bouton_image.CTRL(") == 1
+    assert 'texte="Fermer", role="quiet"' in source
+
+
+def test_ccns_salary_history_uses_common_button_contract():
+    source = _source(SALARY_HISTORY)
+    assert "wx.Button(" not in source
+    assert source.count("CTRL_Bouton_image.CTRL(") == 6
+    assert 'texte="Comparer", role="primary"' in source
+    assert 'texte="Suivi des anomalies"' in source
+    assert 'texte="Alertes"' in source
     assert 'texte="Fermer", role="quiet"' in source
 
 
