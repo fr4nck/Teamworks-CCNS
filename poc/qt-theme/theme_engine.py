@@ -109,6 +109,25 @@ class ThemeEngine:
                 border-radius: 8px;
                 font-weight: 600;
             }}
+            QLabel#complianceStatus {{
+                padding: 8px 10px;
+                background: {t.surface_container_high};
+                border: 1px solid {t.outline};
+                border-radius: 7px;
+                font-weight: 600;
+            }}
+            QLabel#complianceStatus[complianceState="pending"] {{
+                color: {t.on_surface_variant};
+                border-color: {t.outline};
+            }}
+            QLabel#complianceStatus[complianceState="compliant"] {{
+                color: {t.success};
+                border-color: {t.success};
+            }}
+            QLabel#complianceStatus[complianceState="non_compliant"] {{
+                color: {t.danger};
+                border-color: {t.danger};
+            }}
             QLabel#roundBadge {{
                 background: {t.warning};
                 color: {t.surface_container};
