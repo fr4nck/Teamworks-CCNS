@@ -2,26 +2,21 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
-from PySide6.QtCore import QSize, Qt
+from PySide6.QtCore import QSize
 from PySide6.QtWidgets import (
     QAbstractItemView,
-    QGridLayout,
     QGroupBox,
     QHBoxLayout,
     QHeaderView,
     QLabel,
-    QLineEdit,
     QTableWidget,
     QToolButton,
     QVBoxLayout,
     QWidget,
 )
 
+from individual_pages import PresencesPage, QualificationsPage, RecruitmentPage
 from legacy_sheets import (
-    ApplicationPreviewDialog,
-    InterviewPreviewDialog,
-    PiecePreviewDialog,
-    PresencePreviewDialog,
     ReimbursementPreviewDialog,
     ScenarioPreviewDialog,
     TripPreviewDialog,
@@ -31,8 +26,9 @@ from legacy_sheets import (
 class LegacyIndividualTabs:
     """Transposition visuelle des pages wx historiques de la fiche individuelle.
 
-    Les tableaux restent en lecture seule. Les boutons Ajouter des fiches déjà
-    transposées ouvrent uniquement un aperçu local : aucune écriture en base.
+    Les pages déjà rapprochées du source courant utilisent désormais les
+    composants communs Qt. Les autres restent des aperçus historiques en lecture
+    seule jusqu'à leur prochain lot de transposition.
     """
 
     def __init__(self, icon_loader):
@@ -124,69 +120,10 @@ class LegacyIndividualTabs:
         return page
 
     def qualifications(self) -> QWidget:
-        page = QWidget()
-        root = QVBoxLayout(page)
-        root.setContentsMargins(5, 5, 5, 5)
-        root.setSpacing(8)
-
-        top = QHBoxLayout()
-        top.setSpacing(8)
-        top.addWidget(self._group_with_table("Pièces à fournir", [""]), 1)
-        top.addWidget(
-            self._group_with_table(
-                "Qualifications",
-                ["Qualification"],
-                [("Modifier.png", "Modifier la liste des qualifications", "M")],
-            ),
-            1,
-        )
-        root.addLayout(top, 1)
-        root.addWidget(
-            self._group_with_table(
-                "Pièces reçues",
-                ["Type de pièce", "Obtention", "Expiration", "Observations"],
-                [
-                    ("Ajouter.png", "Aperçu de la saisie d'une pièce", "+", PiecePreviewDialog),
-                    ("Modifier.png", "Modifier la pièce sélectionnée", "M"),
-                    ("Supprimer.png", "Supprimer la pièce sélectionnée", "−"),
-                ],
-            ),
-            1,
-        )
-        return page
+        return QualificationsPage(self.icon_loader)
 
     def presences(self) -> QWidget:
-        page = QWidget()
-        root = QVBoxLayout(page)
-        root.setContentsMargins(5, 5, 5, 5)
-        group = QGroupBox("Présences")
-        layout = QGridLayout(group)
-        layout.setContentsMargins(8, 10, 8, 8)
-        layout.setHorizontalSpacing(6)
-        layout.setVerticalSpacing(6)
-        table = self._table(["", "Date", "Vacances", "Horaires", "Durée", "Intitulé"])
-        layout.addWidget(table, 0, 0)
-        tools = self._tool_column(
-            [
-                ("Ajouter.png", "Aperçu de la saisie d'une présence", "+", PresencePreviewDialog),
-                ("Modifier.png", "Modifier la présence", "M"),
-                ("Supprimer.png", "Supprimer la présence", "−"),
-                ("Imprimante.png", "Imprimer", "I"),
-                ("Diagramme.png", "Statistiques", "S"),
-                ("Modele.png", "Appliquer un modèle", "T"),
-                ("Loupe.png", "Rechercher", "R"),
-            ],
-            spacer_after={2, 4},
-        )
-        layout.addLayout(tools, 0, 1, 2, 1)
-        search = QLineEdit()
-        search.setPlaceholderText("Rechercher dans les présences…")
-        search.setEnabled(False)
-        layout.addWidget(search, 1, 0)
-        layout.setColumnStretch(0, 1)
-        layout.setRowStretch(0, 1)
-        root.addWidget(group, 1)
-        return page
+        return PresencesPage(self.icon_loader)
 
     def scenarios(self) -> QWidget:
         page = QWidget()
@@ -242,32 +179,4 @@ class LegacyIndividualTabs:
         return page
 
     def recruitment(self) -> QWidget:
-        page = QWidget()
-        root = QVBoxLayout(page)
-        root.setContentsMargins(5, 5, 5, 5)
-        root.setSpacing(8)
-        root.addWidget(
-            self._group_with_table(
-                "Candidatures",
-                ["Dépôt", "Offre d'emploi", "Disponibilités", "Fonction(s)", "Affectation(s)", "Décision", "Réponse"],
-                [
-                    ("Ajouter.png", "Aperçu de la saisie d'une candidature", "+", ApplicationPreviewDialog),
-                    ("Modifier.png", "Modifier la candidature", "M"),
-                    ("Supprimer.png", "Supprimer la candidature", "−"),
-                ],
-            ),
-            1,
-        )
-        root.addWidget(
-            self._group_with_table(
-                "Entretiens",
-                ["Date", "Heure", "Avis", "Commentaire"],
-                [
-                    ("Ajouter.png", "Aperçu de la saisie d'un entretien", "+", InterviewPreviewDialog),
-                    ("Modifier.png", "Modifier l'entretien", "M"),
-                    ("Supprimer.png", "Supprimer l'entretien", "−"),
-                ],
-            ),
-            1,
-        )
-        return page
+        return RecruitmentPage(self.icon_loader)
