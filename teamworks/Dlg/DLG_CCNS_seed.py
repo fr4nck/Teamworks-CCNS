@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import wx
 
+from Ctrl import CTRL_Bouton_image
 from teamworks.CcnsCore.seed_teamworks_reference_data import seed_teamworks_reference_data
 
 
@@ -27,8 +28,17 @@ class Dialog(wx.Dialog):
 
         self.text_result = wx.TextCtrl(self, -1, "", style=wx.TE_MULTILINE | wx.TE_READONLY | wx.HSCROLL)
 
-        self.button_launch = wx.Button(self, -1, "Lancer l'initialisation")
-        self.button_close = wx.Button(self, wx.ID_CANCEL, "Fermer")
+        self.button_launch = CTRL_Bouton_image.CTRL(
+            self,
+            texte="Lancer l'initialisation",
+            role="primary",
+        )
+        self.button_close = CTRL_Bouton_image.CTRL(
+            self,
+            id=wx.ID_CANCEL,
+            texte="Fermer",
+            role="quiet",
+        )
 
         self.button_launch.Bind(wx.EVT_BUTTON, self.OnLaunch)
 
