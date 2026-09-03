@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 import sys
 import time
 from dataclasses import dataclass
@@ -26,7 +25,7 @@ class FrugalitySnapshot:
 
     @property
     def memory_ok(self) -> bool:
-        return self.rss_mb is None or self.rss_mb <= self.budget.idle_rss_mb
+        return self.rss_mb is not None and self.rss_mb <= self.budget.idle_rss_mb
 
     @property
     def dependencies_ok(self) -> bool:
@@ -76,6 +75,12 @@ def _rss_mb() -> float | None:
 
 
 def _windows_rss_mb() -> float | None:
+    """Retourne le Working Set courant du processus sous Windows.
+
+    Les prototypes ctypes sont déclarés explicitement : sans eux, les HANDLE
+    peuvent être convertis avec une largeur incorrecte sur Python/Windows 64 bits,
+    ce qui faisait retomber silencieusement la mesure à ``None`` sur certains postes.
+    """
     try:
         import ctypes
         from ctypes import wintypes
@@ -90,16 +95,27 @@ def _windows_rss_mb() -> float | None:
                 ("QuotaPagedPoolUsage", ctypes.c_size_t),
                 ("QuotaPeakNonPagedPoolUsage", ctypes.c_size_t),
                 ("QuotaNonPagedPoolUsage", ctypes.c_size_t),
+                ("QuotaNonPagedPoolUsage", ctypes.c_size_t),
                 ("PagefileUsage", ctypes.c_size_t),
                 ("PeakPagefileUsage", ctypes.c_size_t),
             ]
 
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        psapi = ctypes.WinDLL("psapi", use_last_error=True)
+
+        kernel32.GetCurrentProcess.argtypes = []
+        kernel32.GetCurrentProcess.restype = wintypes.HANDLE
+        psapi.GetProcessMemoryInfo.argtypes = [
+            wintypes.HANDLE,
+            ctypes.POINTER(PROCESS_MEMORY_COUNTERS),
+            wintypes.DWORD,
+        ]
+        psapi.GetProcessMemoryInfo.restype = wintypes.BOOL
+
         counters = PROCESS_MEMORY_COUNTERS()
-        counters.cb = ctypes.sizeof(counters)
-        process = ctypes.windll.kernel32.GetCurrentProcess()
-        ok = ctypes.windll.psapi.GetProcessMemoryInfo(
-            process, ctypes.byref(counters), counters.cb
-        )
+        counters.cb = ctypes.sizeof(PROCESS_MEMORY_COUNTERS)
+        process = kernel32.GetCurrentProcess()
+        ok = psapi.GetProcessMemoryInfo(process, ctypes.byref(counters), counters.cb)
         if not ok:
             return None
         return counters.WorkingSetSize / (1024 * 1024)
