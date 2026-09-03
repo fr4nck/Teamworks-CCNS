@@ -2,6 +2,9 @@
 setlocal
 cd /d "%~dp0"
 
+for %%I in ("%~dp0..\..\") do set "REPO_ROOT=%%~fI"
+set "PYTHONPATH=%REPO_ROOT%;%PYTHONPATH%"
+
 if not exist ".venv\Scripts\python.exe" (
   echo [Teamworks Qt POC] Creation de l'environnement isole...
   py -m venv .venv || goto :error
