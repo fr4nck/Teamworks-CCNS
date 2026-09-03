@@ -31,6 +31,7 @@ from ui.common import (
 
 
 EMPTY = "—"
+_TWO_COLUMN_MIN_WIDTH = 760
 
 
 def _read_line(text: str = EMPTY, *, disabled: bool = False) -> QLineEdit:
@@ -50,6 +51,12 @@ def _secondary_button(label: str, tooltip: str) -> QPushButton:
     return button
 
 
+def _empty_layout(layout) -> None:
+    """Détache les items d'un layout sans détruire les widgets réutilisés."""
+    while layout.count():
+        layout.takeAt(0)
+
+
 class GeneralitiesPage(QWidget):
     """Transposition Qt de la page historique ``CTRL_Page_generalites``.
 
@@ -58,9 +65,9 @@ class GeneralitiesPage(QWidget):
     Qt. Il reste strictement en consultation : les satellites peuvent être
     ouverts pour recette visuelle, mais aucune écriture n'est activée.
 
-    La fiche utilise la densité compacte du socle commun : elle garde les mêmes
-    états visuels et la même typographie que les autres écrans, sans réintroduire
-    les hauteurs arbitraires de l'interface wx historique.
+    La fiche utilise la densité compacte du socle commun et reprend aussi le
+    comportement responsive du wrapper 0.9.1f : deux colonnes 3/5 + 2/5 en
+    desktop, puis une colonne scrollable quand l'espace devient insuffisant.
 
     Les informations absentes du contrat de lecture courant restent neutres.
     Le NIR n'est volontairement pas chargé par ce POC.
@@ -69,47 +76,91 @@ class GeneralitiesPage(QWidget):
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._field_rows: dict[str, TwFieldRow] = {}
+        self._responsive_columns: int | None = None
 
         root = QVBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
 
-        scroll = QScrollArea(self)
-        scroll.setWidgetResizable(True)
-        scroll.setFrameShape(QScrollArea.Shape.NoFrame)
-        root.addWidget(scroll, 1)
+        self.scroll = QScrollArea(self)
+        self.scroll.setWidgetResizable(True)
+        self.scroll.setFrameShape(QScrollArea.Shape.NoFrame)
+        root.addWidget(self.scroll, 1)
 
         content = QWidget()
-        grid = QGridLayout(content)
-        grid.setContentsMargins(
+        self.content_grid = QGridLayout(content)
+        self.content_grid.setContentsMargins(
             TOKENS.spacing.xs,
             TOKENS.spacing.xs,
             TOKENS.spacing.xs,
             TOKENS.spacing.xs,
         )
-        grid.setHorizontalSpacing(TOKENS.spacing.md)
-        grid.setVerticalSpacing(TOKENS.spacing.md)
-        grid.setColumnStretch(0, 3)
-        grid.setColumnStretch(1, 2)
+        self.content_grid.setHorizontalSpacing(TOKENS.spacing.md)
+        self.content_grid.setVerticalSpacing(TOKENS.spacing.md)
 
-        left = QWidget()
-        left_layout = QVBoxLayout(left)
-        left_layout.setContentsMargins(0, 0, 0, 0)
-        left_layout.setSpacing(TOKENS.spacing.md)
-        left_layout.addWidget(self._build_identity())
-        left_layout.addWidget(self._build_address())
-        left_layout.addStretch(1)
+        self.section_identity = self._build_identity()
+        self.section_social = self._build_social()
+        self.section_address = self._build_address()
+        self.section_coordinates = self._build_coordinates()
+        self.section_memo = self._build_memo()
 
-        right = QWidget()
-        right_layout = QVBoxLayout(right)
-        right_layout.setContentsMargins(0, 0, 0, 0)
-        right_layout.setSpacing(TOKENS.spacing.md)
-        right_layout.addWidget(self._build_social())
-        right_layout.addWidget(self._build_coordinates())
-        right_layout.addWidget(self._build_memo(), 1)
+        self.left_column = QWidget()
+        self.left_layout = QVBoxLayout(self.left_column)
+        self.left_layout.setContentsMargins(0, 0, 0, 0)
+        self.left_layout.setSpacing(TOKENS.spacing.md)
 
-        grid.addWidget(left, 0, 0, Qt.AlignmentFlag.AlignTop)
-        grid.addWidget(right, 0, 1)
-        scroll.setWidget(content)
+        self.right_column = QWidget()
+        self.right_layout = QVBoxLayout(self.right_column)
+        self.right_layout.setContentsMargins(0, 0, 0, 0)
+        self.right_layout.setSpacing(TOKENS.spacing.md)
+
+        self.scroll.setWidget(content)
+        self._apply_responsive_layout(2, force=True)
+
+    def resizeEvent(self, event) -> None:
+        columns = 2 if event.size().width() >= _TWO_COLUMN_MIN_WIDTH else 1
+        self._apply_responsive_layout(columns)
+        super().resizeEvent(event)
+
+    def _apply_responsive_layout(self, columns: int, *, force: bool = False) -> None:
+        if not force and columns == self._responsive_columns:
+            return
+
+        _empty_layout(self.left_layout)
+        _empty_layout(self.right_layout)
+        self.content_grid.removeWidget(self.left_column)
+        self.content_grid.removeWidget(self.right_column)
+
+        if columns == 1:
+            # Même ordre que le wrapper wx responsive actuel.
+            for section in (
+                self.section_identity,
+                self.section_social,
+                self.section_address,
+                self.section_coordinates,
+                self.section_memo,
+            ):
+                self.left_layout.addWidget(section)
+            self.left_layout.addStretch(1)
+            self.right_column.hide()
+            self.content_grid.addWidget(self.left_column, 0, 0, 1, 2)
+            self.content_grid.setColumnStretch(0, 1)
+            self.content_grid.setColumnStretch(1, 0)
+        else:
+            self.left_layout.addWidget(self.section_identity)
+            self.left_layout.addWidget(self.section_address)
+            self.left_layout.addStretch(1)
+
+            self.right_layout.addWidget(self.section_social)
+            self.right_layout.addWidget(self.section_coordinates)
+            self.right_layout.addWidget(self.section_memo, 1)
+
+            self.right_column.show()
+            self.content_grid.addWidget(self.left_column, 0, 0, Qt.AlignmentFlag.AlignTop)
+            self.content_grid.addWidget(self.right_column, 0, 1)
+            self.content_grid.setColumnStretch(0, 3)
+            self.content_grid.setColumnStretch(1, 2)
+
+        self._responsive_columns = columns
 
     def _row(
         self,
