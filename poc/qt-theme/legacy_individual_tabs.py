@@ -7,15 +7,13 @@ from PySide6.QtWidgets import (
     QAbstractItemView,
     QGroupBox,
     QHBoxLayout,
-    QHeaderView,
-    QLabel,
     QTableWidget,
     QToolButton,
     QVBoxLayout,
     QWidget,
 )
 
-from individual_pages import PresencesPage, QualificationsPage, RecruitmentPage
+from individual_pages import PresencesPage, QualificationsPage, QuestionnairePage, RecruitmentPage
 from legacy_sheets import (
     ReimbursementPreviewDialog,
     ScenarioPreviewDialog,
@@ -95,29 +93,7 @@ class LegacyIndividualTabs:
         return group
 
     def questionnaire(self) -> QWidget:
-        page = QWidget()
-        root = QVBoxLayout(page)
-        root.setContentsMargins(5, 5, 5, 5)
-        root.setSpacing(6)
-
-        title = QLabel("Questionnaire")
-        font = title.font()
-        font.setBold(True)
-        font.setPointSize(max(font.pointSize(), 11))
-        title.setFont(font)
-        root.addWidget(title)
-
-        note = QLabel("Disposition historique : questions à gauche, réponses à droite.")
-        note.setProperty("muted", True)
-        root.addWidget(note)
-
-        table = self._table(["Question", "Réponse"])
-        header = table.horizontalHeader()
-        header.setStretchLastSection(False)
-        header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
-        header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
-        root.addWidget(table, 1)
-        return page
+        return QuestionnairePage()
 
     def qualifications(self) -> QWidget:
         return QualificationsPage(self.icon_loader)
