@@ -1,0 +1,69 @@
+name: Activation ponctuelle entretien Actions
+
+on:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    name: Intégrer l'entretien hebdomadaire dans ci.yml
+    if: ${{ contains(github.event.head_commit.message, '[enable-actions-maintenance]') }}
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v6
+
+      - name: Adapter le workflow unique
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('.github/workflows/ci.yml')
+          text = path.read_text(encoding='utf-8')
+
+          if 'cron: "37 3 * * 1"' not in text:
+              text = text.replace(
+                  '  workflow_dispatch:\n',
+                  '  schedule:\n    - cron: "37 3 * * 1"\n  workflow_dispatch:\n',
+                  1,
+              )
+
+          text = text.replace(
+              "    if: ${{ github.event_name == 'workflow_dispatch' && inputs.cleanup_actions != 'none' }}",
+              "    if: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.cleanup_actions != 'none') }}",
+              1,
+          )
+
+          checkout = '''    steps:\n      - name: Récupérer le dépôt\n        uses: actions/checkout@v6\n'''
+          scheduled = '''\n      - name: Entretien hebdomadaire au-delà de 100 runs\n        if: ${{ github.event_name == 'schedule' }}\n        shell: pwsh\n        env:\n          GH_TOKEN: ${{ github.token }}\n        run: |\n          $count = [int](& gh api "repos/$env:GITHUB_REPOSITORY/actions/runs?status=completed&per_page=1" --jq ".total_count")\n          Write-Host "Runs terminés : $count (seuil : 100)"\n          if ($count -le 100) {\n            Write-Host "Aucun nettoyage nécessaire."\n            exit 0\n          }\n          ./scripts/cleanup_github_actions.ps1 `\n            -Repo $env:GITHUB_REPOSITORY `\n            -KeepPerWorkflow 20 `\n            -Apply\n'''
+          if 'Entretien hebdomadaire au-delà de 100 runs' not in text:
+              text = text.replace(checkout, checkout + scheduled, 1)
+
+          text = text.replace(
+              "    if: ${{ github.event_name != 'workflow_dispatch' || inputs.cleanup_actions == 'none' }}",
+              "    if: ${{ github.event_name != 'schedule' && (github.event_name != 'workflow_dispatch' || inputs.cleanup_actions == 'none') }}",
+              1,
+          )
+          text = text.replace(
+              "    if: ${{ (github.event_name != 'workflow_dispatch' || inputs.cleanup_actions == 'none') && !startsWith(github.ref, 'refs/tags/') }}",
+              "    if: ${{ github.event_name != 'schedule' && (github.event_name != 'workflow_dispatch' || inputs.cleanup_actions == 'none') && !startsWith(github.ref, 'refs/tags/') }}",
+              1,
+          )
+
+          path.write_text(text, encoding='utf-8')
+          Path('.github/workflows/_enable-weekly-actions-maintenance.yml').unlink()
+          PY
+
+      - name: Enregistrer la configuration définitive
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Maintenance: entretien hebdomadaire de l'historique Actions"
+          git push
