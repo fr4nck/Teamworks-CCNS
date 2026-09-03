@@ -29,10 +29,28 @@ class Panel(wx.Panel):
         self.listCtrl = ListCtrl(self)
         self.listCtrl.SetMinSize((20, 20)) 
         
-        self.bouton_ajouter = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_modifier = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Modifier.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_supprimer = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_aide = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Aide.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_ajouter = CTRL_Bouton_image.CTRL(
+            self,
+            texte=_(u"Ajouter"),
+            cheminImage=Chemins.GetStaticPath("Images/32x32/Ajouter.png"),
+        )
+        self.bouton_modifier = CTRL_Bouton_image.CTRL(
+            self,
+            texte=_(u"Modifier"),
+            cheminImage=Chemins.GetStaticPath("Images/32x32/Modifier.png"),
+        )
+        self.bouton_supprimer = CTRL_Bouton_image.CTRL(
+            self,
+            texte=_(u"Supprimer"),
+            cheminImage=Chemins.GetStaticPath("Images/32x32/Supprimer.png"),
+            role="danger",
+        )
+        self.bouton_aide = CTRL_Bouton_image.CTRL(
+            self,
+            texte=_(u"Aide"),
+            cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"),
+            role="quiet",
+        )
         if parent.GetName() != "treebook_configuration" :
             self.bouton_aide.Show(False)
 
@@ -50,11 +68,8 @@ class Panel(wx.Panel):
         
     def __set_properties(self):
         self.bouton_ajouter.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour créer un nouveau type de contrat")))
-        self.bouton_ajouter.SetSize(self.bouton_ajouter.GetBestSize())
         self.bouton_modifier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier le type de contrat sélectionné dans la liste")))
-        self.bouton_modifier.SetSize(self.bouton_modifier.GetBestSize())
         self.bouton_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer le type de contrat sélectionné dans la liste")))
-        self.bouton_supprimer.SetSize(self.bouton_supprimer.GetBestSize())
         self.bouton_aide.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour obtenir de l'aide")))
 
     def __do_layout(self):
@@ -406,8 +421,8 @@ class Dialog(wx.Dialog):
         self.panel_base = wx.Panel(self, -1)
         self.panel_contenu = Panel(self.panel_base)
         self.panel_contenu.barreTitre.Show(False)
-        self.bouton_aide = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))
-        self.bouton_fermer = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Fermer"), cheminImage=Chemins.GetStaticPath("Images/32x32/Fermer.png"))
+        self.bouton_aide = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"), role="quiet")
+        self.bouton_fermer = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Fermer"), cheminImage=Chemins.GetStaticPath("Images/32x32/Fermer.png"), role="quiet")
         self.__set_properties()
         self.__do_layout()
 

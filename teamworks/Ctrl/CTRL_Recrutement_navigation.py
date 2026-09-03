@@ -4,6 +4,7 @@
 
 import wx
 
+from Ctrl import CTRL_Bouton_image
 from ObjectListView import Filter
 from Utils import UTILS_Interface, UTILS_Styles
 from Utils.UTILS_Traduction import _
@@ -24,24 +25,18 @@ def _racine_recrutement(window):
     return None
 
 
-class BoutonMode(wx.ToggleButton):
-    def __init__(self, parent, label, mode):
-        wx.ToggleButton.__init__(self, parent, -1, label=label)
-        self.mode = mode
-        self.SetFont(UTILS_Styles.GetFont("label"))
-        self.SetMinSize((-1, UTILS_Styles.GetControlMetric("button_min_height")))
-        self.AppliquerTheme(False)
+class BoutonMode(CTRL_Bouton_image.Toggle):
+    """Sélecteur de mode recrutements basé sur le contrat Toggle commun."""
 
-    def AppliquerTheme(self, actif=False):
-        if actif:
-            fond = UTILS_Interface.GetToken("primary_container")
-            texte = UTILS_Interface.GetToken("on_primary_container")
-        else:
-            fond = UTILS_Interface.GetToken("surface_container_low")
-            texte = UTILS_Interface.GetToken("on_surface")
-        self.SetBackgroundColour(fond)
-        self.SetForegroundColour(texte)
-        self.SetValue(bool(actif))
+    def __init__(self, parent, label, mode):
+        CTRL_Bouton_image.Toggle.__init__(self, parent, texte=label)
+        self.mode = mode
+
+    def AppliquerTheme(self, actif=None):
+        if actif is not None and bool(actif) != self.GetValue():
+            self.SetValue(bool(actif))
+            return
+        CTRL_Bouton_image.Toggle.AppliquerTheme(self)
 
 
 class BarreModes(wx.Panel):
@@ -71,7 +66,7 @@ class BarreModes(wx.Panel):
         if mode not in self.boutons:
             return
         for code, bouton in self.boutons.items():
-            bouton.AppliquerTheme(code == mode)
+            bouton.SetValue(code == mode)
         if notifier:
             racine = _racine_recrutement(self)
             if racine is not None:

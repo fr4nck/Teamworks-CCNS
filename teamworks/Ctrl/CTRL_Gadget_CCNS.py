@@ -7,6 +7,7 @@ import wx
 
 from teamworks.Utils import UTILS_Diagnostic_performance as DiagnosticPerformance
 from teamworks.CcnsCore.home_gadgets_ccns import build_ccns_home_data
+from Ctrl import CTRL_Bouton_image
 from Utils import UTILS_Colonnes
 from Utils import UTILS_Interface
 
@@ -51,8 +52,12 @@ class Panel(wx.Panel):
             extensibles=(0, 1),
         )
 
-        self.button_refresh = wx.Button(self, -1, u"Actualiser")
-        self.button_open_contract = wx.Button(self, -1, u"Ouvrir le contrat")
+        self.button_refresh = CTRL_Bouton_image.CTRL(self, texte=u"Actualiser")
+        self.button_open_contract = CTRL_Bouton_image.CTRL(
+            self,
+            texte=u"Ouvrir le contrat",
+            role="primary",
+        )
         self.button_open_contract.Enable(False)
 
         self.button_refresh.Bind(wx.EVT_BUTTON, self.OnRefresh)

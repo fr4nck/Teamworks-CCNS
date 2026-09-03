@@ -17,6 +17,10 @@ import PIL.Image as Image
 import PIL.ImageOps as ImageOps
 
 
+ICON_RESOURCE_SIZES = (16, 22, 32, 48, 80, 128)
+BUTTON_ROLES = ("default", "primary", "danger", "quiet")
+
+
 def PILtoWx(image):
     """Convertit une image PIL en wx.Image avec canal alpha."""
     largeur, hauteur = image.size
@@ -36,30 +40,93 @@ def _echelle_marges(marges):
     return UTILS_Styles.Scale(marges, minimum=0)
 
 
-def _chemin_image_existant(chemin):
-    """Renvoie une ressource existante, avec repli 32x32 -> 16x16."""
+def _chemin_image_existant(chemin, taille_cible=None):
+    """Renvoie la variante raster la plus adaptée à la taille réellement affichée.
+
+    Teamworks possède encore plusieurs générations d'icônes PNG rangées dans
+    des répertoires 16x16, 22x22, 32x32, 48x48, 80x80 et 128x128. Agrandir une
+    source 16x16 à 40 px au zoom 200 % produit une icône floue et donne
+    l'impression que l'interface ne suit pas le zoom. Quand plusieurs variantes
+    d'un même fichier existent, on choisit donc la plus petite résolution au
+    moins égale à la cible, ou la plus grande disponible en dernier recours.
+    """
     if chemin in ("", None):
         return None
 
     path = Path(chemin)
-    if path.is_file():
-        return path
-
-    # Quelques écrans historiques demandaient une version 32x32 alors que
-    # seule l'icône 16x16 a toujours été livrée. Le bouton reste fonctionnel
-    # et laisse ensuite Pillow/Teamworks la mettre à l'échelle normalement.
     parts = list(path.parts)
-    if "32x32" in parts:
-        parts[parts.index("32x32")] = "16x16"
-        fallback = Path(*parts)
-        if fallback.is_file():
-            return fallback
+    size_index = None
+    for index, part in enumerate(parts):
+        if part in {"%dx%d" % (size, size) for size in ICON_RESOURCE_SIZES}:
+            size_index = index
+            break
 
-    return None
+    # Ressource hors arborescence multi-résolution : comportement historique.
+    if size_index is None:
+        return path if path.is_file() else None
+
+    candidates = []
+    for size in ICON_RESOURCE_SIZES:
+        variant_parts = list(parts)
+        variant_parts[size_index] = "%dx%d" % (size, size)
+        variant = Path(*variant_parts)
+        if variant.is_file():
+            candidates.append((size, variant))
+
+    if not candidates:
+        return path if path.is_file() else None
+
+    try:
+        target = max(1, int(round(float(taille_cible))))
+    except (TypeError, ValueError):
+        target = 0
+
+    if target <= 0:
+        return path if path.is_file() else candidates[0][1]
+
+    larger = [(size, variant) for size, variant in candidates if size >= target]
+    if larger:
+        return min(larger, key=lambda item: item[0])[1]
+    return max(candidates, key=lambda item: item[0])[1]
+
+
+def _token_texte_bouton(role):
+    """Retourne la couleur sémantique du libellé sans casser le rendu natif."""
+    if role == "danger":
+        return "danger"
+    if role == "primary":
+        return "primary"
+    return "on_surface"
+
+
+def _appliquer_contrat_bouton(control, texte="", role="default", icon_only=False):
+    """Applique le contrat commun de densité, zoom, typo et cible cliquable."""
+    if role not in BUTTON_ROLES:
+        role = "default"
+    control._teamworks_button_role = role
+    control._teamworks_text_style = "label"
+    control.SetFont(UTILS_Styles.GetFont("label"))
+    control._teamworks_font_scaled = True
+    control.SetForegroundColour(
+        UTILS_Interface.GetToken(_token_texte_bouton(role))
+    )
+    control.SetInitialSize()
+
+    best = control.GetBestSize()
+    hauteur_min = UTILS_Styles.GetControlMetric("button_min_height")
+    largeur_min = best.GetWidth()
+    if icon_only:
+        largeur_min = max(largeur_min, hauteur_min)
+    control.SetMinSize((largeur_min, max(best.GetHeight(), hauteur_min)))
 
 
 class CTRL(wx.Button):
-    """Bouton natif Teamworks consommant la charte graphique centrale."""
+    """Bouton d'action natif Teamworks consommant la charte centrale.
+
+    Ce composant couvre les boutons texte, texte+icône et icône seule. Les
+    écrans métier ne devraient pas recréer localement leurs métriques de
+    hauteur, leur typographie ou leur stratégie d'icône.
+    """
 
     def __init__(
         self,
@@ -71,11 +138,13 @@ class CTRL(wx.Button):
         margesImage=None,
         positionImage=wx.LEFT,
         margesTexte=None,
+        role="default",
     ):
         wx.Button.__init__(self, parent, id=id, label=texte)
         self.parent = parent
         self.texte = texte
         self.cheminImage = cheminImage
+        self.role = role if role in BUTTON_ROLES else "default"
         taille_defaut = UTILS_Styles.ICON_SIZES["medium"]
         self.tailleImage = tailleImage or (taille_defaut, taille_defaut)
         if isinstance(self.tailleImage, tuple) is False:
@@ -88,7 +157,8 @@ class CTRL(wx.Button):
         self.MAJ()
 
     def _bitmap(self):
-        chemin = _chemin_image_existant(self.cheminImage)
+        taille_cible = _echelle_taille(self.tailleImage)
+        chemin = _chemin_image_existant(self.cheminImage, max(taille_cible))
         if chemin is None:
             return wx.NullBitmap
 
@@ -104,7 +174,7 @@ class CTRL(wx.Button):
         except AttributeError:
             resample_filter = getattr(Image, "LANCZOS", Image.BICUBIC)
 
-        img = img.resize(_echelle_taille(self.tailleImage), resample_filter)
+        img = img.resize(taille_cible, resample_filter)
         img = ImageOps.expand(img, border=_echelle_marges(self.margesImage))
         return PILtoWx(img).ConvertToBitmap()
 
@@ -126,12 +196,12 @@ class CTRL(wx.Button):
 
     def AppliquerTheme(self):
         """Conserve le rendu natif et applique la typographie de la charte."""
-        self._teamworks_text_style = "label"
-        self.SetFont(UTILS_Styles.GetFont("label"))
-        # GetFont() tient déjà compte de l'échelle globale : le thème ne doit
-        # pas agrandir une seconde fois ce bouton au moment de Show().
-        self._teamworks_font_scaled = True
-        self.SetForegroundColour(UTILS_Interface.GetToken("on_surface"))
+        _appliquer_contrat_bouton(
+            self,
+            texte=self.texte,
+            role=self.role,
+            icon_only=bool(self.cheminImage and not self.texte),
+        )
 
     def SetImage(self, cheminImage=""):
         self.SetBitmap(wx.NullBitmap)
@@ -142,3 +212,64 @@ class CTRL(wx.Button):
         self.texte = texte
         self.SetLabel(texte)
         self.MAJ()
+
+    def SetRole(self, role="default"):
+        self.role = role if role in BUTTON_ROLES else "default"
+        self.AppliquerTheme()
+        self.Refresh()
+
+
+class Toggle(wx.ToggleButton):
+    """Bouton à état Teamworks avec le même contrat que les actions ordinaires.
+
+    L'état sélectionné est lui aussi centralisé : les écrans métier ne doivent
+    plus repeindre individuellement les toggles pour signaler la sélection.
+    """
+
+    def __init__(self, parent, id=-1, texte="", role="default"):
+        wx.ToggleButton.__init__(self, parent, id=id, label=texte)
+        self.parent = parent
+        self.texte = texte
+        self.role = role if role in BUTTON_ROLES else "default"
+        self._teamworks_text_style = "label"
+        self.Bind(wx.EVT_TOGGLEBUTTON, self._OnToggleContract)
+        self.MAJ()
+
+    def _OnToggleContract(self, event):
+        self.AppliquerTheme()
+        self.Refresh()
+        event.Skip()
+
+    def MAJ(self):
+        self.AppliquerTheme()
+
+    def AppliquerTheme(self):
+        _appliquer_contrat_bouton(
+            self,
+            texte=self.texte,
+            role=self.role,
+            icon_only=False,
+        )
+        if self.GetValue():
+            self.SetBackgroundColour(UTILS_Interface.GetToken("primary_container"))
+            self.SetForegroundColour(UTILS_Interface.GetToken("on_primary_container"))
+        else:
+            self.SetBackgroundColour(UTILS_Interface.GetToken("surface_container_low"))
+            self.SetForegroundColour(
+                UTILS_Interface.GetToken(_token_texte_bouton(self.role))
+            )
+
+    def SetValue(self, value):
+        wx.ToggleButton.SetValue(self, bool(value))
+        self.AppliquerTheme()
+        self.Refresh()
+
+    def SetTexte(self, texte=""):
+        self.texte = texte
+        self.SetLabel(texte)
+        self.MAJ()
+
+    def SetRole(self, role="default"):
+        self.role = role if role in BUTTON_ROLES else "default"
+        self.AppliquerTheme()
+        self.Refresh()

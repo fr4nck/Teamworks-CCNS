@@ -17,21 +17,21 @@ def test_contact_details_dialog_has_no_legacy_card_grid():
     assert "wx.BitmapButton" not in source
     assert "Images/16x16/" not in source
     assert ".Fit(self)" not in source
-    assert "wx.ToggleButton" in source
+    assert "wx.ToggleButton(" not in source
+    assert "CTRL_Bouton_image.Toggle" in source
     assert "wx.WrapSizer" in source
 
 
-def test_contact_category_selection_uses_semantic_states_and_charter():
+def test_contact_category_selection_uses_common_semantic_button_contract():
     source = _source()
-    assert 'UTILS_Interface.GetToken("primary_container")' in source
-    assert 'UTILS_Interface.GetToken("on_primary_container")' in source
-    assert 'UTILS_Interface.GetToken("surface_container_low")' in source
+    assert "CTRL_Bouton_image.Toggle" in source
     assert "_select_category" in source
-    assert "CTRL_Texte.H2" in source
+    assert "button.SetValue(categorie == self.categorieSelect)" in source
+    assert "CTRL_Texte.H3" in source
     assert "CTRL_Texte.Label" in source
-    assert 'UTILS_Styles.ApplyWindowProfile(self, "compact")' in source
+    assert 'UTILS_Styles.ApplyWindowProfile(self, "fit")' in source
+    assert "UTILS_Styles.RefitWindow(self, centre=False)" in source
     assert 'UTILS_Styles.GetLayoutSpacing("dialog_padding")' in source
-    assert 'UTILS_Styles.GetControlMetric("button_min_height")' in source
     assert "FromDIP" not in source
     assert "SetPointSize" not in source
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import wx
 
+from Ctrl import CTRL_Bouton_image
 from teamworks.CcnsCore.audit_contracts_ccns import audit_contracts
 from teamworks.CcnsCore.audit_employee_salary_summary import employee_salary_summary_from_audit_rows
 from teamworks.CcnsCore.audit_filters import MINIMUM_SOURCE_FILTERS, SALARY_STATUS_FILTERS, filter_audit_rows
@@ -42,7 +43,7 @@ class Dialog(wx.Dialog):
         self.label_intro = wx.StaticText(
             self,
             -1,
-            "Cet audit relit les contrats Teamworks et applique les premiers contrôles CCNS.",
+            "Cet audit relit les contrats Teamworks-CCNS et applique les premiers contrôles CCNS.",
         )
         self.label_intro.SetForegroundColour(self.palette["on_surface_variant"])
 
@@ -56,7 +57,7 @@ class Dialog(wx.Dialog):
 
         self.label_limit = wx.StaticText(self.box_scope, -1, "Nombre maximal de contrats à auditer :")
         self.ctrl_limit = wx.SpinCtrl(self.box_scope, -1, min=1, max=10000, initial=500)
-        self.button_launch = wx.Button(self.box_scope, -1, "Lancer l'audit")
+        self.button_launch = CTRL_Bouton_image.CTRL(self.box_scope, texte="Lancer l'audit", role="primary")
 
         self.checkbox_anomalies_only = wx.CheckBox(self.box_filters, -1, "Anomalies seulement")
         self.label_group = wx.StaticText(self.box_filters, -1, "Groupe :")
@@ -94,18 +95,18 @@ class Dialog(wx.Dialog):
         self.ctrl_salary_sort.SetSelection(0)
         self.ctrl_sort_direction = wx.ComboBox(self.box_filters, -1, choices=["Croissant", "Décroissant"], style=wx.CB_READONLY)
         self.ctrl_sort_direction.SetSelection(0)
-        self.button_apply_filters = wx.Button(self.box_filters, -1, "Appliquer")
-        self.button_reset_filters = wx.Button(self.box_filters, -1, "Réinitialiser")
+        self.button_apply_filters = CTRL_Bouton_image.CTRL(self.box_filters, texte="Appliquer", role="primary")
+        self.button_reset_filters = CTRL_Bouton_image.CTRL(self.box_filters, texte="Réinitialiser", role="quiet")
 
-        self.button_open_contract = wx.Button(self.box_actions, -1, "Ouvrir le contrat")
-        self.button_salary_detail = wx.Button(self.box_actions, -1, "Détail salarial")
-        self.button_employee_summary = wx.Button(self.box_actions, -1, "Synthèse salarié")
-        self.button_export = wx.Button(self.box_actions, -1, "Exporter CSV")
-        self.button_save_snapshot = wx.Button(self.box_actions, -1, "Enregistrer ce contrôle")
-        self.button_history = wx.Button(self.box_actions, -1, "Historique salarial")
-        self.button_show_non_compliant = wx.Button(self.box_actions, -1, "Voir les non conformes")
-        self.button_show_not_evaluated = wx.Button(self.box_actions, -1, "Voir les non évaluables")
-        self.button_close = wx.Button(self, wx.ID_CANCEL, "Fermer")
+        self.button_open_contract = CTRL_Bouton_image.CTRL(self.box_actions, texte="Ouvrir le contrat")
+        self.button_salary_detail = CTRL_Bouton_image.CTRL(self.box_actions, texte="Détail salarial")
+        self.button_employee_summary = CTRL_Bouton_image.CTRL(self.box_actions, texte="Synthèse salarié")
+        self.button_export = CTRL_Bouton_image.CTRL(self.box_actions, texte="Exporter CSV")
+        self.button_save_snapshot = CTRL_Bouton_image.CTRL(self.box_actions, texte="Enregistrer ce contrôle")
+        self.button_history = CTRL_Bouton_image.CTRL(self.box_actions, texte="Historique salarial")
+        self.button_show_non_compliant = CTRL_Bouton_image.CTRL(self.box_actions, texte="Voir les non conformes")
+        self.button_show_not_evaluated = CTRL_Bouton_image.CTRL(self.box_actions, texte="Voir les non évaluables")
+        self.button_close = CTRL_Bouton_image.CTRL(self, id=wx.ID_CANCEL, texte="Fermer", role="quiet")
 
         self.button_open_contract.Enable(False)
         self.button_salary_detail.Enable(False)

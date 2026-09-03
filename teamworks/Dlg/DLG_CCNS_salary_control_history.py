@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import wx
 
+from Ctrl import CTRL_Bouton_image
 from application.control import BuildContractSalaryControlConsolidatedReportUseCase
 from application.presentation import ContractSalaryAlertPresenter, ContractSalaryControlConsolidatedExporter, ContractSalaryControlExportFormat, ContractSalaryControlIssueHistoryPresenter, ContractSalaryControlSnapshotComparisonPresenter, format_euro_amount, format_french_date
 from teamworks.CcnsCore.audit_salary_alerts import generate_salary_control_alerts
@@ -21,12 +22,12 @@ class Dialog(wx.Dialog):
         self.details = wx.TextCtrl(box_details, -1, "", style=wx.TE_MULTILINE | wx.TE_READONLY)
         self.filter = wx.ComboBox(self, -1, choices=["Tous", "Améliorations", "Dégradations", "Nouveaux contrats", "Contrats absents", "Changements de statut", "Écarts modifiés", "Inchangés"], style=wx.CB_READONLY)
         self.filter.SetSelection(0)
-        self.button_compare = wx.Button(self, -1, "Comparer")
-        self.button_track_issues = wx.Button(self, -1, "Suivi des anomalies")
-        self.button_alerts = wx.Button(self, -1, "Alertes")
-        self.button_export_csv = wx.Button(self, -1, "Exporter le rapport consolidé CSV")
-        self.button_export_json = wx.Button(self, -1, "Exporter le rapport consolidé JSON")
-        self.button_close = wx.Button(self, wx.ID_CANCEL, "Fermer")
+        self.button_compare = CTRL_Bouton_image.CTRL(self, texte="Comparer", role="primary")
+        self.button_track_issues = CTRL_Bouton_image.CTRL(self, texte="Suivi des anomalies")
+        self.button_alerts = CTRL_Bouton_image.CTRL(self, texte="Alertes")
+        self.button_export_csv = CTRL_Bouton_image.CTRL(self, texte="Exporter le rapport consolidé CSV")
+        self.button_export_json = CTRL_Bouton_image.CTRL(self, texte="Exporter le rapport consolidé JSON")
+        self.button_close = CTRL_Bouton_image.CTRL(self, id=wx.ID_CANCEL, texte="Fermer", role="quiet")
         self.listbox.Bind(wx.EVT_LISTBOX, self.OnSelect)
         self.button_compare.Bind(wx.EVT_BUTTON, self.OnCompare)
         self.button_track_issues.Bind(wx.EVT_BUTTON, self.OnTrackIssues)

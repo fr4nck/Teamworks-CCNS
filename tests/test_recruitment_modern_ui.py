@@ -67,12 +67,13 @@ def test_recruitment_preserves_parent_chain_expected_by_object_list_views():
 
 def test_recruitment_navigation_is_textual_and_flexible():
     source = _source(NAV)
-    assert "class BoutonMode(wx.ToggleButton):" in source
+    assert "class BoutonMode(CTRL_Bouton_image.Toggle):" in source
     assert "class BarreModes(wx.Panel):" in source
     assert "wx.WrapSizer(wx.HORIZONTAL)" in source
-    assert 'GetControlMetric("button_min_height")' in source
+    assert "CTRL_Bouton_image.Toggle.__init__" in source
     assert "Images/16x16" not in source
     assert "wx.StaticBitmap" not in source
+    assert "wx.ToggleButton(" not in source
     assert "wx.RED" not in source
     assert "wx.BLACK" not in source
 

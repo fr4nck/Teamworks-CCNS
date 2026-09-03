@@ -48,10 +48,30 @@ class Dialog(wx.Dialog):
         
         self.panel_base = wx.Panel(self, -1)
         self.static_line = wx.StaticLine(self.panel_base, -1)
-        self.bouton_aide = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))
-        self.bouton_retour = wx.BitmapButton(self.panel_base, -1, wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Retour_L72.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_suite = wx.BitmapButton(self.panel_base, -1, wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Suite_L72.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_annuler = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Annuler"), cheminImage=Chemins.GetStaticPath("Images/32x32/Annuler.png"))
+        self.bouton_aide = CTRL_Bouton_image.CTRL(
+            self.panel_base,
+            texte=_(u"Aide"),
+            cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"),
+            role="quiet",
+        )
+        self.bouton_retour = CTRL_Bouton_image.CTRL(
+            self.panel_base,
+            texte=_(u"Retour"),
+            cheminImage=Chemins.GetStaticPath("Images/BoutonsImages/Retour_L72.png"),
+            role="quiet",
+        )
+        self.bouton_suite = CTRL_Bouton_image.CTRL(
+            self.panel_base,
+            texte=_(u"Suivant"),
+            cheminImage=Chemins.GetStaticPath("Images/BoutonsImages/Suite_L72.png"),
+            role="primary",
+        )
+        self.bouton_annuler = CTRL_Bouton_image.CTRL(
+            self.panel_base,
+            texte=_(u"Annuler"),
+            cheminImage=Chemins.GetStaticPath("Images/32x32/Annuler.png"),
+            role="quiet",
+        )
         self.__set_properties()
         self.__do_layout()
                 
@@ -66,6 +86,14 @@ class Dialog(wx.Dialog):
                         
         # Création des pages
         self.Creation_Pages()
+
+    def SetSuiteAction(self, texte, nom_image, role="primary"):
+        """Met à jour l'action principale avec le contrat de bouton commun."""
+        self.bouton_suite.SetTexte(_(texte))
+        self.bouton_suite.SetImage(
+            Chemins.GetStaticPath("Images/BoutonsImages/%s" % nom_image)
+        )
+        self.bouton_suite.SetRole(role)
     
     def Creation_Pages(self):
         """ Creation des pages """
@@ -90,13 +118,9 @@ class Dialog(wx.Dialog):
         _icon.CopyFromBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Logo.png"), wx.BITMAP_TYPE_ANY))
         self.SetIcon(_icon)
         self.bouton_aide.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour obtenir de l'aide")))
-        self.bouton_aide.SetSize(self.bouton_aide.GetBestSize())
         self.bouton_retour.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour revenir à la page précédente")))
-        self.bouton_retour.SetSize(self.bouton_retour.GetBestSize())
         self.bouton_suite.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour passer à l'étape suivante")))
-        self.bouton_suite.SetSize(self.bouton_suite.GetBestSize())
         self.bouton_annuler.SetToolTip(wx.ToolTip(_(u"Cliquez pour fermer l'assistant")))
-        self.bouton_annuler.SetSize(self.bouton_annuler.GetBestSize())
         self.SetMinSize((540, 490))
 
     def __do_layout(self):
@@ -142,10 +166,10 @@ class Dialog(wx.Dialog):
         # Si on quitte la dernière page, on active le bouton Suivant
         if self.pageVisible == self.nbrePages-1 :
             self.bouton_suite.Enable(True)
-            self.bouton_suite.SetBitmapLabel(wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Suite_L72.png"), wx.BITMAP_TYPE_ANY))
+            self.SetSuiteAction(u"Suivant", "Suite_L72.png")
         if self.pageVisible == self.nbrePages :
             self.bouton_suite.Enable(True)
-            self.bouton_suite.SetBitmapLabel(wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Valider_L72.png"), wx.BITMAP_TYPE_ANY))
+            self.SetSuiteAction(u"Valider", "Valider_L72.png")
         # Si on revient à la première page, on désactive le bouton Retour
         if self.pageVisible == 1 :
             self.bouton_retour.Enable(False)
@@ -170,7 +194,7 @@ class Dialog(wx.Dialog):
         self.sizer_pages.Layout()
         # Si on arrive à l'avant-dernière page, on désactive le bouton Suivant
         if self.pageVisible == self.nbrePages :
-            self.bouton_suite.SetBitmapLabel(wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Valider_L72.png"), wx.BITMAP_TYPE_ANY))
+            self.SetSuiteAction(u"Valider", "Valider_L72.png")
         # Si on quitte la première page, on active le bouton Retour
         if self.pageVisible > 1 :
             self.bouton_retour.Enable(True)
@@ -203,7 +227,7 @@ class Page1(wx.Panel):
         # Label Html
         txtIntro = u"""
         <FONT face="Arial" color="#000000" size=2>
-            <P>Vous pouvez ici éditer un document grâce à la technique du publipostage. Cette technique utilise des documents que vous avez créé avec Word, OpenOffice ou l'éditeur de texte intégré de Teamworks. 
+            <P>Vous pouvez ici éditer un document grâce à la technique du publipostage. Cette technique utilise des documents que vous avez créé avec Word, OpenOffice ou l'éditeur de texte intégré de Teamworks-CCNS. 
             L'intérêt de cela est d'imprimer des documents totalement personnalisés.</P>
             
             <P>Vous devrez juste importer ou écrire un document avec l'un de ces logiciels, dans lequel vous placez tout simplement aux endroits de votre choix des mots-clés : 
@@ -256,10 +280,27 @@ class Page2(wx.Panel):
         self.label_remarque = wx.StaticText(self.sizer_champs_staticbox, -1, _(u"*Champs personnalisés"))
         self.label_remarque.SetFont(wx.Font(7, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, ""))
         
-        self.bouton_imprimer = wx.BitmapButton(self.sizer_champs_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Imprimante.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_ajouter = wx.BitmapButton(self.sizer_champs_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_modifier = wx.BitmapButton(self.sizer_champs_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Modifier.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_supprimer = wx.BitmapButton(self.sizer_champs_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_imprimer = CTRL_Bouton_image.CTRL(
+            self.sizer_champs_staticbox,
+            texte=_(u"Imprimer"),
+            cheminImage=Chemins.GetStaticPath("Images/32x32/Imprimante.png"),
+        )
+        self.bouton_ajouter = CTRL_Bouton_image.CTRL(
+            self.sizer_champs_staticbox,
+            texte=_(u"Ajouter"),
+            cheminImage=Chemins.GetStaticPath("Images/32x32/Ajouter.png"),
+        )
+        self.bouton_modifier = CTRL_Bouton_image.CTRL(
+            self.sizer_champs_staticbox,
+            texte=_(u"Modifier"),
+            cheminImage=Chemins.GetStaticPath("Images/32x32/Modifier.png"),
+        )
+        self.bouton_supprimer = CTRL_Bouton_image.CTRL(
+            self.sizer_champs_staticbox,
+            texte=_(u"Supprimer"),
+            cheminImage=Chemins.GetStaticPath("Images/32x32/Supprimer.png"),
+            role="danger",
+        )
 
         self.Bind(wx.EVT_BUTTON, self.OnBoutonImprimer, self.bouton_imprimer)
         self.Bind(wx.EVT_BUTTON, self.OnBoutonAjouter, self.bouton_ajouter)
@@ -855,13 +896,13 @@ class Page3(wx.Panel):
         self.radio_3 = wx.RadioButton(self.sizer_staticbox_1, -1, "")
         self.bitmap_3 = wx.StaticBitmap(self.sizer_staticbox_1, -1, wx.Bitmap(Chemins.GetStaticPath("Images/48x48/Texte.png"), wx.BITMAP_TYPE_ANY))
         self.label_choix_3_titre = wx.StaticText(self.sizer_staticbox_1, -1, _(u"Traitement de texte intégré"))
-        self.label_choix_3_description = wx.StaticText(self.sizer_staticbox_1, -1, _(u"Ecrivez et imprimer des documents directement dans Teamworks \ngrâce à Teamword, le traitement de texte intégré"))
+        self.label_choix_3_description = wx.StaticText(self.sizer_staticbox_1, -1, _(u"Ecrivez et imprimer des documents directement dans Teamworks-CCNS \ngrâce à Teamword, le traitement de texte intégré"))
         
         self.sizer_staticbox_2 = wx.StaticBox(self, -1, _(u"Création d'un Email"))
         self.radio_4 = wx.RadioButton(self.sizer_staticbox_2, -1, "")
         self.bitmap_4 = wx.StaticBitmap(self.sizer_staticbox_2, -1, wx.Bitmap(Chemins.GetStaticPath("Images/48x48/Email.png"), wx.BITMAP_TYPE_ANY))
         self.label_choix_4_titre = wx.StaticText(self.sizer_staticbox_2, -1, _(u"Editeur d'Email"))
-        self.label_choix_4_description = wx.StaticText(self.sizer_staticbox_2, -1, "Ecrivez et envoyez des Emails directement dans Teamworks \ngrâce à Teamword, l'éditeur d'Email intégré")
+        self.label_choix_4_description = wx.StaticText(self.sizer_staticbox_2, -1, "Ecrivez et envoyez des Emails directement dans Teamworks-CCNS \ngrâce à Teamword, l'éditeur d'Email intégré")
         
 ##        self.radio_3.Enable(False)
 ##        self.bitmap_3.Enable(False)
@@ -1028,11 +1069,32 @@ class Page4(wx.Panel):
         
         self.listCtrl = ListCtrl_fichiers(self.sizer_choix_staticbox, controller=self)
         
-        self.bouton_importer = wx.BitmapButton(self.sizer_choix_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Inbox.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_actualiser = wx.BitmapButton(self.sizer_choix_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Actualiser.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_ajouter = wx.BitmapButton(self.sizer_choix_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_modifier = wx.BitmapButton(self.sizer_choix_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Modifier.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_supprimer = wx.BitmapButton(self.sizer_choix_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_importer = CTRL_Bouton_image.CTRL(
+            self.sizer_choix_staticbox,
+            texte=_(u"Importer"),
+            cheminImage=Chemins.GetStaticPath("Images/32x32/Inbox.png"),
+        )
+        self.bouton_actualiser = CTRL_Bouton_image.CTRL(
+            self.sizer_choix_staticbox,
+            texte=_(u"Actualiser"),
+            cheminImage=Chemins.GetStaticPath("Images/32x32/Actualiser.png"),
+        )
+        self.bouton_ajouter = CTRL_Bouton_image.CTRL(
+            self.sizer_choix_staticbox,
+            texte=_(u"Ajouter"),
+            cheminImage=Chemins.GetStaticPath("Images/32x32/Ajouter.png"),
+        )
+        self.bouton_modifier = CTRL_Bouton_image.CTRL(
+            self.sizer_choix_staticbox,
+            texte=_(u"Modifier"),
+            cheminImage=Chemins.GetStaticPath("Images/32x32/Modifier.png"),
+        )
+        self.bouton_supprimer = CTRL_Bouton_image.CTRL(
+            self.sizer_choix_staticbox,
+            texte=_(u"Supprimer"),
+            cheminImage=Chemins.GetStaticPath("Images/32x32/Supprimer.png"),
+            role="danger",
+        )
 ##        self.texte_aide = FonctionsPerso.TexteHtml(self, texte="", Enabled=True)
 
         self.__set_properties()
@@ -1669,13 +1731,21 @@ class Page5(wx.Panel):
         self.label_save = wx.StaticText(self.sizer_contenu_staticbox, -1, "Sauvegarde :")
         self.label_repertoire = wx.StaticText(self.sizer_contenu_staticbox, -1, _(u"Répertoire :"))
         self.text_repertoire = wx.TextCtrl(self.sizer_contenu_staticbox, -1, "")
-        self.bouton_repertoire = wx.Button(self.sizer_contenu_staticbox, -1, "...")
+        self.bouton_repertoire = CTRL_Bouton_image.CTRL(
+            self.sizer_contenu_staticbox,
+            texte=_(u"Parcourir…"),
+            role="quiet",
+        )
         self.label_nom_fichier = wx.StaticText(self.sizer_contenu_staticbox, -1, "Noms des fichiers :")
         self.ctrl_nom_fichiers = Grid_noms_fichiers(self.sizer_contenu_staticbox)
         self.label_prefixe = wx.StaticText(self.sizer_contenu_staticbox, -1, _(u"Préfixe des noms :"))
         self.text_prefixe = wx.TextCtrl(self.sizer_contenu_staticbox, -1, "")
         self.text_prefixe.Enable(False)
-        self.bouton_prefixe = wx.Button(self.sizer_contenu_staticbox, -1, "...")
+        self.bouton_prefixe = CTRL_Bouton_image.CTRL(
+            self.sizer_contenu_staticbox,
+            texte=_(u"Préfixe…"),
+            role="quiet",
+        )
         self.checkbox_apercu = wx.CheckBox(self.sizer_contenu_staticbox, -1, "")
         self.label_apercu = wx.StaticText(self.sizer_contenu_staticbox, -1, _(u"Aperçu avant impression"))
         
@@ -1712,10 +1782,8 @@ class Page5(wx.Panel):
     def __set_properties(self):
         self.label_titre.SetFont(wx.Font(8, wx.DEFAULT, wx.NORMAL, wx.BOLD, 0, ""))
         self.combo_box_exemplaires.SetMinSize((40, -1))
-        self.bouton_repertoire.SetMinSize((20, 20))
-        self.bouton_prefixe.SetMinSize((20, 20))
         self.bouton_repertoire.SetToolTip(wx.ToolTip(_(u"Cliquez ici définir un autre répertoire de destination")))
-        self.text_repertoire.SetToolTip(wx.ToolTip(_(u"Vous pouvez sélectionner un autre répertoire en cliquant sur le bouton '...' ou en tapant directement dans ce cadre de texte.")))
+        self.text_repertoire.SetToolTip(wx.ToolTip(_(u"Vous pouvez sélectionner un autre répertoire en cliquant sur le bouton 'Parcourir…' ou en tapant directement dans ce cadre de texte.")))
         self.ctrl_nom_fichiers.SetToolTip(wx.ToolTip(_(u"Vous pouvez saisir un autre nom de fichier en tapant directement dans ce cadre de texte.")))
         self.bouton_prefixe.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier le préfixe des noms de fichiers pour ce modèle de document")))
         self.text_prefixe.SetToolTip(wx.ToolTip(_(u"Vous devez définir ici le préfixe des noms de fichiers pour ce modèle de document")))
@@ -2143,7 +2211,12 @@ class Page6(wx.Panel):
         self.label_intro = wx.StaticText(self, -1, _(u"Cliquez sur 'Valider' pour lancer le publipostage ou revenez en arrière en cliquant sur 'retour'."))
         self.gauge = wx.Gauge(self, -1, 1, size=(-1, 10))
         self.ctrl_actions = listCtrl_Actions(self)
-        self.bouton_continuer = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/ContinuerPublipostage.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_continuer = CTRL_Bouton_image.CTRL(
+            self,
+            texte=_(u"Continuer"),
+            cheminImage=Chemins.GetStaticPath("Images/BoutonsImages/ContinuerPublipostage.png"),
+            role="primary",
+        )
         self.bouton_continuer.Show(False)
         
         self.Bind(wx.EVT_BUTTON, self.Onbouton_continuer, self.bouton_continuer)
@@ -2161,7 +2234,7 @@ class Page6(wx.Panel):
         grid_sizer_base.Add(self.label_intro, 1, wx.LEFT|wx.BOTTOM|wx.EXPAND, 20)
         grid_sizer_base.Add(self.gauge, 1, wx.LEFT|wx.RIGHT|wx.EXPAND, 20)
         grid_sizer_base.Add(self.ctrl_actions, 1, wx.LEFT|wx.RIGHT|wx.EXPAND, 20)
-        grid_sizer_base.Add(self.bouton_continuer, 1, wx.LEFT|wx.RIGHT|wx.EXPAND, 20)
+        grid_sizer_base.Add(self.bouton_continuer, 0, wx.LEFT|wx.RIGHT, 20)
         grid_sizer_base.Add( (10, 10), 1, wx.EXPAND, 0)
         self.SetSizer(grid_sizer_base)
         grid_sizer_base.Fit(self)
@@ -2188,7 +2261,7 @@ class Page6(wx.Panel):
         if threadEnCours == False and self.termine == False :
             self.ctrl_actions.Remplissage()
             self.gauge.SetValue(0)
-            self.GetGrandParent().bouton_suite.SetBitmapLabel(wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Arreter_L72.png"), wx.BITMAP_TYPE_ANY))
+            self.GetGrandParent().SetSuiteAction(u"Arrêter", "Arreter_L72.png", role="danger")
             self.GetGrandParent().bouton_annuler.Enable(False)
             self.GetGrandParent().bouton_retour.Enable(False)
             self.GetGrandParent().bouton_aide.Enable(False)
@@ -2387,7 +2460,7 @@ class Page6(wx.Panel):
             self.GetGrandParent().bouton_retour.Enable(True)
             self.GetGrandParent().bouton_aide.Enable(True)
             self.GetGrandParent().EnableCloseButton(True)
-            self.GetGrandParent().bouton_suite.SetBitmapLabel(wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Fermer_L72.png"), wx.BITMAP_TYPE_ANY))
+            self.GetGrandParent().SetSuiteAction(u"Fermer", "Fermer_L72.png")
         else:
             # Fin du thread
             self.thread.abort()
@@ -2557,7 +2630,7 @@ class Page6(wx.Panel):
             self.GetGrandParent().bouton_retour.Enable(True)
             self.GetGrandParent().bouton_aide.Enable(True)
             self.GetGrandParent().EnableCloseButton(True)
-            self.GetGrandParent().bouton_suite.SetBitmapLabel(wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Fermer_L72.png"), wx.BITMAP_TYPE_ANY))
+            self.GetGrandParent().SetSuiteAction(u"Fermer", "Fermer_L72.png")
         else:
             # Fin du thread
             self.thread.abort()
@@ -3011,9 +3084,9 @@ class threadPublipostage(Thread):
         self.parent.GetGrandParent().bouton_aide.Enable(True)
         self.parent.GetGrandParent().EnableCloseButton(True)
         if self.parent.termine == True :
-            self.parent.GetGrandParent().bouton_suite.SetBitmapLabel(wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Fermer_L72.png"), wx.BITMAP_TYPE_ANY))
+            self.parent.GetGrandParent().SetSuiteAction(u"Fermer", "Fermer_L72.png")
         else:
-            self.parent.GetGrandParent().bouton_suite.SetBitmapLabel(wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Valider_L72.png"), wx.BITMAP_TYPE_ANY))
+            self.parent.GetGrandParent().SetSuiteAction(u"Valider", "Valider_L72.png")
 
 
 class listCtrl_Actions(wx.ListCtrl):

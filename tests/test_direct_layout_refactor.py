@@ -51,15 +51,24 @@ def test_refactored_sources_are_valid_python():
         GADGET,
         HOME,
         NAVIGATION,
+        RESPONSIVE,
     ):
         ast.parse(_source(path))
 
 
-def test_no_runtime_responsive_overlay_is_installed():
-    source = _source(CUSTOMIZE)
-    assert not RESPONSIVE.exists()
-    assert "UTILS_Responsive" not in source
-    assert "install_auto_layout" not in source
+def test_responsive_helper_does_not_reintroduce_runtime_overlay():
+    customize = _source(CUSTOMIZE)
+    responsive = _source(RESPONSIVE)
+
+    assert RESPONSIVE.exists()
+    assert "UTILS_Responsive" not in customize
+    assert "install_auto_layout" not in customize
+    assert "install_auto_layout" not in responsive
+    assert "wx." not in responsive
+    assert "Bind(" not in responsive
+    assert "SetSizer(" not in responsive
+    assert "def form_column_count" in responsive
+    assert "def logical_width" in responsive
 
 
 def test_persons_layout_is_direct_and_flexible():
@@ -123,7 +132,8 @@ def test_icons_scale_in_components_without_global_patch():
     button = _source(BUTTON)
     navigation = _source(NAVIGATION)
 
-    assert "wx.IMAGE_QUALITY_HIGH" in persons
+    assert "CTRL_Bouton_image.CTRL(" in persons
+    assert "wx.BitmapButton(" not in persons
     assert "wx.IMAGE_QUALITY_HIGH" in contracts
     assert "wx.IMAGE_QUALITY_HIGH" in dialog
     assert 'UTILS_Styles.ICON_SIZES["medium"]' in button

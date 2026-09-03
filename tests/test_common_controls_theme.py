@@ -83,7 +83,8 @@ def test_common_image_button_keeps_native_rendering_and_semantic_text():
     source = _source(BUTTON_PATH)
     methods = _class_methods(BUTTON_PATH, "CTRL")
     assert "from Utils import UTILS_Interface, UTILS_Styles" in source
-    assert 'GetToken("on_surface")' in source
+    assert 'return "on_surface"' in source
+    assert 'UTILS_Interface.GetToken(_token_texte_bouton(role))' in source
     assert 'UTILS_Styles.GetFont("label")' in source
     assert "wx.Font(9, wx.SWISS" not in source
     assert "AppliquerTheme" in methods
@@ -103,11 +104,22 @@ def test_common_image_button_consumes_global_icon_and_control_metrics():
 def test_common_image_button_survives_missing_optional_icons():
     source = _source(BUTTON_PATH)
     assert "def _chemin_image_existant" in source
-    assert 'if "32x32" in parts:' in source
-    assert 'parts[parts.index("32x32")] = "16x16"' in source
+    assert "ICON_RESOURCE_SIZES" in source
+    assert "candidates" in source
+    assert "larger" in source
     assert "except (OSError, ValueError):" in source
     assert "return wx.NullBitmap" in source
     assert "if bitmap.IsOk():" in source
+
+
+def test_common_button_contract_covers_roles_and_toggles():
+    source = _source(BUTTON_PATH)
+    assert "BUTTON_ROLES" in source
+    assert 'class Toggle(wx.ToggleButton):' in source
+    assert "_appliquer_contrat_bouton" in source
+    assert 'GetToken("primary_container")' in source
+    assert 'GetToken("on_primary_container")' in source
+    assert "SetRole" in source
 
 
 def test_common_image_button_no_longer_contains_runtime_migration_scripts():
