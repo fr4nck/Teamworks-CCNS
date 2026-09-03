@@ -101,9 +101,12 @@ def main() -> None:
 
             adapter_timings = getattr(adapter, "startup_timings", None)
             if isinstance(adapter_timings, dict):
+                db_mode = "réseau" if bool(adapter_timings.get("people_db_is_network", False)) else "local"
                 print(
                     "[Teamworks Qt POC] profil données · "
-                    f"PersonReader {float(adapter_timings.get('people_reader_seconds', 0.0)):.2f}s · "
+                    f"import GestionDB {float(adapter_timings.get('people_gestiondb_import_seconds', 0.0)):.2f}s · "
+                    f"ouverture DB {float(adapter_timings.get('people_db_open_seconds', 0.0)):.2f}s ({db_mode}) · "
+                    f"SELECT/fetch {float(adapter_timings.get('people_reader_seconds', 0.0)):.2f}s · "
                     f"mapping {float(adapter_timings.get('people_mapping_seconds', 0.0)):.3f}s · "
                     f"{int(adapter_timings.get('people_count', 0))} personnes"
                 )
