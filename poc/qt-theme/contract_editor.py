@@ -11,13 +11,16 @@ from PySide6.QtWidgets import (
     QDoubleSpinBox,
     QFrame,
     QGridLayout,
+    QHBoxLayout,
     QLabel,
     QLineEdit,
+    QPushButton,
     QVBoxLayout,
     QWidget,
 )
 
 from application.control.ccns_contract_compliance import CCNSContractCompliancePresenter
+from legacy_contract_wizard import LegacyContractWizardDialog
 
 
 PENDING = "pending"
@@ -64,9 +67,15 @@ class ContractComplianceDialog(QDialog):
         root.setContentsMargins(16, 16, 16, 16)
         root.setSpacing(10)
 
+        intro_row = QHBoxLayout()
         intro = QLabel("Simulation de saisie : aucune donnée n'est enregistrée.")
         intro.setProperty("muted", True)
-        root.addWidget(intro)
+        intro_row.addWidget(intro, 1)
+        legacy_button = QPushButton("Assistant contrat historique…")
+        legacy_button.setToolTip("Ouvrir la transposition Qt des six étapes de création de contrat")
+        legacy_button.clicked.connect(self._open_legacy_wizard)
+        intro_row.addWidget(legacy_button)
+        root.addLayout(intro_row)
 
         panel = QFrame()
         panel.setObjectName("panel")
@@ -117,6 +126,10 @@ class ContractComplianceDialog(QDialog):
         self.weekly_hours.valueChanged.connect(self._refresh_compliance)
         self.monthly_salary.textChanged.connect(self._refresh_compliance)
         self._set_pending()
+
+    def _open_legacy_wizard(self) -> None:
+        dialog = LegacyContractWizardDialog(self)
+        dialog.exec()
 
     def _set_status(self, state: str, text: str) -> None:
         self.status.setProperty("complianceState", state)
