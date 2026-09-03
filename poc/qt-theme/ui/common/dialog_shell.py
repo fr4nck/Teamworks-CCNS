@@ -57,13 +57,13 @@ class TwDialogShell(QDialog):
         self.help_button = QPushButton("Aide")
         self.help_button.setObjectName("twSecondaryButton")
         self.help_button.setVisible(show_help)
-        self.help_button.clicked.connect(self.helpRequested)
+        self.help_button.clicked.connect(self.helpRequested.emit)
         footer.addWidget(self.help_button)
         footer.addStretch(1)
 
         self.primary_button = QPushButton(primary_label)
         self.primary_button.setObjectName("twPrimaryButton")
-        self.primary_button.clicked.connect(self.validateRequested)
+        self.primary_button.clicked.connect(self.validateRequested.emit)
         footer.addWidget(self.primary_button)
 
         self.cancel_button = QPushButton(cancel_label)
