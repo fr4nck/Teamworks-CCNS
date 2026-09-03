@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import wx
 
+from Ctrl import CTRL_Bouton_image
 from application.presentation import (
     ContractSalaryControlDetailPresenter,
     ContractSalaryControlEmployeeSummaryViewModel,
@@ -20,8 +21,8 @@ class Dialog(wx.Dialog):
         wx.Dialog.__init__(self, parent, -1, "Synthèse salariale du salarié", style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER | wx.MAXIMIZE_BOX)
         self.summary = summary
         self.limited_scope_label = limited_scope_label
-        self.button_detail = wx.Button(self, -1, "Détail salarial")
-        self.button_close = wx.Button(self, wx.ID_CANCEL, "Fermer")
+        self.button_detail = CTRL_Bouton_image.CTRL(self, texte="Détail salarial")
+        self.button_close = CTRL_Bouton_image.CTRL(self, id=wx.ID_CANCEL, texte="Fermer", role="quiet")
         self.list_ctrl = wx.ListCtrl(self, -1, style=wx.LC_REPORT | wx.BORDER_SUNKEN | wx.LC_SINGLE_SEL)
         self._init_columns()
         self._populate_rows()
