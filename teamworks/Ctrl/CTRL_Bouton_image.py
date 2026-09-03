@@ -220,7 +220,11 @@ class CTRL(wx.Button):
 
 
 class Toggle(wx.ToggleButton):
-    """Bouton à état Teamworks avec le même contrat que les actions ordinaires."""
+    """Bouton à état Teamworks avec le même contrat que les actions ordinaires.
+
+    L'état sélectionné est lui aussi centralisé : les écrans métier ne doivent
+    plus repeindre individuellement les toggles pour signaler la sélection.
+    """
 
     def __init__(self, parent, id=-1, texte="", role="default"):
         wx.ToggleButton.__init__(self, parent, id=id, label=texte)
@@ -228,7 +232,13 @@ class Toggle(wx.ToggleButton):
         self.texte = texte
         self.role = role if role in BUTTON_ROLES else "default"
         self._teamworks_text_style = "label"
+        self.Bind(wx.EVT_TOGGLEBUTTON, self._OnToggleContract)
         self.MAJ()
+
+    def _OnToggleContract(self, event):
+        self.AppliquerTheme()
+        self.Refresh()
+        event.Skip()
 
     def MAJ(self):
         self.AppliquerTheme()
@@ -240,6 +250,19 @@ class Toggle(wx.ToggleButton):
             role=self.role,
             icon_only=False,
         )
+        if self.GetValue():
+            self.SetBackgroundColour(UTILS_Interface.GetToken("primary_container"))
+            self.SetForegroundColour(UTILS_Interface.GetToken("on_primary_container"))
+        else:
+            self.SetBackgroundColour(UTILS_Interface.GetToken("surface_container_low"))
+            self.SetForegroundColour(
+                UTILS_Interface.GetToken(_token_texte_bouton(self.role))
+            )
+
+    def SetValue(self, value):
+        wx.ToggleButton.SetValue(self, bool(value))
+        self.AppliquerTheme()
+        self.Refresh()
 
     def SetTexte(self, texte=""):
         self.texte = texte
