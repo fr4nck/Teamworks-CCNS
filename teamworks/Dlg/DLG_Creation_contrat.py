@@ -205,7 +205,6 @@ class Dialog(wx.Dialog):
         self.dictContrats["operation_type"] = values[9]
         self.dictContrats["previous_contract_id"] = values[10]
         self.dictContrats["trial_period_value"] = values[11]
-        self.dictContrats["trial_period_value"] = values[11]
         self.dictContrats["trial_period_unit"] = values[12]
         self.dictContrats["date_debut"] = values[13]
         self.dictContrats["date_fin"] = values[14]
