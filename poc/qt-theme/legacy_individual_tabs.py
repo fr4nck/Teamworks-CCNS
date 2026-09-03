@@ -16,19 +16,28 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from legacy_sheets import (
+    ApplicationPreviewDialog,
+    InterviewPreviewDialog,
+    PiecePreviewDialog,
+    PresencePreviewDialog,
+    ReimbursementPreviewDialog,
+    ScenarioPreviewDialog,
+    TripPreviewDialog,
+)
+
 
 class LegacyIndividualTabs:
     """Transposition visuelle des pages wx historiques de la fiche individuelle.
 
-    Ces pages restent volontairement en lecture seule dans le POC. Elles
-    reproduisent la disposition et les intitulés du code source historique sans
-    réimplémenter les écritures wx/GestionDB.
+    Les tableaux restent en lecture seule. Les boutons Ajouter des fiches déjà
+    transposées ouvrent uniquement un aperçu local : aucune écriture en base.
     """
 
     def __init__(self, icon_loader):
         self.icon_loader = icon_loader
 
-    def _tool_button(self, icon_name: str, tooltip: str, fallback: str) -> QToolButton:
+    def _tool_button(self, icon_name: str, tooltip: str, fallback: str, dialog_cls=None) -> QToolButton:
         button = QToolButton()
         button.setObjectName("legacyToolButton")
         button.setIcon(self.icon_loader(icon_name))
@@ -37,7 +46,11 @@ class LegacyIndividualTabs:
         button.setFixedSize(30, 30)
         if button.icon().isNull():
             button.setText(fallback)
-        button.setEnabled(False)
+        button.setEnabled(dialog_cls is not None)
+        if dialog_cls is not None:
+            button.clicked.connect(
+                lambda _checked=False, cls=dialog_cls, source=button: cls(source.window()).exec()
+            )
         return button
 
     def _table(self, headers: Iterable[str]) -> QTableWidget:
@@ -52,13 +65,15 @@ class LegacyIndividualTabs:
         table.horizontalHeader().setStretchLastSection(True)
         return table
 
-    def _tool_column(self, specs: Iterable[tuple[str, str, str]], *, spacer_after: set[int] | None = None) -> QVBoxLayout:
+    def _tool_column(self, specs: Iterable[tuple], *, spacer_after: set[int] | None = None) -> QVBoxLayout:
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(5)
         spacer_after = spacer_after or set()
-        for index, (icon_name, tooltip, fallback) in enumerate(specs):
-            layout.addWidget(self._tool_button(icon_name, tooltip, fallback))
+        for index, spec in enumerate(specs):
+            icon_name, tooltip, fallback, *extra = spec
+            dialog_cls = extra[0] if extra else None
+            layout.addWidget(self._tool_button(icon_name, tooltip, fallback, dialog_cls))
             if index in spacer_after:
                 layout.addSpacing(8)
         layout.addStretch(1)
@@ -68,7 +83,7 @@ class LegacyIndividualTabs:
         self,
         title: str,
         headers: Iterable[str],
-        tools: Iterable[tuple[str, str, str]] = (),
+        tools: Iterable[tuple] = (),
         *,
         spacer_after: set[int] | None = None,
     ) -> QGroupBox:
@@ -118,7 +133,7 @@ class LegacyIndividualTabs:
                 "Pièces reçues",
                 ["Type de pièce", "Obtention", "Expiration", "Observations"],
                 [
-                    ("Ajouter.png", "Ajouter une pièce", "+"),
+                    ("Ajouter.png", "Aperçu de la saisie d'une pièce", "+", PiecePreviewDialog),
                     ("Modifier.png", "Modifier la pièce sélectionnée", "M"),
                     ("Supprimer.png", "Supprimer la pièce sélectionnée", "−"),
                 ],
@@ -140,7 +155,7 @@ class LegacyIndividualTabs:
         layout.addWidget(table, 0, 0)
         tools = self._tool_column(
             [
-                ("Ajouter.png", "Ajouter une présence", "+"),
+                ("Ajouter.png", "Aperçu de la saisie d'une présence", "+", PresencePreviewDialog),
                 ("Modifier.png", "Modifier la présence", "M"),
                 ("Supprimer.png", "Supprimer la présence", "−"),
                 ("Imprimante.png", "Imprimer", "I"),
@@ -169,7 +184,7 @@ class LegacyIndividualTabs:
                 "Scénarios",
                 ["Scénario", "Période", "État"],
                 [
-                    ("Ajouter.png", "Créer un scénario", "+"),
+                    ("Ajouter.png", "Aperçu de la création d'un scénario", "+", ScenarioPreviewDialog),
                     ("Modifier.png", "Modifier le scénario", "M"),
                     ("Supprimer.png", "Supprimer le scénario", "−"),
                     ("Dupliquer.png", "Dupliquer le scénario", "D"),
@@ -190,7 +205,7 @@ class LegacyIndividualTabs:
                 "Déplacements",
                 ["N°", "Date", "Objet", "Trajet", "Distance", "Tarif", "Montant", "Rmbst"],
                 [
-                    ("Ajouter.png", "Ajouter un déplacement", "+"),
+                    ("Ajouter.png", "Aperçu de la saisie d'un déplacement", "+", TripPreviewDialog),
                     ("Modifier.png", "Modifier le déplacement", "M"),
                     ("Supprimer.png", "Supprimer le déplacement", "−"),
                     ("Imprimante.png", "Imprimer les déplacements", "I"),
@@ -204,7 +219,7 @@ class LegacyIndividualTabs:
                 "Remboursements",
                 ["N°", "Date", "Montant", "Déplacements rattachés"],
                 [
-                    ("Ajouter.png", "Ajouter un remboursement", "+"),
+                    ("Ajouter.png", "Aperçu de la saisie d'un remboursement", "+", ReimbursementPreviewDialog),
                     ("Modifier.png", "Modifier le remboursement", "M"),
                     ("Supprimer.png", "Supprimer le remboursement", "−"),
                 ],
@@ -223,7 +238,7 @@ class LegacyIndividualTabs:
                 "Candidatures",
                 ["Dépôt", "Offre d'emploi", "Disponibilités", "Fonction(s)", "Affectation(s)", "Décision", "Réponse"],
                 [
-                    ("Ajouter.png", "Ajouter une candidature", "+"),
+                    ("Ajouter.png", "Aperçu de la saisie d'une candidature", "+", ApplicationPreviewDialog),
                     ("Modifier.png", "Modifier la candidature", "M"),
                     ("Supprimer.png", "Supprimer la candidature", "−"),
                 ],
@@ -235,7 +250,7 @@ class LegacyIndividualTabs:
                 "Entretiens",
                 ["Date", "Heure", "Avis", "Commentaire"],
                 [
-                    ("Ajouter.png", "Ajouter un entretien", "+"),
+                    ("Ajouter.png", "Aperçu de la saisie d'un entretien", "+", InterviewPreviewDialog),
                     ("Modifier.png", "Modifier l'entretien", "M"),
                     ("Supprimer.png", "Supprimer l'entretien", "−"),
                 ],
