@@ -40,14 +40,28 @@ def main() -> None:
     adapter, source = build_adapter()
     window = None
     try:
+        before_window = time.perf_counter()
         window = PeopleContractsPilot(adapter)
+        after_window = time.perf_counter()
         window.show()
+        shown_at = time.perf_counter()
+
+        data_seconds = float(getattr(window, "initial_people_load_seconds", 0.0))
+        constructor_seconds = after_window - before_window
+        ui_constructor_seconds = max(0.0, constructor_seconds - data_seconds)
+        foundation_seconds = max(0.0, before_window - STARTED_AT)
+        total_to_show_seconds = shown_at - STARTED_AT
 
         def report_frugality() -> None:
             snapshot = probe.snapshot(direct_dependencies=len(DIRECT_DEPENDENCIES))
+            timing = (
+                f"socle {foundation_seconds:.2f}s · données serveur {data_seconds:.2f}s · "
+                f"construction UI {ui_constructor_seconds:.2f}s · fenêtre {total_to_show_seconds:.2f}s"
+            )
             print(f"[Teamworks Qt POC] source={source} · {snapshot.compact()}")
+            print(f"[Teamworks Qt POC] détail démarrage · {timing}")
             window.statusBar().showMessage(
-                f"{snapshot.compact()} · lecture seule · source {source} · QAbstractTableModel + proxy"
+                f"{snapshot.compact()} · {timing} · lecture seule · source {source}"
             )
 
         QTimer.singleShot(350, report_frugality)
