@@ -4,8 +4,6 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QStandardItemModel
 from PySide6.QtWidgets import (
     QGridLayout,
-    QHBoxLayout,
-    QLabel,
     QLineEdit,
     QPlainTextEdit,
     QPushButton,
@@ -49,7 +47,6 @@ def _secondary_button(label: str, tooltip: str) -> QPushButton:
     button = QPushButton(label)
     button.setObjectName("twSecondaryButton")
     button.setToolTip(tooltip)
-    button.setMinimumHeight(TOKENS.controls.height_standard)
     return button
 
 
@@ -60,6 +57,10 @@ class GeneralitiesPage(QWidget):
     Situation sociale, Adresse, Coordonnées, Mémo) et réutilise le socle commun
     Qt. Il reste strictement en consultation : les satellites peuvent être
     ouverts pour recette visuelle, mais aucune écriture n'est activée.
+
+    La fiche utilise la densité compacte du socle commun : elle garde les mêmes
+    états visuels et la même typographie que les autres écrans, sans réintroduire
+    les hauteurs arbitraires de l'interface wx historique.
 
     Les informations absentes du contrat de lecture courant restent neutres.
     Le NIR n'est volontairement pas chargé par ce POC.
@@ -80,20 +81,20 @@ class GeneralitiesPage(QWidget):
         content = QWidget()
         grid = QGridLayout(content)
         grid.setContentsMargins(
-            TOKENS.spacing.sm,
-            TOKENS.spacing.sm,
-            TOKENS.spacing.sm,
-            TOKENS.spacing.sm,
+            TOKENS.spacing.xs,
+            TOKENS.spacing.xs,
+            TOKENS.spacing.xs,
+            TOKENS.spacing.xs,
         )
-        grid.setHorizontalSpacing(TOKENS.spacing.lg)
-        grid.setVerticalSpacing(TOKENS.spacing.lg)
+        grid.setHorizontalSpacing(TOKENS.spacing.md)
+        grid.setVerticalSpacing(TOKENS.spacing.md)
         grid.setColumnStretch(0, 3)
         grid.setColumnStretch(1, 2)
 
         left = QWidget()
         left_layout = QVBoxLayout(left)
         left_layout.setContentsMargins(0, 0, 0, 0)
-        left_layout.setSpacing(TOKENS.spacing.lg)
+        left_layout.setSpacing(TOKENS.spacing.md)
         left_layout.addWidget(self._build_identity())
         left_layout.addWidget(self._build_address())
         left_layout.addStretch(1)
@@ -101,7 +102,7 @@ class GeneralitiesPage(QWidget):
         right = QWidget()
         right_layout = QVBoxLayout(right)
         right_layout.setContentsMargins(0, 0, 0, 0)
-        right_layout.setSpacing(TOKENS.spacing.lg)
+        right_layout.setSpacing(TOKENS.spacing.md)
         right_layout.addWidget(self._build_social())
         right_layout.addWidget(self._build_coordinates())
         right_layout.addWidget(self._build_memo(), 1)
@@ -110,116 +111,136 @@ class GeneralitiesPage(QWidget):
         grid.addWidget(right, 0, 1)
         scroll.setWidget(content)
 
-    def _register_row(self, key: str, row: TwFieldRow) -> TwFieldRow:
+    def _row(
+        self,
+        key: str,
+        label: str,
+        editor: QWidget,
+        *,
+        action: QWidget | None = None,
+        help_text: str | None = None,
+    ) -> TwFieldRow:
+        row = TwFieldRow(
+            label,
+            editor,
+            action=action,
+            help_text=help_text,
+            compact=True,
+        )
         self._field_rows[key] = row
         return row
 
     def _build_identity(self) -> TwFormSection:
-        section = TwFormSection("Identité")
+        section = TwFormSection("Identité", compact=True)
 
         self.civility = _read_line()
-        section.add_row(self._register_row("civility", TwFieldRow("Civilité", self.civility)))
+        section.add_row(self._row("civility", "Civilité", self.civility))
 
         self.maiden_name = _read_line()
-        section.add_row(self._register_row("maiden_name", TwFieldRow("Nom de jeune fille", self.maiden_name)))
+        section.add_row(self._row("maiden_name", "Nom de jeune fille", self.maiden_name))
 
         self.last_name = _read_line()
-        section.add_row(self._register_row("last_name", TwFieldRow("Nom", self.last_name)))
+        section.add_row(self._row("last_name", "Nom", self.last_name))
 
         self.first_name = _read_line()
-        section.add_row(self._register_row("first_name", TwFieldRow("Prénom", self.first_name)))
+        section.add_row(self._row("first_name", "Prénom", self.first_name))
 
         self.birth_date = _read_line()
-        section.add_row(self._register_row("birth_date", TwFieldRow("Date de naissance", self.birth_date)))
+        section.add_row(self._row("birth_date", "Date de naissance", self.birth_date))
 
         self.birth_country = _read_line()
         choose_birth_country = _secondary_button("Choisir", "Sélectionner un autre pays de naissance")
         choose_birth_country.clicked.connect(self._open_countries)
         section.add_row(
-            self._register_row(
+            self._row(
                 "birth_country",
-                TwFieldRow("Pays de naissance", self.birth_country, action=choose_birth_country),
+                "Pays de naissance",
+                self.birth_country,
+                action=choose_birth_country,
             )
         )
 
         self.birth_postcode = _read_line()
         section.add_row(
-            self._register_row(
-                "birth_postcode",
-                TwFieldRow("Code postal de naissance", self.birth_postcode),
-            )
+            self._row("birth_postcode", "Code postal de naissance", self.birth_postcode)
         )
 
         self.birth_city = _read_line()
         search_birth_city = _secondary_button("Rechercher", "Rechercher ou saisir une ville de naissance")
         search_birth_city.clicked.connect(self._open_cities)
         section.add_row(
-            self._register_row(
+            self._row(
                 "birth_city",
-                TwFieldRow("Ville de naissance", self.birth_city, action=search_birth_city),
+                "Ville de naissance",
+                self.birth_city,
+                action=search_birth_city,
             )
         )
 
         # Donnée sensible : la page conserve sa place historique mais le POC ne
         # la lit pas. Le contrôle désactivé matérialise explicitement cet état.
         self.nir = _read_line("Non chargé dans le POC", disabled=True)
-        nir_row = TwFieldRow(
-            "Numéro de sécurité sociale",
-            self.nir,
-            help_text="Donnée sensible volontairement non chargée dans la couche Qt de consultation.",
+        section.add_row(
+            self._row(
+                "nir",
+                "Numéro de sécurité sociale",
+                self.nir,
+                help_text="Donnée sensible volontairement non chargée dans ce POC.",
+            )
         )
-        section.add_row(self._register_row("nir", nir_row))
 
         self.nationality = _read_line()
         choose_nationality = _secondary_button("Choisir", "Sélectionner une autre nationalité")
         choose_nationality.clicked.connect(self._open_countries)
         section.add_row(
-            self._register_row(
+            self._row(
                 "nationality",
-                TwFieldRow("Nationalité", self.nationality, action=choose_nationality),
+                "Nationalité",
+                self.nationality,
+                action=choose_nationality,
             )
         )
         return section
 
     def _build_social(self) -> TwFormSection:
-        section = TwFormSection("Situation sociale")
+        section = TwFormSection("Situation sociale", compact=True)
         self.social_situation = _read_line()
         manage = _secondary_button("Gérer", "Gérer les situations sociales")
         manage.clicked.connect(self._open_social_situations)
         section.add_row(
-            self._register_row(
+            self._row(
                 "social_situation",
-                TwFieldRow("Situation", self.social_situation, action=manage),
+                "Situation",
+                self.social_situation,
+                action=manage,
             )
         )
         return section
 
     def _build_address(self) -> TwFormSection:
-        section = TwFormSection("Adresse")
+        section = TwFormSection("Adresse", compact=True)
         self.address = QPlainTextEdit()
         self.address.setReadOnly(True)
         self.address.setProperty("twReadOnly", True)
-        self.address.setMinimumHeight(72)
-        section.add_row(self._register_row("address", TwFieldRow("Adresse", self.address)))
+        self.address.setMinimumHeight(58)
+        section.add_row(self._row("address", "Adresse", self.address))
 
         self.postcode = _read_line()
-        section.add_row(self._register_row("postcode", TwFieldRow("Code postal", self.postcode)))
+        section.add_row(self._row("postcode", "Code postal", self.postcode))
 
         self.city = _read_line()
         search_city = _secondary_button("Rechercher", "Rechercher ou saisir une ville de résidence")
         search_city.clicked.connect(self._open_cities)
-        section.add_row(
-            self._register_row("city", TwFieldRow("Ville", self.city, action=search_city))
-        )
+        section.add_row(self._row("city", "Ville", self.city, action=search_city))
         return section
 
     def _build_coordinates(self) -> TwFormSection:
-        section = TwFormSection("Coordonnées")
+        section = TwFormSection("Coordonnées", compact=True)
         self.coords_model = QStandardItemModel(0, 1, self)
         self.coords_model.setHorizontalHeaderLabels(["Coordonnée"])
         self.coords_table = TwDataTable(model=self.coords_model)
         self.coords_table.horizontalHeader().setVisible(False)
-        self.coords_table.setMinimumHeight(118)
+        self.coords_table.setMinimumHeight(96)
         self.coords_table.selectionKeyChanged.connect(self._on_coordinate_selection)
         self.coords_table.activatedKey.connect(lambda _key: self._open_coordinates())
         section.add_widget(self.coords_table)
@@ -243,11 +264,11 @@ class GeneralitiesPage(QWidget):
         return section
 
     def _build_memo(self) -> TwFormSection:
-        section = TwFormSection("Mémo")
+        section = TwFormSection("Mémo", compact=True)
         self.memo = QPlainTextEdit()
         self.memo.setReadOnly(True)
         self.memo.setProperty("twReadOnly", True)
-        self.memo.setMinimumHeight(110)
+        self.memo.setMinimumHeight(88)
         section.add_widget(self.memo, 1)
         return section
 
