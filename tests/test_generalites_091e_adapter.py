@@ -14,3 +14,10 @@ def test_adaptateur_generalites_est_valide_et_non_bloquant_a_letranger():
     assert "def VilleText1" in source
     assert 'departement_nir_attendu(pays_naissance, dep_naiss)' in source
     assert 'texteSansEsp[5:7] != attendu' in source
+
+
+def test_cp_naissance_devient_libre_hors_france_sans_couper_la_residence():
+    source = ADAPTER.read_text(encoding="utf-8")
+    assert 'SetCtrlParameters(mask="#####" if france else "")' in source
+    assert "self.autoComplete = True" in source
+    assert "seuls les\n        # gestionnaires du lieu de naissance" in source
