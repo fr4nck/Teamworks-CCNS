@@ -162,6 +162,13 @@ class ThemeEngine:
                 border-radius: {r.button}px;
                 padding: 4px 8px;
             }}
+            QToolButton#twActionButton[twDensity="compact"],
+            QToolButton#twChoiceButton[twDensity="compact"],
+            QPushButton#twSecondaryButton[twDensity="compact"] {{
+                min-height: {c.height_compact}px;
+                max-height: {c.height_compact}px;
+                padding: 2px 6px;
+            }}
             QToolButton#legacyToolButton:hover,
             QToolButton#twActionButton:hover,
             QToolButton#twChoiceButton:hover,
@@ -236,6 +243,15 @@ class ThemeEngine:
                 border-radius: {r.field}px;
                 selection-background-color: {t.selection};
                 selection-color: {t.selection_text};
+            }}
+            QLineEdit[twDensity="compact"],
+            QComboBox[twDensity="compact"],
+            QDateEdit[twDensity="compact"],
+            QTimeEdit[twDensity="compact"],
+            QSpinBox[twDensity="compact"],
+            QDoubleSpinBox[twDensity="compact"] {{
+                min-height: {c.height_compact}px;
+                max-height: {c.height_compact}px;
             }}
             QLineEdit[twReadOnly="true"],
             QPlainTextEdit[twReadOnly="true"],
