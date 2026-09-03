@@ -418,8 +418,6 @@ def _apply_objectlistview_theme(window, palette):
                     window.SetEmptyListMsgFont(base_font)
             except Exception:
                 pass
-        # Les couleurs OLV ne sont pas rétroactives sur les lignes déjà créées.
-        # Rafraîchir les objets matérialisés évite le tableau blanc/texte clair.
         if hasattr(window, "GetObjects") and hasattr(window, "RefreshObjects"):
             try:
                 objects = list(window.GetObjects() or [])
@@ -462,6 +460,15 @@ def _apply_palette(window, palette, dark):
         _set_colours(empty, background=palette["control"], foreground=palette["text_variant"])
 
 
+def _apply_screen_specific_fixes(window):
+    try:
+        if window.GetName() == "panel_generalites":
+            from Utils import UTILS_Generalites_091f
+            UTILS_Generalites_091f.stabilise(window)
+    except Exception:
+        pass
+
+
 def apply_to_window(window, recursive=True, theme=None, scale=None, palette=None):
     if window is None:
         return
@@ -474,8 +481,8 @@ def apply_to_window(window, recursive=True, theme=None, scale=None, palette=None
     _scale_font(window, scale)
     _apply_metrics(window, scale)
     _apply_palette(window, palette, dark)
+    _apply_screen_specific_fixes(window)
 
-    # Le contrôle commun reconstruit son bitmap après métriques/thème définitifs.
     refresh_visual = getattr(window, "RafraichirVisuel", None)
     if callable(refresh_visual):
         try:
@@ -518,8 +525,6 @@ def _install_preferences_menu(frame):
                     dialog.ShowModal()
                 finally:
                     dialog.Destroy()
-                # Le thème natif Windows ne doit pas être changé sur une frame
-                # déjà peinte : le nouveau choix sera appliqué au redémarrage.
                 refresh_preferences()
 
             frame.Bind(wx.EVT_MENU, open_preferences, item)
