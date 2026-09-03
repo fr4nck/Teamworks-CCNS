@@ -24,8 +24,6 @@ from models import ContractsTableModel, PeopleTableModel
 
 
 class ReadValue(QLabel):
-    """Valeur de consultation légère, volontairement non éditable."""
-
     def __init__(self, text: str = "—"):
         super().__init__(text or "—")
         self.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
@@ -34,8 +32,6 @@ class ReadValue(QLabel):
 
 
 class PeopleContractsPilot(QMainWindow):
-    """Écran témoin Individus/Contrats, strictement lecture seule."""
-
     def __init__(self, adapter: TeamworksReadAdapter, parent=None):
         super().__init__(parent)
         self.adapter = adapter
@@ -93,7 +89,7 @@ class PeopleContractsPilot(QMainWindow):
         frame = QFrame()
         layout = QVBoxLayout(frame)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(8)
+        layout.setSpacing(6)
 
         label = QLabel("Salariés")
         font = label.font()
@@ -108,36 +104,34 @@ class PeopleContractsPilot(QMainWindow):
         self.people_table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.people_table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.people_table.setAlternatingRowColors(True)
+        self.people_table.setTextElideMode(Qt.TextElideMode.ElideRight)
+        self.people_table.setWordWrap(False)
         self.people_table.verticalHeader().setVisible(False)
+        self.people_table.verticalHeader().setDefaultSectionSize(24)
+        self.people_table.verticalHeader().setMinimumSectionSize(22)
         header = self.people_table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
-        header.resizeSection(0, 95)
-        header.resizeSection(2, 130)
-        header.resizeSection(3, 120)
-        header.resizeSection(4, 95)
-        header.resizeSection(5, 75)
-        header.resizeSection(6, 95)
-        header.resizeSection(7, 130)
+        header.resizeSection(0, 82)
+        header.resizeSection(2, 112)
+        header.resizeSection(3, 104)
+        header.resizeSection(4, 84)
+        header.resizeSection(5, 64)
+        header.resizeSection(6, 86)
+        header.resizeSection(7, 100)
         self.people_table.selectionModel().selectionChanged.connect(self._on_person_selection)
         layout.addWidget(self.people_table, 1)
         return frame
 
     def _build_detail_panel(self) -> QWidget:
         self.detail_stack = QStackedWidget()
-        self.detail_stack.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-
         empty_page = QWidget()
         empty_layout = QVBoxLayout(empty_page)
-        empty_layout.setContentsMargins(24, 24, 24, 24)
         empty_message = QLabel("Sélectionnez un salarié pour afficher sa fiche")
         empty_message.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        empty_message.setWordWrap(True)
-        empty_message.setProperty("emptyState", True)
         empty_layout.addWidget(empty_message, 1)
 
         self.tabs = QTabWidget()
-        self.tabs.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.tabs.addTab(self._build_general_tab(), "Généralités")
         self.tabs.addTab(self._build_contracts_tab(), "Contrats")
 
@@ -162,6 +156,7 @@ class PeopleContractsPilot(QMainWindow):
 
         self.value_id = ReadValue()
         self.value_name = ReadValue()
+        self.value_birth_date = ReadValue()
         self.value_role = ReadValue()
         self.value_classification = ReadValue()
         self.value_contract = ReadValue()
@@ -171,98 +166,64 @@ class PeopleContractsPilot(QMainWindow):
         self.value_medical = ReadValue()
         self.value_mutual = ReadValue()
 
-        identity = self._build_compact_section(
-            "Identité",
-            (
-                ("Matricule", self.value_id, "Nom", self.value_name),
-                ("Fonction", self.value_role, "Site", self.value_site),
-            ),
-        )
-        employment = self._build_compact_section(
-            "Situation professionnelle",
-            (
-                ("Classification", self.value_classification, "Contrat", self.value_contract),
-                ("Temps", self.value_hours, "Statut", self.value_status),
-            ),
-        )
-        social = self._build_compact_section(
-            "Suivi RH",
-            (
-                ("Suivi médical", self.value_medical, "Mutuelle", self.value_mutual),
-            ),
-            with_separator=False,
-        )
-
-        content_layout.addWidget(identity)
-        content_layout.addWidget(employment)
-        content_layout.addWidget(social)
+        content_layout.addWidget(self._build_compact_section("Identité", (
+            ("Matricule", self.value_id, "Nom", self.value_name),
+            ("Naissance", self.value_birth_date, "Site", self.value_site),
+        )))
+        content_layout.addWidget(self._build_compact_section("Situation professionnelle", (
+            ("Fonction", self.value_role, "Classification", self.value_classification),
+            ("Contrat", self.value_contract, "Temps", self.value_hours),
+            ("Statut", self.value_status, "", ReadValue("")),
+        )))
+        content_layout.addWidget(self._build_compact_section("Suivi RH", (
+            ("Suivi médical", self.value_medical, "Mutuelle", self.value_mutual),
+        ), with_separator=False))
         content_layout.addStretch(1)
-
         scroll.setWidget(content)
         page_layout.addWidget(scroll, 1)
         return page
 
-    def _build_compact_section(
-        self,
-        title: str,
-        rows: tuple[tuple[str, QWidget, str, QWidget], ...],
-        *,
-        with_separator: bool = True,
-    ) -> QWidget:
+    def _build_compact_section(self, title, rows, *, with_separator=True) -> QWidget:
         section = QWidget()
         layout = QVBoxLayout(section)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(4)
-
         heading = QLabel(title)
         font = heading.font()
         font.setBold(True)
         heading.setFont(font)
-        heading.setProperty("sectionTitle", True)
         layout.addWidget(heading)
-
-        grid_host = QWidget()
-        grid = QGridLayout(grid_host)
+        host = QWidget()
+        grid = QGridLayout(host)
         grid.setContentsMargins(0, 0, 0, 0)
         grid.setHorizontalSpacing(16)
         grid.setVerticalSpacing(6)
         grid.setColumnStretch(1, 1)
         grid.setColumnStretch(3, 1)
-
-        for row_index, (label_a, value_a, label_b, value_b) in enumerate(rows):
-            grid.addWidget(QLabel(label_a), row_index, 0)
-            grid.addWidget(value_a, row_index, 1)
-            grid.addWidget(QLabel(label_b), row_index, 2)
-            grid.addWidget(value_b, row_index, 3)
-
-        layout.addWidget(grid_host)
-
+        for row, (la, va, lb, vb) in enumerate(rows):
+            grid.addWidget(QLabel(la), row, 0)
+            grid.addWidget(va, row, 1)
+            grid.addWidget(QLabel(lb), row, 2)
+            grid.addWidget(vb, row, 3)
+        layout.addWidget(host)
         if with_separator:
             separator = QFrame()
             separator.setFrameShape(QFrame.Shape.HLine)
-            separator.setFrameShadow(QFrame.Shadow.Plain)
             separator.setLineWidth(1)
             separator.setProperty("separator", True)
             layout.addWidget(separator)
-
         return section
 
     def _build_contracts_tab(self) -> QWidget:
         widget = QWidget()
         layout = QVBoxLayout(widget)
         layout.setContentsMargins(12, 12, 12, 12)
-
         self.contracts_stack = QStackedWidget()
-
         empty_page = QWidget()
         empty_layout = QVBoxLayout(empty_page)
-        empty_layout.setContentsMargins(24, 24, 24, 24)
         empty_message = QLabel("Aucun contrat enregistré pour ce salarié")
         empty_message.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        empty_message.setWordWrap(True)
-        empty_message.setProperty("emptyState", True)
         empty_layout.addWidget(empty_message, 1)
-
         self.contracts_table = QTableView()
         self.contracts_table.setModel(self.contracts_model)
         self.contracts_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
@@ -272,12 +233,6 @@ class PeopleContractsPilot(QMainWindow):
         header = self.contracts_table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         header.setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)
-        header.resizeSection(0, 100)
-        header.resizeSection(1, 95)
-        header.resizeSection(2, 95)
-        header.resizeSection(4, 90)
-        header.resizeSection(5, 110)
-
         self.contracts_stack.addWidget(empty_page)
         self.contracts_stack.addWidget(self.contracts_table)
         self.contracts_stack.setCurrentIndex(0)
@@ -291,23 +246,22 @@ class PeopleContractsPilot(QMainWindow):
         self.statusBar().showMessage("Lecture seule · aucune sélection")
 
     def _on_person_selection(self, *_args) -> None:
-        indexes = self.people_table.selectionModel().selectedRows()
-        if not indexes:
+        rows = self.people_table.selectionModel().selectedRows()
+        if not rows:
             self._show_empty_detail()
             return
-        self._show_person_from_proxy_row(indexes[0].row())
+        self._show_person_from_proxy_row(rows[0].row())
 
     def _show_person_from_proxy_row(self, proxy_row: int) -> None:
-        proxy_index = self.people_proxy.index(proxy_row, 0)
-        source_index = self.people_proxy.mapToSource(proxy_index)
+        source_index = self.people_proxy.mapToSource(self.people_proxy.index(proxy_row, 0))
         person = self.people_model.person_at(source_index.row())
         if person is None:
             self._show_empty_detail()
             return
-
-        values = (
+        for widget, value in (
             (self.value_id, person.id),
             (self.value_name, person.name),
+            (self.value_birth_date, person.birth_date),
             (self.value_role, person.role),
             (self.value_classification, person.classification),
             (self.value_contract, person.contract),
@@ -316,13 +270,9 @@ class PeopleContractsPilot(QMainWindow):
             (self.value_site, person.site),
             (self.value_medical, person.medical),
             (self.value_mutual, person.mutual),
-        )
-        for widget, value in values:
+        ):
             widget.setText(value or "—")
-
         self.contracts_model.replace(self.adapter.list_contracts(person.id))
         self.contracts_stack.setCurrentIndex(1 if self.contracts_model.rowCount() else 0)
         self.detail_stack.setCurrentIndex(1)
-        self.statusBar().showMessage(
-            f"Lecture seule · {person.name} · {self.contracts_model.rowCount()} contrat(s)"
-        )
+        self.statusBar().showMessage(f"Lecture seule · {person.name} · {self.contracts_model.rowCount()} contrat(s)")

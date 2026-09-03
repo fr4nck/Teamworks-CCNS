@@ -6,8 +6,16 @@ from typing import Protocol, Sequence
 
 @dataclass(frozen=True)
 class PersonView:
+    """Projection de présentation agrégée pour l'écran Individus / Contrats.
+
+    Tous les champs sont des chaînes prêtes à afficher. Les valeurs absentes d'une
+    source métier canonique sont neutralisées par ``—`` dans l'adaptateur, jamais
+    inventées dans la vue Qt.
+    """
+
     id: str
     name: str
+    birth_date: str
     role: str
     classification: str
     contract: str
@@ -50,9 +58,9 @@ class DemoAdapter:
 
     def list_people(self) -> Sequence[PersonView]:
         return (
-            PersonView("SAL-001", "Gaëlle Desson", "Animatrice", "Groupe 3", "CDI", "35 h", "Dossier complet", "La Guerche-de-Bretagne", "À jour", "Affiliée"),
-            PersonView("SAL-002", "Thomas Loddé", "Éducateur sportif", "Groupe 4", "CDI intermittent", "24 h", "À contrôler", "Bais", "Échéance proche", "Affilié"),
-            PersonView("SAL-003", "Léa Drouillé", "Animatrice", "Groupe 2", "CDD", "21 h", "Pièce manquante", "Moutiers", "À planifier", "Dispense"),
+            PersonView("SAL-001", "Gaëlle Desson", "12/02/1990", "Animatrice", "Groupe 3", "CDI", "35 h", "Dossier complet", "La Guerche-de-Bretagne", "À jour", "Affiliée"),
+            PersonView("SAL-002", "Thomas Loddé", "04/11/1988", "Éducateur sportif", "Groupe 4", "CDI intermittent", "24 h", "À contrôler", "Bais", "Échéance proche", "Affilié"),
+            PersonView("SAL-003", "Léa Drouillé", "19/06/2002", "Animatrice", "Groupe 2", "CDD", "21 h", "Pièce manquante", "Moutiers", "À planifier", "Dispense"),
         )
 
     def list_contracts(self, person_id: str) -> Sequence[ContractView]:

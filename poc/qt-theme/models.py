@@ -8,11 +8,7 @@ from data_adapter import ContractView, PersonView
 
 
 class PeopleTableModel(QAbstractTableModel):
-    """Modèle Qt de consultation des personnes normalisées par l'adaptateur.
-
-    La couche Qt ne connaît ni repository, ni SQL, ni objet du domaine. Elle reçoit
-    uniquement des PersonView immuables et reste donc remplaçable/testable.
-    """
+    """Modèle Qt de consultation des personnes normalisées par l'adaptateur."""
 
     COLUMNS = (
         ("id", "Matricule"),
@@ -41,8 +37,7 @@ class PeopleTableModel(QAbstractTableModel):
         person = self._people[index.row()]
         field_name = self.COLUMNS[index.column()][0]
         if role in (Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.EditRole):
-            value = getattr(person, field_name)
-            return "—" if value in (None, "") else str(value)
+            return getattr(person, field_name)
         if role == Qt.ItemDataRole.UserRole:
             return person
         return None
@@ -98,8 +93,7 @@ class ContractsTableModel(QAbstractTableModel):
         contract = self._contracts[index.row()]
         field_name = self.COLUMNS[index.column()][0]
         if role in (Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.EditRole):
-            value = getattr(contract, field_name)
-            return "—" if value in (None, "") else str(value)
+            return getattr(contract, field_name)
         if role == Qt.ItemDataRole.UserRole:
             return contract
         return None

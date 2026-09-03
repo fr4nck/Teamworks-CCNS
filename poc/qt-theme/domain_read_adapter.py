@@ -5,24 +5,38 @@ from typing import Sequence
 
 from data_adapter import ContractView, PersonView, TeamworksReadAdapter
 from domain.contracts.contract import Contract
-from domain.contracts.contract_type import ContractType
 from domain.people.person import Person
 
 
-class DomainPeopleReadAdapter(TeamworksReadAdapter):
-    """Adaptateur lecture seule branché sur le domaine Teamworks actuel.
+EMPTY = "—"
 
-    Il accepte les repositories de domaine existants. Aucun import wxPython et
-    aucune requête SQL ne sont autorisés ici. Les champs absents du domaine restent
-    explicitement neutres au lieu d'être inventés.
+
+class DomainPeopleReadAdapter(TeamworksReadAdapter):
+    """Coordonne les lectures du domaine puis agrège des DTO de présentation.
+
+    Le POC reste strictement en mémoire : aucun SQL direct, aucune dépendance wx,
+    aucune donnée inventée. Les repositories optionnels représentent les futurs
+    points d'agrégation de sous-domaines ; tant qu'une information n'est pas
+    garantie par une source canonique, elle reste neutre.
     """
 
-    def __init__(self, people_repository, contracts_repository=None):
+    def __init__(
+        self,
+        people_repository,
+        contracts_repository=None,
+        qualifications_repository=None,
+        regulatory_repository=None,
+        sites_repository=None,
+    ):
         self._people_repository = people_repository
         self._contracts_repository = contracts_repository
+        self._qualifications_repository = qualifications_repository
+        self._regulatory_repository = regulatory_repository
+        self._sites_repository = sites_repository
 
     def list_people(self) -> Sequence[PersonView]:
-        return tuple(self._person_to_view(person) for person in self._people_repository.list_all())
+        people = self._people_repository.list_all()
+        return tuple(self._person_to_view(person) for person in people)
 
     def list_contracts(self, person_id: str) -> Sequence[ContractView]:
         if self._contracts_repository is None:
@@ -30,56 +44,81 @@ class DomainPeopleReadAdapter(TeamworksReadAdapter):
         contracts = self._contracts_repository.list_by_person_id(person_id)
         return tuple(self._contract_to_view(contract) for contract in contracts)
 
-    @staticmethod
-    def _person_to_view(person: Person) -> PersonView:
+    def _person_to_view(self, person: Person) -> PersonView:
+        contracts = self._contracts_for(person.id)
+        primary_contract = contracts[0] if contracts else None
+
         return PersonView(
-            id=person.id,
-            name=person.display_name,
-            role="",
-            classification="",
-            contract="",
-            weekly_hours="",
+            id=person.code_internal or person.id or EMPTY,
+            name=person.display_name or EMPTY,
+            birth_date=_format_date(person.birth_date),
+            role=EMPTY,
+            classification=(
+                primary_contract.ccns_classification_code
+                if primary_contract and primary_contract.ccns_classification_code
+                else EMPTY
+            ),
+            contract=(
+                primary_contract.contract_type.value
+                if primary_contract is not None
+                else EMPTY
+            ),
+            weekly_hours=_format_weekly_hours(primary_contract),
             status="Actif" if person.is_active else "Inactif",
-            site="",
-            medical="",
-            mutual="",
+            site=EMPTY,
+            medical=EMPTY,
+            mutual=EMPTY,
         )
+
+    def _contracts_for(self, person_id: str) -> tuple[Contract, ...]:
+        if self._contracts_repository is None:
+            return ()
+        return tuple(self._contracts_repository.list_by_person_id(person_id))
 
     @staticmethod
     def _contract_to_view(contract: Contract) -> ContractView:
-        weekly = (
-            contract.weekly_hours
-            if contract.weekly_hours is not None
-            else contract.weekly_reference_hours
-        )
         return ContractView(
             kind=contract.contract_type.value,
             start=_format_date(contract.start_date),
             end=_format_date(contract.end_date),
-            classification=contract.ccns_classification_code or "—",
-            duration="—" if weekly is None else f"{weekly:g} h",
-            status=contract.contract_status or "—",
+            classification=contract.ccns_classification_code or EMPTY,
+            duration=_format_weekly_hours(contract),
+            status=contract.contract_status or EMPTY,
         )
 
 
 def _format_date(value: date | None) -> str:
-    return "—" if value is None else value.strftime("%d/%m/%Y")
+    return EMPTY if value is None else value.strftime("%d/%m/%Y")
+
+
+def _format_weekly_hours(contract: Contract | None) -> str:
+    if contract is None:
+        return EMPTY
+    weekly = contract.weekly_hours if contract.weekly_hours is not None else contract.weekly_reference_hours
+    return EMPTY if weekly is None else f"{weekly:g} h"
 
 
 def build_domain_smoke_adapter() -> DomainPeopleReadAdapter:
-    """Monte les vrais repositories de domaine, toujours sans BDD de production.
-
-    Le smoke test valide le double flux Person/Contract et le mapping de présentation
-    en lecture seule, sans modifier domain/ ni infrastructure/.
-    """
+    """Monte les vrais repositories de domaine, toujours sans BDD de production."""
     from infrastructure.repositories.contracts_repository import ContractRepository
     from infrastructure.repositories.people_repository import PeopleRepository
+    from domain.contracts.contract_type import ContractType
 
     people_repo = PeopleRepository()
     contracts_repo = ContractRepository()
 
-    aline = Person(code_internal="QT-001", first_name="Aline", last_name="Martin")
-    benoit = Person(code_internal="QT-002", first_name="Benoît", last_name="Durand")
+    aline = Person(
+        code_internal="QT-001",
+        first_name="Aline",
+        last_name="Martin",
+        birth_date=date(1990, 2, 12),
+    )
+    benoit = Person(
+        code_internal="QT-002",
+        first_name="Benoît",
+        last_name="Durand",
+        birth_date=date(1988, 11, 4),
+    )
     people_repo.add(aline)
     people_repo.add(benoit)
 
