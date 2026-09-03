@@ -2,17 +2,25 @@ from __future__ import annotations
 
 import sys
 import time
+from datetime import date
+from decimal import Decimal
 
 from PySide6.QtCore import QSortFilterProxyModel, Qt
 from PySide6.QtWidgets import QApplication, QTableView
 
 from data_adapter import ContractView, PersonView
+from domain.contracts.contract import Contract
+from domain.contracts.contract_type import ContractType
+from domain_read_adapter import DomainPeopleReadAdapter
 from frugality import FrugalityProbe
+from infrastructure.repositories.contracts_repository import ContractRepository
+from infrastructure.repositories.people_repository import PeopleRepository
 from models import ContractsTableModel, PeopleTableModel
 
 
 PEOPLE_COUNT = 1000
 CONTRACTS_PER_PERSON = 6
+DOMAIN_CONTRACT_COUNT = 6000
 
 
 def build_people(count: int) -> tuple[PersonView, ...]:
@@ -45,6 +53,48 @@ def build_contracts(count: int) -> tuple[ContractView, ...]:
         )
         for _ in range(count)
     )
+
+
+def build_domain_contracts(count: int, person_id: str) -> tuple[Contract, ...]:
+    """Construit une charge domaine variée sans contourner les invariants Contract."""
+    return tuple(
+        Contract(
+            person_id=person_id,
+            contract_type=ContractType.CDI,
+            start_date=date(2026, 9, 1),
+            end_date=None if index % 2 == 0 else date(2027, 8, 31),
+            weekly_hours=Decimal("35.00") if index % 3 == 0 else None,
+            weekly_reference_hours=None if index % 3 == 0 else 35.0,
+            ccns_classification_code="Groupe 3",
+            contract_status="draft",
+        )
+        for index in range(count)
+    )
+
+
+def benchmark_domain_adaptation() -> tuple[float, float, int]:
+    """Mesure séparément mapping pur puis repository + adaptation, sans Qt."""
+    person_id = "BENCH-DOMAIN"
+    contracts = build_domain_contracts(DOMAIN_CONTRACT_COUNT, person_id)
+
+    mapping_started = time.perf_counter()
+    mapped = tuple(DomainPeopleReadAdapter._contract_to_view(item) for item in contracts)
+    mapping_ms = (time.perf_counter() - mapping_started) * 1000.0
+
+    contracts_repo = ContractRepository()
+    contracts_repo.replace_all(contracts)
+    adapter = DomainPeopleReadAdapter(PeopleRepository(), contracts_repo)
+
+    adapter_started = time.perf_counter()
+    through_adapter = adapter.list_contracts(person_id)
+    adapter_ms = (time.perf_counter() - adapter_started) * 1000.0
+
+    # Le jeu couvre explicitement les deux branches de date de fin.
+    assert any(item.end == "—" for item in mapped)
+    assert any(item.end != "—" for item in mapped)
+    assert len(through_adapter) == DOMAIN_CONTRACT_COUNT
+
+    return mapping_ms, adapter_ms, len(through_adapter)
 
 
 def main() -> None:
@@ -87,12 +137,23 @@ def main() -> None:
     app.processEvents()
     reset_ms = (time.perf_counter() - reset_started) * 1000.0
 
+    mapping_ms, adapter_ms, adapted_count = benchmark_domain_adaptation()
+    mapping_unit_ms = mapping_ms / DOMAIN_CONTRACT_COUNT
+    adapter_unit_ms = adapter_ms / DOMAIN_CONTRACT_COUNT
+
     snapshot = probe.snapshot(direct_dependencies=2)
     print(
         "[Teamworks Qt benchmark] "
         f"people={PEOPLE_COUNT} · contracts/person={CONTRACTS_PER_PERSON} · "
         f"filtered_rows={proxy.rowCount()} · filter={filter_ms:.2f} ms · "
         f"contracts_reset={reset_ms:.2f} ms · {snapshot.compact()}"
+    )
+    print(
+        "[Teamworks Domain benchmark] "
+        f"contracts={adapted_count} · mapping={mapping_ms:.2f} ms "
+        f"({mapping_unit_ms:.4f} ms/contrat) · "
+        f"repository+adapter={adapter_ms:.2f} ms "
+        f"({adapter_unit_ms:.4f} ms/contrat)"
     )
 
     people_view.close()
