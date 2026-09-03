@@ -22,6 +22,19 @@ La recette du 3 septembre 2026 a validé les points suivants :
 
 Mesure de référence observée sous Windows après chargement différé : premier affichage 1,31 s, données des 96 personnes prêtes à 1,79 s, RSS 130 Mo, deux dépendances UI directes. Ces valeurs sont des points de recette et non des garanties de production.
 
+## Rails de transposition en cours
+
+Le travail visuel avance désormais sur deux rails qui partagent exactement le même socle Qt :
+
+1. **Généralités et ses satellites** : Identité, Situation sociale, Adresse, Coordonnées, Mémo, puis Coordonnées/Villes/Pays/Situations sociales.
+2. **Pages secondaires de la fiche individuelle** : Questionnaire, Qualifications, Présences et Recrutement. Ces pages reprennent la géométrie du source wx courant et utilisent `TwFormSection`, `TwActionBar` et `TwDataTable`. Les actions d'écriture restent désactivées ; les boutons Ajouter peuvent uniquement ouvrir les aperçus Qt locaux déjà transposés.
+
+Pour ce second rail, les invariants source sont notamment :
+- Qualifications : Pièces à fournir + Qualifications en deux colonnes, puis Pièces reçues ; actions sous les listes ;
+- Présences : actions horizontales, recherche, résumé, puis liste ;
+- Recrutement de la fiche individuelle : Candidatures puis Entretiens, avec leurs actions au-dessus de chaque liste ;
+- Questionnaire : tableau Question / Réponse sans données fictives.
+
 ## Ordre de transposition des satellites de Généralités
 
 1. Coordonnées : fixe/mobile/fax/email, champs conditionnels, intitulé, validation et pied de dialogue.
