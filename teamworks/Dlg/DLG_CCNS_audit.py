@@ -5,8 +5,9 @@ from __future__ import annotations
 
 import wx
 
+from Ctrl import CTRL_Bouton_image
 from teamworks.CcnsCore.audit_contracts_ccns import audit_contracts
-from Utils import UTILS_Interface, UTILS_Theme
+from Utils import UTILS_Interface, UTILS_Styles, UTILS_Theme
 
 
 class Dialog(wx.Dialog):
@@ -19,7 +20,7 @@ class Dialog(wx.Dialog):
         self.label_intro = wx.StaticText(
             self,
             -1,
-            "Cet outil relit les contrats Teamworks et applique les premiers contrôles CCNS disponibles.",
+            "Cet outil relit les contrats Teamworks-CCNS et applique les premiers contrôles CCNS disponibles.",
         )
         self.label_intro.SetForegroundColour(self.palette["on_surface_variant"])
 
@@ -41,13 +42,22 @@ class Dialog(wx.Dialog):
         self.text_result.SetBackgroundColour(self.palette["surface_container_lowest"])
         self.text_result.SetForegroundColour(self.palette["on_surface"])
 
-        self.button_launch = wx.Button(self, -1, "Lancer l'audit")
-        self.button_close = wx.Button(self, wx.ID_CANCEL, "Fermer")
+        self.button_launch = CTRL_Bouton_image.CTRL(
+            self,
+            texte="Lancer l'audit",
+            role="primary",
+        )
+        self.button_close = CTRL_Bouton_image.CTRL(
+            self,
+            id=wx.ID_CANCEL,
+            texte="Fermer",
+            role="quiet",
+        )
 
         self.button_launch.Bind(wx.EVT_BUTTON, self.OnLaunch)
 
         self.__do_layout()
-        self.SetMinSize((760, 500))
+        self.SetMinSize((UTILS_Styles.Scale(760), UTILS_Styles.Scale(500)))
         self.CentreOnScreen()
 
     def __do_layout(self):
