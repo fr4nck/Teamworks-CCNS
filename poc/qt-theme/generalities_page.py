@@ -34,13 +34,11 @@ EMPTY = "—"
 _TWO_COLUMN_MIN_WIDTH = 760
 
 
-def _read_line(text: str = EMPTY, *, disabled: bool = False) -> QLineEdit:
+def _read_line(text: str = EMPTY) -> QLineEdit:
     editor = QLineEdit(text)
     editor.setReadOnly(True)
     editor.setProperty("twReadOnly", True)
     editor.setClearButtonEnabled(False)
-    if disabled:
-        editor.setEnabled(False)
     return editor
 
 
@@ -60,8 +58,8 @@ class GeneralitiesPage(QWidget):
     """Transposition Qt de ``CTRL_Page_generalites`` en consultation.
 
     Les cinq sections historiques sont conservées. Les valeurs proviennent du
-    reader dédié ; le NIR garde sa place visuelle mais n'est jamais demandé à la
-    base dans ce POC.
+    reader dédié ; seules les données effectivement projetées en lecture sont
+    représentées dans l'interface.
     """
 
     def __init__(self, parent: QWidget | None = None) -> None:
@@ -208,16 +206,6 @@ class GeneralitiesPage(QWidget):
                 "Ville de naissance",
                 self.birth_city,
                 action=search_birth_city,
-            )
-        )
-
-        self.nir = _read_line("Non chargé dans le POC", disabled=True)
-        section.add_row(
-            self._row(
-                "nir",
-                "Numéro de sécurité sociale",
-                self.nir,
-                help_text="Donnée sensible volontairement non chargée dans ce POC.",
             )
         )
 
