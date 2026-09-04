@@ -19,6 +19,7 @@ echo [Teamworks Qt POC] Chargement des dependances Teamworks necessaires aux rea
 
 echo [Teamworks Qt POC] Verification de la syntaxe...
 ".venv\Scripts\python.exe" -m py_compile app.py launcher.py deferred_people.py deferred_activity.py theme_engine.py data_adapter.py domain_read_adapter.py production_read_adapter.py models.py pilot_view.py pilot_generalities.py generalities_page.py individual_pages.py individual_activity_presenter.py scenario_expense_dialogs.py legacy_individual_tabs.py legacy_sheets.py legacy_contract_wizard.py generalities_satellites.py satellites_gallery.py contract_editor.py recruitment_selection.py recruitment_workspace.py frugality.py || goto :error
+".venv\Scripts\python.exe" -m py_compile "%REPO_ROOT%\infrastructure\persistence\individual_activity_reader.py" "%REPO_ROOT%\domain\repositories\individual_activity_data.py" || goto :error
 ".venv\Scripts\python.exe" -m compileall -q ui || goto :error
 
 echo [Teamworks Qt POC] Lancement lecture seule sur les readers Teamworks reels...
