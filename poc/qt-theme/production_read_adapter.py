@@ -6,6 +6,8 @@ from typing import Sequence
 
 from data_adapter import (
     ContractView,
+    PersonCoordinateView,
+    PersonGeneralitiesView,
     PersonView,
     ReimbursementView,
     ScenarioView,
@@ -117,6 +119,39 @@ class TeamworksProductionReadAdapter(TeamworksReadAdapter):
         )
         return tuple(views)
 
+    def get_person_generalities(self, person_id: str | int) -> PersonGeneralitiesView | None:
+        self._ensure_open()
+        historical_id = self._require_historical_id(person_id)
+        record = self._person_reader.lire_generalites(historical_id)
+        if record is None:
+            return None
+        coordinates = tuple(
+            PersonCoordinateView(
+                key=int(item.IDcoord),
+                category=_text(item.categorie),
+                text=_text(item.texte),
+                label=_text(item.intitule, empty=""),
+            )
+            for item in self._person_reader.lire_coordonnees(historical_id)
+        )
+        return PersonGeneralitiesView(
+            civility=_text(record.civilite),
+            maiden_name=_text(record.nom_jfille),
+            last_name=_text(record.nom),
+            first_name=_text(record.prenom),
+            birth_date=_format_date(record.date_naiss),
+            birth_country=_text(record.pays_naiss),
+            birth_postcode=_format_postcode(record.cp_naiss),
+            birth_city=_text(record.ville_naiss),
+            nationality=_text(record.nationalite),
+            social_situation=_text(record.situation),
+            address=_text(record.adresse_resid, empty=""),
+            postcode=_format_postcode(record.cp_resid),
+            city=_text(record.ville_resid),
+            memo=_text(record.memo, empty=""),
+            coordinates=coordinates,
+        )
+
     def list_contracts(self, person_id: str | int) -> Sequence[ContractView]:
         self._ensure_open()
         historical_id = self._require_historical_id(person_id)
@@ -225,6 +260,18 @@ class TeamworksProductionReadAdapter(TeamworksReadAdapter):
 def _format_date(value) -> str:
     parsed = as_date(value)
     return EMPTY if parsed is None else parsed.strftime("%d/%m/%Y")
+
+
+def _format_postcode(value) -> str:
+    if value is None or isinstance(value, bool):
+        return EMPTY
+    text = str(value).strip()
+    if not text:
+        return EMPTY
+    try:
+        return f"{int(text):05d}"
+    except (TypeError, ValueError):
+        return text
 
 
 def _format_hours(value) -> str:
