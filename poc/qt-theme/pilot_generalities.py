@@ -60,7 +60,7 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
 
         self._request_activity(historical_id)
         self.statusBar().showMessage(
-            f"Lecture seule · {person.name} · {contract_count} contrat(s) · chargement Scénarios/Frais…"
+            f"Lecture seule · {person.name} · {contract_count} contrat(s) · chargement du dossier…"
         )
 
     def _request_activity(self, person_id) -> None:
@@ -69,11 +69,12 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
 
         if self._activity_loader_class is None:
             payload = {
+                "generalities": self.adapter.get_person_generalities(person_id),
                 "scenarios": tuple(self.adapter.list_scenarios(person_id)),
                 "trips": tuple(self.adapter.list_trips(person_id)),
                 "reimbursements": tuple(self.adapter.list_reimbursements(person_id)),
             }
-            self.activity_presenter.set_payload(payload)
+            self._apply_individual_payload(person_id, payload)
             return
 
         if self._activity_thread is not None and self._activity_thread.isRunning():
@@ -98,15 +99,39 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
         thread.finished.connect(worker.deleteLater)
         thread.start()
 
+    def _apply_individual_payload(self, person_id, payload) -> None:
+        if person_id != self._activity_selected_person_id:
+            return
+        details = payload.get("generalities")
+        self.generalities_page.set_details(details)
+        if details is not None:
+            address_parts = [
+                value
+                for value in (details.address, details.postcode, details.city)
+                if value and value != "—"
+            ]
+            self.detail_context.setText(
+                " · ".join(address_parts) if address_parts else "Adresse / situation : —"
+            )
+            birth_parts = [
+                value
+                for value in (details.birth_date, details.birth_city)
+                if value and value != "—"
+            ]
+            self.detail_birth.setText(
+                "Naissance : " + (" · ".join(birth_parts) if birth_parts else "—")
+            )
+        self.activity_presenter.set_payload(payload)
+
     def _on_activity_loaded(self, person_id, payload) -> None:
         if person_id == self._activity_selected_person_id:
-            self.activity_presenter.set_payload(payload)
+            self._apply_individual_payload(person_id, payload)
             scenarios = len(payload.get("scenarios", ()))
             trips = len(payload.get("trips", ()))
             reimbursements = len(payload.get("reimbursements", ()))
             seconds = float(payload.get("seconds", 0.0))
             self.statusBar().showMessage(
-                "Lecture seule · "
+                "Lecture seule · dossier prêt · "
                 f"{scenarios} scénario(s) · {trips} déplacement(s) · "
                 f"{reimbursements} remboursement(s) · {seconds:.2f}s"
             )
@@ -114,11 +139,11 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
             self._activity_thread.quit()
 
     def _on_activity_failed(self, person_id, details: str) -> None:
-        print("[Teamworks Qt POC] Échec lecture Scénarios/Frais :")
+        print("[Teamworks Qt POC] Échec lecture du dossier individuel :")
         print(details)
         if person_id == self._activity_selected_person_id:
             self.activity_presenter.clear()
-            self.statusBar().showMessage("Lecture seule · échec du chargement Scénarios/Frais")
+            self.statusBar().showMessage("Lecture seule · échec du chargement du dossier")
         if self._activity_thread is not None:
             self._activity_thread.quit()
 
