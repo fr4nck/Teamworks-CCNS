@@ -36,11 +36,7 @@ class PersonView:
 
 @dataclass(frozen=True)
 class ContractView:
-    """Projection de consultation d'un contrat pour l'UI Qt.
-
-    Tous les champs sont déjà prêts à afficher. Aucune sémantique d'activité n'est
-    exposée tant que le domaine ne fournit pas de règle canonique pour la dériver.
-    """
+    """Projection de consultation d'un contrat pour l'UI Qt."""
 
     kind: str
     start: str
@@ -48,6 +44,33 @@ class ContractView:
     classification: str
     duration: str
     status: str
+
+
+@dataclass(frozen=True)
+class ScenarioView:
+    name: str
+    period: str
+    description: str
+
+
+@dataclass(frozen=True)
+class TripView:
+    number: str
+    date: str
+    purpose: str
+    route: str
+    distance: str
+    tariff: str
+    amount: str
+    reimbursement: str
+
+
+@dataclass(frozen=True)
+class ReimbursementView:
+    number: str
+    date: str
+    amount: str
+    attached_trips: str
 
 
 class TeamworksReadAdapter(Protocol):
@@ -59,6 +82,12 @@ class TeamworksReadAdapter(Protocol):
     def list_people(self) -> Sequence[PersonView]: ...
 
     def list_contracts(self, person_id: str | int) -> Sequence[ContractView]: ...
+
+    def list_scenarios(self, person_id: str | int) -> Sequence[ScenarioView]: ...
+
+    def list_trips(self, person_id: str | int) -> Sequence[TripView]: ...
+
+    def list_reimbursements(self, person_id: str | int) -> Sequence[ReimbursementView]: ...
 
 
 class DemoAdapter:
@@ -123,6 +152,15 @@ class DemoAdapter:
             ContractView("CDD saisonnier", "06/07/2026", "31/07/2026", "Groupe 2", "35 h", "Terminé"),
         )
 
+    def list_scenarios(self, person_id: str | int) -> Sequence[ScenarioView]:
+        return ()
+
+    def list_trips(self, person_id: str | int) -> Sequence[TripView]:
+        return ()
+
+    def list_reimbursements(self, person_id: str | int) -> Sequence[ReimbursementView]:
+        return ()
+
 
 class ProductionAdapterStub:
     """Emplacement historique conservé pour compatibilité du POC."""
@@ -131,4 +169,13 @@ class ProductionAdapterStub:
         raise RuntimeError("Utiliser TeamworksProductionReadAdapter pour la lecture réelle")
 
     def list_contracts(self, person_id: str | int) -> Sequence[ContractView]:
+        raise RuntimeError("Utiliser TeamworksProductionReadAdapter pour la lecture réelle")
+
+    def list_scenarios(self, person_id: str | int) -> Sequence[ScenarioView]:
+        raise RuntimeError("Utiliser TeamworksProductionReadAdapter pour la lecture réelle")
+
+    def list_trips(self, person_id: str | int) -> Sequence[TripView]:
+        raise RuntimeError("Utiliser TeamworksProductionReadAdapter pour la lecture réelle")
+
+    def list_reimbursements(self, person_id: str | int) -> Sequence[ReimbursementView]:
         raise RuntimeError("Utiliser TeamworksProductionReadAdapter pour la lecture réelle")
