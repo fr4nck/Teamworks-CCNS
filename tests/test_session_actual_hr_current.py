@@ -15,6 +15,7 @@ from domain.employment import SessionActual, SessionActualContractError
 from infrastructure.persistence.session_actual_hr_repository import (
     SessionActualHrPersistenceError,
     SessionActualHrRepository,
+    SessionActualHrTechnicalError,
 )
 
 STAFF_UID = "22222222-2222-2222-2222-222222222222"
@@ -208,7 +209,7 @@ def test_failure_between_work_and_inbox_rolls_back_atomically(db):
         return original(sql, params)
 
     repo._execute = fail_inbox
-    with pytest.raises(SessionActualHrPersistenceError, match="transactionnel"):
+    with pytest.raises(SessionActualHrTechnicalError, match="transactionnel"):
         repo.receive(payload(), "idem-fail")
     assert db.cursor.execute("SELECT count(*) FROM tw_session_actual_work").fetchone()[0] == 0
     assert db.cursor.execute("SELECT count(*) FROM tw_session_actual_inbox").fetchone()[0] == 0
