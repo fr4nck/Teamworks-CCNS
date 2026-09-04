@@ -9,8 +9,8 @@ from PySide6.QtCore import QObject, Signal, Slot
 class DeferredPeopleAdapter:
     """Décale uniquement la liste initiale des personnes.
 
-    Les autres lectures restent déléguées à l'adaptateur réel ; Scénarios/Frais
-    utilisent en production leur worker dédié afin de ne pas bloquer l'UI.
+    Les autres lectures restent déléguées à l'adaptateur réel ; les détails
+    individuels utilisent en production leur worker dédié afin de ne pas bloquer l'UI.
     """
 
     def __init__(self, delegate):
@@ -18,6 +18,9 @@ class DeferredPeopleAdapter:
 
     def list_people(self):
         return ()
+
+    def get_person_generalities(self, person_id):
+        return self._delegate.get_person_generalities(person_id)
 
     def list_contracts(self, person_id):
         return self._delegate.list_contracts(person_id)
@@ -38,12 +41,7 @@ class DeferredPeopleAdapter:
 
 
 class ProductionPeopleLoader(QObject):
-    """Charge les identités sur un worker Qt avec son propre adaptateur/reader.
-
-    Le worker possède donc sa propre connexion de lecture et la ferme dans son
-    thread avant de notifier l'UI. Aucun widget n'est manipulé hors du thread Qt
-    principal.
-    """
+    """Charge les identités sur un worker Qt avec son propre adaptateur/reader."""
 
     loaded = Signal(object, object)
     failed = Signal(str)
