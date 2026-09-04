@@ -6,17 +6,7 @@ from typing import Protocol, Sequence
 
 @dataclass(frozen=True)
 class PersonView:
-    """Projection de présentation agrégée pour l'écran Individus / Contrats.
-
-    Tous les champs affichés sont des chaînes prêtes à rendre. ``id_historique``
-    conserve séparément l'identifiant entier de la base historique lorsqu'il est
-    réellement disponible. Les valeurs absentes d'une source métier canonique
-    sont neutralisées par ``—`` dans l'adaptateur, jamais inventées dans la vue Qt.
-
-    ``first_name`` et ``last_name`` sont conservés séparément afin que la page
-    Généralités respecte les champs historiques Nom / Prénom sans tenter de
-    redécouper artificiellement ``name``.
-    """
+    """Projection de présentation agrégée pour l'écran Individus / Contrats."""
 
     id: str
     id_historique: int | None
@@ -32,6 +22,33 @@ class PersonView:
     site: str
     medical: str
     mutual: str
+
+
+@dataclass(frozen=True)
+class PersonCoordinateView:
+    key: int
+    category: str
+    text: str
+    label: str
+
+
+@dataclass(frozen=True)
+class PersonGeneralitiesView:
+    civility: str
+    maiden_name: str
+    last_name: str
+    first_name: str
+    birth_date: str
+    birth_country: str
+    birth_postcode: str
+    birth_city: str
+    nationality: str
+    social_situation: str
+    address: str
+    postcode: str
+    city: str
+    memo: str
+    coordinates: tuple[PersonCoordinateView, ...]
 
 
 @dataclass(frozen=True)
@@ -80,6 +97,8 @@ class TeamworksReadAdapter(Protocol):
     """
 
     def list_people(self) -> Sequence[PersonView]: ...
+
+    def get_person_generalities(self, person_id: str | int) -> PersonGeneralitiesView | None: ...
 
     def list_contracts(self, person_id: str | int) -> Sequence[ContractView]: ...
 
@@ -145,6 +164,9 @@ class DemoAdapter:
             ),
         )
 
+    def get_person_generalities(self, person_id: str | int) -> PersonGeneralitiesView | None:
+        return None
+
     def list_contracts(self, person_id: str | int) -> Sequence[ContractView]:
         return (
             ContractView("CDI", "01/09/2024", "—", "Groupe 4", "35 h", "Actif"),
@@ -166,6 +188,9 @@ class ProductionAdapterStub:
     """Emplacement historique conservé pour compatibilité du POC."""
 
     def list_people(self) -> Sequence[PersonView]:
+        raise RuntimeError("Utiliser TeamworksProductionReadAdapter pour la lecture réelle")
+
+    def get_person_generalities(self, person_id: str | int) -> PersonGeneralitiesView | None:
         raise RuntimeError("Utiliser TeamworksProductionReadAdapter pour la lecture réelle")
 
     def list_contracts(self, person_id: str | int) -> Sequence[ContractView]:
