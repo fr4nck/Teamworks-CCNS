@@ -1,16 +1,24 @@
 from __future__ import annotations
 
+from PySide6.QtCore import QThread
+
 from generalities_page import GeneralitiesPage
+from individual_activity_presenter import IndividualActivityPresenter
 from pilot_view import PeopleContractsPilot, _contract_count_text, _initials
 
 
 class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
-    """Pilote Individus/Contrats avec la vraie composition Généralités Qt.
+    """Pilote Individus/Contrats avec Généralités et lectures individuelles Qt."""
 
-    Cette sous-classe limite le changement au rail Qt : le reste du pilote reste
-    intact tandis que l'ancien `_build_general_tab` est remplacé par le composant
-    commun source-grounded.
-    """
+    def __init__(self, adapter, parent=None, *, activity_loader_class=None):
+        self._activity_loader_class = activity_loader_class
+        self._activity_thread = None
+        self._activity_worker = None
+        self._activity_loading_person_id = None
+        self._activity_pending_person_id = None
+        self._activity_selected_person_id = None
+        super().__init__(adapter, parent)
+        self.activity_presenter = IndividualActivityPresenter(self.legacy_tabs)
 
     def _build_general_tab(self):
         self.generalities_page = GeneralitiesPage(self)
@@ -21,6 +29,10 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
         page = getattr(self, "generalities_page", None)
         if page is not None:
             page.clear()
+        self._activity_selected_person_id = None
+        presenter = getattr(self, "activity_presenter", None)
+        if presenter is not None:
+            presenter.clear()
 
     def _show_person_from_proxy_row(self, proxy_row: int) -> None:
         source_index = self.people_proxy.mapToSource(self.people_proxy.index(proxy_row, 0))
@@ -45,4 +57,84 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
         self.detail_contracts.setText(_contract_count_text(contract_count))
         self.person_avatar.setText(_initials(person.name))
         self.detail_stack.setCurrentIndex(1)
-        self.statusBar().showMessage(f"Lecture seule · {person.name} · {contract_count} contrat(s)")
+
+        self._request_activity(historical_id)
+        self.statusBar().showMessage(
+            f"Lecture seule · {person.name} · {contract_count} contrat(s) · chargement Scénarios/Frais…"
+        )
+
+    def _request_activity(self, person_id) -> None:
+        self._activity_selected_person_id = person_id
+        self.activity_presenter.clear()
+
+        if self._activity_loader_class is None:
+            payload = {
+                "scenarios": tuple(self.adapter.list_scenarios(person_id)),
+                "trips": tuple(self.adapter.list_trips(person_id)),
+                "reimbursements": tuple(self.adapter.list_reimbursements(person_id)),
+            }
+            self.activity_presenter.set_payload(payload)
+            return
+
+        if self._activity_thread is not None and self._activity_thread.isRunning():
+            if self._activity_loading_person_id != person_id:
+                self._activity_pending_person_id = person_id
+            return
+        self._start_activity_load(person_id)
+
+    def _start_activity_load(self, person_id) -> None:
+        thread = QThread(self)
+        worker = self._activity_loader_class(person_id)
+        worker.moveToThread(thread)
+        self._activity_thread = thread
+        self._activity_worker = worker
+        self._activity_loading_person_id = person_id
+        self._activity_pending_person_id = None
+
+        worker.loaded.connect(self._on_activity_loaded)
+        worker.failed.connect(self._on_activity_failed)
+        thread.started.connect(worker.run)
+        thread.finished.connect(self._on_activity_finished)
+        thread.finished.connect(worker.deleteLater)
+        thread.start()
+
+    def _on_activity_loaded(self, person_id, payload) -> None:
+        if person_id == self._activity_selected_person_id:
+            self.activity_presenter.set_payload(payload)
+            scenarios = len(payload.get("scenarios", ()))
+            trips = len(payload.get("trips", ()))
+            reimbursements = len(payload.get("reimbursements", ()))
+            seconds = float(payload.get("seconds", 0.0))
+            self.statusBar().showMessage(
+                "Lecture seule · "
+                f"{scenarios} scénario(s) · {trips} déplacement(s) · "
+                f"{reimbursements} remboursement(s) · {seconds:.2f}s"
+            )
+        if self._activity_thread is not None:
+            self._activity_thread.quit()
+
+    def _on_activity_failed(self, person_id, details: str) -> None:
+        print("[Teamworks Qt POC] Échec lecture Scénarios/Frais :")
+        print(details)
+        if person_id == self._activity_selected_person_id:
+            self.activity_presenter.clear()
+            self.statusBar().showMessage("Lecture seule · échec du chargement Scénarios/Frais")
+        if self._activity_thread is not None:
+            self._activity_thread.quit()
+
+    def _on_activity_finished(self) -> None:
+        pending = self._activity_pending_person_id
+        self._activity_thread = None
+        self._activity_worker = None
+        self._activity_loading_person_id = None
+        self._activity_pending_person_id = None
+        if pending is not None and pending == self._activity_selected_person_id:
+            self._start_activity_load(pending)
+
+    def closeEvent(self, event) -> None:
+        self._activity_pending_person_id = None
+        thread = self._activity_thread
+        if thread is not None and thread.isRunning():
+            thread.quit()
+            thread.wait(12000)
+        super().closeEvent(event)
