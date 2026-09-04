@@ -7,7 +7,11 @@ from PySide6.QtCore import QObject, Signal, Slot
 
 
 class ProductionIndividualActivityLoader(QObject):
-    """Charge Scénarios/Frais avec une connexion de lecture propre au worker."""
+    """Charge les détails individuels avec une connexion propre au worker.
+
+    Le nom historique de la classe est conservé pour éviter un refactoring du
+    lanceur ; le payload contient désormais Généralités, Scénarios et Frais.
+    """
 
     loaded = Signal(object, object)
     failed = Signal(object, str)
@@ -24,10 +28,12 @@ class ProductionIndividualActivityLoader(QObject):
             from production_read_adapter import build_production_adapter
 
             adapter = build_production_adapter()
+            generalities = adapter.get_person_generalities(self.person_id)
             scenarios = tuple(adapter.list_scenarios(self.person_id))
             trips = tuple(adapter.list_trips(self.person_id))
             reimbursements = tuple(adapter.list_reimbursements(self.person_id))
             payload = {
+                "generalities": generalities,
                 "scenarios": scenarios,
                 "trips": trips,
                 "reimbursements": reimbursements,
