@@ -18,7 +18,11 @@ WORK_TABLE = "tw_session_actual_work"
 
 
 class SessionActualHrPersistenceError(ValueError):
-    pass
+    """Erreur déterministe de persistance ou de contrat, non rejouable."""
+
+
+class SessionActualHrTechnicalError(RuntimeError):
+    """Panne technique/transitoire de persistance, éligible au retry transport."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -331,4 +335,4 @@ class SessionActualHrRepository:
             raise
         except Exception as error:
             self._rollback()
-            raise SessionActualHrPersistenceError("échec transactionnel du réalisé RH: %s" % error) from error
+            raise SessionActualHrTechnicalError("échec transactionnel du réalisé RH: %s" % error) from error
