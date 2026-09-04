@@ -105,14 +105,14 @@ def test_repository_transaction_failure_is_acked_retryable_end_to_end():
         assert repository.ensure_schema(apply=True) == ()
         assert repository.register_person_uid(STAFF_UID, 1) == 1
 
-        original_execute = repository._execute
+        # Le moteur SQLite lui-même refuse l'écriture de l'inbox. L'INSERT du
+        # journal courant est autorisé, puis doit être annulé par le rollback.
+        def deny_inbox_insert(action, arg1, arg2, database, source):
+            if action == sqlite3.SQLITE_INSERT and arg1 == "tw_session_actual_inbox":
+                return sqlite3.SQLITE_DENY
+            return sqlite3.SQLITE_OK
 
-        def fail_inbox(sql, params=()):
-            if sql.lstrip().startswith("INSERT INTO tw_session_actual_inbox"):
-                raise sqlite3.OperationalError("simulated transaction failure")
-            return original_execute(sql, params)
-
-        repository._execute = fail_inbox
+        db.connexion.set_authorizer(deny_inbox_insert)
         consumer = SessionActualHrConsumer(repository)
         transport = FakeTransport(mailbox_item())
 
@@ -125,17 +125,13 @@ def test_repository_transaction_failure_is_acked_retryable_end_to_end():
         assert summary["retryable"] == 1
         assert summary["rejected"] == 0
         assert summary["acked"] == 1
-        assert transport.acks == [
-            (
-                DELIVERY_ID,
-                {
-                    "status": "retryable",
-                    "idempotence_key": IDEMPOTENCE,
-                    "correlation_id": CORRELATION,
-                    "detail": "SessionActualHrTechnicalError: échec transactionnel du réalisé RH: simulated transaction failure",
-                },
-            )
-        ]
+        assert transport.acks[0][0] == DELIVERY_ID
+        receipt = transport.acks[0][1]
+        assert receipt["status"] == "retryable"
+        assert receipt["idempotence_key"] == IDEMPOTENCE
+        assert receipt["correlation_id"] == CORRELATION
+        assert "SessionActualHrTechnicalError" in receipt["detail"]
+        assert "transactionnel" in receipt["detail"]
         assert db.cursor.execute("SELECT count(*) FROM tw_session_actual_work").fetchone()[0] == 0
         assert db.cursor.execute("SELECT count(*) FROM tw_session_actual_inbox").fetchone()[0] == 0
     finally:
