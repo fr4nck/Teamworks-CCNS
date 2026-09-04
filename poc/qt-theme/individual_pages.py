@@ -20,6 +20,9 @@ from legacy_sheets import (
     InterviewPreviewDialog,
     PiecePreviewDialog,
     PresencePreviewDialog,
+    ReimbursementPreviewDialog,
+    ScenarioPreviewDialog,
+    TripPreviewDialog,
 )
 from ui.common import (
     ActionSpec,
@@ -92,7 +95,12 @@ class QuestionnairePage(QWidget):
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         root = QVBoxLayout(self)
-        root.setContentsMargins(TOKENS.spacing.sm, TOKENS.spacing.sm, TOKENS.spacing.sm, TOKENS.spacing.sm)
+        root.setContentsMargins(
+            TOKENS.spacing.sm,
+            TOKENS.spacing.sm,
+            TOKENS.spacing.sm,
+            TOKENS.spacing.sm,
+        )
 
         section = TwFormSection("Questionnaire")
         self.model = _empty_model(("Question", "Réponse"), self)
@@ -106,19 +114,19 @@ class QuestionnairePage(QWidget):
 
 
 class QualificationsPage(QWidget):
-    """Transposition de ``CTRL_Page_qualifications`` sans persistance.
-
-    La structure suit le source courant : Pièces à fournir et Qualifications en
-    deux colonnes, puis Pièces reçues en dessous. Les actions sont placées sous
-    les listes comme dans wx ; seules les ouvertures d'aperçus locaux sont actives.
-    """
+    """Transposition de ``CTRL_Page_qualifications`` sans persistance."""
 
     def __init__(self, icon_loader: IconLoader, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._icon_loader = icon_loader
 
         root = QVBoxLayout(self)
-        root.setContentsMargins(TOKENS.spacing.sm, TOKENS.spacing.sm, TOKENS.spacing.sm, TOKENS.spacing.sm)
+        root.setContentsMargins(
+            TOKENS.spacing.sm,
+            TOKENS.spacing.sm,
+            TOKENS.spacing.sm,
+            TOKENS.spacing.sm,
+        )
         root.setSpacing(TOKENS.spacing.md)
 
         top = QHBoxLayout()
@@ -160,7 +168,13 @@ class QualificationsPage(QWidget):
         self.received_actions = TwActionBar(
             [
                 ActionSpec("add", "Ajouter une pièce", "Ajouter.png", "Saisir une nouvelle pièce"),
-                ActionSpec("edit", "Modifier", "Modifier.png", "Modifier la pièce sélectionnée", enabled=False),
+                ActionSpec(
+                    "edit",
+                    "Modifier",
+                    "Modifier.png",
+                    "Modifier la pièce sélectionnée",
+                    enabled=False,
+                ),
                 ActionSpec(
                     "delete",
                     "Supprimer",
@@ -186,12 +200,7 @@ class QualificationsPage(QWidget):
 
 
 class PresencesPage(QWidget):
-    """Transposition de ``CTRL_Page_presences`` sans lecture/écriture métier.
-
-    Le source place la barre d'actions avant la recherche, le résumé puis la
-    liste. Cette géométrie est conservée ; la recherche filtre seulement le
-    modèle Qt local lorsqu'il contient des lignes.
-    """
+    """Transposition de ``CTRL_Page_presences`` sans lecture/écriture métier."""
 
     HEADERS = ("Date", "Vacances", "Horaires", "Durée", "Intitulé")
 
@@ -199,13 +208,24 @@ class PresencesPage(QWidget):
         super().__init__(parent)
 
         root = QVBoxLayout(self)
-        root.setContentsMargins(TOKENS.spacing.sm, TOKENS.spacing.sm, TOKENS.spacing.sm, TOKENS.spacing.sm)
+        root.setContentsMargins(
+            TOKENS.spacing.sm,
+            TOKENS.spacing.sm,
+            TOKENS.spacing.sm,
+            TOKENS.spacing.sm,
+        )
 
         section = TwFormSection("Présences")
         self.actions = TwActionBar(
             [
                 ActionSpec("add", "Ajouter", "Ajouter.png", "Saisir une nouvelle présence"),
-                ActionSpec("edit", "Modifier", "Modifier.png", "Modifier la présence sélectionnée", enabled=False),
+                ActionSpec(
+                    "edit",
+                    "Modifier",
+                    "Modifier.png",
+                    "Modifier la présence sélectionnée",
+                    enabled=False,
+                ),
                 ActionSpec(
                     "delete",
                     "Supprimer",
@@ -214,9 +234,27 @@ class PresencesPage(QWidget):
                     role="destructive",
                     enabled=False,
                 ),
-                ActionSpec("print", "Imprimer", "Imprimante.png", "Imprimer une feuille d'heures", enabled=False),
-                ActionSpec("stats", "Statistiques", "Diagramme.png", "Afficher les statistiques de présences", enabled=False),
-                ActionSpec("model", "Appliquer un modèle", "Modele.png", "Appliquer un modèle de présences", enabled=False),
+                ActionSpec(
+                    "print",
+                    "Imprimer",
+                    "Imprimante.png",
+                    "Imprimer une feuille d'heures",
+                    enabled=False,
+                ),
+                ActionSpec(
+                    "stats",
+                    "Statistiques",
+                    "Diagramme.png",
+                    "Afficher les statistiques de présences",
+                    enabled=False,
+                ),
+                ActionSpec(
+                    "model",
+                    "Appliquer un modèle",
+                    "Modele.png",
+                    "Appliquer un modèle de présences",
+                    enabled=False,
+                ),
             ],
             icon_loader=icon_loader,
         )
@@ -265,13 +303,227 @@ class PresencesPage(QWidget):
             self.summary.setText("")
 
 
+class ScenariosPage(QWidget):
+    """Page Scénarios individuelle fidèle à ``CTRL_Page_scenarios``.
+
+    La liste reste vide tant qu'aucun reader dédié n'est branché. L'ajout ouvre
+    uniquement l'aperçu Qt local ; modifier, supprimer et dupliquer restent
+    désactivés afin de ne pas reproduire le moteur de reports dans les widgets.
+    """
+
+    HEADERS = ("Nom du scénario", "Période", "Description")
+
+    def __init__(self, icon_loader: IconLoader, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        root = QVBoxLayout(self)
+        root.setContentsMargins(
+            TOKENS.spacing.sm,
+            TOKENS.spacing.sm,
+            TOKENS.spacing.sm,
+            TOKENS.spacing.sm,
+        )
+
+        section = TwFormSection("Scénarios")
+        self.model = _empty_model(self.HEADERS, self)
+        self.table = _table(self.model)
+        header = self.table.horizontalHeader()
+        header.setStretchLastSection(False)
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.Interactive)
+        header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
+        header.resizeSection(1, 190)
+        section.add_widget(self.table, 1)
+
+        self.actions = TwActionBar(
+            [
+                ActionSpec(
+                    "add",
+                    "Ajouter",
+                    "Ajouter.png",
+                    "Ouvrir l'aperçu de création d'un scénario",
+                ),
+                ActionSpec(
+                    "edit",
+                    "Modifier",
+                    "Modifier.png",
+                    "Modifier le scénario sélectionné",
+                    enabled=False,
+                ),
+                ActionSpec(
+                    "delete",
+                    "Supprimer",
+                    "Supprimer.png",
+                    "Supprimer le scénario sélectionné",
+                    role="destructive",
+                    enabled=False,
+                ),
+                ActionSpec(
+                    "duplicate",
+                    "Dupliquer",
+                    "Dupliquer.png",
+                    "Dupliquer le scénario sélectionné",
+                    enabled=False,
+                ),
+            ],
+            icon_loader=icon_loader,
+        )
+        self.actions.triggered.connect(self._on_action)
+        # Le source wx place les quatre actions sous la liste.
+        section.add_widget(self.actions)
+        root.addWidget(section, 1)
+
+    def _on_action(self, action_id: str) -> None:
+        if action_id == "add":
+            _open_preview(ScenarioPreviewDialog, self)
+
+
+class ExpensesPage(QWidget):
+    """Page Frais individuelle fidèle à ``CTRL_Page_frais``.
+
+    Les deux blocs Déplacements/Remboursements occupent chacun la moitié de la
+    page et conservent leurs barres d'actions au-dessus des listes. Les calculs,
+    rattachements et écritures restent hors de l'UI Qt pendant le POC.
+    """
+
+    TRIP_HEADERS = (
+        "N°",
+        "Date",
+        "Objet",
+        "Trajet",
+        "Distance",
+        "Tarif",
+        "Montant",
+        "Remboursement",
+    )
+    REIMBURSEMENT_HEADERS = ("N°", "Date", "Montant", "Déplacements rattachés")
+
+    def __init__(self, icon_loader: IconLoader, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        root = QVBoxLayout(self)
+        root.setContentsMargins(
+            TOKENS.spacing.sm,
+            TOKENS.spacing.sm,
+            TOKENS.spacing.sm,
+            TOKENS.spacing.sm,
+        )
+        root.setSpacing(TOKENS.spacing.md)
+
+        self.trip_model = _empty_model(self.TRIP_HEADERS, self)
+        trips = self._build_trips(icon_loader)
+        root.addWidget(trips, 1)
+
+        self.reimbursement_model = _empty_model(self.REIMBURSEMENT_HEADERS, self)
+        reimbursements = self._build_reimbursements(icon_loader)
+        root.addWidget(reimbursements, 1)
+
+    def _build_trips(self, icon_loader: IconLoader) -> TwFormSection:
+        section = TwFormSection("Déplacements")
+        self.trip_actions = TwActionBar(
+            [
+                ActionSpec(
+                    "add",
+                    "Ajouter",
+                    "Ajouter.png",
+                    "Ouvrir l'aperçu de saisie d'un déplacement",
+                ),
+                ActionSpec(
+                    "edit",
+                    "Modifier",
+                    "Modifier.png",
+                    "Modifier le déplacement sélectionné",
+                    enabled=False,
+                ),
+                ActionSpec(
+                    "delete",
+                    "Supprimer",
+                    "Supprimer.png",
+                    "Supprimer le déplacement sélectionné",
+                    role="destructive",
+                    enabled=False,
+                ),
+                ActionSpec(
+                    "print",
+                    "Imprimer",
+                    "Imprimante.png",
+                    "Imprimer une fiche de frais de déplacement",
+                    enabled=False,
+                ),
+            ],
+            icon_loader=icon_loader,
+        )
+        self.trip_actions.triggered.connect(self._on_trip_action)
+        section.add_widget(self.trip_actions)
+
+        self.trip_table = _table(self.trip_model)
+        header = self.trip_table.horizontalHeader()
+        for column in range(len(self.TRIP_HEADERS)):
+            header.setSectionResizeMode(column, QHeaderView.ResizeMode.Interactive)
+        header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)
+        section.add_widget(self.trip_table, 1)
+        return section
+
+    def _build_reimbursements(self, icon_loader: IconLoader) -> TwFormSection:
+        section = TwFormSection("Remboursements")
+        self.reimbursement_actions = TwActionBar(
+            [
+                ActionSpec(
+                    "add",
+                    "Ajouter",
+                    "Ajouter.png",
+                    "Ouvrir l'aperçu de saisie d'un remboursement",
+                ),
+                ActionSpec(
+                    "edit",
+                    "Modifier",
+                    "Modifier.png",
+                    "Modifier le remboursement sélectionné",
+                    enabled=False,
+                ),
+                ActionSpec(
+                    "delete",
+                    "Supprimer",
+                    "Supprimer.png",
+                    "Supprimer le remboursement sélectionné",
+                    role="destructive",
+                    enabled=False,
+                ),
+            ],
+            icon_loader=icon_loader,
+        )
+        self.reimbursement_actions.triggered.connect(self._on_reimbursement_action)
+        section.add_widget(self.reimbursement_actions)
+
+        self.reimbursement_table = _table(self.reimbursement_model)
+        header = self.reimbursement_table.horizontalHeader()
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.Interactive)
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.Interactive)
+        header.setSectionResizeMode(2, QHeaderView.ResizeMode.Interactive)
+        header.setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)
+        section.add_widget(self.reimbursement_table, 1)
+        return section
+
+    def _on_trip_action(self, action_id: str) -> None:
+        if action_id == "add":
+            _open_preview(TripPreviewDialog, self)
+
+    def _on_reimbursement_action(self, action_id: str) -> None:
+        if action_id == "add":
+            _open_preview(ReimbursementPreviewDialog, self)
+
+
 class RecruitmentPage(QWidget):
     """Page Recrutement de la fiche individuelle (`CTRL_Page_candidatures`)."""
 
     def __init__(self, icon_loader: IconLoader, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         root = QVBoxLayout(self)
-        root.setContentsMargins(TOKENS.spacing.sm, TOKENS.spacing.sm, TOKENS.spacing.sm, TOKENS.spacing.sm)
+        root.setContentsMargins(
+            TOKENS.spacing.sm,
+            TOKENS.spacing.sm,
+            TOKENS.spacing.sm,
+            TOKENS.spacing.sm,
+        )
         root.setSpacing(TOKENS.spacing.md)
 
         self.applications_model = _empty_model(
@@ -314,7 +566,13 @@ class RecruitmentPage(QWidget):
         actions = TwActionBar(
             [
                 ActionSpec("add", "Ajouter", "Ajouter.png", f"Saisir un nouvel élément {title.lower()}"),
-                ActionSpec("edit", "Modifier", "Modifier.png", "Modifier l'élément sélectionné", enabled=False),
+                ActionSpec(
+                    "edit",
+                    "Modifier",
+                    "Modifier.png",
+                    "Modifier l'élément sélectionné",
+                    enabled=False,
+                ),
                 ActionSpec(
                     "delete",
                     "Supprimer",
@@ -326,7 +584,9 @@ class RecruitmentPage(QWidget):
             ],
             icon_loader=icon_loader,
         )
-        actions.triggered.connect(lambda action_id, kind=prefix: self._on_action(kind, action_id))
+        actions.triggered.connect(
+            lambda action_id, kind=prefix: self._on_action(kind, action_id)
+        )
         section.add_widget(actions)
 
         table = _table(model)
