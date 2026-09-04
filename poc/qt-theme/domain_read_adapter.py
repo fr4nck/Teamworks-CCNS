@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date
 from typing import Sequence
 
-from data_adapter import ContractView, PersonView, TeamworksReadAdapter
+from data_adapter import ContractView, PersonGeneralitiesView, PersonView, TeamworksReadAdapter
 from domain.contracts.contract import Contract
 from domain.people.person import Person
 
@@ -41,6 +41,10 @@ class DomainPeopleReadAdapter(TeamworksReadAdapter):
             (person.code_internal or person.id): person.id for person in people
         }
         return tuple(self._person_to_view(person) for person in people)
+
+    def get_person_generalities(self, person_id: str) -> PersonGeneralitiesView | None:
+        # Le domaine in-memory n'expose pas encore la fiche historique complète.
+        return None
 
     def list_contracts(self, person_id: str) -> Sequence[ContractView]:
         if self._contracts_repository is None:
