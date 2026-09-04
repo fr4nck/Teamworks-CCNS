@@ -1,10 +1,19 @@
 from __future__ import annotations
 
 import time
+from decimal import Decimal, InvalidOperation
 from typing import Sequence
 
-from data_adapter import ContractView, PersonView, TeamworksReadAdapter
+from data_adapter import (
+    ContractView,
+    PersonView,
+    ReimbursementView,
+    ScenarioView,
+    TeamworksReadAdapter,
+    TripView,
+)
 from infrastructure.persistence.ccns_data_reader import CcnsDataReader
+from infrastructure.persistence.individual_activity_reader import IndividualActivityReader
 from infrastructure.persistence.person_reader import PersonReader
 from infrastructure.persistence.teamworks_contract_conversions import as_date
 
@@ -15,20 +24,16 @@ EMPTY = "—"
 class TeamworksProductionReadAdapter(TeamworksReadAdapter):
     """Adaptateur lecture seule vers les readers historiques Teamworks.
 
-    Cette classe ne contient aucun SQL. Elle coordonne exclusivement les API
-    actuelles de ``PersonReader`` et ``CcnsDataReader`` puis produit les DTO de
-    présentation attendus par Qt.
-
-    ``startup_timings`` ne modifie aucun comportement métier : il expose
-    uniquement des mesures monotones permettant de distinguer import de
-    ``GestionDB``, ouverture de connexion, lecture SQL et mapping Python.
+    Cette classe ne contient aucun SQL. Elle coordonne les readers dédiés puis
+    produit les DTO de présentation attendus par Qt.
     """
 
-    def __init__(self, person_reader=None, contract_reader=None):
+    def __init__(self, person_reader=None, contract_reader=None, activity_reader=None):
         self._closed = False
         self.startup_timings: dict[str, float | int | bool] = {
             "person_reader_construction_seconds": 0.0,
             "contract_reader_construction_seconds": 0.0,
+            "activity_reader_construction_seconds": 0.0,
             "people_gestiondb_import_seconds": 0.0,
             "people_db_open_seconds": 0.0,
             "people_db_is_network": False,
@@ -46,10 +51,15 @@ class TeamworksProductionReadAdapter(TeamworksReadAdapter):
             db_factory=lambda: self._profiled_db_factory("contracts")
         )
         contract_ready = time.perf_counter()
+        self._activity_reader = activity_reader or IndividualActivityReader(
+            db_factory=lambda: self._profiled_db_factory("activity")
+        )
+        activity_ready = time.perf_counter()
         self.startup_timings.update(
             {
                 "person_reader_construction_seconds": person_ready - started,
                 "contract_reader_construction_seconds": contract_ready - person_ready,
+                "activity_reader_construction_seconds": activity_ready - contract_ready,
             }
         )
 
@@ -68,10 +78,7 @@ class TeamworksProductionReadAdapter(TeamworksReadAdapter):
     def list_people(self) -> Sequence[PersonView]:
         self._ensure_open()
 
-        # Force explicitement la première ouverture afin de ne pas mélanger le
-        # coût d'import/connexion historique avec celui du SELECT lui-même.
         _ = self._person_reader.db
-
         reader_started = time.perf_counter()
         records = self._person_reader.lire_identites()
         reader_finished = time.perf_counter()
@@ -116,6 +123,39 @@ class TeamworksProductionReadAdapter(TeamworksReadAdapter):
         records = self._contract_reader.lire_contrats_personne(historical_id)
         return tuple(self._contract_to_view(record) for record in records)
 
+    def list_scenarios(self, person_id: str | int) -> Sequence[ScenarioView]:
+        self._ensure_open()
+        historical_id = self._require_historical_id(person_id)
+        records = self._activity_reader.lire_scenarios_personne(historical_id)
+        return tuple(
+            ScenarioView(
+                name=_text(record.nom),
+                period=_scenario_period(record.date_debut, record.date_fin),
+                description=_scenario_description(record.description),
+            )
+            for record in records
+        )
+
+    def list_trips(self, person_id: str | int) -> Sequence[TripView]:
+        self._ensure_open()
+        historical_id = self._require_historical_id(person_id)
+        records = self._activity_reader.lire_deplacements_personne(historical_id)
+        return tuple(self._trip_to_view(record) for record in records)
+
+    def list_reimbursements(self, person_id: str | int) -> Sequence[ReimbursementView]:
+        self._ensure_open()
+        historical_id = self._require_historical_id(person_id)
+        records = self._activity_reader.lire_remboursements_personne(historical_id)
+        return tuple(
+            ReimbursementView(
+                number=str(record.IDremboursement),
+                date=_format_date(record.date),
+                amount=_format_money(record.montant),
+                attached_trips=_format_attached_trip_ids(record.listeIDdeplacement),
+            )
+            for record in records
+        )
+
     @staticmethod
     def _contract_to_view(record) -> ContractView:
         return ContractView(
@@ -125,6 +165,31 @@ class TeamworksProductionReadAdapter(TeamworksReadAdapter):
             classification=record.classification or EMPTY,
             duration=_format_hours(record.temps_hebdo),
             status=EMPTY,
+        )
+
+    @staticmethod
+    def _trip_to_view(record) -> TripView:
+        start = _text(record.ville_depart, empty="")
+        end = _text(record.ville_arrivee, empty="")
+        if not start and not end:
+            route = EMPTY
+        else:
+            separator = " <--> " if _is_round_trip(record.aller_retour) else " -> "
+            route = f"{start}{separator}{end}".strip()
+        reimbursement = (
+            ""
+            if record.IDremboursement in (None, 0, "")
+            else f"N°{record.IDremboursement}"
+        )
+        return TripView(
+            number=str(record.IDdeplacement),
+            date=_format_date(record.date),
+            purpose=_text(record.objet),
+            route=route,
+            distance=_format_unit(record.distance, "Km"),
+            tariff=_format_unit(record.tarif_km, "€/km"),
+            amount=_format_product_money(record.distance, record.tarif_km),
+            reimbursement=reimbursement,
         )
 
     @staticmethod
@@ -147,10 +212,10 @@ class TeamworksProductionReadAdapter(TeamworksReadAdapter):
         if self._closed:
             return
         errors = []
-        for reader in (self._contract_reader, self._person_reader):
+        for reader in (self._activity_reader, self._contract_reader, self._person_reader):
             try:
                 reader.close()
-            except Exception as exc:  # nettoyage best-effort des deux ressources
+            except Exception as exc:
                 errors.append(exc)
         self._closed = True
         if errors:
@@ -171,6 +236,75 @@ def _format_hours(value) -> str:
     if "." in text:
         text = text.rstrip("0").rstrip(".")
     return f"{text} h"
+
+
+def _text(value, *, empty: str = EMPTY) -> str:
+    if value is None:
+        return empty
+    text = str(value).strip()
+    return text or empty
+
+
+def _scenario_period(start, end) -> str:
+    start_text = _format_date(start)
+    end_text = _format_date(end)
+    if EMPTY in (start_text, end_text):
+        return EMPTY
+    return f"Du {start_text} au {end_text}"
+
+
+def _scenario_description(value) -> str:
+    text = _text(value, empty="")
+    return text or "Aucune description"
+
+
+def _is_round_trip(value) -> bool:
+    return value is True or str(value) == "True"
+
+
+def _format_unit(value, unit: str) -> str:
+    text = _text(value, empty="")
+    return EMPTY if not text else f"{text} {unit}"
+
+
+def _decimal(value) -> Decimal:
+    if value is None or isinstance(value, bool):
+        raise InvalidOperation
+    text = str(value).strip().replace(",", ".")
+    if not text:
+        raise InvalidOperation
+    return Decimal(text)
+
+
+def _format_money(value) -> str:
+    try:
+        amount = _decimal(value)
+    except (InvalidOperation, ValueError):
+        return EMPTY
+    return f"{amount:.2f} €"
+
+
+def _format_product_money(left, right) -> str:
+    try:
+        amount = _decimal(left) * _decimal(right)
+    except (InvalidOperation, ValueError):
+        return EMPTY
+    return f"{amount:.2f} €"
+
+
+def _format_attached_trip_ids(value) -> str:
+    if value is None or value == "":
+        return "Aucun déplacement rattaché"
+    if isinstance(value, bool):
+        return EMPTY
+    if isinstance(value, int):
+        ids = [str(value)]
+    else:
+        text = str(value).strip()
+        ids = [part for part in text.split("-") if part] if text else []
+    if not ids:
+        return "Aucun déplacement rattaché"
+    return "N° " + ", ".join(ids)
 
 
 def build_production_adapter() -> TeamworksProductionReadAdapter:
