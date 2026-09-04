@@ -14,12 +14,13 @@ class LegacyIndividualTabs:
     """Fabrique des pages Qt de la fiche individuelle historique Teamworks.
 
     Chaque page visible délègue désormais à un composant dédié et source-grounded.
-    Les lectures métier restent à raccorder progressivement ; les écritures restent
-    désactivées pendant le POC.
+    Les écritures restent désactivées pendant le POC.
     """
 
     def __init__(self, icon_loader):
         self.icon_loader = icon_loader
+        self.scenarios_page = None
+        self.expenses_page = None
 
     def questionnaire(self):
         return QuestionnairePage()
@@ -31,10 +32,12 @@ class LegacyIndividualTabs:
         return PresencesPage(self.icon_loader)
 
     def scenarios(self):
-        return ScenariosPage(self.icon_loader)
+        self.scenarios_page = ScenariosPage(self.icon_loader)
+        return self.scenarios_page
 
     def expenses(self):
-        return ExpensesPage(self.icon_loader)
+        self.expenses_page = ExpensesPage(self.icon_loader)
+        return self.expenses_page
 
     def recruitment(self):
         return RecruitmentPage(self.icon_loader)
