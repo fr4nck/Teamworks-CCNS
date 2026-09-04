@@ -167,10 +167,6 @@ def test_cache_distances_est_symetrique_et_conserve_un_aller_simple() -> None:
     assert "cp_arrivee = int(self.ctrl_cp_arrivee.GetValue())" in sauvegarde
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="défaut historique : modifier un déplacement remboursé force IDremboursement à 0",
-)
 def test_modification_deplacement_ne_force_pas_le_rattachement_a_zero() -> None:
     source = function_source(
         DEPLACEMENT, "SauvegardeDeplacement", class_name="SaisieDeplacement"

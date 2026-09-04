@@ -668,9 +668,9 @@ class SaisieDeplacement(wx.Dialog):
             ("distance", distance),
             ("aller_retour", aller_retour),
             ("tarif_km", tarif_km),
-            ("IDremboursement", 0),
         ]
         if self.IDdeplacement is None:
+            listeDonnees.append(("IDremboursement", 0))
             ID = DB.ReqInsert("deplacements", listeDonnees)
         else:
             DB.ReqMAJ("deplacements", listeDonnees, "IDdeplacement", self.IDdeplacement)
