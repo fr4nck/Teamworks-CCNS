@@ -7,6 +7,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 PAGES = ROOT / "poc" / "qt-theme" / "individual_pages.py"
 TABS = ROOT / "poc" / "qt-theme" / "legacy_individual_tabs.py"
+DIALOGS = ROOT / "poc" / "qt-theme" / "scenario_expense_dialogs.py"
 
 
 def _class_assignments(path: Path, class_name: str) -> dict[str, object]:
@@ -58,3 +59,31 @@ def test_legacy_tabs_delegate_scenarios_and_expenses_to_common_pages() -> None:
     assert "return ExpensesPage(self.icon_loader)" in source
     assert '"État"' not in source
     assert '"Rmbst"' not in source
+
+
+def test_scenarios_and_expenses_use_dedicated_source_grounded_dialogs() -> None:
+    source = PAGES.read_text(encoding="utf-8")
+    assert "from scenario_expense_dialogs import" in source
+    assert "ScenarioPreviewDialog" in source
+    assert "TripPreviewDialog" in source
+    assert "ReimbursementPreviewDialog" in source
+
+
+def test_reimbursement_dialog_columns_match_historical_attachment_list() -> None:
+    values = _class_assignments(DIALOGS, "ReimbursementPreviewDialog")
+    assert values["TRIP_HEADERS"] == (
+        "N°",
+        "Date",
+        "Objet",
+        "Trajet",
+        "Distance",
+        "Tarif",
+        "Montant",
+    )
+
+
+def test_scenario_dialog_does_not_invent_static_business_grid_axes() -> None:
+    source = DIALOGS.read_text(encoding="utf-8")
+    assert 'QTableWidget(0, 0)' in source
+    assert '["Période", "Catégorie", "Temps"]' not in source
+    assert '"Personne sélectionnée"' not in source
