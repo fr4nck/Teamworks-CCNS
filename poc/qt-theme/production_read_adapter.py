@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import time
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal, InvalidOperation, localcontext
 from typing import Sequence
 
 from data_adapter import (
@@ -278,18 +278,22 @@ def _decimal(value) -> Decimal:
 
 def _format_money(value) -> str:
     try:
-        amount = _decimal(value)
+        with localcontext() as context:
+            context.prec = 28
+            amount = _decimal(value)
+            return f"{amount:.2f} €"
     except (InvalidOperation, ValueError):
         return EMPTY
-    return f"{amount:.2f} €"
 
 
 def _format_product_money(left, right) -> str:
     try:
-        amount = _decimal(left) * _decimal(right)
+        with localcontext() as context:
+            context.prec = 28
+            amount = _decimal(left) * _decimal(right)
+            return f"{amount:.2f} €"
     except (InvalidOperation, ValueError):
         return EMPTY
-    return f"{amount:.2f} €"
 
 
 def _format_attached_trip_ids(value) -> str:
