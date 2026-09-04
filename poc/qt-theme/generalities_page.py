@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QStandardItemModel
+from PySide6.QtGui import QStandardItem, QStandardItemModel
 from PySide6.QtWidgets import (
     QGridLayout,
     QLineEdit,
@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from data_adapter import PersonView
+from data_adapter import PersonGeneralitiesView, PersonView
 from generalities_satellites import (
     CitiesPreviewDialog,
     CoordinatesPreviewDialog,
@@ -52,25 +52,16 @@ def _secondary_button(label: str, tooltip: str) -> QPushButton:
 
 
 def _empty_layout(layout) -> None:
-    """Détache les items d'un layout sans détruire les widgets réutilisés."""
     while layout.count():
         layout.takeAt(0)
 
 
 class GeneralitiesPage(QWidget):
-    """Transposition Qt de la page historique ``CTRL_Page_generalites``.
+    """Transposition Qt de ``CTRL_Page_generalites`` en consultation.
 
-    Le composant reproduit les cinq sections de la page réelle (Identité,
-    Situation sociale, Adresse, Coordonnées, Mémo) et réutilise le socle commun
-    Qt. Il reste strictement en consultation : les satellites peuvent être
-    ouverts pour recette visuelle, mais aucune écriture n'est activée.
-
-    La fiche utilise la densité compacte du socle commun et reprend aussi le
-    comportement responsive du wrapper 0.9.1f : deux colonnes 3/5 + 2/5 en
-    desktop, puis une colonne scrollable quand l'espace devient insuffisant.
-
-    Les informations absentes du contrat de lecture courant restent neutres.
-    Le NIR n'est volontairement pas chargé par ce POC.
+    Les cinq sections historiques sont conservées. Les valeurs proviennent du
+    reader dédié ; le NIR garde sa place visuelle mais n'est jamais demandé à la
+    base dans ce POC.
     """
 
     def __init__(self, parent: QWidget | None = None) -> None:
@@ -131,7 +122,6 @@ class GeneralitiesPage(QWidget):
         self.content_grid.removeWidget(self.right_column)
 
         if columns == 1:
-            # Même ordre que le wrapper wx responsive actuel.
             for section in (
                 self.section_identity,
                 self.section_social,
@@ -183,19 +173,14 @@ class GeneralitiesPage(QWidget):
 
     def _build_identity(self) -> TwFormSection:
         section = TwFormSection("Identité", compact=True)
-
         self.civility = _read_line()
         section.add_row(self._row("civility", "Civilité", self.civility))
-
         self.maiden_name = _read_line()
         section.add_row(self._row("maiden_name", "Nom de jeune fille", self.maiden_name))
-
         self.last_name = _read_line()
         section.add_row(self._row("last_name", "Nom", self.last_name))
-
         self.first_name = _read_line()
         section.add_row(self._row("first_name", "Prénom", self.first_name))
-
         self.birth_date = _read_line()
         section.add_row(self._row("birth_date", "Date de naissance", self.birth_date))
 
@@ -212,9 +197,7 @@ class GeneralitiesPage(QWidget):
         )
 
         self.birth_postcode = _read_line()
-        section.add_row(
-            self._row("birth_postcode", "Code postal de naissance", self.birth_postcode)
-        )
+        section.add_row(self._row("birth_postcode", "Code postal de naissance", self.birth_postcode))
 
         self.birth_city = _read_line()
         search_birth_city = _secondary_button("Rechercher", "Rechercher ou saisir une ville de naissance")
@@ -228,8 +211,6 @@ class GeneralitiesPage(QWidget):
             )
         )
 
-        # Donnée sensible : la page conserve sa place historique mais le POC ne
-        # la lit pas. Le contrôle désactivé matérialise explicitement cet état.
         self.nir = _read_line("Non chargé dans le POC", disabled=True)
         section.add_row(
             self._row(
@@ -324,28 +305,44 @@ class GeneralitiesPage(QWidget):
         return section
 
     def set_person(self, person: PersonView) -> None:
-        """Injecte uniquement les informations réellement exposées par l'adaptateur."""
+        """Affiche immédiatement l'identité minimale puis attend le détail worker."""
+        self.clear()
         self.last_name.setText(person.last_name or EMPTY)
         self.first_name.setText(person.first_name or EMPTY)
         self.birth_date.setText(person.birth_date or EMPTY)
 
-        # Les autres champs Généralités ne sont pas encore exposés par le
-        # reader canonique. Les laisser neutres interdit toute invention UI.
-        for editor in (
-            self.civility,
-            self.maiden_name,
-            self.birth_country,
-            self.birth_postcode,
-            self.birth_city,
-            self.nationality,
-            self.social_situation,
-            self.postcode,
-            self.city,
+    def set_details(self, details: PersonGeneralitiesView | None) -> None:
+        """Injecte les Généralités historiques lues hors du thread UI."""
+        if details is None:
+            return
+        for editor, value in (
+            (self.civility, details.civility),
+            (self.maiden_name, details.maiden_name),
+            (self.last_name, details.last_name),
+            (self.first_name, details.first_name),
+            (self.birth_date, details.birth_date),
+            (self.birth_country, details.birth_country),
+            (self.birth_postcode, details.birth_postcode),
+            (self.birth_city, details.birth_city),
+            (self.nationality, details.nationality),
+            (self.social_situation, details.social_situation),
+            (self.postcode, details.postcode),
+            (self.city, details.city),
         ):
-            editor.setText(EMPTY)
-        self.address.setPlainText("")
-        self.memo.setPlainText("")
+            editor.setText(value or EMPTY)
+        self.address.setPlainText(details.address or "")
+        self.memo.setPlainText(details.memo or "")
+
         self.coords_model.removeRows(0, self.coords_model.rowCount())
+        for coordinate in details.coordinates:
+            item = QStandardItem(coordinate.text or EMPTY)
+            item.setData(coordinate.key, Qt.ItemDataRole.UserRole)
+            context = " · ".join(
+                part for part in (coordinate.category, coordinate.label) if part and part != EMPTY
+            )
+            if context:
+                item.setToolTip(context)
+            self.coords_model.appendRow(item)
         self._on_coordinate_selection(None)
         self.clear_validation_states()
 
@@ -377,7 +374,6 @@ class GeneralitiesPage(QWidget):
         state: ValidationLevel | str,
         message: str = "",
     ) -> None:
-        """Point d'entrée presenter -> UI pour erreur/avertissement/succès."""
         self._field_rows[field].set_validation(state, message)
 
     def clear_validation_states(self) -> None:
@@ -392,7 +388,6 @@ class GeneralitiesPage(QWidget):
     def _on_coordinate_action(self, action_id: str) -> None:
         if action_id in {"add", "edit"}:
             self._open_coordinates()
-        # Suppression volontairement non raccordée : aucune écriture dans le POC.
 
     def _open_coordinates(self) -> None:
         CoordinatesPreviewDialog(self).exec()
