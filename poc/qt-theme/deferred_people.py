@@ -9,8 +9,8 @@ from PySide6.QtCore import QObject, Signal, Slot
 class DeferredPeopleAdapter:
     """Décale uniquement la liste initiale des personnes.
 
-    Les contrats restent servis par l'adaptateur réel. La fenêtre peut ainsi se
-    construire et s'afficher sans attendre la connexion réseau historique.
+    Les autres lectures restent déléguées à l'adaptateur réel ; Scénarios/Frais
+    utilisent en production leur worker dédié afin de ne pas bloquer l'UI.
     """
 
     def __init__(self, delegate):
@@ -21,6 +21,15 @@ class DeferredPeopleAdapter:
 
     def list_contracts(self, person_id):
         return self._delegate.list_contracts(person_id)
+
+    def list_scenarios(self, person_id):
+        return self._delegate.list_scenarios(person_id)
+
+    def list_trips(self, person_id):
+        return self._delegate.list_trips(person_id)
+
+    def list_reimbursements(self, person_id):
+        return self._delegate.list_reimbursements(person_id)
 
     def close(self) -> None:
         close = getattr(self._delegate, "close", None)
@@ -69,6 +78,4 @@ class ProductionPeopleLoader(QObject):
                 try:
                     adapter.close()
                 except Exception:
-                    # Le chargement a déjà produit son résultat/erreur ; la fermeture
-                    # reste best-effort et ne doit pas masquer le diagnostic principal.
                     pass
