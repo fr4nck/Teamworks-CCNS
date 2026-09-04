@@ -81,12 +81,15 @@ def main() -> None:
     ui_adapter = adapter
 
     people_loader_class = None
+    activity_loader_class = None
     if source == "production":
         phase = time.perf_counter()
         from deferred_people import DeferredPeopleAdapter, ProductionPeopleLoader
+        from deferred_activity import ProductionIndividualActivityLoader
         startup_timings["deferred_people_import"] = time.perf_counter() - phase
         ui_adapter = DeferredPeopleAdapter(adapter)
         people_loader_class = ProductionPeopleLoader
+        activity_loader_class = ProductionIndividualActivityLoader
 
     phase = time.perf_counter()
     from pilot_generalities import PeopleContractsGeneralitiesPilot
@@ -96,7 +99,10 @@ def main() -> None:
     people_thread = None
     try:
         before_window = time.perf_counter()
-        window = PeopleContractsGeneralitiesPilot(ui_adapter)
+        window = PeopleContractsGeneralitiesPilot(
+            ui_adapter,
+            activity_loader_class=activity_loader_class,
+        )
         after_window = time.perf_counter()
         window.show()
         shown_at = time.perf_counter()
@@ -112,15 +118,11 @@ def main() -> None:
             people_thread = QThread(window)
             people_worker = people_loader_class()
             people_worker.moveToThread(people_thread)
-            # Références explicites : le worker doit survivre jusqu'à la fin du chargement.
             window._people_loader_thread = people_thread
             window._people_loader_worker = people_worker
 
             def on_people_loaded(people, timings) -> None:
                 window.people_model.replace(tuple(people))
-                # Le proxy reçoit le reset du modèle de façon différée. On force son
-                # invalidation puis on met à jour le compteur au prochain tour de boucle
-                # pour éviter l'état transitoire « 0 / N personnes » visible sous Windows.
                 window.people_proxy.invalidate()
                 QTimer.singleShot(0, lambda: window.people_count.setText(window._people_count_text()))
                 ready_total = time.perf_counter() - STARTED_AT
