@@ -1300,16 +1300,12 @@ class Tableau(gridlib.Grid):
         if operation == "addition" : totalMinutes = totalMinutesA + totalMinutesB
         if operation == "soustraction" : totalMinutes = totalMinutesA - totalMinutesB
         # Formatage du résultat
-        if totalMinutes >= 0 :
-            nbreHeures = totalMinutes//60
-            nbreMinutes = totalMinutes-(nbreHeures*60)
-        else:
-            nbreHeures = -(-totalMinutes//60)
-            nbreMinutes = -(totalMinutes-(nbreHeures*60))
+        signe = "+" if totalMinutes >= 0 else "-"
+        totalMinutes = abs(totalMinutes)
+        nbreHeures = totalMinutes//60
+        nbreMinutes = totalMinutes-(nbreHeures*60)
         if len(str(nbreMinutes))==1 : nbreMinutes = str("0") + str(nbreMinutes)
-        duree = str(nbreHeures) + ":" + str(nbreMinutes)
-        if nbreHeures>=0 : duree = "+%s" % duree
-        return duree
+        return "%s%s:%s" % (signe, nbreHeures, nbreMinutes)
         
         
     def GetReportColonne(self, IDcategorie, IDpersonne, IDscenario) :
@@ -1642,16 +1638,12 @@ class GetDictColonnes():
         if operation == "addition" : totalMinutes = totalMinutesA + totalMinutesB
         if operation == "soustraction" : totalMinutes = totalMinutesA - totalMinutesB
         # Formatage du résultat
-        if totalMinutes >= 0 :
-            nbreHeures = totalMinutes//60
-            nbreMinutes = totalMinutes-(nbreHeures*60)
-        else:
-            nbreHeures = -(-totalMinutes//60)
-            nbreMinutes = -(totalMinutes-(nbreHeures*60))
+        signe = "+" if totalMinutes >= 0 else "-"
+        totalMinutes = abs(totalMinutes)
+        nbreHeures = totalMinutes//60
+        nbreMinutes = totalMinutes-(nbreHeures*60)
         if len(str(nbreMinutes))==1 : nbreMinutes = str("0") + str(nbreMinutes)
-        duree = str(nbreHeures) + ":" + str(nbreMinutes)
-        if nbreHeures>=0 : duree = "+%s" % duree
-        return duree
+        return "%s%s:%s" % (signe, nbreHeures, nbreMinutes)
         
         
     def GetReportColonne(self, IDcategorie, IDpersonne, IDscenario) :

@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from source_legacy import (
     column_names,
     compact_whitespace,
@@ -144,10 +142,17 @@ def test_operation_heures_conserve_le_resultat_historique_usuel() -> None:
     assert operation(object(), "+02:00", "+00:30", "soustraction") == "+1:30"
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="défaut historique : une durée négative inférieure à une heure perd son signe",
-)
 def test_soustraction_negative_inferieure_a_une_heure_conserve_son_signe() -> None:
     operation = load_method_as_function(SCENARIO, "Tableau", "OperationHeures")
     assert operation(object(), "+00:00", "+00:30", "soustraction") == "-0:30"
+
+
+def test_operation_heures_couvre_les_signes_et_les_deux_implementations() -> None:
+    for class_name in ("Tableau", "GetDictColonnes"):
+        operation = load_method_as_function(SCENARIO, class_name, "OperationHeures")
+        assert operation(object(), "+10:00", "+02:30", "addition") == "+12:30"
+        assert operation(object(), "+00:30", "-00:30", "addition") == "+0:00"
+        assert operation(object(), "-00:30", "+00:15", "addition") == "-0:15"
+        assert operation(object(), "+02:00", "+00:30", "soustraction") == "+1:30"
+        assert operation(object(), "+00:00", "+00:30", "soustraction") == "-0:30"
+        assert operation(object(), "+00:30", "+02:00", "soustraction") == "-1:30"
