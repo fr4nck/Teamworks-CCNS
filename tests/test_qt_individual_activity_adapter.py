@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+from decimal import getcontext
 from pathlib import Path
 
 
@@ -61,7 +62,13 @@ def test_scenario_mapping_matches_historical_individual_list() -> None:
 
 
 def test_trip_mapping_is_decimal_safe_and_keeps_historical_route_semantics() -> None:
-    views = _adapter().list_trips(12)
+    previous_precision = getcontext().prec
+    try:
+        getcontext().prec = 2
+        views = _adapter().list_trips(12)
+    finally:
+        getcontext().prec = previous_precision
+
     assert views[0].number == "8"
     assert views[0].date == "03/09/2026"
     assert views[0].route == "Bais <--> Vitré"
