@@ -1,6 +1,6 @@
 # Teamworks — suivi UI/UX / thème graphique
 
-**Mise à jour : 27 août 2026**
+**Mise à jour : 1er septembre 2026**
 
 ## Objectif
 
@@ -77,6 +77,14 @@ rond bleu. Elle reprend le monogramme `TW`, la mention `CCNS` et les couleurs
 publiques de pelemele.org : orange `#FFBD59`, bleu ardoise `#314666` et bleu
 profond `#044576`. La même source multi-résolution est utilisée par la fenêtre,
 l'exécutable PyInstaller, les raccourcis et l'installateur Inno Setup.
+
+## Panneau salarié « Protection sociale & organismes »
+
+`CRH-15` introduit le premier composant wxPython du nouveau sous-domaine RH, sans encore l'insérer dans la fiche individuelle de production. Le panneau reçoit une projection déjà calculée par la couche applicative et se limite au rendu : compteurs descriptifs, organisme, nature du lien, statut, dates d'effet, échéance, caractère paie-ready et état de configuration de l'organisme.
+
+Le composant suit les règles UI communes : `CTRL_Section`, espacements `UTILS_Styles`, tokens `surface`, `surface_container_lowest`, `on_surface`, `on_surface_variant` et `warning`, aucune couleur locale en dur. Il ne sélectionne aucun backend, ne déclenche aucun réseau et n'embarque aucune logique de conformité juridique. Les échéances ou références d'organismes orphelines utilisent seulement le rôle visuel `warning`.
+
+Le raccordement au `Notebook` historique est volontairement différé : il interviendra lorsque l'adaptateur de persistance de production et le point de composition applicatif seront définis. Cela évite d'afficher dans la fiche salarié un onglet qui semblerait opérationnel alors qu'il reposerait encore sur un store SQLite de qualification.
 
 ## Fond d’accueil personnalisable — principe retenu
 

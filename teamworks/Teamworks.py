@@ -95,7 +95,129 @@ class Toolbook(CTRL_Navigation_principale.NavigationPrincipale):
 # réellement le composant de navigation, sans monkey-patcher wxPython.
 CORE.Toolbook = Toolbook
 
-MyFrame = CORE.MyFrame
+
+_BaseMyFrame = CORE.MyFrame
+
+
+class MyFrame(_BaseMyFrame):
+    """Coque principale enrichie de points d'entrée modernes et isolés."""
+
+    def CreationBarreMenus(self):
+        _BaseMyFrame.CreationBarreMenus(self)
+
+        # Les écrans Connexions RH restent injectés depuis la coque moderne afin
+        # d'éviter de modifier le très gros cœur historique pour des points d'entrée
+        # satellites encore qualifiés indépendamment.
+        menu_parametrage = self.dictInfosMenu["menu_parametrage"]["ctrl"]
+        menu_parametrage.AppendSeparator()
+
+        item_id = wx.Window.NewControlId()
+        item = wx.MenuItem(
+            menu_parametrage,
+            item_id,
+            _(u"Organismes && connexions RH"),
+            _(u"Configurer les organismes, références et portails RH de la structure"),
+        )
+        item.SetBitmap(
+            wx.Bitmap(
+                Chemins.GetStaticPath("Images/16x16/Utilisateur_reseau.png"),
+                wx.BITMAP_TYPE_PNG,
+            )
+        )
+        menu_parametrage.Append(item)
+        self.Bind(wx.EVT_MENU, self.On_param_connexions_rh, id=item_id)
+        self.dictInfosMenu["connexions_rh"] = {"id": item_id, "ctrl": item}
+
+        dashboard_id = wx.Window.NewControlId()
+        dashboard_item = wx.MenuItem(
+            menu_parametrage,
+            dashboard_id,
+            _(u"Démarches RH"),
+            _(u"Afficher les démarches, échéances et anomalies RH de la structure"),
+        )
+        dashboard_item.SetBitmap(
+            wx.Bitmap(
+                Chemins.GetStaticPath("Images/16x16/Utilisateur_reseau.png"),
+                wx.BITMAP_TYPE_PNG,
+            )
+        )
+        menu_parametrage.Append(dashboard_item)
+        self.Bind(wx.EVT_MENU, self.On_demarches_rh, id=dashboard_id)
+        self.dictInfosMenu["demarches_rh"] = {
+            "id": dashboard_id,
+            "ctrl": dashboard_item,
+        }
+
+    def On_param_connexions_rh(self, event):
+        """Ouvre le paramétrage CRH-10B uniquement sur demande explicite."""
+        if self.userConfig.get("nomFichier", "") == "":
+            dlg = wx.MessageDialog(
+                self,
+                _(u"Vous devez d'abord ouvrir un fichier Teamworks."),
+                _(u"Organismes & connexions RH"),
+                wx.OK | wx.ICON_INFORMATION,
+            )
+            dlg.ShowModal()
+            dlg.Destroy()
+            return
+
+        try:
+            from Dlg import DLG_Organismes_connexions_rh
+
+            dlg = DLG_Organismes_connexions_rh.Dialog(self)
+        except Exception as exc:
+            wx.MessageBox(
+                _(u"Le paramétrage des connexions RH est momentanément indisponible.\n\n%s")
+                % str(exc),
+                _(u"Organismes & connexions RH"),
+                wx.OK | wx.ICON_ERROR,
+                self,
+            )
+            return
+
+        try:
+            dlg.ShowModal()
+        finally:
+            dlg.Destroy()
+
+    def On_demarches_rh(self, event):
+        """Ouvre le cockpit CRH-24 en lecture seule sur demande explicite."""
+        if self.userConfig.get("nomFichier", "") == "":
+            dlg = wx.MessageDialog(
+                self,
+                _(u"Vous devez d'abord ouvrir un fichier Teamworks."),
+                _(u"Démarches RH"),
+                wx.OK | wx.ICON_INFORMATION,
+            )
+            dlg.ShowModal()
+            dlg.Destroy()
+            return
+
+        try:
+            from Dlg import DLG_Demarches_rh
+
+            dlg = DLG_Demarches_rh.Dialog(self)
+        except Exception as exc:
+            wx.MessageBox(
+                _(u"Le cockpit des démarches RH est momentanément indisponible.\n\n%s")
+                % str(exc),
+                _(u"Démarches RH"),
+                wx.OK | wx.ICON_ERROR,
+                self,
+            )
+            return
+
+        try:
+            dlg.ShowModal()
+        finally:
+            dlg.Destroy()
+
+
+# ``MyApp.OnInit`` résout ``MyFrame`` dans le module Teamworks_core au moment de
+# l'exécution. On remplace donc ce point de composition, comme pour Toolbook,
+# sans modifier la classe wxPython elle-même ni dupliquer le bootstrap historique.
+CORE.MyFrame = MyFrame
+
 MyApp = CORE.MyApp
 SaisiePassword = CORE.SaisiePassword
 Redirect = CORE.Redirect

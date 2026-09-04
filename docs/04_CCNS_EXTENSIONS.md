@@ -1,6 +1,6 @@
 # Teamworks-CCNS — suivi CCNS et extensions
 
-**Mise à jour : 25 août 2026**
+**Mise à jour : 2 septembre 2026**
 
 ## Objectif
 
@@ -37,6 +37,45 @@ Le chantier est découpé en **9 jalons fonctionnels de poids égal**. `Terminé
 
 Ce pourcentage mesure le développement fonctionnel et son intégration automatisée. Il ne remplace pas la recette utilisateur : une fonction couverte par tests n'est pas déclarée prête en production tant que le parcours réel n'a pas été validé sur une copie de base.
 
+## Extensions satellites en cours
+
+Le chantier **Connexions RH** progresse séparément du build 0.9.1b en cours de qualification.
+
+- `CRH-01` : modèle domaine des organismes, références non secrètes, périodes d'effet, liens de portail et profils de connexion ;
+- `CRH-02` : descripteur de connecteur, capacités, modes, états et registre de découverte sans effet de bord ;
+- `CRH-03` : dossiers de démarches RH, sujets personne/structure, pièces attendues, échéances et machine d'états métier distincte du statut technique d'échange ;
+- `CRH-04` : événements d'audit immuables, journal append-only, cibles typées, horodatage avec fuseau et garde-fous contre les métadonnées manifestement secrètes ou médicales ;
+- `CRH-05` : frontière d'échange de fichiers, formats versionnés, empreinte SHA-256, métadonnées d'artefacts sans payload, validation structurée et protocole d'adaptateur sans I/O implicite ;
+- `CRH-06` : handles opaques de secrets, besoins de credentials et associations typées ; le domaine peut vérifier la disponibilité d'un handle sans lire la valeur secrète et ne définit encore aucun backend réel de coffre ;
+- `CRH-07` : connecteur générique de portail manuel, préparation des références et pièces, demande d'ouverture uniquement après confirmation explicite, mise à jour manuelle de statut et événement d'audit sans simuler de transmission externe ;
+- `CRH-08` : catalogue de connecteurs manuels de référence pour URSSAF, Net-entreprises, mutuelle, prévoyance, retraite complémentaire, OPCO, SPST et France Travail, sans annoncer d'API, de dépôt ou de synchronisation inexistants ;
+- `CRH-09` : persistance additive de référence pour les profils non secrets, dossiers RH et événements append-only. Elle utilise un store SQLite dédié et versionné, sans modifier les bases historiques ni créer de clé étrangère vers les tables salariés/contrats ; ce store sert à qualifier le modèle persistant avant tout raccordement éventuel à la base principale ;
+- `CRH-10A` : service applicatif de configuration d'une structure, avec port de repository et projections UI-agnostiques des organismes et connecteurs disponibles/configurés. Il prépare l'écran « Organismes & connexions RH » sans encore toucher à wxPython ;
+- `CRH-10B` : écran wxPython « Organismes & connexions RH » accessible depuis le paramétrage. Il crée et modifie les profils non secrets de la structure active, références administratives, périodes d'effet et portails ; code et famille sont figés après création, aucune suppression de profil n'est proposée et aucune capacité API/dépôt/synchronisation ne peut être activée déclarativement ;
+- `CRH-11` : modèle historisable « Protection sociale & organismes » du salarié pour mutuelle, prévoyance, retraite complémentaire et SPST. Il distingue affiliation, dispense, enregistrement et suivi administratif, conserve périodes d'effet, régime/option, profil de cotisation, références externes, justificatif opaque, provenance et échéances, sans stocker de contenu médical ni de secret ;
+- `CRH-12` : service applicatif salarié avec port de repository, cohérence obligatoire avec les organismes configurés de la structure, lecture tolérante de l'historique lorsque l'ancien profil a disparu, filtres des données effectives/échues et projection explicite des éléments pertinents pour une future préparation de paie, sans calcul de cotisation ;
+- `CRH-13` : adaptateur SQLite de référence dédié aux suivis salarié. Il persiste les périodes d'effet et métadonnées payroll-ready dans un schéma versionné, isolé des bases historiques et sans clé étrangère vers les profils d'organismes afin de préserver l'historique. Ce store séparé sert uniquement à qualifier le contrat de persistance ; le raccordement de production devra consolider les adaptateurs dans la base cible plutôt que multiplier les fichiers locaux ;
+- `CRH-14` : synthèse descriptive UI-agnostique du suivi salarié. Elle prépare les lignes et compteurs du futur onglet, distingue données effectives, en attente, échues, payroll-ready et références d'organismes orphelines, sans conclure automatiquement à une obligation ou conformité juridique ;
+- `CRH-15` : premier composant wxPython de consultation « Protection sociale & organismes ». Le panneau consomme uniquement la projection CRH-14, utilise les tokens sémantiques du design system et ne choisit ni backend, ni transport réseau, ni règle de conformité ;
+- `CRH-16` : adaptateur de persistance de production `TeamworksHrConnectionsRepository` au-dessus de `GestionDB`. Il consolide dans la base Teamworks active les profils non secrets d'organismes et les suivis salarié, avec schéma additif versionné, transactions, index ciblés et adaptation des paramètres SQLite/MySQL. Aucune table historique n'est modifiée et aucune clé étrangère n'est créée vers les personnes ou contrats ;
+- `CRH-17A` : identité stable et non secrète de la structure portée par la base active, puis point de composition `EmployeeProtectionSummaryRuntimeFactory`. L'identité est un UUID opaque stocké dans `tw_hr_structure_identity` et n'est jamais dérivée du chemin local, du nom/hôte de base ou des paramètres réseau historiques ;
+- `CRH-17B` : raccordement différé de la synthèse « Protection sociale » à la fiche individuelle salarié. L'ouverture de la fiche n'importe pas le runtime Connexions RH et une erreur du sous-système reste contenue dans l'onglet ;
+- `CRH-18` : frontière d'écriture contrôlée du suivi salarié avec création et clôture d'une période active, sans édition libre ni suppression ;
+- `CRH-19` : succession transactionnelle des périodes de protection sociale : clôture du prédécesseur et insertion du successeur dans une seule unité de travail, avec rollback intégral en cas d'échec ;
+- `CRH-20` : actions wxPython « Ajouter », « Clôturer » et « Nouvelle période » raccordées à l'onglet salarié. Le dialogue reste séparé de la persistance et les écritures sont chargées uniquement au premier clic ;
+- `CRH-21` : projection UI-agnostique du cockpit structure des démarches RH. Elle distingue compteurs métier et échecs techniques, dossiers échus, organismes orphelins et nombres de pièces attendues sans inventer de présence documentaire ni de conformité ; elle reste indépendante de wxPython et de la persistance de production des dossiers ;
+- `CRH-22` : adaptateur de persistance de production `TeamworksHrCasesRepository` pour les dossiers CRH-03, pièces attendues et événements CRH-04. Il s'appuie sur `GestionDB`, conserve la compatibilité SQLite/MySQL, versionne un schéma strictement additif et maintient le journal d'audit append-only sans clé étrangère vers les données historiques ;
+- `CRH-23` : runtime de lecture du cockpit sur la base Teamworks active. Il compose l'identité stable de la structure, la persistance des démarches, les organismes configurés et la projection CRH-21 derrière une façade qui exige une date de référence explicite et n'expose aucune opération d'écriture ;
+- `CRH-24` : premier cockpit wxPython « Démarches RH » en lecture seule. Il affiche compteurs, échéances, anomalies métier, échecs techniques, organismes non configurés et détail descriptif des dossiers sans connaître la persistance ni proposer de transition de workflow ;
+- `CRH-25` : service et runtime de workflow contrôlé des démarches. Les transitions autorisées restent définies par `HrCase`, la projection courante et l'événement d'audit sont persistés atomiquement, et un contrôle optimiste sur les statuts métier/technique refuse les écrasements concurrents ;
+- `CRH-26` : actions wxPython du cockpit « Démarches RH ». Le bouton « Faire évoluer » charge le runtime d'écriture au premier clic, ne propose que les transitions autorisées par le domaine, exige une confirmation explicite, conserve résultat/commentaire, recharge le cockpit après écriture et ne modifie jamais le statut technique d'échange ;
+- `CRH-27` : projection, runtime et composant wxPython de consultation du journal d'une démarche. Les événements réellement persistés sont filtrés par dossier, triés du plus récent au plus ancien et affichent horodatage avec fuseau, acteur, source et métadonnées d'audit ; le composant reste en lecture seule ;
+- `CRH-28` : raccordement du bouton « Historique » au cockpit. Il est disponible dès qu'un dossier est sélectionné, y compris lorsqu'il est accepté ou annulé, charge paresseusement le dialogue CRH-27 et ne lui transmet que l'identifiant du dossier. Aucune écriture, transition ou modification du statut technique n'est ajoutée ;
+- `CRH-29` : frontière de création contrôlée des démarches RH. Le service reçoit explicitement type, sujet, organisme, dates, pièces attendues et commentaire, exige un organisme déjà configuré, crée le dossier au statut `TODO` / `NOT_APPLICABLE` et persiste atomiquement le dossier, ses pièces et l'événement `CASE_CREATED`. Aucun catalogue juridique, règle automatique d'échéance ou transport externe n'est introduit ;
+- `CRH-30` : formulaire wxPython « Nouvelle démarche » raccordé au cockpit. Il charge la frontière CRH-29 au premier clic, propose les personnes lues via `PersonReader` et uniquement les organismes déjà configurés, exige la saisie explicite du type, des dates et du caractère obligatoire/facultatif de chaque pièce, puis demande une seconde confirmation avant création. Le dossier créé est rechargé et sélectionné sans modifier le statut technique ni déclencher de transmission externe ;
+- CRH-01 à CRH-08 restent sans persistance ; CRH-09 et CRH-13 restent des stores de qualification isolés. CRH-16 fournit l'adaptateur de production pour les profils et suivis salarié, CRH-22 celui des démarches et événements. CRH-17A verrouille l'identité logique de la base. CRH-10A orchestre la structure et CRH-10B l'expose au paramétrage ; CRH-11 à CRH-20 construisent le suivi salarié jusqu'aux actions historisées ; CRH-21 à CRH-30 construisent le cockpit structure, sa persistance, ses actions métier, son journal et la création transactionnelle désormais raccordée à l'interface. Aucune authentification réelle, ouverture de navigateur effective ou communication réseau n'est ajoutée ;
+- ces travaux ne modifient pas le pourcentage des 9 jalons CCNS ci-dessus et ne valent pas qualification fonctionnelle tant que leurs PR ne sont pas validées et fusionnées.
+
 ## Restant prioritaire
 
 - produire et lancer le portable Windows du `master` exact ;
@@ -63,4 +102,4 @@ son absence, aucun envoi n'a lieu et le fichier reste disponible dans `Logs`.
 - `docs/48-revue-architecture-ccns.md`
 - `docs/50-scope-metier.md`
 - `docs/60-scenario-utilisation-controle-salarial.md`
-- documentation `docs/40-*` à `docs/65-*`
+- documentation `docs/40-*` à `docs/82-*`

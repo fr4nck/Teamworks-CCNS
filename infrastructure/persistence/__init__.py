@@ -4,5 +4,66 @@ from infrastructure.persistence.contract_salary_control_snapshot_repository impo
     DuplicateContractSalaryControlSnapshotError,
     SqliteContractSalaryControlSnapshotRepository,
 )
+from infrastructure.persistence.employee_protection_repository import (
+    EMPLOYEE_PROTECTION_SCHEMA_VERSION,
+    SqliteEmployeeProtectionRepository,
+)
+from infrastructure.persistence.hr_connections_repository import (
+    DuplicateHrAuditEventError,
+    SCHEMA_VERSION as HR_CONNECTIONS_SCHEMA_VERSION,
+    SqliteHrConnectionsRepository,
+)
+from infrastructure.persistence.teamworks_employee_protection_succession_repository import (
+    TeamworksEmployeeProtectionSuccessionRepository,
+)
+from infrastructure.persistence.teamworks_hr_case_creation_repository import (
+    DuplicateTeamworksHrCaseError,
+    TeamworksHrCaseCreationRepository,
+)
+from infrastructure.persistence.teamworks_hr_case_document_repository import (
+    TEAMWORKS_HR_CASE_DOCUMENTS_SCHEMA_VERSION,
+    StaleTeamworksHrCaseDocumentStateError,
+    TeamworksHrCaseDocumentRepository,
+)
+from infrastructure.persistence.teamworks_hr_case_workflow_repository import (
+    StaleTeamworksHrCaseTransitionError,
+    TeamworksHrCaseWorkflowRepository,
+)
+from infrastructure.persistence.teamworks_hr_cases_repository import (
+    TEAMWORKS_HR_CASES_SCHEMA_VERSION,
+    DuplicateTeamworksHrAuditEventError,
+    TeamworksHrCasesRepository,
+)
+from infrastructure.persistence.teamworks_hr_connections_repository import (
+    TEAMWORKS_HR_SCHEMA_VERSION,
+    TeamworksHrConnectionsRepository,
+)
+from infrastructure.persistence.teamworks_structure_identity_repository import (
+    TEAMWORKS_STRUCTURE_IDENTITY_SCHEMA_VERSION,
+    TeamworksStructureIdentityRepository,
+)
 
-__all__ = ["DuplicateContractSalaryControlSnapshotError", "SqliteContractSalaryControlSnapshotRepository"]
+__all__ = [
+    "DuplicateContractSalaryControlSnapshotError",
+    "DuplicateHrAuditEventError",
+    "DuplicateTeamworksHrAuditEventError",
+    "DuplicateTeamworksHrCaseError",
+    "EMPLOYEE_PROTECTION_SCHEMA_VERSION",
+    "HR_CONNECTIONS_SCHEMA_VERSION",
+    "TEAMWORKS_HR_CASE_DOCUMENTS_SCHEMA_VERSION",
+    "TEAMWORKS_HR_CASES_SCHEMA_VERSION",
+    "TEAMWORKS_HR_SCHEMA_VERSION",
+    "TEAMWORKS_STRUCTURE_IDENTITY_SCHEMA_VERSION",
+    "SqliteContractSalaryControlSnapshotRepository",
+    "SqliteEmployeeProtectionRepository",
+    "SqliteHrConnectionsRepository",
+    "StaleTeamworksHrCaseDocumentStateError",
+    "StaleTeamworksHrCaseTransitionError",
+    "TeamworksEmployeeProtectionSuccessionRepository",
+    "TeamworksHrCaseCreationRepository",
+    "TeamworksHrCaseDocumentRepository",
+    "TeamworksHrCaseWorkflowRepository",
+    "TeamworksHrCasesRepository",
+    "TeamworksHrConnectionsRepository",
+    "TeamworksStructureIdentityRepository",
+]
