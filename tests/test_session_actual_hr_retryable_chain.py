@@ -136,3 +136,34 @@ def test_repository_transaction_failure_is_acked_retryable_end_to_end():
         assert db.cursor.execute("SELECT count(*) FROM tw_session_actual_inbox").fetchone()[0] == 0
     finally:
         db.Close()
+
+
+def test_missing_hr_schema_is_acked_retryable_not_rejected():
+    db = SqliteDb()
+    try:
+        # Le poste n'a pas encore appliqué les migrations RH : ce n'est pas un
+        # défaut permanent du message et la mailbox doit pouvoir le rejouer.
+        db.cursor.execute("CREATE TABLE personnes (IDpersonne INTEGER PRIMARY KEY, nom TEXT)")
+        db.connexion.commit()
+
+        repository = SessionActualHrRepository(lambda: db)
+        consumer = SessionActualHrConsumer(repository)
+        transport = FakeTransport(mailbox_item())
+
+        summary = synchronize_mailbox(
+            transport,
+            {KEY_ID: SECRET},
+            consumer=consumer,
+        )
+
+        assert summary["retryable"] == 1
+        assert summary["rejected"] == 0
+        assert summary["acked"] == 1
+        receipt = transport.acks[0][1]
+        assert receipt["status"] == "retryable"
+        assert receipt["idempotence_key"] == IDEMPOTENCE
+        assert receipt["correlation_id"] == CORRELATION
+        assert "SessionActualHrTechnicalError" in receipt["detail"]
+        assert "Tables du réalisé RH absentes" in receipt["detail"]
+    finally:
+        db.Close()
