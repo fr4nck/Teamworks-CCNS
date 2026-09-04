@@ -49,6 +49,15 @@ class DomainPeopleReadAdapter(TeamworksReadAdapter):
         contracts = self._contracts_repository.list_by_person_id(domain_person_id)
         return tuple(self._contract_to_view(contract) for contract in contracts)
 
+    def list_scenarios(self, person_id):
+        return ()
+
+    def list_trips(self, person_id):
+        return ()
+
+    def list_reimbursements(self, person_id):
+        return ()
+
     def _person_to_view(self, person: Person) -> PersonView:
         contracts = self._contracts_for(person.id)
         primary_contract = contracts[0] if contracts else None
