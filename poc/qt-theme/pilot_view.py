@@ -368,13 +368,14 @@ class PeopleContractsPilot(QMainWindow):
             ("Nom", self.value_name, "Prénom", ReadValue()),
             ("Né(e) le", self.value_birth_date, "Pays de naissance", ReadValue()),
             ("C.P. naissance", ReadValue(), "Ville", ReadValue()),
-            ("Num Sécu", ReadValue(), "Nationalité", ReadValue()),
         )
         for row, (la, va, lb, vb) in enumerate(rows):
             identity_grid.addWidget(QLabel(la), row, 0)
             identity_grid.addWidget(va, row, 1)
             identity_grid.addWidget(QLabel(lb), row, 2)
             identity_grid.addWidget(vb, row, 3)
+        identity_grid.addWidget(QLabel("Nationalité"), len(rows), 0)
+        identity_grid.addWidget(ReadValue(), len(rows), 1)
         identity_grid.setColumnStretch(1, 1)
         identity_grid.setColumnStretch(3, 1)
         grid.addWidget(identity, 0, 0)
