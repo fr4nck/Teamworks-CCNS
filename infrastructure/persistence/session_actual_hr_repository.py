@@ -71,7 +71,7 @@ class SessionActualHrRepository:
     def _execute(self, sql: str, params: tuple[Any, ...] = ()):
         cursor = getattr(self.db, "cursor", None)
         if cursor is None:
-            raise SessionActualHrPersistenceError("La connexion ne fournit pas de curseur SQL")
+            raise SessionActualHrTechnicalError("La connexion ne fournit pas de curseur SQL")
         cursor.execute(self._sql(sql), params)
         return cursor
 
@@ -88,7 +88,7 @@ class SessionActualHrRepository:
             return
         connection = getattr(self.db, "connexion", None)
         if connection is None:
-            raise SessionActualHrPersistenceError("La connexion ne permet pas le commit")
+            raise SessionActualHrTechnicalError("La connexion ne permet pas le commit")
         connection.commit()
 
     def _rollback(self) -> None:
@@ -98,7 +98,7 @@ class SessionActualHrRepository:
             return
         connection = getattr(self.db, "connexion", None)
         if connection is None:
-            raise SessionActualHrPersistenceError("La connexion ne permet pas le rollback")
+            raise SessionActualHrTechnicalError("La connexion ne permet pas le rollback")
         connection.rollback()
 
     @staticmethod
@@ -172,7 +172,7 @@ class SessionActualHrRepository:
     def _require_schema(self) -> None:
         missing = self.ensure_schema(False)
         if missing:
-            raise SessionActualHrPersistenceError("Tables du réalisé RH absentes: %s" % ", ".join(missing))
+            raise SessionActualHrTechnicalError("Tables du réalisé RH absentes: %s" % ", ".join(missing))
 
     def register_person_uid(self, person_uid: str, person_id: int) -> int:
         self._require_schema()
@@ -296,7 +296,7 @@ class SessionActualHrRepository:
             )
             now = received_sql
             if current is None:
-                cursor = self._execute(
+                self._execute(
                     f"""INSERT INTO {WORK_TABLE} (
                         session_uid,actual_uuid,IDpersonne,actual_staff_uid,assignment_date,
                         session_status,actual_place_uid,actual_start_time,actual_end_time,
