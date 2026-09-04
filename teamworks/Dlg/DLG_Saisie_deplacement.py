@@ -30,8 +30,6 @@ else:
     from wx import DatePickerCtrl, DP_DROPDOWN
 
 
-decimal.getcontext().prec = 2
-
 
 def _dialog_parent(window):
     current = window

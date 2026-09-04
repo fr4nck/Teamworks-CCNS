@@ -134,10 +134,6 @@ def test_montant_est_distance_stockee_fois_tarif_sans_multiplicateur_supplementa
         assert "float(distance) * float(tarif_km)" in source
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="défaut historique : le module limite globalement Decimal à 2 chiffres significatifs",
-)
 def test_montant_kilometrique_conserve_une_precision_monetaire_normale() -> None:
     calcul = load_method_as_function(
         DEPLACEMENT,
