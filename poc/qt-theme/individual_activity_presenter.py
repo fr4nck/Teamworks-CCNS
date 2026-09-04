@@ -19,8 +19,11 @@ class IndividualActivityPresenter:
         self._legacy_tabs = legacy_tabs
 
     def clear(self) -> None:
+        questionnaire_page = getattr(self._legacy_tabs, "questionnaire_page", None)
         scenarios_page = getattr(self._legacy_tabs, "scenarios_page", None)
         expenses_page = getattr(self._legacy_tabs, "expenses_page", None)
+        if questionnaire_page is not None:
+            questionnaire_page.model.setRowCount(0)
         if scenarios_page is not None:
             scenarios_page.model.setRowCount(0)
         if expenses_page is not None:
@@ -28,8 +31,14 @@ class IndividualActivityPresenter:
             expenses_page.reimbursement_model.setRowCount(0)
 
     def set_payload(self, payload: dict) -> None:
+        questionnaire_page = getattr(self._legacy_tabs, "questionnaire_page", None)
         scenarios_page = getattr(self._legacy_tabs, "scenarios_page", None)
         expenses_page = getattr(self._legacy_tabs, "expenses_page", None)
+        if questionnaire_page is not None:
+            _replace_rows(
+                questionnaire_page.model,
+                ((view.question, view.answer) for view in payload.get("questionnaire", ())),
+            )
         if scenarios_page is not None:
             _replace_rows(
                 scenarios_page.model,
