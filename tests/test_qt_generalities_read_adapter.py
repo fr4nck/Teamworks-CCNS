@@ -6,6 +6,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 POC = ROOT / "poc" / "qt-theme"
+GENERALITIES_PAGE = POC / "generalities_page.py"
+PILOT_VIEW = POC / "pilot_view.py"
 if str(POC) not in sys.path:
     sys.path.insert(0, str(POC))
 
@@ -95,3 +97,13 @@ def test_generalities_missing_record_stays_absent() -> None:
     )
 
     assert adapter.get_person_generalities(12) is None
+
+
+def test_qt_generalities_ui_does_not_expose_social_security_number() -> None:
+    active = GENERALITIES_PAGE.read_text(encoding="utf-8").lower()
+    fallback = PILOT_VIEW.read_text(encoding="utf-8").lower()
+
+    assert "numéro de sécurité sociale" not in active
+    assert "num sécu" not in fallback
+    assert "self.nir" not in active
+    assert '"nir"' not in active
