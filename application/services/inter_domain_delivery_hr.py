@@ -9,7 +9,10 @@ import re
 from typing import Any, Mapping, Optional
 
 from application.services.session_actual_hr import SessionActualHrConsumer
-from infrastructure.persistence.session_actual_hr_repository import SessionActualHrPersistenceError
+from infrastructure.persistence.session_actual_hr_repository import (
+    SessionActualHrPersistenceError,
+    SessionActualHrTechnicalError,
+)
 
 ENVELOPE_VERSION = "inter-domain-delivery/1"
 SOURCE_DOMAIN = "operations_portal"
@@ -151,6 +154,9 @@ def receive_signed_delivery(
             source_domain=envelope["source_domain"],
             received_at=received_at,
         )
+    except SessionActualHrTechnicalError:
+        # La panne technique doit rester visible du mailbox pour devenir retryable.
+        raise
     except SessionActualHrPersistenceError as error:
         return build_ack("rejected", envelope["idempotence_key"], envelope["correlation_id"], str(error))
     finally:
