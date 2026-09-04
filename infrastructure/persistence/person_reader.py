@@ -61,7 +61,7 @@ class PersonReader:
             return [PersonIdentityRecord(*row) for row in rows]
 
     def lire_generalites(self, IDpersonne) -> PersonGeneralitiesRecord | None:
-        """Lit les champs visibles de Généralités sans sélectionner ``num_secu``."""
+        """Lit les champs visibles de Généralités en excluant le NIR de la projection."""
         person_id = self._person_id(IDpersonne)
         req = (
             "SELECT personnes.IDpersonne, personnes.civilite, personnes.nom, "
