@@ -437,11 +437,13 @@ class _OptionalLegacyId:
 
 
 def _legacy_optional_id(value: object) -> _OptionalLegacyId:
-    if value is None or value == 0:
-        if isinstance(value, bool):
-            return _OptionalLegacyId(None, invalid=True)
+    if value is None:
         return _OptionalLegacyId(None)
-    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+    if isinstance(value, bool) or not isinstance(value, int):
+        return _OptionalLegacyId(None, invalid=True)
+    if value == 0:
+        return _OptionalLegacyId(None)
+    if value < 0:
         return _OptionalLegacyId(None, invalid=True)
     return _OptionalLegacyId(value)
 
