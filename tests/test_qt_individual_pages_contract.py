@@ -55,8 +55,10 @@ def test_expenses_columns_match_historical_individual_page() -> None:
 
 def test_legacy_tabs_delegate_scenarios_and_expenses_to_common_pages() -> None:
     source = TABS.read_text(encoding="utf-8")
-    assert "return ScenariosPage(self.icon_loader)" in source
-    assert "return ExpensesPage(self.icon_loader)" in source
+    assert "self.scenarios_page = ScenariosPage(self.icon_loader)" in source
+    assert "return self.scenarios_page" in source
+    assert "self.expenses_page = ExpensesPage(self.icon_loader)" in source
+    assert "return self.expenses_page" in source
     assert '"État"' not in source
     assert '"Rmbst"' not in source
 
