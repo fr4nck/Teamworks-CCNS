@@ -379,7 +379,7 @@ class Panel(wx.Panel):
         if index == -1:
             dlg = wx.MessageDialog(
                 self,
-                _(u"Vous devez d'abord sélectionner un remboursement à modifier dans la liste."),
+                _(u"Vous devez d'abord sélectionner un remboursement à supprimer dans la liste."),
                 "Information",
                 wx.OK | wx.ICON_INFORMATION,
             )
@@ -422,23 +422,31 @@ class Panel(wx.Panel):
 
         DB = GestionDB.DB()
         try:
-            DB.ExecuterReq(
-                "UPDATE deplacements SET IDremboursement=0 WHERE IDremboursement=%d;"
-                % IDremboursement
-            )
-            DB.ReqDEL(
-                "remboursements",
-                "IDremboursement",
-                IDremboursement,
-                commit=False,
-            )
+            req = "UPDATE deplacements SET IDremboursement=0 WHERE IDremboursement=?"
+            if getattr(DB, "isNetwork", False):
+                req = req.replace("?", "%s")
+            DB.cursor.execute(req, (IDremboursement,))
+
+            req = "DELETE FROM remboursements WHERE IDremboursement=?"
+            if getattr(DB, "isNetwork", False):
+                req = req.replace("?", "%s")
+            DB.cursor.execute(req, (IDremboursement,))
             DB.Commit()
-        except Exception:
+        except Exception as err:
             try:
                 DB.connexion.rollback()
             except Exception:
                 pass
-            raise
+            dlg = wx.MessageDialog(
+                self,
+                _(u"Le remboursement n'a pas pu être supprimé. Aucune modification n'a été conservée.\n\n")
+                + str(err),
+                _(u"Erreur de suppression"),
+                wx.OK | wx.ICON_ERROR,
+            )
+            dlg.ShowModal()
+            dlg.Destroy()
+            return
         finally:
             DB.Close()
 
