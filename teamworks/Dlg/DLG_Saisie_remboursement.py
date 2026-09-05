@@ -394,7 +394,19 @@ class SaisieRemboursement(wx.Dialog):
                 return
             dlg.Destroy()
 
-        self.Sauvegarde()
+        try:
+            self.Sauvegarde()
+        except Exception as err:
+            dlg = wx.MessageDialog(
+                self,
+                _(u"Le remboursement n'a pas pu être enregistré. Aucune modification n'a été conservée.\n\n")
+                + str(err),
+                _(u"Erreur d'enregistrement"),
+                wx.OK | wx.ICON_ERROR,
+            )
+            dlg.ShowModal()
+            dlg.Destroy()
+            return
         self.EndModal(wx.ID_OK)
 
     def Sauvegarde(self):
@@ -402,44 +414,91 @@ class SaisieRemboursement(wx.Dialog):
         IDpersonne = self.dictPersonnes[self.ctrl_utilisateur.GetCurrentSelection()]
         montant = float(self.ctrl_montant.GetValue())
         listeIDcoches, listeIDdecoches = self.ctrl_deplacements.ListeItemsCoches()
-        texteID = "-".join(str(ID) for ID in listeIDcoches)
 
         DB = GestionDB.DB()
+
+        def executer(req, valeurs=()):
+            if getattr(DB, "isNetwork", False):
+                req = req.replace("?", "%s")
+            DB.cursor.execute(req, tuple(valeurs))
+
         try:
-            listeDonnees = [
-                ("date", date),
-                ("IDpersonne", IDpersonne),
-                ("montant", montant),
-                ("listeIDdeplacement", texteID),
-            ]
             if self.IDremboursement is None:
+                listeDonnees = [
+                    ("date", date),
+                    ("IDpersonne", IDpersonne),
+                    ("montant", montant),
+                    ("listeIDdeplacement", ""),
+                ]
                 ID = DB.ReqInsert("remboursements", listeDonnees, commit=False)
+                if ID is None:
+                    raise RuntimeError(_(u"La création du remboursement a échoué."))
             else:
-                DB.ReqMAJ(
-                    "remboursements",
-                    listeDonnees,
-                    "IDremboursement",
-                    self.IDremboursement,
-                    commit=False,
-                )
                 ID = self.IDremboursement
+                executer(
+                    """UPDATE remboursements
+                    SET date=?, IDpersonne=?, montant=?
+                    WHERE IDremboursement=?""",
+                    (date, IDpersonne, montant, ID),
+                )
 
             for IDdeplacement in listeIDcoches:
-                DB.ReqMAJ(
-                    "deplacements",
-                    [("IDremboursement", ID)],
-                    "IDdeplacement",
-                    IDdeplacement,
-                    commit=False,
+                executer(
+                    """SELECT IDremboursement FROM deplacements
+                    WHERE IDdeplacement=? AND IDpersonne=?""",
+                    (IDdeplacement, IDpersonne),
                 )
+                ligne = DB.cursor.fetchone()
+                if ligne is None:
+                    raise RuntimeError(
+                        _(u"Le déplacement n°%d n'existe plus pour cette personne.")
+                        % IDdeplacement
+                    )
+                IDremboursementActuel = ligne[0]
+                autorises = (None, 0, "")
+                if self.IDremboursement is not None:
+                    autorises = autorises + (ID,)
+                if IDremboursementActuel not in autorises:
+                    raise RuntimeError(
+                        _(u"Le déplacement n°%d a été rattaché à un autre remboursement entre-temps.")
+                        % IDdeplacement
+                    )
+                if IDremboursementActuel != ID:
+                    executer(
+                        "UPDATE deplacements SET IDremboursement=? WHERE IDdeplacement=?",
+                        (ID, IDdeplacement),
+                    )
+
             for IDdeplacement in listeIDdecoches:
-                DB.ReqMAJ(
-                    "deplacements",
-                    [("IDremboursement", 0)],
-                    "IDdeplacement",
-                    IDdeplacement,
-                    commit=False,
+                executer(
+                    """SELECT IDremboursement FROM deplacements
+                    WHERE IDdeplacement=? AND IDpersonne=?""",
+                    (IDdeplacement, IDpersonne),
                 )
+                ligne = DB.cursor.fetchone()
+                if ligne is not None and ligne[0] == ID:
+                    executer(
+                        "UPDATE deplacements SET IDremboursement=0 WHERE IDdeplacement=?",
+                        (IDdeplacement,),
+                    )
+
+            executer(
+                """SELECT IDdeplacement FROM deplacements
+                WHERE IDpersonne=? AND IDremboursement=? ORDER BY IDdeplacement""",
+                (IDpersonne, ID),
+            )
+            listeIDcanoniques = [ligne[0] for ligne in DB.cursor.fetchall()]
+            if sorted(listeIDcanoniques) != sorted(listeIDcoches):
+                raise RuntimeError(
+                    _(u"Les déplacements rattachés ont changé pendant l'enregistrement.")
+                )
+
+            texteID = "-".join(str(IDdeplacement) for IDdeplacement in listeIDcanoniques)
+            executer(
+                """UPDATE remboursements SET listeIDdeplacement=?
+                WHERE IDremboursement=?""",
+                (texteID, ID),
+            )
             DB.Commit()
         except Exception:
             try:
