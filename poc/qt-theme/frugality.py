@@ -51,9 +51,19 @@ class FrugalityProbe:
         self.started_at = started_at if started_at is not None else time.perf_counter()
         self.budget = budget or FrugalityBudget()
 
-    def snapshot(self, direct_dependencies: int) -> FrugalitySnapshot:
+    def snapshot(
+        self,
+        direct_dependencies: int,
+        *,
+        startup_seconds: float | None = None,
+    ) -> FrugalitySnapshot:
+        measured_startup = (
+            time.perf_counter() - self.started_at
+            if startup_seconds is None
+            else float(startup_seconds)
+        )
         return FrugalitySnapshot(
-            startup_seconds=time.perf_counter() - self.started_at,
+            startup_seconds=measured_startup,
             rss_mb=_rss_mb(),
             direct_dependencies=direct_dependencies,
             budget=self.budget,

@@ -53,6 +53,51 @@ def _print_data_profile(prefix: str, timings: dict, *, ready_total: float | None
     )
 
 
+def start_people_loader(window, people_loader_class, total_to_show_seconds: float):
+    """Start and register the initial production people loader.
+
+    The window owns the QThread for its complete lifetime. Late results are ignored
+    once shutdown starts, while thread/worker references are cleared on finished.
+    """
+    thread = QThread(window)
+    worker = people_loader_class()
+    worker.moveToThread(thread)
+    window.attach_people_loader(thread, worker)
+
+    def on_people_loaded(people, timings) -> None:
+        if window.is_closing_requested():
+            thread.quit()
+            return
+        window.people_model.replace(tuple(people))
+        window.people_proxy.invalidate()
+        QTimer.singleShot(0, lambda: window.people_count.setText(window._people_count_text()))
+        ready_total = time.perf_counter() - STARTED_AT
+        after_show = max(0.0, ready_total - total_to_show_seconds)
+        _print_data_profile(
+            "profil données asynchrone",
+            dict(timings or {}),
+            ready_total=ready_total,
+            after_show=after_show,
+        )
+        window.statusBar().showMessage(
+            f"Lecture seule · {window.people_model.rowCount()} personnes · données prêtes en {ready_total:.2f}s"
+        )
+        thread.quit()
+
+    def on_people_failed(details: str) -> None:
+        if not window.is_closing_requested():
+            print("[Teamworks Qt POC] Échec du chargement asynchrone des personnes :", file=sys.stderr)
+            print(details, file=sys.stderr)
+            window.statusBar().showMessage("Lecture seule · échec du chargement des personnes")
+        thread.quit()
+
+    worker.loaded.connect(on_people_loaded)
+    worker.failed.connect(on_people_failed)
+    thread.started.connect(worker.run)
+    thread.start()
+    return thread
+
+
 def main() -> None:
     startup_timings: dict[str, float] = {"pyside_import": PYSIDE_IMPORT_SECONDS}
 
@@ -96,7 +141,6 @@ def main() -> None:
     startup_timings["pilot_module_import"] = time.perf_counter() - phase
 
     window = None
-    people_thread = None
     try:
         before_window = time.perf_counter()
         window = PeopleContractsGeneralitiesPilot(
@@ -115,42 +159,13 @@ def main() -> None:
 
         if people_loader_class is not None:
             window.statusBar().showMessage("Lecture seule · chargement des personnes en arrière-plan…")
-            people_thread = QThread(window)
-            people_worker = people_loader_class()
-            people_worker.moveToThread(people_thread)
-            window._people_loader_thread = people_thread
-            window._people_loader_worker = people_worker
-
-            def on_people_loaded(people, timings) -> None:
-                window.people_model.replace(tuple(people))
-                window.people_proxy.invalidate()
-                QTimer.singleShot(0, lambda: window.people_count.setText(window._people_count_text()))
-                ready_total = time.perf_counter() - STARTED_AT
-                after_show = max(0.0, ready_total - total_to_show_seconds)
-                _print_data_profile(
-                    "profil données asynchrone",
-                    dict(timings or {}),
-                    ready_total=ready_total,
-                    after_show=after_show,
-                )
-                window.statusBar().showMessage(
-                    f"Lecture seule · {window.people_model.rowCount()} personnes · données prêtes en {ready_total:.2f}s"
-                )
-                people_thread.quit()
-
-            def on_people_failed(details: str) -> None:
-                print("[Teamworks Qt POC] Échec du chargement asynchrone des personnes :", file=sys.stderr)
-                print(details, file=sys.stderr)
-                window.statusBar().showMessage("Lecture seule · échec du chargement des personnes")
-                people_thread.quit()
-
-            people_worker.loaded.connect(on_people_loaded)
-            people_worker.failed.connect(on_people_failed)
-            people_thread.started.connect(people_worker.run)
-            people_thread.start()
+            start_people_loader(window, people_loader_class, total_to_show_seconds)
 
         def report_frugality() -> None:
-            snapshot = probe.snapshot(direct_dependencies=len(DIRECT_DEPENDENCIES))
+            snapshot = probe.snapshot(
+                direct_dependencies=len(DIRECT_DEPENDENCIES),
+                startup_seconds=total_to_show_seconds,
+            )
             data_label = "données bloquantes" if source == "production" else "données"
             timing = (
                 f"socle {foundation_seconds:.2f}s · {data_label} {data_seconds:.2f}s · "
@@ -181,9 +196,15 @@ def main() -> None:
         QTimer.singleShot(350, report_frugality)
         raise SystemExit(qt_app.exec())
     finally:
-        if people_thread is not None and people_thread.isRunning():
-            people_thread.quit()
-            people_thread.wait(12000)
+        if window is not None:
+            stopped = window.stop_background_threads(wait_timeout_ms=100)
+            if not stopped:
+                print(
+                    "[Teamworks Qt POC] Fermeture : lecture synchrone encore active après le délai court ; "
+                    "attente jusqu'au retour du worker afin de ne pas détruire un QThread actif.",
+                    file=sys.stderr,
+                )
+                window.stop_background_threads(wait_timeout_ms=None)
         close = getattr(adapter, "close", None)
         if callable(close):
             close()

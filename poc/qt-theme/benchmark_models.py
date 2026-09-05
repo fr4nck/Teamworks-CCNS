@@ -29,6 +29,8 @@ def build_people(count: int) -> tuple[PersonView, ...]:
             id=f"BENCH-{index:04d}",
             id_historique=None,
             name=f"Personne {index:04d}",
+            first_name="",
+            last_name="",
             birth_date="",
             role="",
             classification="",
