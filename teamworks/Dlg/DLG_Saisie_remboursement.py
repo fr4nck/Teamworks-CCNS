@@ -186,7 +186,7 @@ class SaisieRemboursement(wx.Dialog):
 
     def Importation(self):
         DB = GestionDB.DB()
-        req = """SELECT IDremboursement, IDpersonne, date, montant, listeIDdeplacement
+        req = """SELECT IDremboursement, IDpersonne, date, montant
         FROM remboursements WHERE IDremboursement=%d;""" % self.IDremboursement
         DB.ExecuterReq(req)
         listeDonnees = DB.ResultatReq()
@@ -394,7 +394,19 @@ class SaisieRemboursement(wx.Dialog):
                 return
             dlg.Destroy()
 
-        self.Sauvegarde()
+        try:
+            self.Sauvegarde()
+        except Exception as err:
+            dlg = wx.MessageDialog(
+                self,
+                _(u"Le remboursement n'a pas pu être enregistré. Aucune modification n'a été conservée.\n\n")
+                + str(err),
+                _(u"Erreur d'enregistrement"),
+                wx.OK | wx.ICON_ERROR,
+            )
+            dlg.ShowModal()
+            dlg.Destroy()
+            return
         self.EndModal(wx.ID_OK)
 
     def Sauvegarde(self):
@@ -402,45 +414,100 @@ class SaisieRemboursement(wx.Dialog):
         IDpersonne = self.dictPersonnes[self.ctrl_utilisateur.GetCurrentSelection()]
         montant = float(self.ctrl_montant.GetValue())
         listeIDcoches, listeIDdecoches = self.ctrl_deplacements.ListeItemsCoches()
-        texteID = "-".join(str(ID) for ID in listeIDcoches)
 
         DB = GestionDB.DB()
-        listeDonnees = [
-            ("date", date),
-            ("IDpersonne", IDpersonne),
-            ("montant", montant),
-            ("listeIDdeplacement", texteID),
-        ]
-        if self.IDremboursement is None:
-            ID = DB.ReqInsert("remboursements", listeDonnees)
-        else:
-            DB.ReqMAJ(
-                "remboursements",
-                listeDonnees,
-                "IDremboursement",
-                self.IDremboursement,
-            )
-            ID = self.IDremboursement
-        DB.Commit()
-        DB.Close()
 
-        DB = GestionDB.DB()
-        for IDdeplacement in listeIDcoches:
-            DB.ReqMAJ(
-                "deplacements",
-                [("IDremboursement", ID)],
-                "IDdeplacement",
-                IDdeplacement,
+        def executer(req, valeurs=()):
+            if getattr(DB, "isNetwork", False):
+                req = req.replace("?", "%s")
+            DB.cursor.execute(req, tuple(valeurs))
+
+        try:
+            if self.IDremboursement is None:
+                listeDonnees = [
+                    ("date", date),
+                    ("IDpersonne", IDpersonne),
+                    ("montant", montant),
+                    ("listeIDdeplacement", ""),
+                ]
+                ID = DB.ReqInsert("remboursements", listeDonnees, commit=False)
+                if ID is None:
+                    raise RuntimeError(_(u"La création du remboursement a échoué."))
+            else:
+                ID = self.IDremboursement
+                executer(
+                    """UPDATE remboursements
+                    SET date=?, IDpersonne=?, montant=?
+                    WHERE IDremboursement=?""",
+                    (date, IDpersonne, montant, ID),
+                )
+
+            for IDdeplacement in listeIDcoches:
+                executer(
+                    """SELECT IDremboursement FROM deplacements
+                    WHERE IDdeplacement=? AND IDpersonne=?""",
+                    (IDdeplacement, IDpersonne),
+                )
+                ligne = DB.cursor.fetchone()
+                if ligne is None:
+                    raise RuntimeError(
+                        _(u"Le déplacement n°%d n'existe plus pour cette personne.")
+                        % IDdeplacement
+                    )
+                IDremboursementActuel = ligne[0]
+                autorises = (None, 0, "")
+                if self.IDremboursement is not None:
+                    autorises = autorises + (ID,)
+                if IDremboursementActuel not in autorises:
+                    raise RuntimeError(
+                        _(u"Le déplacement n°%d a été rattaché à un autre remboursement entre-temps.")
+                        % IDdeplacement
+                    )
+                if IDremboursementActuel != ID:
+                    executer(
+                        "UPDATE deplacements SET IDremboursement=? WHERE IDdeplacement=?",
+                        (ID, IDdeplacement),
+                    )
+
+            for IDdeplacement in listeIDdecoches:
+                executer(
+                    """SELECT IDremboursement FROM deplacements
+                    WHERE IDdeplacement=? AND IDpersonne=?""",
+                    (IDdeplacement, IDpersonne),
+                )
+                ligne = DB.cursor.fetchone()
+                if ligne is not None and ligne[0] == ID:
+                    executer(
+                        "UPDATE deplacements SET IDremboursement=0 WHERE IDdeplacement=?",
+                        (IDdeplacement,),
+                    )
+
+            executer(
+                """SELECT IDdeplacement FROM deplacements
+                WHERE IDpersonne=? AND IDremboursement=? ORDER BY IDdeplacement""",
+                (IDpersonne, ID),
             )
-        for IDdeplacement in listeIDdecoches:
-            DB.ReqMAJ(
-                "deplacements",
-                [("IDremboursement", 0)],
-                "IDdeplacement",
-                IDdeplacement,
+            listeIDcanoniques = [ligne[0] for ligne in DB.cursor.fetchall()]
+            if sorted(listeIDcanoniques) != sorted(listeIDcoches):
+                raise RuntimeError(
+                    _(u"Les déplacements rattachés ont changé pendant l'enregistrement.")
+                )
+
+            texteID = "-".join(str(IDdeplacement) for IDdeplacement in listeIDcanoniques)
+            executer(
+                """UPDATE remboursements SET listeIDdeplacement=?
+                WHERE IDremboursement=?""",
+                (texteID, ID),
             )
-        DB.Commit()
-        DB.Close()
+            DB.Commit()
+        except Exception:
+            try:
+                DB.connexion.rollback()
+            except Exception:
+                pass
+            raise
+        finally:
+            DB.Close()
         return ID
 
 
@@ -677,10 +744,10 @@ class ListCtrl_deplacements(wx.ListCtrl, _CheckboxFallback):
         DB = GestionDB.DB()
         if self.IDremboursement is None:
             req = """SELECT IDdeplacement, date, objet, ville_depart, ville_arrivee, distance, aller_retour, tarif_km, IDremboursement
-            FROM deplacements WHERE IDpersonne=%d AND IDremboursement=0 ORDER BY date;""" % self.IDpersonne
+            FROM deplacements WHERE IDpersonne=%d AND COALESCE(IDremboursement, 0)=0 ORDER BY date;""" % self.IDpersonne
         else:
             req = """SELECT IDdeplacement, date, objet, ville_depart, ville_arrivee, distance, aller_retour, tarif_km, IDremboursement
-            FROM deplacements WHERE IDpersonne=%d AND (IDremboursement=0 OR IDremboursement=%d) ORDER BY date;""" % (
+            FROM deplacements WHERE IDpersonne=%d AND COALESCE(IDremboursement, 0) IN (0, %d) ORDER BY date;""" % (
                 self.IDpersonne,
                 self.IDremboursement,
             )
@@ -699,7 +766,7 @@ class ListCtrl_deplacements(wx.ListCtrl, _CheckboxFallback):
             montant = float(distance) * float(tarif_km)
             montantStr = u"%.2f €" % montant
             tarif_str = str(tarif_km) + _(u" €/km")
-            if IDremboursement != 0:
+            if IDremboursement not in (None, 0, ""):
                 self.montantRattache += montant
             self.donnees.append(
                 (
@@ -710,7 +777,7 @@ class ListCtrl_deplacements(wx.ListCtrl, _CheckboxFallback):
                     dist,
                     tarif_str,
                     montantStr,
-                    IDremboursement,
+                    IDremboursement or 0,
                 )
             )
 
