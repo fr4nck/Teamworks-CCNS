@@ -267,7 +267,7 @@ class Panel(wx.Panel):
         DB.Close()
         dejaAttribue = None
         for _, IDremboursement in listeDonnees:
-            if IDremboursement != 0:
+            if IDremboursement not in (None, 0, ""):
                 dejaAttribue = IDremboursement
                 break
         if dejaAttribue is not None:
@@ -379,7 +379,7 @@ class Panel(wx.Panel):
         if index == -1:
             dlg = wx.MessageDialog(
                 self,
-                _(u"Vous devez d'abord sélectionner un remboursement à supprimer dans la liste."),
+                _(u"Vous devez d'abord sélectionner un remboursement à modifier dans la liste."),
                 "Information",
                 wx.OK | wx.ICON_INFORMATION,
             )
@@ -392,6 +392,7 @@ class Panel(wx.Panel):
         req = "SELECT IDdeplacement FROM deplacements WHERE IDremboursement=%d;" % IDremboursement
         DB.ExecuterReq(req)
         listeDeplacements = DB.ResultatReq()
+        DB.Close()
         nbreRattaches = len(listeDeplacements)
         if nbreRattaches != 0:
             dlgConfirm = wx.MessageDialog(
@@ -405,7 +406,6 @@ class Panel(wx.Panel):
             reponse = dlgConfirm.ShowModal()
             dlgConfirm.Destroy()
             if reponse == wx.ID_NO:
-                DB.Close()
                 return
 
         texte = self.ctrl_remboursements.GetItem(index, 2).GetText() + _(u" d'un montant de ") + self.ctrl_remboursements.GetItem(index, 3).GetText()
@@ -418,20 +418,29 @@ class Panel(wx.Panel):
         reponse = dlgConfirm.ShowModal()
         dlgConfirm.Destroy()
         if reponse == wx.ID_NO:
-            DB.Close()
             return
 
-        DB.ReqDEL("remboursements", "IDremboursement", IDremboursement)
-        for donnees in listeDeplacements:
-            IDdeplacement = donnees[0]
-            DB.ReqMAJ(
-                "deplacements",
-                [("IDremboursement", 0)],
-                "IDdeplacement",
-                IDdeplacement,
+        DB = GestionDB.DB()
+        try:
+            DB.ExecuterReq(
+                "UPDATE deplacements SET IDremboursement=0 WHERE IDremboursement=%d;"
+                % IDremboursement
             )
-        DB.Commit()
-        DB.Close()
+            DB.ReqDEL(
+                "remboursements",
+                "IDremboursement",
+                IDremboursement,
+                commit=False,
+            )
+            DB.Commit()
+        except Exception:
+            try:
+                DB.connexion.rollback()
+            except Exception:
+                pass
+            raise
+        finally:
+            DB.Close()
 
         self.ctrl_deplacements.MAJListeCtrl()
         self.ctrl_remboursements.MAJListeCtrl()
@@ -687,20 +696,29 @@ class ListCtrl_remboursements(_ListeFrais):
 
     def Importation(self):
         DB = GestionDB.DB()
-        req = "SELECT IDremboursement, date, montant, listeIDdeplacement FROM remboursements WHERE IDpersonne=%d ORDER BY date;" % self.IDpersonne
+        req = "SELECT IDremboursement, date, montant FROM remboursements WHERE IDpersonne=%d ORDER BY date;" % self.IDpersonne
         DB.ExecuterReq(req)
         listeDonnees = DB.ResultatReq()
+
+        dictDeplacements = {}
+        if listeDonnees:
+            listeRemboursements = [str(IDremboursement) for IDremboursement, _, _ in listeDonnees]
+            req = """SELECT IDdeplacement, IDremboursement FROM deplacements
+            WHERE IDpersonne=%d AND IDremboursement IN (%s) ORDER BY IDdeplacement;""" % (
+                self.IDpersonne,
+                ",".join(listeRemboursements),
+            )
+            DB.ExecuterReq(req)
+            for IDdeplacement, IDremboursement in DB.ResultatReq():
+                dictDeplacements.setdefault(IDremboursement, []).append(IDdeplacement)
         DB.Close()
+
         self.nbreLignes = len(listeDonnees)
         self.donnees = {}
-        for IDremboursement, date, montant, listeIDdeplacement in listeDonnees:
+        for IDremboursement, date, montant in listeDonnees:
             montant_str = u"%.2f €" % montant
-            listeID = []
-            if isinstance(listeIDdeplacement, int):
-                listeID = [listeIDdeplacement]
-            elif isinstance(listeIDdeplacement, six.string_types):
-                listeID = listeIDdeplacement.split("-") if "-" in listeIDdeplacement else ([listeIDdeplacement] if listeIDdeplacement else [])
-            if not listeID or listeID[0] == "":
+            listeID = dictDeplacements.get(IDremboursement, [])
+            if not listeID:
                 texteListeID = _(u"Aucun déplacement rattaché")
             else:
                 texteListeID = u"N° " + ", ".join(str(x) for x in listeID)
