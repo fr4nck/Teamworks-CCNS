@@ -186,7 +186,7 @@ class SaisieRemboursement(wx.Dialog):
 
     def Importation(self):
         DB = GestionDB.DB()
-        req = """SELECT IDremboursement, IDpersonne, date, montant, listeIDdeplacement
+        req = """SELECT IDremboursement, IDpersonne, date, montant
         FROM remboursements WHERE IDremboursement=%d;""" % self.IDremboursement
         DB.ExecuterReq(req)
         listeDonnees = DB.ResultatReq()
@@ -405,42 +405,50 @@ class SaisieRemboursement(wx.Dialog):
         texteID = "-".join(str(ID) for ID in listeIDcoches)
 
         DB = GestionDB.DB()
-        listeDonnees = [
-            ("date", date),
-            ("IDpersonne", IDpersonne),
-            ("montant", montant),
-            ("listeIDdeplacement", texteID),
-        ]
-        if self.IDremboursement is None:
-            ID = DB.ReqInsert("remboursements", listeDonnees)
-        else:
-            DB.ReqMAJ(
-                "remboursements",
-                listeDonnees,
-                "IDremboursement",
-                self.IDremboursement,
-            )
-            ID = self.IDremboursement
-        DB.Commit()
-        DB.Close()
+        try:
+            listeDonnees = [
+                ("date", date),
+                ("IDpersonne", IDpersonne),
+                ("montant", montant),
+                ("listeIDdeplacement", texteID),
+            ]
+            if self.IDremboursement is None:
+                ID = DB.ReqInsert("remboursements", listeDonnees, commit=False)
+            else:
+                DB.ReqMAJ(
+                    "remboursements",
+                    listeDonnees,
+                    "IDremboursement",
+                    self.IDremboursement,
+                    commit=False,
+                )
+                ID = self.IDremboursement
 
-        DB = GestionDB.DB()
-        for IDdeplacement in listeIDcoches:
-            DB.ReqMAJ(
-                "deplacements",
-                [("IDremboursement", ID)],
-                "IDdeplacement",
-                IDdeplacement,
-            )
-        for IDdeplacement in listeIDdecoches:
-            DB.ReqMAJ(
-                "deplacements",
-                [("IDremboursement", 0)],
-                "IDdeplacement",
-                IDdeplacement,
-            )
-        DB.Commit()
-        DB.Close()
+            for IDdeplacement in listeIDcoches:
+                DB.ReqMAJ(
+                    "deplacements",
+                    [("IDremboursement", ID)],
+                    "IDdeplacement",
+                    IDdeplacement,
+                    commit=False,
+                )
+            for IDdeplacement in listeIDdecoches:
+                DB.ReqMAJ(
+                    "deplacements",
+                    [("IDremboursement", 0)],
+                    "IDdeplacement",
+                    IDdeplacement,
+                    commit=False,
+                )
+            DB.Commit()
+        except Exception:
+            try:
+                DB.connexion.rollback()
+            except Exception:
+                pass
+            raise
+        finally:
+            DB.Close()
         return ID
 
 
@@ -677,10 +685,10 @@ class ListCtrl_deplacements(wx.ListCtrl, _CheckboxFallback):
         DB = GestionDB.DB()
         if self.IDremboursement is None:
             req = """SELECT IDdeplacement, date, objet, ville_depart, ville_arrivee, distance, aller_retour, tarif_km, IDremboursement
-            FROM deplacements WHERE IDpersonne=%d AND IDremboursement=0 ORDER BY date;""" % self.IDpersonne
+            FROM deplacements WHERE IDpersonne=%d AND COALESCE(IDremboursement, 0)=0 ORDER BY date;""" % self.IDpersonne
         else:
             req = """SELECT IDdeplacement, date, objet, ville_depart, ville_arrivee, distance, aller_retour, tarif_km, IDremboursement
-            FROM deplacements WHERE IDpersonne=%d AND (IDremboursement=0 OR IDremboursement=%d) ORDER BY date;""" % (
+            FROM deplacements WHERE IDpersonne=%d AND COALESCE(IDremboursement, 0) IN (0, %d) ORDER BY date;""" % (
                 self.IDpersonne,
                 self.IDremboursement,
             )
@@ -699,7 +707,7 @@ class ListCtrl_deplacements(wx.ListCtrl, _CheckboxFallback):
             montant = float(distance) * float(tarif_km)
             montantStr = u"%.2f €" % montant
             tarif_str = str(tarif_km) + _(u" €/km")
-            if IDremboursement != 0:
+            if IDremboursement not in (None, 0, ""):
                 self.montantRattache += montant
             self.donnees.append(
                 (
@@ -710,7 +718,7 @@ class ListCtrl_deplacements(wx.ListCtrl, _CheckboxFallback):
                     dist,
                     tarif_str,
                     montantStr,
-                    IDremboursement,
+                    IDremboursement or 0,
                 )
             )
 
