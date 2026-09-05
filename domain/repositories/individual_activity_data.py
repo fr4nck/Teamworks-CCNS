@@ -32,3 +32,29 @@ class ReimbursementRecord:
     date: object
     montant: object
     listeIDdeplacement: object
+
+
+@dataclass(frozen=True)
+class PresenceRecord:
+    IDpresence: int
+    date: object
+    heure_debut: object
+    heure_fin: object
+    IDcategorie: int
+    intitule: str | None
+
+
+@dataclass(frozen=True)
+class PresenceCategoryRecord:
+    IDcategorie: int
+    nom_categorie: str | None
+    couleur: str | None
+
+
+@dataclass(frozen=True)
+class VacationPeriodRecord:
+    IDperiode: int
+    nom: str | None
+    annee: object
+    date_debut: object
+    date_fin: object
