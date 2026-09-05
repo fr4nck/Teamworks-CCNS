@@ -5,7 +5,11 @@ import sys
 import time
 from types import SimpleNamespace
 
-os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+_NATIVE_WINDOWS_REQUIRED = (
+    os.environ.get("TEAMWORKS_QT_NATIVE_WINDOWS_REQUIRED", "").strip() == "1"
+)
+if sys.platform != "win32":
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PySide6.QtCore import QObject, QTimer, Signal, Slot
 from PySide6.QtWidgets import QApplication
@@ -178,6 +182,13 @@ def _new_window(delays: dict[int, int]) -> PeopleContractsGeneralitiesPilot:
 
 def run_smoke() -> None:
     app = _app()
+    platform_name = app.platformName()
+    if _NATIVE_WINDOWS_REQUIRED:
+        assert sys.platform == "win32", "qualification native Windows demandee hors Windows"
+        assert platform_name.lower() == "windows", (
+            "plugin Qt Windows natif attendu, "
+            f"plateforme active: {platform_name!r}"
+        )
 
     window = _new_window({1: 10, 2: 120, 3: 10})
     try:
@@ -257,8 +268,8 @@ def run_smoke() -> None:
     assert not thread.isRunning()
 
     print(
-        "[Teamworks Qt runtime] OK - 8 onglets, clear A->B, rejet stale A, "
-        "A->B->C, fermeture thread"
+        f"[Teamworks Qt runtime] OK - plateforme={platform_name} - "
+        "8 onglets, clear A->B, rejet stale A, A->B->C, fermeture thread"
     )
 
 
