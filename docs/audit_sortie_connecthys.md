@@ -90,70 +90,248 @@ Aucun contrôle ci-dessous n'est déclaré conforme par hypothèse.
 
 ### 3.1 Base réelle
 
+Exécuter uniquement des `SELECT` sur la base réelle, de préférence avec un compte en lecture seule. Les requêtes ci-dessous ne retournent jamais les mots de passe, tokens, clés API ni les valeurs d'authentification.
+
 #### Paramètres
 
 ```sql
-SELECT categorie, nom, parametre
+SELECT categorie, nom,
+       CASE WHEN LOWER(COALESCE(parametre, '')) LIKE '%connecthys%' THEN 1 ELSE 0 END AS contient_connecthys,
+       CASE WHEN LOWER(COALESCE(parametre, '')) LIKE '%http%'
+                  OR LOWER(COALESCE(parametre, '')) LIKE '%ftp%' THEN 1 ELSE 0 END AS contient_url,
+       CASE WHEN LOWER(COALESCE(parametre, '')) LIKE '%portail%'
+                  OR LOWER(COALESCE(parametre, '')) LIKE '%sync%' THEN 1 ELSE 0 END AS contient_portail_sync,
+       LENGTH(COALESCE(parametre, '')) AS longueur_valeur
 FROM parametres
 WHERE LOWER(COALESCE(categorie, '')) LIKE '%connecthys%'
    OR LOWER(COALESCE(nom, '')) LIKE '%connecthys%'
+   OR LOWER(COALESCE(categorie, '')) LIKE '%portail%'
+   OR LOWER(COALESCE(nom, '')) LIKE '%portail%'
+   OR LOWER(COALESCE(categorie, '')) LIKE '%sync%'
+   OR LOWER(COALESCE(nom, '')) LIKE '%sync%'
+   OR LOWER(COALESCE(nom, '')) LIKE '%url%'
+   OR LOWER(COALESCE(nom, '')) LIKE '%host%'
+   OR LOWER(COALESCE(nom, '')) LIKE '%serveur%'
    OR LOWER(COALESCE(parametre, '')) LIKE '%connecthys%'
    OR LOWER(COALESCE(parametre, '')) LIKE '%portail%'
-   OR LOWER(COALESCE(parametre, '')) LIKE '%http%';
+   OR LOWER(COALESCE(parametre, '')) LIKE '%sync%'
+   OR LOWER(COALESCE(parametre, '')) LIKE '%http%'
+   OR LOWER(COALESCE(parametre, '')) LIKE '%ftp%'
+ORDER BY categorie, nom;
 ```
 
-Preuve positive : URL, domaine, identifiant ou option identifiable comme Connecthys.  
-Preuve négative : résultat horodaté sans référence Connecthys, puis qualification des paramètres URL/portail restants.
+Preuve attendue : liste datée des clés candidates et indicateurs, sans valeur brute. Une ligne candidate doit ensuite être qualifiée localement ; ne recopier qu'un hôte/port utile, jamais une chaîne pouvant contenir des credentials.
 
 #### Messagerie
 
-Inspecter les métadonnées de `adresses_mail` sans copier de mots de passe, clés ou secrets :
-
 ```sql
-SELECT IDadresse, moteur, adresse, smtp, port, defaut,
-       connexionAuthentifiee, startTLS, utilisateur, parametres
+SELECT IDadresse, moteur, smtp, port, defaut,
+       connexionAuthentifiee, startTLS,
+       CASE WHEN COALESCE(utilisateur, '') <> '' THEN 1 ELSE 0 END AS utilisateur_present,
+       CASE WHEN COALESCE(motdepasse, '') <> '' THEN 1 ELSE 0 END AS motdepasse_present,
+       CASE WHEN COALESCE(parametres, '') <> '' THEN 1 ELSE 0 END AS parametres_presents,
+       CASE WHEN LOWER(COALESCE(smtp, '')) LIKE '%connecthys%'
+                  OR LOWER(COALESCE(parametres, '')) LIKE '%connecthys%' THEN 1 ELSE 0 END AS indice_connecthys
 FROM adresses_mail;
 ```
 
-Preuve attendue : aucun hôte/domaine/paramètre Connecthys. SMTP et Mailjet restent des dépendances externes distinctes.
+Preuve attendue : moteurs et hôtes SMTP qualifiés ; présence éventuelle de credentials signalée uniquement par booléen. SMTP et Mailjet restent des dépendances externes distinctes tant qu'aucun lien Connecthys n'est démontré.
 
 #### Sauvegardes automatiques
 
 ```sql
-SELECT * FROM sauvegardes_auto;
+SELECT IDsauvegarde, nom, date_derniere,
+       sauvegarde_repertoire, sauvegarde_fichiers_reseau,
+       condition_heure, condition_poste,
+       CASE WHEN COALESCE(sauvegarde_emails, '') <> '' THEN 1 ELSE 0 END AS emails_configures,
+       CASE WHEN COALESCE(sauvegarde_motdepasse, '') <> '' THEN 1 ELSE 0 END AS motdepasse_configure,
+       CASE WHEN LOWER(COALESCE(sauvegarde_repertoire, '')) LIKE '%connecthys%'
+                  OR LOWER(COALESCE(sauvegarde_fichiers_reseau, '')) LIKE '%connecthys%' THEN 1 ELSE 0 END AS indice_connecthys
+FROM sauvegardes_auto;
 ```
 
-Inspecter ensuite le schéma si nécessaire pour identifier destinations, e-mails, réseau et conditions d'exécution. Preuve attendue : aucune destination Connecthys et toutes les sauvegardes nécessaires identifiées.
-
-Rechercher plus largement les colonnes/valeurs liées à `url`, `host`, `server`, `portail`, `sync`, `token`, `secret`, `login`, `api`, en adaptant la requête au moteur réel et sans exporter aveuglément des secrets.
+Cette requête expose les chemins nécessaires à la qualification des destinations, mais jamais `sauvegarde_motdepasse` ni les adresses de `sauvegarde_emails`. Le schéma applicatif confirme que le mot de passe est stocké dans un champ séparé : ne jamais utiliser `SELECT *` sur cette table.
 
 ### 3.2 Postes Windows
 
-Sur un poste de recette représentatif :
+À exécuter dans PowerShell 5.1+ sur le poste PMSL représentatif. Ouvrir une console élevée si nécessaire pour ne pas manquer des tâches ou services, mais **ne lancer aucune commande de modification**. Les scripts ci-dessous lisent les valeurs pour produire des indicateurs, sans imprimer les valeurs potentiellement secrètes.
+
+#### Emplacements Teamworks : `Config.json`, `Customize.ini`, `Sync`
+
+Le code utilise `%APPDATA%\teamworks` en installation standard et `<dossier application>\Portable` en mode portable. Si une version portable n'est pas lancée, ajouter explicitement son dossier `Portable` connu à `$roots`.
 
 ```powershell
-schtasks /Query /FO LIST /V | findstr /I "connecthys portail sync http ftp sftp"
-Get-CimInstance Win32_Service | Select-Object Name, State, StartMode, PathName
-Get-CimInstance Win32_StartupCommand | Select-Object Name, Command, Location, User
-Get-ChildItem Env: | Where-Object { $_.Name -match 'CONNECT|PORTAIL|SYNC|API|TOKEN' }
+$portableRoots = Get-CimInstance Win32_Process -ErrorAction SilentlyContinue |
+  Where-Object { $_.Name -match '(?i)teamworks|noethys' -and $_.ExecutablePath } |
+  ForEach-Object { Join-Path (Split-Path $_.ExecutablePath -Parent) 'Portable' }
+
+$roots = @((Join-Path $env:APPDATA 'teamworks')) + @($portableRoots)
+$roots = @($roots | Where-Object { $_ -and (Test-Path -LiteralPath $_) } | Select-Object -Unique)
+
+$roots | ForEach-Object {
+  [PSCustomObject]@{
+    Root = $_
+    ConfigJson = Test-Path -LiteralPath (Join-Path $_ 'Config.json')
+    CustomizeIni = Test-Path -LiteralPath (Join-Path $_ 'Customize.ini')
+    Sync = Test-Path -LiteralPath (Join-Path $_ 'Sync')
+  }
+}
 ```
 
-Clés de démarrage :
+Inventaire de `Config.json` : uniquement nom de clé et indicateurs, jamais la valeur.
 
 ```powershell
-Get-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' -ErrorAction SilentlyContinue
-Get-ItemProperty 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Run' -ErrorAction SilentlyContinue
-Get-ItemProperty 'HKLM:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Run' -ErrorAction SilentlyContinue
+$secretKey = '(?i)pass|mot.?de.?passe|token|secret|api.?key|credential|auth|login|user'
+foreach ($root in $roots) {
+  $path = Join-Path $root 'Config.json'
+  if (Test-Path -LiteralPath $path) {
+    try {
+      $cfg = Get-Content -LiteralPath $path -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
+      foreach ($prop in $cfg.PSObject.Properties) {
+        if ($null -eq $prop.Value) {
+          $text = ''
+        } elseif ($prop.Value -is [string]) {
+          $text = [string]$prop.Value
+        } else {
+          $text = $prop.Value | ConvertTo-Json -Compress -Depth 6
+        }
+        [PSCustomObject]@{
+          File = $path
+          Key = $prop.Name
+          SecretLike = [bool]($prop.Name -match $secretKey)
+          Connecthys = [bool]($text -match '(?i)connect[\s_-]*hys')
+          Url = [bool]($text -match '(?i)(?:https?|s?ftp)://')
+          PortailSync = [bool]($text -match '(?i)portail|sync')
+        }
+      }
+    } catch {
+      [PSCustomObject]@{ File = $path; Key = '<JSON illisible>'; SecretLike = $false; Connecthys = $false; Url = $false; PortailSync = $false }
+    }
+  }
+}
 ```
 
-Recherche dans les configurations utilisateur, sans collecter de secrets :
+Inventaire de `Customize.ini` : section, clé et indicateurs, jamais la valeur.
 
 ```powershell
-$roots = @($env:APPDATA, $env:LOCALAPPDATA, $env:PROGRAMDATA)
-Get-ChildItem $roots -File -Recurse -ErrorAction SilentlyContinue |
-  Where-Object { $_.Extension -match '^\.(ini|cfg|conf|json|xml|yaml|yml|txt|log)$' } |
-  Select-String -Pattern 'Connecthys|https?://|portail|sync' -CaseSensitive:$false
+foreach ($root in $roots) {
+  $path = Join-Path $root 'Customize.ini'
+  if (Test-Path -LiteralPath $path) {
+    $section = ''
+    Get-Content -LiteralPath $path -ErrorAction Stop | ForEach-Object {
+      $line = $_.Trim()
+      if ($line -match '^\[(?<section>[^\]]+)\]$') {
+        $section = $Matches.section
+      } elseif ($line -match '^(?<key>[^#;][^=]*)=(?<value>.*)$') {
+        $key = $Matches.key.Trim()
+        $value = $Matches.value
+        [PSCustomObject]@{
+          File = $path
+          Section = $section
+          Key = $key
+          SecretLike = [bool]($key -match $secretKey)
+          Connecthys = [bool]($value -match '(?i)connect[\s_-]*hys')
+          Url = [bool]($value -match '(?i)(?:https?|s?ftp)://')
+          PortailSync = [bool]($value -match '(?i)portail|sync')
+        }
+      }
+    }
+  }
+}
 ```
+
+Inventaire du dossier `Sync` sans lire le contenu des fichiers :
+
+```powershell
+foreach ($root in $roots) {
+  $sync = Join-Path $root 'Sync'
+  if (Test-Path -LiteralPath $sync) {
+    Get-ChildItem -LiteralPath $sync -File -Recurse -Force -ErrorAction SilentlyContinue |
+      Select-Object @{N='SyncRoot';E={$sync}},
+                    @{N='RelativePath';E={$_.FullName.Substring($sync.Length).TrimStart('\')}},
+                    Extension, Length, LastWriteTime
+  } else {
+    [PSCustomObject]@{ SyncRoot = $sync; RelativePath = '<absent>'; Extension = ''; Length = 0; LastWriteTime = $null }
+  }
+}
+```
+
+#### Tâches planifiées, services, démarrage et environnement
+
+Les arguments complets des tâches/services/démarrages sont analysés pour les indicateurs mais **ne sont pas affichés**, car ils peuvent contenir des secrets.
+
+```powershell
+Get-ScheduledTask -ErrorAction SilentlyContinue | ForEach-Object {
+  $task = $_
+  $actionText = ($task.Actions | ForEach-Object { "$($_.Execute) $($_.Arguments) $($_.WorkingDirectory)" }) -join ' '
+  [PSCustomObject]@{
+    TaskPath = $task.TaskPath
+    TaskName = $task.TaskName
+    State = $task.State
+    ActionExecutable = (($task.Actions | ForEach-Object { $_.Execute } | Where-Object { $_ }) -join '; ')
+    Connecthys = [bool]($actionText -match '(?i)connect[\s_-]*hys')
+    NetworkIndicator = [bool]($actionText -match '(?i)(?:https?|s?ftp)://|portail|sync')
+  }
+} | Sort-Object TaskPath, TaskName
+
+Get-CimInstance Win32_Service -ErrorAction SilentlyContinue | ForEach-Object {
+  $raw = [string]$_.PathName
+  $exe = ''
+  if ($raw -match '^\s*"([^"]+)"') { $exe = $Matches[1] }
+  elseif ($raw) { $exe = ($raw -split '\s+')[0] }
+  [PSCustomObject]@{
+    Name = $_.Name
+    State = $_.State
+    StartMode = $_.StartMode
+    Executable = $exe
+    Connecthys = [bool]($raw -match '(?i)connect[\s_-]*hys')
+    NetworkIndicator = [bool]($raw -match '(?i)(?:https?|s?ftp)://|portail|sync')
+  }
+} | Sort-Object Name
+
+Get-CimInstance Win32_StartupCommand -ErrorAction SilentlyContinue | ForEach-Object {
+  $raw = [string]$_.Command
+  [PSCustomObject]@{
+    Name = $_.Name
+    Location = $_.Location
+    User = $_.User
+    Connecthys = [bool]($raw -match '(?i)connect[\s_-]*hys')
+    NetworkIndicator = [bool]($raw -match '(?i)(?:https?|s?ftp)://|portail|sync')
+  }
+} | Sort-Object Location, Name
+
+Get-ChildItem Env: | ForEach-Object {
+  $value = [string]$_.Value
+  [PSCustomObject]@{
+    Name = $_.Name
+    SecretLike = [bool]($_.Name -match $secretKey)
+    Connecthys = [bool]($value -match '(?i)connect[\s_-]*hys')
+    NetworkIndicator = [bool]($value -match '(?i)(?:https?|s?ftp)://|portail|sync')
+  }
+} | Where-Object { $_.SecretLike -or $_.Connecthys -or $_.NetworkIndicator } | Sort-Object Name
+```
+
+#### Connexions réseau actives
+
+À relever pendant que Teamworks/Noethys et les parcours concernés sont réellement ouverts. Cette commande n'effectue aucune coupure et n'affiche aucun payload ni credential.
+
+```powershell
+$processNames = @{}
+Get-Process -ErrorAction SilentlyContinue | ForEach-Object { $processNames[$_.Id] = $_.ProcessName }
+Get-NetTCPConnection -State Established -ErrorAction SilentlyContinue |
+  ForEach-Object {
+    [PSCustomObject]@{
+      Process = $processNames[$_.OwningProcess]
+      PID = $_.OwningProcess
+      LocalAddress = $_.LocalAddress
+      LocalPort = $_.LocalPort
+      RemoteAddress = $_.RemoteAddress
+      RemotePort = $_.RemotePort
+    }
+  } | Sort-Object Process, RemoteAddress, RemotePort
+```
+
+Preuve attendue pour ce rail : inventaires horodatés, candidats explicitement signalés et aucune valeur secrète copiée. **L'absence de candidat dans ces sorties n'autorise pas la résiliation** : l'analyse des résultats et le test de coupure ciblée restent des étapes séparées.
 
 ### 3.3 Serveur PMSL35
 
@@ -257,58 +435,3 @@ Seulement après toutes les preuves : **CONNECTHYS : PRÊT À RÉSILIER**.
 | Recette Noethys | Recette | Parcours critiques/portail validés sous coupure | Référent métier | **À faire** |
 | RGPD | Registre / DPA / contrat | Sort des données et sous-traitants validé | DPO / Direction | **À faire** |
 | Échéance contractuelle | Contrat Connecthys | Date, préavis, procédure et coûts confirmés | Direction / Admin | **À faire** |
-
----
-
-## 7. Audit exécutable
-
-Inventaire :
-
-```bash
-python tools/audit_connecthys.py . --json audit-connecthys.json --markdown audit-connecthys.md
-```
-
-Garde explicite :
-
-```bash
-python tools/audit_connecthys.py . --fail-on-active-brand
-```
-
-Tests ciblés :
-
-```bash
-python -m pytest -q tests/test_audit_connecthys.py
-```
-
-Suite :
-
-```bash
-python -m pytest -q
-```
-
-Politique : une nouvelle référence explicite Connecthys en code actif non commenté est bloquante ; les références historiques/documentaires restent inventoriées ; les URL et concepts génériques demandent une qualification humaine.
-
----
-
-## 8. Validation exécutée et limites
-
-### Validation CI du code et des outils d'audit
-
-Sur le commit de code/tests `e16864e51e2a22fed0f21d200e51e4ea71143c29` :
-
-- Linux : compilation Python, politique UTF-8, composants essentiels, audit runtime, contrôles SQLite/Phoenix, inventaires et suite pytest : **succès** ;
-- pytest Linux : **2 013 réussis, 3 ignorés, 1 avertissement d'inventaire** ;
-- scanner : **1 255 fichiers texte**, **3 références Connecthys**, **0 exécutable bloquante**, **3 historiques/documentaires** ;
-- Windows : contrats de dialogues **30 réussis** ;
-- Windows : sauvegarde/restauration, checklists, contrat, exports, PDF, navigation, fiche personne, présence, recrutement et aller-retour DB : **succès** ;
-- bilan Windows : **tous les contrôles Windows passés**.
-
-Le premier prototype du test Connecthys avait produit un échec volontairement conservateur sur le commentaire de l'updater (`2 011 réussis, 3 ignorés, 1 échec`). Après suivi d'appels, la garde a été corrigée pour ne pas confondre commentaire historique et code exécutable.
-
-### Limites de l'environnement
-
-Non exécuté et donc toujours **À faire** : inspection d'un poste Windows PMSL35 réel ; interrogation d'une base réelle ; inspection du serveur PMSL35 ; Planificateur réel ; DNS/pare-feu réel ; capture réseau réelle ; environnement Noethys réel ; coupure Connecthys réelle ; contrat/facture/DPA/espace client ; export/restauration de données Connecthys.
-
-Ces limites imposent le verdict final :
-
-## **CONNECTHYS : NON DÉMONTRÉ**
