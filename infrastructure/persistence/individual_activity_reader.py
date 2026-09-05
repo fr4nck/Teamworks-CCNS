@@ -6,15 +6,18 @@ from __future__ import annotations
 from typing import Callable, Optional
 
 from domain.repositories.individual_activity_data import (
+    PresenceCategoryRecord,
+    PresenceRecord,
     ReimbursementRecord,
     ScenarioRecord,
     TripRecord,
+    VacationPeriodRecord,
 )
 from teamworks.Utils import UTILS_Diagnostic_performance as DiagnosticPerformance
 
 
 class IndividualActivityReader:
-    """Lecteur SQL sans wxPython pour les pages individuelles Scénarios/Frais."""
+    """Lecteur SQL sans wxPython pour les pages individuelles Scénarios/Frais/Présences."""
 
     def __init__(self, db_factory: Optional[Callable[[], object]] = None):
         self._db_factory = db_factory or self._default_db_factory
@@ -80,6 +83,25 @@ class IndividualActivityReader:
         )
         rows = self._fetch(req, "IndividualActivityReader.lire_remboursements_personne")
         return [ReimbursementRecord(*row) for row in rows]
+
+    def lire_presences_personne(self, IDpersonne) -> list[PresenceRecord]:
+        person_id = self._person_id(IDpersonne)
+        req = (
+            "SELECT IDpresence, date, heure_debut, heure_fin, IDcategorie, intitule "
+            "FROM presences WHERE IDpersonne=%d ORDER BY date, heure_debut;" % person_id
+        )
+        rows = self._fetch(req, "IndividualActivityReader.lire_presences_personne")
+        return [PresenceRecord(*row) for row in rows]
+
+    def lire_categories_presences(self) -> list[PresenceCategoryRecord]:
+        req = "SELECT IDcategorie, nom_categorie, couleur FROM cat_presences;"
+        rows = self._fetch(req, "IndividualActivityReader.lire_categories_presences")
+        return [PresenceCategoryRecord(*row) for row in rows]
+
+    def lire_periodes_vacances(self) -> list[VacationPeriodRecord]:
+        req = "SELECT IDperiode, nom, annee, date_debut, date_fin FROM periodes_vacances;"
+        rows = self._fetch(req, "IndividualActivityReader.lire_periodes_vacances")
+        return [VacationPeriodRecord(*row) for row in rows]
 
     def close(self) -> None:
         if self._db is not None:
