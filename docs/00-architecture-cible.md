@@ -2,8 +2,9 @@
 
 ## Décision retenue
 - **Teamworks forké orienté CCNS** = cœur métier principal
-- **Passerelle WordPress** = couche de liaison avec l'écosystème existant
-- **Noethys / Connecthys / DocuSign / Mailjet** = outils connectés autour
+- **Qt / PySide6** = interface desktop cible
+- **Serveur** = données et services partagés
+- **Portail** = accès complémentaire aux fonctions qui doivent être disponibles hors Teamworks
 
 ## Rôle du cœur Teamworks
 Le cœur Teamworks doit porter :
@@ -42,4 +43,4 @@ Le gel de Vanilla **n'interdit pas les corrections**. Restent autorisés :
 Principe : **on corrige ce qui dysfonctionne dans Vanilla, mais on évite d'y investir dans une nouvelle refonte UI destinée à être remplacée par Qt.**
 
 ## Règle simple
-**WordPress transmet, Teamworks décide.**
+**Le serveur partage, Teamworks décide, Qt présente, le Portail complète.**
