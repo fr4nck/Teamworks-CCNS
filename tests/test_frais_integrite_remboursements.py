@@ -71,14 +71,38 @@ class _Control:
         self.label = label
 
 
+class _Cursor:
+    def __init__(self, connexion: sqlite3.Connection, *, fail_after_child=False):
+        self._cursor = connexion.cursor()
+        self.fail_after_child = fail_after_child
+        self.child_updates = 0
+
+    def execute(self, request, params=()):
+        normalized = " ".join(request.split())
+        if normalized.startswith("UPDATE deplacements SET IDremboursement=?"):
+            self.child_updates += 1
+            if self.fail_after_child and self.child_updates == 1:
+                raise RuntimeError("panne injectée pendant le rattachement")
+        return self._cursor.execute(request, params)
+
+    def fetchone(self):
+        return self._cursor.fetchone()
+
+    def fetchall(self):
+        return self._cursor.fetchall()
+
+    @property
+    def lastrowid(self):
+        return self._cursor.lastrowid
+
+
 class _DB:
-    """Doublure SQLite avec sémantique commit=False de GestionDB."""
+    """Doublure SQLite de la transaction stricte utilisée par le dialogue."""
 
     def __init__(self, connexion: sqlite3.Connection, *, fail_after_child=False):
         self.connexion = connexion
-        self.cursor = connexion.cursor()
-        self.fail_after_child = fail_after_child
-        self.child_updates = 0
+        self.cursor = _Cursor(connexion, fail_after_child=fail_after_child)
+        self.isNetwork = False
         self.closed = False
 
     def ReqInsert(self, table, values, commit=True):  # noqa: N802
@@ -93,20 +117,6 @@ class _DB:
         if commit:
             self.connexion.commit()
         return self.cursor.lastrowid
-
-    def ReqMAJ(self, table, values, key, key_value, commit=True):  # noqa: N802
-        if table == "deplacements":
-            self.child_updates += 1
-            if self.fail_after_child and self.child_updates == 1:
-                raise RuntimeError("panne injectée pendant le rattachement")
-        assignments = ", ".join("%s=?" % name for name, _ in values)
-        payload = [value for _, value in values]
-        self.cursor.execute(
-            "UPDATE %s SET %s WHERE %s=?" % (table, assignments, key),
-            payload + [key_value],
-        )
-        if commit:
-            self.connexion.commit()
 
     def Commit(self):  # noqa: N802
         self.connexion.commit()
@@ -180,13 +190,15 @@ def test_modifier_un_deplacement_ne_detache_plus_son_remboursement() -> None:
     assert '("IDremboursement", 0)' in creation
 
 
-def test_sauvegarde_remboursement_utilise_une_seule_transaction() -> None:
+def test_sauvegarde_remboursement_utilise_une_seule_transaction_stricte() -> None:
     source = _method_source(REMBOURSEMENT, "SaisieRemboursement", "Sauvegarde")
     assert source.count("GestionDB.DB()") == 1
     assert source.count("DB.Commit()") == 1
-    assert source.count("commit=False") >= 3
+    assert 'DB.ReqInsert("remboursements", listeDonnees, commit=False)' in source
+    assert "DB.cursor.execute" in source
     assert "DB.connexion.rollback()" in source
-    assert source.index('ReqInsert("remboursements"') < source.index('("IDremboursement", ID)')
+    assert "listeIDcanoniques" in source
+    assert "rattaché à un autre remboursement entre-temps" in source
 
 
 def test_creation_remboursement_et_rattachements_sont_commites_ensemble() -> None:
@@ -196,7 +208,7 @@ def test_creation_remboursement_et_rattachements_sont_commites_ensemble() -> Non
         REMBOURSEMENT,
         "SaisieRemboursement",
         "Sauvegarde",
-        globals_={"GestionDB": SimpleNamespace(DB=lambda: db)},
+        globals_={"GestionDB": SimpleNamespace(DB=lambda: db), "_": lambda value: value},
     )
 
     IDremboursement = sauvegarde(_dialogue_remboursement())
@@ -213,14 +225,14 @@ def test_creation_remboursement_et_rattachements_sont_commites_ensemble() -> Non
     assert db.closed is True
 
 
-def test_panne_pendant_rattachement_annule_aussi_le_parent() -> None:
+def test_panne_sql_pendant_rattachement_annule_aussi_le_parent() -> None:
     connexion = _database()
     db = _DB(connexion, fail_after_child=True)
     sauvegarde = _load_method(
         REMBOURSEMENT,
         "SaisieRemboursement",
         "Sauvegarde",
-        globals_={"GestionDB": SimpleNamespace(DB=lambda: db)},
+        globals_={"GestionDB": SimpleNamespace(DB=lambda: db), "_": lambda value: value},
     )
 
     with pytest.raises(RuntimeError, match="panne injectée"):
@@ -230,6 +242,28 @@ def test_panne_pendant_rattachement_annule_aussi_le_parent() -> None:
     assert connexion.execute(
         "SELECT IDdeplacement, IDremboursement FROM deplacements ORDER BY IDdeplacement"
     ).fetchall() == [(7, 0), (8, None)]
+    assert db.closed is True
+
+
+def test_un_deplacement_reaffecte_entre_temps_n_est_pas_volee_a_un_autre_remboursement() -> None:
+    connexion = _database()
+    connexion.execute("UPDATE deplacements SET IDremboursement=99 WHERE IDdeplacement=7")
+    connexion.commit()
+    db = _DB(connexion)
+    sauvegarde = _load_method(
+        REMBOURSEMENT,
+        "SaisieRemboursement",
+        "Sauvegarde",
+        globals_={"GestionDB": SimpleNamespace(DB=lambda: db), "_": lambda value: value},
+    )
+
+    with pytest.raises(RuntimeError, match="autre remboursement"):
+        sauvegarde(_dialogue_remboursement(checked=(7,)))
+
+    assert connexion.execute("SELECT COUNT(*) FROM remboursements").fetchone()[0] == 0
+    assert connexion.execute(
+        "SELECT IDremboursement FROM deplacements WHERE IDdeplacement=7"
+    ).fetchone()[0] == 99
     assert db.closed is True
 
 
@@ -247,11 +281,13 @@ def test_liste_principale_lit_les_rattachements_depuis_deplacements() -> None:
     assert "dictDeplacements.setdefault(IDremboursement, []).append(IDdeplacement)" in source
 
 
-def test_liste_historique_reste_projection_de_compatibilite_a_ecriture() -> None:
+def test_liste_historique_est_rederivee_de_la_source_canonique_avant_commit() -> None:
     sauvegarde = _method_source(REMBOURSEMENT, "SaisieRemboursement", "Sauvegarde")
     import_dialogue = _method_source(REMBOURSEMENT, "SaisieRemboursement", "Importation")
-    assert 'texteID = "-".join(str(ID) for ID in listeIDcoches)' in sauvegarde
-    assert '("listeIDdeplacement", texteID)' in sauvegarde
+    assert "listeIDcanoniques" in sauvegarde
+    assert 'texteID = "-".join(str(IDdeplacement) for IDdeplacement in listeIDcanoniques)' in sauvegarde
+    assert "UPDATE remboursements SET listeIDdeplacement=?" in sauvegarde
+    assert sauvegarde.index("listeIDcanoniques") < sauvegarde.index("DB.Commit()")
     assert "listeIDdeplacement" not in import_dialogue
 
 
