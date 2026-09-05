@@ -30,6 +30,19 @@ def test_new_selection_is_queued_while_previous_worker_is_running() -> None:
     assert "pending == self._activity_selected_person_id" in source
 
 
+def test_contracts_are_cleared_before_reading_next_employee() -> None:
+    source = PILOT.read_text(encoding="utf-8")
+    method = source[
+        source.index("def _show_person_from_proxy_row") : source.index("def _request_activity")
+    ]
+
+    clear_rows = method.index("self.contracts_model.replace(())")
+    clear_page = method.index("self.contracts_stack.setCurrentIndex(0)")
+    read_next = method.index("self.adapter.list_contracts(contract_key)")
+    assert clear_rows < read_next
+    assert clear_page < read_next
+
+
 def test_generalities_reader_uses_explicit_projection_without_nir_or_select_star() -> None:
     source = PERSON_READER.read_text(encoding="utf-8")
     method = source[source.index("def lire_generalites") : source.index("def lire_coordonnees")]

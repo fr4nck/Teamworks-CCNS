@@ -66,6 +66,8 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
         self.generalities_page.set_person(person)
 
         contract_key = person.id_historique if person.id_historique is not None else person.id
+        self.contracts_model.replace(())
+        self.contracts_stack.setCurrentIndex(0)
         self.contracts_model.replace(self.adapter.list_contracts(contract_key))
         contract_count = self.contracts_model.rowCount()
         self.contracts_stack.setCurrentIndex(1 if contract_count else 0)
