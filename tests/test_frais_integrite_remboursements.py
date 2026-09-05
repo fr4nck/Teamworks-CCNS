@@ -163,6 +163,15 @@ def _dialogue_remboursement(checked=(7, 8), unchecked=(), IDremboursement=None):
     )
 
 
+def _sauvegarde(db: _DB):
+    return _load_method(
+        REMBOURSEMENT,
+        "SaisieRemboursement",
+        "Sauvegarde",
+        globals_={"GestionDB": SimpleNamespace(DB=lambda: db), "_": lambda value: value},
+    )
+
+
 def test_calcul_kilometrique_ne_reduit_plus_globalement_decimal_a_deux_chiffres() -> None:
     source = _source(DEPLACEMENT)
     assert "decimal.getcontext().prec = 2" not in source
@@ -204,12 +213,7 @@ def test_sauvegarde_remboursement_utilise_une_seule_transaction_stricte() -> Non
 def test_creation_remboursement_et_rattachements_sont_commites_ensemble() -> None:
     connexion = _database()
     db = _DB(connexion)
-    sauvegarde = _load_method(
-        REMBOURSEMENT,
-        "SaisieRemboursement",
-        "Sauvegarde",
-        globals_={"GestionDB": SimpleNamespace(DB=lambda: db), "_": lambda value: value},
-    )
+    sauvegarde = _sauvegarde(db)
 
     IDremboursement = sauvegarde(_dialogue_remboursement())
 
@@ -225,15 +229,34 @@ def test_creation_remboursement_et_rattachements_sont_commites_ensemble() -> Non
     assert db.closed is True
 
 
+def test_modification_remboursement_reconcilie_decochage_et_nouveau_rattachement() -> None:
+    connexion = _database()
+    connexion.execute(
+        "INSERT INTO remboursements VALUES (3, 1, '2026-09-01', 10.0, '7')"
+    )
+    connexion.execute("UPDATE deplacements SET IDremboursement=3 WHERE IDdeplacement=7")
+    connexion.execute("UPDATE deplacements SET IDremboursement=0 WHERE IDdeplacement=8")
+    connexion.commit()
+    db = _DB(connexion)
+    sauvegarde = _sauvegarde(db)
+
+    assert sauvegarde(
+        _dialogue_remboursement(checked=(8,), unchecked=(7,), IDremboursement=3)
+    ) == 3
+
+    assert connexion.execute(
+        "SELECT listeIDdeplacement FROM remboursements WHERE IDremboursement=3"
+    ).fetchone() == ("8",)
+    assert connexion.execute(
+        "SELECT IDdeplacement, IDremboursement FROM deplacements ORDER BY IDdeplacement"
+    ).fetchall() == [(7, 0), (8, 3)]
+    assert db.closed is True
+
+
 def test_panne_sql_pendant_rattachement_annule_aussi_le_parent() -> None:
     connexion = _database()
     db = _DB(connexion, fail_after_child=True)
-    sauvegarde = _load_method(
-        REMBOURSEMENT,
-        "SaisieRemboursement",
-        "Sauvegarde",
-        globals_={"GestionDB": SimpleNamespace(DB=lambda: db), "_": lambda value: value},
-    )
+    sauvegarde = _sauvegarde(db)
 
     with pytest.raises(RuntimeError, match="panne injectée"):
         sauvegarde(_dialogue_remboursement())
@@ -250,12 +273,7 @@ def test_un_deplacement_reaffecte_entre_temps_n_est_pas_volee_a_un_autre_rembour
     connexion.execute("UPDATE deplacements SET IDremboursement=99 WHERE IDdeplacement=7")
     connexion.commit()
     db = _DB(connexion)
-    sauvegarde = _load_method(
-        REMBOURSEMENT,
-        "SaisieRemboursement",
-        "Sauvegarde",
-        globals_={"GestionDB": SimpleNamespace(DB=lambda: db), "_": lambda value: value},
-    )
+    sauvegarde = _sauvegarde(db)
 
     with pytest.raises(RuntimeError, match="autre remboursement"):
         sauvegarde(_dialogue_remboursement(checked=(7,)))
@@ -291,10 +309,11 @@ def test_liste_historique_est_rederivee_de_la_source_canonique_avant_commit() ->
     assert "listeIDdeplacement" not in import_dialogue
 
 
-def test_suppression_remboursement_detache_et_supprime_avant_commit_unique() -> None:
+def test_suppression_remboursement_utilise_deux_ecritures_strictes_et_un_commit() -> None:
     source = _method_source(PAGE_FRAIS, "Panel", "SupprimerRemboursement")
-    assert "UPDATE deplacements SET IDremboursement=0 WHERE IDremboursement=%d" in source
-    assert 'DB.ReqDEL(' in source
-    assert "commit=False" in source
+    assert "UPDATE deplacements SET IDremboursement=0 WHERE IDremboursement=?" in source
+    assert "DELETE FROM remboursements WHERE IDremboursement=?" in source
+    assert source.count("DB.cursor.execute") == 2
     assert source.count("DB.Commit()") == 1
     assert "DB.connexion.rollback()" in source
+    assert "Aucune modification n'a été conservée" in source
