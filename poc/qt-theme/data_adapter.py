@@ -90,6 +90,19 @@ class ReimbursementView:
     attached_trips: str
 
 
+@dataclass(frozen=True)
+class PresenceView:
+    key: int
+    category_id: int
+    category: str
+    category_color: str
+    date: str
+    vacation: str
+    schedule: str
+    duration: str
+    label: str
+
+
 class TeamworksReadAdapter(Protocol):
     """Contrat de lecture attendu par la future UI Qt.
 
@@ -107,6 +120,8 @@ class TeamworksReadAdapter(Protocol):
     def list_trips(self, person_id: str | int) -> Sequence[TripView]: ...
 
     def list_reimbursements(self, person_id: str | int) -> Sequence[ReimbursementView]: ...
+
+    def list_presences(self, person_id: str | int) -> Sequence[PresenceView]: ...
 
 
 class DemoAdapter:
@@ -183,6 +198,9 @@ class DemoAdapter:
     def list_reimbursements(self, person_id: str | int) -> Sequence[ReimbursementView]:
         return ()
 
+    def list_presences(self, person_id: str | int) -> Sequence[PresenceView]:
+        return ()
+
 
 class ProductionAdapterStub:
     """Emplacement historique conservé pour compatibilité du POC."""
@@ -203,4 +221,7 @@ class ProductionAdapterStub:
         raise RuntimeError("Utiliser TeamworksProductionReadAdapter pour la lecture réelle")
 
     def list_reimbursements(self, person_id: str | int) -> Sequence[ReimbursementView]:
+        raise RuntimeError("Utiliser TeamworksProductionReadAdapter pour la lecture réelle")
+
+    def list_presences(self, person_id: str | int) -> Sequence[PresenceView]:
         raise RuntimeError("Utiliser TeamworksProductionReadAdapter pour la lecture réelle")
