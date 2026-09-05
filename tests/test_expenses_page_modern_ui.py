@@ -42,11 +42,11 @@ def test_expenses_page_keeps_business_actions_and_guards():
     assert "DLG_Saisie_deplacement.SaisieDeplacement" in source
     assert "DLG_Saisie_remboursement.SaisieRemboursement" in source
     assert 'DB.ReqDEL("deplacements", "IDdeplacement", IDdeplacement)' in source
-    assert '"remboursements"' in source
-    assert '"IDremboursement"' in source
-    assert "UPDATE deplacements SET IDremboursement=0 WHERE IDremboursement=%d" in source
-    assert "commit=False" in source
+    assert "UPDATE deplacements SET IDremboursement=0 WHERE IDremboursement=?" in source
+    assert "DELETE FROM remboursements WHERE IDremboursement=?" in source
+    assert source.count("DB.cursor.execute") >= 2
     assert "DB.Commit()" in source
+    assert "DB.connexion.rollback()" in source
     assert "DLG_Impression_frais.Dialog" in source
     assert "MAJ_frm_gestion_frais" in source
 
