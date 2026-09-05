@@ -1,6 +1,6 @@
 # Teamworks-CCNS — suivi CCNS et extensions
 
-**Mise à jour : 25 août 2026**
+**Mise à jour : 5 septembre 2026**
 
 ## Objectif
 
@@ -56,6 +56,20 @@ adresse_rapport_bugs`. Si le champ est vide ou absent, Teamworks conserve le
 comportement historique et utilise `noethys@gmail.com`, l'adresse d'origine d'Ivan.
 L'envoi utilise l'adresse expéditeur par défaut déjà configurée dans Teamworks ; en
 son absence, aucun envoi n'a lieu et le fichier reste disponible dans `Logs`.
+
+## Migration de cohérence remboursements / déplacements
+
+Un utilitaire de maintenance SQLite complète désormais les audits #372/#373 sans modifier le schéma ni l'interface wxPython :
+
+- dry-run en lecture seule fondé sur `deplacements.IDremboursement` comme source canonique ;
+- régénération déterministe de `remboursements.listeIDdeplacement` ;
+- récupération optionnelle, explicitement activée, d'un enfant libre revendiqué par un unique parent de la même personne ;
+- blocage des ambiguïtés de la source canonique ;
+- transaction SQLite atomique avec relecture et vérification avant commit ;
+- snapshot externe typé et checksummé avant toute écriture ;
+- rollback exact des deux représentations, refusé si des relations ont changé depuis la migration.
+
+La procédure opérateur et les limites sont documentées dans `docs/migrations/remboursements_deplacements.md`. Une recette sur copie réelle de base reste obligatoire avant toute utilisation en production.
 
 ## Références principales
 
