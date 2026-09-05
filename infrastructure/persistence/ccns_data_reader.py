@@ -78,7 +78,8 @@ class CcnsDataReader:
         personnes.prenom,
         personnes.nom,
         contrats_class.nom AS classification,
-        contrats_types.nom AS type_contrat
+        contrats_types.nom AS type_contrat,
+        contrats.date_rupture
     FROM contrats
     LEFT JOIN personnes ON personnes.IDpersonne = contrats.IDpersonne
     LEFT JOIN contrats_class ON contrats_class.IDclassification = contrats.IDclassification
