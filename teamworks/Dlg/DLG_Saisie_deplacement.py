@@ -30,8 +30,6 @@ else:
     from wx import DatePickerCtrl, DP_DROPDOWN
 
 
-decimal.getcontext().prec = 2
-
 
 def _dialog_parent(window):
     current = window
@@ -670,9 +668,9 @@ class SaisieDeplacement(wx.Dialog):
             ("distance", distance),
             ("aller_retour", aller_retour),
             ("tarif_km", tarif_km),
-            ("IDremboursement", 0),
         ]
         if self.IDdeplacement is None:
+            listeDonnees.append(("IDremboursement", 0))
             ID = DB.ReqInsert("deplacements", listeDonnees)
         else:
             DB.ReqMAJ("deplacements", listeDonnees, "IDdeplacement", self.IDdeplacement)
