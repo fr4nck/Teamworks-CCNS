@@ -50,8 +50,9 @@ def test_reimbursement_statuses_use_only_semantic_families():
 def test_reimbursement_keeps_database_contract():
     source = _source()
     assert 'DB.ReqInsert("remboursements", listeDonnees, commit=False)' in source
-    assert '"IDremboursement"' in source
+    assert "UPDATE remboursements" in source
     assert "UPDATE deplacements SET IDremboursement=?" in source
+    assert "UPDATE remboursements SET listeIDdeplacement=?" in source
     assert "DB.cursor.execute" in source
     assert "DB.Commit()" in source
     assert "DB.connexion.rollback()" in source
