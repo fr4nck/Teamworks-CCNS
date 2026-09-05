@@ -150,7 +150,10 @@ def main() -> None:
             people_thread.start()
 
         def report_frugality() -> None:
-            snapshot = probe.snapshot(direct_dependencies=len(DIRECT_DEPENDENCIES))
+            snapshot = probe.snapshot(
+                direct_dependencies=len(DIRECT_DEPENDENCIES),
+                startup_seconds=total_to_show_seconds,
+            )
             data_label = "données bloquantes" if source == "production" else "données"
             timing = (
                 f"socle {foundation_seconds:.2f}s · {data_label} {data_seconds:.2f}s · "
