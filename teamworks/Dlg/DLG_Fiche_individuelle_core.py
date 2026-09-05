@@ -152,6 +152,9 @@ class Dialog(wx.Dialog):
             name="FicheIndividuelle",
             style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER | wx.MAXIMIZE_BOX | wx.MINIMIZE_BOX,
         )
+        if "wxMSW" in wx.PlatformInfo:
+            self.SetDoubleBuffered(True)
+
         self.IDpersonne = IDpersonne
         self.contratEnCours = None
         self.AnnulationImpossible = False
@@ -166,6 +169,9 @@ class Dialog(wx.Dialog):
             pass
 
         self.panel_1 = wx.Panel(self, -1)
+        if "wxMSW" in wx.PlatformInfo:
+            self.panel_1.SetDoubleBuffered(True)
+
         self.label_hd_CatId = wx.StaticText(self.panel_1, -1, u"")
         self.static_line_1 = wx.StaticLine(self.panel_1, -1)
         self.label_hd_nomPrenom = wx.StaticText(self.panel_1, -1, _(u"NOM, Prénom"))

@@ -1,6 +1,6 @@
 # Teamworks Vanilla — suivi des bugs et correctifs
 
-**Mise à jour : 25 août 2026**
+**Mise à jour : 5 septembre 2026**
 
 ## Objectif
 
@@ -137,6 +137,20 @@ Ce défaut est indépendant de Python 3/Phoenix et de nos extensions.
 
 **Patch préparé et vérifié statiquement :** `patches/vanilla/VFIX-010-vacances-selection.patch`.
 
+### VFIX-011 — Frais : intégrité des remboursements et déplacements
+
+**Fichiers :** `teamworks/Dlg/DLG_Saisie_deplacement.py`, `teamworks/Dlg/DLG_Saisie_remboursement.py`, `teamworks/Ctrl/CTRL_Page_frais.py`.
+
+Trois défauts liés sont confirmés dans le code historique :
+
+- `decimal.getcontext().prec = 2` limite tout le contexte Decimal du processus à deux chiffres significatifs ; un calcul tel que `123 × 0,55` peut alors produire `68,00 €` au lieu de `67,65 €` ;
+- modifier un déplacement déjà remboursé réécrit systématiquement `IDremboursement=0`, ce qui le détache silencieusement ;
+- la sauvegarde d'un remboursement et la mise à jour de ses déplacements sont réalisées dans des écritures/transactions distinctes, tandis que `remboursements.listeIDdeplacement` et `deplacements.IDremboursement` sont lus comme deux représentations concurrentes du même rattachement.
+
+Le correctif côté fork conserve désormais `deplacements.IDremboursement` comme source opérationnelle canonique, garde `listeIDdeplacement` comme projection de compatibilité, traite `NULL` comme l'ancien état non remboursé, et regroupe l'écriture du remboursement avec celle de ses déplacements dans une transaction explicite. La suppression d'un remboursement détache également les déplacements dans le même lot transactionnel.
+
+**État :** bug Vanilla confirmé ; correctif Teamworks-CCNS en qualification sur `fix/frais-integrite-remboursements` ; tests de non-régression SQLite/AST ajoutés. Le backport Vanilla minimal reste à isoler après qualification du correctif moderne.
+
 ## Sécurité / durcissement Vanilla — piste séparée
 
 Les faiblesses de sécurité ne doivent pas être mélangées artificiellement avec les bugs fonctionnels. Elles sont suivies comme `VSEC-*` jusqu'à qualification complète.
@@ -213,7 +227,7 @@ Le ratissage porte sur environ **1 237 commits** et sur une analyse statique com
 
 À ce stade :
 
-- VFIX fonctionnels confirmés : **10 familles** (`VFIX-001` à `VFIX-010`) ;
+- VFIX fonctionnels confirmés : **11 familles** (`VFIX-001` à `VFIX-011`) ;
 - pistes sécurité confirmées / en qualification : **2** (`VSEC-001` et `VSEC-002`) ;
 - plusieurs candidats ont déjà été rejetés ou reclassés Phoenix/UI/fork ;
 - le nombre final de bugs n'est volontairement pas figé tant que le ratissage n'est pas terminé.

@@ -1,0 +1,2 @@
+Demande de génération des paquets Windows wxPython 0.9.1g depuis master.
+Ce fichier sert uniquement à tracer le déclenchement explicite du build Windows correspondant.

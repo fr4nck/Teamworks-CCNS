@@ -469,15 +469,14 @@ def _apply_screen_specific_fixes(window):
         pass
 
 
-def apply_to_window(window, recursive=True, theme=None, scale=None, palette=None):
-    if window is None:
-        return
-    if theme is None or scale is None:
-        configured_theme, configured_scale = _config_values()
-        theme = configured_theme if theme is None else theme
-        scale = configured_scale if scale is None else scale
+def _apply_window_tree(window, theme, scale, palette):
+    """Applique thème et métriques sans provoquer de repaint intermédiaire.
+
+    Les descendants sont préparés avant le premier affichage de la surface. Le
+    Layout/Refresh final est volontairement laissé au conteneur racine afin de
+    ne pas construire visuellement une fenêtre contrôle par contrôle sous MSW.
+    """
     dark = is_dark_theme(theme)
-    palette = palette or _semantic_palette(dark)
     _scale_font(window, scale)
     _apply_metrics(window, scale)
     _apply_palette(window, palette, dark)
@@ -490,18 +489,53 @@ def apply_to_window(window, recursive=True, theme=None, scale=None, palette=None
         except Exception:
             pass
 
+    try:
+        children = window.GetChildren()
+    except Exception:
+        children = []
+    for child in children:
+        _apply_window_tree(child, theme, scale, palette)
+
+
+def apply_to_window(window, recursive=True, theme=None, scale=None, palette=None):
+    if window is None:
+        return
+    if theme is None or scale is None:
+        configured_theme, configured_scale = _config_values()
+        theme = configured_theme if theme is None else theme
+        scale = configured_scale if scale is None else scale
+    dark = is_dark_theme(theme)
+    palette = palette or _semantic_palette(dark)
+
     if recursive:
-        try:
-            children = window.GetChildren()
-        except Exception:
-            children = []
-        for child in children:
-            apply_to_window(child, True, theme=theme, scale=scale, palette=palette)
+        _apply_window_tree(window, theme, scale, palette)
+    else:
+        _scale_font(window, scale)
+        _apply_metrics(window, scale)
+        _apply_palette(window, palette, dark)
+        _apply_screen_specific_fixes(window)
+        refresh_visual = getattr(window, "RafraichirVisuel", None)
+        if callable(refresh_visual):
+            try:
+                refresh_visual()
+            except Exception:
+                pass
+
     try:
         window.Layout()
         window.Refresh(False)
     except Exception:
         pass
+    return dark
+
+
+def _show_requested(args, kwargs):
+    """Retourne l'état demandé à ``wx.Window.Show`` sans effet de bord."""
+    if "show" in kwargs:
+        return bool(kwargs["show"])
+    if args:
+        return bool(args[0])
+    return True
 
 
 def _install_preferences_menu(frame):
@@ -541,8 +575,12 @@ def install_auto_theming():
     original_show = wx.Window.Show
 
     def themed_show(window, *args, **kwargs):
-        _install_preferences_menu(window)
-        apply_to_window(window, True)
+        # ``Show(False)`` sert à masquer/détruire des contrôles : le re-thémage
+        # à ce moment-là provoquait un repaint tardif visible, notamment un fond
+        # sombre apparaissant juste avant la fermeture de l'application.
+        if _show_requested(args, kwargs):
+            _install_preferences_menu(window)
+            apply_to_window(window, True)
         return original_show(window, *args, **kwargs)
 
     wx.Window.Show = themed_show
