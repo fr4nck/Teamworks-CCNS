@@ -31,11 +31,17 @@ def _operation_heures(class_name: str):
     raise AssertionError(f"{class_name}.OperationHeures introuvable")
 
 
-def test_tableau_conserve_le_signe_dune_duree_negative_inferieure_a_une_heure():
-    operation = _operation_heures("Tableau")
+def _assert_duration_contract(class_name: str):
+    operation = _operation_heures(class_name)
     assert operation(object(), "+00:00", "+00:30", "soustraction") == "-0:30"
+    assert operation(object(), "+02:00", "+00:30", "soustraction") == "+1:30"
+    assert operation(object(), "+00:30", "+02:00", "soustraction") == "-1:30"
+    assert operation(object(), "+10:00", "+02:30", "addition") == "+12:30"
 
 
-def test_get_dict_colonnes_conserve_le_meme_contrat_de_signe():
-    operation = _operation_heures("GetDictColonnes")
-    assert operation(object(), "+00:00", "+00:30", "soustraction") == "-0:30"
+def test_tableau_conserve_le_signe_et_les_resultats_historiques_valides():
+    _assert_duration_contract("Tableau")
+
+
+def test_get_dict_colonnes_conserve_le_meme_contrat_de_duree():
+    _assert_duration_contract("GetDictColonnes")
