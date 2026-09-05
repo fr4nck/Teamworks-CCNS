@@ -1,6 +1,6 @@
 # Teamworks-CCNS — suivi CCNS et extensions
 
-**Mise à jour : 25 août 2026**
+**Mise à jour : 4 septembre 2026**
 
 ## Objectif
 
@@ -56,6 +56,29 @@ adresse_rapport_bugs`. Si le champ est vide ou absent, Teamworks conserve le
 comportement historique et utilise `noethys@gmail.com`, l'adresse d'origine d'Ivan.
 L'envoi utilise l'adresse expéditeur par défaut déjà configurée dans Teamworks ; en
 son absence, aucun envoi n'a lieu et le fichier reste disponible dans `Logs`.
+
+## Interopération — réalisé validé vers le domaine RH
+
+Teamworks peut recevoir le contrat transverse `session-actual/1`, événement
+`session_actual_validated`, provenant du domaine stable `operations_portal`.
+Cette entrée est volontairement séparée du planning prévisionnel et de la paie.
+
+Le lot RH ajoute :
+
+- un mapping explicite `person_uid` stable → `personnes.IDpersonne` existante ;
+- aucune création automatique de salarié lorsqu'un UID reçu est inconnu ;
+- une inbox idempotente et un journal RH courant du réalisé par `session_uid` ;
+- refus des révisions obsolètes et des payloads divergents ;
+- garde de concurrence empêchant une ancienne révision d'écraser une plus récente ;
+- réception de l'enveloppe authentifiée `inter-domain-delivery/1` avec HMAC-SHA256 et rotation par `key_id` ;
+- client sortant `inter-domain-mailbox-pull/1` en HTTPS, limité au domaine `hr_employment` ;
+- redirections HTTP interdites afin de ne jamais retransmettre le bearer vers un autre origin ;
+- acquittement terminal des messages déterministement invalides pour éviter les boucles de poison message ;
+- aucune écriture directe dans les contrats, le planning prévisionnel ou la paie.
+
+Le bearer de transport et la clé HMAC de l'enveloppe restent des secrets distincts.
+Le transport HTTP est isolé de l'orchestration métier afin de pouvoir être remplacé
+ultérieurement par une queue ou un broker sans modifier le consommateur RH.
 
 ## Références principales
 
