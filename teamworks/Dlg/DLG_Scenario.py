@@ -1299,17 +1299,13 @@ class Tableau(gridlib.Grid):
         # Opération
         if operation == "addition" : totalMinutes = totalMinutesA + totalMinutesB
         if operation == "soustraction" : totalMinutes = totalMinutesA - totalMinutesB
-        # Formatage du résultat
-        if totalMinutes >= 0 :
-            nbreHeures = totalMinutes//60
-            nbreMinutes = totalMinutes-(nbreHeures*60)
-        else:
-            nbreHeures = -(-totalMinutes//60)
-            nbreMinutes = -(totalMinutes-(nbreHeures*60))
-        if len(str(nbreMinutes))==1 : nbreMinutes = str("0") + str(nbreMinutes)
-        duree = str(nbreHeures) + ":" + str(nbreMinutes)
-        if nbreHeures>=0 : duree = "+%s" % duree
-        return duree
+        # Formatage du résultat : le signe porte sur la durée complète,
+        # y compris lorsque la partie heures vaut zéro.
+        signe = "+" if totalMinutes >= 0 else "-"
+        totalMinutesAbs = abs(totalMinutes)
+        nbreHeures = totalMinutesAbs // 60
+        nbreMinutes = totalMinutesAbs % 60
+        return "%s%d:%02d" % (signe, nbreHeures, nbreMinutes)
         
         
     def GetReportColonne(self, IDcategorie, IDpersonne, IDscenario) :
@@ -1641,17 +1637,13 @@ class GetDictColonnes():
         # Opération
         if operation == "addition" : totalMinutes = totalMinutesA + totalMinutesB
         if operation == "soustraction" : totalMinutes = totalMinutesA - totalMinutesB
-        # Formatage du résultat
-        if totalMinutes >= 0 :
-            nbreHeures = totalMinutes//60
-            nbreMinutes = totalMinutes-(nbreHeures*60)
-        else:
-            nbreHeures = -(-totalMinutes//60)
-            nbreMinutes = -(totalMinutes-(nbreHeures*60))
-        if len(str(nbreMinutes))==1 : nbreMinutes = str("0") + str(nbreMinutes)
-        duree = str(nbreHeures) + ":" + str(nbreMinutes)
-        if nbreHeures>=0 : duree = "+%s" % duree
-        return duree
+        # Formatage du résultat : le signe porte sur la durée complète,
+        # y compris lorsque la partie heures vaut zéro.
+        signe = "+" if totalMinutes >= 0 else "-"
+        totalMinutesAbs = abs(totalMinutes)
+        nbreHeures = totalMinutesAbs // 60
+        nbreMinutes = totalMinutesAbs % 60
+        return "%s%d:%02d" % (signe, nbreHeures, nbreMinutes)
         
         
     def GetReportColonne(self, IDcategorie, IDpersonne, IDscenario) :
