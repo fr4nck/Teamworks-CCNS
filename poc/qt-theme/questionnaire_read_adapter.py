@@ -7,6 +7,7 @@ from infrastructure.persistence.questionnaire_reader import QuestionnaireReader
 
 
 EMPTY = "—"
+DOCUMENT_SENTINEL = "##DOCUMENTS##"
 
 
 @dataclass(frozen=True)
@@ -30,7 +31,10 @@ class QuestionnaireProductionReadAdapter:
         for record in records:
             if not _is_visible(record.categorie_visible) or not _is_visible(record.question_visible):
                 continue
-            answer = record.reponse if record.reponse not in (None, "") else record.defaut
+            # Le wx historique utilise la présence de la ligne de réponse, pas la
+            # vérité de son contenu : une réponse enregistrée vide doit donc
+            # écraser le défaut au lieu de le ressusciter.
+            answer = record.reponse if record.IDreponse is not None else record.defaut
             views.append(
                 QuestionnaireView(
                     question=_text(record.question_label),
@@ -58,13 +62,23 @@ def _text(value) -> str:
 
 
 def _format_answer(record, value) -> str:
+    # Le contrôle historique Documents stocke cette sentinelle uniquement pour
+    # déclencher la sauvegarde de ses vignettes. Elle n'est jamais une réponse
+    # métier et ne doit pas fuiter dans la consultation Qt.
+    if record.controle == "documents" or value == DOCUMENT_SENTINEL:
+        return "Document(s) associé(s)" if record.IDreponse is not None else EMPTY
+
     if value in (None, ""):
         return EMPTY
     text = str(value).strip()
     if not text:
         return EMPTY
 
-    choices = {str(choice.IDchoix): _text(choice.label) for choice in record.choix if _is_visible(choice.visible)}
+    choices = {
+        str(choice.IDchoix): _text(choice.label)
+        for choice in record.choix
+        if _is_visible(choice.visible)
+    }
     if not choices:
         return text
 
