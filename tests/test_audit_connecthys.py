@@ -11,18 +11,9 @@ sys.modules[SPEC.name] = AUDIT
 SPEC.loader.exec_module(AUDIT)
 
 
-def _brand_bloquante(hit):
-    """Une marque en commentaire reste une preuve historique, pas du code actif."""
-    return (
-        hit.category == "brand"
-        and hit.scope == "active"
-        and not hit.snippet.lstrip().startswith("#")
-    )
-
-
 def test_connecthys_dans_code_actif_est_bloquant():
     hits = AUDIT.scan_text("teamworks/module.py", "client = ConnecthysClient()\n")
-    assert [hit for hit in hits if _brand_bloquante(hit)]
+    assert [hit for hit in hits if AUDIT.is_blocking_brand(hit)]
 
 
 def test_connecthys_dans_commentaire_actif_reste_historique():
@@ -31,7 +22,7 @@ def test_connecthys_dans_commentaire_actif_reste_historique():
         "# Ancienne intégration Connecthys supprimée\n",
     )
     assert any(hit.category == "brand" for hit in hits)
-    assert not any(_brand_bloquante(hit) for hit in hits)
+    assert not any(AUDIT.is_blocking_brand(hit) for hit in hits)
 
 
 def test_connecthys_dans_documentation_n_est_pas_actif():
@@ -68,7 +59,7 @@ def test_depot_reel_n_a_pas_de_reference_connecthys_executable():
     hits, skipped, scanned_count = AUDIT.scan_repository(root)
     report = AUDIT.build_report(root, hits, skipped, scanned_count)
     brand_hits = [hit for hit in hits if hit.category == "brand"]
-    blocking_brand_hits = [hit for hit in brand_hits if _brand_bloquante(hit)]
+    blocking_brand_hits = [hit for hit in brand_hits if AUDIT.is_blocking_brand(hit)]
     active_candidates = [
         hit
         for hit in hits
