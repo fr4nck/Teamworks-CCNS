@@ -22,6 +22,10 @@ Sauvegarde des connaissances fonctionnelles et conventions de migration : Prése
 
 Inventaire des branches actives, intermédiaires CRH, anciennes branches Qt POC et autres branches observées pendant le ratissage.
 
+### `2026-09-05-registre-pr-historique.md`
+
+Chronologie des PR importantes : qualification Qt, fermeture des satellites superseded, architecture, CRH, Documents RH, Frais, Connecthys et contexte release.
+
 ## Décisions récupérées hors archive
 
 À lire en priorité :
