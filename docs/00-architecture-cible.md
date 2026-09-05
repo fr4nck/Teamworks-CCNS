@@ -3,8 +3,8 @@
 ## Décision retenue
 - **Teamworks forké orienté CCNS** = cœur métier principal
 - **Qt / PySide6** = interface desktop cible
-- **Serveur** = données et services partagés
-- **Portail** = accès complémentaire aux fonctions qui doivent être disponibles hors Teamworks
+- **Serveur** = hébergement des bases de données métier uniquement, à ce stade
+- **Portail** = accès complémentaire aux fonctions qui doivent être disponibles hors Teamworks, avec un hébergement séparé sur O2 si les contraintes techniques le permettent
 
 ## Rôle du cœur Teamworks
 Le cœur Teamworks doit porter :
@@ -43,4 +43,4 @@ Le gel de Vanilla **n'interdit pas les corrections**. Restent autorisés :
 Principe : **on corrige ce qui dysfonctionne dans Vanilla, mais on évite d'y investir dans une nouvelle refonte UI destinée à être remplacée par Qt.**
 
 ## Règle simple
-**Le serveur partage, Teamworks décide, Qt présente, le Portail complète.**
+**Le serveur héberge les bases métier, Teamworks décide, Qt présente, le Portail complète.**
