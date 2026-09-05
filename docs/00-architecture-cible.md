@@ -1,12 +1,18 @@
-# Architecture cible du fork Teamworks orienté CCNS
+# Architecture cible de Teamworks-CCNS
+
+## Portée de ce document
+
+Ce document décrit uniquement les décisions propres à **Teamworks-CCNS**.
+
+Les décisions transverses entre applications, Portail, hébergement et infrastructure relèvent de **`fr4nck/PMSL-Arch`** et de ses ADR acceptées. Elles ne doivent pas être redéfinies ici.
 
 ## Décision retenue
-- **Teamworks forké orienté CCNS** = cœur métier principal
-- **Qt / PySide6** = interface desktop cible
-- **Serveur** = hébergement des bases de données métier uniquement, à ce stade
-- **Portail** = accès complémentaire aux fonctions qui doivent être disponibles hors Teamworks, avec un hébergement séparé sur O2 si les contraintes techniques le permettent
+
+- **Teamworks-CCNS** = cœur métier RH principal ;
+- **Qt / PySide6** = interface desktop cible.
 
 ## Rôle du cœur Teamworks
+
 Le cœur Teamworks doit porter :
 - gestion des personnes ;
 - profils juridiques ;
@@ -41,6 +47,3 @@ Le gel de Vanilla **n'interdit pas les corrections**. Restent autorisés :
 - adaptations limitées nécessaires à une migration Qt propre.
 
 Principe : **on corrige ce qui dysfonctionne dans Vanilla, mais on évite d'y investir dans une nouvelle refonte UI destinée à être remplacée par Qt.**
-
-## Règle simple
-**Le serveur héberge les bases métier, Teamworks décide, Qt présente, le Portail complète.**
