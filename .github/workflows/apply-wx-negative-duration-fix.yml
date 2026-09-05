@@ -37,6 +37,9 @@ jobs:
           path.write_text(text.replace(old, new), encoding='utf-8')
           PY
 
+      - name: Install pytest
+        run: python -m pip install pytest
+
       - name: Verify regression contract
         run: python -m pytest -q tests/test_wx_scenario_negative_duration_contract.py
 
