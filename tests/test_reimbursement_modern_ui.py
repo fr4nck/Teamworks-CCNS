@@ -51,9 +51,9 @@ def test_reimbursement_keeps_database_contract():
     source = _source()
     assert 'DB.ReqInsert("remboursements", listeDonnees, commit=False)' in source
     assert '"IDremboursement"' in source
-    assert 'DB.ReqMAJ(\n                    "deplacements"' in source
-    assert source.count("GestionDB.DB()") >= 1
-    assert "commit=False" in source
+    assert "UPDATE deplacements SET IDremboursement=?" in source
+    assert "DB.cursor.execute" in source
     assert "DB.Commit()" in source
+    assert "DB.connexion.rollback()" in source
     assert "ListeItemsCoches" in source
     assert "montantRemboursement" in source
