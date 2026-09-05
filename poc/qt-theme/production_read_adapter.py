@@ -198,7 +198,7 @@ class TeamworksProductionReadAdapter(TeamworksReadAdapter):
         return ContractView(
             kind=record.type_contrat or EMPTY,
             start=_format_date(record.date_debut),
-            end=_format_contract_end(record.date_fin),
+            end=_format_contract_end(record.date_fin, record.date_rupture),
             classification=record.classification or EMPTY,
             duration=_format_hours(record.temps_hebdo),
             status=EMPTY,
@@ -264,7 +264,10 @@ def _format_date(value) -> str:
     return EMPTY if parsed is None else parsed.strftime("%d/%m/%Y")
 
 
-def _format_contract_end(value) -> str:
+def _format_contract_end(value, rupture=None) -> str:
+    rupture_text = _format_date(rupture)
+    if rupture_text != EMPTY:
+        return f"{rupture_text}-R"
     if value is not None and str(value).strip().startswith(INDEFINITE_CONTRACT_END):
         return INDEFINITE_CONTRACT_LABEL
     return _format_date(value)
