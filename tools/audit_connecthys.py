@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Inventaire statique reproductible des dépendances candidates à Connecthys.
 
-Le scanner produit des *candidats* : seule une référence explicite à Connecthys
-située dans un périmètre actif peut faire échouer ``--fail-on-active-brand``.
-Les autres catégories servent à orienter l'analyse humaine (réseau,
-synchronisation, secrets, configuration, automatisation, transferts).
+Le scanner produit des *candidats*. Une référence explicite à Connecthys ne
+fait échouer ``--fail-on-active-brand`` que si elle apparaît dans un périmètre
+actif et sur une ligne non documentaire/commentée. Les autres catégories
+orientent l'analyse humaine (réseau, synchronisation, secrets, configuration,
+automatisation, transferts).
 """
 from __future__ import annotations
 
@@ -50,52 +51,35 @@ ROOT_ACTIVE_NAMES = {
 }
 
 ROOT_ACTIVE_SUFFIXES = {
-    ".py",
-    ".bat",
-    ".cmd",
-    ".ps1",
-    ".sh",
-    ".ini",
-    ".cfg",
-    ".json",
-    ".yaml",
-    ".yml",
-    ".xml",
-    ".toml",
+    ".py", ".bat", ".cmd", ".ps1", ".sh", ".ini", ".cfg", ".json",
+    ".yaml", ".yml", ".xml", ".toml",
 }
 
 PATTERNS: dict[str, re.Pattern[str]] = {
-    # Blocant seulement si le scope est actif.
     "brand": re.compile(r"(?i)connect[\s_-]*hys"),
-    # Candidats forts : primitives réseau ou URLs explicites.
     "url": re.compile(r"(?i)\b(?:https?|ftp|sftp)://[^\s\"'<>()[\]{}]+"),
     "network_api": re.compile(
         r"(?i)\b(?:requests\s*\.|urllib(?:2|3)?\b|urlopen\s*\(|"
         r"http\.client\b|httplib\b|ftplib\b|paramiko\b|socket\s*\.|"
         r"smtplib\b|xmlrpc\b|webhook\b|curl\b|wget\b)"
     ),
-    # Concepts proches d'un portail / d'une synchronisation, sans conclure à Connecthys.
     "sync_portal": re.compile(
         r"(?i)\b(?:sync(?:hron\w*)?|synchron\w*|portail\w*|upload\w*|"
         r"download\w*|remote\w*|push\w*|pull\w*|webhook\w*)\b"
     ),
-    # Indices de secrets ou d'identifiants techniques.
     "auth_secret": re.compile(
         r"(?i)\b(?:token\w*|api[ _-]?key\w*|secret\w*|password\w*|passwd\w*|"
         r"mot[ _-]?de[ _-]?passe\w*|login\w*|identifiant\w*|bearer\b|basic auth\b)"
     ),
-    # Démarrage / tâche périodique / fin d'application.
     "automation": re.compile(
         r"(?i)\b(?:cron\b|schtasks\b|task scheduler\b|planificateur\w*|"
         r"wx\.Timer\b|threading\.Timer\b|Timer\s*\(|EVT_CLOSE\b|atexit\b|"
         r"daemon\b|background\b|startup\b|d[eé]marrage\b)"
     ),
-    # Stockage possible de paramètres hors code.
     "config_storage": re.compile(
         r"(?i)\b(?:winreg\b|registry\b|registre\b|AppData\b|ConfigParser\b|"
         r"param[eè]tre\w*|preferences?\b|GestionDB\b|sqlite\b|mysql\b)"
     ),
-    # Faible signal, conservé pour satisfaire le ratissage demandé.
     "transfer_semantics": re.compile(r"(?i)\b(?:export\w*|import\w*)\b"),
 }
 
@@ -144,6 +128,17 @@ def classify_scope(relative_path: str) -> str:
     return "other"
 
 
+def is_comment_only(hit: Hit) -> bool:
+    """Vrai si la preuve trouvée est une ligne de commentaire/documentation locale."""
+    stripped = hit.snippet.lstrip()
+    return stripped.startswith(("#", "//", "<!--"))
+
+
+def is_blocking_brand(hit: Hit) -> bool:
+    """Une marque Connecthys n'est bloquante que si elle est exécutable."""
+    return hit.category == "brand" and hit.scope == "active" and not is_comment_only(hit)
+
+
 def git_tracked_files(root: Path) -> list[Path]:
     try:
         proc = subprocess.run(
@@ -184,27 +179,16 @@ def scan_text(relative_path: str, text: str) -> list[Hit]:
             matches = list(pattern.finditer(line))
             if not matches:
                 continue
-            # Une ligne/catégorie suffit ; la chaîne exacte reste utile comme preuve.
             match = matches[0].group(0)
-            hits.append(
-                Hit(
-                    path=relative_path,
-                    line=line_no,
-                    category=category,
-                    match=match[:160],
-                    snippet=stripped[:280],
-                    scope=scope,
-                )
-            )
+            hits.append(Hit(relative_path, line_no, category, match[:160], stripped[:280], scope))
     return hits
 
 
 def scan_repository(root: Path) -> tuple[list[Hit], list[SkippedFile], int]:
     hits: list[Hit] = []
     skipped: list[SkippedFile] = []
-    files = git_tracked_files(root)
     scanned_count = 0
-    for path in files:
+    for path in git_tracked_files(root):
         relative = normalize_path(path, root)
         if relative in SELF_PATHS:
             continue
@@ -231,11 +215,11 @@ def extract_domains(hits: Iterable[Hit]) -> Counter[str]:
 def build_report(root: Path, hits: Sequence[Hit], skipped: Sequence[SkippedFile], scanned_count: int) -> dict:
     category_counts = Counter(hit.category for hit in hits)
     scope_counts = Counter(hit.scope for hit in hits)
-    active_brand = [hit for hit in hits if hit.category == "brand" and hit.scope == "active"]
     brand_all = [hit for hit in hits if hit.category == "brand"]
+    blocking_brand = [hit for hit in brand_all if is_blocking_brand(hit)]
+    historical_brand = [hit for hit in brand_all if not is_blocking_brand(hit)]
     high_signal = [
-        hit
-        for hit in hits
+        hit for hit in hits
         if hit.category in {"brand", "url", "network_api", "sync_portal", "automation"}
     ]
     files_by_category: dict[str, list[str]] = defaultdict(list)
@@ -248,7 +232,8 @@ def build_report(root: Path, hits: Sequence[Hit], skipped: Sequence[SkippedFile]
         "counts": {
             "total_hits": len(hits),
             "brand_hits": len(brand_all),
-            "active_brand_hits": len(active_brand),
+            "active_brand_hits": len(blocking_brand),
+            "historical_brand_hits": len(historical_brand),
             "high_signal_hits": len(high_signal),
             "by_category": dict(sorted(category_counts.items())),
             "by_scope": dict(sorted(scope_counts.items())),
@@ -262,26 +247,19 @@ def build_report(root: Path, hits: Sequence[Hit], skipped: Sequence[SkippedFile]
 def markdown_report(report: dict) -> str:
     counts = report["counts"]
     lines = [
-        "# Inventaire statique Connecthys",
-        "",
-        "> Ce rapport contient des candidats statiques. Un candidat n'est pas une dépendance confirmée.",
-        "",
-        "## Synthèse",
-        "",
+        "# Inventaire statique Connecthys", "",
+        "> Ce rapport contient des candidats statiques. Un candidat n'est pas une dépendance confirmée.", "",
+        "## Synthèse", "",
         f"- fichiers texte suivis analysés : **{report['scanned_text_files']}** ;",
         f"- occurrences totales : **{counts['total_hits']}** ;",
         f"- références explicites Connecthys : **{counts['brand_hits']}** ;",
-        f"- références explicites Connecthys dans le périmètre actif : **{counts['active_brand_hits']}** ;",
-        f"- fichiers ignorés/non textuels : **{len(report['skipped_files'])}**.",
-        "",
-        "## Occurrences par catégorie",
-        "",
-        "| Catégorie | Occurrences |",
-        "| --- | ---: |",
+        f"- références Connecthys exécutables bloquantes : **{counts['active_brand_hits']}** ;",
+        f"- références Connecthys historiques/documentaires : **{counts['historical_brand_hits']}** ;",
+        f"- fichiers ignorés/non textuels : **{len(report['skipped_files'])}**.", "",
+        "## Occurrences par catégorie", "", "| Catégorie | Occurrences |", "| --- | ---: |",
     ]
     for category in PATTERNS:
         lines.append(f"| `{category}` | {counts['by_category'].get(category, 0)} |")
-
     lines.extend(["", "## Domaines vus dans des URL", ""])
     if report["domains"]:
         lines.extend(["| Domaine | Occurrences |", "| --- | ---: |"])
@@ -289,34 +267,19 @@ def markdown_report(report: dict) -> str:
             lines.append(f"| `{domain}` | {count} |")
     else:
         lines.append("Aucun domaine extrait.")
-
     lines.extend(["", "## Candidats à examiner", ""])
-    selected = [
-        hit
-        for hit in report["hits"]
-        if hit["category"] in {"brand", "url", "network_api", "sync_portal", "automation"}
-    ]
+    selected = [hit for hit in report["hits"] if hit["category"] in {"brand", "url", "network_api", "sync_portal", "automation"}]
     if selected:
-        lines.extend(
-            [
-                "| Catégorie | Scope | Fichier | Ligne | Indice |",
-                "| --- | --- | --- | ---: | --- |",
-            ]
-        )
+        lines.extend(["| Catégorie | Scope | Fichier | Ligne | Indice |", "| --- | --- | --- | ---: | --- |"])
         for hit in selected:
             snippet = hit["snippet"].replace("|", "\\|")
-            lines.append(
-                f"| `{hit['category']}` | `{hit['scope']}` | `{hit['path']}` | "
-                f"{hit['line']} | `{snippet}` |"
-            )
+            lines.append(f"| `{hit['category']}` | `{hit['scope']}` | `{hit['path']}` | {hit['line']} | `{snippet}` |")
     else:
         lines.append("Aucun candidat à signal fort.")
-
     if report["skipped_files"]:
         lines.extend(["", "## Fichiers non inspectés comme texte", ""])
         for item in report["skipped_files"]:
             lines.append(f"- `{item['path']}` — {item['reason']}")
-
     return "\n".join(lines) + "\n"
 
 
@@ -325,11 +288,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("path", nargs="?", default=".", help="racine du dépôt")
     parser.add_argument("--json", dest="json_path", help="écrire le rapport JSON")
     parser.add_argument("--markdown", dest="markdown_path", help="écrire le rapport Markdown")
-    parser.add_argument(
-        "--fail-on-active-brand",
-        action="store_true",
-        help="échouer si Connecthys apparaît dans un fichier classé actif",
-    )
+    parser.add_argument("--fail-on-active-brand", action="store_true", help="échouer si Connecthys apparaît dans du code actif non commenté")
     return parser.parse_args(argv)
 
 
@@ -338,30 +297,26 @@ def main(argv: Sequence[str] | None = None) -> int:
     root = Path(args.path).resolve()
     hits, skipped, scanned_count = scan_repository(root)
     report = build_report(root, hits, skipped, scanned_count)
-
     if args.json_path:
-        Path(args.json_path).write_text(
-            json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
-        )
+        Path(args.json_path).write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     if args.markdown_path:
         Path(args.markdown_path).write_text(markdown_report(report), encoding="utf-8")
-
     counts = report["counts"]
     print(
         "Audit Connecthys : "
         f"{report['scanned_text_files']} fichiers texte, "
         f"{counts['brand_hits']} référence(s) explicite(s), "
-        f"{counts['active_brand_hits']} active(s), "
+        f"{counts['active_brand_hits']} exécutable(s) bloquante(s), "
+        f"{counts['historical_brand_hits']} historique(s)/documentaire(s), "
         f"{counts['high_signal_hits']} candidat(s) à signal fort, "
         f"{len(skipped)} fichier(s) non textuel(s)/illisible(s)."
     )
     if report["domains"]:
         print("Domaines URL : " + ", ".join(report["domains"].keys()))
-
     if args.fail_on_active_brand and counts["active_brand_hits"]:
-        print("Références Connecthys actives détectées :", file=sys.stderr)
+        print("Références Connecthys exécutables détectées :", file=sys.stderr)
         for hit in hits:
-            if hit.category == "brand" and hit.scope == "active":
+            if is_blocking_brand(hit):
                 print(f"- {hit.path}:{hit.line}: {hit.snippet}", file=sys.stderr)
         return 1
     return 0
