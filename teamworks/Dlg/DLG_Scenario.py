@@ -23,6 +23,7 @@ import wx.lib.scrolledpanel as scrolled
 import os
 import sys
 from Utils import UTILS_Fichiers
+from Utils.UTILS_ScenarioReports import ProtegerReportContreCycles
 from Dlg import DLG_Scenario_select_categories
 from Dlg import DLG_Scenario_select_periode
 from Dlg import DLG_Scenario_saisie_prevision
@@ -839,6 +840,7 @@ class Tableau(gridlib.Grid):
                                         self.SetCellBackgroundColour(index_ligne, index_col, (255, 0, 0))
                                         if label[6:] == "1" : texteErreur = _(u"Un report ne peut pas provenir du scénario d'une autre personne !")
                                         elif label[6:] == "2" : texteErreur = _(u"Le report fait référence à un scénario supprimé !")
+                                        elif label[6:] == "3" : texteErreur = _(u"Une boucle de reports a été détectée entre plusieurs scénarios !")
                                         else : texteErreur = _(u"Erreur inconnue !")
                                         self.listeLegendes.append( ( ("couleur", (255, 0, 0)), ("texte", _(u"Erreur de report : %s") % texteErreur), u"") )
                                         self.nbreErreursReport += 1
@@ -1308,6 +1310,7 @@ class Tableau(gridlib.Grid):
         return "%s%d:%02d" % (signe, nbreHeures, nbreMinutes)
         
         
+    @ProtegerReportContreCycles
     def GetReportColonne(self, IDcategorie, IDpersonne, IDscenario) :
         """ Report d'une colonne """
         # Récupère le nom du scénario
@@ -1646,6 +1649,7 @@ class GetDictColonnes():
         return "%s%d:%02d" % (signe, nbreHeures, nbreMinutes)
         
         
+    @ProtegerReportContreCycles
     def GetReportColonne(self, IDcategorie, IDpersonne, IDscenario) :
         """ Ici programmer la récupération du report d'une colonne """
         # Récupère le nbre d'heures pour le report
