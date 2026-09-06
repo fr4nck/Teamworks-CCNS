@@ -23,6 +23,7 @@ import wx.lib.scrolledpanel as scrolled
 import os
 import sys
 from Utils import UTILS_Fichiers
+from Utils.UTILS_ScenarioReports import ProtegerReportContreCycles
 from Dlg import DLG_Scenario_select_categories
 from Dlg import DLG_Scenario_select_periode
 from Dlg import DLG_Scenario_saisie_prevision
@@ -155,8 +156,8 @@ class Dialog(wx.Dialog):
         self.ctrl_nom.SetToolTip(wx.ToolTip(_(u"Saisissez ici un nom pour le scénario")))
         self.ctrl_description.SetToolTip(wx.ToolTip(_(u"Saisissez ici une description claire du scénario (optionnel)")))
         self.ctrl_personne.SetToolTip(wx.ToolTip(_(u"Sélectionnez un individu dans la liste proposée")))
-        self.ctrl_date_debut.SetToolTip(wx.ToolTip(_(u"Saisissez la date de début de période")))
-        self.ctrl_date_fin.SetToolTip(wx.ToolTip(_(u"Saisissez la date de fin de période")))
+        self.ctrl_date_debut.SetToolTip(wx.ToolTip(_(u"Saisissez ici la date de début de période")))
+        self.ctrl_date_fin.SetToolTip(wx.ToolTip(_(u"Saisissez ici la date de fin de période")))
         self.ctrl_toutes_categories.SetToolTip(wx.ToolTip(_(u"Cochez cette option pour inclure dans le scénario \ntoutes les catégories pour lesquelles des présences \nont été enregistrées sur la période du scénario.")))
         self.ctrl_detail.SetToolTip(wx.ToolTip(_(u"Cette option vous permet de sélectionner le niveau de détail souhaité dans l'affichage des heure réalisées")))
         self.ctrl_modeHeure.SetToolTip(wx.ToolTip(_(u"Sélectionnez le mode d'affichage des minutes : normal ou décimal")))
@@ -636,7 +637,7 @@ class Tableau(gridlib.Grid):
         if self.GetNumberRows() > 0 : 
             # Suppression des lignes du tableau
             self.DeleteRows(0, self.GetNumberRows())
-        if self.GetNumberCols() > 0 : 
+        if self.GetNumberCols() > 0 :
             # Suppression des colonnes du tableau
             self.DeleteCols(0, self.GetNumberCols())
         self.ClearGrid()
@@ -839,6 +840,7 @@ class Tableau(gridlib.Grid):
                                         self.SetCellBackgroundColour(index_ligne, index_col, (255, 0, 0))
                                         if label[6:] == "1" : texteErreur = _(u"Un report ne peut pas provenir du scénario d'une autre personne !")
                                         elif label[6:] == "2" : texteErreur = _(u"Le report fait référence à un scénario supprimé !")
+                                        elif label[6:] == "3" : texteErreur = _(u"Une boucle de reports a été détectée entre plusieurs scénarios !")
                                         else : texteErreur = _(u"Erreur inconnue !")
                                         self.listeLegendes.append( ( ("couleur", (255, 0, 0)), ("texte", _(u"Erreur de report : %s") % texteErreur), u"") )
                                         self.nbreErreursReport += 1
@@ -945,7 +947,7 @@ class Tableau(gridlib.Grid):
         # Formate noms de mois :
         if len(label) == 6 or len(label) == 7 :
             numAnnee, numMois = label.split("-")
-            listeMois = ("Janvier", _(u"Février"), "Mars", "Avril", "Mai", "Juin", "Juillet", _(u"Août"), "Septembre", "Octobre", "Novembre", _(u"Décembre"))
+            listeMois = ("Janvier", _(u"Février"), "Mars", "Avril", "Mai", "Juin", _(u"Juillet"), _(u"Août"), "Septembre", "Octobre", "Novembre", _(u"Décembre"))
             texte = u"%s %s" % (listeMois[int(numMois)-1], numAnnee)
             return texte
         
@@ -1308,6 +1310,7 @@ class Tableau(gridlib.Grid):
         return "%s%d:%02d" % (signe, nbreHeures, nbreMinutes)
         
         
+    @ProtegerReportContreCycles
     def GetReportColonne(self, IDcategorie, IDpersonne, IDscenario) :
         """ Report d'une colonne """
         # Récupère le nom du scénario
@@ -1368,7 +1371,7 @@ class Tableau(gridlib.Grid):
             duree = self.OperationHeures("+" + heure_fin, "+" + heure_debut, "soustraction")
             total_heure_realisees = self.OperationHeures(total_heure_realisees, duree, "addition")
             dictHeuresRealisees["total_heures_realisees"] = total_heure_realisees
-            # Détail
+            # Détail Jour ou Mois des heures réalisées :
             if mode_detail == 1 :
                 codeJour = str(dateDD)
                 if codeJour in dictHeuresRealisees :
@@ -1646,6 +1649,7 @@ class GetDictColonnes():
         return "%s%d:%02d" % (signe, nbreHeures, nbreMinutes)
         
         
+    @ProtegerReportContreCycles
     def GetReportColonne(self, IDcategorie, IDpersonne, IDscenario) :
         """ Ici programmer la récupération du report d'une colonne """
         # Récupère le nbre d'heures pour le report
@@ -1686,7 +1690,7 @@ class GetDictColonnes():
             duree = self.OperationHeures("+" + heure_fin, "+" + heure_debut, "soustraction")
             total_heure_realisees = self.OperationHeures(total_heure_realisees, duree, "addition")
             dictHeuresRealisees["total_heures_realisees"] = total_heure_realisees
-            # Détail
+            # Détail Jour ou Mois des heures réalisées :
             if mode_detail == 1 :
                 codeMois = "%s-%s" % (dateDD.year, dateDD.month)
                 if codeMois in dictHeuresRealisees :
