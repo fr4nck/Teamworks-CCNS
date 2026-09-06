@@ -71,6 +71,22 @@ def test_extraction_atomique_conserve_l_ancien_fichier_si_la_lecture_echoue(tmp_
     assert list(tmp_path.glob(".teamworks-restore-*.tmp")) == []
 
 
+@pytest.mark.parametrize(
+    "nom_fichier",
+    ["../hors-data.dat", "sous-dossier/base.dat", "sous-dossier\\base.dat"],
+)
+def test_extraction_atomique_refuse_les_chemins_de_fichier(tmp_path, nom_fichier):
+    with pytest.raises(ValueError):
+        ExtraireFichierAtomiquement(
+            _ArchiveEnEchec(),
+            nom_fichier,
+            str(tmp_path),
+        )
+
+    assert not (tmp_path.parent / "hors-data.dat").exists()
+    assert list(tmp_path.glob(".teamworks-restore-*.tmp")) == []
+
+
 def test_restauration_legacy_utilise_l_extraction_atomique_pour_sqlite():
     source = SOURCE_SAUVEGARDE.read_text(encoding="utf-8")
 
