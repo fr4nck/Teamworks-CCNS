@@ -156,8 +156,8 @@ class Dialog(wx.Dialog):
         self.ctrl_nom.SetToolTip(wx.ToolTip(_(u"Saisissez ici un nom pour le scénario")))
         self.ctrl_description.SetToolTip(wx.ToolTip(_(u"Saisissez ici une description claire du scénario (optionnel)")))
         self.ctrl_personne.SetToolTip(wx.ToolTip(_(u"Sélectionnez un individu dans la liste proposée")))
-        self.ctrl_date_debut.SetToolTip(wx.ToolTip(_(u"Saisissez ici la date de début de période")))
-        self.ctrl_date_fin.SetToolTip(wx.ToolTip(_(u"Saisissez ici la date de fin de période")))
+        self.ctrl_date_debut.SetToolTip(wx.ToolTip(_(u"Saisissez la date de début de période")))
+        self.ctrl_date_fin.SetToolTip(wx.ToolTip(_(u"Saisissez la date de fin de période")))
         self.ctrl_toutes_categories.SetToolTip(wx.ToolTip(_(u"Cochez cette option pour inclure dans le scénario \ntoutes les catégories pour lesquelles des présences \nont été enregistrées sur la période du scénario.")))
         self.ctrl_detail.SetToolTip(wx.ToolTip(_(u"Cette option vous permet de sélectionner le niveau de détail souhaité dans l'affichage des heure réalisées")))
         self.ctrl_modeHeure.SetToolTip(wx.ToolTip(_(u"Sélectionnez le mode d'affichage des minutes : normal ou décimal")))
@@ -637,7 +637,7 @@ class Tableau(gridlib.Grid):
         if self.GetNumberRows() > 0 : 
             # Suppression des lignes du tableau
             self.DeleteRows(0, self.GetNumberRows())
-        if self.GetNumberCols() > 0 :
+        if self.GetNumberCols() > 0 : 
             # Suppression des colonnes du tableau
             self.DeleteCols(0, self.GetNumberCols())
         self.ClearGrid()
@@ -947,7 +947,7 @@ class Tableau(gridlib.Grid):
         # Formate noms de mois :
         if len(label) == 6 or len(label) == 7 :
             numAnnee, numMois = label.split("-")
-            listeMois = ("Janvier", _(u"Février"), "Mars", "Avril", "Mai", "Juin", _(u"Juillet"), _(u"Août"), "Septembre", "Octobre", "Novembre", _(u"Décembre"))
+            listeMois = ("Janvier", _(u"Février"), "Mars", "Avril", "Mai", "Juin", "Juillet", _(u"Août"), "Septembre", "Octobre", "Novembre", _(u"Décembre"))
             texte = u"%s %s" % (listeMois[int(numMois)-1], numAnnee)
             return texte
         
@@ -1371,7 +1371,7 @@ class Tableau(gridlib.Grid):
             duree = self.OperationHeures("+" + heure_fin, "+" + heure_debut, "soustraction")
             total_heure_realisees = self.OperationHeures(total_heure_realisees, duree, "addition")
             dictHeuresRealisees["total_heures_realisees"] = total_heure_realisees
-            # Détail Jour ou Mois des heures réalisées :
+            # Détail
             if mode_detail == 1 :
                 codeJour = str(dateDD)
                 if codeJour in dictHeuresRealisees :
@@ -1690,7 +1690,7 @@ class GetDictColonnes():
             duree = self.OperationHeures("+" + heure_fin, "+" + heure_debut, "soustraction")
             total_heure_realisees = self.OperationHeures(total_heure_realisees, duree, "addition")
             dictHeuresRealisees["total_heures_realisees"] = total_heure_realisees
-            # Détail Jour ou Mois des heures réalisées :
+            # Détail
             if mode_detail == 1 :
                 codeMois = "%s-%s" % (dateDD.year, dateDD.month)
                 if codeMois in dictHeuresRealisees :
