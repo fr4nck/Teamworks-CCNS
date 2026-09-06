@@ -6,17 +6,22 @@ import shutil
 import tempfile
 
 
+def _VerifierNomFichierLocal(nom_fichier):
+    if not nom_fichier or nom_fichier in (".", ".."):
+        raise ValueError("Nom de fichier de restauration invalide")
+    if "/" in nom_fichier or "\\" in nom_fichier:
+        raise ValueError("La restauration locale attend un nom de fichier simple")
+
+
 def ExtraireFichierAtomiquement(fichier_zip, nom_fichier, repertoire_destination):
-    """Extrait un membre ZIP sans altérer la cible avant lecture complète."""
+    """Extrait un fichier local sans altérer la cible avant lecture complète."""
+    _VerifierNomFichierLocal(nom_fichier)
     destination = os.path.join(repertoire_destination, nom_fichier)
-    repertoire_parent = os.path.dirname(destination)
-    if repertoire_parent and not os.path.isdir(repertoire_parent):
-        os.makedirs(repertoire_parent)
 
     descripteur, fichier_temporaire = tempfile.mkstemp(
         prefix=".teamworks-restore-",
         suffix=".tmp",
-        dir=repertoire_parent or repertoire_destination,
+        dir=repertoire_destination,
     )
 
     try:
