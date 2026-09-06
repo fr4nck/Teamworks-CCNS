@@ -1,47 +1,15 @@
 import ast
-import functools
 from pathlib import Path
-import threading
+
+from teamworks.Utils.UTILS_ScenarioReports import ProtegerReportContreCycles
 
 
 SOURCE_PATH = Path("teamworks/Dlg/DLG_Scenario.py")
-GUARD_NAME = "_ProtegerReportContreCycles"
-STATE_NAME = "_etatCycleReports"
+GUARD_NAME = "ProtegerReportContreCycles"
 
 
 def _source_tree():
     return ast.parse(SOURCE_PATH.read_text(encoding="utf-8"))
-
-
-def _load_cycle_guard():
-    tree = _source_tree()
-    selected = []
-    for node in tree.body:
-        if isinstance(node, ast.Assign):
-            names = {
-                target.id
-                for target in node.targets
-                if isinstance(target, ast.Name)
-            }
-            if STATE_NAME in names:
-                selected.append(node)
-        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            if node.name == GUARD_NAME:
-                selected.append(node)
-
-    assert len(selected) == 2, (
-        "DLG_Scenario.py doit définir l'état local de pile et le décorateur "
-        "de protection contre les cycles de report"
-    )
-
-    namespace = {
-        "threading": threading,
-        "wraps": functools.wraps,
-    }
-    module = ast.Module(body=selected, type_ignores=[])
-    ast.fix_missing_locations(module)
-    exec(compile(module, str(SOURCE_PATH), "exec"), namespace)
-    return namespace[GUARD_NAME]
 
 
 def _decorator_names(method):
@@ -67,10 +35,8 @@ def _get_report_methods():
 
 
 def test_report_cycle_guard_stops_a_to_b_to_a_recursion():
-    guard = _load_cycle_guard()
-
     class FakeReports:
-        @guard
+        @ProtegerReportContreCycles
         def GetReportColonne(self, IDcategorie, IDpersonne, IDscenario):
             if IDscenario == 1:
                 return self.GetReportColonne(20, IDpersonne, 2)
@@ -84,10 +50,8 @@ def test_report_cycle_guard_stops_a_to_b_to_a_recursion():
 
 
 def test_report_cycle_guard_preserves_acyclic_reports_and_resets_after_cycle():
-    guard = _load_cycle_guard()
-
     class FakeReports:
-        @guard
+        @ProtegerReportContreCycles
         def GetReportColonne(self, IDcategorie, IDpersonne, IDscenario):
             if IDscenario == 1:
                 return self.GetReportColonne(20, IDpersonne, 2)
