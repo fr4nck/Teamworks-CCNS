@@ -49,6 +49,30 @@ def test_report_cycle_guard_stops_a_to_b_to_a_recursion():
     )
 
 
+def test_report_cycle_guard_is_shared_across_both_report_engines():
+    class FakeTableau:
+        def __init__(self):
+            self.total_engine = FakeGetDictColonnes(self)
+
+        @ProtegerReportContreCycles
+        def GetReportColonne(self, IDcategorie, IDpersonne, IDscenario):
+            return self.total_engine.GetReportColonne(20, IDpersonne, 2)
+
+    class FakeGetDictColonnes:
+        def __init__(self, tableau):
+            self.tableau = tableau
+
+        @ProtegerReportContreCycles
+        def GetReportColonne(self, IDcategorie, IDpersonne, IDscenario):
+            return self.tableau.GetReportColonne(1000, IDpersonne, 1)
+
+    assert FakeTableau().GetReportColonne(1000, 7, 1) == (
+        "+00:00",
+        "ERREUR3",
+        "",
+    )
+
+
 def test_report_cycle_guard_preserves_acyclic_reports_and_resets_after_cycle():
     class FakeReports:
         @ProtegerReportContreCycles
