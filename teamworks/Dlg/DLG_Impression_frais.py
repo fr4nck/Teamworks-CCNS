@@ -220,16 +220,8 @@ class ListCtrl(wx.ListCtrl, CheckListCtrlMixin):
         self.ToggleItem(evt.Index)
 
     def OnCheckItem(self, index, flag):
-        """ Ne fait rien si c'est le remplissage qui coche la case ! """
-        if self.remplissage == False :
-            IDgadget = self.GetItemData(index)
-            # Enregistre l'affichage True/False du gadget dans la base
-            DB = GestionDB.DB()
-            listeDonnees = [("affichage",  str(flag)),]
-            DB.ReqMAJ("gadgets", listeDonnees, "IDgadget", IDgadget)
-            DB.Close()
-        else:
-            pass
+        """La sélection d'impression reste locale au dialogue."""
+        pass
 
       
     def Importation(self):
