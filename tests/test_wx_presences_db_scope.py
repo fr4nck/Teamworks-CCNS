@@ -20,12 +20,21 @@ def _charger_scope():
     return module
 
 
+class _CurseurFaux(object):
+    def __init__(self):
+        self.close_count = 0
+
+    def close(self):
+        self.close_count += 1
+
+
 class _ConnexionFausse(object):
     __hash__ = None
 
     def __init__(self):
         self.rollback_count = 0
         self.close_count = 0
+        self.curseurs = []
 
     def rollback(self):
         self.rollback_count += 1
@@ -34,7 +43,9 @@ class _ConnexionFausse(object):
         self.close_count += 1
 
     def cursor(self):
-        return object()
+        curseur = _CurseurFaux()
+        self.curseurs.append(curseur)
+        return curseur
 
 
 def test_scope_reutilise_une_connexion_sequentielle_et_ferme_en_sortie():
@@ -51,10 +62,12 @@ def test_scope_reutilise_une_connexion_sequentielle_et_ferme_en_sortie():
     with scope.connexions_reseau_partagees(gestion_db) as stats:
         bail1, nom1 = gestion_db.GetConnexionReseau("3306;h;u;p[RESEAU]base_TDATA")
         assert nom1 == "base_tdata"
+        curseur1 = bail1.cursor()
         bail1.close()
 
         bail2, nom2 = gestion_db.GetConnexionReseau("3306;h;u;p[RESEAU]base_TDATA")
         assert nom2 == "base_tdata"
+        curseur2 = bail2.cursor()
         bail2.close()
 
         assert len(connexions) == 1
@@ -62,6 +75,8 @@ def test_scope_reutilise_une_connexion_sequentielle_et_ferme_en_sortie():
         assert stats["reutilisations"] == 1
         assert connexions[0].rollback_count == 2
         assert connexions[0].close_count == 0
+        assert curseur1.close_count == 1
+        assert curseur2.close_count == 1
 
     assert connexions[0].close_count == 1
 
