@@ -66,6 +66,12 @@ def test_six_onglets_secondaires_sont_differees():
     assert "wx.personnes.fiche.onglet.chargement" in source
 
 
+def test_dialogue_personne_appelle_explicitement_le_coeur_sans_super_recursif():
+    source = _source("teamworks/Dlg/DLG_Fiche_individuelle.py")
+    assert "CORE.Dialog.__init__(self, *args, **kwargs)" in source
+    assert "super(Dialog, self).__init__(*args, **kwargs)" not in source
+
+
 def test_diagnostic_agrege_nombre_requetes_et_temps_sql(monkeypatch):
     path = ROOT / "teamworks/Utils/UTILS_Diagnostic_performance.py"
     spec = importlib.util.spec_from_file_location("diag_perf_test", path)
