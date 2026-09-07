@@ -10,7 +10,7 @@ from application.control import BuildContractSalaryControlConsolidatedReportUseC
 from application.presentation import ContractSalaryAlertPresenter, ContractSalaryControlConsolidatedExporter, ContractSalaryControlExportFormat, ContractSalaryControlIssueHistoryPresenter, ContractSalaryControlSnapshotComparisonPresenter, format_euro_amount, format_french_date
 from teamworks.CcnsCore.audit_salary_alerts import generate_salary_control_alerts
 from teamworks.CcnsCore.audit_salary_history import compare_salary_control_snapshots, list_salary_control_snapshots, track_salary_control_issues
-from Utils import UTILS_Interface, UTILS_Theme
+from Utils import UTILS_Interface, UTILS_Styles, UTILS_Theme
 
 
 class Dialog(wx.Dialog):
@@ -18,8 +18,13 @@ class Dialog(wx.Dialog):
         wx.Dialog.__init__(self, parent, -1, "Historique des contrôles salariaux", style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
         self.repository = repository
         self.snapshots = list(list_salary_control_snapshots(repository=repository))
-        self.listbox = wx.ListBox(box_snapshots, -1, choices=[self._summary(s) for s in self.snapshots], style=wx.LB_EXTENDED)
-        self.details = wx.TextCtrl(box_details, -1, "", style=wx.TE_MULTILINE | wx.TE_READONLY)
+
+        # Les zones de travail sont créées avant leurs contrôles enfants :
+        # wxPython reçoit ainsi un parent valide dès l'instanciation, sans Reparent tardif.
+        self.box_snapshots = wx.StaticBox(self, -1, "Contrôles enregistrés")
+        self.box_details = wx.StaticBox(self, -1, "Détail et analyse")
+        self.listbox = wx.ListBox(self.box_snapshots, -1, choices=[self._summary(s) for s in self.snapshots], style=wx.LB_EXTENDED)
+        self.details = wx.TextCtrl(self.box_details, -1, "", style=wx.TE_MULTILINE | wx.TE_READONLY)
         self.filter = wx.ComboBox(self, -1, choices=["Tous", "Améliorations", "Dégradations", "Nouveaux contrats", "Contrats absents", "Changements de statut", "Écarts modifiés", "Inchangés"], style=wx.CB_READONLY)
         self.filter.SetSelection(0)
         self.button_compare = CTRL_Bouton_image.CTRL(self, texte="Comparer", role="primary")
@@ -39,8 +44,7 @@ class Dialog(wx.Dialog):
         self._last_issue_history = None
         self._last_alerts = None
         self.__do_layout()
-        self.SetSize((1120, 700))
-        self.SetMinSize((900, 560))
+        UTILS_Styles.ApplyWindowProfile(self, "workspace")
         if self.snapshots:
             self.listbox.SetSelection(0)
             self._show(self.snapshots[0])
@@ -64,19 +68,15 @@ class Dialog(wx.Dialog):
 
         body = wx.BoxSizer(wx.HORIZONTAL)
 
-        box_snapshots = wx.StaticBox(self, -1, "Contrôles enregistrés")
-        box_snapshots.SetBackgroundColour(surface)
-        box_snapshots.SetForegroundColour(text_colour)
-        snapshots_sizer = wx.StaticBoxSizer(box_snapshots, wx.VERTICAL)
-        self.listbox.Reparent(box_snapshots)
+        self.box_snapshots.SetBackgroundColour(surface)
+        self.box_snapshots.SetForegroundColour(text_colour)
+        snapshots_sizer = wx.StaticBoxSizer(self.box_snapshots, wx.VERTICAL)
         snapshots_sizer.Add(self.listbox, 1, wx.ALL | wx.EXPAND, ui["space_s"])
         body.Add(snapshots_sizer, 1, wx.RIGHT | wx.EXPAND, ui["space_m"])
 
-        box_details = wx.StaticBox(self, -1, "Détail et analyse")
-        box_details.SetBackgroundColour(surface)
-        box_details.SetForegroundColour(text_colour)
-        details_sizer = wx.StaticBoxSizer(box_details, wx.VERTICAL)
-        self.details.Reparent(box_details)
+        self.box_details.SetBackgroundColour(surface)
+        self.box_details.SetForegroundColour(text_colour)
+        details_sizer = wx.StaticBoxSizer(self.box_details, wx.VERTICAL)
         details_sizer.Add(self.details, 1, wx.ALL | wx.EXPAND, ui["space_s"])
         body.Add(details_sizer, 2, wx.EXPAND)
 
