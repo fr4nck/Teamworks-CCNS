@@ -13,6 +13,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: test/0.9.2-scenario-stacked
+      - name: Install test dependencies
+        run: python -m pip install -r .github/requirements-ci.txt
       - name: Apply presence fix on atomic scenario base
         shell: python
         run: |
@@ -35,7 +37,6 @@ jobs:
       - name: Add numeric presence tests
         shell: bash
         run: |
-          cp /dev/null tests/test_scenario_presence_duration_contract.py
           cat > tests/test_scenario_presence_duration_contract.py <<'PY'
           from pathlib import Path
           import sys
