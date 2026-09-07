@@ -640,11 +640,19 @@ class SaisieDeplacement(wx.Dialog):
                 return
             dlg.Destroy()
 
-        self.SauvegardeDeplacement()
-        self.SauvegardeDistance()
+        DB = GestionDB.DB()
+        try:
+            self.SauvegardeDeplacement(DB=DB, commit=False)
+            self.SauvegardeDistance(DB=DB, commit=False)
+            DB.Commit()
+        except Exception:
+            DB.connexion.rollback()
+            raise
+        finally:
+            DB.Close()
         self.EndModal(wx.ID_OK)
 
-    def SauvegardeDeplacement(self):
+    def SauvegardeDeplacement(self, DB=None, commit=True):
         date = str(self.GetDatePickerValue(self.ctrl_date))
         IDpersonne = self.dictPersonnes[self.ctrl_utilisateur.GetCurrentSelection()]
         objet = self.ctrl_objet.GetValue()
@@ -656,7 +664,9 @@ class SaisieDeplacement(wx.Dialog):
         aller_retour = str(self.ctrl_aller_retour.GetValue())
         tarif_km = float(self.ctrl_tarif.GetValue())
 
-        DB = GestionDB.DB()
+        own_db = DB is None
+        if own_db:
+            DB = GestionDB.DB()
         listeDonnees = [
             ("date", date),
             ("IDpersonne", IDpersonne),
@@ -671,15 +681,15 @@ class SaisieDeplacement(wx.Dialog):
         ]
         if self.IDdeplacement is None:
             listeDonnees.append(("IDremboursement", 0))
-            ID = DB.ReqInsert("deplacements", listeDonnees)
+            ID = DB.ReqInsert("deplacements", listeDonnees, commit=commit)
         else:
-            DB.ReqMAJ("deplacements", listeDonnees, "IDdeplacement", self.IDdeplacement)
+            DB.ReqMAJ("deplacements", listeDonnees, "IDdeplacement", self.IDdeplacement, commit=commit)
             ID = self.IDdeplacement
-        DB.Commit()
-        DB.Close()
+        if own_db:
+            DB.Close()
         return ID
 
-    def SauvegardeDistance(self):
+    def SauvegardeDistance(self, DB=None, commit=True):
         depart = (self.ctrl_cp_depart.GetValue(), self.ctrl_ville_depart.GetValue())
         arrivee = (self.ctrl_cp_arrivee.GetValue(), self.ctrl_ville_arrivee.GetValue())
         distanceExiste = False
@@ -702,7 +712,9 @@ class SaisieDeplacement(wx.Dialog):
         if self.ctrl_aller_retour.GetValue() is True:
             distance = distance / 2
 
-        DB = GestionDB.DB()
+        own_db = DB is None
+        if own_db:
+            DB = GestionDB.DB()
         listeDonnees = [
             ("cp_depart", cp_depart),
             ("ville_depart", ville_depart),
@@ -711,11 +723,11 @@ class SaisieDeplacement(wx.Dialog):
             ("distance", distance),
         ]
         if distanceExiste is False:
-            DB.ReqInsert("distances", listeDonnees)
+            DB.ReqInsert("distances", listeDonnees, commit=commit)
         else:
-            DB.ReqMAJ("distances", listeDonnees, "IDdistance", distanceID)
-        DB.Commit()
-        DB.Close()
+            DB.ReqMAJ("distances", listeDonnees, "IDdistance", distanceID, commit=commit)
+        if own_db:
+            DB.Close()
 
 
 class AdvancedComboBox(wx.ComboBox):
