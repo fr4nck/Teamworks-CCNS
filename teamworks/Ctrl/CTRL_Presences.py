@@ -15,6 +15,7 @@ from Ctrl import CTRL_Presences_calendrier
 from Ctrl import CTRL_Presences_legende
 from Ctrl import CTRL_Presences_personnes
 from Ctrl import CTRL_Section
+from Utils import UTILS_Connexion_partagee as ConnexionPartagee
 from Utils import UTILS_Diagnostic_performance as DiagnosticPerformance
 from Utils import UTILS_Interface
 from Utils import UTILS_Styles
@@ -125,7 +126,11 @@ class PanelPresences(wx.Panel):
         )
         self.__do_layout()
         self.init = True
-        self.panelCalendrier.MAJselectionDates(listeDates=selectionDates)
+
+        # Initialise uniquement la sélection. ``MAJselectionDates`` déclenchait
+        # ici un premier calcul complet du planning, immédiatement refait par
+        # MAJpanel() quelques lignes plus loin.
+        self.panelCalendrier.SetSelectionDates(selectionDates)
         wx.CallAfter(self._ajuster_splitter_initial)
 
     def _ajuster_splitter_initial(self):
@@ -167,21 +172,37 @@ class PanelPresences(wx.Panel):
             {"reinit_selection": bool(reinitSelectionPersonnes)},
         ):
             mode_affichage = CTRL_Planning.modeAffichage
+            presents_connus = None
             if reinitSelectionPersonnes:
                 with DiagnosticPerformance.mesurer_action(
                     "wx.presences.planning.recherche_presents"
                 ):
-                    selectionPersonnes = self.panelPlanning.RecherchePresents(
+                    presents_connus = self.panelPlanning.RecherchePresents(
                         selectionDates
                     )
-            with DiagnosticPerformance.mesurer_action(
-                "wx.presences.planning.reinit"
-            ):
-                self.panelPlanning.ReInitPlanning(
-                    mode_affichage,
-                    selectionPersonnes,
-                    selectionDates,
+                selectionPersonnes = list(presents_connus)
+
+            # ReInitPlanning() relit historiquement RecherchePresents() pour
+            # alimenter self.listePresents. Lorsque la sélection vient juste
+            # d'être calculée avec les mêmes dates, réutiliser exactement ce
+            # résultat évite une deuxième requête sans changer le résultat métier.
+            recherche_originale = self.panelPlanning.RecherchePresents
+            if presents_connus is not None:
+                self.panelPlanning.RecherchePresents = (
+                    lambda _dates: list(presents_connus)
                 )
+            try:
+                with DiagnosticPerformance.mesurer_action(
+                    "wx.presences.planning.reinit"
+                ):
+                    self.panelPlanning.ReInitPlanning(
+                        mode_affichage,
+                        selectionPersonnes,
+                        selectionDates,
+                    )
+            finally:
+                self.panelPlanning.RecherchePresents = recherche_originale
+
             with DiagnosticPerformance.mesurer_action(
                 "wx.presences.planning.categories"
             ):
@@ -197,41 +218,50 @@ class PanelPresences(wx.Panel):
         DiagnosticPerformance.installer_instrumentation_sql(GestionDB)
         premier_chargement = not self.init
 
-        with DiagnosticPerformance.mesurer_action(
-            "wx.presences.majpanel",
-            {"premier_chargement": premier_chargement},
-        ):
-            if not self.init:
-                with DiagnosticPerformance.mesurer_action(
-                    "wx.presences.initialisation"
-                ):
-                    self.InitPage()
+        # Toutes les lectures réseau de cette séquence logique partagent au plus
+        # une connexion inactive par base. SQLite reste sur son chemin historique.
+        with ConnexionPartagee.connexions_reseau_partagees(GestionDB) as stats_connexions:
+            with DiagnosticPerformance.mesurer_action(
+                "wx.presences.majpanel",
+                {"premier_chargement": premier_chargement},
+            ) as action:
+                if not self.init:
+                    with DiagnosticPerformance.mesurer_action(
+                        "wx.presences.initialisation"
+                    ):
+                        self.InitPage()
 
-            if "planning" in listeElements or listeElements == []:
-                with DiagnosticPerformance.mesurer_action(
-                    "wx.presences.planning.preparation"
-                ):
-                    self.panelPlanning.DCplanning.Init_valeurs_defaut()
-                    self.panelPlanning.RechargeDictCategories()
-                self.MAJpanelPlanning(reinitSelectionPersonnes=True)
+                if "planning" in listeElements or listeElements == []:
+                    with DiagnosticPerformance.mesurer_action(
+                        "wx.presences.planning.preparation"
+                    ):
+                        self.panelPlanning.DCplanning.Init_valeurs_defaut()
+                        self.panelPlanning.RechargeDictCategories()
+                    self.MAJpanelPlanning(reinitSelectionPersonnes=True)
 
-            if "listCtrl_personnes" in listeElements or listeElements == []:
-                with DiagnosticPerformance.mesurer_action(
-                    "wx.presences.personnes.maj"
-                ):
-                    self.panelPersonnes.MAJpanel()
+                if "listCtrl_personnes" in listeElements or listeElements == []:
+                    with DiagnosticPerformance.mesurer_action(
+                        "wx.presences.personnes.maj"
+                    ):
+                        self.panelPersonnes.MAJpanel()
 
-            if "legendes" in listeElements or listeElements == []:
-                with DiagnosticPerformance.mesurer_action(
-                    "wx.presences.legendes.maj"
-                ):
-                    self.panelLegendes.MAJpanel()
+                if "legendes" in listeElements or listeElements == []:
+                    with DiagnosticPerformance.mesurer_action(
+                        "wx.presences.legendes.maj"
+                    ):
+                        self.panelLegendes.MAJpanel()
 
-            if "calendrier" in listeElements or listeElements == []:
-                with DiagnosticPerformance.mesurer_action(
-                    "wx.presences.calendrier.maj"
-                ):
-                    self.panelCalendrier.MAJpanel()
+                if "calendrier" in listeElements or listeElements == []:
+                    with DiagnosticPerformance.mesurer_action(
+                        "wx.presences.calendrier.maj"
+                    ):
+                        self.panelCalendrier.MAJpanel()
+
+                if action is not None:
+                    action["details"].update({
+                        "connexions_physiques": stats_connexions["ouvertures_physiques"],
+                        "connexions_reutilisees": stats_connexions["reutilisations"],
+                    })
 
 
 class TestFrame(wx.Frame):
