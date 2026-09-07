@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+import logging
+
 import wx
 
 from Ctrl import CTRL_Bouton_image
@@ -11,6 +13,9 @@ from application.presentation import ContractSalaryAlertPresenter, ContractSalar
 from teamworks.CcnsCore.audit_salary_alerts import generate_salary_control_alerts
 from teamworks.CcnsCore.audit_salary_history import compare_salary_control_snapshots, list_salary_control_snapshots, track_salary_control_issues
 from Utils import UTILS_Interface, UTILS_Styles, UTILS_Theme
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 class Dialog(wx.Dialog):
@@ -85,7 +90,6 @@ class Dialog(wx.Dialog):
         sizer.Add(intro, 0, wx.LEFT | wx.RIGHT | wx.TOP | wx.EXPAND, ui["space_m"])
 
         body = wx.BoxSizer(wx.HORIZONTAL)
-
         self.box_snapshots.SetBackgroundColour(surface)
         self.box_snapshots.SetForegroundColour(text_colour)
         snapshots_sizer = wx.StaticBoxSizer(self.box_snapshots, wx.VERTICAL)
@@ -97,11 +101,9 @@ class Dialog(wx.Dialog):
         details_sizer = wx.StaticBoxSizer(self.box_details, wx.VERTICAL)
         details_sizer.Add(self.details, 1, wx.ALL | wx.EXPAND, ui["space_s"])
         body.Add(details_sizer, 2, wx.EXPAND)
-
         sizer.Add(body, 1, wx.ALL | wx.EXPAND, ui["space_m"])
 
         actions = wx.BoxSizer(wx.VERTICAL)
-
         row_main = wx.BoxSizer(wx.HORIZONTAL)
         row_main.Add(wx.StaticText(self, -1, "Filtrer :"), 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, ui["space_xs"])
         row_main.Add(self.filter, 1, wx.RIGHT | wx.EXPAND, ui["space_m"])
@@ -109,33 +111,30 @@ class Dialog(wx.Dialog):
         row_main.Add(self.button_track_issues, 0, wx.RIGHT, ui["space_s"])
         row_main.Add(self.button_alerts, 0)
         actions.Add(row_main, 0, wx.EXPAND)
-
         actions.AddSpacer(ui["space_s"])
 
         row_export = wx.BoxSizer(wx.HORIZONTAL)
         row_export.AddStretchSpacer(1)
         row_export.Add(self.button_export_csv, 0, wx.RIGHT, ui["space_s"])
-        row_export.Add(self.button_export_json, 0, wx.RIGHT, ui["space_m"])
+        row_export.Add(self.button_export_json, 0, wx.RIGHT | wx.EXPAND, ui["space_m"])
         row_export.Add(self.button_close, 0)
         actions.Add(row_export, 0, wx.EXPAND)
-
         sizer.Add(actions, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, ui["space_m"])
 
         self.SetSizer(sizer)
         self.Layout()
 
     def _summary(self, snapshot):
-        return "%s | exécuté %s | %d contrats | écart %s | %s" % (
+        return "%s | exécuté %s | %d contrats | écart %s" % (
             format_french_date(snapshot.reference_date),
             snapshot.executed_at.isoformat(timespec="seconds"),
             snapshot.total_contracts,
             format_euro_amount(snapshot.total_shortfall_amount),
-            snapshot.snapshot_id,
         )
 
     def _show(self, snapshot):
         lines = [
-            "Snapshot : %s" % snapshot.snapshot_id,
+            "Contrôle enregistré",
             "Date de référence : %s" % format_french_date(snapshot.reference_date),
             "Date d'exécution : %s" % snapshot.executed_at.isoformat(timespec="seconds"),
             "Contrats : %d | conformes : %d | non conformes : %d | non évaluables : %d" % (snapshot.total_contracts, snapshot.compliant_contracts, snapshot.non_compliant_contracts, snapshot.not_evaluated_contracts),
@@ -182,12 +181,12 @@ class Dialog(wx.Dialog):
     def OnCompare(self, event):
         selections = list(self.listbox.GetSelections())
         if len(selections) != 2:
-            wx.MessageBox("Sélectionnez exactement deux snapshots à comparer.", "Comparaison impossible", wx.OK | wx.ICON_WARNING)
+            wx.MessageBox("Sélectionnez exactement deux contrôles enregistrés à comparer.", "Comparaison impossible", wx.OK | wx.ICON_WARNING)
             return
         before = self.snapshots[selections[0]]
         after = self.snapshots[selections[1]]
         if before.snapshot_id == after.snapshot_id:
-            wx.MessageBox("Un snapshot ne peut pas être comparé avec lui-même.", "Comparaison impossible", wx.OK | wx.ICON_WARNING)
+            wx.MessageBox("Un contrôle enregistré ne peut pas être comparé avec lui-même.", "Comparaison impossible", wx.OK | wx.ICON_WARNING)
             return
         try:
             self._last_alerts = None
@@ -195,8 +194,9 @@ class Dialog(wx.Dialog):
             self._last_comparison = compare_salary_control_snapshots(before.snapshot_id, after.snapshot_id, repository=self.repository)
             self.filter.SetItems(["Tous", "Améliorations", "Dégradations", "Nouveaux contrats", "Contrats absents", "Changements de statut", "Écarts modifiés", "Inchangés"])
             self.filter.SetSelection(0)
-        except Exception as exc:
-            wx.MessageBox("Impossible de comparer les snapshots.\n\n%s" % exc, "Comparaison impossible", wx.OK | wx.ICON_ERROR)
+        except Exception:
+            LOGGER.exception("Échec de la comparaison des contrôles salariaux enregistrés")
+            wx.MessageBox("Impossible de comparer les contrôles enregistrés. Consultez le journal de diagnostic si le problème persiste.", "Comparaison impossible", wx.OK | wx.ICON_ERROR)
             return
         self._show_comparison(self._last_comparison)
 
@@ -215,7 +215,7 @@ class Dialog(wx.Dialog):
     def OnTrackIssues(self, event):
         selections = list(self.listbox.GetSelections())
         if len(selections) != 2:
-            wx.MessageBox("Sélectionnez exactement deux snapshots pour suivre les anomalies.", "Suivi impossible", wx.OK | wx.ICON_WARNING)
+            wx.MessageBox("Sélectionnez exactement deux contrôles enregistrés pour suivre les anomalies.", "Suivi impossible", wx.OK | wx.ICON_WARNING)
             return
         before = self.snapshots[selections[0]]
         after = self.snapshots[selections[1]]
@@ -225,8 +225,9 @@ class Dialog(wx.Dialog):
             self._last_issue_history = track_salary_control_issues(before.snapshot_id, after.snapshot_id, repository=self.repository)
             self.filter.SetItems(["Toutes", "Nouvelles", "Persistantes", "Résolues"])
             self.filter.SetSelection(0)
-        except Exception as exc:
-            wx.MessageBox("Impossible de suivre les anomalies.\n\n%s" % exc, "Suivi impossible", wx.OK | wx.ICON_ERROR)
+        except Exception:
+            LOGGER.exception("Échec du suivi des anomalies salariales")
+            wx.MessageBox("Impossible de suivre les anomalies entre les contrôles enregistrés. Consultez le journal de diagnostic si le problème persiste.", "Suivi impossible", wx.OK | wx.ICON_ERROR)
             return
         self._show_issue_history(self._last_issue_history)
 
@@ -243,7 +244,7 @@ class Dialog(wx.Dialog):
         vm = presenter.present(history, filter_key=self._issue_filter_key())
         lines = ["Suivi des anomalies", "===================", *vm.summary_lines, "", "Anomalies", "========="]
         for row in vm.rows:
-            lines.append("%s | salarié %s | anomalie %s | %s | %s | motif %s → %s | snapshots %s → %s" % (
+            lines.append("%s | salarié %s | anomalie %s | %s | %s | motif %s → %s | contrôles %s → %s" % (
                 row.contract_id_label, row.employee_id_label, row.issue_label, row.status_label, row.evolution_label,
                 row.before_reason_label, row.after_reason_label, row.before_snapshot_date_label, row.after_snapshot_date_label,
             ))
@@ -256,8 +257,9 @@ class Dialog(wx.Dialog):
             self._last_alerts = generate_salary_control_alerts(repository=self.repository)
             self.filter.SetItems(["Toutes", "Critiques", "Avertissements", "Informations", "Non conformités", "Nouvelles anomalies", "Résolues"])
             self.filter.SetSelection(0)
-        except Exception as exc:
-            wx.MessageBox("Impossible de générer les alertes.\n\n%s" % exc, "Alertes indisponibles", wx.OK | wx.ICON_ERROR)
+        except Exception:
+            LOGGER.exception("Échec de la génération des alertes salariales")
+            wx.MessageBox("Impossible de générer les alertes salariales. Consultez le journal de diagnostic si le problème persiste.", "Alertes indisponibles", wx.OK | wx.ICON_ERROR)
             return
         self._show_alerts(self._last_alerts)
 
@@ -289,10 +291,10 @@ class Dialog(wx.Dialog):
             index = self.listbox.GetSelection()
             selections = [index] if 0 <= index < len(self.snapshots) else []
         if not selections:
-            wx.MessageBox("Sélectionnez au moins le snapshot courant à exporter.", "Export impossible", wx.OK | wx.ICON_WARNING)
+            wx.MessageBox("Sélectionnez au moins le contrôle courant à exporter.", "Export impossible", wx.OK | wx.ICON_WARNING)
             return None, None
         if len(selections) > 2:
-            wx.MessageBox("Sélectionnez un snapshot courant, et éventuellement un snapshot précédent.", "Export impossible", wx.OK | wx.ICON_WARNING)
+            wx.MessageBox("Sélectionnez un contrôle courant, et éventuellement un contrôle précédent.", "Export impossible", wx.OK | wx.ICON_WARNING)
             return None, None
         snapshots = [self.snapshots[index] for index in selections]
         snapshots.sort(key=lambda snapshot: (snapshot.executed_at, snapshot.snapshot_id))
@@ -313,8 +315,9 @@ class Dialog(wx.Dialog):
         try:
             report = BuildContractSalaryControlConsolidatedReportUseCase().execute(current, previous)
             export = ContractSalaryControlConsolidatedExporter().export(report, format)
-        except Exception as exc:
-            wx.MessageBox("Impossible de construire le rapport consolidé.\n\n%s" % exc, "Export impossible", wx.OK | wx.ICON_ERROR)
+        except Exception:
+            LOGGER.exception("Échec de la construction du rapport salarial consolidé")
+            wx.MessageBox("Impossible de construire le rapport consolidé. Consultez le journal de diagnostic si le problème persiste.", "Export impossible", wx.OK | wx.ICON_ERROR)
             return
         wildcard = "CSV (*.csv)|*.csv" if format is ContractSalaryControlExportFormat.CSV else "JSON (*.json)|*.json"
         with wx.FileDialog(self, "Exporter le rapport consolidé", wildcard=wildcard, defaultFile=export.suggested_filename, style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as dialog:
