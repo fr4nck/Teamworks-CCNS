@@ -26,7 +26,6 @@ jobs:
           s = s.replace(old, new, 1)
           s = s.replace('''        DB = GestionDB.DB()\n        listeDonnees = [\n''', '''        own_db = DB is None\n        if own_db:\n            DB = GestionDB.DB()\n        listeDonnees = [\n''', 1)
           s = s.replace('''            ID = DB.ReqInsert("deplacements", listeDonnees)\n        else:\n            DB.ReqMAJ("deplacements", listeDonnees, "IDdeplacement", self.IDdeplacement)\n            ID = self.IDdeplacement\n        DB.Commit()\n        DB.Close()\n        return ID\n\n    def SauvegardeDistance(self):\n''', '''            ID = DB.ReqInsert("deplacements", listeDonnees, commit=commit)\n        else:\n            DB.ReqMAJ("deplacements", listeDonnees, "IDdeplacement", self.IDdeplacement, commit=commit)\n            ID = self.IDdeplacement\n        if own_db:\n            DB.Close()\n        return ID\n\n    def SauvegardeDistance(self, DB=None, commit=True):\n''', 1)
-          # Replace the second local DB creation, inside SauvegardeDistance.
           marker = '''        DB = GestionDB.DB()\n        listeDonnees = [\n            ("cp_depart", cp_depart),\n'''
           repl = '''        own_db = DB is None\n        if own_db:\n            DB = GestionDB.DB()\n        listeDonnees = [\n            ("cp_depart", cp_depart),\n'''
           if marker not in s:
@@ -72,7 +71,7 @@ jobs:
               assert 'def SauvegardeDistance(self, DB=None, commit=True)' in source
               assert source.count('commit=commit') == 2
               assert 'DB.Commit()' not in source
-PY
+          PY
       - name: Validate motor tests
         run: |
           python -m compileall -q teamworks tests
