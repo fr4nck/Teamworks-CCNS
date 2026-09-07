@@ -52,10 +52,14 @@ def test_travel_entry_keeps_city_autocomplete_and_distance_contract():
 
 def test_travel_entry_keeps_persistence_contract():
     source = _source()
-    assert 'DB.ReqInsert("deplacements", listeDonnees)' in source
-    assert 'DB.ReqMAJ("deplacements", listeDonnees, "IDdeplacement", self.IDdeplacement)' in source
-    assert 'DB.ReqInsert("distances", listeDonnees)' in source
-    assert 'DB.ReqMAJ("distances", listeDonnees, "IDdistance", distanceID)' in source
+    assert 'DB.ReqInsert("deplacements", listeDonnees, commit=commit)' in source
+    assert 'DB.ReqMAJ("deplacements", listeDonnees, "IDdeplacement", self.IDdeplacement, commit=commit)' in source
+    assert 'DB.ReqInsert("distances", listeDonnees, commit=commit)' in source
+    assert 'DB.ReqMAJ("distances", listeDonnees, "IDdistance", distanceID, commit=commit)' in source
+    assert 'self.SauvegardeDeplacement(DB=DB, commit=False)' in source
+    assert 'self.SauvegardeDistance(DB=DB, commit=False)' in source
+    assert "DB.connexion.rollback()" in source
+    assert source.count("DB.Commit()") == 1
     assert "PersonReader()" in source
     import_people = source.split("def ImportationPersonnes", 1)[1].split("def ImportationDistances", 1)[0]
     assert "reader.close()" in import_people

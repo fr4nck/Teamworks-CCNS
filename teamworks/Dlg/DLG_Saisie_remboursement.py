@@ -20,6 +20,7 @@ from Utils import UTILS_Styles
 import FonctionsPerso
 import GestionDB
 import datetime
+from decimal import Decimal, ROUND_HALF_UP
 
 if 'phoenix' in wx.PlatformInfo:
     from wx.adv import DatePickerCtrl, DP_DROPDOWN
@@ -29,6 +30,14 @@ else:
 
 _PHOENIX = 'phoenix' in wx.PlatformInfo
 _CheckboxFallback = object if _PHOENIX else CheckListCtrlMixin
+
+CENTIME = Decimal("0.01")
+
+def _euros_decimal(value):
+    return Decimal(str(value)).quantize(CENTIME, rounding=ROUND_HALF_UP)
+
+def _montant_deplacement_decimal(distance, tarif_km):
+    return (Decimal(str(distance)) * Decimal(str(tarif_km))).quantize(CENTIME, rounding=ROUND_HALF_UP)
 
 
 class SaisieRemboursement(wx.Dialog):
@@ -206,7 +215,7 @@ class SaisieRemboursement(wx.Dialog):
         )
         self.ctrl_montant.SetValue(str(listeDonnees[0][3]))
         self.MajIDpersonne()
-        self.MajLabelRattachement(float(self.ctrl_montant.GetValue()))
+        self.MajLabelRattachement(_euros_decimal(self.ctrl_montant.GetValue()))
 
     # Méthodes historiques conservées pour compatibilité d'API.
     def SetRemboursement(self, IDremboursement=None):
@@ -239,9 +248,11 @@ class SaisieRemboursement(wx.Dialog):
             return
         if self.ValideControleFloat(self.ctrl_tarif) is False:
             return
-        distance = float(self.ctrl_distance.GetValue())
-        tarif = float(self.ctrl_tarif.GetValue())
-        self.ctrl_montant.SetValue(u"%.2f" % (distance * tarif))
+        montant = _montant_deplacement_decimal(
+            self.ctrl_distance.GetValue(),
+            self.ctrl_tarif.GetValue(),
+        )
+        self.ctrl_montant.SetValue(u"%.2f" % montant)
 
     def montant_EvtKillFocus(self, event):
         if self.ValideControleFloat(self.ctrl_montant) is False:
@@ -257,7 +268,7 @@ class SaisieRemboursement(wx.Dialog):
             self.ctrl_montant.SetFocus()
             return
         if self.ctrl_utilisateur.GetCurrentSelection() != -1:
-            self.MajLabelRattachement(float(self.ctrl_montant.GetValue()))
+            self.MajLabelRattachement(_euros_decimal(self.ctrl_montant.GetValue()))
         event.Skip()
 
     def MajIDpersonne(self):
@@ -366,7 +377,7 @@ class SaisieRemboursement(wx.Dialog):
             dlg.Destroy()
             self.ctrl_montant.SetFocus()
             return
-        if float(valeur) == 0:
+        if _euros_decimal(valeur) == Decimal("0.00"):
             dlg = wx.MessageDialog(
                 self,
                 _(u"Le montant que vous avez saisi est de 0 €\n\nSouhaitez-vous conserver ce montant ?\n(Cliquez sur 'Non' ou 'Annuler' pour modifier maintenant le montant)"),
@@ -412,7 +423,7 @@ class SaisieRemboursement(wx.Dialog):
     def Sauvegarde(self):
         date = str(self.GetDatePickerValue(self.ctrl_date))
         IDpersonne = self.dictPersonnes[self.ctrl_utilisateur.GetCurrentSelection()]
-        montant = float(self.ctrl_montant.GetValue())
+        montant = str(_euros_decimal(self.ctrl_montant.GetValue()))
         listeIDcoches, listeIDdecoches = self.ctrl_deplacements.ListeItemsCoches()
 
         DB = GestionDB.DB()
@@ -718,13 +729,13 @@ class ListCtrl_deplacements(wx.ListCtrl, _CheckboxFallback):
         label = self._label_rattachement()
         if label is None:
             return
-        montantRattache = 0
+        montantRattache = Decimal("0.00")
         for index in range(self.GetItemCount()):
-            montant = float(self.GetItem(index, 6).GetText()[:-2])
+            montant = _euros_decimal(self.GetItem(index, 6).GetText()[:-2].strip())
             if self._is_checked(index):
                 montantRattache += montant
 
-        montantNonRattache = self.montantRemboursement - montantRattache
+        montantNonRattache = _euros_decimal(self.montantRemboursement) - montantRattache
         couleur = "on_surface_variant"
         if len(self.donnees) == 0:
             texte = _(u"Aucun déplacement n'est à rattacher pour cette personne.")
@@ -756,14 +767,14 @@ class ListCtrl_deplacements(wx.ListCtrl, _CheckboxFallback):
         DB.Close()
         self.nbreLignes = len(listeDonnees)
         self.donnees = []
-        self.montantRattache = 0
-        self.montantNonRattache = 0
+        self.montantRattache = Decimal("0.00")
+        self.montantNonRattache = Decimal("0.00")
 
         for IDdeplacement, date, objet, ville_depart, ville_arrivee, distance, aller_retour, tarif_km, IDremboursement in listeDonnees:
             dateTmp = str(date[8:10]) + "/" + str(date[5:7]) + "/" + str(date[0:4])
             trajet = ville_depart + (" <--> " if aller_retour == "True" else " -> ") + ville_arrivee
             dist = str(distance) + _(u" Km")
-            montant = float(distance) * float(tarif_km)
+            montant = _montant_deplacement_decimal(distance, tarif_km)
             montantStr = u"%.2f €" % montant
             tarif_str = str(tarif_km) + _(u" €/km")
             if IDremboursement not in (None, 0, ""):
