@@ -1,0 +1,88 @@
+name: tmp-frais-deplacement-atomic
+on:
+  push:
+    branches:
+      - fix/0.9.2-frais-integrite-impression-distance
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/0.9.2-frais-integrite-impression-distance
+      - name: Patch atomic displacement save
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('teamworks/Dlg/DLG_Saisie_deplacement.py')
+          s = p.read_text(encoding='utf-8')
+          old = '''        self.SauvegardeDeplacement()\n        self.SauvegardeDistance()\n        self.EndModal(wx.ID_OK)\n\n    def SauvegardeDeplacement(self):\n'''
+          new = '''        DB = GestionDB.DB()\n        try:\n            self.SauvegardeDeplacement(DB=DB, commit=False)\n            self.SauvegardeDistance(DB=DB, commit=False)\n            DB.Commit()\n        except Exception:\n            DB.connexion.rollback()\n            raise\n        finally:\n            DB.Close()\n        self.EndModal(wx.ID_OK)\n\n    def SauvegardeDeplacement(self, DB=None, commit=True):\n'''
+          if old not in s:
+              raise SystemExit('bloc OnBoutonOk/SauvegardeDeplacement introuvable')
+          s = s.replace(old, new, 1)
+          s = s.replace('''        DB = GestionDB.DB()\n        listeDonnees = [\n''', '''        own_db = DB is None\n        if own_db:\n            DB = GestionDB.DB()\n        listeDonnees = [\n''', 1)
+          s = s.replace('''            ID = DB.ReqInsert("deplacements", listeDonnees)\n        else:\n            DB.ReqMAJ("deplacements", listeDonnees, "IDdeplacement", self.IDdeplacement)\n            ID = self.IDdeplacement\n        DB.Commit()\n        DB.Close()\n        return ID\n\n    def SauvegardeDistance(self):\n''', '''            ID = DB.ReqInsert("deplacements", listeDonnees, commit=commit)\n        else:\n            DB.ReqMAJ("deplacements", listeDonnees, "IDdeplacement", self.IDdeplacement, commit=commit)\n            ID = self.IDdeplacement\n        if own_db:\n            DB.Close()\n        return ID\n\n    def SauvegardeDistance(self, DB=None, commit=True):\n''', 1)
+          # Replace the second local DB creation, inside SauvegardeDistance.
+          marker = '''        DB = GestionDB.DB()\n        listeDonnees = [\n            ("cp_depart", cp_depart),\n'''
+          repl = '''        own_db = DB is None\n        if own_db:\n            DB = GestionDB.DB()\n        listeDonnees = [\n            ("cp_depart", cp_depart),\n'''
+          if marker not in s:
+              raise SystemExit('DB locale SauvegardeDistance introuvable')
+          s = s.replace(marker, repl, 1)
+          s = s.replace('''        if distanceExiste is False:\n            DB.ReqInsert("distances", listeDonnees)\n        else:\n            DB.ReqMAJ("distances", listeDonnees, "IDdistance", distanceID)\n        DB.Commit()\n        DB.Close()\n''', '''        if distanceExiste is False:\n            DB.ReqInsert("distances", listeDonnees, commit=commit)\n        else:\n            DB.ReqMAJ("distances", listeDonnees, "IDdistance", distanceID, commit=commit)\n        if own_db:\n            DB.Close()\n''', 1)
+          p.write_text(s, encoding='utf-8')
+      - name: Add atomicity regression test
+        shell: bash
+        run: |
+          cat > tests/test_frais_deplacement_atomicity.py <<'PY'
+          from pathlib import Path
+          import ast
+
+          ROOT = Path(__file__).resolve().parents[1]
+          PATH = ROOT / 'teamworks' / 'Dlg' / 'DLG_Saisie_deplacement.py'
+          SOURCE = PATH.read_text(encoding='utf-8')
+          TREE = ast.parse(SOURCE)
+
+          def _method(name):
+              for node in ast.walk(TREE):
+                  if isinstance(node, ast.FunctionDef) and node.name == name:
+                      return ast.get_source_segment(SOURCE, node)
+              raise AssertionError(name)
+
+          def test_ok_saves_deplacement_and_distance_in_one_transaction():
+              source = _method('OnBoutonOk')
+              assert 'DB = GestionDB.DB()' in source
+              assert 'self.SauvegardeDeplacement(DB=DB, commit=False)' in source
+              assert 'self.SauvegardeDistance(DB=DB, commit=False)' in source
+              assert source.count('DB.Commit()') == 1
+              assert 'DB.connexion.rollback()' in source
+              assert 'finally:' in source and 'DB.Close()' in source
+
+          def test_deplacement_write_can_join_external_transaction():
+              source = _method('SauvegardeDeplacement')
+              assert 'def SauvegardeDeplacement(self, DB=None, commit=True)' in source
+              assert 'commit=commit' in source
+              assert 'DB.Commit()' not in source
+
+          def test_distance_cache_write_can_join_external_transaction():
+              source = _method('SauvegardeDistance')
+              assert 'def SauvegardeDistance(self, DB=None, commit=True)' in source
+              assert source.count('commit=commit') == 2
+              assert 'DB.Commit()' not in source
+PY
+      - name: Validate motor tests
+        run: |
+          python -m compileall -q teamworks tests
+          python -m pip install -q pytest
+          python -m pytest -q tests/test_frais_integrite_wx.py tests/test_frais_decimal_money.py tests/test_frais_deplacement_atomicity.py
+      - name: Commit and remove workflow
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git rm .github/workflows/tmp-frais-deplacement-atomic.yml
+          git add teamworks/Dlg/DLG_Saisie_deplacement.py tests/test_frais_deplacement_atomicity.py
+          git commit -m "fix(frais): enregistrer déplacement et cache atomiquement"
+          git push
