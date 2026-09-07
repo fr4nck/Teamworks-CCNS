@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -109,17 +110,19 @@ def test_local_runner_powershell_parses_when_pwsh_is_available():
     if not pwsh:
         pytest.skip("pwsh indisponible sur ce runner")
 
+    env = os.environ.copy()
+    env["TEAMWORKS_RUN_LOCAL_PS1"] = str(RUN_LOCAL)
     completed = subprocess.run(
         [
             pwsh,
             "-NoProfile",
             "-Command",
-            "[scriptblock]::Create((Get-Content -Raw $args[0])) | Out-Null",
-            str(RUN_LOCAL),
+            "[scriptblock]::Create((Get-Content -Raw $env:TEAMWORKS_RUN_LOCAL_PS1)) | Out-Null",
         ],
         text=True,
         capture_output=True,
         check=False,
+        env=env,
     )
     assert completed.returncode == 0, completed.stderr
 
