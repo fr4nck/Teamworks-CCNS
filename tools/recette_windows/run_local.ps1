@@ -150,9 +150,11 @@ if (-not $isWindows) {
     Complete-LocalRun -Kind "environment" -ExitCode 10 -Reason "Ce lanceur doit être exécuté sous Windows."
 }
 
-try {
-    Add-Type -TypeDefinition @'
+if (-not ("TeamworksRecipeNative" -as [type])) {
+    try {
+        Add-Type -TypeDefinition @'
 using System;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -176,6 +178,15 @@ public static class TeamworksRecipeNative {
     [DllImport("user32.dll")]
     public static extern int GetSystemMetrics(int index);
 
+    [DllImport("shcore.dll")]
+    private static extern int GetProcessDpiAwareness(IntPtr process, out int awareness);
+
+    public static int GetCurrentProcessDpiAwareness() {
+        int awareness;
+        int result = GetProcessDpiAwareness(Process.GetCurrentProcess().Handle, out awareness);
+        return result == 0 ? awareness : -1;
+    }
+
     public static string GetInputDesktopName() {
         const uint DESKTOP_READOBJECTS = 0x0001;
         const int UOI_NAME = 2;
@@ -193,9 +204,10 @@ public static class TeamworksRecipeNative {
     }
 }
 '@
-}
-catch {
-    Complete-LocalRun -Kind "environment" -ExitCode 10 -Reason ("API Windows indisponible : {0}" -f $_.Exception.Message)
+    }
+    catch {
+        Complete-LocalRun -Kind "environment" -ExitCode 10 -Reason ("API Windows indisponible : {0}" -f $_.Exception.Message)
+    }
 }
 
 $SessionName = [Environment]::GetEnvironmentVariable("SESSIONNAME")
@@ -247,15 +259,24 @@ if ($TeamworksCheckCode -ne 0) {
 
 $Dpi = $null
 $ScalePercent = $null
+$DpiAwareness = $null
 try {
-    $detectedDpi = [TeamworksRecipeNative]::GetDpiForSystem()
-    if ($detectedDpi -gt 0) {
-        $Dpi = [int]$detectedDpi
-        $ScalePercent = [int][Math]::Round(($Dpi / 96.0) * 100.0)
+    $detectedAwareness = [TeamworksRecipeNative]::GetCurrentProcessDpiAwareness()
+    if ($detectedAwareness -ge 0) {
+        $DpiAwareness = [int]$detectedAwareness
+    }
+    # GetDpiForSystem renvoie 96 par virtualisation pour un processus DPI-unaware.
+    # On ne publie donc un scaling que si le processus est réellement DPI-aware.
+    if ($DpiAwareness -in @(1, 2)) {
+        $detectedDpi = [TeamworksRecipeNative]::GetDpiForSystem()
+        if ($detectedDpi -gt 0) {
+            $Dpi = [int]$detectedDpi
+            $ScalePercent = [int][Math]::Round(($Dpi / 96.0) * 100.0)
+        }
     }
 }
 catch {
-    # La valeur reste null : aucun pourcentage n'est inventé si Windows ne le fournit pas.
+    # Les valeurs restent null : aucun pourcentage n'est inventé.
 }
 
 $WindowsCaption = $null
@@ -274,7 +295,7 @@ $EnvironmentInfo = [ordered]@{
     windows = [ordered]@{
         caption = $WindowsCaption
         version = [Environment]::OSVersion.Version.ToString()
-        architecture = [Environment]::Is64BitOperatingSystem
+        is_64_bit_os = [Environment]::Is64BitOperatingSystem
         user_interactive = $UserInteractive
         session_name = $SessionName
         session_id = $SessionId
@@ -289,10 +310,11 @@ $EnvironmentInfo = [ordered]@{
     display = [ordered]@{
         width_px = [TeamworksRecipeNative]::GetSystemMetrics(0)
         height_px = [TeamworksRecipeNative]::GetSystemMetrics(1)
+        process_dpi_awareness = $DpiAwareness
         system_dpi = $Dpi
         system_scaling_percent = $ScalePercent
-        scaling_source = $(if ($null -ne $Dpi) { "GetDpiForSystem" } else { $null })
-        scope = $(if ($null -ne $Dpi) { "system DPI; not claimed as per-monitor DPI" } else { "not detected" })
+        scaling_source = $(if ($null -ne $Dpi) { "GetDpiForSystem from a DPI-aware process" } else { $null })
+        scope = $(if ($null -ne $Dpi) { "system DPI; not claimed as per-monitor DPI" } else { "not reliably detected" })
     }
     powershell = $PSVersionTable.PSVersion.ToString()
 }
