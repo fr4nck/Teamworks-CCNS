@@ -37,6 +37,18 @@ def test_geometry_audit_flags_useless_stretch():
     assert "stretch-without-expandable-content" in codes
 
 
+def test_geometry_audit_accepts_action_row_stretch():
+    record = audit_dialog_geometry.classify(
+        "wx.Dialog.__init__(self, parent, style=wx.DEFAULT_DIALOG_STYLE)\n"
+        "actions = wx.BoxSizer(wx.HORIZONTAL)\n"
+        "actions.AddStretchSpacer(1)\n"
+        "actions.Add(self.button_close, 0)\n"
+    )
+    codes = {item["code"] for item in record["findings"]}
+    assert record["action_stretch"] is True
+    assert "stretch-without-expandable-content" not in codes
+
+
 def test_geometry_audit_requires_outer_refit_after_dynamic_content_change():
     record = audit_dialog_geometry.classify(
         "self.details.Show(active)\n"
