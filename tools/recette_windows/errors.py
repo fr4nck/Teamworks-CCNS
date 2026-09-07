@@ -2,7 +2,11 @@ class RecipeError(RuntimeError):
     """Erreur de recette qui doit produire un diagnostic exploitable."""
 
 
-class UnsupportedRunner(RecipeError):
+class BlockedEnvironment(RecipeError):
+    """Une précondition empêche la recette de qualifier Teamworks."""
+
+
+class UnsupportedRunner(BlockedEnvironment):
     """Le runner ne fournit pas un bureau Windows interactif."""
 
 
