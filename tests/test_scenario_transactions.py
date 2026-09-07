@@ -13,16 +13,17 @@ from teamworks.Utils.UTILS_ScenarioTransactions import (
 
 
 class CurseurInjecte(object):
-    def __init__(self, curseur, predicate, exception):
+    def __init__(self, curseur, predicate, exception, echec_au=2):
         self._curseur = curseur
         self._predicate = predicate
         self._exception = exception
         self._compteur = 0
+        self._echec_au = echec_au
 
     def execute(self, sql, params=()):
         if self._predicate(sql):
             self._compteur += 1
-            if self._compteur == 2:
+            if self._compteur == self._echec_au:
                 raise self._exception
         self._curseur.execute(sql, params)
         return self
@@ -87,6 +88,29 @@ def _creer_source(db):
     return IDscenario
 
 
+def _donnees_scenario(nom):
+    return [
+        ("IDpersonne", 1),
+        ("nom", nom),
+        ("description", ""),
+        ("mode_heure", 0),
+        ("detail_mois", 0),
+        ("date_debut", "2026-01-01"),
+        ("date_fin", "2026-12-31"),
+        ("toutes_categories", 1),
+    ]
+
+
+def _categorie(IDscenario_cat, prevision):
+    return {
+        "IDscenario_cat": IDscenario_cat,
+        "prevision": prevision,
+        "report": "",
+        "date_debut_realise": None,
+        "date_fin_realise": None,
+    }
+
+
 def test_dupliquer_copie_parent_et_categories_avec_un_commit(db):
     source = _creer_source(db)
 
@@ -138,6 +162,26 @@ def test_suppression_refuse_un_scenario_reference(db):
     ).fetchone()[0] == 1
 
 
+def test_suppression_rollback_si_parent_echoue_apres_enfants(db):
+    source = _creer_source(db)
+    db.cursor = CurseurInjecte(
+        db.cursor,
+        lambda sql: sql.startswith("DELETE FROM scenarios"),
+        sqlite3.OperationalError("panne injectée"),
+        echec_au=2,
+    )
+
+    with pytest.raises(sqlite3.OperationalError):
+        supprimer_scenario_atomique(db, source)
+
+    assert db.connexion.execute(
+        "SELECT COUNT(*) FROM scenarios WHERE IDscenario=?", (source,)
+    ).fetchone()[0] == 1
+    assert db.connexion.execute(
+        "SELECT COUNT(*) FROM scenarios_cat WHERE IDscenario=?", (source,)
+    ).fetchone()[0] == 2
+
+
 def test_sauvegarde_rollback_si_synchronisation_categorie_echoue(db):
     source = _creer_source(db)
     avant_nom = db.connexion.execute(
@@ -148,31 +192,9 @@ def test_sauvegarde_rollback_si_synchronisation_categorie_echoue(db):
         (source,),
     ).fetchall()]
 
-    donnees = [
-        ("IDpersonne", 1),
-        ("nom", "Modifié"),
-        ("description", ""),
-        ("mode_heure", 0),
-        ("detail_mois", 0),
-        ("date_debut", "2026-01-01"),
-        ("date_fin", "2026-12-31"),
-        ("toutes_categories", 1),
-    ]
     virtuel = {
-        10: {
-            "IDscenario_cat": ids[0],
-            "prevision": "+03:00",
-            "report": "",
-            "date_debut_realise": None,
-            "date_fin_realise": None,
-        },
-        20: {
-            "IDscenario_cat": ids[1],
-            "prevision": "+04:00",
-            "report": "",
-            "date_debut_realise": None,
-            "date_fin_realise": None,
-        },
+        10: _categorie(ids[0], "+03:00"),
+        20: _categorie(ids[1], "+04:00"),
     }
     db.cursor = CurseurInjecte(
         db.cursor,
@@ -181,7 +203,7 @@ def test_sauvegarde_rollback_si_synchronisation_categorie_echoue(db):
     )
 
     with pytest.raises(sqlite3.OperationalError):
-        sauvegarder_scenario_atomique(db, source, donnees, virtuel)
+        sauvegarder_scenario_atomique(db, source, _donnees_scenario("Modifié"), virtuel)
 
     assert db.connexion.execute(
         "SELECT nom FROM scenarios WHERE IDscenario=?", (source,)
@@ -190,3 +212,21 @@ def test_sauvegarde_rollback_si_synchronisation_categorie_echoue(db):
         "SELECT prevision FROM scenarios_cat WHERE IDscenario=? ORDER BY IDscenario_cat",
         (source,),
     ).fetchall() == [("+01:00",), ("+02:00",)]
+
+
+def test_creation_rollback_si_deuxieme_categorie_echoue(db):
+    virtuel = {
+        10: _categorie(None, "+01:00"),
+        20: _categorie(None, "+02:00"),
+    }
+    db.cursor = CurseurInjecte(
+        db.cursor,
+        lambda sql: sql.startswith("INSERT INTO scenarios_cat"),
+        sqlite3.IntegrityError("panne injectée"),
+    )
+
+    with pytest.raises(sqlite3.IntegrityError):
+        sauvegarder_scenario_atomique(db, None, _donnees_scenario("Nouveau"), virtuel)
+
+    assert db.connexion.execute("SELECT COUNT(*) FROM scenarios").fetchone()[0] == 0
+    assert db.connexion.execute("SELECT COUNT(*) FROM scenarios_cat").fetchone()[0] == 0
