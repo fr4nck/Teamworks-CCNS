@@ -728,6 +728,9 @@ class Dialog(wx.Dialog):
         grid_sizer_base.AddGrowableCol(0)
         
         self.panel.SetSizer(grid_sizer_base)
+        sizer_dialog = wx.BoxSizer(wx.VERTICAL)
+        sizer_dialog.Add(self.panel, 1, wx.EXPAND, 0)
+        self.SetSizer(sizer_dialog)
         self.Layout()
         
         self.SetSize((970, 700))
