@@ -8,6 +8,7 @@
 
 import Chemins
 from Utils.UTILS_Traduction import _
+from Utils import UTILS_Selection_metier
 import wx
 from Ctrl import CTRL_Bouton_image
 import wx.lib.agw.hyperlink as hl
@@ -15,7 +16,7 @@ import wx.lib.agw.hyperlink as hl
 
 
 class Dialog(wx.Dialog):
-    def __init__(self, parent, liste_labelsColonnes=None, listeValeurs=None, type=None):
+    def __init__(self, parent, liste_labelsColonnes=None, listeValeurs=None, type=None, listeIDs=None):
         if liste_labelsColonnes is None:
             liste_labelsColonnes = []
         if listeValeurs is None:
@@ -25,11 +26,17 @@ class Dialog(wx.Dialog):
         self.type = type
         self.liste_labelsColonnes = liste_labelsColonnes
         self.listeValeurs = listeValeurs
+        self.listeIDs = listeIDs
         
         self.label_intro = wx.StaticText(self, -1, _(u"Veuillez sélectionner les éléments de votre choix :"))
         
         # ListCtrl
-        self.listCtrl = ListCtrl(self, self.liste_labelsColonnes, self.listeValeurs)
+        self.listCtrl = ListCtrl(
+            self,
+            self.liste_labelsColonnes,
+            self.listeValeurs,
+            listeIDs=self.listeIDs,
+        )
         
         # Hyperlinks
         self.hyperlink_select = self.Build_Hyperlink_select()
@@ -161,12 +168,13 @@ class Dialog(wx.Dialog):
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 class ListCtrl(wx.ListCtrl):
-    def __init__(self, parent, liste_labelsColonnes, listeValeurs):
+    def __init__(self, parent, liste_labelsColonnes, listeValeurs, listeIDs=None):
         wx.ListCtrl.__init__(self, parent, -1, style=wx.LC_REPORT|wx.LC_SINGLE_SEL|wx.LC_HRULES|wx.LC_VRULES)
         self.EnableCheckBoxes(True)
         self.parent = parent
         self.liste_labelsColonnes = liste_labelsColonnes
         self.listeValeurs = listeValeurs
+        self.listeIDs = listeIDs
         
         self.Remplissage()
         self.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.OnItemActivated)
@@ -182,18 +190,24 @@ class ListCtrl(wx.ListCtrl):
             self.SetColumnWidth(index, largeur)
             index += 1
                 
-        # Remplissage avec les valeurs
+        # Remplissage avec les valeurs. L'identifiant métier est transporté
+        # dans ItemData et n'est jamais déduit de la première cellule visible
+        # lorsque l'appelant fournit listeIDs.
         self.remplissage = True
-        for valeurs in self.listeValeurs :
-            ID = int(valeurs[0])
-            index = self.InsertItem(self.GetItemCount(), str(ID))
+        lignes = UTILS_Selection_metier.associer_identifiants(
+            self.listeValeurs,
+            self.listeIDs,
+        )
+        for ID, valeurs in lignes:
+            premiere = "" if len(valeurs) == 0 else str(valeurs[0])
+            index = self.InsertItem(self.GetItemCount(), premiere)
             x = 1
             for valeur in valeurs[1:] :
                 if x <= len(self.liste_labelsColonnes)-1:
-                    self.SetItem(index, x, valeur)
+                    self.SetItem(index, x, str(valeur))
                     x += 1
 
-            self.SetItemData(index, ID)
+            self.SetItemData(index, int(ID))
                 
             # Check
             if action == None or action == "select" :
@@ -209,11 +223,11 @@ class ListCtrl(wx.ListCtrl):
         self.CheckItem(evt.Index, not self.IsItemChecked(evt.Index))
 
     def ListeItemsCoches(self):
-        """ Récupère la liste des IDdeplacements cochés """
+        """ Récupère la liste des identifiants métier cochés. """
         listeIDcoches = []
         nbreItems = self.GetItemCount()
         for index in range(0, nbreItems) :
-            ID = int(self.GetItem(index, 0).GetText())
+            ID = int(self.GetItemData(index))
             # Vérifie si l'item est coché
             if self.IsItemChecked(index) :
                 listeIDcoches.append(ID)
