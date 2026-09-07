@@ -18,6 +18,12 @@ import GestionDB
 from wx.lib.mixins.listctrl import CheckListCtrlMixin
 import sys
 import datetime
+from decimal import Decimal, ROUND_HALF_UP
+
+CENTIME = Decimal("0.01")
+
+def _montant_decimal(distance, tarif_km):
+    return (Decimal(str(distance)) * Decimal(str(tarif_km))).quantize(CENTIME, rounding=ROUND_HALF_UP)
 
 def DateEngFr(textDate):
     text = str(textDate[8:10]) + "/" + str(textDate[5:7]) + "/" + str(textDate[:4])
@@ -251,7 +257,7 @@ class ListCtrl(wx.ListCtrl, CheckListCtrlMixin):
             # Formatage distance
             dist = str(distance) + _(u" Km")
             # Formatage montant
-            montant = float(distance) * float(tarif_km)
+            montant = _montant_decimal(distance, tarif_km)
             montantStr = u"%.2f €" % montant
             # Formatage tarif/Km
             tarif_km = str(tarif_km) + _(u" €/km")
@@ -345,7 +351,7 @@ class ImpressionFicheFrais():
         dataTableau.append( valeurs )
         
         # Création des groupes
-        montant_total = 0
+        montant_total = Decimal("0.00")
         for IDdeplacement, date, objet, ville_depart, ville_arrivee, distance, aller_retour, tarif_km, IDremboursement, nom, prenom in listeDonnees :
             varIDdeplacement = IDdeplacement
             varDate = self.DateComplete(self.RetourneDatetime(date))
@@ -357,7 +363,7 @@ class ImpressionFicheFrais():
             varDistance = str(distance) + " Km"
             varTarif_km = str(tarif_km) + _(u" €/Km")
 ##            varIDremboursement = IDremboursement
-            montant = distance * tarif_km
+            montant = _montant_decimal(distance, tarif_km)
             montant_total += montant
             varMontant = u"%.2f €" % montant
             valeurs = (varIDdeplacement, varDate, varObjet, varTrajet, varDistance, varTarif_km, varMontant)
