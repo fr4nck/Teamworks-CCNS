@@ -19,8 +19,6 @@ class Dialog(wx.Dialog):
         self.repository = repository
         self.snapshots = list(list_salary_control_snapshots(repository=repository))
 
-        # Les zones de travail sont créées avant leurs contrôles enfants :
-        # wxPython reçoit ainsi un parent valide dès l'instanciation, sans Reparent tardif.
         self.box_snapshots = wx.StaticBox(self, -1, "Contrôles enregistrés")
         self.box_details = wx.StaticBox(self, -1, "Détail et analyse")
         self.listbox = wx.ListBox(self.box_snapshots, -1, choices=[self._summary(s) for s in self.snapshots], style=wx.LB_EXTENDED)
@@ -82,16 +80,25 @@ class Dialog(wx.Dialog):
 
         sizer.Add(body, 1, wx.ALL | wx.EXPAND, ui["space_m"])
 
-        actions = wx.BoxSizer(wx.HORIZONTAL)
-        actions.Add(wx.StaticText(self, -1, "Filtrer :"), 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, ui["space_xs"])
-        actions.Add(self.filter, 0, wx.RIGHT, ui["space_m"])
-        actions.Add(self.button_compare, 0, wx.RIGHT, ui["space_s"])
-        actions.Add(self.button_track_issues, 0, wx.RIGHT, ui["space_s"])
-        actions.Add(self.button_alerts, 0, wx.RIGHT, ui["space_m"])
-        actions.AddStretchSpacer(1)
-        actions.Add(self.button_export_csv, 0, wx.RIGHT, ui["space_s"])
-        actions.Add(self.button_export_json, 0, wx.RIGHT, ui["space_m"])
-        actions.Add(self.button_close, 0)
+        actions = wx.BoxSizer(wx.VERTICAL)
+
+        row_main = wx.BoxSizer(wx.HORIZONTAL)
+        row_main.Add(wx.StaticText(self, -1, "Filtrer :"), 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, ui["space_xs"])
+        row_main.Add(self.filter, 1, wx.RIGHT | wx.EXPAND, ui["space_m"])
+        row_main.Add(self.button_compare, 0, wx.RIGHT, ui["space_s"])
+        row_main.Add(self.button_track_issues, 0, wx.RIGHT, ui["space_s"])
+        row_main.Add(self.button_alerts, 0)
+        actions.Add(row_main, 0, wx.EXPAND)
+
+        actions.AddSpacer(ui["space_s"])
+
+        row_export = wx.BoxSizer(wx.HORIZONTAL)
+        row_export.AddStretchSpacer(1)
+        row_export.Add(self.button_export_csv, 0, wx.RIGHT, ui["space_s"])
+        row_export.Add(self.button_export_json, 0, wx.RIGHT, ui["space_m"])
+        row_export.Add(self.button_close, 0)
+        actions.Add(row_export, 0, wx.EXPAND)
+
         sizer.Add(actions, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, ui["space_m"])
 
         self.SetSizer(sizer)
