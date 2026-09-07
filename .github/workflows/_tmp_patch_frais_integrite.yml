@@ -1,0 +1,64 @@
+name: Patch temporaire integrite frais
+
+on:
+  push:
+    branches:
+      - fix/0.9.2-frais-integrite-moteur
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/0.9.2-frais-integrite-moteur
+      - name: Supprimer l'ecriture parasite gadgets
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("teamworks/Dlg/DLG_Impression_frais.py")
+          text = path.read_text(encoding="utf-8")
+          old = '''    def OnCheckItem(self, index, flag):
+        """ Ne fait rien si c'est le remplissage qui coche la case ! """
+        if self.remplissage == False :
+            IDgadget = self.GetItemData(index)
+            # Enregistre l'affichage True/False du gadget dans la base
+            DB = GestionDB.DB()
+            listeDonnees = [("affichage",  str(flag)),]
+            DB.ReqMAJ("gadgets", listeDonnees, "IDgadget", IDgadget)
+            DB.Close()
+        else:
+            pass
+
+'''
+          new = '''    def OnCheckItem(self, index, flag):
+        """La coche sert uniquement à sélectionner les déplacements à imprimer."""
+        # Aucun état métier n'est persisté ici : l'identifiant porté par la ligne
+        # est un IDdeplacement, pas un IDgadget.
+        pass
+
+'''
+          if old not in text:
+              raise SystemExit("bloc OnCheckItem historique introuvable")
+          text = text.replace(old, new, 1)
+          path.write_text(text, encoding="utf-8", newline="\n")
+          PY
+      - name: Verifier le correctif
+        shell: bash
+        run: |
+          python -m py_compile teamworks/Dlg/DLG_Impression_frais.py
+          python -m pytest -q tests/test_frais_print_selection_integrity.py
+      - name: Committer
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add teamworks/Dlg/DLG_Impression_frais.py
+          git commit -m 'fix: ne plus modifier gadgets lors de la selection frais'
+          git push origin HEAD:fix/0.9.2-frais-integrite-moteur
