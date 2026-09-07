@@ -12,6 +12,32 @@ from teamworks.Utils.UTILS_ScenarioTransactions import (
 )
 
 
+class CurseurInjecte(object):
+    def __init__(self, curseur, predicate, exception):
+        self._curseur = curseur
+        self._predicate = predicate
+        self._exception = exception
+        self._compteur = 0
+
+    def execute(self, sql, params=()):
+        if self._predicate(sql):
+            self._compteur += 1
+            if self._compteur == 2:
+                raise self._exception
+        self._curseur.execute(sql, params)
+        return self
+
+    def fetchone(self):
+        return self._curseur.fetchone()
+
+    def fetchall(self):
+        return self._curseur.fetchall()
+
+    @property
+    def lastrowid(self):
+        return self._curseur.lastrowid
+
+
 class DBTest(object):
     def __init__(self, connexion):
         self.connexion = connexion
@@ -74,24 +100,13 @@ def test_dupliquer_copie_parent_et_categories_avec_un_commit(db):
     ).fetchone()[0] == 2
 
 
-def test_dupliquer_rollback_si_une_categorie_echoue(db, monkeypatch):
+def test_dupliquer_rollback_si_une_categorie_echoue(db):
     source = _creer_source(db)
-    original_execute = db.cursor.execute
-    compteur = {"insert_cat": 0}
-
-    class CurseurFail(object):
-        @property
-        def lastrowid(self):
-            return db.cursor.lastrowid
-
-    def execute(sql, params=()):
-        if sql.startswith("INSERT INTO scenarios_cat"):
-            compteur["insert_cat"] += 1
-            if compteur["insert_cat"] == 2:
-                raise sqlite3.IntegrityError("panne injectée")
-        return original_execute(sql, params)
-
-    monkeypatch.setattr(db.cursor, "execute", execute)
+    db.cursor = CurseurInjecte(
+        db.cursor,
+        lambda sql: sql.startswith("INSERT INTO scenarios_cat"),
+        sqlite3.IntegrityError("panne injectée"),
+    )
 
     with pytest.raises(sqlite3.IntegrityError):
         dupliquer_scenario_atomique(db, source)
@@ -123,7 +138,7 @@ def test_suppression_refuse_un_scenario_reference(db):
     ).fetchone()[0] == 1
 
 
-def test_sauvegarde_rollback_si_synchronisation_categorie_echoue(db, monkeypatch):
+def test_sauvegarde_rollback_si_synchronisation_categorie_echoue(db):
     source = _creer_source(db)
     avant_nom = db.connexion.execute(
         "SELECT nom FROM scenarios WHERE IDscenario=?", (source,)
@@ -159,18 +174,11 @@ def test_sauvegarde_rollback_si_synchronisation_categorie_echoue(db, monkeypatch
             "date_fin_realise": None,
         },
     }
-
-    original_execute = db.cursor.execute
-    compteur = {"update_cat": 0}
-
-    def execute(sql, params=()):
-        if sql.startswith("UPDATE scenarios_cat"):
-            compteur["update_cat"] += 1
-            if compteur["update_cat"] == 2:
-                raise sqlite3.OperationalError("panne injectée")
-        return original_execute(sql, params)
-
-    monkeypatch.setattr(db.cursor, "execute", execute)
+    db.cursor = CurseurInjecte(
+        db.cursor,
+        lambda sql: sql.startswith("UPDATE scenarios_cat"),
+        sqlite3.OperationalError("panne injectée"),
+    )
 
     with pytest.raises(sqlite3.OperationalError):
         sauvegarder_scenario_atomique(db, source, donnees, virtuel)
