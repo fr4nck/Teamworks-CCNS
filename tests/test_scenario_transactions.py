@@ -6,6 +6,7 @@ import pytest
 
 from teamworks.Utils.UTILS_ScenarioTransactions import (
     ScenarioReferenceError,
+    ScenarioTransactionError,
     dupliquer_scenario_atomique,
     sauvegarder_scenario_atomique,
     supprimer_scenario_atomique,
@@ -68,13 +69,19 @@ def db():
     return DBTest(connexion)
 
 
-def _creer_source(db):
+def _creer_scenario_vide(db, nom="Source"):
     cur = db.connexion.execute(
         "INSERT INTO scenarios "
         "(IDpersonne, nom, description, mode_heure, detail_mois, date_debut, date_fin, toutes_categories) "
-        "VALUES (1, 'Source', '', 0, 0, '2026-01-01', '2026-12-31', 1)"
+        "VALUES (1, ?, '', 0, 0, '2026-01-01', '2026-12-31', 1)",
+        (nom,),
     )
-    IDscenario = cur.lastrowid
+    db.connexion.commit()
+    return cur.lastrowid
+
+
+def _creer_source(db):
+    IDscenario = _creer_scenario_vide(db)
     db.connexion.executemany(
         "INSERT INTO scenarios_cat "
         "(IDscenario, IDcategorie, prevision, report, date_debut_realise, date_fin_realise) "
@@ -139,13 +146,22 @@ def test_dupliquer_rollback_si_une_categorie_echoue(db):
     assert db.connexion.execute("SELECT COUNT(*) FROM scenarios_cat").fetchone()[0] == 2
 
 
+def test_suppression_supprime_parent_et_categories(db):
+    source = _creer_source(db)
+
+    supprimer_scenario_atomique(db, source)
+
+    assert db.connexion.execute(
+        "SELECT COUNT(*) FROM scenarios WHERE IDscenario=?", (source,)
+    ).fetchone()[0] == 0
+    assert db.connexion.execute(
+        "SELECT COUNT(*) FROM scenarios_cat WHERE IDscenario=?", (source,)
+    ).fetchone()[0] == 0
+
+
 def test_suppression_refuse_un_scenario_reference(db):
     source = _creer_source(db)
-    autre = db.connexion.execute(
-        "INSERT INTO scenarios "
-        "(IDpersonne, nom, description, mode_heure, detail_mois, date_debut, date_fin, toutes_categories) "
-        "VALUES (1, 'Autre', '', 0, 0, '2026-01-01', '2026-12-31', 1)"
-    ).lastrowid
+    autre = _creer_scenario_vide(db, nom="Autre")
     db.connexion.execute(
         "INSERT INTO scenarios_cat "
         "(IDscenario, IDcategorie, prevision, report, date_debut_realise, date_fin_realise) "
@@ -160,6 +176,9 @@ def test_suppression_refuse_un_scenario_reference(db):
     assert db.connexion.execute(
         "SELECT COUNT(*) FROM scenarios WHERE IDscenario=?", (source,)
     ).fetchone()[0] == 1
+    assert db.connexion.execute(
+        "SELECT COUNT(*) FROM scenarios_cat WHERE IDscenario=?", (source,)
+    ).fetchone()[0] == 2
 
 
 def test_suppression_rollback_si_parent_echoue_apres_enfants(db):
@@ -180,6 +199,56 @@ def test_suppression_rollback_si_parent_echoue_apres_enfants(db):
     assert db.connexion.execute(
         "SELECT COUNT(*) FROM scenarios_cat WHERE IDscenario=?", (source,)
     ).fetchone()[0] == 2
+
+
+def test_sauvegarde_met_a_jour_ajoute_et_supprime_atomiquement(db):
+    source = _creer_source(db)
+    ids = [row[0] for row in db.connexion.execute(
+        "SELECT IDscenario_cat FROM scenarios_cat WHERE IDscenario=? ORDER BY IDcategorie",
+        (source,),
+    ).fetchall()]
+    virtuel = {
+        10: _categorie(ids[0], "+03:00"),
+        30: _categorie(None, "+05:00"),
+    }
+
+    resultat = sauvegarder_scenario_atomique(
+        db, source, _donnees_scenario("Modifié"), virtuel
+    )
+
+    assert resultat == source
+    assert db.connexion.execute(
+        "SELECT nom FROM scenarios WHERE IDscenario=?", (source,)
+    ).fetchone() == ("Modifié",)
+    assert db.connexion.execute(
+        "SELECT IDcategorie, prevision FROM scenarios_cat WHERE IDscenario=? ORDER BY IDcategorie",
+        (source,),
+    ).fetchall() == [(10, "+03:00"), (30, "+05:00")]
+
+
+def test_sauvegarde_refuse_une_categorie_appartenant_a_un_autre_scenario(db):
+    source = _creer_source(db)
+    autre = _creer_source(db)
+    categorie_etrangere = db.connexion.execute(
+        "SELECT IDscenario_cat FROM scenarios_cat WHERE IDscenario=? ORDER BY IDscenario_cat LIMIT 1",
+        (autre,),
+    ).fetchone()[0]
+
+    with pytest.raises(ScenarioTransactionError):
+        sauvegarder_scenario_atomique(
+            db,
+            source,
+            _donnees_scenario("Ne doit pas passer"),
+            {10: _categorie(categorie_etrangere, "+09:00")},
+        )
+
+    assert db.connexion.execute(
+        "SELECT nom FROM scenarios WHERE IDscenario=?", (source,)
+    ).fetchone() == ("Source",)
+    assert db.connexion.execute(
+        "SELECT prevision FROM scenarios_cat WHERE IDscenario=? ORDER BY IDcategorie",
+        (autre,),
+    ).fetchall() == [("+01:00",), ("+02:00",)]
 
 
 def test_sauvegarde_rollback_si_synchronisation_categorie_echoue(db):
