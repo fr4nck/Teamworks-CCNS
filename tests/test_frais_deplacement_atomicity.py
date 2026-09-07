@@ -6,11 +6,13 @@ PATH = ROOT / 'teamworks' / 'Dlg' / 'DLG_Saisie_deplacement.py'
 SOURCE = PATH.read_text(encoding='utf-8')
 TREE = ast.parse(SOURCE)
 
+
 def _method(name):
     for node in ast.walk(TREE):
         if isinstance(node, ast.FunctionDef) and node.name == name:
             return ast.get_source_segment(SOURCE, node)
     raise AssertionError(name)
+
 
 def test_ok_saves_deplacement_and_distance_in_one_transaction():
     source = _method('OnBoutonOk')
@@ -21,11 +23,19 @@ def test_ok_saves_deplacement_and_distance_in_one_transaction():
     assert 'DB.connexion.rollback()' in source
     assert 'finally:' in source and 'DB.Close()' in source
 
+
+def test_dialog_closes_only_after_atomic_transaction_is_committed_and_closed():
+    source = _method('OnBoutonOk')
+    assert source.index('DB.Commit()') < source.index('DB.Close()')
+    assert source.index('DB.Close()') < source.index('self.EndModal(wx.ID_OK)')
+
+
 def test_deplacement_write_can_join_external_transaction():
     source = _method('SauvegardeDeplacement')
     assert 'def SauvegardeDeplacement(self, DB=None, commit=True)' in source
     assert 'commit=commit' in source
     assert 'DB.Commit()' not in source
+
 
 def test_distance_cache_write_can_join_external_transaction():
     source = _method('SauvegardeDistance')
