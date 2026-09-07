@@ -215,7 +215,7 @@ class SaisieRemboursement(wx.Dialog):
         )
         self.ctrl_montant.SetValue(str(listeDonnees[0][3]))
         self.MajIDpersonne()
-        self.MajLabelRattachement(float(self.ctrl_montant.GetValue()))
+        self.MajLabelRattachement(_euros_decimal(self.ctrl_montant.GetValue()))
 
     # Méthodes historiques conservées pour compatibilité d'API.
     def SetRemboursement(self, IDremboursement=None):
@@ -248,9 +248,11 @@ class SaisieRemboursement(wx.Dialog):
             return
         if self.ValideControleFloat(self.ctrl_tarif) is False:
             return
-        distance = float(self.ctrl_distance.GetValue())
-        tarif = float(self.ctrl_tarif.GetValue())
-        self.ctrl_montant.SetValue(u"%.2f" % (distance * tarif))
+        montant = _montant_deplacement_decimal(
+            self.ctrl_distance.GetValue(),
+            self.ctrl_tarif.GetValue(),
+        )
+        self.ctrl_montant.SetValue(u"%.2f" % montant)
 
     def montant_EvtKillFocus(self, event):
         if self.ValideControleFloat(self.ctrl_montant) is False:
@@ -266,7 +268,7 @@ class SaisieRemboursement(wx.Dialog):
             self.ctrl_montant.SetFocus()
             return
         if self.ctrl_utilisateur.GetCurrentSelection() != -1:
-            self.MajLabelRattachement(float(self.ctrl_montant.GetValue()))
+            self.MajLabelRattachement(_euros_decimal(self.ctrl_montant.GetValue()))
         event.Skip()
 
     def MajIDpersonne(self):
@@ -375,7 +377,7 @@ class SaisieRemboursement(wx.Dialog):
             dlg.Destroy()
             self.ctrl_montant.SetFocus()
             return
-        if float(valeur) == 0:
+        if _euros_decimal(valeur) == Decimal("0.00"):
             dlg = wx.MessageDialog(
                 self,
                 _(u"Le montant que vous avez saisi est de 0 €\n\nSouhaitez-vous conserver ce montant ?\n(Cliquez sur 'Non' ou 'Annuler' pour modifier maintenant le montant)"),
@@ -421,7 +423,7 @@ class SaisieRemboursement(wx.Dialog):
     def Sauvegarde(self):
         date = str(self.GetDatePickerValue(self.ctrl_date))
         IDpersonne = self.dictPersonnes[self.ctrl_utilisateur.GetCurrentSelection()]
-        montant = float(self.ctrl_montant.GetValue())
+        montant = str(_euros_decimal(self.ctrl_montant.GetValue()))
         listeIDcoches, listeIDdecoches = self.ctrl_deplacements.ListeItemsCoches()
 
         DB = GestionDB.DB()

@@ -80,3 +80,26 @@ def test_reimbursement_line_money_rounding_is_deterministic():
 def test_no_kilometric_money_path_in_reimbursement_falls_back_to_binary_float():
     source = REMBOURSEMENT.read_text(encoding='utf-8')
     assert 'float(distance) * float(tarif_km)' not in source
+
+
+def test_reimbursement_active_money_chain_never_converts_amount_to_float():
+    import_source = _function_source(REMBOURSEMENT, 'Importation', 'SaisieRemboursement')
+    focus_source = _function_source(REMBOURSEMENT, 'montant_EvtKillFocus', 'SaisieRemboursement')
+    save_source = _function_source(REMBOURSEMENT, 'Sauvegarde', 'SaisieRemboursement')
+    assert 'MajLabelRattachement(float(' not in import_source
+    assert 'MajLabelRattachement(float(' not in focus_source
+    assert 'montant = float(self.ctrl_montant.GetValue())' not in save_source
+    assert 'montant = str(_euros_decimal(self.ctrl_montant.GetValue()))' in save_source
+
+
+def test_reimbursement_zero_check_is_decimal():
+    source = _function_source(REMBOURSEMENT, 'OnBoutonOk', 'SaisieRemboursement')
+    assert 'if _euros_decimal(valeur) == Decimal("0.00"):' in source
+    assert 'if float(valeur) == 0:' not in source
+
+
+def test_legacy_reimbursement_calculation_uses_decimal_rounding_too():
+    source = _function_source(REMBOURSEMENT, 'CalcMontantRmbst', 'SaisieRemboursement')
+    assert '_montant_deplacement_decimal(' in source
+    assert 'distance = float(' not in source
+    assert 'tarif = float(' not in source
