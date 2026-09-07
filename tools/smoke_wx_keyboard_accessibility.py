@@ -40,6 +40,14 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                     assert control.IsEnabled()
                     assert control.IsShownOnScreen()
 
+                def _navigate(control, forward=True):
+                    event = wx.NavigationKeyEvent()
+                    event.SetDirection(forward)
+                    event.SetWindowChange(False)
+                    event.SetCurrentFocus(control)
+                    assert control.GetParent().ProcessWindowEvent(event), "navigation clavier non traitée"
+                    _pump()
+
                 def _press(simulator, keycode, shift=False):
                     if shift:
                         simulator.KeyDown(wx.WXK_SHIFT)
@@ -76,9 +84,9 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 _pump()
                 dialog.text.SetFocus()
                 _focus_is(dialog.text)
-                _press(simulator, wx.WXK_TAB)
+                _navigate(dialog.text, True)
                 _focus_is(dialog.primary)
-                _press(simulator, wx.WXK_TAB, shift=True)
+                _navigate(dialog.primary, False)
                 _focus_is(dialog.text)
 
                 dialog.toggle.SetFocus()
@@ -102,7 +110,8 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 dialog.text.SetFocus()
                 seen = {dialog.text}
                 for _ in range(8):
-                    _press(simulator, wx.WXK_TAB)
+                    focused = wx.Window.FindFocus()
+                    _navigate(focused, True)
                     focused = wx.Window.FindFocus()
                     if focused is not None:
                         seen.add(focused)
@@ -111,7 +120,8 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 dialog.cancel.SetFocus()
                 seen = {dialog.cancel}
                 for _ in range(8):
-                    _press(simulator, wx.WXK_TAB, shift=True)
+                    focused = wx.Window.FindFocus()
+                    _navigate(focused, False)
                     focused = wx.Window.FindFocus()
                     if focused is not None:
                         seen.add(focused)
@@ -159,16 +169,16 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 _press(simulator, wx.WXK_SPACE)
                 assert filter_dialog.radio2.GetValue()
                 assert filter_dialog.ctrl_texte.IsEnabled()
-                _press(simulator, wx.WXK_TAB)
+                _navigate(filter_dialog.radio2, True)
                 _focus_is(filter_dialog.ctrl_texte)
-                _press(simulator, wx.WXK_TAB, shift=True)
+                _navigate(filter_dialog.ctrl_texte, False)
                 _focus_is(filter_dialog.radio2)
 
                 filter_dialog.radio1.SetFocus()
                 _press(simulator, wx.WXK_SPACE)
                 assert filter_dialog.radio1.GetValue()
                 assert not filter_dialog.ctrl_texte.IsEnabled()
-                _press(simulator, wx.WXK_TAB)
+                _navigate(filter_dialog.radio1, True)
                 assert wx.Window.FindFocus() is not filter_dialog.ctrl_texte
                 filter_dialog.Destroy()
                 _pump()
