@@ -48,7 +48,39 @@ def test_premier_maj_de_liste_est_explicitement_ignore_une_seule_fois():
     source = _source("teamworks/Ol/OL_personnes.py")
     assert "self._premier_maj_redondant = True" in source
     assert "if self._premier_maj_redondant and IDpersonne is None and presents is None" in source
-    assert "super(ListView, self).MAJ" in source
+    assert "self._rafraichir_donnees(" in source
+
+
+def test_refresh_personnes_ne_reconstruit_pas_les_colonnes():
+    source = _source("teamworks/Ol/OL_personnes.py")
+    tree = ast.parse(source)
+    classe = next(
+        node for node in tree.body
+        if isinstance(node, ast.ClassDef) and node.name == "ListView"
+    )
+    maj = next(
+        node for node in classe.body
+        if isinstance(node, ast.FunctionDef) and node.name == "MAJ"
+    )
+    refresh = next(
+        node for node in classe.body
+        if isinstance(node, ast.FunctionDef) and node.name == "_rafraichir_donnees"
+    )
+    config = next(
+        node for node in classe.body
+        if isinstance(node, ast.FunctionDef) and node.name == "SetListeColonnes"
+    )
+
+    texte_maj = ast.get_source_segment(source, maj)
+    texte_refresh = ast.get_source_segment(source, refresh)
+    texte_config = ast.get_source_segment(source, config)
+
+    assert "InitObjectListView" not in texte_maj
+    assert "InitObjectListView" not in texte_refresh
+    assert "SetObjects(self.donnees)" in texte_refresh
+    assert "CORE.ListView.InitObjectListView(self)" in texte_config
+    assert "_capturer_presentation_colonnes" in texte_config
+    assert "_restaurer_presentation_colonnes" in texte_config
 
 
 def test_six_onglets_secondaires_sont_differees():

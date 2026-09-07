@@ -102,6 +102,77 @@ class ListView(CORE.ListView):
                 self.selectionTrack = track
         return objets
 
+    def _capturer_presentation_colonnes(self):
+        """Retourne largeur et tri courants sans reconstruire la liste."""
+        largeurs = {}
+        for index, colonne in enumerate(getattr(self, "columns", [])):
+            champ = getattr(colonne, "valueGetter", None)
+            if not isinstance(champ, str) or champ == "champ_recherche":
+                continue
+            try:
+                largeurs[champ] = self.GetColumnWidth(index)
+            except Exception:
+                pass
+
+        colonne_tri = self.GetSortColumn()
+        champ_tri = getattr(colonne_tri, "valueGetter", None) if colonne_tri else None
+        return {
+            "largeurs": largeurs,
+            "champ_tri": champ_tri,
+            "tri_ascendant": bool(getattr(self, "sortAscending", True)),
+        }
+
+    def _restaurer_presentation_colonnes(self, presentation):
+        """Réapplique largeur et tri après un rebuild explicitement demandé."""
+        largeurs = presentation.get("largeurs", {})
+        for index, colonne in enumerate(getattr(self, "columns", [])):
+            champ = getattr(colonne, "valueGetter", None)
+            largeur = largeurs.get(champ)
+            if largeur is not None:
+                try:
+                    self.SetColumnWidth(index, largeur)
+                except Exception:
+                    pass
+
+        champ_tri = presentation.get("champ_tri")
+        if champ_tri:
+            for colonne in getattr(self, "columns", []):
+                if getattr(colonne, "valueGetter", None) == champ_tri:
+                    self.SetSortColumn(colonne)
+                    self.sortAscending = presentation.get("tri_ascendant", True)
+                    self.SetObjects(self.donnees)
+                    break
+
+    def SetListeColonnes(self, listeColonnes):
+        """Rebuild explicite réservé à une modification de configuration."""
+        presentation = self._capturer_presentation_colonnes()
+        CORE.ListView.SetListeColonnes(self, listeColonnes)
+        CORE.ListView.InitObjectListView(self)
+        self._restaurer_presentation_colonnes(presentation)
+
+    def _rafraichir_donnees(self, IDpersonne=None, presents=None):
+        """Recharge les objets métier sans toucher à la structure des colonnes."""
+        if IDpersonne is not None:
+            self.selectionID = IDpersonne
+            self.selectionTrack = None
+        else:
+            self.selectionID = None
+            self.selectionTrack = None
+        if presents is not None:
+            self.presents = presents
+
+        self.InitModel()
+        self.SetObjects(self.donnees)
+
+        if self.selectionTrack is not None:
+            self.SelectObject(
+                self.selectionTrack,
+                deselectOthers=True,
+                ensureVisible=True,
+            )
+        self.selectionID = None
+        self.selectionTrack = None
+
     def MAJ(self, IDpersonne=None, presents=None):
         # ``PanelPersonnes.MAJpanel()`` appelle MAJ() immédiatement après
         # InitPage(), alors que le constructeur CORE a déjà chargé exactement
@@ -115,7 +186,10 @@ class ListView(CORE.ListView):
             "wx.personnes.liste.rafraichissement",
             {"IDpersonne": IDpersonne, "presents": presents},
         ):
-            return super(ListView, self).MAJ(IDpersonne=IDpersonne, presents=presents)
+            return self._rafraichir_donnees(
+                IDpersonne=IDpersonne,
+                presents=presents,
+            )
 
     def Supprimer(self):
         selection = self.Selection()
