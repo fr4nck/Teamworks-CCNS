@@ -52,3 +52,10 @@ def test_planning_amplitude_never_accepts_hour_24_before_datetime_time():
     assert 'heureDebut >= "24:00"' in AMPLITUDE_SOURCE
     assert 'heureFin >= "24:00"' in AMPLITUDE_SOURCE
     assert 'datetime.time(int(heureTuple[0]), int(heureTuple[1]))' in AMPLITUDE_SOURCE
+
+
+def test_all_presence_clock_inputs_share_the_23h59_ceiling():
+    assert ' <=24' not in SOURCE
+    assert ' > "24:00"' not in SOURCE
+    assert ' <=24' not in AMPLITUDE_SOURCE
+    assert ' > "24:00"' not in AMPLITUDE_SOURCE
