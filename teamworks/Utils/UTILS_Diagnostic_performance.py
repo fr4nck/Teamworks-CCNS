@@ -47,6 +47,10 @@ _METRIQUES_PERSISTEES = (
     "python_wx_ms",
     "total_ms",
 )
+_METRIQUES_OPTIONNELLES = (
+    "connexions_physiques",
+    "connexions_reutilisees",
+)
 
 
 def diagnostic_actif():
@@ -114,14 +118,18 @@ def _ecrire_resume_action(mesure):
     if not chemin:
         return
     details = mesure.get("details") or {}
+    details_persistes = {
+        cle: details.get(cle)
+        for cle in _METRIQUES_PERSISTEES
+    }
+    for cle in _METRIQUES_OPTIONNELLES:
+        if cle in details:
+            details_persistes[cle] = details[cle]
     resume = {
         "date": datetime.datetime.now().astimezone().isoformat(timespec="milliseconds"),
         "categorie": "action",
         "nom": mesure.get("nom", ""),
-        "details": {
-            cle: details.get(cle)
-            for cle in _METRIQUES_PERSISTEES
-        },
+        "details": details_persistes,
     }
     try:
         chemin = os.path.abspath(os.path.expanduser(chemin))
