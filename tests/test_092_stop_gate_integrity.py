@@ -10,6 +10,7 @@ GESTION_SCENARIOS = ROOT / "teamworks" / "Dlg" / "DLG_Scenario_gestion.py"
 SCENARIO = ROOT / "teamworks" / "Dlg" / "DLG_Scenario.py"
 CI = ROOT / ".github" / "workflows" / "ci.yml"
 REQUIREMENTS = ROOT / "requirements.txt"
+WINDOWS_EXE_SMOKE = ROOT / "scripts" / "test_windows_executable.ps1"
 
 
 def _methode(source, debut_signature, fin_signature):
@@ -147,3 +148,17 @@ def test_requirements_txt_documente_les_dependances_non_figees_mais_ne_sert_pas_
     source = CI.read_text(encoding="utf-8")
     build = source[source.index("  build-windows:"):]
     assert "requirements.txt" not in build
+
+
+def test_smoke_executable_confirme_qu_une_fenetre_windows_est_reellement_creee():
+    source = WINDOWS_EXE_SMOKE.read_text(encoding="utf-8")
+    assert "MainWindowHandle" in source
+
+
+def test_installateur_est_reellement_installe_et_desinstalle_en_ci():
+    source = CI.read_text(encoding="utf-8")
+    build = source[source.index("  build-windows:"):]
+    # Compiler un .exe Inno ne valide ni son installation, ni le lancement depuis
+    # Program Files, ni sa désinstallation silencieuse.
+    assert "/VERYSILENT" in build or "/SILENT" in build
+    assert "unins000.exe" in build
