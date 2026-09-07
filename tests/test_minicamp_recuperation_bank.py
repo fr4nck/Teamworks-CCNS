@@ -1,5 +1,6 @@
 import pytest
 
+import domain.common.recuperation as recuperation
 from domain.common.recuperation import (
     JOURNEE_EXTRASCOLAIRE_MINUTES_ACTUELLE,
     credit_recuperation_minicamp,
@@ -28,6 +29,12 @@ def test_ccns_la_nuitee_suit_la_duree_de_journee_extrascolaire_fournie():
     )
     assert credit.valeur == 16 * 60
     assert format_minutes_recuperation(credit.valeur) == "16:00"
+
+
+def test_ccns_reference_par_defaut_est_resolue_au_moment_de_l_appel(monkeypatch):
+    monkeypatch.setattr(recuperation, "JOURNEE_EXTRASCOLAIRE_MINUTES_ACTUELLE", 8 * 60)
+    credit = recuperation.credit_recuperation_minicamp(2, "CCNS")
+    assert credit.valeur == 16 * 60
 
 
 def test_cee_une_nuitee_credite_un_jour_sans_conversion_horaire():
