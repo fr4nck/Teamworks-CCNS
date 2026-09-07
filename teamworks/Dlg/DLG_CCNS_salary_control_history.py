@@ -42,10 +42,30 @@ class Dialog(wx.Dialog):
         self._last_issue_history = None
         self._last_alerts = None
         self.__do_layout()
-        UTILS_Styles.ApplyWindowProfile(self, "workspace")
+        self._apply_workspace_profile()
         if self.snapshots:
             self.listbox.SetSelection(0)
             self._show(self.snapshots[0])
+
+    def _apply_workspace_profile(self):
+        """Applique le workspace puis le borne à la zone de travail Windows."""
+        UTILS_Styles.ApplyWindowProfile(self, "workspace", centre=False)
+        try:
+            display = wx.Display.GetFromWindow(self)
+            if display == wx.NOT_FOUND:
+                display = 0
+            area = wx.Display(display).GetClientArea()
+            margin = UTILS_Styles.GetLayoutSpacing("section_gap")
+            max_width = max(1, area.GetWidth() - (2 * margin))
+            max_height = max(1, area.GetHeight() - (2 * margin))
+            current = self.GetSize()
+            width = min(current.GetWidth(), max_width)
+            height = min(current.GetHeight(), max_height)
+            self.SetMinSize((min(self.GetMinSize().GetWidth(), width), min(self.GetMinSize().GetHeight(), height)))
+            self.SetSize((width, height))
+        except Exception:
+            pass
+        self.CentreOnScreen()
 
     def __do_layout(self):
         ui = UTILS_Theme.metrics()
