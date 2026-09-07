@@ -30,8 +30,8 @@ def test_ccns_audit_uses_common_button_contract():
     assert 'texte="Lancer l\'audit"' in source
     assert 'role="primary"' in source
     assert 'role="quiet"' in source
-    assert "UTILS_Styles.Scale(760)" in source
-    assert "UTILS_Styles.Scale(500)" in source
+    assert 'UTILS_Styles.ApplyWindowProfile(self, "standard")' in source
+    assert "SetMinSize((UTILS_Styles.Scale(760)" not in source
 
 
 def test_ccns_detailed_audit_uses_common_button_contract():
