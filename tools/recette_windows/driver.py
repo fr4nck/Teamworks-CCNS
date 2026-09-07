@@ -83,7 +83,7 @@ class WindowsRecipeDriver:
         )
         return self.process.pid
 
-    def wait_main_window(self, title_re=r"^Teamworks - .+"):
+    def wait_main_window(self, title_re=r"^Teamworks(?:\s+v[^\s]+)?(?:\s+-.*)?$"):
         self._ensure_process_alive("attente de la fenetre principale")
         app = self._Application(backend=self.backend).connect(process=self.process.pid, timeout=self.timeout)
         spec = app.window(title_re=title_re)
