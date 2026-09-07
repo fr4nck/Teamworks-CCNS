@@ -10,7 +10,7 @@ from application.control import BuildContractSalaryControlConsolidatedReportUseC
 from application.presentation import ContractSalaryAlertPresenter, ContractSalaryControlConsolidatedExporter, ContractSalaryControlExportFormat, ContractSalaryControlIssueHistoryPresenter, ContractSalaryControlSnapshotComparisonPresenter, format_euro_amount, format_french_date
 from teamworks.CcnsCore.audit_salary_alerts import generate_salary_control_alerts
 from teamworks.CcnsCore.audit_salary_history import compare_salary_control_snapshots, list_salary_control_snapshots, track_salary_control_issues
-from Utils import UTILS_Interface, UTILS_Theme
+from Utils import UTILS_Interface, UTILS_Styles, UTILS_Theme
 
 
 class Dialog(wx.Dialog):
@@ -18,8 +18,11 @@ class Dialog(wx.Dialog):
         wx.Dialog.__init__(self, parent, -1, "Historique des contrôles salariaux", style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
         self.repository = repository
         self.snapshots = list(list_salary_control_snapshots(repository=repository))
-        self.listbox = wx.ListBox(box_snapshots, -1, choices=[self._summary(s) for s in self.snapshots], style=wx.LB_EXTENDED)
-        self.details = wx.TextCtrl(box_details, -1, "", style=wx.TE_MULTILINE | wx.TE_READONLY)
+
+        self.box_snapshots = wx.StaticBox(self, -1, "Contrôles enregistrés")
+        self.box_details = wx.StaticBox(self, -1, "Détail et analyse")
+        self.listbox = wx.ListBox(self.box_snapshots, -1, choices=[self._summary(s) for s in self.snapshots], style=wx.LB_EXTENDED)
+        self.details = wx.TextCtrl(self.box_details, -1, "", style=wx.TE_MULTILINE | wx.TE_READONLY)
         self.filter = wx.ComboBox(self, -1, choices=["Tous", "Améliorations", "Dégradations", "Nouveaux contrats", "Contrats absents", "Changements de statut", "Écarts modifiés", "Inchangés"], style=wx.CB_READONLY)
         self.filter.SetSelection(0)
         self.button_compare = CTRL_Bouton_image.CTRL(self, texte="Comparer", role="primary")
@@ -39,11 +42,30 @@ class Dialog(wx.Dialog):
         self._last_issue_history = None
         self._last_alerts = None
         self.__do_layout()
-        self.SetSize((1120, 700))
-        self.SetMinSize((900, 560))
+        self._apply_workspace_profile()
         if self.snapshots:
             self.listbox.SetSelection(0)
             self._show(self.snapshots[0])
+
+    def _apply_workspace_profile(self):
+        """Applique le workspace puis le borne à la zone de travail Windows."""
+        UTILS_Styles.ApplyWindowProfile(self, "workspace", centre=False)
+        try:
+            display = wx.Display.GetFromWindow(self)
+            if display == wx.NOT_FOUND:
+                display = 0
+            area = wx.Display(display).GetClientArea()
+            margin = UTILS_Styles.GetLayoutSpacing("section_gap")
+            max_width = max(1, area.GetWidth() - (2 * margin))
+            max_height = max(1, area.GetHeight() - (2 * margin))
+            current = self.GetSize()
+            width = min(current.GetWidth(), max_width)
+            height = min(current.GetHeight(), max_height)
+            self.SetMinSize((min(self.GetMinSize().GetWidth(), width), min(self.GetMinSize().GetHeight(), height)))
+            self.SetSize((width, height))
+        except Exception:
+            pass
+        self.CentreOnScreen()
 
     def __do_layout(self):
         ui = UTILS_Theme.metrics()
@@ -64,34 +86,39 @@ class Dialog(wx.Dialog):
 
         body = wx.BoxSizer(wx.HORIZONTAL)
 
-        box_snapshots = wx.StaticBox(self, -1, "Contrôles enregistrés")
-        box_snapshots.SetBackgroundColour(surface)
-        box_snapshots.SetForegroundColour(text_colour)
-        snapshots_sizer = wx.StaticBoxSizer(box_snapshots, wx.VERTICAL)
-        self.listbox.Reparent(box_snapshots)
+        self.box_snapshots.SetBackgroundColour(surface)
+        self.box_snapshots.SetForegroundColour(text_colour)
+        snapshots_sizer = wx.StaticBoxSizer(self.box_snapshots, wx.VERTICAL)
         snapshots_sizer.Add(self.listbox, 1, wx.ALL | wx.EXPAND, ui["space_s"])
         body.Add(snapshots_sizer, 1, wx.RIGHT | wx.EXPAND, ui["space_m"])
 
-        box_details = wx.StaticBox(self, -1, "Détail et analyse")
-        box_details.SetBackgroundColour(surface)
-        box_details.SetForegroundColour(text_colour)
-        details_sizer = wx.StaticBoxSizer(box_details, wx.VERTICAL)
-        self.details.Reparent(box_details)
+        self.box_details.SetBackgroundColour(surface)
+        self.box_details.SetForegroundColour(text_colour)
+        details_sizer = wx.StaticBoxSizer(self.box_details, wx.VERTICAL)
         details_sizer.Add(self.details, 1, wx.ALL | wx.EXPAND, ui["space_s"])
         body.Add(details_sizer, 2, wx.EXPAND)
 
         sizer.Add(body, 1, wx.ALL | wx.EXPAND, ui["space_m"])
 
-        actions = wx.BoxSizer(wx.HORIZONTAL)
-        actions.Add(wx.StaticText(self, -1, "Filtrer :"), 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, ui["space_xs"])
-        actions.Add(self.filter, 0, wx.RIGHT, ui["space_m"])
-        actions.Add(self.button_compare, 0, wx.RIGHT, ui["space_s"])
-        actions.Add(self.button_track_issues, 0, wx.RIGHT, ui["space_s"])
-        actions.Add(self.button_alerts, 0, wx.RIGHT, ui["space_m"])
-        actions.AddStretchSpacer(1)
-        actions.Add(self.button_export_csv, 0, wx.RIGHT, ui["space_s"])
-        actions.Add(self.button_export_json, 0, wx.RIGHT, ui["space_m"])
-        actions.Add(self.button_close, 0)
+        actions = wx.BoxSizer(wx.VERTICAL)
+
+        row_main = wx.BoxSizer(wx.HORIZONTAL)
+        row_main.Add(wx.StaticText(self, -1, "Filtrer :"), 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, ui["space_xs"])
+        row_main.Add(self.filter, 1, wx.RIGHT | wx.EXPAND, ui["space_m"])
+        row_main.Add(self.button_compare, 0, wx.RIGHT, ui["space_s"])
+        row_main.Add(self.button_track_issues, 0, wx.RIGHT, ui["space_s"])
+        row_main.Add(self.button_alerts, 0)
+        actions.Add(row_main, 0, wx.EXPAND)
+
+        actions.AddSpacer(ui["space_s"])
+
+        row_export = wx.BoxSizer(wx.HORIZONTAL)
+        row_export.AddStretchSpacer(1)
+        row_export.Add(self.button_export_csv, 0, wx.RIGHT, ui["space_s"])
+        row_export.Add(self.button_export_json, 0, wx.RIGHT, ui["space_m"])
+        row_export.Add(self.button_close, 0)
+        actions.Add(row_export, 0, wx.EXPAND)
+
         sizer.Add(actions, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, ui["space_m"])
 
         self.SetSizer(sizer)
