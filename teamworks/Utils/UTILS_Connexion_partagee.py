@@ -46,7 +46,9 @@ class _ScopeConnexions(object):
         self.module = module
         self.ouverture_originale = ouverture_originale
         self.inactives = {}
-        self.connexions = set()
+        # Certaines implémentations DB ne garantissent pas que l'objet connexion
+        # soit hashable : indexer par id() évite de dépendre de ce détail.
+        self.connexions = {}
         self.actif = True
         self.profondeur = 1
         self.stats = {
@@ -60,24 +62,27 @@ class _ScopeConnexions(object):
         entree = self.inactives.pop(cle, None)
         if entree is None:
             connexion, nom_base = self.ouverture_originale(nomFichier)
-            self.connexions.add(connexion)
+            self.connexions[id(connexion)] = connexion
             self.stats["ouvertures_physiques"] += 1
         else:
             connexion, nom_base = entree
             self.stats["reutilisations"] += 1
         return _BailConnexion(self, cle, connexion), nom_base
 
+    def _est_connue(self, connexion):
+        return self.connexions.get(id(connexion)) is connexion
+
     def _fermer_physiquement(self, connexion):
-        if connexion not in self.connexions:
+        if not self._est_connue(connexion):
             return
-        self.connexions.discard(connexion)
+        self.connexions.pop(id(connexion), None)
         try:
             connexion.close()
         finally:
             self.stats["fermetures_physiques"] += 1
 
     def rendre(self, cle, connexion):
-        if connexion not in self.connexions:
+        if not self._est_connue(connexion):
             return
         try:
             connexion.rollback()
@@ -94,12 +99,9 @@ class _ScopeConnexions(object):
         if cle in self.inactives:
             self._fermer_physiquement(connexion)
         else:
-            self.inactives[cle] = (connexion, self._nom_base(connexion, cle))
+            self.inactives[cle] = (connexion, self._nom_base(cle))
 
-    def _nom_base(self, connexion, cle):
-        entree = self.inactives.get(cle)
-        if entree is not None and entree[0] is connexion:
-            return entree[1]
+    def _nom_base(self, cle):
         # Le nom de base est recalculé sans ouvrir de connexion.
         try:
             pos = cle.index("[RESEAU]")
@@ -110,7 +112,7 @@ class _ScopeConnexions(object):
     def fermer(self):
         self.actif = False
         self.inactives.clear()
-        for connexion in list(self.connexions):
+        for connexion in list(self.connexions.values()):
             self._fermer_physiquement(connexion)
 
 
