@@ -1,0 +1,26 @@
+name: tmp-scenario-integration
+on:
+  push:
+    branches:
+      - test/0.9.2-scenario-integration
+permissions:
+  contents: write
+jobs:
+  integrate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: test/0.9.2-scenario-integration
+          fetch-depth: 0
+      - name: Merge scenario fixes
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git fetch origin fix/0.9.2-scenario-atomicity fix/0.9.2-scenario-presence-duration
+          git merge --no-edit origin/fix/0.9.2-scenario-atomicity
+          git merge --no-edit origin/fix/0.9.2-scenario-presence-duration
+          python -m compileall -q teamworks domain application infrastructure tests
+          python -m pytest -q tests/test_scenario_transactions.py tests/test_scenario_presence_duration_contract.py
+          git push
