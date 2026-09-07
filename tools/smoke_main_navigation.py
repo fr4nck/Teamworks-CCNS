@@ -3,8 +3,11 @@
 
 from __future__ import annotations
 
+import json
 import os
 from pathlib import Path
+import shutil
+import subprocess
 import sys
 import traceback
 
@@ -27,6 +30,78 @@ from Utils import UTILS_Interface
 
 def _same_colour(left, right):
     return tuple(left) == tuple(right)
+
+
+def _run_interactive_recipe_probe() -> None:
+    """Hook temporaire PR #414: exécute le pilote réel dans le job Windows."""
+    if not os.environ.get("GITHUB_ACTIONS"):
+        return
+    recipe_requirement = ROOT / "requirements" / "recette-windows.txt"
+    if not recipe_requirement.is_file():
+        return
+
+    report = ROOT / "artifacts" / "recette-windows"
+    report.mkdir(parents=True, exist_ok=True)
+    session = os.environ.get("SESSIONNAME", "")
+    foreground = 0
+    try:
+        import ctypes
+        foreground = int(ctypes.windll.user32.GetForegroundWindow())
+    except Exception:
+        pass
+    (report / "session.txt").write_text(
+        "SESSIONNAME=%s\nFOREGROUND_HWND=%s\n" % (session, foreground),
+        encoding="utf-8",
+    )
+
+    subprocess.run(
+        [sys.executable, "-m", "pip", "install", "--requirement", str(recipe_requirement)],
+        cwd=ROOT,
+        check=True,
+    )
+
+    portable = ROOT / "Portable"
+    data = portable / "Data"
+    data.mkdir(parents=True, exist_ok=True)
+    examples = TEAMWORKS / "Static" / "Exemples"
+    for suffix in ("TDATA", "TDOCUMENTS", "TPHOTOS"):
+        shutil.copy2(examples / ("Exemple_%s.dat" % suffix), data / ("Exemple_%s.dat" % suffix))
+    (portable / "Config.json").write_text(
+        json.dumps(
+            {
+                "nomFichier": "Exemple",
+                "derniersFichiers": ["Exemple"],
+                "taille_fenetre": [900, 700],
+                "interface_mysql": "mysql.connector",
+                "assistant_demarrage": True,
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+
+    command = [
+        sys.executable,
+        "-m",
+        "tools.recette_windows",
+        "--scenario",
+        "individus-smoke",
+        "--backend",
+        "uia",
+        "--artifacts",
+        str(report / "ci-individus-smoke"),
+    ]
+    completed = subprocess.run(command, cwd=ROOT, text=True, capture_output=True, check=False)
+    (report / "runner-output.txt").write_text(
+        "return_code=%s\n--- stdout ---\n%s\n--- stderr ---\n%s\n"
+        % (completed.returncode, completed.stdout, completed.stderr),
+        encoding="utf-8",
+    )
+    print(completed.stdout, end="")
+    print(completed.stderr, end="", file=sys.stderr)
+    if completed.returncode != 0:
+        raise RuntimeError("recette Windows interactive KO: code=%s" % completed.returncode)
 
 
 def main() -> int:
@@ -86,6 +161,7 @@ def main() -> int:
     frame.Destroy()
     app.ProcessPendingEvents()
     print("TEAMWORKS_SMOKE_MAIN_NAVIGATION_READY", flush=True)
+    _run_interactive_recipe_probe()
     return 0
 
 
