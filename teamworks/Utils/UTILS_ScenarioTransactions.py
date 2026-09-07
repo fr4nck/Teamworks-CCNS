@@ -17,8 +17,16 @@ class ScenarioTransactionError(Exception):
     """La transaction scénario n'a pas pu être menée à son terme."""
 
 
-def _placeholder(db):
-    return "%s" if db.isNetwork else "?"
+CHAMPS_SCENARIO_AUTORISES = {
+    "IDpersonne",
+    "nom",
+    "description",
+    "mode_heure",
+    "detail_mois",
+    "date_debut",
+    "date_fin",
+    "toutes_categories",
+}
 
 
 def _execute(db, sql, params=()):
@@ -143,6 +151,11 @@ def sauvegarder_scenario_atomique(db, IDscenario, donnees_scenario, dict_virtual
         champs = [champ for champ, valeur in donnees_scenario]
         valeurs = [valeur for champ, valeur in donnees_scenario]
 
+        if len(champs) != len(set(champs)):
+            raise ScenarioTransactionError("Champ scénario présent plusieurs fois")
+        if set(champs) != CHAMPS_SCENARIO_AUTORISES:
+            raise ScenarioTransactionError("Jeu de champs scénario inattendu")
+
         if IDscenario is None:
             colonnes = ", ".join(champs)
             marqueurs = ", ".join(["?"] * len(champs))
@@ -192,6 +205,15 @@ def sauvegarder_scenario_atomique(db, IDscenario, donnees_scenario, dict_virtual
                 if not IDscenario_cat:
                     raise ScenarioTransactionError("Identifiant de catégorie scénario indisponible")
             else:
+                if IDscenario_cat not in ids_existants:
+                    raise ScenarioTransactionError(
+                        "La catégorie scénario %s n'appartient pas au scénario %s"
+                        % (IDscenario_cat, IDscenario)
+                    )
+                if IDscenario_cat in ids_traites:
+                    raise ScenarioTransactionError(
+                        "La catégorie scénario %s est utilisée plusieurs fois" % IDscenario_cat
+                    )
                 _execute(
                     db,
                     "UPDATE scenarios_cat SET IDscenario=?, IDcategorie=?, prevision=?, report=?, "
