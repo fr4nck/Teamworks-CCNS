@@ -6,12 +6,12 @@ Le mécanisme est volontairement opt-in et limité au thread qui ouvre le
 contexte. SQLite n'est jamais intercepté : seuls les appels à
 ``GestionDB.GetConnexionReseau`` peuvent être réutilisés.
 
-Chaque ``GestionDB.DB`` conserve sa frontière logique : son ``Close()`` rend la
-connexion au petit pool de l'action après un rollback de sécurité. Si deux DB
-sont ouvertes en même temps, elles reçoivent deux connexions physiques
-indépendantes ; seules les ouvertures séquentielles réutilisent une connexion.
-Toutes les connexions physiques restantes sont fermées à la sortie du contexte,
-y compris en cas d'exception.
+Chaque ``GestionDB.DB`` conserve sa frontière logique : son ``Close()`` ferme
+les curseurs créés par ce bail, puis rend la connexion au petit pool de l'action
+après un rollback de sécurité. Si deux DB sont ouvertes en même temps, elles
+reçoivent deux connexions physiques indépendantes ; seules les ouvertures
+séquentielles réutilisent une connexion. Toutes les connexions physiques
+restantes sont fermées à la sortie du contexte, y compris en cas d'exception.
 """
 
 from contextlib import contextmanager
@@ -30,14 +30,29 @@ class _BailConnexion(object):
         self._cle = cle
         self._connexion = connexion
         self._rendue = False
+        self._curseurs = []
 
     def __getattr__(self, nom):
         return getattr(self._connexion, nom)
+
+    def cursor(self, *args, **kwargs):
+        curseur = self._connexion.cursor(*args, **kwargs)
+        self._curseurs.append(curseur)
+        return curseur
+
+    def _fermer_curseurs(self):
+        for curseur in self._curseurs:
+            try:
+                curseur.close()
+            except Exception:
+                pass
+        self._curseurs = []
 
     def close(self):
         if self._rendue:
             return
         self._rendue = True
+        self._fermer_curseurs()
         self._scope.rendre(self._cle, self._connexion)
 
 
