@@ -272,7 +272,7 @@ class ListView(CORE.ListView):
 
 class SaisiePassword(wx.Dialog):
     def __init__(self, parent, id=-1, title=_(u"Déverrouiller les avis")):
-        wx.Dialog.__init__(self, parent, id, title, style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
+        wx.Dialog.__init__(self, parent, id, title, style=wx.DEFAULT_DIALOG_STYLE)
         self.SetBackgroundColour(UTILS_Interface.GetToken("surface"))
         self.section = CTRL_Section.Section(
             self,
@@ -301,8 +301,14 @@ class SaisiePassword(wx.Dialog):
         sizer.Add(actions, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, padding)
         self.SetSizer(sizer)
         self.text_password.Bind(wx.EVT_TEXT_ENTER, lambda evt: self.EndModal(wx.ID_OK))
-        UTILS_Styles.ApplyWindowProfile(self, "compact")
+        UTILS_Styles.ApplyWindowProfile(self, "fit")
         self.text_password.SetFocus()
+        self.Bind(wx.EVT_SHOW, self.OnShow)
+
+    def OnShow(self, event):
+        event.Skip()
+        if event.IsShown():
+            wx.CallAfter(UTILS_Styles.RefitWindow, self, "fit")
 
     def GetPassword(self):
         return self.text_password.GetValue()
