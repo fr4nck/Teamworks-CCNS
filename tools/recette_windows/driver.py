@@ -45,9 +45,10 @@ class WindowsRecipeDriver:
                 "La recette UI exige Windows avec une session bureau interactive; runner actuel: %s"
                 % platform.platform()
             )
-        if not os.environ.get("SESSIONNAME"):
+        session = os.environ.get("SESSIONNAME", "").strip()
+        if not session or session.casefold() == "services":
             raise UnsupportedRunner(
-                "SESSIONNAME est absent: impossible de confirmer une session Windows interactive."
+                "Aucune session bureau Windows interactive exploitable (SESSIONNAME=%r)." % session
             )
 
     def _load_pywinauto(self):
@@ -180,6 +181,33 @@ class WindowsRecipeDriver:
 
     def send_escape(self):
         self._send_keys("{ESC}")
+
+    def focused_element(self, window=None):
+        target = window or self._foreground_own_window() or self.main_window
+        if target is None:
+            return None
+        candidates = [target]
+        try:
+            candidates.extend(target.descendants())
+        except Exception:
+            pass
+        for element in candidates:
+            try:
+                if element.has_keyboard_focus():
+                    return element
+            except Exception:
+                continue
+        return None
+
+    def focus_snapshot(self, window=None):
+        element = self.focused_element(window)
+        if element is None:
+            return {"name": "", "control_type": "", "handle": None}
+        return {
+            "name": element_name(element),
+            "control_type": element_control_type(element),
+            "handle": getattr(element, "handle", None),
+        }
 
     def window_handles(self):
         if not self.process:
