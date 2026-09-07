@@ -74,6 +74,9 @@ coverage.xml
 # CI diagnostics
 /runtime-risk-audit.json
 
+# Recette UI Windows
+/artifacts/recette-windows/
+
 # Translations
 *.mo
 *.pot
@@ -112,10 +115,6 @@ teamworks/Static/Images/Special/Thumbs.db
 
 # Thumbnails
 ._*
-
-# Files that might appear on external disk
-.Spotlight-V100
-.Trashes
 
 # Directories potentially created on remote AFP share
 .AppleDB
