@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -7,6 +8,8 @@ SAISIE_DEPLACEMENT = ROOT / "teamworks" / "Dlg" / "DLG_Saisie_deplacement.py"
 SAISIE_REMBOURSEMENT = ROOT / "teamworks" / "Dlg" / "DLG_Saisie_remboursement.py"
 GESTION_SCENARIOS = ROOT / "teamworks" / "Dlg" / "DLG_Scenario_gestion.py"
 SCENARIO = ROOT / "teamworks" / "Dlg" / "DLG_Scenario.py"
+CI = ROOT / ".github" / "workflows" / "ci.yml"
+REQUIREMENTS = ROOT / "requirements.txt"
 
 
 def _methode(source, debut_signature, fin_signature):
@@ -118,3 +121,29 @@ def test_presence_scenario_ne_concatene_pas_none_aux_horaires():
     )
     assert '"+" + heure_fin' not in methode
     assert '"+" + heure_debut' not in methode
+
+
+def test_build_windows_peut_etre_declenche_sur_le_rail_wx_master():
+    source = CI.read_text(encoding="utf-8")
+    assert "github.ref == 'refs/heads/wx/master'" in source
+
+
+def test_build_windows_n_installe_pas_requirements_txt_flottant():
+    source = CI.read_text(encoding="utf-8")
+    build = source[source.index("  build-windows:"):]
+    assert "python -m pip install -r requirements.txt" not in build
+
+
+def test_requirements_txt_documente_les_dependances_non_figees_mais_ne_sert_pas_a_la_release():
+    flottantes = []
+    for ligne in REQUIREMENTS.read_text(encoding="utf-8").splitlines():
+        ligne = ligne.strip()
+        if not ligne or ligne.startswith("#"):
+            continue
+        paquet = re.split(r"[<>=!~;]", ligne, maxsplit=1)[0].strip()
+        if "==" not in ligne:
+            flottantes.append(paquet)
+    assert flottantes, "Ce test doit être retiré si requirements.txt devient lui-même le lock de release."
+    source = CI.read_text(encoding="utf-8")
+    build = source[source.index("  build-windows:"):]
+    assert "requirements.txt" not in build
