@@ -220,18 +220,10 @@ class ListCtrl(wx.ListCtrl, CheckListCtrlMixin):
         self.ToggleItem(evt.Index)
 
     def OnCheckItem(self, index, flag):
-        """ Ne fait rien si c'est le remplissage qui coche la case ! """
-        if self.remplissage == False :
-            IDgadget = self.GetItemData(index)
-            # Enregistre l'affichage True/False du gadget dans la base
-            DB = GestionDB.DB()
-            listeDonnees = [("affichage",  str(flag)),]
-            DB.ReqMAJ("gadgets", listeDonnees, "IDgadget", IDgadget)
-            DB.Close()
-        else:
-            pass
+        """La coche sert uniquement a selectionner les deplacements a imprimer."""
+        # Aucun etat metier nest persiste ici : la ligne porte un IDdeplacement.
+        pass
 
-      
     def Importation(self):
         # Récupération des données
         DB = GestionDB.DB()        
