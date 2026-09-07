@@ -19,6 +19,7 @@ RegimeRecuperation = Literal["CCNS", "CEE"]
 
 JOURNEE_EXTRASCOLAIRE_MINUTES_ACTUELLE = 9 * 60 + 36
 CEE_JOURS_PAR_NUITEE = 1
+_REFERENCE_EXTRASCOLAIRE_COURANTE = object()
 
 
 @dataclass(frozen=True)
@@ -33,16 +34,16 @@ def credit_recuperation_minicamp(
     nuitees: int,
     regime: RegimeRecuperation,
     *,
-    journee_extrascolaire_minutes: int = JOURNEE_EXTRASCOLAIRE_MINUTES_ACTUELLE,
+    journee_extrascolaire_minutes=_REFERENCE_EXTRASCOLAIRE_COURANTE,
 ) -> RecuperationCredit:
     """Calcule le crédit de récupération généré par des nuitées de minicamp.
 
     ``nuitees`` doit être un entier positif ou nul.
 
     Pour un salarié CCNS, une nuitée crédite l'équivalent d'une journée
-    extrascolaire. Sa durée actuelle est 576 minutes (9 h 36), mais le paramètre
-    explicite permet d'appliquer une autre durée de référence si l'organisation
-    de la journée extrascolaire évolue.
+    extrascolaire. Sa durée actuelle est 576 minutes (9 h 36). Quand aucune
+    durée n'est fournie, la référence courante est résolue au moment de l'appel,
+    afin qu'une évolution de configuration ne reste pas figée dans la signature.
 
     Pour un CEE, une nuitée crédite 1 jour sans conversion horaire.
     """
@@ -52,6 +53,8 @@ def credit_recuperation_minicamp(
         raise ValueError("Le nombre de nuitées ne peut pas être négatif.")
 
     if regime == "CCNS":
+        if journee_extrascolaire_minutes is _REFERENCE_EXTRASCOLAIRE_COURANTE:
+            journee_extrascolaire_minutes = JOURNEE_EXTRASCOLAIRE_MINUTES_ACTUELLE
         if isinstance(journee_extrascolaire_minutes, bool) or not isinstance(
             journee_extrascolaire_minutes, int
         ):
