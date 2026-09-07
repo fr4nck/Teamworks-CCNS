@@ -103,3 +103,10 @@ def test_legacy_reimbursement_calculation_uses_decimal_rounding_too():
     assert '_montant_deplacement_decimal(' in source
     assert 'distance = float(' not in source
     assert 'tarif = float(' not in source
+
+
+def test_reimbursement_ctrl_amount_is_never_persisted_or_compared_via_float():
+    source = REMBOURSEMENT.read_text(encoding='utf-8')
+    assert 'float(self.ctrl_montant.GetValue())' not in source
+    assert 'if float(valeur) == 0:' not in source
+    assert 'str(_euros_decimal(self.ctrl_montant.GetValue()))' in source
