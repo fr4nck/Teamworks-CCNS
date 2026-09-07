@@ -7,7 +7,7 @@ from pathlib import Path
 import sys
 
 from .driver import WindowsRecipeDriver
-from .errors import DestructiveDialogDetected, RecipeError, UnsupportedRunner
+from .errors import BlockedEnvironment, DestructiveDialogDetected, RecipeError
 from .scenarios import SCENARIOS
 
 
@@ -66,11 +66,12 @@ def main(argv=None):
         result.update({"status": "stopped-destructive", "error": str(exc)})
         driver.capture_failure(exc)
         print("STOP DESTRUCTIF: %s" % exc, file=sys.stderr)
-    except UnsupportedRunner as exc:
+    except BlockedEnvironment as exc:
         failure = exc
         exit_status = 4
-        result.update({"status": "environment-not-ready", "error": str(exc)})
-        print("RUNNER NON SUPPORTE: %s" % exc, file=sys.stderr)
+        result.update({"status": "BLOCKED", "error": str(exc)})
+        driver.capture_failure(exc)
+        print("BLOCKED: %s" % exc, file=sys.stderr)
     except (RecipeError, LookupError, RuntimeError) as exc:
         failure = exc
         exit_status = 2
