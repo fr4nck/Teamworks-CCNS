@@ -1,0 +1,87 @@
+name: tmp-presences-moteur
+on:
+  push:
+    branches:
+      - fix/0.9.2-presences-moteur
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: fix/0.9.2-presences-moteur
+      - name: Corriger validation horaire et atomicité du lot
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('teamworks/Dlg/DLG_Saisie_presence.py')
+          s = p.read_text(encoding='utf-8')
+
+          s = s.replace('heure_debut > "24:00"', 'heure_debut >= "24:00"')
+          s = s.replace('heure_fin > "24:00"', 'heure_fin >= "24:00"')
+          s = s.replace('0 <= int(texte_brut[:2]) <= 24', '0 <= int(texte_brut[:2]) <= 23')
+
+          start = s.index('    def SauvegardeNouveau(self):\n')
+          end = s.index('    def GetDonneesModele(self):\n', start)
+          replacement = '''    def SauvegardeNouveau(self):\n        liste_exceptions = []\n        nombre_selectionne = sum(1 for valeurs in self.dictDonnees.values() if valeurs[2])\n        DB = GestionDB.DB()\n\n        try:\n            for valeurs in self.dictDonnees.values():\n                if not valeurs[2]:\n                    continue\n                IDpersonne = valeurs[0]\n                date = str(valeurs[1])\n                heure_debut = self.text_heure_debut.GetValue()\n                heure_fin = self.text_heure_fin.GetValue()\n                req = """\n                SELECT IDpresence, date, heure_debut, heure_fin\n                FROM presences\n                WHERE (date='%s' AND IDpersonne=%d) AND\n                (heure_debut<'%s' And heure_fin>'%s');\n                """ % (date, IDpersonne, heure_fin, heure_debut)\n                DB.ExecuterReq(req)\n                liste_presences = DB.ResultatReq()\n\n                if liste_presences:\n                    nom = self.dictPersonnes[IDpersonne][0] + " " + self.dictPersonnes[IDpersonne][1]\n                    liste_exceptions.append((nom, DatetimeDateEnStr(valeurs[1])))\n                    continue\n\n                DB.ReqInsert(\n                    "presences",\n                    [\n                        ("IDpersonne", IDpersonne),\n                        ("date", date),\n                        ("heure_debut", heure_debut),\n                        ("heure_fin", heure_fin),\n                        ("IDcategorie", self.treeCtrl_categories.GetDataSelection()),\n                        (\n                            "intitule",\n                            UTILS_Presences.normaliser_intitule_presence(\n                                self.text_intitule.GetValue()\n                            ),\n                        ),\n                    ],\n                    commit=False,\n                )\n            DB.Commit()\n        except Exception:\n            DB.connexion.rollback()\n            raise\n        finally:\n            DB.Close()\n\n        nombre_invalides = len(liste_exceptions)\n        nombre_valides = nombre_selectionne - nombre_invalides\n        if nombre_invalides:\n            if nombre_valides == 0:\n                message = _(u"Aucune tâche n'a été enregistrée.")\n            elif nombre_valides == 1:\n                message = _(u"1 tâche a été enregistrée.")\n            else:\n                message = str(nombre_valides) + _(u" tâches ont été enregistrées.")\n            message += "\\n\\n" + _(\n                u"Les tâches suivantes n'ont pas été enregistrées car elles chevauchent des tâches existantes :"\n            ) + "\\n\\n"\n            for nom, date in liste_exceptions:\n                message += "• %s — %s\\n" % (date, nom)\n            dlg = wx.lib.dialogs.ScrolledMessageDialog(\n                self,\n                message,\n                _(u"Rapport d'enregistrement"),\n            )\n            dlg.ShowModal()\n            dlg.Destroy()\n        return "Ok"\n\n'''
+          s = s[:start] + replacement + s[end:]
+          p.write_text(s, encoding='utf-8')
+      - name: Ajouter les régressions moteur
+        shell: bash
+        run: |
+          cat > tests/test_presences_motor_integrity.py <<'PY'
+          import ast
+          from pathlib import Path
+
+          ROOT = Path(__file__).resolve().parents[1]
+          PATH = ROOT / 'teamworks' / 'Dlg' / 'DLG_Saisie_presence.py'
+          SOURCE = PATH.read_text(encoding='utf-8')
+          TREE = ast.parse(SOURCE)
+
+          def _method(name):
+              node = next(n for n in ast.walk(TREE) if isinstance(n, ast.FunctionDef) and n.name == name)
+              return ast.get_source_segment(SOURCE, node)
+
+          def test_presence_rejects_24h00_for_start_and_end():
+              source = _method('ValidationDonnees')
+              assert 'heure_debut >= "24:00"' in source
+              assert 'heure_fin >= "24:00"' in source
+              assert 'heure_debut > "24:00"' not in source
+              assert 'heure_fin > "24:00"' not in source
+
+          def test_live_time_validation_never_accepts_hour_24():
+              source = _method('_valider_heure_pendant_saisie')
+              assert '0 <= int(texte_brut[:2]) <= 23' in source
+              assert '<= 24' not in source
+
+          def test_bulk_presence_save_is_one_transaction():
+              source = _method('SauvegardeNouveau')
+              assert 'commit=False' in source
+              assert source.count('DB.Commit()') == 1
+              assert 'DB.connexion.rollback()' in source
+              assert 'finally:' in source
+              assert source.count('DB.Close()') == 1
+              assert source.index('DB.Commit()') < source.index('DB.Close()')
+
+          def test_overlap_remains_a_business_skip_not_a_transaction_failure():
+              source = _method('SauvegardeNouveau')
+              assert 'liste_exceptions.append' in source
+              assert 'continue' in source
+              assert source.index('liste_exceptions.append') < source.index('DB.ReqInsert(')
+          PY
+      - name: Valider
+        run: |
+          python -m compileall -q teamworks tests
+          python -m pip install -q pytest
+          python -m pytest -q tests/test_presences_motor_integrity.py
+      - name: Committer et retirer le workflow temporaire
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git rm .github/workflows/tmp-presences-moteur.yml
+          git add teamworks/Dlg/DLG_Saisie_presence.py tests/test_presences_motor_integrity.py
+          git commit -m "fix(presences): valider les horaires et enregistrer les lots atomiquement"
+          git push
