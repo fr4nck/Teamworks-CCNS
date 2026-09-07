@@ -1,0 +1,2 @@
+# Recette Windows interactive (a installer dans l'environnement Teamworks existant)
+pywinauto==0.6.9
