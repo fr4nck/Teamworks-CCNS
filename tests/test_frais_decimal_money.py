@@ -75,3 +75,8 @@ def test_reimbursement_line_money_rounding_is_deterministic():
     calc = ns['_montant_deplacement_decimal']
     assert calc('3', '0.335') == Decimal('1.01')
     assert calc('123', '0.55') == Decimal('67.65')
+
+
+def test_no_kilometric_money_path_in_reimbursement_falls_back_to_binary_float():
+    source = REMBOURSEMENT.read_text(encoding='utf-8')
+    assert 'float(distance) * float(tarif_km)' not in source
