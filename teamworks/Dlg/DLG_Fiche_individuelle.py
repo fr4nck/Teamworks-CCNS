@@ -155,7 +155,9 @@ class Dialog(CORE.Dialog):
         notebook_original = CORE.Notebook
         CORE.Notebook = Notebook
         try:
-            super(Dialog, self).__init__(*args, **kwargs)
+            # Appel explicite du cœur : super(Dialog, self) devient récursif si
+            # le module wrapper est rechargé sous Windows par les parcours smoke.
+            CORE.Dialog.__init__(self, *args, **kwargs)
         finally:
             CORE.Notebook = notebook_original
             DiagnosticPerformance.terminer_action(action)
