@@ -6,6 +6,7 @@ IMPRESSION_FRAIS = ROOT / "teamworks" / "Dlg" / "DLG_Impression_frais.py"
 SAISIE_DEPLACEMENT = ROOT / "teamworks" / "Dlg" / "DLG_Saisie_deplacement.py"
 SAISIE_REMBOURSEMENT = ROOT / "teamworks" / "Dlg" / "DLG_Saisie_remboursement.py"
 GESTION_SCENARIOS = ROOT / "teamworks" / "Dlg" / "DLG_Scenario_gestion.py"
+SCENARIO = ROOT / "teamworks" / "Dlg" / "DLG_Scenario.py"
 
 
 def _methode(source, debut_signature, fin_signature):
@@ -56,3 +57,21 @@ def test_impression_frais_n_utilise_pas_float_pour_les_montants():
 def test_rattachement_remboursement_n_utilise_pas_egalite_exacte_sur_float():
     source = SAISIE_REMBOURSEMENT.read_text(encoding="utf-8")
     assert "montantNonRattache == 0" not in source
+
+
+def test_sauvegarde_scenario_est_une_transaction_unique():
+    source = SCENARIO.read_text(encoding="utf-8")
+    methode = _methode(source, "    def Sauvegarde(self):", "    def OnBoutonExcel(self, event):")
+    assert "commit=False" in methode
+    assert methode.count("DB.Commit()") <= 1
+
+
+def test_duplication_scenario_est_une_transaction_unique():
+    source = GESTION_SCENARIOS.read_text(encoding="utf-8")
+    methode = _methode(
+        source,
+        "    def OnBoutonDupliquer(self, event):",
+        "    def MAJ_ListCtrl(self, IDselection=None):",
+    )
+    assert "commit=False" in methode
+    assert methode.count("DB.Commit()") <= 1
