@@ -1,11 +1,5 @@
 #!/usr/bin/env python3
-"""Smoke Windows du clavier wx et des changements d'état UX.
-
-Ce smoke doit être exécuté sur un vrai runner Windows avec wxPython. Il vérifie
-les comportements que l'analyse statique ne peut pas prouver : focus effectif,
-Tab/Shift+Tab, activation Enter/Espace, Escape et maintien d'un focus valide
-après changement d'état.
-"""
+"""Smoke Windows du clavier wx dans le bootstrap Teamworks réel."""
 
 from __future__ import annotations
 
@@ -13,256 +7,243 @@ from pathlib import Path
 import sys
 import traceback
 
+from smoke_runtime import github_error_summary, run_entrypoint, write_diagnostic
+
 ROOT = Path(__file__).resolve().parents[1]
 TEAMWORKS_DIR = ROOT / "teamworks"
+ENTRYPOINT_SOURCE = TEAMWORKS_DIR / "Teamworks.py"
+CORE_SOURCE = TEAMWORKS_DIR / "Teamworks_core.py"
+PATCHED = TEAMWORKS_DIR / "Teamworks_keyboard_accessibility_smoke.py"
+PATCHED_CORE = TEAMWORKS_DIR / "Teamworks_core_keyboard_accessibility_smoke.py"
 REPORT_DIR = ROOT / "artifacts" / "keyboard-accessibility-smoke"
 REPORT = REPORT_DIR / "diagnostic.txt"
+MARKER_LINE = '            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)'
+READY_MARKER = "TEAMWORKS_WX_KEYBOARD_ACCESSIBILITY_READY"
+FAILURE_MARKER = "TEAMWORKS_WX_KEYBOARD_ACCESSIBILITY_FAILED"
 
-if str(TEAMWORKS_DIR) not in sys.path:
-    sys.path.insert(0, str(TEAMWORKS_DIR))
+INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
+            try:
+                print("TEAMWORKS_KEYBOARD_STAGE:imports", flush=True)
+                from Ctrl import CTRL_Bouton_image as _smoke_buttons
+                from Dlg import DLG_Filtre_texte as _smoke_filter
 
-import wx
+                def _pump(milliseconds=120):
+                    loops = max(1, int(milliseconds / 10))
+                    for _ in range(loops):
+                        wx.YieldIfNeeded()
+                        wx.MilliSleep(10)
 
-from Ctrl import CTRL_Bouton_image
-from Dlg import DLG_Filtre_texte
+                def _focus_is(control):
+                    _pump(60)
+                    focused = wx.Window.FindFocus()
+                    assert focused is control, "focus inattendu: %r au lieu de %r" % (focused, control)
+                    assert control.IsEnabled()
+                    assert control.IsShownOnScreen()
 
+                def _press(simulator, keycode, shift=False):
+                    if shift:
+                        simulator.KeyDown(wx.WXK_SHIFT)
+                    simulator.Char(keycode)
+                    if shift:
+                        simulator.KeyUp(wx.WXK_SHIFT)
+                    _pump()
 
-class KeyboardContractDialog(wx.Dialog):
-    """Petit hôte réel pour qualifier les composants communs Teamworks."""
+                class _KeyboardDialog(wx.Dialog):
+                    def __init__(self, parent):
+                        wx.Dialog.__init__(self, parent, title="Smoke clavier Teamworks")
+                        self.primary_count = 0
+                        self.text = wx.TextCtrl(self, value="test")
+                        self.primary = _smoke_buttons.CTRL(self, id=wx.ID_OK, texte="Valider", role="primary")
+                        self.toggle = _smoke_buttons.Toggle(self, texte="Basculer")
+                        self.checkbox = wx.CheckBox(self, label="Option")
+                        self.cancel = _smoke_buttons.CTRL(self, id=wx.ID_CANCEL, texte="Annuler", role="quiet")
+                        self.primary.SetDefault()
+                        self.primary.Bind(wx.EVT_BUTTON, self._on_primary)
+                        sizer = wx.BoxSizer(wx.VERTICAL)
+                        for control in (self.text, self.primary, self.toggle, self.checkbox, self.cancel):
+                            sizer.Add(control, 0, wx.ALL | wx.EXPAND, 8)
+                        self.SetSizerAndFit(sizer)
 
-    def __init__(self, parent):
-        super().__init__(parent, title="Smoke clavier Teamworks")
-        self.primary_count = 0
-        self.cancel_count = 0
+                    def _on_primary(self, event):
+                        self.primary_count += 1
 
-        self.text = wx.TextCtrl(self, value="test")
-        self.primary = CTRL_Bouton_image.CTRL(
-            self,
-            id=wx.ID_OK,
-            texte="Valider",
-            role="primary",
-        )
-        self.toggle = CTRL_Bouton_image.Toggle(self, texte="Basculer")
-        self.checkbox = wx.CheckBox(self, label="Option")
-        self.cancel = CTRL_Bouton_image.CTRL(
-            self,
-            id=wx.ID_CANCEL,
-            texte="Annuler",
-            role="quiet",
-        )
-        self.primary.SetDefault()
+                simulator = wx.UIActionSimulator()
 
-        self.primary.Bind(wx.EVT_BUTTON, self._on_primary)
-        self.cancel.Bind(wx.EVT_BUTTON, self._on_cancel)
+                print("TEAMWORKS_KEYBOARD_STAGE:common-components", flush=True)
+                dialog = _KeyboardDialog(frame)
+                dialog.Show()
+                dialog.Raise()
+                _pump()
+                dialog.text.SetFocus()
+                _focus_is(dialog.text)
+                _press(simulator, wx.WXK_TAB)
+                _focus_is(dialog.primary)
+                _press(simulator, wx.WXK_TAB, shift=True)
+                _focus_is(dialog.text)
 
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        for control in (
-            self.text,
-            self.primary,
-            self.toggle,
-            self.checkbox,
-            self.cancel,
-        ):
-            sizer.Add(control, 0, wx.ALL | wx.EXPAND, 8)
-        self.SetSizerAndFit(sizer)
+                dialog.toggle.SetFocus()
+                _focus_is(dialog.toggle)
+                assert not dialog.toggle.GetValue()
+                _press(simulator, wx.WXK_SPACE)
+                assert dialog.toggle.GetValue()
 
-    def _on_primary(self, event):
-        self.primary_count += 1
+                dialog.checkbox.SetFocus()
+                _focus_is(dialog.checkbox)
+                assert not dialog.checkbox.GetValue()
+                _press(simulator, wx.WXK_SPACE)
+                assert dialog.checkbox.GetValue()
 
-    def _on_cancel(self, event):
-        self.cancel_count += 1
-        event.Skip()
+                dialog.text.SetFocus()
+                before = dialog.primary_count
+                _press(simulator, wx.WXK_RETURN)
+                assert dialog.primary_count == before + 1
 
+                expected = {dialog.text, dialog.primary, dialog.toggle, dialog.checkbox, dialog.cancel}
+                dialog.text.SetFocus()
+                seen = {dialog.text}
+                for _ in range(8):
+                    _press(simulator, wx.WXK_TAB)
+                    focused = wx.Window.FindFocus()
+                    if focused is not None:
+                        seen.add(focused)
+                assert expected.issubset(seen), "Tab incomplet sur composants communs"
 
-def _pump(milliseconds=120):
-    loops = max(1, int(milliseconds / 10))
-    for _ in range(loops):
-        wx.YieldIfNeeded()
-        wx.MilliSleep(10)
+                dialog.cancel.SetFocus()
+                seen = {dialog.cancel}
+                for _ in range(8):
+                    _press(simulator, wx.WXK_TAB, shift=True)
+                    focused = wx.Window.FindFocus()
+                    if focused is not None:
+                        seen.add(focused)
+                assert expected.issubset(seen), "Shift+Tab incomplet sur composants communs"
+                dialog.Destroy()
+                _pump()
 
+                print("TEAMWORKS_KEYBOARD_STAGE:escape", flush=True)
+                escape_dialog = wx.Dialog(frame, title="Smoke Escape")
+                escape_cancel = _smoke_buttons.CTRL(escape_dialog, id=wx.ID_CANCEL, texte="Annuler")
+                escape_sizer = wx.BoxSizer(wx.VERTICAL)
+                escape_sizer.Add(escape_cancel, 0, wx.ALL, 12)
+                escape_dialog.SetSizerAndFit(escape_sizer)
 
-def _focus_is(control):
-    _pump(60)
-    focused = wx.Window.FindFocus()
-    assert focused is control, (
-        "focus inattendu: attendu=%s obtenu=%s"
-        % (control.GetName() or control.__class__.__name__, getattr(focused, "GetName", lambda: "aucun")())
-    )
-    assert control.IsEnabled()
-    assert control.IsShownOnScreen()
+                def _send_escape():
+                    escape_dialog.Raise()
+                    escape_cancel.SetFocus()
+                    _pump(40)
+                    simulator.Char(wx.WXK_ESCAPE)
 
+                def _escape_timeout():
+                    if escape_dialog.IsModal():
+                        escape_dialog.EndModal(wx.ID_ABORT)
 
-def _press(simulator, keycode, shift=False):
-    if shift:
-        simulator.KeyDown(wx.WXK_SHIFT)
-    simulator.Char(keycode)
-    if shift:
-        simulator.KeyUp(wx.WXK_SHIFT)
-    _pump()
+                wx.CallLater(120, _send_escape)
+                wx.CallLater(1800, _escape_timeout)
+                result = escape_dialog.ShowModal()
+                escape_dialog.Destroy()
+                assert result == wx.ID_CANCEL, "Escape ne ferme pas avec wx.ID_CANCEL"
 
+                print("TEAMWORKS_KEYBOARD_STAGE:filter-state", flush=True)
+                filter_dialog = _smoke_filter.MyDialog(
+                    frame,
+                    nom_filtre="le nom",
+                    titre_frame="Filtre du nom",
+                    texte=None,
+                )
+                filter_dialog.Show()
+                filter_dialog.Raise()
+                _pump()
+                _focus_is(filter_dialog.radio1)
+                assert not filter_dialog.ctrl_texte.IsEnabled()
 
-def _test_common_components(frame, simulator):
-    print("TEAMWORKS_KEYBOARD_STAGE:common-components", flush=True)
-    dialog = KeyboardContractDialog(frame)
-    dialog.Show()
-    dialog.Raise()
-    _pump()
+                filter_dialog.radio2.SetFocus()
+                _press(simulator, wx.WXK_SPACE)
+                assert filter_dialog.radio2.GetValue()
+                assert filter_dialog.ctrl_texte.IsEnabled()
+                _press(simulator, wx.WXK_TAB)
+                _focus_is(filter_dialog.ctrl_texte)
+                _press(simulator, wx.WXK_TAB, shift=True)
+                _focus_is(filter_dialog.radio2)
 
-    dialog.text.SetFocus()
-    _focus_is(dialog.text)
+                filter_dialog.radio1.SetFocus()
+                _press(simulator, wx.WXK_SPACE)
+                assert filter_dialog.radio1.GetValue()
+                assert not filter_dialog.ctrl_texte.IsEnabled()
+                _press(simulator, wx.WXK_TAB)
+                assert wx.Window.FindFocus() is not filter_dialog.ctrl_texte
+                filter_dialog.Destroy()
+                _pump()
 
-    _press(simulator, wx.WXK_TAB)
-    _focus_is(dialog.primary)
-    _press(simulator, wx.WXK_TAB, shift=True)
-    _focus_is(dialog.text)
-
-    dialog.toggle.SetFocus()
-    _focus_is(dialog.toggle)
-    assert not dialog.toggle.GetValue()
-    _press(simulator, wx.WXK_SPACE)
-    assert dialog.toggle.GetValue(), "Espace n'active pas CTRL_Bouton_image.Toggle"
-
-    dialog.checkbox.SetFocus()
-    _focus_is(dialog.checkbox)
-    assert not dialog.checkbox.GetValue()
-    _press(simulator, wx.WXK_SPACE)
-    assert dialog.checkbox.GetValue(), "Espace n'active pas wx.CheckBox"
-
-    dialog.text.SetFocus()
-    _focus_is(dialog.text)
-    before = dialog.primary_count
-    _press(simulator, wx.WXK_RETURN)
-    assert dialog.primary_count == before + 1, "Enter n'active pas l'action par défaut"
-
-    expected = {dialog.text, dialog.primary, dialog.toggle, dialog.checkbox, dialog.cancel}
-    dialog.text.SetFocus()
-    seen_forward = {dialog.text}
-    for _ in range(8):
-        _press(simulator, wx.WXK_TAB)
-        focused = wx.Window.FindFocus()
-        if focused is not None:
-            seen_forward.add(focused)
-    assert expected.issubset(seen_forward), "Tab ne parcourt pas tous les contrôles communs"
-
-    dialog.cancel.SetFocus()
-    seen_backward = {dialog.cancel}
-    for _ in range(8):
-        _press(simulator, wx.WXK_TAB, shift=True)
-        focused = wx.Window.FindFocus()
-        if focused is not None:
-            seen_backward.add(focused)
-    assert expected.issubset(seen_backward), "Shift+Tab ne parcourt pas tous les contrôles communs"
-
-    dialog.Destroy()
-    _pump()
-
-
-def _test_escape(frame, simulator):
-    print("TEAMWORKS_KEYBOARD_STAGE:escape", flush=True)
-    dialog = wx.Dialog(frame, title="Smoke Escape")
-    cancel = CTRL_Bouton_image.CTRL(dialog, id=wx.ID_CANCEL, texte="Annuler")
-    sizer = wx.BoxSizer(wx.VERTICAL)
-    sizer.Add(cancel, 0, wx.ALL, 12)
-    dialog.SetSizerAndFit(sizer)
-
-    def send_escape():
-        dialog.Raise()
-        cancel.SetFocus()
-        _pump(40)
-        simulator.Char(wx.WXK_ESCAPE)
-
-    def force_timeout():
-        if dialog.IsModal():
-            dialog.EndModal(wx.ID_ABORT)
-
-    wx.CallLater(120, send_escape)
-    wx.CallLater(1800, force_timeout)
-    result = dialog.ShowModal()
-    dialog.Destroy()
-    assert result == wx.ID_CANCEL, "Escape ne ferme pas le dialogue avec wx.ID_CANCEL"
-
-
-def _test_filter_state_and_navigation(frame, simulator):
-    print("TEAMWORKS_KEYBOARD_STAGE:filter-dialog", flush=True)
-    dialog = DLG_Filtre_texte.MyDialog(
-        frame,
-        nom_filtre="le nom",
-        titre_frame="Filtre du nom",
-        texte=None,
-    )
-    dialog.Show()
-    dialog.Raise()
-    _pump()
-
-    _focus_is(dialog.radio1)
-    assert not dialog.ctrl_texte.IsEnabled()
-
-    # Le parcours avant doit atteindre les deux actions sans se perdre.
-    seen = {wx.Window.FindFocus()}
-    for _ in range(8):
-        _press(simulator, wx.WXK_TAB)
-        focused = wx.Window.FindFocus()
-        if focused is not None:
-            seen.add(focused)
-    assert dialog.bouton_ok in seen, "Tab n'atteint pas l'action Appliquer"
-    assert dialog.bouton_annuler in seen, "Tab n'atteint pas l'action Annuler"
-
-    # Changement d'état réel au clavier : radio2 active le champ texte.
-    dialog.radio2.SetFocus()
-    _focus_is(dialog.radio2)
-    _press(simulator, wx.WXK_SPACE)
-    assert dialog.radio2.GetValue()
-    assert dialog.ctrl_texte.IsEnabled()
-    _press(simulator, wx.WXK_TAB)
-    _focus_is(dialog.ctrl_texte)
-    _press(simulator, wx.WXK_TAB, shift=True)
-    _focus_is(dialog.radio2)
-
-    # Retour à l'état initial : le champ désactivé ne doit plus recevoir Tab.
-    dialog.radio1.SetFocus()
-    _press(simulator, wx.WXK_SPACE)
-    assert dialog.radio1.GetValue()
-    assert not dialog.ctrl_texte.IsEnabled()
-    _press(simulator, wx.WXK_TAB)
-    assert wx.Window.FindFocus() is not dialog.ctrl_texte
-
-    dialog.Destroy()
-    _pump()
+                print("TEAMWORKS_WX_KEYBOARD_ACCESSIBILITY_READY", flush=True)
+            except Exception:
+                import traceback as _smoke_traceback
+                _smoke_traceback.print_exc()
+                print("TEAMWORKS_WX_KEYBOARD_ACCESSIBILITY_FAILED", flush=True)
+                wx.CallAfter(self.ExitMainLoop)
+                return True
+'''
 
 
-def main():
+def build_patched_entrypoint() -> int:
+    core_source = CORE_SOURCE.read_text(encoding="utf-8")
+    marker_count = core_source.count(MARKER_LINE)
+    if marker_count < 1:
+        raise RuntimeError(f"marqueur principal introuvable: count={marker_count}")
+    patched_core = core_source.replace(MARKER_LINE, INJECTION, 1)
+    compile(patched_core, str(PATCHED_CORE), "exec")
+    PATCHED_CORE.write_text(patched_core, encoding="utf-8")
+
+    entrypoint_source = ENTRYPOINT_SOURCE.read_text(encoding="utf-8")
+    import_line = "import Teamworks_core as CORE"
+    patched_import = "import Teamworks_core_keyboard_accessibility_smoke as CORE"
+    if entrypoint_source.count(import_line) != 1:
+        raise RuntimeError("import du cœur Teamworks introuvable ou ambigu")
+    patched_entrypoint = entrypoint_source.replace(import_line, patched_import, 1)
+    compile(patched_entrypoint, str(PATCHED), "exec")
+    PATCHED.write_text(patched_entrypoint, encoding="utf-8")
+    return marker_count
+
+
+def main() -> int:
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
-    if sys.platform != "win32":
-        REPORT.write_text("Smoke réservé à Windows.\n", encoding="utf-8")
-        return 0
-
-    app = wx.App(False)
-    frame = wx.Frame(None, title="Teamworks wx keyboard smoke")
-    frame.Show()
-    frame.Raise()
-    _pump()
-    simulator = wx.UIActionSimulator()
-
+    marker_count = None
     try:
-        _test_common_components(frame, simulator)
-        _test_escape(frame, simulator)
-        _test_filter_state_and_navigation(frame, simulator)
-        REPORT.write_text(
-            "Focus, Tab, Shift+Tab, Enter, Espace, Escape et changements d'état : OK.\n",
-            encoding="utf-8",
+        marker_count = build_patched_entrypoint()
+        return_code, output = run_entrypoint(
+            PATCHED,
+            root=ROOT,
+            teamworks_dir=TEAMWORKS_DIR,
+            timeout=180,
         )
-        print("TEAMWORKS_WX_KEYBOARD_ACCESSIBILITY_READY", flush=True)
+        write_diagnostic(
+            REPORT,
+            return_code=return_code,
+            marker_count=marker_count,
+            ready_marker=READY_MARKER,
+            failure_marker=FAILURE_MARKER,
+            output=output,
+        )
+        if return_code != 0 or FAILURE_MARKER in output:
+            github_error_summary("wx keyboard accessibility smoke failed", output)
+            return return_code or 1
+        if READY_MARKER not in output:
+            github_error_summary("wx keyboard accessibility smoke failed", output)
+            return 2
         return 0
     except Exception:
-        details = traceback.format_exc()
-        REPORT.write_text(details, encoding="utf-8")
-        print(details, file=sys.stderr)
-        print("TEAMWORKS_WX_KEYBOARD_ACCESSIBILITY_FAILED", flush=True)
-        return 1
+        output = traceback.format_exc()
+        write_diagnostic(
+            REPORT,
+            return_code=3,
+            marker_count=marker_count,
+            ready_marker=READY_MARKER,
+            failure_marker=FAILURE_MARKER,
+            output=output,
+        )
+        github_error_summary("wx keyboard accessibility smoke failed", output)
+        return 3
     finally:
-        if frame:
-            frame.Destroy()
-        _pump(40)
+        PATCHED.unlink(missing_ok=True)
+        PATCHED_CORE.unlink(missing_ok=True)
 
 
 if __name__ == "__main__":
