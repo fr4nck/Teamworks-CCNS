@@ -24,6 +24,7 @@ import os
 import sys
 from Utils import UTILS_Fichiers
 from Utils.UTILS_ScenarioReports import ProtegerReportContreCycles
+from Utils.UTILS_ScenarioTransactions import sauvegarder_scenario_atomique
 from Dlg import DLG_Scenario_select_categories
 from Dlg import DLG_Scenario_select_periode
 from Dlg import DLG_Scenario_saisie_prevision
@@ -434,8 +435,20 @@ class Dialog(wx.Dialog):
             dlg.Destroy()
             return
         
-        # Sauvegarde
-        IDscenario = self.Sauvegarde()
+        # Sauvegarde atomique : une erreur ne doit jamais fermer le dialogue
+        # ni laisser un scenario partiellement enregistre.
+        try:
+            IDscenario = self.Sauvegarde()
+        except Exception as err:
+            dlg = wx.MessageDialog(
+                self,
+                _(u"La sauvegarde du scenario a echoue. Aucune modification n'a ete conservee.\n\n%s") % six.text_type(err),
+                _(u"Erreur de sauvegarde"),
+                wx.OK | wx.ICON_ERROR,
+            )
+            dlg.ShowModal()
+            dlg.Destroy()
+            return
         
         # MAJ de la frame parente
         if FonctionsPerso.FrameOuverte("gestion_scenarios") != None :
@@ -445,9 +458,8 @@ class Dialog(wx.Dialog):
         self.EndModal(wx.ID_OK)
 
     def Sauvegarde(self):
-        DB = GestionDB.DB()     
-        
-        # Sauvegarde des paramètres du scénario
+        DB = GestionDB.DB()
+
         IDpersonne = self.GetIDpersonne()
         nom = self.ctrl_nom.GetValue()
         description = self.ctrl_description.GetValue()
@@ -455,68 +467,28 @@ class Dialog(wx.Dialog):
         detail_mois = self.ctrl_detail.GetSelection()
         date_debut, date_fin = self.GetDatesPeriode()
         toutes_categories = int(self.ctrl_toutes_categories.GetValue())
-        
-        listeDonnees = [ ("IDpersonne",   IDpersonne),  
-                                    ("nom",   nom),  
-                                    ("description",    description),
-                                    ("mode_heure",    mode_heure), 
-                                    ("detail_mois",    detail_mois),
-                                    ("date_debut",    str(date_debut)), 
-                                    ("date_fin",    str(date_fin)),
-                                    ("toutes_categories",    toutes_categories),
-                                     ]
-                                    
-        if self.IDscenario == None :
-            IDscenario = DB.ReqInsert("scenarios", listeDonnees) 
-        else:
-            DB.ReqMAJ("scenarios", listeDonnees, "IDscenario", self.IDscenario)
-            IDscenario = self.IDscenario
-        DB.Commit()
 
-        # Sauvegarde des catégories de scénarios
-        req = "SELECT IDscenario_cat, IDscenario, IDcategorie, prevision, report, date_debut_realise, date_fin_realise FROM scenarios_cat WHERE IDscenario=%d;" % IDscenario
-        DB.ExecuterReq(req)
-        listeCategoriesDB = DB.ResultatReq()
+        listeDonnees = [
+            ("IDpersonne", IDpersonne),
+            ("nom", nom),
+            ("description", description),
+            ("mode_heure", mode_heure),
+            ("detail_mois", detail_mois),
+            ("date_debut", str(date_debut)),
+            ("date_fin", str(date_fin)),
+            ("toutes_categories", toutes_categories),
+        ]
 
-        dictVirtualDB = self.ctrl_tableau.dictVirtualDB
-        
-        # Ajout ou modification de catégories
-        listeIDTraites = []
-        for IDcategorie, valeurs in dictVirtualDB.items() :
-            etat = valeurs["etat"]
-            date_debut_realise = valeurs["date_debut_realise"]
-            date_fin_realise = valeurs["date_fin_realise"]
-            IDscenario_cat = valeurs["IDscenario_cat"]
-            prevision = valeurs["prevision"]
-            report = valeurs["report"]
-        
-            listeDonnees = [ ("IDscenario",   IDscenario),  
-                                    ("IDcategorie",   IDcategorie),  
-                                    ("prevision",    prevision),
-                                    ("report",    report), 
-                                    ("date_debut_realise",    date_debut_realise),
-                                    ("date_fin_realise",    date_fin_realise), 
-                                     ]
-                                    
-            if IDscenario_cat == None :
-                IDscenario_cat = DB.ReqInsert("scenarios_cat", listeDonnees) 
-            else:
-                DB.ReqMAJ("scenarios_cat", listeDonnees, "IDscenario_cat", IDscenario_cat)
-                IDscenario_cat = IDscenario_cat
-            DB.Commit()
-            
-            # Créée une liste des IDscenario_cat traités :
-            listeIDTraites.append(IDscenario_cat)
-        
-        # Suppression de scenarios_cat :
-        for valeurs in listeCategoriesDB :
-            IDscenario_cat = valeurs[0]
-            if IDscenario_cat not in listeIDTraites :
-                DB.ReqDEL("scenarios_cat", "IDscenario_cat", IDscenario_cat)
-        
-        # Fermeture de la DB
-        DB.Close()
-        
+        try:
+            IDscenario = sauvegarder_scenario_atomique(
+                DB,
+                self.IDscenario,
+                listeDonnees,
+                self.ctrl_tableau.dictVirtualDB,
+            )
+        finally:
+            DB.Close()
+
         return IDscenario
 
     def OnBoutonExcel(self, event):

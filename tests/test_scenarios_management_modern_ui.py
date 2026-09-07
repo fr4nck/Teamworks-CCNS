@@ -32,9 +32,11 @@ def test_scenario_tree_uses_semantic_surface_and_flexible_columns():
 
 def test_scenario_manager_keeps_crud_and_duplication_contract():
     source = _source()
-    assert 'DB.ReqDEL("scenarios", "IDscenario", IDscenario)' in source
-    assert 'DB.ReqDEL("scenarios_cat", "IDscenario", IDscenario)' in source
-    assert 'DB.ReqInsert("scenarios", listeDonnees)' in source
-    assert 'DB.ReqInsert("scenarios_cat", listeDonnees)' in source
-    assert "nbreReports" in source
+    assert "supprimer_scenario_atomique" in source
+    assert "dupliquer_scenario_atomique" in source
+    assert "ScenarioReferenceError" in source
+    assert 'DB.ReqDEL("scenarios", "IDscenario", IDscenario)' not in source
+    assert 'DB.ReqDEL("scenarios_cat", "IDscenario", IDscenario)' not in source
+    assert 'DB.ReqInsert("scenarios", listeDonnees)' not in source
+    assert 'DB.ReqInsert("scenarios_cat", listeDonnees)' not in source
     assert "DLG_Scenario.Dialog" in source
