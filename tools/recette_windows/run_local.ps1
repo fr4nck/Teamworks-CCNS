@@ -51,6 +51,41 @@ function Ensure-ResultFile {
     }
 }
 
+function Ensure-BasicEnvironmentFile {
+    $environmentPath = Join-Path $ArtifactDir "environment.json"
+    if (Test-Path $environmentPath) {
+        return
+    }
+
+    $sessionId = $null
+    try {
+        $sessionId = (Get-Process -Id $PID).SessionId
+    }
+    catch {
+        $sessionId = $null
+    }
+
+    Write-JsonFile -Path $environmentPath -Value ([ordered]@{
+        captured_at = (Get-Date).ToString("o")
+        repository_root = $RepoRoot
+        scenario = $Scenario
+        backend = $Backend
+        windows = [ordered]@{
+            platform = [Environment]::OSVersion.Platform.ToString()
+            version = [Environment]::OSVersion.Version.ToString()
+            user_interactive = [Environment]::UserInteractive
+            session_name = [Environment]::GetEnvironmentVariable("SESSIONNAME")
+            session_id = $sessionId
+        }
+        display = [ordered]@{
+            system_dpi = $null
+            system_scaling_percent = $null
+            scope = "not reliably detected"
+        }
+        powershell = $PSVersionTable.PSVersion.ToString()
+    })
+}
+
 function Complete-LocalRun {
     param(
         [Parameter(Mandatory = $true)]
@@ -67,6 +102,7 @@ function Complete-LocalRun {
         default { "ENVIRONNEMENT NON PRÊT" }
     }
 
+    Ensure-BasicEnvironmentFile
     Ensure-ResultFile -Status $Kind -ExitCode $ExitCode -Reason $Reason
     Write-JsonFile -Path (Join-Path $ArtifactDir "local-run.json") -Value ([ordered]@{
         verdict = $verdict
@@ -79,6 +115,7 @@ function Complete-LocalRun {
         completed_at = (Get-Date).ToString("o")
     })
 
+    $zipError = $null
     try {
         if (Test-Path $ZipPath) {
             Remove-Item -Force $ZipPath
@@ -88,12 +125,6 @@ function Complete-LocalRun {
     catch {
         $zipError = "Impossible de créer le ZIP : $($_.Exception.Message)"
         Set-Content -Path (Join-Path $ArtifactDir "zip-error.txt") -Value $zipError -Encoding UTF8
-        if ($Kind -eq "ok") {
-            $Kind = "ko"
-            $ExitCode = 2
-            $verdict = "RECETTE KO"
-            $Reason = $zipError
-        }
     }
 
     Write-Host ""
@@ -109,6 +140,9 @@ function Complete-LocalRun {
     Write-Host ("Résultats : {0}" -f $ArtifactDir)
     if (Test-Path $ZipPath) {
         Write-Host ("ZIP       : {0}" -f $ZipPath)
+    }
+    elseif ($zipError) {
+        Write-Host ("ZIP       : non créé — {0}" -f $zipError)
     }
     exit $ExitCode
 }
