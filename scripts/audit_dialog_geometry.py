@@ -17,7 +17,10 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 
 DIALOG_CLASS = re.compile(r"^class\s+(?P<name>\w+)\s*\((?P<bases>[^\n]*wx\.Dialog[^\n]*)\)\s*:", re.MULTILINE)
 NEXT_CLASS = re.compile(r"^class\s+\w+\s*\(", re.MULTILINE)
-LITERAL_SIZE = re.compile(r"(?:\bsize\s*=|Set(?:Min|Max)?Size\s*\()\s*\(?\s*\d+\s*,\s*\d+")
+SELF_LITERAL_SIZE = re.compile(r"\bself\.Set(?:Min|Max)?Size\s*\(\s*\(?\s*\d+\s*,\s*\d+")
+DIALOG_INIT_LITERAL_SIZE = re.compile(
+    r"wx\.Dialog\.__init__\([\s\S]{0,500}?\bsize\s*=\s*\(?\s*\d+\s*,\s*\d+"
+)
 STRETCH_SIZER = re.compile(r"(?P<sizer>\w+)\.AddStretchSpacer\s*\(")
 
 EXPANDABLE_MARKERS = (
@@ -93,9 +96,9 @@ def classify(block):
     dynamic = ".Show(" in block or ".Hide(" in block
     fit = _has_any(block, FIT_MARKERS)
     refit = _has_any(block, REFIT_MARKERS)
-    fixed_min = "SetMinSize(" in block
-    fixed_max = "SetMaxSize(" in block
-    literal_size = bool(LITERAL_SIZE.search(block))
+    fixed_min = "self.SetMinSize(" in block
+    fixed_max = "self.SetMaxSize(" in block
+    literal_size = bool(SELF_LITERAL_SIZE.search(block) or DIALOG_INIT_LITERAL_SIZE.search(block))
     window_profile = "ApplyWindowProfile(" in block
     stretch = "AddStretchSpacer(" in block
     action_stretch = _stretch_is_action_alignment(block)
@@ -180,44 +183,49 @@ def render_markdown(report):
         "- Alertes moyennes : **%d**" % summary["counts"]["medium"],
         "- Dialogues sans alerte : **%d**" % summary["counts"]["clean"],
         "",
-        "## Alertes",
+        "## Alertes par catégorie",
         "",
-        "| Gravité | Fichier | Classe | Type | Code | Recommandation |",
-        "| --- | --- | --- | --- | --- | --- |",
     ]
-    severity_rank = {"high": 0, "medium": 1}
-    rows = []
+    if summary["by_code"]:
+        for code, count in summary["by_code"].items():
+            lines.append("- `%s` : %d" % (code, count))
+    else:
+        lines.append("- Aucune")
+
+    lines.extend(["", "## Détails", ""])
     for record in report["dialogs"]:
+        if not record["findings"]:
+            continue
+        lines.append("### `%s` — `%s`" % (record["file"], record["class"]))
+        lines.append("")
+        lines.append("- Type estimé : **%s**" % record["kind"])
         for finding in record["findings"]:
-            rows.append((severity_rank.get(finding["severity"], 9), record["file"], record["class"], record["kind"], finding))
-    for _, filename, class_name, kind, finding in sorted(rows, key=lambda row: (row[0], row[1], row[2], row[4]["code"])):
-        lines.append("| %s | `%s` | `%s` | %s | `%s` | %s |" % (
-            finding["severity"], filename, class_name, kind, finding["code"], finding["recommendation"]
-        ))
-    return "\n".join(lines) + "\n"
+            lines.append("- **%s** `%s` — %s" % (
+                finding["severity"].upper(), finding["code"], finding["recommendation"],
+            ))
+        lines.append("")
+    return "\n".join(lines)
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description="Audit géométrique des wx.Dialog")
-    parser.add_argument("--path", default=os.path.join(ROOT, "teamworks"), help="Racine à analyser")
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("path", nargs="?", default="teamworks", help="Répertoire à auditer")
     parser.add_argument("--json", dest="json_path", help="Écrire le rapport JSON")
     parser.add_argument("--markdown", dest="markdown_path", help="Écrire le rapport Markdown")
     args = parser.parse_args(argv)
 
     records = scan(args.path)
     report = {"summary": summarize(records), "dialogs": records}
+    markdown = render_markdown(report)
 
     if args.json_path:
         with open(args.json_path, "w", encoding="utf-8") as handle:
-            json.dump(report, handle, ensure_ascii=False, indent=2)
+            json.dump(report, handle, ensure_ascii=False, indent=2, sort_keys=True)
     if args.markdown_path:
         with open(args.markdown_path, "w", encoding="utf-8") as handle:
-            handle.write(render_markdown(report))
+            handle.write(markdown + "\n")
 
-    counts = report["summary"]["counts"]
-    print("Géométrie : {dialogs} dialogue(s), {high} alerte(s) haute(s), {medium} moyenne(s), {clean} sans alerte".format(**counts))
-    for code, count in report["summary"]["by_code"].items():
-        print("%4d  %s" % (count, code))
+    print(markdown)
     return 0
 
 

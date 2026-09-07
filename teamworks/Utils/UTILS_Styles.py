@@ -195,20 +195,41 @@ def GetFieldSizerFlag(role=FIELD_TEXT):
     return wx.EXPAND if FieldExpands(role) else wx.ALIGN_CENTER_VERTICAL
 
 
+def _GetDisplayWorkAreaSize():
+    """Retourne la zone de travail utilisable, hors barre des tâches si possible."""
+    try:
+        rect = wx.GetClientDisplayRect()
+        width, height = rect.GetWidth(), rect.GetHeight()
+        if width > 0 and height > 0:
+            return width, height
+    except Exception:
+        pass
+    try:
+        return wx.GetDisplaySize()
+    except Exception:
+        return 1280, 800
+
+
 def GetWindowSize(profile="standard", display_size=None):
     definition = WINDOW_PROFILES.get(profile, WINDOW_PROFILES["standard"])
     if display_size is None:
-        try:
-            display_size = wx.GetDisplaySize()
-        except Exception:
-            display_size = (1280, 800)
-    width = int(round(display_size[0] * definition["width_ratio"]))
-    height = int(round(display_size[1] * definition["height_ratio"]))
+        display_size = _GetDisplayWorkAreaSize()
+    display_width, display_height = int(display_size[0]), int(display_size[1])
+    width = int(round(display_width * definition["width_ratio"]))
+    height = int(round(display_height * definition["height_ratio"]))
     min_width, min_height = definition["min_size"]
     max_width, max_height = definition["max_size"]
     width = max(Scale(min_width), min(Scale(max_width), width))
     height = max(Scale(min_height), min(Scale(max_height), height))
-    return width, height
+
+    # À forte échelle (notamment 200 %), un minimum sémantique ne doit jamais
+    # rendre la fenêtre plus grande que la zone de travail Windows. On conserve
+    # une petite marge afin que bordures et poignée de redimensionnement restent
+    # accessibles.
+    margin = Scale(12, minimum=0)
+    available_width = max(1, display_width - (2 * margin))
+    available_height = max(1, display_height - (2 * margin))
+    return min(width, available_width), min(height, available_height)
 
 
 def _CentreWindow(window):
@@ -257,7 +278,8 @@ def ApplyWindowProfile(window, profile="standard", centre=True):
     size = GetWindowSize(profile)
     window.SetSize(size)
     definition = WINDOW_PROFILES.get(profile, WINDOW_PROFILES["standard"])
-    window.SetMinSize(tuple(Scale(value) for value in definition["min_size"]))
+    scaled_min = tuple(Scale(value) for value in definition["min_size"])
+    window.SetMinSize((min(scaled_min[0], size[0]), min(scaled_min[1], size[1])))
     window._teamworks_window_profile = profile
     if centre:
         _CentreWindow(window)

@@ -24,7 +24,7 @@ class MyDialog(wx.Dialog):
             parent,
             id=-1,
             title=titre_frame,
-            style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER,
+            style=wx.DEFAULT_DIALOG_STYLE,
         )
         self.nom_filtre = nom_filtre
         self.titre_frame = titre_frame
@@ -65,6 +65,7 @@ class MyDialog(wx.Dialog):
 
         self._layout()
         UTILS_Styles.ApplyWindowProfile(self, "compact")
+        (self.myChoice if self.radio2.GetValue() else self.radio1).SetFocus()
 
     def _layout(self):
         padding = UTILS_Styles.GetLayoutSpacing("dialog_padding")
