@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SMOKE = ROOT / "tools" / "smoke_secondary_contract_dialog.py"
 OPERATIONS_SMOKE = ROOT / "tools" / "smoke_contract_cee_cdd_operations.py"
 DOCUMENTS_SMOKE = ROOT / "tools" / "smoke_contract_documents.py"
+KEYBOARD_SMOKE = ROOT / "tools" / "smoke_wx_keyboard_accessibility.py"
 RUNTIME = ROOT / "tools" / "smoke_runtime.py"
 ENTRYPOINT = ROOT / "teamworks" / "Teamworks.py"
 CORE = ROOT / "teamworks" / "Teamworks_core.py"
@@ -98,3 +99,19 @@ def test_contract_documents_run_in_real_windows_application() -> None:
 
     output = "\n".join(part for part in (completed.stdout, completed.stderr) if part)
     assert completed.returncode == 0, output
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="smoke clavier wxPython réservé à la qualification Windows")
+def test_wx_keyboard_accessibility_runs_on_real_windows() -> None:
+    completed = subprocess.run(
+        [sys.executable, str(KEYBOARD_SMOKE)],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        timeout=120,
+        check=False,
+    )
+
+    output = "\n".join(part for part in (completed.stdout, completed.stderr) if part)
+    assert completed.returncode == 0, output
+    assert "TEAMWORKS_WX_KEYBOARD_ACCESSIBILITY_READY" in output
