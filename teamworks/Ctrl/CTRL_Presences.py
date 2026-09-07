@@ -9,11 +9,13 @@ d'un arbre de parents ou de splitters historique.
 
 import wx
 
+import GestionDB
 from Ctrl import CTRL_Planning
 from Ctrl import CTRL_Presences_calendrier
 from Ctrl import CTRL_Presences_legende
 from Ctrl import CTRL_Presences_personnes
 from Ctrl import CTRL_Section
+from Utils import UTILS_Diagnostic_performance as DiagnosticPerformance
 from Utils import UTILS_Interface
 from Utils import UTILS_Styles
 from Utils.UTILS_Traduction import _
@@ -160,33 +162,76 @@ class PanelPresences(wx.Panel):
 
     def MAJpanelPlanning(self, reinitSelectionPersonnes=False):
         global selectionPersonnes, selectionDates
-        mode_affichage = CTRL_Planning.modeAffichage
-        if reinitSelectionPersonnes:
-            selectionPersonnes = self.panelPlanning.RecherchePresents(selectionDates)
-        self.panelPlanning.ReInitPlanning(
-            mode_affichage,
-            selectionPersonnes,
-            selectionDates,
-        )
-        self.panelPlanning.DCplanning.MAJ_listCtrl_Categories()
-        self.panelPlanning.DCplanning.MAJAffichage()
+        with DiagnosticPerformance.mesurer_action(
+            "wx.presences.planning.maj",
+            {"reinit_selection": bool(reinitSelectionPersonnes)},
+        ):
+            mode_affichage = CTRL_Planning.modeAffichage
+            if reinitSelectionPersonnes:
+                with DiagnosticPerformance.mesurer_action(
+                    "wx.presences.planning.recherche_presents"
+                ):
+                    selectionPersonnes = self.panelPlanning.RecherchePresents(
+                        selectionDates
+                    )
+            with DiagnosticPerformance.mesurer_action(
+                "wx.presences.planning.reinit"
+            ):
+                self.panelPlanning.ReInitPlanning(
+                    mode_affichage,
+                    selectionPersonnes,
+                    selectionDates,
+                )
+            with DiagnosticPerformance.mesurer_action(
+                "wx.presences.planning.categories"
+            ):
+                self.panelPlanning.DCplanning.MAJ_listCtrl_Categories()
+            with DiagnosticPerformance.mesurer_action(
+                "wx.presences.planning.affichage"
+            ):
+                self.panelPlanning.DCplanning.MAJAffichage()
 
     def MAJpanel(self, listeElements=None, reinitSelectionPersonnes=False):
         if listeElements is None:
             listeElements = []
-        if not self.init:
-            self.InitPage()
+        DiagnosticPerformance.installer_instrumentation_sql(GestionDB)
+        premier_chargement = not self.init
 
-        if "planning" in listeElements or listeElements == []:
-            self.panelPlanning.DCplanning.Init_valeurs_defaut()
-            self.panelPlanning.RechargeDictCategories()
-            self.MAJpanelPlanning(reinitSelectionPersonnes=True)
-        if "listCtrl_personnes" in listeElements or listeElements == []:
-            self.panelPersonnes.MAJpanel()
-        if "legendes" in listeElements or listeElements == []:
-            self.panelLegendes.MAJpanel()
-        if "calendrier" in listeElements or listeElements == []:
-            self.panelCalendrier.MAJpanel()
+        with DiagnosticPerformance.mesurer_action(
+            "wx.presences.majpanel",
+            {"premier_chargement": premier_chargement},
+        ):
+            if not self.init:
+                with DiagnosticPerformance.mesurer_action(
+                    "wx.presences.initialisation"
+                ):
+                    self.InitPage()
+
+            if "planning" in listeElements or listeElements == []:
+                with DiagnosticPerformance.mesurer_action(
+                    "wx.presences.planning.preparation"
+                ):
+                    self.panelPlanning.DCplanning.Init_valeurs_defaut()
+                    self.panelPlanning.RechargeDictCategories()
+                self.MAJpanelPlanning(reinitSelectionPersonnes=True)
+
+            if "listCtrl_personnes" in listeElements or listeElements == []:
+                with DiagnosticPerformance.mesurer_action(
+                    "wx.presences.personnes.maj"
+                ):
+                    self.panelPersonnes.MAJpanel()
+
+            if "legendes" in listeElements or listeElements == []:
+                with DiagnosticPerformance.mesurer_action(
+                    "wx.presences.legendes.maj"
+                ):
+                    self.panelLegendes.MAJpanel()
+
+            if "calendrier" in listeElements or listeElements == []:
+                with DiagnosticPerformance.mesurer_action(
+                    "wx.presences.calendrier.maj"
+                ):
+                    self.panelCalendrier.MAJpanel()
 
 
 class TestFrame(wx.Frame):
