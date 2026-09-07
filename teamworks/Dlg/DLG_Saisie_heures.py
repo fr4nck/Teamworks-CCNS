@@ -101,7 +101,7 @@ class MyDialog(wx.Dialog):
 
         # Vérification de l'ensemble de la date
         if validation == True and len(texteBrut)==4:
-            if not (0<= int(texteBrut[:2]) <=24):
+            if not (0<= int(texteBrut[:2]) <=23):
                 validation = False
             if not (0<= int(texteBrut[2:]) <=59):
                 validation = False
@@ -140,7 +140,7 @@ class MyDialog(wx.Dialog):
 
         # Vérification de l'ensemble de la date
         if validation == True and len(texteBrut)==4:
-            if not (0<= int(texteBrut[:2]) <=24):
+            if not (0<= int(texteBrut[:2]) <=23):
                 validation = False
             if not (0<= int(texteBrut[2:]) <=59):
                 validation = False
@@ -179,7 +179,7 @@ class MyDialog(wx.Dialog):
             wx.MessageBox(message, "Erreur de saisie")
             self.ctrl_heure_max.SetFocus()
             return False
-        if heureDebut < "00:00" or heureDebut > "24:00" :
+        if heureDebut < "00:00" or heureDebut >= "24:00" :
             message = _(u"L'heure de début n'est pas valide")
             wx.MessageBox(message, "Erreur de saisie")
             self.ctrl_heure_min.SetFocus()
@@ -189,7 +189,7 @@ class MyDialog(wx.Dialog):
             wx.MessageBox(message, "Erreur de saisie")
             self.ctrl_heure_max.SetFocus()
             return False
-        if heureFin < "00:00" or heureFin > "24:00" :
+        if heureFin < "00:00" or heureFin >= "24:00" :
             message = _(u"L'heure de fin n'est pas valide")
             wx.MessageBox(message, "Erreur de saisie")
             self.ctrl_heure_max.SetFocus()

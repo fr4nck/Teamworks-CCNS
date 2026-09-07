@@ -5,6 +5,8 @@ ROOT = Path(__file__).resolve().parents[1]
 PATH = ROOT / 'teamworks' / 'Dlg' / 'DLG_Saisie_presence.py'
 SOURCE = PATH.read_text(encoding='utf-8')
 TREE = ast.parse(SOURCE)
+AMPLITUDE_PATH = ROOT / 'teamworks' / 'Dlg' / 'DLG_Saisie_heures.py'
+AMPLITUDE_SOURCE = AMPLITUDE_PATH.read_text(encoding='utf-8')
 
 
 def _method(name):
@@ -42,3 +44,11 @@ def test_overlap_remains_a_business_skip_not_a_transaction_failure():
     assert 'liste_exceptions.append' in source
     assert 'continue' in source
     assert source.index('liste_exceptions.append') < source.index('DB.ReqInsert(')
+
+
+def test_planning_amplitude_never_accepts_hour_24_before_datetime_time():
+    assert '0<= int(texteBrut[:2]) <=24' not in AMPLITUDE_SOURCE
+    assert AMPLITUDE_SOURCE.count('0<= int(texteBrut[:2]) <=23') == 2
+    assert 'heureDebut >= "24:00"' in AMPLITUDE_SOURCE
+    assert 'heureFin >= "24:00"' in AMPLITUDE_SOURCE
+    assert 'datetime.time(int(heureTuple[0]), int(heureTuple[1]))' in AMPLITUDE_SOURCE
