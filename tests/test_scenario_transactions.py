@@ -1,0 +1,184 @@
+# -*- coding: utf-8 -*-
+
+import sqlite3
+
+import pytest
+
+from teamworks.Utils.UTILS_ScenarioTransactions import (
+    ScenarioReferenceError,
+    dupliquer_scenario_atomique,
+    sauvegarder_scenario_atomique,
+    supprimer_scenario_atomique,
+)
+
+
+class DBTest(object):
+    def __init__(self, connexion):
+        self.connexion = connexion
+        self.cursor = connexion.cursor()
+        self.isNetwork = False
+
+    def Commit(self):
+        self.connexion.commit()
+
+
+@pytest.fixture
+def db():
+    connexion = sqlite3.connect(":memory:")
+    connexion.execute(
+        "CREATE TABLE scenarios ("
+        "IDscenario INTEGER PRIMARY KEY AUTOINCREMENT, "
+        "IDpersonne INTEGER, nom TEXT, description TEXT, mode_heure INTEGER, "
+        "detail_mois INTEGER, date_debut TEXT, date_fin TEXT, toutes_categories INTEGER)"
+    )
+    connexion.execute(
+        "CREATE TABLE scenarios_cat ("
+        "IDscenario_cat INTEGER PRIMARY KEY AUTOINCREMENT, "
+        "IDscenario INTEGER, IDcategorie INTEGER, prevision TEXT, report TEXT, "
+        "date_debut_realise TEXT, date_fin_realise TEXT)"
+    )
+    connexion.commit()
+    return DBTest(connexion)
+
+
+def _creer_source(db):
+    cur = db.connexion.execute(
+        "INSERT INTO scenarios "
+        "(IDpersonne, nom, description, mode_heure, detail_mois, date_debut, date_fin, toutes_categories) "
+        "VALUES (1, 'Source', '', 0, 0, '2026-01-01', '2026-12-31', 1)"
+    )
+    IDscenario = cur.lastrowid
+    db.connexion.executemany(
+        "INSERT INTO scenarios_cat "
+        "(IDscenario, IDcategorie, prevision, report, date_debut_realise, date_fin_realise) "
+        "VALUES (?, ?, ?, ?, ?, ?)",
+        [
+            (IDscenario, 10, '+01:00', '', None, None),
+            (IDscenario, 20, '+02:00', '', None, None),
+        ],
+    )
+    db.connexion.commit()
+    return IDscenario
+
+
+def test_dupliquer_copie_parent_et_categories_avec_un_commit(db):
+    source = _creer_source(db)
+
+    copie = dupliquer_scenario_atomique(db, source)
+
+    assert db.connexion.execute(
+        "SELECT nom FROM scenarios WHERE IDscenario=?", (copie,)
+    ).fetchone() == ("Copie de Source",)
+    assert db.connexion.execute(
+        "SELECT COUNT(*) FROM scenarios_cat WHERE IDscenario=?", (copie,)
+    ).fetchone()[0] == 2
+
+
+def test_dupliquer_rollback_si_une_categorie_echoue(db, monkeypatch):
+    source = _creer_source(db)
+    original_execute = db.cursor.execute
+    compteur = {"insert_cat": 0}
+
+    class CurseurFail(object):
+        @property
+        def lastrowid(self):
+            return db.cursor.lastrowid
+
+    def execute(sql, params=()):
+        if sql.startswith("INSERT INTO scenarios_cat"):
+            compteur["insert_cat"] += 1
+            if compteur["insert_cat"] == 2:
+                raise sqlite3.IntegrityError("panne injectée")
+        return original_execute(sql, params)
+
+    monkeypatch.setattr(db.cursor, "execute", execute)
+
+    with pytest.raises(sqlite3.IntegrityError):
+        dupliquer_scenario_atomique(db, source)
+
+    assert db.connexion.execute("SELECT COUNT(*) FROM scenarios").fetchone()[0] == 1
+    assert db.connexion.execute("SELECT COUNT(*) FROM scenarios_cat").fetchone()[0] == 2
+
+
+def test_suppression_refuse_un_scenario_reference(db):
+    source = _creer_source(db)
+    autre = db.connexion.execute(
+        "INSERT INTO scenarios "
+        "(IDpersonne, nom, description, mode_heure, detail_mois, date_debut, date_fin, toutes_categories) "
+        "VALUES (1, 'Autre', '', 0, 0, '2026-01-01', '2026-12-31', 1)"
+    ).lastrowid
+    db.connexion.execute(
+        "INSERT INTO scenarios_cat "
+        "(IDscenario, IDcategorie, prevision, report, date_debut_realise, date_fin_realise) "
+        "VALUES (?, 30, '+01:00', ?, NULL, NULL)",
+        (autre, "A%d;30;+01:00" % source),
+    )
+    db.connexion.commit()
+
+    with pytest.raises(ScenarioReferenceError):
+        supprimer_scenario_atomique(db, source)
+
+    assert db.connexion.execute(
+        "SELECT COUNT(*) FROM scenarios WHERE IDscenario=?", (source,)
+    ).fetchone()[0] == 1
+
+
+def test_sauvegarde_rollback_si_synchronisation_categorie_echoue(db, monkeypatch):
+    source = _creer_source(db)
+    avant_nom = db.connexion.execute(
+        "SELECT nom FROM scenarios WHERE IDscenario=?", (source,)
+    ).fetchone()[0]
+    ids = [row[0] for row in db.connexion.execute(
+        "SELECT IDscenario_cat FROM scenarios_cat WHERE IDscenario=? ORDER BY IDscenario_cat",
+        (source,),
+    ).fetchall()]
+
+    donnees = [
+        ("IDpersonne", 1),
+        ("nom", "Modifié"),
+        ("description", ""),
+        ("mode_heure", 0),
+        ("detail_mois", 0),
+        ("date_debut", "2026-01-01"),
+        ("date_fin", "2026-12-31"),
+        ("toutes_categories", 1),
+    ]
+    virtuel = {
+        10: {
+            "IDscenario_cat": ids[0],
+            "prevision": "+03:00",
+            "report": "",
+            "date_debut_realise": None,
+            "date_fin_realise": None,
+        },
+        20: {
+            "IDscenario_cat": ids[1],
+            "prevision": "+04:00",
+            "report": "",
+            "date_debut_realise": None,
+            "date_fin_realise": None,
+        },
+    }
+
+    original_execute = db.cursor.execute
+    compteur = {"update_cat": 0}
+
+    def execute(sql, params=()):
+        if sql.startswith("UPDATE scenarios_cat"):
+            compteur["update_cat"] += 1
+            if compteur["update_cat"] == 2:
+                raise sqlite3.OperationalError("panne injectée")
+        return original_execute(sql, params)
+
+    monkeypatch.setattr(db.cursor, "execute", execute)
+
+    with pytest.raises(sqlite3.OperationalError):
+        sauvegarder_scenario_atomique(db, source, donnees, virtuel)
+
+    assert db.connexion.execute(
+        "SELECT nom FROM scenarios WHERE IDscenario=?", (source,)
+    ).fetchone()[0] == avant_nom
+    assert db.connexion.execute(
+        "SELECT prevision FROM scenarios_cat WHERE IDscenario=? ORDER BY IDscenario_cat",
+        (source,),
+    ).fetchall() == [("+01:00",), ("+02:00",)]
