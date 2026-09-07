@@ -369,7 +369,7 @@ class Panel(wx.Panel):
             wx.MessageBox(_(u"Vous devez saisir une heure de fin."), _(u"Erreur de saisie"))
             self.text_heure_fin.SetFocus()
             return False
-        if heure_debut < "00:00" or heure_debut > "24:00":
+        if heure_debut < "00:00" or heure_debut >= "24:00":
             wx.MessageBox(_(u"L'heure de début n'est pas valide."), _(u"Erreur de saisie"))
             self.text_heure_debut.SetFocus()
             return False
@@ -377,7 +377,7 @@ class Panel(wx.Panel):
             wx.MessageBox(_(u"L'heure de fin n'est pas valide."), _(u"Erreur de saisie"))
             self.text_heure_fin.SetFocus()
             return False
-        if heure_fin < "00:00" or heure_fin > "24:00":
+        if heure_fin < "00:00" or heure_fin >= "24:00":
             wx.MessageBox(_(u"L'heure de fin n'est pas valide."), _(u"Erreur de saisie"))
             self.text_heure_fin.SetFocus()
             return False
@@ -428,7 +428,7 @@ class Panel(wx.Panel):
         texte_brut = controle.GetPlainValue()
         if len(texte_brut) != 4 or not texte_brut.isdigit():
             return
-        if not (0 <= int(texte_brut[:2]) <= 24):
+        if not (0 <= int(texte_brut[:2]) <= 23):
             return
         if not (0 <= int(texte_brut[2:]) <= 59):
             return
@@ -506,45 +506,51 @@ class Panel(wx.Panel):
         nombre_selectionne = sum(1 for valeurs in self.dictDonnees.values() if valeurs[2])
         DB = GestionDB.DB()
 
-        for valeurs in self.dictDonnees.values():
-            if not valeurs[2]:
-                continue
-            IDpersonne = valeurs[0]
-            date = str(valeurs[1])
-            heure_debut = self.text_heure_debut.GetValue()
-            heure_fin = self.text_heure_fin.GetValue()
-            req = """
-            SELECT IDpresence, date, heure_debut, heure_fin
-            FROM presences
-            WHERE (date='%s' AND IDpersonne=%d) AND
-            (heure_debut<'%s' And heure_fin>'%s');
-            """ % (date, IDpersonne, heure_fin, heure_debut)
-            DB.ExecuterReq(req)
-            liste_presences = DB.ResultatReq()
+        try:
+            for valeurs in self.dictDonnees.values():
+                if not valeurs[2]:
+                    continue
+                IDpersonne = valeurs[0]
+                date = str(valeurs[1])
+                heure_debut = self.text_heure_debut.GetValue()
+                heure_fin = self.text_heure_fin.GetValue()
+                req = """
+                SELECT IDpresence, date, heure_debut, heure_fin
+                FROM presences
+                WHERE (date='%s' AND IDpersonne=%d) AND
+                (heure_debut<'%s' And heure_fin>'%s');
+                """ % (date, IDpersonne, heure_fin, heure_debut)
+                DB.ExecuterReq(req)
+                liste_presences = DB.ResultatReq()
 
-            if liste_presences:
-                nom = self.dictPersonnes[IDpersonne][0] + " " + self.dictPersonnes[IDpersonne][1]
-                liste_exceptions.append((nom, DatetimeDateEnStr(valeurs[1])))
-                continue
+                if liste_presences:
+                    nom = self.dictPersonnes[IDpersonne][0] + " " + self.dictPersonnes[IDpersonne][1]
+                    liste_exceptions.append((nom, DatetimeDateEnStr(valeurs[1])))
+                    continue
 
-            DB.ReqInsert(
-                "presences",
-                [
-                    ("IDpersonne", IDpersonne),
-                    ("date", date),
-                    ("heure_debut", heure_debut),
-                    ("heure_fin", heure_fin),
-                    ("IDcategorie", self.treeCtrl_categories.GetDataSelection()),
-                    (
-                        "intitule",
-                        UTILS_Presences.normaliser_intitule_presence(
-                            self.text_intitule.GetValue()
+                DB.ReqInsert(
+                    "presences",
+                    [
+                        ("IDpersonne", IDpersonne),
+                        ("date", date),
+                        ("heure_debut", heure_debut),
+                        ("heure_fin", heure_fin),
+                        ("IDcategorie", self.treeCtrl_categories.GetDataSelection()),
+                        (
+                            "intitule",
+                            UTILS_Presences.normaliser_intitule_presence(
+                                self.text_intitule.GetValue()
+                            ),
                         ),
-                    ),
-                ],
-            )
+                    ],
+                    commit=False,
+                )
             DB.Commit()
-        DB.Close()
+        except Exception:
+            DB.connexion.rollback()
+            raise
+        finally:
+            DB.Close()
 
         nombre_invalides = len(liste_exceptions)
         nombre_valides = nombre_selectionne - nombre_invalides
