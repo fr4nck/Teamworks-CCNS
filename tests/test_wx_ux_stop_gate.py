@@ -12,6 +12,10 @@ EXPANDING_CHILD_PANEL = re.compile(
     r"\.Add\(\s*self\.\w*panel\w*\s*,\s*1\s*,[^\n]*wx\.EXPAND",
     re.IGNORECASE,
 )
+EXPANDING_DATA_CONTROL = re.compile(
+    r"\.Add\(\s*self\.\w*(?:list|liste|tree|grid|check)\w*\s*,\s*1\s*,[^\n]*wx\.EXPAND",
+    re.IGNORECASE,
+)
 
 
 def _class_block(record):
@@ -26,8 +30,9 @@ def _is_real_finding(record, finding):
     block = _class_block(record)
     code = finding["code"]
 
-    if code == "resizable-without-expandable-content" and EXPANDING_CHILD_PANEL.search(block):
-        return False
+    if code == "resizable-without-expandable-content":
+        if EXPANDING_CHILD_PANEL.search(block) or EXPANDING_DATA_CONTROL.search(block):
+            return False
 
     if code == "dynamic-content-without-refit":
         without_initial_hide = block.replace(".Show(False)", "")
