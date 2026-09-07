@@ -1,0 +1,52 @@
+name: tmp-fix-scenario-presence
+on:
+  push:
+    branches:
+      - fix/0.9.2-scenario-presence-duration
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/0.9.2-scenario-presence-duration
+      - name: Patch scenario presence calculation
+        shell: python
+        run: |
+          from pathlib import Path
+          path = Path('teamworks/Dlg/DLG_Scenario.py')
+          text = path.read_text(encoding='utf-8')
+          anchor = 'from Utils.UTILS_ScenarioReports import ProtegerReportContreCycles\n'
+          if 'from Utils.UTILS_Duration import duree_presence_wx\n' not in text:
+              text = text.replace(anchor, anchor + 'from Utils.UTILS_Duration import duree_presence_wx\n', 1)
+          old = '            duree = self.OperationHeures("+" + heure_fin, "+" + heure_debut, "soustraction")\n'
+          new = '''            duree, resultat_presence = duree_presence_wx(heure_debut, heure_fin)\n            if not resultat_presence.ok:\n                erreur = resultat_presence.error\n                dictHeuresRealisees["total_heures_realisees"] = "ERREUR"\n                dictHeuresRealisees["erreur_presence"] = {\n                    "IDpresence": IDpresence,\n                    "code": erreur.code if erreur is not None else "INVALID_PRESENCE",\n                    "message": erreur.message if erreur is not None else "Présence invalide.",\n                    "field": erreur.field if erreur is not None else "horaire",\n                }\n                return dictHeuresRealisees, listeLabelsDetails\n'''
+          if text.count(old) != 2:
+              raise SystemExit('les deux anciens calculs de présence ne sont pas présents')
+          text = text.replace(old, new)
+          guard_anchor = '        total_heures_realisees = dictHeuresRealisees["total_heures_realisees"]\n'
+          guard = '''        total_heures_realisees = dictHeuresRealisees["total_heures_realisees"]\n        if dictHeuresRealisees.get("erreur_presence") is not None:\n            dictDonnees["total_heures_realisees"] = "ERREUR"\n            dictDonnees["listeLabelsDetails"] = []\n            dictDonnees["erreur_presence"] = dictHeuresRealisees["erreur_presence"]\n            dictDonnees["total_reste_heures"] = "ERREUR"\n            return dictDonnees\n'''
+          if text.count(guard_anchor) != 2:
+              raise SystemExit('les deux appels GetHeuresRealisees attendus ne sont pas présents')
+          text = text.replace(guard_anchor, guard)
+          path.write_text(text, encoding='utf-8')
+      - name: Verify contracts
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('teamworks/Dlg/DLG_Scenario.py')
+          s = p.read_text(encoding='utf-8')
+          assert s.count('duree_presence_wx(heure_debut, heure_fin)') == 2
+          assert 'OperationHeures("+" + heure_fin' not in s
+          assert s.count('dictHeuresRealisees.get("erreur_presence")') == 2
+          compile(s, str(p), 'exec')
+      - name: Commit patch
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add teamworks/Dlg/DLG_Scenario.py
+          git commit -m "fix(scenario): calculer les présences comme horaires de journée"
+          git push
