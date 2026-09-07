@@ -78,6 +78,14 @@ def test_journal_perf_persiste_uniquement_les_metriques_agregees(monkeypatch, tm
     assert donnees["details"]["nb_requetes"] == 1
     assert donnees["details"]["sql_ms"] == 14.0
     assert donnees["details"]["connexion_ms"] == 2.0
-    assert "IDpersonne" not in ligne
+    assert set(donnees["details"]) == {
+        "nb_requetes",
+        "sql_ms",
+        "connexion_ms",
+        "io_ms",
+        "python_wx_ms",
+        "total_ms",
+    }
+    assert "IDpersonne" not in donnees["details"]
+    assert "texte" not in donnees["details"]
     assert "SECRET" not in ligne
-    assert "123" not in ligne
