@@ -5,6 +5,7 @@
 import wx
 
 from Ol import OL_personnes_core as CORE
+from Utils import UTILS_Diagnostic_performance as DiagnosticPerformance
 from Utils.UTILS_Traduction import _
 
 
@@ -77,6 +78,12 @@ class Track(CORE.Track):
 class ListView(CORE.ListView):
     """Liste historique conservée, avec lecture robuste et suppression transactionnelle."""
 
+    def __init__(self, *args, **kwds):
+        DiagnosticPerformance.installer_instrumentation_sql(CORE.GestionDB)
+        self._premier_maj_redondant = True
+        with DiagnosticPerformance.mesurer_action("wx.personnes.liste.ouverture"):
+            super(ListView, self).__init__(*args, **kwds)
+
     def GetTracks(self):
         DB = CORE.GestionDB.DB()
         req = """SELECT IDpersonne, civilite, nom, nom_jfille, prenom, date_naiss,
@@ -94,6 +101,21 @@ class ListView(CORE.ListView):
             if self.selectionID == row[0]:
                 self.selectionTrack = track
         return objets
+
+    def MAJ(self, IDpersonne=None, presents=None):
+        # ``PanelPersonnes.MAJpanel()`` appelle MAJ() immédiatement après
+        # InitPage(), alors que le constructeur CORE a déjà chargé exactement
+        # les mêmes données. Ignorer uniquement cet appel sans paramètres
+        # supprime cinq lectures SQL en série au premier affichage.
+        if self._premier_maj_redondant and IDpersonne is None and presents is None:
+            self._premier_maj_redondant = False
+            return
+        self._premier_maj_redondant = False
+        with DiagnosticPerformance.mesurer_action(
+            "wx.personnes.liste.rafraichissement",
+            {"IDpersonne": IDpersonne, "presents": presents},
+        ):
+            return super(ListView, self).MAJ(IDpersonne=IDpersonne, presents=presents)
 
     def Supprimer(self):
         selection = self.Selection()
