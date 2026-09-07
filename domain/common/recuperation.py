@@ -1,9 +1,11 @@
 """Règles métier communes pour la récupération liée aux nuitées de minicamp.
 
 Ce module sépare volontairement les unités selon le régime :
-- salarié CCNS : banque en minutes, 1 nuitée = 9 h 36 ;
-- CEE : banque en jours, 1 nuitée = 1 jour.
+- salarié CCNS : banque en minutes ; 1 nuitée = 1 journée extrascolaire de référence ;
+- CEE : banque en jours ; 1 nuitée = 1 jour.
 
+La durée actuelle d'une journée extrascolaire est 9 h 36 (576 minutes), mais elle
+reste un paramètre de référence et non une propriété intrinsèque d'une nuitée.
 Aucune conversion automatique entre jours CEE et heures CCNS n'est autorisée ici.
 """
 
@@ -15,7 +17,7 @@ from typing import Literal
 
 RegimeRecuperation = Literal["CCNS", "CEE"]
 
-CCNS_MINUTES_PAR_NUITEE = 9 * 60 + 36
+JOURNEE_EXTRASCOLAIRE_MINUTES_ACTUELLE = 9 * 60 + 36
 CEE_JOURS_PAR_NUITEE = 1
 
 
@@ -27,11 +29,22 @@ class RecuperationCredit:
     valeur: int
 
 
-def credit_recuperation_minicamp(nuitees: int, regime: RegimeRecuperation) -> RecuperationCredit:
+def credit_recuperation_minicamp(
+    nuitees: int,
+    regime: RegimeRecuperation,
+    *,
+    journee_extrascolaire_minutes: int = JOURNEE_EXTRASCOLAIRE_MINUTES_ACTUELLE,
+) -> RecuperationCredit:
     """Calcule le crédit de récupération généré par des nuitées de minicamp.
 
-    ``nuitees`` doit être un entier positif ou nul. Une nuitée crédite 576 minutes
-    pour un salarié CCNS et 1 jour pour un CEE.
+    ``nuitees`` doit être un entier positif ou nul.
+
+    Pour un salarié CCNS, une nuitée crédite l'équivalent d'une journée
+    extrascolaire. Sa durée actuelle est 576 minutes (9 h 36), mais le paramètre
+    explicite permet d'appliquer une autre durée de référence si l'organisation
+    de la journée extrascolaire évolue.
+
+    Pour un CEE, une nuitée crédite 1 jour sans conversion horaire.
     """
     if isinstance(nuitees, bool) or not isinstance(nuitees, int):
         raise TypeError("Le nombre de nuitées doit être un entier.")
@@ -39,11 +52,17 @@ def credit_recuperation_minicamp(nuitees: int, regime: RegimeRecuperation) -> Re
         raise ValueError("Le nombre de nuitées ne peut pas être négatif.")
 
     if regime == "CCNS":
+        if isinstance(journee_extrascolaire_minutes, bool) or not isinstance(
+            journee_extrascolaire_minutes, int
+        ):
+            raise TypeError("La durée de la journée extrascolaire doit être un entier de minutes.")
+        if journee_extrascolaire_minutes <= 0:
+            raise ValueError("La durée de la journée extrascolaire doit être strictement positive.")
         return RecuperationCredit(
             regime="CCNS",
             nuitees=nuitees,
             unite="minutes",
-            valeur=nuitees * CCNS_MINUTES_PAR_NUITEE,
+            valeur=nuitees * journee_extrascolaire_minutes,
         )
     if regime == "CEE":
         return RecuperationCredit(
