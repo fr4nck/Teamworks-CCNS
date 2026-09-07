@@ -21,6 +21,8 @@ def _charger_scope():
 
 
 class _ConnexionFausse(object):
+    __hash__ = None
+
     def __init__(self):
         self.rollback_count = 0
         self.close_count = 0
