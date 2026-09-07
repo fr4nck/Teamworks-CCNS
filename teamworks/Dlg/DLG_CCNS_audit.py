@@ -3,11 +3,16 @@
 
 from __future__ import annotations
 
+import logging
+
 import wx
 
 from Ctrl import CTRL_Bouton_image
 from teamworks.CcnsCore.audit_contracts_ccns import audit_contracts
 from Utils import UTILS_Interface, UTILS_Styles, UTILS_Theme
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 class Dialog(wx.Dialog):
@@ -57,8 +62,8 @@ class Dialog(wx.Dialog):
         self.button_launch.Bind(wx.EVT_BUTTON, self.OnLaunch)
 
         self.__do_layout()
-        self.SetMinSize((UTILS_Styles.Scale(760), UTILS_Styles.Scale(500)))
-        self.CentreOnScreen()
+        UTILS_Styles.ApplyWindowProfile(self, "standard")
+        self.ctrl_limit.SetFocus()
 
     def __do_layout(self):
         sizer_base = wx.BoxSizer(wx.VERTICAL)
@@ -117,10 +122,11 @@ class Dialog(wx.Dialog):
     def OnLaunch(self, event):
         try:
             rows = audit_contracts(limit=self.ctrl_limit.GetValue())
-        except Exception as exc:
+        except Exception:
+            LOGGER.exception("Échec de l'audit CCNS des contrats")
             wx.MessageBox(
-                "Une erreur est survenue pendant l'audit CCNS.\n\n%s" % exc,
-                "Erreur",
+                "L'audit CCNS n'a pas pu être lancé. Consultez les diagnostics de l'application puis réessayez.",
+                "Audit impossible",
                 wx.OK | wx.ICON_ERROR,
                 self,
             )
