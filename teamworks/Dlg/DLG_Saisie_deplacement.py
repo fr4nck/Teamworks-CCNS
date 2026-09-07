@@ -694,9 +694,9 @@ class SaisieDeplacement(wx.Dialog):
                 distanceID = IDdistance
                 break
 
-        cp_depart = int(self.ctrl_cp_depart.GetValue())
+        cp_depart = self.ctrl_cp_depart.GetValue()
         ville_depart = self.ctrl_ville_depart.GetValue()
-        cp_arrivee = int(self.ctrl_cp_arrivee.GetValue())
+        cp_arrivee = self.ctrl_cp_arrivee.GetValue()
         ville_arrivee = self.ctrl_ville_arrivee.GetValue()
         distance = float(self.ctrl_distance.GetValue())
         if self.ctrl_aller_retour.GetValue() is True:
