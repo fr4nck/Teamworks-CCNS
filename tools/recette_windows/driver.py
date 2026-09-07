@@ -278,10 +278,11 @@ class WindowsRecipeDriver:
             pass
         self.send_escape()
         if self._wait_handle_gone(handle, timeout):
-            return
+            return "escape"
         window.close()
         if not self._wait_handle_gone(handle, timeout):
             raise RecipeError("Le dialogue HWND=%s ne se ferme ni par Echap ni par WM_CLOSE" % handle)
+        return "wm_close"
 
     def open_context_menu_item(self, control, item_name):
         before = self.window_handles()
@@ -344,21 +345,43 @@ class WindowsRecipeDriver:
     def collect_logs(self):
         if self.started_at is None:
             return
+
+        bases = [
+            self.root / "Temp",
+            self.root / "Logs",
+            self.root / "logs",
+            self.root / "teamworks" / "Temp",
+            self.root / "teamworks" / "Logs",
+        ]
+        if platform.system() == "Windows":
+            for variable in ("APPDATA", "LOCALAPPDATA", "PROGRAMDATA"):
+                value = os.environ.get(variable)
+                if value:
+                    bases.append(Path(value) / "teamworks")
+
         destination = self.artifacts_dir / "app-logs"
         copied = 0
-        for folder in ("Temp", "Logs", "logs", "teamworks/Temp", "teamworks/Logs"):
-            base = self.root / folder
+        seen = set()
+        for base in bases:
             if not base.is_dir():
                 continue
-            for path in base.glob("*.log"):
-                try:
-                    if path.stat().st_mtime + 1 < self.started_at:
-                        continue
-                    destination.mkdir(parents=True, exist_ok=True)
-                    shutil.copy2(path, destination / path.name)
-                    copied += 1
-                except OSError:
-                    pass
+            for pattern in ("*.log", "Logs/*.log", "logs/*.log", "Temp/*.log"):
+                for path in base.glob(pattern):
+                    try:
+                        resolved = path.resolve()
+                        if resolved in seen:
+                            continue
+                        seen.add(resolved)
+                        if path.stat().st_mtime + 1 < self.started_at:
+                            continue
+                        destination.mkdir(parents=True, exist_ok=True)
+                        target = destination / path.name
+                        if target.exists():
+                            target = destination / (base.name + "-" + path.name)
+                        shutil.copy2(path, target)
+                        copied += 1
+                    except OSError:
+                        pass
         return copied
 
     def shutdown(self, graceful=True):
