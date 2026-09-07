@@ -23,6 +23,7 @@ import wx.lib.scrolledpanel as scrolled
 import os
 import sys
 from Utils import UTILS_Fichiers
+from Utils.UTILS_Duration import operation_heures_wx
 from Utils.UTILS_ScenarioReports import ProtegerReportContreCycles
 from Dlg import DLG_Scenario_select_categories
 from Dlg import DLG_Scenario_select_periode
@@ -153,7 +154,7 @@ class Dialog(wx.Dialog):
             _icon = wx.EmptyIcon()
         _icon.CopyFromBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Logo.png"), wx.BITMAP_TYPE_ANY))
         self.SetIcon(_icon)
-        self.ctrl_nom.SetToolTip(wx.ToolTip(_(u"Saisissez ici un nom pour le scénario")))
+        self.ctrl_nom.SetToolTip(wx.ToolTip(_(u"Saisissez ici un nom pour ce scénario")))
         self.ctrl_description.SetToolTip(wx.ToolTip(_(u"Saisissez ici une description claire du scénario (optionnel)")))
         self.ctrl_personne.SetToolTip(wx.ToolTip(_(u"Sélectionnez un individu dans la liste proposée")))
         self.ctrl_date_debut.SetToolTip(wx.ToolTip(_(u"Saisissez la date de début de période")))
@@ -1280,34 +1281,10 @@ class Tableau(gridlib.Grid):
         return dictDonnees
     
     def OperationHeures(self, heureA=None, heureB=None, operation="addition"):
-        # Préparation heure A
-        if heureA == None :
-            totalMinutesA = 0
-        else:
-            signeA = heureA[0]
-            hrA, mnA = heureA[1:].split(":")
-            hrA, mnA = int(float(hrA)), int(float(mnA))
-            totalMinutesA = (hrA*60) + mnA
-            if signeA == "-" : totalMinutesA = -totalMinutesA
-        # Préparation heure B
-        if heureB == None :
-            totalMinutesB = 0
-        else:
-            signeB = heureB[0]
-            hrB, mnB = heureB[1:].split(":")
-            hrB, mnB = int(float(hrB)), int(float(mnB))
-            totalMinutesB = (hrB*60) + mnB
-            if signeB == "-" : totalMinutesB = -totalMinutesB
-        # Opération
-        if operation == "addition" : totalMinutes = totalMinutesA + totalMinutesB
-        if operation == "soustraction" : totalMinutes = totalMinutesA - totalMinutesB
-        # Formatage du résultat : le signe porte sur la durée complète,
-        # y compris lorsque la partie heures vaut zéro.
-        signe = "+" if totalMinutes >= 0 else "-"
-        totalMinutesAbs = abs(totalMinutes)
-        nbreHeures = totalMinutesAbs // 60
-        nbreMinutes = totalMinutesAbs % 60
-        return "%s%d:%02d" % (signe, nbreHeures, nbreMinutes)
+        valeur, resultat = operation_heures_wx(heureA, heureB, operation)
+        if resultat.ok:
+            return valeur
+        raise ValueError(resultat.error.message)
         
         
     @ProtegerReportContreCycles
@@ -1619,34 +1596,10 @@ class GetDictColonnes():
         return dictTotauxLignes
 
     def OperationHeures(self, heureA=None, heureB=None, operation="addition"):
-        # Préparation heure A
-        if heureA == None :
-            totalMinutesA = 0
-        else:
-            signeA = heureA[0]
-            hrA, mnA = heureA[1:].split(":")
-            hrA, mnA = int(hrA), int(mnA)
-            totalMinutesA = (hrA*60) + mnA
-            if signeA == "-" : totalMinutesA = -totalMinutesA
-        # Préparation heure B
-        if heureB == None :
-            totalMinutesB = 0
-        else:
-            signeB = heureB[0]
-            hrB, mnB = heureB[1:].split(":")
-            hrB, mnB = int(hrB), int(mnB)
-            totalMinutesB = (hrB*60) + mnB
-            if signeB == "-" : totalMinutesB = -totalMinutesB
-        # Opération
-        if operation == "addition" : totalMinutes = totalMinutesA + totalMinutesB
-        if operation == "soustraction" : totalMinutes = totalMinutesA - totalMinutesB
-        # Formatage du résultat : le signe porte sur la durée complète,
-        # y compris lorsque la partie heures vaut zéro.
-        signe = "+" if totalMinutes >= 0 else "-"
-        totalMinutesAbs = abs(totalMinutes)
-        nbreHeures = totalMinutesAbs // 60
-        nbreMinutes = totalMinutesAbs % 60
-        return "%s%d:%02d" % (signe, nbreHeures, nbreMinutes)
+        valeur, resultat = operation_heures_wx(heureA, heureB, operation)
+        if resultat.ok:
+            return valeur
+        raise ValueError(resultat.error.message)
         
         
     @ProtegerReportContreCycles
