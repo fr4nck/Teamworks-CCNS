@@ -20,6 +20,7 @@ from Utils import UTILS_Styles
 import FonctionsPerso
 import GestionDB
 import datetime
+from decimal import Decimal, ROUND_HALF_UP
 
 if 'phoenix' in wx.PlatformInfo:
     from wx.adv import DatePickerCtrl, DP_DROPDOWN
@@ -29,6 +30,11 @@ else:
 
 _PHOENIX = 'phoenix' in wx.PlatformInfo
 _CheckboxFallback = object if _PHOENIX else CheckListCtrlMixin
+
+CENTIME = Decimal("0.01")
+
+def _euros_decimal(value):
+    return Decimal(str(value)).quantize(CENTIME, rounding=ROUND_HALF_UP)
 
 
 class SaisieRemboursement(wx.Dialog):
@@ -718,13 +724,13 @@ class ListCtrl_deplacements(wx.ListCtrl, _CheckboxFallback):
         label = self._label_rattachement()
         if label is None:
             return
-        montantRattache = 0
+        montantRattache = Decimal("0.00")
         for index in range(self.GetItemCount()):
-            montant = float(self.GetItem(index, 6).GetText()[:-2])
+            montant = _euros_decimal(self.GetItem(index, 6).GetText()[:-2].strip())
             if self._is_checked(index):
                 montantRattache += montant
 
-        montantNonRattache = self.montantRemboursement - montantRattache
+        montantNonRattache = _euros_decimal(self.montantRemboursement) - montantRattache
         couleur = "on_surface_variant"
         if len(self.donnees) == 0:
             texte = _(u"Aucun déplacement n'est à rattacher pour cette personne.")
