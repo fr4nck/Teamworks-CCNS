@@ -38,6 +38,17 @@ def test_supprimer_un_scenario_reference_ne_peut_pas_creer_de_report_orphelin():
     assert "Souhaitez-vous tout de même le supprimer" not in methode
 
 
+def test_suppression_scenario_est_atomique():
+    source = GESTION_SCENARIOS.read_text(encoding="utf-8")
+    methode = _methode(
+        source,
+        "    def Supprimer(self):",
+        "    def OnBoutonDupliquer(self, event):",
+    )
+    assert "commit=False" in methode
+    assert methode.count("DB.Commit()") <= 1
+
+
 def test_cache_distance_conserve_les_codes_postaux_sur_cinq_caracteres():
     source = SAISIE_DEPLACEMENT.read_text(encoding="utf-8")
     methode = _methode(
@@ -59,6 +70,16 @@ def test_rattachement_remboursement_n_utilise_pas_egalite_exacte_sur_float():
     assert "montantNonRattache == 0" not in source
 
 
+def test_rattachement_remboursement_n_accumule_pas_les_montants_en_float():
+    source = SAISIE_REMBOURSEMENT.read_text(encoding="utf-8")
+    methode = _methode(
+        source,
+        "    def MajLabelRattachement(self):",
+        "    def Importation(self):",
+    )
+    assert "montant = float(" not in methode
+
+
 def test_sauvegarde_scenario_est_une_transaction_unique():
     source = SCENARIO.read_text(encoding="utf-8")
     methode = _methode(source, "    def Sauvegarde(self):", "    def OnBoutonExcel(self, event):")
@@ -75,3 +96,25 @@ def test_duplication_scenario_est_une_transaction_unique():
     )
     assert "commit=False" in methode
     assert methode.count("DB.Commit()") <= 1
+
+
+def test_presence_scenario_utilise_le_contrat_horaire_de_journee():
+    source = SCENARIO.read_text(encoding="utf-8")
+    methode = _methode(
+        source,
+        "    def GetHeuresRealisees(self, IDpersonne=None, date_debut_periode=None, date_fin_periode=None, IDcategorie=None, mode_detail=None):",
+        "    def GetCategoriesUtilisees(self, IDpersonne, date_debut, date_fin):",
+    )
+    assert "duree_presence_wx(" in methode
+    assert 'OperationHeures("+" + heure_fin, "+" + heure_debut, "soustraction")' not in methode
+
+
+def test_presence_scenario_ne_concatene_pas_none_aux_horaires():
+    source = SCENARIO.read_text(encoding="utf-8")
+    methode = _methode(
+        source,
+        "    def GetHeuresRealisees(self, IDpersonne=None, date_debut_periode=None, date_fin_periode=None, IDcategorie=None, mode_detail=None):",
+        "    def GetCategoriesUtilisees(self, IDpersonne, date_debut, date_fin):",
+    )
+    assert '"+" + heure_fin' not in methode
+    assert '"+" + heure_debut' not in methode
