@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+import logging
+
 import wx
 
 from Ctrl import CTRL_Bouton_image
@@ -24,6 +26,9 @@ from Utils import UTILS_Interface, UTILS_Styles, UTILS_Theme
 from teamworks.Dlg.DLG_CCNS_employee_salary_summary import Dialog as EmployeeSalarySummaryDialog
 from teamworks.Dlg.DLG_CCNS_salary_control_detail import Dialog as SalaryControlDetailDialog
 from teamworks.Dlg.DLG_CCNS_salary_control_history import Dialog as SalaryControlHistoryDialog
+
+
+LOGGER = logging.getLogger(__name__)
 
 try:
     from Ctrl import CTRL_Page_contrats
@@ -340,10 +345,11 @@ class Dialog(wx.Dialog):
     def OnLaunch(self, event):
         try:
             rows = audit_contracts(limit=self.ctrl_limit.GetValue())
-        except Exception as exc:
+        except Exception:
+            LOGGER.exception("Échec de l'audit CCNS")
             wx.MessageBox(
-                "Une erreur est survenue pendant l'audit CCNS.\n\n%s" % exc,
-                "Erreur",
+                "L'audit CCNS n'a pas pu être lancé. Vérifiez l'accès aux données puis réessayez.",
+                "Audit indisponible",
                 wx.OK | wx.ICON_ERROR,
                 self,
             )
@@ -414,10 +420,11 @@ class Dialog(wx.Dialog):
             return
         try:
             summary = employee_salary_summary_from_audit_rows(self.rows, salary_row.employee_id)
-        except Exception as exc:
+        except Exception:
+            LOGGER.exception("Échec de construction de la synthèse salariale")
             wx.MessageBox(
-                "Impossible de construire la synthèse salariale depuis l'audit chargé.\n\n%s" % exc,
-                "Erreur",
+                "La synthèse salariale n'a pas pu être construite à partir de l'audit chargé.",
+                "Synthèse indisponible",
                 wx.OK | wx.ICON_ERROR,
                 self,
             )
@@ -457,7 +464,7 @@ class Dialog(wx.Dialog):
 
         if CTRL_Page_contrats is None:
             wx.MessageBox(
-                "Le module d'ouverture de contrat n'est pas disponible dans cet environnement.",
+                "La fiche contrat ne peut pas être ouverte depuis cet écran dans cet environnement.",
                 "Ouverture indisponible",
                 wx.OK | wx.ICON_WARNING,
                 self,
@@ -466,7 +473,6 @@ class Dialog(wx.Dialog):
 
         id_contrat = row["IDcontrat"]
         opened = False
-        errors = []
 
         if hasattr(CTRL_Page_contrats, "Dialog"):
             try:
@@ -474,8 +480,8 @@ class Dialog(wx.Dialog):
                 dlg.ShowModal()
                 dlg.Destroy()
                 opened = True
-            except Exception as exc:
-                errors.append("Dialog(IDcontrat=...): %s" % exc)
+            except Exception:
+                LOGGER.exception("Échec d'ouverture du contrat %s via Dialog", id_contrat)
 
         if not opened and hasattr(CTRL_Page_contrats, "CTRL"):
             try:
@@ -488,15 +494,12 @@ class Dialog(wx.Dialog):
                 dlg.ShowModal()
                 dlg.Destroy()
                 opened = True
-            except Exception as exc:
-                errors.append("CTRL(IDcontrat=...): %s" % exc)
+            except Exception:
+                LOGGER.exception("Échec d'ouverture du contrat %s via CTRL", id_contrat)
 
         if not opened:
-            message = "Impossible d'ouvrir directement la fiche contrat %s." % id_contrat
-            if errors:
-                message += "\n\nTentatives effectuées :\n- " + "\n- ".join(errors)
             wx.MessageBox(
-                message,
+                "La fiche contrat sélectionnée n'a pas pu être ouverte. Réessayez ou ouvrez-la depuis la gestion des contrats.",
                 "Ouverture impossible",
                 wx.OK | wx.ICON_WARNING,
                 self,
@@ -536,18 +539,19 @@ class Dialog(wx.Dialog):
         if wx.MessageBox(message, "Confirmation", wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION, self) != wx.YES:
             return
         try:
-            snapshot = save_salary_control_snapshot_from_audit_rows(self.rows)
-        except Exception as exc:
+            save_salary_control_snapshot_from_audit_rows(self.rows)
+        except Exception:
+            LOGGER.exception("Échec d'enregistrement de l'historique du contrôle salarial")
             wx.MessageBox(
-                "Impossible d'enregistrer l'historique du contrôle salarial.\n\n%s" % exc,
-                "Erreur",
+                "Le contrôle salarial n'a pas pu être enregistré. Vérifiez l'accès aux données puis réessayez.",
+                "Enregistrement impossible",
                 wx.OK | wx.ICON_ERROR,
                 self,
             )
             return
         self._last_saved_snapshot_signature = signature
         wx.MessageBox(
-            "Contrôle salarial enregistré.\n\nSnapshot : %s" % snapshot.snapshot_id,
+            "Contrôle salarial enregistré dans l'historique.",
             "Enregistrement terminé",
             wx.OK | wx.ICON_INFORMATION,
             self,
@@ -580,10 +584,11 @@ class Dialog(wx.Dialog):
         try:
             with open(path, "w", newline="", encoding="utf-8-sig") as f:
                 write_audit_csv(f, self.filtered_rows)
-        except Exception as exc:
+        except Exception:
+            LOGGER.exception("Échec d'export CSV de l'audit CCNS")
             wx.MessageBox(
-                "Impossible d'exporter le fichier CSV.\n\n%s" % exc,
-                "Erreur",
+                "Le fichier CSV n'a pas pu être exporté. Vérifiez le dossier de destination puis réessayez.",
+                "Export impossible",
                 wx.OK | wx.ICON_ERROR,
                 self,
             )
