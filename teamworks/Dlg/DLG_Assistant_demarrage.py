@@ -8,6 +8,7 @@
 
 import Chemins
 from Utils.UTILS_Traduction import _
+from Utils import UTILS_Styles
 import wx
 from Ctrl import CTRL_Bouton_image
 from wx.lib import platebtn
@@ -32,7 +33,7 @@ class MyPlateBtn(platebtn.PlateButton):
 
 class Dialog(wx.Dialog):
     def __init__(self, parent, checkAffichage=False, afficherDernierFichier=True, nomDernierFichier=""):
-        wx.Dialog.__init__(self, parent, -1, title=_(u"Assistant de démarrage"), size=(730, -1))
+        wx.Dialog.__init__(self, parent, -1, title=_(u"Assistant de démarrage"))
         self.parent = parent
         self.choix = None
 
@@ -112,9 +113,8 @@ class Dialog(wx.Dialog):
         grid_sizer_base.AddGrowableCol(0)
         grid_sizer_base.Add(grid_sizer_boutons, 1, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, 10)
         self.SetSizer(grid_sizer_base)
-        grid_sizer_base.Fit(self)
+        UTILS_Styles.ApplyWindowProfile(self, "fit")
         self.Layout()
-        self.Centre()
 
     def OnBoutonAide(self, event):
         from Utils import UTILS_Aide
