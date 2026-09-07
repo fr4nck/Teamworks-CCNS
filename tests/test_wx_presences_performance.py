@@ -12,6 +12,13 @@ def _source(path):
     return path.read_text(encoding="utf-8")
 
 
+def _charger_diagnostic(nom):
+    spec = importlib.util.spec_from_file_location(nom, DIAGNOSTIC)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def test_fichiers_instrumentation_presences_compilent():
     for path in (PRESENCES, DIAGNOSTIC):
         compile(_source(path), str(path), "exec")
@@ -39,9 +46,7 @@ def test_majpanel_presences_est_decoupe_en_actions_mesurables():
 
 
 def test_signature_sql_ne_conserve_ni_valeurs_ni_requete_complete():
-    spec = importlib.util.spec_from_file_location("diag_presences_test", DIAGNOSTIC)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    module = _charger_diagnostic("diag_presences_test")
 
     signature = module._signature_requete(
         "SELECT nom FROM presences WHERE IDpersonne=123 AND nom='SECRET'"
@@ -53,9 +58,7 @@ def test_signature_sql_ne_conserve_ni_valeurs_ni_requete_complete():
 
 
 def test_journal_perf_persiste_uniquement_les_metriques_agregees(monkeypatch, tmp_path):
-    spec = importlib.util.spec_from_file_location("diag_presences_log_test", DIAGNOSTIC)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    module = _charger_diagnostic("diag_presences_log_test")
 
     journal = tmp_path / "performance.jsonl"
     monkeypatch.setenv("TEAMWORKS_PERF_DIAG", "1")
@@ -89,3 +92,25 @@ def test_journal_perf_persiste_uniquement_les_metriques_agregees(monkeypatch, tm
     assert "IDpersonne" not in donnees["details"]
     assert "texte" not in donnees["details"]
     assert "SECRET" not in ligne
+
+
+def test_journal_ajoute_les_compteurs_reseau_uniquement_quand_fournis(monkeypatch, tmp_path):
+    module = _charger_diagnostic("diag_presences_connexions_test")
+
+    journal = tmp_path / "performance-connexions.jsonl"
+    monkeypatch.setenv("TEAMWORKS_PERF_DIAG", "1")
+    monkeypatch.setenv("TEAMWORKS_PERF_LOG", str(journal))
+    module.reinitialiser_mesures()
+
+    action = module.demarrer_action("wx.presences.majpanel")
+    action["details"].update({
+        "connexions_physiques": 2,
+        "connexions_reutilisees": 44,
+        "IDpersonne": 999,
+    })
+    module.terminer_action(action)
+
+    donnees = json.loads(journal.read_text(encoding="utf-8").strip())
+    assert donnees["details"]["connexions_physiques"] == 2
+    assert donnees["details"]["connexions_reutilisees"] == 44
+    assert "IDpersonne" not in donnees["details"]
