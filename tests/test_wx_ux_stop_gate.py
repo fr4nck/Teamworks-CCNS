@@ -16,6 +16,10 @@ EXPANDING_DATA_CONTROL = re.compile(
     r"\.Add\(\s*self\.\w*(?:list|liste|tree|grid|check)\w*\s*,\s*1\s*,[^\n]*wx\.EXPAND",
     re.IGNORECASE,
 )
+EXPANDING_CUSTOM_CONTROL = re.compile(
+    r"\.Add\(\s*self\.(?!\w*(?:bouton|button|titre|title|label|section)\b)\w+\s*,\s*1\s*,[^\n]*wx\.EXPAND",
+    re.IGNORECASE,
+)
 
 
 def _class_block(record):
@@ -31,7 +35,11 @@ def _is_real_finding(record, finding):
     code = finding["code"]
 
     if code == "resizable-without-expandable-content":
-        if EXPANDING_CHILD_PANEL.search(block) or EXPANDING_DATA_CONTROL.search(block):
+        if (
+            EXPANDING_CHILD_PANEL.search(block)
+            or EXPANDING_DATA_CONTROL.search(block)
+            or EXPANDING_CUSTOM_CONTROL.search(block)
+        ):
             return False
 
     if code == "dynamic-content-without-refit":
