@@ -33,6 +33,10 @@ class Dialog(wx.Dialog):
         self.list_ctrl.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.OnOpenSalaryDetail)
         self.__do_layout()
         UTILS_Styles.ApplyWindowProfile(self, "wide")
+        if self.summary.rows:
+            self.list_ctrl.SetFocus()
+        else:
+            self.button_close.SetFocus()
 
     def _init_columns(self):
         for index, (label, width) in enumerate((("Contrat", 260), ("Classification", 110), ("Rémunération", 130), ("Minimum", 130), ("Source", 110), ("Écart", 110), ("Statut", 130))):

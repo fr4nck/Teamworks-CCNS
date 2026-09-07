@@ -25,6 +25,7 @@ class Dialog(wx.Dialog):
         self.button_close = CTRL_Bouton_image.CTRL(self, id=wx.ID_CANCEL, texte="Fermer", role="quiet")
         self.__do_layout()
         UTILS_Styles.ApplyWindowProfile(self, "standard")
+        self.button_close.SetFocus()
 
     @classmethod
     def from_audit_row(cls, parent, row):
