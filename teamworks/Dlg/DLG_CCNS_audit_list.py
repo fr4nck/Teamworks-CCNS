@@ -19,7 +19,7 @@ from teamworks.CcnsCore.audit_sorting import (
     sort_audit_rows_by_salary,
 )
 from teamworks.Ol.OL_CCNS_audit import ListView
-from Utils import UTILS_Interface, UTILS_Theme
+from Utils import UTILS_Interface, UTILS_Styles, UTILS_Theme
 
 from teamworks.Dlg.DLG_CCNS_employee_salary_summary import Dialog as EmployeeSalarySummaryDialog
 from teamworks.Dlg.DLG_CCNS_salary_control_detail import Dialog as SalaryControlDetailDialog
@@ -95,6 +95,16 @@ class Dialog(wx.Dialog):
         self.ctrl_salary_sort.SetSelection(0)
         self.ctrl_sort_direction = wx.ComboBox(self.box_filters, -1, choices=["Croissant", "Décroissant"], style=wx.CB_READONLY)
         self.ctrl_sort_direction.SetSelection(0)
+
+        UTILS_Styles.ApplyFieldRole(self.ctrl_group, UTILS_Styles.FIELD_CODE)
+        UTILS_Styles.ApplyFieldRole(self.ctrl_type, UTILS_Styles.FIELD_NAME)
+        UTILS_Styles.ApplyFieldRole(self.ctrl_min_salary, UTILS_Styles.FIELD_MONEY)
+        UTILS_Styles.ApplyFieldRole(self.ctrl_max_salary, UTILS_Styles.FIELD_MONEY)
+        UTILS_Styles.ApplyFieldRole(self.ctrl_salary_status, UTILS_Styles.FIELD_NAME)
+        UTILS_Styles.ApplyFieldRole(self.ctrl_minimum_source, UTILS_Styles.FIELD_NAME)
+        UTILS_Styles.ApplyFieldRole(self.ctrl_salary_sort, UTILS_Styles.FIELD_NAME)
+        UTILS_Styles.ApplyFieldRole(self.ctrl_sort_direction, UTILS_Styles.FIELD_NAME)
+
         self.button_apply_filters = CTRL_Bouton_image.CTRL(self.box_filters, texte="Appliquer", role="primary")
         self.button_reset_filters = CTRL_Bouton_image.CTRL(self.box_filters, texte="Réinitialiser", role="quiet")
 
@@ -132,7 +142,7 @@ class Dialog(wx.Dialog):
         self.legend = wx.StaticText(
             self,
             -1,
-            "Tri : individu d'abord, puis gravité. Légende : rouge = bloquant, jaune = à revoir, vert = OK",
+            "Gravité affichée en texte et en couleur : Bloquant (rouge), À revoir (jaune), OK (vert).",
         )
         self.legend.SetForegroundColour(self.palette["on_surface_variant"])
         self.listview = ListView(self, donnees=[])
@@ -154,8 +164,23 @@ class Dialog(wx.Dialog):
         self.listview.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.OnOpenSalaryDetail)
 
         self.__do_layout()
-        self.SetSize((1280, 820))
-        self.SetMinSize((980, 700))
+        self._apply_workspace_profile()
+
+    def _apply_workspace_profile(self):
+        UTILS_Styles.ApplyWindowProfile(self, "workspace", centre=False)
+        try:
+            client_area = wx.GetClientDisplayRect()
+        except Exception:
+            self.CentreOnScreen()
+            return
+        margin = UTILS_Styles.Scale(16)
+        max_width = max(1, client_area.GetWidth() - (2 * margin))
+        max_height = max(1, client_area.GetHeight() - (2 * margin))
+        current_size = self.GetSize()
+        target_width = min(current_size.GetWidth(), max_width)
+        target_height = min(current_size.GetHeight(), max_height)
+        self.SetMinSize((min(UTILS_Styles.Scale(960), target_width), min(UTILS_Styles.Scale(640), target_height)))
+        self.SetSize((target_width, target_height))
         self.CentreOnScreen()
 
     def __do_layout(self):
@@ -172,22 +197,22 @@ class Dialog(wx.Dialog):
         filter_grid = wx.FlexGridSizer(cols=6, vgap=self.ui["space_s"], hgap=self.ui["space_s"])
         filter_grid.Add(self.checkbox_anomalies_only, 0, wx.ALIGN_CENTER_VERTICAL)
         filter_grid.Add(self.label_group, 0, wx.ALIGN_CENTER_VERTICAL)
-        filter_grid.Add(self.ctrl_group, 0, wx.EXPAND)
+        filter_grid.Add(self.ctrl_group, 0, UTILS_Styles.GetFieldSizerFlag(UTILS_Styles.FIELD_CODE))
         filter_grid.Add(self.label_type, 0, wx.ALIGN_CENTER_VERTICAL)
-        filter_grid.Add(self.ctrl_type, 0, wx.EXPAND)
+        filter_grid.Add(self.ctrl_type, 0, UTILS_Styles.GetFieldSizerFlag(UTILS_Styles.FIELD_NAME))
         filter_grid.AddSpacer(1)
         filter_grid.Add(self.label_min_salary, 0, wx.ALIGN_CENTER_VERTICAL)
-        filter_grid.Add(self.ctrl_min_salary, 0, wx.EXPAND)
+        filter_grid.Add(self.ctrl_min_salary, 0, UTILS_Styles.GetFieldSizerFlag(UTILS_Styles.FIELD_MONEY))
         filter_grid.Add(self.label_max_salary, 0, wx.ALIGN_CENTER_VERTICAL)
-        filter_grid.Add(self.ctrl_max_salary, 0, wx.EXPAND)
+        filter_grid.Add(self.ctrl_max_salary, 0, UTILS_Styles.GetFieldSizerFlag(UTILS_Styles.FIELD_MONEY))
         filter_grid.Add(self.label_salary_status, 0, wx.ALIGN_CENTER_VERTICAL)
-        filter_grid.Add(self.ctrl_salary_status, 0, wx.EXPAND)
+        filter_grid.Add(self.ctrl_salary_status, 0, UTILS_Styles.GetFieldSizerFlag(UTILS_Styles.FIELD_NAME))
         filter_grid.Add(self.label_minimum_source, 0, wx.ALIGN_CENTER_VERTICAL)
-        filter_grid.Add(self.ctrl_minimum_source, 0, wx.EXPAND)
+        filter_grid.Add(self.ctrl_minimum_source, 0, UTILS_Styles.GetFieldSizerFlag(UTILS_Styles.FIELD_NAME))
         filter_grid.Add(self.checkbox_positive_shortfall, 0, wx.ALIGN_CENTER_VERTICAL)
         filter_grid.Add(self.label_salary_sort, 0, wx.ALIGN_CENTER_VERTICAL)
-        filter_grid.Add(self.ctrl_salary_sort, 0, wx.EXPAND)
-        filter_grid.Add(self.ctrl_sort_direction, 0, wx.EXPAND)
+        filter_grid.Add(self.ctrl_salary_sort, 0, UTILS_Styles.GetFieldSizerFlag(UTILS_Styles.FIELD_NAME))
+        filter_grid.Add(self.ctrl_sort_direction, 0, UTILS_Styles.GetFieldSizerFlag(UTILS_Styles.FIELD_NAME))
         sizer_filters.Add(filter_grid, 0, wx.ALL | wx.EXPAND, self.ui["space_m"])
         filter_buttons = wx.BoxSizer(wx.HORIZONTAL)
         filter_buttons.AddStretchSpacer(1)
@@ -459,8 +484,7 @@ class Dialog(wx.Dialog):
                 sizer = wx.BoxSizer(wx.VERTICAL)
                 sizer.Add(ctrl, 1, wx.EXPAND | wx.ALL, 8)
                 dlg.SetSizer(sizer)
-                dlg.SetSize((980, 720))
-                dlg.CentreOnScreen()
+                UTILS_Styles.ApplyWindowProfile(dlg, "wide")
                 dlg.ShowModal()
                 dlg.Destroy()
                 opened = True
@@ -537,7 +561,6 @@ class Dialog(wx.Dialog):
     def OnExport(self, event):
         if not self.filtered_rows:
             return
-
         wildcard = "Fichiers CSV (*.csv)|*.csv"
         dlg = wx.FileDialog(
             self,
