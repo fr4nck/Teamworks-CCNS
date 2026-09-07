@@ -59,3 +59,19 @@ def test_reimbursement_decimal_normalizes_cents():
     euros = ns['_euros_decimal']
     assert euros('0.1') + euros('0.2') == Decimal('0.30')
     assert euros('67.65000000000001') == Decimal('67.65')
+
+
+def test_reimbursement_importation_uses_same_decimal_money_engine():
+    source = _function_source(REMBOURSEMENT, 'Importation', 'ListCtrl_deplacements')
+    assert 'float(distance) * float(tarif_km)' not in source
+    assert '_montant_deplacement_decimal(distance, tarif_km)' in source
+    assert 'self.montantRattache = Decimal("0.00")' in source
+
+
+def test_reimbursement_line_money_rounding_is_deterministic():
+    ns = {'Decimal': Decimal}
+    helper = _function_source(REMBOURSEMENT, '_montant_deplacement_decimal')
+    exec('CENTIME = Decimal("0.01")\nfrom decimal import ROUND_HALF_UP\n' + helper, ns)
+    calc = ns['_montant_deplacement_decimal']
+    assert calc('3', '0.335') == Decimal('1.01')
+    assert calc('123', '0.55') == Decimal('67.65')

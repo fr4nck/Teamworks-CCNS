@@ -36,6 +36,9 @@ CENTIME = Decimal("0.01")
 def _euros_decimal(value):
     return Decimal(str(value)).quantize(CENTIME, rounding=ROUND_HALF_UP)
 
+def _montant_deplacement_decimal(distance, tarif_km):
+    return (Decimal(str(distance)) * Decimal(str(tarif_km))).quantize(CENTIME, rounding=ROUND_HALF_UP)
+
 
 class SaisieRemboursement(wx.Dialog):
     """Saisie d'un remboursement pour les frais de déplacement."""
@@ -762,14 +765,14 @@ class ListCtrl_deplacements(wx.ListCtrl, _CheckboxFallback):
         DB.Close()
         self.nbreLignes = len(listeDonnees)
         self.donnees = []
-        self.montantRattache = 0
-        self.montantNonRattache = 0
+        self.montantRattache = Decimal("0.00")
+        self.montantNonRattache = Decimal("0.00")
 
         for IDdeplacement, date, objet, ville_depart, ville_arrivee, distance, aller_retour, tarif_km, IDremboursement in listeDonnees:
             dateTmp = str(date[8:10]) + "/" + str(date[5:7]) + "/" + str(date[0:4])
             trajet = ville_depart + (" <--> " if aller_retour == "True" else " -> ") + ville_arrivee
             dist = str(distance) + _(u" Km")
-            montant = float(distance) * float(tarif_km)
+            montant = _montant_deplacement_decimal(distance, tarif_km)
             montantStr = u"%.2f €" % montant
             tarif_str = str(tarif_km) + _(u" €/km")
             if IDremboursement not in (None, 0, ""):
