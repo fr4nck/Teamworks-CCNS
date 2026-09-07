@@ -11,7 +11,7 @@ from application.presentation import (
     ContractSalaryControlEmployeeSummaryViewModel,
 )
 from teamworks.Dlg.DLG_CCNS_salary_control_detail import Dialog as SalaryControlDetailDialog
-from Utils import UTILS_Interface
+from Utils import UTILS_Interface, UTILS_Styles
 
 
 class Dialog(wx.Dialog):
@@ -32,8 +32,7 @@ class Dialog(wx.Dialog):
         self.list_ctrl.Bind(wx.EVT_LIST_ITEM_DESELECTED, self.OnSelectionChanged)
         self.list_ctrl.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.OnOpenSalaryDetail)
         self.__do_layout()
-        self.SetSize((1100, 650))
-        self.CentreOnParent()
+        UTILS_Styles.ApplyWindowProfile(self, "wide")
 
     def _init_columns(self):
         for index, (label, width) in enumerate((("Contrat", 260), ("Classification", 110), ("Rémunération", 130), ("Minimum", 130), ("Source", 110), ("Écart", 110), ("Statut", 130))):
