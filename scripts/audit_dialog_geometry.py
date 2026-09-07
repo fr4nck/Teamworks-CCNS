@@ -18,6 +18,7 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 DIALOG_CLASS = re.compile(r"^class\s+(?P<name>\w+)\s*\((?P<bases>[^\n]*wx\.Dialog[^\n]*)\)\s*:", re.MULTILINE)
 NEXT_CLASS = re.compile(r"^class\s+\w+\s*\(", re.MULTILINE)
 LITERAL_SIZE = re.compile(r"(?:\bsize\s*=|Set(?:Min|Max)?Size\s*\()\s*\(?\s*\d+\s*,\s*\d+")
+STRETCH_SIZER = re.compile(r"(?P<sizer>\w+)\.AddStretchSpacer\s*\(")
 
 EXPANDABLE_MARKERS = (
     "wx.ListCtrl", "ListCtrl", "wx.TreeCtrl", "TreeCtrl", "wx.Grid", "grid.Grid",
@@ -67,6 +68,25 @@ def _has_any(block, markers):
     return any(marker in block for marker in markers)
 
 
+def _stretch_is_action_alignment(block):
+    """Reconnaît un stretch utilisé pour aligner des boutons dans une rangée d'actions.
+
+    Un ``AddStretchSpacer`` n'est pas en soi un signe de dialogue étirable : il est
+    parfaitement légitime entre des boutons pour pousser les actions secondaires
+    vers la droite. On ne neutralise l'alerte que si le même sizer ajoute aussi un
+    contrôle dont le nom exprime clairement un bouton/action.
+    """
+    for match in STRETCH_SIZER.finditer(block):
+        sizer = re.escape(match.group("sizer"))
+        action_add = re.compile(
+            r"\b%s\.Add\(\s*(?:self\.)?(?:button|bouton|btn|action)\w*" % sizer,
+            re.IGNORECASE,
+        )
+        if action_add.search(block):
+            return True
+    return False
+
+
 def classify(block):
     resizable = "wx.RESIZE_BORDER" in block
     expandable = _has_any(block, EXPANDABLE_MARKERS)
@@ -78,11 +98,12 @@ def classify(block):
     literal_size = bool(LITERAL_SIZE.search(block))
     window_profile = "ApplyWindowProfile(" in block
     stretch = "AddStretchSpacer(" in block
+    action_stretch = _stretch_is_action_alignment(block)
 
     findings = []
     if resizable and not expandable:
         findings.append(("high", "resizable-without-expandable-content", "retirer RESIZE_BORDER ou justifier un contenu expansible"))
-    if stretch and not expandable:
+    if stretch and not expandable and not action_stretch:
         findings.append(("high", "stretch-without-expandable-content", "supprimer l'espace élastique qui ne sert aucun contrôle"))
     if literal_size and not window_profile:
         findings.append(("medium", "literal-window-size", "remplacer la taille arbitraire par le profil fit ou un profil sémantique"))
@@ -112,6 +133,7 @@ def classify(block):
         "literal_size": literal_size,
         "window_profile": window_profile,
         "stretch_spacer": stretch,
+        "action_stretch": action_stretch,
         "findings": [
             {"severity": severity, "code": code, "recommendation": recommendation}
             for severity, code, recommendation in findings
