@@ -78,6 +78,10 @@ class _ScopeConnexions(object):
         self.connexions.pop(id(connexion), None)
         try:
             connexion.close()
+        except Exception:
+            # Même contrat que GestionDB.DB.Close() : une erreur de fermeture
+            # ne doit jamais faire échouer l'action métier en cours.
+            pass
         finally:
             self.stats["fermetures_physiques"] += 1
 
