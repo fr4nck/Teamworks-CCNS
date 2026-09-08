@@ -539,7 +539,12 @@ class Calendrier(wx.ScrolledWindow):
         dc.DrawText(texte, int(xMois+(largMois/2)-int(largTexte/2)), int(yMois+(hautHeader/2)-int(hautTexte/2)))
         # Dessin de la ligne
         dc.SetPen(wx.Pen((210, 210, 210), 1))
-        dc.DrawLine(xMois+2, yMois+hautHeader-2, xMois+largMois-2, yMois+hautHeader-2)
+        dc.DrawLine(
+            wx_int(xMois + 2),
+            wx_int(yMois + hautHeader - 2),
+            wx_int(xMois + largMois - 2),
+            wx_int(yMois + hautHeader - 2),
+        )
         
         return hautMois-hautHeader, yMois+hautHeader
 

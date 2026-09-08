@@ -223,10 +223,10 @@ class ListCtrl_champs(wx.ListCtrl):
         menuPop.Destroy()
     
     def Menu_Ajouter(self, event):
-        self.parent.OnBoutonAjouter(None)
+        self.parent.OnBoutonChamps(None)
 
     def Menu_Modifier(self, event):
-        self.parent.OnBoutonModifier(None)
+        self.parent.OnBoutonChamps(None)
 
     def Menu_Supprimer(self, event):
-        self.parent.OnBoutonSupprimer(None)
+        self.parent.OnBoutonChamps(None)
