@@ -98,7 +98,14 @@ CORE.Toolbook = Toolbook
 MyFrame = CORE.MyFrame
 MyApp = CORE.MyApp
 SaisiePassword = CORE.SaisiePassword
-Redirect = CORE.Redirect
+
+
+class Redirect(CORE.Redirect):
+    """Redirection stdout compatible avec le protocole des flux Python."""
+
+    def flush(self):
+        if not self.filename.closed:
+            self.filename.flush()
 
 
 def _detruire_fenetres_smoke(app):
