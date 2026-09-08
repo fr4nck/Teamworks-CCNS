@@ -68,26 +68,37 @@ def _ccns_group_label(group_code, date_debut):
     return _as_text(choice.label if choice is not None else code)
 
 
-def classification_for_contract(data):
-    """Corrige uniquement les fallbacks modernes introduits pour les anciens modèles.
+def classification_for_contract(data, has_legacy_classification=False):
+    """Résout la balise historique depuis les données réellement sélectionnées.
 
-    ``Importation_contrat`` a déjà la vraie classification historique lorsqu'un
-    ``IDclassification`` existe. Le fallback RC1 est reconnaissable car il copie
-    exactement ``GROUPECCNS`` ou ``QUALIFICATIONCEE`` dans ``CLASSIFICATION``.
-    On remplace donc seulement ces copies : groupe CCNS -> libellé de la grille ;
-    qualification CEE -> chaîne vide, car ce sont deux notions métier distinctes.
+    Une classification historique enregistrée reste prioritaire. Pour un contrat
+    CCNS moderne sans ``IDclassification``, la source métier est ``ccns_group``.
+    La qualification CEE reste distincte et n'est jamais transformée en
+    classification.
     """
     data = data or {}
     current = _as_text(data.get("CLASSIFICATION", ""))
+    if has_legacy_classification:
+        return current
     convention = _as_text(data.get("CONVENTION", "")).strip().upper()
     group = _as_text(data.get("GROUPECCNS", "")).strip().upper()
-    qualification = _as_text(data.get("QUALIFICATIONCEE", ""))
-
-    if convention == "CCNS" and group and (not current or current.strip().upper() == group):
+    if convention == "CCNS" and group:
         return _ccns_group_label(group, data.get("DATEDEBUT"))
-    if qualification and current == qualification:
-        return ""
-    return current
+    return ""
+
+
+def _has_legacy_classification(module, contract_id):
+    if contract_id in (None, ""):
+        return False
+    DB = module.GestionDB.DB()
+    try:
+        DB.ExecuterReq(
+            "SELECT IDclassification FROM contrats WHERE IDcontrat=%d;" % int(contract_id)
+        )
+        rows = DB.ResultatReq()
+    finally:
+        DB.Close()
+    return bool(rows and rows[0][0] not in (None, ""))
 
 
 def install(module):
@@ -103,7 +114,10 @@ def install(module):
         keywords, data = original_import_contract(IDcontrat=IDcontrat)
         if not data:
             return keywords, data
-        data["CLASSIFICATION"] = classification_for_contract(data)
+        data["CLASSIFICATION"] = classification_for_contract(
+            data,
+            has_legacy_classification=_has_legacy_classification(module, IDcontrat),
+        )
         return keywords, data
 
     module.Importation_contrat = import_contract
