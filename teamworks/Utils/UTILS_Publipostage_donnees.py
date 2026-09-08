@@ -589,6 +589,14 @@ def Importation_contrat(IDcontrat=None):
     if gross_monthly_salary not in (None, ""):
         dictDonnees["SALAIREBRUTMENSUEL"] = u"%.2f €" % float(gross_monthly_salary)
 
+    # Compatibilité avec les modèles de contrats historiques.
+    dictDonnees["BRUTMENS"] = dictDonnees["SALAIREBRUTMENSUEL"]
+    if not dictDonnees["CLASSIFICATION"]:
+        if dictDonnees["GROUPECCNS"]:
+            dictDonnees["CLASSIFICATION"] = dictDonnees["GROUPECCNS"]
+        elif dictDonnees["QUALIFICATIONCEE"]:
+            dictDonnees["CLASSIFICATION"] = dictDonnees["QUALIFICATIONCEE"]
+
     dictDonnees["MINIMUMCCNS"] = ""
     dictDonnees["MINIMUMSMIC"] = ""
     dictDonnees["MINIMUMRETENU"] = ""
@@ -635,7 +643,7 @@ def Importation_contrat(IDcontrat=None):
 
     listeMotscles = [
         "DATEDEBUT", "DATEFIN", "CLASSIFICATION", "TYPECONTRAT", "VALEURPOINT", "ESSAI",
-        "CONVENTION", "GROUPECCNS", "QUALIFICATIONCEE", "DUREEHEBDO", "SALAIREBRUTMENSUEL",
+        "CONVENTION", "GROUPECCNS", "QUALIFICATIONCEE", "DUREEHEBDO", "SALAIREBRUTMENSUEL", "BRUTMENS",
         "MINIMUMCCNS", "MINIMUMSMIC", "MINIMUMRETENU", "CONFORMITEREMUNERATION",
         "BAREMECEE", "MINIMUMCEE",
     ]

@@ -1,6 +1,6 @@
 # Teamworks — suivi Python 3 / wxPython Phoenix
 
-**Mise à jour : 28 août 2026**
+**Mise à jour : 8 septembre 2026**
 
 ## Objectif
 
@@ -51,6 +51,30 @@ Le build manuel du 28 août a confirmé une anomalie de packaging Python 3 :
 avec un `--specpath` distinct, PyInstaller résolvait le chemin relatif de
 l'icône depuis le dossier du fichier `.spec`. Le workflow utilise désormais le
 chemin absolu résolu avant l'appel à PyInstaller, avec un test de contrat dédié.
+
+## Recette Windows 0.9.2 RC1 — correctifs techniques préparant RC2
+
+La recette réelle du 8 septembre 2026 a révélé deux incompatibilités techniques
+qui n'étaient pas correctement couvertes par les smokes automatisés :
+
+- le publipostage utilisait encore `Thread.isAlive()`, supprimé en Python 3
+  moderne, derrière un `except` silencieux. Le garde pouvait donc laisser partir
+  un second worker alors que le premier possédait encore des proxies COM. Le
+  flux manipulait en outre des contrôles wx depuis ce worker et pouvait fermer
+  Word/Writer au milieu d'une opération. Le correctif RC2 impose un worker
+  propriétaire unique de l'automatisation, une annulation coopérative, des
+  mises à jour UI via `wx.CallAfter` et une libération COM unique dans le thread
+  propriétaire ; la disparition du crash natif reste à confirmer en recette
+  Windows réelle avec Word/Writer ;
+- la saisie des champs de publipostage transmettait directement des colonnes SQL
+  nullables à `wx.TextCtrl.SetValue()`. Phoenix exige une chaîne : les valeurs
+  `NULL` sont désormais normalisées avant l'appel wx et couvertes par un test de
+  non-régression.
+
+Qualification automatisée dédiée au commit applicatif RC2 : compilation ciblée,
+**11 tests passés / 2 ignorés sous Linux** et **13 tests passés sous Windows
+Server 2022 avec wxPython 4.3.1**. Cette qualification ne lance aucun packaging
+et ne remplace pas la recette Word/COM réelle.
 
 ## Références
 

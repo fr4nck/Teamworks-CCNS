@@ -143,6 +143,10 @@ class Dialog(wx.Dialog):
         if not resultats:
             return
         IDchamp, categorie, nom, mot_cle, defaut = resultats[0]
+        # wx.TextCtrl.SetValue n'accepte pas None : normalise les champs SQL optionnels.
+        nom = "" if nom is None else str(nom)
+        defaut = "" if defaut is None else str(defaut)
+        mot_cle = "" if mot_cle is None else str(mot_cle)
         # Place les valeurs dans les controles
         self.text_nom.SetValue(nom)
         self.text_defaut.SetValue(defaut)
