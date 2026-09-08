@@ -12,15 +12,17 @@ def __getattr__(name):
         globals()[name] = module
         return module
 
-    if name == "DLG_Fiche_individuelle":
-        module = importlib.import_module("%s.DLG_Fiche_individuelle" % __name__)
-        lazy = importlib.import_module("%s.DLG_Fiche_individuelle_lazy" % __name__)
-        problems = importlib.import_module("%s.DLG_Fiche_individuelle_problems" % __name__)
-        refresh = importlib.import_module("%s.DLG_Fiche_individuelle_refresh" % __name__)
-        lazy.install(module)
-        problems.install(module)
-        refresh.install(module)
-        globals()[name] = module
-        return module
+    # Conserver la forme historique attendue par le garde-fou de lazy loading :
+    # toute autre demande que la fiche individuelle échoue sans importer sa pile.
+    if name != "DLG_Fiche_individuelle":
+        raise AttributeError(name)
 
-    raise AttributeError(name)
+    module = importlib.import_module("%s.DLG_Fiche_individuelle" % __name__)
+    lazy = importlib.import_module("%s.DLG_Fiche_individuelle_lazy" % __name__)
+    problems = importlib.import_module("%s.DLG_Fiche_individuelle_problems" % __name__)
+    refresh = importlib.import_module("%s.DLG_Fiche_individuelle_refresh" % __name__)
+    lazy.install(module)
+    problems.install(module)
+    refresh.install(module)
+    globals()[name] = module
+    return module

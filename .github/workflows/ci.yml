@@ -5,6 +5,12 @@ on:
     branches:
       - release/vanilla-wx-0.9.2-rc2
   workflow_dispatch:
+    inputs:
+      build_windows:
+        description: Construire la candidate Windows RC2
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
   group: vanilla-wx-0.9.2-rc2-${{ github.ref }}
@@ -196,7 +202,17 @@ jobs:
     needs:
       - linux-tests
       - windows-tests
-    if: ${{ needs.linux-tests.result == 'success' && needs.windows-tests.result == 'success' }}
+    if: >-
+      ${{
+        needs.linux-tests.result == 'success'
+        && needs.windows-tests.result == 'success'
+        && (
+          startsWith(github.ref, 'refs/tags/v')
+          || (github.event_name == 'workflow_dispatch' && inputs.build_windows)
+          || (github.ref == 'refs/heads/master' && contains(github.event.head_commit.message, '[windows]'))
+          || (github.ref == 'refs/heads/release/vanilla-wx-0.9.2-rc2' && contains(github.event.head_commit.message, '[rc2-build]'))
+        )
+      }}
     runs-on: windows-2022
     timeout-minutes: 60
     permissions:
