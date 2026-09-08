@@ -54,6 +54,14 @@ def DateFrEng(textDate):
     return str(textDate[6:10]) + "/" + str(textDate[3:5]) + "/" + str(textDate[:2])
 
 
+def _database_ready(DB):
+    return (
+        getattr(DB, "echec", 1) == 0
+        and getattr(DB, "cursor", None) is not None
+        and getattr(DB, "connexion", None) is not None
+    )
+
+
 def _echelle_interface():
     try:
         valeur = UTILS_Customize.GetValeur(
@@ -230,8 +238,30 @@ class Panel_Contrats(wx.Panel):
         etatDue = "" if etatDue == "Oui" else "Oui"
 
         DB = GestionDB.DB()
-        DB.ReqMAJ("contrats", [("due", etatDue)], "IDcontrat", IDcontrat)
-        DB.Commit()
+        if not _database_ready(DB):
+            DB.Close()
+            wx.MessageBox(
+                _(u"La base de données est indisponible. L'état DPAE/DUE n'a pas été modifié."),
+                _(u"DPAE/DUE"), wx.OK | wx.ICON_ERROR, parent=self,
+            )
+            return
+
+        placeholder = "%s" if DB.isNetwork else "?"
+        try:
+            req = "UPDATE contrats SET due=%s WHERE IDcontrat=%s" % (placeholder, placeholder)
+            DB.cursor.execute(req, (etatDue, IDcontrat))
+            DB.Commit()
+        except Exception:
+            try:
+                DB.connexion.rollback()
+            except Exception:
+                pass
+            DB.Close()
+            wx.MessageBox(
+                _(u"L'état DPAE/DUE n'a pas pu être enregistré. Vérifiez la connexion à la base puis réessayez."),
+                _(u"DPAE/DUE"), wx.OK | wx.ICON_ERROR, parent=self,
+            )
+            return
         DB.Close()
 
         self.list_ctrl_contrats.SetItem(index, 5, etatDue)
