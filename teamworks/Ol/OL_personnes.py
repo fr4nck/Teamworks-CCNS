@@ -268,6 +268,59 @@ class ListView(CORE.ListView):
                 presents=presents,
             )
 
+    def CourrierPublipostage(self, mode="unique"):
+        """Publipostage dont l'ID métier est indépendant des colonnes visibles."""
+        if mode == "unique":
+            return super(ListView, self).CourrierPublipostage(mode=mode)
+
+        if self.GetNbreItems() == 0:
+            dlg = wx.MessageDialog(
+                self,
+                _(u"Il n'y a aucune personne dans la liste !"),
+                "Erreur",
+                wx.OK | wx.ICON_ERROR,
+            )
+            dlg.ShowModal()
+            dlg.Destroy()
+            return False
+
+        liste_labelsColonnes, listeValeurs = self.GetValeurs()
+        objets = list(self.GetFilteredObjects())
+        listeIDs = [objet.IDpersonne for objet in objets]
+        if len(listeIDs) != len(listeValeurs):
+            wx.MessageBox(
+                _(u"La liste affichée a changé pendant la préparation du publipostage. Veuillez recommencer."),
+                _(u"Publipostage annulé"),
+                wx.OK | wx.ICON_ERROR,
+            )
+            return False
+
+        from Dlg import DLG_Selection_liste
+        dlg = DLG_Selection_liste.Dialog(
+            self,
+            liste_labelsColonnes,
+            listeValeurs,
+            type="exportTexte",
+            listeIDs=listeIDs,
+        )
+        if dlg.ShowModal() == wx.ID_OK:
+            listeID = dlg.GetSelections()
+            dlg.Destroy()
+        else:
+            dlg.Destroy()
+            return False
+
+        from Utils import UTILS_Publipostage_donnees
+        dictDonnees = UTILS_Publipostage_donnees.GetDictDonnees(
+            categorie="personne",
+            listeID=listeID,
+        )
+        from Dlg import DLG_Publiposteur
+        dlg = DLG_Publiposteur.Dialog(self, "", dictDonnees=dictDonnees)
+        dlg.ShowModal()
+        dlg.Destroy()
+        return True
+
     def Supprimer(self):
         selection = self.Selection()
         if not selection:
