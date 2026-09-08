@@ -1,0 +1,118 @@
+name: Complete PR423 parameter defaults fix
+
+on:
+  push:
+    branches:
+      - fix/rc1-recette-bugs-20260908
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-test:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Apply shared parameter defaults fix
+        shell: python
+        run: |
+          from pathlib import Path
+
+          old = '        DB = GestionDB.DB(nomDB="Defaut.db3")\n'
+          new = (
+              '        DB = GestionDB.DB(\n'
+              '            nomFichier=Chemins.GetStaticPath("Databases/Defaut.dat"),\n'
+              '            suffixe=None,\n'
+              '        )\n'
+          )
+          for path in (
+              'teamworks/Dlg/DLG_Parametres_dossiers.py',
+              'teamworks/Dlg/DLG_Parametres_calendrier.py',
+          ):
+              p = Path(path)
+              text = p.read_text(encoding='utf-8')
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{path}: expected one legacy DB call, found {count}')
+              p.write_text(text.replace(old, new), encoding='utf-8')
+
+          # Horloge was already fixed in the first PR423 commit: require the exact same implementation.
+          for path in (
+              'teamworks/Dlg/DLG_Parametres_horloge.py',
+              'teamworks/Dlg/DLG_Parametres_dossiers.py',
+              'teamworks/Dlg/DLG_Parametres_calendrier.py',
+          ):
+              text = Path(path).read_text(encoding='utf-8')
+              if 'GestionDB.DB(nomDB="Defaut.db3")' in text:
+                  raise SystemExit(f'{path}: legacy nomDB call still present')
+              if 'nomFichier=Chemins.GetStaticPath("Databases/Defaut.dat")' not in text:
+                  raise SystemExit(f'{path}: shared static defaults path missing')
+              if 'suffixe=None' not in text:
+                  raise SystemExit(f'{path}: suffixe=None missing')
+
+          test = Path('tests/test_parametres_defaults_db_rc1.py')
+          test.write_text('''# -*- coding: utf-8 -*-
+import ast
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+FILES = (
+    "teamworks/Dlg/DLG_Parametres_horloge.py",
+    "teamworks/Dlg/DLG_Parametres_dossiers.py",
+    "teamworks/Dlg/DLG_Parametres_calendrier.py",
+)
+
+
+def _on_left_link_source(path):
+    text = (ROOT / path).read_text(encoding="utf-8")
+    tree = ast.parse(text)
+    cls = next(node for node in tree.body if isinstance(node, ast.ClassDef) and node.name == "Dialog")
+    func = next(node for node in cls.body if isinstance(node, ast.FunctionDef) and node.name == "OnLeftLink")
+    lines = text.splitlines()
+    return "\\n".join(lines[func.lineno - 1:func.end_lineno])
+
+
+def test_three_parameter_screens_use_same_supported_defaults_database_call():
+    bodies = [_on_left_link_source(path) for path in FILES]
+    for body in bodies:
+        assert 'GestionDB.DB(nomDB="Defaut.db3")' not in body
+        assert 'nomFichier=Chemins.GetStaticPath("Databases/Defaut.dat")' in body
+        assert 'suffixe=None' in body
+        assert 'FROM gadgets' in body
+
+
+def test_three_parameter_screens_have_identical_database_constructor_block():
+    marker = 'DB = GestionDB.DB(\\n            nomFichier=Chemins.GetStaticPath("Databases/Defaut.dat"),\\n            suffixe=None,\\n        )'
+    for path in FILES:
+        assert marker in _on_left_link_source(path)
+''', encoding='utf-8')
+
+      - name: Compile targeted modules
+        run: |
+          python -m compileall -q \
+            teamworks/Dlg/DLG_Parametres_horloge.py \
+            teamworks/Dlg/DLG_Parametres_dossiers.py \
+            teamworks/Dlg/DLG_Parametres_calendrier.py \
+            tests/test_parametres_defaults_db_rc1.py
+
+      - name: Install pytest
+        run: python -m pip install -q pytest
+
+      - name: Run targeted tests
+        run: python -m pytest -q tests/test_parametres_defaults_db_rc1.py
+
+      - name: Commit completion
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            teamworks/Dlg/DLG_Parametres_dossiers.py \
+            teamworks/Dlg/DLG_Parametres_calendrier.py \
+            tests/test_parametres_defaults_db_rc1.py
+          git commit -m "fix: aligner les trois parametres sur Defaut.dat"
+          git push origin HEAD:fix/rc1-recette-bugs-20260908
