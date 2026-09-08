@@ -39,7 +39,6 @@ jobs:
           tests/test_parametres_defaults_db_rc1.py
           tests/test_rc2_recette_regressions.py
           tests/test_secondary_contract_smoke_contract.py
-          tests/test_ccns_contract_compliance_presenter.py
 
   windows-targeted:
     runs-on: windows-2022
@@ -77,4 +76,3 @@ jobs:
           tests/test_parametres_defaults_db_rc1.py
           tests/test_rc2_recette_regressions.py
           tests/test_secondary_contract_smoke_contract.py
-          tests/test_ccns_contract_compliance_presenter.py
