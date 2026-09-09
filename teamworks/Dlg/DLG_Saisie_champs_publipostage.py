@@ -14,6 +14,11 @@ import GestionDB
 import FonctionsPerso
 
 
+def _nullable_db_text(value):
+    """Normalise uniquement le NULL SQL des colonnes texte optionnelles."""
+    return "" if value is None else value
+
+
 class Dialog(wx.Dialog):
     def __init__(self, parent, title="" , IDchamp=0, categorie="", listeMotsCles=None):
         if listeMotsCles is None:
@@ -143,6 +148,10 @@ class Dialog(wx.Dialog):
         if not resultats:
             return
         IDchamp, categorie, nom, mot_cle, defaut = resultats[0]
+        # Les trois colonnes sont textuelles et nullables en base : NULL signifie champ vide.
+        nom = _nullable_db_text(nom)
+        defaut = _nullable_db_text(defaut)
+        mot_cle = _nullable_db_text(mot_cle)
         # Place les valeurs dans les controles
         self.text_nom.SetValue(nom)
         self.text_defaut.SetValue(defaut)
@@ -200,7 +209,7 @@ class Dialog(wx.Dialog):
 
         if motCle == "" :
             txt = _(u"Vous devez saisir un mot-clé.\n\nCe mot-clé sera nécessaire lors de l'impression des documents lors de la procédure de publipostage.")
-            dlg = wx.MessageDialog(self, txt, "Erreur", wx.OK)  
+            dlg = wx.MessageDialog(self, txt, "Erreur", wx.OK| wx.ICON_EXCLAMATION)  
             dlg.ShowModal()
             dlg.Destroy()
             self.text_motCle.SetFocus()
@@ -214,7 +223,7 @@ class Dialog(wx.Dialog):
         if incoherences != "" :
             incoherences = incoherences[:-2]
             txt = _(u"Le mot-clé que vous avez saisi n'est pas valide. Les caractères suivants ne sont pas valides : ") + incoherences + _(u"\n\nRappel : Ce mot-clé doit être en majuscules, ne peut comporter que des lettres ou des chiffres. Les espaces, accents ou autres caractères spéciaux ne sont pas acceptés.")
-            dlg = wx.MessageDialog(self, txt, "Erreur", wx.OK)  
+            dlg = wx.MessageDialog(self, txt, "Erreur", wx.OK| wx.ICON_EXCLAMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
