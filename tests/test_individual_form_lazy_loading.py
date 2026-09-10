@@ -49,6 +49,7 @@ def test_individual_form_is_imported_and_patched_only_on_attribute_access(monkey
     # Charger le package seul ne doit ni importer ni patcher la fiche.
     assert events == []
     assert "DLG_Fiche_individuelle" not in package.__dict__
+    assert not hasattr(individual_form, "_LAZY_INDIVIDUAL_FORM_INSTALLED")
 
     # Un autre attribut, même absent, ne doit pas déclencher ce chargement.
     try:
@@ -58,6 +59,7 @@ def test_individual_form_is_imported_and_patched_only_on_attribute_access(monkey
     else:
         raise AssertionError("Un attribut inconnu doit lever AttributeError")
     assert events == []
+    assert not hasattr(individual_form, "_LAZY_INDIVIDUAL_FORM_INSTALLED")
 
     # Le premier accès à la fiche déclenche les imports puis les trois patches.
     loaded = package.DLG_Fiche_individuelle
