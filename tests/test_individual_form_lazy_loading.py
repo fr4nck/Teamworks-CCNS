@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import importlib
+import types
 from pathlib import Path
 
 
@@ -9,12 +11,73 @@ CORE = ROOT / "teamworks" / "Dlg" / "DLG_Fiche_individuelle_core.py"
 WRAPPER = ROOT / "teamworks" / "Dlg" / "DLG_Fiche_individuelle.py"
 
 
-def test_individual_form_is_patched_only_when_requested():
+def test_individual_form_is_imported_and_patched_only_on_attribute_access(monkeypatch):
+    """Le package Dlg reste léger jusqu'au premier accès à la fiche individuelle."""
     source = PACKAGE.read_text(encoding="utf-8")
-    assert "def __getattr__(name):" in source
-    assert 'name != "DLG_Fiche_individuelle"' in source
-    assert "lazy.install(module)" in source
-    assert "DLG_Fiche_individuelle_lazy" not in source.split("def __getattr__", 1)[0]
+    events = []
+    individual_form = types.SimpleNamespace()
+
+    def patch_module(label):
+        patch = types.SimpleNamespace()
+
+        def install(module):
+            events.append(("patch", label))
+            if label == "lazy":
+                module._LAZY_INDIVIDUAL_FORM_INSTALLED = True
+            return module
+
+        patch.install = install
+        return patch
+
+    fake_modules = {
+        "Dlg_test.DLG_Fiche_individuelle": individual_form,
+        "Dlg_test.DLG_Fiche_individuelle_lazy": patch_module("lazy"),
+        "Dlg_test.DLG_Fiche_individuelle_problems": patch_module("problems"),
+        "Dlg_test.DLG_Fiche_individuelle_refresh": patch_module("refresh"),
+    }
+
+    def fake_import_module(name):
+        events.append(("import", name))
+        return fake_modules[name]
+
+    monkeypatch.setattr(importlib, "import_module", fake_import_module)
+
+    package = types.ModuleType("Dlg_test")
+    package.__package__ = "Dlg_test"
+    exec(compile(source, str(PACKAGE), "exec"), package.__dict__)
+
+    # Charger le package seul ne doit ni importer ni patcher la fiche.
+    assert events == []
+    assert "DLG_Fiche_individuelle" not in package.__dict__
+
+    # Un autre attribut, même absent, ne doit pas déclencher ce chargement.
+    try:
+        getattr(package, "ATTRIBUT_INCONNU")
+    except AttributeError:
+        pass
+    else:
+        raise AssertionError("Un attribut inconnu doit lever AttributeError")
+    assert events == []
+
+    # Le premier accès à la fiche déclenche les imports puis les trois patches.
+    loaded = package.DLG_Fiche_individuelle
+    assert loaded is individual_form
+    assert package.__dict__["DLG_Fiche_individuelle"] is individual_form
+    assert individual_form._LAZY_INDIVIDUAL_FORM_INSTALLED is True
+    assert events == [
+        ("import", "Dlg_test.DLG_Fiche_individuelle"),
+        ("import", "Dlg_test.DLG_Fiche_individuelle_lazy"),
+        ("import", "Dlg_test.DLG_Fiche_individuelle_problems"),
+        ("import", "Dlg_test.DLG_Fiche_individuelle_refresh"),
+        ("patch", "lazy"),
+        ("patch", "problems"),
+        ("patch", "refresh"),
+    ]
+
+    # L'attribut mis en cache ne doit pas réimporter ni repatcher au second accès.
+    first_access_events = list(events)
+    assert package.DLG_Fiche_individuelle is individual_form
+    assert events == first_access_events
 
 
 def test_secondary_tabs_are_declared_as_lazy_factories():
