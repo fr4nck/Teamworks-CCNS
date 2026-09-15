@@ -79,15 +79,80 @@ class Track(CORE.Track):
 
 
 class ListView(CORE.ListView):
-    """Liste historique conservée, avec présentation utilisateur persistante."""
+    """Liste historique avec présentation persistante et connexion DB bornée."""
 
     def __init__(self, *args, **kwds):
         DiagnosticPerformance.installer_instrumentation_sql(CORE.GestionDB)
         self._premier_maj_redondant = True
         self._etat_colonnes_charge = None
-        with DiagnosticPerformance.mesurer_action("wx.personnes.liste.ouverture"):
-            super(ListView, self).__init__(*args, **kwds)
+        # Le constructeur historique enchaîne pays -> modèle -> personnes.
+        # Une seule connexion couvre cette action cohérente puis est fermée.
+        self._db_action = CORE.GestionDB.DB()
+        try:
+            with DiagnosticPerformance.mesurer_action("wx.personnes.liste.ouverture"):
+                super(ListView, self).__init__(*args, **kwds)
+        finally:
+            self._db_action.Close()
+            self._db_action = None
         self.Bind(wx.EVT_LIST_COL_END_DRAG, self._OnColonneRedimensionnee)
+
+    def _obtenir_db_action(self):
+        DB = getattr(self, "_db_action", None)
+        if DB is not None:
+            return DB, False
+        DB = CORE.GestionDB.DB()
+        self._db_action = DB
+        return DB, True
+
+    def Importation_pays(self):
+        """Charge les pays dans la connexion de l'action en cours."""
+        DB, possede_db = self._obtenir_db_action()
+        try:
+            DB.ExecuterReq("SELECT IDpays, nom, nationalite FROM pays;")
+            CORE.DICT_PAYS = {
+                IDpays: (nom, nationalite)
+                for IDpays, nom, nationalite in DB.ResultatReq()
+            }
+        finally:
+            if possede_db:
+                DB.Close()
+                self._db_action = None
+
+    def InitModel(self):
+        """Charge références et personnes avec une connexion physique bornée."""
+        DB, possede_db = self._obtenir_db_action()
+        try:
+            DB.ExecuterReq("SELECT IDsituation, situation FROM Situations;")
+            CORE.DICT_SITUATIONS = {
+                IDsituation: situation
+                for IDsituation, situation in DB.ResultatReq()
+            }
+
+            DB.ExecuterReq(
+                "SELECT IDcoord, IDpersonne, categorie, texte, intitule FROM Coordonnees;"
+            )
+            CORE.DICT_COORDONNEES = {}
+            for IDcoord, IDpersonne, categorie, texte, intitule in DB.ResultatReq():
+                CORE.DICT_COORDONNEES.setdefault(IDpersonne, []).append(
+                    (IDcoord, IDpersonne, categorie, texte, intitule)
+                )
+
+            DB.ExecuterReq("SELECT IDdiplome, IDpersonne, IDtype_diplome FROM diplomes;")
+            CORE.DICT_QUALIFICATIONS = {}
+            for _IDdiplome, IDpersonne, IDtype_diplome in DB.ResultatReq():
+                CORE.DICT_QUALIFICATIONS.setdefault(IDpersonne, []).append(IDtype_diplome)
+
+            DB.ExecuterReq("SELECT IDtype_diplome, nom_diplome FROM types_diplomes;")
+            CORE.DICT_TYPES_DIPLOMES = {
+                IDtype_diplome: nom_diplome
+                for IDtype_diplome, nom_diplome in DB.ResultatReq()
+            }
+
+            self.donnees = self.GetTracks()
+        finally:
+            if possede_db:
+                DB.Close()
+                self._db_action = None
 
     def _charger_etat_colonnes(self):
         if self._etat_colonnes_charge is None:
@@ -98,9 +163,6 @@ class ListView(CORE.ListView):
             if not isinstance(etat, dict):
                 etat = {}
             self._etat_colonnes_charge = etat
-
-            # Une copie profonde garantit que LISTE_COLONNES reste un défaut
-            # immuable et que le bouton Réinitialiser dispose d'un vrai repli.
             self.listeColonnesOriginale = UTILS_Etat_colonnes.fusionner_colonnes(
                 LISTE_COLONNES,
                 None,
@@ -134,14 +196,18 @@ class ListView(CORE.ListView):
                 break
 
     def GetTracks(self):
-        DB = CORE.GestionDB.DB()
-        req = """SELECT IDpersonne, civilite, nom, nom_jfille, prenom, date_naiss,
-        cp_naiss, ville_naiss, pays_naiss, nationalite, num_secu,
-        adresse_resid, cp_resid, ville_resid, IDsituation
-        FROM personnes %s ORDER BY nom, prenom;""" % self.criteres
-        DB.ExecuterReq(req)
-        rows = DB.ResultatReq()
-        DB.Close()
+        DB, possede_db = self._obtenir_db_action()
+        try:
+            req = """SELECT IDpersonne, civilite, nom, nom_jfille, prenom, date_naiss,
+            cp_naiss, ville_naiss, pays_naiss, nationalite, num_secu,
+            adresse_resid, cp_resid, ville_resid, IDsituation
+            FROM personnes %s ORDER BY nom, prenom;""" % self.criteres
+            DB.ExecuterReq(req)
+            rows = DB.ResultatReq()
+        finally:
+            if possede_db:
+                DB.Close()
+                self._db_action = None
 
         objets = []
         for row in rows:
@@ -152,7 +218,6 @@ class ListView(CORE.ListView):
         return objets
 
     def _capturer_presentation_colonnes(self):
-        """Retourne largeur et tri courants sans reconstruire la liste."""
         largeurs = {}
         for index, colonne in enumerate(getattr(self, "columns", [])):
             champ = getattr(colonne, "valueGetter", None)
@@ -161,7 +226,7 @@ class ListView(CORE.ListView):
             try:
                 largeurs[champ] = self.GetColumnWidth(index)
             except Exception:
-                pass
+                continue
 
         colonne_tri = self.GetSortColumn()
         champ_tri = getattr(colonne_tri, "valueGetter", None) if colonne_tri else None
@@ -172,7 +237,6 @@ class ListView(CORE.ListView):
         }
 
     def _restaurer_presentation_colonnes(self, presentation):
-        """Réapplique largeur et tri après un rebuild explicitement demandé."""
         largeurs = presentation.get("largeurs", {})
         for index, colonne in enumerate(getattr(self, "columns", [])):
             champ = getattr(colonne, "valueGetter", None)
@@ -181,7 +245,7 @@ class ListView(CORE.ListView):
                 try:
                     self.SetColumnWidth(index, largeur)
                 except Exception:
-                    pass
+                    continue
 
         champ_tri = presentation.get("champ_tri")
         if champ_tri:
@@ -202,13 +266,11 @@ class ListView(CORE.ListView):
         )
         self._etat_colonnes_charge = etat
         try:
-            # Écrit immédiatement le Config.json pour survivre à un arrêt non
-            # nominal, puis synchronise le cache de la fenêtre principale.
             UTILS_Config.FichierConfig().SetItemConfig(_CLE_ETAT_COLONNES, etat)
             UTILS_Config.SetParametre(_CLE_ETAT_COLONNES, etat)
         except Exception:
-            # Une préférence d'affichage ne doit jamais empêcher l'usage de la liste.
-            pass
+            # Une préférence d'affichage ne doit jamais bloquer la liste.
+            return
 
     def _OnColonneRedimensionnee(self, event):
         event.Skip()
@@ -220,7 +282,6 @@ class ListView(CORE.ListView):
         return resultat
 
     def SetListeColonnes(self, listeColonnes):
-        """Rebuild explicite réservé à une modification de configuration."""
         presentation = self._capturer_presentation_colonnes()
         CORE.ListView.SetListeColonnes(self, listeColonnes)
         CORE.ListView.InitObjectListView(self)
@@ -228,7 +289,6 @@ class ListView(CORE.ListView):
         self._sauvegarder_presentation_colonnes()
 
     def _rafraichir_donnees(self, IDpersonne=None, presents=None):
-        """Recharge les objets métier sans toucher à la structure des colonnes."""
         if IDpersonne is not None:
             self.selectionID = IDpersonne
             self.selectionTrack = None
@@ -251,10 +311,6 @@ class ListView(CORE.ListView):
         self.selectionTrack = None
 
     def MAJ(self, IDpersonne=None, presents=None):
-        # ``PanelPersonnes.MAJpanel()`` appelle MAJ() immédiatement après
-        # InitPage(), alors que le constructeur CORE a déjà chargé exactement
-        # les mêmes données. Ignorer uniquement cet appel sans paramètres
-        # supprime cinq lectures SQL en série au premier affichage.
         if self._premier_maj_redondant and IDpersonne is None and presents is None:
             self._premier_maj_redondant = False
             return
@@ -269,7 +325,6 @@ class ListView(CORE.ListView):
             )
 
     def CourrierPublipostage(self, mode="unique"):
-        """Publipostage dont l'ID métier est indépendant des colonnes visibles."""
         if mode == "unique":
             return super(ListView, self).CourrierPublipostage(mode=mode)
 
