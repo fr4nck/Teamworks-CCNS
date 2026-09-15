@@ -23,6 +23,7 @@ from Utils import UTILS_Customize
 from Utils import UTILS_Fichiers
 from Utils import UTILS_Rapport_bugs
 from Utils import UTILS_Qualifications_091g
+from Utils import UTILS_Schema_compat
 from Utils import UTILS_Version
 from Utils.UTILS_Traduction import _
 
@@ -135,6 +136,27 @@ class MyFrame(CORE.MyFrame):
     def ConvertVersionTuple(self, texteVersion=""):
         """Normalise les versions CCNS tout en gardant la comparaison historique."""
         return UTILS_Version.ConvertirTuple(texteVersion)
+
+    def ValidationVersionFichier(self, nomFichier):
+        """Répare le schéma courant avant la validation historique de version."""
+        db_schema = CORE.UpgradeDB.DB(nomFichier=nomFichier)
+        try:
+            rapport = UTILS_Schema_compat.Assurer(
+                db_schema,
+                CORE.UpgradeDB.Tables.DB_DATA,
+            )
+            if rapport["tables_creees"] or rapport["champs_ajoutes"]:
+                print(
+                    "Compatibilité schéma appliquée : tables=%s champs=%s"
+                    % (rapport["tables_creees"], rapport["champs_ajoutes"])
+                )
+        except Exception as err:
+            print("Compatibilité du schéma impossible : %s" % err)
+            return False
+        finally:
+            db_schema.Close()
+
+        return super(MyFrame, self).ValidationVersionFichier(nomFichier)
 
     def AnnonceFinancement(self):
         """Désactive les sollicitations commerciales automatiques historiques."""
