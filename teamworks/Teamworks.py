@@ -146,10 +146,7 @@ class MyFrame(CORE.MyFrame):
                 self.ConvertVersionTuple,
             )
 
-            if (
-                version_schema is not None
-                and version_schema < UTILS_Schema_compat.VERSION_SCHEMA_CIBLE
-            ):
+            if UTILS_Schema_compat.NecessiteMigrationDonneesHistorique(version_schema):
                 resultat = db_schema.Upgrade(version_schema)
                 if resultat is not True:
                     print(
