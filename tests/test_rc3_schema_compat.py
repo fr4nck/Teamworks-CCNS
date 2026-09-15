@@ -146,9 +146,10 @@ def test_version_produit_ccns_ne_declenche_pas_les_migrations_historiques():
 
     assert version is None
     assert source == "produit_ccns"
+    assert not module.NecessiteMigrationDonneesHistorique(version)
 
 
-def test_version_historique_reste_utilisable_pour_les_anciennes_bases():
+def test_version_historique_moderne_utilise_la_reparation_structurelle_seule():
     module = _charger_module()
     db = FakeDB(parametres={"version": "2.0.0.1"})
 
@@ -156,6 +157,18 @@ def test_version_historique_reste_utilisable_pour_les_anciennes_bases():
 
     assert version == (2, 0, 0, 1)
     assert source == "version_historique"
+    assert not module.NecessiteMigrationDonneesHistorique(version)
+
+
+def test_vraie_base_ancienne_conserve_les_migrations_de_donnees():
+    module = _charger_module()
+    db = FakeDB(parametres={"version": "1.0.5.2"})
+
+    version, source = module.DeterminerVersionSchema(db, _convertir_version)
+
+    assert version == (1, 0, 5, 2)
+    assert source == "version_historique"
+    assert module.NecessiteMigrationDonneesHistorique(version)
 
 
 def test_schema_version_dedie_est_prioritaire_et_memorise_separement():
@@ -170,6 +183,7 @@ def test_schema_version_dedie_est_prioritaire_et_memorise_separement():
     version, source = module.DeterminerVersionSchema(db, _convertir_version)
     assert version == (2, 1, 1, 0)
     assert source == "schema_version"
+    assert not module.NecessiteMigrationDonneesHistorique(version)
 
     module.MemoriserVersionSchema(db)
     assert db.parametres["schema_version"] == "2.1.2.0"
@@ -184,12 +198,14 @@ def test_absence_de_version_conserve_le_fallback_historique():
 
     assert version == (1, 0, 5, 2)
     assert source == "fallback_historique"
+    assert module.NecessiteMigrationDonneesHistorique(version)
 
 
 def test_coque_rc3_ne_delegue_plus_la_version_produit_au_validateur_historique():
     source = TEAMWORKS.read_text(encoding="utf-8")
     bloc = source.split("def ValidationVersionFichier", 1)[1].split("def AnnonceFinancement", 1)[0]
     assert "UTILS_Schema_compat.DeterminerVersionSchema" in bloc
+    assert "UTILS_Schema_compat.NecessiteMigrationDonneesHistorique" in bloc
     assert "db_schema.Upgrade(version_schema)" in bloc
     assert "UTILS_Schema_compat.Assurer" in bloc
     assert "UTILS_Schema_compat.MemoriserVersionSchema" in bloc
