@@ -24,13 +24,17 @@ def test_fichiers_performance_personnes_compilent():
 def test_scan_dossiers_ne_fait_plus_de_sql_dans_les_boucles_personnes():
     source = _source("teamworks/Utils/UTILS_Personnes_performance.py")
     tree = ast.parse(source)
-    fonction = next(
+    recherche = next(
         node for node in tree.body
         if isinstance(node, ast.FunctionDef) and node.name == "Recherche_problemes_personnes"
     )
+    contrats = next(
+        node for node in tree.body
+        if isinstance(node, ast.FunctionDef) and node.name == "_contrats_en_cours_ou_a_venir"
+    )
 
     appels_sql_dans_boucle_personne = []
-    for node in ast.walk(fonction):
+    for node in ast.walk(recherche):
         if not isinstance(node, (ast.For, ast.While)):
             continue
         for enfant in ast.walk(node):
@@ -39,9 +43,20 @@ def test_scan_dossiers_ne_fait_plus_de_sql_dans_les_boucles_personnes():
             if enfant.func.attr == "ExecuterReq":
                 appels_sql_dans_boucle_personne.append(enfant.lineno)
 
+    def compter_executer_req(fonction):
+        return sum(
+            1
+            for node in ast.walk(fonction)
+            if isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and node.func.attr == "ExecuterReq"
+        )
+
     assert appels_sql_dans_boucle_personne == []
-    assert source.count("DB.ExecuterReq(") == 6
-    assert "FonctionsPerso.Recherche_ContratsEnCoursOuAVenir()" in source
+    assert compter_executer_req(recherche) == 6
+    assert compter_executer_req(contrats) == 1
+    assert "_contrats_en_cours_ou_a_venir(DB)" in source
+    assert "FonctionsPerso.Recherche_ContratsEnCoursOuAVenir()" not in source
 
 
 def test_premier_maj_de_liste_est_explicitement_ignore_une_seule_fois():
