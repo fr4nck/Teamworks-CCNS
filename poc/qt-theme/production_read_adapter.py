@@ -9,6 +9,7 @@ from data_adapter import (
     PersonCoordinateView,
     PersonGeneralitiesView,
     PersonView,
+    PresenceView,
     ReimbursementView,
     ScenarioView,
     TeamworksReadAdapter,
@@ -18,6 +19,7 @@ from infrastructure.persistence.ccns_data_reader import CcnsDataReader
 from infrastructure.persistence.individual_activity_reader import IndividualActivityReader
 from infrastructure.persistence.person_reader import PersonReader
 from infrastructure.persistence.teamworks_contract_conversions import as_date
+from presence_read_adapter import PresenceReadAdapter
 
 
 EMPTY = "—"
@@ -58,6 +60,7 @@ class TeamworksProductionReadAdapter(TeamworksReadAdapter):
         self._activity_reader = activity_reader or IndividualActivityReader(
             db_factory=lambda: self._profiled_db_factory("activity")
         )
+        self._presence_reader = PresenceReadAdapter(self._activity_reader)
         activity_ready = time.perf_counter()
         self.startup_timings.update(
             {
@@ -81,12 +84,10 @@ class TeamworksProductionReadAdapter(TeamworksReadAdapter):
 
     def list_people(self) -> Sequence[PersonView]:
         self._ensure_open()
-
         _ = self._person_reader.db
         reader_started = time.perf_counter()
         records = self._person_reader.lire_identites()
         reader_finished = time.perf_counter()
-
         views = []
         for record in records:
             historical_id = self._require_historical_id(record.IDpersonne)
@@ -160,6 +161,10 @@ class TeamworksProductionReadAdapter(TeamworksReadAdapter):
         records = self._contract_reader.lire_contrats_personne(historical_id)
         return tuple(self._contract_to_view(record) for record in records)
 
+    def list_presences(self, person_id: str | int) -> Sequence[PresenceView]:
+        self._ensure_open()
+        return tuple(self._presence_reader.list_presences(person_id))
+
     def list_scenarios(self, person_id: str | int) -> Sequence[ScenarioView]:
         self._ensure_open()
         historical_id = self._require_historical_id(person_id)
@@ -216,11 +221,7 @@ class TeamworksProductionReadAdapter(TeamworksReadAdapter):
         else:
             separator = " <--> " if _is_round_trip(record.aller_retour) else " -> "
             route = f"{start}{separator}{end}".strip()
-        reimbursement = (
-            ""
-            if record.IDremboursement in (None, 0, "")
-            else f"N°{record.IDremboursement}"
-        )
+        reimbursement = "" if record.IDremboursement in (None, 0, "") else f"N°{record.IDremboursement}"
         return TripView(
             number=str(record.IDdeplacement),
             date=_format_date(record.date),
