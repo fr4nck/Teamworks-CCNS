@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import threading
+
 import pytest
 
 from domain.common.scenario_report_cycles import (
@@ -54,3 +56,34 @@ def test_guard_is_reusable_after_cycle_failure() -> None:
     with guard.enter(1, 10):
         with guard.enter(2, 20):
             pass
+
+
+def test_guard_state_is_isolated_between_threads() -> None:
+    guard = ReportCycleGuard()
+    entered = threading.Event()
+    release = threading.Event()
+    errors: list[BaseException] = []
+
+    def worker() -> None:
+        try:
+            with guard.enter(1, 10):
+                entered.set()
+                if not release.wait(2.0):
+                    raise AssertionError("timeout waiting for main thread")
+        except BaseException as exc:
+            errors.append(exc)
+
+    thread = threading.Thread(target=worker)
+    thread.start()
+    assert entered.wait(2.0)
+
+    try:
+        # Le même nœud est autorisé simultanément dans un autre thread.
+        with guard.enter(1, 10):
+            pass
+    finally:
+        release.set()
+        thread.join(2.0)
+
+    assert thread.is_alive() is False
+    assert errors == []
