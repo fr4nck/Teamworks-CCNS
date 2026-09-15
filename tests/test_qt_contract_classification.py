@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+from datetime import date
 from pathlib import Path
 
 from application.control.contract_classification import resolve_contract_classification
@@ -81,7 +82,7 @@ def test_groupe_ccns_inconnu_conserve_le_code_stocke() -> None:
         legacy_classification=None,
         convention_code="CCNS",
         ccns_group="G99",
-        reference_date=__import__("datetime").date(2026, 9, 1),
+        reference_date=date(2026, 9, 1),
     )
 
     assert result == "G99"
