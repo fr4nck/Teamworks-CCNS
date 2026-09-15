@@ -69,6 +69,7 @@ class ScenarioView:
     name: str
     period: str
     description: str
+    id_historique: int | None = None
 
 
 @dataclass(frozen=True)
@@ -81,6 +82,7 @@ class TripView:
     tariff: str
     amount: str
     reimbursement: str
+    id_historique: int | None = None
 
 
 @dataclass(frozen=True)
@@ -89,6 +91,7 @@ class ReimbursementView:
     date: str
     amount: str
     attached_trips: str
+    id_historique: int | None = None
 
 
 @dataclass(frozen=True)
