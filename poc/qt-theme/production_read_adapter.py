@@ -202,6 +202,7 @@ class TeamworksProductionReadAdapter(TeamworksReadAdapter):
             classification=record.classification or EMPTY,
             duration=_format_hours(record.temps_hebdo),
             status=EMPTY,
+            id_historique=int(record.IDcontrat),
         )
 
     @staticmethod
