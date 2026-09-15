@@ -81,6 +81,8 @@ def test_journal_perf_persiste_uniquement_les_metriques_agregees(monkeypatch, tm
     assert donnees["details"]["nb_requetes"] == 1
     assert donnees["details"]["sql_ms"] == 14.0
     assert donnees["details"]["connexion_ms"] == 2.0
+    assert donnees["details"]["connexions_physiques"] == 1
+    assert donnees["details"]["connexions_reutilisees"] == 0
     assert set(donnees["details"]) == {
         "nb_requetes",
         "sql_ms",
@@ -88,13 +90,15 @@ def test_journal_perf_persiste_uniquement_les_metriques_agregees(monkeypatch, tm
         "io_ms",
         "python_wx_ms",
         "total_ms",
+        "connexions_physiques",
+        "connexions_reutilisees",
     }
     assert "IDpersonne" not in donnees["details"]
     assert "texte" not in donnees["details"]
     assert "SECRET" not in ligne
 
 
-def test_journal_ajoute_les_compteurs_reseau_uniquement_quand_fournis(monkeypatch, tmp_path):
+def test_journal_conserve_les_compteurs_reseau_fournis_par_le_scope(monkeypatch, tmp_path):
     module = _charger_diagnostic("diag_presences_connexions_test")
 
     journal = tmp_path / "performance-connexions.jsonl"
