@@ -1,14 +1,17 @@
 from __future__ import annotations
 
+from PySide6.QtCore import Qt
 from PySide6.QtGui import QStandardItem
 
 
 def _replace_rows(model, rows) -> None:
+    """Remplace les lignes et conserve le DTO métier hors des colonnes visibles."""
     model.setRowCount(0)
-    for values in rows:
+    for payload, values in rows:
         items = [QStandardItem(str(value or "")) for value in values]
         for item in items:
             item.setEditable(False)
+            item.setData(payload, Qt.ItemDataRole.UserRole)
         model.appendRow(items)
 
 
@@ -37,13 +40,16 @@ class IndividualActivityPresenter:
         if questionnaire_page is not None:
             _replace_rows(
                 questionnaire_page.model,
-                ((view.question, view.answer) for view in payload.get("questionnaire", ())),
+                (
+                    (view, (view.question, view.answer))
+                    for view in payload.get("questionnaire", ())
+                ),
             )
         if scenarios_page is not None:
             _replace_rows(
                 scenarios_page.model,
                 (
-                    (view.name, view.period, view.description)
+                    (view, (view.name, view.period, view.description))
                     for view in payload.get("scenarios", ())
                 ),
             )
@@ -52,14 +58,17 @@ class IndividualActivityPresenter:
                 expenses_page.trip_model,
                 (
                     (
-                        view.number,
-                        view.date,
-                        view.purpose,
-                        view.route,
-                        view.distance,
-                        view.tariff,
-                        view.amount,
-                        view.reimbursement,
+                        view,
+                        (
+                            view.number,
+                            view.date,
+                            view.purpose,
+                            view.route,
+                            view.distance,
+                            view.tariff,
+                            view.amount,
+                            view.reimbursement,
+                        ),
                     )
                     for view in payload.get("trips", ())
                 ),
@@ -67,7 +76,10 @@ class IndividualActivityPresenter:
             _replace_rows(
                 expenses_page.reimbursement_model,
                 (
-                    (view.number, view.date, view.amount, view.attached_trips)
+                    (
+                        view,
+                        (view.number, view.date, view.amount, view.attached_trips),
+                    )
                     for view in payload.get("reimbursements", ())
                 ),
             )
