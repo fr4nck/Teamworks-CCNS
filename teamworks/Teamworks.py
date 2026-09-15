@@ -138,13 +138,32 @@ class MyFrame(CORE.MyFrame):
         return UTILS_Version.ConvertirTuple(texteVersion)
 
     def ValidationVersionFichier(self, nomFichier):
-        """Répare le schéma courant avant la validation historique de version."""
+        """Valide le schéma sans confondre version produit 0.9.x et schéma 2.x."""
         db_schema = CORE.UpgradeDB.DB(nomFichier=nomFichier)
         try:
+            version_schema, source_version = UTILS_Schema_compat.DeterminerVersionSchema(
+                db_schema,
+                self.ConvertVersionTuple,
+            )
+
+            if (
+                version_schema is not None
+                and version_schema < UTILS_Schema_compat.VERSION_SCHEMA_CIBLE
+            ):
+                resultat = db_schema.Upgrade(version_schema)
+                if resultat is not True:
+                    print(
+                        "Migration historique du schéma impossible (%s) : %s"
+                        % (source_version, resultat)
+                    )
+                    return False
+
             rapport = UTILS_Schema_compat.Assurer(
                 db_schema,
                 CORE.UpgradeDB.Tables.DB_DATA,
             )
+            UTILS_Schema_compat.MemoriserVersionSchema(db_schema)
+
             if rapport["tables_creees"] or rapport["champs_ajoutes"]:
                 print(
                     "Compatibilité schéma appliquée : tables=%s champs=%s"
@@ -156,7 +175,7 @@ class MyFrame(CORE.MyFrame):
         finally:
             db_schema.Close()
 
-        return super(MyFrame, self).ValidationVersionFichier(nomFichier)
+        return True
 
     def AnnonceFinancement(self):
         """Désactive les sollicitations commerciales automatiques historiques."""
