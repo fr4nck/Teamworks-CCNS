@@ -41,7 +41,7 @@ def resolve_contract_classification(
             ),
             None,
         )
-    except Exception:
+    except (LookupError, TypeError, ValueError):
         choice = None
     return _text(choice.label if choice is not None else group_code)
 
