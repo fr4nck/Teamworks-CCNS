@@ -21,6 +21,8 @@ class CcnsContratRecord:
     classification: Optional[str]
     type_contrat: Optional[str]
     date_rupture: object = None
+    convention_code: Optional[str] = None
+    ccns_group: Optional[str] = None
 
 
 @dataclass(frozen=True)
