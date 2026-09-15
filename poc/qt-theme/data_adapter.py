@@ -61,6 +61,7 @@ class ContractView:
     classification: str
     duration: str
     status: str
+    id_historique: int | None = None
 
 
 @dataclass(frozen=True)
