@@ -4,6 +4,7 @@ import time
 from decimal import Decimal, InvalidOperation, localcontext
 from typing import Sequence
 
+from application.control.contract_classification import resolve_contract_classification
 from data_adapter import (
     ContractView,
     PersonCoordinateView,
@@ -202,11 +203,17 @@ class TeamworksProductionReadAdapter(TeamworksReadAdapter):
 
     @staticmethod
     def _contract_to_view(record) -> ContractView:
+        classification = resolve_contract_classification(
+            legacy_classification=record.classification,
+            convention_code=record.convention_code,
+            ccns_group=record.ccns_group,
+            reference_date=as_date(record.date_debut),
+        )
         return ContractView(
             kind=record.type_contrat or EMPTY,
             start=_format_date(record.date_debut),
             end=_format_contract_end(record.date_fin, record.date_rupture),
-            classification=record.classification or EMPTY,
+            classification=classification or EMPTY,
             duration=_format_hours(record.temps_hebdo),
             status=EMPTY,
             id_historique=int(record.IDcontrat),
