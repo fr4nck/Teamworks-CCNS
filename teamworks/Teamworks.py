@@ -136,6 +136,10 @@ class MyFrame(CORE.MyFrame):
         """Normalise les versions CCNS tout en gardant la comparaison historique."""
         return UTILS_Version.ConvertirTuple(texteVersion)
 
+    def AnnonceFinancement(self):
+        """Désactive les sollicitations commerciales automatiques historiques."""
+        return False
+
     def SetTitleFrame(self, nomFichier=""):
         if "[RESEAU]" in nomFichier:
             _port, _hote, user, _mdp = nomFichier.split(";")
