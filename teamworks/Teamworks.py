@@ -23,6 +23,7 @@ from Utils import UTILS_Customize
 from Utils import UTILS_Fichiers
 from Utils import UTILS_Rapport_bugs
 from Utils import UTILS_Qualifications_091g
+from Utils import UTILS_Version
 from Utils.UTILS_Traduction import _
 
 
@@ -130,6 +131,10 @@ class MyFrame(CORE.MyFrame):
         u"Accéder au forum d'entraide",
         u"Visionner des tutoriels vidéos",
     }
+
+    def ConvertVersionTuple(self, texteVersion=""):
+        """Normalise les versions CCNS tout en gardant la comparaison historique."""
+        return UTILS_Version.ConvertirTuple(texteVersion)
 
     def SetTitleFrame(self, nomFichier=""):
         if "[RESEAU]" in nomFichier:
