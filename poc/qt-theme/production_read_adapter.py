@@ -169,6 +169,7 @@ class TeamworksProductionReadAdapter(TeamworksReadAdapter):
                 name=_text(record.nom),
                 period=_scenario_period(record.date_debut, record.date_fin),
                 description=_scenario_description(record.description),
+                id_historique=int(record.IDscenario),
             )
             for record in records
         )
@@ -189,6 +190,7 @@ class TeamworksProductionReadAdapter(TeamworksReadAdapter):
                 date=_format_date(record.date),
                 amount=_format_money(record.montant),
                 attached_trips=_format_attached_trip_ids(record.listeIDdeplacement),
+                id_historique=int(record.IDremboursement),
             )
             for record in records
         )
@@ -228,6 +230,7 @@ class TeamworksProductionReadAdapter(TeamworksReadAdapter):
             tariff=_format_unit(record.tarif_km, "€/km"),
             amount=_format_product_money(record.distance, record.tarif_km),
             reimbursement=reimbursement,
+            id_historique=int(record.IDdeplacement),
         )
 
     @staticmethod
