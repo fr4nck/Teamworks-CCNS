@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Point d'entrée de Teamworks et coque d'interface moderne.
+"""Point d'entrée de Teamworks-CCNS et coque d'interface wx.
 
-Le cœur historique reste isolé dans ``Teamworks_core``. Cette coque ne réécrit
-pas la logique métier : elle remplace uniquement le livre d'onglets principal
-par la navigation flexible et conserve les noms publics attendus par le reste
-de l'application.
+Le cœur historique reste isolé dans ``Teamworks_core``. Cette coque fournit la
+navigation actuelle, l'identité de version Teamworks-CCNS et retire du parcours
+utilisateur les sollicitations commerciales historiques.
 """
 
 import os
@@ -32,10 +31,38 @@ from Utils.UTILS_Traduction import _
 UTILS_Qualifications_091g.install()
 
 
-VERSION_APPLICATION = CORE.VERSION_APPLICATION
-MAIL_AUTEUR = CORE.MAIL_AUTEUR
-ADRESSE_FORUM = CORE.ADRESSE_FORUM
+def _lire_version_teamworks_ccns():
+    """Lit la version distribuée depuis le fichier VERSION canonique.
+
+    En développement, VERSION est à la racine du dépôt. Dans le paquet
+    PyInstaller, il est copié à côté de l'exécutable.
+    """
+    candidats = (
+        Chemins.GetMainPath("VERSION"),
+        os.path.abspath(os.path.join(Chemins.GetMainPath(""), os.pardir, "VERSION")),
+    )
+    for chemin in candidats:
+        try:
+            with open(chemin, "r", encoding="utf-8") as fichier:
+                version = fichier.readline().strip()
+            if version:
+                return version
+        except (OSError, UnicodeError):
+            continue
+    raise RuntimeError("VERSION Teamworks-CCNS introuvable")
+
+
+VERSION_APPLICATION = _lire_version_teamworks_ccns()
+MAIL_AUTEUR = ""
+ADRESSE_FORUM = ""
 ID_DERNIER_FICHIER = CORE.ID_DERNIER_FICHIER
+
+# Le cœur historique consomme encore cette constante dans les journaux, les
+# nouveaux fichiers et certains dialogues. On lui fournit donc la même source
+# canonique au lieu de Versions.txt / v2.13.1.
+CORE.VERSION_APPLICATION = VERSION_APPLICATION
+CORE.MAIL_AUTEUR = MAIL_AUTEUR
+CORE.ADRESSE_FORUM = ADRESSE_FORUM
 
 
 class Toolbook(CTRL_Navigation_principale.NavigationPrincipale):
@@ -91,11 +118,54 @@ class Toolbook(CTRL_Navigation_principale.NavigationPrincipale):
 
 
 # Le cœur historique résout Toolbook au moment où MyFrame est instanciée.
-# Cette injection locale garde donc toute la logique existante tout en remplaçant
-# réellement le composant de navigation, sans monkey-patcher wxPython.
 CORE.Toolbook = Toolbook
 
-MyFrame = CORE.MyFrame
+
+class MyFrame(CORE.MyFrame):
+    """Fenêtre Teamworks-CCNS avec identité et menus actuels."""
+
+    _LIBELLES_HISTORIQUES_A_RETIRER = {
+        u"Soutenir Teamworks",
+        u"Acheter une licence pour accéder au manuel de référence",
+        u"Accéder au forum d'entraide",
+        u"Visionner des tutoriels vidéos",
+    }
+
+    def SetTitleFrame(self, nomFichier=""):
+        if "[RESEAU]" in nomFichier:
+            _port, _hote, user, _mdp = nomFichier.split(";")
+            nom_affiche = nomFichier[nomFichier.index("[RESEAU]") + 8:]
+            nomFichier = _(u"Fichier réseau : %s | Utilisateur : %s") % (
+                nom_affiche,
+                user,
+            )
+        if nomFichier:
+            nomFichier = " - [" + nomFichier + "]"
+        self.SetTitle("Teamworks CCNS %s%s" % (VERSION_APPLICATION, nomFichier))
+
+    @classmethod
+    def _nettoyer_menu(cls, menu):
+        """Retire les entrées commerciales/obsolètes du menu wx réel."""
+        for item in list(menu.GetMenuItems()):
+            sous_menu = item.GetSubMenu()
+            if sous_menu is not None:
+                cls._nettoyer_menu(sous_menu)
+            if item.IsSeparator():
+                continue
+            libelle = item.GetItemLabelText()
+            if libelle in cls._LIBELLES_HISTORIQUES_A_RETIRER:
+                menu.Delete(item)
+
+    def CreationBarreMenus(self):
+        super(MyFrame, self).CreationBarreMenus()
+        barre = self.GetMenuBar()
+        if barre is None:
+            return
+        for index in range(barre.GetMenuCount()):
+            self._nettoyer_menu(barre.GetMenu(index))
+
+
+CORE.MyFrame = MyFrame
 MyApp = CORE.MyApp
 SaisiePassword = CORE.SaisiePassword
 
