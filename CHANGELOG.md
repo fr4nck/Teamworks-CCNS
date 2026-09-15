@@ -17,6 +17,10 @@
 
 ## Stabilité
 
+- prise en charge des suffixes de version Teamworks-CCNS (`0.9.2-rc3`, `0.9.1f`) sans casser l'ouverture des fichiers ;
+- séparation de la version du logiciel et de la version du schéma de données afin d'empêcher une RC `0.9.x` de relancer des migrations historiques 1.x/2.x ;
+- réparation idempotente des tables et champs de schéma attendus à l'ouverture, notamment `sauvegardes_auto` et les champs modernes de `adresses_mail` ;
+- échec explicite des parcours Windows lorsqu'une erreur SQL jusque-là silencieuse est détectée ;
 - corrections des questionnaires et de leur ordre d'initialisation ;
 - correction de `AttributeError: flush` à la fermeture journalisée ;
 - durcissement du parcours DPAE/DUE et de ses transactions ;
