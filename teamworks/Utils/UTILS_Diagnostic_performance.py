@@ -183,6 +183,12 @@ def terminer_action(action):
     io = temps.get("io", 0.0)
     temps_db = sql + connexion
     details = dict(action["details"])
+    connexions_physiques = details.get(
+        "connexions_physiques", action["connexions_physiques"]
+    )
+    connexions_reutilisees = details.get(
+        "connexions_reutilisees", action["connexions_reutilisees"]
+    )
     details.update({
         "nb_requetes": action["nb_requetes"],
         "sql_ms": round(sql * 1000.0, 2),
@@ -190,8 +196,8 @@ def terminer_action(action):
         "io_ms": round(io * 1000.0, 2),
         "python_wx_ms": round(max(0.0, duree - temps_db - io) * 1000.0, 2),
         "total_ms": round(duree * 1000.0, 2),
-        "connexions_physiques": action["connexions_physiques"],
-        "connexions_reutilisees": action["connexions_reutilisees"],
+        "connexions_physiques": connexions_physiques,
+        "connexions_reutilisees": connexions_reutilisees,
     })
     mesure = {
         "categorie": "action",
