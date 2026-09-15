@@ -10,6 +10,11 @@ idempotentes.
 
 
 VERSION_SCHEMA_CIBLE = (2, 1, 2, 0)
+# Dans UpgradeDB, les filtres postérieurs à 2.0.0.1 ne font que créer des
+# tables/champs. Ils sont couverts de façon idempotente par Assurer(). Les
+# migrations antérieures contiennent en revanche les transformations A2000 et
+# D1051 et doivent rester disponibles pour les vraies bases historiques.
+SEUIL_MIGRATIONS_DONNEES_HISTORIQUES = (2, 0, 0, 1)
 NOM_PARAMETRE_SCHEMA = "schema_version"
 VERSION_HISTORIQUE_DEFAUT = (1, 0, 5, 2)
 
@@ -87,6 +92,14 @@ def DeterminerVersionSchema(db, convertir_version):
     if version_tuple and version_tuple[0] == 0:
         return None, "produit_ccns"
     return version_tuple, "version_historique"
+
+
+def NecessiteMigrationDonneesHistorique(version_schema):
+    """Vrai uniquement pour les schémas exigeant encore A2000/D1051."""
+    return (
+        version_schema is not None
+        and version_schema < SEUIL_MIGRATIONS_DONNEES_HISTORIQUES
+    )
 
 
 def MemoriserVersionSchema(db, version_schema=VERSION_SCHEMA_CIBLE):
