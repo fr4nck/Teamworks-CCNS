@@ -9,12 +9,6 @@ Le diagnostic est désactivé par défaut. Il s'active avec la variable
 Pour une recette partageable, ``TEAMWORKS_PERF_LOG`` peut pointer vers un
 fichier JSONL. Seuls les résumés d'actions et leurs métriques agrégées y sont
 écrits : aucune requête SQL, aucun identifiant métier et aucune valeur de champ.
-
-Les actions agrègent les temps SQL/connexion et le nombre de requêtes afin de
-séparer la latence base distante du temps Python/wx. Lorsque la boîte noire
-technique est disponible, des breadcrumbs sûrs signalent aussi le début/la fin
-des actions et la signature SQL (opération + table uniquement), ce qui permet
-de corréler un freeze wx sans exposer de contenu de base.
 """
 
 from __future__ import annotations
@@ -46,26 +40,21 @@ _METRIQUES_PERSISTEES = (
     "io_ms",
     "python_wx_ms",
     "total_ms",
-)
-_METRIQUES_OPTIONNELLES = (
     "connexions_physiques",
     "connexions_reutilisees",
 )
 
 
 def diagnostic_actif():
-    """Indique si la collecte des mesures est activée."""
     return os.environ.get(_VARIABLE_ENV, "").strip().lower() in _VALEURS_ACTIVES
 
 
 def reinitialiser_mesures():
-    """Vide les mesures collectées pendant la session courante."""
     del _MESURES[:]
     _ETAT.actions = []
 
 
 def obtenir_mesures():
-    """Retourne une copie des mesures collectées."""
     return list(_MESURES)
 
 
@@ -76,7 +65,6 @@ def _actions():
 
 
 def _tracer_blackbox(action, component):
-    """Ajoute un breadcrumb technique sans rendre la boîte noire obligatoire."""
     try:
         from Utils import UTILS_Blackbox
         UTILS_Blackbox.Tracer(action, component)
@@ -92,7 +80,6 @@ def _composant_action(nom):
 
 
 def _signature_requete(req):
-    """Retourne uniquement ``operation:table`` sans valeur ni SQL brut."""
     texte = " ".join(str(req or "").split())
     if not texte:
         return "unknown"
@@ -113,18 +100,11 @@ def _composant_sql(signature):
 
 
 def _ecrire_resume_action(mesure):
-    """Persiste un résumé explicitement opt-in, sans détail métier."""
     chemin = os.environ.get(_VARIABLE_LOG, "").strip()
     if not chemin:
         return
     details = mesure.get("details") or {}
-    details_persistes = {
-        cle: details.get(cle)
-        for cle in _METRIQUES_PERSISTEES
-    }
-    for cle in _METRIQUES_OPTIONNELLES:
-        if cle in details:
-            details_persistes[cle] = details[cle]
+    details_persistes = {cle: details.get(cle, 0) for cle in _METRIQUES_PERSISTEES}
     resume = {
         "date": datetime.datetime.now().astimezone().isoformat(timespec="milliseconds"),
         "categorie": "action",
@@ -145,10 +125,8 @@ def _ecrire_resume_action(mesure):
 
 
 def enregistrer_mesure(categorie, nom, duree, details=None):
-    """Ajoute une mesure et l'agrège dans les actions actives."""
     if not diagnostic_actif():
         return
-
     details = details or {}
     duree = float(duree)
     _MESURES.append({
@@ -157,17 +135,24 @@ def enregistrer_mesure(categorie, nom, duree, details=None):
         "duree": duree,
         "details": details,
     })
-
     for action in list(_actions()):
         action["temps_par_categorie"][categorie] = (
             action["temps_par_categorie"].get(categorie, 0.0) + duree
         )
         if categorie == "sql" and details.get("phase") == "execute":
             action["nb_requetes"] += 1
+        elif categorie == "connexion":
+            action["connexions_physiques"] += 1
+        elif categorie == "connexion_reutilisee":
+            action["connexions_reutilisees"] += 1
+
+
+def enregistrer_reutilisation_connexion(nom="GestionDB.DB"):
+    """Compte une réutilisation explicite d'une connexion bornée déjà ouverte."""
+    enregistrer_mesure("connexion_reutilisee", nom, 0.0, {"reutilisee": True})
 
 
 def demarrer_action(nom, details=None):
-    """Démarre une mesure agrégée, utilisable aussi à travers ``wx.CallAfter``."""
     if not diagnostic_actif():
         return None
     action = {
@@ -176,6 +161,8 @@ def demarrer_action(nom, details=None):
         "debut": time.perf_counter(),
         "temps_par_categorie": {},
         "nb_requetes": 0,
+        "connexions_physiques": 0,
+        "connexions_reutilisees": 0,
     }
     _actions().append(action)
     _tracer_blackbox("PERF_ACTION_START", _composant_action(nom))
@@ -183,15 +170,12 @@ def demarrer_action(nom, details=None):
 
 
 def terminer_action(action):
-    """Termine une action et enregistre son résumé SQL / Python-wx."""
     if action is None or not diagnostic_actif():
         return None
-
     actions = _actions()
     if action not in actions:
         return None
     actions.remove(action)
-
     duree = time.perf_counter() - action["debut"]
     temps = action["temps_par_categorie"]
     sql = temps.get("sql", 0.0)
@@ -206,6 +190,8 @@ def terminer_action(action):
         "io_ms": round(io * 1000.0, 2),
         "python_wx_ms": round(max(0.0, duree - temps_db - io) * 1000.0, 2),
         "total_ms": round(duree * 1000.0, 2),
+        "connexions_physiques": action["connexions_physiques"],
+        "connexions_reutilisees": action["connexions_reutilisees"],
     })
     mesure = {
         "categorie": "action",
@@ -221,7 +207,6 @@ def terminer_action(action):
 
 @contextmanager
 def mesurer_action(nom, details=None):
-    """Mesure une action UI complète et agrège ses accès base."""
     action = demarrer_action(nom, details)
     try:
         yield action
@@ -231,7 +216,6 @@ def mesurer_action(nom, details=None):
 
 @contextmanager
 def mesurer(categorie, nom, details=None):
-    """Mesure un bloc avec ``time.perf_counter()`` si le diagnostic est actif."""
     if not diagnostic_actif():
         yield
         return
@@ -243,21 +227,14 @@ def mesurer(categorie, nom, details=None):
 
 
 def installer_instrumentation_sql(gestion_db_module=None):
-    """Instrumente ``GestionDB.DB`` une seule fois quand le diagnostic est actif.
-
-    L'installation est volontairement déclenchée par les écrans wx étudiés :
-    en production, sans ``TEAMWORKS_PERF_DIAG``, aucun monkey-patch n'est posé.
-    """
+    """Instrumente ``GestionDB.DB`` une seule fois quand le diagnostic est actif."""
     if not diagnostic_actif():
         return False
-
     if gestion_db_module is None:
         import GestionDB as gestion_db_module
-
     classe_db = gestion_db_module.DB
     if getattr(classe_db, "_teamworks_perf_sql_installe", False):
         return True
-
     executer_original = classe_db.ExecuterReq
     resultat_original = classe_db.ResultatReq
 
