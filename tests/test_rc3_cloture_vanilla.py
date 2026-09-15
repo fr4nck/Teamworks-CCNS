@@ -73,6 +73,14 @@ def test_menu_runtime_retire_les_entrees_historiques_visibles():
     assert "menu.Delete(item)" in source
 
 
+def test_demarrage_ne_declenche_plus_de_sollicitation_financiere_automatique():
+    source = _read("teamworks/Teamworks.py")
+    bloc = source.split("def AnnonceFinancement(self):", 1)[1].split("def SetTitleFrame", 1)[0]
+    assert "return False" in bloc
+    assert "DLG_Financement" not in bloc
+    assert "random" not in bloc
+
+
 def test_changelog_courant_est_teamworks_ccns_et_legacy_archive():
     changelog = _read("CHANGELOG.md")
     versions = _read("teamworks/Versions.txt")
