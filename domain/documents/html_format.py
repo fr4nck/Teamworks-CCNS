@@ -8,7 +8,7 @@ from urllib.parse import urlparse
 _ALLOWED_TAGS = {"p", "br", "div", "span", "strong", "b", "em", "i", "u", "s", "ul", "ol", "li", "table", "thead", "tbody", "tfoot", "tr", "td", "th", "a", "img", "h1", "h2", "h3", "h4", "h5", "h6", "blockquote", "hr"}
 _BLOCKED_CONTENT_TAGS = {"script", "style", "iframe", "object", "embed"}
 _VOID_TAGS = {"br", "img", "hr"}
-_ALLOWED_STYLE_PROPERTIES = {"text-align", "color", "background-color", "font-size", "font-family", "font-weight", "font-style", "text-decoration", "margin-left", "margin-right", "page-break-before", "page-break-after", "break-before", "break-after", "width", "height", "vertical-align"}
+_ALLOWED_STYLE_PROPERTIES = {"text-align", "color", "background-color", "font-size", "font-family", "font-weight", "font-style", "text-decoration", "margin-left", "margin-right", "margin-top", "margin-bottom", "line-height", "page-break-before", "page-break-after", "break-before", "break-after", "width", "height", "vertical-align"}
 _SAFE_LINK_SCHEMES = {"http", "https", "mailto", "tel"}
 _FIELD_KEY_RE = re.compile(r"^[A-Z][A-Z0-9_]*$")
 _ASSET_URI_RE = re.compile(r"^asset://[0-9a-fA-F-]{36}$")
