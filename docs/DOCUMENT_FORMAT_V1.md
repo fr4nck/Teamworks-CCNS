@@ -1,6 +1,6 @@
 # Format documentaire PMSL / Teamworks — version 1
 
-Statut : **expérimental, première itération Qt**, non substitué aux modèles wx/TWD de production.
+Statut : **expérimental**, format portable du moteur documentaire ; il ne remplace pas les modèles wx/TWD de production et ne constitue pas un choix d'éditeur Qt de production.
 
 ## But
 
@@ -29,7 +29,7 @@ La représentation canonique n'est pas une chaîne remplacée globalement. Un ch
 
 Le texte visible à l'intérieur du `span` n'est pas l'identité du champ. L'identité est `data-pmsl-field` et doit exister dans le registre central avant d'être résolue.
 
-Les syntaxes historiques telles que `{NOM}` sont reconnues par l'adaptateur `domain.documents.legacy.upgrade_legacy_placeholders()` et converties vers la forme sémantique lorsqu'un alias est recensé. Un mot-clé inconnu est conservé tel quel.
+Les syntaxes historiques telles que `{NOM}` sont reconnues par `domain.documents.legacy.upgrade_legacy_placeholders()` lorsqu'un alias est recensé. Un mot-clé inconnu est conservé tel quel. Les alias historiques qualifiés et les tokens volontairement non canoniques sont documentés dans `DOCUMENT_FIELD_LEGACY_ALIASES.md`.
 
 ## Sous-ensemble HTML v1
 
@@ -42,73 +42,47 @@ Le nettoyeur autorise notamment :
 - liens `http`, `https`, `mailto`, `tel` et ancres locales ;
 - images référencées par `asset://UUID` ;
 - un sous-ensemble CSS de présentation ;
-- propriétés de saut de page nécessaires au futur rendu imprimable.
+- propriétés de saut de page nécessaires au rendu imprimable.
 
-Il supprime ou neutralise notamment :
-
-- `script`, `iframe`, `object`, `embed`, contenu actif ;
-- attributs d'événement `on*` ;
-- protocoles dangereux ;
-- images réseau implicites ;
-- CSS contenant `url(...)`, `expression(...)`, `javascript:` ou `data:`.
+Il supprime ou neutralise notamment le contenu actif, les gestionnaires `on*`, les protocoles dangereux, les images réseau implicites et le CSS actif/distant.
 
 Le but n'est pas de devenir un navigateur HTML complet : le format est volontairement borné.
 
 ## Assets
 
-Un asset v1 porte :
-
-- un UUID stable ;
-- un type MIME ;
-- un nom ;
-- un contenu base64 dans cette première itération ;
-- une empreinte SHA-256 ;
-- des métadonnées JSON-compatibles.
-
-Sa référence canonique est :
+Un asset v1 porte un UUID, un type MIME, un nom, un contenu base64 dans cette version, une empreinte SHA-256 et des métadonnées JSON-compatibles. Sa référence canonique est :
 
 ```text
 asset://<uuid>
 ```
 
-L'encodage base64 est un choix de prototype pour obtenir immédiatement un objet autonome et sérialisable. Il ne constitue pas une décision de stockage définitive. Le contrat `asset://` permet d'externaliser plus tard le stockage sans introduire aujourd'hui de GED ou de service dédié.
+L'encodage base64 est un choix du format v1 autonome ; le contrat `asset://` permet une évolution ultérieure du stockage sans introduire aujourd'hui de GED ou de service dédié.
 
 ## Métadonnées et gouvernance
 
 `DocumentMetadata.owner_domain` identifie le domaine propriétaire du document métier. Pour les documents RH traités ici, la valeur attendue est `rh`.
 
-Ce champ ne décide pas :
+Ce champ ne décide pas du dossier de stockage, de l'original légal, de la durée de conservation ni de l'exposition Portail/NAS/GED. Ces décisions restent gouvernées hors du moteur documentaire.
 
-- du dossier de stockage ;
-- de l'original légal ;
-- de la durée de conservation ;
-- de l'exposition Portail/NAS/GED.
+## Import du patrimoine Teamword
 
-Ces décisions restent gouvernées par PMSL-Arch et ne sont pas encodées arbitrairement dans le moteur.
+Depuis l'itération 2, le lecteur direct TWD se trouve dans `infrastructure/documents/twd_importer.py`. Il lit le format wxWidgets RichText XML observé sans importer wxPython et produit un nouveau `DocumentModel v1` ; le `.twd` source reste intact.
 
-## Exemple JSON minimal
+Depuis l'itération 3, `infrastructure/documents/twd_compare.py` fournit un inventaire et un diff structurel pour comparer plusieurs générations réelles sans réduire la comparaison à un diff texte XML.
 
-```json
-{
-  "id": "2c9415e4-4d0e-4aa3-9898-c319397178a7",
-  "format_version": 1,
-  "document_type": "contract",
-  "html": "<p>Bonjour <span data-pmsl-field=\"SALARIE_PRENOM\">{SALARIE_PRENOM}</span></p>",
-  "metadata": {
-    "title": "Contrat",
-    "owner_domain": "rh",
-    "language": "fr-FR",
-    "attributes": {}
-  },
-  "assets": [],
-  "render_options": {
-    "page_size": "A4"
-  }
-}
-```
+Ces composants sont **des adaptateurs legacy/infrastructure**. `domain.documents` ne dépend ni de wx, ni de Qt, ni de `GestionDB`, ni de l'UI Teamworks.
+
+La qualification multi-version connue est décrite dans `TWD_MULTI_VERSION_AUDIT.md`. Elle ne vaut que pour les générations réellement disponibles et testées.
 
 ## Migration
 
-La migration est toujours **copie vers un nouveau document**. Le fichier historique `.twd` / XML n'est jamais écrasé par le core.
+Une migration est toujours une **copie vers un nouveau document** :
 
-La première itération fournit la conversion pure des mots-clés historiques une fois un contenu HTML obtenu. Le lecteur direct wx RichText XML/TWD reste à encapsuler dans une couche legacy dédiée : il n'est pas requis par le fonctionnement normal du core.
+1. lecture du TWD ;
+2. hash et inventaire du source ;
+3. conversion vers le sous-ensemble HTML v1 et extraction des assets ;
+4. sémantisation des seuls placeholders présents dans le registre ;
+5. conservation et signalement des placeholders/structures non maîtrisés ;
+6. sérialisation éventuelle du nouveau `DocumentModel`.
+
+Aucune étape ne réécrit le TWD source. Cette itération n'active aucune migration en masse du patrimoine utilisateur.
