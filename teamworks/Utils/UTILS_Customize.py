@@ -5,12 +5,13 @@
 # Site internet :  www.noethys.com
 # Auteur:          Ivan LUCAS
 # Copyright:       (c) 2010-16 Ivan LUCAS
-# Licence:         Licence GNU GPL
+# Licence :        Licence GNU GPL
 #------------------------------------------------------------------------
 
 import Chemins
 import wx
 import os
+import locale
 from six.moves import configparser
 try :
     from Utils import UTILS_Adaptations
@@ -61,10 +62,35 @@ class Customize():
         self.cfg = configparser.ConfigParser()
         self.InitFichier()
 
+    def _LireFichier(self):
+        """Lit Customize.ini en privilégiant UTF-8, avec compatibilité Windows historique."""
+        encodages = ["utf-8-sig", locale.getpreferredencoding(False), "cp1252"]
+        deja_testes = set()
+        derniere_erreur = None
+
+        for encodage in encodages:
+            normalise = (encodage or "").lower()
+            if not normalise or normalise in deja_testes:
+                continue
+            deja_testes.add(normalise)
+
+            cfg = configparser.ConfigParser()
+            try:
+                with open(self.nomFichier, "r", encoding=encodage) as fichier:
+                    cfg.read_file(fichier)
+                self.cfg = cfg
+                return encodage
+            except UnicodeDecodeError as erreur:
+                derniere_erreur = erreur
+
+        if derniere_erreur is not None:
+            raise derniere_erreur
+        return None
+
     def InitFichier(self):
         """Création, vérification et migration légère des préférences."""
         if os.path.isfile(self.nomFichier) :
-            self.cfg.read(self.nomFichier)
+            self._LireFichier()
 
         dirty = False
 
@@ -122,7 +148,7 @@ class Customize():
 
     def Enregistrement(self):
         """ Enregistrement du fichier sur le disque dur """
-        with open(self.nomFichier, "w") as fichier:
+        with open(self.nomFichier, "w", encoding="utf-8") as fichier:
             self.cfg.write(fichier)
 
 
