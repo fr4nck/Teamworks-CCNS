@@ -11,7 +11,6 @@
 import Chemins
 import wx
 import os
-import locale
 from six.moves import configparser
 try :
     from Utils import UTILS_Adaptations
@@ -20,6 +19,7 @@ except:
     import UTILS_Adaptations
     import UTILS_Theme
 UTILS_Fichiers = UTILS_Adaptations.Import("Utils.UTILS_Fichiers")
+UTILS_Encodage = UTILS_Adaptations.Import("Utils.UTILS_Encodage")
 
 # Le rendu natif doit être demandé avant la construction des fenêtres.
 UTILS_Theme.enable_native_dark_mode()
@@ -63,29 +63,13 @@ class Customize():
         self.InitFichier()
 
     def _LireFichier(self):
-        """Lit Customize.ini en privilégiant UTF-8, avec compatibilité Windows historique."""
-        encodages = ["utf-8-sig", locale.getpreferredencoding(False), "cp1252"]
-        deja_testes = set()
-        derniere_erreur = None
-
-        for encodage in encodages:
-            normalise = (encodage or "").lower()
-            if not normalise or normalise in deja_testes:
-                continue
-            deja_testes.add(normalise)
-
-            cfg = configparser.ConfigParser()
-            try:
-                with open(self.nomFichier, "r", encoding=encodage) as fichier:
-                    cfg.read_file(fichier)
-                self.cfg = cfg
-                return encodage
-            except UnicodeDecodeError as erreur:
-                derniere_erreur = erreur
-
-        if derniere_erreur is not None:
-            raise derniere_erreur
-        return None
+        """Lit Customize.ini via la frontière d'encodage historique autorisée."""
+        with open(self.nomFichier, "rb") as fichier:
+            contenu = fichier.read()
+        texte = UTILS_Encodage.DecodeTexteExterne(contenu)
+        cfg = configparser.ConfigParser()
+        cfg.read_string(texte)
+        self.cfg = cfg
 
     def InitFichier(self):
         """Création, vérification et migration légère des préférences."""
