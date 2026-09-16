@@ -2,6 +2,8 @@
 
 **Teamword** est l’éditeur RichText intégré de Teamworks-CCNS wx. Il peut être utilisé directement ou comme moteur de modèles du publipostage.
 
+> Cette page décrit **l'éditeur actuel de la Vanilla wx**. Le chantier du futur moteur documentaire Qt est documenté séparément dans [[Évolution documentaire Qt]].
+
 <a id="teamword-ouvrir"></a>
 ## Où le trouver ?
 
@@ -23,6 +25,12 @@ Teamword sait :
 
 Lors de la fermeture d’un document modifié non enregistré, l’éditeur demande si les changements doivent être sauvegardés. Les modèles de publipostage Teamword utilisent `.twd`.
 
+### À propos du format `.twd`
+
+L'audit du code montre que, pour Teamword, `.twd` repose sur le XML RichText de wx enregistré sous une extension spécifique. Il doit donc être considéré comme un format historique lié au moteur wx.
+
+Le dépôt utilise également historiquement l'extension `.twd` dans certains parcours de sauvegarde applicative : il faut donc toujours identifier le contexte avant de conclure qu'un fichier `.twd` est un document Teamword.
+
 <a id="teamword-formatage"></a>
 ## Mise en forme
 
@@ -39,6 +47,18 @@ Les commandes auditées couvrent :
 
 Teamword est un éditeur intégré et ne prétend pas reproduire toutes les fonctions de Word ou Writer.
 
+### Fonctions non structurées dans Teamword
+
+L'audit ne montre pas de concepts explicites pour :
+
+- tableaux ;
+- saut de page manuel ;
+- saut de section ;
+- en-tête/pied de page ;
+- orientation ou format de page par section.
+
+Un document long peut néanmoins être paginé automatiquement au moment de l'impression par `RichTextPrintout`.
+
 <a id="teamword-recherche"></a>
 ## Recherche et remplacement
 
@@ -48,6 +68,8 @@ L’éditeur possède des commandes de recherche et de remplacement dans le docu
 ## Mots-clés de publipostage
 
 Lorsqu’il est ouvert avec un contexte de publipostage, Teamword affiche **Liste des mots-clés**. Un double-clic sur un mot-clé l’insère à la position du curseur.
+
+Dans Teamword actuel, ces balises restent du texte ordinaire. Le futur moteur documentaire étudie des variables atomiques afin d'éviter qu'une balise soit cassée caractère par caractère.
 
 Accès direct à la référence :
 
@@ -63,12 +85,22 @@ Exemples fréquents : [`{NOM}`](Mots-clés-de-publipostage#publipostage-nom), [`
 
 Teamword utilise `wx.PrintPreview` pour l’aperçu avant impression et la boîte d’impression système pour imprimer. Le publipostage peut aussi enchaîner automatiquement sauvegarde, aperçu et impression selon les options choisies.
 
+La pagination automatique est donc actuellement produite par wx au rendu ; elle n'est pas représentée comme une structure documentaire indépendante.
+
 <a id="teamword-html-email"></a>
 ## HTML et Email
 
 Le moteur sait convertir le RichText en HTML et intégrer les images nécessaires au contenu HTML. La voie Email du publipostage utilise Teamword comme éditeur et peut prendre `{EMAILS}` comme destinataire du document courant, avec sujet et pièces jointes configurés dans l’assistant.
 
 **À confirmer en recette fonctionnelle :** rendu HTML final dans les différents clients de messagerie et comportement des images/encodages complexes.
+
+## Héritage et évolution
+
+Teamword reste l'éditeur de la Vanilla wx. Il n'est pas prévu de le remplacer brutalement dans cette branche.
+
+La future voie Qt étudie un moteur documentaire indépendant de l'interface, en conservant l'expérience de rédaction de Teamword et certains concepts du moteur NoeDoc de Noethys : objets structurés, fonds réutilisables, positionnement avancé et rendu indépendant.
+
+Voir [[Évolution documentaire Qt]].
 
 ## Résultat attendu
 
@@ -79,6 +111,7 @@ Un document `.twd` peut être réouvert, modifié, fusionné, prévisualisé ou 
 - L’aide historique interne de Teamword indique qu’elle est incomplète ; ce wiki décrit les fonctions observées dans le code actuel.
 - Une balise inconnue peut rester affichée dans le résultat.
 - Pour un modèle nécessitant des fonctions bureautiques externes, choisissez Word ou Writer dans l’assistant.
+- Les fonctions décrites dans [[Évolution documentaire Qt]] sont des objectifs de conception, pas des fonctions disponibles dans la Vanilla wx.
 
 ## Problèmes fréquents
 
@@ -86,4 +119,4 @@ Pour un document qui ne s’ouvre pas, une balise vide ou un problème de modèl
 
 ## Liens associés
 
-[[Publipostage et documents]] · [[Mots-clés de publipostage]] · [[Problèmes fréquents]]
+[[Publipostage et documents]] · [[Mots-clés de publipostage]] · [[Évolution documentaire Qt]] · [[Problèmes fréquents]]
