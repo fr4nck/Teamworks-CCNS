@@ -23,8 +23,8 @@ REAL_CORPUS = {
         "contains": "Autorisation parentale",
     },
     "Certificat de travail - Exemple.twd": {
-        "recognized": {"{CIVILITE}", "{PRENOM}", "{NOM}", "{CLASSIFICATION}", "{DATEDEBUT}", "{DATEFIN}"},
-        "unknown": {"{NUMSECU}"},
+        "recognized": {"{CIVILITE}", "{PRENOM}", "{NOM}", "{CLASSIFICATION}", "{DATEDEBUT}", "{DATEFIN}", "{NUMSECU}"},
+        "unknown": set(),
         "contains": "Certificat de travail",
     },
     "Confirmation d'embauche - Exemple.twd": {
@@ -33,13 +33,13 @@ REAL_CORPUS = {
         "contains": "Confirmation",
     },
     "Contrat d'engagement éducatif - Exemple.twd": {
-        "recognized": {"{CIVILITE}", "{NOM}", "{PRENOM}", "{DATENAISS}", "{ADRESSERESID}", "{CPRESID}", "{VILLERESID}", "{CLASSIFICATION}", "{DATEDEBUT}", "{DATEFIN}"},
-        "unknown": {"{CPNAISS}", "{VILLENAISS}", "{NUMSECU}", "{ESSAI}", "{NBREJOURS}", "{REPARTITION}", "{BRUTJOUR}", "{VALEURPOINT}"},
+        "recognized": {"{CIVILITE}", "{NOM}", "{PRENOM}", "{DATENAISS}", "{CPNAISS}", "{VILLENAISS}", "{NUMSECU}", "{ADRESSERESID}", "{CPRESID}", "{VILLERESID}", "{CLASSIFICATION}", "{DATEDEBUT}", "{DATEFIN}", "{ESSAI}", "{VALEURPOINT}"},
+        "unknown": {"{NBREJOURS}", "{REPARTITION}", "{BRUTJOUR}"},
         "contains": "engagement",
     },
     "Contrat à durée déterminée - Exemple.twd": {
-        "recognized": {"{CIVILITE}", "{NOM}", "{PRENOM}", "{DATENAISS}", "{ADRESSERESID}", "{CPRESID}", "{VILLERESID}", "{CLASSIFICATION}", "{DATEDEBUT}", "{DATEFIN}"},
-        "unknown": {"{CPNAISS}", "{VILLENAISS}", "{NUMSECU}", "{ESSAI}", "{NBREJOURS}", "{REPARTITION}", "{BRUTJOUR}", "{VALEURPOINT}"},
+        "recognized": {"{CIVILITE}", "{NOM}", "{PRENOM}", "{DATENAISS}", "{CPNAISS}", "{VILLENAISS}", "{NUMSECU}", "{ADRESSERESID}", "{CPRESID}", "{VILLERESID}", "{CLASSIFICATION}", "{DATEDEBUT}", "{DATEFIN}", "{ESSAI}", "{VALEURPOINT}"},
+        "unknown": {"{NBREJOURS}", "{REPARTITION}", "{BRUTJOUR}"},
         "contains": "durée déterminée",
     },
     "Lettre de refus - Exemple.twd": {
@@ -67,8 +67,6 @@ def test_real_twd_corpus_imports_non_destructively(filename: str):
     assert result.document.metadata.attributes["legacy_version"] == "1.0.0.0"
     assert REAL_CORPUS[filename]["contains"] in result.document.html
 
-    # Direct inspection of the six repository blobs shows one embedded BMP logo
-    # at the start of each document. The importer must retain it as an Asset.
     assert len(result.imported_assets) == 1
     asset = result.imported_assets[0]
     assert asset.mime_type == "image/bmp"
