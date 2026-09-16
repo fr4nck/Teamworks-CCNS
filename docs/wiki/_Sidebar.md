@@ -30,6 +30,10 @@
 - [[Diagnostic et rapports de crash]]
 - [[Aide, discussions et signalement de bugs]]
 
+### Évolutions en cours
+- [[Évolution documentaire Qt]]
+- [[Questionnaires et formulaires conditionnels]]
+
 ### Pour aller plus loin
 - [[Architecture fonctionnelle]]
 - [[Historique, versions et héritage]]
