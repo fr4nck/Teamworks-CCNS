@@ -1,47 +1,37 @@
 # Aide, discussions et signalement de bugs
 
-## Discussions & entraide Teamworks-CCNS
+## Avant de signaler un problème
 
-Pour les nouveaux échanges autour du fork, utiliser l'espace **GitHub Discussions** de Teamworks-CCNS.
+Notez :
 
-Il est destiné notamment à :
+- la version affichée par Teamworks (`0.9.2-rc3` sur la branche documentée) ;
+- installation Windows ou portable ;
+- dossier local ou réseau/MySQL ;
+- l’écran et l’action exacte ;
+- le résultat attendu et le résultat obtenu ;
+- le message d’erreur complet ;
+- si possible une capture d’écran sans données sensibles.
 
-- poser une question ;
-- demander de l'aide ;
-- échanger sur les usages ;
-- proposer une idée générale ;
-- discuter du fonctionnement du logiciel.
+## Reproduire proprement
 
-## Forum historique Teamworks
+1. Fermez le dialogue en erreur si cela est possible sans perdre de données.
+2. Reproduisez l’action depuis un état connu.
+3. Notez les clics exacts.
+4. Pour un problème de document, notez le contexte (Individu/Contrat/Candidat/Candidature), l’éditeur choisi et le mot-clé concerné.
+5. Pour un problème réseau, notez la latence et l’heure, mais ne partagez pas les mots de passe.
 
-L'ancien forum Teamworks reste accessible comme ressource historique.
+## Discussions et tickets
 
-Il peut contenir des informations utiles sur le fonctionnement historique du logiciel.
+Utilisez les espaces GitHub du projet correspondant à votre besoin : les **Discussions** pour une question/échange et les **Issues** pour un défaut reproductible ou une demande suivie. Le wiki ne renvoie pas vers l’ancien forum historique configuré dans le code (`teamworks.ovh`), car une constante historique n’est pas une preuve que le service doit encore être utilisé.
 
-Il ne constitue toutefois plus l'espace principal de discussion du fork Teamworks-CCNS.
+## Aide intégrée
 
-## Signaler un bug
+Plusieurs écrans appellent encore le système d’aide historique. Teamword affiche même explicitement que son aide est en cours de rédaction. Lorsque l’aide intégrée et ce wiki divergent, privilégiez le comportement de la version réellement installée et signalez l’écart documentaire.
 
-Pour permettre un diagnostic efficace, fournir si possible :
+## Informations à ne pas publier
 
-- version Teamworks-CCNS ;
-- commit indiqué dans `BUILD.txt` ;
-- version Windows ;
-- version wxPython ;
-- étapes précises permettant de reproduire le problème ;
-- capture d'écran si utile ;
-- rapport de crash `.txt` lorsqu'il existe.
-
-Les rapports sont généralement enregistrés dans :
-
-```text
-%APPDATA%\teamworks\Logs
-```
-
-Ne publier aucune donnée personnelle ou confidentielle provenant de votre base.
-
-## Bug ou discussion ?
-
-Utiliser **Discussions** pour l'entraide et les questions générales.
-
-Utiliser **Issues** pour un bug reproductible ou une demande technique clairement identifiée.
+- mots de passe ;
+- chaîne de connexion MySQL complète ;
+- numéro de sécurité sociale réel ;
+- données personnelles non nécessaires à la reproduction ;
+- sauvegarde complète d’un dossier de production dans une issue publique.

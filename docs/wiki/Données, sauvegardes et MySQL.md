@@ -1,38 +1,33 @@
 # Données, sauvegardes et MySQL
 
-Teamworks-CCNS peut fonctionner avec des données locales ou une base MySQL distante.
+Teamworks-CCNS wx sait travailler avec des données locales et avec un dossier réseau/MySQL. Cette page explique ce que l’utilisateur doit retenir sans transformer le wiki en documentation d’administration SQL.
 
-## Mode local
+## Dossier local
 
-Les données sont stockées dans des fichiers locaux gérés par Teamworks.
+Le code wx reconnaît les fichiers locaux dans le répertoire Data, notamment `<nom>_TDATA.dat`. Le nom du dossier choisi dans Teamworks est plus important que la manipulation manuelle de ce fichier : utilisez les commandes de l’application pour créer, ouvrir, sauvegarder ou convertir.
 
-Ce mode peut convenir notamment à une utilisation monoposte.
+## Dossier réseau / MySQL
 
-## Mode réseau
+Un identifiant de dossier réseau contient le marqueur `[RESEAU]` et les paramètres nécessaires à la connexion. L’application peut utiliser une interface MySQL disponible (`MySQLdb` ou `mysql.connector` selon l’environnement) et mémorise le choix dans sa configuration.
 
-Le mode réseau permet de travailler avec une base MySQL partagée.
+Le menu Fichier comporte **Convertir en fichier réseau** et **Convertir en fichier local**. Ces actions sont activées/désactivées en fonction du type de dossier actuellement ouvert.
 
-La qualité de la connexion réseau peut avoir un impact important sur les performances, notamment lors du chargement de listes importantes.
+## Latence réseau
+
+Un serveur MySQL distant peut rendre visibles les temps aller-retour. Distinguez un temps réseau normal d’un blocage applicatif : notez l’action exacte (ouvrir la liste Individus, ouvrir une fiche, changer d’onglet, fermer la fiche) et comparez si possible avec le même parcours sur une liaison plus proche.
 
 ## Sauvegardes
 
-Effectuer régulièrement des sauvegardes.
+Utilisez les commandes Teamworks plutôt qu’une copie improvisée : voir [[Sauvegardes et restauration]]. Les sauvegardes automatiques peuvent être exécutées à la fermeture selon la configuration.
 
-Avant :
+## Mot de passe de dossier
 
-- une mise à jour importante ;
-- une migration ;
-- une modification massive de données ;
+Un dossier peut contenir un mot de passe dans ses données de configuration. Teamworks le demande à l’ouverture et refuse le dossier si la saisie est incorrecte. Ce mot de passe d’ouverture n’est pas la même chose qu’un compte MySQL.
 
-une sauvegarde récente est fortement recommandée.
+## Version de la base
 
-## Performance
+À l’ouverture, Teamworks vérifie la version du fichier/dossier et peut appliquer les adaptations prévues par l’application. Avant toute montée de version, sauvegardez le dossier dans son état antérieur.
 
-Teamworks-CCNS comprend des outils de diagnostic permettant de distinguer notamment :
+## Diagnostic réseau
 
-- temps de connexion ;
-- temps SQL ;
-- nombre de requêtes ;
-- traitement Python/wx.
-
-Ces diagnostics peuvent être utilisés lors d'une recette sans enregistrer le contenu des données utilisateur.
+Pour un signalement, fournir : version Teamworks, local ou réseau, hôte/port sans mot de passe, action lente, heure du test, message d’erreur et si le problème est reproductible. Ne publiez jamais de mot de passe ou de chaîne de connexion complète.

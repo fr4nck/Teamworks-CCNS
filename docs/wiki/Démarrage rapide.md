@@ -1,43 +1,55 @@
 # Démarrage rapide
 
-## 1. Lancer Teamworks-CCNS
+Ce parcours décrit une première prise en main de Teamworks-CCNS wx.
 
-Démarrer Teamworks-CCNS depuis le menu Windows ou directement depuis l'exécutable de la version portable.
+## 1. Ouvrir ou créer un dossier
 
-## 2. Ouvrir un fichier de travail
+Au lancement, utilisez l’**Assistant Démarrage** ou le menu **Fichier** :
 
-Teamworks peut utiliser :
+- **Créer un nouveau fichier** pour démarrer un dossier ;
+- **Ouvrir un fichier** pour reprendre un dossier existant ;
+- les derniers fichiers utilisés peuvent aussi être proposés dans le menu Fichier.
 
-- une base locale ;
-- une base réseau MySQL.
+Une fois le dossier ouvert, les espaces **Individus**, **Présences** et **Recrutement** deviennent disponibles.
 
-Le mode réseau est destiné aux structures utilisant une base partagée.
+## 2. Créer un individu
 
-## 3. Navigation principale
+Ouvrez **Individus** puis cliquez sur **Ajouter**. La création commence par l’onglet **Généralités**. Après la première sauvegarde, la fiche complète devient disponible avec les onglets Questionnaire, Qualifications, Contrats, Présences, Scénarios, Frais et Recrutement.
 
-Les principaux espaces permettent notamment d'accéder à :
+Renseignez d’abord les données fiables : identité, naissance, adresse et coordonnées. Elles alimentent ensuite les listes, contrats et documents.
 
-- Individus ;
-- Présences ;
-- Contrats ;
-- Recrutement ;
-- Paramètres ;
-- outils complémentaires.
+## 3. Retrouver et modifier une personne
 
-## 4. Première vérification
+La liste des individus possède une barre **Rechercher un individu**. Elle filtre les colonnes visibles pendant la saisie. Vous pouvez modifier la ligne sélectionnée avec le bouton **Modifier** ou par double-clic.
 
-Après ouverture du fichier :
+Le bouton de recherche par période permet aussi de sélectionner les personnes présentes entre deux dates ; **Afficher tout** revient à la liste complète.
 
-- ouvrir la liste des individus ;
-- ouvrir une fiche ;
-- consulter les présences ;
-- ouvrir les paramètres ;
-- vérifier que l'application se ferme normalement.
+## 4. Compléter le dossier
 
-En cas de crash, Teamworks-CCNS peut générer automatiquement un rapport dans :
+Dans la fiche :
 
-```text
-%APPDATA%\teamworks\Logs
-```
+- **Qualifications** : diplômes/qualifications rattachés à la personne ;
+- **Contrats** : historique et création des contrats ;
+- **Présences** : suivi de la personne ;
+- **Frais** : frais et déplacements rattachés ;
+- **Recrutement** : candidatures reliées.
 
-Conserver ce rapport pour le signalement du bug.
+Voir [[Individus et fiches]] pour le détail.
+
+## 5. Créer un document
+
+Depuis la liste **Individus**, le bouton courrier permet de lancer un **courrier ou Email par publipostage** pour la sélection. L’assistant vous fait vérifier les données, choisir Teamword/Word/Writer, choisir ou créer un modèle, puis définir impression, sauvegarde ou aperçu.
+
+Commencez avec [[Publipostage et documents]] et gardez [[Mots-clés de publipostage]] ouvert pour les balises exactes.
+
+## 6. Sauvegarder
+
+Le menu **Fichier** propose **Créer une sauvegarde**, **Restaurer une sauvegarde** et **Sauvegardes automatiques**. Configurez la destination avant de considérer le dossier prêt pour la production. Voir [[Sauvegardes et restauration]].
+
+## Vérifications utiles après une première saisie
+
+- l’individu est retrouvable par son nom/prénom ;
+- ses coordonnées apparaissent dans le résumé ;
+- le contrat attendu apparaît dans sa fiche ;
+- un modèle de test remplace bien `{NOM}` et `{PRENOM}` ;
+- une sauvegarde a été produite sur un emplacement distinct des données de travail.

@@ -1,53 +1,36 @@
-# Teamworks-CCNS
+# Teamworks-CCNS — Manuel utilisateur
 
-**Teamworks-CCNS** est un fork de Teamworks orienté vers la gestion d'équipes et l'évolution des fonctions liées notamment à la Convention collective nationale du sport (CCNS).
+Bienvenue dans le manuel utilisateur de **Teamworks-CCNS**. Ce wiki décrit le logiciel réellement présent dans le dépôt, avec une priorité donnée à la branche **Vanilla wx**, aujourd’hui la référence historique et fonctionnelle. La migration **Qt** existe sur un rail distinct et progresse séparément : une fonction décrite ici n’est pas réputée disponible en Qt tant qu’elle n’a pas été portée et validée.
 
-Le projet conserve l'héritage fonctionnel de Teamworks tout en modernisant progressivement son code, son interface et son fonctionnement.
+## À qui s’adresse Teamworks-CCNS ?
 
-## État actuel
+Teamworks-CCNS organise le suivi de personnes, de présences, de recrutement, de contrats et de documents dans un environnement associatif/employeur utilisant notamment la Convention collective nationale du sport (CCNS) et le contrat d’engagement éducatif (CEE).
 
-Le logiciel existe actuellement sous deux axes de développement :
+Les grands espaces visibles dans l’application wx sont **Accueil**, **Individus**, **Présences** et **Recrutement**. La fiche d’un individu donne ensuite accès à ses généralités, qualifications, contrats, présences, scénarios, frais et candidatures.
 
-- **Vanilla wx** : version opérationnelle basée sur wxPython, actuellement prioritaire pour la stabilisation et l'utilisation réelle ;
-- **Qt** : évolution parallèle en cours, qui n'est pas encore le canal principal de distribution.
+## Commencer
 
-La documentation de ce wiki porte principalement sur la **Vanilla wx** lorsque rien d'autre n'est précisé.
+1. Installez ou décompressez la version wx : [[Installer Teamworks-CCNS wx]].
+2. Au premier lancement, ouvrez l’**Assistant Démarrage**, créez un fichier ou ouvrez un dossier existant.
+3. Suivez le parcours [[Démarrage rapide]].
+4. Pour le travail courant, consultez [[Individus et fiches]], [[Présences et planning]], [[Contrats, CCNS et CEE]] et [[Recrutement]].
 
-## Principales fonctions
+## Documents et publipostage
 
-Teamworks-CCNS permet notamment de travailler sur :
+Teamworks-CCNS ne dépend pas uniquement de Word ou de Writer. Il comprend **Teamword**, son traitement de texte intégré, et un assistant commun d’édition de documents.
 
-- les individus et leurs fiches ;
-- les coordonnées, diplômes et pièces ;
-- les présences et plannings ;
-- les contrats ;
-- la DPAE/DUE ;
-- le recrutement ;
-- le publipostage et les documents ;
-- les règles et contrôles liés à la CCNS et aux CEE ;
-- les frais et déplacements ;
-- différentes fonctions de gestion d'équipe.
+- [[Éditeur interne et documents]] — créer, modifier, prévisualiser, imprimer et envoyer avec Teamword ;
+- [[Publipostage et documents]] — assistant de fusion, modèles, Word, Writer et Teamword ;
+- [[Mots-clés de publipostage]] — référence des 47 mots-clés standard actuels et des champs personnalisés.
 
-Certaines fonctions CCNS sont encore en cours d'évolution. Ce wiki distingue autant que possible ce qui est réellement disponible de ce qui reste en développement.
+## Données, paramétrage et sauvegardes
 
-## Où commencer ?
+- [[Paramétrage]]
+- [[Données, sauvegardes et MySQL]]
+- [[Sauvegardes et restauration]]
 
-1. [[Installer Teamworks-CCNS wx]]
-2. [[Démarrage rapide]]
-3. [[Individus et fiches]]
-4. [[Présences et planning]]
-5. [[Contrats, CCNS et CEE]]
+## Support et projet
 
-## Aide et communauté
+Pour identifier votre version, préparer un signalement ou retrouver les canaux du projet, voir [[Aide, discussions et signalement de bugs]]. Pour comprendre l’héritage historique et la coexistence wx/Qt, voir [[Historique, versions et héritage]].
 
-Pour les nouveaux échanges autour du fork : **GitHub Discussions — Teamworks-CCNS**.
-
-L'ancien forum Teamworks reste également accessible comme ressource historique.
-
-Pour signaler un dysfonctionnement, consulter [[Aide, discussions et signalement de bugs]].
-
-## Héritage
-
-Teamworks-CCNS dérive du projet libre Teamworks de Noethys.
-
-Le fork conserve les mentions de licence, crédits et éléments historiques nécessaires, tout en poursuivant son propre cycle de développement.
+> **État documenté :** ce manuel est construit à partir du code de la branche de documentation rattachée à la version `0.9.2-rc3`. Lorsqu’un parcours n’a pas pu être confirmé fonctionnellement au-delà de sa présence dans le code, le wiki l’indique au lieu d’inventer une procédure.

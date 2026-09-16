@@ -1,48 +1,29 @@
 # Historique, versions et héritage
 
-## Origine
+Teamworks-CCNS descend d’un socle historique Teamworks/Noethys mais le fork actuel a ses propres corrections et évolutions. Ce wiki documente **Teamworks-CCNS actuel**, pas un manuel ancien recopié.
 
-Teamworks-CCNS dérive du projet historique **Teamworks**, développé dans l'écosystème Noethys.
+## Deux rails du projet
 
-Le fork poursuit désormais son propre développement.
+- **wx / Vanilla wx** : référence historique et de production du logiciel actuel ;
+- **Qt** : migration progressive sur une branche séparée.
 
-## Pourquoi ce fork ?
+Les deux rails ne doivent pas être confondus. Une procédure wx n’est pas annoncée comme disponible en Qt sans validation du portage.
 
-Les objectifs principaux sont notamment :
+## Version documentée
 
-- maintenir Teamworks utilisable sur les environnements Python/wxPython actuels ;
-- corriger les régressions et crashs ;
-- améliorer les performances ;
-- améliorer l'ergonomie ;
-- moderniser progressivement l'architecture ;
-- développer les fonctions liées à la CCNS et aux CEE.
+Le fichier `VERSION` de la branche auditée contient `0.9.2-rc3`. Une RC est une candidate à la publication : elle peut être qualifiée pour test/validation mais n’est pas décrite comme « stable finale » par simple déduction.
 
-## Vanilla wx
+## Compatibilités historiques conservées
 
-La branche wx constitue aujourd'hui la base opérationnelle utilisée pour la stabilisation et les recettes réelles.
+Le code actuel maintient volontairement certaines compatibilités :
 
-Elle conserve une part importante du code historique tout en intégrant progressivement les corrections Teamworks-CCNS.
+- `BRUTMENS` dans les anciens modèles de contrats ;
+- `CLASSIFICATION` et `VALEURPOINT` pour les contrats historiques ;
+- le libellé « OpenOffice Writer » dans l’interface alors que la voie technique passe par UNO/soffice ;
+- différents écrans/aides portant encore des formulations anciennes.
 
-## Qt
+Ces éléments sont documentés comme historiques lorsqu’ils fonctionnent encore, et non supprimés du manuel par souci de modernisation visuelle.
 
-Une évolution Qt existe parallèlement.
+## Ce qui n’est pas une fonctionnalité actuelle
 
-Elle ne doit pas être considérée comme identique à la Vanilla wx ni utiliser automatiquement son mécanisme de mise à jour.
-
-## Versions
-
-Les versions peuvent comporter des préversions :
-
-```text
-0.9.2-rc1
-0.9.2-rc2
-0.9.2-rc3
-```
-
-Une RC est une candidate à une version stable, pas une version finale.
-
-## Historique upstream
-
-L'historique ancien de Teamworks peut être conservé séparément afin de ne pas encombrer le changelog courant Teamworks-CCNS.
-
-Le changelog principal doit décrire les modifications réellement apportées par le fork.
+Une classe, un commentaire, une roadmap ou une ancienne page d’aide ne suffit pas à prouver un parcours utilisateur. Le wiki marque **À documenter après validation fonctionnelle** les zones dont le code existe mais dont le parcours exact n’a pas encore été confirmé par recette interactive.
