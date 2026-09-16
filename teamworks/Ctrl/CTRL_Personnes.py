@@ -129,23 +129,38 @@ class PanelResume(wx.Panel):
 
     def RecupIDfichier(self):
         DB = GestionDB.DB()
-        req = "SELECT codeIDfichier FROM divers WHERE IDdivers=1;"
-        DB.ExecuterReq(req)
-        donnees = DB.ResultatReq()
-        DB.Close()
-        codeIDfichier = donnees[0][0]
-        return codeIDfichier
+        try:
+            DB.ExecuterReq("SELECT codeIDfichier FROM divers WHERE IDdivers=1;")
+            donnees = DB.ResultatReq()
+            return donnees[0][0]
+        finally:
+            DB.Close()
 
     def OnSelectPersonne(self, IDpersonne=0):
+        """Charge le résumé avec une seule connexion bornée à la sélection."""
         DB = GestionDB.DB()
-        req = """SELECT civilite, nom, prenom, date_naiss, ville_naiss, adresse_resid, cp_resid, ville_resid
-        FROM personnes WHERE IDpersonne=%d; """ % IDpersonne
-        DB.ExecuterReq(req)
-        resultats = DB.ResultatReq()
-        DB.Close()
-        if not resultats:
-            return
-        donnees = resultats[0]
+        try:
+            req = """SELECT civilite, nom, prenom, date_naiss, ville_naiss, adresse_resid, cp_resid, ville_resid
+            FROM personnes WHERE IDpersonne=%d; """ % IDpersonne
+            DB.ExecuterReq(req)
+            resultats = DB.ResultatReq()
+            if not resultats:
+                return
+            donnees = resultats[0]
+
+            req = """SELECT categorie, texte, intitule
+            FROM coordonnees WHERE IDpersonne=%d; """ % IDpersonne
+            DB.ExecuterReq(req)
+            listeCoords = DB.ResultatReq()
+
+            req = """SELECT contrats_class.nom, contrats.date_debut, contrats.date_fin, contrats.date_rupture, contrats_types.duree_indeterminee
+            FROM contrats INNER JOIN contrats_class ON contrats.IDclassification = contrats_class.IDclassification INNER JOIN contrats_types ON contrats.IDtype = contrats_types.IDtype
+            WHERE contrats.IDpersonne=%d
+            ORDER BY contrats.date_fin;""" % IDpersonne
+            DB.ExecuterReq(req)
+            listeContrats = DB.ResultatReq()
+        finally:
+            DB.Close()
 
         civilite = donnees[0]
         nom = "?" if donnees[1] in ("", None) else donnees[1]
@@ -157,14 +172,7 @@ class PanelResume(wx.Panel):
         ville_resid = u"?" if donnees[7] in ("", None) else donnees[7]
         age = self.RetourneAge(donnees[3])
 
-        DB = GestionDB.DB()
-        req = """SELECT categorie, texte, intitule
-        FROM coordonnees WHERE IDpersonne=%d; """ % IDpersonne
-        DB.ExecuterReq(req)
-        listeCoords = DB.ResultatReq()
-        DB.Close()
-
-        if len(listeCoords) != 0:
+        if listeCoords:
             texteCoords = _(u"Tél : ") + " | ".join(coord[1] for coord in listeCoords)
         else:
             texteCoords = _(u"Aucune coordonnée")
@@ -184,21 +192,14 @@ class PanelResume(wx.Panel):
         nomFichier = "Images/128x128/" + img
         self.bitmap_photo.SetPhoto(IDpersonne, nomFichier, taillePhoto=(128, 128))
 
-        DB = GestionDB.DB()
-        req = """SELECT contrats_class.nom, contrats.date_debut, contrats.date_fin, contrats.date_rupture, contrats_types.duree_indeterminee
-        FROM contrats INNER JOIN contrats_class ON contrats.IDclassification = contrats_class.IDclassification INNER JOIN contrats_types ON contrats.IDtype = contrats_types.IDtype
-        WHERE contrats.IDpersonne=%d
-        ORDER BY contrats.date_fin;""" % IDpersonne
-        DB.ExecuterReq(req)
-        listeContrats = DB.ResultatReq()
-        DB.Close()
-
         contratEnCours = False
         if len(listeContrats) == 0:
             etatContrat = _(u"Aucun contrat à ce jour.")
             detailContrat = u""
         else:
             dateDuJour = str(datetime.date.today())
+            etatContrat = _(u"Aucun contrat en cours.")
+            detailContrat = u""
             for classification, date_debut, date_fin, date_rupture, type in listeContrats:
                 if type == "non":
                     if date_debut <= dateDuJour <= date_fin:
@@ -264,7 +265,6 @@ class PanelPersonnes(wx.Panel):
         wx.Panel.__init__(self, parent, -1, name="Personnes")
         self.parent = parent
         self.init = False
-        self._largeurs_colonnes = None
         self._separateur_initialise = False
 
     def InitPage(self):
@@ -329,7 +329,6 @@ class PanelPersonnes(wx.Panel):
         self.Bind(wx.EVT_BUTTON, self.OnBoutonExportTexte, self.bouton_export_texte)
         self.Bind(wx.EVT_BUTTON, self.OnBoutonExportExcel, self.bouton_export_excel)
         self.Bind(wx.EVT_BUTTON, self.OnBoutonAide, self.bouton_aide)
-        self.listCtrl_personnes.Bind(wx.EVT_SIZE, self.OnTailleListe)
 
         self.bouton_modifier.Enable(False)
         self.bouton_supprimer.Enable(False)
@@ -337,7 +336,6 @@ class PanelPersonnes(wx.Panel):
 
         self.init = True
         wx.CallAfter(self.InitialiserSeparateur)
-        wx.CallAfter(self.AjusterColonnes)
 
     def __set_properties(self):
         self.barreRecherche.SetToolTip(wx.ToolTip(_(u"Saisissez ici un nom, un prénom, un nom de ville, etc... pour retrouver une personne donnée.")))
@@ -395,49 +393,15 @@ class PanelPersonnes(wx.Panel):
         self.splitter.SetSashPosition(cible, True)
         self._separateur_initialise = True
 
-    def OnTailleListe(self, event):
-        wx.CallAfter(self.AjusterColonnes)
-        event.Skip()
-
     def AjusterColonnes(self):
-        liste = self.listCtrl_personnes
-        try:
-            nbre = liste.GetColumnCount()
-            largeur_dispo = liste.GetClientSize().GetWidth() - 24
-        except Exception:
-            return
-        if nbre <= 0 or largeur_dispo <= 100:
-            return
+        """Compatibilité historique : les largeurs utilisateur sont autoritaires.
 
-        if self._largeurs_colonnes is None or len(self._largeurs_colonnes) != nbre:
-            self._largeurs_colonnes = [max(22, liste.GetColumnWidth(i)) for i in range(nbre)]
-
-        facteur = _echelle_interface() / 100.0
-        minimums = [max(22, int(round(largeur * facteur))) for largeur in self._largeurs_colonnes]
-        total = sum(minimums)
-        cibles = list(minimums)
-
-        if largeur_dispo > total:
-            extensibles = [i for i, largeur in enumerate(minimums) if largeur >= 90]
-            if not extensibles:
-                extensibles = [nbre - 1]
-            surplus = largeur_dispo - total
-            poids = sum(minimums[i] for i in extensibles)
-            distribue = 0
-            for position, index in enumerate(extensibles):
-                if position == len(extensibles) - 1:
-                    ajout = surplus - distribue
-                else:
-                    ajout = int(surplus * minimums[index] / float(poids))
-                    distribue += ajout
-                cibles[index] += max(0, ajout)
-
-        for index, largeur in enumerate(cibles):
-            try:
-                if liste.GetColumnWidth(index) != largeur:
-                    liste.SetColumnWidth(index, largeur)
-            except Exception:
-                pass
+        L'ancien ajustement recalculait toutes les colonnes à chaque EVT_SIZE et
+        réimposait notamment une largeur élevée à « Téléphones ». Les valeurs
+        par défaut restent définies dans LISTE_COLONNES ; après création, seule
+        l'action explicite de l'utilisateur ou Réinitialiser doit les changer.
+        """
+        return
 
     def OnBoutonAjouter(self, event):
         self.listCtrl_personnes.Ajouter()
@@ -483,14 +447,19 @@ class PanelPersonnes(wx.Panel):
         self.Refresh()
 
     def MAJpanel(self, listeElements=[]):
-        if self.init == False:
-            self.InitPage()
-        if "listCtrl_personnes" in listeElements or listeElements == []:
-            self.listCtrl_personnes.MAJ()
-            self.panel_dossiers.tree_ctrl_problemes.MAJ_treeCtrl()
-            wx.CallAfter(self.AjusterColonnes)
-            if self.listCtrl_personnes.GetNbrePersonnes() == 0:
-                self.AffichePanelResume(False)
+        """Prépare liste + arbre puis publie le rendu en une seule fois."""
+        self.Freeze()
+        try:
+            if self.init == False:
+                self.InitPage()
+            if "listCtrl_personnes" in listeElements or listeElements == []:
+                self.listCtrl_personnes.MAJ()
+                self.panel_dossiers.tree_ctrl_problemes.MAJ_treeCtrl()
+                if self.listCtrl_personnes.GetNbrePersonnes() == 0:
+                    self.AffichePanelResume(False)
+            self.Layout()
+        finally:
+            self.Thaw()
 
     def OnBoutonCourrier(self, event):
         self.listCtrl_personnes.CourrierPublipostage(mode='multiple')

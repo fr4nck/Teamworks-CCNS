@@ -32,7 +32,10 @@ class Dialog(wx.Dialog):
         self.sizer_type_staticbox = wx.StaticBox(self.panel_base, -1, _(u"1. Sélectionnez un type de pièce"))
         self.radio_pieces_1 = wx.RadioButton(self.sizer_type_staticbox, -1, _(u"Dans la liste de pièces que la personne doit fournir :"), style = wx.RB_GROUP)
         
-        self.list_ctrl_pieces = ListCtrl_Pieces(self.sizer_type_staticbox, -1)
+        self.list_ctrl_pieces = ListCtrl_Pieces(
+            self.sizer_type_staticbox, -1,
+            IDpersonne=self.IDpersonne, IDpiece=self.IDpiece,
+        )
         
         self.radio_pieces_2 = wx.RadioButton(self.sizer_type_staticbox, -1, _(u"Dans la liste des autres types de pièces :"))
 
@@ -557,12 +560,12 @@ class Dialog(wx.Dialog):
 
 
 class ListCtrl_Pieces(wx.ListCtrl):
-    def __init__(self, parent, id):
+    def __init__(self, parent, id, IDpersonne=0, IDpiece=0):
         wx.ListCtrl.__init__(self, parent, id, size=(180, -1), style=wx.LC_REPORT|wx.LC_NO_HEADER|wx.LC_HRULES|wx.LC_SINGLE_SEL|wx.SUNKEN_BORDER)
 
         self.parent = parent
-        self.IDpersonne = self.GetGrandParent().IDpersonne
-        self.IDpiece = self.GetGrandParent().IDpiece
+        self.IDpersonne = IDpersonne
+        self.IDpiece = IDpiece
 
         # ImageList
         self.il = wx.ImageList(16,16)

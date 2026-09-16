@@ -8,6 +8,8 @@
 
 from Utils.UTILS_Traduction import _
 from Utils import UTILS_Interface
+from Utils import UTILS_Diagnostic_performance as DiagnosticPerformance
+from Utils import UTILS_Personnes_performance as PersonnesPerformance
 import wx
 import FonctionsPerso
 import wx.lib.agw.customtreectrl as CT
@@ -88,16 +90,18 @@ class TreeCtrl(CT.CustomTreeCtrl):
         event.Skip()
 
     def MAJ_treeCtrl(self):
-        self.DeleteAllItems()
-        self.AppliquerTheme()
-        self.SetHilightFocusColour(UTILS_Interface.GetToken("selection"))
-        self.SetHilightNonFocusColour(UTILS_Interface.GetToken("selection"))
-        self.SetConnectionPen(wx.Pen(self.couleurTraits, 1, style=wx.PENSTYLE_DOT))
+        DiagnosticPerformance.installer_instrumentation_sql(PersonnesPerformance.GestionDB)
+        with DiagnosticPerformance.mesurer_action("wx.personnes.dossiers.rafraichissement"):
+            self.DeleteAllItems()
+            self.AppliquerTheme()
+            self.SetHilightFocusColour(UTILS_Interface.GetToken("selection"))
+            self.SetHilightNonFocusColour(UTILS_Interface.GetToken("selection"))
+            self.SetConnectionPen(wx.Pen(self.couleurTraits, 1, style=wx.PENSTYLE_DOT))
 
-        self.listeDonnees = self.GetListeProblemes()
-        self.root = self.AddRoot("Root")
-        self.SetItemData(self.root, None)
-        self.AddTreeNodes(self.root, self.listeDonnees)
+            self.listeDonnees = self.GetListeProblemes()
+            self.root = self.AddRoot("Root")
+            self.SetItemData(self.root, None)
+            self.AddTreeNodes(self.root, self.listeDonnees)
 
     def AddTreeNodes(self, parentItem, items, img=None):
         for item in items:
@@ -131,7 +135,7 @@ class TreeCtrl(CT.CustomTreeCtrl):
         return nomCategorie
 
     def GetListeProblemes(self):
-        dictNoms, dictProblemes = FonctionsPerso.Creation_liste_pb_personnes()
+        dictNoms, dictProblemes = PersonnesPerformance.Creation_liste_pb_personnes()
         listeProblemes = []
         index1 = 0
         for IDpersonne, dictCategories in dictProblemes.items():

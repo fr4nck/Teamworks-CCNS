@@ -64,6 +64,14 @@ def _date_or_none(value):
     return UTILS_Dates.DateEnDateDD(value)
 
 
+def _database_ready(DB):
+    return (
+        getattr(DB, "echec", 1) == 0
+        and getattr(DB, "cursor", None) is not None
+        and getattr(DB, "connexion", None) is not None
+    )
+
+
 def _age_on(birth_date, reference_date):
     if birth_date is None:
         return None
@@ -346,12 +354,19 @@ class Page(wx.Panel):
         dictContrats = self.GetGrandParent().dictContrats
         dictChamps = self.GetGrandParent().dictChamps
         DB = GestionDB.DB()
-        UTILS_Contrats_schema.EnsureContractEngineColumns(DB)
+        if not _database_ready(DB):
+            DB.Close()
+            wx.MessageBox(
+                _(u"La base de données est indisponible. Le contrat n'a pas été enregistré. Vérifiez la connexion puis réessayez."),
+                _(u"Enregistrement du contrat"), wx.OK | wx.ICON_ERROR, parent=self,
+            )
+            return False
 
         # Défense en profondeur : le résultat métier agrégé informe la validation,
         # mais l'utilisateur garde la décision finale lorsqu'il n'y a pas de risque
         # technique pour les données.
         try:
+            UTILS_Contrats_schema.EnsureContractEngineColumns(DB)
             if not self._RunFinalPreflight(DB, dictContrats):
                 DB.Close()
                 return False
