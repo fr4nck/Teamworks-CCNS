@@ -12,6 +12,8 @@ class MissingMergeField:
 
 @dataclass(frozen=True)
 class MergeContext:
+    """Neutral values passed to the document core by a business-data adapter."""
+
     values: dict[str, object]
 
     def get(self, key: str, default: object = "") -> object:
@@ -19,6 +21,15 @@ class MergeContext:
 
     def as_dict(self) -> dict[str, object]:
         return dict(self.values)
+
+    @classmethod
+    def from_mapping(cls, values: Mapping[str, object]) -> "MergeContext":
+        normalized: dict[str, object] = {}
+        for key, value in values.items():
+            normalized_key = str(key).strip().upper()
+            if normalized_key:
+                normalized[normalized_key] = _clean_value(value)
+        return cls(values=normalized)
 
 
 def _clean_value(value: object) -> object:
@@ -29,11 +40,7 @@ def _clean_value(value: object) -> object:
     return value
 
 
-def _copy_prefixed(
-    target: dict[str, object],
-    source: Mapping[str, object] | None,
-    prefix: str,
-) -> None:
+def _copy_prefixed(target: dict[str, object], source: Mapping[str, object] | None, prefix: str) -> None:
     if not source:
         return
     for key, value in source.items():
@@ -50,26 +57,16 @@ def build_merge_context(
     contract: Mapping[str, object] | None = None,
     extra: Mapping[str, object] | None = None,
 ) -> MergeContext:
-    """Construit les mots-clés canoniques sans injecter de données propres à une structure.
-
-    Les données sont fournies par les adaptateurs d'infrastructure ou par le moteur
-    de publipostage historique. Le domaine se contente de les normaliser et de les
-    préfixer pour éviter les collisions entre structure, salarié et contrat.
-    """
-
+    """Construit les mots-clés canoniques sans injecter de données propres à une structure."""
     values: dict[str, object] = {}
     _copy_prefixed(values, structure, "STRUCTURE")
     _copy_prefixed(values, employee, "SALARIE")
     _copy_prefixed(values, contract, "CONTRAT")
-
     if extra:
         for key, value in extra.items():
             normalized_key = str(key).strip().upper()
             if normalized_key:
-                # Les mots-clés historiques restent disponibles, mais ne doivent
-                # jamais écraser les espaces de noms canoniques construits ci-dessus.
                 values.setdefault(normalized_key, _clean_value(value))
-
     return MergeContext(values=values)
 
 
