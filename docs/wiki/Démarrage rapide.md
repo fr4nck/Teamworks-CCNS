@@ -1,55 +1,56 @@
 # Démarrage rapide
 
-Ce parcours décrit une première prise en main de Teamworks-CCNS wx.
+Ce parcours permet à un nouvel utilisateur de passer de l’ouverture du logiciel à une première fiche, un document et une sauvegarde.
 
 ## 1. Ouvrir ou créer un dossier
 
-Au lancement, utilisez l’**Assistant Démarrage** ou le menu **Fichier** :
+Au lancement, utilisez l’**Assistant Démarrage** ou **Fichier** :
 
-- **Créer un nouveau fichier** pour démarrer un dossier ;
-- **Ouvrir un fichier** pour reprendre un dossier existant ;
-- les derniers fichiers utilisés peuvent aussi être proposés dans le menu Fichier.
+- **Créer un nouveau fichier** ;
+- **Ouvrir un fichier** ;
+- ou un dossier récent proposé dans le menu.
 
 Une fois le dossier ouvert, les espaces **Individus**, **Présences** et **Recrutement** deviennent disponibles.
 
 ## 2. Créer un individu
 
-Ouvrez **Individus** puis cliquez sur **Ajouter**. La création commence par l’onglet **Généralités**. Après la première sauvegarde, la fiche complète devient disponible avec les onglets Questionnaire, Qualifications, Contrats, Présences, Scénarios, Frais et Recrutement.
+Ouvrez **Individus > Ajouter**. La création commence sur **Généralités**. Complétez d’abord les données fiables : identité, naissance, situation, adresse et coordonnées.
 
-Renseignez d’abord les données fiables : identité, naissance, adresse et coordonnées. Elles alimentent ensuite les listes, contrats et documents.
+La fiche expose ensuite huit onglets réels : **Généralités**, **Questionnaire**, **Qualifications**, **Contrats**, **Présences**, **Scénarios**, **Frais**, **Recrutement**. Voir [[Individus et fiches#onglets-fiche]].
 
-## 3. Retrouver et modifier une personne
+## 3. Retrouver et personnaliser la liste
 
-La liste des individus possède une barre **Rechercher un individu**. Elle filtre les colonnes visibles pendant la saisie. Vous pouvez modifier la ligne sélectionnée avec le bouton **Modifier** ou par double-clic.
-
-Le bouton de recherche par période permet aussi de sélectionner les personnes présentes entre deux dates ; **Afficher tout** revient à la liste complète.
+La barre **Rechercher un individu** filtre la liste. Cliquez sur un en-tête pour trier ; utilisez **Options** pour choisir l’ordre/visibilité des colonnes et **Réinitialiser** pour revenir à la présentation par défaut. Voir [[Individus et fiches#personnaliser-liste]].
 
 ## 4. Compléter le dossier
 
-Dans la fiche :
+Selon vos besoins :
 
-- **Qualifications** : diplômes/qualifications rattachés à la personne ;
-- **Contrats** : historique et création des contrats ;
-- **Présences** : suivi de la personne ;
-- **Frais** : frais et déplacements rattachés ;
-- **Recrutement** : candidatures reliées.
-
-Voir [[Individus et fiches]] pour le détail.
+- **Qualifications** : qualifications et pièces ;
+- **Contrats** : création, rémunération et documents ;
+- **Présences** : plages de présence ;
+- **Frais** : déplacements/remboursements ;
+- **Recrutement** : candidatures et entretiens rattachés.
 
 ## 5. Créer un document
 
-Depuis la liste **Individus**, le bouton courrier permet de lancer un **courrier ou Email par publipostage** pour la sélection. L’assistant vous fait vérifier les données, choisir Teamword/Word/Writer, choisir ou créer un modèle, puis définir impression, sauvegarde ou aperçu.
+Depuis **Individus**, sélectionnez une ou plusieurs personnes puis **Courrier**. L’assistant vous fait vérifier les données, choisir Teamword/Word/Writer, choisir/créer un modèle, insérer les mots-clés puis sauvegarder/imprimer/prévisualiser.
 
-Commencez avec [[Publipostage et documents]] et gardez [[Mots-clés de publipostage]] ouvert pour les balises exactes.
+Commencez par [[Publipostage et documents#publipostage-parcours]] et gardez [[Mots-clés de publipostage]] ouvert.
 
 ## 6. Sauvegarder
 
-Le menu **Fichier** propose **Créer une sauvegarde**, **Restaurer une sauvegarde** et **Sauvegardes automatiques**. Configurez la destination avant de considérer le dossier prêt pour la production. Voir [[Sauvegardes et restauration]].
+Avant de considérer le dossier prêt pour un usage réel : **Fichier > Créer une sauvegarde** et vérifiez que l’archive existe à un emplacement distinct. Voir [[Sauvegardes et restauration]].
 
-## Vérifications utiles après une première saisie
+## Vérifications utiles
 
-- l’individu est retrouvable par son nom/prénom ;
-- ses coordonnées apparaissent dans le résumé ;
-- le contrat attendu apparaît dans sa fiche ;
-- un modèle de test remplace bien `{NOM}` et `{PRENOM}` ;
-- une sauvegarde a été produite sur un emplacement distinct des données de travail.
+- l’individu est retrouvable ;
+- ses coordonnées sont correctes ;
+- un contrat apparaît dans sa fiche si vous en avez créé un ;
+- un modèle de test remplace `{NOM}` et `{PRENOM}` ;
+- une sauvegarde a été produite ;
+- vous savez où trouver [[Problèmes fréquents]] et [[Diagnostic et rapports de crash]].
+
+## Liens associés
+
+[[Installer Teamworks-CCNS wx]] · [[Individus et fiches]] · [[Publipostage et documents]] · [[Sauvegardes et restauration]]

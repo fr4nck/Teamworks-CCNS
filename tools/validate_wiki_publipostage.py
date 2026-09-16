@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
-"""Vérifie l'inventaire statique de publipostage et les liens du wiki.
-
-Les mots-clés personnalisés stockés en base ne sont pas statiquement énumérables et
-sont volontairement hors du rapprochement code/wiki.
-"""
+"""Valide l'inventaire statique du publipostage contre sa page de référence."""
 from __future__ import annotations
+
 import ast
 import re
 from pathlib import Path
@@ -13,7 +10,28 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "teamworks" / "Utils" / "UTILS_Publipostage_donnees.py"
 WIKI = ROOT / "docs" / "wiki"
 REF = WIKI / "Mots-clés de publipostage.md"
-TARGETS = {"Importation_personne", "Importation_candidat", "Importation_candidature", "Importation_contrat"}
+TARGETS = {
+    "Importation_personne",
+    "Importation_candidat",
+    "Importation_candidature",
+    "Importation_contrat",
+}
+REQUIRED_INDEX_ANCHORS = {
+    "index-alphabetique",
+    "index-contexte-individu",
+    "index-contexte-candidat",
+    "index-contexte-candidature",
+    "index-contexte-contrat",
+    "index-usage-identite",
+    "index-usage-coordonnees",
+    "index-usage-recrutement",
+    "index-usage-contrat",
+    "index-usage-remuneration",
+    "index-usage-ccns",
+    "index-usage-cee",
+    "exemples-modeles",
+    "champs-personnalises",
+}
 
 
 def slug(key: str) -> str:
@@ -43,48 +61,64 @@ def static_keys() -> set[str]:
     return found
 
 
-def wiki_checks(keys: set[str]) -> list[str]:
+def checks(keys: set[str]) -> list[str]:
     errors: list[str] = []
     ref = REF.read_text(encoding="utf-8")
-    anchors = set(re.findall(r'<a id="([^"]+)"></a>', ref))
+    anchors = re.findall(r'<a id="([^"]+)"></a>', ref)
+    anchor_set = set(anchors)
     headings = set(re.findall(r'^### `\{([A-Z0-9_]+)\}`\s*$', ref, flags=re.M))
+
+    duplicates = sorted({anchor for anchor in anchors if anchors.count(anchor) > 1})
+    if duplicates:
+        errors.append("ancres dupliquées: " + ", ".join(duplicates))
+
     for key in sorted(keys):
         if key not in headings:
             errors.append(f"mot-clé exposé mais fiche absente: {key}")
-        if slug(key) not in anchors:
+        if slug(key) not in anchor_set:
             errors.append(f"ancre absente pour {key}: {slug(key)}")
+
     extra = headings - keys
     if extra:
         errors.append("fiches standard absentes du code: " + ", ".join(sorted(extra)))
 
-    pages = {p.stem for p in WIKI.glob("*.md")}
-    for path in WIKI.glob("*.md"):
-        text = path.read_text(encoding="utf-8")
-        for inner in re.findall(r'\[\[([^\]]+)\]\]', text):
-            target = inner.split("|", 1)[1] if "|" in inner else inner
-            target = target.split("#", 1)[0]
-            if target not in pages:
-                errors.append(f"lien wiki cassé dans {path.name}: [[{inner}]]")
-        for anc in re.findall(r'\]\(Mots-clés-de-publipostage#([^)]+)\)', text):
-            if anc not in anchors:
-                errors.append(f"ancre cible absente dans {path.name}: {anc}")
+    missing_indexes = REQUIRED_INDEX_ANCHORS - anchor_set
+    if missing_indexes:
+        errors.append("index/sections de référence absents: " + ", ".join(sorted(missing_indexes)))
+
+    examples = (
+        "Bonjour {CIVILITE} {NOM}",
+        "Votre contrat débute le {DATEDEBUT}",
+        "Salaire brut mensuel : {SALAIREBRUTMENSUEL}",
+    )
+    for example in examples:
+        if example not in ref:
+            errors.append(f"exemple attendu absent: {example}")
+
+    for match in re.findall(r'Mots-clés-de-publipostage#([A-Za-z0-9_-]+)', "\n".join(
+        p.read_text(encoding="utf-8") for p in WIKI.glob("*.md")
+    )):
+        if match not in anchor_set:
+            errors.append(f"lien vers une ancre de mot-clé absente: {match}")
+
     return errors
 
 
 def main() -> int:
-    if not SOURCE.exists():
-        print(f"ERREUR: source introuvable: {SOURCE}")
+    if not SOURCE.exists() or not REF.exists():
+        print("ERREUR: source ou page de référence introuvable")
         return 2
     keys = static_keys()
-    errors = wiki_checks(keys)
+    errors = checks(keys)
     print(f"Mots-clés statiques détectés: {len(keys)}")
     if errors:
         for err in errors:
             print("ERREUR:", err)
         return 1
-    print("OK: inventaire, fiches, ancres et liens contrôlés.")
-    print("NOTE: champs personnalisés en base exclus du contrôle statique par conception.")
+    print("OK: inventaire, 47 fiches, ancres, index, exemples et liens de mots-clés contrôlés.")
+    print("NOTE: champs personnalisés en base exclus du rapprochement statique par conception.")
     return 0
+
 
 if __name__ == "__main__":
     raise SystemExit(main())

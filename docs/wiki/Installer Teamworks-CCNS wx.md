@@ -1,58 +1,65 @@
 # Installer Teamworks-CCNS wx
 
-Cette page concerne la **Vanilla wx**, pas la migration Qt.
+Cette page concerne la **Vanilla wx**. La migration Qt est séparée.
+
+## À quoi ça sert ?
+
+Installer ou décompresser une version wx sans confondre une **release publiée** et une **RC de validation**, puis ouvrir les données avec un chemin de retour sûr.
 
 ## Quelle édition utiliser ?
 
-Le projet est distribué sous forme d’installation Windows et, selon la livraison, sous forme portable. L’installateur intègre Teamworks dans un emplacement d’application Windows ; l’édition portable conserve l’application dans le dossier décompressé et se prête mieux aux essais ou à une exécution sans installation classique.
+Le projet peut livrer un **installateur Windows** et une **archive portable**. L’installateur place l’application dans un emplacement Windows ; le portable fonctionne depuis son dossier décompressé et facilite les essais isolés.
 
-Avant de remplacer une installation utilisée en production, faites une [[sauvegarde|Sauvegardes et restauration]] du dossier métier / de la base concernée et notez la version actuellement utilisée.
+Avant de remplacer une installation utilisée, suivez [[Sauvegardes et restauration#avant-mise-a-jour]].
 
 ## Vérifier la version
 
-La branche documentée contient `VERSION = 0.9.2-rc3`. `rc` signifie **release candidate** : une version destinée à validation avant stabilisation, et non une version finale déclarée stable.
+La branche documentée porte `VERSION = 0.9.2-rc3`. Une RC est une version candidate à la publication, pas une stable finale par simple déduction.
 
-Dans l’application wx, la barre de titre est construite sous la forme `Teamworks v<version>` et affiche aussi le dossier ouvert. Pour un diagnostic, recopiez cette version exactement.
-
-### À propos de `BUILD.txt`
-
-Le fichier `VERSION` est présent dans le dépôt et constitue la source de version de l’application. Aucun `BUILD.txt` racine n’est présent dans l’arbre source de la branche auditée. Certaines constructions distribuées peuvent ajouter des métadonnées de build : si un `BUILD.txt` accompagne votre paquet, joignez-le au diagnostic, mais ne le supposez pas présent sur toutes les installations.
+La Vanilla wx lit le fichier `VERSION` comme source canonique. Un `BUILD.txt` peut exister dans certains paquets et rapports, mais il n’est pas garanti dans l’arbre source. Voir [[Versions et mises à jour wx]].
 
 ## Installation Windows
 
-1. Fermez Teamworks-CCNS si une version est déjà ouverte.
-2. Sauvegardez les données utilisées en production.
-3. Lancez l’installateur fourni avec la version que vous avez décidé de déployer.
-4. Conservez le chemin proposé sauf contrainte locale connue.
-5. Lancez Teamworks et vérifiez la version dans le titre de fenêtre avant d’ouvrir/mettre à niveau un dossier important.
-
-Le manuel ne publie volontairement **aucun ancien lien de téléchargement** : utilisez les livrables de la version actuellement validée par le projet.
+1. Fermez Teamworks-CCNS.
+2. Sauvegardez le dossier métier/base concerné.
+3. Lancez l’installateur de la version que vous avez décidé de déployer.
+4. Conservez l’ancien paquet/installateur pour un retour arrière tant que la nouvelle version n’est pas validée.
+5. Lancez Teamworks et vérifiez la version affichée avant d’ouvrir un dossier important.
+6. Après ouverture, contrôlez quelques parcours représentatifs.
 
 ## Version portable
 
-1. Décompressez l’archive dans un dossier où vous avez le droit d’écrire.
-2. Ne lancez pas directement l’exécutable depuis une archive compressée.
-3. Évitez de mélanger les fichiers de deux versions dans le même répertoire : décompressez une nouvelle version dans un nouveau dossier.
-4. Ouvrez vos données depuis Teamworks après avoir vérifié la version affichée.
+1. Décompressez l’archive dans un nouveau dossier où vous pouvez écrire.
+2. Ne lancez pas l’exécutable directement depuis l’archive ZIP.
+3. Ne mélangez pas les fichiers de deux versions dans le même répertoire.
+4. Vérifiez la version puis ouvrez un dossier de test avant un dossier de production.
 
 ## Premier lancement
 
-Teamworks peut afficher l’**Assistant Démarrage**. Le menu **Fichier** permet aussi de créer un nouveau fichier ou d’ouvrir un fichier existant. L’application mémorise une liste de fichiers récemment ouverts.
+Teamworks peut afficher l’**Assistant Démarrage**. Le menu **Fichier** permet aussi **Créer un nouveau fichier** ou **Ouvrir un fichier**. L’application mémorise les dossiers récents.
 
-Un dossier local est représenté par les données Teamworks dans le répertoire `Data`; le code wx reconnaît notamment le fichier `<nom>_TDATA.dat`. Un dossier réseau/MySQL utilise un identifiant `[RESEAU]` et des paramètres de connexion distincts. Ne renommez pas manuellement ces éléments pour « réparer » un dossier.
+Un dossier local s’appuie notamment sur `<nom>_TDATA.dat`. Un dossier réseau/MySQL utilise le mode `[RESEAU]`. Ne renommez pas manuellement ces éléments pour tenter de réparer un dossier.
 
 ## Mise à jour
 
-- sauvegardez avant toute mise à jour ;
-- ne remplacez pas votre seule copie fonctionnelle d’une RC par une autre sans retour arrière ;
-- ouvrez d’abord un dossier de test représentatif ;
-- contrôlez Individus, contrats, présences et un publipostage réel ;
-- en cas de migration de schéma proposée par l’application, ne l’interrompez pas.
+Le menu wx contient une recherche de mise à jour, mais son fonctionnement complet sur les paquets actuels reste **À confirmer en recette fonctionnelle**. Pour une version publiée, contrôlez l’espace **Releases GitHub** décrit dans [[Versions et mises à jour wx]].
 
-## Désinstallation
+Le mécanisme de mise à jour de cette page concerne **la Vanilla wx uniquement**, pas Qt.
 
-Désinstaller l’application n’est pas une stratégie de sauvegarde des données. Avant toute suppression, identifiez le dossier métier et sa sauvegarde. Pour une édition portable, supprimer le dossier de programme n’efface pas nécessairement les données réseau/MySQL, mais peut supprimer des fichiers locaux si vous les avez volontairement placés à l’intérieur : vérifiez avant suppression.
+## Résultat attendu
 
-## En cas de problème
+Teamworks démarre, affiche la version attendue et permet d’ouvrir/créer un dossier sans message de migration inattendu. Après une mise à jour, contrôlez Individus, contrats, présences et un publipostage représentatif avant de considérer la migration validée.
 
-Notez la version, le type d’installation (installateur/portable), le type de dossier (local/réseau), le message affiché et l’action exacte qui l’a provoqué. Voir [[Aide, discussions et signalement de bugs]].
+## Points d’attention
+
+- Désinstaller l’application n’est pas une sauvegarde des données.
+- Une migration de schéma peut modifier le dossier ; conservez une sauvegarde antérieure.
+- N’utilisez pas une RC comme « stable » simplement parce qu’elle démarre.
+
+## Problèmes fréquents
+
+Pour un démarrage impossible ou une mise à jour indisponible, voir [[Problèmes fréquents]]. Pour un rapport de crash, voir [[Diagnostic et rapports de crash]].
+
+## Liens associés
+
+[[Démarrage rapide]] · [[Sauvegardes et restauration]] · [[Versions et mises à jour wx]] · [[Diagnostic et rapports de crash]]

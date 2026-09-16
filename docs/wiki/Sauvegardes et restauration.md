@@ -1,36 +1,73 @@
 # Sauvegardes et restauration
 
-Les fonctions de sauvegarde sont accessibles dans le menu **Fichier** : **Créer une sauvegarde**, **Restaurer une sauvegarde** et **Sauvegardes automatiques**.
+<a id="sauvegarde-manuelle"></a>
+## À quoi ça sert ?
+
+Les sauvegardes protègent le dossier avant une mise à jour, une migration, une conversion réseau ou une modification importante. Teamworks sait sauvegarder les données locales et, avec les outils nécessaires, les bases réseau/MySQL.
+
+## Où les trouver ?
+
+Menu **Fichier** :
+
+- **Créer une sauvegarde** ;
+- **Restaurer une sauvegarde** ;
+- **Sauvegardes automatiques**.
 
 ## Créer une sauvegarde manuelle
 
-1. Ouvrez le dossier à sauvegarder.
+1. Ouvrez le dossier à protéger.
 2. Choisissez **Fichier > Créer une sauvegarde**.
-3. Choisissez/contrôlez la destination proposée.
-4. Conservez la sauvegarde sur un emplacement distinct des données de travail.
-5. Pour une opération risquée, vérifiez qu’un fichier a réellement été créé avant de continuer.
+3. Vérifiez les catégories de données et la destination proposées.
+4. Selon les options, incluez aussi modèles et éditions si vous voulez les conserver avec la sauvegarde.
+5. Contrôlez qu’un fichier a réellement été créé avant une opération risquée.
 
+Le moteur crée une archive `.twd` non chiffrée ou `.twc` lorsqu’un mot de passe de sauvegarde est utilisé.
+
+### Dossier réseau/MySQL
+
+La sauvegarde MySQL utilise `mysqldump` puis intègre le fichier SQL à l’archive. Si Teamworks ne localise pas MySQL ou si l’export échoue, la sauvegarde réseau est signalée en échec.
+
+<a id="sauvegardes-auto"></a>
 ## Sauvegardes automatiques
 
-Teamworks peut déclencher une sauvegarde automatique, notamment lors de la fermeture d’un dossier/application selon la configuration. Le code vérifie aussi que le répertoire de destination enregistré existe ; s’il a disparu, il peut revenir vers le dossier Documents de l’utilisateur.
+Une procédure automatique peut définir : destination, nom, fichiers locaux/réseau, modèles/éditions, envoi email et conditions d’exécution. Le moteur sait notamment conditionner l’exécution selon jours scolaires/vacances, plage horaire, poste, ancienneté de la dernière sauvegarde et utilisateur, puis supprimer les anciennes archives selon une durée configurée.
 
-Une sauvegarde automatique n’est utile que si sa destination est accessible et surveillée. Testez périodiquement la restauration sur une copie.
+Teamworks lance la vérification des sauvegardes automatiques lors de la fermeture lorsque cette fonction est active.
 
+<a id="restauration"></a>
 ## Restaurer
 
-1. Fermez les écrans qui modifient encore le dossier.
-2. Identifiez précisément la sauvegarde et sa date.
-3. Utilisez **Fichier > Restaurer une sauvegarde**.
-4. Après restauration, contrôlez quelques individus, contrats, présences et documents avant de reprendre le travail.
+1. Conservez une copie intacte de l’archive d’origine.
+2. Fermez les écrans qui modifient encore le dossier.
+3. Choisissez **Fichier > Restaurer une sauvegarde**.
+4. Identifiez précisément la sauvegarde et sa date.
+5. Confirmez l’écrasement seulement après avoir vérifié le dossier cible.
+6. Après restauration, ouvrez quelques fiches, contrats, présences et documents pour contrôler le résultat.
 
+Le moteur demande confirmation avant de remplacer des fichiers locaux déjà présents. Les restaurations réseau nécessitent les paramètres/outils MySQL adaptés.
+
+<a id="avant-mise-a-jour"></a>
 ## Avant une mise à jour
 
-Toujours créer une sauvegarde avant d’ouvrir pour la première fois un dossier important avec une nouvelle RC/version. Une migration de structure de données peut être irréversible sans sauvegarde antérieure.
+Checklist courte :
 
-## Local et réseau/MySQL
+- [ ] faire une sauvegarde ;
+- [ ] noter la version actuellement utilisée ;
+- [ ] fermer Teamworks proprement ;
+- [ ] conserver le paquet/installateur précédent si nécessaire ;
+- [ ] après mise à jour, vérifier le dossier sur quelques parcours avant de supprimer l’ancienne sauvegarde.
 
-Le mécanisme de stockage diffère entre dossier local et dossier réseau. Ne remplacez pas une sauvegarde MySQL par une simple copie approximative d’un fichier local. Voir [[Données, sauvegardes et MySQL]].
+## Précautions
 
-## En cas d’échec
+- Une archive de sauvegarde peut contenir des données personnelles : protégez son emplacement.
+- Ne testez pas une restauration destructive sur l’unique copie de production.
+- Une base ouverte par une version plus récente peut recevoir des adaptations de schéma ; conservez une sauvegarde faite avant l’ouverture.
+- Le succès d’une sauvegarde automatisée mérite d’être vérifié périodiquement par une restauration sur copie.
 
-Ne multipliez pas les tentatives de restauration sur l’unique copie. Conservez la sauvegarde d’origine, notez la version de Teamworks et le message d’erreur, puis consultez [[Aide, discussions et signalement de bugs]].
+## Problèmes fréquents
+
+Si le répertoire n’existe plus, si `mysqldump` est introuvable ou si la restauration échoue, ne multipliez pas les essais destructifs : conservez l’archive, notez la version et consultez [[Problèmes fréquents]] / [[Diagnostic et rapports de crash]].
+
+## Liens associés
+
+[[Données, sauvegardes et MySQL]] · [[Versions et mises à jour wx]] · [[Problèmes fréquents]]

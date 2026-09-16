@@ -1,36 +1,43 @@
 # Teamworks-CCNS — Manuel utilisateur
 
-Bienvenue dans le manuel utilisateur de **Teamworks-CCNS**. Ce wiki décrit le logiciel réellement présent dans le dépôt, avec une priorité donnée à la branche **Vanilla wx**, aujourd’hui la référence historique et fonctionnelle. La migration **Qt** existe sur un rail distinct et progresse séparément : une fonction décrite ici n’est pas réputée disponible en Qt tant qu’elle n’a pas été portée et validée.
-
-## À qui s’adresse Teamworks-CCNS ?
-
-Teamworks-CCNS organise le suivi de personnes, de présences, de recrutement, de contrats et de documents dans un environnement associatif/employeur utilisant notamment la Convention collective nationale du sport (CCNS) et le contrat d’engagement éducatif (CEE).
-
-Les grands espaces visibles dans l’application wx sont **Accueil**, **Individus**, **Présences** et **Recrutement**. La fiche d’un individu donne ensuite accès à ses généralités, qualifications, contrats, présences, scénarios, frais et candidatures.
+Ce wiki décrit **Teamworks-CCNS Vanilla wx** tel qu’il existe dans le code de la branche documentaire de la PR #432. La migration **Qt** suit un rail séparé : une fonction décrite ici n’est pas réputée disponible en Qt sans validation spécifique.
 
 ## Commencer
 
-1. Installez ou décompressez la version wx : [[Installer Teamworks-CCNS wx]].
-2. Au premier lancement, ouvrez l’**Assistant Démarrage**, créez un fichier ou ouvrez un dossier existant.
-3. Suivez le parcours [[Démarrage rapide]].
-4. Pour le travail courant, consultez [[Individus et fiches]], [[Présences et planning]], [[Contrats, CCNS et CEE]] et [[Recrutement]].
+1. [[Installer Teamworks-CCNS wx]].
+2. Suivre [[Démarrage rapide]].
+3. Créer ou ouvrir un dossier de travail.
+4. Utiliser les quatre espaces principaux : **Accueil**, **Individus**, **Présences**, **Recrutement**.
 
-## Documents et publipostage
+## Travailler avec les personnes et l’activité
 
-Teamworks-CCNS ne dépend pas uniquement de Word ou de Writer. Il comprend **Teamword**, son traitement de texte intégré, et un assistant commun d’édition de documents.
+- [[Individus et fiches]] — liste, recherche, colonnes et les huit onglets de la fiche.
+- [[Présences et planning]] — calendrier, planning et saisie de présences.
+- [[Contrats, CCNS et CEE]] — contrats, rémunération et contrôles calculés.
+- [[DPAE et DUE]] — édition du formulaire PDF, sans promesse de télétransmission.
+- [[Recrutement]] — candidats, candidatures, entretiens et offres d’emploi.
+- [[Frais et déplacements]] — déplacements et remboursements.
 
-- [[Éditeur interne et documents]] — créer, modifier, prévisualiser, imprimer et envoyer avec Teamword ;
-- [[Publipostage et documents]] — assistant de fusion, modèles, Word, Writer et Teamword ;
-- [[Mots-clés de publipostage]] — référence des 47 mots-clés standard actuels et des champs personnalisés.
+## Produire des documents
 
-## Données, paramétrage et sauvegardes
+- [[Publipostage et documents]] — parcours complet de fusion.
+- [[Éditeur interne et documents]] — aide Teamword.
+- [[Mots-clés de publipostage]] — 47 mots-clés standard, contextes et champs personnalisés.
+
+## Configurer et protéger les données
 
 - [[Paramétrage]]
 - [[Données, sauvegardes et MySQL]]
 - [[Sauvegardes et restauration]]
+- [[Versions et mises à jour wx]]
 
-## Support et projet
+## Se dépanner et contribuer
 
-Pour identifier votre version, préparer un signalement ou retrouver les canaux du projet, voir [[Aide, discussions et signalement de bugs]]. Pour comprendre l’héritage historique et la coexistence wx/Qt, voir [[Historique, versions et héritage]].
+- [[Problèmes fréquents]] — vérifications simples par symptôme.
+- [[Diagnostic et rapports de crash]] — logs, rapports et informations à joindre.
+- [[Aide, discussions et signalement de bugs]] — forum historique, Discussions GitHub et Issues GitHub.
+- [[Glossaire]] — vocabulaire du logiciel.
+- [[Architecture fonctionnelle]] — repères pour utilisateurs avancés et contributeurs.
+- [[Historique, versions et héritage]] — origine du projet et séparation wx/Qt.
 
-> **État documenté :** ce manuel est construit à partir du code de la branche de documentation rattachée à la version `0.9.2-rc3`. Lorsqu’un parcours n’a pas pu être confirmé fonctionnellement au-delà de sa présence dans le code, le wiki l’indique au lieu d’inventer une procédure.
+> **Niveau de preuve.** Les procédures sont reliées au code wx réel. Lorsqu’un comportement nécessite encore une vraie recette Windows, le wiki emploie explicitement **À confirmer en recette fonctionnelle** au lieu de compléter par déduction.

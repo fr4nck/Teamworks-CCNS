@@ -1,78 +1,90 @@
 # Individus et fiches
 
-L’espace **Individus** est la liste de travail principale des personnes enregistrées dans le dossier.
+<a id="liste-individus"></a>
+## À quoi ça sert ?
 
-## La liste des individus
+L’espace **Individus** est la liste centrale des personnes du dossier. Il permet de rechercher une personne, ouvrir sa fiche, produire des listes ou documents et contrôler rapidement l’état du dossier.
 
-La page affiche une liste, une zone **État des dossiers**, un résumé de la sélection et une barre **Rechercher un individu**. Les actions présentes sont : ajouter, modifier, supprimer, rechercher par période de présence, afficher tout, options de liste, courrier/publipostage, imprimer, exporter en texte, exporter en Excel et aide.
+## Où la trouver ?
+
+Onglet principal **Individus**. Une fiche s’ouvre avec **Ajouter**, **Modifier** ou un double-clic sur une ligne.
+
+## Comment utiliser la liste ?
+
+La page comprend la liste, **État des dossiers**, un résumé de la sélection, une recherche texte et les actions **Ajouter**, **Modifier**, **Supprimer**, recherche par période de présence, **Tout afficher**, options/colonnes, courrier-publipostage, impression, export texte, export Excel et aide.
 
 ### Rechercher et trier
 
-- Tapez dans **Rechercher un individu** : le filtre porte sur les colonnes de la liste.
-- Cliquez sur une colonne pour trier.
-- Redimensionnez une colonne en faisant glisser sa séparation : les largeurs et le tri sont mémorisés dans la configuration wx.
-- Les options de liste permettent de revenir aux choix de présentation ; l’ajustement automatique ne réécrase plus les largeurs choisies par l’utilisateur.
+- Tapez un nom, prénom, ville ou autre texte dans **Rechercher un individu**.
+- Cliquez sur un en-tête pour trier.
+- Le bouton de recherche par période filtre les personnes présentes entre deux dates ; **Tout afficher** enlève ce filtre.
+- **Export Excel** est désactivé sous Linux dans le contrôleur wx actuel ; l’export texte reste distinct.
 
-### Exporter
+<a id="personnaliser-liste"></a>
+## Personnaliser la liste
 
-**Exporter texte** produit un export texte de la liste. **Exporter Excel** est disponible sur les plateformes où cette action est activée ; le bouton est explicitement désactivé sous Linux dans l’interface wx actuelle.
+Le bouton **Options** ouvre le dialogue de colonnes. Il permet :
 
-## Créer une fiche
+- d’afficher ou masquer une colonne ;
+- de déplacer une colonne vers le haut ou le bas ;
+- de conserver l’ordre choisi ;
+- de redimensionner directement les colonnes dans la liste ;
+- de conserver le tri et les largeurs dans la configuration utilisateur.
 
-1. Cliquez sur **Ajouter**.
-2. La fiche s’ouvre sur **Généralités** et crée l’enregistrement de base.
-3. Enregistrez les généralités ; les autres onglets deviennent alors disponibles.
-4. Complétez progressivement le dossier plutôt que d’inventer des valeurs manquantes.
+La liste connaît 20 colonnes : identifiant/icône, civilité, nom, nom de jeune fille, prénom, âge, qualifications, date/CP/ville/pays de naissance, nationalité, numéro de sécurité sociale, adresse/CP/ville de résidence, téléphones, email, fax et situation. Toutes ne sont pas visibles par défaut.
 
-## Onglets de la fiche individuelle
+<a id="reinitialiser-affichage"></a>
+## Réinitialiser l’affichage
 
-La fiche wx actuelle contient exactement les onglets suivants :
+Dans **Options**, utilisez **Réinitialiser** pour revenir aux colonnes, ordre et visibilité par défaut. Le contrôleur actuel rétablit aussi les largeurs par défaut et le tri sur le nom croissant, puis mémorise ce nouvel état.
 
-- **Généralités** — identité et informations principales ;
-- **Questionnaire** — champs de questionnaire configurés ;
-- **Qualifications** — qualifications/diplômes ;
-- **Contrats** — contrats rattachés ;
-- **Présences** — présences de la personne ;
-- **Scénarios** — scénarios rattachés ;
-- **Frais** — frais de la personne ;
-- **Recrutement** — candidatures rattachées.
+## Créer ou modifier une fiche
 
-Le changement d’onglet sauvegarde les généralités quittées ; après cette première sauvegarde, l’annulation de toute la création n’est plus équivalente à « aucune donnée créée ».
+1. Dans **Individus**, cliquez sur **Ajouter** ou sélectionnez une ligne puis **Modifier**.
+2. Complétez **Généralités** et validez les données nécessaires.
+3. Utilisez ensuite les autres onglets selon le dossier.
+4. Le passage hors de l’onglet Généralités sauvegarde ses données ; après cette première sauvegarde, l’annulation globale ne signifie plus qu’aucune donnée n’a été créée.
 
-## Modifier une fiche
+<a id="onglets-fiche"></a>
+## Les huit onglets réels de la fiche individuelle
 
-Sélectionnez une personne puis cliquez sur **Modifier**, ou double-cliquez sa ligne. L’en-tête reprend le nom, l’adresse, la naissance et la photo. Une barre de problèmes peut signaler des points à contrôler sur le dossier.
+| Onglet affiché | Finalité et données principales | Actions confirmées dans le code |
+|---|---|---|
+| **Généralités** | identité, naissance, situation, adresse, coordonnées, mémo | saisir/modifier les champs ; assistance ville/pays ; contrôle technique du NIR ; coordonnées et mémo |
+| **Questionnaire** | réponses au questionnaire configuré pour un individu | saisir les réponses ; certaines réponses peuvent référencer des documents |
+| **Qualifications** | qualifications, pièces à fournir et pièces reçues | modifier les qualifications ; ajouter/modifier/supprimer une pièce reçue ; double-clic sur une pièce à fournir pour créer la pièce correspondante |
+| **Contrats** | contrats rattachés à la personne | ajouter/modifier/supprimer ; marquer signature/DUE ; imprimer DUE ou autre document |
+| **Présences** | présences de cette personne | ajouter/modifier/supprimer ; imprimer ; statistiques ; appliquer un modèle |
+| **Scénarios** | scénarios rattachés à la personne | panneau de gestion des scénarios ; détail des scénarios à **confirmer en recette fonctionnelle** |
+| **Frais** | déplacements et remboursements | ajouter/modifier/supprimer ; imprimer les déplacements ; gérer les remboursements |
+| **Recrutement** | candidatures et entretiens déjà rattachés à l’individu | ajouter/modifier/supprimer candidature ou entretien |
 
-## Supprimer une fiche
+### Généralités : ce qui est réellement regroupé
 
-Le bouton **Supprimer** agit sur la personne sélectionnée. Cette opération est destructive : avant de confirmer, contrôlez les contrats, présences, frais et candidatures associés et assurez-vous de disposer d’une sauvegarde.
+Les éléments **Coordonnées**, **Situation** et **Mémo** ne sont pas des onglets séparés : ils sont des sections de **Généralités**. De même, les qualifications et pièces sont regroupées dans l’onglet **Qualifications**. Cela évite de chercher des onglets qui n’existent pas dans le notebook wx actuel.
+
+## Résultat attendu
+
+Après validation, l’en-tête reprend l’identité, l’adresse, la naissance et la photo. La fiche expose ensuite les données liées à la personne dans chaque onglet. Une barre de contrôle peut attirer l’attention sur des éléments de dossier à vérifier.
 
 ## Données historiques incomplètes
 
-La liste modernisée est volontairement tolérante aux références historiques cassées. Au lieu de planter, elle peut afficher par exemple **Pays introuvable (réf. …)**, **Nationalité introuvable**, **Situation introuvable** ou **Diplôme introuvable**. Ces libellés indiquent une donnée à corriger ; ils ne constituent pas une valeur métier normale.
+La liste tolère certaines références anciennes manquantes et peut afficher **Pays introuvable (réf. …)**, **Nationalité introuvable**, **Situation introuvable** ou **Diplôme introuvable** au lieu de planter. Ces libellés signalent une donnée à corriger.
 
 ## Publipostage depuis Individus
 
-Le bouton courrier de la liste lance `CourrierPublipostage(mode='multiple')` et ouvre l’assistant pour les personnes sélectionnées. L’étape de vérification montre les valeurs exactes qui seront fusionnées.
+Le bouton courrier lance le publipostage pour la sélection. Vérifiez les valeurs à l’étape **Vérification des données du document** avant fusion. Voir [[Publipostage et documents]] et l’[index Individu](Mots-clés-de-publipostage#index-contexte-individu).
 
-## Mots-clés de publipostage liés aux individus
+## Points d’attention
 
-Les plus utilisés sont :
+- La suppression d’une personne est destructive : sauvegardez avant une opération irréversible.
+- Un numéro de sécurité sociale signalé comme valide par l’interface n’est pas une certification administrative.
+- Les comportements fins des **Scénarios** restent **À confirmer en recette fonctionnelle**.
 
-- [`{CIVILITE}`](Mots-clés-de-publipostage#publipostage-civilite)
-- [`{NOM}`](Mots-clés-de-publipostage#publipostage-nom)
-- [`{PRENOM}`](Mots-clés-de-publipostage#publipostage-prenom)
-- [`{DATENAISS}`](Mots-clés-de-publipostage#publipostage-datenaiss)
-- [`{ADRESSERESID}`](Mots-clés-de-publipostage#publipostage-adresseresid)
-- [`{CPRESID}`](Mots-clés-de-publipostage#publipostage-cpresid)
-- [`{VILLERESID}`](Mots-clés-de-publipostage#publipostage-villeresid)
-- [`{TELEPHONES}`](Mots-clés-de-publipostage#publipostage-telephones)
-- [`{EMAILS}`](Mots-clés-de-publipostage#publipostage-emails)
+## Problèmes fréquents
 
-Le contexte Individu expose 18 mots-clés standard. Voir [[Mots-clés de publipostage]] pour la liste exhaustive, les formats et les contextes hérités.
+Pour une fiche lente, une colonne illisible ou une référence introuvable, voir [[Problèmes fréquents]]. Pour un crash, voir [[Diagnostic et rapports de crash]].
 
-## En cas de problème
+## Liens associés
 
-- Si une valeur n’apparaît pas dans un document, regardez d’abord la grille **Vérification des données du document** de l’assistant.
-- Si la liste signale une référence introuvable, corrigez la donnée de la fiche avant de produire un document officiel.
-- Si les colonnes sont devenues peu lisibles, utilisez les options/réinitialisation de présentation plutôt que de supprimer la configuration entière.
+[[Présences et planning]] · [[Contrats, CCNS et CEE]] · [[Recrutement]] · [[Frais et déplacements]] · [[Publipostage et documents]]

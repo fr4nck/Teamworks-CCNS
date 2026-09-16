@@ -1,29 +1,36 @@
 # Historique, versions et héritage
 
-Teamworks-CCNS descend d’un socle historique Teamworks/Noethys mais le fork actuel a ses propres corrections et évolutions. Ce wiki documente **Teamworks-CCNS actuel**, pas un manuel ancien recopié.
+Teamworks-CCNS descend du logiciel Teamworks/Noethys et conserve volontairement certaines compatibilités. Le wiki documente le fork actuel sans effacer les traces utiles de son histoire.
 
-## Deux rails du projet
+## Deux rails distincts
 
-- **wx / Vanilla wx** : référence historique et de production du logiciel actuel ;
-- **Qt** : migration progressive sur une branche séparée.
+- **Vanilla wx** : référence historique/fonctionnelle documentée ici ;
+- **Qt** : migration progressive sur un rail séparé.
 
-Les deux rails ne doivent pas être confondus. Une procédure wx n’est pas annoncée comme disponible en Qt sans validation du portage.
+Une fonction wx n’est pas annoncée comme disponible en Qt sans portage et validation dédiés.
 
-## Version documentée
+## Version et état de publication
 
-Le fichier `VERSION` de la branche auditée contient `0.9.2-rc3`. Une RC est une candidate à la publication : elle peut être qualifiée pour test/validation mais n’est pas décrite comme « stable finale » par simple déduction.
+La branche documentaire auditée porte `0.9.2-rc3`. Une RC n’est pas une stable finale par simple déduction. Voir [[Versions et mises à jour wx]] pour distinguer `VERSION`, release, commit et build.
 
 ## Compatibilités historiques conservées
 
-Le code actuel maintient volontairement certaines compatibilités :
+Exemples confirmés :
 
-- `BRUTMENS` dans les anciens modèles de contrats ;
-- `CLASSIFICATION` et `VALEURPOINT` pour les contrats historiques ;
-- le libellé « OpenOffice Writer » dans l’interface alors que la voie technique passe par UNO/soffice ;
-- différents écrans/aides portant encore des formulations anciennes.
+- `{BRUTMENS}` comme alias de `{SALAIREBRUTMENSUEL}` ;
+- `CLASSIFICATION` et `VALEURPOINT` dans les anciens contrats/modèles ;
+- libellé historique **OpenOffice Writer** alors que le pilote passe par UNO/`soffice` ;
+- module D.U.E. historique pour l’édition PDF DPAE/DUE ;
+- adresse `https://www.teamworks.ovh` conservée dans le cœur historique et comme site/forum historique, même si la coque actuelle masque l’ancienne entrée de menu.
 
-Ces éléments sont documentés comme historiques lorsqu’ils fonctionnent encore, et non supprimés du manuel par souci de modernisation visuelle.
+## Forum historique et support actuel
 
-## Ce qui n’est pas une fonctionnalité actuelle
+Le **Forum historique Teamworks** reste une ressource d’archive. L’entraide du fork est orientée vers **Discussions GitHub** ; les bugs reproductibles relèvent des **Issues GitHub** lorsque cet espace est activé. Voir [[Aide, discussions et signalement de bugs]].
 
-Une classe, un commentaire, une roadmap ou une ancienne page d’aide ne suffit pas à prouver un parcours utilisateur. Le wiki marque **À documenter après validation fonctionnelle** les zones dont le code existe mais dont le parcours exact n’a pas encore été confirmé par recette interactive.
+## Ce que le wiki refuse de déduire
+
+Une classe, un commentaire, une ancienne aide ou un menu historique ne suffit pas à prouver un parcours actuel. Lorsqu’un écran existe dans le code mais que son comportement complet n’est pas qualifié, la documentation dit **À confirmer en recette fonctionnelle**.
+
+## Liens associés
+
+[[Versions et mises à jour wx]] · [[Architecture fonctionnelle]] · [[Aide, discussions et signalement de bugs]]

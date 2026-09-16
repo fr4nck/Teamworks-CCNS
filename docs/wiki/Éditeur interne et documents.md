@@ -1,92 +1,89 @@
 # Éditeur interne et documents
 
-**Teamword** est le traitement de texte intégré à Teamworks-CCNS wx. Il est implémenté dans `DLG_Teamword.py` avec `wx.richtext.RichTextCtrl` et est utilisé directement par l’assistant de publipostage.
+**Teamword** est l’éditeur RichText intégré de Teamworks-CCNS wx. Il peut être utilisé directement ou comme moteur de modèles du publipostage.
 
-## Comment l’ouvrir ?
+<a id="teamword-ouvrir"></a>
+## Où le trouver ?
 
-Le parcours confirmé passe par l’assistant **Édition de documents** :
+- **Outils > Teamword, l’éditeur de texte** pour ouvrir l’éditeur ;
+- **Outils > Éditeur d’Emails** pour la voie email ;
+- dans le publipostage, choisir **Traitement de texte intégré** ou **Éditeur Email Teamword**.
 
-1. lancez un publipostage depuis un contexte pris en charge (par exemple Individus) ;
-2. vérifiez les données ;
-3. choisissez **Traitement de texte intégré** ;
-4. à l’étape du modèle, cliquez sur **Ajouter** pour créer un `.twd` ou sélectionnez un modèle puis **Modifier**.
+<a id="teamword-fichiers"></a>
+## Créer, ouvrir et enregistrer
 
-L’assistant peut aussi ouvrir Teamword en mode **Éditeur d’Email**.
+Teamword sait :
 
-## Créer et ouvrir des documents
+- créer un nouveau document ;
+- ouvrir un document ;
+- enregistrer ;
+- **Enregistrer sous** ;
+- fermer un document ;
+- travailler avec plusieurs documents dans des onglets.
 
-Teamword sait créer un nouveau document, ouvrir un fichier, sauvegarder, sauvegarder sous un autre nom et fermer un document. Plusieurs documents peuvent être ouverts dans les onglets de son notebook. Lorsqu’un document modifié est fermé sans avoir été sauvegardé, Teamword demande s’il faut enregistrer les changements.
+Lors de la fermeture d’un document modifié non enregistré, l’éditeur demande si les changements doivent être sauvegardés. Les modèles de publipostage Teamword utilisent `.twd`.
 
-Dans le publipostage, les modèles Teamword sont filtrés sur l’extension `.twd`.
+<a id="teamword-formatage"></a>
+## Mise en forme
 
-## Mise en forme disponible
+Les commandes auditées couvrent :
 
-Les commandes présentes dans l’éditeur couvrent :
+- choix de police et couleur ;
+- gras, italique, souligné ;
+- alignement gauche, centré, droit ;
+- retraits ;
+- espacement des paragraphes ;
+- interligne ;
+- liens/URL ;
+- images.
 
-- police et couleur de police ;
-- gras, italique et souligné ;
-- alignement gauche, centré et droit ;
-- retraits gauche/droit ;
-- réglages d’espacement de paragraphe ;
-- interligne simple, intermédiaire et double ;
-- URL ;
-- image ;
-- recherche et remplacement.
+Teamword est un éditeur intégré et ne prétend pas reproduire toutes les fonctions de Word ou Writer.
 
-Le moteur peut aussi convertir le contenu RichText en HTML, notamment pour l’email.
+<a id="teamword-recherche"></a>
+## Recherche et remplacement
 
-## Insérer un mot-clé
+L’éditeur possède des commandes de recherche et de remplacement dans le document courant. Vérifiez le résultat lorsqu’un même texte apparaît plusieurs fois ou dans un document complexe.
 
-Lorsqu’un contexte de publipostage fournit des variables, Teamword affiche un panneau **Liste des mots-clés**. Double-cliquez sur une entrée pour l’insérer à la position du curseur.
+<a id="teamword-mots-cles"></a>
+## Mots-clés de publipostage
 
-Exemples :
+Lorsqu’il est ouvert avec un contexte de publipostage, Teamword affiche **Liste des mots-clés**. Un double-clic sur un mot-clé l’insère à la position du curseur.
 
-- [`{CIVILITE}`](Mots-clés-de-publipostage#publipostage-civilite)
-- [`{NOM}`](Mots-clés-de-publipostage#publipostage-nom)
-- [`{PRENOM}`](Mots-clés-de-publipostage#publipostage-prenom)
-- [`{DATENAISS}`](Mots-clés-de-publipostage#publipostage-datenaiss)
-- [`{ADRESSERESID}`](Mots-clés-de-publipostage#publipostage-adresseresid)
-- [`{CPRESID}`](Mots-clés-de-publipostage#publipostage-cpresid)
-- [`{VILLERESID}`](Mots-clés-de-publipostage#publipostage-villeresid)
-- [`{TELEPHONES}`](Mots-clés-de-publipostage#publipostage-telephones)
-- [`{EMAILS}`](Mots-clés-de-publipostage#publipostage-emails)
+Accès direct à la référence :
 
-L’insertion automatique évite les erreurs d’accolades. Référence exhaustive : [[Mots-clés de publipostage]].
+- [index alphabétique](Mots-clés-de-publipostage#index-alphabetique) ;
+- [index Individu](Mots-clés-de-publipostage#index-contexte-individu) ;
+- [index Contrat](Mots-clés-de-publipostage#index-contexte-contrat) ;
+- [index Recrutement](Mots-clés-de-publipostage#index-usage-recrutement).
 
+Exemples fréquents : [`{NOM}`](Mots-clés-de-publipostage#publipostage-nom), [`{PRENOM}`](Mots-clés-de-publipostage#publipostage-prenom), [`{DATEDEBUT}`](Mots-clés-de-publipostage#publipostage-datedebut).
+
+<a id="teamword-apercu-impression"></a>
 ## Aperçu et impression
 
-Teamword possède un **Aperçu avant impression** basé sur `wx.PrintPreview` et une impression via la boîte de dialogue système. Dans l’assistant de publipostage, l’impression peut aussi être lancée automatiquement avec le nombre d’exemplaires et l’imprimante choisis.
+Teamword utilise `wx.PrintPreview` pour l’aperçu avant impression et la boîte d’impression système pour imprimer. Le publipostage peut aussi enchaîner automatiquement sauvegarde, aperçu et impression selon les options choisies.
 
-## Publipostage
+<a id="teamword-html-email"></a>
+## HTML et Email
 
-Pour chaque document, l’assistant :
+Le moteur sait convertir le RichText en HTML et intégrer les images nécessaires au contenu HTML. La voie Email du publipostage utilise Teamword comme éditeur et peut prendre `{EMAILS}` comme destinataire du document courant, avec sujet et pièces jointes configurés dans l’assistant.
 
-1. ouvre le modèle `.twd` ;
-2. fournit la liste des valeurs du contexte ;
-3. remplace les balises connues ;
-4. sauvegarde et/ou imprime selon les options ;
-5. ouvre éventuellement l’aperçu avant de continuer.
+**À confirmer en recette fonctionnelle :** rendu HTML final dans les différents clients de messagerie et comportement des images/encodages complexes.
 
-Une balise connue dont la valeur est vide devient vide. Une balise inconnue n’est pas dans la liste de remplacement et n’est pas corrigée automatiquement.
+## Résultat attendu
 
-## Email intégré
+Un document `.twd` peut être réouvert, modifié, fusionné, prévisualisé ou imprimé. En publipostage, seules les balises connues du contexte sont remplacées automatiquement.
 
-Teamword peut convertir son contenu en HTML, intégrer les images dans le HTML et envoyer via les paramètres SMTP fournis par Teamworks. Le mode Email de l’assistant utilise l’adresse `{EMAILS}` du document comme destinataire et peut proposer un aperçu avant envoi.
+## Points d’attention
 
-## Limites actuelles
+- L’aide historique interne de Teamword indique qu’elle est incomplète ; ce wiki décrit les fonctions observées dans le code actuel.
+- Une balise inconnue peut rester affichée dans le résultat.
+- Pour un modèle nécessitant des fonctions bureautiques externes, choisissez Word ou Writer dans l’assistant.
 
-- L’aide interne de Teamword affiche explicitement que l’aide de ce module est **en cours de rédaction** ; ce wiki constitue donc la documentation utilisateur détaillée.
-- Teamword est un éditeur RichText intégré, pas un clone complet de Word/Writer. Pour des modèles nécessitant des fonctions bureautiques externes spécifiques, utilisez le moteur correspondant.
-- Les noms de champs personnalisés dépendent du dossier ; utilisez la grille de vérification plutôt qu’une ancienne liste papier.
+## Problèmes fréquents
 
-## Teamword, Word ou Writer : quand choisir quoi ?
+Pour un document qui ne s’ouvre pas, une balise vide ou un problème de modèle, voir [[Problèmes fréquents]].
 
-| Besoin | Teamword | Word | Writer |
-|---|---|---|---|
-| Rester dans Teamworks | **oui** | non | non |
-| Insérer les mots-clés par double-clic | **oui** | non, liste fournie dans le modèle d’exemple | non, liste fournie dans le modèle d’exemple |
-| Modèle géré par l’assistant | `.twd` | `.doc` | `.odt` |
-| Dépendance externe | aucune suite bureautique pour l’édition Teamword | Microsoft Word | UNO/soffice compatible |
-| Email HTML intégré | **oui** | non dans cette voie | non dans cette voie |
+## Liens associés
 
-Voir [[Publipostage et documents]] pour le parcours de fusion complet.
+[[Publipostage et documents]] · [[Mots-clés de publipostage]] · [[Problèmes fréquents]]

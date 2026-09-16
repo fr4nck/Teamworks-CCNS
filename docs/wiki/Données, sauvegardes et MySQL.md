@@ -1,33 +1,51 @@
 # Données, sauvegardes et MySQL
 
-Teamworks-CCNS wx sait travailler avec des données locales et avec un dossier réseau/MySQL. Cette page explique ce que l’utilisateur doit retenir sans transformer le wiki en documentation d’administration SQL.
+<a id="donnees-locales"></a>
+## Données locales
 
-## Dossier local
+Un dossier local utilise des fichiers du répertoire de données, notamment `<nom>_TDATA.dat`. Les sauvegardes savent aussi inclure les catégories photos (`TPHOTOS`) et documents numérisés (`TDOCUMENTS`) lorsqu’elles existent.
 
-Le code wx reconnaît les fichiers locaux dans le répertoire Data, notamment `<nom>_TDATA.dat`. Le nom du dossier choisi dans Teamworks est plus important que la manipulation manuelle de ce fichier : utilisez les commandes de l’application pour créer, ouvrir, sauvegarder ou convertir.
+Utilisez les commandes Teamworks pour créer, ouvrir, sauvegarder et convertir un dossier plutôt que de déplacer manuellement ses fichiers.
 
-## Dossier réseau / MySQL
+<a id="donnees-reseau"></a>
+## Réseau / MySQL
 
-Un identifiant de dossier réseau contient le marqueur `[RESEAU]` et les paramètres nécessaires à la connexion. L’application peut utiliser une interface MySQL disponible (`MySQLdb` ou `mysql.connector` selon l’environnement) et mémorise le choix dans sa configuration.
+Un dossier réseau est identifié par le marqueur `[RESEAU]` et des paramètres de connexion. Teamworks sait choisir l’interface MySQL disponible (`MySQLdb` ou `mysql.connector`) et mémorise ce choix.
 
-Le menu Fichier comporte **Convertir en fichier réseau** et **Convertir en fichier local**. Ces actions sont activées/désactivées en fonction du type de dossier actuellement ouvert.
+Le menu **Fichier** contient **Convertir en fichier réseau** et **Convertir en fichier local**. Leur activation dépend du type de dossier ouvert.
 
-## Latence réseau
+### Conversion local ↔ réseau
 
-Un serveur MySQL distant peut rendre visibles les temps aller-retour. Distinguez un temps réseau normal d’un blocage applicatif : notez l’action exacte (ouvrir la liste Individus, ouvrir une fiche, changer d’onglet, fermer la fiche) et comparez si possible avec le même parcours sur une liaison plus proche.
+Ces commandes sont réellement présentes et les routines de conversion existent. Parce qu’elles changent le support de stockage, faites une sauvegarde et notez le nom du dossier ainsi que les paramètres réseau avant de commencer.
 
-## Sauvegardes
+**À confirmer en recette fonctionnelle :** parcours complet d’une conversion aller/retour sur la RC documentée et comportement en cas d’interruption réseau.
 
-Utilisez les commandes Teamworks plutôt qu’une copie improvisée : voir [[Sauvegardes et restauration]]. Les sauvegardes automatiques peuvent être exécutées à la fermeture selon la configuration.
+<a id="performance-mysql"></a>
+## Performance et latence MySQL
 
-## Mot de passe de dossier
+Un serveur distant ajoute un temps aller-retour à chaque requête. Pour distinguer latence réseau et lenteur applicative, notez :
 
-Un dossier peut contenir un mot de passe dans ses données de configuration. Teamworks le demande à l’ouverture et refuse le dossier si la saisie est incorrecte. Ce mot de passe d’ouverture n’est pas la même chose qu’un compte MySQL.
+- l’action exacte : liste Individus, ouverture de fiche, changement d’onglet, fermeture/rafraîchissement ;
+- l’heure ;
+- le mode local ou réseau ;
+- si possible le même parcours sur une connexion plus proche.
 
-## Version de la base
+Ne publiez jamais le mot de passe ni une chaîne de connexion complète dans un rapport public.
 
-À l’ouverture, Teamworks vérifie la version du fichier/dossier et peut appliquer les adaptations prévues par l’application. Avant toute montée de version, sauvegardez le dossier dans son état antérieur.
+## Sauvegarder et restaurer
+
+Les commandes **Fichier > Créer une sauvegarde**, **Restaurer une sauvegarde** et **Sauvegardes automatiques** couvrent les données locales et réseau selon les paramètres disponibles. Pour MySQL, la sauvegarde réseau passe par `mysqldump` et nécessite que les outils MySQL soient accessibles sur le poste qui effectue l’opération.
+
+Voir [[Sauvegardes et restauration]] pour le parcours pratique.
+
+## Compatibilité de base
+
+À l’ouverture, Teamworks vérifie/adapte la structure de données prévue par la version. Une migration de schéma n’est pas une raison de supprimer l’ancienne sauvegarde : conservez une copie antérieure tant que la nouvelle version n’est pas validée sur vos données.
 
 ## Diagnostic réseau
 
-Pour un signalement, fournir : version Teamworks, local ou réseau, hôte/port sans mot de passe, action lente, heure du test, message d’erreur et si le problème est reproductible. Ne publiez jamais de mot de passe ou de chaîne de connexion complète.
+Pour un problème MySQL, réunissez : version Teamworks, local/réseau, hôte et port **sans mot de passe**, action exacte, heure, message d’erreur, reproductibilité et rapport de crash éventuel. Voir [[Diagnostic et rapports de crash]].
+
+## Liens associés
+
+[[Sauvegardes et restauration]] · [[Versions et mises à jour wx]] · [[Problèmes fréquents]] · [[Diagnostic et rapports de crash]]

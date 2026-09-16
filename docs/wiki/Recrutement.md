@@ -1,53 +1,99 @@
 # Recrutement
 
-**Recrutement** est un onglet principal de Teamworks-CCNS wx. La fiche individuelle possède également un onglet Recrutement pour les candidatures reliées à une personne.
+<a id="recrutement-vues"></a>
+## À quoi ça sert ?
 
-## Candidat et candidature : deux objets distincts
+L’espace **Recrutement** suit les candidats avant et pendant leur candidature, puis permet de convertir un candidat en fiche **Individu** lorsque son dossier doit rejoindre le suivi courant.
 
-Le moteur de publipostage confirme deux contextes séparés :
+## Où le trouver ?
 
-- **candidat** — identité/coordonnées du candidat, qualifications et mémo ;
-- **candidature** — dépôt, offre, disponibilités, fonctions, affectations, décision et réponse.
+Onglet principal **Recrutement**. La fiche individuelle contient aussi un onglet **Recrutement** pour les candidatures et entretiens déjà rattachés à cette personne.
 
-Une candidature peut être encore rattachée au candidat ou déjà rattachée à une personne Teamworks.
+## Les quatre vues réelles
 
-## Ce qui change après liaison à une personne
+La barre de navigation du module propose :
 
-Pour un document **Candidature** :
+- **Candidats** ;
+- **Candidatures** ;
+- **Entretiens** ;
+- **Offres d’emploi**.
 
-- si `IDpersonne` est absent/0, Teamworks charge les données du candidat ;
-- si une personne est liée, Teamworks charge les données de la personne à la place ;
-- les 9 données propres à la candidature sont ensuite ajoutées dans les deux cas.
+Les actions générales sont ajouter, modifier, supprimer, filtres/tout afficher, colonnes, imprimer, export texte, export Excel et aide. **Courrier** n’est affiché que pour **Candidats** et **Candidatures**. L’export Excel est désactivé sous Linux dans le contrôleur wx actuel.
 
-Conséquence : `{QUALIFICATIONS}` et `{MEMO}` du candidat ne sont pas automatiquement repris après liaison à une personne, tandis que les champs propres à la personne comme `{NUMSECU}` deviennent disponibles lorsqu’elle est liée.
+<a id="candidat"></a>
+## Candidat
 
-## Mots-clés de publipostage liés au recrutement
+La fiche candidat regroupe : identité, adresse, coordonnées, qualifications, candidatures, entretiens et mémo. Les coordonnées peuvent être ajoutées/modifiées/supprimées ; une adresse email peut être utilisée pour lancer un email depuis son menu contextuel.
 
-Principales balises :
+Un candidat possède ses propres coordonnées et qualifications tant qu’il n’a pas été converti en personne Teamworks.
 
-- [`{NOM}`](Mots-clés-de-publipostage#publipostage-nom)
-- [`{PRENOM}`](Mots-clés-de-publipostage#publipostage-prenom)
-- [`{QUALIFICATIONS}`](Mots-clés-de-publipostage#publipostage-qualifications)
-- [`{MEMO}`](Mots-clés-de-publipostage#publipostage-memo)
-- [`{DATEDEPOT}`](Mots-clés-de-publipostage#publipostage-datedepot)
-- [`{TYPEDEPOT}`](Mots-clés-de-publipostage#publipostage-typedepot)
-- [`{OFFREDEMPLOI}`](Mots-clés-de-publipostage#publipostage-offredemploi)
-- [`{DISPONIBILITES}`](Mots-clés-de-publipostage#publipostage-disponibilites)
-- [`{FONCTIONS}`](Mots-clés-de-publipostage#publipostage-fonctions)
-- [`{DECISION}`](Mots-clés-de-publipostage#publipostage-decision)
+<a id="candidature"></a>
+## Candidature
 
-Voir [[Mots-clés de publipostage]] pour le tableau exact Candidat/Candidature et les conditions de chaque balise.
+Le dialogue de candidature comprend des sections vérifiées :
 
-## Disponibilités et décision
+- **Dépôt de candidature** : date, canal de dépôt, remarques ;
+- **Offre d’emploi** : offre liée ou candidature spontanée ;
+- **Disponibilités** : périodes ajoutables, modifiables et supprimables ;
+- **Poste souhaité** : fonctions et affectations ;
+- **Réponse** : décision et suivi de la réponse communiquée.
 
-`{DISPONIBILITES}` assemble les périodes sous la forme « du … au … ». `{DECISION}` traduit la valeur enregistrée en **Décision non prise**, **Oui** ou **Non**. Les champs de réponse ne sont remplis que lorsqu’une réponse est effectivement enregistrée.
+Choisir une offre peut préremplir ses périodes de disponibilité, fonctions et affectations dans la candidature.
 
-## Offre d’emploi
+<a id="conversion-candidat"></a>
+## Passer d’un candidat à un individu
 
-`{OFFREDEMPLOI}` contient l’intitulé de l’offre liée. Sans offre, la valeur devient **Candidature spontanée**.
+Le code contient une action réelle de **conversion de fiche**. Elle :
 
-Le moteur contient aussi une fonction auxiliaire qui sait lire le détail et les dates d’une offre, mais ces noms `OFFRE_*` ne sont pas ajoutés au contexte générique Candidature actuel : ils ne sont donc pas documentés comme balises disponibles.
+1. crée une fiche Personne/Individu à partir de l’identité, de l’adresse et du mémo du candidat ;
+2. transfère ses coordonnées et qualifications ;
+3. rattache ses candidatures et entretiens à la nouvelle personne ;
+4. retire les enregistrements propres au candidat converti ;
+5. propose d’ouvrir la nouvelle fiche individuelle.
 
-## À documenter après validation fonctionnelle
+Schéma fonctionnel simplifié :
 
-Les dialogues de candidat, candidature, emploi et entretien existent dans le code. Le détail clic par clic de toutes les opérations de recrutement doit encore être confirmé par recette interactive avant d’être figé ici.
+```text
+Candidat
+   ↓
+Candidature
+   ↓
+Personne / Individu
+   ↓
+Contrat
+```
+
+Le dernier passage n’est pas automatique : un **Contrat** est ensuite créé depuis la fiche de l’Individu.
+
+<a id="publipostage-recrutement"></a>
+## Publipostage depuis le recrutement
+
+Deux contextes sont directement utilisables depuis le bouton **Courrier** :
+
+- **Candidat** : identité, coordonnées, qualifications et mémo ;
+- **Candidature** : identité provenant du candidat ou de la personne liée, plus dépôt, offre, disponibilités, fonctions, affectations, décision et réponse.
+
+Les quatre contextes génériques du moteur sont :
+
+| Contexte | Point d’usage |
+|---|---|
+| **Individu / Personne** | liste/fiches Individus |
+| **Candidat** | Recrutement > Candidats |
+| **Candidature** | Recrutement > Candidatures |
+| **Contrat** | documents d’un contrat |
+
+Voir l’[index Candidat](Mots-clés-de-publipostage#index-contexte-candidat) et l’[index Candidature](Mots-clés-de-publipostage#index-contexte-candidature).
+
+## Résultat attendu
+
+Les listes et le panneau de résumé reflètent le type de vue choisi. Une conversion réussie déplace le suivi vers une fiche Individu tout en conservant les liaisons de candidatures/entretiens prévues par le code.
+
+## Points d’attention
+
+- Après conversion, une candidature utilise les données de la **Personne** liée plutôt que les anciennes données Candidat.
+- `{QUALIFICATIONS}` et `{MEMO}` appartiennent au contexte Candidat ; ils ne deviennent pas automatiquement des champs Personne.
+- Les scénarios complets entretien → décision → embauche restent **À confirmer en recette fonctionnelle**.
+
+## Liens associés
+
+[[Individus et fiches]] · [[Mots-clés de publipostage]] · [[Publipostage et documents]] · [[Contrats, CCNS et CEE]]

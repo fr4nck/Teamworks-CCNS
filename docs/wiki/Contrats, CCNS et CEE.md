@@ -1,60 +1,95 @@
 # Contrats, CCNS et CEE
 
-Cette page sépare la **gestion du contrat** dans Teamworks des **contrôles métier CCNS/CEE** calculés autour de la rémunération.
+Cette page décrit ce que Teamworks-CCNS calcule et affiche. Elle ne constitue pas un conseil juridique.
 
-## Gestion d’un contrat dans Teamworks
+<a id="gestion-contrat"></a>
+## A. Gestion d’un contrat
 
-### Où le trouver ?
+### Où la trouver ?
 
-Ouvrez **Individus**, ouvrez la fiche de la personne puis l’onglet **Contrats**. La liste globale des contrats et les dialogues de création existent également dans l’application wx, mais la fiche individuelle reste le point d’entrée le plus naturel pour garantir que le contrat est rattaché à la bonne personne.
+**Individus > ouvrir une fiche > Contrats**.
 
-### Données de contrat exposées aux documents
+### Comment l’utiliser ?
 
-Le moteur actuel lit notamment : personne, classification historique, type de contrat, valeur du point historique, dates, essai, qualification CEE, code de convention, groupe CCNS, durée hebdomadaire et salaire brut mensuel.
+Dans l’onglet Contrats, les actions confirmées sont **Ajouter**, **Modifier**, **Supprimer**, suivi de signature/DUE et impression. L’assistant de création/modification comporte six pages internes et collecte notamment :
 
-Les contrats modernes n’ont plus besoin de renseigner une classification ou une valeur du point historique pour alimenter les nouveaux contrôles ; les anciennes données restent lues pour préserver les modèles historiques.
+- nature de l’opération : nouveau contrat, renouvellement CDD, passage CDD → CDI ;
+- contrat précédent lorsque nécessaire ;
+- convention/régime ;
+- type de contrat ;
+- groupe CCNS ou qualification/statut CEE ;
+- dates ;
+- durée hebdomadaire ;
+- rémunération ;
+- période d’essai ;
+- informations complémentaires éventuelles.
 
-## Contrôles métier CCNS
+Pour les parcours de renouvellement/passage CDD → CDI, le code exige un CDD précédent et contrôle la continuité de date.
 
-Lorsque `CONVENTION` vaut `CCNS`, qu’un groupe est renseigné et que la date de début permet de choisir le barème, Teamworks peut calculer : minimum CCNS, minimum SMIC, minimum retenu et résultat de conformité.
+<a id="remuneration"></a>
+## B. Rémunération
 
-Pour un groupe à minimum annuel, le moteur indique un minimum « annuel » et le statut **Contrôle annuel requis** au lieu de transformer ce cas en contrôle mensuel artificiel.
+Pour le régime CCNS, l’écran saisit une durée hebdomadaire et une rémunération brute mensuelle, ou une rémunération annuelle de référence lorsque le barème du groupe est annuel. Le moteur peut préremplir un minimum calculé et recalcule l’aperçu de conformité lorsque les données changent.
 
-## CEE
+<a id="controle-ccns"></a>
+## C. Contrôle CCNS
 
-Un contrat est reconnu comme CEE lorsqu’il correspond au type/à l’intitulé CEE géré par le moteur. Si la qualification et la date de référence sont exploitables, Teamworks calcule le minimum journalier légal et recherche le barème CEE applicable. Le résultat de conformité est ensuite exposé aux documents quand le calcul est possible.
+Lorsque les données sont calculables, l’aperçu affiche :
 
-## Compatibilité avec les anciens modèles
+- **Minimum CCNS** ;
+- **SMIC** ;
+- **Minimum retenu** et sa source ;
+- état **CONFORME** ou **NON CONFORME** avec l’écart.
 
-- [`{BRUTMENS}`](Mots-clés-de-publipostage#publipostage-brutmens) contient la même valeur que [`{SALAIREBRUTMENSUEL}`](Mots-clés-de-publipostage#publipostage-salairebrutmensuel) ; préférez `{SALAIREBRUTMENSUEL}` dans les nouveaux modèles.
-- `{CLASSIFICATION}` reste alimenté : classification historique si elle existe, sinon groupe CCNS, sinon qualification CEE.
-- `{VALEURPOINT}` reste prévu pour les contrats historiques qui référencent une valeur du point.
+Pour une grille à minimum annuel, l’interface affiche un minimum annuel de référence et avertit qu’une période incomplète nécessite un prorata. Le moteur ne doit pas être présenté comme transformant automatiquement tous les cas annuels en équivalent mensuel universel.
 
-## Mots-clés de publipostage liés aux contrats
+<a id="controle-cee"></a>
+## D. Contrôle CEE
 
-Un document de contrat reçoit **les données de l’individu associé**, puis les données du contrat. Vous pouvez donc utiliser à la fois `{NOM}` et `{DATEDEBUT}`.
+Le régime CEE utilise la qualification/statut CEE, une date de référence et le barème disponible. Teamworks peut afficher le minimum journalier et le barème applicable lorsque les données permettent le calcul.
 
-Principales balises :
+**À confirmer en recette fonctionnelle :** le parcours complet de tous les cas CEE réels et le rendu utilisateur pour chaque qualification/barème.
 
-- [`{DATEDEBUT}`](Mots-clés-de-publipostage#publipostage-datedebut)
-- [`{DATEFIN}`](Mots-clés-de-publipostage#publipostage-datefin)
-- [`{TYPECONTRAT}`](Mots-clés-de-publipostage#publipostage-typecontrat)
-- [`{CONVENTION}`](Mots-clés-de-publipostage#publipostage-convention)
-- [`{GROUPECCNS}`](Mots-clés-de-publipostage#publipostage-groupeccns)
-- [`{QUALIFICATIONCEE}`](Mots-clés-de-publipostage#publipostage-qualificationcee)
-- [`{DUREEHEBDO}`](Mots-clés-de-publipostage#publipostage-dureehebdo)
-- [`{SALAIREBRUTMENSUEL}`](Mots-clés-de-publipostage#publipostage-salairebrutmensuel)
-- [`{MINIMUMRETENU}`](Mots-clés-de-publipostage#publipostage-minimumretenu)
-- [`{CONFORMITEREMUNERATION}`](Mots-clés-de-publipostage#publipostage-conformiteremuneration)
+<a id="compatibilite-historique"></a>
+## E. Compatibilité historique
 
-Voir [[Mots-clés de publipostage]] pour les 18 balises Contrat, les 18 balises Individu héritées, les champs personnalisés et les règles de calcul.
+Les anciens dossiers/modèles peuvent encore utiliser :
 
-## Documents de contrat
+- `CLASSIFICATION` ;
+- `VALEURPOINT` ;
+- `BRUTMENS`, alias de compatibilité de `SALAIREBRUTMENSUEL`.
 
-L’assistant de publipostage peut travailler avec Teamword, Word ou Writer, puis sauvegarder, imprimer et prévisualiser selon les options choisies. Voir [[Publipostage et documents]] et [[Éditeur interne et documents]].
+Les contrats modernes privilégient les champs CCNS/CEE structurés. L’assistant masque certains anciens champs complémentaires lorsqu’ils sont déjà gérés nativement.
+
+<a id="lecture-conformite"></a>
+## Lecture d’un résultat de conformité
+
+| Élément | Lecture utilisateur |
+|---|---|
+| **Minimum CCNS** | minimum calculé à partir du groupe/barème CCNS applicable lorsque le moteur dispose des données nécessaires |
+| **Minimum SMIC** | minimum issu du catalogue SMIC utilisé par le moteur pour le territoire pris en charge |
+| **Minimum retenu** | le montant que le moteur retient comme seuil de comparaison entre les minima disponibles |
+| **CONFORME** | la rémunération saisie atteint le minimum retenu dans le calcul effectué |
+| **NON CONFORME** | la rémunération saisie est inférieure au minimum retenu ; l’interface indique l’écart |
+| **Contrôle annuel requis** | le barème est annuel et ne doit pas être lu comme un simple contrôle mensuel |
+| **Non calculable** | données absentes/incompatibles : groupe, date, qualification, barème ou rémunération à vérifier |
+
+Ce résultat est un calcul logiciel sur les données saisies, pas une certification juridique du contrat.
+
+## Documents et DPAE/DUE
+
+Depuis l’onglet Contrats, **Imprimer** peut ouvrir l’édition DUE ou un document de contrat. Voir [[DPAE et DUE]] et [[Publipostage et documents]].
+
+## Mots-clés
+
+Un contexte Contrat reçoit les données de l’individu puis celles du contrat. Références utiles : [`{DATEDEBUT}`](Mots-clés-de-publipostage#publipostage-datedebut), [`{SALAIREBRUTMENSUEL}`](Mots-clés-de-publipostage#publipostage-salairebrutmensuel), [`{MINIMUMCCNS}`](Mots-clés-de-publipostage#publipostage-minimumccns), [`{MINIMUMSMIC}`](Mots-clés-de-publipostage#publipostage-minimumsmic), [`{MINIMUMRETENU}`](Mots-clés-de-publipostage#publipostage-minimumretenu), [`{CONFORMITEREMUNERATION}`](Mots-clés-de-publipostage#publipostage-conformiteremuneration).
 
 ## Points d’attention
 
-- Une balise calculée vide ne signifie pas forcément un bug : vérifiez la convention, le groupe/qualification, les heures, le salaire et la date de début.
-- N’utilisez pas un ancien modèle avec `{BRUTMENS}` comme preuve que ce nom est le nom moderne recommandé.
-- Les champs personnalisés de contrat sont définis par le dossier et ne peuvent pas être listés de façon universelle dans ce wiki.
+- Une donnée vide dans le document peut signaler un calcul impossible, pas une panne de publipostage.
+- Les valeurs historiques restent utiles pour les anciens modèles mais ne doivent pas être confondues avec le moteur actuel.
+- Les contrôles métier nécessitant une vraie situation employeur restent **À confirmer en recette fonctionnelle**.
+
+## Liens associés
+
+[[Individus et fiches]] · [[DPAE et DUE]] · [[Mots-clés de publipostage]] · [[Paramétrage]]

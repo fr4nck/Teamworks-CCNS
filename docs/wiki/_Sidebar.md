@@ -1,34 +1,35 @@
-### Commencer
-- [[Accueil|Home]]
+**Teamworks-CCNS — Vanilla wx**
+
+### Démarrer
+- [[Home]]
 - [[Installer Teamworks-CCNS wx]]
 - [[Démarrage rapide]]
+- [[Glossaire]]
 
-### Personnel / Individus
+### Utiliser Teamworks
 - [[Individus et fiches]]
-- [[Recrutement]]
-
-### Planning / Présences
 - [[Présences et planning]]
-
-### Contrats / CCNS / CEE
 - [[Contrats, CCNS et CEE]]
 - [[DPAE et DUE]]
-
-### Documents
-- [[Éditeur interne et documents]]
-- [[Publipostage et documents]]
-- [[Mots-clés de publipostage]]
-
-### Frais / Déplacements
+- [[Recrutement]]
 - [[Frais et déplacements]]
 
-### Administration
+### Documents
+- [[Publipostage et documents]]
+- [[Éditeur interne et documents]]
+- [[Mots-clés de publipostage]]
+
+### Configuration et données
 - [[Paramétrage]]
 - [[Données, sauvegardes et MySQL]]
 - [[Sauvegardes et restauration]]
+- [[Versions et mises à jour wx]]
 
-### Support
+### Aide et diagnostic
+- [[Problèmes fréquents]]
+- [[Diagnostic et rapports de crash]]
 - [[Aide, discussions et signalement de bugs]]
 
-### Projet
+### Pour aller plus loin
+- [[Architecture fonctionnelle]]
 - [[Historique, versions et héritage]]

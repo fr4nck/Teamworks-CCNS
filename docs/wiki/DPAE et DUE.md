@@ -1,25 +1,57 @@
 # DPAE et DUE
 
-Teamworks-CCNS wx contient un module historique d’**édition DUE/DPAE** (`DLG_Edition_DUE.py`) qui construit un formulaire PDF à partir des données employeur et salarié.
+<a id="dpae-entree"></a>
+## À quoi ça sert ?
 
-## Nature du module
+Teamworks-CCNS wx contient un module historique d’édition **DUE/DPAE** qui prépare les informations du formulaire et produit un PDF.
 
-Le module ne passe pas par le moteur générique `{MOTCLE}`. Il définit ses propres champs de formulaire, ses catégories (« Établissement employeur », « Futur salarié », « Autres éléments ») et des coordonnées de rendu PDF.
+> **Avertissement — télétransmission**
+>
+> **Ce module génère/édite les informations du formulaire. Cela ne prouve pas l’existence d’une télétransmission automatisée.** Le code audité construit un PDF ; il ne démontre pas un envoi officiel en ligne à l’Urssaf ou à un autre service.
 
-On y trouve par exemple des identifiants internes comme `NUM_SIRET`, `CODE_APE`, `DENOMINATION`, `CIVILITE_SALARIE`, `NUMSECU_SALARIE` ou `DATENAISS_SALARIE`.
+## Où la trouver ?
 
-> Ces identifiants **ne sont pas des mots-clés de publipostage** et ne doivent pas être saisis comme `{NUM_SIRET}` dans un modèle Teamword/Word/Writer sans autre preuve d’exposition.
+Parcours confirmé : **Individus > fiche > Contrats > sélectionner un contrat > Imprimer > D.U.E.**. L’action ouvre `DLG_Edition_DUE` pour le contrat sélectionné.
 
-## Utilisation
+Le bouton/état **DUE** de la liste des contrats sert à mémoriser l’état du contrat ; le fait de cocher cet état ne déclenche pas à lui seul l’édition ni une déclaration en ligne.
 
-Le parcours fonctionnel exact dépend du point d’entrée contrat/DUE de l’interface. Avant validation, contrôlez toutes les données employeur, l’identité du salarié, la naissance, la nationalité et les éléments de contrat présentés dans le formulaire.
+## Données préremplies
 
-Le rendu est produit par ReportLab et place les valeurs dans les cases du document.
+Le dialogue importe des données du dossier et du contrat pour les trois catégories du formulaire :
 
-## DPAE / DUE et publipostage
+- **Établissement employeur** : SIRET, APE, dénomination, adresses, téléphone/fax et autres paramètres employeur disponibles ;
+- **Futur salarié** : identité, naissance, sécurité sociale, nationalité, adresse, date/heure d’embauche ;
+- **Autres éléments** : emploi/qualification, période d’essai, durées de travail et informations contractuelles prévues par le formulaire historique.
 
-Il n’existe pas de contexte `dpae` dans `UTILS_Publipostage_donnees.py`. Les documents contractuels génériques peuvent néanmoins utiliser les vraies balises Contrat/Individu lorsqu’ils sont lancés depuis le contexte Contrat : voir [[Contrats, CCNS et CEE]] et [[Mots-clés de publipostage]].
+## Données à vérifier
 
-## État à valider
+Avant génération, relisez particulièrement :
 
-Le module est présent dans le code et ses champs sont réels. Le parcours de validation administrative « DPAE moderne » doit cependant être confirmé fonctionnellement sur la version livrée avant de présenter l’édition PDF historique comme équivalente à une télétransmission officielle.
+- SIRET et code APE ;
+- identité et nom de naissance ;
+- numéro de sécurité sociale ;
+- date/lieu/nationalité de naissance ;
+- adresse ;
+- date et heure d’embauche ;
+- nature du contrat, qualification et durée du travail.
+
+Les champs du formulaire portent des identifiants comme `NUM_SIRET`, `CODE_APE` ou `CIVILITE_SALARIE`. **Ce ne sont pas des balises `{MOTCLE}` de publipostage.**
+
+## Rendu PDF
+
+Le module utilise ReportLab et place les valeurs aux coordonnées du formulaire PDF. Le résultat attendu est un document imprimable/archivable à contrôler visuellement avant usage administratif.
+
+## Points d’attention
+
+- La terminologie **DUE** est historique ; la page emploie DPAE/DUE pour retrouver le module réel.
+- L’édition PDF n’est pas une preuve de dépôt ou d’accusé de réception administratif.
+- Le moteur générique de publipostage ne possède pas de contexte `dpae`.
+- Le résultat final du PDF et son adéquation au formulaire administratif du moment restent **À confirmer en recette fonctionnelle** avant usage réel.
+
+## Problèmes fréquents
+
+Si une valeur est absente, corrigez d’abord la fiche personne, le contrat ou les paramètres employeur. Si le PDF ne s’ouvre pas ou si un champ est décalé, voir [[Problèmes fréquents]].
+
+## Liens associés
+
+[[Contrats, CCNS et CEE]] · [[Paramétrage]] · [[Problèmes fréquents]]

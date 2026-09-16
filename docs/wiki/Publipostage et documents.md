@@ -1,79 +1,124 @@
 # Publipostage et documents
 
-Teamworks-CCNS possède un **assistant commun d’édition de documents**. Il ne se limite pas à Word et Writer : il sait aussi créer et fusionner des modèles avec **Teamword, le traitement de texte intégré**.
+<a id="publipostage-parcours"></a>
+## À quoi ça sert ?
 
-## Où lancer le publipostage ?
+Le publipostage produit plusieurs documents à partir d’un modèle et des données Teamworks. Le même assistant peut piloter **Teamword**, **Microsoft Word** ou **Writer**, avec une voie Email Teamword distincte.
 
-Un parcours confirmé est la liste **Individus** : sélectionnez la ou les personnes puis utilisez le bouton **courrier** (« créer un courrier ou un Email par publipostage »). Les contrats, candidats et candidatures possèdent aussi des contextes de données dans le moteur de publipostage.
+## Où le trouver ?
 
-## Les six étapes de l’assistant
+Parcours confirmés :
 
-1. **Introduction** — rappelle le principe des modèles et des balises `{NOM}`.
-2. **Vérification des données** — grille des mots-clés et valeurs pour chaque document ; les cellules peuvent être corrigées avant fusion. On peut imprimer la liste au format PDF et gérer des champs personnalisés.
-3. **Choix du logiciel** — Microsoft Word, Writer, traitement de texte intégré Teamword ou éditeur Email Teamword.
-4. **Choix du modèle** — sélectionner, importer, actualiser, créer, modifier ou supprimer un modèle.
-5. **Options d’édition** — impression, nombre d’exemplaires, imprimante, sauvegarde, dossier/nom/préfixe, aperçu ; le mode Email affiche ses paramètres dédiés.
-6. **Exécution** — création de chaque document, remplacement, sauvegarde/impression/aperçu/envoi selon les options puis compte rendu de progression.
+- **Individus > Courrier** pour une ou plusieurs personnes ;
+- **Recrutement > Candidats/Candidatures > Courrier** ;
+- les documents de **Contrat** depuis l’onglet Contrats lorsque le parcours appelle le contexte contrat ;
+- **Outils > Créer des courriers ou des emails par publipostage** pour l’assistant général.
 
-## Choisir le bon éditeur
+## Guide de bout en bout
 
-### Teamword — éditeur interne
+### 1. Choisir le contexte
 
-Choisissez **Traitement de texte intégré** pour rester dans Teamworks. Les modèles sont des fichiers `.twd`; la liste des mots-clés est affichée dans un panneau et un double-clic insère la balise. Voir [[Éditeur interne et documents]].
+Le moteur générique connaît quatre contextes : **Individu/Personne**, **Candidat**, **Candidature**, **Contrat**. Le point d’entrée détermine les mots-clés réellement disponibles.
 
-### Microsoft Word
+### 2. Choisir les personnes ou données
 
-La voie Word utilise l’automatisation Microsoft Word et des modèles `.doc`. Sur Windows, Word doit être réellement installé et accessible à l’automatisation COM. La création d’un nouveau modèle ouvre Word et insère un texte d’exemple avec la liste des mots-clés du contexte.
+Sélectionnez les lignes ou le contrat concernés. L’assistant construit un document de données par destinataire/élément.
 
-### Writer (LibreOffice/OpenOffice selon l’installation)
+### 3. Vérifier les données
 
-L’interface conserve le libellé historique **OpenOffice Writer** et utilise des modèles `.odt`. Le moteur Linux passe par UNO/`soffice`; le code possède aussi une classe Writer Windows. Le wiki parle donc de Writer sans inventer une intégration « LibreOffice moderne » séparée : la compatibilité dépend de l’installation UNO/soffice disponible sur le poste.
+L’étape **Vérification des données du document** affiche les mots-clés et leurs valeurs. C’est le meilleur endroit pour repérer une donnée vide avant fusion. Les cellules peuvent être corrigées pour le document courant ; l’écran permet aussi de gérer les champs personnalisés et d’imprimer la liste en PDF.
 
-### Email intégré
+### 4. Choisir l’éditeur
 
-Le quatrième choix utilise Teamword comme éditeur HTML de mail. Le destinataire est alimenté par la valeur `{EMAILS}` du document courant. Les paramètres d’expédition, sujet et pièces jointes sont saisis dans l’assistant.
+L’assistant propose quatre voies :
 
-## Modèles
+1. **Microsoft Word** ;
+2. **Writer** — libellé historique « OpenOffice Writer » ;
+3. **Traitement de texte intégré Teamword** ;
+4. **Éditeur Email Teamword**.
 
-Les modèles sont regroupés dans le répertoire retourné par Teamworks pour les modèles (`UTILS_Fichiers.GetRepModeles()`). L’assistant filtre selon le moteur choisi : `.doc`, `.odt` ou `.twd`.
+### 5. Choisir, créer ou importer le modèle
 
-**Importer** copie un modèle existant dans ce répertoire et refuse un doublon de même nom. **Ajouter** crée un nouveau modèle dans l’éditeur choisi. **Modifier** ouvre le modèle sélectionné. **Supprimer** efface le fichier après confirmation.
+Extensions utilisées :
 
-## Mots-clés et vérification avant fusion
+| Éditeur | Modèle |
+|---|---|
+| Teamword | `.twd` |
+| Microsoft Word | `.doc` |
+| Writer | `.odt` |
 
-La syntaxe est `{MOTCLE}`. L’étape 2 est le meilleur endroit pour vérifier ce que le contexte expose réellement :
+La page des modèles expose **Importer**, actualiser la liste, **Ajouter**, **Modifier** et **Supprimer**.
 
-- [`{CIVILITE}`](Mots-clés-de-publipostage#publipostage-civilite)
-- [`{NOM}`](Mots-clés-de-publipostage#publipostage-nom)
-- [`{PRENOM}`](Mots-clés-de-publipostage#publipostage-prenom)
-- [`{DATENAISS}`](Mots-clés-de-publipostage#publipostage-datenaiss)
-- [`{ADRESSERESID}`](Mots-clés-de-publipostage#publipostage-adresseresid)
-- [`{CPRESID}`](Mots-clés-de-publipostage#publipostage-cpresid)
-- [`{VILLERESID}`](Mots-clés-de-publipostage#publipostage-villeresid)
-- [`{TELEPHONES}`](Mots-clés-de-publipostage#publipostage-telephones)
-- [`{EMAILS}`](Mots-clés-de-publipostage#publipostage-emails)
+### 6. Insérer les mots-clés
 
-Pour les contrats, voir aussi [`{DATEDEBUT}`](Mots-clés-de-publipostage#publipostage-datedebut), [`{TYPECONTRAT}`](Mots-clés-de-publipostage#publipostage-typecontrat) et [`{SALAIREBRUTMENSUEL}`](Mots-clés-de-publipostage#publipostage-salairebrutmensuel).
+La syntaxe commune est `{MOTCLE}`. Exemple fictif :
 
-Référence complète : [[Mots-clés de publipostage]].
+```text
+Bonjour {CIVILITE} {NOM},
 
+Votre contrat débute le {DATEDEBUT}.
+Salaire brut mensuel : {SALAIREBRUTMENSUEL}
+```
+
+Utilisez uniquement un mot-clé présent dans votre contexte : [[Mots-clés de publipostage]].
+
+### 7. Lancer la fusion et vérifier
+
+L’assistant remplace les balises connues pour chaque document et affiche la progression. Une donnée connue mais absente est généralement remplacée par une chaîne vide. Une balise inconnue du contexte n’est pas devinée et peut rester visible : relisez le résultat.
+
+### 8. Enregistrer, imprimer ou prévisualiser
+
+Selon la voie choisie, les options proposent sauvegarde, répertoire/nom de fichier, impression, nombre d’exemplaires, imprimante et aperçu. La voie Email possède ses paramètres d’expédition, sujet et pièces jointes.
+
+<a id="publipostage-teamword"></a>
+## Teamword
+
+Teamword reste dans Teamworks, utilise des modèles `.twd` et affiche la liste des mots-clés ; un double-clic insère la balise. Il sait prévisualiser, imprimer et convertir le document en HTML. Voir [[Éditeur interne et documents]].
+
+<a id="publipostage-word"></a>
+## Microsoft Word
+
+La voie Word automatise Microsoft Word et utilise `.doc`. Word doit être installé et accessible à l’automatisation du poste Windows. La création d’un modèle peut ouvrir Word avec un texte d’exemple et la liste des mots-clés.
+
+**À confirmer en recette fonctionnelle :** compatibilité avec chaque version moderne de Microsoft Office utilisée sur les postes réels.
+
+<a id="publipostage-writer"></a>
+## LibreOffice Writer
+
+L’interface conserve le nom historique « OpenOffice Writer ». Le pilote technique utilise UNO/`soffice` et des modèles `.odt`; la documentation emploie **LibreOffice Writer** comme terme utilisateur actuel tout en signalant cette compatibilité historique.
+
+La recherche/remplacement Writer audité est sensible à la casse. Le fonctionnement dépend d’une installation UNO/`soffice` compatible.
+
+**À confirmer en recette fonctionnelle :** versions exactes de LibreOffice/OpenOffice supportées sur chaque plateforme livrée.
+
+<a id="champs-personnalises-publipostage"></a>
 ## Champs personnalisés
 
-L’assistant peut ajouter des champs personnalisés à une catégorie de publipostage. Ils reçoivent un nom de mot-clé et une valeur par défaut puis apparaissent dans la grille ; ils sont marqués `*` dans la liste imprimée. Les contrats peuvent en outre exposer les mots-clés définis dans `contrats_champs`.
+Un champ personnalisé est une valeur définie dans votre dossier qui rejoint les données du publipostage pour une catégorie donnée. Son nom de balise dépend de la base ; il ne peut donc pas être listé universellement dans ce wiki.
 
-## Valeurs absentes
+Pour retrouver son mot-clé exact :
 
-Une donnée connue mais absente est généralement fusionnée en chaîne vide. Une balise non connue du contexte n’est pas automatiquement devinée : elle peut rester visible dans le document final. Contrôlez donc la grille avant de produire un document officiel.
+1. ouvrez le publipostage dans le bon contexte ;
+2. allez à **Vérification des données du document** ;
+3. relevez le nom affiché dans la grille ou dans la gestion des champs ;
+4. pour les champs de contrat, contrôlez aussi **Paramétrage > Contrats > Les champs de contrats**.
 
-## Impression, sauvegarde et aperçu
+N’inventez jamais une balise à partir du libellé d’un champ.
 
-L’assistant sait sélectionner le nombre d’exemplaires et l’imprimante, enregistrer les documents dans un répertoire choisi et proposer un aperçu. Le nom de fichier par défaut est construit à partir d’un préfixe et d’éléments du contexte (nom/prénom/dates selon la catégorie).
+## Résultat attendu
 
-## Erreurs fréquentes
+Chaque élément sélectionné produit un document fusionné selon le modèle choisi et les options de sortie. Le document final doit être relu avant usage officiel.
 
-- **La balise reste visible** : vérifiez l’orthographe, les accolades, la casse et surtout que le contexte l’expose.
-- **Une valeur est vide** : regardez la grille de l’étape 2 avant d’accuser le modèle.
-- **Word ne s’ouvre pas** : vérifiez l’installation de Word/COM.
-- **Writer ne s’ouvre pas** : vérifiez l’installation UNO/soffice compatible avec la voie choisie.
-- **Modèle absent de la liste** : vérifiez son extension pour l’éditeur sélectionné.
-- **Champ personnalisé absent** : vérifiez la catégorie de publipostage et le dossier ouvert.
+## Problèmes fréquents
+
+- **Balise visible :** vérifier orthographe, accolades, casse et contexte.
+- **Valeur vide :** vérifier l’étape 2 et la donnée source.
+- **Word ne s’ouvre pas :** contrôler installation/automatisation Word.
+- **Writer ne s’ouvre pas :** contrôler UNO/`soffice`.
+- **Modèle absent :** vérifier extension et répertoire des modèles.
+
+Voir [[Problèmes fréquents]].
+
+## Liens associés
+
+[[Éditeur interne et documents]] · [[Mots-clés de publipostage]] · [[Individus et fiches]] · [[Recrutement]] · [[Contrats, CCNS et CEE]]

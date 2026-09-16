@@ -1,28 +1,83 @@
 # Présences et planning
 
-L’espace **Présences** est un onglet principal de Teamworks-CCNS wx et la fiche individuelle possède aussi un onglet **Présences**.
+<a id="presences-disponible"></a>
+## À quoi ça sert ?
 
-## Deux niveaux d’utilisation
+L’espace **Présences** sert à consulter et saisir les plages de présence du dossier. La même donnée est accessible depuis l’onglet **Présences** d’une fiche individuelle pour travailler sur une seule personne.
 
-- **Présences globales** : utilisez l’onglet principal Présences pour travailler à l’échelle du dossier.
-- **Présences d’une personne** : ouvrez la fiche Individu puis l’onglet Présences pour rester centré sur cette personne.
+## Où la trouver ?
 
-La liste Individus peut également rechercher les personnes **présentes sur une période donnée** : utilisez le bouton de recherche par période, choisissez les deux dates puis revenez à **Afficher tout** pour supprimer ce filtre.
+- onglet principal **Présences** pour la vue globale ;
+- **Individus > ouvrir une fiche > Présences** pour une personne.
 
-## Planning et périodes
+## Fonction disponible
 
-Les écrans de présences/planning utilisent les données déjà enregistrées pour la personne. Avant de corriger un résultat de planning, vérifiez le contrat et la période concernés afin d’éviter de compenser un problème de données par une saisie incohérente.
+### Navigation et affichage
 
-## Impression
+La vue globale s’appuie sur un calendrier/planning wx et permet de changer la période affichée. Les présences sont associées à une personne, une date, des heures de début/fin et une catégorie de présence.
 
-Le dépôt contient un moteur d’impression graphique des présences (`UTILS_Impression_presences_graph.py`). Les détails d’impression dépendent de l’écran qui l’appelle ; si une option précise n’apparaît pas dans votre version, ne la déduisez pas de ce module seul.
+### Ajouter une présence
 
-## Mots-clés de publipostage liés aux présences et au planning
+Le dialogue de saisie permet de choisir :
 
-Le moteur générique audité **ne déclare pas de catégorie `presence`** dans `UTILS_Publipostage_donnees.py`. Il n’existe donc pas, dans ce parcours générique, de liste vérifiée de balises propres aux présences à recopier dans un modèle.
+- une ou plusieurs personnes selon le point d’entrée ;
+- une ou plusieurs dates ;
+- heure de début et heure de fin ;
+- catégorie de présence ;
+- légende/complément lorsque l’écran le propose.
 
-Les balises Individu restent documentées pour les parcours Individu/Contrat où elles sont réellement exposées : voir [[Mots-clés de publipostage]]. Ne supposez pas qu’elles sont disponibles depuis un écran Présences tant que celui-ci ne lance pas l’assistant avec un contexte pris en charge.
+Le code vérifie qu’une plage ne chevauche pas une présence existante pour la même personne. Une saisie qui se superpose est refusée avec un message explicatif.
 
-## À documenter après validation fonctionnelle
+### Modifier et supprimer
 
-Le détail exhaustif des actions de planning (création de plages, duplication, suppression et impressions selon écran) doit encore être confirmé par une recette interactive Windows avant d’être présenté comme procédure utilisateur stable.
+Les listes de présences exposent **Ajouter**, **Modifier** et **Supprimer**. Dans la fiche individuelle, on trouve aussi **Imprimer**, **Statistiques** et l’application d’un **Modèle**.
+
+### Modèles et répétition
+
+Le contrôleur contient une voie de modèles de présence permettant de réutiliser une organisation enregistrée. Le détail clic par clic et les conséquences sur une période complète sont **À confirmer en recette fonctionnelle**.
+
+### Impression et statistiques
+
+Le dépôt contient le moteur d’impression graphique des présences et un dialogue de statistiques. Leur disponibilité est prouvée dans les contrôleurs ; le rendu exact doit être vérifié sur Windows avant d’en faire une référence visuelle.
+
+## Données utilisées
+
+- personne ;
+- date ;
+- début/fin ;
+- catégorie ;
+- informations de planning associées.
+
+Les contrats et personnes constituent le contexte du dossier, mais une présence n’est pas un contrat : corrigez les données à leur source plutôt que de forcer une saisie de planning incohérente.
+
+## Résultat attendu
+
+Une présence validée apparaît dans le planning et dans l’onglet Présences de la personne concernée. Les modifications doivent se refléter lors du rafraîchissement de la liste/planning.
+
+<a id="presences-controle-metier"></a>
+## Contrôle métier encore à valider
+
+La présence du moteur de contrats CCNS/CEE ne prouve pas que chaque règle de durée du travail, repos ou plafond est automatiquement contrôlée dans l’écran Présences.
+
+**À confirmer en recette fonctionnelle :**
+
+- règles conventionnelles de planning effectivement signalées dans cette page ;
+- comportement des modèles sur des périodes complexes ;
+- rendu et contenu exacts des statistiques/impressions ;
+- interactions complètes entre rupture/fin de contrat et planning.
+
+Le wiki ne présente donc pas ces contrôles comme une validation juridique ou conventionnelle du planning.
+
+## Publipostage
+
+Le moteur générique ne déclare pas de contexte `presence`. N’inventez pas de balise de présence dans Teamword/Word/Writer. Voir [[Mots-clés de publipostage]].
+
+## Problèmes fréquents
+
+- **La saisie est refusée :** vérifier les horaires et un éventuel chevauchement.
+- **Une personne n’apparaît pas comme attendu :** contrôler sa fiche et la période affichée.
+- **Le planning semble lent :** distinguer temps de chargement local et latence MySQL ; voir [[Problèmes fréquents]].
+
+## Liens associés
+
+[[Individus et fiches]] · [[Contrats, CCNS et CEE]] · [[Paramétrage]] · [[Problèmes fréquents]]
