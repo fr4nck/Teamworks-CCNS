@@ -31,10 +31,6 @@
 - [[Aide, discussions et signalement de bugs]]
 - [[Sujets et discussions]]
 
-### Évolutions en cours
-- [[Évolution documentaire Qt]]
-- [[Questionnaires et formulaires conditionnels]]
-
 ### Pour aller plus loin
 - [[Architecture fonctionnelle]]
 - [[Historique, versions et héritage]]
