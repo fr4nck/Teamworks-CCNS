@@ -36,8 +36,15 @@ Ce wiki décrit **Teamworks-CCNS Vanilla wx** tel qu’il existe dans le code de
 - [[Problèmes fréquents]] — vérifications simples par symptôme.
 - [[Diagnostic et rapports de crash]] — logs, rapports et informations à joindre.
 - [[Aide, discussions et signalement de bugs]] — forum historique, Discussions GitHub et Issues GitHub.
+- [[Sujets et discussions]] — classement conseillé des échanges par grande thématique, avec les pages du wiki associées.
 - [[Glossaire]] — vocabulaire du logiciel.
 - [[Architecture fonctionnelle]] — repères pour utilisateurs avancés et contributeurs.
 - [[Historique, versions et héritage]] — origine du projet et séparation wx/Qt.
+
+## État de la documentation
+
+Le wiki est considéré comme **complet pour l’état actuel documenté de la Vanilla wx**. Il sera rouvert lorsqu’une nouvelle version, une nouvelle fonction ou une correction importante le justifiera.
+
+Voir [[État du wiki]].
 
 > **Niveau de preuve.** Les procédures sont reliées au code wx réel. Lorsqu’un comportement nécessite encore une vraie recette Windows, le wiki emploie explicitement **À confirmer en recette fonctionnelle** au lieu de compléter par déduction.
