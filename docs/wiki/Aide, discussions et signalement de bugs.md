@@ -13,6 +13,8 @@ Le cœur historique du logiciel contient encore cette adresse, mais la Vanilla w
 
 Pour une question d’utilisation, une idée ou un échange communautaire, utilisez **GitHub Discussions** du fork : <https://github.com/fr4nck/Teamworks-CCNS/discussions>.
 
+Les échanges sont organisés par grandes thématiques afin d’éviter de mélanger installation, contrats, publipostage, données, Qt ou questionnaires dans un même fil. Voir [[Sujets et discussions]] pour les sujets conseillés et les pages du wiki à citer dans chaque échange.
+
 ### 3. Issues GitHub
 
 Pour un bug reproductible ou une demande technique suivie, le canal attendu est **GitHub Issues** : <https://github.com/fr4nck/Teamworks-CCNS/issues>.
@@ -58,4 +60,4 @@ Plusieurs dialogues appellent encore le système d’aide historique. Lorsque ce
 
 ## Liens associés
 
-[[Problèmes fréquents]] · [[Diagnostic et rapports de crash]] · [[Versions et mises à jour wx]] · [[Sauvegardes et restauration]]
+[[Sujets et discussions]] · [[Problèmes fréquents]] · [[Diagnostic et rapports de crash]] · [[Versions et mises à jour wx]] · [[Sauvegardes et restauration]]
