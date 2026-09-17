@@ -81,6 +81,8 @@ class CcnsDataReader:
         # modernes absentes sont projetées en NULL au lieu d'être créées ici.
         convention_expr = self._optional_contract_column("convention_code")
         group_expr = self._optional_contract_column("ccns_group")
+        signature_expr = self._optional_contract_column("signature")
+        due_expr = self._optional_contract_column("due")
         req = """
     SELECT
         contrats.IDcontrat,
@@ -96,14 +98,23 @@ class CcnsDataReader:
         contrats_types.nom AS type_contrat,
         contrats.date_rupture,
         %s AS convention_code,
-        %s AS ccns_group
+        %s AS ccns_group,
+        %s AS signature,
+        %s AS due
     FROM contrats
     LEFT JOIN personnes ON personnes.IDpersonne = contrats.IDpersonne
     LEFT JOIN contrats_class ON contrats_class.IDclassification = contrats.IDclassification
     LEFT JOIN contrats_types ON contrats_types.IDtype = contrats.IDtype
     %s
     ORDER BY contrats.IDcontrat%s;
-    """ % (convention_expr, group_expr, where_clause, self._limit_clause(limit))
+    """ % (
+            convention_expr,
+            group_expr,
+            signature_expr,
+            due_expr,
+            where_clause,
+            self._limit_clause(limit),
+        )
         return [CcnsContratRecord(*row) for row in self._fetch(req, nom)]
 
     def lire_classifications(self) -> list[CcnsClassificationRecord]:
