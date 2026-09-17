@@ -5,7 +5,7 @@
 # Site internet :  www.noethys.com
 # Auteur:          Ivan LUCAS
 # Copyright:       (c) 2010-16 Ivan LUCAS
-# Licence:         Licence GNU GPL
+# Licence :        Licence GNU GPL
 #------------------------------------------------------------------------
 
 import Chemins
@@ -19,6 +19,7 @@ except:
     import UTILS_Adaptations
     import UTILS_Theme
 UTILS_Fichiers = UTILS_Adaptations.Import("Utils.UTILS_Fichiers")
+UTILS_Encodage = UTILS_Adaptations.Import("Utils.UTILS_Encodage")
 
 # Le rendu natif doit être demandé avant la construction des fenêtres.
 UTILS_Theme.enable_native_dark_mode()
@@ -61,10 +62,19 @@ class Customize():
         self.cfg = configparser.ConfigParser()
         self.InitFichier()
 
+    def _LireFichier(self):
+        """Lit Customize.ini via la frontière d'encodage historique autorisée."""
+        with open(self.nomFichier, "rb") as fichier:
+            contenu = fichier.read()
+        texte = UTILS_Encodage.DecodeTexteExterne(contenu)
+        cfg = configparser.ConfigParser()
+        cfg.read_string(texte)
+        self.cfg = cfg
+
     def InitFichier(self):
         """Création, vérification et migration légère des préférences."""
         if os.path.isfile(self.nomFichier) :
-            self.cfg.read(self.nomFichier)
+            self._LireFichier()
 
         dirty = False
 
@@ -122,7 +132,7 @@ class Customize():
 
     def Enregistrement(self):
         """ Enregistrement du fichier sur le disque dur """
-        with open(self.nomFichier, "w") as fichier:
+        with open(self.nomFichier, "w", encoding="utf-8") as fichier:
             self.cfg.write(fichier)
 
 

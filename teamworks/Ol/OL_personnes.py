@@ -5,10 +5,14 @@
 import wx
 
 from Ol import OL_personnes_core as CORE
+from Utils import UTILS_Config
+from Utils import UTILS_Diagnostic_performance as DiagnosticPerformance
+from Utils import UTILS_Etat_colonnes
 from Utils.UTILS_Traduction import _
 
 
 LISTE_COLONNES = CORE.LISTE_COLONNES
+_CLE_ETAT_COLONNES = "wx_personnes_etat_colonnes_v1"
 
 
 class Track(CORE.Track):
@@ -75,17 +79,135 @@ class Track(CORE.Track):
 
 
 class ListView(CORE.ListView):
-    """Liste historique conservée, avec lecture robuste et suppression transactionnelle."""
+    """Liste historique avec présentation persistante et connexion DB bornée."""
+
+    def __init__(self, *args, **kwds):
+        DiagnosticPerformance.installer_instrumentation_sql(CORE.GestionDB)
+        self._premier_maj_redondant = True
+        self._etat_colonnes_charge = None
+        # Le constructeur historique enchaîne pays -> modèle -> personnes.
+        # Une seule connexion couvre cette action cohérente puis est fermée.
+        self._db_action = CORE.GestionDB.DB()
+        try:
+            with DiagnosticPerformance.mesurer_action("wx.personnes.liste.ouverture"):
+                super(ListView, self).__init__(*args, **kwds)
+        finally:
+            self._db_action.Close()
+            self._db_action = None
+        self.Bind(wx.EVT_LIST_COL_END_DRAG, self._OnColonneRedimensionnee)
+
+    def _obtenir_db_action(self):
+        DB = getattr(self, "_db_action", None)
+        if DB is not None:
+            return DB, False
+        DB = CORE.GestionDB.DB()
+        self._db_action = DB
+        return DB, True
+
+    def Importation_pays(self):
+        """Charge les pays dans la connexion de l'action en cours."""
+        DB, possede_db = self._obtenir_db_action()
+        try:
+            DB.ExecuterReq("SELECT IDpays, nom, nationalite FROM pays;")
+            CORE.DICT_PAYS = {
+                IDpays: (nom, nationalite)
+                for IDpays, nom, nationalite in DB.ResultatReq()
+            }
+        finally:
+            if possede_db:
+                DB.Close()
+                self._db_action = None
+
+    def InitModel(self):
+        """Charge références et personnes avec une connexion physique bornée."""
+        DB, possede_db = self._obtenir_db_action()
+        try:
+            DB.ExecuterReq("SELECT IDsituation, situation FROM Situations;")
+            CORE.DICT_SITUATIONS = {
+                IDsituation: situation
+                for IDsituation, situation in DB.ResultatReq()
+            }
+
+            DB.ExecuterReq(
+                "SELECT IDcoord, IDpersonne, categorie, texte, intitule FROM Coordonnees;"
+            )
+            CORE.DICT_COORDONNEES = {}
+            for IDcoord, IDpersonne, categorie, texte, intitule in DB.ResultatReq():
+                CORE.DICT_COORDONNEES.setdefault(IDpersonne, []).append(
+                    (IDcoord, IDpersonne, categorie, texte, intitule)
+                )
+
+            DB.ExecuterReq("SELECT IDdiplome, IDpersonne, IDtype_diplome FROM diplomes;")
+            CORE.DICT_QUALIFICATIONS = {}
+            for _IDdiplome, IDpersonne, IDtype_diplome in DB.ResultatReq():
+                CORE.DICT_QUALIFICATIONS.setdefault(IDpersonne, []).append(IDtype_diplome)
+
+            DB.ExecuterReq("SELECT IDtype_diplome, nom_diplome FROM types_diplomes;")
+            CORE.DICT_TYPES_DIPLOMES = {
+                IDtype_diplome: nom_diplome
+                for IDtype_diplome, nom_diplome in DB.ResultatReq()
+            }
+
+            self.donnees = self.GetTracks()
+        finally:
+            if possede_db:
+                DB.Close()
+                self._db_action = None
+
+    def _charger_etat_colonnes(self):
+        if self._etat_colonnes_charge is None:
+            try:
+                etat = UTILS_Config.GetParametre(_CLE_ETAT_COLONNES, {})
+            except Exception:
+                etat = {}
+            if not isinstance(etat, dict):
+                etat = {}
+            self._etat_colonnes_charge = etat
+            self.listeColonnesOriginale = UTILS_Etat_colonnes.fusionner_colonnes(
+                LISTE_COLONNES,
+                None,
+            )
+            self.listeColonnesTemp = UTILS_Etat_colonnes.fusionner_colonnes(
+                LISTE_COLONNES,
+                etat,
+            )
+        return self._etat_colonnes_charge
+
+    def InitObjectListView(self):
+        """Construit les colonnes initiales à partir du défaut + état utilisateur."""
+        etat = self._charger_etat_colonnes()
+        CORE.ListView.InitObjectListView(self)
+
+        champs = [
+            getattr(colonne, "valueGetter", None)
+            for colonne in getattr(self, "columns", [])
+        ]
+        champ_tri, ascendant = UTILS_Etat_colonnes.extraire_tri(
+            etat,
+            champs_connus=champs,
+            champ_defaut="nom",
+            ascendant_defaut=True,
+        )
+        for colonne in getattr(self, "columns", []):
+            if getattr(colonne, "valueGetter", None) == champ_tri:
+                self.SetSortColumn(colonne)
+                self.sortAscending = ascendant
+                self.SetObjects(self.donnees)
+                break
 
     def GetTracks(self):
-        DB = CORE.GestionDB.DB()
-        req = """SELECT IDpersonne, civilite, nom, nom_jfille, prenom, date_naiss,
-        cp_naiss, ville_naiss, pays_naiss, nationalite, num_secu,
-        adresse_resid, cp_resid, ville_resid, IDsituation
-        FROM personnes %s ORDER BY nom, prenom;""" % self.criteres
-        DB.ExecuterReq(req)
-        rows = DB.ResultatReq()
-        DB.Close()
+        DB, possede_db = self._obtenir_db_action()
+        try:
+            req = """SELECT IDpersonne, civilite, nom, nom_jfille, prenom, date_naiss,
+            cp_naiss, ville_naiss, pays_naiss, nationalite, num_secu,
+            adresse_resid, cp_resid, ville_resid, IDsituation
+            FROM personnes %s ORDER BY nom, prenom;""" % self.criteres
+            DB.ExecuterReq(req)
+            rows = DB.ResultatReq()
+        finally:
+            if possede_db:
+                DB.Close()
+                self._db_action = None
 
         objets = []
         for row in rows:
@@ -94,6 +216,165 @@ class ListView(CORE.ListView):
             if self.selectionID == row[0]:
                 self.selectionTrack = track
         return objets
+
+    def _capturer_presentation_colonnes(self):
+        largeurs = {}
+        for index, colonne in enumerate(getattr(self, "columns", [])):
+            champ = getattr(colonne, "valueGetter", None)
+            if not isinstance(champ, str) or champ == "champ_recherche":
+                continue
+            try:
+                largeurs[champ] = self.GetColumnWidth(index)
+            except Exception:
+                continue
+
+        colonne_tri = self.GetSortColumn()
+        champ_tri = getattr(colonne_tri, "valueGetter", None) if colonne_tri else None
+        return {
+            "largeurs": largeurs,
+            "champ_tri": champ_tri,
+            "tri_ascendant": bool(getattr(self, "sortAscending", True)),
+        }
+
+    def _restaurer_presentation_colonnes(self, presentation):
+        largeurs = presentation.get("largeurs", {})
+        for index, colonne in enumerate(getattr(self, "columns", [])):
+            champ = getattr(colonne, "valueGetter", None)
+            largeur = largeurs.get(champ)
+            if largeur is not None:
+                try:
+                    self.SetColumnWidth(index, largeur)
+                except Exception:
+                    continue
+
+        champ_tri = presentation.get("champ_tri")
+        if champ_tri:
+            for colonne in getattr(self, "columns", []):
+                if getattr(colonne, "valueGetter", None) == champ_tri:
+                    self.SetSortColumn(colonne)
+                    self.sortAscending = presentation.get("tri_ascendant", True)
+                    self.SetObjects(self.donnees)
+                    break
+
+    def _sauvegarder_presentation_colonnes(self):
+        presentation = self._capturer_presentation_colonnes()
+        etat = UTILS_Etat_colonnes.construire_etat(
+            self.listeColonnesTemp,
+            presentation["largeurs"],
+            presentation["champ_tri"],
+            presentation["tri_ascendant"],
+        )
+        self._etat_colonnes_charge = etat
+        try:
+            UTILS_Config.FichierConfig().SetItemConfig(_CLE_ETAT_COLONNES, etat)
+            UTILS_Config.SetParametre(_CLE_ETAT_COLONNES, etat)
+        except Exception:
+            # Une préférence d'affichage ne doit jamais bloquer la liste.
+            return
+
+    def _OnColonneRedimensionnee(self, event):
+        event.Skip()
+        wx.CallAfter(self._sauvegarder_presentation_colonnes)
+
+    def _HandleColumnClick(self, evt):
+        resultat = super(ListView, self)._HandleColumnClick(evt)
+        wx.CallAfter(self._sauvegarder_presentation_colonnes)
+        return resultat
+
+    def SetListeColonnes(self, listeColonnes):
+        presentation = self._capturer_presentation_colonnes()
+        CORE.ListView.SetListeColonnes(self, listeColonnes)
+        CORE.ListView.InitObjectListView(self)
+        self._restaurer_presentation_colonnes(presentation)
+        self._sauvegarder_presentation_colonnes()
+
+    def _rafraichir_donnees(self, IDpersonne=None, presents=None):
+        if IDpersonne is not None:
+            self.selectionID = IDpersonne
+            self.selectionTrack = None
+        else:
+            self.selectionID = None
+            self.selectionTrack = None
+        if presents is not None:
+            self.presents = presents
+
+        self.InitModel()
+        self.SetObjects(self.donnees)
+
+        if self.selectionTrack is not None:
+            self.SelectObject(
+                self.selectionTrack,
+                deselectOthers=True,
+                ensureVisible=True,
+            )
+        self.selectionID = None
+        self.selectionTrack = None
+
+    def MAJ(self, IDpersonne=None, presents=None):
+        if self._premier_maj_redondant and IDpersonne is None and presents is None:
+            self._premier_maj_redondant = False
+            return
+        self._premier_maj_redondant = False
+        with DiagnosticPerformance.mesurer_action(
+            "wx.personnes.liste.rafraichissement",
+            {"IDpersonne": IDpersonne, "presents": presents},
+        ):
+            return self._rafraichir_donnees(
+                IDpersonne=IDpersonne,
+                presents=presents,
+            )
+
+    def CourrierPublipostage(self, mode="unique"):
+        if mode == "unique":
+            return super(ListView, self).CourrierPublipostage(mode=mode)
+
+        if self.GetNbreItems() == 0:
+            dlg = wx.MessageDialog(
+                self,
+                _(u"Il n'y a aucune personne dans la liste !"),
+                "Erreur",
+                wx.OK | wx.ICON_ERROR,
+            )
+            dlg.ShowModal()
+            dlg.Destroy()
+            return False
+
+        liste_labelsColonnes, listeValeurs = self.GetValeurs()
+        objets = list(self.GetFilteredObjects())
+        listeIDs = [objet.IDpersonne for objet in objets]
+        if len(listeIDs) != len(listeValeurs):
+            wx.MessageBox(
+                _(u"La liste affichée a changé pendant la préparation du publipostage. Veuillez recommencer."),
+                _(u"Publipostage annulé"),
+                wx.OK | wx.ICON_ERROR,
+            )
+            return False
+
+        from Dlg import DLG_Selection_liste
+        dlg = DLG_Selection_liste.Dialog(
+            self,
+            liste_labelsColonnes,
+            listeValeurs,
+            type="exportTexte",
+            listeIDs=listeIDs,
+        )
+        if dlg.ShowModal() == wx.ID_OK:
+            listeID = dlg.GetSelections()
+            dlg.Destroy()
+        else:
+            dlg.Destroy()
+            return False
+
+        from Utils import UTILS_Publipostage_donnees
+        dictDonnees = UTILS_Publipostage_donnees.GetDictDonnees(
+            categorie="personne",
+            listeID=listeID,
+        )
+        from Dlg import DLG_Publiposteur
+        dlg = DLG_Publiposteur.Dialog(self, "", dictDonnees=dictDonnees)
+        dlg.ShowModal()
+        dlg.Destroy()
+        return True
 
     def Supprimer(self):
         selection = self.Selection()
