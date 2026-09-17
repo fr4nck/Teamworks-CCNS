@@ -19,6 +19,8 @@ class FakeDB:
             ("IDclassification",),
             ("IDtype",),
             ("date_rupture",),
+            ("signature",),
+            ("due",),
         ]
         if self.modern_contract_columns:
             columns.extend((("convention_code",), ("ccns_group",)))
@@ -51,6 +53,8 @@ class FakeDB:
                     None,
                     convention,
                     group,
+                    "Oui",
+                    "",
                 )
             ]
         if "FROM contrats_class" in self.current:
@@ -80,6 +84,8 @@ def test_ccns_data_reader_lit_le_perimetre_ccns_sans_wx():
     assert contrats[0].classification == "G3"
     assert contrats[0].convention_code is None
     assert contrats[0].ccns_group is None
+    assert contrats[0].signature == "Oui"
+    assert contrats[0].due == ""
     assert classifications[0].nom == "G3"
     assert grilles[0].code == "CCNS-2026"
     assert lignes[0].IDtw_salary_grid == 7
