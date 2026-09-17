@@ -19,8 +19,25 @@ def _load_customize(monkeypatch, tmp_path):
     fichiers_stub = types.SimpleNamespace(
         GetRepUtilisateur=lambda nom: str(tmp_path / nom)
     )
+
+    # UTILS_Customize charge ses dépendances via UTILS_Adaptations.Import().
+    # On ne simule que la localisation du fichier utilisateur : le décodage
+    # doit rester celui de la vraie frontière UTILS_Encodage pour que ces
+    # tests vérifient réellement UTF-8 et les anciens fichiers CP1252.
+    sys.modules.pop("Utils.UTILS_Encodage", None)
+    encodage = importlib.import_module("Utils.UTILS_Encodage")
+
     adaptations_stub = types.ModuleType("Utils.UTILS_Adaptations")
-    adaptations_stub.Import = lambda _nom: fichiers_stub
+
+    def importer(nom):
+        if nom == "Utils.UTILS_Fichiers":
+            return fichiers_stub
+        if nom == "Utils.UTILS_Encodage":
+            return encodage
+        raise AssertionError(f"Import inattendu dans le test : {nom}")
+
+    adaptations_stub.Import = importer
+
     theme_stub = types.ModuleType("Utils.UTILS_Theme")
     theme_stub.enable_native_dark_mode = lambda: None
     theme_stub.install_auto_theming = lambda: None
