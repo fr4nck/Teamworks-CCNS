@@ -12,7 +12,14 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
 
     CLOSE_WAIT_TIMEOUT_MS = 100
 
-    def __init__(self, adapter, parent=None, *, activity_loader_class=None):
+    def __init__(
+        self,
+        adapter,
+        parent=None,
+        *,
+        activity_loader_class=None,
+        contract_write_port_factory=None,
+    ):
         self._activity_loader_class = activity_loader_class
         self._activity_thread = None
         self._activity_worker = None
@@ -24,7 +31,11 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
         self._closing_requested = False
         self._deferred_close_scheduled = False
         self._last_close_wait_timed_out = False
-        super().__init__(adapter, parent)
+        super().__init__(
+            adapter,
+            parent,
+            contract_write_port_factory=contract_write_port_factory,
+        )
         self.activity_presenter = IndividualActivityPresenter(self.legacy_tabs)
 
     def _build_general_tab(self):
@@ -66,6 +77,7 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
         self.generalities_page.set_person(person)
 
         contract_key = person.id_historique if person.id_historique is not None else person.id
+        self._current_contract_person_key = contract_key
         self.contracts_model.replace(())
         self.contracts_stack.setCurrentIndex(0)
         self.contracts_model.replace(self.adapter.list_contracts(contract_key))
