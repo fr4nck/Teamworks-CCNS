@@ -1,10 +1,10 @@
 # Sujets et discussions
 
-Le wiki sert de référence. Les échanges vivants doivent plutôt se faire dans **GitHub Discussions** :
+Le wiki sert de référence pour les fonctions réellement disponibles. Les échanges vivants peuvent se faire dans **GitHub Discussions** :
 
 https://github.com/fr4nck/Teamworks-CCNS/discussions
 
-L’idée est de garder un sujet principal par grande thématique, puis d’ouvrir un nouveau sujet uniquement lorsqu’une question mérite réellement d’être séparée.
+L’idée est de garder un sujet principal par grande thématique d’utilisation, puis d’ouvrir un nouveau sujet uniquement lorsqu’une question mérite réellement d’être séparée.
 
 ## 1. Installation, démarrage et versions
 
@@ -57,7 +57,7 @@ Wiki associé :
 
 **Sujet conseillé :** `Frais, déplacements et remboursements`
 
-À utiliser pour : saisie des déplacements, frais, remboursements, affichage et besoins d’évolution liés à ces fonctions.
+À utiliser pour : saisie des déplacements, frais, remboursements, affichage et questions liées au fonctionnement actuel.
 
 Wiki associé :
 
@@ -105,32 +105,7 @@ Wiki associé :
 
 Pour chaque signalement, préciser la version, l’écran, les étapes et le résultat obtenu.
 
-## 9. Qt et évolution de l'application
-
-**Sujet conseillé :** `Évolution Qt et convergence avec la Vanilla wx`
-
-À utiliser pour : état du client Qt, fonctions reprises depuis wx, différences connues et choix d’évolution.
-
-Wiki associé :
-
-- [[Évolution documentaire Qt]]
-- [[Architecture fonctionnelle]]
-- [[Historique, versions et héritage]]
-
-Il faut continuer à distinguer ce qui existe déjà de ce qui est encore en conception.
-
-## 10. Questionnaires, formulaires et FormEngine
-
-**Sujet conseillé :** `Questionnaires, formulaires conditionnels et FormEngine`
-
-À utiliser pour : questionnaires, formulaires conditionnels, logique de champs, calculs, cas pilote congés/absences et futur moteur commun.
-
-Wiki associé :
-
-- [[Questionnaires et formulaires conditionnels]]
-- [[Architecture fonctionnelle]]
-
-## 11. Documentation elle-même
+## 9. Documentation elle-même
 
 **Sujet conseillé :** `Corrections et compléments du wiki Teamworks-CCNS`
 
@@ -142,6 +117,10 @@ Wiki associé :
 - [[État du wiki]]
 
 Lorsqu’une correction est proposée, indiquer la page concernée et, si possible, la version de Teamworks à laquelle elle se rapporte.
+
+## Ce qui ne va pas dans les Discussions publiques
+
+Les études internes, prototypes, pistes techniques et choix de développement non livrés ne sont pas documentés ici. Ils restent dans les espaces de travail prévus à cet effet et n’entrent dans le wiki qu’une fois disponibles dans une version publiée ou lorsqu’une information publique est réellement utile aux utilisateurs.
 
 ## Modèle très court pour ouvrir un sujet
 
@@ -159,6 +138,6 @@ Lorsqu’une correction est proposée, indiquer la page concernée et, si possib
 
 Le wiki répond à **« comment cela fonctionne actuellement ? »**.
 
-Les Discussions servent à **« j’ai une question, une idée, un retour ou une proposition »**.
+Les Discussions servent à **« j’ai une question, un retour ou une difficulté sur une fonction disponible »**.
 
 Quand une discussion aboutit à une réponse durable ou à une nouvelle fonction réellement livrée, le wiki peut alors être mis à jour.
