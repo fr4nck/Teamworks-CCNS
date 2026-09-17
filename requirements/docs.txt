@@ -1,0 +1,3 @@
+# Documentation statique
+# 1.6.1 est la dernière version stable ; les 2.0.dev* ne sont pas utilisées en production.
+mkdocs==1.6.1

@@ -128,6 +128,8 @@ La politique est volontairement frugale :
 
 ## Documentation de référence
 
+- `docs/index.md` — **porte d’entrée du manuel utilisateur et de la documentation MkDocs** ;
+- `mkdocs.yml` — navigation du site documentaire ;
 - `ROADMAP.md` — **roadmap officielle et unique** ;
 - `AGENTS.md` — règles opérationnelles pour les agents et contributeurs ;
 - `docs/MATRICE_COMPATIBILITE.md` — état réel des environnements et plateformes ;
