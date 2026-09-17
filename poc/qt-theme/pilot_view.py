@@ -27,6 +27,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from application.services.contract_write import update_contract_indicator
 from contract_editor import ContractComplianceDialog
 from data_adapter import TeamworksReadAdapter
 from legacy_individual_tabs import LegacyIndividualTabs
@@ -64,9 +65,17 @@ class ReadValue(QLabel):
 
 
 class PeopleContractsPilot(QMainWindow):
-    def __init__(self, adapter: TeamworksReadAdapter, parent=None):
+    def __init__(
+        self,
+        adapter: TeamworksReadAdapter,
+        parent=None,
+        *,
+        contract_write_port_factory=None,
+    ):
         super().__init__(parent)
         self.adapter = adapter
+        self._contract_write_port_factory = contract_write_port_factory
+        self._current_contract_person_key = None
         self.legacy_tabs = LegacyIndividualTabs(_legacy_icon)
         self.setWindowTitle("Teamworks Qt — Individus / Contrats")
         self.resize(1380, 860)
@@ -459,6 +468,7 @@ class PeopleContractsPilot(QMainWindow):
         self.contracts_table = QTableView()
         self.contracts_table.setModel(self.contracts_model)
         self.contracts_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.contracts_table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.contracts_table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.contracts_table.setAlternatingRowColors(True)
         self.contracts_table.verticalHeader().setVisible(False)
@@ -479,8 +489,20 @@ class PeopleContractsPilot(QMainWindow):
         ):
             tools.addWidget(self._legacy_tool_button(icon, tooltip, fallback=fallback))
         tools.addSpacing(8)
-        tools.addWidget(self._legacy_tool_button("Signature.png", "Signature du contrat", fallback="S"))
-        tools.addWidget(self._legacy_tool_button("Document.png", "DUE", fallback="D"))
+        self.contract_signature_button = self._legacy_tool_button(
+            "Signature.png", "Basculer l'état de signature du contrat", fallback="S"
+        )
+        self.contract_due_button = self._legacy_tool_button(
+            "Document.png", "Basculer l'état DUE du contrat", fallback="D"
+        )
+        self.contract_signature_button.clicked.connect(
+            lambda: self._toggle_contract_indicator("signature")
+        )
+        self.contract_due_button.clicked.connect(
+            lambda: self._toggle_contract_indicator("due")
+        )
+        tools.addWidget(self.contract_signature_button)
+        tools.addWidget(self.contract_due_button)
         tools.addSpacing(8)
         tools.addWidget(self._legacy_tool_button("Imprimante.png", "Imprimer", fallback="I"))
         tools.addStretch(1)
@@ -495,11 +517,93 @@ class PeopleContractsPilot(QMainWindow):
         simulate_button.clicked.connect(self._open_contract_compliance_dialog)
         command_layout.addWidget(simulate_button)
         command_layout.addStretch(1)
-        readonly = QLabel("POC · aucune écriture")
+        readonly = QLabel("Écriture limitée · Signature / DUE")
         readonly.setProperty("muted", True)
         command_layout.addWidget(readonly)
         root.addWidget(command_bar)
+        self.contracts_table.selectionModel().selectionChanged.connect(
+            self._on_contract_selection
+        )
         return widget
+
+    def _selected_contract(self):
+        rows = self.contracts_table.selectionModel().selectedRows()
+        if not rows:
+            return None
+        return self.contracts_model.contract_at(rows[0].row())
+
+    def _on_contract_selection(self, *_args) -> None:
+        contract = self._selected_contract()
+        writable = (
+            callable(self._contract_write_port_factory)
+            and contract is not None
+            and isinstance(contract.id_historique, int)
+            and not isinstance(contract.id_historique, bool)
+            and contract.id_historique > 0
+        )
+        self.contract_signature_button.setEnabled(writable)
+        self.contract_due_button.setEnabled(writable)
+
+    def _reload_contracts(self, *, selected_contract_id=None) -> None:
+        if self._current_contract_person_key is None:
+            return
+        contracts = tuple(self.adapter.list_contracts(self._current_contract_person_key))
+        self.contracts_model.replace(contracts)
+        count = self.contracts_model.rowCount()
+        self.contracts_stack.setCurrentIndex(1 if count else 0)
+        self.detail_contracts.setText(_contract_count_text(count))
+        if selected_contract_id is not None:
+            for row in range(count):
+                contract = self.contracts_model.contract_at(row)
+                if contract is not None and contract.id_historique == selected_contract_id:
+                    self.contracts_table.selectRow(row)
+                    break
+        self._on_contract_selection()
+
+    def _toggle_contract_indicator(self, field: str) -> None:
+        contract = self._selected_contract()
+        if contract is None or not callable(self._contract_write_port_factory):
+            return
+
+        current_value = getattr(contract, field, "") or ""
+        new_value = "" if current_value == "Oui" else "Oui"
+
+        try:
+            port = self._contract_write_port_factory()
+            result = update_contract_indicator(
+                port,
+                contract_id=contract.id_historique,
+                field=field,
+                value=new_value,
+            )
+        except Exception as exc:
+            self.statusBar().showMessage(f"Écriture Contrat impossible · {exc}")
+            return
+
+        label = "Signature" if field == "signature" else "DUE"
+        if not result.committed:
+            self.statusBar().showMessage(
+                f"{label} non modifiée · {result.code} · {result.message}"
+            )
+            return
+
+        try:
+            self._reload_contracts(selected_contract_id=contract.id_historique)
+        except Exception as exc:
+            self.statusBar().showMessage(
+                f"{label} enregistrée, mais rafraîchissement impossible · {exc}"
+            )
+            return
+
+        if result.ok:
+            display_value = new_value or "Non"
+            self.statusBar().showMessage(
+                f"Contrat n°{contract.id_historique} · {label} : {display_value}"
+            )
+        else:
+            self.statusBar().showMessage(
+                f"{label} enregistrée · relecture transactionnelle incomplète · {result.message}"
+            )
 
     def _open_contract_compliance_dialog(self) -> None:
         dialog = ContractComplianceDialog(self)
@@ -507,8 +611,12 @@ class PeopleContractsPilot(QMainWindow):
 
     def _show_empty_detail(self) -> None:
         self.detail_stack.setCurrentIndex(0)
+        self._current_contract_person_key = None
         self.contracts_model.replace([])
         self.contracts_stack.setCurrentIndex(0)
+        if hasattr(self, "contract_signature_button"):
+            self.contract_signature_button.setEnabled(False)
+            self.contract_due_button.setEnabled(False)
         self.statusBar().showMessage("Lecture seule · aucune sélection")
 
     def _on_person_selection(self, *_args) -> None:
@@ -541,6 +649,7 @@ class PeopleContractsPilot(QMainWindow):
             widget.setText(value or "—")
 
         contract_key = person.id_historique if person.id_historique is not None else person.id
+        self._current_contract_person_key = contract_key
         self.contracts_model.replace(self.adapter.list_contracts(contract_key))
         contract_count = self.contracts_model.rowCount()
         self.contracts_stack.setCurrentIndex(1 if contract_count else 0)
