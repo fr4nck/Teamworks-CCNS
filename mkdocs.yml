@@ -1,0 +1,39 @@
+site_name: Teamworks CCNS — Documentation
+site_description: Manuel utilisateur et documentation de référence de Teamworks CCNS
+site_url: https://fr4nck.github.io/Teamworks-CCNS/
+repo_url: https://github.com/fr4nck/Teamworks-CCNS
+repo_name: fr4nck/Teamworks-CCNS
+
+docs_dir: docs
+site_dir: site
+
+theme:
+  name: mkdocs
+
+plugins:
+  - search:
+      lang: fr
+
+markdown_extensions:
+  - attr_list
+  - toc:
+      permalink: true
+
+nav:
+  - Accueil: index.md
+  - Guide utilisateur:
+      - Démarrage: utilisateur/index.md
+      - Publipostage: utilisateur/publipostage.md
+  - Référence:
+      - Mots-clés de publipostage: reference/mots-cles-publipostage.md
+  - Projet:
+      - Index technique: README.md
+      - Cartographie: 30-cartographie-teamworks-ccns.md
+      - Matrice de compatibilité: MATRICE_COMPATIBILITE.md
+      - Couche d'accès aux données: 40-couche-acces-donnees.md
+
+# Le dépôt contient de nombreux documents techniques/historiques utiles mais
+# volontairement absents du menu principal. Ils restent construits et accessibles
+# par lien direct sans générer de bruit "omitted from nav".
+not_in_nav: |
+  *
