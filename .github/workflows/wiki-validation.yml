@@ -1,0 +1,31 @@
+name: Validation wiki
+
+on:
+  push:
+    branches:
+      - docs/wiki-teamworks-ccns-ready
+    paths:
+      - 'docs/wiki/**'
+      - 'tools/validate_wiki_*.py'
+      - '.github/workflows/wiki-validation.yml'
+  pull_request:
+    paths:
+      - 'docs/wiki/**'
+      - 'tools/validate_wiki_*.py'
+      - '.github/workflows/wiki-validation.yml'
+
+jobs:
+  wiki:
+    name: Wiki — liens et publipostage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Installer Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Valider les mots-clés
+        run: python tools/validate_wiki_publipostage.py
+      - name: Valider les liens
+        run: python tools/validate_wiki_links.py
