@@ -162,6 +162,13 @@ class TeamworksProductionReadAdapter(TeamworksReadAdapter):
         records = self._contract_reader.lire_contrats_personne(historical_id)
         return tuple(self._contract_to_view(record) for record in records)
 
+    def build_contract_write_port(self):
+        """Construit le port d'écriture sur la même session DB que le reader Contrats."""
+        self._ensure_open()
+        from infrastructure.persistence.contract_write_adapter import GestionDbContractWriteAdapter
+
+        return GestionDbContractWriteAdapter(self._contract_reader.db)
+
     def list_presences(self, person_id: str | int) -> Sequence[PresenceView]:
         self._ensure_open()
         return tuple(self._presence_reader.list_presences(person_id))
@@ -217,6 +224,8 @@ class TeamworksProductionReadAdapter(TeamworksReadAdapter):
             duration=_format_hours(record.temps_hebdo),
             status=EMPTY,
             id_historique=int(record.IDcontrat),
+            signature=_text(getattr(record, "signature", None), empty=""),
+            due=_text(getattr(record, "due", None), empty=""),
         )
 
     @staticmethod
