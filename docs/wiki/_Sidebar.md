@@ -25,10 +25,11 @@
 - [[Sauvegardes et restauration]]
 - [[Versions et mises à jour wx]]
 
-### Aide et diagnostic
+### Aide et échanges
 - [[Problèmes fréquents]]
 - [[Diagnostic et rapports de crash]]
 - [[Aide, discussions et signalement de bugs]]
+- [[Sujets et discussions]]
 
 ### Évolutions en cours
 - [[Évolution documentaire Qt]]
@@ -37,3 +38,4 @@
 ### Pour aller plus loin
 - [[Architecture fonctionnelle]]
 - [[Historique, versions et héritage]]
+- [[État du wiki]]
