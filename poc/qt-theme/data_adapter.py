@@ -62,6 +62,8 @@ class ContractView:
     duration: str
     status: str
     id_historique: int | None = None
+    signature: str = ""
+    due: str = ""
 
 
 @dataclass(frozen=True)
