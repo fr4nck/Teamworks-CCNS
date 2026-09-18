@@ -249,6 +249,13 @@ def load_contract_for_edit(
     )
 
 
+def _readback_contract(port: ContractWritePort, contract_id: int) -> ContractEditSnapshot:
+    snapshot = port.read_contract(contract_id)
+    if snapshot is None:
+        raise LookupError("Contrat introuvable après commit.")
+    return snapshot
+
+
 def update_contract(
     port: ContractWritePort,
     *,
@@ -287,7 +294,7 @@ def update_contract(
         write=lambda: port.update_contract(command),
         commit=port.commit,
         rollback=port.rollback,
-        readback=lambda: port.read_contract(command.contract_id),
+        readback=lambda: _readback_contract(port, command.contract_id),
     )
 
 
