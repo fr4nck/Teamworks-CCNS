@@ -81,6 +81,7 @@ class CcnsDataReader:
         # modernes absentes sont projetées en NULL au lieu d'être créées ici.
         convention_expr = self._optional_contract_column("convention_code")
         group_expr = self._optional_contract_column("ccns_group")
+        weekly_expr = self._optional_contract_column("weekly_hours")
         signature_expr = self._optional_contract_column("signature")
         due_expr = self._optional_contract_column("due")
         req = """
@@ -90,7 +91,7 @@ class CcnsDataReader:
         contrats.date_debut,
         contrats.date_fin,
         NULL AS salaire_base,
-        NULL AS temps_hebdo,
+        %s AS temps_hebdo,
         NULL AS prime_anciennete,
         personnes.prenom,
         personnes.nom,
@@ -108,6 +109,7 @@ class CcnsDataReader:
     %s
     ORDER BY contrats.IDcontrat%s;
     """ % (
+            weekly_expr,
             convention_expr,
             group_expr,
             signature_expr,
