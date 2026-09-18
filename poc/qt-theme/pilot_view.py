@@ -7,6 +7,7 @@ from PySide6.QtCore import QSize, QSortFilterProxyModel, Qt
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
     QAbstractItemView,
+    QDialog,
     QFrame,
     QGridLayout,
     QGroupBox,
@@ -27,8 +28,12 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from application.services.contract_write import update_contract_indicator
-from contract_editor import ContractComplianceDialog
+from application.services.contract_write import (
+    load_contract_for_edit,
+    update_contract,
+    update_contract_indicator,
+)
+from contract_editor import ContractComplianceDialog, ContractEditDialog
 from data_adapter import TeamworksReadAdapter
 from legacy_individual_tabs import LegacyIndividualTabs
 from models import ContractsTableModel, PeopleTableModel
@@ -105,7 +110,7 @@ class PeopleContractsPilot(QMainWindow):
         heading.setFont(font)
         root.addWidget(heading)
 
-        subheading = QLabel("Transposition Qt de l’organisation historique Teamworks · lecture seule")
+        subheading = QLabel("Transposition Qt de l’organisation historique Teamworks · écritures Contrats contrôlées")
         subheading.setProperty("muted", True)
         root.addWidget(subheading)
 
@@ -482,12 +487,13 @@ class PeopleContractsPilot(QMainWindow):
 
         tools = QVBoxLayout()
         tools.setSpacing(5)
-        for icon, tooltip, fallback in (
-            ("Ajouter.png", "Ajouter un contrat", "+"),
-            ("Modifier.png", "Modifier le contrat", "M"),
-            ("Supprimer.png", "Supprimer le contrat", "−"),
-        ):
-            tools.addWidget(self._legacy_tool_button(icon, tooltip, fallback=fallback))
+        tools.addWidget(self._legacy_tool_button("Ajouter.png", "Ajouter un contrat", fallback="+"))
+        self.contract_edit_button = self._legacy_tool_button(
+            "Modifier.png", "Modifier le contrat", fallback="M"
+        )
+        self.contract_edit_button.clicked.connect(self._edit_selected_contract)
+        tools.addWidget(self.contract_edit_button)
+        tools.addWidget(self._legacy_tool_button("Supprimer.png", "Supprimer le contrat", fallback="−"))
         tools.addSpacing(8)
         self.contract_signature_button = self._legacy_tool_button(
             "Signature.png", "Basculer l'état de signature du contrat", fallback="S"
@@ -517,7 +523,7 @@ class PeopleContractsPilot(QMainWindow):
         simulate_button.clicked.connect(self._open_contract_compliance_dialog)
         command_layout.addWidget(simulate_button)
         command_layout.addStretch(1)
-        readonly = QLabel("Écriture limitée · Signature / DUE")
+        readonly = QLabel("Écriture contrôlée · Modifier / Signature / DUE")
         readonly.setProperty("muted", True)
         command_layout.addWidget(readonly)
         root.addWidget(command_bar)
@@ -541,8 +547,58 @@ class PeopleContractsPilot(QMainWindow):
             and not isinstance(contract.id_historique, bool)
             and contract.id_historique > 0
         )
+        self.contract_edit_button.setEnabled(writable)
         self.contract_signature_button.setEnabled(writable)
         self.contract_due_button.setEnabled(writable)
+
+    def _edit_selected_contract(self) -> None:
+        contract = self._selected_contract()
+        if contract is None or not callable(self._contract_write_port_factory):
+            return
+
+        try:
+            port = self._contract_write_port_factory()
+            loaded = load_contract_for_edit(
+                port,
+                contract_id=contract.id_historique,
+            )
+        except Exception as exc:
+            self.statusBar().showMessage(f"Lecture du contrat impossible · {exc}")
+            return
+
+        if not loaded.ok or loaded.value is None:
+            self.statusBar().showMessage(
+                f"Modification impossible · {loaded.code} · {loaded.message}"
+            )
+            return
+
+        dialog = ContractEditDialog(loaded.value, self)
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+
+        result = update_contract(port, command=dialog.command())
+        if not result.ok and not result.committed:
+            self.statusBar().showMessage(
+                f"Contrat non modifié · {result.code} · {result.message}"
+            )
+            return
+
+        try:
+            self._reload_contracts(selected_contract_id=contract.id_historique)
+        except Exception as exc:
+            self.statusBar().showMessage(
+                f"Contrat enregistré, mais rafraîchissement impossible · {exc}"
+            )
+            return
+
+        if result.committed:
+            self.statusBar().showMessage(
+                f"Contrat n°{contract.id_historique} modifié et relu depuis la base"
+            )
+        else:
+            self.statusBar().showMessage(
+                f"Contrat n°{contract.id_historique} · aucune modification à enregistrer"
+            )
 
     def _reload_contracts(self, *, selected_contract_id=None) -> None:
         if self._current_contract_person_key is None:
@@ -615,6 +671,7 @@ class PeopleContractsPilot(QMainWindow):
         self.contracts_model.replace([])
         self.contracts_stack.setCurrentIndex(0)
         if hasattr(self, "contract_signature_button"):
+            self.contract_edit_button.setEnabled(False)
             self.contract_signature_button.setEnabled(False)
             self.contract_due_button.setEnabled(False)
         self.statusBar().showMessage("Lecture seule · aucune sélection")
