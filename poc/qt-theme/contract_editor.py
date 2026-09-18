@@ -213,7 +213,7 @@ class ContractEditDialog(QDialog):
             label = self.regime_form.itemAt(row, QFormLayout.ItemRole.LabelRole)
             field = self.regime_form.itemAt(row, QFormLayout.ItemRole.FieldRole)
             if label is not None and field is not None:
-                label.widget().setVisible(field.widget().isVisible())
+                label.widget().setVisible(not field.widget().isHidden())
 
     def _refresh_groups(self, *_args) -> None:
         if not self.snapshot.modern_fields_supported:
@@ -251,7 +251,7 @@ class ContractEditDialog(QDialog):
                 annual = False
         self.monthly_salary.setVisible(not annual)
         self.annual_salary.setVisible(annual)
-        if self.regime_panel.isVisible():
+        if not self.regime_panel.isHidden():
             for row in range(self.regime_form.rowCount()):
                 label = self.regime_form.itemAt(row, QFormLayout.ItemRole.LabelRole)
                 field = self.regime_form.itemAt(row, QFormLayout.ItemRole.FieldRole)
