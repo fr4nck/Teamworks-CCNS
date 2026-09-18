@@ -15,8 +15,10 @@ POC = ROOT / "poc" / "qt-theme"
 if str(POC) not in sys.path:
     sys.path.insert(0, str(POC))
 
+from PySide6.QtCore import QDate, QTimer  # noqa: E402
 from PySide6.QtWidgets import QApplication  # noqa: E402
 
+from contract_editor import ContractEditDialog  # noqa: E402
 from data_adapter import PersonView  # noqa: E402
 from infrastructure.persistence.ccns_data_reader import CcnsDataReader  # noqa: E402
 from infrastructure.persistence.contract_write_adapter import (  # noqa: E402
@@ -49,7 +51,8 @@ class SqliteGestionDbCompat:
             );
             CREATE TABLE contrats_types (
                 IDtype INTEGER PRIMARY KEY,
-                nom TEXT
+                nom TEXT,
+                nom_abrege TEXT
             );
             CREATE TABLE contrats (
                 IDcontrat INTEGER PRIMARY KEY,
@@ -60,13 +63,22 @@ class SqliteGestionDbCompat:
                 date_fin TEXT,
                 date_rupture TEXT,
                 signature TEXT,
-                due TEXT
+                due TEXT,
+                convention_code TEXT,
+                ccns_group TEXT,
+                cee_qualification TEXT,
+                weekly_hours REAL,
+                gross_monthly_salary REAL,
+                gross_annual_salary REAL
             );
             INSERT INTO personnes VALUES (12, 'Ada', 'Lovelace');
-            INSERT INTO contrats_class VALUES (3, 'Groupe historique');
-            INSERT INTO contrats_types VALUES (4, 'CDI');
+            INSERT INTO contrats_class VALUES (3, 'Classification historique');
+            INSERT INTO contrats_types VALUES (4, 'CDI', 'CDI');
             INSERT INTO contrats VALUES (
-                417, 12, 3, 4, '2026-09-01', '2999-01-01', NULL, '', ''
+                417, 12, NULL, 4,
+                '2026-09-01', '2999-01-01', NULL,
+                '', '',
+                'CCNS', 'G3', NULL, 35.0, 3000.0, NULL
             );
             """
         )
@@ -129,27 +141,33 @@ def _app():
     return QApplication.instance() or QApplication([])
 
 
+def _window(db, reader):
+    return PeopleContractsPilot(
+        RoundTripAdapter(reader),
+        contract_write_port_factory=lambda: GestionDbContractWriteAdapter(db),
+    )
+
+
+def _select_contract(window):
+    window.people_table.selectRow(0)
+    QApplication.processEvents()
+    window.contracts_table.selectRow(0)
+    QApplication.processEvents()
+
+
 def test_signature_action_roundtrips_qt_service_db_readback_and_refresh():
     _app()
     db = SqliteGestionDbCompat()
     reader = CcnsDataReader(db_factory=lambda: db)
-    adapter = RoundTripAdapter(reader)
-    window = PeopleContractsPilot(
-        adapter,
-        contract_write_port_factory=lambda: GestionDbContractWriteAdapter(db),
-    )
+    window = _window(db, reader)
 
     try:
-        window.people_table.selectRow(0)
-        QApplication.processEvents()
+        _select_contract(window)
 
         assert window.contracts_model.rowCount() == 1
         before = window.contracts_model.contract_at(0)
         assert before.id_historique == 417
         assert before.signature == ""
-
-        window.contracts_table.selectRow(0)
-        QApplication.processEvents()
         assert window.contract_signature_button.isEnabled() is True
 
         window.contract_signature_button.click()
@@ -173,9 +191,76 @@ def test_signature_action_roundtrips_qt_service_db_readback_and_refresh():
         reader.close()
 
 
-def test_contract_widget_contains_no_sql():
-    source = (POC / "pilot_view.py").read_text(encoding="utf-8")
-    assert "SELECT " not in source
-    assert "UPDATE " not in source
-    assert "DELETE FROM" not in source
-    assert "INSERT INTO" not in source
+def test_modify_action_roundtrips_real_dialog_service_db_readback_and_refresh():
+    _app()
+    db = SqliteGestionDbCompat()
+    reader = CcnsDataReader(db_factory=lambda: db)
+    window = _window(db, reader)
+
+    try:
+        _select_contract(window)
+        before = window.contracts_model.contract_at(0)
+        assert before.id_historique == 417
+        assert before.start == "01/09/2026"
+        assert before.classification == "Groupe 3"
+        assert window.contract_edit_button.isEnabled() is True
+
+        def drive_dialog():
+            dialog = QApplication.activeModalWidget()
+            assert isinstance(dialog, ContractEditDialog)
+            dialog.start_date.setDate(QDate(2026, 10, 1))
+            group_index = dialog.group.findData("G4")
+            assert group_index >= 0
+            dialog.group.setCurrentIndex(group_index)
+            dialog.weekly_hours.setValue(28.0)
+            dialog.monthly_salary.setText("3000,00")
+            dialog._on_accept()
+
+        QTimer.singleShot(0, drive_dialog)
+        window.contract_edit_button.click()
+        QApplication.processEvents()
+
+        stored = db.connexion.execute(
+            """
+            SELECT date_debut, date_fin, date_rupture,
+                   convention_code, ccns_group, weekly_hours,
+                   gross_monthly_salary, gross_annual_salary
+            FROM contrats
+            WHERE IDcontrat=?
+            """,
+            (417,),
+        ).fetchone()
+        assert stored == (
+            "2026-10-01",
+            "2999-01-01",
+            None,
+            "CCNS",
+            "G4",
+            28.0,
+            3000.0,
+            None,
+        )
+        assert db.commit_count == 1
+
+        refreshed = window.contracts_model.contract_at(0)
+        assert refreshed.id_historique == 417
+        assert refreshed.start == "01/10/2026"
+        assert refreshed.classification == "Groupe 4"
+        assert refreshed.duration == "28 h"
+        assert window.contracts_table.selectionModel().selectedRows()[0].row() == 0
+        assert (
+            window.statusBar().currentMessage()
+            == "Contrat n°417 modifié et relu depuis la base"
+        )
+    finally:
+        window.close()
+        reader.close()
+
+
+def test_contract_widgets_contain_no_sql():
+    for filename in ("pilot_view.py", "contract_editor.py"):
+        source = (POC / filename).read_text(encoding="utf-8")
+        assert "SELECT " not in source
+        assert "UPDATE " not in source
+        assert "DELETE FROM" not in source
+        assert "INSERT INTO" not in source
