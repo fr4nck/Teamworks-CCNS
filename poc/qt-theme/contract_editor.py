@@ -3,12 +3,15 @@ from __future__ import annotations
 from datetime import date
 from decimal import Decimal, InvalidOperation
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QDate, Qt
 from PySide6.QtWidgets import (
+    QCheckBox,
     QComboBox,
+    QDateEdit,
     QDialog,
     QDialogButtonBox,
     QDoubleSpinBox,
+    QFormLayout,
     QFrame,
     QGridLayout,
     QHBoxLayout,
@@ -20,6 +23,14 @@ from PySide6.QtWidgets import (
 )
 
 from application.control.ccns_contract_compliance import CCNSContractCompliancePresenter
+from application.services.contract_write import (
+    FIXED_TERM_CODES,
+    ContractEditCommand,
+    ContractEditSnapshot,
+    validate_contract_edit,
+)
+from domain.contracts.contract_creation_rules import CEEQualification
+from domain.convention.salary_grid_entry import SalaryMinimumPeriodicity
 from legacy_contract_wizard import LegacyContractWizardDialog
 
 
@@ -46,6 +57,266 @@ def parse_decimal_text(text: str) -> Decimal | None:
         return None
     return value
 
+
+
+
+_CEE_LABELS = {
+    CEEQualification.BAFA_HOLDER.value: "BAFA titulaire",
+    CEEQualification.BAFA_TRAINEE.value: "BAFA stagiaire",
+    CEEQualification.UNQUALIFIED.value: "Non diplômé",
+    CEEQualification.EQUIVALENT.value: "Qualification équivalente",
+    CEEQualification.BAFD_HOLDER.value: "BAFD titulaire",
+    CEEQualification.BAFD_TRAINEE.value: "BAFD stagiaire",
+}
+
+
+def _qdate(value: date | None) -> QDate:
+    value = value or date.today()
+    return QDate(value.year, value.month, value.day)
+
+
+def _python_date(value: QDate) -> date:
+    return date(value.year(), value.month(), value.day())
+
+
+class ContractEditDialog(QDialog):
+    """Éditeur du noyau Contrat ; toute validation métier reste hors Qt."""
+
+    def __init__(self, snapshot: ContractEditSnapshot, parent: QWidget | None = None):
+        super().__init__(parent)
+        self.snapshot = snapshot
+        self._accepted_command: ContractEditCommand | None = None
+        self._presenter = CCNSContractCompliancePresenter()
+
+        self.setWindowTitle(f"Modifier le contrat n°{snapshot.contract_id}")
+        self.setMinimumWidth(560)
+
+        root = QVBoxLayout(self)
+        root.setContentsMargins(16, 16, 16, 16)
+        root.setSpacing(10)
+
+        identity = QLabel(
+            f"{snapshot.contract_type_label or snapshot.contract_type_code or 'Contrat'} · "
+            f"convention {snapshot.convention_code or 'historique'}"
+        )
+        identity.setProperty("muted", True)
+        root.addWidget(identity)
+
+        dates_panel = QFrame()
+        dates_panel.setObjectName("panel")
+        dates_form = QFormLayout(dates_panel)
+        self.start_date = QDateEdit(_qdate(snapshot.start_date))
+        self.start_date.setCalendarPopup(True)
+        self.start_date.setDisplayFormat("dd/MM/yyyy")
+        dates_form.addRow("Début", self.start_date)
+
+        self.open_ended = QCheckBox("Contrat sans date de fin")
+        self.open_ended.setChecked(snapshot.end_date is None)
+        if snapshot.contract_type_code.strip().upper() in FIXED_TERM_CODES:
+            self.open_ended.setChecked(False)
+            self.open_ended.setEnabled(False)
+        dates_form.addRow("", self.open_ended)
+
+        self.end_date = QDateEdit(_qdate(snapshot.end_date or snapshot.start_date))
+        self.end_date.setCalendarPopup(True)
+        self.end_date.setDisplayFormat("dd/MM/yyyy")
+        self.end_date.setEnabled(not self.open_ended.isChecked())
+        self.open_ended.toggled.connect(lambda checked: self.end_date.setEnabled(not checked))
+        dates_form.addRow("Fin", self.end_date)
+
+        self.has_break = QCheckBox("Rupture anticipée")
+        self.has_break.setChecked(snapshot.break_date is not None)
+        dates_form.addRow("", self.has_break)
+        self.break_date = QDateEdit(_qdate(snapshot.break_date or snapshot.start_date))
+        self.break_date.setCalendarPopup(True)
+        self.break_date.setDisplayFormat("dd/MM/yyyy")
+        self.break_date.setEnabled(self.has_break.isChecked())
+        self.has_break.toggled.connect(self.break_date.setEnabled)
+        dates_form.addRow("Date de rupture", self.break_date)
+        root.addWidget(dates_panel)
+
+        self.regime_panel = QFrame()
+        self.regime_panel.setObjectName("panel")
+        self.regime_form = QFormLayout(self.regime_panel)
+
+        self.group = QComboBox()
+        self.weekly_hours = QDoubleSpinBox()
+        self.weekly_hours.setRange(0.25, 80.0)
+        self.weekly_hours.setDecimals(2)
+        self.weekly_hours.setSingleStep(0.25)
+        self.weekly_hours.setValue(float(snapshot.weekly_hours or Decimal("35")))
+
+        self.monthly_salary = QLineEdit()
+        if snapshot.gross_monthly_salary is not None:
+            self.monthly_salary.setText(str(snapshot.gross_monthly_salary).replace(".", ","))
+        self.annual_salary = QLineEdit()
+        if snapshot.gross_annual_salary is not None:
+            self.annual_salary.setText(str(snapshot.gross_annual_salary).replace(".", ","))
+
+        self.cee_qualification = QComboBox()
+        self.cee_qualification.addItem("—", None)
+        for code, label in _CEE_LABELS.items():
+            self.cee_qualification.addItem(label, code)
+        current_cee = self.cee_qualification.findData(snapshot.cee_qualification)
+        if current_cee >= 0:
+            self.cee_qualification.setCurrentIndex(current_cee)
+
+        self.regime_form.addRow("Groupe CCNS", self.group)
+        self.regime_form.addRow("Durée hebdomadaire", self.weekly_hours)
+        self.regime_form.addRow("Brut mensuel", self.monthly_salary)
+        self.regime_form.addRow("Brut annuel", self.annual_salary)
+        self.regime_form.addRow("Qualification CEE", self.cee_qualification)
+        root.addWidget(self.regime_panel)
+
+        self.legacy_note = QLabel(
+            "Les colonnes métier modernes ne sont pas disponibles sur cette base : "
+            "la modification est limitée aux dates, sans migration automatique du schéma."
+        )
+        self.legacy_note.setWordWrap(True)
+        self.legacy_note.setProperty("muted", True)
+        root.addWidget(self.legacy_note)
+
+        self.error_label = QLabel("")
+        self.error_label.setWordWrap(True)
+        self.error_label.setProperty("error", True)
+        root.addWidget(self.error_label)
+
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel
+        )
+        buttons.accepted.connect(self._on_accept)
+        buttons.rejected.connect(self.reject)
+        root.addWidget(buttons)
+
+        self.start_date.dateChanged.connect(self._refresh_groups)
+        self.group.currentIndexChanged.connect(self._refresh_salary_mode)
+        self._configure_regime()
+        self._refresh_groups()
+
+    def _configure_regime(self) -> None:
+        modern = self.snapshot.modern_fields_supported
+        self.regime_panel.setVisible(modern)
+        self.legacy_note.setVisible(not modern)
+        if not modern:
+            return
+        is_cee = self.snapshot.contract_type_code.strip().upper() == "CEE"
+        is_ccns = (
+            (self.snapshot.convention_code or "").strip().upper() == "CCNS"
+            and not is_cee
+        )
+        self.group.setVisible(is_ccns)
+        self.weekly_hours.setVisible(is_ccns)
+        self.monthly_salary.setVisible(is_ccns)
+        self.annual_salary.setVisible(is_ccns)
+        self.cee_qualification.setVisible(is_cee)
+        for row in range(self.regime_form.rowCount()):
+            label = self.regime_form.itemAt(row, QFormLayout.ItemRole.LabelRole)
+            field = self.regime_form.itemAt(row, QFormLayout.ItemRole.FieldRole)
+            if label is not None and field is not None:
+                label.widget().setVisible(field.widget().isVisible())
+
+    def _refresh_groups(self, *_args) -> None:
+        if not self.snapshot.modern_fields_supported:
+            return
+        if (self.snapshot.convention_code or "").strip().upper() != "CCNS":
+            return
+        if self.snapshot.contract_type_code.strip().upper() == "CEE":
+            return
+        preserve = self.group.currentData() or self.snapshot.ccns_group
+        self.group.blockSignals(True)
+        self.group.clear()
+        try:
+            choices = self._presenter.group_choices(_python_date(self.start_date.date()))
+        except Exception:
+            choices = ()
+        for choice in choices:
+            self.group.addItem(choice.label, choice.code)
+        index = self.group.findData(preserve)
+        if index >= 0:
+            self.group.setCurrentIndex(index)
+        self.group.blockSignals(False)
+        self._refresh_salary_mode()
+
+    def _refresh_salary_mode(self, *_args) -> None:
+        code = self.group.currentData()
+        annual = False
+        if code:
+            try:
+                choices = self._presenter.group_choices(_python_date(self.start_date.date()))
+                choice = next((item for item in choices if item.code == code), None)
+                annual = bool(
+                    choice and choice.periodicity is SalaryMinimumPeriodicity.ANNUAL
+                )
+            except Exception:
+                annual = False
+        self.monthly_salary.setVisible(not annual)
+        self.annual_salary.setVisible(annual)
+        if self.regime_panel.isVisible():
+            self._configure_regime()
+
+    def _build_command(self) -> ContractEditCommand:
+        end_date = None if self.open_ended.isChecked() else _python_date(self.end_date.date())
+        break_date = _python_date(self.break_date.date()) if self.has_break.isChecked() else None
+
+        convention = self.snapshot.convention_code
+        group = self.snapshot.ccns_group
+        cee = self.snapshot.cee_qualification
+        weekly = self.snapshot.weekly_hours
+        monthly = self.snapshot.gross_monthly_salary
+        annual = self.snapshot.gross_annual_salary
+
+        if self.snapshot.modern_fields_supported:
+            is_cee = self.snapshot.contract_type_code.strip().upper() == "CEE"
+            is_ccns = (convention or "").strip().upper() == "CCNS" and not is_cee
+            if is_cee:
+                cee = self.cee_qualification.currentData()
+                group = None
+                weekly = None
+                monthly = None
+                annual = None
+            elif is_ccns:
+                group = self.group.currentData()
+                cee = None
+                weekly = Decimal(str(self.weekly_hours.value())).quantize(Decimal("0.01"))
+                monthly = parse_decimal_text(self.monthly_salary.text())
+                annual = parse_decimal_text(self.annual_salary.text())
+                try:
+                    choices = self._presenter.group_choices(_python_date(self.start_date.date()))
+                    choice = next((item for item in choices if item.code == group), None)
+                except Exception:
+                    choice = None
+                if choice and choice.periodicity is SalaryMinimumPeriodicity.ANNUAL:
+                    monthly = None
+                else:
+                    annual = None
+
+        return ContractEditCommand(
+            contract_id=self.snapshot.contract_id,
+            contract_type_code=self.snapshot.contract_type_code,
+            convention_code=convention,
+            ccns_group=group,
+            cee_qualification=cee,
+            weekly_hours=weekly,
+            gross_monthly_salary=monthly,
+            gross_annual_salary=annual,
+            start_date=_python_date(self.start_date.date()),
+            end_date=end_date,
+            break_date=break_date,
+            modern_fields_supported=self.snapshot.modern_fields_supported,
+        )
+
+    def _on_accept(self) -> None:
+        command = self._build_command()
+        errors = validate_contract_edit(command, original=self.snapshot)
+        if errors:
+            self.error_label.setText("\n".join(errors))
+            return
+        self.error_label.clear()
+        self._accepted_command = command
+        self.accept()
+
+    def command(self) -> ContractEditCommand:
+        return self._accepted_command or self._build_command()
 
 class ContractComplianceDialog(QDialog):
     """Formulaire Qt de raccordement au moteur CCNS, sans persistance.
