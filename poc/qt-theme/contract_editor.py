@@ -256,7 +256,7 @@ class ContractEditDialog(QDialog):
                 label = self.regime_form.itemAt(row, QFormLayout.ItemRole.LabelRole)
                 field = self.regime_form.itemAt(row, QFormLayout.ItemRole.FieldRole)
                 if label is not None and field is not None:
-                    label.widget().setVisible(field.widget().isVisible())
+                    label.widget().setVisible(not field.widget().isHidden())
 
     def _build_command(self) -> ContractEditCommand:
         end_date = None if self.open_ended.isChecked() else _python_date(self.end_date.date())
