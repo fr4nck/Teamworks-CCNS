@@ -252,7 +252,11 @@ class ContractEditDialog(QDialog):
         self.monthly_salary.setVisible(not annual)
         self.annual_salary.setVisible(annual)
         if self.regime_panel.isVisible():
-            self._configure_regime()
+            for row in range(self.regime_form.rowCount()):
+                label = self.regime_form.itemAt(row, QFormLayout.ItemRole.LabelRole)
+                field = self.regime_form.itemAt(row, QFormLayout.ItemRole.FieldRole)
+                if label is not None and field is not None:
+                    label.widget().setVisible(field.widget().isVisible())
 
     def _build_command(self) -> ContractEditCommand:
         end_date = None if self.open_ended.isChecked() else _python_date(self.end_date.date())
