@@ -78,6 +78,12 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
 
         contract_key = person.id_historique if person.id_historique is not None else person.id
         self._current_contract_person_key = contract_key
+        self.contract_create_button.setEnabled(
+            callable(self._contract_write_port_factory)
+            and isinstance(contract_key, int)
+            and not isinstance(contract_key, bool)
+            and contract_key > 0
+        )
         self.contracts_model.replace(())
         self.contracts_stack.setCurrentIndex(0)
         self.contracts_model.replace(self.adapter.list_contracts(contract_key))
