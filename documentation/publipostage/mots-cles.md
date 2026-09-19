@@ -1,10 +1,11 @@
 # Référence des mots-clés
 
-Cette page référence les **47 mots-clés standard distincts** exposés par le moteur de publipostage wx actuel (`teamworks/Utils/UTILS_Publipostage_donnees.py` et `teamworks/Dlg/DLG_Publiposteur*.py`), reconstruite et vérifiée directement depuis le code — pas recopiée de l'ancien Wiki. La syntaxe est exactement `{MOTCLE}`.
+Cette page référence les **47 mots-clés distincts** du moteur de publipostage wx actuel (`teamworks/Utils/UTILS_Publipostage_donnees.py` et `teamworks/Dlg/DLG_Publiposteur*.py`) : **46 mots-clés génériques**, disponibles selon le contexte depuis n'importe quel point d'entrée du publipostage, **plus 1 alias historique** (`{BRUTJOUR}`) disponible dans un seul flux précis. Reconstruite et vérifiée directement depuis le code — pas recopiée de l'ancien Wiki. La syntaxe est exactement `{MOTCLE}`.
 
-!!! warning "Deux flux de publipostage légèrement différents"
-    - Le **flux générique** (sélection de personnes/candidats/candidatures/contrats puis **Courrier**, via `DLG_Publiposteur_Choix` → `DLG_Publiposteur`) expose les 47 mots-clés ci-dessous.
-    - Le flux **« Imprimer un document »** depuis la fiche contrat (`DLG_Publiposteur_contrat`) expose les mêmes mots-clés **plus** l'alias historique `{BRUTJOUR}` et, indirectement, la [couche moderne RH](#couche-moderne-rh) — voir plus bas.
+!!! warning "`{BRUTJOUR}` n'existe que dans un seul flux — ne pas l'utiliser ailleurs"
+    - Le **flux générique** (sélection de personnes/candidats/candidatures/contrats puis **Courrier**, via `DLG_Publiposteur_Choix` → `DLG_Publiposteur`) expose **46 mots-clés** — l'union de tous les mots-clés ci-dessous, **à l'exclusion de `{BRUTJOUR}`**.
+    - Seul le flux **« Imprimer un document »** depuis la fiche contrat, qui instancie `DLG_Publiposteur_contrat.Dialog` (sous-classe de `DLG_Publiposteur.Dialog`), appelle `_apply_legacy_cee_aliases()` à sa construction et ajoute alors l'alias historique `{BRUTJOUR}` (uniquement si `QUALIFICATIONCEE` et `BAREMECEE` sont renseignés pour ce contrat), ainsi qu'indirectement la [couche moderne RH](#couche-moderne-rh) — voir plus bas.
+    - Un modèle destiné aux deux flux ne doit jamais utiliser `{BRUTJOUR}` : préférez toujours `{BAREMECEE}`, disponible partout où `{BRUTJOUR}` l'est.
 
 ## Index alphabétique
 
@@ -18,6 +19,7 @@ Voir la [matrice des contextes](contextes.md) pour la lecture inverse « je réd
 - **Une balise inconnue n'est jamais recherchée** : seuls les mots-clés effectivement présents dans les données du document sont substitués, donc un `{TRUC}` qui n'existe pas reste visible tel quel.
 - Une valeur absente devient généralement une chaîne vide, **sauf** pour `NOM`, `PRENOM`, `CIVILITE`, `NOMJFILLE`, `ADRESSERESID`, `VILLERESID`, `VILLENAISS`, `NUMSECU` et `MEMO`, qui recopient la valeur brute de la base sans normalisation : si la colonne correspondante est `NULL` en base, le comportement exact du remplacement dépend du moteur de fusion (Word/Writer/Teamword) et n'a pas été vérifié en recette — **à confirmer en recette fonctionnelle**.
 - `ESSAI` n'est jamais vide : il vaut `"0"` par défaut si la colonne est `NULL`.
+- Tous les montants (`SALAIREBRUTMENSUEL`, `MINIMUMCCNS`, `MINIMUMSMIC`, `MINIMUMRETENU`, `BAREMECEE`, `MINIMUMCEE`) sont produits par un simple `"%.2f €"` Python, **non localisé** : le séparateur décimal est un point (`1234.56 €`), jamais une virgule française.
 - Les clés internes commençant par `_` servent aux liaisons internes et ne sont pas des mots-clés de modèle.
 - Il n'existe **aucun contexte** `présences`, `planning`, `frais` ou `dpae` dans le moteur audité — recherche exhaustive négative.
 
@@ -34,7 +36,7 @@ Le seul alias réellement implémenté et testé est `{BRUTJOUR}` → `{BAREMECE
 
 ## Couche moderne RH {#couche-moderne-rh}
 
-Une couche additive plus récente (`domain/documents/merge_context.py`, `teamworks/Utils/UTILS_Documents_RH.py`, `teamworks/Utils/UTILS_Organisation.py`) ajoute des clés préfixées, **en plus** des 47 mots-clés standard, mais **uniquement dans le flux « Imprimer un document » de la fiche contrat** (`DLG_Publiposteur_contrat`) — le sélecteur générique (`DLG_Publiposteur_Choix`) ne les câble pas.
+Une couche additive plus récente (`domain/documents/merge_context.py`, `teamworks/Utils/UTILS_Documents_RH.py`, `teamworks/Utils/UTILS_Organisation.py`) ajoute des clés préfixées, **en plus** des 46 mots-clés génériques et de l'alias `{BRUTJOUR}`, mais **uniquement dans le flux « Imprimer un document » de la fiche contrat** (`DLG_Publiposteur_contrat.Dialog`, via `UTILS_Documents_RH.EnrichirDictDonneesContrat()`) — le sélecteur générique (`DLG_Publiposteur_Choix`) ne les câble pas.
 
 | Préfixe | Nombre de clés | Origine | Exemples |
 |---|---|---|---|
@@ -93,11 +95,11 @@ Ville de naissance. Valeur brute.
 
 <a id="publipostage-paysnaiss"></a>
 #### `{PAYSNAISS}`
-Pays de naissance, résolu par jointure sur la table `pays`. Vide si l'identifiant est absent, invalide ou introuvable.
+Pays de naissance, résolu par une requête dédiée sur la table `pays` (colonne `nom`) à partir de l'identifiant enregistré. Vide si l'identifiant est absent, invalide ou introuvable.
 
 <a id="publipostage-nationalite"></a>
 #### `{NATIONALITE}`
-Nationalité, résolue par la même jointure que `PAYSNAISS`. Vide dans les mêmes conditions.
+Nationalité, résolue par la même requête que `PAYSNAISS` sur la table `pays` (colonne `nationalite` de la ligne correspondante). Vide dans les mêmes conditions.
 
 <a id="publipostage-numsecu"></a>
 #### `{NUMSECU}`
@@ -117,7 +119,7 @@ Ville de résidence. Valeur brute.
 
 <a id="publipostage-situation"></a>
 #### `{SITUATION}`
-Situation familiale, résolue par jointure sur `situations`. Vide si aucune ligne correspondante.
+Situation familiale, résolue par une requête dédiée sur la table `situations` à partir de l'identifiant enregistré. Vide si aucune ligne correspondante.
 
 <a id="publipostage-telephones"></a>
 #### `{TELEPHONES}`
@@ -133,7 +135,10 @@ Numéros de fax concaténés. Vide si aucun.
 
 ### Contexte Candidat (2 mots-clés propres, + 11 hérités d'Individu)
 
-Le Candidat reprend un sous-ensemble de 11 mots-clés Individu (`CIVILITE`, `NOM`, `PRENOM`, `DATENAISS`, `AGE`, `ADRESSERESID`, `CPRESID`, `VILLERESID`, `TELEPHONES`, `FAX`, `EMAILS`) — sans `NOMJFILLE`, `CPNAISS`, `VILLENAISS`, `PAYSNAISS`, `NATIONALITE`, `NUMSECU`, `SITUATION`.
+Le Candidat reprend un sous-ensemble de 11 noms de mots-clés Individu (`CIVILITE`, `NOM`, `PRENOM`, `DATENAISS`, `AGE`, `ADRESSERESID`, `CPRESID`, `VILLERESID`, `TELEPHONES`, `FAX`, `EMAILS`) — sans `NOMJFILLE`, `CPNAISS`, `VILLENAISS`, `PAYSNAISS`, `NATIONALITE`, `NUMSECU`, `SITUATION`.
+
+!!! info "Même nom, source différente"
+    `Importation_candidat()` est une fonction indépendante de `Importation_personne()` : ces 11 mots-clés proviennent, pour un Candidat, des tables `candidats`/`coords_candidats` — pas de `personnes`/`coordonnees` comme décrit dans la section Individu ci-dessus. Le comportement (valeur brute, non-normalisation, formatage du code postal) reste identique ; seule la table interrogée change. `AGE` a en plus une logique légèrement différente (lu directement en base si renseigné, calculé sinon).
 
 <a id="publipostage-qualifications"></a>
 #### `{QUALIFICATIONS}`
@@ -149,7 +154,7 @@ Une candidature charge d'abord les mots-clés de la **Personne** liée si `IDper
 
 <a id="publipostage-datedepot"></a>
 #### `{DATEDEPOT}`
-Date de dépôt de la candidature, formatée.
+Date de dépôt de la candidature, formatée. Contrairement à `DATENAISS`/`DATEDEBUT`/`DATEFIN`, le code ne vérifie pas explicitement que la date est renseignée avant de la formater — comportement sur une candidature sans date de dépôt **à confirmer en recette fonctionnelle**.
 
 <a id="publipostage-typedepot"></a>
 #### `{TYPEDEPOT}`
@@ -222,7 +227,7 @@ Groupe CCNS du contrat (`contrats.ccns_group`) lorsqu'il est renseigné.
 
 <a id="publipostage-qualificationcee"></a>
 #### `{QUALIFICATIONCEE}`
-Qualification/statut CEE, résolu depuis une table de libellés.
+Qualification/statut CEE, résolu depuis une liste de libellés codée dans l'application (`BAFA_HOLDER` → « BAFA titulaire », etc.) ; si le code enregistré n'est pas reconnu, la valeur brute est utilisée telle quelle.
 
 <a id="publipostage-dureehebdo"></a>
 #### `{DUREEHEBDO}`
@@ -230,7 +235,7 @@ Durée hebdomadaire du contrat, formatée « X h ».
 
 <a id="publipostage-salairebrutmensuel"></a>
 #### `{SALAIREBRUTMENSUEL}`
-Salaire brut mensuel (`contrats.gross_monthly_salary`), formaté « X,XX € ».
+Salaire brut mensuel (`contrats.gross_monthly_salary`), formaté « X.XX € » (point décimal — voir [Compatibilité et comportement](#compatibilite-et-comportement)).
 
 <a id="publipostage-minimumccns"></a>
 #### `{MINIMUMCCNS}`
@@ -242,11 +247,14 @@ Minimum SMIC applicable, proratisé selon la durée hebdomadaire (sans majoratio
 
 <a id="publipostage-minimumretenu"></a>
 #### `{MINIMUMRETENU}`
-Le plus élevé entre `MINIMUMCCNS` et `MINIMUMSMIC` (source indiquée : CCNS, SMIC ou égalité). Vide si non calculable.
+Le plus élevé entre `MINIMUMCCNS` et `MINIMUMSMIC` pour un groupe à minimum mensuel (G1-G6). Pour un groupe à minimum annuel (G7/G8), prend directement le minimum annuel de la grille, avec le suffixe « € annuel » (ex. `40597.94 € annuel`) plutôt qu'une comparaison CCNS/SMIC. Vide si non calculable.
 
 <a id="publipostage-conformiteremuneration"></a>
 #### `{CONFORMITEREMUNERATION}`
-Résultat textuel du contrôle de rémunération (« CONFORME », « NON CONFORME — manque X € », ou « Contrôle annuel requis » pour les groupes à minimum annuel). Ce n'est pas une certification juridique.
+Résultat textuel du contrôle de rémunération, produit par `Importation_contrat()`. Trois valeurs possibles, exactement : `Conforme`, `Non conforme`, ou `Contrôle annuel requis` (groupes CCNS à minimum annuel) ; chaîne vide si le calcul n'est pas possible. Ce n'est pas une certification juridique.
+
+!!! warning "Ne contient jamais le montant de l'écart"
+    L'assistant de création de contrat affiche à l'écran un texte plus détaillé et dans une autre casse (`CONFORME`, `NON CONFORME — manque X €` pour le CCNS mensuel, `CONFORME`/`NON CONFORME` sans montant pour le CEE) — mais ce texte d'écran n'est **jamais** copié dans ce mot-clé de fusion. Un modèle de document affichant `{CONFORMITEREMUNERATION}` ne montrera donc jamais le montant manquant.
 
 <a id="publipostage-baremecee"></a>
 #### `{BAREMECEE}`

@@ -2,15 +2,16 @@
 
 ## Lancer l'application depuis les sources
 
-Utiliser **Python 3.11**, version exercée par la CI :
+Utiliser **Python 3.11**, version exercée par la CI, et lancer `run_teamworks.py` **depuis la racine du dépôt** :
 
 ```bash
 python -m pip install -r requirements.txt
-cd teamworks
-python Teamworks.py
+python run_teamworks.py
 ```
 
-Le point d'entrée moderne recommandé est `run_teamworks.py` à la racine (configure `sys.path` puis exécute `teamworks/Teamworks.py`).
+!!! warning "Ne pas lancer `teamworks/Teamworks.py` directement"
+    `python Teamworks.py` exécuté depuis `teamworks/` échoue sur un checkout normal (`ModuleNotFoundError: No module named 'domain'`). `teamworks/Chemins.py` (chargé par `Teamworks.py`) n'ajoute à `sys.path` que le dossier `teamworks/` et ses sous-dossiers, jamais la racine du dépôt ; or la chaîne de démarrage charge des modules comme `Ctrl/CTRL_Creation_contrat_p3_modern.py` qui importent le paquet racine `domain` (`from domain.contracts.contract_operation import ContractOperation`, etc.).
+    `run_teamworks.py` insère explicitement la racine du dépôt **et** `teamworks/` dans `sys.path` (`configure_import_paths()`) avant d'exécuter `teamworks/Teamworks.py` via `runpy.run_path()` — c'est la seule commande qui garantit que les deux arborescences d'import (historique et moderne) sont résolues.
 
 ## Lancer la documentation localement
 

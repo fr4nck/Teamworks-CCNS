@@ -80,6 +80,9 @@ Les contrats modernes privilégient les champs CCNS/CEE structurés. L'assistant
 
 Ce résultat est un calcul logiciel sur les données saisies, pas une certification juridique du contrat.
 
+!!! info "Cette lecture décrit l'écran de l'assistant, pas le mot-clé de fusion"
+    Le texte ci-dessus (casse, mention de l'écart en euros pour le CCNS mensuel) est celui affiché **à l'écran** pendant la saisie du contrat. Le mot-clé de publipostage [`{CONFORMITEREMUNERATION}`](../publipostage/mots-cles.md#publipostage-conformiteremuneration) injecté dans les documents produit un texte différent, sans le montant de l'écart : `Conforme`, `Non conforme` ou `Contrôle annuel requis`.
+
 ## Documents et DPAE/DUE
 
 Depuis l'onglet Contrats, **Imprimer** peut ouvrir l'édition DUE ou un document de contrat (avec, dans ce cas, l'alias `{BRUTJOUR}` et la [couche moderne RH](../publipostage/mots-cles.md#couche-moderne-rh) en plus). Voir [DPAE et DUE](dpae-due.md) et [Documents et publipostage](documents.md).
