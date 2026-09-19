@@ -9,8 +9,6 @@ on:
       - master
     tags:
       - "v*"
-  schedule:
-    - cron: "37 3 * * 1"
   workflow_dispatch:
     inputs:
       build_windows:
@@ -40,7 +38,7 @@ jobs:
   cleanup-actions:
     name: Nettoyage de l'historique Actions
     if: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.cleanup_actions != 'none') }}
-    runs-on: windows-2022
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
       actions: write
@@ -301,7 +299,18 @@ jobs:
 
   windows-smokes:
     name: Parcours critiques Windows
-    if: ${{ github.event_name != 'schedule' && (github.event_name != 'workflow_dispatch' || inputs.cleanup_actions == 'none') && !startsWith(github.ref, 'refs/tags/') }}
+    if: >-
+      ${{
+        !startsWith(github.ref, 'refs/tags/')
+        && (
+          (github.event_name == 'workflow_dispatch' && inputs.cleanup_actions == 'none')
+          || (
+            github.event_name == 'push'
+            && github.ref == 'refs/heads/master'
+            && contains(github.event.head_commit.message, '[windows]')
+          )
+        )
+      }}
     runs-on: windows-2022
     timeout-minutes: 45
 
