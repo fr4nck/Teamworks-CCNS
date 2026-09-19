@@ -54,6 +54,58 @@ def _safe_rollback(rollback: Callable[[], None]) -> None:
         pass
 
 
+def execute_transactional_insert(
+    *,
+    write: Callable[[], int],
+    commit: Callable[[], None],
+    rollback: Callable[[], None],
+    readback: Callable[[int], T],
+) -> WriteResult[T]:
+    """Exécute un INSERT atomique, exige un ID créé valide, puis relit la cible."""
+
+    created_id = None
+    try:
+        created_id = write()
+        if not is_valid_target_id(created_id):
+            _safe_rollback(rollback)
+            return WriteResult(
+                ok=False,
+                code=WriteCode.INVALID_TARGET_ID,
+                message="L'écriture n'a pas retourné d'identifiant métier valide.",
+            )
+        commit()
+    except Exception as exc:
+        _safe_rollback(rollback)
+        return WriteResult(
+            ok=False,
+            code=WriteCode.DATABASE_ERROR,
+            message="Création en base impossible : %s" % exc,
+            target_id=created_id if is_valid_target_id(created_id) else None,
+        )
+
+    try:
+        value = readback(created_id)
+        if value is None:
+            raise LookupError("La cible créée est introuvable après commit.")
+    except Exception as exc:
+        return WriteResult(
+            ok=False,
+            code=WriteCode.READBACK_ERROR,
+            message="Création validée, mais relecture impossible : %s" % exc,
+            target_id=created_id,
+            committed=True,
+        )
+
+    return WriteResult(
+        ok=True,
+        code=WriteCode.OK,
+        message="Création validée.",
+        target_id=created_id,
+        value=value,
+        committed=True,
+    )
+
+
 def execute_transactional_update(
     *,
     target_id: object,
