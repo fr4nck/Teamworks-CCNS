@@ -11,11 +11,19 @@ from application.control.ccns_contract_compliance import CCNSContractComplianceP
 from application.services.transactional_write import (
     WriteCode,
     WriteResult,
+    execute_transactional_insert,
     execute_transactional_update,
     invalid_target_result,
     is_valid_target_id,
 )
-from domain.contracts.contract_creation_rules import CEEQualification
+from domain.contracts.contract_creation_rules import (
+    CEEQualification,
+    ContractCreationContext,
+    ContractCreationRules,
+    ConventionCode,
+)
+from domain.contracts.contract_type import ContractType
+from domain.contracts.probation_period import ProbationUnit, probation_calendar_days
 from domain.convention.salary_grid_entry import SalaryMinimumPeriodicity
 
 
@@ -23,6 +31,7 @@ ALLOWED_INDICATOR_FIELDS = frozenset(("signature", "due"))
 ALLOWED_INDICATOR_VALUES = frozenset(("", "Oui"))
 FIXED_TERM_CODES = frozenset(("CDD", "CEE", "APPRENTISSAGE", "STAGE", "SERVICE CIVIQUE"))
 CEE_CODES = frozenset(item.value for item in CEEQualification)
+SUPPORTED_CREATE_TYPES = frozenset(("CDI", "CDD"))
 
 
 @dataclass(frozen=True)
@@ -44,6 +53,23 @@ class ContractEditSnapshot:
 
 
 @dataclass(frozen=True)
+class ContractCreateCommand:
+    person_id: int
+    contract_type_code: str
+    convention_code: str
+    ccns_group: Optional[str]
+    cee_qualification: Optional[str]
+    weekly_hours: Optional[Decimal]
+    gross_monthly_salary: Optional[Decimal]
+    gross_annual_salary: Optional[Decimal]
+    start_date: date
+    end_date: Optional[date]
+    trial_period_value: int
+    trial_period_unit: str
+    confirm_no_trial: bool = False
+
+
+@dataclass(frozen=True)
 class ContractEditCommand:
     contract_id: int
     contract_type_code: str
@@ -60,6 +86,15 @@ class ContractEditCommand:
 
 
 class ContractWritePort(Protocol):
+    def person_exists(self, person_id: int) -> bool:
+        ...
+
+    def available_contract_type_codes(self) -> tuple[str, ...]:
+        ...
+
+    def insert_contract(self, command: ContractCreateCommand) -> int:
+        ...
+
     def contract_exists(self, contract_id: int) -> bool:
         ...
 
@@ -196,6 +231,177 @@ def validate_contract_edit(
             )
 
     return tuple(errors)
+
+
+
+def validate_contract_create(command: ContractCreateCommand) -> tuple[str, ...]:
+    """Valide une création avant toute écriture en base.
+
+    Ce premier lot active volontairement les créations CDI/CDD sous CCNS.
+    Les parcours CEE et conventions historiques restent hors de ce formulaire
+    tant que leurs compensations/classifications complètes ne sont pas extraites.
+    """
+
+    errors: list[str] = []
+    if not is_valid_target_id(command.person_id):
+        errors.append("Identifiant historique de la personne invalide.")
+
+    contract_code = _normalise_code(command.contract_type_code)
+    if contract_code not in SUPPORTED_CREATE_TYPES:
+        errors.append("Ce type de contrat n'est pas encore activé dans la création Qt.")
+
+    if _normalise_code(command.convention_code) != ConventionCode.CCNS.value:
+        errors.append("La création Qt initiale est limitée aux contrats CCNS.")
+
+    if errors:
+        return tuple(errors)
+
+    try:
+        contract_type = ContractType(contract_code)
+        convention = ConventionCode(_normalise_code(command.convention_code))
+    except ValueError:
+        return ("Type de contrat ou convention inconnu.",)
+
+    context = ContractCreationContext(
+        convention=convention,
+        contract_type=contract_type,
+        classification_code=command.ccns_group,
+        cee_qualification=None,
+    )
+    errors.extend(ContractCreationRules().validate_context(context))
+
+    edit_equivalent = ContractEditCommand(
+        contract_id=1,
+        contract_type_code=contract_code,
+        convention_code=command.convention_code,
+        ccns_group=command.ccns_group,
+        cee_qualification=None,
+        weekly_hours=command.weekly_hours,
+        gross_monthly_salary=command.gross_monthly_salary,
+        gross_annual_salary=command.gross_annual_salary,
+        start_date=command.start_date,
+        end_date=command.end_date,
+        break_date=None,
+        modern_fields_supported=True,
+    )
+    errors.extend(validate_contract_edit(edit_equivalent))
+
+    if type(command.trial_period_value) is not int or command.trial_period_value < 0:
+        errors.append("La durée de période d'essai est invalide.")
+    try:
+        trial_unit = ProbationUnit(command.trial_period_unit)
+    except (TypeError, ValueError):
+        errors.append("L'unité de période d'essai est invalide.")
+        trial_unit = None
+
+    if (
+        type(command.trial_period_value) is int
+        and command.trial_period_value == 0
+        and not command.confirm_no_trial
+    ):
+        errors.append(
+            "Confirmez explicitement l'absence de période d'essai avant d'enregistrer."
+        )
+
+    if not errors and trial_unit is not None:
+        try:
+            legacy_days = probation_calendar_days(
+                start_date=command.start_date,
+                value=command.trial_period_value,
+                unit=trial_unit,
+            )
+        except Exception as exc:
+            errors.append("La période d'essai ne peut pas être calculée : %s" % exc)
+        else:
+            if legacy_days > 365:
+                errors.append("La période d'essai dépasse la capacité historique de 365 jours.")
+
+    return tuple(errors)
+
+
+def contract_create_legacy_trial_days(command: ContractCreateCommand) -> int:
+    return probation_calendar_days(
+        start_date=command.start_date,
+        value=command.trial_period_value,
+        unit=ProbationUnit(command.trial_period_unit),
+    )
+
+
+def load_contract_creation_types(
+    port: ContractWritePort,
+) -> WriteResult[tuple[str, ...]]:
+    try:
+        available = {
+            _normalise_code(code)
+            for code in port.available_contract_type_codes()
+            if _normalise_code(code)
+        }
+    except Exception as exc:
+        return WriteResult(
+            ok=False,
+            code=WriteCode.DATABASE_ERROR,
+            message="Lecture des types de contrat impossible : %s" % exc,
+        )
+    supported = tuple(code for code in ("CDI", "CDD") if code in available)
+    if not supported:
+        return WriteResult(
+            ok=False,
+            code=WriteCode.VALIDATION_ERROR,
+            message="Aucun type CDI/CDD exploitable n'est configuré dans la base.",
+        )
+    return WriteResult(
+        ok=True,
+        code=WriteCode.OK,
+        message="Types de contrat disponibles.",
+        value=supported,
+    )
+
+
+def create_contract(
+    port: ContractWritePort,
+    *,
+    command: ContractCreateCommand,
+) -> WriteResult[ContractEditSnapshot]:
+    errors = validate_contract_create(command)
+    if errors:
+        return WriteResult(
+            ok=False,
+            code=WriteCode.VALIDATION_ERROR,
+            message=" ".join(errors),
+        )
+
+    try:
+        if not port.person_exists(command.person_id):
+            return WriteResult(
+                ok=False,
+                code=WriteCode.TARGET_NOT_FOUND,
+                message="La personne sélectionnée n'existe plus.",
+            )
+        available = {
+            _normalise_code(code)
+            for code in port.available_contract_type_codes()
+        }
+    except Exception as exc:
+        return WriteResult(
+            ok=False,
+            code=WriteCode.DATABASE_ERROR,
+            message="Préflight de création impossible : %s" % exc,
+        )
+
+    contract_code = _normalise_code(command.contract_type_code)
+    if contract_code not in available:
+        return WriteResult(
+            ok=False,
+            code=WriteCode.VALIDATION_ERROR,
+            message="Le type de contrat %s n'existe pas dans cette base." % contract_code,
+        )
+
+    return execute_transactional_insert(
+        write=lambda: port.insert_contract(command),
+        commit=port.commit,
+        rollback=port.rollback,
+        readback=lambda contract_id: _readback_contract(port, contract_id),
+    )
 
 
 def contract_edit_has_changes(
