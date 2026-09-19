@@ -59,6 +59,7 @@ class SqliteGestionDbCompat:
                 IDpersonne INTEGER,
                 IDclassification INTEGER,
                 IDtype INTEGER,
+                valeur_point INTEGER,
                 date_debut TEXT,
                 date_fin TEXT,
                 date_rupture TEXT,
@@ -76,7 +77,7 @@ class SqliteGestionDbCompat:
             INSERT INTO contrats_class VALUES (3, 'Classification historique');
             INSERT INTO contrats_types VALUES (4, 'CDI', 'CDI');
             INSERT INTO contrats VALUES (
-                417, 12, NULL, 4,
+                417, 12, NULL, 4, NULL,
                 '2026-09-01', '2999-01-01', NULL, 0,
                 '', '',
                 'CCNS', 'G3', NULL, 35.0, 3000.0, NULL
