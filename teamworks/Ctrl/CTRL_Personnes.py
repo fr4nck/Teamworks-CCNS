@@ -422,6 +422,20 @@ class PanelPersonnes(wx.Panel):
         self.window_D.Layout()
         self.Refresh()
 
+    def OnChangementDossier(self, ancienFichier="", nouveauFichier=""):
+        """Écarte les sélections et filtres propres à l'ancien dossier."""
+        if not self.init or ancienFichier == nouveauFichier:
+            return
+
+        self.listCtrl_personnes.selectionID = None
+        self.listCtrl_personnes.selectionTrack = None
+        self.listCtrl_personnes.criteres = ""
+        self.barreRecherche.OnCancel(None)
+        self.AffichePanelResume(False)
+        self.AfficheLabelSelection(False)
+        self.bouton_modifier.Enable(False)
+        self.bouton_supprimer.Enable(False)
+
     def MAJpanel(self, listeElements=[]):
         if self.init == False:
             self.InitPage()
