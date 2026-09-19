@@ -11,8 +11,10 @@ from decimal import Decimal
 
 from application.services.contract_write import (
     ALLOWED_INDICATOR_FIELDS,
+    ContractCreateCommand,
     ContractEditCommand,
     ContractEditSnapshot,
+    contract_create_legacy_trial_days,
 )
 
 
@@ -59,6 +61,104 @@ class GestionDbContractWriteAdapter:
         if value in (None, ""):
             return None
         return Decimal(str(value))
+
+
+    def person_exists(self, person_id: int) -> bool:
+        self.db.cursor.execute(
+            "SELECT IDpersonne FROM personnes WHERE IDpersonne=%s" % self._placeholder,
+            (person_id,),
+        )
+        return self.db.cursor.fetchone() is not None
+
+    def _contract_type_rows(self):
+        self.db.cursor.execute(
+            "SELECT IDtype, COALESCE(nom_abrege, ''), COALESCE(nom, '') "
+            "FROM contrats_types ORDER BY IDtype"
+        )
+        return self.db.cursor.fetchall() or ()
+
+    def available_contract_type_codes(self) -> tuple[str, ...]:
+        codes = []
+        for _type_id, short_name, long_name in self._contract_type_rows():
+            code = str(short_name or long_name or "").strip().upper()
+            if code:
+                codes.append(code)
+        return tuple(codes)
+
+    def _contract_type_id(self, contract_type_code: str) -> int:
+        expected = str(contract_type_code or "").strip().upper()
+        for type_id, short_name, long_name in self._contract_type_rows():
+            candidates = {
+                str(short_name or "").strip().upper(),
+                str(long_name or "").strip().upper(),
+            }
+            if expected in candidates:
+                return int(type_id)
+        raise LookupError("Type de contrat %s introuvable." % expected)
+
+    def insert_contract(self, command: ContractCreateCommand) -> int:
+        modern_names = (
+            "convention_code",
+            "ccns_group",
+            "cee_qualification",
+            "weekly_hours",
+            "gross_monthly_salary",
+            "gross_annual_salary",
+        )
+        if not all(name in self._contract_columns() for name in modern_names):
+            raise RuntimeError(
+                "La création Qt nécessite les colonnes métier modernes du contrat."
+            )
+
+        data = [
+            ("IDpersonne", command.person_id),
+            ("IDclassification", None),
+            ("IDtype", self._contract_type_id(command.contract_type_code)),
+            ("valeur_point", None),
+            ("date_debut", command.start_date.isoformat()),
+            (
+                "date_fin",
+                command.end_date.isoformat() if command.end_date else "2999-01-01",
+            ),
+            ("date_rupture", None),
+            ("essai", contract_create_legacy_trial_days(command)),
+            ("signature", ""),
+            ("due", ""),
+            ("cee_qualification", command.cee_qualification),
+            ("convention_code", command.convention_code),
+            ("ccns_group", command.ccns_group),
+            (
+                "weekly_hours",
+                float(command.weekly_hours) if command.weekly_hours is not None else None,
+            ),
+            (
+                "gross_monthly_salary",
+                float(command.gross_monthly_salary)
+                if command.gross_monthly_salary is not None
+                else None,
+            ),
+            (
+                "gross_annual_salary",
+                float(command.gross_annual_salary)
+                if command.gross_annual_salary is not None
+                else None,
+            ),
+        ]
+
+        optional = {
+            "operation_type": "NEW",
+            "previous_contract_id": None,
+            "trial_period_value": command.trial_period_value,
+            "trial_period_unit": command.trial_period_unit,
+        }
+        for name, value in optional.items():
+            if name in self._contract_columns():
+                data.append((name, value))
+
+        inserted = self.db.ReqInsert("contrats", data, commit=False)
+        if inserted is None:
+            raise RuntimeError("Le contrat principal n'a pas pu être créé.")
+        return int(inserted)
 
     def read_contract(self, contract_id: int) -> ContractEditSnapshot | None:
         modern_names = (
