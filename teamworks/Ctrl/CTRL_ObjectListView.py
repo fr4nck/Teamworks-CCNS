@@ -26,6 +26,7 @@ import six
 
 from Utils import UTILS_Adaptations
 from Utils import UTILS_Filtres_listes
+from Utils import UTILS_Etat_vues
 from Utils.UTILS_Traduction import _
 
 import ObjectListView as OLV
@@ -52,10 +53,18 @@ class ObjectListView(OLV.ObjectListView):
         self.impression_intro = ""
         self.impression_total = ""
         self.orientation = wx.PORTRAIT
+        self.view_id = kwargs.pop("view_id", None)
+        self._etat_vue_persisted = (
+            UTILS_Etat_vues.charger_etat_vue(self.view_id)
+            if self.view_id else {}
+        )
+        self._ignorer_capture_etat_vue = False
 
         OLV.ObjectListView.__init__(self, *args, **kwargs)
 
         self.Bind(wx.EVT_LIST_COL_DRAGGING, self._HandleColumnDragging)
+        self.Bind(wx.EVT_KILL_FOCUS, self._OnViewStateKillFocus)
+        self.Bind(wx.EVT_WINDOW_DESTROY, self._OnViewStateDestroy)
         self.GetMainWindow().Bind(wx.EVT_SCROLLWIN, self.OnScroll)
 
     def Activation(self, etat=True):
@@ -72,6 +81,13 @@ class ObjectListView(OLV.ObjectListView):
     def SetColumns(self, columns, repopulate=True):
         self.listeColonnes = columns
         sortCol = self.GetSortColumn()
+
+        if self.view_id and getattr(self, "columns", None):
+            if self._ignorer_capture_etat_vue:
+                self._ignorer_capture_etat_vue = False
+            else:
+                self._SauverEtatVueColonnes()
+
         wx.ListCtrl.ClearAll(self)
         self.checkStateColumn = None
         self.columns = []
@@ -81,11 +97,153 @@ class ObjectListView(OLV.ObjectListView):
                     self.AddColumnDefn(x)
                 else:
                     self.AddColumnDefn(ColumnDefn(*x))
-        # Try to preserve the column column
+        self._RestaurerEtatVueColonnes()
+
+        # Try to preserve the sort column
         self.SetSortColumn(sortCol)
         if repopulate:
             self.RepopulateList()
 
+
+    def _CodeColonneEtat(self, colonne, index):
+        getter = getattr(colonne, "valueGetter", None)
+        if isinstance(getter, str) and getter:
+            return getter
+        titre = getattr(colonne, "title", "") or ""
+        return "col_%d_%s" % (index, titre)
+
+    def _CodesColonnesEtat(self):
+        return [
+            self._CodeColonneEtat(colonne, index)
+            for index, colonne in enumerate(getattr(self, "columns", []))
+        ]
+
+    def _EchelleVue(self):
+        try:
+            valeur = float(self.GetContentScaleFactor())
+            if 0.5 <= valeur <= 4.0:
+                return valeur
+        except Exception:
+            pass
+        return 1.0
+
+    def GetPreferencesColonnes(
+        self,
+        colonnes_disponibles=None,
+        ordre_defaut=None,
+        visibilite_defaut=None,
+    ):
+        if colonnes_disponibles is None:
+            colonnes_disponibles = self._CodesColonnesEtat()
+        return UTILS_Etat_vues.normaliser_etat_colonnes(
+            self._etat_vue_persisted,
+            colonnes_disponibles,
+            ordre_defaut=ordre_defaut,
+            visibilite_defaut=visibilite_defaut,
+        )
+
+    def DefinirPreferencesColonnes(self, ordre=None, visibilite=None):
+        if not self.view_id:
+            return
+        etat = dict(self._etat_vue_persisted or {})
+        etat["version"] = UTILS_Etat_vues.VERSION_ETAT
+        if ordre is not None:
+            etat["order"] = list(ordre)
+        if visibilite is not None:
+            etat["visible"] = dict(visibilite)
+        etat.setdefault("widths", {})
+        etat.setdefault("scale", self._EchelleVue())
+        self._etat_vue_persisted = etat
+        self._ignorer_capture_etat_vue = True
+        UTILS_Etat_vues.sauver_etat_vue(self.view_id, etat)
+
+    def _OrdreColonnesAffiche(self, codes):
+        try:
+            ordre_indices = list(self.GetColumnsOrder())
+            if sorted(ordre_indices) == list(range(len(codes))):
+                return [codes[index] for index in ordre_indices]
+        except Exception:
+            pass
+        return list(codes)
+
+    def _CapturerEtatVueColonnes(self):
+        if not self.view_id:
+            return None
+        codes = self._CodesColonnesEtat()
+        if not codes:
+            return None
+
+        etat = dict(self._etat_vue_persisted or {})
+        ordre_visible = self._OrdreColonnesAffiche(codes)
+        etat["version"] = UTILS_Etat_vues.VERSION_ETAT
+        etat["order"] = UTILS_Etat_vues.fusionner_ordre_visible(
+            etat.get("order", []),
+            ordre_visible,
+        )
+
+        largeurs = dict(etat.get("widths", {}))
+        for index, code in enumerate(codes):
+            try:
+                largeurs[code] = int(self.GetColumnWidth(index))
+            except Exception:
+                pass
+        etat["widths"] = largeurs
+        etat.setdefault("visible", {})
+        etat["scale"] = self._EchelleVue()
+        return etat
+
+    def _SauverEtatVueColonnes(self):
+        etat = self._CapturerEtatVueColonnes()
+        if etat is None or etat == self._etat_vue_persisted:
+            return
+        if UTILS_Etat_vues.sauver_etat_vue(self.view_id, etat):
+            self._etat_vue_persisted = etat
+
+    def _RestaurerEtatVueColonnes(self):
+        if not self.view_id:
+            return
+        codes = self._CodesColonnesEtat()
+        if not codes:
+            return
+
+        etat = self.GetPreferencesColonnes(
+            colonnes_disponibles=codes,
+            ordre_defaut=codes,
+        )
+
+        index_par_code = {code: index for index, code in enumerate(codes)}
+        ordre = [index_par_code[code] for code in etat["order"] if code in index_par_code]
+        if len(ordre) == len(codes):
+            try:
+                self.SetColumnsOrder(ordre)
+            except Exception:
+                pass
+
+        echelle_cible = self._EchelleVue()
+        for code, largeur in etat["widths"].items():
+            index = index_par_code.get(code)
+            if index is None:
+                continue
+            cible = UTILS_Etat_vues.adapter_largeur(
+                largeur,
+                echelle_source=etat.get("scale", 1.0),
+                echelle_cible=echelle_cible,
+            )
+            if cible is None:
+                continue
+            try:
+                self.SetColumnWidth(index, cible)
+            except Exception:
+                pass
+
+    def _OnViewStateKillFocus(self, event):
+        self._SauverEtatVueColonnes()
+        event.Skip()
+
+    def _OnViewStateDestroy(self, event):
+        if event.GetEventObject() is self:
+            self._SauverEtatVueColonnes()
+        event.Skip()
 
     def AddColumnDefn(self, defn):
         # Enlève l'espace gauche sur tous les headers du listctrl sous Phoenix en ajoutant une image transparente
@@ -133,6 +291,11 @@ class ObjectListView(OLV.ObjectListView):
     def _HandleColumnDragging(self, evt):
         self.MAJ_footer()
         evt.Skip()
+
+    def _HandleColumnEndDrag(self, evt):
+        OLV.ObjectListView._HandleColumnEndDrag(self, evt)
+        if self.view_id:
+            wx.CallAfter(self._SauverEtatVueColonnes)
 
     def _HandleLeftDownOnImage(self, rowIndex, subItemIndex):
         column = self.columns[subItemIndex]

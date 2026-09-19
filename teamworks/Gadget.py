@@ -401,11 +401,9 @@ class Gadget_Calendrier(CTRL_Calendrier_tw.Panel):
             afficheAujourdhui=False,
         )
         self.parent = parent
+        self._AppliquerParametres(self.parent.paramGadget)
 
-    def RechargerContexte(self):
-        self.MAJpanel()
-        dictParam = self.GetParent().paramGadget
-
+    def _AppliquerParametres(self, dictParam):
         self.calendrier.SetBackgroundColour(dictParam["colFond"])
         self.SetBackgroundColour(dictParam["colFond"])
         self.parent.couleurFondCadre = dictParam["colFond"]
@@ -418,6 +416,10 @@ class Gadget_Calendrier(CTRL_Calendrier_tw.Panel):
         self.calendrier.couleurVacances = dictParam["colVacs"]
         self.calendrier.couleurFontJoursAvecPresents = dictParam["colFontPresents"]
         self.calendrier.couleurFerie = dictParam["colFeries"]
+
+    def RechargerContexte(self):
+        self._AppliquerParametres(self.parent.paramGadget)
+        self.MAJpanel()
 
     def Config(self):
         from Dlg import DLG_Parametres_calendrier
