@@ -18,7 +18,7 @@ if str(POC) not in sys.path:
 from PySide6.QtCore import QDate, QTimer  # noqa: E402
 from PySide6.QtWidgets import QApplication  # noqa: E402
 
-from contract_editor import ContractEditDialog  # noqa: E402
+from contract_editor import ContractCreateDialog, ContractEditDialog  # noqa: E402
 from data_adapter import PersonView  # noqa: E402
 from infrastructure.persistence.ccns_data_reader import CcnsDataReader  # noqa: E402
 from infrastructure.persistence.contract_write_adapter import (  # noqa: E402
@@ -96,6 +96,19 @@ class SqliteGestionDbCompat:
 
     def ResultatReq(self):
         return self.cursor.fetchall()
+
+    def ReqInsert(self, table_name, data, commit=True):
+        fields = ", ".join(name for name, _value in data)
+        placeholders = ", ".join("?" for _name, _value in data)
+        values = tuple(value for _name, value in data)
+        self.cursor.execute(
+            f"INSERT INTO {table_name} ({fields}) VALUES ({placeholders})",
+            values,
+        )
+        inserted = int(self.cursor.lastrowid)
+        if commit:
+            self.Commit()
+        return inserted
 
     def Commit(self):
         self.commit_count += 1
@@ -251,6 +264,84 @@ def test_modify_action_roundtrips_real_dialog_service_db_readback_and_refresh():
         assert (
             window.statusBar().currentMessage()
             == "Contrat n°417 modifié et relu depuis la base"
+        )
+    finally:
+        window.close()
+        reader.close()
+
+
+
+def test_create_action_roundtrips_dialog_insert_commit_readback_and_refresh():
+    _app()
+    db = SqliteGestionDbCompat()
+    reader = CcnsDataReader(db_factory=lambda: db)
+    window = _window(db, reader)
+
+    try:
+        _select_contract(window)
+        assert window.contracts_model.rowCount() == 1
+        assert window.contract_create_button.isEnabled() is True
+
+        def drive_create_dialog():
+            dialog = QApplication.activeModalWidget()
+            assert isinstance(dialog, ContractCreateDialog)
+            assert dialog.contract_type.currentData() == "CDI"
+
+            dialog.start_date.setDate(QDate(2026, 11, 1))
+            group_index = dialog.group.findData("G4")
+            assert group_index >= 0
+            dialog.group.setCurrentIndex(group_index)
+            dialog.weekly_hours.setValue(28.0)
+            dialog.monthly_salary.setText("3000,00")
+            dialog._on_accept()
+
+        QTimer.singleShot(0, drive_create_dialog)
+        window.contract_create_button.click()
+        QApplication.processEvents()
+
+        rows = db.connexion.execute(
+            """
+            SELECT IDcontrat, IDpersonne, IDclassification, IDtype,
+                   date_debut, date_fin, date_rupture, essai,
+                   signature, due, convention_code, ccns_group,
+                   weekly_hours, gross_monthly_salary, gross_annual_salary
+            FROM contrats
+            ORDER BY IDcontrat
+            """
+        ).fetchall()
+
+        assert len(rows) == 2
+        created = rows[-1]
+        assert created == (
+            418,
+            12,
+            None,
+            4,
+            "2026-11-01",
+            "2999-01-01",
+            None,
+            61,
+            "",
+            "",
+            "CCNS",
+            "G4",
+            28.0,
+            3000.0,
+            None,
+        )
+        assert db.commit_count == 1
+
+        assert window.contracts_model.rowCount() == 2
+        selected_rows = window.contracts_table.selectionModel().selectedRows()
+        assert len(selected_rows) == 1
+        refreshed = window.contracts_model.contract_at(selected_rows[0].row())
+        assert refreshed.id_historique == 418
+        assert refreshed.start == "01/11/2026"
+        assert refreshed.classification == "Groupe 4"
+        assert refreshed.duration == "28 h"
+        assert (
+            window.statusBar().currentMessage()
+            == "Contrat n°418 créé et relu depuis la base"
         )
     finally:
         window.close()
