@@ -257,6 +257,78 @@ def test_modify_action_roundtrips_real_dialog_service_db_readback_and_refresh():
         reader.close()
 
 
+def test_invalid_business_validation_blocks_write_shows_error_and_preserves_database():
+    _app()
+    db = SqliteGestionDbCompat()
+    reader = CcnsDataReader(db_factory=lambda: db)
+    window = _window(db, reader)
+
+    before_db = db.connexion.execute(
+        """
+        SELECT date_debut, date_fin, date_rupture,
+               convention_code, ccns_group, weekly_hours,
+               gross_monthly_salary, gross_annual_salary,
+               signature, due
+        FROM contrats
+        WHERE IDcontrat=?
+        """,
+        (417,),
+    ).fetchone()
+    observed = {}
+
+    try:
+        _select_contract(window)
+        assert window.contract_edit_button.isEnabled() is True
+
+        def drive_invalid_dialog():
+            dialog = QApplication.activeModalWidget()
+            assert isinstance(dialog, ContractEditDialog)
+
+            # Modification volontairement invalide : salaire très inférieur
+            # au minimum CCNS/SMIC pour le groupe et la durée sélectionnés.
+            dialog.monthly_salary.setText("1,00")
+            dialog._on_accept()
+            QApplication.processEvents()
+
+            observed["error"] = dialog.error_label.text()
+            observed["accepted"] = dialog.result()
+            observed["still_visible"] = dialog.isVisible()
+
+            # La validation invalide doit laisser le dialogue ouvert.
+            dialog.reject()
+
+        QTimer.singleShot(0, drive_invalid_dialog)
+        window.contract_edit_button.click()
+        QApplication.processEvents()
+
+        after_db = db.connexion.execute(
+            """
+            SELECT date_debut, date_fin, date_rupture,
+                   convention_code, ccns_group, weekly_hours,
+                   gross_monthly_salary, gross_annual_salary,
+                   signature, due
+            FROM contrats
+            WHERE IDcontrat=?
+            """,
+            (417,),
+        ).fetchone()
+
+        assert "minimum CCNS/SMIC" in observed["error"]
+        assert observed["accepted"] == 0
+        assert observed["still_visible"] is True
+        assert db.commit_count == 0
+        assert after_db == before_db
+
+        refreshed = window.contracts_model.contract_at(0)
+        assert refreshed.id_historique == 417
+        assert refreshed.start == "01/09/2026"
+        assert refreshed.classification == "Groupe 3"
+        assert refreshed.duration == "35 h"
+    finally:
+        window.close()
+        reader.close()
+
+
 def test_contract_widgets_contain_no_sql():
     for filename in ("pilot_view.py", "contract_editor.py"):
         source = (POC / filename).read_text(encoding="utf-8")
