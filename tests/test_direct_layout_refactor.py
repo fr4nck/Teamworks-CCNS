@@ -78,7 +78,8 @@ def test_persons_layout_is_direct_and_flexible():
     assert "FlexGridSizer" not in source
     assert "wx.SplitterWindow" in source
     assert "wx.WrapSizer" in source
-    assert "AjusterColonnes" in source
+    assert "AjusterColonnes" not in source
+    assert 'view_id="personnes.main"' in source
     assert "InitialiserSeparateur" in source
 
 
@@ -117,7 +118,13 @@ def test_scale_configuration_is_centralized_in_styles():
 
 
 def test_legacy_components_still_read_interface_scale_before_fallback():
-    for path in (PERSONS, CONTRACTS, GADGET, NAVIGATION):
+    # Individus n'a plus de calcul local de largeur : ses boutons délèguent au
+    # composant commun et ses colonnes au contrat de persistance de vue.
+    persons = _source(PERSONS)
+    assert '"echelle_interface"' not in persons
+    assert '"echelle_police"' not in persons
+
+    for path in (CONTRACTS, GADGET, NAVIGATION):
         source = _source(path)
         assert '"echelle_interface"' in source
         assert '"echelle_police"' in source

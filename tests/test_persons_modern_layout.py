@@ -33,7 +33,7 @@ def test_persons_screen_uses_native_flexible_layout():
 def test_persons_splitter_starts_proportional_then_stays_user_controlled():
     source = _source()
     init = source.split("def InitialiserSeparateur", 1)[1].split(
-        "def OnTailleListe", 1
+        "def OnBoutonAjouter", 1
     )[0]
 
     assert "GetClientSize().GetWidth()" in init
@@ -49,17 +49,16 @@ def test_persons_actions_use_the_common_scaled_button_contract():
     assert 'Chemins.GetStaticPath("Images/32x32/%s" % nom_image)' in source
     assert "wx.BitmapButton(" not in source
     assert "SetMinSize((cote, cote))" not in source
-    assert '"echelle_interface"' in source
-    assert '"echelle_police"' in source
-    assert "ajouter_si_manquant=False" in source
+    assert '"echelle_interface"' not in source
+    assert '"echelle_police"' not in source
 
 
-def test_persons_list_consumes_available_width_directly():
+def test_persons_list_keeps_stable_user_controlled_columns():
     source = _source()
-    assert "AjusterColonnes" in source
-    assert "GetClientSize().GetWidth()" in source
-    assert "SetColumnWidth" in source
-    assert "largeur_dispo > total" in source
+    assert "AjusterColonnes" not in source
+    assert "listCtrl_personnes.Bind(wx.EVT_SIZE" not in source
+    assert "SetColumnWidth" not in source
+    assert 'view_id="personnes.main"' in source
 
 
 def test_persons_screen_uses_semantic_surfaces_instead_of_blue_fill():

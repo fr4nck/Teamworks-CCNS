@@ -13,7 +13,6 @@ import GestionDB
 import datetime
 import FonctionsPerso
 from Utils import UTILS_Dates
-from Utils import UTILS_Customize
 from Utils import UTILS_Interface
 from Ctrl import CTRL_Bouton_image, CTRL_Gadget_pb_personnes
 import sys
@@ -22,20 +21,6 @@ from Ol import OL_personnes
 from Ctrl import CTRL_Photo
 
 from ObjectListView import Filter
-
-
-def _echelle_interface():
-    try:
-        valeur = UTILS_Customize.GetValeur(
-            "interface", "echelle_interface", "", ajouter_si_manquant=False
-        )
-        if valeur in (None, ""):
-            valeur = UTILS_Customize.GetValeur(
-                "interface", "echelle_police", "100", type_valeur=int
-            )
-        return max(80, min(200, int(valeur)))
-    except Exception:
-        return 100
 
 
 def _bouton_action(parent, nom_image):
@@ -264,7 +249,6 @@ class PanelPersonnes(wx.Panel):
         wx.Panel.__init__(self, parent, -1, name="Personnes")
         self.parent = parent
         self.init = False
-        self._largeurs_colonnes = None
         self._separateur_initialise = False
 
     def InitPage(self):
@@ -290,6 +274,7 @@ class PanelPersonnes(wx.Panel):
             id=-1,
             name="OL_personnes",
             style=wx.LC_REPORT | wx.LC_SINGLE_SEL | wx.LC_HRULES | wx.LC_VRULES,
+            view_id="personnes.main",
         )
         self.listCtrl_personnes.SetMinSize((200, 160))
         self.barreRecherche = BarreRecherche(self.window_D)
@@ -329,15 +314,14 @@ class PanelPersonnes(wx.Panel):
         self.Bind(wx.EVT_BUTTON, self.OnBoutonExportTexte, self.bouton_export_texte)
         self.Bind(wx.EVT_BUTTON, self.OnBoutonExportExcel, self.bouton_export_excel)
         self.Bind(wx.EVT_BUTTON, self.OnBoutonAide, self.bouton_aide)
-        self.listCtrl_personnes.Bind(wx.EVT_SIZE, self.OnTailleListe)
-
         self.bouton_modifier.Enable(False)
         self.bouton_supprimer.Enable(False)
         self.AffichePanelResume(False)
 
         self.init = True
-        wx.CallAfter(self.InitialiserSeparateur)
-        wx.CallAfter(self.AjusterColonnes)
+        # La géométrie finale est appliquée avant le premier affichage lorsque
+        # la taille est déjà connue ; CallLater reste uniquement un fallback.
+        self.InitialiserSeparateur()
 
     def __set_properties(self):
         self.barreRecherche.SetToolTip(wx.ToolTip(_(u"Saisissez ici un nom, un prénom, un nom de ville, etc... pour retrouver une personne donnée.")))
@@ -395,50 +379,6 @@ class PanelPersonnes(wx.Panel):
         self.splitter.SetSashPosition(cible, True)
         self._separateur_initialise = True
 
-    def OnTailleListe(self, event):
-        wx.CallAfter(self.AjusterColonnes)
-        event.Skip()
-
-    def AjusterColonnes(self):
-        liste = self.listCtrl_personnes
-        try:
-            nbre = liste.GetColumnCount()
-            largeur_dispo = liste.GetClientSize().GetWidth() - 24
-        except Exception:
-            return
-        if nbre <= 0 or largeur_dispo <= 100:
-            return
-
-        if self._largeurs_colonnes is None or len(self._largeurs_colonnes) != nbre:
-            self._largeurs_colonnes = [max(22, liste.GetColumnWidth(i)) for i in range(nbre)]
-
-        facteur = _echelle_interface() / 100.0
-        minimums = [max(22, int(round(largeur * facteur))) for largeur in self._largeurs_colonnes]
-        total = sum(minimums)
-        cibles = list(minimums)
-
-        if largeur_dispo > total:
-            extensibles = [i for i, largeur in enumerate(minimums) if largeur >= 90]
-            if not extensibles:
-                extensibles = [nbre - 1]
-            surplus = largeur_dispo - total
-            poids = sum(minimums[i] for i in extensibles)
-            distribue = 0
-            for position, index in enumerate(extensibles):
-                if position == len(extensibles) - 1:
-                    ajout = surplus - distribue
-                else:
-                    ajout = int(surplus * minimums[index] / float(poids))
-                    distribue += ajout
-                cibles[index] += max(0, ajout)
-
-        for index, largeur in enumerate(cibles):
-            try:
-                if liste.GetColumnWidth(index) != largeur:
-                    liste.SetColumnWidth(index, largeur)
-            except Exception:
-                pass
-
     def OnBoutonAjouter(self, event):
         self.listCtrl_personnes.Ajouter()
 
@@ -482,13 +422,26 @@ class PanelPersonnes(wx.Panel):
         self.window_D.Layout()
         self.Refresh()
 
+    def OnChangementDossier(self, ancienFichier="", nouveauFichier=""):
+        """Écarte les sélections et filtres propres à l'ancien dossier."""
+        if not self.init or ancienFichier == nouveauFichier:
+            return
+
+        self.listCtrl_personnes.selectionID = None
+        self.listCtrl_personnes.selectionTrack = None
+        self.listCtrl_personnes.criteres = ""
+        self.barreRecherche.OnCancel(None)
+        self.AffichePanelResume(False)
+        self.AfficheLabelSelection(False)
+        self.bouton_modifier.Enable(False)
+        self.bouton_supprimer.Enable(False)
+
     def MAJpanel(self, listeElements=[]):
         if self.init == False:
             self.InitPage()
         if "listCtrl_personnes" in listeElements or listeElements == []:
             self.listCtrl_personnes.MAJ()
             self.panel_dossiers.tree_ctrl_problemes.MAJ_treeCtrl()
-            wx.CallAfter(self.AjusterColonnes)
             if self.listCtrl_personnes.GetNbrePersonnes() == 0:
                 self.AffichePanelResume(False)
 

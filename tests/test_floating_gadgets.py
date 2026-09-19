@@ -191,3 +191,20 @@ def test_opening_one_missing_gadget_does_not_rebuild_dashboard():
     assert "PlanifierVisibilite" in ouvrir
     assert "self.Construire()" not in ouvrir
     assert "DetachPane" in source
+
+
+def test_dossier_switch_reloads_existing_gadget_content_without_rebuilding_dashboard():
+    host = _source(FLOATING_PATH)
+    gadget = _source(GADGET_PATH)
+
+    assert "_changement_dossier_en_attente" in host
+    assert "def OnChangementDossier" in host
+    maj = host.split("def MAJ(self, listeGadgets=None):", 1)[1].split("def Fermer_Gadget", 1)[0]
+    assert "recharger_contexte = self._changement_dossier_en_attente" in maj
+    assert "gadget.MAJContexte(" in maj
+    assert "self.Construire()" not in maj.split("if self.manager is None:", 1)[1].split("visibles =", 1)[1]
+
+    assert "def MAJContexte" in gadget
+    dossiers = gadget.split("class Gadget_DossiersIncomplets", 1)[1].split("class Gadget_Horloge", 1)[0]
+    assert "def RechargerContexte" in dossiers
+    assert "self.tree.MAJ_treeCtrl()" in dossiers
