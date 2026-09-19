@@ -1,0 +1,97 @@
+site_name: Documentation Teamworks-CCNS
+site_description: Manuel utilisateur et documentation technique de Teamworks-CCNS
+site_url: https://fr4nck.github.io/Teamworks-CCNS/
+repo_url: https://github.com/fr4nck/Teamworks-CCNS
+repo_name: fr4nck/Teamworks-CCNS
+edit_uri: edit/master/documentation/
+docs_dir: documentation
+
+theme:
+  name: material
+  language: fr
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Passer au thème sombre
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Passer au thème clair
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - navigation.indexes
+    - toc.follow
+    - search.suggest
+    - search.highlight
+    - content.action.edit
+    - content.code.copy
+
+plugins:
+  - search:
+      lang: fr
+
+markdown_extensions:
+  - toc:
+      permalink: true
+      title: Sur cette page
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - attr_list
+  - md_in_html
+  - footnotes
+
+nav:
+  - Accueil: index.md
+  - Démarrer:
+      - Installation: demarrage/installation.md
+      - Premier démarrage: demarrage/premier-demarrage.md
+      - Configuration initiale: demarrage/configuration.md
+      - Mises à jour: demarrage/mise-a-jour.md
+  - Utiliser Teamworks:
+      - Individus et fiches: utilisation/individus.md
+      - Contrats, CCNS et CEE: utilisation/contrats-ccns-cee.md
+      - Présences et planning: utilisation/presences-planning.md
+      - Recrutement: utilisation/recrutement.md
+      - DPAE et DUE: utilisation/dpae-due.md
+      - Frais et déplacements: utilisation/frais-deplacements.md
+      - Documents et Publipostage: utilisation/documents.md
+      - Éditeur interne (Teamword): utilisation/editeur.md
+  - Publipostage:
+      - Vue d'ensemble: publipostage/index.md
+      - Référence des mots-clés: publipostage/mots-cles.md
+      - Contextes d'utilisation: publipostage/contextes.md
+      - Exemples: publipostage/exemples.md
+  - Administration:
+      - Paramétrage: administration/parametrage.md
+      - Utilisateurs et habilitations: administration/utilisateurs.md
+      - Données, sauvegardes et MySQL: administration/donnees-sauvegardes.md
+      - Diagnostic et rapports de crash: administration/diagnostic.md
+  - Dépannage:
+      - Problèmes fréquents: reference/problemes-frequents.md
+      - Aide et signalement de bugs: reference/aide.md
+      - Glossaire: reference/glossaire.md
+  - Architecture:
+      - Vue d'ensemble: architecture/vue-ensemble.md
+      - Trajectoire Qt: architecture/qt.md
+      - FormEngine et questionnaires: architecture/formengine-questionnaires.md
+  - Développement:
+      - Organisation du dépôt: developpement/organisation-depot.md
+      - Démarrer en développement: developpement/demarrer-dev.md
+      - Tests et CI: developpement/tests-ci.md
+      - Packaging et releases: developpement/packaging-releases.md
+      - Contribuer et documenter: developpement/contribuer.md
+  - Historique:
+      - Origine du projet et ancien Wiki: historique/origine-et-wiki.md
