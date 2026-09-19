@@ -1,14 +1,17 @@
 from __future__ import annotations
 
+from PySide6.QtCore import Qt
 from PySide6.QtGui import QStandardItem
 
 
 def _replace_rows(model, rows) -> None:
+    """Remplace les lignes et conserve le DTO métier hors des colonnes visibles."""
     model.setRowCount(0)
-    for values in rows:
+    for payload, values in rows:
         items = [QStandardItem(str(value or "")) for value in values]
         for item in items:
             item.setEditable(False)
+            item.setData(payload, Qt.ItemDataRole.UserRole)
         model.appendRow(items)
 
 
@@ -20,10 +23,13 @@ class IndividualActivityPresenter:
 
     def clear(self) -> None:
         questionnaire_page = getattr(self._legacy_tabs, "questionnaire_page", None)
+        presences_page = getattr(self._legacy_tabs, "presences_page", None)
         scenarios_page = getattr(self._legacy_tabs, "scenarios_page", None)
         expenses_page = getattr(self._legacy_tabs, "expenses_page", None)
         if questionnaire_page is not None:
             questionnaire_page.model.setRowCount(0)
+        if presences_page is not None:
+            presences_page.source_model.setRowCount(0)
         if scenarios_page is not None:
             scenarios_page.model.setRowCount(0)
         if expenses_page is not None:
@@ -32,18 +38,33 @@ class IndividualActivityPresenter:
 
     def set_payload(self, payload: dict) -> None:
         questionnaire_page = getattr(self._legacy_tabs, "questionnaire_page", None)
+        presences_page = getattr(self._legacy_tabs, "presences_page", None)
         scenarios_page = getattr(self._legacy_tabs, "scenarios_page", None)
         expenses_page = getattr(self._legacy_tabs, "expenses_page", None)
         if questionnaire_page is not None:
             _replace_rows(
                 questionnaire_page.model,
-                ((view.question, view.answer) for view in payload.get("questionnaire", ())),
+                (
+                    (view, (view.question, view.answer))
+                    for view in payload.get("questionnaire", ())
+                ),
+            )
+        if presences_page is not None:
+            _replace_rows(
+                presences_page.source_model,
+                (
+                    (
+                        view,
+                        (view.date, view.vacation, view.schedule, view.duration, view.label),
+                    )
+                    for view in payload.get("presences", ())
+                ),
             )
         if scenarios_page is not None:
             _replace_rows(
                 scenarios_page.model,
                 (
-                    (view.name, view.period, view.description)
+                    (view, (view.name, view.period, view.description))
                     for view in payload.get("scenarios", ())
                 ),
             )
@@ -52,14 +73,17 @@ class IndividualActivityPresenter:
                 expenses_page.trip_model,
                 (
                     (
-                        view.number,
-                        view.date,
-                        view.purpose,
-                        view.route,
-                        view.distance,
-                        view.tariff,
-                        view.amount,
-                        view.reimbursement,
+                        view,
+                        (
+                            view.number,
+                            view.date,
+                            view.purpose,
+                            view.route,
+                            view.distance,
+                            view.tariff,
+                            view.amount,
+                            view.reimbursement,
+                        ),
                     )
                     for view in payload.get("trips", ())
                 ),
@@ -67,7 +91,10 @@ class IndividualActivityPresenter:
             _replace_rows(
                 expenses_page.reimbursement_model,
                 (
-                    (view.number, view.date, view.amount, view.attached_trips)
+                    (
+                        view,
+                        (view.number, view.date, view.amount, view.attached_trips),
+                    )
                     for view in payload.get("reimbursements", ())
                 ),
             )
