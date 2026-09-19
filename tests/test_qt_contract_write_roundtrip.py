@@ -62,6 +62,7 @@ class SqliteGestionDbCompat:
                 date_debut TEXT,
                 date_fin TEXT,
                 date_rupture TEXT,
+                essai INTEGER,
                 signature TEXT,
                 due TEXT,
                 convention_code TEXT,
@@ -76,7 +77,7 @@ class SqliteGestionDbCompat:
             INSERT INTO contrats_types VALUES (4, 'CDI', 'CDI');
             INSERT INTO contrats VALUES (
                 417, 12, NULL, 4,
-                '2026-09-01', '2999-01-01', NULL,
+                '2026-09-01', '2999-01-01', NULL, 0,
                 '', '',
                 'CCNS', 'G3', NULL, 35.0, 3000.0, NULL
             );
