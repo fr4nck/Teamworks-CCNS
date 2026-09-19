@@ -319,7 +319,9 @@ class PanelPersonnes(wx.Panel):
         self.AffichePanelResume(False)
 
         self.init = True
-        wx.CallAfter(self.InitialiserSeparateur)
+        # La géométrie finale est appliquée avant le premier affichage lorsque
+        # la taille est déjà connue ; CallLater reste uniquement un fallback.
+        self.InitialiserSeparateur()
 
     def __set_properties(self):
         self.barreRecherche.SetToolTip(wx.ToolTip(_(u"Saisissez ici un nom, un prénom, un nom de ville, etc... pour retrouver une personne donnée.")))

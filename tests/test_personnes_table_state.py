@@ -16,6 +16,7 @@ def test_individus_has_no_deferred_column_autosize():
     assert "AjusterColonnes" not in source
     assert "OnTailleListe" not in source
     assert "listCtrl_personnes.Bind(wx.EVT_SIZE" not in source
+    assert "wx.CallAfter(self.InitialiserSeparateur)" not in source
 
 
 def test_individus_defaults_are_dense_and_business_oriented():
