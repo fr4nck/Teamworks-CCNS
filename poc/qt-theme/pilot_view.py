@@ -29,11 +29,17 @@ from PySide6.QtWidgets import (
 )
 
 from application.services.contract_write import (
+    create_contract,
+    load_contract_creation_types,
     load_contract_for_edit,
     update_contract,
     update_contract_indicator,
 )
-from contract_editor import ContractComplianceDialog, ContractEditDialog
+from contract_editor import (
+    ContractComplianceDialog,
+    ContractCreateDialog,
+    ContractEditDialog,
+)
 from data_adapter import TeamworksReadAdapter
 from legacy_individual_tabs import LegacyIndividualTabs
 from models import ContractsTableModel, PeopleTableModel
@@ -487,7 +493,11 @@ class PeopleContractsPilot(QMainWindow):
 
         tools = QVBoxLayout()
         tools.setSpacing(5)
-        tools.addWidget(self._legacy_tool_button("Ajouter.png", "Ajouter un contrat", fallback="+"))
+        self.contract_create_button = self._legacy_tool_button(
+            "Ajouter.png", "Ajouter un contrat", fallback="+"
+        )
+        self.contract_create_button.clicked.connect(self._create_contract)
+        tools.addWidget(self.contract_create_button)
         self.contract_edit_button = self._legacy_tool_button(
             "Modifier.png", "Modifier le contrat", fallback="M"
         )
@@ -523,7 +533,7 @@ class PeopleContractsPilot(QMainWindow):
         simulate_button.clicked.connect(self._open_contract_compliance_dialog)
         command_layout.addWidget(simulate_button)
         command_layout.addStretch(1)
-        readonly = QLabel("Écriture contrôlée · Modifier / Signature / DUE")
+        readonly = QLabel("Écriture contrôlée · Créer / Modifier / Signature / DUE")
         readonly.setProperty("muted", True)
         command_layout.addWidget(readonly)
         root.addWidget(command_bar)
@@ -550,6 +560,64 @@ class PeopleContractsPilot(QMainWindow):
         self.contract_edit_button.setEnabled(writable)
         self.contract_signature_button.setEnabled(writable)
         self.contract_due_button.setEnabled(writable)
+
+
+    def _create_contract(self) -> None:
+        person_id = self._current_contract_person_key
+        if (
+            not callable(self._contract_write_port_factory)
+            or not isinstance(person_id, int)
+            or isinstance(person_id, bool)
+            or person_id <= 0
+        ):
+            return
+
+        try:
+            port = self._contract_write_port_factory()
+            type_result = load_contract_creation_types(port)
+        except Exception as exc:
+            self.statusBar().showMessage(f"Création du contrat impossible · {exc}")
+            return
+
+        if not type_result.ok or not type_result.value:
+            self.statusBar().showMessage(
+                f"Création impossible · {type_result.code} · {type_result.message}"
+            )
+            return
+
+        dialog = ContractCreateDialog(person_id, type_result.value, self)
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+
+        result = create_contract(port, command=dialog.command())
+        if not result.ok and not result.committed:
+            self.statusBar().showMessage(
+                f"Contrat non créé · {result.code} · {result.message}"
+            )
+            return
+
+        if result.target_id is None:
+            self.statusBar().showMessage(
+                "Création du contrat sans identifiant exploitable · rafraîchissement requis"
+            )
+            return
+
+        try:
+            self._reload_contracts(selected_contract_id=result.target_id)
+        except Exception as exc:
+            self.statusBar().showMessage(
+                f"Contrat créé, mais rafraîchissement impossible · {exc}"
+            )
+            return
+
+        if result.ok:
+            self.statusBar().showMessage(
+                f"Contrat n°{result.target_id} créé et relu depuis la base"
+            )
+        else:
+            self.statusBar().showMessage(
+                f"Contrat n°{result.target_id} créé · relecture transactionnelle incomplète"
+            )
 
     def _edit_selected_contract(self) -> None:
         contract = self._selected_contract()
@@ -671,6 +739,7 @@ class PeopleContractsPilot(QMainWindow):
         self.contracts_model.replace([])
         self.contracts_stack.setCurrentIndex(0)
         if hasattr(self, "contract_signature_button"):
+            self.contract_create_button.setEnabled(False)
             self.contract_edit_button.setEnabled(False)
             self.contract_signature_button.setEnabled(False)
             self.contract_due_button.setEnabled(False)
@@ -707,6 +776,12 @@ class PeopleContractsPilot(QMainWindow):
 
         contract_key = person.id_historique if person.id_historique is not None else person.id
         self._current_contract_person_key = contract_key
+        self.contract_create_button.setEnabled(
+            callable(self._contract_write_port_factory)
+            and isinstance(contract_key, int)
+            and not isinstance(contract_key, bool)
+            and contract_key > 0
+        )
         self.contracts_model.replace(self.adapter.list_contracts(contract_key))
         contract_count = self.contracts_model.rowCount()
         self.contracts_stack.setCurrentIndex(1 if contract_count else 0)
