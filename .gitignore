@@ -145,3 +145,6 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+
+# Documentation MkDocs (site généré)
+/site/
