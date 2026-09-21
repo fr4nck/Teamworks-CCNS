@@ -191,6 +191,9 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
                 "Naissance : " + (" · ".join(birth_parts) if birth_parts else "—")
             )
         self.activity_presenter.set_payload(payload)
+        controller = getattr(self, "presence_controller", None)
+        if controller is not None:
+            controller.set_ready(True)
 
     def _refresh_presences_after_write(self, person_id) -> None:
         if self._closing_requested:
@@ -225,6 +228,9 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
             print(details)
             if person_id == self._activity_selected_person_id:
                 self.activity_presenter.clear()
+                controller = getattr(self, "presence_controller", None)
+                if controller is not None:
+                    controller.set_ready(False)
                 self.statusBar().showMessage("Lecture seule · échec du chargement du dossier")
         if self._activity_thread is not None:
             self._activity_thread.quit()
