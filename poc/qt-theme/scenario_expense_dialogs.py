@@ -1,15 +1,19 @@
 from __future__ import annotations
 
+from decimal import Decimal, InvalidOperation
+
 from PySide6.QtCore import QDate, Qt
-from PySide6.QtGui import QStandardItemModel
+from PySide6.QtGui import QStandardItem, QStandardItemModel
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
     QDateEdit,
+    QDialog,
     QGridLayout,
     QHBoxLayout,
     QLabel,
     QLineEdit,
+    QMessageBox,
     QPushButton,
     QTableWidget,
     QTextEdit,
@@ -17,6 +21,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from application.services.expense_reimbursement_write import ReimbursementCommand
 from ui.common import ActionSpec, TOKENS, TwActionBar, TwDataTable, TwDialogShell, TwFormSection
 
 
@@ -268,13 +273,26 @@ class TripPreviewDialog(TwDialogShell):
 
 
 class ReimbursementPreviewDialog(TwDialogShell):
-    """Transposition de ``DLG_Saisie_remboursement`` sans rattachement ni écriture."""
+    """Dialogue remboursement Qt, utilisable en aperçu ou en écriture contrôlée."""
 
     TRIP_HEADERS = ("N°", "Date", "Objet", "Trajet", "Distance", "Tarif", "Montant")
 
-    def __init__(self, parent: QWidget | None = None) -> None:
+    def __init__(
+        self,
+        parent: QWidget | None = None,
+        *,
+        person_id: int | None = None,
+        trips=(),
+        reimbursement=None,
+        writable: bool = False,
+    ) -> None:
+        self.person_id = person_id
+        self.reimbursement = reimbursement
+        self._writable = bool(writable)
+        self._confirm_zero_amount = False
+        title = "Modification d'un remboursement" if reimbursement is not None else "Saisie d'un remboursement"
         super().__init__(
-            "Saisie d'un remboursement",
+            title,
             parent,
             profile="wide",
             primary_label="Valider",
@@ -286,7 +304,12 @@ class ReimbursementPreviewDialog(TwDialogShell):
         root = QVBoxLayout(body)
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(TOKENS.spacing.md)
-        root.addWidget(_readonly_banner())
+        if writable:
+            banner = QLabel("Écriture contrôlée · validation métier puis transaction et relecture")
+            banner.setProperty("muted", True)
+            root.addWidget(banner)
+        else:
+            root.addWidget(_readonly_banner())
 
         characteristics = TwFormSection("Caractéristiques", compact=True)
         characteristics_host = QWidget()
@@ -307,20 +330,131 @@ class ReimbursementPreviewDialog(TwDialogShell):
         user_row.addWidget(QLabel("Utilisateur"))
         self.user_choice = QComboBox()
         self.user_choice.setEnabled(False)
+        if person_id is not None:
+            self.user_choice.addItem(f"ID {person_id}", person_id)
         user_row.addWidget(self.user_choice, 1)
         characteristics_layout.addLayout(user_row)
         characteristics.add_widget(characteristics_host)
         root.addWidget(characteristics)
 
         attached = TwFormSection("Déplacements rattachés", compact=True)
-        self.attachment_status = QLabel("Veuillez sélectionner un utilisateur dans la liste proposée.")
+        self.attachment_status = QLabel(
+            "Cochez les déplacements à rattacher au remboursement."
+            if writable
+            else "Veuillez sélectionner un utilisateur dans la liste proposée."
+        )
         self.attachment_status.setProperty("muted", True)
         attached.add_widget(self.attachment_status)
         self.trip_table = _empty_table(self.TRIP_HEADERS, self)
-        self.trip_table.setEnabled(False)
+        self.trip_table.setEnabled(writable)
         attached.add_widget(self.trip_table, 1)
         root.addWidget(attached, 1)
 
         self.set_content(body)
         self.help_button.setEnabled(False)
-        self.set_primary_enabled(False)
+        self.set_primary_enabled(writable)
+
+        if reimbursement is not None:
+            payment_date = getattr(reimbursement, "payment_date_value", None)
+            if payment_date is not None:
+                self.date_edit.setDate(QDate(payment_date.year, payment_date.month, payment_date.day))
+            amount = getattr(reimbursement, "amount_value", None)
+            if amount is not None:
+                self.amount_edit.setText(f"{amount:.2f}")
+
+        if writable:
+            self._populate_trips(tuple(trips))
+            self.validateRequested.connect(self._validate_and_accept)
+
+    def _populate_trips(self, trips) -> None:
+        model = self.trip_table.model()
+        model.setRowCount(0)
+        current_id = getattr(self.reimbursement, "id_historique", None)
+        checked_ids = set(getattr(self.reimbursement, "attached_trip_ids", ()) or ())
+        for trip in trips:
+            assigned_id = getattr(trip, "reimbursement_id", None)
+            if assigned_id not in (None, current_id):
+                continue
+            values = (
+                trip.number,
+                trip.date,
+                trip.purpose,
+                trip.route,
+                trip.distance,
+                trip.tariff,
+                trip.amount,
+            )
+            items = [QStandardItem(str(value or "")) for value in values]
+            first = items[0]
+            first.setCheckable(True)
+            first.setEditable(False)
+            first.setData(getattr(trip, "id_historique", None), Qt.ItemDataRole.UserRole)
+            first.setCheckState(
+                Qt.CheckState.Checked
+                if getattr(trip, "id_historique", None) in checked_ids
+                else Qt.CheckState.Unchecked
+            )
+            for item in items[1:]:
+                item.setEditable(False)
+            model.appendRow(items)
+        self.attachment_status.setText(
+            f"{model.rowCount()} déplacement(s) disponible(s) pour ce remboursement."
+        )
+
+    def _amount(self) -> Decimal:
+        text = self.amount_edit.text().strip().replace(",", ".")
+        if not text:
+            raise InvalidOperation
+        return Decimal(text)
+
+    def _validate_and_accept(self) -> None:
+        try:
+            amount = self._amount()
+        except (InvalidOperation, ValueError):
+            QMessageBox.warning(self, "Montant invalide", "Saisissez un montant valide.")
+            return
+        if amount < Decimal("0"):
+            QMessageBox.warning(self, "Montant invalide", "Le montant ne peut pas être négatif.")
+            return
+        if amount == Decimal("0"):
+            answer = QMessageBox.question(
+                self,
+                "Remboursement à 0 €",
+                "Confirmer explicitement l'enregistrement d'un remboursement à 0 € ?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No,
+            )
+            if answer != QMessageBox.StandardButton.Yes:
+                return
+            self._confirm_zero_amount = True
+        self.accept()
+
+    def _checked_trip_ids(self) -> tuple[int, ...]:
+        model = self.trip_table.model()
+        result = []
+        for row in range(model.rowCount()):
+            item = model.item(row, 0)
+            if item.checkState() != Qt.CheckState.Checked:
+                continue
+            trip_id = item.data(Qt.ItemDataRole.UserRole)
+            if isinstance(trip_id, int) and not isinstance(trip_id, bool) and trip_id > 0:
+                result.append(trip_id)
+        return tuple(result)
+
+    def command(self) -> ReimbursementCommand:
+        if not self._writable or self.person_id is None:
+            raise RuntimeError("Dialogue remboursement non configuré pour l'écriture.")
+        checked = self._checked_trip_ids()
+        original = set(getattr(self.reimbursement, "attached_trip_ids", ()) or ())
+        unchecked = tuple(sorted(original - set(checked)))
+        qdate = self.date_edit.date()
+        return ReimbursementCommand(
+            person_id=int(self.person_id),
+            payment_date=qdate.toPython(),
+            amount=self._amount(),
+            checked_trip_ids=checked,
+            unchecked_trip_ids=unchecked,
+            reimbursement_id=getattr(self.reimbursement, "id_historique", None),
+            confirm_zero_amount=self._confirm_zero_amount,
+        )
+
