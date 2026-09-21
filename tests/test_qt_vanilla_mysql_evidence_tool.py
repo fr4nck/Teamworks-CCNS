@@ -152,4 +152,5 @@ def test_tool_never_accepts_password_on_command_line():
     assert '"--password"' not in source
     assert "'--password'" not in source
     assert "SHOW PROCESSLIST" in source
-    assert "info" not in source.lower().split("SHOW PROCESSLIST")[1][:200]
+    assert 'record.get("info")' not in source
+    assert '"info":' not in source
