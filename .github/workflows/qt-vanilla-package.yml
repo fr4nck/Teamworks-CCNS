@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - qt/rail-c-documents-rh
+      - qt/master
     paths:
       - ".github/workflows/qt-vanilla-package.yml"
       - "requirements/qt-vanilla-0.1.txt"
