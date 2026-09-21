@@ -50,7 +50,7 @@ class Dialog(wx.Dialog):
         
         # Police
         self.label_police = wx.StaticText(self.sizer_contenu_staticbox, -1, _(u"Police du texte :"))
-        self.bouton_police = wx.Button(self.sizer_contenu_staticbox, -1, "")
+        self.bouton_police = CTRL_Bouton_image.CTRL(self.sizer_contenu_staticbox, texte=_(u"Choisir la police…"))
         self.bouton_couleurPolice = csel.ColourSelect(self.sizer_contenu_staticbox, -1, "", self.val_couleurPolice, size = (40, 23))
         
         # Apercu de la police
@@ -285,7 +285,7 @@ class Dialog(wx.Dialog):
     def MajExemplePolice(self):
         taille = self.val_police.GetPointSize()
         nom = self.val_police.GetFaceName()
-        self.bouton_police.SetLabel(nom + ", " + str(taille) + " points")
+        self.bouton_police.SetTexte(nom + ", " + str(taille) + " points")
         self.label_exemplePolice.SetFont(self.val_police)
         self.label_exemplePolice.SetForegroundColour(self.val_couleurPolice)
         self.label_exemplePolice.SetBackgroundColour(self.val_couleurFond)
