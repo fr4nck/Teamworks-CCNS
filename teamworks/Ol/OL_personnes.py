@@ -370,14 +370,21 @@ class ListView(CORE.ListView):
         with DiagnosticPerformance.mesurer_action(
             "wx.personnes.publipostage.donnees",
             {"nb_personnes": len(listeID)},
-        ):
+        ) as action_perf:
             with UTILS_Connexion_partagee.connexions_reseau_partagees(
                 UTILS_Publipostage_donnees.GestionDB
-            ):
+            ) as stats_connexions:
                 dictDonnees = UTILS_Publipostage_donnees.GetDictDonnees(
                     categorie="personne",
                     listeID=listeID,
                 )
+            if action_perf is not None:
+                action_perf["details"]["connexions_physiques"] = stats_connexions[
+                    "ouvertures_physiques"
+                ]
+                action_perf["details"]["connexions_reutilisees"] = stats_connexions[
+                    "reutilisations"
+                ]
         from Dlg import DLG_Publiposteur
         dlg = DLG_Publiposteur.Dialog(self, "", dictDonnees=dictDonnees)
         dlg.ShowModal()
