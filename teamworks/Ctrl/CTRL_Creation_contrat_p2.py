@@ -36,7 +36,7 @@ class Page(wx.Panel):
         self.radio_non = wx.RadioButton(self, -1, "Non", style=wx.RB_GROUP)
         self.radio_oui = wx.RadioButton(self, -1, "Oui")
         self.listCtrl_modeles = ListCtrl(self.sizer_choix_modele_staticbox, controller=self)
-        self.bouton_modeles = wx.Button(self.sizer_choix_modele_staticbox, -1, "...", style=wx.BU_EXACTFIT)
+        self.bouton_modeles = wx.Button(self.sizer_choix_modele_staticbox, -1, "...", style=wx.BU_EXACTFIT)  # native-button-ok: sélecteur compact intégré au champ
 
         self.__set_properties()
         self.__do_layout()
