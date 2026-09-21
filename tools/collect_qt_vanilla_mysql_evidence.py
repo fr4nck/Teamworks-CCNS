@@ -308,7 +308,7 @@ def _compare(args) -> int:
         "count_deltas": count_deltas,
         "processlist_before": (before.get("processlist") or {}).get("count"),
         "processlist_after": (after.get("processlist") or {}).get("count"),
-        "automatic_integrity_gate": (
+        "automatic_schema_gate": (
             same_sha
             and same_database
             and same_mysql
@@ -322,7 +322,7 @@ def _compare(args) -> int:
         encoding="utf-8",
     )
     print(json.dumps(report, indent=2, ensure_ascii=False))
-    return 0 if report["automatic_integrity_gate"] else 2
+    return 0 if report["automatic_schema_gate"] else 2
 
 
 def _performance(args) -> int:
@@ -371,6 +371,7 @@ def _performance(args) -> int:
                 global_pass = False
             elif ratio > 1.20 and verdict == "PASS":
                 verdict = "ANALYSE"
+                global_pass = False
 
         summary[test_id] = {
             "samples": len(qt_values),
