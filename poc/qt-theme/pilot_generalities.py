@@ -19,8 +19,12 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
         *,
         activity_loader_class=None,
         contract_write_port_factory=None,
+        reimbursement_write_port_factory=None,
+        trip_write_port_factory=None,
     ):
         self._activity_loader_class = activity_loader_class
+        self._reimbursement_write_port_factory = reimbursement_write_port_factory
+        self._trip_write_port_factory = trip_write_port_factory
         self._activity_thread = None
         self._activity_worker = None
         self._activity_loading_person_id = None
@@ -37,6 +41,20 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
             contract_write_port_factory=contract_write_port_factory,
         )
         self.activity_presenter = IndividualActivityPresenter(self.legacy_tabs)
+        expenses_page = getattr(self.legacy_tabs, "expenses_page", None)
+        if expenses_page is not None:
+            expenses_page.configure_reimbursement_write(
+                person_id=None,
+                write_port_factory=self._reimbursement_write_port_factory,
+                reload_callback=self._reload_expenses_after_write,
+                message_callback=self.statusBar().showMessage,
+            )
+            expenses_page.configure_trip_write(
+                person_id=None,
+                write_port_factory=self._trip_write_port_factory,
+                reload_callback=self._reload_expenses_after_trip_write,
+                message_callback=self.statusBar().showMessage,
+            )
 
     def _build_general_tab(self):
         self.generalities_page = GeneralitiesPage(self)
@@ -64,6 +82,9 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
         presenter = getattr(self, "activity_presenter", None)
         if presenter is not None:
             presenter.clear()
+        expenses_page = getattr(getattr(self, "legacy_tabs", None), "expenses_page", None)
+        if expenses_page is not None:
+            expenses_page.set_expense_person(None)
 
     def _show_person_from_proxy_row(self, proxy_row: int) -> None:
         if self._closing_requested:
@@ -99,6 +120,10 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
         self.detail_contracts.setText(_contract_count_text(contract_count))
         self.person_avatar.setText(_initials(person.name))
         self.detail_stack.setCurrentIndex(1)
+
+        expenses_page = getattr(self.legacy_tabs, "expenses_page", None)
+        if expenses_page is not None:
+            expenses_page.set_expense_person(historical_id)
 
         self._request_activity(historical_id)
         self.statusBar().showMessage(
@@ -171,6 +196,32 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
                 "Naissance : " + (" · ".join(birth_parts) if birth_parts else "—")
             )
         self.activity_presenter.set_payload(payload)
+
+    def _reload_expenses_after_write(self, reimbursement_id: int | None) -> None:
+        person_id = self._activity_selected_person_id
+        if person_id is None:
+            return
+        payload = {
+            "trips": tuple(self.adapter.list_trips(person_id)),
+            "reimbursements": tuple(self.adapter.list_reimbursements(person_id)),
+        }
+        self.activity_presenter.set_payload(payload)
+        expenses_page = getattr(self.legacy_tabs, "expenses_page", None)
+        if expenses_page is not None and reimbursement_id is not None:
+            expenses_page.select_reimbursement(reimbursement_id)
+
+    def _reload_expenses_after_trip_write(self, trip_id: int | None) -> None:
+        person_id = self._activity_selected_person_id
+        if person_id is None:
+            return
+        payload = {
+            "trips": tuple(self.adapter.list_trips(person_id)),
+            "reimbursements": tuple(self.adapter.list_reimbursements(person_id)),
+        }
+        self.activity_presenter.set_payload(payload)
+        expenses_page = getattr(self.legacy_tabs, "expenses_page", None)
+        if expenses_page is not None and trip_id is not None:
+            expenses_page.select_trip(trip_id)
 
     def _on_activity_loaded(self, person_id, payload) -> None:
         if not self._closing_requested:

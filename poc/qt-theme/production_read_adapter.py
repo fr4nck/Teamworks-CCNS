@@ -169,6 +169,24 @@ class TeamworksProductionReadAdapter(TeamworksReadAdapter):
 
         return GestionDbContractWriteAdapter(self._contract_reader.db)
 
+    def build_reimbursement_write_port(self):
+        """Construit le port Remboursements sur la session DB du reader d'activité."""
+        self._ensure_open()
+        from infrastructure.persistence.expense_reimbursement_write_adapter import (
+            GestionDbReimbursementWriteAdapter,
+        )
+
+        return GestionDbReimbursementWriteAdapter(self._activity_reader.db)
+
+    def build_trip_write_port(self):
+        """Construit le port Déplacements sur la session DB du reader d'activité."""
+        self._ensure_open()
+        from infrastructure.persistence.expense_trip_write_adapter import (
+            GestionDbTripWriteAdapter,
+        )
+
+        return GestionDbTripWriteAdapter(self._activity_reader.db)
+
     def list_presences(self, person_id: str | int) -> Sequence[PresenceView]:
         self._ensure_open()
         return tuple(self._presence_reader.list_presences(person_id))
@@ -204,6 +222,9 @@ class TeamworksProductionReadAdapter(TeamworksReadAdapter):
                 amount=_format_money(record.montant),
                 attached_trips=_format_attached_trip_ids(record.listeIDdeplacement),
                 id_historique=int(record.IDremboursement),
+                payment_date_value=as_date(record.date),
+                amount_value=_decimal_or_none(record.montant),
+                attached_trip_ids=_attached_trip_ids(record.listeIDdeplacement),
             )
             for record in records
         )
@@ -237,7 +258,8 @@ class TeamworksProductionReadAdapter(TeamworksReadAdapter):
         else:
             separator = " <--> " if _is_round_trip(record.aller_retour) else " -> "
             route = f"{start}{separator}{end}".strip()
-        reimbursement = "" if record.IDremboursement in (None, 0, "") else f"N°{record.IDremboursement}"
+        reimbursement_id = _positive_int_or_none(record.IDremboursement)
+        reimbursement = "" if reimbursement_id is None else f"N°{reimbursement_id}"
         return TripView(
             number=str(record.IDdeplacement),
             date=_format_date(record.date),
@@ -248,6 +270,7 @@ class TeamworksProductionReadAdapter(TeamworksReadAdapter):
             amount=_format_product_money(record.distance, record.tarif_km),
             reimbursement=reimbursement,
             id_historique=int(record.IDdeplacement),
+            reimbursement_id=reimbursement_id,
         )
 
     @staticmethod
@@ -375,19 +398,42 @@ def _format_product_money(left, right) -> str:
         return EMPTY
 
 
+def _positive_int_or_none(value) -> int | None:
+    if value is None or isinstance(value, bool):
+        return None
+    try:
+        result = int(value)
+    except (TypeError, ValueError):
+        return None
+    return result if result > 0 else None
+
+
+def _decimal_or_none(value) -> Decimal | None:
+    try:
+        with localcontext() as context:
+            context.prec = 28
+            return _decimal(value)
+    except (InvalidOperation, ValueError):
+        return None
+
+
+def _attached_trip_ids(value) -> tuple[int, ...]:
+    if value is None or value == "" or isinstance(value, bool):
+        return ()
+    raw_values = (value,) if isinstance(value, int) else str(value).strip().split("-")
+    result = []
+    for raw in raw_values:
+        parsed = _positive_int_or_none(raw)
+        if parsed is not None:
+            result.append(parsed)
+    return tuple(result)
+
+
 def _format_attached_trip_ids(value) -> str:
-    if value is None or value == "":
-        return "Aucun déplacement rattaché"
-    if isinstance(value, bool):
-        return EMPTY
-    if isinstance(value, int):
-        ids = [str(value)]
-    else:
-        text = str(value).strip()
-        ids = [part for part in text.split("-") if part] if text else []
+    ids = _attached_trip_ids(value)
     if not ids:
         return "Aucun déplacement rattaché"
-    return "N° " + ", ".join(ids)
+    return "N° " + ", ".join(str(item) for item in ids)
 
 
 def build_production_adapter() -> TeamworksProductionReadAdapter:

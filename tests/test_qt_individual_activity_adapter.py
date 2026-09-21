@@ -76,8 +76,12 @@ def test_trip_mapping_is_decimal_safe_and_keeps_historical_route_semantics() -> 
     assert views[0].tariff == "0.55 €/km"
     assert views[0].amount == "67.65 €"
     assert views[0].reimbursement == "N°4"
+    assert views[0].id_historique == 8
+    assert views[0].reimbursement_id == 4
     assert views[1].amount == "—"
     assert views[1].reimbursement == ""
+    assert views[1].id_historique == 9
+    assert views[1].reimbursement_id is None
 
 
 def test_reimbursement_mapping_preserves_legacy_textual_attachment_display() -> None:
@@ -86,4 +90,9 @@ def test_reimbursement_mapping_preserves_legacy_textual_attachment_display() -> 
     assert views[0].date == "30/09/2026"
     assert views[0].amount == "67.65 €"
     assert views[0].attached_trips == "N° 8, 9"
+    assert views[0].id_historique == 4
+    assert views[0].payment_date_value.isoformat() == "2026-09-30"
+    assert str(views[0].amount_value) == "67.65"
+    assert views[0].attached_trip_ids == (8, 9)
     assert views[1].attached_trips == "Aucun déplacement rattaché"
+    assert views[1].attached_trip_ids == ()
