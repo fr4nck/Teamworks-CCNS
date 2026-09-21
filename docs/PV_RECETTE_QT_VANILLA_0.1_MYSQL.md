@@ -304,3 +304,20 @@ Règles :
 |---|---|---|---|
 | Recetteur | | | |
 | Responsable release | | | |
+
+
+## 11. Décision de release
+
+Référence : `docs/GO_NO_GO_QT_VANILLA_0.1.md`.
+
+Décision finale :
+
+```text
+GO / NO-GO / NON QUALIFIEE
+```
+
+Motif synthétique :
+
+Responsable de la décision :
+
+Date :
