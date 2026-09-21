@@ -406,7 +406,7 @@ class Dialog(wx.Dialog):
 
         grid_sizer_boutons = wx.FlexGridSizer(rows=1, cols=5, vgap=10, hgap=10)
         grid_sizer_boutons.Add(self.bouton_aide, 0, 0, 0)
-        grid_sizer_boutons.Add(self.bouton_detail, 0, wx.EXPAND, 0)
+        grid_sizer_boutons.Add(self.bouton_detail, 0, wx.ALIGN_CENTER_VERTICAL, 0)
         grid_sizer_boutons.Add((20, 20), 0, wx.EXPAND, 0)
         grid_sizer_boutons.Add(self.bouton_ok, 0, 0, 0)
         grid_sizer_boutons.Add(self.bouton_annuler, 0, 0, 0)
