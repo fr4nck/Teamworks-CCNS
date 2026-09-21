@@ -22,6 +22,11 @@ from application.services.expense_reimbursement_write import (
     delete_reimbursement,
     save_reimbursement,
 )
+from application.services.expense_trip_write import (
+    TripDeleteCommand,
+    delete_trip,
+    save_trip,
+)
 from legacy_sheets import (
     ApplicationPreviewDialog,
     InterviewPreviewDialog,
@@ -361,8 +366,11 @@ class ExpensesPage(QWidget):
     def __init__(self, icon_loader: IconLoader, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._reimbursement_write_port_factory = None
+        self._trip_write_port_factory = None
         self._reimbursement_person_id = None
+        self._trip_person_id = None
         self._reimbursement_reload_callback = None
+        self._trip_reload_callback = None
         self._message_callback = None
         root = QVBoxLayout(self)
         root.setContentsMargins(
@@ -400,6 +408,9 @@ class ExpensesPage(QWidget):
         section.add_widget(self.trip_actions)
 
         self.trip_table = _table(self.trip_model)
+        self.trip_table.selectionModel().selectionChanged.connect(
+            self._update_trip_actions
+        )
         header = self.trip_table.horizontalHeader()
         for column in range(len(self.TRIP_HEADERS)):
             header.setSectionResizeMode(column, QHeaderView.ResizeMode.Interactive)
@@ -440,9 +451,174 @@ class ExpensesPage(QWidget):
         section.add_widget(self.reimbursement_table, 1)
         return section
 
+    def configure_trip_write(
+        self,
+        *,
+        person_id,
+        write_port_factory,
+        reload_callback,
+        message_callback=None,
+    ) -> None:
+        self._trip_person_id = person_id
+        self._trip_write_port_factory = write_port_factory
+        self._trip_reload_callback = reload_callback
+        if message_callback is not None:
+            self._message_callback = message_callback
+        self._update_trip_actions()
+
+    def set_expense_person(self, person_id) -> None:
+        self._reimbursement_person_id = person_id
+        self._trip_person_id = person_id
+        self._update_reimbursement_actions()
+        self._update_trip_actions()
+
+    def _trip_write_enabled(self) -> bool:
+        return (
+            callable(self._trip_write_port_factory)
+            and isinstance(self._trip_person_id, int)
+            and not isinstance(self._trip_person_id, bool)
+            and self._trip_person_id > 0
+        )
+
+    def _selected_trip(self):
+        rows = self.trip_table.selectionModel().selectedRows()
+        if not rows:
+            return None
+        item = self.trip_model.item(rows[0].row(), 0)
+        return item.data(Qt.ItemDataRole.UserRole) if item is not None else None
+
+    def _update_trip_actions(self, *_args) -> None:
+        writable = self._trip_write_enabled()
+        self.trip_actions.set_enabled("add", writable)
+        selected = self._selected_trip()
+        stable_selection = (
+            selected is not None
+            and isinstance(getattr(selected, "id_historique", None), int)
+            and not isinstance(getattr(selected, "id_historique", None), bool)
+            and getattr(selected, "id_historique", 0) > 0
+        )
+        self.trip_actions.set_enabled("edit", writable and stable_selection)
+        self.trip_actions.set_enabled("delete", writable and stable_selection)
+
+    def select_trip(self, trip_id: int) -> None:
+        for row in range(self.trip_model.rowCount()):
+            item = self.trip_model.item(row, 0)
+            payload = item.data(Qt.ItemDataRole.UserRole) if item is not None else None
+            if getattr(payload, "id_historique", None) == trip_id:
+                self.trip_table.selectRow(row)
+                return
+
     def _on_trip_action(self, action_id: str) -> None:
-        if action_id == "add":
-            _open_preview(TripPreviewDialog, self)
+        if action_id not in ("add", "edit", "delete") or not self._trip_write_enabled():
+            return
+
+        selected = self._selected_trip() if action_id in ("edit", "delete") else None
+        if action_id in ("edit", "delete") and selected is None:
+            return
+
+        try:
+            port = self._trip_write_port_factory()
+        except Exception as exc:
+            self._emit_message(f"Déplacement impossible · {exc}")
+            return
+
+        if action_id == "delete":
+            self._delete_selected_trip(port, selected)
+            return
+
+        snapshot = None
+        if action_id == "edit":
+            try:
+                snapshot = port.read_trip(selected.id_historique)
+            except Exception as exc:
+                self._emit_message(f"Lecture du déplacement impossible · {exc}")
+                return
+            if snapshot is None or snapshot.person_id != self._trip_person_id:
+                self._emit_message("Le déplacement sélectionné n'existe plus pour cette personne.")
+                return
+
+        dialog = TripPreviewDialog(
+            self.window(),
+            person_id=self._trip_person_id,
+            snapshot=snapshot,
+            writable=True,
+        )
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+
+        result = save_trip(port, command=dialog.command())
+        if result.committed and result.target_id is not None and callable(
+            self._trip_reload_callback
+        ):
+            try:
+                self._trip_reload_callback(result.target_id)
+            except Exception as exc:
+                self._emit_message(
+                    f"Déplacement validé, mais rafraîchissement impossible · {exc}"
+                )
+                return
+
+        if result.ok:
+            self._emit_message(f"Déplacement enregistré · n°{result.target_id}")
+        else:
+            self._emit_message(
+                f"Déplacement non enregistré · {result.code} · {result.message}"
+            )
+
+    def _delete_selected_trip(self, port, trip) -> None:
+        trip_id = getattr(trip, "id_historique", None)
+        reimbursement_id = getattr(trip, "reimbursement_id", None)
+        if reimbursement_id not in (None, 0):
+            QMessageBox.information(
+                self,
+                "Déplacement rattaché",
+                (
+                    f"Ce déplacement est déjà attribué au remboursement n°{reimbursement_id}.\n"
+                    "Il ne peut pas être supprimé."
+                ),
+            )
+            self._emit_message(
+                f"Suppression refusée · déplacement rattaché au remboursement n°{reimbursement_id}"
+            )
+            return
+
+        answer = QMessageBox.question(
+            self,
+            "Confirmation de suppression",
+            (
+                f"Voulez-vous vraiment supprimer le déplacement n°{trip_id} ?\n\n"
+                f"{getattr(trip, 'route', '—')}\nLe {getattr(trip, 'date', '—')}"
+            ),
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+        if answer != QMessageBox.StandardButton.Yes:
+            self._emit_message("Suppression annulée · aucune écriture")
+            return
+
+        result = delete_trip(
+            port,
+            command=TripDeleteCommand(
+                person_id=self._trip_person_id,
+                trip_id=trip_id,
+                confirmed=True,
+            ),
+        )
+        if result.committed and callable(self._trip_reload_callback):
+            try:
+                self._trip_reload_callback(None)
+            except Exception as exc:
+                self._emit_message(
+                    f"Déplacement supprimé, mais rafraîchissement impossible · {exc}"
+                )
+                return
+
+        if result.ok:
+            self._emit_message(f"Déplacement n°{trip_id} supprimé")
+        else:
+            self._emit_message(
+                f"Déplacement non supprimé · {result.code} · {result.message}"
+            )
 
     def configure_reimbursement_write(
         self,
@@ -459,8 +635,8 @@ class ExpensesPage(QWidget):
         self._update_reimbursement_actions()
 
     def set_reimbursement_person(self, person_id) -> None:
-        self._reimbursement_person_id = person_id
-        self._update_reimbursement_actions()
+        # Alias historique conservé pour les callers existants du POC.
+        self.set_expense_person(person_id)
 
     def _write_enabled(self) -> bool:
         return (
