@@ -13,6 +13,7 @@ class _FakePort:
     engine_version: str = "1.0"
     source_label: str = "fake-source"
     tables_data: dict = field(default_factory=dict)
+    column_stats_calls: list = field(default_factory=list)
 
     def list_tables(self) -> tuple[str, ...]:
         return tuple(self.tables_data)
@@ -24,8 +25,15 @@ class _FakePort:
         return self.tables_data[table]["columns"]
 
     def column_stats(self, table: str, column: ColumnDefinition, *, sample_limit: int) -> ColumnStats:
+        self.column_stats_calls.append((table, column.name, sample_limit))
         values = [row[column.name] for row in self.tables_data[table]["rows"]]
         non_null = [v for v in values if v is not None]
+        if sample_limit <= 0:
+            # Reproduit fidèlement un vrai adaptateur : aucune lecture
+            # d'échantillon n'est effectuée quand sample_limit vaut 0.
+            samples: tuple[str, ...] = ()
+        else:
+            samples = tuple(str(v) for v in non_null[:sample_limit])
         return ColumnStats(
             column=column,
             row_count=len(values),
@@ -33,7 +41,7 @@ class _FakePort:
             empty_string_count=sum(1 for v in values if v == ""),
             zero_count=sum(1 for v in values if v == 0),
             distinct_count=len(set(non_null)),
-            sample_values=tuple(str(v) for v in non_null[:sample_limit]),
+            sample_values=samples,
         )
 
     def duplicate_key_row_count(self, table: str, key_columns: tuple[str, ...]) -> int:
@@ -118,6 +126,29 @@ def test_sensitive_column_is_masked_in_output():
 
     table = inventory.table("personnes")
     assert table.columns[0].sample_values == ()
+
+
+def test_sensitive_column_never_receives_a_nonzero_sample_limit_at_the_port():
+    """Le port ne doit jamais être sollicité pour échantillonner une colonne
+    sensible : ce n'est pas seulement le résultat final qui doit être vide,
+    c'est la requête elle-même qui ne doit jamais partir avec sample_limit>0.
+    """
+    nom_col = ColumnDefinition(name="nom", declared_type="VARCHAR(100)", nullable=True)
+    distance_col = ColumnDefinition(name="distance", declared_type="REAL", nullable=True)
+    port = _FakePort(
+        tables_data={
+            "personnes": {
+                "columns": (nom_col, distance_col),
+                "rows": [{"nom": "Dupont", "distance": 12.0}],
+            }
+        }
+    )
+
+    build_database_inventory(port, sample_limit=5, inventoried_at=datetime(2026, 1, 1))
+
+    calls_by_column = {name: limit for _, name, limit in port.column_stats_calls}
+    assert calls_by_column["distance"] == 5
+    assert calls_by_column["nom"] == 0
 
 
 def test_result_is_deterministic_given_same_timestamp():

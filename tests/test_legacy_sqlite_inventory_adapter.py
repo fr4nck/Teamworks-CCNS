@@ -155,3 +155,37 @@ def test_fetch_rows_streams_requested_columns(legacy_db_path):
         )
 
     assert rows == [(7, 12), (8, 12), (9, 12)]
+
+
+def test_zero_sample_limit_never_issues_a_sample_query_at_the_sql_level(legacy_db_path):
+    """Preuve au niveau SQL, pas seulement au niveau du résultat : quand
+    sample_limit=0 (ce que le moteur impose pour une colonne sensible),
+    l'adaptateur ne doit émettre aucune requête d'échantillonnage du tout.
+    """
+    connection = sqlite3.connect(str(legacy_db_path))
+    executed_sql: list[str] = []
+    connection.set_trace_callback(executed_sql.append)
+    port = SqliteLegacyDatabasePort(connection, source_label=str(legacy_db_path))
+    try:
+        columns = {c.name: c for c in port.column_definitions("personnes")}
+
+        # La requête de statistiques agrégées (COUNT/SUM/MIN/MAX, y compris
+        # COUNT(DISTINCT ...)) est toujours exécutée : ce n'est pas elle
+        # qu'il faut interdire. La requête d'échantillonnage, elle, a une
+        # forme distincte : SELECT DISTINCT <col> ... ORDER BY ... LIMIT.
+        def issued_sample_query(statements: list[str]) -> bool:
+            return any("LIMIT" in sql and "ORDER BY" in sql for sql in statements)
+
+        executed_sql.clear()
+        stats_masked = port.column_stats("personnes", columns["nom"], sample_limit=0)
+
+        assert stats_masked.sample_values == ()
+        assert issued_sample_query(executed_sql) is False
+
+        executed_sql.clear()
+        stats_sampled = port.column_stats("personnes", columns["nom"], sample_limit=3)
+
+        assert issued_sample_query(executed_sql) is True
+        assert stats_sampled.sample_values != ()
+    finally:
+        port.close()

@@ -32,10 +32,14 @@ def build_database_inventory(
 
         column_stats = []
         for column in columns_def:
-            stats = port.column_stats(table_name, column, sample_limit=sample_limit)
-            if column.is_sensitive:
-                stats = stats.masked
-            column_stats.append(stats)
+            # Une colonne sensible ne doit jamais faire l'objet d'une requête
+            # d'échantillonnage : sample_limit=0 empêche le port de lire la
+            # moindre valeur, pas seulement de l'afficher après coup.
+            effective_sample_limit = 0 if column.is_sensitive else sample_limit
+            stats = port.column_stats(
+                table_name, column, sample_limit=effective_sample_limit
+            )
+            column_stats.append(stats.masked if column.is_sensitive else stats)
 
         if primary_key_columns:
             duplicate_key_row_count = port.duplicate_key_row_count(
