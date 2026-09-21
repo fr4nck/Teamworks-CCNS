@@ -52,24 +52,21 @@ def test_telephones_reste_redimensionnable_et_persistant():
     assert "largeurs_defaut" in dialog
 
 
-def test_aide_ne_declenche_plus_le_parcours_commercial_historique():
+def test_aide_ouvre_la_documentation_ccns_sans_parcours_commercial():
     aide = _read("teamworks/Utils/UTILS_Aide.py")
     assert "DLG_Financement" not in aide
-    assert "webbrowser" not in aide
     assert "teamworks.ovh" not in aide.lower()
-    assert "Aucun achat ni licence supplémentaire" in aide
+    assert "https://fr4nck.github.io/Teamworks-CCNS/" in aide
+    assert "wx.LaunchDefaultBrowser" in aide
 
 
-def test_menu_runtime_retire_les_entrees_historiques_visibles():
+def test_menu_runtime_garde_les_credits_et_filtre_les_ressources_historiques():
     source = _read("teamworks/Teamworks.py")
-    for libelle in (
-        "Soutenir Teamworks",
-        "Acheter une licence pour accéder au manuel de référence",
-        "Accéder au forum d'entraide",
-        "Visionner des tutoriels vidéos",
-    ):
-        assert libelle in source
-    assert "self._nettoyer_menu(barre.GetMenu(index))" in source
+    assert "_LIBELLES_COMMERCIAUX_A_RETIRER" in source
+    assert "_LIBELLES_RESSOURCES_HISTORIQUES" in source
+    assert "Forum historique Teamworks / Noethys" in source
+    assert "Tutoriels historiques Teamworks / Noethys" in source
+    assert "afficher_ressources" in source
     assert "menu.Delete(item)" in source
 
 
