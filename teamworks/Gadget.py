@@ -330,10 +330,9 @@ class Gadget_Updater(wx.Panel):
         )
         self.texte.Wrap(360)
 
-        self.bouton_telecharger = wx.Button(
+        self.bouton_telecharger = CTRL_Bouton_image.CTRL(
             self,
-            -1,
-            _(u"État des mises à jour"),
+            texte=_(u"État des mises à jour"),
         )
         self.bouton_telecharger.SetToolTip(
             wx.ToolTip(
