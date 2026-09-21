@@ -3,6 +3,8 @@ from __future__ import annotations
 from datetime import date
 from decimal import Decimal
 
+import pytest
+
 from application.services.contract_write import (
     ContractDeleteCommand,
     ContractEditSnapshot,
@@ -109,15 +111,17 @@ def test_delete_requires_explicit_confirmation_before_database_access():
     assert port.calls == []
 
 
-def test_delete_invalid_id_is_rejected_before_database_access():
+@pytest.mark.parametrize("invalid_id", [None, 0, -1, True, False])
+def test_delete_invalid_id_is_rejected_before_database_access(invalid_id):
     port = DeleteRecordingPort()
 
     result = delete_contract(
         port,
-        command=ContractDeleteCommand(contract_id=0, confirmed=True),
+        command=ContractDeleteCommand(contract_id=invalid_id, confirmed=True),
     )
 
     assert result.code == WriteCode.INVALID_TARGET_ID
+    assert result.committed is False
     assert port.calls == []
 
 

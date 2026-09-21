@@ -356,6 +356,48 @@ def test_create_action_roundtrips_dialog_insert_commit_readback_and_refresh():
 
 
 
+def test_delete_action_cancel_keeps_database_and_model_unchanged():
+    _app()
+    db = SqliteGestionDbCompat()
+    reader = CcnsDataReader(db_factory=lambda: db)
+    window = _window(db, reader)
+
+    try:
+        _select_contract(window)
+        assert window.contracts_model.rowCount() == 1
+        assert window.contract_delete_button.isEnabled() is True
+
+        def cancel_delete():
+            box = QApplication.activeModalWidget()
+            assert isinstance(box, QMessageBox)
+            no = box.button(QMessageBox.StandardButton.No)
+            assert no is not None
+            no.click()
+
+        QTimer.singleShot(0, cancel_delete)
+        window.contract_delete_button.click()
+        QApplication.processEvents()
+
+        assert db.connexion.execute(
+            "SELECT IDcontrat FROM contrats WHERE IDcontrat=?",
+            (417,),
+        ).fetchone() == (417,)
+        assert db.connexion.execute(
+            "SELECT COUNT(*) FROM contrats_valchamps WHERE IDcontrat=?",
+            (417,),
+        ).fetchone()[0] == 1
+        assert db.commit_count == 0
+
+        assert window.contracts_model.rowCount() == 1
+        selected = window.contracts_model.contract_at(0)
+        assert selected.id_historique == 417
+        assert window.contract_delete_button.isEnabled() is True
+        assert window.statusBar().currentMessage() == "Suppression annulée · aucune écriture"
+    finally:
+        window.close()
+        reader.close()
+
+
 def test_delete_action_requires_confirmation_then_roundtrips_absence_and_refresh():
     _app()
     db = SqliteGestionDbCompat()
