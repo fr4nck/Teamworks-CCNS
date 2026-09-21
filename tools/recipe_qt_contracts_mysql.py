@@ -12,7 +12,6 @@ tenté dans un finally même si une étape intermédiaire échoue.
 
 from __future__ import annotations
 
-from dataclasses import replace
 from datetime import date, timedelta
 from decimal import Decimal
 import os
@@ -41,7 +40,6 @@ from application.services.contract_write import (  # noqa: E402
     load_contract_creation_types,
     update_contract,
 )
-from application.services.transactional_write import WriteCode  # noqa: E402
 from domain.convention.salary_grid_entry import SalaryMinimumPeriodicity  # noqa: E402
 from infrastructure.persistence.contract_write_adapter import (  # noqa: E402
     GestionDbContractWriteAdapter,
@@ -108,7 +106,10 @@ def run() -> int:
         _require_real_mysql(db)
         port = GestionDbContractWriteAdapter(db)
 
-        version = db.GetVersionServeur()
+        try:
+            version = db.GetVersionServeur()
+        except Exception:
+            version = None
         print("TEAMWORKS_RAIL_A_BACKEND:MYSQL", flush=True)
         print("TEAMWORKS_RAIL_A_MYSQL_VERSION:%s" % (version or "inconnue"), flush=True)
 
