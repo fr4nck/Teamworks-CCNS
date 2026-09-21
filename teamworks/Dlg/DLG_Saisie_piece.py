@@ -52,11 +52,11 @@ class Dialog(wx.Dialog):
         # Pages capturées
         self.sizer_pages_staticbox = wx.StaticBox(self.panel_base, -1, _(u"Documents associés"))
         self.ctrl_pages = CTRL_Vignettes_documents.CTRL(self.sizer_pages_staticbox, IDpiece=self.IDpiece, style=wx.BORDER_SUNKEN)
-        self.bouton_ajouter_page = wx.BitmapButton(self.sizer_pages_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_supprimer_page = wx.BitmapButton(self.sizer_pages_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_visualiser_page = wx.BitmapButton(self.sizer_pages_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Loupe.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_zoom_plus = wx.BitmapButton(self.sizer_pages_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/zoom_plus.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_zoom_moins = wx.BitmapButton(self.sizer_pages_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/zoom_moins.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_ajouter_page = CTRL_Bouton_image.CTRL(self.sizer_pages_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Ajouter.png"))
+        self.bouton_supprimer_page = CTRL_Bouton_image.CTRL(self.sizer_pages_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Supprimer.png"))
+        self.bouton_visualiser_page = CTRL_Bouton_image.CTRL(self.sizer_pages_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Loupe.png"))
+        self.bouton_zoom_plus = CTRL_Bouton_image.CTRL(self.sizer_pages_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/zoom_plus.png"))
+        self.bouton_zoom_moins = CTRL_Bouton_image.CTRL(self.sizer_pages_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/zoom_moins.png"))
 
         self.bouton_aide = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))
         self.bouton_ok = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Ok"), cheminImage=Chemins.GetStaticPath("Images/32x32/Valider.png"))
