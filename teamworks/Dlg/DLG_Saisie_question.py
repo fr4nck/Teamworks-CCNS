@@ -399,11 +399,11 @@ class Dialog(wx.Dialog):
         # Choix
         self.box_choix_staticbox = wx.StaticBox(self, -1, _(u"Liste de choix"))
         self.ctrl_choix = CTRL_Choix(self.box_choix_staticbox, IDquestion=IDquestion)
-        self.bouton_ajouter_choix = wx.BitmapButton(self.box_choix_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_modifier_choix = wx.BitmapButton(self.box_choix_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Modifier.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_supprimer_choix = wx.BitmapButton(self.box_choix_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_monter_choix = wx.BitmapButton(self.box_choix_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Fleche_haut.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_descendre_choix = wx.BitmapButton(self.box_choix_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Fleche_bas.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_ajouter_choix = CTRL_Bouton_image.CTRL(self.box_choix_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Ajouter.png"))
+        self.bouton_modifier_choix = CTRL_Bouton_image.CTRL(self.box_choix_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Modifier.png"))
+        self.bouton_supprimer_choix = CTRL_Bouton_image.CTRL(self.box_choix_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Supprimer.png"))
+        self.bouton_monter_choix = CTRL_Bouton_image.CTRL(self.box_choix_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Fleche_haut.png"))
+        self.bouton_descendre_choix = CTRL_Bouton_image.CTRL(self.box_choix_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Fleche_bas.png"))
 
         # Options
         self.box_options_staticbox = wx.StaticBox(self, -1, _(u"Options"))
