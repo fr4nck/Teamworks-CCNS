@@ -324,6 +324,11 @@ jobs:
           python -m pip install --requirement requirements/python311-core.txt
           python -m pip install pytest
 
+      - name: Vérifier les extensions wx de l'éditeur Email
+        shell: pwsh
+        run: |
+          python -c "import wx; import wx._xml; import wx._richtext; import wx.richtext"
+
       - name: Vérifier les contrats des dialogues
         id: windows_contracts
         continue-on-error: true
@@ -561,7 +566,10 @@ jobs:
             '--collect-all', 'reportlab',
             '--collect-all', 'PIL',
             '--collect-all', 'mysql.connector',
-            '--hidden-import', 'win32com.client'
+            '--hidden-import', 'win32com.client',
+            '--hidden-import', 'wx.richtext',
+            '--hidden-import', 'wx._richtext',
+            '--hidden-import', 'wx._xml'
           )
           foreach ($module in $modules) {
             $pyinstallerArgs += @('--hidden-import', $module)
@@ -603,6 +611,15 @@ jobs:
           }
           if ((Get-Item "$package/Versions.txt").Length -eq 0) {
             throw 'Versions.txt est vide'
+          }
+
+          $wxXml = @(Get-ChildItem $package -Recurse -Filter '_xml*.pyd' -File)
+          if ($wxXml.Count -eq 0) {
+            throw 'Extension wx._xml absente du paquet Windows'
+          }
+          $wxRichText = @(Get-ChildItem $package -Recurse -Filter '_richtext*.pyd' -File)
+          if ($wxRichText.Count -eq 0) {
+            throw 'Extension wx._richtext absente du paquet Windows'
           }
 
           $manifest = @(Get-Content "$package/INTERNAL-MODULES.txt")
