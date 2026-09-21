@@ -526,7 +526,7 @@ class Panel_general(wx.Panel):
 
         # Coordonnées ------------------------------------------------------
         coords = wx.BoxSizer(wx.VERTICAL)
-        actions_coords = wx.WrapSizer(wx.HORIZONTAL)
+        actions_coords = wx.WrapSizer(wx.HORIZONTAL, 0)
         for bouton in (
             self.button_coords_ajout,
             self.button_coords_modif,
