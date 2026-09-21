@@ -44,8 +44,8 @@ class MyDialog(wx.Dialog):
         self.box_fichiers_staticbox = wx.StaticBox(self, -1, _(u"Liste des fichiers"))
         self.ctrl_fichiers = CTRL_Liste_fichiers.CTRL(self.box_fichiers_staticbox, mode="local")
         self.ctrl_fichiers.SetMinSize((-1, 400))
-        self.bouton_modifier_fichier = wx.BitmapButton(self.box_fichiers_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Modifier.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_supprimer_fichier = wx.BitmapButton(self.box_fichiers_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_modifier_fichier = CTRL_Bouton_image.CTRL(self.box_fichiers_staticbox, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Modifier.png"))
+        self.bouton_supprimer_fichier = CTRL_Bouton_image.CTRL(self.box_fichiers_staticbox, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Supprimer.png"), role="danger")
 
         # Boutons
         self.bouton_aide = CTRL_Bouton_image.CTRL(self, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))
