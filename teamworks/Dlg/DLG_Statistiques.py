@@ -635,8 +635,8 @@ class Dialog(wx.Dialog):
         
         # Mode d'affichage
         sizerStaticBox_mode = wx.StaticBoxSizer(self.staticbox_mode, wx.HORIZONTAL)
-        sizerStaticBox_mode.Add(self.bouton_mode_tableau, 1, wx.EXPAND|wx.TOP|wx.LEFT|wx.BOTTOM, 5)
-        sizerStaticBox_mode.Add(self.bouton_mode_graph, 1, wx.EXPAND|wx.ALL, 5)
+        sizerStaticBox_mode.Add(self.bouton_mode_tableau, 1, wx.EXPAND|wx.TOP|wx.LEFT|wx.BOTTOM, 5)  # button-stretch-ok: sélecteur de mode
+        sizerStaticBox_mode.Add(self.bouton_mode_graph, 1, wx.EXPAND|wx.ALL, 5)  # button-stretch-ok: sélecteur de mode
         grid_sizer_haut_gauche.Add(sizerStaticBox_mode, 1, wx.EXPAND|wx.ALL, 0)
                 
         # Période
