@@ -76,11 +76,11 @@ class Dialog(wx.Dialog):
         self.staticbox_modeles_staticbox = wx.StaticBox(self, -1, _(u"Modèles disponibles"))
         self.ctrl_modeles = OL_Modeles_emails.ListView(self.staticbox_modeles_staticbox, id=-1, style=wx.LC_REPORT|wx.SUNKEN_BORDER|wx.LC_SINGLE_SEL|wx.LC_HRULES|wx.LC_VRULES)
         
-        self.bouton_ajouter = wx.BitmapButton(self.staticbox_modeles_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath(u"Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_modifier = wx.BitmapButton(self.staticbox_modeles_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath(u"Images/16x16/Modifier.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_supprimer = wx.BitmapButton(self.staticbox_modeles_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath(u"Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_dupliquer = wx.BitmapButton(self.staticbox_modeles_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath(u"Images/16x16/Dupliquer.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_defaut = wx.BitmapButton(self.staticbox_modeles_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath(u"Images/16x16/Ok.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_ajouter = CTRL_Bouton_image.CTRL(self.staticbox_modeles_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath(u"Images/16x16/Ajouter.png"))
+        self.bouton_modifier = CTRL_Bouton_image.CTRL(self.staticbox_modeles_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath(u"Images/16x16/Modifier.png"))
+        self.bouton_supprimer = CTRL_Bouton_image.CTRL(self.staticbox_modeles_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath(u"Images/16x16/Supprimer.png"))
+        self.bouton_dupliquer = CTRL_Bouton_image.CTRL(self.staticbox_modeles_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath(u"Images/16x16/Dupliquer.png"))
+        self.bouton_defaut = CTRL_Bouton_image.CTRL(self.staticbox_modeles_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath(u"Images/16x16/Ok.png"))
         
 ##        self.hyper_telecharger = Hyperlien(self, label=_(u"Télécharger de nouveaux modèles"), infobulle=_(u"Cliquez ici pour télécharger de nouveaux modèles de documents sur internet"), URL="telecharger")
 ##        self.label_separation = wx.StaticText(self, -1, u"|")
