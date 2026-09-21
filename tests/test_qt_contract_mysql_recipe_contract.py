@@ -32,3 +32,15 @@ def test_rail_a_windows_launcher_executes_the_strict_mysql_recipe():
 
     assert "recipe_qt_contracts_mysql.py" in source
     assert "stop-gate Rail A Windows/MySQL" in source
+
+
+def test_rail_a_mysql_recipe_avoids_contract_overlap_before_writing():
+    source = SCRIPT.read_text(encoding="utf-8")
+
+    assert "def _safe_person_id" in source
+    assert "WHERE NOT EXISTS" in source
+    assert "c.date_debut<=%s" in source
+    assert "c.date_fin>=%s" in source
+    assert "_first_person_id" not in source
+    assert "aucune écriture n'a été tentée" in source
+    assert "Nettoyage incomplet : le contrat de recette existe encore après commit." in source
