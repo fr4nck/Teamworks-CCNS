@@ -9,6 +9,7 @@
 import Chemins
 from Utils.UTILS_Traduction import _
 import wx
+from Ctrl import CTRL_Bouton_image
 import GestionDB
 from Utils import UTILS_Adaptations
 from Dlg import DLG_Config_champs_contrats
@@ -22,7 +23,7 @@ class Page(wx.Panel):
         self.label_titre = wx.StaticText(self, -1, _(u"3. Choix des champs personnalisés"))
         self.label_intro = wx.StaticText(self, -1, _(u"Sélectionnez les données personnalisées que vous souhaitez ajouter aux\ncaractérististiques de ce contrat :"))
         self.listCtrl_champs = ListCtrl_champs(self.sizer_champs_staticbox, controller=self)
-        self.bouton_champs = wx.Button(self.sizer_champs_staticbox, -1, "...", style=wx.BU_EXACTFIT)  # native-button-ok: sélecteur compact intégré au champ
+        self.bouton_champs = CTRL_Bouton_image.Compact(self.sizer_champs_staticbox, texte="...")
 
         self.__set_properties()
         self.__do_layout()
