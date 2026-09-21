@@ -16,6 +16,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QLineEdit,
     QMainWindow,
+    QMessageBox,
     QPushButton,
     QScrollArea,
     QSizePolicy,
@@ -29,7 +30,9 @@ from PySide6.QtWidgets import (
 )
 
 from application.services.contract_write import (
+    ContractDeleteCommand,
     create_contract,
+    delete_contract,
     load_contract_creation_types,
     load_contract_for_edit,
     update_contract,
@@ -503,7 +506,11 @@ class PeopleContractsPilot(QMainWindow):
         )
         self.contract_edit_button.clicked.connect(self._edit_selected_contract)
         tools.addWidget(self.contract_edit_button)
-        tools.addWidget(self._legacy_tool_button("Supprimer.png", "Supprimer le contrat", fallback="−"))
+        self.contract_delete_button = self._legacy_tool_button(
+            "Supprimer.png", "Supprimer le contrat", fallback="−"
+        )
+        self.contract_delete_button.clicked.connect(self._delete_selected_contract)
+        tools.addWidget(self.contract_delete_button)
         tools.addSpacing(8)
         self.contract_signature_button = self._legacy_tool_button(
             "Signature.png", "Basculer l'état de signature du contrat", fallback="S"
@@ -533,7 +540,7 @@ class PeopleContractsPilot(QMainWindow):
         simulate_button.clicked.connect(self._open_contract_compliance_dialog)
         command_layout.addWidget(simulate_button)
         command_layout.addStretch(1)
-        readonly = QLabel("Écriture contrôlée · Créer / Modifier / Signature / DUE")
+        readonly = QLabel("Écriture contrôlée · Créer / Modifier / Supprimer / Signature / DUE")
         readonly.setProperty("muted", True)
         command_layout.addWidget(readonly)
         root.addWidget(command_bar)
@@ -558,6 +565,7 @@ class PeopleContractsPilot(QMainWindow):
             and contract.id_historique > 0
         )
         self.contract_edit_button.setEnabled(writable)
+        self.contract_delete_button.setEnabled(writable)
         self.contract_signature_button.setEnabled(writable)
         self.contract_due_button.setEnabled(writable)
 
@@ -617,6 +625,63 @@ class PeopleContractsPilot(QMainWindow):
         else:
             self.statusBar().showMessage(
                 f"Contrat n°{result.target_id} créé · relecture transactionnelle incomplète"
+            )
+
+
+    def _delete_selected_contract(self) -> None:
+        contract = self._selected_contract()
+        if contract is None or not callable(self._contract_write_port_factory):
+            return
+
+        contract_id = contract.id_historique
+        answer = QMessageBox.question(
+            self,
+            "Confirmation de suppression",
+            (
+                "Voulez-vous vraiment supprimer ce contrat ?\n\n"
+                f"> {contract.contract_type or 'Contrat'} · n°{contract_id}"
+            ),
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+        if answer != QMessageBox.StandardButton.Yes:
+            self.statusBar().showMessage("Suppression annulée · aucune écriture")
+            return
+
+        try:
+            port = self._contract_write_port_factory()
+            result = delete_contract(
+                port,
+                command=ContractDeleteCommand(
+                    contract_id=contract_id,
+                    confirmed=True,
+                ),
+            )
+        except Exception as exc:
+            self.statusBar().showMessage(f"Suppression du contrat impossible · {exc}")
+            return
+
+        if not result.ok and not result.committed:
+            self.statusBar().showMessage(
+                f"Contrat non supprimé · {result.code} · {result.message}"
+            )
+            return
+
+        try:
+            self._reload_contracts()
+        except Exception as exc:
+            self.statusBar().showMessage(
+                f"Contrat supprimé, mais rafraîchissement impossible · {exc}"
+            )
+            return
+
+        if result.ok:
+            self.statusBar().showMessage(
+                f"Contrat n°{contract_id} supprimé · absence confirmée après commit"
+            )
+        else:
+            self.statusBar().showMessage(
+                f"Contrat n°{contract_id} supprimé · contrôle d'absence incomplet"
             )
 
     def _edit_selected_contract(self) -> None:
@@ -741,6 +806,7 @@ class PeopleContractsPilot(QMainWindow):
         if hasattr(self, "contract_signature_button"):
             self.contract_create_button.setEnabled(False)
             self.contract_edit_button.setEnabled(False)
+            self.contract_delete_button.setEnabled(False)
             self.contract_signature_button.setEnabled(False)
             self.contract_due_button.setEnabled(False)
         self.statusBar().showMessage("Lecture seule · aucune sélection")
