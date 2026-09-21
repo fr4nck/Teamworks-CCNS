@@ -294,6 +294,17 @@ def _detruire_fenetres_smoke(app):
 
 def _initialiser_application():
     """Reprend le bootstrap historique en initialisant le cœur partagé."""
+    if os.environ.get("TEAMWORKS_PACKAGE_SMOKE_EMAIL") == "1":
+        # Ce hook ne s'active que dans le smoke du paquet PyInstaller. Il
+        # verrouille le défaut réel observé en recette : wx.richtext était
+        # présent mais son extension wx._xml manquait du bundle.
+        import wx._xml  # noqa: F401
+        import wx._richtext  # noqa: F401
+        import wx.richtext  # noqa: F401
+        from Ctrl import CTRL_Editeur_email  # noqa: F401
+        from Dlg import DLG_Mailer  # noqa: F401
+        print("TEAMWORKS_PACKAGE_EMAIL_IMPORT_OK", flush=True)
+
     for rep in ("Temp", "Updates", "Sync", "Lang", "Modeles", "Editions"):
         chemin = UTILS_Fichiers.GetRepUtilisateur(rep)
         if not os.path.isdir(chemin):
