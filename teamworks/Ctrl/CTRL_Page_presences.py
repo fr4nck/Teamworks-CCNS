@@ -105,7 +105,7 @@ class Panel(wx.Panel):
         field_gap = UTILS_Styles.GetLayoutSpacing("field_gap")
         page_gap = UTILS_Styles.GetLayoutSpacing("page_gap")
 
-        actions = wx.WrapSizer(wx.HORIZONTAL)
+        actions = wx.WrapSizer(wx.HORIZONTAL, 0)
         for bouton in (
             self.bouton_ajouter,
             self.bouton_modifier,
