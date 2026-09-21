@@ -146,8 +146,8 @@ class GestionDbContractWriteAdapter:
         ]
 
         optional = {
-            "operation_type": "NEW",
-            "previous_contract_id": None,
+            "operation_type": command.operation_type,
+            "previous_contract_id": command.previous_contract_id,
             "trial_period_value": command.trial_period_value,
             "trial_period_unit": command.trial_period_unit,
         }
@@ -169,8 +169,9 @@ class GestionDbContractWriteAdapter:
             "gross_monthly_salary",
             "gross_annual_salary",
         )
+        metadata_names = ("operation_type", "previous_contract_id")
         modern_supported = all(name in self._contract_columns() for name in modern_names)
-        exprs = [self._optional_expr(name) for name in modern_names]
+        exprs = [self._optional_expr(name) for name in modern_names + metadata_names]
         req = (
             "SELECT c.IDpersonne, c.IDtype, COALESCE(t.nom_abrege, t.nom, ''), "
             "COALESCE(t.nom, t.nom_abrege, ''), "
@@ -203,6 +204,8 @@ class GestionDbContractWriteAdapter:
             gross_monthly_salary=self._as_decimal(row[11]),
             gross_annual_salary=self._as_decimal(row[12]),
             modern_fields_supported=modern_supported,
+            operation_type=row[13],
+            previous_contract_id=int(row[14]) if row[14] is not None else None,
         )
 
     def update_contract(self, command: ContractEditCommand) -> int:
