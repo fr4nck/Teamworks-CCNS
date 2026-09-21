@@ -162,6 +162,30 @@ class GestionDbReimbursementWriteAdapter:
             trip_ids=self.list_trip_ids(person_id, reimbursement_id),
         )
 
+    def detach_all_trips(self, reimbursement_id: int) -> int:
+        self.db.cursor.execute(
+            "UPDATE deplacements SET IDremboursement=0 WHERE IDremboursement=%s"
+            % self._placeholder,
+            (reimbursement_id,),
+        )
+        return int(self.db.cursor.rowcount)
+
+    def delete_reimbursement(self, reimbursement_id: int, person_id: int) -> int:
+        self.db.cursor.execute(
+            "DELETE FROM remboursements WHERE IDremboursement=%s AND IDpersonne=%s"
+            % (self._placeholder, self._placeholder),
+            (reimbursement_id, person_id),
+        )
+        return int(self.db.cursor.rowcount)
+
+    def has_trip_assignment(self, reimbursement_id: int) -> bool:
+        self.db.cursor.execute(
+            "SELECT IDdeplacement FROM deplacements WHERE IDremboursement=%s"
+            % self._placeholder,
+            (reimbursement_id,),
+        )
+        return self.db.cursor.fetchone() is not None
+
     def commit(self) -> None:
         self.db.Commit()
 
