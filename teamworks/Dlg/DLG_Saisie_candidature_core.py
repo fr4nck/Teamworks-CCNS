@@ -69,9 +69,9 @@ class Panel(wx.Panel):
         self.label_periodes = wx.StaticText(self.sizer_disponibilites_staticbox, -1, _(u"Périodes :"))
         self.ctrl_periodes = ListBoxDisponibilites(self.sizer_disponibilites_staticbox)
         self.ctrl_periodes.SetMinSize((200, -1))
-        self.bouton_ajouter_periode = wx.BitmapButton(self.sizer_disponibilites_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_modifier_periode = wx.BitmapButton(self.sizer_disponibilites_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Modifier.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_supprimer_periode = wx.BitmapButton(self.sizer_disponibilites_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_ajouter_periode = CTRL_Bouton_image.CTRL(self.sizer_disponibilites_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Ajouter.png"))
+        self.bouton_modifier_periode = CTRL_Bouton_image.CTRL(self.sizer_disponibilites_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Modifier.png"))
+        self.bouton_supprimer_periode = CTRL_Bouton_image.CTRL(self.sizer_disponibilites_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Supprimer.png"))
         self.label_periodes_remarques = wx.StaticText(self.sizer_disponibilites_staticbox, -1, _(u"Remarques :"))
         self.ctrl_periodes_remarques = wx.TextCtrl(self.sizer_disponibilites_staticbox, -1, u"")
         
@@ -117,7 +117,7 @@ class Panel(wx.Panel):
 
         # Commandes
         self.bouton_aide = CTRL_Bouton_image.CTRL(self, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))
-        self.bouton_courrier = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Envoyer_courrier.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_courrier = CTRL_Bouton_image.CTRL(self, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/BoutonsImages/Envoyer_courrier.png"))
         self.bouton_ok = CTRL_Bouton_image.CTRL(self, texte=_(u"Ok"), cheminImage=Chemins.GetStaticPath("Images/32x32/Valider.png"))
         self.bouton_annuler = CTRL_Bouton_image.CTRL(self, texte=_(u"Annuler"), cheminImage=Chemins.GetStaticPath("Images/32x32/Annuler.png"))
         self.bouton_aide.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour obtenir de l'aide")))
