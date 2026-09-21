@@ -695,9 +695,6 @@ def validate_contract_create(command: ContractCreateCommand) -> tuple[str, ...]:
     if contract_type is ContractType.CEE:
         if type(command.trial_period_value) is int and command.trial_period_value != 0:
             errors.append("Un CEE ne doit pas comporter de période d'essai.")
-    elif operation is ContractOperation.CDD_RENEWAL:
-        if type(command.trial_period_value) is int and command.trial_period_value != 0:
-            errors.append("Un renouvellement de CDD ne doit pas recréer de période d'essai.")
 
     if not errors and trial_unit is not None:
         errors.extend(
