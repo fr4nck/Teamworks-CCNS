@@ -129,6 +129,7 @@ def main() -> None:
     activity_loader_class = None
     contract_write_port_factory = None
     reimbursement_write_port_factory = None
+    trip_write_port_factory = None
     if source == "production":
         phase = time.perf_counter()
         from deferred_people import DeferredPeopleAdapter, ProductionPeopleLoader
@@ -139,6 +140,7 @@ def main() -> None:
         activity_loader_class = ProductionIndividualActivityLoader
         contract_write_port_factory = adapter.build_contract_write_port
         reimbursement_write_port_factory = adapter.build_reimbursement_write_port
+        trip_write_port_factory = adapter.build_trip_write_port
 
     phase = time.perf_counter()
     from pilot_generalities import PeopleContractsGeneralitiesPilot
@@ -152,6 +154,7 @@ def main() -> None:
             activity_loader_class=activity_loader_class,
             contract_write_port_factory=contract_write_port_factory,
             reimbursement_write_port_factory=reimbursement_write_port_factory,
+            trip_write_port_factory=trip_write_port_factory,
         )
         after_window = time.perf_counter()
         window.show()
