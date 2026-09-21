@@ -6,6 +6,7 @@ from decimal import Decimal
 from application.services.contract_write import (
     ContractCreateCommand,
     ContractEditSnapshot,
+    contract_create_legacy_trial_days,
     create_contract,
     load_contract_creation_types,
 )
@@ -140,6 +141,9 @@ class CreateRecordingPort:
             end_date=command.end_date,
             operation_type=command.operation_type,
             previous_contract_id=command.previous_contract_id,
+            legacy_trial_days=contract_create_legacy_trial_days(command),
+            trial_period_value=command.trial_period_value,
+            trial_period_unit=command.trial_period_unit,
         )
 
     # Autres méthodes du port non utilisées par ce use case.
@@ -558,3 +562,146 @@ def test_cdd_to_cdi_persists_operation_and_previous_identity():
         ("commit",),
         ("readback", 900),
     ]
+
+
+
+def test_new_cdi_rejects_trial_above_ccns_group_maximum_before_database_access():
+    port = CreateRecordingPort()
+
+    result = create_contract(
+        port,
+        command=_command(
+            ccns_group="G3",
+            trial_period_value=3,
+            trial_period_unit="MONTH",
+        ),
+    )
+
+    assert result.code == WriteCode.VALIDATION_ERROR
+    assert "dépasse le maximum calculé" in result.message
+    assert port.calls == []
+
+
+def test_new_cdd_rejects_trial_above_legal_maximum_before_database_access():
+    port = CreateRecordingPort()
+
+    result = create_contract(
+        port,
+        command=_command(
+            contract_type_code="CDD",
+            end_date=date(2026, 10, 28),
+            trial_period_value=5,
+            trial_period_unit="DAY",
+        ),
+    )
+
+    assert result.code == WriteCode.VALIDATION_ERROR
+    assert "dépasse le maximum calculé" in result.message
+    assert port.calls == []
+
+
+def test_new_cdd_maximum_trial_roundtrips_structured_and_legacy_values():
+    port = CreateRecordingPort()
+
+    result = create_contract(
+        port,
+        command=_command(
+            contract_type_code="CDD",
+            end_date=date(2026, 10, 28),
+            trial_period_value=4,
+            trial_period_unit="DAY",
+        ),
+    )
+
+    assert result.ok is True
+    assert result.value is not None
+    assert result.value.trial_period_value == 4
+    assert result.value.trial_period_unit == "DAY"
+    assert result.value.legacy_trial_days == 4
+
+
+def test_cdd_to_cdi_automatic_zero_does_not_require_manual_confirmation():
+    port = CreateRecordingPort(previous_snapshot=_previous_cdd())
+
+    result = create_contract(
+        port,
+        command=_cdd_to_cdi_command(confirm_no_trial=False),
+    )
+
+    assert result.ok is True
+    assert result.committed is True
+    assert result.value is not None
+    assert result.value.trial_period_value == 0
+    assert result.value.legacy_trial_days == 0
+
+
+def test_cdd_to_cdi_rejects_trial_above_remaining_maximum_after_previous_read():
+    previous = _previous_cdd(
+        start_date=date(2026, 9, 1),
+        end_date=date(2026, 9, 30),
+    )
+    port = CreateRecordingPort(previous_snapshot=previous)
+
+    result = create_contract(
+        port,
+        command=_cdd_to_cdi_command(
+            ccns_group="G6",
+            gross_monthly_salary=Decimal("9999.00"),
+            trial_period_value=63,
+            trial_period_unit="DAY",
+        ),
+    )
+
+    assert result.code == WriteCode.VALIDATION_ERROR
+    assert "dépasse le maximum calculé" in result.message
+    assert ("readback", 700) in port.calls
+    assert ("insert", 12, "CDI") not in port.calls
+
+
+def test_cdd_to_cdi_accepts_exact_remaining_trial_maximum():
+    previous = _previous_cdd(
+        start_date=date(2026, 9, 1),
+        end_date=date(2026, 9, 30),
+    )
+    port = CreateRecordingPort(previous_snapshot=previous)
+
+    result = create_contract(
+        port,
+        command=_cdd_to_cdi_command(
+            ccns_group="G6",
+            gross_monthly_salary=Decimal("9999.00"),
+            trial_period_value=62,
+            trial_period_unit="DAY",
+            confirm_no_trial=False,
+        ),
+    )
+
+    assert result.ok is True
+    assert result.committed is True
+    assert result.value is not None
+    assert result.value.trial_period_value == 62
+    assert result.value.legacy_trial_days == 62
+
+
+def test_cdd_to_cdi_zero_with_remaining_trial_requires_explicit_confirmation():
+    previous = _previous_cdd(
+        start_date=date(2026, 9, 1),
+        end_date=date(2026, 9, 30),
+    )
+    port = CreateRecordingPort(previous_snapshot=previous)
+
+    result = create_contract(
+        port,
+        command=_cdd_to_cdi_command(
+            ccns_group="G6",
+            gross_monthly_salary=Decimal("9999.00"),
+            trial_period_value=0,
+            trial_period_unit="DAY",
+            confirm_no_trial=False,
+        ),
+    )
+
+    assert result.code == WriteCode.VALIDATION_ERROR
+    assert "Confirmez explicitement" in result.message
+    assert ("readback", 700) in port.calls
+    assert ("insert", 12, "CDI") not in port.calls
