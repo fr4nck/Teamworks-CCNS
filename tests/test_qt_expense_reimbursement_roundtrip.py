@@ -24,8 +24,14 @@ from data_adapter import PersonView, ReimbursementView, TripView  # noqa: E402
 from infrastructure.persistence.expense_reimbursement_write_adapter import (  # noqa: E402
     GestionDbReimbursementWriteAdapter,
 )
+from infrastructure.persistence.expense_trip_write_adapter import (  # noqa: E402
+    GestionDbTripWriteAdapter,
+)
 from pilot_generalities import PeopleContractsGeneralitiesPilot  # noqa: E402
-from scenario_expense_dialogs import ReimbursementPreviewDialog  # noqa: E402
+from scenario_expense_dialogs import (  # noqa: E402
+    ReimbursementPreviewDialog,
+    TripPreviewDialog,
+)
 
 
 class SqliteGestionDbCompat:
@@ -52,7 +58,9 @@ class SqliteGestionDbCompat:
                 IDpersonne INTEGER,
                 date TEXT,
                 objet TEXT,
+                cp_depart TEXT,
                 ville_depart TEXT,
+                cp_arrivee TEXT,
                 ville_arrivee TEXT,
                 distance REAL,
                 aller_retour TEXT,
@@ -61,8 +69,8 @@ class SqliteGestionDbCompat:
             );
             INSERT INTO personnes VALUES (12);
             INSERT INTO deplacements VALUES
-                (7, 12, '2026-09-10', 'Réunion', 'Bruz', 'Rennes', 20, 'False', 0.50, 0),
-                (8, 12, '2026-09-11', 'Formation', 'Bruz', 'Vitré', 50, 'False', 0.40, 0);
+                (7, 12, '2026-09-10', 'Réunion', '35170', 'Bruz', '35000', 'Rennes', 20, 'False', 0.50, 0),
+                (8, 12, '2026-09-11', 'Formation', '35170', 'Bruz', '35500', 'Vitré', 50, 'False', 0.40, 0);
             """
         )
         self.connexion.commit()
@@ -192,6 +200,7 @@ def _window(db):
     return PeopleContractsGeneralitiesPilot(
         ExpenseRoundTripAdapter(db),
         reimbursement_write_port_factory=lambda: GestionDbReimbursementWriteAdapter(db),
+        trip_write_port_factory=lambda: GestionDbTripWriteAdapter(db),
     )
 
 
@@ -356,5 +365,150 @@ def test_reimbursement_delete_cancel_keeps_parent_and_trips_unchanged():
         ).fetchone() == (1,)
         assert page.reimbursement_model.rowCount() == 1
         assert window.statusBar().currentMessage() == "Suppression annulée · aucune écriture"
+    finally:
+        window.close()
+
+
+
+def test_trip_create_modify_delete_roundtrips_qt_service_db_and_refresh():
+    _app()
+    db = SqliteGestionDbCompat()
+    window = _window(db)
+
+    try:
+        _select_person(window)
+        page = window.legacy_tabs.expenses_page
+        assert page.trip_actions.button("add").isEnabled() is True
+
+        def drive_create():
+            dialog = QApplication.activeModalWidget()
+            assert isinstance(dialog, TripPreviewDialog)
+            dialog.date_edit.setDate(QDate(2026, 9, 21))
+            dialog.object_edit.setPlainText("Réunion Rail B")
+            dialog.departure_postcode.setText("35170")
+            dialog.departure_city.setText("BRUZ")
+            dialog.arrival_postcode.setText("35240")
+            dialog.arrival_city.setText("RETIERS")
+            dialog.distance_edit.setText("42.5")
+            dialog.tariff_edit.setText("0.50")
+            dialog._validate_and_accept()
+
+        QTimer.singleShot(0, drive_create)
+        page.trip_actions.button("add").click()
+        QApplication.processEvents()
+
+        created = db.connexion.execute(
+            """
+            SELECT IDdeplacement, IDpersonne, date, objet, cp_depart, ville_depart,
+                   cp_arrivee, ville_arrivee, distance, aller_retour,
+                   tarif_km, IDremboursement
+            FROM deplacements
+            ORDER BY IDdeplacement DESC
+            LIMIT 1
+            """
+        ).fetchone()
+        assert created == (
+            9,
+            12,
+            "2026-09-21",
+            "Réunion Rail B",
+            "35170",
+            "BRUZ",
+            "35240",
+            "RETIERS",
+            42.5,
+            "False",
+            0.5,
+            0,
+        )
+        assert db.commit_count == 1
+        selected = page._selected_trip()
+        assert selected.id_historique == 9
+        assert selected.reimbursement_id is None
+        assert page.trip_actions.button("edit").isEnabled() is True
+        assert page.trip_actions.button("delete").isEnabled() is True
+
+        def drive_edit():
+            dialog = QApplication.activeModalWidget()
+            assert isinstance(dialog, TripPreviewDialog)
+            assert dialog.snapshot.trip_id == 9
+            dialog.object_edit.setPlainText("Réunion Rail B modifiée")
+            dialog.arrival_postcode.setText("35000")
+            dialog.arrival_city.setText("RENNES")
+            dialog.distance_edit.setText("50")
+            dialog.tariff_edit.setText("0.55")
+            dialog._validate_and_accept()
+
+        QTimer.singleShot(0, drive_edit)
+        page.trip_actions.button("edit").click()
+        QApplication.processEvents()
+
+        assert db.connexion.execute(
+            """
+            SELECT objet, cp_arrivee, ville_arrivee, distance, tarif_km, IDremboursement
+            FROM deplacements WHERE IDdeplacement=9
+            """
+        ).fetchone() == ("Réunion Rail B modifiée", "35000", "RENNES", 50.0, 0.55, 0)
+        assert db.commit_count == 2
+        assert page._selected_trip().id_historique == 9
+
+        def confirm_delete():
+            box = QApplication.activeModalWidget()
+            assert isinstance(box, QMessageBox)
+            yes = box.button(QMessageBox.StandardButton.Yes)
+            assert yes is not None
+            yes.click()
+
+        QTimer.singleShot(0, confirm_delete)
+        page.trip_actions.button("delete").click()
+        QApplication.processEvents()
+
+        assert db.connexion.execute(
+            "SELECT IDdeplacement FROM deplacements WHERE IDdeplacement=9"
+        ).fetchone() is None
+        assert db.commit_count == 3
+        assert page.trip_model.rowCount() == 2
+        assert "Déplacement n°9 supprimé" in window.statusBar().currentMessage()
+    finally:
+        window.close()
+
+
+def test_trip_delete_is_blocked_in_qt_when_already_reimbursed():
+    _app()
+    db = SqliteGestionDbCompat()
+    db.connexion.execute(
+        "INSERT INTO remboursements VALUES (3, 12, '2026-09-30', 20.0, '8')"
+    )
+    db.connexion.execute(
+        "UPDATE deplacements SET IDremboursement=3 WHERE IDdeplacement=8"
+    )
+    db.connexion.commit()
+    window = _window(db)
+
+    try:
+        _select_person(window)
+        page = window.legacy_tabs.expenses_page
+        page.trip_table.selectRow(1)
+        QApplication.processEvents()
+        selected = page._selected_trip()
+        assert selected.id_historique == 8
+        assert selected.reimbursement_id == 3
+
+        def close_information():
+            box = QApplication.activeModalWidget()
+            assert isinstance(box, QMessageBox)
+            ok = box.button(QMessageBox.StandardButton.Ok)
+            assert ok is not None
+            ok.click()
+
+        QTimer.singleShot(0, close_information)
+        page.trip_actions.button("delete").click()
+        QApplication.processEvents()
+
+        assert db.commit_count == 0
+        assert db.connexion.execute(
+            "SELECT IDremboursement FROM deplacements WHERE IDdeplacement=8"
+        ).fetchone() == (3,)
+        assert "remboursement n°3" in window.statusBar().currentMessage()
     finally:
         window.close()
