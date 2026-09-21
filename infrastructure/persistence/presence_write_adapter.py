@@ -69,7 +69,7 @@ class GestionDbPresenceWriteAdapter:
             title=str(row[5] or ""),
         )
 
-    def has_overlap(
+    def find_overlap(
         self,
         *,
         person_id: int,
@@ -77,7 +77,7 @@ class GestionDbPresenceWriteAdapter:
         start_time: str,
         end_time: str,
         exclude_presence_id: int | None = None,
-    ) -> bool:
+    ) -> int | None:
         p = self._placeholder
         sql = (
             "SELECT IDpresence FROM presences "
@@ -94,9 +94,10 @@ class GestionDbPresenceWriteAdapter:
         if exclude_presence_id is not None:
             sql += " AND IDpresence<>%s" % p
             params.append(exclude_presence_id)
-        sql += " LIMIT 1"
+        sql += " ORDER BY IDpresence LIMIT 1"
         self.db.cursor.execute(sql, tuple(params))
-        return self.db.cursor.fetchone() is not None
+        row = self.db.cursor.fetchone()
+        return int(row[0]) if row is not None else None
 
     def insert_presence(
         self,
