@@ -17,6 +17,8 @@ on:
       - "teamworks/Utils/UTILS_Fichiers.py"
       - "tests/test_qt_vanilla_packaging_contract.py"
   push:
+    branches:
+      - qt/vanilla-0.1-rc
     tags:
       - "qt-v0.1.*"
   workflow_dispatch:
