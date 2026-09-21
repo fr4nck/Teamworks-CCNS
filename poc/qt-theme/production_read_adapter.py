@@ -10,6 +10,7 @@ from data_adapter import (
     PersonCoordinateView,
     PersonGeneralitiesView,
     PersonView,
+    PresenceCategoryView,
     PresenceView,
     ReimbursementView,
     ScenarioView,
@@ -172,6 +173,26 @@ class TeamworksProductionReadAdapter(TeamworksReadAdapter):
     def list_presences(self, person_id: str | int) -> Sequence[PresenceView]:
         self._ensure_open()
         return tuple(self._presence_reader.list_presences(person_id))
+
+    def list_presence_categories(self) -> Sequence[PresenceCategoryView]:
+        self._ensure_open()
+        return tuple(
+            PresenceCategoryView(
+                category_id=int(record.IDcategorie),
+                name=_text(record.nom_categorie),
+                color=_text(record.couleur, empty=""),
+            )
+            for record in self._activity_reader.lire_categories_presences()
+        )
+
+    def build_presence_write_port(self):
+        """Construit le port d'écriture Présences sur la session activité."""
+        self._ensure_open()
+        from infrastructure.persistence.presence_write_adapter import (
+            GestionDbPresenceWriteAdapter,
+        )
+
+        return GestionDbPresenceWriteAdapter(self._activity_reader.db)
 
     def list_scenarios(self, person_id: str | int) -> Sequence[ScenarioView]:
         self._ensure_open()
