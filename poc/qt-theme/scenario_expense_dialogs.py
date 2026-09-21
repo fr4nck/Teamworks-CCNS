@@ -335,6 +335,9 @@ class TripPreviewDialog(TwDialogShell):
         self.arrival_city.setText(snapshot.arrival_city)
         self.distance_edit.setText(str(snapshot.distance))
         self.round_trip.setChecked(bool(snapshot.round_trip))
+        self.distance_unit.setText(
+            "Km (aller / retour)" if snapshot.round_trip else "Km (aller simple)"
+        )
         self.tariff_edit.setText(str(snapshot.tariff_per_km))
         reimbursement_id = snapshot.reimbursement_id
         if reimbursement_id not in (None, 0):
@@ -362,7 +365,7 @@ class TripPreviewDialog(TwDialogShell):
         except (InvalidOperation, ValueError):
             return
         distance = distance * 2 if checked else distance / 2
-        self.distance_edit.setText(str(distance.normalize()))
+        self.distance_edit.setText(format(distance, "f"))
 
     def _warning(self, title: str, text: str) -> None:
         QMessageBox.warning(self, title, text)
