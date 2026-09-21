@@ -54,6 +54,8 @@ class ContractEditSnapshot:
     modern_fields_supported: bool
     operation_type: Optional[str] = None
     previous_contract_id: Optional[int] = None
+    legacy_classification_id: Optional[int] = None
+    legacy_point_id: Optional[int] = None
 
 
 @dataclass(frozen=True)
@@ -119,6 +121,17 @@ class ContractWritePort(Protocol):
     def update_contract(self, command: ContractEditCommand) -> int:
         ...
 
+    def list_legacy_classifications(self):
+        ...
+
+    def list_legacy_point_values(self):
+        ...
+
+    def update_legacy_classification(
+        self, contract_id: int, classification_id: int, point_id: int
+    ) -> int:
+        ...
+
     def commit(self) -> None:
         ...
 
@@ -126,8 +139,205 @@ class ContractWritePort(Protocol):
         ...
 
 
+@dataclass(frozen=True)
+class LegacyClassificationChoice:
+    classification_id: int
+    label: str
+
+
+@dataclass(frozen=True)
+class LegacyPointChoice:
+    point_id: int
+    value: Decimal
+    effective_date: date
+
+
+@dataclass(frozen=True)
+class LegacyContractOptions:
+    classifications: tuple[LegacyClassificationChoice, ...]
+    point_values: tuple[LegacyPointChoice, ...]
+    applicable_point_id: Optional[int]
+
+
+@dataclass(frozen=True)
+class ContractLegacyClassificationCommand:
+    contract_id: int
+    classification_id: int
+    point_id: int
+
+
 def _normalise_code(value: object) -> str:
     return str(value or "").strip().upper()
+
+
+def _as_legacy_date(value: object) -> date:
+    if type(value) is date:
+        return value
+    text = str(value or "").strip()
+    if not text:
+        raise ValueError("Date de valeur de point absente.")
+    return date.fromisoformat(text[:10])
+
+
+def _as_legacy_decimal(value: object) -> Decimal:
+    result = Decimal(str(value))
+    if not result.is_finite():
+        raise ValueError("Valeur de point invalide.")
+    return result
+
+
+def load_legacy_contract_options(
+    port: ContractWritePort,
+    *,
+    reference_date: date,
+) -> WriteResult[LegacyContractOptions]:
+    if type(reference_date) is not date:
+        return WriteResult(
+            ok=False,
+            code=WriteCode.VALIDATION_ERROR,
+            message="La date de référence historique est invalide.",
+        )
+
+    try:
+        raw_classifications = port.list_legacy_classifications()
+        raw_points = port.list_legacy_point_values()
+
+        classifications = tuple(
+            LegacyClassificationChoice(
+                classification_id=int(classification_id),
+                label=str(label or "").strip(),
+            )
+            for classification_id, label in raw_classifications
+            if is_valid_target_id(int(classification_id))
+        )
+        points = tuple(
+            LegacyPointChoice(
+                point_id=int(point_id),
+                value=_as_legacy_decimal(value),
+                effective_date=_as_legacy_date(effective_date),
+            )
+            for point_id, value, effective_date in raw_points
+            if is_valid_target_id(int(point_id))
+        )
+    except Exception as exc:
+        return WriteResult(
+            ok=False,
+            code=WriteCode.DATABASE_ERROR,
+            message="Lecture des classifications historiques impossible : %s" % exc,
+        )
+
+    applicable = [
+        item for item in points if item.effective_date <= reference_date
+    ]
+    applicable_point_id = (
+        max(applicable, key=lambda item: (item.effective_date, item.point_id)).point_id
+        if applicable
+        else None
+    )
+
+    return WriteResult(
+        ok=True,
+        code=WriteCode.OK,
+        message="Classifications historiques chargées.",
+        value=LegacyContractOptions(
+            classifications=classifications,
+            point_values=points,
+            applicable_point_id=applicable_point_id,
+        ),
+    )
+
+
+def update_contract_legacy_classification(
+    port: ContractWritePort,
+    *,
+    command: ContractLegacyClassificationCommand,
+) -> WriteResult[ContractEditSnapshot]:
+    if not is_valid_target_id(command.contract_id):
+        return invalid_target_result(command.contract_id)
+    if not is_valid_target_id(command.classification_id):
+        return WriteResult(
+            ok=False,
+            code=WriteCode.VALIDATION_ERROR,
+            message="Classification historique invalide.",
+            target_id=command.contract_id,
+        )
+    if not is_valid_target_id(command.point_id):
+        return WriteResult(
+            ok=False,
+            code=WriteCode.VALIDATION_ERROR,
+            message="Valeur de point historique invalide.",
+            target_id=command.contract_id,
+        )
+
+    loaded = load_contract_for_edit(port, contract_id=command.contract_id)
+    if not loaded.ok or loaded.value is None:
+        return loaded
+    original = loaded.value
+
+    if _normalise_code(original.contract_type_code) == ContractType.CEE.value:
+        return WriteResult(
+            ok=False,
+            code=WriteCode.VALIDATION_ERROR,
+            message="Un CEE n'utilise pas de classification historique.",
+            target_id=command.contract_id,
+        )
+    if _normalise_code(original.convention_code) == ConventionCode.CCNS.value:
+        return WriteResult(
+            ok=False,
+            code=WriteCode.VALIDATION_ERROR,
+            message="Un contrat CCNS moderne utilise le groupe CCNS, pas la classification historique.",
+            target_id=command.contract_id,
+        )
+
+    options_result = load_legacy_contract_options(
+        port,
+        reference_date=original.start_date,
+    )
+    if not options_result.ok or options_result.value is None:
+        return WriteResult(
+            ok=False,
+            code=options_result.code,
+            message=options_result.message,
+            target_id=command.contract_id,
+        )
+    options = options_result.value
+    valid_classification_ids = {
+        item.classification_id for item in options.classifications
+    }
+    if command.classification_id not in valid_classification_ids:
+        return WriteResult(
+            ok=False,
+            code=WriteCode.VALIDATION_ERROR,
+            message="La classification historique sélectionnée n'existe pas.",
+            target_id=command.contract_id,
+        )
+    if options.applicable_point_id is None:
+        return WriteResult(
+            ok=False,
+            code=WriteCode.VALIDATION_ERROR,
+            message="Aucune valeur de point historique n'est applicable à la date du contrat.",
+            target_id=command.contract_id,
+        )
+    if command.point_id != options.applicable_point_id:
+        return WriteResult(
+            ok=False,
+            code=WriteCode.VALIDATION_ERROR,
+            message="La valeur de point sélectionnée ne correspond pas à la date du contrat.",
+            target_id=command.contract_id,
+        )
+
+    return execute_transactional_update(
+        target_id=command.contract_id,
+        target_exists=lambda: port.contract_exists(command.contract_id),
+        write=lambda: port.update_legacy_classification(
+            command.contract_id,
+            command.classification_id,
+            command.point_id,
+        ),
+        commit=port.commit,
+        rollback=port.rollback,
+        readback=lambda: _readback_contract(port, command.contract_id),
+    )
 
 
 def _is_cee(command: ContractEditCommand) -> bool:
