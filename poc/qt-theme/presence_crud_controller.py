@@ -38,6 +38,7 @@ class PresenceCrudController(QObject):
         self._refresh_callback = refresh_callback
         self._dialog_factory = dialog_factory
         self._person_id = None
+        self._ready = False
         page.action_requested.connect(self._on_action)
         self._sync_enabled()
 
@@ -50,11 +51,18 @@ class PresenceCrudController(QObject):
             self._person_id = person_id
         else:
             self._person_id = None
+        self._ready = False
+        self._sync_enabled()
+
+    def set_ready(self, ready: bool) -> None:
+        self._ready = bool(ready) and self._person_id is not None
         self._sync_enabled()
 
     def _sync_enabled(self) -> None:
         self._page.set_write_enabled(
-            self._person_id is not None and callable(self._write_port_factory)
+            self._person_id is not None
+            and self._ready
+            and callable(self._write_port_factory)
         )
 
     def _categories(self):
