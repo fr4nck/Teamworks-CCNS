@@ -14,7 +14,8 @@ La qualification MySQL de la Qt Vanilla 0.1 repose sur trois documents compléme
 
 - `docs/MATRICE_VALIDATION_QT_VANILLA_0.1_MYSQL.md` : cas de test Compatibilité / Intégrité / Performance ;
 - `docs/SEUILS_PERFORMANCE_QT_VANILLA_0.1.md` : seuils chiffrés et règles de mesure ;
-- `docs/PV_RECETTE_QT_VANILLA_0.1_MYSQL.md` : procès-verbal à remplir et signer.
+- `docs/PV_RECETTE_QT_VANILLA_0.1_MYSQL.md` : procès-verbal à remplir et signer ;
+- `docs/COLLECTE_PREUVES_QT_VANILLA_0.1_MYSQL.md` : snapshots, comparaison de schéma et synthèse p50/p95 automatisés.
 
 Le verdict final doit être produit à partir de ces trois documents. Une simple impression de bon fonctionnement ne vaut pas qualification.
 
