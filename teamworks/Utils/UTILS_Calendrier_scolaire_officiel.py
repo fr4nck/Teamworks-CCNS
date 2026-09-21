@@ -20,7 +20,6 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 from zoneinfo import ZoneInfo
 
-import icalendar
 
 
 DATASET = "fr-en-calendrier-scolaire"
@@ -269,6 +268,11 @@ def _valeur_ical(component, nom):
 
 
 def charger_depuis_ical(zone, timeout=DEFAULT_TIMEOUT):
+    # Dépendance runtime historique, importée seulement lorsque le fallback
+    # iCal est réellement nécessaire afin de garder le provider testable sans
+    # dépendance réseau/GUI supplémentaire dans le job Linux minimal.
+    import icalendar
+
     code = normaliser_zone(zone)
     url = ICAL_URLS.get(code)
     if not url:
