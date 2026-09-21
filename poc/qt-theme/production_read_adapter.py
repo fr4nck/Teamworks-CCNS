@@ -170,13 +170,22 @@ class TeamworksProductionReadAdapter(TeamworksReadAdapter):
         return GestionDbContractWriteAdapter(self._contract_reader.db)
 
     def build_reimbursement_write_port(self):
-        """Construit le port Frais sur la session DB du reader d'activité."""
+        """Construit le port Remboursements sur la session DB du reader d'activité."""
         self._ensure_open()
         from infrastructure.persistence.expense_reimbursement_write_adapter import (
             GestionDbReimbursementWriteAdapter,
         )
 
         return GestionDbReimbursementWriteAdapter(self._activity_reader.db)
+
+    def build_trip_write_port(self):
+        """Construit le port Déplacements sur la session DB du reader d'activité."""
+        self._ensure_open()
+        from infrastructure.persistence.expense_trip_write_adapter import (
+            GestionDbTripWriteAdapter,
+        )
+
+        return GestionDbTripWriteAdapter(self._activity_reader.db)
 
     def list_presences(self, person_id: str | int) -> Sequence[PresenceView]:
         self._ensure_open()
