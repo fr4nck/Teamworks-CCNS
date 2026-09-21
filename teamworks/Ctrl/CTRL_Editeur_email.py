@@ -263,7 +263,7 @@ class Panel_Expediteur(wx.Panel):
         # Layout
         grid_sizer = wx.FlexGridSizer(rows=1, cols=2, vgap=5, hgap=5)
         grid_sizer.Add(self.ctrl_exp, 0, wx.EXPAND, 0)
-        grid_sizer.Add(self.bouton_exp, 0, wx.EXPAND, 0)
+        grid_sizer.Add(self.bouton_exp, 0, wx.ALIGN_CENTER_VERTICAL, 0)
         grid_sizer.AddGrowableRow(0)
         grid_sizer.AddGrowableCol(0)
         self.SetSizer(grid_sizer)
