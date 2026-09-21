@@ -21,13 +21,13 @@ class Panel(wx.Panel):
         self.listePiecesJointes = []
         self.label_exp = wx.StaticText(self, -1, _(u"Exp. :"))
         self.ctrl_exp = wx.Choice(self, -1, choices=[], size=(50, -1))
-        self.bouton_exp = wx.Button(self, -1, "...", size=(20, 20))  # native-button-ok: sélecteur compact intégré au champ
+        self.bouton_exp = CTRL_Bouton_image.Compact(self, texte="...")
         self.label_a = wx.StaticText(self, -1, _(u"A :"))
         self.ctrl_a = wx.TextCtrl(self, -1, "")
-        self.bouton_a = wx.Button(self, -1, "...", size=(20, 20))  # native-button-ok: sélecteur compact intégré au champ
+        self.bouton_a = CTRL_Bouton_image.Compact(self, texte="...")
         self.label_cci = wx.StaticText(self, -1, _(u"Cci :"))
         self.ctrl_cci = wx.TextCtrl(self, -1, "")
-        self.bouton_cci = wx.Button(self, -1, "...", size=(20, 20))  # native-button-ok: sélecteur compact intégré au champ
+        self.bouton_cci = CTRL_Bouton_image.Compact(self, texte="...")
         self.label_objet = wx.StaticText(self, -1, _(u"Objet :"))
         self.ctrl_objet = wx.TextCtrl(self, -1, "")
         self.label_joindre = wx.StaticText(self, -1, _(u"Joindre :"))
