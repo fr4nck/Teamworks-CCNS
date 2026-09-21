@@ -66,12 +66,12 @@ class Panel(wx.Panel):
         self.ctrl_fonction = CheckListBox(self.sizer_poste_staticbox)
         self.ctrl_fonction.SetMinSize((20, 20))
         self.ctrl_fonction.Remplissage(self.Importation_fonctions())
-        self.bouton_fonctions = wx.Button(self.sizer_poste_staticbox, -1, "...", size=(20, 20))  # native-button-ok: sélecteur compact intégré au champ
+        self.bouton_fonctions = CTRL_Bouton_image.Compact(self.sizer_poste_staticbox, texte="...")
         self.label_affectation = wx.StaticText(self.sizer_poste_staticbox, -1, _(u"Affectation :"))
         self.ctrl_affectations = CheckListBox(self.sizer_poste_staticbox)
         self.ctrl_affectations.SetMinSize((20, 20))
         self.ctrl_affectations.Remplissage(self.Importation_affectations())
-        self.bouton_affectations = wx.Button(self.sizer_poste_staticbox, -1, "...", size=(20, 20))  # native-button-ok: sélecteur compact intégré au champ
+        self.bouton_affectations = CTRL_Bouton_image.Compact(self.sizer_poste_staticbox, texte="...")
         self.label_poste_remarques = wx.StaticText(self.sizer_poste_staticbox, -1, _(u"Remarques :"))
         self.ctrl_poste_remarques = wx.TextCtrl(self.sizer_poste_staticbox, -1, "")
         
@@ -81,7 +81,7 @@ class Panel(wx.Panel):
         self.ctrl_diffuseurs = CheckListBox(self.sizer_diffusion_staticbox)
         self.ctrl_diffuseurs.SetMinSize((20, 20))
         self.ctrl_diffuseurs.Remplissage(self.Importation_diffuseurs())
-        self.bouton_diffuseurs = wx.Button(self.sizer_diffusion_staticbox, -1, "...", size=(20, 20))  # native-button-ok: sélecteur compact intégré au champ
+        self.bouton_diffuseurs = CTRL_Bouton_image.Compact(self.sizer_diffusion_staticbox, texte="...")
         
         # Commandes
         self.bouton_aide = CTRL_Bouton_image.CTRL(self, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))
