@@ -969,7 +969,7 @@ class Panel(wx.Panel):
         # Layout
         sizer =  wx.BoxSizer(wx.VERTICAL)
         sizerOptions = wx.FlexGridSizer(rows=1, cols=8, vgap=0, hgap=5)
-        sizerOptions.Add(self.bouton_CalendrierAnnuel, 0, wx.EXPAND, 0)
+        sizerOptions.Add(self.bouton_CalendrierAnnuel, 0, wx.ALIGN_CENTER_VERTICAL, 0)
         sizerOptions.Add(self.combo_mois, 0, wx.EXPAND, 0)
         sizerOptions.Add(self.ctrl_annee, 0, wx.EXPAND, 0)
         sizerOptions.Add(self.spin, 0, wx.EXPAND, 0)
