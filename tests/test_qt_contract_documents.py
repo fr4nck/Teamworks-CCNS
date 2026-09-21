@@ -18,7 +18,7 @@ if str(POC) not in sys.path:
     sys.path.insert(0, str(POC))
 
 from PySide6.QtCore import QTimer  # noqa: E402
-from PySide6.QtWidgets import QApplication  # noqa: E402
+from PySide6.QtWidgets import QApplication, QLabel  # noqa: E402
 
 from application.services.contract_document_workspace import (  # noqa: E402
     ContractDocumentContext,
@@ -198,9 +198,11 @@ def test_qt_contract_document_action_uses_stable_contract_id_and_opens_readonly_
             assert isinstance(dialog, ContractDocumentsDialog)
             assert dialog.workspace.contract_id == 417
             assert dialog.document_choice.count() > 0
-            assert "génération Word / LibreOffice" in dialog.findChildren(
-                type(dialog.windowTitle()) if False else object
-            )[0].text() if False else True
+            labels = [item.text() for item in dialog.findChildren(QLabel)]
+            assert any(
+                "génération Word / LibreOffice" in text
+                for text in labels
+            )
             dialog.reject()
 
         QTimer.singleShot(0, close_dialog)
