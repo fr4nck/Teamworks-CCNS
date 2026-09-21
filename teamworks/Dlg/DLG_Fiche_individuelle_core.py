@@ -469,12 +469,35 @@ class Dialog(wx.Dialog):
             pass
 
     def OnMotionTxtDefilant(self, event):
-        self.txtDefilant.Stop()
+        if not self._fermeture_en_cours:
+            self.txtDefilant.Stop()
         event.Skip()
 
     def OnLeaveTxtDefilant(self, event):
-        self.txtDefilant.Start()
+        if not self._fermeture_en_cours:
+            self.txtDefilant.Start()
         event.Skip()
+
+    def _arreter_callbacks_avant_fermeture(self):
+        """Neutralise le ticker et ses événements avant EndModal/Destroy.
+
+        Des EVT_LEAVE_WINDOW déjà en file pouvaient redémarrer le timer pendant
+        la destruction native de la fiche. La fermeture devient idempotente et
+        aucun callback du bandeau ne peut réarmer le ticker ensuite.
+        """
+        if self._fermeture_en_cours:
+            return False
+        self._fermeture_en_cours = True
+        try:
+            self.txtDefilant.Stop()
+        except Exception:
+            pass
+        try:
+            self.txtDefilant.Unbind(wx.EVT_MOTION)
+            self.txtDefilant.Unbind(wx.EVT_LEAVE_WINDOW)
+        except Exception:
+            pass
+        return True
 
     def OnBoutonAide(self, event):
         from Utils import UTILS_Aide
@@ -513,11 +536,8 @@ class Dialog(wx.Dialog):
             else:
                 return False
 
-        self._fermeture_en_cours = True
-        try:
-            self.txtDefilant.Stop()
-        except Exception:
-            pass
+        if not self._arreter_callbacks_avant_fermeture():
+            return False
 
         frm = FonctionsPerso.FrameOuverte("Personnes")
         if frm is not None:
