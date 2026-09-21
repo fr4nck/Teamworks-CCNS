@@ -80,6 +80,7 @@ class SqliteGestionDbCompat:
             INSERT INTO personnes VALUES (12, 'Ada', 'Lovelace');
             INSERT INTO contrats_class VALUES (3, 'Classification historique');
             INSERT INTO contrats_types VALUES (4, 'CDI', 'CDI');
+            INSERT INTO contrats_types VALUES (5, 'CEE', 'CEE');
             INSERT INTO contrats VALUES (
                 417, 12, NULL, 4, NULL,
                 '2026-09-01', '2999-01-01', NULL, 0,
@@ -346,6 +347,95 @@ def test_create_action_roundtrips_dialog_insert_commit_readback_and_refresh():
         assert refreshed.start == "01/11/2026"
         assert refreshed.classification == "Groupe 4"
         assert refreshed.duration == "28 h"
+        assert (
+            window.statusBar().currentMessage()
+            == "Contrat n°418 créé et relu depuis la base"
+        )
+    finally:
+        window.close()
+        reader.close()
+
+
+
+def test_create_cee_action_roundtrips_dialog_insert_commit_readback_and_refresh():
+    _app()
+    db = SqliteGestionDbCompat()
+    reader = CcnsDataReader(db_factory=lambda: db)
+    window = _window(db, reader)
+
+    try:
+        _select_contract(window)
+        assert window.contracts_model.rowCount() == 1
+
+        def drive_create_dialog():
+            dialog = QApplication.activeModalWidget()
+            assert isinstance(dialog, ContractCreateDialog)
+
+            cee_index = dialog.contract_type.findData("CEE")
+            assert cee_index >= 0
+            dialog.contract_type.setCurrentIndex(cee_index)
+            QApplication.processEvents()
+
+            assert dialog.end_date.isEnabled() is True
+            assert dialog.cee_qualification.isVisible() is True
+            assert dialog.group.isVisible() is False
+            assert dialog.weekly_hours.isVisible() is False
+            assert dialog.monthly_salary.isVisible() is False
+            assert dialog.annual_salary.isVisible() is False
+            assert dialog.trial_row.isVisible() is False
+
+            dialog.start_date.setDate(QDate(2026, 11, 10))
+            dialog.end_date.setDate(QDate(2026, 11, 15))
+            qualification_index = dialog.cee_qualification.findData("BAFA_HOLDER")
+            assert qualification_index >= 0
+            dialog.cee_qualification.setCurrentIndex(qualification_index)
+            dialog._on_accept()
+
+        QTimer.singleShot(0, drive_create_dialog)
+        window.contract_create_button.click()
+        QApplication.processEvents()
+
+        created = db.connexion.execute(
+            """
+            SELECT IDcontrat, IDpersonne, IDclassification, IDtype,
+                   date_debut, date_fin, date_rupture, essai,
+                   signature, due, convention_code, ccns_group,
+                   cee_qualification, weekly_hours,
+                   gross_monthly_salary, gross_annual_salary
+            FROM contrats
+            WHERE IDcontrat=?
+            """,
+            (418,),
+        ).fetchone()
+
+        assert created == (
+            418,
+            12,
+            None,
+            5,
+            "2026-11-10",
+            "2026-11-15",
+            None,
+            0,
+            "",
+            "",
+            "CCNS",
+            None,
+            "BAFA_HOLDER",
+            None,
+            None,
+            None,
+        )
+        assert db.commit_count == 1
+
+        assert window.contracts_model.rowCount() == 2
+        selected_rows = window.contracts_table.selectionModel().selectedRows()
+        assert len(selected_rows) == 1
+        refreshed = window.contracts_model.contract_at(selected_rows[0].row())
+        assert refreshed.id_historique == 418
+        assert refreshed.kind == "CEE"
+        assert refreshed.start == "10/11/2026"
+        assert refreshed.end == "15/11/2026"
         assert (
             window.statusBar().currentMessage()
             == "Contrat n°418 créé et relu depuis la base"

@@ -7,6 +7,7 @@ from application.services.contract_write import (
     ContractCreateCommand,
     ContractEditSnapshot,
     create_contract,
+    load_contract_creation_types,
 )
 from application.services.transactional_write import WriteCode
 
@@ -31,8 +32,8 @@ def _command(**changes):
     return ContractCreateCommand(**values)
 
 
-def _snapshot(contract_id=900):
-    return ContractEditSnapshot(
+def _snapshot(contract_id=900, **changes):
+    values = dict(
         contract_id=contract_id,
         person_id=12,
         contract_type_code="CDI",
@@ -48,6 +49,25 @@ def _snapshot(contract_id=900):
         break_date=None,
         modern_fields_supported=True,
     )
+    values.update(changes)
+    return ContractEditSnapshot(**values)
+
+
+def _cee_command(**changes):
+    values = dict(
+        contract_type_code="CEE",
+        ccns_group=None,
+        cee_qualification="BAFA_HOLDER",
+        weekly_hours=None,
+        gross_monthly_salary=None,
+        gross_annual_salary=None,
+        end_date=date(2026, 10, 15),
+        trial_period_value=0,
+        trial_period_unit="DAY",
+        confirm_no_trial=False,
+    )
+    values.update(changes)
+    return _command(**values)
 
 
 class CreateRecordingPort:
@@ -67,6 +87,7 @@ class CreateRecordingPort:
         self.fail_readback = fail_readback
         self.calls = []
         self.committed = False
+        self.inserted_command = None
 
     def person_exists(self, person_id):
         self.calls.append(("person_exists", person_id))
@@ -80,6 +101,7 @@ class CreateRecordingPort:
         self.calls.append(("insert", command.person_id, command.contract_type_code))
         if self.fail_insert:
             raise RuntimeError("insert")
+        self.inserted_command = command
         return self.created_id
 
     def commit(self):
@@ -93,7 +115,23 @@ class CreateRecordingPort:
         self.calls.append(("readback", contract_id))
         if self.fail_readback:
             raise RuntimeError("readback")
-        return _snapshot(contract_id)
+        if self.inserted_command is None:
+            return _snapshot(contract_id)
+        command = self.inserted_command
+        return _snapshot(
+            contract_id,
+            person_id=command.person_id,
+            contract_type_code=command.contract_type_code,
+            contract_type_label=command.contract_type_code,
+            convention_code=command.convention_code,
+            ccns_group=command.ccns_group,
+            cee_qualification=command.cee_qualification,
+            weekly_hours=command.weekly_hours,
+            gross_monthly_salary=command.gross_monthly_salary,
+            gross_annual_salary=command.gross_annual_salary,
+            start_date=command.start_date,
+            end_date=command.end_date,
+        )
 
     # Autres méthodes du port non utilisées par ce use case.
     def contract_exists(self, contract_id):
@@ -212,4 +250,103 @@ def test_zero_trial_requires_explicit_confirmation():
 
     assert result.code == WriteCode.VALIDATION_ERROR
     assert "Confirmez explicitement" in result.message
+    assert port.calls == []
+
+
+
+def test_creation_types_expose_cee_when_configured_in_database():
+    port = CreateRecordingPort(available=("CEE", "CDD", "CDI"))
+
+    result = load_contract_creation_types(port)
+
+    assert result.ok is True
+    assert result.value == ("CDI", "CDD", "CEE")
+
+
+def test_create_cee_commits_once_and_reads_back_qualification():
+    port = CreateRecordingPort(available=("CDI", "CDD", "CEE"))
+
+    result = create_contract(port, command=_cee_command())
+
+    assert result.ok is True
+    assert result.code == WriteCode.OK
+    assert result.committed is True
+    assert result.value is not None
+    assert result.value.contract_type_code == "CEE"
+    assert result.value.cee_qualification == "BAFA_HOLDER"
+    assert result.value.ccns_group is None
+    assert result.value.weekly_hours is None
+    assert result.value.end_date == date(2026, 10, 15)
+    assert port.calls == [
+        ("person_exists", 12),
+        ("types",),
+        ("insert", 12, "CEE"),
+        ("commit",),
+        ("readback", 900),
+    ]
+
+
+def test_create_cee_requires_qualification_before_database_access():
+    port = CreateRecordingPort(available=("CDI", "CDD", "CEE"))
+
+    result = create_contract(
+        port,
+        command=_cee_command(cee_qualification=None),
+    )
+
+    assert result.code == WriteCode.VALIDATION_ERROR
+    assert "qualification CEE est obligatoire" in result.message
+    assert port.calls == []
+
+
+def test_create_cee_rejects_unknown_qualification_before_database_access():
+    port = CreateRecordingPort(available=("CDI", "CDD", "CEE"))
+
+    result = create_contract(
+        port,
+        command=_cee_command(cee_qualification="INCONNUE"),
+    )
+
+    assert result.code == WriteCode.VALIDATION_ERROR
+    assert "qualification CEE est inconnue" in result.message
+    assert port.calls == []
+
+
+def test_create_cee_rejects_ccns_group_before_database_access():
+    port = CreateRecordingPort(available=("CDI", "CDD", "CEE"))
+
+    result = create_contract(
+        port,
+        command=_cee_command(ccns_group="G3"),
+    )
+
+    assert result.code == WriteCode.VALIDATION_ERROR
+    assert "ne doit pas porter de groupe CCNS" in result.message
+    assert port.calls == []
+
+
+def test_create_cee_requires_end_date_before_database_access():
+    port = CreateRecordingPort(available=("CDI", "CDD", "CEE"))
+
+    result = create_contract(
+        port,
+        command=_cee_command(end_date=None),
+    )
+
+    assert result.code == WriteCode.VALIDATION_ERROR
+    assert "date de fin est obligatoire" in result.message
+    assert port.calls == []
+
+
+
+def test_create_cee_rejects_trial_period_before_database_access():
+    port = CreateRecordingPort(available=("CDI", "CDD", "CEE"))
+
+    result = create_contract(
+        port,
+        command=_cee_command(trial_period_value=1),
+    )
+
+    assert result.code == WriteCode.VALIDATION_ERROR
+    assert "ne doit pas comporter de période d'essai" in result.message
     assert port.calls == []

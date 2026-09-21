@@ -114,6 +114,8 @@ jobs:
             tests/test_qt_contract_identity.py `
             tests/test_qt_contract_classification.py `
             tests/test_qt_contract_write_roundtrip.py `
+            tests/test_contract_write_adapter_mysql_contract.py `
+            tests/test_qt_contract_mysql_recipe_contract.py `
             tests/test_qt_presence_integration.py `
             tests/test_qt_blocking_thread_lifecycle_runtime.py
 
