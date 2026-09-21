@@ -378,8 +378,8 @@ class Dialog(wx.Dialog):
         self.label_modif.SetBackgroundColour(COULEUR_MODIF)
         self.label_non_synchro.SetBackgroundColour(COULEUR_NON_SYNCHRO)
         
-        self.bouton_synchroTout = wx.Button(self.sizer_grid_staticbox, -1, _(u"Tout synchroniser"))
-        self.bouton_supprTout = wx.Button(self.sizer_grid_staticbox, -1, _(u"Tout désynchroniser"))
+        self.bouton_synchroTout = CTRL_Bouton_image.CTRL(self.sizer_grid_staticbox, texte=_(u"Tout synchroniser"))
+        self.bouton_supprTout = CTRL_Bouton_image.CTRL(self.sizer_grid_staticbox, texte=_(u"Tout désynchroniser"), role="danger")
 
         self.bouton_aide = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))
         self.bouton_annuler = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Fermer"), cheminImage=Chemins.GetStaticPath("Images/32x32/Fermer.png"))
