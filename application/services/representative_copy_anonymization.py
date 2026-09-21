@@ -100,3 +100,54 @@ def anonymized_if_present(value: object) -> object:
     if isinstance(value, str) and not value.strip():
         return value
     return ANONYMIZED_TEXT
+
+
+def synthetic_birth_date(
+    value: date | None,
+    sequence: int,
+    *,
+    reference_date: date | None = None,
+) -> date | None:
+    """Remplace une naissance par une date synthétique gardant le groupe d'âge.
+
+    Les mineurs restent mineurs. Pour les adultes, l'âge est ramené au milieu
+    d'une tranche de cinq ans. Le mois et le jour sont synthétiques.
+    """
+
+    if value is None:
+        return None
+    reference_date = reference_date or date.today()
+    age = reference_date.year - value.year - (
+        (reference_date.month, reference_date.day) < (value.month, value.day)
+    )
+    if age < 18:
+        synthetic_age = max(0, age)
+    else:
+        synthetic_age = (age // 5) * 5 + 2
+
+    year = reference_date.year - synthetic_age
+    month = (sequence % 12) + 1
+    day = ((sequence * 7) % 27) + 1
+    candidate = date(year, month, day)
+    if candidate > reference_date:
+        candidate = date(year - 1, month, day)
+    return candidate
+
+
+def build_sequential_mapping(
+    identifiers: list[int] | tuple[int, ...],
+    *,
+    start: int,
+) -> dict[int, int]:
+    """Crée un remappage dense sans conserver le lien original dans la sortie."""
+
+    clean = sorted(
+        {
+            int(value)
+            for value in identifiers
+            if isinstance(value, int)
+            and not isinstance(value, bool)
+            and int(value) > 0
+        }
+    )
+    return {old: start + index for index, old in enumerate(clean)}
