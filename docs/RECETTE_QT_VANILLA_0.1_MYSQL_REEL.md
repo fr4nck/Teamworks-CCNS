@@ -8,6 +8,16 @@ Le code historique `UTILS_MySQL.ConstruireOptionsConnexion()` conserve explicite
 
 Cette recette ne doit jamais être exécutée directement sur l'unique base de production.
 
+## Documents normatifs de la recette
+
+La qualification MySQL de la Qt Vanilla 0.1 repose sur trois documents complémentaires :
+
+- `docs/MATRICE_VALIDATION_QT_VANILLA_0.1_MYSQL.md` : cas de test Compatibilité / Intégrité / Performance ;
+- `docs/SEUILS_PERFORMANCE_QT_VANILLA_0.1.md` : seuils chiffrés et règles de mesure ;
+- `docs/PV_RECETTE_QT_VANILLA_0.1_MYSQL.md` : procès-verbal à remplir et signer.
+
+Le verdict final doit être produit à partir de ces trois documents. Une simple impression de bon fonctionnement ne vaut pas qualification.
+
 ## Préconditions
 
 - poste Windows réel ;
