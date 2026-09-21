@@ -15,7 +15,8 @@ La qualification MySQL de la Qt Vanilla 0.1 repose sur trois documents compléme
 - `docs/MATRICE_VALIDATION_QT_VANILLA_0.1_MYSQL.md` : cas de test Compatibilité / Intégrité / Performance ;
 - `docs/SEUILS_PERFORMANCE_QT_VANILLA_0.1.md` : seuils chiffrés et règles de mesure ;
 - `docs/PV_RECETTE_QT_VANILLA_0.1_MYSQL.md` : procès-verbal à remplir et signer ;
-- `docs/COLLECTE_PREUVES_QT_VANILLA_0.1_MYSQL.md` : snapshots, comparaison de schéma et synthèse p50/p95 automatisés.
+- `docs/COLLECTE_PREUVES_QT_VANILLA_0.1_MYSQL.md` : snapshots, comparaison de schéma et synthèse p50/p95 automatisés ;
+- `docs/GO_NO_GO_QT_VANILLA_0.1.md` : critères finaux GO / NO-GO / NON QUALIFIÉE.
 
 Le verdict final doit être produit à partir de ces trois documents. Une simple impression de bon fonctionnement ne vaut pas qualification.
 
@@ -27,6 +28,50 @@ Le verdict final doit être produit à partir de ces trois documents. Une simple
 - compte MySQL capable de créer/supprimer une base de recette dédiée pour le test automatisé Frais ;
 - copie représentative de la base Teamworks pour la recette fonctionnelle ;
 - Vanilla wx conservée comme référence de lecture, sans faire d'écriture concurrente pendant les tests.
+
+## Lanceur terrain Windows
+
+Pour exécuter la campagne de façon reproductible sur le poste autorisé, utiliser :
+
+`scripts/run_qt_vanilla_mysql_terrain.ps1`
+
+Démarrage de campagne :
+
+```powershell
+.\scripts\run_qt_vanilla_mysql_terrain.ps1 `
+  -Action Start `
+  -Database "<base>_qt_vanilla_recette" `
+  -Sha "<SHA-RC-40-caracteres>" `
+  -HostName "<serveur>" `
+  -Port 3306 `
+  -User "<compte-recette>" `
+  -PortableArtifact ".\Teamworks-CCNS-Qt-0.1.0-windows-x64-portable.zip" `
+  -SetupArtifact ".\Teamworks-CCNS-Qt-0.1.0-windows-x64-setup.exe"
+```
+
+Le script demande le mot de passe de manière sécurisée et prend le snapshot avant recette.
+
+Après la campagne fonctionnelle :
+
+```powershell
+.\scripts\run_qt_vanilla_mysql_terrain.ps1 `
+  -Action Finish `
+  -Database "<base>_qt_vanilla_recette" `
+  -Sha "<SHA-RC-40-caracteres>" `
+  -HostName "<serveur>" `
+  -Port 3306 `
+  -User "<compte-recette>"
+```
+
+Pour les mesures P-01 à P-11 :
+
+```powershell
+.\scripts\run_qt_vanilla_mysql_terrain.ps1 `
+  -Action Performance `
+  -Database "<base>_qt_vanilla_recette" `
+  -Sha "<SHA-RC-40-caracteres>" `
+  -PerformanceCsv ".\preuves-qt-vanilla-0.1\performance.csv"
+```
 
 ## 1. Relever la version serveur
 
