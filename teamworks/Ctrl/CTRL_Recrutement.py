@@ -191,7 +191,7 @@ class Panel(wx.Panel):
         padding = UTILS_Styles.GetLayoutSpacing("content_padding")
         gap = UTILS_Styles.GetLayoutSpacing("control_gap")
 
-        actions = wx.WrapSizer(wx.HORIZONTAL)
+        actions = wx.WrapSizer(wx.HORIZONTAL, 0)
         for bouton in self._boutons_actions:
             actions.Add(bouton, 0, wx.RIGHT | wx.BOTTOM, gap)
 
