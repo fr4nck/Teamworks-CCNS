@@ -18,7 +18,7 @@ if str(POC) not in sys.path:
     sys.path.insert(0, str(POC))
 
 from PySide6.QtCore import QDate, QTimer, Qt  # noqa: E402
-from PySide6.QtWidgets import QApplication  # noqa: E402
+from PySide6.QtWidgets import QApplication, QMessageBox  # noqa: E402
 
 from data_adapter import PersonView, ReimbursementView, TripView  # noqa: E402
 from infrastructure.persistence.expense_reimbursement_write_adapter import (  # noqa: E402
@@ -265,6 +265,45 @@ def test_reimbursement_create_then_modify_roundtrips_qt_service_db_and_refresh()
         assert refreshed.amount_value == Decimal("20.0")
         assert refreshed.attached_trip_ids == (8,)
         assert "Remboursement enregistré" in window.statusBar().currentMessage()
+        assert page.reimbursement_actions.button("delete").isEnabled() is True
+
+        observed = []
+
+        def confirm_final_delete():
+            box = QApplication.activeModalWidget()
+            assert isinstance(box, QMessageBox)
+            observed.append(box.text())
+            yes = box.button(QMessageBox.StandardButton.Yes)
+            assert yes is not None
+            yes.click()
+
+        def confirm_attached_delete():
+            box = QApplication.activeModalWidget()
+            assert isinstance(box, QMessageBox)
+            observed.append(box.text())
+            QTimer.singleShot(0, confirm_final_delete)
+            yes = box.button(QMessageBox.StandardButton.Yes)
+            assert yes is not None
+            yes.click()
+
+        QTimer.singleShot(0, confirm_attached_delete)
+        page.reimbursement_actions.button("delete").click()
+        QApplication.processEvents()
+
+        assert len(observed) == 2
+        assert "1 déplacement(s) rattaché(s)" in observed[0]
+        assert "remboursement n°1" in observed[1]
+        assert db.connexion.execute(
+            "SELECT IDremboursement FROM remboursements WHERE IDremboursement=1"
+        ).fetchone() is None
+        assert db.connexion.execute(
+            "SELECT IDdeplacement, IDremboursement FROM deplacements ORDER BY IDdeplacement"
+        ).fetchall() == [(7, 0), (8, 0)]
+        assert db.commit_count == 3
+        assert page.reimbursement_model.rowCount() == 0
+        assert page.reimbursement_actions.button("edit").isEnabled() is False
+        assert page.reimbursement_actions.button("delete").isEnabled() is False
+        assert "supprimé" in window.statusBar().currentMessage()
     finally:
         window.close()
 
@@ -275,3 +314,47 @@ def test_expenses_qt_widgets_contain_no_sql_statements():
     upper = (source + "\n" + dialogs).upper()
     for token in ("SELECT ", "UPDATE ", "INSERT ", "DELETE "):
         assert token not in upper
+
+
+
+def test_reimbursement_delete_cancel_keeps_parent_and_trips_unchanged():
+    _app()
+    db = SqliteGestionDbCompat()
+    db.connexion.execute(
+        "INSERT INTO remboursements VALUES (1, 12, '2026-09-30', 10.0, '7')"
+    )
+    db.connexion.execute(
+        "UPDATE deplacements SET IDremboursement=1 WHERE IDdeplacement=7"
+    )
+    db.connexion.commit()
+    window = _window(db)
+
+    try:
+        _select_person(window)
+        page = window.legacy_tabs.expenses_page
+        page.reimbursement_table.selectRow(0)
+        QApplication.processEvents()
+        assert page.reimbursement_actions.button("delete").isEnabled() is True
+
+        def cancel_attached_delete():
+            box = QApplication.activeModalWidget()
+            assert isinstance(box, QMessageBox)
+            no = box.button(QMessageBox.StandardButton.No)
+            assert no is not None
+            no.click()
+
+        QTimer.singleShot(0, cancel_attached_delete)
+        page.reimbursement_actions.button("delete").click()
+        QApplication.processEvents()
+
+        assert db.commit_count == 0
+        assert db.connexion.execute(
+            "SELECT IDremboursement FROM remboursements WHERE IDremboursement=1"
+        ).fetchone() == (1,)
+        assert db.connexion.execute(
+            "SELECT IDremboursement FROM deplacements WHERE IDdeplacement=7"
+        ).fetchone() == (1,)
+        assert page.reimbursement_model.rowCount() == 1
+        assert window.statusBar().currentMessage() == "Suppression annulée · aucune écriture"
+    finally:
+        window.close()
