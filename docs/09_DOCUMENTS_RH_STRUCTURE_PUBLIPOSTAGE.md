@@ -148,3 +148,14 @@ Un service GED transverse peut fournir stockage technique, indexation, prévisua
 4. créer un adaptateur lecture historique → profil canonique ;
 5. ajouter une validation de modèle distinguant clé connue vide et clé inconnue ;
 6. seulement ensuite faire évoluer le stockage ou l'interface de gestion de la structure.
+
+
+## 11. Rail C — extraction du moteur indépendant de l'UI
+
+Le Rail C matérialise cette architecture dans `domain/documents/` et `application/services/hr_documents.py`.
+
+Le périmètre automatisable hors UI couvre maintenant le catalogue de mots-clés, la validation des balises, la préparation du contexte de fusion, le ciblage des modèles et un plan de génération portant des états et erreurs métier explicites. Les modèles historiques non classés restent compatibles comme solution de secours.
+
+Le rendu texte pur sert uniquement de contrat de prévisualisation et de test. Il applique la règle définie plus haut : une clé connue sans valeur est remplacée par une chaîne vide ; une clé inconnue reste visible et est signalée.
+
+La génération Office réelle (`.doc`, `.odt`, automatisation Word/LibreOffice, impression et ouverture applicative) reste hors de ce lot. Elle devra être branchée derrière ce contrat puis qualifiée sur Windows avant d'être déclarée prête.
