@@ -114,6 +114,10 @@ def _cleanup(port: GestionDbContractWriteAdapter, contract_id: int | None) -> No
                     "Nettoyage incomplet du contrat de recette : rowcount=%s" % affected
                 )
             port.commit()
+            if port.contract_exists(contract_id):
+                raise RuntimeError(
+                    "Nettoyage incomplet : le contrat de recette existe encore après commit."
+                )
     except Exception:
         try:
             port.rollback()
