@@ -505,8 +505,8 @@ class Dialog(wx.Dialog):
         self.staticbox_tableau = wx.StaticBox(self.panel, -1, _(u"Statistiques"))
         
         # Mode d'affichage
-        self.bouton_mode_tableau = wx.BitmapButton(self.staticbox_mode, -1, wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Tableau.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_mode_graph = wx.BitmapButton(self.staticbox_mode, -1, wx.Bitmap(Chemins.GetStaticPath("Images/32x32/GraphNB.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_mode_tableau = CTRL_Bouton_image.CTRL(self.staticbox_mode, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/32x32/Tableau.png"))
+        self.bouton_mode_graph = CTRL_Bouton_image.CTRL(self.staticbox_mode, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/32x32/GraphNB.png"))
         
         # Période
         self.radio_dates = wx.RadioButton(self.staticbox_periode, -1, _(u"Dates sélectionnées"), size=(300, -1), style = wx.RB_GROUP)
@@ -575,11 +575,11 @@ class Dialog(wx.Dialog):
         
         # Boutons
         self.bouton_aide = CTRL_Bouton_image.CTRL(self.panel, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))
-        self.bouton_excel= wx.BitmapButton(self.panel, -1, wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Export_excel.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_imprimer_tableau = wx.BitmapButton(self.panel, -1, wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Imprimer_tableau.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_save_image = wx.BitmapButton(self.panel, -1, wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Enregistrer_graphe.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_clipboard_image = wx.BitmapButton(self.panel, -1, wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Clipboard_image.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_imprimer_image = wx.BitmapButton(self.panel, -1, wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Imprimer_graphe.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_excel= CTRL_Bouton_image.CTRL(self.panel, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/BoutonsImages/Export_excel.png"))
+        self.bouton_imprimer_tableau = CTRL_Bouton_image.CTRL(self.panel, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/BoutonsImages/Imprimer_tableau.png"))
+        self.bouton_save_image = CTRL_Bouton_image.CTRL(self.panel, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/BoutonsImages/Enregistrer_graphe.png"))
+        self.bouton_clipboard_image = CTRL_Bouton_image.CTRL(self.panel, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/BoutonsImages/Clipboard_image.png"))
+        self.bouton_imprimer_image = CTRL_Bouton_image.CTRL(self.panel, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/BoutonsImages/Imprimer_graphe.png"))
         self.bouton_fermer = CTRL_Bouton_image.CTRL(self.panel, texte=_(u"Fermer"), cheminImage=Chemins.GetStaticPath("Images/32x32/Fermer.png"))
 
         self.__set_properties()
