@@ -27,7 +27,9 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
             try:
                 print("TEAMWORKS_SMOKE_PERSON_STAGE:imports", flush=True)
                 import os as _smoke_os
+                import datetime as _smoke_datetime
                 import tempfile as _smoke_tempfile
+                import time as _smoke_time
                 import zipfile as _smoke_zipfile
                 import GestionDB as _smoke_gestiondb
                 from Utils import UTILS_Rapport_bugs as _smoke_bug_reports
@@ -58,7 +60,9 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 from Dlg import DLG_Liste_contrats
                 from Dlg import DLG_Preferences
                 from Dlg import DLG_Vacances
+                from Dlg import DLG_Importation_vacances
                 from Dlg import DLG_Feries
+                from Utils import UTILS_Calendrier_scolaire_officiel as _smoke_calendrier
 
                 def _smoke_descendants(_smoke_window):
                     _smoke_items = []
@@ -185,6 +189,57 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                     _smoke_parameter_dialog.Destroy()
                     wx.Yield()
                     print("TEAMWORKS_SMOKE_PARAMETER_OK:%s" % _smoke_label, flush=True)
+
+                print("TEAMWORKS_SMOKE_PERSON_STAGE:vacances-officielles", flush=True)
+                _smoke_calendrier_original = _smoke_calendrier.charger_vacances
+                try:
+                    def _smoke_charger_vacances(_smoke_zone, timeout=8):
+                        _smoke_vacance = _smoke_calendrier.VacanceOfficielle(
+                            nom="Toussaint",
+                            date_debut=_smoke_datetime.date(2099, 10, 17),
+                            date_fin=_smoke_datetime.date(2099, 11, 1),
+                            annee_scolaire="2099-2100",
+                            zone="Zone %s" % _smoke_zone,
+                            academie="Smoke",
+                            population="-",
+                        )
+                        return _smoke_calendrier.ResultatCalendrier(
+                            (_smoke_vacance,),
+                            "api",
+                        )
+
+                    _smoke_calendrier.charger_vacances = _smoke_charger_vacances
+                    _smoke_vacances = DLG_Importation_vacances.Dialog(frame)
+                    _smoke_assert_populated(
+                        _smoke_vacances,
+                        "Importation vacances officielles",
+                    )
+                    _smoke_deadline = _smoke_time.time() + 5.0
+                    while (
+                        _smoke_vacances._chargement_en_cours
+                        and _smoke_time.time() < _smoke_deadline
+                    ):
+                        wx.Yield()
+                        _smoke_time.sleep(0.01)
+                    assert not _smoke_vacances._chargement_en_cours
+                    assert len(_smoke_vacances.ctrl_periodes.donnees) == 1
+                    assert _smoke_vacances.ctrl_periodes.donnees[0].nom == "Toussaint"
+                    _smoke_vacances.SetZone("B")
+                    _smoke_deadline = _smoke_time.time() + 5.0
+                    while (
+                        _smoke_vacances._chargement_en_cours
+                        and _smoke_time.time() < _smoke_deadline
+                    ):
+                        wx.Yield()
+                        _smoke_time.sleep(0.01)
+                    assert not _smoke_vacances._chargement_en_cours
+                    assert _smoke_vacances.GetZone() == "B"
+                    assert len(_smoke_vacances.ctrl_periodes.donnees) == 1
+                    _smoke_vacances._fermer(wx.ID_CANCEL)
+                    wx.Yield()
+                    print("TEAMWORKS_SMOKE_VACANCES_OFFICIELLES_OK", flush=True)
+                finally:
+                    _smoke_calendrier.charger_vacances = _smoke_calendrier_original
 
                 print("TEAMWORKS_SMOKE_PERSON_STAGE:subdialogs", flush=True)
                 _smoke_subdialogs = (
