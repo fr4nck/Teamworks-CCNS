@@ -20,6 +20,7 @@ class CcnsDataReader:
     def __init__(self, db_factory: Optional[Callable[[], object]] = None):
         self._db_factory = db_factory or self._default_db_factory
         self._db = None
+        self._contract_columns = None
 
     @staticmethod
     def _default_db_factory():
@@ -55,6 +56,18 @@ class CcnsDataReader:
         )
         return rows
 
+    def _contract_column_names(self) -> set[str]:
+        """Inspecte le schéma sans créer ni modifier de colonne."""
+        if self._contract_columns is None:
+            champs = self.db.GetListeChamps2("contrats") or ()
+            self._contract_columns = {str(champ[0]) for champ in champs if champ}
+        return self._contract_columns
+
+    def _optional_contract_column(self, name: str) -> str:
+        if name in self._contract_column_names():
+            return "contrats.%s" % name
+        return "NULL"
+
     def lire_contrats(self, limit: Optional[int] = None) -> list[CcnsContratRecord]:
         return self._lire_contrats(where_clause="", limit=limit, nom="contrats")
 
@@ -63,9 +76,14 @@ class CcnsDataReader:
         return self._lire_contrats(where_clause=where_clause, limit=limit, nom="contrats_personne")
 
     def _lire_contrats(self, where_clause: str, limit: Optional[int], nom: str) -> list[CcnsContratRecord]:
-        # Le schema historique canonique de DATA_Tables.py ne porte pas salaire_base,
-        # temps_hebdo ni prime_anciennete dans la table contrats. Ces champs restent
-        # donc explicitement neutres tant qu'une source canonique n'est pas raccordee.
+        # Le schéma historique canonique ne porte pas forcément les colonnes
+        # TW-184. Le reader reste strictement en lecture seule : les colonnes
+        # modernes absentes sont projetées en NULL au lieu d'être créées ici.
+        convention_expr = self._optional_contract_column("convention_code")
+        group_expr = self._optional_contract_column("ccns_group")
+        weekly_expr = self._optional_contract_column("weekly_hours")
+        signature_expr = self._optional_contract_column("signature")
+        due_expr = self._optional_contract_column("due")
         req = """
     SELECT
         contrats.IDcontrat,
@@ -73,20 +91,32 @@ class CcnsDataReader:
         contrats.date_debut,
         contrats.date_fin,
         NULL AS salaire_base,
-        NULL AS temps_hebdo,
+        %s AS temps_hebdo,
         NULL AS prime_anciennete,
         personnes.prenom,
         personnes.nom,
         contrats_class.nom AS classification,
         contrats_types.nom AS type_contrat,
-        contrats.date_rupture
+        contrats.date_rupture,
+        %s AS convention_code,
+        %s AS ccns_group,
+        %s AS signature,
+        %s AS due
     FROM contrats
     LEFT JOIN personnes ON personnes.IDpersonne = contrats.IDpersonne
     LEFT JOIN contrats_class ON contrats_class.IDclassification = contrats.IDclassification
     LEFT JOIN contrats_types ON contrats_types.IDtype = contrats.IDtype
     %s
     ORDER BY contrats.IDcontrat%s;
-    """ % (where_clause, self._limit_clause(limit))
+    """ % (
+            weekly_expr,
+            convention_expr,
+            group_expr,
+            signature_expr,
+            due_expr,
+            where_clause,
+            self._limit_clause(limit),
+        )
         return [CcnsContratRecord(*row) for row in self._fetch(req, nom)]
 
     def lire_classifications(self) -> list[CcnsClassificationRecord]:
@@ -118,3 +148,4 @@ class CcnsDataReader:
         if self._db is not None:
             self._db.Close()
             self._db = None
+        self._contract_columns = None

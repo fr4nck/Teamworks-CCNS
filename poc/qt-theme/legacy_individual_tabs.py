@@ -20,6 +20,7 @@ class LegacyIndividualTabs:
     def __init__(self, icon_loader):
         self.icon_loader = icon_loader
         self.questionnaire_page = None
+        self.presences_page = None
         self.scenarios_page = None
         self.expenses_page = None
 
@@ -31,7 +32,8 @@ class LegacyIndividualTabs:
         return QualificationsPage(self.icon_loader)
 
     def presences(self):
-        return PresencesPage(self.icon_loader)
+        self.presences_page = PresencesPage(self.icon_loader)
+        return self.presences_page
 
     def scenarios(self):
         self.scenarios_page = ScenariosPage(self.icon_loader)

@@ -10,7 +10,8 @@ class ProductionIndividualActivityLoader(QObject):
     """Charge les détails individuels avec une connexion propre au worker.
 
     Le nom historique de la classe est conservé pour éviter un refactoring du
-    lanceur ; le payload contient Généralités, Questionnaire, Scénarios et Frais.
+    lanceur ; le payload contient Généralités, Questionnaire, Présences,
+    Scénarios et Frais.
     """
 
     loaded = Signal(object, object)
@@ -33,12 +34,14 @@ class ProductionIndividualActivityLoader(QObject):
             questionnaire_adapter = QuestionnaireProductionReadAdapter()
             generalities = adapter.get_person_generalities(self.person_id)
             questionnaire = tuple(questionnaire_adapter.list_questionnaire(self.person_id))
+            presences = tuple(adapter.list_presences(self.person_id))
             scenarios = tuple(adapter.list_scenarios(self.person_id))
             trips = tuple(adapter.list_trips(self.person_id))
             reimbursements = tuple(adapter.list_reimbursements(self.person_id))
             payload = {
                 "generalities": generalities,
                 "questionnaire": questionnaire,
+                "presences": presences,
                 "scenarios": scenarios,
                 "trips": trips,
                 "reimbursements": reimbursements,

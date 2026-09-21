@@ -21,6 +21,11 @@ class SqliteGestionDBCompat:
         self._connection = sqlite3.connect(path)
         self._cursor = None
 
+    def GetListeChamps2(self, table_name):
+        """Expose uniquement l'introspection attendue par GestionDB, sans mutation."""
+        rows = self._connection.execute("PRAGMA table_info(%s)" % table_name).fetchall()
+        return [(row[1], row[2]) for row in rows]
+
     def ExecuterReq(self, req):
         self._cursor = self._connection.execute(req)
 
