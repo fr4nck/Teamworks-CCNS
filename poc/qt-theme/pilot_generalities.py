@@ -20,9 +20,11 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
         activity_loader_class=None,
         contract_write_port_factory=None,
         reimbursement_write_port_factory=None,
+        trip_write_port_factory=None,
     ):
         self._activity_loader_class = activity_loader_class
         self._reimbursement_write_port_factory = reimbursement_write_port_factory
+        self._trip_write_port_factory = trip_write_port_factory
         self._activity_thread = None
         self._activity_worker = None
         self._activity_loading_person_id = None
@@ -45,6 +47,12 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
                 person_id=None,
                 write_port_factory=self._reimbursement_write_port_factory,
                 reload_callback=self._reload_expenses_after_write,
+                message_callback=self.statusBar().showMessage,
+            )
+            expenses_page.configure_trip_write(
+                person_id=None,
+                write_port_factory=self._trip_write_port_factory,
+                reload_callback=self._reload_expenses_after_trip_write,
                 message_callback=self.statusBar().showMessage,
             )
 
@@ -76,7 +84,7 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
             presenter.clear()
         expenses_page = getattr(getattr(self, "legacy_tabs", None), "expenses_page", None)
         if expenses_page is not None:
-            expenses_page.set_reimbursement_person(None)
+            expenses_page.set_expense_person(None)
 
     def _show_person_from_proxy_row(self, proxy_row: int) -> None:
         if self._closing_requested:
@@ -115,7 +123,7 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
 
         expenses_page = getattr(self.legacy_tabs, "expenses_page", None)
         if expenses_page is not None:
-            expenses_page.set_reimbursement_person(historical_id)
+            expenses_page.set_expense_person(historical_id)
 
         self._request_activity(historical_id)
         self.statusBar().showMessage(
@@ -201,6 +209,19 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
         expenses_page = getattr(self.legacy_tabs, "expenses_page", None)
         if expenses_page is not None and reimbursement_id is not None:
             expenses_page.select_reimbursement(reimbursement_id)
+
+    def _reload_expenses_after_trip_write(self, trip_id: int | None) -> None:
+        person_id = self._activity_selected_person_id
+        if person_id is None:
+            return
+        payload = {
+            "trips": tuple(self.adapter.list_trips(person_id)),
+            "reimbursements": tuple(self.adapter.list_reimbursements(person_id)),
+        }
+        self.activity_presenter.set_payload(payload)
+        expenses_page = getattr(self.legacy_tabs, "expenses_page", None)
+        if expenses_page is not None and trip_id is not None:
+            expenses_page.select_trip(trip_id)
 
     def _on_activity_loaded(self, person_id, payload) -> None:
         if not self._closing_requested:
