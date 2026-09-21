@@ -35,14 +35,19 @@ from application.services.contract_write import (
     delete_contract,
     load_contract_creation_types,
     load_contract_for_edit,
+    load_legacy_contract_options,
     update_contract,
     update_contract_indicator,
+    update_contract_legacy_classification,
 )
 from contract_editor import (
     ContractComplianceDialog,
     ContractCreateDialog,
     ContractEditDialog,
+    ContractOperationDialog,
+    LegacyClassificationDialog,
 )
+from domain.contracts.contract_operation import ContractOperation
 from data_adapter import TeamworksReadAdapter
 from legacy_individual_tabs import LegacyIndividualTabs
 from models import ContractsTableModel, PeopleTableModel
@@ -731,6 +736,158 @@ class PeopleContractsPilot(QMainWindow):
         else:
             self.statusBar().showMessage(
                 f"Contrat n°{contract.id_historique} · aucune modification à enregistrer"
+            )
+
+    def _run_advanced_contract_operation(
+        self,
+        operation: ContractOperation,
+    ) -> None:
+        """Prépare/exécute une opération avancée.
+
+        Méthode volontairement non reliée à la barre d'outils tant que la
+        recette Windows/MySQL réelle du Rail A n'est pas validée.
+        """
+        contract = self._selected_contract()
+        person_id = self._current_contract_person_key
+        if (
+            contract is None
+            or not callable(self._contract_write_port_factory)
+            or not isinstance(person_id, int)
+            or isinstance(person_id, bool)
+            or person_id <= 0
+        ):
+            return
+
+        try:
+            port = self._contract_write_port_factory()
+            loaded = load_contract_for_edit(
+                port,
+                contract_id=contract.id_historique,
+            )
+        except Exception as exc:
+            self.statusBar().showMessage(
+                f"Lecture du contrat précédent impossible · {exc}"
+            )
+            return
+
+        if not loaded.ok or loaded.value is None:
+            self.statusBar().showMessage(
+                f"Opération Contrat impossible · {loaded.code} · {loaded.message}"
+            )
+            return
+
+        try:
+            dialog = ContractOperationDialog(
+                person_id,
+                loaded.value,
+                operation,
+                self,
+            )
+        except Exception as exc:
+            self.statusBar().showMessage(
+                f"Opération Contrat indisponible · {exc}"
+            )
+            return
+
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+
+        result = create_contract(port, command=dialog.command())
+        if not result.ok and not result.committed:
+            self.statusBar().showMessage(
+                f"Opération Contrat refusée · {result.code} · {result.message}"
+            )
+            return
+
+        if result.target_id is None:
+            self.statusBar().showMessage(
+                "Opération Contrat commitée sans identifiant exploitable"
+            )
+            return
+
+        try:
+            self._reload_contracts(selected_contract_id=result.target_id)
+        except Exception as exc:
+            self.statusBar().showMessage(
+                f"Contrat créé, mais rafraîchissement impossible · {exc}"
+            )
+            return
+
+        if result.ok:
+            self.statusBar().showMessage(
+                f"Contrat n°{result.target_id} créé par {operation.value} et relu"
+            )
+        else:
+            self.statusBar().showMessage(
+                f"Contrat n°{result.target_id} créé · readback incomplet"
+            )
+
+    def _run_legacy_classification(self) -> None:
+        """Prépare/exécute la classification historique.
+
+        Cette méthode reste sans point d'entrée UI jusqu'au feu vert MySQL réel.
+        """
+        contract = self._selected_contract()
+        if contract is None or not callable(self._contract_write_port_factory):
+            return
+
+        try:
+            port = self._contract_write_port_factory()
+            loaded = load_contract_for_edit(
+                port,
+                contract_id=contract.id_historique,
+            )
+        except Exception as exc:
+            self.statusBar().showMessage(
+                f"Lecture du contrat historique impossible · {exc}"
+            )
+            return
+
+        if not loaded.ok or loaded.value is None:
+            self.statusBar().showMessage(
+                f"Classification impossible · {loaded.code} · {loaded.message}"
+            )
+            return
+
+        options = load_legacy_contract_options(
+            port,
+            reference_date=loaded.value.start_date,
+        )
+        if not options.ok or options.value is None:
+            self.statusBar().showMessage(
+                f"Classification impossible · {options.code} · {options.message}"
+            )
+            return
+
+        dialog = LegacyClassificationDialog(options.value, loaded.value, self)
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+
+        result = update_contract_legacy_classification(
+            port,
+            command=dialog.command(),
+        )
+        if not result.ok and not result.committed:
+            self.statusBar().showMessage(
+                f"Classification non modifiée · {result.code} · {result.message}"
+            )
+            return
+
+        try:
+            self._reload_contracts(selected_contract_id=contract.id_historique)
+        except Exception as exc:
+            self.statusBar().showMessage(
+                f"Classification enregistrée, mais rafraîchissement impossible · {exc}"
+            )
+            return
+
+        if result.ok:
+            self.statusBar().showMessage(
+                f"Contrat n°{contract.id_historique} · classification historique relue"
+            )
+        else:
+            self.statusBar().showMessage(
+                f"Classification commitée · readback incomplet · {result.message}"
             )
 
     def _reload_contracts(self, *, selected_contract_id=None) -> None:
