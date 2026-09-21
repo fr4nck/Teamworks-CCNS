@@ -2,10 +2,9 @@
 # -*- coding: utf-8 -*-
 """Aide utilisateur Teamworks-CCNS.
 
-L'ancien mécanisme d'aide Teamworks demandait une licence puis redirigeait vers
-un service web historique. Ce parcours commercial n'appartient plus à
-Teamworks-CCNS. Les boutons d'aide restent fonctionnels mais n'ouvrent plus de
-fenêtre de financement ni d'URL historique.
+La documentation courante est publiée avec MkDocs. Les anciens identifiants
+d'aide restent acceptés et sont traduits vers les pages modernes lorsqu'une
+correspondance fiable existe.
 """
 
 import wx
@@ -13,30 +12,48 @@ import wx
 from Utils.UTILS_Traduction import _
 
 
+DOCUMENTATION_BASE = "https://fr4nck.github.io/Teamworks-CCNS/"
+
+_PAGE_MAP = {
+    "Personnes": "utilisation/individus/",
+    "Laficheindividuelle": "utilisation/individus/",
+    "Contrats": "utilisation/contrats-ccns-cee/",
+    "DPAE": "utilisation/dpae-due/",
+    "DUE": "utilisation/dpae-due/",
+    "EditeurdEmails": "utilisation/documents/",
+    "Publipostage": "utilisation/documents/",
+    "Vacances": "administration/parametrage/",
+    "Lesgadgets": "administration/parametrage/",
+    "Rechercherunemisejourdulogiciel": "demarrage/mise-a-jour/",
+}
+
+
+def GetUrl(page=None):
+    """Retourne l'URL de documentation la plus précise connue."""
+    suffixe = _PAGE_MAP.get(page, "")
+    return DOCUMENTATION_BASE + suffixe
+
+
 def Aide(page=None):
-    """Informe proprement sur l'aide courante, sans sollicitation commerciale."""
-    message = _(
-        u"L'aide en ligne historique de Teamworks n'est plus utilisée par "
-        u"Teamworks-CCNS.\n\n"
-        u"Aucun achat ni licence supplémentaire n'est nécessaire pour utiliser "
-        u"le logiciel. La documentation Teamworks-CCNS est en cours de "
-        u"centralisation dans le projet."
-    )
-    if page not in (None, ""):
-        message += _(u"\n\nRubrique demandée : %s") % page
-    dlg = wx.MessageDialog(
-        None,
-        message,
-        _(u"Aide Teamworks-CCNS"),
-        wx.OK | wx.ICON_INFORMATION,
-    )
+    """Ouvre la documentation Teamworks-CCNS dans le navigateur par défaut."""
+    url = GetUrl(page)
     try:
-        dlg.ShowModal()
-    finally:
-        dlg.Destroy()
+        ouvert = wx.LaunchDefaultBrowser(url)
+    except Exception:
+        ouvert = False
+
+    if ouvert is False:
+        wx.MessageBox(
+            _(
+                u"La documentation Teamworks-CCNS n'a pas pu être ouverte "
+                u"automatiquement.\n\nAdresse : %s"
+            ) % url,
+            _(u"Documentation Teamworks-CCNS"),
+            wx.OK | wx.ICON_INFORMATION,
+        )
+    return url
 
 
 if __name__ == "__main__":
     app = wx.App(0)
     Aide()
-    app.MainLoop()
