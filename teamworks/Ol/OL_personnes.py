@@ -7,6 +7,7 @@ import wx
 from Ol import OL_personnes_core as CORE
 from Utils import UTILS_Config
 from Utils import UTILS_Diagnostic_performance as DiagnosticPerformance
+from Utils import UTILS_Connexion_partagee
 from Utils import UTILS_Etat_colonnes
 from Utils.UTILS_Traduction import _
 
@@ -366,10 +367,17 @@ class ListView(CORE.ListView):
             return False
 
         from Utils import UTILS_Publipostage_donnees
-        dictDonnees = UTILS_Publipostage_donnees.GetDictDonnees(
-            categorie="personne",
-            listeID=listeID,
-        )
+        with DiagnosticPerformance.mesurer_action(
+            "wx.personnes.publipostage.donnees",
+            {"nb_personnes": len(listeID)},
+        ):
+            with UTILS_Connexion_partagee.connexions_reseau_partagees(
+                UTILS_Publipostage_donnees.GestionDB
+            ):
+                dictDonnees = UTILS_Publipostage_donnees.GetDictDonnees(
+                    categorie="personne",
+                    listeID=listeID,
+                )
         from Dlg import DLG_Publiposteur
         dlg = DLG_Publiposteur.Dialog(self, "", dictDonnees=dictDonnees)
         dlg.ShowModal()
