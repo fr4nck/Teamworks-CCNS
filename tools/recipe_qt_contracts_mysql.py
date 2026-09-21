@@ -62,11 +62,36 @@ def _require_real_mysql(db) -> None:
         )
 
 
-def _first_person_id(db) -> int:
-    db.cursor.execute("SELECT IDpersonne FROM personnes ORDER BY IDpersonne LIMIT 1")
+def _safe_person_id(db, start: date, end: date) -> int:
+    """Choisit une personne sans contrat chevauchant la fenêtre de recette."""
+    db.cursor.execute(
+        """
+        SELECT p.IDpersonne
+        FROM personnes p
+        WHERE NOT EXISTS (
+            SELECT 1
+            FROM contrats c
+            WHERE c.IDpersonne=p.IDpersonne
+              AND COALESCE(c.date_debut, '')<>''
+              AND c.date_debut<=%s
+              AND (
+                    c.date_fin IS NULL
+                 OR c.date_fin=''
+                 OR c.date_fin='2999-01-01'
+                 OR c.date_fin>=%s
+              )
+        )
+        ORDER BY p.IDpersonne
+        LIMIT 1
+        """,
+        (end.isoformat(), start.isoformat()),
+    )
     row = db.cursor.fetchone()
     if row is None:
-        raise RuntimeError("Aucune personne disponible pour la recette Contrats.")
+        raise RuntimeError(
+            "Aucune personne sans contrat chevauchant la fenêtre de recette ; "
+            "aucune écriture n'a été tentée."
+        )
     return int(row[0])
 
 
@@ -113,15 +138,16 @@ def run() -> int:
         print("TEAMWORKS_RAIL_A_BACKEND:MYSQL", flush=True)
         print("TEAMWORKS_RAIL_A_MYSQL_VERSION:%s" % (version or "inconnue"), flush=True)
 
-        person_id = _first_person_id(db)
+        start = date.today() + timedelta(days=14)
+        end = start + timedelta(days=6)
+        person_id = _safe_person_id(db, start, end)
+
         available = load_contract_creation_types(port)
         if not available.ok or not available.value:
             raise RuntimeError("Types de contrat indisponibles : %s" % available.message)
         if "CDD" not in available.value:
             raise RuntimeError("Le type CDD n'est pas configuré dans cette base.")
 
-        start = date.today() + timedelta(days=14)
-        end = start + timedelta(days=6)
         group = _monthly_group(start)
 
         create_command = ContractCreateCommand(
