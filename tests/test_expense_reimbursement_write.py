@@ -1,3 +1,5 @@
+"""Round-trips SQLite du contrat transactionnel Frais / remboursements."""
+
 from __future__ import annotations
 
 import sqlite3
