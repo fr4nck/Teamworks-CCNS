@@ -36,7 +36,9 @@ class DocumentTemplate:
 def _clean(value: object) -> str | None:
     if value in (None, ""):
         return None
-    return str(value).strip() or None
+    # Compatibilité stricte avec l'adaptateur historique : les espaces ne sont
+    # pas normalisés implicitement pour les codes génériques.
+    return str(value)
 
 
 def normalize_cee_qualification(value: object) -> str | None:
@@ -45,7 +47,7 @@ def normalize_cee_qualification(value: object) -> str | None:
         return None
     if cleaned in CEE_LABELS:
         return cleaned
-    lowered = cleaned.lower()
+    lowered = cleaned.strip().lower()
     for code, label in CEE_LABELS.items():
         if lowered == label.lower():
             return code
