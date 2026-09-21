@@ -57,7 +57,11 @@ jobs:
         run: |
           $env:PYTHONPATH = "$pwd\teamworks;$pwd"
           python -c "import GestionDB; from Utils import UTILS_Fichiers; print('runtime legacy headless OK')"
-          python -m pytest -q tests/test_qt_vanilla_packaging_contract.py
+          python -m pytest -q `
+            tests/test_qt_vanilla_packaging_contract.py `
+            tests/test_contract_document_workspace.py `
+            tests/test_qt_contract_documents.py `
+            tests/test_qt_contract_write_roundtrip.py
 
       - name: Construire Qt Vanilla et le portable
         shell: pwsh
@@ -110,6 +114,15 @@ jobs:
           $uninstall = Start-Process -FilePath $uninstaller -ArgumentList "/VERYSILENT", "/NORESTART" -Wait -PassThru
           if ($uninstall.ExitCode -ne 0) { throw "Désinstallation silencieuse échouée : $($uninstall.ExitCode)" }
 
+      - name: Calculer les sommes SHA-256
+        shell: pwsh
+        run: |
+          $portable = (Resolve-Path "dist/qt-vanilla/Teamworks-CCNS-Qt-0.1.0-windows-x64-portable.zip").Path
+          $setup = (Resolve-Path "dist/qt-vanilla/installer/Teamworks-CCNS-Qt-0.1.0-windows-x64-setup.exe").Path
+          $portableHash = (Get-FileHash $portable -Algorithm SHA256).Hash.ToLower()
+          $setupHash = (Get-FileHash $setup -Algorithm SHA256).Hash.ToLower()
+          @("$portableHash  $(Split-Path $portable -Leaf)", "$setupHash  $(Split-Path $setup -Leaf)") | Set-Content -Path "dist/qt-vanilla/SHA256SUMS.txt" -Encoding ascii
+
       - name: Publier les artefacts de qualification
         uses: actions/upload-artifact@v4
         with:
@@ -118,3 +131,4 @@ jobs:
           path: |
             dist/qt-vanilla/Teamworks-CCNS-Qt-0.1.0-windows-x64-portable.zip
             dist/qt-vanilla/installer/Teamworks-CCNS-Qt-0.1.0-windows-x64-setup.exe
+            dist/qt-vanilla/SHA256SUMS.txt
