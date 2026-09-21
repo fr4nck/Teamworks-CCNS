@@ -116,7 +116,7 @@ class Dialog(wx.Dialog):
         row_export = wx.BoxSizer(wx.HORIZONTAL)
         row_export.AddStretchSpacer(1)
         row_export.Add(self.button_export_csv, 0, wx.RIGHT, ui["space_s"])
-        row_export.Add(self.button_export_json, 0, wx.RIGHT | wx.EXPAND, ui["space_m"])
+        row_export.Add(self.button_export_json, 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, ui["space_m"])
         row_export.Add(self.button_close, 0)
         actions.Add(row_export, 0, wx.EXPAND)
         sizer.Add(actions, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, ui["space_m"])
