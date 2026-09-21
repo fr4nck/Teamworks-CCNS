@@ -79,6 +79,7 @@ class CreateRecordingPort:
         created_id=900,
         fail_insert=False,
         fail_readback=False,
+        previous_snapshot=None,
     ):
         self.person_found = person_exists
         self.available = available
@@ -88,6 +89,7 @@ class CreateRecordingPort:
         self.calls = []
         self.committed = False
         self.inserted_command = None
+        self.previous_snapshot = previous_snapshot
 
     def person_exists(self, person_id):
         self.calls.append(("person_exists", person_id))
@@ -115,6 +117,11 @@ class CreateRecordingPort:
         self.calls.append(("readback", contract_id))
         if self.fail_readback:
             raise RuntimeError("readback")
+        if (
+            self.previous_snapshot is not None
+            and contract_id == self.previous_snapshot.contract_id
+        ):
+            return self.previous_snapshot
         if self.inserted_command is None:
             return _snapshot(contract_id)
         command = self.inserted_command
@@ -131,6 +138,8 @@ class CreateRecordingPort:
             gross_annual_salary=command.gross_annual_salary,
             start_date=command.start_date,
             end_date=command.end_date,
+            operation_type=command.operation_type,
+            previous_contract_id=command.previous_contract_id,
         )
 
     # Autres méthodes du port non utilisées par ce use case.
@@ -350,3 +359,202 @@ def test_create_cee_rejects_trial_period_before_database_access():
     assert result.code == WriteCode.VALIDATION_ERROR
     assert "ne doit pas comporter de période d'essai" in result.message
     assert port.calls == []
+
+
+
+def _previous_cdd(**changes):
+    values = dict(
+        contract_id=700,
+        person_id=12,
+        contract_type_code="CDD",
+        contract_type_label="CDD",
+        convention_code="CCNS",
+        ccns_group="G3",
+        cee_qualification=None,
+        weekly_hours=Decimal("35.00"),
+        gross_monthly_salary=Decimal("3000.00"),
+        gross_annual_salary=None,
+        start_date=date(2026, 7, 1),
+        end_date=date(2026, 9, 30),
+        break_date=None,
+        modern_fields_supported=True,
+        operation_type="NEW",
+        previous_contract_id=None,
+    )
+    values.update(changes)
+    return ContractEditSnapshot(**values)
+
+
+def _renewal_command(**changes):
+    values = dict(
+        contract_type_code="CDD",
+        start_date=date(2026, 10, 1),
+        end_date=date(2026, 12, 31),
+        trial_period_value=0,
+        trial_period_unit="DAY",
+        confirm_no_trial=False,
+        operation_type="CDD_RENEWAL",
+        previous_contract_id=700,
+    )
+    values.update(changes)
+    return _command(**values)
+
+
+def test_renewal_rejects_wrong_resulting_contract_type_before_database_access():
+    port = CreateRecordingPort(previous_snapshot=_previous_cdd())
+
+    result = create_contract(
+        port,
+        command=_renewal_command(contract_type_code="CDI"),
+    )
+
+    assert result.code == WriteCode.VALIDATION_ERROR
+    assert "doit produire un CDD" in result.message
+    assert port.calls == []
+
+
+def test_renewal_requires_previous_contract_before_database_access():
+    port = CreateRecordingPort(previous_snapshot=_previous_cdd())
+
+    result = create_contract(
+        port,
+        command=_renewal_command(previous_contract_id=None),
+    )
+
+    assert result.code == WriteCode.VALIDATION_ERROR
+    assert "contrat précédent est obligatoire" in result.message
+    assert port.calls == []
+
+
+def test_renewal_rejects_new_trial_before_database_access():
+    port = CreateRecordingPort(previous_snapshot=_previous_cdd())
+
+    result = create_contract(
+        port,
+        command=_renewal_command(trial_period_value=1),
+    )
+
+    assert result.code == WriteCode.VALIDATION_ERROR
+    assert "ne doit pas recréer de période d'essai" in result.message
+    assert port.calls == []
+
+
+def test_renewal_rejects_previous_contract_from_another_person():
+    port = CreateRecordingPort(
+        previous_snapshot=_previous_cdd(person_id=99),
+    )
+
+    result = create_contract(port, command=_renewal_command())
+
+    assert result.code == WriteCode.VALIDATION_ERROR
+    assert "n'appartient pas à la personne" in result.message
+    assert ("insert", 12, "CDD") not in port.calls
+    assert ("commit",) not in port.calls
+
+
+def test_renewal_rejects_previous_non_cdd_contract():
+    port = CreateRecordingPort(
+        previous_snapshot=_previous_cdd(contract_type_code="CDI"),
+    )
+
+    result = create_contract(port, command=_renewal_command())
+
+    assert result.code == WriteCode.VALIDATION_ERROR
+    assert "doit être un CDD" in result.message
+    assert ("insert", 12, "CDD") not in port.calls
+
+
+def test_renewal_requires_day_after_previous_end():
+    port = CreateRecordingPort(previous_snapshot=_previous_cdd())
+
+    result = create_contract(
+        port,
+        command=_renewal_command(start_date=date(2026, 10, 2)),
+    )
+
+    assert result.code == WriteCode.VALIDATION_ERROR
+    assert "lendemain du CDD précédent" in result.message
+    assert ("insert", 12, "CDD") not in port.calls
+
+
+def test_renewal_persists_operation_and_previous_identity_after_preflight():
+    port = CreateRecordingPort(previous_snapshot=_previous_cdd())
+
+    result = create_contract(port, command=_renewal_command())
+
+    assert result.ok is True
+    assert result.committed is True
+    assert result.value is not None
+    assert result.value.operation_type == "CDD_RENEWAL"
+    assert result.value.previous_contract_id == 700
+    assert port.calls == [
+        ("person_exists", 12),
+        ("types",),
+        ("readback", 700),
+        ("insert", 12, "CDD"),
+        ("commit",),
+        ("readback", 900),
+    ]
+
+
+
+def _cdd_to_cdi_command(**changes):
+    values = dict(
+        contract_type_code="CDI",
+        start_date=date(2026, 10, 1),
+        end_date=None,
+        trial_period_value=0,
+        trial_period_unit="DAY",
+        confirm_no_trial=True,
+        operation_type="CDD_TO_CDI",
+        previous_contract_id=700,
+    )
+    values.update(changes)
+    return _command(**values)
+
+
+def test_cdd_to_cdi_rejects_wrong_resulting_contract_type_before_database_access():
+    port = CreateRecordingPort(previous_snapshot=_previous_cdd())
+
+    result = create_contract(
+        port,
+        command=_cdd_to_cdi_command(contract_type_code="CDD", end_date=date(2026, 12, 31)),
+    )
+
+    assert result.code == WriteCode.VALIDATION_ERROR
+    assert "doit produire un CDI" in result.message
+    assert port.calls == []
+
+
+def test_cdd_to_cdi_requires_previous_cdd_and_continuity():
+    port = CreateRecordingPort(previous_snapshot=_previous_cdd())
+
+    result = create_contract(
+        port,
+        command=_cdd_to_cdi_command(start_date=date(2026, 10, 2)),
+    )
+
+    assert result.code == WriteCode.VALIDATION_ERROR
+    assert "lendemain du CDD précédent" in result.message
+    assert ("insert", 12, "CDI") not in port.calls
+
+
+def test_cdd_to_cdi_persists_operation_and_previous_identity():
+    port = CreateRecordingPort(previous_snapshot=_previous_cdd())
+
+    result = create_contract(port, command=_cdd_to_cdi_command())
+
+    assert result.ok is True
+    assert result.committed is True
+    assert result.value is not None
+    assert result.value.contract_type_code == "CDI"
+    assert result.value.operation_type == "CDD_TO_CDI"
+    assert result.value.previous_contract_id == 700
+    assert port.calls == [
+        ("person_exists", 12),
+        ("types",),
+        ("readback", 700),
+        ("insert", 12, "CDI"),
+        ("commit",),
+        ("readback", 900),
+    ]

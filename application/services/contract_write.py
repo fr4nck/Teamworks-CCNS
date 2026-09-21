@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 from typing import Optional, Protocol
 
@@ -23,6 +23,7 @@ from domain.contracts.contract_creation_rules import (
     ContractCreationRules,
     ConventionCode,
 )
+from domain.contracts.contract_operation import ContractOperation
 from domain.contracts.contract_type import ContractType
 from domain.contracts.probation_period import ProbationUnit, probation_calendar_days
 from domain.convention.salary_grid_entry import SalaryMinimumPeriodicity
@@ -51,6 +52,8 @@ class ContractEditSnapshot:
     end_date: Optional[date]
     break_date: Optional[date]
     modern_fields_supported: bool
+    operation_type: Optional[str] = None
+    previous_contract_id: Optional[int] = None
 
 
 @dataclass(frozen=True)
@@ -68,6 +71,8 @@ class ContractCreateCommand:
     trial_period_value: int
     trial_period_unit: str
     confirm_no_trial: bool = False
+    operation_type: str = ContractOperation.NEW.value
+    previous_contract_id: Optional[int] = None
 
 
 @dataclass(frozen=True)
@@ -127,6 +132,74 @@ def _normalise_code(value: object) -> str:
 
 def _is_cee(command: ContractEditCommand) -> bool:
     return _normalise_code(command.contract_type_code) == "CEE"
+
+
+def _create_operation(command: ContractCreateCommand) -> ContractOperation | None:
+    try:
+        return ContractOperation(_normalise_code(command.operation_type))
+    except ValueError:
+        return None
+
+
+def _validate_create_operation_shape(
+    command: ContractCreateCommand,
+    *,
+    contract_type: ContractType,
+) -> tuple[str, ...]:
+    errors: list[str] = []
+    operation = _create_operation(command)
+    if operation is None:
+        return ("Nature de l'opération de contrat inconnue.",)
+
+    if operation is ContractOperation.NEW:
+        if command.previous_contract_id is not None:
+            errors.append(
+                "Un nouveau contrat ne doit pas référencer de contrat précédent."
+            )
+        return tuple(errors)
+
+    if not is_valid_target_id(command.previous_contract_id):
+        errors.append("Le contrat précédent est obligatoire pour cette opération.")
+
+    if operation is ContractOperation.CDD_RENEWAL:
+        if contract_type is not ContractType.CDD:
+            errors.append("Un renouvellement de CDD doit produire un CDD.")
+        if command.trial_period_value != 0:
+            errors.append("Un renouvellement de CDD ne doit pas recréer de période d'essai.")
+    elif operation is ContractOperation.CDD_TO_CDI:
+        if contract_type is not ContractType.CDI:
+            errors.append("Un passage CDD vers CDI doit produire un CDI.")
+
+    return tuple(errors)
+
+
+def _validate_previous_contract(
+    command: ContractCreateCommand,
+    previous: ContractEditSnapshot | None,
+) -> tuple[str, ...]:
+    operation = _create_operation(command)
+    if operation not in (
+        ContractOperation.CDD_RENEWAL,
+        ContractOperation.CDD_TO_CDI,
+    ):
+        return ()
+
+    if previous is None:
+        return ("Le contrat précédent sélectionné n'existe plus.",)
+    if previous.person_id != command.person_id:
+        return ("Le contrat précédent n'appartient pas à la personne sélectionnée.",)
+    if _normalise_code(previous.contract_type_code) != ContractType.CDD.value:
+        return ("Le contrat précédent doit être un CDD.",)
+    if previous.end_date is None:
+        return ("Le CDD précédent doit avoir une date de fin exploitable.",)
+
+    expected_start = previous.end_date + timedelta(days=1)
+    if command.start_date != expected_start:
+        return (
+            "Le nouveau contrat doit débuter le lendemain du CDD précédent (%s attendu)."
+            % expected_start.isoformat(),
+        )
+    return ()
 
 
 def validate_contract_edit(
@@ -274,6 +347,10 @@ def validate_contract_create(command: ContractCreateCommand) -> tuple[str, ...]:
         except (TypeError, ValueError):
             invalid_cee_qualification = True
 
+    errors.extend(
+        _validate_create_operation_shape(command, contract_type=contract_type)
+    )
+
     context = ContractCreationContext(
         convention=convention,
         contract_type=contract_type,
@@ -307,9 +384,12 @@ def validate_contract_create(command: ContractCreateCommand) -> tuple[str, ...]:
         errors.append("L'unité de période d'essai est invalide.")
         trial_unit = None
 
+    operation = _create_operation(command)
     if contract_type is ContractType.CEE:
         if type(command.trial_period_value) is int and command.trial_period_value != 0:
             errors.append("Un CEE ne doit pas comporter de période d'essai.")
+    elif operation is ContractOperation.CDD_RENEWAL:
+        pass
     elif (
         type(command.trial_period_value) is int
         and command.trial_period_value == 0
@@ -411,6 +491,27 @@ def create_contract(
             code=WriteCode.VALIDATION_ERROR,
             message="Le type de contrat %s n'existe pas dans cette base." % contract_code,
         )
+
+    operation = _create_operation(command)
+    if operation in (
+        ContractOperation.CDD_RENEWAL,
+        ContractOperation.CDD_TO_CDI,
+    ):
+        try:
+            previous = port.read_contract(command.previous_contract_id)
+        except Exception as exc:
+            return WriteResult(
+                ok=False,
+                code=WriteCode.DATABASE_ERROR,
+                message="Lecture du contrat précédent impossible : %s" % exc,
+            )
+        operation_errors = _validate_previous_contract(command, previous)
+        if operation_errors:
+            return WriteResult(
+                ok=False,
+                code=WriteCode.VALIDATION_ERROR,
+                message=" ".join(operation_errors),
+            )
 
     return execute_transactional_insert(
         write=lambda: port.insert_contract(command),
