@@ -8,15 +8,26 @@ if errorlevel 1 (
   exit /b 2
 )
 
-py -3.11 tools\recipe_qt_contracts_mysql.py
+set "REPORT_DIR=artifacts\rail-a-mysql"
+set "REPORT=%REPORT_DIR%\console.txt"
+if not exist "%REPORT_DIR%" mkdir "%REPORT_DIR%"
+
+echo Teamworks Rail A - recette Windows/MySQL
+echo Rapport : %CD%\%REPORT%
+echo.
+
+py -3.11 tools\recipe_qt_contracts_mysql.py > "%REPORT%" 2>&1
 set "RC=%ERRORLEVEL%"
 
+type "%REPORT%"
+echo.
+
 if not "%RC%"=="0" (
-  echo.
   echo ECHEC - le stop-gate Rail A Windows/MySQL n'est pas valide.
+  echo Diagnostic conserve dans %REPORT%
   exit /b %RC%
 )
 
-echo.
 echo OK - stop-gate technique Rail A Windows/MySQL valide.
+echo Diagnostic conserve dans %REPORT%
 exit /b 0
