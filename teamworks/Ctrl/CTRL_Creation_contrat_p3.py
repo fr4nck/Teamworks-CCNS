@@ -86,7 +86,7 @@ class Page(wx.Panel):
         self.label_type = wx.StaticText(caract, -1, _(u"Type de contrat :"))
         self.choice_type = wx.Choice(caract, -1, choices=[])
         self.Importation_Type()
-        self.bouton_type = wx.Button(caract, -1, "...", style=wx.BU_EXACTFIT)  # native-button-ok: sélecteur compact intégré au champ
+        self.bouton_type = CTRL_Bouton_image.Compact(caract, texte="...")
 
         self.label_ccns_group = wx.StaticText(caract, -1, _(u"Groupe CCNS :"))
         self.choice_ccns_group = wx.Choice(caract, -1, choices=[])
@@ -101,12 +101,12 @@ class Page(wx.Panel):
         self.label_class = wx.StaticText(caract, -1, _(u"Classification historique :"))
         self.choice_class = wx.Choice(caract, -1, choices=[])
         self.Importation_classifications()
-        self.bouton_class = wx.Button(caract, -1, "...", style=wx.BU_EXACTFIT)  # native-button-ok: sélecteur compact intégré au champ
+        self.bouton_class = CTRL_Bouton_image.Compact(caract, texte="...")
 
         self.label_valpoint = wx.StaticText(caract, -1, _(u"Valeur du point historique :"))
         self.choice_valpoint = wx.Choice(caract, -1, choices=[])
         self.Importation_valPoint()
-        self.bouton_valpoint = wx.Button(caract, -1, "...", style=wx.BU_EXACTFIT)  # native-button-ok: sélecteur compact intégré au champ
+        self.bouton_valpoint = CTRL_Bouton_image.Compact(caract, texte="...")
 
         ccns = self.sizer_ccns_staticbox
         self.label_weekly_hours = wx.StaticText(ccns, -1, _(u"Durée hebdomadaire :"))
