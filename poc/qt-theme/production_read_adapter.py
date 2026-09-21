@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import time
+from pathlib import Path
 from decimal import Decimal, InvalidOperation, localcontext
 from typing import Sequence
 
@@ -37,6 +38,7 @@ class TeamworksProductionReadAdapter(TeamworksReadAdapter):
 
     def __init__(self, person_reader=None, contract_reader=None, activity_reader=None):
         self._closed = False
+        self._contract_document_port = None
         self.startup_timings: dict[str, float | int | bool] = {
             "person_reader_construction_seconds": 0.0,
             "contract_reader_construction_seconds": 0.0,
@@ -168,6 +170,32 @@ class TeamworksProductionReadAdapter(TeamworksReadAdapter):
         from infrastructure.persistence.contract_write_adapter import GestionDbContractWriteAdapter
 
         return GestionDbContractWriteAdapter(self._contract_reader.db)
+
+    def prepare_contract_document_workspace(self, contract_id: int):
+        """Prépare les documents du contrat sur les readers déjà ouverts."""
+        self._ensure_open()
+        from application.services.contract_document_workspace import (
+            prepare_contract_document_workspace,
+        )
+        from contract_document_adapter import QtContractDocumentReadAdapter
+        from infrastructure.persistence.contract_write_adapter import (
+            GestionDbContractWriteAdapter,
+        )
+        from Utils import UTILS_Organisation
+
+        if self._contract_document_port is None:
+            root = Path(__file__).resolve().parents[2]
+            self._contract_document_port = QtContractDocumentReadAdapter(
+                get_person_generalities=self.get_person_generalities,
+                contract_reader=GestionDbContractWriteAdapter(self._contract_reader.db),
+                db=self._contract_reader.db,
+                template_directory=root / "teamworks" / "Static" / "Documents",
+                structure_loader=UTILS_Organisation.GetProfilPublipostage,
+            )
+        return prepare_contract_document_workspace(
+            self._contract_document_port,
+            contract_id=contract_id,
+        )
 
     def list_presences(self, person_id: str | int) -> Sequence[PresenceView]:
         self._ensure_open()
