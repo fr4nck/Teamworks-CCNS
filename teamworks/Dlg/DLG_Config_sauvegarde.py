@@ -352,7 +352,7 @@ class Saisie_sauvegarde_auto(wx.Frame):
         
         grid_sizer_destination = wx.FlexGridSizer(rows=1, cols=2, vgap=10, hgap=10)
         grid_sizer_destination.Add(self.textctrl_destination, 0, wx.ALL|wx.EXPAND, 0)
-        grid_sizer_destination.Add(self.bouton_destination, 0, wx.ALL|wx.EXPAND, 0)
+        grid_sizer_destination.Add(self.bouton_destination, 0, wx.ALIGN_CENTER_VERTICAL, 0)
         grid_sizer_destination.AddGrowableCol(0)
         grid_sizer_param.Add(grid_sizer_destination, 1, wx.EXPAND|wx.ALL, 0)
         
@@ -575,7 +575,7 @@ class Saisie_sauvegarde_occasionnelle(wx.Frame):
         
         grid_sizer_destination = wx.FlexGridSizer(rows=1, cols=2, vgap=10, hgap=10)
         grid_sizer_destination.Add(self.textctrl_destination, 0, wx.ALL|wx.EXPAND, 0)
-        grid_sizer_destination.Add(self.bouton_destination, 0, wx.ALL|wx.EXPAND, 0)
+        grid_sizer_destination.Add(self.bouton_destination, 0, wx.ALIGN_CENTER_VERTICAL, 0)
         grid_sizer_destination.AddGrowableCol(0)
         grid_sizer_param.Add(grid_sizer_destination, 1, wx.EXPAND|wx.ALL, 0)
 
