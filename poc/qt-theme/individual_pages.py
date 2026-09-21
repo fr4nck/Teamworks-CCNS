@@ -12,11 +12,16 @@ from PySide6.QtWidgets import (
     QLabel,
     QLineEdit,
     QListWidget,
+    QMessageBox,
     QVBoxLayout,
     QWidget,
 )
 
-from application.services.expense_reimbursement_write import save_reimbursement
+from application.services.expense_reimbursement_write import (
+    ReimbursementDeleteCommand,
+    delete_reimbursement,
+    save_reimbursement,
+)
 from legacy_sheets import (
     ApplicationPreviewDialog,
     InterviewPreviewDialog,
@@ -492,6 +497,7 @@ class ExpensesPage(QWidget):
             and getattr(selected, "id_historique", 0) > 0
         )
         self.reimbursement_actions.set_enabled("edit", writable and stable_selection)
+        self.reimbursement_actions.set_enabled("delete", writable and stable_selection)
 
     def _emit_message(self, text: str) -> None:
         if callable(self._message_callback):
@@ -506,10 +512,19 @@ class ExpensesPage(QWidget):
                 return
 
     def _on_reimbursement_action(self, action_id: str) -> None:
-        if action_id not in ("add", "edit") or not self._write_enabled():
+        if action_id not in ("add", "edit", "delete") or not self._write_enabled():
             return
-        reimbursement = self._selected_reimbursement() if action_id == "edit" else None
-        if action_id == "edit" and reimbursement is None:
+
+        reimbursement = (
+            self._selected_reimbursement()
+            if action_id in ("edit", "delete")
+            else None
+        )
+        if action_id in ("edit", "delete") and reimbursement is None:
+            return
+
+        if action_id == "delete":
+            self._delete_selected_reimbursement(reimbursement)
             return
 
         dialog = ReimbursementPreviewDialog(
@@ -545,6 +560,78 @@ class ExpensesPage(QWidget):
         else:
             self._emit_message(
                 f"Remboursement non enregistré · {result.code} · {result.message}"
+            )
+
+    def _delete_selected_reimbursement(self, reimbursement) -> None:
+        reimbursement_id = getattr(reimbursement, "id_historique", None)
+        attached_trip_ids = tuple(
+            getattr(reimbursement, "attached_trip_ids", ()) or ()
+        )
+
+        confirm_attached = not attached_trip_ids
+        if attached_trip_ids:
+            answer = QMessageBox.question(
+                self,
+                "Confirmation de suppression",
+                (
+                    f"Ce remboursement possède {len(attached_trip_ids)} déplacement(s) "
+                    "rattaché(s).\n"
+                    "Les détacher et poursuivre la suppression ?"
+                ),
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No,
+            )
+            if answer != QMessageBox.StandardButton.Yes:
+                self._emit_message("Suppression annulée · aucune écriture")
+                return
+            confirm_attached = True
+
+        answer = QMessageBox.question(
+            self,
+            "Confirmation de suppression",
+            (
+                f"Voulez-vous vraiment supprimer le remboursement n°{reimbursement_id} "
+                f"du {getattr(reimbursement, 'date', '—')} "
+                f"({getattr(reimbursement, 'amount', '—')}) ?"
+            ),
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+        if answer != QMessageBox.StandardButton.Yes:
+            self._emit_message("Suppression annulée · aucune écriture")
+            return
+
+        try:
+            port = self._reimbursement_write_port_factory()
+            result = delete_reimbursement(
+                port,
+                command=ReimbursementDeleteCommand(
+                    person_id=self._reimbursement_person_id,
+                    reimbursement_id=reimbursement_id,
+                    confirmed=True,
+                    confirm_attached_trips=confirm_attached,
+                ),
+            )
+        except Exception as exc:
+            self._emit_message(f"Suppression du remboursement impossible · {exc}")
+            return
+
+        if result.committed and callable(self._reimbursement_reload_callback):
+            try:
+                self._reimbursement_reload_callback(None)
+            except Exception as exc:
+                self._emit_message(
+                    f"Remboursement supprimé, mais rafraîchissement impossible · {exc}"
+                )
+                return
+
+        if result.ok:
+            self._emit_message(
+                f"Remboursement n°{reimbursement_id} supprimé · déplacements détachés"
+            )
+        else:
+            self._emit_message(
+                f"Remboursement non supprimé · {result.code} · {result.message}"
             )
 
 
