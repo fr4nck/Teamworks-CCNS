@@ -72,6 +72,14 @@ class PlanningSnapshot:
     vacations: tuple[VacationPeriod, ...] = ()
 
 
+class PlanningReadDataError(ValueError):
+    """Une source a été lue, mais contient des données non projetables."""
+
+
+class PlanningReadMappingError(ValueError):
+    """La donnée est lisible mais ne peut pas être convertie vers le DTO."""
+
+
 class PlanningReadPort(Protocol):
     def read_presences(
         self,
@@ -163,6 +171,28 @@ def read_planning(
     for source, reader, message in required_sources:
         try:
             required_values[source] = tuple(reader(query))
+        except PlanningReadDataError as exc:
+            required_issues.append(
+                ReadIssue(
+                    code=ReadIssueCode.SOURCE_DATA_INVALID,
+                    message="Certaines données de %s sont invalides." % source,
+                    source=source,
+                    requirement=ReadSourceRequirement.REQUIRED,
+                    retry_policy=ReadRetryPolicy.NEVER,
+                    diagnostic=repr(exc),
+                )
+            )
+        except PlanningReadMappingError as exc:
+            required_issues.append(
+                ReadIssue(
+                    code=ReadIssueCode.SOURCE_MAPPING_FAILED,
+                    message="La projection de %s a échoué." % source,
+                    source=source,
+                    requirement=ReadSourceRequirement.REQUIRED,
+                    retry_policy=ReadRetryPolicy.NEVER,
+                    diagnostic=repr(exc),
+                )
+            )
         except Exception as exc:
             required_issues.append(
                 required_source_unavailable(
@@ -183,6 +213,28 @@ def read_planning(
 
     try:
         vacations = tuple(port.read_vacations(query))
+    except PlanningReadDataError as exc:
+        optional_issues.append(
+            ReadIssue(
+                code=ReadIssueCode.SOURCE_DATA_INVALID,
+                message="Certaines périodes de vacances sont invalides.",
+                source="vacations",
+                requirement=ReadSourceRequirement.OPTIONAL,
+                retry_policy=ReadRetryPolicy.NEVER,
+                diagnostic=repr(exc),
+            )
+        )
+    except PlanningReadMappingError as exc:
+        optional_issues.append(
+            ReadIssue(
+                code=ReadIssueCode.SOURCE_MAPPING_FAILED,
+                message="La projection des périodes de vacances a échoué.",
+                source="vacations",
+                requirement=ReadSourceRequirement.OPTIONAL,
+                retry_policy=ReadRetryPolicy.NEVER,
+                diagnostic=repr(exc),
+            )
+        )
     except Exception as exc:
         optional_issues.append(
             optional_source_unavailable(
