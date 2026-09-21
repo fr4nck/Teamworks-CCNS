@@ -9,6 +9,7 @@
 import Chemins
 from Utils.UTILS_Traduction import _
 import wx
+from Ctrl import CTRL_Bouton_image
 import GestionDB
 import datetime
 import FonctionsPerso
@@ -81,7 +82,7 @@ def _bouton_action(parent, nom_image):
     bitmap = wx.Bitmap(Chemins.GetStaticPath("Images/16x16/%s" % nom_image), wx.BITMAP_TYPE_PNG)
     if bitmap.IsOk() and (bitmap.GetWidth() != taille or bitmap.GetHeight() != taille):
         bitmap = wx.Bitmap(bitmap.ConvertToImage().Scale(taille, taille, wx.IMAGE_QUALITY_HIGH))
-    bouton = wx.BitmapButton(parent, -1, bitmap)
+    bouton = CTRL_Bouton_image.CTRL(parent, id=-1, bitmap=bitmap)
     cote = max(36, taille + 12)
     bouton.SetMinSize((cote, cote))
     return bouton
