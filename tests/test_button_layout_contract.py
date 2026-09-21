@@ -25,9 +25,12 @@ NATIVE_BUTTON_RE = re.compile(
 def _production_source(path):
     source = path.read_text(encoding="utf-8")
     # Les harnais manuels sous __main__ ne font pas partie de l'interface livrée.
-    return source.split('if __name__ == "__main__":', 1)[0].split(
-        "if __name__ == '__main__':", 1
-    )[0]
+    marker = re.search(
+        r"^\s*if\s+__name__\s*==\s*['\"]__main__['\"]\s*:",
+        source,
+        re.MULTILINE,
+    )
+    return source[: marker.start()] if marker else source
 
 
 def _ui_files():
@@ -62,15 +65,18 @@ def test_aucun_bouton_action_n_est_explicitement_etire_sans_justification():
         if not names:
             continue
 
-        for lineno, line in enumerate(source.splitlines(), 1):
-            if "button-stretch-ok:" in line:
-                continue
-            if "wx.EXPAND" not in line or ".Add(" not in line:
-                continue
-            for name in names:
-                if f"self.{name}" in line:
-                    violations.append(f"{path}:{lineno}: {line.strip()}")
-                    break
+        lines = source.splitlines()
+        for name in names:
+            pattern = re.compile(
+                r"\.Add\(\s*self\." + re.escape(name)
+                + r"\s*,[^\n]*wx\.EXPAND[^\n]*\)"
+            )
+            for match in pattern.finditer(source):
+                lineno = source.count("\n", 0, match.start()) + 1
+                line = lines[lineno - 1]
+                if "button-stretch-ok:" in line:
+                    continue
+                violations.append(f"{path}:{lineno}: {line.strip()}")
 
     assert not violations, (
         "Un bouton d'action ne doit pas absorber l'espace disponible. "
