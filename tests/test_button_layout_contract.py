@@ -16,6 +16,10 @@ DEFAULT_WRAP_RE = re.compile(
     r"wx\.WrapSizer\(\s*wx\.HORIZONTAL\s*\)",
     re.MULTILINE,
 )
+NATIVE_BUTTON_RE = re.compile(
+    r"wx\.(?:Button|BitmapButton|ToggleButton)\s*\(",
+    re.MULTILINE,
+)
 
 
 def _production_source(path):
@@ -72,5 +76,26 @@ def test_aucun_bouton_action_n_est_explicitement_etire_sans_justification():
         "Un bouton d'action ne doit pas absorber l'espace disponible. "
         "Retirer wx.EXPAND ou documenter un vrai sélecteur extensible avec "
         "'# button-stretch-ok: raison'.\n"
+        + "\n".join(violations)
+    )
+
+
+def test_boutons_actions_standards_utilisent_le_controle_commun():
+    violations = []
+    for path in _ui_files():
+        source = _production_source(path)
+        lines = source.splitlines()
+        for match in NATIVE_BUTTON_RE.finditer(source):
+            lineno = source.count("\n", 0, match.start()) + 1
+            index = lineno - 1
+            contexte = "\n".join(lines[max(0, index - 2): index + 1])
+            if "native-button-ok:" in contexte:
+                continue
+            violations.append(f"{path}:{lineno}: {lines[index].strip()}")
+
+    assert not violations, (
+        "Les boutons d'action utilisateur doivent passer par "
+        "CTRL_Bouton_image. Les rares contrôles natifs réellement techniques "
+        "doivent porter '# native-button-ok: raison'.\n"
         + "\n".join(violations)
     )
