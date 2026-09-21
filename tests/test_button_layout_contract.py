@@ -86,22 +86,21 @@ def test_aucun_bouton_action_n_est_explicitement_etire_sans_justification():
     )
 
 
-def test_boutons_actions_standards_utilisent_le_controle_commun():
+def test_aucun_bouton_wx_natif_ne_reste_dans_interface_livree():
     violations = []
     for path in _ui_files():
+        if path.name == "CTRL_Bouton_image.py":
+            continue
         source = _production_source(path)
         lines = source.splitlines()
         for match in NATIVE_BUTTON_RE.finditer(source):
             lineno = source.count("\n", 0, match.start()) + 1
             index = lineno - 1
-            contexte = "\n".join(lines[max(0, index - 2): index + 1])
-            if "native-button-ok:" in contexte:
-                continue
             violations.append(f"{path}:{lineno}: {lines[index].strip()}")
 
     assert not violations, (
-        "Les boutons d'action utilisateur doivent passer par "
-        "CTRL_Bouton_image. Les rares contrôles natifs réellement techniques "
-        "doivent porter '# native-button-ok: raison'.\n"
+        "Tous les boutons de l'interface livrée doivent passer par "
+        "CTRL_Bouton_image (CTRL, Compact ou Toggle). Aucun wx.Button, "
+        "wx.BitmapButton ou wx.ToggleButton natif ne doit subsister.\n"
         + "\n".join(violations)
     )
