@@ -90,10 +90,12 @@ class PeopleContractsPilot(QMainWindow):
         parent=None,
         *,
         contract_write_port_factory=None,
+        advanced_contracts_enabled: bool = False,
     ):
         super().__init__(parent)
         self.adapter = adapter
         self._contract_write_port_factory = contract_write_port_factory
+        self._advanced_contracts_enabled = advanced_contracts_enabled is True
         self._current_contract_person_key = None
         self.legacy_tabs = LegacyIndividualTabs(_legacy_icon)
         self.setWindowTitle("Teamworks Qt — Individus / Contrats")
@@ -511,6 +513,40 @@ class PeopleContractsPilot(QMainWindow):
         )
         self.contract_edit_button.clicked.connect(self._edit_selected_contract)
         tools.addWidget(self.contract_edit_button)
+
+        self.contract_renew_button = self._legacy_tool_button(
+            "Modifier.png", "Renouveler le CDD", fallback="R"
+        )
+        self.contract_renew_button.clicked.connect(
+            lambda: self._run_advanced_contract_operation(
+                ContractOperation.CDD_RENEWAL
+            )
+        )
+        self.contract_renew_button.setVisible(self._advanced_contracts_enabled)
+        tools.addWidget(self.contract_renew_button)
+
+        self.contract_to_cdi_button = self._legacy_tool_button(
+            "Modifier.png", "Poursuivre le CDD en CDI", fallback="C"
+        )
+        self.contract_to_cdi_button.clicked.connect(
+            lambda: self._run_advanced_contract_operation(
+                ContractOperation.CDD_TO_CDI
+            )
+        )
+        self.contract_to_cdi_button.setVisible(self._advanced_contracts_enabled)
+        tools.addWidget(self.contract_to_cdi_button)
+
+        self.contract_legacy_classification_button = self._legacy_tool_button(
+            "Modifier.png", "Classification historique / valeur de point", fallback="H"
+        )
+        self.contract_legacy_classification_button.clicked.connect(
+            self._run_legacy_classification
+        )
+        self.contract_legacy_classification_button.setVisible(
+            self._advanced_contracts_enabled
+        )
+        tools.addWidget(self.contract_legacy_classification_button)
+
         self.contract_delete_button = self._legacy_tool_button(
             "Supprimer.png", "Supprimer le contrat", fallback="−"
         )
@@ -573,6 +609,20 @@ class PeopleContractsPilot(QMainWindow):
         self.contract_delete_button.setEnabled(writable)
         self.contract_signature_button.setEnabled(writable)
         self.contract_due_button.setEnabled(writable)
+
+        is_cdd = bool(
+            writable
+            and str(getattr(contract, "kind", "") or "").strip().upper() == "CDD"
+        )
+        self.contract_renew_button.setEnabled(
+            self._advanced_contracts_enabled and is_cdd
+        )
+        self.contract_to_cdi_button.setEnabled(
+            self._advanced_contracts_enabled and is_cdd
+        )
+        self.contract_legacy_classification_button.setEnabled(
+            self._advanced_contracts_enabled and writable
+        )
 
 
     def _create_contract(self) -> None:
@@ -966,6 +1016,9 @@ class PeopleContractsPilot(QMainWindow):
             self.contract_delete_button.setEnabled(False)
             self.contract_signature_button.setEnabled(False)
             self.contract_due_button.setEnabled(False)
+            self.contract_renew_button.setEnabled(False)
+            self.contract_to_cdi_button.setEnabled(False)
+            self.contract_legacy_classification_button.setEnabled(False)
         self.statusBar().showMessage("Lecture seule · aucune sélection")
 
     def _on_person_selection(self, *_args) -> None:
