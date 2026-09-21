@@ -1,7 +1,8 @@
 ; Teamworks-CCNS — installateur Windows x64
 ; Garde-fou : cet installateur ne doit jamais créer, migrer, déplacer,
-; supprimer ou écraser une base utilisateur. Il installe uniquement
-; les fichiers applicatifs sous {app} et les raccourcis Windows.
+; supprimer ou écraser une base utilisateur. Il installe les fichiers
+; applicatifs sous {app} et peut uniquement mémoriser la préférence
+; d'affichage des ressources historiques dans Customize.ini.
 
 #ifndef AppVersion
   #define AppVersion "0.0.0-dev"
