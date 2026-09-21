@@ -119,6 +119,10 @@ class ReadResult(Generic[T]):
                 raise ValueError(
                     "Une lecture FAILED doit exposer au moins un incident."
                 )
+            if not any(issue.blocking for issue in self.issues):
+                raise ValueError(
+                    "Une lecture FAILED doit contenir au moins un incident bloquant."
+                )
 
     @property
     def ok(self) -> bool:
@@ -145,11 +149,25 @@ class ReadResult(Generic[T]):
 
     @property
     def automatic_retry_allowed(self) -> bool:
-        """Une seule nouvelle tentative automatique est autorisée côté appelant."""
+        """Indique qu'une source autorise une tentative automatique."""
 
         return any(
             issue.retry_policy is ReadRetryPolicy.AUTOMATIC_ONCE
             for issue in self.issues
+        )
+
+    def should_retry_automatically(self, attempts_already_made: int) -> bool:
+        """Autorise au maximum une nouvelle tentative automatique.
+
+        attempts_already_made compte les retries déjà effectués, pas la lecture
+        initiale. Avec AUTOMATIC_ONCE : 0 => oui, 1 ou plus => non.
+        """
+
+        if attempts_already_made < 0:
+            raise ValueError("Le nombre de retries déjà effectués est invalide.")
+        return (
+            attempts_already_made == 0
+            and self.automatic_retry_allowed
         )
 
     @property
