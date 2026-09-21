@@ -307,7 +307,10 @@ def validate_contract_create(command: ContractCreateCommand) -> tuple[str, ...]:
         errors.append("L'unité de période d'essai est invalide.")
         trial_unit = None
 
-    if (
+    if contract_type is ContractType.CEE:
+        if type(command.trial_period_value) is int and command.trial_period_value != 0:
+            errors.append("Un CEE ne doit pas comporter de période d'essai.")
+    elif (
         type(command.trial_period_value) is int
         and command.trial_period_value == 0
         and not command.confirm_no_trial
