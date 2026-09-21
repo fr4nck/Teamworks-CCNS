@@ -169,8 +169,8 @@ class Dialog(wx.Dialog):
         
         grid_sizer_code2 = wx.FlexGridSizer(rows=1, cols=2, vgap=5, hgap=5)
         grid_sizer_code2.Add(self.ctrl_code, 0, wx.EXPAND, 0)
-        grid_sizer_code2.Add(self.bouton_validite, 0, wx.EXPAND, 0)
-        grid_sizer_code2.AddGrowableCol(1)
+        grid_sizer_code2.Add(self.bouton_validite, 0, wx.ALIGN_CENTER_VERTICAL, 0)
+        grid_sizer_code2.AddGrowableCol(0)
         grid_sizer_code.Add(grid_sizer_code2, 0, wx.EXPAND, 0)
 
         grid_sizer_code.Add((5, 5), 0, wx.EXPAND, 0)
