@@ -189,7 +189,7 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
             )
         self.activity_presenter.set_payload(payload)
 
-    def _reload_expenses_after_write(self, reimbursement_id: int) -> None:
+    def _reload_expenses_after_write(self, reimbursement_id: int | None) -> None:
         person_id = self._activity_selected_person_id
         if person_id is None:
             return
@@ -199,7 +199,7 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
         }
         self.activity_presenter.set_payload(payload)
         expenses_page = getattr(self.legacy_tabs, "expenses_page", None)
-        if expenses_page is not None:
+        if expenses_page is not None and reimbursement_id is not None:
             expenses_page.select_reimbursement(reimbursement_id)
 
     def _on_activity_loaded(self, person_id, payload) -> None:
