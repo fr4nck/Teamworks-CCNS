@@ -169,14 +169,19 @@ class GestionDbContractWriteAdapter:
             "gross_monthly_salary",
             "gross_annual_salary",
         )
-        metadata_names = ("operation_type", "previous_contract_id")
+        metadata_names = (
+            "operation_type",
+            "previous_contract_id",
+            "trial_period_value",
+            "trial_period_unit",
+        )
         modern_supported = all(name in self._contract_columns() for name in modern_names)
         exprs = [self._optional_expr(name) for name in modern_names + metadata_names]
         req = (
             "SELECT c.IDpersonne, c.IDtype, COALESCE(t.nom_abrege, t.nom, ''), "
             "COALESCE(t.nom, t.nom_abrege, ''), "
             "c.date_debut, c.date_fin, c.date_rupture, "
-            "c.IDclassification, c.valeur_point, "
+            "c.IDclassification, c.valeur_point, c.essai, "
             + ", ".join("c.%s" % expr if expr != "NULL" else "NULL" for expr in exprs)
             + " FROM contrats c "
             "LEFT JOIN contrats_types t ON t.IDtype=c.IDtype "
@@ -198,17 +203,20 @@ class GestionDbContractWriteAdapter:
             start_date=self._as_date(row[4]),
             end_date=end_date,
             break_date=self._as_date(row[6]),
-            convention_code=row[9],
-            ccns_group=row[10],
-            cee_qualification=row[11],
-            weekly_hours=self._as_decimal(row[12]),
-            gross_monthly_salary=self._as_decimal(row[13]),
-            gross_annual_salary=self._as_decimal(row[14]),
+            convention_code=row[10],
+            ccns_group=row[11],
+            cee_qualification=row[12],
+            weekly_hours=self._as_decimal(row[13]),
+            gross_monthly_salary=self._as_decimal(row[14]),
+            gross_annual_salary=self._as_decimal(row[15]),
             modern_fields_supported=modern_supported,
-            operation_type=row[15],
-            previous_contract_id=int(row[16]) if row[16] is not None else None,
+            operation_type=row[16],
+            previous_contract_id=int(row[17]) if row[17] is not None else None,
             legacy_classification_id=int(row[7]) if row[7] is not None else None,
             legacy_point_id=int(row[8]) if row[8] is not None else None,
+            legacy_trial_days=int(row[9]) if row[9] is not None else None,
+            trial_period_value=int(row[18]) if row[18] is not None else None,
+            trial_period_unit=row[19],
         )
 
     def list_legacy_classifications(self):
