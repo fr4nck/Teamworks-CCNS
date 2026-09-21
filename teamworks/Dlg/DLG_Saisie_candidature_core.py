@@ -62,7 +62,7 @@ class Panel(wx.Panel):
         self.label_emploi = wx.StaticText(self.sizer_emploi_staticbox, -1, _(u"         Offre :"))
         self.ctrl_emploi = ChoiceEmploi(self.sizer_emploi_staticbox)
         self.ctrl_emploi.Remplissage(self.Importation_emplois())
-        self.bouton_emplois = wx.Button(self.sizer_emploi_staticbox, -1, "...", size=(20, 20))  # native-button-ok: sélecteur compact intégré au champ
+        self.bouton_emplois = CTRL_Bouton_image.Compact(self.sizer_emploi_staticbox, texte="...")
         
         # Disponibilités
         self.sizer_disponibilites_staticbox = wx.StaticBox(self, -1, _(u"3. Disponibilités"))
@@ -80,11 +80,11 @@ class Panel(wx.Panel):
         self.label_fonction = wx.StaticText(self.sizer_poste_staticbox, -1, _(u"Fonction :"))
         self.ctrl_fonction = CheckListBox(self.sizer_poste_staticbox)
         self.ctrl_fonction.Remplissage(self.Importation_fonctions())
-        self.bouton_fonctions = wx.Button(self.sizer_poste_staticbox, -1, "...", size=(20, 20))  # native-button-ok: sélecteur compact intégré au champ
+        self.bouton_fonctions = CTRL_Bouton_image.Compact(self.sizer_poste_staticbox, texte="...")
         self.label_affectation = wx.StaticText(self.sizer_poste_staticbox, -1, _(u"Affectation :"))
         self.ctrl_affectations = CheckListBox(self.sizer_poste_staticbox)
         self.ctrl_affectations.Remplissage(self.Importation_affectations())
-        self.bouton_affectations = wx.Button(self.sizer_poste_staticbox, -1, "...", size=(20, 20))  # native-button-ok: sélecteur compact intégré au champ
+        self.bouton_affectations = CTRL_Bouton_image.Compact(self.sizer_poste_staticbox, texte="...")
         self.label_poste_remarques = wx.StaticText(self.sizer_poste_staticbox, -1, _(u"Remarques :"))
         self.ctrl_poste_remarques = wx.TextCtrl(self.sizer_poste_staticbox, -1, "")
         
