@@ -32,7 +32,7 @@ ALLOWED_INDICATOR_FIELDS = frozenset(("signature", "due"))
 ALLOWED_INDICATOR_VALUES = frozenset(("", "Oui"))
 FIXED_TERM_CODES = frozenset(("CDD", "CEE", "APPRENTISSAGE", "STAGE", "SERVICE CIVIQUE"))
 CEE_CODES = frozenset(item.value for item in CEEQualification)
-SUPPORTED_CREATE_TYPES = frozenset(("CDI", "CDD"))
+SUPPORTED_CREATE_TYPES = frozenset(("CDI", "CDD", "CEE"))
 
 
 @dataclass(frozen=True)
@@ -241,9 +241,9 @@ def validate_contract_edit(
 def validate_contract_create(command: ContractCreateCommand) -> tuple[str, ...]:
     """Valide une création avant toute écriture en base.
 
-    Ce premier lot active volontairement les créations CDI/CDD sous CCNS.
-    Les parcours CEE et conventions historiques restent hors de ce formulaire
-    tant que leurs compensations/classifications complètes ne sont pas extraites.
+    Le rail Qt autorise CDI/CDD sous CCNS et les CEE dont la qualification
+    est explicite. Les autres conventions et parcours historiques restent
+    hors de ce formulaire tant que leurs règles complètes ne sont pas extraites.
     """
 
     errors: list[str] = []
@@ -266,20 +266,29 @@ def validate_contract_create(command: ContractCreateCommand) -> tuple[str, ...]:
     except ValueError:
         return ("Type de contrat ou convention inconnu.",)
 
+    cee_context_qualification = None
+    invalid_cee_qualification = False
+    if contract_type is ContractType.CEE and command.cee_qualification:
+        try:
+            cee_context_qualification = CEEQualification(command.cee_qualification)
+        except (TypeError, ValueError):
+            invalid_cee_qualification = True
+
     context = ContractCreationContext(
         convention=convention,
         contract_type=contract_type,
         classification_code=command.ccns_group,
-        cee_qualification=None,
+        cee_qualification=cee_context_qualification,
     )
-    errors.extend(ContractCreationRules().validate_context(context))
+    if not invalid_cee_qualification:
+        errors.extend(ContractCreationRules().validate_context(context))
 
     edit_equivalent = ContractEditCommand(
         contract_id=1,
         contract_type_code=contract_code,
         convention_code=command.convention_code,
         ccns_group=command.ccns_group,
-        cee_qualification=None,
+        cee_qualification=command.cee_qualification,
         weekly_hours=command.weekly_hours,
         gross_monthly_salary=command.gross_monthly_salary,
         gross_annual_salary=command.gross_annual_salary,
@@ -346,12 +355,12 @@ def load_contract_creation_types(
             code=WriteCode.DATABASE_ERROR,
             message="Lecture des types de contrat impossible : %s" % exc,
         )
-    supported = tuple(code for code in ("CDI", "CDD") if code in available)
+    supported = tuple(code for code in ("CDI", "CDD", "CEE") if code in available)
     if not supported:
         return WriteResult(
             ok=False,
             code=WriteCode.VALIDATION_ERROR,
-            message="Aucun type CDI/CDD exploitable n'est configuré dans la base.",
+            message="Aucun type CDI/CDD/CEE exploitable n'est configuré dans la base.",
         )
     return WriteResult(
         ok=True,
