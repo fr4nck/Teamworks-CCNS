@@ -11,6 +11,7 @@ from application.control.ccns_contract_compliance import CCNSContractComplianceP
 from application.services.transactional_write import (
     WriteCode,
     WriteResult,
+    execute_transactional_delete,
     execute_transactional_insert,
     execute_transactional_update,
     invalid_target_result,
@@ -96,6 +97,9 @@ class ContractWritePort(Protocol):
         ...
 
     def contract_exists(self, contract_id: int) -> bool:
+        ...
+
+    def delete_contract(self, contract_id: int) -> int:
         ...
 
     def update_indicator(self, contract_id: int, field: str, value: str) -> int:
@@ -401,6 +405,41 @@ def create_contract(
         commit=port.commit,
         rollback=port.rollback,
         readback=lambda contract_id: _readback_contract(port, contract_id),
+    )
+
+
+
+@dataclass(frozen=True)
+class ContractDeleteCommand:
+    contract_id: int
+    confirmed: bool
+
+
+def delete_contract(
+    port: ContractWritePort,
+    *,
+    command: ContractDeleteCommand,
+) -> WriteResult[bool]:
+    """Supprime un contrat uniquement après confirmation explicite."""
+
+    if not is_valid_target_id(command.contract_id):
+        return invalid_target_result(command.contract_id)
+
+    if command.confirmed is not True:
+        return WriteResult(
+            ok=False,
+            code=WriteCode.VALIDATION_ERROR,
+            message="La suppression du contrat doit être confirmée explicitement.",
+            target_id=command.contract_id,
+        )
+
+    return execute_transactional_delete(
+        target_id=command.contract_id,
+        target_exists=lambda: port.contract_exists(command.contract_id),
+        write=lambda: port.delete_contract(command.contract_id),
+        commit=port.commit,
+        rollback=port.rollback,
+        readback_exists=lambda: port.read_contract(command.contract_id) is not None,
     )
 
 
