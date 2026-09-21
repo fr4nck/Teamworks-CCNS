@@ -123,16 +123,24 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 _smoke_generalites = _smoke_notebook.pageGeneralites
                 _smoke_generalites.Layout()
                 wx.Yield()
-                assert _smoke_generalites.text_adresse.IsShownOnScreen()
                 assert _smoke_generalites.text_adresse.GetSize().GetHeight() >= 50
-                assert _smoke_generalites.text_cp.IsShownOnScreen() or (
-                    _smoke_generalites._scroll_host.GetVirtualSize().GetHeight()
-                    > _smoke_generalites._scroll_host.GetClientSize().GetHeight()
-                )
+                _smoke_scroll = _smoke_generalites._scroll_host
                 assert (
-                    _smoke_generalites._scroll_host.GetVirtualSize().GetHeight()
-                    >= _smoke_generalites._scroll_host.GetClientSize().GetHeight()
+                    _smoke_scroll.GetVirtualSize().GetHeight()
+                    >= _smoke_scroll.GetClientSize().GetHeight()
                 )
+                # En fenêtre basse, Adresse peut légitimement se trouver sous le
+                # viewport : on vérifie qu'elle devient réellement accessible
+                # par le scroll et qu'elle n'est plus comprimée à quelques pixels.
+                _smoke_target_y = max(
+                    0,
+                    _smoke_generalites.section_adresse.GetPosition().y // 12,
+                )
+                _smoke_scroll.Scroll(-1, _smoke_target_y)
+                _smoke_scroll.Layout()
+                wx.Yield()
+                assert _smoke_generalites.text_adresse.IsShownOnScreen()
+                assert _smoke_generalites.text_cp.IsShownOnScreen()
                 print("TEAMWORKS_SMOKE_PERSON_WINDOWED_LAYOUT_OK", flush=True)
 
                 print("TEAMWORKS_SMOKE_PERSON_STAGE:pages", flush=True)
