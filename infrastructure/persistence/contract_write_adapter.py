@@ -259,6 +259,18 @@ class GestionDbContractWriteAdapter:
         )
         return int(self.db.cursor.rowcount)
 
+    def delete_contract(self, contract_id: int) -> int:
+        # Parité wx : enfants d'abord, parent ensuite, dans la transaction du caller.
+        self.db.cursor.execute(
+            "DELETE FROM contrats_valchamps WHERE IDcontrat=%s" % self._placeholder,
+            (contract_id,),
+        )
+        self.db.cursor.execute(
+            "DELETE FROM contrats WHERE IDcontrat=%s" % self._placeholder,
+            (contract_id,),
+        )
+        return int(self.db.cursor.rowcount)
+
     def contract_exists(self, contract_id: int) -> bool:
         self.db.cursor.execute(
             "SELECT IDcontrat FROM contrats WHERE IDcontrat=%s" % self._placeholder,
