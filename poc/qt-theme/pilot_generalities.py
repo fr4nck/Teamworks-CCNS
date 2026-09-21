@@ -19,6 +19,7 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
         *,
         activity_loader_class=None,
         contract_write_port_factory=None,
+        contract_document_workspace_factory=None,
     ):
         self._activity_loader_class = activity_loader_class
         self._activity_thread = None
@@ -35,6 +36,7 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
             adapter,
             parent,
             contract_write_port_factory=contract_write_port_factory,
+            contract_document_workspace_factory=contract_document_workspace_factory,
         )
         self.activity_presenter = IndividualActivityPresenter(self.legacy_tabs)
 

@@ -43,6 +43,7 @@ from contract_editor import (
     ContractCreateDialog,
     ContractEditDialog,
 )
+from contract_documents import ContractDocumentsDialog
 from data_adapter import TeamworksReadAdapter
 from legacy_individual_tabs import LegacyIndividualTabs
 from models import ContractsTableModel, PeopleTableModel
@@ -85,10 +86,12 @@ class PeopleContractsPilot(QMainWindow):
         parent=None,
         *,
         contract_write_port_factory=None,
+        contract_document_workspace_factory=None,
     ):
         super().__init__(parent)
         self.adapter = adapter
         self._contract_write_port_factory = contract_write_port_factory
+        self._contract_document_workspace_factory = contract_document_workspace_factory
         self._current_contract_person_key = None
         self.legacy_tabs = LegacyIndividualTabs(_legacy_icon)
         self.setWindowTitle("Teamworks Qt — Individus / Contrats")
@@ -527,7 +530,13 @@ class PeopleContractsPilot(QMainWindow):
         tools.addWidget(self.contract_signature_button)
         tools.addWidget(self.contract_due_button)
         tools.addSpacing(8)
-        tools.addWidget(self._legacy_tool_button("Imprimante.png", "Imprimer", fallback="I"))
+        self.contract_document_button = self._legacy_tool_button(
+            "Imprimante.png",
+            "Préparer un document RH / publipostage",
+            fallback="I",
+        )
+        self.contract_document_button.clicked.connect(self._open_contract_documents)
+        tools.addWidget(self.contract_document_button)
         tools.addStretch(1)
         group_layout.addLayout(tools)
         root.addWidget(group, 1)
@@ -568,6 +577,14 @@ class PeopleContractsPilot(QMainWindow):
         self.contract_delete_button.setEnabled(writable)
         self.contract_signature_button.setEnabled(writable)
         self.contract_due_button.setEnabled(writable)
+        document_ready = (
+            callable(self._contract_document_workspace_factory)
+            and contract is not None
+            and isinstance(contract.id_historique, int)
+            and not isinstance(contract.id_historique, bool)
+            and contract.id_historique > 0
+        )
+        self.contract_document_button.setEnabled(document_ready)
 
 
     def _create_contract(self) -> None:
@@ -682,6 +699,39 @@ class PeopleContractsPilot(QMainWindow):
         else:
             self.statusBar().showMessage(
                 f"Contrat n°{contract_id} supprimé · contrôle d'absence incomplet"
+            )
+
+    def _open_contract_documents(self) -> None:
+        contract = self._selected_contract()
+        if (
+            contract is None
+            or not callable(self._contract_document_workspace_factory)
+            or not isinstance(contract.id_historique, int)
+            or isinstance(contract.id_historique, bool)
+            or contract.id_historique <= 0
+        ):
+            return
+
+        try:
+            workspace = self._contract_document_workspace_factory(
+                contract.id_historique
+            )
+        except Exception as exc:
+            self.statusBar().showMessage(
+                f"Préparation documentaire impossible · {exc}"
+            )
+            return
+
+        dialog = ContractDocumentsDialog(workspace, self)
+        dialog.exec()
+        if workspace.ok:
+            self.statusBar().showMessage(
+                f"Documents RH préparés pour le contrat n°{contract.id_historique}"
+            )
+        else:
+            message = " · ".join(error.message for error in workspace.errors)
+            self.statusBar().showMessage(
+                f"Préparation documentaire incomplète · {message}"
             )
 
     def _edit_selected_contract(self) -> None:
