@@ -38,7 +38,7 @@ class MyDialog(wx.Dialog):
         self.ctrl_utilisateur = wx.TextCtrl(self.box_codes_staticbox, -1, u"")
         self.label_motdepasse = wx.StaticText(self.box_codes_staticbox, -1, _(u"Mot de passe :"))
         self.ctrl_motdepasse = wx.TextCtrl(self.box_codes_staticbox, -1, u"", style=wx.TE_PASSWORD)
-        self.bouton_valider_codes = wx.Button(self.box_codes_staticbox, -1, _(u"Valider"), style=wx.BU_EXACTFIT)
+        self.bouton_valider_codes = CTRL_Bouton_image.CTRL(self.box_codes_staticbox, texte=_(u"Valider"), role="primary")
         
         # Liste fichiers
         self.box_fichiers_staticbox = wx.StaticBox(self, -1, _(u"Liste des fichiers"))
