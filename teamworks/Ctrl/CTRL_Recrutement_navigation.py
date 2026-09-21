@@ -53,7 +53,7 @@ class BarreModes(wx.Panel):
         self.boutons = {}
 
         gap = UTILS_Styles.GetLayoutSpacing("control_gap")
-        sizer = wx.WrapSizer(wx.HORIZONTAL)
+        sizer = wx.WrapSizer(wx.HORIZONTAL, 0)
         for mode, label in self.MODES:
             bouton = BoutonMode(self, label, mode)
             bouton.Bind(wx.EVT_TOGGLEBUTTON, self.OnMode)
