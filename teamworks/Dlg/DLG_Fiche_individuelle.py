@@ -173,6 +173,9 @@ class Dialog(CORE.Dialog):
             if save or not self.nouvelleFiche:
                 return CORE.Dialog.Fermer(self, save=save)
 
+            if self._fermeture_en_cours:
+                return False
+
             IDpersonne = self.IDpersonne
             DB = CORE.GestionDB.DB()
             placeholder = "%s" if DB.isNetwork else "?"
@@ -204,11 +207,20 @@ class Dialog(CORE.Dialog):
                 return False
             DB.Close()
 
+            self._fermeture_en_cours = True
+            try:
+                self.txtDefilant.Stop()
+            except Exception:
+                pass
+
             frm = CORE.FonctionsPerso.FrameOuverte("Personnes")
             if frm is not None:
                 frm.listCtrl_personnes.MAJ(IDpersonne=IDpersonne)
                 frm.panel_dossiers.tree_ctrl_problemes.MAJ_treeCtrl()
-            self.EndModal(wx.ID_OK)
+            if self.IsModal():
+                self.EndModal(wx.ID_OK)
+            else:
+                self.Destroy()
             return True
         finally:
             DiagnosticPerformance.terminer_action(action)
