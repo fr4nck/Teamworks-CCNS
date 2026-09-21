@@ -97,6 +97,9 @@ def _appliquer_contrat_bouton(control, texte="", role="default", icon_only=False
     control.SetFont(UTILS_Styles.GetFont("label"))
     control._teamworks_font_scaled = True
     control.SetForegroundColour(UTILS_Interface.GetToken(_token_texte_bouton(role)))
+    # Recalculer le BestSize sans hériter d'une ancienne largeur maximale,
+    # notamment après SetTexte().
+    control.SetMaxSize((-1, -1))
     control.SetInitialSize()
 
     best = control.GetBestSize()
