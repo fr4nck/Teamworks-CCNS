@@ -58,6 +58,13 @@ Un échec de connexion, de placeholder, de transaction ou de rollback bloque la 
 
 ## 3. Préparer la copie représentative Teamworks
 
+La procédure complète d'anonymisation est décrite dans
+`docs/ANONYMISATION_COPIE_RECETTE_QT.md`.
+
+La base utilisée pour cette recette doit avoir passé l'audit final de cet outil avant tout parcours fonctionnel Qt.
+
+
+
 Dupliquer la base de travail dans un nom explicitement de recette, par exemple :
 
 `<base>_qt_vanilla_recette`

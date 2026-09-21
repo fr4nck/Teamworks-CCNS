@@ -197,6 +197,10 @@ jobs:
         shell: pwsh
         run: python -m pytest -q tests/test_mysql_expense_roundtrip.py
 
+      - name: Recette anonymisation — Windows + MySQL
+        shell: pwsh
+        run: python -m pytest -q tests/test_mysql_representative_copy_anonymization.py
+
       - name: Smoke runtime Qt Windows natif
         shell: pwsh
         run: python poc/qt-theme/runtime_async_smoke.py
