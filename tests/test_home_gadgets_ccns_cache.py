@@ -130,3 +130,21 @@ def test_mesures_accueil_ccns_separe_sql_et_transformation(monkeypatch):
     assert "total_action" in categories
     assert "accueil_ccns.audit_contracts" in noms
     diag.reinitialiser_mesures()
+
+
+def test_cache_ne_traverse_pas_un_changement_de_dossier(monkeypatch):
+    appels = []
+    contexte = {"nom": "dossier-a"}
+    monkeypatch.setattr(home, "_current_context_key", lambda: contexte["nom"])
+    monkeypatch.setattr(
+        home,
+        "audit_contracts",
+        lambda limit=None: appels.append((contexte["nom"], limit)) or _rows(),
+    )
+
+    first = home.build_ccns_home_data(limit=5000, max_lines=12)
+    contexte["nom"] = "dossier-b"
+    second = home.build_ccns_home_data(limit=5000, max_lines=12)
+
+    assert appels == [("dossier-a", 5000), ("dossier-b", 5000)]
+    assert second is not first

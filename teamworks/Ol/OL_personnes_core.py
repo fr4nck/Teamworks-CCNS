@@ -13,6 +13,7 @@ import wx
 from Utils import UTILS_Adaptations, UTILS_Dates
 import GestionDB
 import operator
+import copy
 import FonctionsPerso
 from Dlg import DLG_Fiche_individuelle
 import os
@@ -36,7 +37,7 @@ LISTE_COLONNES = [
             [_(u"Nom de jeune fille"), "left", 120, "nom_jfille", "", _(u"Nom de jeune fille"), False, 4 ],
             [_(u"Prénom"), "left", 120, "prenom", "", _(u"Prénom"), True, 5 ],
             [_(u"Âge"), "left", 50, "age", "", _(u"Âge"), True, 6 ],
-            [_(u"Qualifications"), "left", 90, "qualifications", "", _(u"Qualifications"), True, 7 ],
+            [_(u"Qualifications"), "left", 180, "qualifications", "", _(u"Qualifications"), True, 7 ],
             [_(u"Date naiss."), "left", 70, "date_naiss", "date" , _(u"Date de naissance"), True, 8 ],
             [_(u"CP naiss."), "left", 60, "cp_naiss", "", _(u"Code postal de la ville de naissance"), True, 9 ],
             [_(u"Ville naiss."), "left", 110, "ville_naiss", "", _(u"Nom de la ville de naissance"), True, 10 ],
@@ -46,7 +47,7 @@ LISTE_COLONNES = [
             [_(u"Adresse"), "left", 160, "adresse_resid",  "", _(u"Adresse de résidence"), True, 14 ],
             [_(u"CP"), "left", 50, "cp_resid",  "", _(u"Code postal de la ville de résidence"), True, 15 ],
             [_(u"Ville"), "left", 110, "ville_resid",  "", _(u"Nom de la ville de résidence"), True, 16 ],
-            [_(u"Téléphones"), "left", 200, "telephones", "", _(u"Numéros de téléphones"), True, 17 ],
+            [_(u"Téléphones"), "left", 125, "telephones", "", _(u"Numéros de téléphones"), True, 17 ],
             [_(u"Email"), "left", 150, "email", "", _(u"Adresses emails"), True, 18 ],
             [_(u"Fax"), "left", 150, "fax", "", _(u"Numéros de fax"), False, 19 ],            
             [_(u"Situation"), "left", 100, "nom_situation",  "", _(u"Situation sociale"), True, 20 ],
@@ -165,10 +166,13 @@ class ListView(FastObjectListView):
         self.presents = False
         self.criteres = ""
         self.itemSelected = False
-        # Initialisation du listCtrl
-        self.listeColonnesTemp = LISTE_COLONNES
-        self.listeColonnesOriginale = list(self.listeColonnesTemp)
+        self._colonnes_a_reconstruire = True
+        # Chaque vue possède sa copie : une personnalisation ne modifie jamais
+        # les valeurs par défaut globales ni une autre instance.
+        self.listeColonnesTemp = copy.deepcopy(LISTE_COLONNES)
+        self.listeColonnesOriginale = copy.deepcopy(LISTE_COLONNES)
         FastObjectListView.__init__(self, *args, **kwds)
+        self._AppliquerPreferencesColonnes()
         self.Importation_pays()
         self.InitModel()
         self.InitObjectListView()
@@ -296,6 +300,26 @@ class ListView(FastObjectListView):
         for pays in listePays :
             DICT_PAYS[pays[0]] = (pays[1], pays[2])
 
+    def _AppliquerPreferencesColonnes(self):
+        if not self.view_id:
+            return
+
+        colonnes = sorted(self.listeColonnesTemp, key=operator.itemgetter(7))
+        codes = [colonne[3] for colonne in colonnes]
+        visibilite_defaut = {colonne[3]: bool(colonne[6]) for colonne in colonnes}
+        preferences = self.GetPreferencesColonnes(
+            colonnes_disponibles=codes,
+            ordre_defaut=codes,
+            visibilite_defaut=visibilite_defaut,
+        )
+
+        rang = {code: index + 1 for index, code in enumerate(preferences["order"])}
+        for colonne in self.listeColonnesTemp:
+            code = colonne[3]
+            colonne[6] = preferences["visible"].get(code, bool(colonne[6]))
+            if code in rang:
+                colonne[7] = rang[code]
+
     def InitObjectListView(self):
         # Images
         imgHomme = self.AddNamedImages("homme", wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Homme.png"), wx.BITMAP_TYPE_PNG))
@@ -350,6 +374,7 @@ class ListView(FastObjectListView):
         self.SetEmptyListMsg(_(u"Aucune personne"))
         self.SetEmptyListMsgFont(wx.FFont(11, wx.DEFAULT, False, "Tekton"))
         self.SetObjects(self.donnees)
+        self._colonnes_a_reconstruire = False
        
     def MAJ(self, IDpersonne=None, presents=None):
         if IDpersonne != None :
@@ -361,7 +386,11 @@ class ListView(FastObjectListView):
         if presents != None :
             self.presents = presents
         self.InitModel()
-        self.InitObjectListView()
+        if self._colonnes_a_reconstruire:
+            self.InitObjectListView()
+        else:
+            # Les colonnes sont stables : seule la donnée métier est remplacée.
+            self.SetObjects(self.donnees)
         # Sélection d'un item
         if self.selectionTrack != None :
             self.SelectObject(self.selectionTrack, deselectOthers=True, ensureVisible=True)
@@ -372,7 +401,12 @@ class ListView(FastObjectListView):
         return self.GetSelectedObjects()
     
     def SetListeColonnes(self, listeColonnes):
-        self.listeColonnesTemp = listeColonnes
+        self.listeColonnesTemp = copy.deepcopy(listeColonnes)
+        colonnes = sorted(self.listeColonnesTemp, key=operator.itemgetter(7))
+        ordre = [colonne[3] for colonne in colonnes]
+        visibilite = {colonne[3]: bool(colonne[6]) for colonne in colonnes}
+        self.DefinirPreferencesColonnes(ordre=ordre, visibilite=visibilite)
+        self._colonnes_a_reconstruire = True
 
 
 # --------------------------------------------------------------------------------------------------------------------------------------------------
