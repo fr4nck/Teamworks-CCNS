@@ -239,6 +239,77 @@ class CTRL(wx.Button):
         self._stabiliser_rendu()
 
 
+class Compact(wx.Button):
+    """Petit bouton technique Teamworks intégré à un champ ou une grille.
+
+    Il remplace les wx.Button/wx.BitmapButton historiques utilisés comme
+    sélecteurs "..." ou déclencheurs d'icône, tout en conservant leur encombrement
+    réduit. Contrairement à CTRL, il n'impose pas la hauteur d'un bouton d'action
+    principal mais il consomme quand même la charte et le contrat de largeur.
+    """
+
+    def __init__(
+        self,
+        parent,
+        id=-1,
+        texte="",
+        cheminImage=None,
+        bitmap=None,
+        size=(-1, -1),
+        role="quiet",
+        style=wx.BU_EXACTFIT,
+    ):
+        wx.Button.__init__(self, parent, id=id, label=texte, size=size, style=style)
+        self.parent = parent
+        self.texte = texte
+        self.cheminImage = cheminImage
+        self.bitmapSource = bitmap
+        self.role = role if role in BUTTON_ROLES else "quiet"
+        self._teamworks_text_style = "label"
+        self.MAJ()
+
+    def _bitmap(self):
+        if self.bitmapSource is not None:
+            try:
+                if self.bitmapSource.IsOk():
+                    return self.bitmapSource
+            except Exception:
+                pass
+        if not self.cheminImage:
+            return wx.NullBitmap
+        chemin = _chemin_image_existant(
+            self.cheminImage,
+            UTILS_Styles.ICON_SIZES["small"],
+        )
+        if chemin is None:
+            return wx.NullBitmap
+        try:
+            return wx.Bitmap(str(chemin), wx.BITMAP_TYPE_ANY)
+        except Exception:
+            return wx.NullBitmap
+
+    def MAJ(self):
+        self.SetFont(UTILS_Styles.GetFont("label"))
+        self.SetForegroundColour(
+            UTILS_Interface.GetToken(_token_texte_bouton(self.role))
+        )
+        bitmap = self._bitmap()
+        if bitmap.IsOk():
+            self.SetBitmap(bitmap)
+            self.SetBitmapMargins((2, 0))
+        self.SetInitialSize()
+        best = self.GetBestSize()
+        largeur = max(best.GetWidth(), 20)
+        hauteur = max(best.GetHeight(), 20)
+        self.SetMinSize((largeur, hauteur))
+        self.SetMaxSize((largeur, hauteur))
+        try:
+            self.InvalidateBestSize()
+            self.Refresh(False)
+        except Exception:
+            pass
+
+
 class Toggle(wx.ToggleButton):
     """Bouton à état Teamworks avec le même contrat que les actions ordinaires."""
 
