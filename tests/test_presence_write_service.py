@@ -461,3 +461,112 @@ def test_readback_echoue_apres_commit_sans_faux_rollback(db, port, monkeypatch):
     assert result.committed is True
     assert db.commit_count == 1
     assert db.connexion.execute("SELECT COUNT(*) FROM presences").fetchone()[0] == 1
+
+
+
+def test_modification_refuse_revision_obsolete(db, port):
+    target_id = _insert_raw(
+        db,
+        day="2026-09-21",
+        start="08:00",
+        end="09:00",
+        title="Version A",
+    )
+    stale = port.read_presence(target_id)
+    assert stale is not None
+    assert stale.revision
+
+    db.connexion.execute(
+        "UPDATE presences SET intitule=? WHERE IDpresence=?",
+        ("Version B", target_id),
+    )
+    db.connexion.commit()
+
+    result = update_presence(
+        port,
+        command=PresenceUpdateCommand(
+            presence_id=target_id,
+            start_time="08:00",
+            end_time="09:30",
+            category_id=10,
+            title="Version C",
+            expected_revision=stale.revision,
+        ),
+    )
+
+    assert result.ok is False
+    assert result.code == ServiceErrorCode.CONCURRENT_MODIFICATION.value
+    assert result.error is not None
+    assert result.error.expected_revision == stale.revision
+    assert result.error.actual_revision != stale.revision
+    assert result.committed is False
+    assert db.connexion.execute(
+        "SELECT intitule FROM presences WHERE IDpresence=?",
+        (target_id,),
+    ).fetchone()[0] == "Version B"
+
+
+def test_suppression_refuse_revision_obsolete(db, port):
+    target_id = _insert_raw(db, title="Version A")
+    stale = port.read_presence(target_id)
+    assert stale is not None
+
+    db.connexion.execute(
+        "UPDATE presences SET intitule=? WHERE IDpresence=?",
+        ("Version B", target_id),
+    )
+    db.connexion.commit()
+
+    result = delete_presence(
+        port,
+        command=PresenceDeleteCommand(
+            presence_id=target_id,
+            confirmed=True,
+            expected_revision=stale.revision,
+        ),
+    )
+
+    assert result.ok is False
+    assert result.code == ServiceErrorCode.CONCURRENT_MODIFICATION.value
+    assert port.read_presence(target_id) is not None
+
+
+def test_adapter_compare_and_swap_refuse_update_si_ligne_change_apres_lecture(
+    db, port
+):
+    target_id = _insert_raw(db, title="Version A")
+    expected = port.read_presence(target_id)
+    assert expected is not None
+
+    db.connexion.execute(
+        "UPDATE presences SET intitule=? WHERE IDpresence=?",
+        ("Version concurrente", target_id),
+    )
+
+    affected = port.update_presence(
+        presence_id=target_id,
+        start_time="08:15",
+        end_time="09:15",
+        category_id=10,
+        title="Notre version",
+        expected=expected,
+    )
+
+    assert affected == 0
+    db.connexion.rollback()
+
+
+def test_revision_change_quand_contenu_presence_change(db, port):
+    target_id = _insert_raw(db, title="Version A")
+    first = port.read_presence(target_id)
+    assert first is not None
+
+    db.connexion.execute(
+        "UPDATE presences SET intitule=? WHERE IDpresence=?",
+        ("Version B", target_id),
+    )
+    db.connexion.commit()
+
+    second = port.read_presence(target_id)
+    assert second is not None
+    assert second.revision != first.revision
