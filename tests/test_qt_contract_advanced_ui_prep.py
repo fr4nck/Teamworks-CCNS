@@ -218,3 +218,13 @@ def test_feature_gate_defaults_to_false_in_public_constructor():
 
     assert "advanced_contracts_enabled: bool = False" in source
     assert "self._advanced_contracts_enabled = advanced_contracts_enabled is True" in source
+
+
+
+def test_production_pilot_propagates_gate_but_launcher_does_not_enable_it():
+    generalities_source = (POC / "pilot_generalities.py").read_text(encoding="utf-8")
+    launcher_source = (POC / "launcher.py").read_text(encoding="utf-8")
+
+    assert "advanced_contracts_enabled: bool = False" in generalities_source
+    assert "advanced_contracts_enabled=advanced_contracts_enabled" in generalities_source
+    assert "advanced_contracts_enabled=True" not in launcher_source
