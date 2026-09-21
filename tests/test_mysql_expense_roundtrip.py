@@ -73,9 +73,9 @@ def _network_db():
 def db():
     admin = _admin_connection()
     cursor = admin.cursor()
-    cursor.execute(f"DROP DATABASE IF EXISTS \`{DB_NAME}\`")
+    cursor.execute(f"DROP DATABASE IF EXISTS {DB_NAME}")
     cursor.execute(
-        f"CREATE DATABASE \`{DB_NAME}\` CHARACTER SET utf8 COLLATE utf8_unicode_ci"
+        f"CREATE DATABASE {DB_NAME} CHARACTER SET utf8 COLLATE utf8_unicode_ci"
     )
     cursor.close()
     admin.close()
@@ -139,7 +139,7 @@ def db():
         database.Close()
         admin = _admin_connection()
         cursor = admin.cursor()
-        cursor.execute(f"DROP DATABASE IF EXISTS \`{DB_NAME}\`")
+    cursor.execute(f"DROP DATABASE IF EXISTS {DB_NAME}")
         cursor.close()
         admin.close()
 
