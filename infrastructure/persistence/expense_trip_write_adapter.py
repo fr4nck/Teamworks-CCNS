@@ -31,6 +31,13 @@ class GestionDbTripWriteAdapter:
         return date.fromisoformat(str(value)[:10])
 
     @staticmethod
+    def _postcode(value) -> str:
+        if value is None:
+            return ""
+        text = str(value).strip()
+        return text.zfill(5) if text else ""
+
+    @staticmethod
     def _reimbursement_id(value):
         if value in (None, 0, "", "0"):
             return None
@@ -61,9 +68,9 @@ class GestionDbTripWriteAdapter:
             person_id=int(row[0]),
             travel_date=self._as_date(row[1]),
             purpose=str(row[2] or "").strip(),
-            departure_postcode=str(row[3] or "").strip().zfill(5),
+            departure_postcode=self._postcode(row[3]),
             departure_city=str(row[4] or "").strip(),
-            arrival_postcode=str(row[5] or "").strip().zfill(5),
+            arrival_postcode=self._postcode(row[5]),
             arrival_city=str(row[6] or "").strip(),
             distance=Decimal(str(row[7])),
             round_trip=(row[8] is True or str(row[8]) == "True"),
