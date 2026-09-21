@@ -31,6 +31,7 @@ class PresenceSnapshot:
     end_time: str
     category_id: int
     title: str
+    revision: str = ""
 
 
 @dataclass(frozen=True)
@@ -61,12 +62,14 @@ class PresenceUpdateCommand:
     end_time: str
     category_id: int
     title: str = ""
+    expected_revision: str | None = None
 
 
 @dataclass(frozen=True)
 class PresenceDeleteCommand:
     presence_id: int
     confirmed: bool = False
+    expected_revision: str | None = None
 
 
 class PresenceWritePort(Protocol):
@@ -110,10 +113,16 @@ class PresenceWritePort(Protocol):
         end_time: str,
         category_id: int,
         title: str,
+        expected: PresenceSnapshot | None = None,
     ) -> int:
         ...
 
-    def delete_presence(self, presence_id: int) -> int:
+    def delete_presence(
+        self,
+        presence_id: int,
+        *,
+        expected: PresenceSnapshot | None = None,
+    ) -> int:
         ...
 
     def commit(self) -> None:
@@ -436,7 +445,7 @@ def update_presence(
     *,
     command: PresenceUpdateCommand,
 ) -> ServiceResult[PresenceSnapshot]:
-    """Modifie les horaires, la catégorie et la légende d'une présence."""
+    """Modifie une présence avec protection contre les écrasements concurrents."""
 
     errors = validate_presence_update_command(command)
     if errors:
@@ -473,6 +482,37 @@ def update_presence(
             target_id=command.presence_id,
         )
 
+    if (
+        command.expected_revision
+        and command.expected_revision != current.revision
+    ):
+        return ServiceResult.failure(
+            error=ServiceError(
+                code=ServiceErrorCode.CONCURRENT_MODIFICATION,
+                message=(
+                    "La présence a été modifiée depuis son affichage. "
+                    "Rechargez-la avant de réessayer."
+                ),
+                target_id=command.presence_id,
+                expected_revision=command.expected_revision,
+                actual_revision=current.revision,
+            ),
+            target_id=command.presence_id,
+        )
+
+    normalized_title = normalize_presence_title(command.title)
+    if (
+        current.start_time == command.start_time
+        and current.end_time == command.end_time
+        and current.category_id == command.category_id
+        and current.title == normalized_title
+    ):
+        return ServiceResult.success(
+            value=current,
+            target_id=command.presence_id,
+            committed=False,
+        )
+
     try:
         conflicting_presence_id = port.find_overlap(
             person_id=current.person_id,
@@ -502,16 +542,32 @@ def update_presence(
                 start_time=command.start_time,
                 end_time=command.end_time,
                 category_id=command.category_id,
-                title=normalize_presence_title(command.title),
+                title=normalized_title,
+                expected=current,
             )
         )
         if affected == 0:
+            actual = port.read_presence(command.presence_id)
             _safe_rollback(port)
+            if actual is None:
+                return ServiceResult.failure(
+                    error=ServiceError(
+                        code=ServiceErrorCode.TARGET_NOT_FOUND,
+                        message="La présence a disparu avant l'enregistrement.",
+                        target_id=command.presence_id,
+                    ),
+                    target_id=command.presence_id,
+                )
             return ServiceResult.failure(
                 error=ServiceError(
-                    code=ServiceErrorCode.TARGET_NOT_FOUND,
-                    message="La présence a disparu avant l'enregistrement.",
+                    code=ServiceErrorCode.CONCURRENT_MODIFICATION,
+                    message=(
+                        "La présence a changé pendant l'enregistrement. "
+                        "Rechargez-la avant de réessayer."
+                    ),
                     target_id=command.presence_id,
+                    expected_revision=current.revision,
+                    actual_revision=actual.revision,
                 ),
                 target_id=command.presence_id,
             )
@@ -520,9 +576,7 @@ def update_presence(
             return ServiceResult.failure(
                 error=ServiceError(
                     code=ServiceErrorCode.UNEXPECTED_ROWCOUNT,
-                    message=(
-                        "Le nombre de présences modifiées est inattendu."
-                    ),
+                    message="Le nombre de présences modifiées est inattendu.",
                     target_id=command.presence_id,
                     diagnostic="rowcount=%d" % affected,
                 ),
@@ -550,9 +604,7 @@ def update_presence(
         return ServiceResult.failure(
             error=ServiceError(
                 code=ServiceErrorCode.READBACK_ERROR,
-                message=(
-                    "L'enregistrement a été validé mais sa relecture a échoué."
-                ),
+                message="L'enregistrement a été validé mais sa relecture a échoué.",
                 target_id=command.presence_id,
                 retryable=False,
                 diagnostic=repr(exc),
@@ -567,13 +619,12 @@ def update_presence(
         committed=True,
     )
 
-
 def delete_presence(
     port: PresenceWritePort,
     *,
     command: PresenceDeleteCommand,
 ) -> ServiceResult[bool]:
-    """Supprime une présence après confirmation explicite."""
+    """Supprime une présence avec confirmation et concurrence optimiste."""
 
     if not is_valid_target_id(command.presence_id):
         return ServiceResult.failure(
@@ -588,9 +639,7 @@ def delete_presence(
         return ServiceResult.failure(
             error=ServiceError(
                 code=ServiceErrorCode.VALIDATION_ERROR,
-                message=(
-                    "La suppression de la présence doit être confirmée explicitement."
-                ),
+                message="La suppression de la présence doit être confirmée explicitement.",
                 field="confirmation",
                 target_id=command.presence_id,
             ),
@@ -598,7 +647,8 @@ def delete_presence(
         )
 
     try:
-        if not port.presence_exists(command.presence_id):
+        current = port.read_presence(command.presence_id)
+        if current is None:
             return ServiceResult.failure(
                 error=ServiceError(
                     code=ServiceErrorCode.TARGET_NOT_FOUND,
@@ -608,14 +658,52 @@ def delete_presence(
                 target_id=command.presence_id,
             )
 
-        affected = int(port.delete_presence(command.presence_id))
-        if affected == 0:
-            _safe_rollback(port)
+        if (
+            command.expected_revision
+            and command.expected_revision != current.revision
+        ):
             return ServiceResult.failure(
                 error=ServiceError(
-                    code=ServiceErrorCode.TARGET_NOT_FOUND,
-                    message="La présence a disparu avant la suppression.",
+                    code=ServiceErrorCode.CONCURRENT_MODIFICATION,
+                    message=(
+                        "La présence a été modifiée depuis son affichage. "
+                        "Rechargez-la avant de la supprimer."
+                    ),
                     target_id=command.presence_id,
+                    expected_revision=command.expected_revision,
+                    actual_revision=current.revision,
+                ),
+                target_id=command.presence_id,
+            )
+
+        affected = int(
+            port.delete_presence(
+                command.presence_id,
+                expected=current,
+            )
+        )
+        if affected == 0:
+            actual = port.read_presence(command.presence_id)
+            _safe_rollback(port)
+            if actual is None:
+                return ServiceResult.failure(
+                    error=ServiceError(
+                        code=ServiceErrorCode.TARGET_NOT_FOUND,
+                        message="La présence a disparu avant la suppression.",
+                        target_id=command.presence_id,
+                    ),
+                    target_id=command.presence_id,
+                )
+            return ServiceResult.failure(
+                error=ServiceError(
+                    code=ServiceErrorCode.CONCURRENT_MODIFICATION,
+                    message=(
+                        "La présence a changé pendant la suppression. "
+                        "Rechargez-la avant de réessayer."
+                    ),
+                    target_id=command.presence_id,
+                    expected_revision=current.revision,
+                    actual_revision=actual.revision,
                 ),
                 target_id=command.presence_id,
             )
@@ -624,9 +712,7 @@ def delete_presence(
             return ServiceResult.failure(
                 error=ServiceError(
                     code=ServiceErrorCode.UNEXPECTED_ROWCOUNT,
-                    message=(
-                        "Le nombre de présences supprimées est inattendu."
-                    ),
+                    message="Le nombre de présences supprimées est inattendu.",
                     target_id=command.presence_id,
                     diagnostic="rowcount=%d" % affected,
                 ),
@@ -653,9 +739,7 @@ def delete_presence(
         return ServiceResult.failure(
             error=ServiceError(
                 code=ServiceErrorCode.READBACK_ERROR,
-                message=(
-                    "La suppression a été validée mais son contrôle final a échoué."
-                ),
+                message="La suppression a été validée mais son contrôle final a échoué.",
                 target_id=command.presence_id,
                 retryable=False,
                 diagnostic=repr(exc),
