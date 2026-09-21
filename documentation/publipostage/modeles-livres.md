@@ -36,6 +36,8 @@ Les modèles « Contrat d'engagement éducatif - Exemple » et « Contrat à dur
 
 Ces noms ne correspondent à aucun mot-clé standard fourni par le moteur et aucun champ personnalisé portant ces noms n'est créé automatiquement sur une installation neuve. Ils restent donc considérés comme **balises inconnues tolérées explicitement** par le garde-fou, afin de préserver la compatibilité tout en rendant la dette visible.
 
+Une troisième dette est détectée dans « Fiche renseignements salarié - Exemple » : les variantes Word et LibreOffice contiennent `{QUALIFICATIONS}`, alors que ce mot-clé appartient au contexte Candidat et n'est pas fourni par le contexte Individu/Salarié actuel. Le garde-fou conserve cette incohérence visible sans la corriger automatiquement.
+
 Ces deux modèles utilisent également `{BRUTJOUR}`. Ce mot-clé est connu mais restreint au flux historique « Imprimer un document » depuis la fiche contrat, lorsqu'un barème CEE est disponible. Pour un modèle destiné à plusieurs points d'entrée, `{BAREMECEE}` est la clé plus générale.
 
 ## Ce que cet audit ne valide pas
