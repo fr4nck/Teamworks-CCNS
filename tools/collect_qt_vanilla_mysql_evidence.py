@@ -31,6 +31,7 @@ MYSQL_VARIABLES = (
     "max_allowed_packet",
     "autocommit",
     "tx_isolation",
+    "transaction_isolation",
 )
 
 PERFORMANCE_THRESHOLDS = {
@@ -135,15 +136,12 @@ def _snapshot(args) -> int:
         mysql_version = str(cursor.fetchone()[0])
 
         variables = {}
-        placeholders = ",".join(["%s"] * len(MYSQL_VARIABLES))
-        for name, value in _fetch_all(
-            cursor,
-            "SELECT variable_name, variable_value "
-            "FROM information_schema.global_variables "
-            f"WHERE variable_name IN ({placeholders})",
-            MYSQL_VARIABLES,
-        ):
-            variables[str(name).lower()] = str(value)
+        cursor.execute("SHOW VARIABLES")
+        wanted_variables = {name.lower() for name in MYSQL_VARIABLES}
+        for name, value in cursor.fetchall():
+            normalized = str(name).lower()
+            if normalized in wanted_variables:
+                variables[normalized] = str(value)
 
         tables = [
             {
