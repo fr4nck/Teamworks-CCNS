@@ -70,6 +70,8 @@ class FakeMySqlCursor:
                 Decimal("35.00"),
                 Decimal("3000.00"),
                 None,
+                "CDD_RENEWAL",
+                400,
             )
         if "FROM contrats WHERE IDcontrat" in self._last_query:
             return (501,)
@@ -172,6 +174,8 @@ def test_mysql_adapter_update_delete_and_readback_keep_mysql_parameter_style():
     assert snapshot is not None
     assert snapshot.contract_id == 501
     assert snapshot.contract_type_code == "CDD"
+    assert snapshot.operation_type == "CDD_RENEWAL"
+    assert snapshot.previous_contract_id == 400
 
     assert adapter.update_indicator(501, "signature", "Oui") == 1
     assert adapter.read_indicator(501, "signature") == "Oui"
