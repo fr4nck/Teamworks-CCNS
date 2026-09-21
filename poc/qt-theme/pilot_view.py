@@ -639,7 +639,7 @@ class PeopleContractsPilot(QMainWindow):
             "Confirmation de suppression",
             (
                 "Voulez-vous vraiment supprimer ce contrat ?\n\n"
-                f"> {contract.contract_type or 'Contrat'} · n°{contract_id}"
+                f"> {contract.kind or 'Contrat'} · n°{contract_id}"
             ),
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No,
