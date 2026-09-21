@@ -189,9 +189,11 @@ Ne pas activer un slow-query log global sur le serveur de production pour cette 
 
 La petite sélection fonctionnelle de 50–100 individus ne suffit pas.
 
-La copie utilisée pour P-* doit conserver au moins :
+La copie utilisée pour P-* doit respecter le critère formel **≥ 80 %** de la volumétrie d'exploitation pour les domaines mesurés, ou conserver toute la base anonymisée.
 
-- **80 % du nombre réel d'individus**, ou toute la base anonymisée ;
+Elle doit donc conserver au moins :
+
+- **80 % du nombre réel d'individus** ;
 - **80 % des contrats** ;
 - **80 % des présences** ;
 - **80 % des déplacements/remboursements** ;
