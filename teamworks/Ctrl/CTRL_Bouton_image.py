@@ -128,11 +128,14 @@ class CTRL(wx.Button):
         positionImage=wx.LEFT,
         margesTexte=None,
         role="default",
+        bitmap=None,
+        style=0,
     ):
-        wx.Button.__init__(self, parent, id=id, label=texte)
+        wx.Button.__init__(self, parent, id=id, label=texte, style=style)
         self.parent = parent
         self.texte = texte
         self.cheminImage = cheminImage
+        self.bitmapSource = bitmap
         self.role = role if role in BUTTON_ROLES else "default"
         taille_defaut = UTILS_Styles.ICON_SIZES["medium"]
         self.tailleImage = tailleImage or (taille_defaut, taille_defaut)
@@ -146,6 +149,13 @@ class CTRL(wx.Button):
         self.MAJ()
 
     def _bitmap(self):
+        if self.bitmapSource is not None:
+            try:
+                if self.bitmapSource.IsOk():
+                    return self.bitmapSource
+            except Exception:
+                pass
+
         taille_cible = _echelle_taille(self.tailleImage)
         chemin = _chemin_image_existant(self.cheminImage, max(taille_cible))
         if chemin is None:
@@ -206,7 +216,7 @@ class CTRL(wx.Button):
             self,
             texte=self.texte,
             role=self.role,
-            icon_only=bool(self.cheminImage and not self.texte),
+            icon_only=bool((self.cheminImage or self.bitmapSource is not None) and not self.texte),
         )
 
     def RafraichirVisuel(self):
