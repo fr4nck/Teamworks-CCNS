@@ -201,6 +201,10 @@ jobs:
         shell: pwsh
         run: python -m pytest -q tests/test_mysql_representative_copy_anonymization.py
 
+      - name: Collecteur de preuves — Windows + MySQL
+        shell: pwsh
+        run: python -m pytest -q tests/test_mysql_qt_vanilla_evidence_snapshot.py
+
       - name: Smoke runtime Qt Windows natif
         shell: pwsh
         run: python poc/qt-theme/runtime_async_smoke.py
