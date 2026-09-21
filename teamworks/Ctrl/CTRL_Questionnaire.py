@@ -586,7 +586,7 @@ class CTRL_documents(wx.Panel):
         # Layout
         grid_sizer_base = wx.FlexGridSizer(rows=1, cols=2, vgap=0, hgap=0)
         grid_sizer_base.Add(self.ctrl_vignettes, 1, wx.EXPAND, 0)
-        grid_sizer_base.Add(self.bouton_outils, 0, wx.EXPAND, 0)
+        grid_sizer_base.Add(self.bouton_outils, 0, wx.ALIGN_CENTER_VERTICAL, 0)
         self.SetSizer(grid_sizer_base)
         grid_sizer_base.AddGrowableCol(0)        
         self.Layout()
