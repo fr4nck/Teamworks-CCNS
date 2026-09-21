@@ -1,0 +1,134 @@
+name: Packaging Qt Vanilla 0.1
+
+on:
+  pull_request:
+    branches:
+      - qt/rail-c-documents-rh
+    paths:
+      - ".github/workflows/qt-vanilla-package.yml"
+      - "requirements/qt-vanilla-0.1.txt"
+      - "scripts/build_qt_vanilla_windows.ps1"
+      - "packaging/windows/Teamworks-CCNS-Qt.iss"
+      - "poc/qt-theme/**"
+      - "application/**"
+      - "domain/**"
+      - "infrastructure/**"
+      - "teamworks/GestionDB.py"
+      - "teamworks/Utils/UTILS_Fichiers.py"
+      - "tests/test_qt_vanilla_packaging_contract.py"
+  push:
+    tags:
+      - "qt-v0.1.*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PYTHONUTF8: "1"
+  QT_QPA_PLATFORM: "offscreen"
+
+jobs:
+  package-windows:
+    name: Qt Vanilla — build / install / smoke Windows
+    runs-on: windows-2022
+    timeout-minutes: 45
+
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v6
+
+      - name: Installer Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements/qt-vanilla-0.1.txt
+
+      - name: Installer le runtime Qt sans wx et les outils de build
+        shell: pwsh
+        run: |
+          python -m pip install --requirement requirements/qt-vanilla-0.1.txt
+          python -m pip install "pyinstaller>=6.10,<7" pytest
+          python -c "import importlib.util; assert importlib.util.find_spec('wx') is None, 'wxPython ne doit pas être installé dans le build Qt Vanilla'"
+
+      - name: Vérifier les frontières headless et le contrat de packaging
+        shell: pwsh
+        run: |
+          $env:PYTHONPATH = "$pwd\teamworks;$pwd"
+          python -c "import GestionDB; from Utils import UTILS_Fichiers; print('runtime legacy headless OK')"
+          python -m pytest -q `
+            tests/test_qt_vanilla_packaging_contract.py `
+            tests/test_contract_document_workspace.py `
+            tests/test_qt_contract_documents.py `
+            tests/test_qt_contract_write_roundtrip.py
+
+      - name: Construire Qt Vanilla et le portable
+        shell: pwsh
+        run: .\scripts\build_qt_vanilla_windows.ps1 -Version "0.1.0"
+
+      - name: Smoke du runtime figé
+        shell: pwsh
+        run: |
+          $exe = (Resolve-Path "dist/qt-vanilla/Teamworks-CCNS-Qt/Teamworks-CCNS-Qt.exe").Path
+          $env:TEAMWORKS_QT_SOURCE = "smoke"
+          $env:TEAMWORKS_QT_AUTOCLOSE_MS = "1200"
+          $process = Start-Process -FilePath $exe -PassThru
+          if (-not $process.WaitForExit(20000)) {
+            Stop-Process -Id $process.Id -Force
+            throw "Le runtime Qt figé ne s'est pas fermé après le smoke."
+          }
+          if ($process.ExitCode -ne 0) {
+            throw "Le runtime Qt figé a quitté avec le code $($process.ExitCode)."
+          }
+
+      - name: Installer Inno Setup
+        shell: pwsh
+        run: choco install innosetup --yes --no-progress
+
+      - name: Compiler l'installateur
+        shell: pwsh
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { throw "ISCC.exe introuvable." }
+          & $iscc "/DAppVersion=0.1.0" "packaging/windows/Teamworks-CCNS-Qt.iss"
+          if ($LASTEXITCODE -ne 0) { throw "Compilation Inno Setup échouée." }
+
+      - name: Installer, lancer et désinstaller silencieusement
+        shell: pwsh
+        run: |
+          $setup = (Resolve-Path "dist/qt-vanilla/installer/Teamworks-CCNS-Qt-0.1.0-windows-x64-setup.exe").Path
+          $target = Join-Path $env:TEMP "Teamworks-CCNS-Qt-Vanilla-Test"
+          Remove-Item $target -Recurse -Force -ErrorAction SilentlyContinue
+          $install = Start-Process -FilePath $setup -ArgumentList "/VERYSILENT", "/NORESTART", "/DIR=$target" -Wait -PassThru
+          if ($install.ExitCode -ne 0) { throw "Installation silencieuse échouée : $($install.ExitCode)" }
+          $exe = Join-Path $target "Teamworks-CCNS-Qt.exe"
+          if (-not (Test-Path $exe)) { throw "Exécutable installé introuvable." }
+          if (Test-Path (Join-Path $target "Portable")) { throw "L'installateur ne doit jamais installer le mode Portable." }
+          $env:TEAMWORKS_QT_SOURCE = "smoke"
+          $env:TEAMWORKS_QT_AUTOCLOSE_MS = "1200"
+          $app = Start-Process -FilePath $exe -Wait -PassThru
+          if ($app.ExitCode -ne 0) { throw "Smoke de l'installation échoué : $($app.ExitCode)" }
+          $uninstaller = Join-Path $target "unins000.exe"
+          if (-not (Test-Path $uninstaller)) { throw "Désinstalleur introuvable." }
+          $uninstall = Start-Process -FilePath $uninstaller -ArgumentList "/VERYSILENT", "/NORESTART" -Wait -PassThru
+          if ($uninstall.ExitCode -ne 0) { throw "Désinstallation silencieuse échouée : $($uninstall.ExitCode)" }
+
+      - name: Calculer les sommes SHA-256
+        shell: pwsh
+        run: |
+          $portable = (Resolve-Path "dist/qt-vanilla/Teamworks-CCNS-Qt-0.1.0-windows-x64-portable.zip").Path
+          $setup = (Resolve-Path "dist/qt-vanilla/installer/Teamworks-CCNS-Qt-0.1.0-windows-x64-setup.exe").Path
+          $portableHash = (Get-FileHash $portable -Algorithm SHA256).Hash.ToLower()
+          $setupHash = (Get-FileHash $setup -Algorithm SHA256).Hash.ToLower()
+          @("$portableHash  $(Split-Path $portable -Leaf)", "$setupHash  $(Split-Path $setup -Leaf)") | Set-Content -Path "dist/qt-vanilla/SHA256SUMS.txt" -Encoding ascii
+
+      - name: Publier les artefacts de qualification
+        uses: actions/upload-artifact@v4
+        with:
+          name: teamworks-qt-vanilla-0.1-windows
+          if-no-files-found: error
+          path: |
+            dist/qt-vanilla/Teamworks-CCNS-Qt-0.1.0-windows-x64-portable.zip
+            dist/qt-vanilla/installer/Teamworks-CCNS-Qt-0.1.0-windows-x64-setup.exe
+            dist/qt-vanilla/SHA256SUMS.txt

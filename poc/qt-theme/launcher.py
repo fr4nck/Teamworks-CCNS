@@ -108,7 +108,9 @@ def main() -> None:
 
     phase = time.perf_counter()
     qt_app = QApplication(sys.argv)
-    qt_app.setApplicationName("Teamworks Qt POC")
+    qt_app.setApplicationName(
+        os.environ.get("TEAMWORKS_QT_APP_NAME", "Teamworks Qt POC")
+    )
     qt_app.setOrganizationName("Pêle-Mêle Sports et Loisirs")
     startup_timings["qapplication"] = time.perf_counter() - phase
 
@@ -156,6 +158,13 @@ def main() -> None:
         after_window = time.perf_counter()
         window.show()
         shown_at = time.perf_counter()
+
+        try:
+            auto_close_ms = int(os.environ.get("TEAMWORKS_QT_AUTOCLOSE_MS", "0") or "0")
+        except ValueError:
+            auto_close_ms = 0
+        if auto_close_ms > 0:
+            QTimer.singleShot(auto_close_ms, qt_app.quit)
 
         data_seconds = float(getattr(window, "initial_people_load_seconds", 0.0))
         constructor_seconds = after_window - before_window
