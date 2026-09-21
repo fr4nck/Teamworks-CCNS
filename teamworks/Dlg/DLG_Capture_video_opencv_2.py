@@ -190,7 +190,7 @@ class Dialog(wx.Dialog):
         grid_sizer_boutons = wx.FlexGridSizer(rows=1, cols=5, vgap=10, hgap=10)
         grid_sizer_base.Add(self.ctrl_bandeau, 0, wx.EXPAND, 0)
         grid_sizer_base.Add(self.ctrl_video, 0, wx.LEFT|wx.RIGHT|wx.EXPAND, 10)
-        grid_sizer_base.Add(self.bouton_capture, 0, wx.LEFT|wx.RIGHT|wx.EXPAND, 10)
+        grid_sizer_base.Add(self.bouton_capture, 0, wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_HORIZONTAL, 10)
         grid_sizer_base.Add(self.ctrl_ligne, 0, wx.LEFT|wx.RIGHT|wx.EXPAND, 10)
         grid_sizer_boutons.Add(self.bouton_aide, 0, 0, 0)
         grid_sizer_boutons.Add(self.bouton_options, 0, 0, 0)
