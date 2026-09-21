@@ -13,6 +13,7 @@ import Chemins
 from Utils import UTILS_Adaptations
 from Utils.UTILS_Traduction import _
 import wx
+from Ctrl import CTRL_Bouton_image
 import wx.richtext as rt
 import six
 import copy
@@ -254,7 +255,7 @@ class Panel_Expediteur(wx.Panel):
         
         # Contrôles
         self.ctrl_exp = CTRL_Expediteur(self)
-        self.bouton_exp = self.bouton_exp = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Mecanisme.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_exp = CTRL_Bouton_image.CTRL(self, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Mecanisme.png"))
         
         # Propriétés
         self.ctrl_exp.SetToolTip(wx.ToolTip(_(u"Sélectionnez l'adresse d'expéditeur")))
@@ -792,7 +793,7 @@ class CTRL(wx.Panel):
         dlg = wx.Dialog(self, title="HTML", style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
         html = wx.html.HtmlWindow(dlg, size=(500,400), style=wx.BORDER_SUNKEN)
         html.SetPage(source)
-        btn = wx.Button(dlg, wx.ID_CANCEL)
+        btn = CTRL_Bouton_image.CTRL(dlg, id=wx.ID_CANCEL, texte=_(u"Fermer"))
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(html, 1, wx.ALL|wx.EXPAND, 5)
         sizer.Add(btn, 0, wx.ALL|wx.CENTER, 10)
