@@ -1,3 +1,4 @@
+from Ctrl import CTRL_Bouton_image
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #-----------------------------------------------------------
@@ -122,7 +123,7 @@ class Page(wx.Panel):
         cee = self.sizer_cee_staticbox
         self.label_cee_preview = wx.StaticText(cee, -1, "")
         self.label_cee_preview.Wrap(520)
-        self.bouton_cee_baremes = wx.Button(cee, -1, _(u"Barèmes CEE…"))
+        self.bouton_cee_baremes = CTRL_Bouton_image.CTRL(cee, texte=_(u"Barèmes CEE…"))
 
         dates = self.sizer_dates_staticbox
         self.label_date_debut = wx.StaticText(dates, -1, _(u"À partir du :"))
