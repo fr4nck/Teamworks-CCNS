@@ -3,6 +3,7 @@
 """Préférences d'affichage de Teamworks-CCNS."""
 
 import wx
+from Ctrl import CTRL_Bouton_image
 
 from Ctrl import CTRL_Texte
 from Utils import (
@@ -146,9 +147,9 @@ class Dialog(wx.Dialog):
         self.adresse_rapport_bugs.SetValue(
             UTILS_Envoi_rapport_bug.GetAdresseRapportBugsConfiguree()
         )
-        self.reset_adresse_rapport_bugs = wx.Button(
+        self.reset_adresse_rapport_bugs = CTRL_Bouton_image.CTRL(
             self.body,
-            label="Rétablir le réglage d'origine",
+            texte="Rétablir le réglage d'origine",
         )
         adresse_rapport_bugs = wx.BoxSizer(wx.HORIZONTAL)
         adresse_rapport_bugs.Add(self.adresse_rapport_bugs, 1, wx.EXPAND)
@@ -213,19 +214,19 @@ class Dialog(wx.Dialog):
             CTRL_Texte.Label(self.body, "Organisation et références RH"),
             0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, padding,
         )
-        self.organisation_button = wx.Button(
-            self.body, label="Structure / association…",
+        self.organisation_button = CTRL_Bouton_image.CTRL(
+            self.body, texte="Structure / association…",
         )
-        self.admin_button = wx.Button(
-            self.body, label="Références administratives RH…",
+        self.admin_button = CTRL_Bouton_image.CTRL(
+            self.body, texte="Références administratives RH…",
         )
         main.Add(
             self.organisation_button, 0,
-            wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, padding,
+            wx.LEFT | wx.RIGHT | wx.TOP, padding,
         )
         main.Add(
             self.admin_button, 0,
-            wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP | wx.BOTTOM, padding,
+            wx.LEFT | wx.RIGHT | wx.TOP | wx.BOTTOM, padding,
         )
 
         self.body.SetSizer(main)
@@ -240,8 +241,8 @@ class Dialog(wx.Dialog):
         footer_sizer = wx.BoxSizer(wx.HORIZONTAL)
         footer_sizer.AddStretchSpacer()
         buttons = wx.StdDialogButtonSizer()
-        ok_button = wx.Button(self.footer, wx.ID_OK)
-        cancel_button = wx.Button(self.footer, wx.ID_CANCEL)
+        ok_button = CTRL_Bouton_image.CTRL(self.footer, id=wx.ID_OK, texte="Valider", role="primary")
+        cancel_button = CTRL_Bouton_image.CTRL(self.footer, id=wx.ID_CANCEL, texte="Annuler")
         buttons.AddButton(ok_button)
         buttons.AddButton(cancel_button)
         buttons.Realize()
