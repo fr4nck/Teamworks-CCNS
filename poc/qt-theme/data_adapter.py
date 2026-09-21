@@ -97,6 +97,13 @@ class ReimbursementView:
 
 
 @dataclass(frozen=True)
+class PresenceCategoryView:
+    category_id: int
+    name: str
+    color: str = ""
+
+
+@dataclass(frozen=True)
 class PresenceView:
     key: int
     category_id: int
@@ -128,6 +135,8 @@ class TeamworksReadAdapter(Protocol):
     def list_reimbursements(self, person_id: str | int) -> Sequence[ReimbursementView]: ...
 
     def list_presences(self, person_id: str | int) -> Sequence[PresenceView]: ...
+
+    def list_presence_categories(self) -> Sequence[PresenceCategoryView]: ...
 
 
 class DemoAdapter:
@@ -207,6 +216,9 @@ class DemoAdapter:
     def list_presences(self, person_id: str | int) -> Sequence[PresenceView]:
         return ()
 
+    def list_presence_categories(self) -> Sequence[PresenceCategoryView]:
+        return ()
+
 
 class ProductionAdapterStub:
     """Emplacement historique conservé pour compatibilité du POC."""
@@ -230,4 +242,7 @@ class ProductionAdapterStub:
         raise RuntimeError("Utiliser TeamworksProductionReadAdapter pour la lecture réelle")
 
     def list_presences(self, person_id: str | int) -> Sequence[PresenceView]:
+        raise RuntimeError("Utiliser TeamworksProductionReadAdapter pour la lecture réelle")
+
+    def list_presence_categories(self) -> Sequence[PresenceCategoryView]:
         raise RuntimeError("Utiliser TeamworksProductionReadAdapter pour la lecture réelle")
