@@ -14,6 +14,7 @@ import Chemins
 from Utils import UTILS_Adaptations
 import six
 import wx
+from Ctrl import CTRL_Bouton_image
 import GestionDB
 from Utils.UTILS_Traduction import _
 
@@ -87,8 +88,8 @@ class CTRL(wx.Panel):
 
         self.ctrl_choix_profil = CTRL_Choix_profil(self, categorie=categorie)
         self.ctrl_choix_profil.SetMinSize((50, -1))
-        self.bouton_gestion = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath(u"Images/16x16/Mecanisme.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_enregistrer = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath(u"Images/16x16/Sauvegarder.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_gestion = CTRL_Bouton_image.CTRL(self, id=-1, texte="", cheminImage=Chemins.GetStaticPath(u"Images/16x16/Mecanisme.png"))
+        self.bouton_enregistrer = CTRL_Bouton_image.CTRL(self, id=-1, texte="", cheminImage=Chemins.GetStaticPath(u"Images/16x16/Sauvegarder.png"))
 
         self.Bind(wx.EVT_CHOICE, self.OnChoixProfil, self.ctrl_choix_profil)
         self.Bind(wx.EVT_BUTTON, self.OnBoutonGestion, self.bouton_gestion)
