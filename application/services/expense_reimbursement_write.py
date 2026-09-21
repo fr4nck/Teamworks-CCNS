@@ -7,7 +7,13 @@ from datetime import date
 from decimal import Decimal
 from typing import Optional, Protocol
 
-from application.services.transactional_write import WriteCode, WriteResult, is_valid_target_id
+from application.services.transactional_write import (
+    WriteCode,
+    WriteResult,
+    execute_transactional_delete,
+    invalid_target_result,
+    is_valid_target_id,
+)
 
 
 @dataclass(frozen=True)
@@ -28,6 +34,14 @@ class ReimbursementCommand:
     unchecked_trip_ids: tuple[int, ...] = ()
     reimbursement_id: Optional[int] = None
     confirm_zero_amount: bool = False
+
+
+@dataclass(frozen=True)
+class ReimbursementDeleteCommand:
+    person_id: int
+    reimbursement_id: int
+    confirmed: bool = False
+    confirm_attached_trips: bool = False
 
 
 class ReimbursementWritePort(Protocol):
@@ -75,6 +89,15 @@ class ReimbursementWritePort(Protocol):
     def read_reimbursement(
         self, reimbursement_id: int
     ) -> Optional[ReimbursementSnapshot]:
+        ...
+
+    def detach_all_trips(self, reimbursement_id: int) -> int:
+        ...
+
+    def delete_reimbursement(self, reimbursement_id: int, person_id: int) -> int:
+        ...
+
+    def has_trip_assignment(self, reimbursement_id: int) -> bool:
         ...
 
     def commit(self) -> None:
@@ -287,3 +310,95 @@ def save_reimbursement(
         value=snapshot,
         committed=True,
     )
+
+
+def delete_reimbursement(
+    port: ReimbursementWritePort,
+    *,
+    command: ReimbursementDeleteCommand,
+) -> WriteResult[bool]:
+    """Supprime un remboursement et détache ses déplacements dans une transaction unique."""
+
+    if not is_valid_target_id(command.reimbursement_id):
+        return invalid_target_result(command.reimbursement_id)
+    if not is_valid_target_id(command.person_id):
+        return WriteResult(
+            ok=False,
+            code=WriteCode.VALIDATION_ERROR,
+            message="Identifiant historique de la personne invalide.",
+            target_id=command.reimbursement_id,
+        )
+    if not command.confirmed:
+        return WriteResult(
+            ok=False,
+            code=WriteCode.VALIDATION_ERROR,
+            message="La suppression du remboursement doit être confirmée explicitement.",
+            target_id=command.reimbursement_id,
+        )
+
+    try:
+        snapshot = port.read_reimbursement(command.reimbursement_id)
+    except Exception as exc:
+        return WriteResult(
+            ok=False,
+            code=WriteCode.DATABASE_ERROR,
+            message="Lecture du remboursement impossible avant suppression : %s" % exc,
+            target_id=command.reimbursement_id,
+        )
+
+    if snapshot is None or snapshot.person_id != command.person_id:
+        return WriteResult(
+            ok=False,
+            code=WriteCode.TARGET_NOT_FOUND,
+            message="Le remboursement sélectionné n'existe plus pour cette personne.",
+            target_id=command.reimbursement_id,
+        )
+
+    if snapshot.trip_ids and not command.confirm_attached_trips:
+        return WriteResult(
+            ok=False,
+            code=WriteCode.VALIDATION_ERROR,
+            message=(
+                "Le remboursement possède %d déplacement(s) rattaché(s) : "
+                "leur détachement doit être confirmé explicitement."
+            )
+            % len(snapshot.trip_ids),
+            target_id=command.reimbursement_id,
+        )
+
+    def _target_exists() -> bool:
+        current = port.read_reimbursement(command.reimbursement_id)
+        return current is not None and current.person_id == command.person_id
+
+    def _write() -> int:
+        port.detach_all_trips(command.reimbursement_id)
+        return int(
+            port.delete_reimbursement(
+                command.reimbursement_id,
+                command.person_id,
+            )
+        )
+
+    def _readback_exists() -> bool:
+        if port.read_reimbursement(command.reimbursement_id) is not None:
+            return True
+        return bool(port.has_trip_assignment(command.reimbursement_id))
+
+    result = execute_transactional_delete(
+        target_id=command.reimbursement_id,
+        target_exists=_target_exists,
+        write=_write,
+        commit=port.commit,
+        rollback=port.rollback,
+        readback_exists=_readback_exists,
+    )
+    if result.ok:
+        return WriteResult(
+            ok=True,
+            code=WriteCode.OK,
+            message="Remboursement supprimé, déplacements détachés et absence confirmée.",
+            target_id=command.reimbursement_id,
+            value=True,
+            committed=True,
+        )
+    return result
