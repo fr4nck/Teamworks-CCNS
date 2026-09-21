@@ -107,8 +107,8 @@ class Dialog(wx.Dialog):
         self.ctrl_checkVille = wx.CheckBox(self.staticbox_options_staticbox, -1, u"")
         self.label_ville = wx.StaticText(self.staticbox_options_staticbox, -1, _(u"Lors d'une inscription, attribuer par défaut cette catégorie aux\nindividus dont la ville de résidence figure dans la liste suivante :"))
         self.ctrl_villes = CTRL_Villes(self.staticbox_options_staticbox, self.IDcategorie_tarif)
-        self.bouton_villes_ajouter = wx.BitmapButton(self.staticbox_options_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_villes_supprimer = wx.BitmapButton(self.staticbox_options_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_villes_ajouter = CTRL_Bouton_image.CTRL(self.staticbox_options_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Ajouter.png"))
+        self.bouton_villes_supprimer = CTRL_Bouton_image.CTRL(self.staticbox_options_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Supprimer.png"))
         
         # Boutons
         self.bouton_aide = CTRL_Bouton_image.CTRL(self, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))
