@@ -29,11 +29,11 @@ class Panel(wx.Panel):
         self.listCtrl = ListCtrl(self)
         self.listCtrl.SetMinSize((20, 20)) 
         
-        self.bouton_ajouter = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_modifier = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Modifier.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_supprimer = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_defaut = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ok.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_aide = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Aide.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_ajouter = CTRL_Bouton_image.CTRL(self, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Ajouter.png"))
+        self.bouton_modifier = CTRL_Bouton_image.CTRL(self, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Modifier.png"))
+        self.bouton_supprimer = CTRL_Bouton_image.CTRL(self, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Supprimer.png"))
+        self.bouton_defaut = CTRL_Bouton_image.CTRL(self, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Ok.png"))
+        self.bouton_aide = CTRL_Bouton_image.CTRL(self, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Aide.png"))
         if parent.GetName() != "treebook_configuration" :
             self.bouton_aide.Show(False)
 
