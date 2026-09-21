@@ -64,6 +64,8 @@ class FakeMySqlCursor:
                 "2026-10-01",
                 "2026-10-31",
                 None,
+                2,
+                10,
                 "CCNS",
                 "G3",
                 None,
@@ -80,6 +82,13 @@ class FakeMySqlCursor:
     def fetchall(self):
         if "FROM contrats_types" in self._last_query:
             return ((4, "CDD", "CDD"), (5, "CEE", "CEE"))
+        if "FROM contrats_class" in self._last_query:
+            return ((1, "Personnel de service"), (2, "Animateur BAFA"))
+        if "FROM valeurs_point" in self._last_query:
+            return (
+                (9, Decimal("6.10"), "2026-01-01"),
+                (10, Decimal("6.20"), "2026-09-01"),
+            )
         return ()
 
 
@@ -176,6 +185,18 @@ def test_mysql_adapter_update_delete_and_readback_keep_mysql_parameter_style():
     assert snapshot.contract_type_code == "CDD"
     assert snapshot.operation_type == "CDD_RENEWAL"
     assert snapshot.previous_contract_id == 400
+    assert snapshot.legacy_classification_id == 2
+    assert snapshot.legacy_point_id == 10
+
+    assert adapter.list_legacy_classifications() == (
+        (1, "Personnel de service"),
+        (2, "Animateur BAFA"),
+    )
+    assert adapter.list_legacy_point_values() == (
+        (9, Decimal("6.10"), "2026-01-01"),
+        (10, Decimal("6.20"), "2026-09-01"),
+    )
+    assert adapter.update_legacy_classification(501, 1, 10) == 1
 
     assert adapter.update_indicator(501, "signature", "Oui") == 1
     assert adapter.read_indicator(501, "signature") == "Oui"
