@@ -117,7 +117,6 @@ class PresenceCrudController(QObject):
                 end_time=end,
                 category_id=category_id,
                 title=title,
-                expected_revision=snapshot.revision or None,
             ),
         )
         self._handle_result(result, "Présence ajoutée.")
@@ -154,6 +153,7 @@ class PresenceCrudController(QObject):
                 end_time=end,
                 category_id=category_id,
                 title=title,
+                expected_revision=snapshot.revision or None,
             ),
         )
         self._handle_result(result, "Présence modifiée.")
