@@ -120,7 +120,7 @@ class Dialog(wx.Dialog):
         self.label_code = wx.StaticText(self.staticbox_code_staticbox, -1, _(u"Code :"))
         self.ctrl_code = masked.TextCtrl(self.staticbox_code_staticbox, -1, "", mask="AAAA-AAAA-AAAA-AAAA-AAAA", formatcodes="F!")
         self.ctrl_code.SetMinSize((190, -1))
-        self.bouton_validite = wx.Button(self.staticbox_code_staticbox, -1, _(u"Vérifier la validité"))
+        self.bouton_validite = CTRL_Bouton_image.CTRL(self.staticbox_code_staticbox, texte=_(u"Vérifier la validité"))
         self.ctrl_image = wx.StaticBitmap(self.staticbox_code_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Interdit.png"), wx.BITMAP_TYPE_ANY))
         self.label_validite = wx.StaticText(self.staticbox_code_staticbox, -1, _(u"Veuillez saisir un code."))
         
