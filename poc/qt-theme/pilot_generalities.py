@@ -5,6 +5,7 @@ from PySide6.QtCore import QThread, QTimer
 from generalities_page import GeneralitiesPage
 from individual_activity_presenter import IndividualActivityPresenter
 from pilot_view import PeopleContractsPilot, _contract_count_text, _initials
+from presence_crud_controller import PresenceCrudController
 
 
 class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
@@ -19,8 +20,10 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
         *,
         activity_loader_class=None,
         contract_write_port_factory=None,
+        presence_write_port_factory=None,
     ):
         self._activity_loader_class = activity_loader_class
+        self._presence_write_port_factory = presence_write_port_factory
         self._activity_thread = None
         self._activity_worker = None
         self._activity_loading_person_id = None
@@ -37,6 +40,16 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
             contract_write_port_factory=contract_write_port_factory,
         )
         self.activity_presenter = IndividualActivityPresenter(self.legacy_tabs)
+        self.presence_controller = PresenceCrudController(
+            self.legacy_tabs.presences_page,
+            read_adapter=self.adapter,
+            write_port_factory=self._presence_write_port_factory,
+            refresh_callback=self._refresh_presences_after_write,
+            parent=self,
+        )
+        self.presence_controller.status_message.connect(
+            self.statusBar().showMessage
+        )
 
     def _build_general_tab(self):
         self.generalities_page = GeneralitiesPage(self)
@@ -61,6 +74,9 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
         if page is not None:
             page.clear()
         self._activity_selected_person_id = None
+        controller = getattr(self, "presence_controller", None)
+        if controller is not None:
+            controller.set_person_id(None)
         presenter = getattr(self, "activity_presenter", None)
         if presenter is not None:
             presenter.clear()
@@ -91,6 +107,9 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
         self.contracts_stack.setCurrentIndex(1 if contract_count else 0)
 
         historical_id = person.id_historique if person.id_historique is not None else person.id
+        controller = getattr(self, "presence_controller", None)
+        if controller is not None:
+            controller.set_person_id(historical_id)
         self.detail_id.setText(f"{person.contract or 'Aucun contrat en cours'} | ID : {historical_id}")
         self.detail_title.setText(person.name or "—")
         context_parts = [value for value in (person.role, person.site) if value and value != "—"]
@@ -114,6 +133,7 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
         if self._activity_loader_class is None:
             payload = {
                 "generalities": self.adapter.get_person_generalities(person_id),
+                "presences": tuple(self.adapter.list_presences(person_id)),
                 "scenarios": tuple(self.adapter.list_scenarios(person_id)),
                 "trips": tuple(self.adapter.list_trips(person_id)),
                 "reimbursements": tuple(self.adapter.list_reimbursements(person_id)),
@@ -171,6 +191,20 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
                 "Naissance : " + (" · ".join(birth_parts) if birth_parts else "—")
             )
         self.activity_presenter.set_payload(payload)
+        controller = getattr(self, "presence_controller", None)
+        if controller is not None:
+            controller.set_ready(True)
+
+    def _refresh_presences_after_write(self, person_id) -> None:
+        if self._closing_requested:
+            return
+        if person_id != self._activity_selected_person_id:
+            return
+        views = tuple(self.adapter.list_presences(person_id))
+        self.activity_presenter.set_presences(views)
+        self.statusBar().showMessage(
+            "Présences actualisées · %d ligne(s)." % len(views)
+        )
 
     def _on_activity_loaded(self, person_id, payload) -> None:
         if not self._closing_requested:
@@ -194,6 +228,9 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
             print(details)
             if person_id == self._activity_selected_person_id:
                 self.activity_presenter.clear()
+                controller = getattr(self, "presence_controller", None)
+                if controller is not None:
+                    controller.set_ready(False)
                 self.statusBar().showMessage("Lecture seule · échec du chargement du dossier")
         if self._activity_thread is not None:
             self._activity_thread.quit()

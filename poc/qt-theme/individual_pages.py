@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from PySide6.QtCore import QSortFilterProxyModel, Qt
+from PySide6.QtCore import QSortFilterProxyModel, Qt, Signal
 from PySide6.QtGui import QIcon, QStandardItemModel
 from PySide6.QtWidgets import (
     QAbstractItemView,
@@ -202,8 +202,9 @@ class QualificationsPage(QWidget):
 
 
 class PresencesPage(QWidget):
-    """Transposition de ``CTRL_Page_presences`` sans lecture/écriture métier."""
+    """Page Présences Qt : rendu et événements, sans règle métier ni SQL."""
 
+    action_requested = Signal(str, object)
     HEADERS = ("Date", "Vacances", "Horaires", "Durée", "Intitulé")
 
     def __init__(self, icon_loader: IconLoader, parent: QWidget | None = None) -> None:
@@ -219,7 +220,7 @@ class PresencesPage(QWidget):
         section = TwFormSection("Présences")
         self.actions = TwActionBar(
             [
-                ActionSpec("add", "Ajouter", "Ajouter.png", "Saisir une nouvelle présence"),
+                ActionSpec("add", "Ajouter", "Ajouter.png", "Saisir une nouvelle présence", enabled=False),
                 ActionSpec("edit", "Modifier", "Modifier.png", "Modifier la présence sélectionnée", enabled=False),
                 ActionSpec(
                     "delete",
@@ -263,12 +264,32 @@ class PresencesPage(QWidget):
         header.setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)
         section.add_widget(self.table, 1)
 
+        self._write_enabled = False
         self.search.textChanged.connect(self._filter)
+        self.table.selectionModel().selectionChanged.connect(
+            lambda _selected, _deselected: self._update_selection_actions()
+        )
         root.addWidget(section, 1)
 
+    def selected_presence(self):
+        indexes = self.table.selectionModel().selectedRows()
+        if not indexes:
+            return None
+        return indexes[0].data(Qt.ItemDataRole.UserRole)
+
+    def set_write_enabled(self, enabled: bool) -> None:
+        self._write_enabled = bool(enabled)
+        self.actions.set_enabled("add", self._write_enabled)
+        self._update_selection_actions()
+
+    def _update_selection_actions(self) -> None:
+        has_selection = self.selected_presence() is not None
+        self.actions.set_enabled("edit", self._write_enabled and has_selection)
+        self.actions.set_enabled("delete", self._write_enabled and has_selection)
+
     def _on_action(self, action_id: str) -> None:
-        if action_id == "add":
-            _open_preview(PresencePreviewDialog, self)
+        if action_id in ("add", "edit", "delete"):
+            self.action_requested.emit(action_id, self.selected_presence())
 
     def _filter(self, text: str) -> None:
         self.proxy_model.setFilterFixedString(text)
