@@ -17,7 +17,7 @@ from application.services.presence_write import (
     normalize_presence_title,
     update_presence,
 )
-from application.services.transactional_write import WriteCode
+from application.services.service_result import ServiceErrorCode
 from infrastructure.persistence.presence_write_adapter import (
     GestionDbPresenceWriteAdapter,
 )
@@ -119,7 +119,7 @@ def test_creation_refuse_horaire_hors_contrat_sans_ecriture(db, port, value):
     )
 
     assert result.ok is False
-    assert result.code == WriteCode.VALIDATION_ERROR
+    assert result.code == ServiceErrorCode.VALIDATION_ERROR.value
     assert db.commit_count == 0
     assert db.connexion.execute("SELECT COUNT(*) FROM presences").fetchone()[0] == 0
 
@@ -135,7 +135,7 @@ def test_creation_refuse_fin_avant_debut(db, port):
     )
 
     assert result.ok is False
-    assert result.code == WriteCode.VALIDATION_ERROR
+    assert result.code == ServiceErrorCode.VALIDATION_ERROR.value
     assert db.commit_count == 0
 
 
@@ -157,7 +157,7 @@ def test_creation_refuse_duree_inferieure_a_15_minutes(db, port, start, end):
     )
 
     assert result.ok is False
-    assert result.code == WriteCode.VALIDATION_ERROR
+    assert result.code == ServiceErrorCode.VALIDATION_ERROR.value
     assert db.commit_count == 0
 
 
@@ -194,9 +194,9 @@ def test_creation_refuse_categorie_absente_ou_legende_trop_longue(db, port):
     )
 
     assert missing_category.ok is False
-    assert missing_category.code == WriteCode.VALIDATION_ERROR
+    assert missing_category.code == ServiceErrorCode.VALIDATION_ERROR.value
     assert long_title.ok is False
-    assert long_title.code == WriteCode.VALIDATION_ERROR
+    assert long_title.code == ServiceErrorCode.VALIDATION_ERROR.value
     assert db.commit_count == 0
 
 
@@ -230,6 +230,16 @@ def test_lot_ignore_chevauchement_individuel_et_commit_les_autres(db, port):
     assert result.value.skipped_overlaps == (
         PresenceTarget(1, date(2026, 9, 21)),
     )
+    assert result.batch is not None
+    assert result.batch.requested_count == 2
+    assert result.batch.succeeded_count == 1
+    assert result.batch.skipped_count == 1
+    assert len(result.batch.issues) == 1
+    issue = result.batch.issues[0]
+    assert issue.error.code is ServiceErrorCode.OVERLAP_CONFLICT
+    assert issue.error.conflicting_target_id is not None
+    assert issue.item.person_id == 1
+    assert issue.item.presence_date == date(2026, 9, 21)
     assert db.commit_count == 1
     assert db.connexion.execute("SELECT COUNT(*) FROM presences").fetchone()[0] == 2
 
@@ -280,7 +290,7 @@ def test_lot_rollback_total_si_deuxieme_insert_echoue(db, port, monkeypatch):
     )
 
     assert result.ok is False
-    assert result.code == WriteCode.DATABASE_ERROR
+    assert result.code == ServiceErrorCode.DATABASE_ERROR.value
     assert result.committed is False
     assert db.commit_count == 0
     assert db.connexion.execute("SELECT COUNT(*) FROM presences").fetchone()[0] == 0
@@ -300,7 +310,9 @@ def test_lot_refuse_personne_disparue_et_rollback_les_insertions_precedentes(
     )
 
     assert result.ok is False
-    assert result.code == WriteCode.DATABASE_ERROR
+    assert result.code == ServiceErrorCode.TARGET_NOT_FOUND.value
+    assert result.error is not None
+    assert result.error.field == "person_id"
     assert db.commit_count == 0
     assert db.connexion.execute("SELECT COUNT(*) FROM presences").fetchone()[0] == 0
 
@@ -333,7 +345,10 @@ def test_modification_refuse_chevauchement_et_ne_modifie_pas_la_base(db, port):
     )
 
     assert result.ok is False
-    assert result.code == WriteCode.VALIDATION_ERROR
+    assert result.code == ServiceErrorCode.OVERLAP_CONFLICT.value
+    assert result.error is not None
+    assert result.error.field == "schedule"
+    assert result.error.conflicting_target_id is not None
     assert db.commit_count == 0
     assert db.connexion.execute(
         "SELECT heure_debut, heure_fin, IDcategorie, intitule "
@@ -383,7 +398,7 @@ def test_modification_cible_absente(db, port):
     )
 
     assert result.ok is False
-    assert result.code == WriteCode.TARGET_NOT_FOUND
+    assert result.code == ServiceErrorCode.TARGET_NOT_FOUND.value
     assert db.commit_count == 0
 
 
@@ -399,7 +414,7 @@ def test_suppression_exige_confirmation_explicite(db, port):
     )
 
     assert result.ok is False
-    assert result.code == WriteCode.VALIDATION_ERROR
+    assert result.code == ServiceErrorCode.VALIDATION_ERROR.value
     assert port.read_presence(target_id) is not None
     assert db.commit_count == 0
 
@@ -442,7 +457,7 @@ def test_readback_echoue_apres_commit_sans_faux_rollback(db, port, monkeypatch):
     )
 
     assert result.ok is False
-    assert result.code == WriteCode.READBACK_ERROR
+    assert result.code == ServiceErrorCode.READBACK_ERROR.value
     assert result.committed is True
     assert db.commit_count == 1
     assert db.connexion.execute("SELECT COUNT(*) FROM presences").fetchone()[0] == 1
