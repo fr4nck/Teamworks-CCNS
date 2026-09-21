@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Mapping
+from typing import Iterable, Mapping
 
 from domain.documents import (
     DocumentType,
+    GenerationPlan,
     MergeContext,
     MissingMergeField,
+    build_generation_plan,
     build_merge_context,
     get_document_type,
     validate_required_fields,
@@ -51,4 +53,32 @@ def prepare_hr_document(
         document_type=document_type,
         merge_context=merge_context,
         missing_fields=missing_fields,
+    )
+
+
+def prepare_hr_document_generation(
+    document_code: str,
+    *,
+    structure: Mapping[str, object] | None = None,
+    employee: Mapping[str, object] | None = None,
+    contract: Mapping[str, object] | None = None,
+    extra: Mapping[str, object] | None = None,
+    template_text: str | None = None,
+    known_template_keywords: Iterable[str] = (),
+) -> GenerationPlan:
+    """Prépare un plan de génération indépendant de wx et de la suite Office."""
+
+    prepared = prepare_hr_document(
+        document_code,
+        structure=structure,
+        employee=employee,
+        contract=contract,
+        extra=extra,
+    )
+    return build_generation_plan(
+        document_type=prepared.document_type,
+        merge_context=prepared.merge_context,
+        missing_fields=prepared.missing_fields,
+        template_text=template_text,
+        known_template_keywords=known_template_keywords,
     )
