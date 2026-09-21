@@ -61,7 +61,15 @@ class Panel(CORE.Panel):
 class Dialog(wx.Dialog):
     def __init__(self, parent):
         wx.Dialog.__init__(self, parent, -1, style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER); self.parent = parent; self.panel_contenu = Panel(self); self.bouton_aide = CTRL_Bouton_image.CTRL(self, texte=_(u"Aide")); self.bouton_fermer = CTRL_Bouton_image.CTRL(self, texte=_(u"Fermer")); self.SetTitle(_(u"Gestion des diffuseurs"))
-        padding = UTILS_Styles.GetLayoutSpacing("dialog_padding"); actions = wx.BoxSizer(wx.HORIZONTAL); actions.Add(self.bouton_aide, 0); actions.AddStretchSpacer(1); actions.Add(self.bouton_fermer, 0); s = wx.BoxSizer(wx.VERTICAL); s.Add(self.panel_contenu, 1, wx.EXPAND | wx.ALL, padding); s.Add(actions, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, padding); self.SetSizer(s)
+        padding = UTILS_Styles.GetLayoutSpacing("dialog_padding")
+        actions = wx.BoxSizer(wx.HORIZONTAL)
+        actions.Add(self.bouton_aide, 0)
+        actions.AddStretchSpacer(1)
+        actions.Add(self.bouton_fermer, 0)
+        s = wx.BoxSizer(wx.VERTICAL)
+        s.Add(self.panel_contenu, 1, wx.EXPAND | wx.ALL, padding)
+        s.Add(actions, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, padding)
+        self.SetSizer(s)
         self.Bind(wx.EVT_BUTTON, lambda evt: self.panel_contenu.OnBoutonAide(evt), self.bouton_aide); self.Bind(wx.EVT_BUTTON, lambda evt: self.EndModal(wx.ID_CANCEL), self.bouton_fermer); UTILS_Styles.ApplyWindowProfile(self, "standard")
 
 
