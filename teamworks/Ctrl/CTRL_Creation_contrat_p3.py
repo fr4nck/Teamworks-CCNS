@@ -1,4 +1,3 @@
-from Ctrl import CTRL_Bouton_image
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #-----------------------------------------------------------
@@ -11,6 +10,7 @@ import datetime
 from decimal import Decimal, InvalidOperation
 
 import wx
+from Ctrl import CTRL_Bouton_image
 from Utils.UTILS_Traduction import _
 import GestionDB
 import FonctionsPerso
