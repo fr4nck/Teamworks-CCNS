@@ -128,7 +128,7 @@ class Panel_Contrats(wx.Panel):
         self.Bind(wx.EVT_BUTTON, self.OnBoutonImprimer, self.bouton_imprimer)
 
     def __do_layout(self):
-        actions = wx.WrapSizer(wx.HORIZONTAL)
+        actions = wx.WrapSizer(wx.HORIZONTAL, 0)
         for numero, groupe in enumerate((
             (self.bouton_contrats_ajouter, self.bouton_contrats_modifier, self.bouton_contrats_supprimer),
             (self.bouton_signature, self.bouton_due),
