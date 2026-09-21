@@ -214,7 +214,7 @@ def construire_url_api(zone, offset=0, limit=API_PAGE_SIZE):
     params = {
         "limit": int(limit),
         "offset": int(offset),
-        "where": 'zones="%s"' % ZONE_LABELS[code],
+        "where": 'zones="%s" AND end_date >= now()' % ZONE_LABELS[code],
         "order_by": "start_date",
     }
     return API_BASE + "?" + urlencode(params)
