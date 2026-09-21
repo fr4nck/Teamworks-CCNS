@@ -126,11 +126,18 @@ CORE.Toolbook = Toolbook
 class MyFrame(CORE.MyFrame):
     """Fenêtre Teamworks-CCNS avec identité et menus actuels."""
 
-    _LIBELLES_HISTORIQUES_A_RETIRER = {
+    _LIBELLES_COMMERCIAUX_A_RETIRER = {
         u"Soutenir Teamworks",
         u"Acheter une licence pour accéder au manuel de référence",
+    }
+    _LIBELLES_RESSOURCES_HISTORIQUES = {
         u"Accéder au forum d'entraide",
         u"Visionner des tutoriels vidéos",
+    }
+    _RENOMMAGES_MENU = {
+        u"Consulter l'aide": u"Documentation Teamworks-CCNS",
+        u"Accéder au forum d'entraide": u"Forum historique Teamworks / Noethys",
+        u"Visionner des tutoriels vidéos": u"Tutoriels historiques Teamworks / Noethys",
     }
 
     def ConvertVersionTuple(self, texteVersion=""):
@@ -190,26 +197,75 @@ class MyFrame(CORE.MyFrame):
             nomFichier = " - [" + nomFichier + "]"
         self.SetTitle("Teamworks CCNS %s%s" % (VERSION_APPLICATION, nomFichier))
 
+    def RechercheMAJinternet(self):
+        """Ne contacte jamais l'infrastructure historique au démarrage."""
+        return False
+
+    @staticmethod
+    def _afficher_ressources_historiques():
+        try:
+            return bool(
+                UTILS_Customize.GetValeur(
+                    "historique",
+                    "afficher_ressources",
+                    "1",
+                    type_valeur=bool,
+                )
+            )
+        except Exception:
+            return True
+
     @classmethod
-    def _nettoyer_menu(cls, menu):
-        """Retire les entrées commerciales/obsolètes du menu wx réel."""
+    def _nettoyer_separateurs(cls, menu):
+        items = list(menu.GetMenuItems())
+        precedent_separateur = True
+        for item in items:
+            if item.IsSeparator():
+                if precedent_separateur:
+                    menu.Delete(item)
+                else:
+                    precedent_separateur = True
+            else:
+                precedent_separateur = False
+        items = list(menu.GetMenuItems())
+        if items and items[-1].IsSeparator():
+            menu.Delete(items[-1])
+
+    @classmethod
+    def _nettoyer_menu(cls, menu, afficher_historiques):
+        """Présente la documentation moderne et filtre les liens hérités."""
         for item in list(menu.GetMenuItems()):
             sous_menu = item.GetSubMenu()
             if sous_menu is not None:
-                cls._nettoyer_menu(sous_menu)
+                cls._nettoyer_menu(sous_menu, afficher_historiques)
             if item.IsSeparator():
                 continue
+
             libelle = item.GetItemLabelText()
-            if libelle in cls._LIBELLES_HISTORIQUES_A_RETIRER:
+            if libelle in cls._LIBELLES_COMMERCIAUX_A_RETIRER:
                 menu.Delete(item)
+                continue
+            if (
+                libelle in cls._LIBELLES_RESSOURCES_HISTORIQUES
+                and not afficher_historiques
+            ):
+                menu.Delete(item)
+                continue
+
+            nouveau = cls._RENOMMAGES_MENU.get(libelle)
+            if nouveau:
+                item.SetItemLabel(nouveau)
+
+        cls._nettoyer_separateurs(menu)
 
     def CreationBarreMenus(self):
         super(MyFrame, self).CreationBarreMenus()
         barre = self.GetMenuBar()
         if barre is None:
             return
+        afficher_historiques = self._afficher_ressources_historiques()
         for index in range(barre.GetMenuCount()):
-            self._nettoyer_menu(barre.GetMenu(index))
+            self._nettoyer_menu(barre.GetMenu(index), afficher_historiques)
 
 
 CORE.MyFrame = MyFrame
