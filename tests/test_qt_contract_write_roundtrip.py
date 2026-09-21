@@ -16,7 +16,7 @@ if str(POC) not in sys.path:
     sys.path.insert(0, str(POC))
 
 from PySide6.QtCore import QDate, QTimer  # noqa: E402
-from PySide6.QtWidgets import QApplication  # noqa: E402
+from PySide6.QtWidgets import QApplication, QMessageBox  # noqa: E402
 
 from contract_editor import ContractCreateDialog, ContractEditDialog  # noqa: E402
 from data_adapter import PersonView  # noqa: E402
@@ -54,6 +54,10 @@ class SqliteGestionDbCompat:
                 nom TEXT,
                 nom_abrege TEXT
             );
+            CREATE TABLE contrats_valchamps (
+                IDval_champ INTEGER PRIMARY KEY,
+                IDcontrat INTEGER
+            );
             CREATE TABLE contrats (
                 IDcontrat INTEGER PRIMARY KEY,
                 IDpersonne INTEGER,
@@ -82,6 +86,7 @@ class SqliteGestionDbCompat:
                 '', '',
                 'CCNS', 'G3', NULL, 35.0, 3000.0, NULL
             );
+            INSERT INTO contrats_valchamps VALUES (700, 417);
             """
         )
         self.connexion.commit()
@@ -344,6 +349,63 @@ def test_create_action_roundtrips_dialog_insert_commit_readback_and_refresh():
         assert (
             window.statusBar().currentMessage()
             == "Contrat n°418 créé et relu depuis la base"
+        )
+    finally:
+        window.close()
+        reader.close()
+
+
+
+def test_delete_action_requires_confirmation_then_roundtrips_absence_and_refresh():
+    _app()
+    db = SqliteGestionDbCompat()
+    reader = CcnsDataReader(db_factory=lambda: db)
+    window = _window(db, reader)
+
+    try:
+        _select_contract(window)
+        assert window.contracts_model.rowCount() == 1
+        assert window.contract_delete_button.isEnabled() is True
+        assert db.connexion.execute(
+            "SELECT COUNT(*) FROM contrats_valchamps WHERE IDcontrat=?",
+            (417,),
+        ).fetchone()[0] == 1
+
+        observed = {}
+
+        def confirm_delete():
+            box = QApplication.activeModalWidget()
+            assert isinstance(box, QMessageBox)
+            observed["title"] = box.windowTitle()
+            observed["text"] = box.text()
+            yes = box.button(QMessageBox.StandardButton.Yes)
+            assert yes is not None
+            yes.click()
+
+        QTimer.singleShot(0, confirm_delete)
+        window.contract_delete_button.click()
+        QApplication.processEvents()
+
+        assert observed["title"] == "Confirmation de suppression"
+        assert "Voulez-vous vraiment supprimer ce contrat ?" in observed["text"]
+        assert "n°417" in observed["text"]
+
+        assert db.connexion.execute(
+            "SELECT IDcontrat FROM contrats WHERE IDcontrat=?",
+            (417,),
+        ).fetchone() is None
+        assert db.connexion.execute(
+            "SELECT COUNT(*) FROM contrats_valchamps WHERE IDcontrat=?",
+            (417,),
+        ).fetchone()[0] == 0
+        assert db.commit_count == 1
+
+        assert window.contracts_model.rowCount() == 0
+        assert window.contracts_stack.currentIndex() == 0
+        assert window.contract_delete_button.isEnabled() is False
+        assert (
+            window.statusBar().currentMessage()
+            == "Contrat n°417 supprimé · absence confirmée après commit"
         )
     finally:
         window.close()
