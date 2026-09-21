@@ -371,7 +371,11 @@ class Dialog(wx.Dialog):
         except Exception as err:
             resultat = None
             erreur = err
-        wx.CallAfter(self._terminer_chargement, generation, zone, resultat, erreur)
+        try:
+            wx.CallAfter(self._terminer_chargement, generation, zone, resultat, erreur)
+        except RuntimeError:
+            # L'application peut être en train de se fermer pendant l'appel HTTP.
+            return
 
     def _terminer_chargement(self, generation, zone, resultat, erreur):
         if self._ferme or generation != self._generation_chargement:
