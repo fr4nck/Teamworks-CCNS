@@ -1,4 +1,3 @@
-from Ctrl import CTRL_Bouton_image
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
@@ -6,6 +5,7 @@ import datetime
 from decimal import Decimal, InvalidOperation
 
 import wx
+from Ctrl import CTRL_Bouton_image
 if 'phoenix' in wx.PlatformInfo:
     from wx.adv import DatePickerCtrl, DP_DROPDOWN, EVT_DATE_CHANGED
 else:
