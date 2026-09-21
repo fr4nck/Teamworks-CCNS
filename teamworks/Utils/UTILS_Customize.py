@@ -42,6 +42,11 @@ LISTE_DONNEES = [
     ("branding", [
         ("logo_association", ""),
     ]),
+    ("historique", [
+        # Les crédits restent toujours visibles. Cette préférence ne pilote
+        # que les liens externes hérités Teamworks / Noethys.
+        ("afficher_ressources", "1"),
+    ]),
     ("journal", [
         ("actif", "1"),
         ("nom", "journal.log"),
