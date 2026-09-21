@@ -64,7 +64,7 @@ def _cee_command(**changes):
         end_date=date(2026, 10, 15),
         trial_period_value=0,
         trial_period_unit="DAY",
-        confirm_no_trial=True,
+        confirm_no_trial=False,
     )
     values.update(changes)
     return _command(**values)
@@ -335,4 +335,18 @@ def test_create_cee_requires_end_date_before_database_access():
 
     assert result.code == WriteCode.VALIDATION_ERROR
     assert "date de fin est obligatoire" in result.message
+    assert port.calls == []
+
+
+
+def test_create_cee_rejects_trial_period_before_database_access():
+    port = CreateRecordingPort(available=("CDI", "CDD", "CEE"))
+
+    result = create_contract(
+        port,
+        command=_cee_command(trial_period_value=1),
+    )
+
+    assert result.code == WriteCode.VALIDATION_ERROR
+    assert "ne doit pas comporter de période d'essai" in result.message
     assert port.calls == []
