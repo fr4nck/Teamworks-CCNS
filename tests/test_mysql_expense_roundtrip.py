@@ -139,7 +139,7 @@ def db():
         database.Close()
         admin = _admin_connection()
         cursor = admin.cursor()
-    cursor.execute(f"DROP DATABASE IF EXISTS {DB_NAME}")
+        cursor.execute(f"DROP DATABASE IF EXISTS {DB_NAME}")
         cursor.close()
         admin.close()
 
