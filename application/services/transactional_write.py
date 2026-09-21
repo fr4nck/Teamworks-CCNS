@@ -106,6 +106,97 @@ def execute_transactional_insert(
     )
 
 
+def execute_transactional_delete(
+    *,
+    target_id: object,
+    target_exists: Callable[[], bool],
+    write: Callable[[], int],
+    commit: Callable[[], None],
+    rollback: Callable[[], None],
+    readback_exists: Callable[[], bool],
+) -> WriteResult[bool]:
+    """Supprime une cible atomiquement et confirme son absence après commit."""
+
+    if not is_valid_target_id(target_id):
+        return invalid_target_result(target_id)
+
+    try:
+        exists = bool(target_exists())
+    except Exception as exc:
+        return WriteResult(
+            ok=False,
+            code=WriteCode.DATABASE_ERROR,
+            message="Vérification de la cible impossible : %s" % exc,
+            target_id=target_id,
+        )
+
+    if not exists:
+        return WriteResult(
+            ok=False,
+            code=WriteCode.TARGET_NOT_FOUND,
+            message="La cible n'existe plus.",
+            target_id=target_id,
+        )
+
+    try:
+        affected = int(write())
+        if affected == 0:
+            _safe_rollback(rollback)
+            return WriteResult(
+                ok=False,
+                code=WriteCode.TARGET_NOT_FOUND,
+                message="La cible a disparu avant la suppression.",
+                target_id=target_id,
+            )
+        if affected != 1:
+            _safe_rollback(rollback)
+            return WriteResult(
+                ok=False,
+                code=WriteCode.UNEXPECTED_ROWCOUNT,
+                message="Nombre de lignes supprimées inattendu : %s." % affected,
+                target_id=target_id,
+            )
+        commit()
+    except Exception as exc:
+        _safe_rollback(rollback)
+        return WriteResult(
+            ok=False,
+            code=WriteCode.DATABASE_ERROR,
+            message="Suppression en base impossible : %s" % exc,
+            target_id=target_id,
+        )
+
+    try:
+        still_exists = bool(readback_exists())
+    except Exception as exc:
+        return WriteResult(
+            ok=False,
+            code=WriteCode.READBACK_ERROR,
+            message="Suppression validée, mais contrôle d'absence impossible : %s" % exc,
+            target_id=target_id,
+            committed=True,
+        )
+
+    if still_exists:
+        return WriteResult(
+            ok=False,
+            code=WriteCode.READBACK_ERROR,
+            message="Suppression validée, mais la cible est encore relue après commit.",
+            target_id=target_id,
+            value=False,
+            committed=True,
+        )
+
+    return WriteResult(
+        ok=True,
+        code=WriteCode.OK,
+        message="Suppression validée et absence confirmée.",
+        target_id=target_id,
+        value=True,
+        committed=True,
+    )
+
+
 def execute_transactional_update(
     *,
     target_id: object,
