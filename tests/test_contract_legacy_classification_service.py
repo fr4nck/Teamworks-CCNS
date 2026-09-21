@@ -38,8 +38,9 @@ def _snapshot(**changes):
 
 
 class RecordingPort:
-    def __init__(self, *, snapshot=None):
+    def __init__(self, *, snapshot=None, ignore_update=False):
         self.snapshot = snapshot or _snapshot()
+        self.ignore_update = ignore_update
         self.calls = []
         self.committed = False
         self.updated_classification_id = self.snapshot.legacy_classification_id
@@ -82,8 +83,9 @@ class RecordingPort:
         self.calls.append(
             ("update_legacy", contract_id, classification_id, point_id)
         )
-        self.updated_classification_id = classification_id
-        self.updated_point_id = point_id
+        if not self.ignore_update:
+            self.updated_classification_id = classification_id
+            self.updated_point_id = point_id
         return 1
 
     def commit(self):
@@ -226,3 +228,23 @@ def test_legacy_classification_is_not_used_for_cee():
     assert result.code == WriteCode.VALIDATION_ERROR
     assert "CEE" in result.message
     assert ("classifications",) not in port.calls
+
+
+
+def test_legacy_classification_detects_post_commit_readback_mismatch():
+    port = RecordingPort(ignore_update=True)
+
+    result = update_contract_legacy_classification(
+        port,
+        command=ContractLegacyClassificationCommand(
+            contract_id=417,
+            classification_id=3,
+            point_id=10,
+        ),
+    )
+
+    assert result.ok is False
+    assert result.code == WriteCode.READBACK_ERROR
+    assert result.committed is True
+    assert ("commit",) in port.calls
+    assert ("rollback",) not in port.calls
