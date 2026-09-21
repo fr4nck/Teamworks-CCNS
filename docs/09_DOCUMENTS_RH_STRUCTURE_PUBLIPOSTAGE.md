@@ -167,6 +167,8 @@ Les interfaces ne doivent pas reconstruire elles-mêmes les règles de publipost
 
 Le service `application/services/mail_merge_data.py` prend en charge l'assemblage pur des données de fusion : composition de plusieurs sources, exclusion des clés internes commençant par `_` et préparation du format de lot attendu par le publiposteur historique.
 
+Le service `application/services/document_template_catalog.py` inventorie les fichiers modèles disponibles par format (.doc, .odt, .twd) et peut les enrichir avec un fournisseur de métadonnées injecté, sans dépendance wx ni lancement d'une suite bureautique.
+
 Le service `application/services/hr_document_workflow.py` constitue la façade de plus haut niveau pour une future interface Qt. Il prend un type de document, les données Structure/Salarié/Contrat, les modèles disponibles et, si nécessaire, le texte du modèle. Il retourne :
 
 - le type documentaire reconnu ;
