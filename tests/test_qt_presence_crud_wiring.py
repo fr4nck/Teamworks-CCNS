@@ -16,12 +16,14 @@ POC = ROOT / "poc" / "qt-theme"
 if str(POC) not in sys.path:
     sys.path.insert(0, str(POC))
 
-from PySide6.QtCore import Qt  # noqa: E402
+from PySide6.QtCore import QObject, Qt, Signal  # noqa: E402
 from PySide6.QtGui import QIcon, QStandardItem  # noqa: E402
 from PySide6.QtWidgets import QApplication  # noqa: E402
 
 from data_adapter import PresenceCategoryView, PresenceView  # noqa: E402
+from deferred_people import DeferredPeopleAdapter  # noqa: E402
 from individual_pages import PresencesPage  # noqa: E402
+from presence_crud_controller import PresenceCrudController  # noqa: E402
 from presence_editor import PresenceEditorDialog  # noqa: E402
 from production_read_adapter import TeamworksProductionReadAdapter  # noqa: E402
 
@@ -173,3 +175,54 @@ def test_launcher_et_pilote_transportent_la_factory_presence():
     assert "presence_write_port_factory=presence_write_port_factory" in launcher
     assert "PresenceCrudController" in pilot
     assert "refresh_callback=self._refresh_presences_after_write" in pilot
+
+
+class _FakePresencePage(QObject):
+    action_requested = Signal(str, object)
+
+    def __init__(self):
+        super().__init__()
+        self.write_enabled = None
+
+    def set_write_enabled(self, enabled):
+        self.write_enabled = bool(enabled)
+
+
+def test_controller_attend_fin_de_lecture_avant_activer_ecriture(app):
+    page = _FakePresencePage()
+    controller = PresenceCrudController(
+        page,
+        read_adapter=object(),
+        write_port_factory=lambda: object(),
+    )
+
+    assert page.write_enabled is False
+
+    controller.set_person_id(12)
+    assert page.write_enabled is False
+
+    controller.set_ready(True)
+    assert page.write_enabled is True
+
+    controller.set_person_id(13)
+    assert page.write_enabled is False
+
+    controller.set_ready(True)
+    assert page.write_enabled is True
+
+    controller.set_ready(False)
+    assert page.write_enabled is False
+
+
+def test_deferred_people_adapter_delegue_les_lectures_presence():
+    class Delegate:
+        def list_presences(self, person_id):
+            return ("presence-%s" % person_id,)
+
+        def list_presence_categories(self):
+            return ("categories",)
+
+    adapter = DeferredPeopleAdapter(Delegate())
+
+    assert adapter.list_presences(12) == ("presence-12",)
+    assert adapter.list_presence_categories() == ("categories",)
