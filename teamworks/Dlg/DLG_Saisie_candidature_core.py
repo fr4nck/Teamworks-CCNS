@@ -216,7 +216,7 @@ class Panel(wx.Panel):
         grid_sizer_emploi.Add(self.label_emploi, 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL, 0)
         grid_sizer_emploi2 = wx.FlexGridSizer(rows=1, cols=2, vgap=5, hgap=5)
         grid_sizer_emploi2.Add(self.ctrl_emploi, 0, wx.EXPAND, 0)
-        grid_sizer_emploi2.Add(self.bouton_emplois, 0, wx.EXPAND, 0)
+        grid_sizer_emploi2.Add(self.bouton_emplois, 0, wx.ALIGN_CENTER_VERTICAL, 0)
         grid_sizer_emploi2.AddGrowableCol(0)
         grid_sizer_emploi.Add(grid_sizer_emploi2, 0, wx.EXPAND, 0)
         grid_sizer_emploi.AddGrowableCol(1)
