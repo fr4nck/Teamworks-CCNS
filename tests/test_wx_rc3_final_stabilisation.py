@@ -43,7 +43,13 @@ def test_bandeau_problemes_est_plat_et_arrete_avant_fermeture():
         "def Verifie_validite_donnees", 1
     )[0]
     assert "self._fermeture_en_cours" in fermer
-    assert "self.txtDefilant.Stop()" in fermer
+    assert "self._arreter_callbacks_avant_fermeture()" in fermer
+    helper = source.split("def _arreter_callbacks_avant_fermeture(self):", 1)[1].split(
+        "def OnBoutonOk", 1
+    )[0]
+    assert "self.txtDefilant.Stop()" in helper
+    assert "self.txtDefilant.Unbind(wx.EVT_MOTION)" in helper
+    assert "self.txtDefilant.Unbind(wx.EVT_LEAVE_WINDOW)" in helper
 
 
 def test_rafraichissement_barre_ne_rouvre_plus_mysql_a_chaque_focus():
