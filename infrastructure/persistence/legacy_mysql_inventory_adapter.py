@@ -12,7 +12,8 @@ besoin de ce paquet, déjà une dépendance historique du dépôt
 
 from __future__ import annotations
 
-from typing import Iterator, Protocol
+import re
+from typing import Iterable, Iterator, Protocol
 
 from domain.migration.inventory_model import ColumnDefinition, ColumnKind, ColumnStats
 from infrastructure.persistence.legacy_inventory_sql import (
@@ -23,6 +24,19 @@ from infrastructure.persistence.legacy_inventory_sql import (
     build_sample_values_sql,
     build_select_rows_sql,
 )
+
+# start_transaction(readonly=True) n'existe côté serveur qu'à partir de
+# MySQL 5.6.5 (RESET TRANSACTION / READ ONLY). En dessous, Connector/Python
+# lève une erreur si on l'utilise : il faut une autre garantie de lecture
+# seule. Voir docs/68-inventaire-legacy-database.md pour le détail de la
+# stratégie et son statut de qualification (MySQL 5.5 réel NON QUALIFIÉ).
+READONLY_TRANSACTION_MIN_VERSION: tuple[int, int, int] = (5, 6, 5)
+
+# Seuls des privilèges strictement en lecture sont acceptés pour un serveur
+# trop ancien pour start_transaction(readonly=True). USAGE est le
+# "privilège nul" que MySQL attribue par défaut ; il n'autorise aucune
+# opération.
+_READ_ONLY_GRANT_PRIVILEGES = frozenset({"SELECT", "USAGE"})
 
 
 def quote_identifier(name: str) -> str:
@@ -39,6 +53,108 @@ class _DbApiConnection(Protocol):
     def cursor(self) -> _DbApiCursor: ...
 
 
+class MySqlReadOnlyGuaranteeError(RuntimeError):
+    """La lecture seule ne peut pas être garantie automatiquement.
+
+    Levée plutôt que de tenter silencieusement une connexion en écriture
+    potentielle sur un serveur MySQL trop ancien pour
+    start_transaction(readonly=True).
+    """
+
+
+def parse_mysql_version(version_string: str) -> tuple[int, int, int]:
+    match = re.match(r"(\d+)\.(\d+)\.(\d+)", version_string or "")
+    if not match:
+        raise MySqlReadOnlyGuaranteeError(
+            f"Version MySQL non interprétable ({version_string!r}) : "
+            "impossible de choisir une stratégie de lecture seule."
+        )
+    return (int(match.group(1)), int(match.group(2)), int(match.group(3)))
+
+
+def supports_readonly_transaction(version: tuple[int, int, int]) -> bool:
+    return version >= READONLY_TRANSACTION_MIN_VERSION
+
+
+def _grant_privileges(grant_statement: str) -> tuple[str, ...]:
+    match = re.match(r"\s*GRANT\s+(.+?)\s+ON\s+", grant_statement or "", re.IGNORECASE)
+    if not match:
+        return ()
+    return tuple(part.strip().upper() for part in match.group(1).split(",") if part.strip())
+
+
+def ensure_select_only_account(grants: Iterable[str]) -> None:
+    """Vérifie que le compte connecté n'a aucun privilège d'écriture.
+
+    Seul recours pour un serveur antérieur à MySQL 5.6.5, où aucune
+    transaction en lecture seule ne peut être demandée au serveur : c'est
+    au compte SQL lui-même de ne pouvoir qu'exécuter des SELECT.
+    """
+    grants = tuple(grants)
+    if not grants:
+        raise MySqlReadOnlyGuaranteeError(
+            "Aucun droit lisible pour le compte MySQL connecté : impossible "
+            "de garantir la lecture seule sur un serveur antérieur à "
+            "MySQL 5.6.5. Un compte strictement SELECT-only est requis."
+        )
+    for grant_statement in grants:
+        privileges = _grant_privileges(grant_statement)
+        if not privileges:
+            raise MySqlReadOnlyGuaranteeError(
+                f"Droits MySQL illisibles ({grant_statement!r}) : un compte "
+                "strictement SELECT-only est requis pour un serveur "
+                "antérieur à MySQL 5.6.5."
+            )
+        unexpected = [p for p in privileges if p not in _READ_ONLY_GRANT_PRIVILEGES]
+        if unexpected:
+            raise MySqlReadOnlyGuaranteeError(
+                "Le compte MySQL connecté dispose de privilèges d'écriture "
+                f"({', '.join(unexpected)}) alors que le serveur est "
+                "antérieur à MySQL 5.6.5 et ne supporte pas "
+                "start_transaction(readonly=True). Un compte strictement "
+                "SELECT-only est requis pour cette version de serveur."
+            )
+
+
+def negotiate_read_only_mode(connection: object, *, version_string: str) -> None:
+    """Choisit et applique la stratégie de lecture seule selon la version serveur.
+
+    >= 5.6.5 : transaction readonly=True, supportée nativement.
+    < 5.6.5 : aucune commande DDL/DML n'est jamais émise par cet adaptateur,
+    mais ce n'est pas une garantie automatique suffisante à elle seule ; on
+    vérifie donc que le compte connecté n'a que des privilèges SELECT.
+    Si cela ne peut pas être vérifié, la connexion échoue explicitement
+    plutôt que de continuer sur une hypothèse non garantie.
+    """
+    version = parse_mysql_version(version_string)
+    if supports_readonly_transaction(version):
+        connection.start_transaction(readonly=True)
+        return
+
+    try:
+        cursor = connection.cursor()
+        cursor.execute("SHOW GRANTS FOR CURRENT_USER()")
+        grants = [row[0] for row in cursor.fetchall()]
+    except MySqlReadOnlyGuaranteeError:
+        raise
+    except Exception as exc:
+        raise MySqlReadOnlyGuaranteeError(
+            "Impossible de lire les droits du compte MySQL connecté "
+            f"({exc}) sur un serveur {version_string} antérieur à "
+            "MySQL 5.6.5. Un compte strictement SELECT-only est requis "
+            "pour garantir la lecture seule."
+        ) from exc
+
+    ensure_select_only_account(grants)
+
+
+def _read_server_version(connection: object) -> str:
+    cursor = connection.cursor()
+    cursor.execute("SELECT VERSION()")
+    row = cursor.fetchone()
+    return str(row[0]) if row else ""
+
+
 def connect_mysql(
     *,
     host: str,
@@ -49,11 +165,18 @@ def connect_mysql(
     charset: str = "utf8mb4",
     connection_timeout: int = 10,
 ) -> _DbApiConnection:
-    """Ouvre une connexion MySQL en lecture seule via mysql-connector-python.
+    """Ouvre une connexion MySQL et négocie une garantie de lecture seule.
 
     Importé à l'appel uniquement : les adaptateurs et leurs tests ne
     dépendent pas de mysql-connector-python tant que cette fonction n'est
     pas invoquée.
+
+    Détecte la version réelle du serveur avant de choisir le mode
+    transactionnel (voir negotiate_read_only_mode) : aucune hypothèse
+    implicite que readonly=True fonctionne partout. Si la lecture seule ne
+    peut pas être garantie, la connexion est fermée et une
+    MySqlReadOnlyGuaranteeError explicite est levée — jamais une tentative
+    d'écriture « pour tester ».
     """
     import mysql.connector
 
@@ -67,7 +190,12 @@ def connect_mysql(
         connection_timeout=connection_timeout,
         use_pure=True,
     )
-    connection.start_transaction(readonly=True)
+    try:
+        version_string = _read_server_version(connection)
+        negotiate_read_only_mode(connection, version_string=version_string)
+    except Exception:
+        connection.close()
+        raise
     return connection
 
 
