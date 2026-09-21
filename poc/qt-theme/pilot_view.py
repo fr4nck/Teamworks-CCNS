@@ -49,8 +49,12 @@ from legacy_individual_tabs import LegacyIndividualTabs
 from models import ContractsTableModel, PeopleTableModel
 
 
-_REPO_ROOT = Path(__file__).resolve().parents[2]
-_LEGACY_ICONS = _REPO_ROOT / "teamworks" / "Static" / "Images" / "16x16"
+try:
+    import Chemins
+    _LEGACY_ICONS = Path(Chemins.GetStaticPath("Images/16x16"))
+except Exception:
+    _REPO_ROOT = Path(__file__).resolve().parents[2]
+    _LEGACY_ICONS = _REPO_ROOT / "teamworks" / "Static" / "Images" / "16x16"
 
 
 def _initials(name: str) -> str:
