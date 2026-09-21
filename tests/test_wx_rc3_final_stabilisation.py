@@ -104,5 +104,5 @@ def test_updater_historique_ne_contacte_plus_le_reseau_au_demarrage():
         "@staticmethod", 1
     )[0]
     assert "return False" in bloc
-    assert "Mise à jour automatique n'est pas activée" in gadget
+    assert "mise à jour automatique n'est pas activée" in gadget.lower()
     assert "Une nouvelle version du logiciel est disponible" not in gadget
