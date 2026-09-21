@@ -165,11 +165,11 @@ class PanelContacts(scrolled.ScrolledPanel):
         for IDpersonne, civilite, nom, prenom, date_naiss, adresse_resid, cp_resid, ville_resid, emails, fixes, fax, mobile in self.listeContacts:
             
             # Création des contrôles
-            bouton_synchro = wx.BitmapButton(self, 10000 + IDpersonne, wx.Bitmap('Images/16x16/Ok_2.png', wx.BITMAP_TYPE_ANY))
+            bouton_synchro = CTRL_Bouton_image.CTRL(self, id=10000 + IDpersonne, bitmap=wx.Bitmap('Images/16x16/Ok_2.png', wx.BITMAP_TYPE_ANY))
             setattr(self, "bouton_synchro_%s" % IDpersonne, bouton_synchro)
             bouton_synchro.SetBitmapDisabled(wx.Bitmap('Images/16x16/Ok_3.png', wx.BITMAP_TYPE_ANY))
             bouton_synchro.SetToolTip(wx.ToolTip(u'Cliquez ici pour synchroniser la fiche de ' + prenom + ' ' + nom + '.'))
-            bouton_suppr = wx.BitmapButton(self, 20000 + IDpersonne, wx.Bitmap('Images/16x16/Supprimer_2.png', wx.BITMAP_TYPE_ANY))
+            bouton_suppr = CTRL_Bouton_image.CTRL(self, id=20000 + IDpersonne, bitmap=wx.Bitmap('Images/16x16/Supprimer_2.png', wx.BITMAP_TYPE_ANY))
             setattr(self, "bouton_suppr_%s" % IDpersonne, bouton_suppr)
             bouton_suppr.SetBitmapDisabled(wx.Bitmap('Images/16x16/Supprimer_3.png', wx.BITMAP_TYPE_ANY))
             bouton_suppr.SetToolTip(wx.ToolTip(u'Cliquez ici pour supprimer la fiche de ' + prenom + ' ' + nom + ' de Outlook.'))
