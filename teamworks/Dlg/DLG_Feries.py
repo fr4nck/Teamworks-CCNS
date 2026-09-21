@@ -68,7 +68,7 @@ class Panel(wx.Panel):
         sizer_base.Add(self.ctrl_listview, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, content_padding)
         sizer_base.Add(self.ctrl_recherche, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, field_gap)
 
-        sizer_actions = wx.WrapSizer(wx.HORIZONTAL)
+        sizer_actions = wx.WrapSizer(wx.HORIZONTAL, 0)
         sizer_actions.Add(self.bouton_ajouter, 0, wx.RIGHT | wx.BOTTOM, toolbar_gap)
         sizer_actions.Add(self.bouton_modifier, 0, wx.RIGHT | wx.BOTTOM, toolbar_gap)
         sizer_actions.Add(self.bouton_supprimer, 0, wx.RIGHT | wx.BOTTOM, toolbar_gap)
