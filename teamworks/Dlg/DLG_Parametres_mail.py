@@ -32,8 +32,8 @@ class Panel(wx.Panel):
         self.ctrl_objet = wx.TextCtrl(self, -1, "")
         self.label_joindre = wx.StaticText(self, -1, _(u"Joindre :"))
         self.ctrl_joindre = wx.ListBox(self, -1, choices=[], style=wx.LB_MULTIPLE)
-        self.bouton_joindre_ajouter = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_joindre_supprimer = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_joindre_ajouter = CTRL_Bouton_image.CTRL(self, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Ajouter.png"))
+        self.bouton_joindre_supprimer = CTRL_Bouton_image.CTRL(self, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Supprimer.png"))
         self.bouton_envoyer = CTRL_Bouton_image.CTRL(self, texte=_(u"Envoyer l'Email"), cheminImage=Chemins.GetStaticPath("Images/32x32/Emails_exp.png"))
         
         self.activer_a = activer_a
