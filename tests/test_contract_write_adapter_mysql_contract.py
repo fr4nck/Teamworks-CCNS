@@ -66,6 +66,7 @@ class FakeMySqlCursor:
                 None,
                 2,
                 10,
+                0,
                 "CCNS",
                 "G3",
                 None,
@@ -74,6 +75,8 @@ class FakeMySqlCursor:
                 None,
                 "CDD_RENEWAL",
                 400,
+                0,
+                "DAY",
             )
         if "FROM contrats WHERE IDcontrat" in self._last_query:
             return (501,)
@@ -187,6 +190,9 @@ def test_mysql_adapter_update_delete_and_readback_keep_mysql_parameter_style():
     assert snapshot.previous_contract_id == 400
     assert snapshot.legacy_classification_id == 2
     assert snapshot.legacy_point_id == 10
+    assert snapshot.legacy_trial_days == 0
+    assert snapshot.trial_period_value == 0
+    assert snapshot.trial_period_unit == "DAY"
 
     assert adapter.list_legacy_classifications() == (
         (1, "Personnel de service"),
