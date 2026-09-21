@@ -420,8 +420,8 @@ class Dialog(wx.Dialog):
         grid_sizer_commandes.Add( self.label_modif, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 0)
         grid_sizer_commandes.Add( self.label_non_synchro, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 0)
         grid_sizer_commandes.Add( (5, 5), 1, wx.ALL|wx.EXPAND, 5)
-        grid_sizer_commandes.Add(self.bouton_synchroTout, 1, wx.ALL|wx.EXPAND, 5)
-        grid_sizer_commandes.Add(self.bouton_supprTout, 1, wx.ALL|wx.EXPAND, 5)
+        grid_sizer_commandes.Add(self.bouton_synchroTout, 0, wx.ALL | wx.ALIGN_CENTER_VERTICAL, 5)
+        grid_sizer_commandes.Add(self.bouton_supprTout, 0, wx.ALL | wx.ALIGN_CENTER_VERTICAL, 5)
         grid_sizer_commandes.AddGrowableCol(3)
         
         grid_sizer_2.Add(grid_sizer_commandes, 1, wx.ALL|wx.EXPAND, 0)
