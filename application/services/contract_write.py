@@ -247,6 +247,25 @@ def load_legacy_contract_options(
     )
 
 
+def _readback_legacy_classification(
+    port: ContractWritePort,
+    *,
+    contract_id: int,
+    classification_id: int,
+    point_id: int,
+) -> ContractEditSnapshot:
+    snapshot = _readback_contract(port, contract_id)
+    if snapshot.legacy_classification_id != classification_id:
+        raise LookupError(
+            "La classification historique relue ne correspond pas à la valeur enregistrée."
+        )
+    if snapshot.legacy_point_id != point_id:
+        raise LookupError(
+            "La valeur de point historique relue ne correspond pas à la valeur enregistrée."
+        )
+    return snapshot
+
+
 def update_contract_legacy_classification(
     port: ContractWritePort,
     *,
@@ -336,7 +355,12 @@ def update_contract_legacy_classification(
         ),
         commit=port.commit,
         rollback=port.rollback,
-        readback=lambda: _readback_contract(port, command.contract_id),
+        readback=lambda: _readback_legacy_classification(
+            port,
+            contract_id=command.contract_id,
+            classification_id=command.classification_id,
+            point_id=command.point_id,
+        ),
     )
 
 
