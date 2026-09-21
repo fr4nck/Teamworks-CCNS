@@ -143,6 +143,35 @@ class Panel_general(LEGACY.Panel_general):
         for section in self._sections():
             self._detach_window_from_sizer(sizer, section)
 
+    def _rafraichir_taille_virtuelle(self):
+        """Recalcule explicitement la hauteur scrollable après chaque relayout.
+
+        Sous Windows, le BestSize des panels reparentés pouvait rester basé sur
+        leur ancienne hauteur comprimée. La zone Adresse héritait alors d'une
+        hauteur minuscule en mode fenêtré malgré le SetMinSize du TextCtrl.
+        """
+        if self._scroll_host is None:
+            return
+        sizer = self._scroll_host.GetSizer()
+        if sizer is None:
+            return
+
+        for section in self._sections():
+            try:
+                section.GetContentPanel().Layout()
+                section.Layout()
+                section.InvalidateBestSize()
+            except Exception:
+                pass
+
+        self._scroll_host.Layout()
+        minimum = sizer.GetMinSize()
+        client = self._scroll_host.GetClientSize()
+        largeur = max(client.GetWidth(), minimum.GetWidth())
+        hauteur = max(client.GetHeight(), minimum.GetHeight())
+        self._scroll_host.SetVirtualSize((largeur, hauteur))
+        self._scroll_host.FitInside()
+
     def _installer_zone_defilante(self):
         """Transforme la page historique en contenu scrollable sans le dupliquer."""
         ancien_sizer = self.GetSizer()
@@ -179,10 +208,7 @@ class Panel_general(LEGACY.Panel_general):
             scale_percent=self._scale_percent(),
         )
         if not force and colonnes == self._responsive_columns:
-            try:
-                self._scroll_host.FitInside()
-            except Exception:
-                pass
+            self._rafraichir_taille_virtuelle()
             return
 
         self._responsive_layout_busy = True
@@ -234,7 +260,7 @@ class Panel_general(LEGACY.Panel_general):
             self._scroll_host.SetSizer(sizer, deleteOld=True)
             self._responsive_columns = colonnes
             self._scroll_host.Layout()
-            self._scroll_host.FitInside()
+            self._rafraichir_taille_virtuelle()
             self.Layout()
             self._scroll_host.Refresh()
         finally:
