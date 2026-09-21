@@ -92,8 +92,13 @@ class PresenceEditorDialog(QDialog):
             self.start_edit.setTime(QTime.fromString(snapshot.start_time, "HH:mm"))
             self.end_edit.setTime(QTime.fromString(snapshot.end_time, "HH:mm"))
             index = self.category_combo.findData(int(snapshot.category_id))
-            if index >= 0:
-                self.category_combo.setCurrentIndex(index)
+            if index < 0:
+                self.category_combo.addItem(
+                    "Catégorie %d (historique)" % int(snapshot.category_id),
+                    int(snapshot.category_id),
+                )
+                index = self.category_combo.count() - 1
+            self.category_combo.setCurrentIndex(index)
             self.title_edit.setText(snapshot.title or "")
 
     def values(self) -> tuple[date, str, str, int, str]:
