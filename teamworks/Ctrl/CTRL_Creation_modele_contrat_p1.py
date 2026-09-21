@@ -43,7 +43,7 @@ class Page(wx.Panel):
         self.label_type = wx.StaticText(self.sizer_caract_staticbox, -1, "Type de contrat :")
         self.choice_type = wx.Choice(self.sizer_caract_staticbox, -1, choices=[])
         self.Importation_Type()
-        self.bouton_type = wx.Button(self.sizer_caract_staticbox, -1, "...", style=wx.BU_EXACTFIT)
+        self.bouton_type = wx.Button(self.sizer_caract_staticbox, -1, "...", style=wx.BU_EXACTFIT)  # native-button-ok: sélecteur compact intégré au champ
 
         self.label_convention = wx.StaticText(self.sizer_caract_staticbox, -1, "Parcours / convention :")
         self.choice_convention = wx.Choice(
@@ -58,10 +58,10 @@ class Page(wx.Panel):
         self.label_class = wx.StaticText(self.sizer_caract_staticbox, -1, "Classification historique :")
         self.choice_class = wx.Choice(self.sizer_caract_staticbox, -1, choices=[])
         self.Importation_classifications()
-        self.bouton_class = wx.Button(self.sizer_caract_staticbox, -1, "...", style=wx.BU_EXACTFIT)
+        self.bouton_class = wx.Button(self.sizer_caract_staticbox, -1, "...", style=wx.BU_EXACTFIT)  # native-button-ok: sélecteur compact intégré au champ
 
         self.listCtrl_champs = ListCtrl_champs(self.sizer_champs_staticbox)
-        self.bouton_champs = wx.Button(self.sizer_champs_staticbox, -1, "...", style=wx.BU_EXACTFIT)
+        self.bouton_champs = wx.Button(self.sizer_champs_staticbox, -1, "...", style=wx.BU_EXACTFIT)  # native-button-ok: sélecteur compact intégré au champ
 
         self.__set_properties()
         self.__do_layout()
