@@ -66,6 +66,7 @@ def test_production_adapter_reuses_activity_reader_for_presences() -> None:
     assert view.schedule == "8h00-17h36"
     assert view.duration == "9h36"
     assert view.label == "Travail (ALSH)"
+    assert view.revision
 
 
 def test_presenter_populates_and_clears_presence_model_with_hidden_identity() -> None:
