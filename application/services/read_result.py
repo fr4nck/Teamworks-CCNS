@@ -24,6 +24,7 @@ class ReadCompleteness(str, Enum):
 
 
 class ReadIssueCode(str, Enum):
+    INVALID_QUERY = "INVALID_QUERY"
     OPTIONAL_SOURCE_UNAVAILABLE = "OPTIONAL_SOURCE_UNAVAILABLE"
     REQUIRED_SOURCE_UNAVAILABLE = "REQUIRED_SOURCE_UNAVAILABLE"
     SOURCE_DATA_INVALID = "SOURCE_DATA_INVALID"
@@ -63,6 +64,8 @@ class ReadIssue:
 
         if self.code is ReadIssueCode.INTERNAL_READ_ERROR:
             return 100
+        if self.code is ReadIssueCode.INVALID_QUERY:
+            return 95
         if self.code is ReadIssueCode.REQUIRED_SOURCE_UNAVAILABLE:
             return 90
         if self.requirement is ReadSourceRequirement.REQUIRED:
