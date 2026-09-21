@@ -76,12 +76,21 @@ def is_contract_target_compatible(
 
     contract_data = contract_data or {}
     contract_convention = _clean(
-        contract_data.get("CONVENTION_CODE") or contract_data.get("CONVENTION")
+        contract_data.get("CONVENTION_CODE")
+        or contract_data.get("CONVENTION")
+        or contract_data.get("convention_code")
+        or contract_data.get("convention")
     )
-    contract_group = _clean(contract_data.get("GROUPECCNS"))
+    contract_group = _clean(
+        contract_data.get("GROUPECCNS")
+        or contract_data.get("ccns_group")
+        or contract_data.get("groupe_ccns")
+    )
     contract_cee = normalize_cee_qualification(
         contract_data.get("QUALIFICATIONCEE_CODE")
         or contract_data.get("QUALIFICATIONCEE")
+        or contract_data.get("cee_qualification")
+        or contract_data.get("qualification_cee")
     )
 
     if target.convention_code == "CCNS":
