@@ -100,10 +100,10 @@ class ExpenseReconciliationResult:
 
 
 def normalize_reimbursement_id(value: object) -> int | None:
-    if value in (None, "", 0, "0"):
-        return None
     if isinstance(value, bool):
         raise ValueError("IDremboursement booléen invalide")
+    if value in (None, "", 0, "0"):
+        return None
     result = int(value)
     if result <= 0:
         raise ValueError("IDremboursement doit être positif ou nul")
@@ -185,9 +185,12 @@ def reconcile_expenses(
     people = set(source_people_ids)
     trips = tuple(source_trips)
     reimbursements = tuple(source_reimbursements)
-    dest_trips = {item.source_trip_id: item for item in destination_trips}
+    destination_trip_items = tuple(destination_trips)
+    destination_reimbursement_items = tuple(destination_reimbursements)
+    dest_trips = {item.source_trip_id: item for item in destination_trip_items}
     dest_reimbursements = {
-        item.source_reimbursement_id: item for item in destination_reimbursements
+        item.source_reimbursement_id: item
+        for item in destination_reimbursement_items
     }
     source_reimbursement_ids = {item.reimbursement_id for item in reimbursements}
 
@@ -196,6 +199,8 @@ def reconcile_expenses(
         reimbursement_id = normalize_reimbursement_id(trip.reimbursement_id)
         if reimbursement_id is not None:
             canonical_by_reimbursement.setdefault(reimbursement_id, []).append(trip.trip_id)
+
+    source_trips_by_id = {item.trip_id: item for item in trips}
 
     mirror_audits: list[MirrorAudit] = []
     mirror_by_reimbursement: dict[int, MirrorAudit] = {}
@@ -291,8 +296,28 @@ def reconcile_expenses(
             disposition = MigrationDisposition.REJECTED
             reason = "LEGACY_TRIP_LIST_UNPARSABLE"
             message = "La liste historique contient des identifiants non interprétables."
-        elif not audit.matches:
-            # La relation deplacements.IDremboursement est explicitement canonique.
+        elif audit.mirror_only_trip_ids:
+            mirror_only_trips = [
+                source_trips_by_id.get(trip_id)
+                for trip_id in audit.mirror_only_trip_ids
+            ]
+            if any(item is None for item in mirror_only_trips):
+                disposition = MigrationDisposition.REJECTED
+                reason = "LEGACY_TRIP_LIST_REFERENCES_UNKNOWN_TRIP"
+                message = "Le miroir historique référence un déplacement source inexistant."
+            elif any(item.person_id != reimbursement.person_id for item in mirror_only_trips):
+                disposition = MigrationDisposition.REJECTED
+                reason = "LEGACY_TRIP_LIST_PERSON_MISMATCH"
+                message = "Le miroir historique référence un déplacement d'une autre personne."
+            else:
+                disposition = MigrationDisposition.REJECTED
+                reason = "LEGACY_TRIP_LIST_CONFLICTS_WITH_CANONICAL_ASSIGNMENT"
+                message = (
+                    "Le miroir historique revendique un déplacement que "
+                    "deplacements.IDremboursement n'attribue pas à ce remboursement."
+                )
+        elif audit.canonical_only_trip_ids:
+            # Un miroir incomplet est reconstructible depuis la relation canonique.
             disposition = MigrationDisposition.TRANSFORMED
             reason = "LEGACY_TRIP_LIST_REBUILT_FROM_CANONICAL_ASSIGNMENTS"
             message = (
@@ -329,24 +354,116 @@ def reconcile_expenses(
         for item in dest_trips.values()
     )
 
-    metrics = (
-        ReconciliationMetric("TRIP_COUNT", len(trips), len(dest_trips)),
+    metrics: list[ReconciliationMetric] = [
+        ReconciliationMetric("TRIP_COUNT", len(trips), len(destination_trip_items)),
         ReconciliationMetric(
-            "REIMBURSEMENT_COUNT", len(reimbursements), len(dest_reimbursements)
+            "REIMBURSEMENT_COUNT",
+            len(reimbursements),
+            len(destination_reimbursement_items),
+        ),
+        ReconciliationMetric(
+            "DESTINATION_TRIP_SOURCE_IDS_UNIQUE",
+            len(destination_trip_items),
+            len(dest_trips),
+        ),
+        ReconciliationMetric(
+            "DESTINATION_REIMBURSEMENT_SOURCE_IDS_UNIQUE",
+            len(destination_reimbursement_items),
+            len(dest_reimbursements),
         ),
         ReconciliationMetric("FREE_TRIP_COUNT", source_free, destination_free),
         ReconciliationMetric(
-            "ATTACHED_TRIP_COUNT", len(trips) - source_free, len(dest_trips) - destination_free
+            "ATTACHED_TRIP_COUNT",
+            len(trips) - source_free,
+            len(destination_trip_items) - destination_free,
         ),
         ReconciliationMetric(
-            "REIMBURSEMENT_TOTAL_CENTS", source_total_cents, destination_total_cents
+            "REIMBURSEMENT_TOTAL_CENTS",
+            source_total_cents,
+            destination_total_cents,
         ),
+    ]
+
+    all_people = sorted(
+        set(item.person_id for item in trips)
+        | set(item.person_id for item in reimbursements)
+        | set(item.person_id for item in destination_trip_items)
+        | set(item.person_id for item in destination_reimbursement_items)
     )
+    for person_id in all_people:
+        metrics.append(
+            ReconciliationMetric(
+                f"TRIP_COUNT_PERSON_{person_id}",
+                sum(item.person_id == person_id for item in trips),
+                sum(item.person_id == person_id for item in destination_trip_items),
+            )
+        )
+        metrics.append(
+            ReconciliationMetric(
+                f"REIMBURSEMENT_COUNT_PERSON_{person_id}",
+                sum(item.person_id == person_id for item in reimbursements),
+                sum(
+                    item.person_id == person_id
+                    for item in destination_reimbursement_items
+                ),
+            )
+        )
+
+    all_reimbursement_ids = sorted(
+        set(canonical_by_reimbursement)
+        | set(item.source_reimbursement_id for item in destination_reimbursement_items)
+    )
+    for reimbursement_id in all_reimbursement_ids:
+        metrics.append(
+            ReconciliationMetric(
+                f"TRIP_COUNT_REIMBURSEMENT_{reimbursement_id}",
+                len(canonical_by_reimbursement.get(reimbursement_id, ())),
+                sum(
+                    item.source_reimbursement_id == reimbursement_id
+                    for item in destination_trip_items
+                ),
+            )
+        )
+
+    if trips and destination_trip_items:
+        metrics.extend(
+            (
+                ReconciliationMetric(
+                    "TRIP_MIN_DATE",
+                    min(item.travel_date for item in trips).isoformat(),
+                    min(item.travel_date for item in destination_trip_items).isoformat(),
+                ),
+                ReconciliationMetric(
+                    "TRIP_MAX_DATE",
+                    max(item.travel_date for item in trips).isoformat(),
+                    max(item.travel_date for item in destination_trip_items).isoformat(),
+                ),
+            )
+        )
+    if reimbursements and destination_reimbursement_items:
+        metrics.extend(
+            (
+                ReconciliationMetric(
+                    "REIMBURSEMENT_MIN_DATE",
+                    min(item.payment_date for item in reimbursements).isoformat(),
+                    min(
+                        item.payment_date for item in destination_reimbursement_items
+                    ).isoformat(),
+                ),
+                ReconciliationMetric(
+                    "REIMBURSEMENT_MAX_DATE",
+                    max(item.payment_date for item in reimbursements).isoformat(),
+                    max(
+                        item.payment_date for item in destination_reimbursement_items
+                    ).isoformat(),
+                ),
+            )
+        )
 
     report = ReconciliationReport.build(
         expected_source_rows=len(trips) + len(reimbursements),
         entries=entries,
-        metrics=metrics,
+        metrics=tuple(metrics),
     )
     return ExpenseReconciliationResult(
         report=report,
