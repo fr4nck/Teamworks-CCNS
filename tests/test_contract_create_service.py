@@ -495,3 +495,66 @@ def test_renewal_persists_operation_and_previous_identity_after_preflight():
         ("commit",),
         ("readback", 900),
     ]
+
+
+
+def _cdd_to_cdi_command(**changes):
+    values = dict(
+        contract_type_code="CDI",
+        start_date=date(2026, 10, 1),
+        end_date=None,
+        trial_period_value=0,
+        trial_period_unit="DAY",
+        confirm_no_trial=True,
+        operation_type="CDD_TO_CDI",
+        previous_contract_id=700,
+    )
+    values.update(changes)
+    return _command(**values)
+
+
+def test_cdd_to_cdi_rejects_wrong_resulting_contract_type_before_database_access():
+    port = CreateRecordingPort(previous_snapshot=_previous_cdd())
+
+    result = create_contract(
+        port,
+        command=_cdd_to_cdi_command(contract_type_code="CDD", end_date=date(2026, 12, 31)),
+    )
+
+    assert result.code == WriteCode.VALIDATION_ERROR
+    assert "doit produire un CDI" in result.message
+    assert port.calls == []
+
+
+def test_cdd_to_cdi_requires_previous_cdd_and_continuity():
+    port = CreateRecordingPort(previous_snapshot=_previous_cdd())
+
+    result = create_contract(
+        port,
+        command=_cdd_to_cdi_command(start_date=date(2026, 10, 2)),
+    )
+
+    assert result.code == WriteCode.VALIDATION_ERROR
+    assert "lendemain du CDD précédent" in result.message
+    assert ("insert", 12, "CDI") not in port.calls
+
+
+def test_cdd_to_cdi_persists_operation_and_previous_identity():
+    port = CreateRecordingPort(previous_snapshot=_previous_cdd())
+
+    result = create_contract(port, command=_cdd_to_cdi_command())
+
+    assert result.ok is True
+    assert result.committed is True
+    assert result.value is not None
+    assert result.value.contract_type_code == "CDI"
+    assert result.value.operation_type == "CDD_TO_CDI"
+    assert result.value.previous_contract_id == 700
+    assert port.calls == [
+        ("person_exists", 12),
+        ("types",),
+        ("readback", 700),
+        ("insert", 12, "CDI"),
+        ("commit",),
+        ("readback", 900),
+    ]
