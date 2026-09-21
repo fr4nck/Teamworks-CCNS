@@ -114,6 +114,7 @@ class PresenceView:
     schedule: str
     duration: str
     label: str
+    revision: str = ""
 
 
 class TeamworksReadAdapter(Protocol):
