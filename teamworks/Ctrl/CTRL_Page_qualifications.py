@@ -105,7 +105,7 @@ class Panel_Statut(wx.Panel):
         sizer_dossier = wx.BoxSizer(wx.VERTICAL)
         sizer_dossier.Add(self.titre_dossier, 0, wx.BOTTOM, 6)
         sizer_dossier.Add(self.list_ctrl_dossier, 1, wx.EXPAND)
-        sizer_actions = wx.WrapSizer(wx.HORIZONTAL)
+        sizer_actions = wx.WrapSizer(wx.HORIZONTAL, 0)
         sizer_actions.Add(self.bouton_dossier_ajouter, 0, wx.RIGHT | wx.TOP, 6)
         sizer_actions.Add(self.bouton_dossier_modifier, 0, wx.RIGHT | wx.TOP, 6)
         sizer_actions.Add(self.bouton_dossier_supprimer, 0, wx.RIGHT | wx.TOP, 6)
