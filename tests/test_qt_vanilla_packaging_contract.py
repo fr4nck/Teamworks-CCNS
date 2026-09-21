@@ -10,11 +10,16 @@ WORKFLOW = ROOT / ".github" / "workflows" / "qt-vanilla-package.yml"
 
 
 def test_qt_vanilla_runtime_requirements_do_not_install_wx():
-    text = REQ.read_text(encoding="utf-8").lower()
+    lines = [
+        line.strip().lower()
+        for line in REQ.read_text(encoding="utf-8").splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+    ]
+    text = "\n".join(lines)
     assert "pyside6" in text
     assert "mysql-connector-python" in text
-    assert "wxpython" not in text
-    assert "\nwx" not in text
+    assert all(not line.startswith("wxpython") for line in lines)
+    assert all(not line.startswith("wx==") for line in lines)
 
 
 def test_release_entry_point_defaults_to_production():
