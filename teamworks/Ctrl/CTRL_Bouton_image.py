@@ -104,7 +104,11 @@ def _appliquer_contrat_bouton(control, texte="", role="default", icon_only=False
     largeur_min = best.GetWidth()
     if icon_only:
         largeur_min = max(largeur_min, hauteur_min)
-    control.SetMinSize((largeur_min, max(best.GetHeight(), hauteur_min)))
+    hauteur = max(best.GetHeight(), hauteur_min)
+    control.SetMinSize((largeur_min, hauteur))
+    # Un bouton d'action garde sa largeur naturelle. Le parent peut consommer
+    # l'espace restant avec un spacer, mais ne transforme pas le bouton en barre.
+    control.SetMaxSize((largeur_min, -1))
 
 
 class CTRL(wx.Button):
@@ -189,7 +193,9 @@ class CTRL(wx.Button):
         largeur_min = best.GetWidth()
         if bitmap.IsOk() and not self.texte:
             largeur_min = max(largeur_min, hauteur_min)
-        self.SetMinSize((largeur_min, max(best.GetHeight(), hauteur_min)))
+        hauteur = max(best.GetHeight(), hauteur_min)
+        self.SetMinSize((largeur_min, hauteur))
+        self.SetMaxSize((largeur_min, -1))
         self._stabiliser_rendu()
 
     def AppliquerTheme(self):
