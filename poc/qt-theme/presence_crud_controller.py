@@ -117,6 +117,7 @@ class PresenceCrudController(QObject):
                 end_time=end,
                 category_id=category_id,
                 title=title,
+                expected_revision=snapshot.revision or None,
             ),
         )
         self._handle_result(result, "Présence ajoutée.")
@@ -174,6 +175,7 @@ class PresenceCrudController(QObject):
             command=PresenceDeleteCommand(
                 presence_id=presence_id,
                 confirmed=True,
+                expected_revision=getattr(payload, "revision", None) or None,
             ),
         )
         self._handle_result(result, "Présence supprimée.")
