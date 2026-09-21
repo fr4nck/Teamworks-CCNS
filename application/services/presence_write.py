@@ -6,7 +6,16 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Protocol
 
-from application.services.transactional_write import WriteCode, WriteResult, is_valid_target_id
+from application.services.service_result import (
+    BatchDisposition,
+    BatchIssue,
+    BatchItemRef,
+    BatchReport,
+    ServiceError,
+    ServiceErrorCode,
+    ServiceResult,
+)
+from application.services.transactional_write import is_valid_target_id
 from domain.common.duration import parse_clock_time
 
 
@@ -70,7 +79,7 @@ class PresenceWritePort(Protocol):
     def read_presence(self, presence_id: int) -> PresenceSnapshot | None:
         ...
 
-    def has_overlap(
+    def find_overlap(
         self,
         *,
         person_id: int,
@@ -78,7 +87,7 @@ class PresenceWritePort(Protocol):
         start_time: str,
         end_time: str,
         exclude_presence_id: int | None = None,
-    ) -> bool:
+    ) -> int | None:
         ...
 
     def insert_presence(
@@ -124,68 +133,154 @@ def normalize_presence_title(value: object) -> str:
     return text
 
 
-def _validate_time_window(start_time: object, end_time: object) -> tuple[str, ...]:
-    errors: list[str] = []
+def _validation_error(field: str, message: str) -> ServiceError:
+    return ServiceError(
+        code=ServiceErrorCode.VALIDATION_ERROR,
+        message=message,
+        field=field,
+    )
 
-    start = parse_clock_time(start_time, "heure_debut")
-    end = parse_clock_time(end_time, "heure_fin")
+
+def _validate_time_window(
+    start_time: object,
+    end_time: object,
+) -> tuple[ServiceError, ...]:
+    errors: list[ServiceError] = []
+
+    start = parse_clock_time(start_time, "start_time")
+    end = parse_clock_time(end_time, "end_time")
 
     if not start.ok:
-        errors.append(start.error.message if start.error else "Heure de début invalide.")
+        errors.append(
+            _validation_error(
+                "start_time",
+                start.error.message if start.error else "Heure de début invalide.",
+            )
+        )
     if not end.ok:
-        errors.append(end.error.message if end.error else "Heure de fin invalide.")
+        errors.append(
+            _validation_error(
+                "end_time",
+                end.error.message if end.error else "Heure de fin invalide.",
+            )
+        )
     if not start.ok or not end.ok:
         return tuple(errors)
 
     if end.value_minutes < start.value_minutes:
-        errors.append("L'heure de fin doit être supérieure à l'heure de début.")
+        errors.append(
+            _validation_error(
+                "end_time",
+                "L'heure de fin doit être supérieure à l'heure de début.",
+            )
+        )
         return tuple(errors)
 
     duration = end.value_minutes - start.value_minutes
     if duration < _MIN_DURATION_MINUTES:
-        errors.append("La durée de la présence doit être au minimum de 15 minutes.")
+        errors.append(
+            _validation_error(
+                "duration",
+                "La durée de la présence doit être au minimum de 15 minutes.",
+            )
+        )
 
     return tuple(errors)
 
 
-def _validate_category_id(category_id: object) -> tuple[str, ...]:
-    if not is_valid_target_id(category_id):
-        return ("La catégorie de présence est obligatoire.",)
-    return ()
+def validate_presence_create_command(
+    command: PresenceCreateCommand,
+) -> tuple[ServiceError, ...]:
+    errors: list[ServiceError] = []
 
-
-def _validate_title(title: object) -> tuple[str, ...]:
-    normalized = normalize_presence_title(title)
-    if len(normalized) > 200:
-        return ("La légende de la présence ne peut pas dépasser 200 caractères.",)
-    return ()
-
-
-def validate_presence_create_command(command: PresenceCreateCommand) -> tuple[str, ...]:
-    errors: list[str] = []
     if not command.targets:
-        errors.append("Au moins une date et une personne doivent être sélectionnées.")
+        errors.append(
+            _validation_error(
+                "targets",
+                "Au moins une date et une personne doivent être sélectionnées.",
+            )
+        )
 
     for target in command.targets:
         if not is_valid_target_id(target.person_id):
-            errors.append("Une personne sélectionnée possède un identifiant invalide.")
+            errors.append(
+                _validation_error(
+                    "person_id",
+                    "Une personne sélectionnée possède un identifiant invalide.",
+                )
+            )
         if type(target.presence_date) is not date:
-            errors.append("Une date de présence est invalide.")
+            errors.append(
+                _validation_error(
+                    "presence_date",
+                    "Une date de présence est invalide.",
+                )
+            )
 
     errors.extend(_validate_time_window(command.start_time, command.end_time))
-    errors.extend(_validate_category_id(command.category_id))
-    errors.extend(_validate_title(command.title))
+
+    if not is_valid_target_id(command.category_id):
+        errors.append(
+            _validation_error(
+                "category_id",
+                "La catégorie de présence est obligatoire.",
+            )
+        )
+
+    if len(normalize_presence_title(command.title)) > 200:
+        errors.append(
+            _validation_error(
+                "title",
+                "La légende de la présence ne peut pas dépasser 200 caractères.",
+            )
+        )
+
     return tuple(errors)
 
 
-def validate_presence_update_command(command: PresenceUpdateCommand) -> tuple[str, ...]:
-    errors: list[str] = []
+def validate_presence_update_command(
+    command: PresenceUpdateCommand,
+) -> tuple[ServiceError, ...]:
+    errors: list[ServiceError] = []
+
     if not is_valid_target_id(command.presence_id):
-        errors.append("Identifiant historique de présence invalide.")
+        errors.append(
+            ServiceError(
+                code=ServiceErrorCode.INVALID_TARGET_ID,
+                message="Identifiant historique de présence invalide.",
+                field="presence_id",
+            )
+        )
+
     errors.extend(_validate_time_window(command.start_time, command.end_time))
-    errors.extend(_validate_category_id(command.category_id))
-    errors.extend(_validate_title(command.title))
+
+    if not is_valid_target_id(command.category_id):
+        errors.append(
+            _validation_error(
+                "category_id",
+                "La catégorie de présence est obligatoire.",
+            )
+        )
+
+    if len(normalize_presence_title(command.title)) > 200:
+        errors.append(
+            _validation_error(
+                "title",
+                "La légende de la présence ne peut pas dépasser 200 caractères.",
+            )
+        )
+
     return tuple(errors)
+
+
+def _collapse_validation_errors(errors: tuple[ServiceError, ...]) -> ServiceError:
+    first = errors[0]
+    return ServiceError(
+        code=first.code,
+        message=" ".join(error.message for error in errors),
+        field=first.field,
+        target_id=first.target_id,
+    )
 
 
 def _safe_rollback(port: PresenceWritePort) -> None:
@@ -199,40 +294,74 @@ def create_presences(
     port: PresenceWritePort,
     *,
     command: PresenceCreateCommand,
-) -> WriteResult[PresenceBatchSnapshot]:
+) -> ServiceResult[PresenceBatchSnapshot]:
     """Crée un lot de présences avec un seul commit.
 
-    Un chevauchement est un skip métier individuel, comme dans le parcours wx
-    historique. Toute panne technique annule en revanche toutes les insertions
-    du lot.
+    Un chevauchement est un skip métier individuel. Toute panne technique
+    annule en revanche toutes les insertions du lot.
     """
 
     errors = validate_presence_create_command(command)
     if errors:
-        return WriteResult(
-            ok=False,
-            code=WriteCode.VALIDATION_ERROR,
-            message=" ".join(errors),
+        return ServiceResult.failure(
+            error=_collapse_validation_errors(errors),
         )
 
     normalized_title = normalize_presence_title(command.title)
-    created_ids: list[int] = []
-    skipped: list[PresenceTarget] = []
 
     try:
         for target in command.targets:
             if not port.person_exists(target.person_id):
-                raise LookupError(
-                    "La personne n°%d n'existe plus." % target.person_id
+                return ServiceResult.failure(
+                    error=ServiceError(
+                        code=ServiceErrorCode.TARGET_NOT_FOUND,
+                        message="La personne sélectionnée n'existe plus.",
+                        field="person_id",
+                        target_id=target.person_id,
+                    ),
                 )
+    except Exception as exc:
+        return ServiceResult.failure(
+            error=ServiceError(
+                code=ServiceErrorCode.DATABASE_ERROR,
+                message="La vérification des personnes a échoué.",
+                retryable=True,
+                diagnostic=repr(exc),
+            ),
+        )
 
-            if port.has_overlap(
+    created_ids: list[int] = []
+    skipped: list[PresenceTarget] = []
+    batch_issues: list[BatchIssue] = []
+
+    try:
+        for index, target in enumerate(command.targets):
+            conflicting_presence_id = port.find_overlap(
                 person_id=target.person_id,
                 presence_date=target.presence_date,
                 start_time=command.start_time,
                 end_time=command.end_time,
-            ):
+            )
+            if conflicting_presence_id is not None:
                 skipped.append(target)
+                batch_issues.append(
+                    BatchIssue(
+                        item=BatchItemRef(
+                            index=index,
+                            person_id=target.person_id,
+                            presence_date=target.presence_date,
+                        ),
+                        disposition=BatchDisposition.SKIPPED,
+                        error=ServiceError(
+                            code=ServiceErrorCode.OVERLAP_CONFLICT,
+                            message=(
+                                "Une présence existe déjà sur cette plage horaire."
+                            ),
+                            field="schedule",
+                            conflicting_target_id=conflicting_presence_id,
+                        ),
+                    )
+                )
                 continue
 
             presence_id = port.insert_presence(
@@ -252,10 +381,14 @@ def create_presences(
         port.commit()
     except Exception as exc:
         _safe_rollback(port)
-        return WriteResult(
-            ok=False,
-            code=WriteCode.DATABASE_ERROR,
-            message="Création des présences impossible : %s" % exc,
+        return ServiceResult.failure(
+            error=ServiceError(
+                code=ServiceErrorCode.DATABASE_ERROR,
+                message="La création des présences a échoué.",
+                retryable=True,
+                diagnostic=repr(exc),
+            ),
+            committed=False,
         )
 
     try:
@@ -268,23 +401,33 @@ def create_presences(
                 )
             created.append(snapshot)
     except Exception as exc:
-        return WriteResult(
-            ok=False,
-            code=WriteCode.READBACK_ERROR,
-            message="Présences validées, mais relecture impossible : %s" % exc,
+        return ServiceResult.failure(
+            error=ServiceError(
+                code=ServiceErrorCode.READBACK_ERROR,
+                message=(
+                    "L'enregistrement a été validé mais sa relecture a échoué."
+                ),
+                retryable=False,
+                diagnostic=repr(exc),
+            ),
             committed=True,
         )
 
-    return WriteResult(
-        ok=True,
-        code=WriteCode.OK,
-        message="%d présence(s) créée(s), %d chevauchement(s) ignoré(s)."
-        % (len(created), len(skipped)),
+    batch = BatchReport(
+        requested_count=len(command.targets),
+        succeeded_count=len(created),
+        skipped_count=len(skipped),
+        rejected_count=0,
+        issues=tuple(batch_issues),
+    )
+
+    return ServiceResult.success(
         value=PresenceBatchSnapshot(
             created=tuple(created),
             skipped_overlaps=tuple(skipped),
         ),
         committed=True,
+        batch=batch,
     )
 
 
@@ -292,48 +435,64 @@ def update_presence(
     port: PresenceWritePort,
     *,
     command: PresenceUpdateCommand,
-) -> WriteResult[PresenceSnapshot]:
+) -> ServiceResult[PresenceSnapshot]:
     """Modifie les horaires, la catégorie et la légende d'une présence."""
 
     errors = validate_presence_update_command(command)
     if errors:
-        return WriteResult(
-            ok=False,
-            code=WriteCode.VALIDATION_ERROR,
-            message=" ".join(errors),
-            target_id=command.presence_id if is_valid_target_id(command.presence_id) else None,
+        return ServiceResult.failure(
+            error=_collapse_validation_errors(errors),
+            target_id=(
+                command.presence_id
+                if is_valid_target_id(command.presence_id)
+                else None
+            ),
         )
 
     try:
         current = port.read_presence(command.presence_id)
     except Exception as exc:
-        return WriteResult(
-            ok=False,
-            code=WriteCode.DATABASE_ERROR,
-            message="Lecture de la présence impossible : %s" % exc,
+        return ServiceResult.failure(
+            error=ServiceError(
+                code=ServiceErrorCode.DATABASE_ERROR,
+                message="La lecture de la présence a échoué.",
+                target_id=command.presence_id,
+                retryable=True,
+                diagnostic=repr(exc),
+            ),
             target_id=command.presence_id,
         )
 
     if current is None:
-        return WriteResult(
-            ok=False,
-            code=WriteCode.TARGET_NOT_FOUND,
-            message="La présence sélectionnée n'existe plus.",
+        return ServiceResult.failure(
+            error=ServiceError(
+                code=ServiceErrorCode.TARGET_NOT_FOUND,
+                message="La présence sélectionnée n'existe plus.",
+                target_id=command.presence_id,
+            ),
             target_id=command.presence_id,
         )
 
     try:
-        if port.has_overlap(
+        conflicting_presence_id = port.find_overlap(
             person_id=current.person_id,
             presence_date=current.presence_date,
             start_time=command.start_time,
             end_time=command.end_time,
             exclude_presence_id=command.presence_id,
-        ):
-            return WriteResult(
-                ok=False,
-                code=WriteCode.VALIDATION_ERROR,
-                message="Les horaires modifiés chevauchent une autre présence de la même personne.",
+        )
+        if conflicting_presence_id is not None:
+            return ServiceResult.failure(
+                error=ServiceError(
+                    code=ServiceErrorCode.OVERLAP_CONFLICT,
+                    message=(
+                        "Les horaires modifiés chevauchent une autre présence "
+                        "de la même personne."
+                    ),
+                    field="schedule",
+                    target_id=command.presence_id,
+                    conflicting_target_id=conflicting_presence_id,
+                ),
                 target_id=command.presence_id,
             )
 
@@ -348,27 +507,38 @@ def update_presence(
         )
         if affected == 0:
             _safe_rollback(port)
-            return WriteResult(
-                ok=False,
-                code=WriteCode.TARGET_NOT_FOUND,
-                message="La présence a disparu avant l'enregistrement.",
+            return ServiceResult.failure(
+                error=ServiceError(
+                    code=ServiceErrorCode.TARGET_NOT_FOUND,
+                    message="La présence a disparu avant l'enregistrement.",
+                    target_id=command.presence_id,
+                ),
                 target_id=command.presence_id,
             )
         if affected != 1:
             _safe_rollback(port)
-            return WriteResult(
-                ok=False,
-                code=WriteCode.UNEXPECTED_ROWCOUNT,
-                message="Nombre de présences modifiées inattendu : %d." % affected,
+            return ServiceResult.failure(
+                error=ServiceError(
+                    code=ServiceErrorCode.UNEXPECTED_ROWCOUNT,
+                    message=(
+                        "Le nombre de présences modifiées est inattendu."
+                    ),
+                    target_id=command.presence_id,
+                    diagnostic="rowcount=%d" % affected,
+                ),
                 target_id=command.presence_id,
             )
         port.commit()
     except Exception as exc:
         _safe_rollback(port)
-        return WriteResult(
-            ok=False,
-            code=WriteCode.DATABASE_ERROR,
-            message="Modification de la présence impossible : %s" % exc,
+        return ServiceResult.failure(
+            error=ServiceError(
+                code=ServiceErrorCode.DATABASE_ERROR,
+                message="La modification de la présence a échoué.",
+                target_id=command.presence_id,
+                retryable=True,
+                diagnostic=repr(exc),
+            ),
             target_id=command.presence_id,
         )
 
@@ -377,20 +547,23 @@ def update_presence(
         if snapshot is None:
             raise LookupError("Présence introuvable après commit.")
     except Exception as exc:
-        return WriteResult(
-            ok=False,
-            code=WriteCode.READBACK_ERROR,
-            message="Présence validée, mais relecture impossible : %s" % exc,
+        return ServiceResult.failure(
+            error=ServiceError(
+                code=ServiceErrorCode.READBACK_ERROR,
+                message=(
+                    "L'enregistrement a été validé mais sa relecture a échoué."
+                ),
+                target_id=command.presence_id,
+                retryable=False,
+                diagnostic=repr(exc),
+            ),
             target_id=command.presence_id,
             committed=True,
         )
 
-    return WriteResult(
-        ok=True,
-        code=WriteCode.OK,
-        message="Présence modifiée et relue.",
-        target_id=command.presence_id,
+    return ServiceResult.success(
         value=snapshot,
+        target_id=command.presence_id,
         committed=True,
     )
 
@@ -399,56 +572,77 @@ def delete_presence(
     port: PresenceWritePort,
     *,
     command: PresenceDeleteCommand,
-) -> WriteResult[bool]:
+) -> ServiceResult[bool]:
     """Supprime une présence après confirmation explicite."""
 
     if not is_valid_target_id(command.presence_id):
-        return WriteResult(
-            ok=False,
-            code=WriteCode.INVALID_TARGET_ID,
-            message="Identifiant historique de présence invalide.",
+        return ServiceResult.failure(
+            error=ServiceError(
+                code=ServiceErrorCode.INVALID_TARGET_ID,
+                message="Identifiant historique de présence invalide.",
+                field="presence_id",
+            ),
         )
+
     if command.confirmed is not True:
-        return WriteResult(
-            ok=False,
-            code=WriteCode.VALIDATION_ERROR,
-            message="La suppression de la présence doit être confirmée explicitement.",
+        return ServiceResult.failure(
+            error=ServiceError(
+                code=ServiceErrorCode.VALIDATION_ERROR,
+                message=(
+                    "La suppression de la présence doit être confirmée explicitement."
+                ),
+                field="confirmation",
+                target_id=command.presence_id,
+            ),
             target_id=command.presence_id,
         )
 
     try:
         if not port.presence_exists(command.presence_id):
-            return WriteResult(
-                ok=False,
-                code=WriteCode.TARGET_NOT_FOUND,
-                message="La présence sélectionnée n'existe plus.",
+            return ServiceResult.failure(
+                error=ServiceError(
+                    code=ServiceErrorCode.TARGET_NOT_FOUND,
+                    message="La présence sélectionnée n'existe plus.",
+                    target_id=command.presence_id,
+                ),
                 target_id=command.presence_id,
             )
 
         affected = int(port.delete_presence(command.presence_id))
         if affected == 0:
             _safe_rollback(port)
-            return WriteResult(
-                ok=False,
-                code=WriteCode.TARGET_NOT_FOUND,
-                message="La présence a disparu avant la suppression.",
+            return ServiceResult.failure(
+                error=ServiceError(
+                    code=ServiceErrorCode.TARGET_NOT_FOUND,
+                    message="La présence a disparu avant la suppression.",
+                    target_id=command.presence_id,
+                ),
                 target_id=command.presence_id,
             )
         if affected != 1:
             _safe_rollback(port)
-            return WriteResult(
-                ok=False,
-                code=WriteCode.UNEXPECTED_ROWCOUNT,
-                message="Nombre de présences supprimées inattendu : %d." % affected,
+            return ServiceResult.failure(
+                error=ServiceError(
+                    code=ServiceErrorCode.UNEXPECTED_ROWCOUNT,
+                    message=(
+                        "Le nombre de présences supprimées est inattendu."
+                    ),
+                    target_id=command.presence_id,
+                    diagnostic="rowcount=%d" % affected,
+                ),
                 target_id=command.presence_id,
             )
         port.commit()
     except Exception as exc:
         _safe_rollback(port)
-        return WriteResult(
-            ok=False,
-            code=WriteCode.DATABASE_ERROR,
-            message="Suppression de la présence impossible : %s" % exc,
+        return ServiceResult.failure(
+            error=ServiceError(
+                code=ServiceErrorCode.DATABASE_ERROR,
+                message="La suppression de la présence a échoué.",
+                target_id=command.presence_id,
+                retryable=True,
+                diagnostic=repr(exc),
+            ),
             target_id=command.presence_id,
         )
 
@@ -456,19 +650,22 @@ def delete_presence(
         if port.read_presence(command.presence_id) is not None:
             raise LookupError("La présence est encore relue après commit.")
     except Exception as exc:
-        return WriteResult(
-            ok=False,
-            code=WriteCode.READBACK_ERROR,
-            message="Présence supprimée, mais contrôle d'absence impossible : %s" % exc,
+        return ServiceResult.failure(
+            error=ServiceError(
+                code=ServiceErrorCode.READBACK_ERROR,
+                message=(
+                    "La suppression a été validée mais son contrôle final a échoué."
+                ),
+                target_id=command.presence_id,
+                retryable=False,
+                diagnostic=repr(exc),
+            ),
             target_id=command.presence_id,
             committed=True,
         )
 
-    return WriteResult(
-        ok=True,
-        code=WriteCode.OK,
-        message="Présence supprimée et absence confirmée.",
-        target_id=command.presence_id,
+    return ServiceResult.success(
         value=True,
+        target_id=command.presence_id,
         committed=True,
     )
