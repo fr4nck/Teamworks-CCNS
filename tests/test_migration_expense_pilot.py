@@ -247,3 +247,103 @@ def test_duplicate_source_ids_block_validation():
     assert result.report.duplicated_sources == (
         ("noethys_teamworks_legacy", "deplacements", "7"),
     )
+
+
+def test_mirror_only_unknown_trip_blocks_migration():
+    trip = _source_trip(7, 3)
+    reimbursement = _source_reimbursement(3, legacy_trip_list="7-999")
+    result = reconcile_expenses(
+        source_people_ids=[12],
+        source_trips=[trip],
+        source_reimbursements=[reimbursement],
+        destination_trips=[_dest_trip(trip)],
+        destination_reimbursements=[_dest_reimbursement(reimbursement)],
+    )
+
+    assert result.is_valid is False
+    assert (
+        result.report.entries[-1].reason_code
+        == "LEGACY_TRIP_LIST_REFERENCES_UNKNOWN_TRIP"
+    )
+
+
+def test_mirror_claiming_trip_of_another_person_blocks_migration():
+    trip7 = _source_trip(7, 3, person_id=12)
+    trip8 = _source_trip(8, None, person_id=13)
+    reimbursement = _source_reimbursement(3, legacy_trip_list="7-8", person_id=12)
+    result = reconcile_expenses(
+        source_people_ids=[12, 13],
+        source_trips=[trip7, trip8],
+        source_reimbursements=[reimbursement],
+        destination_trips=[_dest_trip(trip7), _dest_trip(trip8)],
+        destination_reimbursements=[_dest_reimbursement(reimbursement)],
+    )
+
+    assert result.is_valid is False
+    assert (
+        result.report.entries[-1].reason_code
+        == "LEGACY_TRIP_LIST_PERSON_MISMATCH"
+    )
+
+
+def test_mirror_claiming_free_trip_is_not_silently_reassigned():
+    trip7 = _source_trip(7, 3)
+    trip8 = _source_trip(8, None)
+    reimbursement = _source_reimbursement(3, legacy_trip_list="7-8")
+    result = reconcile_expenses(
+        source_people_ids=[12],
+        source_trips=[trip7, trip8],
+        source_reimbursements=[reimbursement],
+        destination_trips=[_dest_trip(trip7), _dest_trip(trip8)],
+        destination_reimbursements=[_dest_reimbursement(reimbursement)],
+    )
+
+    assert result.is_valid is False
+    assert (
+        result.report.entries[-1].reason_code
+        == "LEGACY_TRIP_LIST_CONFLICTS_WITH_CANONICAL_ASSIGNMENT"
+    )
+
+
+def test_duplicate_destination_provenance_blocks_migration():
+    source_trip = _source_trip(reimbursement_id=None)
+    first = _dest_trip(source_trip, destination_id="trip-a")
+    duplicate = _dest_trip(source_trip, destination_id="trip-b")
+
+    result = reconcile_expenses(
+        source_people_ids=[12],
+        source_trips=[source_trip],
+        source_reimbursements=[],
+        destination_trips=[first, duplicate],
+        destination_reimbursements=[],
+    )
+
+    assert result.is_valid is False
+    mismatches = {
+        metric.code for metric in result.report.blocking_metric_mismatches
+    }
+    assert "DESTINATION_TRIP_SOURCE_IDS_UNIQUE" in mismatches
+
+
+def test_per_person_and_date_metrics_are_blocking():
+    source_trip = _source_trip(reimbursement_id=None)
+    destination = _dest_trip(
+        source_trip,
+        person_id=13,
+        travel_date=date(2026, 9, 11),
+    )
+    result = reconcile_expenses(
+        source_people_ids=[12, 13],
+        source_trips=[source_trip],
+        source_reimbursements=[],
+        destination_trips=[destination],
+        destination_reimbursements=[],
+    )
+
+    assert result.is_valid is False
+    mismatches = {
+        metric.code for metric in result.report.blocking_metric_mismatches
+    }
+    assert "TRIP_COUNT_PERSON_12" in mismatches
+    assert "TRIP_COUNT_PERSON_13" in mismatches
+    assert "TRIP_MIN_DATE" in mismatches
