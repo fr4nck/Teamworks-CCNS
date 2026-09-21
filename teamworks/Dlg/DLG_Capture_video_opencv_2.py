@@ -140,7 +140,7 @@ class Dialog(wx.Dialog):
         
         # Vidéo
         self.ctrl_video = CTRL_Video(self, -1)
-        self.bouton_capture = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Capturer_photo.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_capture = CTRL_Bouton_image.CTRL(self, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/BoutonsImages/Capturer_photo.png"))
         
         # Boutons
         self.ctrl_ligne = wx.StaticLine(self, -1)
