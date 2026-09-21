@@ -117,6 +117,82 @@ jobs:
             tests/test_qt_expense_reimbursement_roundtrip.py `
             tests/test_qt_presence_integration.py `
             tests/test_qt_blocking_thread_lifecycle_runtime.py
+      - name: Démarrer MySQL local pour la recette Frais
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $version = "8.0.46"
+          $archive = Join-Path $env:RUNNER_TEMP "mysql-$version-winx64.zip"
+          $base = Join-Path $env:RUNNER_TEMP "mysql-$version-winx64"
+          $data = Join-Path $env:RUNNER_TEMP "mysql-data"
+          $log = Join-Path $env:RUNNER_TEMP "mysql-error.log"
+
+          if (-not (Test-Path (Join-Path $base "bin\mysqld.exe"))) {
+            curl.exe -L --fail --retry 3 "https://dev.mysql.com/get/Downloads/MySQL-8.0/mysql-$version-winx64.zip" -o $archive
+            if ($LASTEXITCODE -ne 0) { throw "Échec du téléchargement MySQL $version" }
+            7z x $archive "-o$env:RUNNER_TEMP" -y | Out-Null
+          }
+
+          $mysqld = Join-Path $base "bin\mysqld.exe"
+          if (-not (Test-Path $mysqld)) {
+            throw "mysqld.exe introuvable après installation de MySQL $version"
+          }
+
+          if (Test-Path $data) { Remove-Item $data -Recurse -Force }
+          New-Item -ItemType Directory -Path $data | Out-Null
+
+          & $mysqld --no-defaults --initialize-insecure "--basedir=$base" "--datadir=$data"
+          if ($LASTEXITCODE -ne 0) { throw "Échec de l initialisation MySQL" }
+
+          $process = Start-Process -FilePath $mysqld -ArgumentList @(
+            "--no-defaults",
+            "--basedir=$base",
+            "--datadir=$data",
+            "--port=3307",
+            "--bind-address=127.0.0.1",
+            "--skip-log-bin",
+            "--log-error=$log"
+          ) -PassThru
+
+          "TEAMWORKS_MYSQL_INTEGRATION=1" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "TEAMWORKS_MYSQL_HOST=127.0.0.1" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "TEAMWORKS_MYSQL_PORT=3307" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "TEAMWORKS_MYSQL_USER=root" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "TEAMWORKS_MYSQL_PASSWORD=" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "TEAMWORKS_MYSQL_PID=$($process.Id)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+          @'
+          import time
+          import mysql.connector
+
+          last = None
+          for _ in range(60):
+              try:
+                  connection = mysql.connector.connect(
+                      host="127.0.0.1",
+                      port=3307,
+                      user="root",
+                      password="",
+                      use_pure=True,
+                      ssl_disabled=True,
+                      connection_timeout=2,
+                  )
+                  cursor = connection.cursor()
+                  cursor.execute("SELECT VERSION()")
+                  print("[Teamworks MySQL CI] serveur prêt :", cursor.fetchone()[0])
+                  cursor.close()
+                  connection.close()
+                  break
+              except Exception as exc:
+                  last = exc
+                  time.sleep(1)
+          else:
+              raise SystemExit("MySQL indisponible après 60s: %r" % (last,))
+          '@ | python -
+
+      - name: Recette réelle Frais — Windows + MySQL
+        shell: pwsh
+        run: python -m pytest -q tests/test_mysql_expense_roundtrip.py
 
       - name: Smoke runtime Qt Windows natif
         shell: pwsh
