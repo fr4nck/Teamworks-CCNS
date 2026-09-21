@@ -25,22 +25,26 @@ def test_installer_only_writes_application_files_to_app_dir():
     assert set(destinations) == {"{app}"}
 
 
-def test_installer_does_not_manage_user_data_or_databases():
-    text = INSTALLER.read_text(encoding="utf-8").lower()
-    forbidden = (
-        "{userappdata}",
-        "{localappdata}",
-        "{commonappdata}",
-        "%appdata%",
-        "%programdata%",
+def test_installer_ne_touche_pas_aux_bases_et_ne_modifie_que_customize_ini():
+    text = INSTALLER.read_text(encoding="utf-8")
+    lower = text.lower()
+    for token in (
         "sqlite3",
         "mysql",
         "[dirs]",
         "[registry]",
         "deleteafterinstall",
-    )
-    for token in forbidden:
-        assert token not in text
+        "{localappdata}",
+        "{commonappdata}",
+        "%programdata%",
+    ):
+        assert token not in lower
+
+    assert "{userappdata}\\teamworks\\Customize.ini" in text
+    assert "SetIniString(" in text
+    assert "'historique'" in text
+    assert "'afficher_ressources'" in text
+    assert ".dat" not in _section(text, "Code").lower()
 
 
 def test_installer_has_stable_identity_and_uninstaller():
