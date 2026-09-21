@@ -61,6 +61,11 @@ def _tokens_from_doc(path: Path) -> tuple[str, ...]:
 
     for match in _DOC_ASCII_TOKEN_RE.finditer(data):
         token = match.group(1).decode("ascii").upper()
+        # Les conteneurs OLE des anciens .doc contiennent régulièrement des
+        # séquences binaires ressemblant à "{E}". Aucun mot-clé standard livré
+        # n'est mono-caractère : on les écarte pour éviter ce faux positif.
+        if len(token) < 2:
+            continue
         if token not in seen:
             seen.add(token)
             tokens.append(token)
