@@ -22,7 +22,7 @@ class Page(wx.Panel):
         self.label_titre = wx.StaticText(self, -1, _(u"3. Choix des champs personnalisés"))
         self.label_intro = wx.StaticText(self, -1, _(u"Sélectionnez les données personnalisées que vous souhaitez ajouter aux\ncaractérististiques de ce contrat :"))
         self.listCtrl_champs = ListCtrl_champs(self.sizer_champs_staticbox, controller=self)
-        self.bouton_champs = wx.Button(self.sizer_champs_staticbox, -1, "...", style=wx.BU_EXACTFIT)
+        self.bouton_champs = wx.Button(self.sizer_champs_staticbox, -1, "...", style=wx.BU_EXACTFIT)  # native-button-ok: sélecteur compact intégré au champ
 
         self.__set_properties()
         self.__do_layout()
