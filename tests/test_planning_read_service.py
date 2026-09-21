@@ -242,8 +242,8 @@ def test_vacances_invalides_degradent_sans_bloquer_le_planning(db, port):
     result = read_planning(
         port,
         query=PresenceQuery(
-            start_date=date(2026, 9, 21),
-            end_date=date(2026, 9, 30),
+            start_date=date(2026, 9, 19),
+            end_date=date(2026, 10, 1),
             person_ids=(1,),
         ),
     )
