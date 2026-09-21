@@ -6,6 +6,7 @@ from PySide6.QtCore import QSortFilterProxyModel, Qt
 from PySide6.QtGui import QIcon, QStandardItemModel
 from PySide6.QtWidgets import (
     QAbstractItemView,
+    QDialog,
     QHBoxLayout,
     QHeaderView,
     QLabel,
@@ -15,6 +16,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from application.services.expense_reimbursement_write import save_reimbursement
 from legacy_sheets import (
     ApplicationPreviewDialog,
     InterviewPreviewDialog,
@@ -208,6 +210,10 @@ class PresencesPage(QWidget):
 
     def __init__(self, icon_loader: IconLoader, parent: QWidget | None = None) -> None:
         super().__init__(parent)
+        self._reimbursement_write_port_factory = None
+        self._reimbursement_person_id = None
+        self._reimbursement_reload_callback = None
+        self._message_callback = None
         root = QVBoxLayout(self)
         root.setContentsMargins(
             TOKENS.spacing.sm,
@@ -418,6 +424,9 @@ class ExpensesPage(QWidget):
         section.add_widget(self.reimbursement_actions)
 
         self.reimbursement_table = _table(self.reimbursement_model)
+        self.reimbursement_table.selectionModel().selectionChanged.connect(
+            self._update_reimbursement_actions
+        )
         header = self.reimbursement_table.horizontalHeader()
         header.setSectionResizeMode(0, QHeaderView.ResizeMode.Interactive)
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.Interactive)
@@ -430,9 +439,113 @@ class ExpensesPage(QWidget):
         if action_id == "add":
             _open_preview(TripPreviewDialog, self)
 
+    def configure_reimbursement_write(
+        self,
+        *,
+        person_id,
+        write_port_factory,
+        reload_callback,
+        message_callback=None,
+    ) -> None:
+        self._reimbursement_person_id = person_id
+        self._reimbursement_write_port_factory = write_port_factory
+        self._reimbursement_reload_callback = reload_callback
+        self._message_callback = message_callback
+        self._update_reimbursement_actions()
+
+    def set_reimbursement_person(self, person_id) -> None:
+        self._reimbursement_person_id = person_id
+        self._update_reimbursement_actions()
+
+    def _write_enabled(self) -> bool:
+        return (
+            callable(self._reimbursement_write_port_factory)
+            and isinstance(self._reimbursement_person_id, int)
+            and not isinstance(self._reimbursement_person_id, bool)
+            and self._reimbursement_person_id > 0
+        )
+
+    def _selected_reimbursement(self):
+        rows = self.reimbursement_table.selectionModel().selectedRows()
+        if not rows:
+            return None
+        item = self.reimbursement_model.item(rows[0].row(), 0)
+        return item.data(Qt.ItemDataRole.UserRole) if item is not None else None
+
+    def _trip_payloads(self) -> tuple:
+        result = []
+        for row in range(self.trip_model.rowCount()):
+            item = self.trip_model.item(row, 0)
+            payload = item.data(Qt.ItemDataRole.UserRole) if item is not None else None
+            if payload is not None:
+                result.append(payload)
+        return tuple(result)
+
+    def _update_reimbursement_actions(self, *_args) -> None:
+        writable = self._write_enabled()
+        self.reimbursement_actions.set_enabled("add", writable)
+        selected = self._selected_reimbursement()
+        stable_selection = (
+            selected is not None
+            and isinstance(getattr(selected, "id_historique", None), int)
+            and not isinstance(getattr(selected, "id_historique", None), bool)
+            and getattr(selected, "id_historique", 0) > 0
+        )
+        self.reimbursement_actions.set_enabled("edit", writable and stable_selection)
+
+    def _emit_message(self, text: str) -> None:
+        if callable(self._message_callback):
+            self._message_callback(text)
+
+    def select_reimbursement(self, reimbursement_id: int) -> None:
+        for row in range(self.reimbursement_model.rowCount()):
+            item = self.reimbursement_model.item(row, 0)
+            payload = item.data(Qt.ItemDataRole.UserRole) if item is not None else None
+            if getattr(payload, "id_historique", None) == reimbursement_id:
+                self.reimbursement_table.selectRow(row)
+                return
+
     def _on_reimbursement_action(self, action_id: str) -> None:
-        if action_id == "add":
-            _open_preview(ReimbursementPreviewDialog, self)
+        if action_id not in ("add", "edit") or not self._write_enabled():
+            return
+        reimbursement = self._selected_reimbursement() if action_id == "edit" else None
+        if action_id == "edit" and reimbursement is None:
+            return
+
+        dialog = ReimbursementPreviewDialog(
+            self.window(),
+            person_id=self._reimbursement_person_id,
+            trips=self._trip_payloads(),
+            reimbursement=reimbursement,
+            writable=True,
+        )
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+
+        try:
+            port = self._reimbursement_write_port_factory()
+            result = save_reimbursement(port, command=dialog.command())
+        except Exception as exc:
+            self._emit_message(f"Remboursement impossible · {exc}")
+            return
+
+        if result.committed and result.target_id is not None and callable(
+            self._reimbursement_reload_callback
+        ):
+            try:
+                self._reimbursement_reload_callback(result.target_id)
+            except Exception as exc:
+                self._emit_message(
+                    f"Remboursement validé, mais rafraîchissement impossible · {exc}"
+                )
+                return
+
+        if result.ok:
+            self._emit_message(f"Remboursement enregistré · n°{result.target_id}")
+        else:
+            self._emit_message(
+                f"Remboursement non enregistré · {result.code} · {result.message}"
+            )
 
 
 class RecruitmentPage(QWidget):
