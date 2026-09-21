@@ -74,6 +74,8 @@ class ContractsTableModel(QAbstractTableModel):
         ("end", "Fin"),
         ("classification", "Classification"),
         ("duration", "Durée"),
+        ("signature", "Signé"),
+        ("due", "DUE"),
         ("status", "Statut"),
     )
 
@@ -114,3 +116,8 @@ class ContractsTableModel(QAbstractTableModel):
         self.beginResetModel()
         self._contracts = tuple(contracts)
         self.endResetModel()
+
+    def contract_at(self, row: int) -> ContractView | None:
+        if 0 <= row < len(self._contracts):
+            return self._contracts[row]
+        return None

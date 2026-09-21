@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import date
+from decimal import Decimal
 from typing import Protocol, Sequence
 
 
@@ -61,6 +63,9 @@ class ContractView:
     classification: str
     duration: str
     status: str
+    id_historique: int | None = None
+    signature: str = ""
+    due: str = ""
 
 
 @dataclass(frozen=True)
@@ -68,6 +73,7 @@ class ScenarioView:
     name: str
     period: str
     description: str
+    id_historique: int | None = None
 
 
 @dataclass(frozen=True)
@@ -80,6 +86,8 @@ class TripView:
     tariff: str
     amount: str
     reimbursement: str
+    id_historique: int | None = None
+    reimbursement_id: int | None = None
 
 
 @dataclass(frozen=True)
@@ -88,6 +96,10 @@ class ReimbursementView:
     date: str
     amount: str
     attached_trips: str
+    id_historique: int | None = None
+    payment_date_value: date | None = None
+    amount_value: Decimal | None = None
+    attached_trip_ids: tuple[int, ...] = ()
 
 
 @dataclass(frozen=True)

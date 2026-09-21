@@ -13,8 +13,12 @@ import Chemins
 from Utils.UTILS_Traduction import _
 import sys
 import sqlite3
-import wx
+try:
+    import wx
+except ImportError:
+    wx = None
 import os
+import json
 import base64
 import datetime
 import random
@@ -178,20 +182,33 @@ class DB:
     
     def GetNomFichierDefaut(self):
         nomFichier = ""
-        try :
-            topWindow = wx.GetApp().GetTopWindow()
-            nomWindow = topWindow.GetName()
-        except :
-            nomWindow = None
-        if nomWindow == "general" : 
-            # Si la frame 'General' est chargée, on y récupère le dict de config
+        topWindow = None
+        nomWindow = None
+        if wx is not None:
+            try:
+                topWindow = wx.GetApp().GetTopWindow()
+                nomWindow = topWindow.GetName()
+            except Exception:
+                nomWindow = None
+
+        if nomWindow == "general":
+            # Parcours wx historique inchangé lorsque wxPython est présent.
             nomFichier = topWindow.userConfig["nomFichier"]
-        else:
-            # Récupération du nom de la DB directement dans le fichier de config sur le disque dur
+        elif wx is not None:
             from Utils import UTILS_Config
             cfg = UTILS_Config.FichierConfig()
             nomFichier = cfg.GetItemConfig("nomFichier")
-        return nomFichier
+        else:
+            # Runtime Qt headless : lecture directe du même Config.json,
+            # sans importer UTILS_Config qui dépend encore de wx.
+            try:
+                config_path = UTILS_Fichiers.GetRepUtilisateur("Config.json")
+                with open(config_path, "r", encoding="utf-8") as config_file:
+                    config = json.load(config_file)
+                nomFichier = config.get("nomFichier", "")
+            except (OSError, ValueError, TypeError):
+                nomFichier = ""
+        return nomFichier or ""
     
     def GetListeDatabasesMySQL(self):
         # Récupère la liste des databases présentes

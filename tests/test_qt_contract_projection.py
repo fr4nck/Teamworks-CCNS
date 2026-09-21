@@ -15,11 +15,14 @@ from production_read_adapter import TeamworksProductionReadAdapter
 
 def _contract(*, date_fin, date_rupture=None):
     return SimpleNamespace(
+        IDcontrat=417,
         type_contrat="CDI",
         date_debut="2020-09-01",
         date_fin=date_fin,
         date_rupture=date_rupture,
         classification="Groupe 4",
+        convention_code=None,
+        ccns_group=None,
         temps_hebdo=35.0,
     )
 
@@ -31,6 +34,7 @@ def test_contract_projection_translates_historical_indefinite_end_date():
 
     assert view.start == "01/09/2020"
     assert view.end == "Indétermin."
+    assert view.id_historique == 417
 
 
 def test_contract_projection_keeps_real_fixed_end_date():
@@ -39,6 +43,7 @@ def test_contract_projection_keeps_real_fixed_end_date():
     )
 
     assert view.end == "31/12/2026"
+    assert view.id_historique == 417
 
 
 def test_contract_projection_prefers_historical_rupture_date():
@@ -47,3 +52,4 @@ def test_contract_projection_prefers_historical_rupture_date():
     )
 
     assert view.end == "30/11/2025-R"
+    assert view.id_historique == 417

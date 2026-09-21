@@ -1,474 +1,34 @@
-name: Validation et publication
+name: Validation Qt
 
 on:
   pull_request:
     branches:
-      - master
+      - qt/master
+      - qt/convergence-0.9.2-rc3
+      - qt/vanilla-0.1-rc
   push:
     branches:
-      - master
-    tags:
-      - "v*"
-  schedule:
-    - cron: "37 3 * * 1"
+      - qt/master
+      - qt/vanilla-0.1-rc
   workflow_dispatch:
-    inputs:
-      build_windows:
-        description: Construire le paquet Windows portable
-        required: false
-        default: false
-        type: boolean
-      cleanup_actions:
-        description: Nettoyer l'historique GitHub Actions
-        required: false
-        default: none
-        type: choice
-        options:
-          - none
-          - preview
-          - obsolete
-          - trim
 
 concurrency:
-  group: teamworks-ci-${{ github.ref }}
-  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+  group: teamworks-qt-ci-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
 
+env:
+  PYTHONUTF8: "1"
+
 jobs:
-  cleanup-actions:
-    name: Nettoyage de l'historique Actions
-    if: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.cleanup_actions != 'none') }}
-    runs-on: windows-2022
-    timeout-minutes: 15
-    permissions:
-      actions: write
-      contents: read
-
-    steps:
-      - name: Récupérer le dépôt
-        uses: actions/checkout@v6
-
-      - name: Entretien hebdomadaire au-delà de 100 runs
-        if: ${{ github.event_name == 'schedule' }}
-        shell: pwsh
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          $count = [int](& gh api "repos/$env:GITHUB_REPOSITORY/actions/runs?status=completed&per_page=1" --jq ".total_count")
-          Write-Host "Runs terminés : $count (seuil : 100)"
-          if ($count -le 100) {
-            Write-Host "Aucun nettoyage nécessaire."
-            exit 0
-          }
-          ./scripts/cleanup_github_actions.ps1 `
-            -Repo $env:GITHUB_REPOSITORY `
-            -KeepPerWorkflow 20 `
-            -Apply
-
-      - name: Aperçu du nettoyage
-        if: ${{ inputs.cleanup_actions == 'preview' }}
-        shell: pwsh
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: >-
-          ./scripts/cleanup_github_actions.ps1
-          -Repo $env:GITHUB_REPOSITORY
-          -KeepPerWorkflow 20
-
-      - name: Supprimer les runs des workflows obsolètes
-        if: ${{ inputs.cleanup_actions == 'obsolete' }}
-        shell: pwsh
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: >-
-          ./scripts/cleanup_github_actions.ps1
-          -Repo $env:GITHUB_REPOSITORY
-          -KeepPerWorkflow 20
-          -OnlyObsoleteWorkflows
-          -Apply
-
-      - name: Réduire l'historique à 20 runs par workflow actif
-        if: ${{ inputs.cleanup_actions == 'trim' }}
-        shell: pwsh
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: >-
-          ./scripts/cleanup_github_actions.ps1
-          -Repo $env:GITHUB_REPOSITORY
-          -KeepPerWorkflow 20
-          -Apply
-
-  tests:
-    name: Tests et règles du socle
-    if: ${{ github.event_name != 'schedule' && (github.event_name != 'workflow_dispatch' || inputs.cleanup_actions == 'none') }}
+  tests-linux:
+    name: Socle et tests Qt — Linux
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
-
-    steps:
-      - name: Récupérer le dépôt
-        uses: actions/checkout@v6
-
-      - name: Installer Python 3.11
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.11"
-          cache: pip
-          cache-dependency-path: .github/requirements-ci.txt
-
-      - name: Installer les dépendances de test
-        run: python -m pip install --requirement .github/requirements-ci.txt
-
-      - name: Garantir un workflow unique
-        id: workflow_unique
-        continue-on-error: true
-        shell: bash
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-
-          workflows = sorted(
-              path.name
-              for path in Path(".github/workflows").iterdir()
-              if path.is_file() and path.suffix.lower() in {".yml", ".yaml"}
-          )
-          expected = ["ci.yml"]
-          if workflows != expected:
-              raise SystemExit(
-                  f"Un seul workflow est autorisé : {expected}; trouvés : {workflows}"
-              )
-          print("Workflow unique confirmé : .github/workflows/ci.yml")
-          PY
-
-      - name: Compiler tout le code Python
-        id: compile_python
-        continue-on-error: true
-        run: python -m compileall -q application domain infrastructure scripts tools teamworks tests
-
-      - name: Contrôler la politique UTF-8
-        id: utf8_policy
-        continue-on-error: true
-        run: python scripts/check_utf8.py
-
-      - name: Contrôler les composants essentiels
-        id: essential_runtime
-        continue-on-error: true
-        run: python scripts/check_essential_runtime.py
-
-      - name: Auditer les risques de compatibilité
-        id: runtime_risks
-        continue-on-error: true
-        run: >-
-          python scripts/audit_runtime_risks.py .
-          --fail-on-python2-builtins
-          --fail-on-missing-handlers
-          --json runtime-risk-audit.json
-
-      - name: Refuser de nouveaux chemins SQLite binaires
-        id: sqlite_paths
-        continue-on-error: true
-        shell: bash
-        run: |
-          python - <<'PY'
-          import json
-          from pathlib import Path
-
-          path = Path("runtime-risk-audit.json")
-          if not path.is_file():
-              raise SystemExit(
-                  "Contrôle SQLite impossible : runtime-risk-audit.json est absent"
-              )
-          report = json.loads(path.read_text(encoding="utf-8"))
-          current = report["counts"].get("sqlite-bytes-path", 0)
-          historical_ceiling = 0
-          if current > historical_ceiling:
-              raise SystemExit(
-                  f"Les chemins SQLite binaires passent de "
-                  f"{historical_ceiling} à {current}"
-              )
-          print(f"Chemins SQLite binaires : {current}/{historical_ceiling}")
-          PY
-
-      - name: Contrôler les branches Phoenix redondantes
-        id: phoenix_branches
-        continue-on-error: true
-        run: python tools/find_redundant_phoenix_branches.py teamworks/Ctrl --check
-
-      - name: Inventorier les valeurs par défaut mutables
-        id: mutable_defaults
-        continue-on-error: true
-        shell: bash
-        run: python tools/find_mutable_defaults.py teamworks > mutable-defaults.txt
-
-      - name: Inventorier les imports externes
-        id: external_imports
-        continue-on-error: true
-        run: >-
-          python tools/inventory_external_imports.py
-          --path teamworks
-          --json external-imports.json
-          --markdown external-imports.md
-
-      - name: Inventorier les erreurs de compilation Python
-        id: compile_inventory
-        continue-on-error: true
-        run: >-
-          python tools/inventory_python_compile_errors.py
-          --path teamworks
-          --json python-compile-errors.json
-          --markdown python-compile-errors.md
-
-      - name: Exécuter les tests
-        id: pytest_suite
-        continue-on-error: true
-        shell: bash
-        run: |
-          set -o pipefail
-          python -m pytest -q 2>&1 | tee pytest-output.txt
-
-      - name: Préparer le bilan des contrôles
-        if: always()
-        shell: bash
-        env:
-          WORKFLOW_UNIQUE: ${{ steps.workflow_unique.outcome }}
-          COMPILE_PYTHON: ${{ steps.compile_python.outcome }}
-          UTF8_POLICY: ${{ steps.utf8_policy.outcome }}
-          ESSENTIAL_RUNTIME: ${{ steps.essential_runtime.outcome }}
-          RUNTIME_RISKS: ${{ steps.runtime_risks.outcome }}
-          SQLITE_PATHS: ${{ steps.sqlite_paths.outcome }}
-          PHOENIX_BRANCHES: ${{ steps.phoenix_branches.outcome }}
-          MUTABLE_DEFAULTS: ${{ steps.mutable_defaults.outcome }}
-          EXTERNAL_IMPORTS: ${{ steps.external_imports.outcome }}
-          COMPILE_INVENTORY: ${{ steps.compile_inventory.outcome }}
-          PYTEST_SUITE: ${{ steps.pytest_suite.outcome }}
-        run: |
-          : > ci-failures.txt
-          check() {
-            local label="$1"
-            local outcome="$2"
-            if [[ "$outcome" != "success" ]]; then
-              printf '%s\n' "$label [$outcome]" >> ci-failures.txt
-            fi
-          }
-
-          check "Workflow unique" "$WORKFLOW_UNIQUE"
-          check "Compilation Python" "$COMPILE_PYTHON"
-          check "Politique UTF-8" "$UTF8_POLICY"
-          check "Composants essentiels" "$ESSENTIAL_RUNTIME"
-          check "Audit des risques runtime" "$RUNTIME_RISKS"
-          check "Chemins SQLite binaires" "$SQLITE_PATHS"
-          check "Branches Phoenix redondantes" "$PHOENIX_BRANCHES"
-          check "Valeurs par défaut mutables" "$MUTABLE_DEFAULTS"
-          check "Imports externes" "$EXTERNAL_IMPORTS"
-          check "Inventaire compilation Python" "$COMPILE_INVENTORY"
-          check "Pytest" "$PYTEST_SUITE"
-
-          if [[ -s ci-failures.txt ]]; then
-            echo "Contrôles en échec :"
-            sed 's/^/- /' ci-failures.txt
-          else
-            echo "Tous les contrôles du socle sont passés."
-          fi
-
-      - name: Publier les diagnostics
-        if: always()
-        uses: actions/upload-artifact@v6
-        with:
-          name: diagnostics-tests
-          path: |
-            ci-failures.txt
-            pytest-output.txt
-            runtime-risk-audit.json
-            mutable-defaults.txt
-            external-imports.json
-            external-imports.md
-            python-compile-errors.json
-            python-compile-errors.md
-          if-no-files-found: warn
-          retention-days: 1
-
-      - name: Bilan CI du socle
-        if: always()
-        shell: bash
-        run: |
-          if [[ -s ci-failures.txt ]]; then
-            echo "::error::Plusieurs contrôles ont échoué. Voir le bilan ci-dessous et l'artefact diagnostics-tests."
-            sed 's/^/- /' ci-failures.txt
-            exit 1
-          fi
-          echo "Bilan CI : tous les contrôles du socle sont verts."
-
-  windows-smokes:
-    name: Parcours critiques Windows
-    if: ${{ github.event_name != 'schedule' && (github.event_name != 'workflow_dispatch' || inputs.cleanup_actions == 'none') && !startsWith(github.ref, 'refs/tags/') }}
-    runs-on: windows-2022
-    timeout-minutes: 45
-
-    steps:
-      - name: Récupérer le dépôt
-        uses: actions/checkout@v6
-
-      - name: Installer Python 3.11
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.11"
-          cache: pip
-          cache-dependency-path: requirements/python311-core.txt
-
-      - name: Installer le socle Windows
-        shell: pwsh
-        run: |
-          python -m pip install --requirement requirements/python311-core.txt
-          python -m pip install pytest
-
-      - name: Vérifier les contrats des dialogues
-        id: windows_contracts
-        continue-on-error: true
-        shell: pwsh
-        run: |
-          python -m pytest -q `
-            tests/test_secondary_presence_smoke_contract.py `
-            tests/test_secondary_person_smoke_contract.py `
-            tests/test_secondary_contract_smoke_contract.py
-
-      - name: Exécuter tous les parcours critiques
-        id: windows_critical_smokes
-        continue-on-error: true
-        shell: pwsh
-        run: |
-          $failures = @()
-
-          function Invoke-Smoke {
-            param(
-              [string]$Name,
-              [string[]]$Arguments
-            )
-
-            Write-Host "::group::$Name"
-            & python @Arguments
-            $exitCode = $LASTEXITCODE
-            Write-Host "::endgroup::"
-
-            if ($exitCode -ne 0) {
-              $script:failures += $Name
-            }
-          }
-
-          Invoke-Smoke "Sauvegarde et restauration" @("tools/smoke_backup_restore.py")
-          Invoke-Smoke "Contrôles des checklists" @("tools/smoke_checklist_controls.py")
-          Invoke-Smoke "Dialogue contrat" @("tools/smoke_secondary_contract_dialog.py")
-          Invoke-Smoke "Exports" @("tools/smoke_exports.py")
-          Invoke-Smoke "Impression PDF" @("tools/smoke_pdf_impression.py")
-          Invoke-Smoke "Navigation et thème sombre" @("tools/smoke_main_navigation.py")
-          Invoke-Smoke "Fiche personne" @("tools/smoke_secondary_person_dialog.py")
-          Invoke-Smoke "Saisie présence" @("tools/smoke_secondary_presence_dialog.py")
-          Invoke-Smoke "Recrutement" @("tools/smoke_secondary_recruitment.py")
-
-          New-Item -ItemType Directory -Force functional-report | Out-Null
-          Invoke-Smoke "Aller-retour base fonctionnelle" @(
-            "tools/functional_db_roundtrip.py",
-            "--output-dir",
-            "functional-report",
-            "--json"
-          )
-
-          $temporaryEntrypoints = @(
-            "teamworks/Teamworks_secondary_contract_smoke.py",
-            "teamworks/Teamworks_secondary_person_smoke.py",
-            "teamworks/Teamworks_secondary_presence_smoke.py",
-            "teamworks/Teamworks_secondary_recruitment_smoke.py"
-          )
-          foreach ($entrypoint in $temporaryEntrypoints) {
-            if (Test-Path $entrypoint) {
-              $failures += "Fichier temporaire restant : $entrypoint"
-            }
-          }
-
-          if ($failures.Count -gt 0) {
-            $failures | Set-Content windows-smoke-failures.txt
-            throw "Parcours en échec : $($failures -join ', ')"
-          }
-
-          Set-Content windows-smoke-failures.txt -Value ""
-
-      - name: Préparer le bilan Windows
-        if: always()
-        shell: pwsh
-        env:
-          CONTRACTS_OUTCOME: ${{ steps.windows_contracts.outcome }}
-          SMOKES_OUTCOME: ${{ steps.windows_critical_smokes.outcome }}
-        run: |
-          $failures = @()
-          if ($env:CONTRACTS_OUTCOME -ne 'success') {
-            $failures += "Contrats des dialogues [$env:CONTRACTS_OUTCOME]"
-          }
-          if ($env:SMOKES_OUTCOME -ne 'success') {
-            $failures += "Parcours critiques [$env:SMOKES_OUTCOME]"
-          }
-
-          if (Test-Path windows-smoke-failures.txt) {
-            $details = @(Get-Content windows-smoke-failures.txt | Where-Object { $_.Trim() })
-            foreach ($detail in $details) {
-              $failures += "Smoke : $detail"
-            }
-          }
-
-          $failures | Set-Content windows-failures.txt
-          if ($failures.Count -gt 0) {
-            Write-Host "Contrôles Windows en échec :"
-            $failures | ForEach-Object { Write-Host "- $_" }
-          } else {
-            Write-Host "Tous les contrôles Windows sont passés."
-          }
-
-      - name: Publier les diagnostics Windows
-        if: always()
-        uses: actions/upload-artifact@v6
-        with:
-          name: diagnostics-windows
-          path: |
-            windows-failures.txt
-            windows-smoke-failures.txt
-            artifacts/**
-            functional-report/**
-          if-no-files-found: warn
-          retention-days: 1
-
-      - name: Bilan CI Windows
-        if: always()
-        shell: pwsh
-        run: |
-          $failures = @()
-          if (Test-Path windows-failures.txt) {
-            $failures = @(Get-Content windows-failures.txt | Where-Object { $_.Trim() })
-          }
-          if ($failures.Count -gt 0) {
-            Write-Error "Plusieurs contrôles Windows ont échoué : $($failures -join ', ')"
-            exit 1
-          }
-          Write-Host "Bilan CI Windows : tous les contrôles sont verts."
-
-  build-windows:
-    name: Paquets Windows portable et installable
-    needs:
-      - tests
-      - windows-smokes
-    if: >-
-      ${{
-        always()
-        && needs.tests.result == 'success'
-        && (startsWith(github.ref, 'refs/tags/v') || needs.windows-smokes.result == 'success')
-        && (
-          startsWith(github.ref, 'refs/tags/v')
-          || (github.event_name == 'workflow_dispatch' && inputs.build_windows)
-          || (github.ref == 'refs/heads/master' && contains(github.event.head_commit.message, '[windows]'))
-        )
-      }}
-    runs-on: windows-2022
-    timeout-minutes: 45
-    permissions:
-      contents: write
+    timeout-minutes: 35
+    env:
+      QT_QPA_PLATFORM: offscreen
 
     steps:
       - name: Récupérer le dépôt
@@ -480,292 +40,175 @@ jobs:
           python-version: "3.11"
           cache: pip
           cache-dependency-path: |
-            requirements.txt
-            .github/requirements-windows-build.txt
+            .github/requirements-ci.txt
+            poc/qt-theme/requirements.txt
+
+      - name: Installer les bibliothèques Qt système
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends libegl1
 
       - name: Installer les dépendances
-        shell: pwsh
         run: |
-          python -m pip install -r requirements.txt
-          python -m pip install -r .github/requirements-windows-build.txt
-          python -m pip freeze | Set-Content build-requirements.txt
+          python -m pip install --requirement .github/requirements-ci.txt
+          python -m pip install --requirement poc/qt-theme/requirements.txt
 
-      - name: Valider le tag de version
-        if: startsWith(github.ref, 'refs/tags/')
-        shell: pwsh
-        run: |
-          $version = (Get-Content VERSION -Raw).Trim()
-          $expectedTag = "v$version"
-          if ($env:GITHUB_REF_NAME -ne $expectedTag) {
-            throw "Le tag $env:GITHUB_REF_NAME ne correspond pas à VERSION ($expectedTag)"
-          }
+      - name: Compiler tout le code Python
+        run: python -m compileall -q application domain infrastructure scripts tools teamworks tests poc/qt-theme
 
-      - name: Inventorier les modules du paquet
-        shell: pwsh
-        run: |
-          $modules = @()
+      - name: Contrôler la politique UTF-8
+        run: python scripts/check_utf8.py
 
-          Get-ChildItem teamworks -Recurse -Filter '*.py' -File | ForEach-Object {
-            $relative = [System.IO.Path]::GetRelativePath((Resolve-Path teamworks).Path, $_.FullName)
-            $module = [System.IO.Path]::ChangeExtension($relative, $null) -replace '[\\/]', '.'
-            if ($module.EndsWith('.__init__')) {
-              $module = $module.Substring(0, $module.Length - 9)
-            }
-            if ($module -and $module -ne '__init__') {
-              $modules += $module
-            }
-          }
+      - name: Contrôler les composants essentiels
+        run: python scripts/check_essential_runtime.py
 
-          foreach ($root in @('domain', 'application', 'infrastructure')) {
-            Get-ChildItem $root -Recurse -Filter '*.py' -File | ForEach-Object {
-              $relative = [System.IO.Path]::GetRelativePath((Get-Location).Path, $_.FullName)
-              $module = [System.IO.Path]::ChangeExtension($relative, $null) -replace '[\\/]', '.'
-              if ($module.EndsWith('.__init__')) {
-                $module = $module.Substring(0, $module.Length - 9)
-              }
-              if ($module) {
-                $modules += $module
-              }
-            }
-          }
+      - name: Auditer les risques de compatibilité
+        run: >-
+          python scripts/audit_runtime_risks.py .
+          --fail-on-python2-builtins
+          --fail-on-missing-handlers
+          --json runtime-risk-audit.json
 
-          $modules = $modules | Sort-Object -Unique
-          if ($modules.Count -lt 250) {
-            throw "Inventaire des modules anormalement petit : $($modules.Count)"
-          }
-          New-Item -ItemType Directory -Force build | Out-Null
-          $modules | Set-Content build/internal-modules.txt
+      - name: Exécuter la suite fonctionnelle hors contrats de packaging wx
+        run: >-
+          python -m pytest -q
+          --deselect=tests/test_main_navigation_smoke_contract.py::test_windows_navigation_smoke_is_part_of_critical_ci
+          --deselect=tests/test_mysql_connection_compatibility.py::test_windows_build_collects_the_complete_mysql_connector_package
+          --deselect=tests/test_windows_installer_contract.py::test_windows_packages_are_not_built_on_every_commit
 
-      - name: Construire l'application portable
-        shell: pwsh
-        run: |
-          $version = (Get-Content VERSION -Raw).Trim()
-          $modules = Get-Content build/internal-modules.txt
-          $icon = (Resolve-Path 'teamworks/Static/Images/Branding/Teamworks-CCNS.ico').Path
-          $pyinstallerArgs = @(
-            '-m', 'PyInstaller',
-            '--noconfirm',
-            '--clean',
-            '--windowed',
-            '--onedir',
-            '--name', 'Teamworks-CCNS',
-            '--icon', $icon,
-            '--paths', '.',
-            '--paths', 'teamworks',
-            '--distpath', 'dist',
-            '--workpath', 'build/pyinstaller',
-            '--specpath', 'build/spec',
-            '--collect-all', 'reportlab',
-            '--collect-all', 'PIL',
-            '--collect-all', 'mysql.connector',
-            '--hidden-import', 'win32com.client'
-          )
-          foreach ($module in $modules) {
-            $pyinstallerArgs += @('--hidden-import', $module)
-          }
-          $pyinstallerArgs += 'teamworks/Teamworks.py'
-          python @pyinstallerArgs
+  qt-windows-native:
+    name: Qt natif — Windows
+    runs-on: windows-2022
+    timeout-minutes: 35
+    env:
+      TEAMWORKS_QT_NATIVE_WINDOWS_REQUIRED: "1"
 
-          $package = 'dist/Teamworks-CCNS'
-          Copy-Item teamworks/Static "$package/Static" -Recurse -Force
-          if (Test-Path teamworks/Data) {
-            Copy-Item teamworks/Data "$package/Data" -Recurse -Force
-          }
-          Copy-Item teamworks/Versions.txt "$package/Versions.txt" -Force
-          Copy-Item VERSION "$package/VERSION" -Force
-          Copy-Item ROADMAP.md "$package/ROADMAP.md" -Force
-          Copy-Item build/internal-modules.txt "$package/INTERNAL-MODULES.txt" -Force
-          Copy-Item build-requirements.txt "$package/BUILD-REQUIREMENTS.txt" -Force
-          Set-Content -Path "$package/BUILD.txt" -Value "Teamworks-CCNS $version`nCommit $env:GITHUB_SHA"
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v6
 
-      - name: Valider le contenu du paquet
-        shell: pwsh
-        run: |
-          $package = 'dist/Teamworks-CCNS'
-          $requiredFiles = @(
-            'Teamworks-CCNS.exe',
-            'Static',
-            'Versions.txt',
-            'VERSION',
-            'ROADMAP.md',
-            'INTERNAL-MODULES.txt',
-            'BUILD-REQUIREMENTS.txt'
-          )
-          foreach ($required in $requiredFiles) {
-            if (-not (Test-Path "$package/$required")) {
-              throw "$required est absent"
-            }
-          }
-          if ((Get-Item "$package/Versions.txt").Length -eq 0) {
-            throw 'Versions.txt est vide'
-          }
-
-          $manifest = @(Get-Content "$package/INTERNAL-MODULES.txt")
-          if ($manifest.Count -lt 250) {
-            throw "Manifeste des modules anormalement petit : $($manifest.Count)"
-          }
-
-          $prefixes = @(
-            'Ctrl.',
-            'Dlg.',
-            'Ol.',
-            'Utils.',
-            'CcnsCore.',
-            'domain.',
-            'application.',
-            'infrastructure.'
-          )
-          foreach ($prefix in $prefixes) {
-            if (-not ($manifest | Where-Object { $_.StartsWith($prefix) } | Select-Object -First 1)) {
-              throw "Aucun module inclus pour le préfixe : $prefix"
-            }
-          }
-
-      - name: Tester le démarrage de l'exécutable
-        shell: pwsh
-        run: ./scripts/test_windows_executable.ps1
-
-      - name: Publier les journaux de démarrage en cas d'échec
-        if: failure()
-        uses: actions/upload-artifact@v6
+      - name: Installer Python 3.11
+        uses: actions/setup-python@v6
         with:
-          name: journaux-demarrage-windows
-          path: |
-            teamworks-smoke.stdout.log
-            teamworks-smoke.stderr.log
-          if-no-files-found: ignore
-          retention-days: 3
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: |
+            requirements/python311-core.txt
+            poc/qt-theme/requirements.txt
 
-      - name: Créer et vérifier le manifeste d'intégrité
+      - name: Installer le socle et Qt
         shell: pwsh
         run: |
-          $package = Resolve-Path 'dist/Teamworks-CCNS'
-          $manifestPath = Join-Path $package.Path 'PACKAGE-SHA256SUMS.txt'
+          python -m pip install --requirement requirements/python311-core.txt
+          python -m pip install --requirement poc/qt-theme/requirements.txt
+          python -m pip install pytest
 
-          Get-ChildItem $package -Recurse -File |
-            Where-Object { $_.FullName -ne $manifestPath } |
-            Sort-Object FullName |
-            ForEach-Object {
-              $relative = [System.IO.Path]::GetRelativePath($package.Path, $_.FullName).Replace('\', '/')
-              $hash = (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
-              "$hash  $relative"
-            } | Set-Content $manifestPath -Encoding utf8
-
-          $entries = @(Get-Content $manifestPath -Encoding utf8)
-          if ($entries.Count -eq 0) {
-            throw "Le manifeste d'intégrité est vide"
-          }
-
-          foreach ($entry in $entries) {
-            if ($entry -notmatch '^([0-9a-f]{64})  (.+)$') {
-              throw "Entrée invalide : $entry"
-            }
-            $expected = $Matches[1]
-            $relative = $Matches[2]
-            $target = Join-Path $package.Path (
-              $relative.Replace('/', [System.IO.Path]::DirectorySeparatorChar)
-            )
-            if (-not (Test-Path -LiteralPath $target -PathType Leaf)) {
-              throw "Fichier du manifeste absent : $relative"
-            }
-            $actual = (Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash.ToLowerInvariant()
-            if ($actual -ne $expected) {
-              throw "Empreinte incorrecte : $relative"
-            }
-          }
-
-      - name: Créer l'archive portable
+      - name: Préparer le PYTHONPATH natif
         shell: pwsh
         run: |
-          $version = (Get-Content VERSION -Raw).Trim()
-          $archive = "Teamworks-CCNS-$version-windows-x64.zip"
-          Compress-Archive -Path 'dist/Teamworks-CCNS/*' -DestinationPath $archive -Force
-          $hash = (Get-FileHash $archive -Algorithm SHA256).Hash.ToLowerInvariant()
-          "$hash  $archive" | Set-Content SHA256SUMS.txt -Encoding ascii
+          "PYTHONPATH=$pwd\teamworks;$pwd" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          Remove-Item Env:QT_QPA_PLATFORM -ErrorAction SilentlyContinue
 
-      - name: Créer l'installateur Windows
+      - name: Vérifier les contrats Qt et le lifecycle QThread
         shell: pwsh
         run: |
-          $version = (Get-Content VERSION -Raw).Trim()
-          $iscc = Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6\ISCC.exe'
-          if (-not (Test-Path $iscc)) {
-            choco install innosetup --no-progress -y
-          }
-          if (-not (Test-Path $iscc)) {
-            throw "Compilateur Inno Setup introuvable : $iscc"
-          }
-
-          & $iscc "/DAppVersion=$version" 'packaging/windows/Teamworks-CCNS.iss'
-          if ($LASTEXITCODE -ne 0) {
-            throw "La compilation de l'installateur a échoué avec le code $LASTEXITCODE"
-          }
-
-          $installer = Get-ChildItem 'dist/installer/Teamworks-CCNS-*-windows-x64-setup.exe' |
-            Select-Object -First 1
-          if (-not $installer) {
-            throw "L'installateur Windows est absent"
-          }
-          $hash = (Get-FileHash $installer.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
-          "$hash  $($installer.Name)" | Add-Content SHA256SUMS.txt -Encoding ascii
-
-      - name: Publier les artefacts Windows
-        uses: actions/upload-artifact@v6
-        with:
-          name: Teamworks-CCNS-Windows
-          path: |
-            Teamworks-CCNS-*-windows-x64.zip
-            dist/installer/Teamworks-CCNS-*-windows-x64-setup.exe
-            SHA256SUMS.txt
-          if-no-files-found: error
-          retention-days: 3
-
-      - name: Publier la release GitHub
-        if: >-
-          ${{
-            startsWith(github.ref, 'refs/tags/')
-            || (
-              github.ref == 'refs/heads/master'
-              && contains(github.event.head_commit.message, '[windows]')
-            )
-          }}
+          python -m pytest -q `
+            tests/test_qt_contract_identity.py `
+            tests/test_qt_contract_classification.py `
+            tests/test_qt_contract_write_roundtrip.py `
+            tests/test_qt_contract_documents.py `
+            tests/test_qt_expense_reimbursement_roundtrip.py `
+            tests/test_qt_presence_integration.py `
+            tests/test_qt_blocking_thread_lifecycle_runtime.py
+      - name: Démarrer MySQL local pour la recette Frais
         shell: pwsh
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
-          $archive = Get-ChildItem 'Teamworks-CCNS-*-windows-x64.zip' |
-            Select-Object -First 1
-          if (-not $archive) {
-            throw "L'archive portable est absente"
-          }
-          $installer = Get-ChildItem 'dist/installer/Teamworks-CCNS-*-windows-x64-setup.exe' |
-            Select-Object -First 1
-          if (-not $installer) {
-            throw "L'installateur Windows est absent"
+          $ErrorActionPreference = "Stop"
+          $version = "8.0.46"
+          $archive = Join-Path $env:RUNNER_TEMP "mysql-$version-winx64.zip"
+          $base = Join-Path $env:RUNNER_TEMP "mysql-$version-winx64"
+          $data = Join-Path $env:RUNNER_TEMP "mysql-data"
+          $log = Join-Path $env:RUNNER_TEMP "mysql-error.log"
+
+          if (-not (Test-Path (Join-Path $base "bin\mysqld.exe"))) {
+            curl.exe -L --fail --retry 3 "https://dev.mysql.com/get/Downloads/MySQL-8.0/mysql-$version-winx64.zip" -o $archive
+            if ($LASTEXITCODE -ne 0) { throw "Échec du téléchargement MySQL $version" }
+            7z x $archive "-o$env:RUNNER_TEMP" -y | Out-Null
           }
 
-          $version = (Get-Content VERSION -Raw).Trim()
-          $isTagBuild = $env:GITHUB_REF.StartsWith('refs/tags/')
-          if ($isTagBuild) {
-            $releaseTag = $env:GITHUB_REF_NAME
-          } else {
-            $releaseTag = "v$version"
+          $mysqld = Join-Path $base "bin\mysqld.exe"
+          if (-not (Test-Path $mysqld)) {
+            throw "mysqld.exe introuvable après installation de MySQL $version"
           }
 
-          $ghArgs = @(
-            'release', 'create', $releaseTag,
-            $archive.FullName,
-            $installer.FullName,
-            'SHA256SUMS.txt',
-            '--title', "Teamworks-CCNS $releaseTag",
-            '--generate-notes'
-          )
-          if ($isTagBuild) {
-            $ghArgs += '--verify-tag'
-          } else {
-            $ghArgs += @('--target', $env:GITHUB_SHA)
-          }
+          if (Test-Path $data) { Remove-Item $data -Recurse -Force }
+          New-Item -ItemType Directory -Path $data | Out-Null
 
-          & gh @ghArgs
-          if ($LASTEXITCODE -ne 0) {
-            throw "La publication de la release $releaseTag a échoué"
-          }
+          & $mysqld --no-defaults --initialize-insecure "--basedir=$base" "--datadir=$data"
+          if ($LASTEXITCODE -ne 0) { throw "Échec de l initialisation MySQL" }
+
+          $process = Start-Process -FilePath $mysqld -ArgumentList @(
+            "--no-defaults",
+            "--basedir=$base",
+            "--datadir=$data",
+            "--port=3307",
+            "--bind-address=127.0.0.1",
+            "--skip-log-bin",
+            "--log-error=$log"
+          ) -PassThru
+
+          "TEAMWORKS_MYSQL_INTEGRATION=1" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "TEAMWORKS_MYSQL_HOST=127.0.0.1" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "TEAMWORKS_MYSQL_PORT=3307" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "TEAMWORKS_MYSQL_USER=root" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "TEAMWORKS_MYSQL_PASSWORD=" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "TEAMWORKS_MYSQL_PID=$($process.Id)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+          @'
+          import time
+          import mysql.connector
+
+          last = None
+          for _ in range(60):
+              try:
+                  connection = mysql.connector.connect(
+                      host="127.0.0.1",
+                      port=3307,
+                      user="root",
+                      password="",
+                      use_pure=True,
+                      ssl_disabled=True,
+                      connection_timeout=2,
+                  )
+                  cursor = connection.cursor()
+                  cursor.execute("SELECT VERSION()")
+                  print("[Teamworks MySQL CI] serveur prêt :", cursor.fetchone()[0])
+                  cursor.close()
+                  connection.close()
+                  break
+              except Exception as exc:
+                  last = exc
+                  time.sleep(1)
+          else:
+              raise SystemExit("MySQL indisponible après 60s: %r" % (last,))
+          '@ | python -
+
+      - name: Recette réelle Frais — Windows + MySQL
+        shell: pwsh
+        run: python -m pytest -q tests/test_mysql_expense_roundtrip.py
+
+      - name: Recette anonymisation — Windows + MySQL
+        shell: pwsh
+        run: python -m pytest -q tests/test_mysql_representative_copy_anonymization.py
+
+      - name: Collecteur de preuves — Windows + MySQL
+        shell: pwsh
+        run: python -m pytest -q tests/test_mysql_qt_vanilla_evidence_snapshot.py
+
+      - name: Smoke runtime Qt Windows natif
+        shell: pwsh
+        run: python poc/qt-theme/runtime_async_smoke.py
+
+      - name: Benchmark de frugalité Qt
+        shell: pwsh
+        run: python poc/qt-theme/benchmark_models.py

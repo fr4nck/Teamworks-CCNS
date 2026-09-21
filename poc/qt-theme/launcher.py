@@ -108,7 +108,9 @@ def main() -> None:
 
     phase = time.perf_counter()
     qt_app = QApplication(sys.argv)
-    qt_app.setApplicationName("Teamworks Qt POC")
+    qt_app.setApplicationName(
+        os.environ.get("TEAMWORKS_QT_APP_NAME", "Teamworks Qt POC")
+    )
     qt_app.setOrganizationName("Pêle-Mêle Sports et Loisirs")
     startup_timings["qapplication"] = time.perf_counter() - phase
 
@@ -127,6 +129,10 @@ def main() -> None:
 
     people_loader_class = None
     activity_loader_class = None
+    contract_write_port_factory = None
+    reimbursement_write_port_factory = None
+    trip_write_port_factory = None
+    contract_document_workspace_factory = None
     if source == "production":
         phase = time.perf_counter()
         from deferred_people import DeferredPeopleAdapter, ProductionPeopleLoader
@@ -135,6 +141,10 @@ def main() -> None:
         ui_adapter = DeferredPeopleAdapter(adapter)
         people_loader_class = ProductionPeopleLoader
         activity_loader_class = ProductionIndividualActivityLoader
+        contract_write_port_factory = adapter.build_contract_write_port
+        reimbursement_write_port_factory = adapter.build_reimbursement_write_port
+        trip_write_port_factory = adapter.build_trip_write_port
+        contract_document_workspace_factory = adapter.prepare_contract_document_workspace
 
     phase = time.perf_counter()
     from pilot_generalities import PeopleContractsGeneralitiesPilot
@@ -146,10 +156,21 @@ def main() -> None:
         window = PeopleContractsGeneralitiesPilot(
             ui_adapter,
             activity_loader_class=activity_loader_class,
+            contract_write_port_factory=contract_write_port_factory,
+            reimbursement_write_port_factory=reimbursement_write_port_factory,
+            trip_write_port_factory=trip_write_port_factory,
+            contract_document_workspace_factory=contract_document_workspace_factory,
         )
         after_window = time.perf_counter()
         window.show()
         shown_at = time.perf_counter()
+
+        try:
+            auto_close_ms = int(os.environ.get("TEAMWORKS_QT_AUTOCLOSE_MS", "0") or "0")
+        except ValueError:
+            auto_close_ms = 0
+        if auto_close_ms > 0:
+            QTimer.singleShot(auto_close_ms, qt_app.quit)
 
         data_seconds = float(getattr(window, "initial_people_load_seconds", 0.0))
         constructor_seconds = after_window - before_window
