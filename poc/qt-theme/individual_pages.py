@@ -210,10 +210,6 @@ class PresencesPage(QWidget):
 
     def __init__(self, icon_loader: IconLoader, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self._reimbursement_write_port_factory = None
-        self._reimbursement_person_id = None
-        self._reimbursement_reload_callback = None
-        self._message_callback = None
         root = QVBoxLayout(self)
         root.setContentsMargins(
             TOKENS.spacing.sm,
@@ -359,6 +355,10 @@ class ExpensesPage(QWidget):
 
     def __init__(self, icon_loader: IconLoader, parent: QWidget | None = None) -> None:
         super().__init__(parent)
+        self._reimbursement_write_port_factory = None
+        self._reimbursement_person_id = None
+        self._reimbursement_reload_callback = None
+        self._message_callback = None
         root = QVBoxLayout(self)
         root.setContentsMargins(
             TOKENS.spacing.sm,
