@@ -24,6 +24,12 @@ def test_vacances_actions_ne_s_etirent_plus():
     assert "Importer depuis l’Éducation nationale" in source
 
 
+def test_boutons_actions_communs_gardent_leur_largeur_naturelle():
+    source = _read("teamworks/Ctrl/CTRL_Bouton_image.py")
+    assert "SetMaxSize((largeur_min, -1))" in source
+    assert "transforme pas le bouton en barre" in source
+
+
 def test_bandeau_problemes_est_plat_et_arrete_avant_fermeture():
     source = _read("teamworks/Dlg/DLG_Fiche_individuelle_core.py")
     assert "self.bitmap_problemes_G = None" in source
