@@ -113,7 +113,7 @@ class Panel(wx.Panel):
         grid_sizer_joindre.AddGrowableCol(0)
         grid_sizer.Add(grid_sizer_joindre, 1, wx.EXPAND|wx.RIGHT, 10)
         grid_sizer.Add((20, 20), 0, wx.EXPAND, 0)
-        grid_sizer.Add(self.bouton_envoyer, 0, wx.EXPAND|wx.RIGHT|wx.TOP|wx.BOTTOM, 10)
+        grid_sizer.Add(self.bouton_envoyer, 0, wx.RIGHT | wx.TOP | wx.BOTTOM | wx.ALIGN_LEFT, 10)
         self.SetSizer(grid_sizer)
         grid_sizer.Fit(self)
         grid_sizer.AddGrowableCol(1)
