@@ -181,16 +181,18 @@ class TeamworksProductionReadAdapter(TeamworksReadAdapter):
         from infrastructure.persistence.contract_write_adapter import (
             GestionDbContractWriteAdapter,
         )
-        from Utils import UTILS_Organisation
+        import Chemins
+        from infrastructure.persistence.organization_profile_reader import (
+            load_organization_mail_merge_profile,
+        )
 
         if self._contract_document_port is None:
-            root = Path(__file__).resolve().parents[2]
             self._contract_document_port = QtContractDocumentReadAdapter(
                 get_person_generalities=self.get_person_generalities,
                 contract_reader=GestionDbContractWriteAdapter(self._contract_reader.db),
                 db=self._contract_reader.db,
-                template_directory=root / "teamworks" / "Static" / "Documents",
-                structure_loader=UTILS_Organisation.GetProfilPublipostage,
+                template_directory=Path(Chemins.GetStaticPath("Documents")),
+                structure_loader=load_organization_mail_merge_profile,
             )
         return prepare_contract_document_workspace(
             self._contract_document_port,
