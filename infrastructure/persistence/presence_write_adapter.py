@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import date, datetime
 
 from application.services.presence_write import PresenceSnapshot
+from domain.common.presence_revision import build_presence_revision
 
 
 class GestionDbPresenceWriteAdapter:
@@ -59,14 +60,28 @@ class GestionDbPresenceWriteAdapter:
         row = self.db.cursor.fetchone()
         if row is None:
             return None
+        person_id = int(row[0])
+        presence_date = self._as_date(row[1])
+        start_time = self._as_time_text(row[2])
+        end_time = self._as_time_text(row[3])
+        category_id = int(row[4])
+        title = str(row[5] or "")
         return PresenceSnapshot(
             presence_id=presence_id,
-            person_id=int(row[0]),
-            presence_date=self._as_date(row[1]),
-            start_time=self._as_time_text(row[2]),
-            end_time=self._as_time_text(row[3]),
-            category_id=int(row[4]),
-            title=str(row[5] or ""),
+            person_id=person_id,
+            presence_date=presence_date,
+            start_time=start_time,
+            end_time=end_time,
+            category_id=category_id,
+            title=title,
+            revision=build_presence_revision(
+                presence_id=presence_id,
+                presence_date=presence_date,
+                start_time=start_time,
+                end_time=end_time,
+                category_id=category_id,
+                title=title,
+            ),
         )
 
     def find_overlap(
@@ -133,27 +148,68 @@ class GestionDbPresenceWriteAdapter:
         end_time: str,
         category_id: int,
         title: str,
+        expected: PresenceSnapshot | None = None,
     ) -> int:
         p = self._placeholder
-        self.db.cursor.execute(
+        sql = (
             "UPDATE presences SET heure_debut=%s, heure_fin=%s, "
             "IDcategorie=%s, intitule=%s WHERE IDpresence=%s"
-            % (p, p, p, p, p),
-            (
-                start_time,
-                end_time,
-                category_id,
-                title,
-                presence_id,
-            ),
+            % (p, p, p, p, p)
         )
+        params: list[object] = [
+            start_time,
+            end_time,
+            category_id,
+            title,
+            presence_id,
+        ]
+        if expected is not None:
+            sql += (
+                " AND IDpersonne=%s AND date=%s "
+                "AND heure_debut=%s AND heure_fin=%s "
+                "AND IDcategorie=%s AND COALESCE(intitule, '')=%s"
+                % (p, p, p, p, p, p)
+            )
+            params.extend(
+                (
+                    expected.person_id,
+                    expected.presence_date.isoformat(),
+                    expected.start_time,
+                    expected.end_time,
+                    expected.category_id,
+                    expected.title,
+                )
+            )
+        self.db.cursor.execute(sql, tuple(params))
         return int(self.db.cursor.rowcount)
 
-    def delete_presence(self, presence_id: int) -> int:
-        self.db.cursor.execute(
-            "DELETE FROM presences WHERE IDpresence=%s" % self._placeholder,
-            (presence_id,),
-        )
+    def delete_presence(
+        self,
+        presence_id: int,
+        *,
+        expected: PresenceSnapshot | None = None,
+    ) -> int:
+        p = self._placeholder
+        sql = "DELETE FROM presences WHERE IDpresence=%s" % p
+        params: list[object] = [presence_id]
+        if expected is not None:
+            sql += (
+                " AND IDpersonne=%s AND date=%s "
+                "AND heure_debut=%s AND heure_fin=%s "
+                "AND IDcategorie=%s AND COALESCE(intitule, '')=%s"
+                % (p, p, p, p, p, p)
+            )
+            params.extend(
+                (
+                    expected.person_id,
+                    expected.presence_date.isoformat(),
+                    expected.start_time,
+                    expected.end_time,
+                    expected.category_id,
+                    expected.title,
+                )
+            )
+        self.db.cursor.execute(sql, tuple(params))
         return int(self.db.cursor.rowcount)
 
     def commit(self) -> None:
