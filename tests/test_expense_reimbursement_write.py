@@ -8,6 +8,8 @@ from decimal import Decimal
 
 from application.services.expense_reimbursement_write import (
     ReimbursementCommand,
+    ReimbursementDeleteCommand,
+    delete_reimbursement,
     save_reimbursement,
 )
 from application.services.transactional_write import WriteCode
@@ -293,3 +295,180 @@ def test_common_frais_boundary_has_no_wx_or_qt_import():
     assert "import wx" not in source
     assert "from wx" not in source
     assert "PySide6" not in source
+
+
+def _seed_reimbursement(db, *, reimbursement_id=3, trip_ids=(7, 8)):
+    db.connexion.execute(
+        "INSERT INTO remboursements VALUES (?, 1, '2026-09-01', 20.0, ?)",
+        (reimbursement_id, "-".join(str(value) for value in trip_ids)),
+    )
+    for trip_id in trip_ids:
+        db.connexion.execute(
+            "UPDATE deplacements SET IDremboursement=? WHERE IDdeplacement=?",
+            (reimbursement_id, trip_id),
+        )
+    db.connexion.commit()
+
+
+def test_delete_reimbursement_requires_explicit_confirmation_before_database_access():
+    db = SqliteGestionDbCompat()
+    _seed_reimbursement(db)
+    port = GestionDbReimbursementWriteAdapter(db)
+
+    result = delete_reimbursement(
+        port,
+        command=ReimbursementDeleteCommand(
+            person_id=1,
+            reimbursement_id=3,
+            confirmed=False,
+            confirm_attached_trips=True,
+        ),
+    )
+
+    assert result.code == WriteCode.VALIDATION_ERROR
+    assert result.committed is False
+    assert db.commit_count == 0
+    assert db.connexion.execute(
+        "SELECT IDremboursement FROM remboursements WHERE IDremboursement=3"
+    ).fetchone() == (3,)
+
+
+def test_delete_reimbursement_with_attached_trips_requires_specific_confirmation():
+    db = SqliteGestionDbCompat()
+    _seed_reimbursement(db)
+    port = GestionDbReimbursementWriteAdapter(db)
+
+    result = delete_reimbursement(
+        port,
+        command=ReimbursementDeleteCommand(
+            person_id=1,
+            reimbursement_id=3,
+            confirmed=True,
+            confirm_attached_trips=False,
+        ),
+    )
+
+    assert result.code == WriteCode.VALIDATION_ERROR
+    assert "déplacement(s) rattaché(s)" in result.message
+    assert db.commit_count == 0
+    assert db.connexion.execute(
+        "SELECT IDdeplacement, IDremboursement FROM deplacements ORDER BY IDdeplacement"
+    ).fetchall() == [(7, 3), (8, 3), (9, 0)]
+
+
+def test_delete_reimbursement_detaches_children_and_deletes_parent_atomically():
+    db = SqliteGestionDbCompat()
+    _seed_reimbursement(db)
+    port = GestionDbReimbursementWriteAdapter(db)
+
+    result = delete_reimbursement(
+        port,
+        command=ReimbursementDeleteCommand(
+            person_id=1,
+            reimbursement_id=3,
+            confirmed=True,
+            confirm_attached_trips=True,
+        ),
+    )
+
+    assert result.ok is True
+    assert result.code == WriteCode.OK
+    assert result.committed is True
+    assert db.commit_count == 1
+    assert db.connexion.execute(
+        "SELECT IDremboursement FROM remboursements WHERE IDremboursement=3"
+    ).fetchone() is None
+    assert db.connexion.execute(
+        "SELECT IDdeplacement, IDremboursement FROM deplacements ORDER BY IDdeplacement"
+    ).fetchall() == [(7, 0), (8, 0), (9, 0)]
+
+
+class FailingDeleteAdapter(GestionDbReimbursementWriteAdapter):
+    def delete_reimbursement(self, reimbursement_id, person_id):
+        raise RuntimeError("panne injectée pendant DELETE parent")
+
+
+def test_delete_failure_rolls_back_child_detachments_and_parent():
+    db = SqliteGestionDbCompat()
+    _seed_reimbursement(db)
+    port = FailingDeleteAdapter(db)
+
+    result = delete_reimbursement(
+        port,
+        command=ReimbursementDeleteCommand(
+            person_id=1,
+            reimbursement_id=3,
+            confirmed=True,
+            confirm_attached_trips=True,
+        ),
+    )
+
+    assert result.code == WriteCode.DATABASE_ERROR
+    assert result.committed is False
+    assert db.commit_count == 0
+    assert db.connexion.execute(
+        "SELECT IDremboursement FROM remboursements WHERE IDremboursement=3"
+    ).fetchone() == (3,)
+    assert db.connexion.execute(
+        "SELECT IDdeplacement, IDremboursement FROM deplacements ORDER BY IDdeplacement"
+    ).fetchall() == [(7, 3), (8, 3), (9, 0)]
+
+
+class UnexpectedDeleteRowcountAdapter(GestionDbReimbursementWriteAdapter):
+    def delete_reimbursement(self, reimbursement_id, person_id):
+        super().delete_reimbursement(reimbursement_id, person_id)
+        return 2
+
+
+def test_delete_unexpected_parent_rowcount_rolls_back_everything():
+    db = SqliteGestionDbCompat()
+    _seed_reimbursement(db)
+    port = UnexpectedDeleteRowcountAdapter(db)
+
+    result = delete_reimbursement(
+        port,
+        command=ReimbursementDeleteCommand(
+            person_id=1,
+            reimbursement_id=3,
+            confirmed=True,
+            confirm_attached_trips=True,
+        ),
+    )
+
+    assert result.code == WriteCode.UNEXPECTED_ROWCOUNT
+    assert result.committed is False
+    assert db.connexion.execute(
+        "SELECT IDremboursement FROM remboursements WHERE IDremboursement=3"
+    ).fetchone() == (3,)
+    assert db.connexion.execute(
+        "SELECT IDdeplacement, IDremboursement FROM deplacements ORDER BY IDdeplacement"
+    ).fetchall() == [(7, 3), (8, 3), (9, 0)]
+
+
+class BrokenDeleteReadbackAdapter(GestionDbReimbursementWriteAdapter):
+    def has_trip_assignment(self, reimbursement_id):
+        raise RuntimeError("readback suppression cassé")
+
+
+def test_delete_readback_failure_is_distinguished_after_commit():
+    db = SqliteGestionDbCompat()
+    _seed_reimbursement(db)
+    port = BrokenDeleteReadbackAdapter(db)
+
+    result = delete_reimbursement(
+        port,
+        command=ReimbursementDeleteCommand(
+            person_id=1,
+            reimbursement_id=3,
+            confirmed=True,
+            confirm_attached_trips=True,
+        ),
+    )
+
+    assert result.code == WriteCode.READBACK_ERROR
+    assert result.ok is False
+    assert result.committed is True
+    assert db.commit_count == 1
+    assert db.connexion.execute(
+        "SELECT IDremboursement FROM remboursements WHERE IDremboursement=3"
+    ).fetchone() is None
