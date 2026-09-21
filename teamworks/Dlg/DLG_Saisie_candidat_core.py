@@ -77,7 +77,7 @@ class Panel(wx.Panel):
         self.label_ville = wx.StaticText(self.sizer_adresse_staticbox, -1, _(u"Ville :"))
         self.ctrl_ville = TextCtrlVille(self.sizer_adresse_staticbox, value="", ctrlCp=self.ctrl_cp, listeVilles=self.listeVilles, listeNomsVilles=self.listeNomsVilles)
         self.ctrl_cp.ctrlVille = self.ctrl_ville
-        self.bouton_villes = wx.Button(self.sizer_adresse_staticbox, -1, u"...")  # native-button-ok: sélecteur compact intégré au champ
+        self.bouton_villes = CTRL_Bouton_image.Compact(self.sizer_adresse_staticbox, texte="...")
         
         # Coords
         self.sizer_coords_staticbox = wx.StaticBox(self, -1, _(u"Coordonnées"))
