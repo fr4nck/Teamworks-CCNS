@@ -9,6 +9,7 @@
 import Chemins
 from Utils.UTILS_Traduction import _
 import wx
+from Ctrl import CTRL_Bouton_image
 import GestionDB
 from Ctrl import CTRL_Calendrier_tw
 from Utils import UTILS_Customize
@@ -44,7 +45,7 @@ def _bitmap_titre(nom_image):
 
 def _bouton_titre(parent, nom_image, aide):
     bitmap = _bitmap_titre(nom_image)
-    bouton = wx.BitmapButton(parent, -1, bitmap, style=wx.BORDER_NONE)
+    bouton = CTRL_Bouton_image.CTRL(parent, id=-1, bitmap=bitmap, style=wx.BORDER_NONE)
     cote = max(30, bitmap.GetWidth() + 10)
     bouton.SetMinSize((cote, cote))
     bouton.SetToolTip(wx.ToolTip(aide))
