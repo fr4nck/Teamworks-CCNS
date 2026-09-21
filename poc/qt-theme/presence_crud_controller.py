@@ -173,6 +173,23 @@ class PresenceCrudController(QObject):
     def _handle_result(self, result, success_message: str) -> None:
         if result.ok:
             self._refresh()
+            batch = getattr(result, "batch", None)
+            if batch is not None and batch.skipped_count:
+                issue = batch.issues[0] if batch.issues else None
+                message = (
+                    issue.error.message
+                    if issue is not None
+                    else "La présence n'a pas été créée."
+                )
+                QMessageBox.warning(
+                    self._page,
+                    "Présences",
+                    message,
+                )
+                self.status_message.emit(
+                    "Présence non créée · chevauchement détecté."
+                )
+                return
             self.status_message.emit(success_message)
             return
 
