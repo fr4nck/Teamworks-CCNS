@@ -62,7 +62,7 @@ class MyDialog(wx.Dialog):
         # ListView Scenarios
         self.label_scenario = wx.StaticText(self.staticbox_periode, -1, _(u"Scénario :"))
         self.listview_scenarios = ListView(self.staticbox_periode, -1, IDscenario=self.IDscenario, IDpersonne=self.IDpersonne, style=wx.LC_REPORT|wx.SUNKEN_BORDER)
-        self.bouton_apercu = wx.BitmapButton(self.staticbox_periode, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Loupe.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_apercu = CTRL_Bouton_image.CTRL(self.staticbox_periode, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Loupe.png"))
         self.bouton_apercu.Enable(False)
         self.listview_scenarios.SetMinSize((50, 50))
         
