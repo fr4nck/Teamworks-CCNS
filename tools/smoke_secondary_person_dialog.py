@@ -115,6 +115,26 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 assert _smoke_notebook.GetPageCount() == len(_smoke_expected_pages)
                 assert tuple(_smoke_notebook.GetPageText(_smoke_index) for _smoke_index in range(_smoke_notebook.GetPageCount())) == _smoke_expected_pages
 
+                print("TEAMWORKS_SMOKE_PERSON_STAGE:windowed-layout", flush=True)
+                _smoke_dialog.SetSize((900, 700))
+                _smoke_notebook.SetSelection(0)
+                _smoke_dialog.Layout()
+                wx.Yield()
+                _smoke_generalites = _smoke_notebook.pageGeneralites
+                _smoke_generalites.Layout()
+                wx.Yield()
+                assert _smoke_generalites.text_adresse.IsShownOnScreen()
+                assert _smoke_generalites.text_adresse.GetSize().GetHeight() >= 50
+                assert _smoke_generalites.text_cp.IsShownOnScreen() or (
+                    _smoke_generalites._scroll_host.GetVirtualSize().GetHeight()
+                    > _smoke_generalites._scroll_host.GetClientSize().GetHeight()
+                )
+                assert (
+                    _smoke_generalites._scroll_host.GetVirtualSize().GetHeight()
+                    >= _smoke_generalites._scroll_host.GetClientSize().GetHeight()
+                )
+                print("TEAMWORKS_SMOKE_PERSON_WINDOWED_LAYOUT_OK", flush=True)
+
                 print("TEAMWORKS_SMOKE_PERSON_STAGE:pages", flush=True)
                 for _smoke_index in range(_smoke_notebook.GetPageCount()):
                     _smoke_notebook.SetSelection(_smoke_index)
@@ -135,6 +155,19 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 assert not _smoke_dialog.bitmap_button_annuler.IsEnabled()
                 _smoke_dialog.Destroy()
                 wx.Yield()
+
+                print("TEAMWORKS_SMOKE_PERSON_STAGE:close-reopen", flush=True)
+                for _smoke_cycle in range(3):
+                    _smoke_close_dialog = _smoke_person.Dialog(
+                        frame,
+                        IDpersonne=_smoke_person_id,
+                    )
+                    _smoke_close_dialog.Show()
+                    _smoke_close_dialog.Layout()
+                    wx.Yield()
+                    assert _smoke_close_dialog.Fermer(save=True) is True
+                    wx.Yield()
+                print("TEAMWORKS_SMOKE_PERSON_CLOSE_REOPEN_OK", flush=True)
 
                 print("TEAMWORKS_SMOKE_PERSON_STAGE:bug-report", flush=True)
                 _smoke_crash_dir = _smoke_tempfile.mkdtemp(prefix="teamworks-crash-dialog-")
