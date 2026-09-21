@@ -28,6 +28,9 @@ _CONTEXT_BY_STEM = {
 _ALLOWED_UNKNOWN_BY_STEM = {
     "Contrat d'engagement éducatif - Exemple": {"NBREJOURS", "REPARTITION"},
     "Contrat à durée déterminée - Exemple": {"NBREJOURS", "REPARTITION"},
+    # Le modèle porte un nom Salarié mais utilise une donnée disponible
+    # uniquement dans le contexte Candidat du moteur historique.
+    "Fiche renseignements salarié - Exemple": {"QUALIFICATIONS"},
 }
 
 
@@ -75,6 +78,16 @@ def test_bundled_templates_do_not_introduce_untracked_unknown_keywords() -> None
             unexpected[audit.path.name] = sorted(extra)
 
     assert unexpected == {}
+
+
+def test_employee_information_template_exposes_candidate_only_qualification_keyword() -> None:
+    audits = {audit.path.name: audit for audit in _audits()}
+
+    for filename in (
+        "Fiche renseignements salarié - Exemple.doc",
+        "Fiche renseignements salarié - Exemple.odt",
+    ):
+        assert "QUALIFICATIONS" in audits[filename].unknown_keywords
 
 
 def test_known_legacy_unknown_keywords_are_still_detected_in_contract_examples() -> None:
