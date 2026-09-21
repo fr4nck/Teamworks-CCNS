@@ -25,7 +25,11 @@ from domain.contracts.contract_creation_rules import (
 )
 from domain.contracts.contract_operation import ContractOperation
 from domain.contracts.contract_type import ContractType
-from domain.contracts.probation_period import ProbationUnit, probation_calendar_days
+from domain.contracts.probation_period import (
+    ProbationUnit,
+    probation_calendar_days,
+    propose_ccns_probation_period,
+)
 from domain.convention.salary_grid_entry import SalaryMinimumPeriodicity
 
 
@@ -56,6 +60,9 @@ class ContractEditSnapshot:
     previous_contract_id: Optional[int] = None
     legacy_classification_id: Optional[int] = None
     legacy_point_id: Optional[int] = None
+    legacy_trial_days: Optional[int] = None
+    trial_period_value: Optional[int] = None
+    trial_period_unit: Optional[str] = None
 
 
 @dataclass(frozen=True)
@@ -407,6 +414,72 @@ def _validate_create_operation_shape(
     return tuple(errors)
 
 
+def _validate_probation_rules(
+    command: ContractCreateCommand,
+    *,
+    contract_type: ContractType,
+    previous: ContractEditSnapshot | None = None,
+    allow_deferred_previous: bool = False,
+) -> tuple[str, ...]:
+    operation = _create_operation(command)
+    if operation is None:
+        return ()
+
+    if (
+        operation is ContractOperation.CDD_TO_CDI
+        and previous is None
+        and allow_deferred_previous
+    ):
+        return ()
+
+    try:
+        unit = ProbationUnit(command.trial_period_unit)
+        proposal = propose_ccns_probation_period(
+            contract_type=contract_type,
+            operation=operation,
+            start_date=command.start_date,
+            end_date=command.end_date,
+            ccns_group=command.ccns_group,
+            previous_contract_start=previous.start_date if previous is not None else None,
+            previous_contract_end=previous.end_date if previous is not None else None,
+        )
+        entered_days = probation_calendar_days(
+            start_date=command.start_date,
+            value=command.trial_period_value,
+            unit=unit,
+        )
+        proposed_days = probation_calendar_days(
+            start_date=command.start_date,
+            value=proposal.value,
+            unit=proposal.unit,
+        )
+    except Exception as exc:
+        return ("La période d'essai ne peut pas être calculée : %s" % exc,)
+
+    errors: list[str] = []
+    if entered_days > 365:
+        errors.append("La période d'essai dépasse la capacité historique de 365 jours.")
+
+    if proposal.automatic and entered_days > proposed_days:
+        errors.append(
+            "La période d'essai saisie dépasse le maximum calculé pour ce parcours."
+        )
+
+    if command.trial_period_value == 0:
+        automatic_zero = proposal.automatic and proposal.value == 0
+        if (
+            contract_type is not ContractType.CEE
+            and operation is not ContractOperation.CDD_RENEWAL
+            and not automatic_zero
+            and not command.confirm_no_trial
+        ):
+            errors.append(
+                "Confirmez explicitement l'absence de période d'essai avant d'enregistrer."
+            )
+
+    return tuple(errors)
+
+
 def _validate_previous_contract(
     command: ContractCreateCommand,
     previous: ContractEditSnapshot | None,
@@ -622,29 +695,15 @@ def validate_contract_create(command: ContractCreateCommand) -> tuple[str, ...]:
     if contract_type is ContractType.CEE:
         if type(command.trial_period_value) is int and command.trial_period_value != 0:
             errors.append("Un CEE ne doit pas comporter de période d'essai.")
-    elif operation is ContractOperation.CDD_RENEWAL:
-        pass
-    elif (
-        type(command.trial_period_value) is int
-        and command.trial_period_value == 0
-        and not command.confirm_no_trial
-    ):
-        errors.append(
-            "Confirmez explicitement l'absence de période d'essai avant d'enregistrer."
-        )
 
     if not errors and trial_unit is not None:
-        try:
-            legacy_days = probation_calendar_days(
-                start_date=command.start_date,
-                value=command.trial_period_value,
-                unit=trial_unit,
+        errors.extend(
+            _validate_probation_rules(
+                command,
+                contract_type=contract_type,
+                allow_deferred_previous=True,
             )
-        except Exception as exc:
-            errors.append("La période d'essai ne peut pas être calculée : %s" % exc)
-        else:
-            if legacy_days > 365:
-                errors.append("La période d'essai dépasse la capacité historique de 365 jours.")
+        )
 
     return tuple(errors)
 
@@ -746,6 +805,27 @@ def create_contract(
                 code=WriteCode.VALIDATION_ERROR,
                 message=" ".join(operation_errors),
             )
+
+        if operation is ContractOperation.CDD_TO_CDI:
+            try:
+                contract_type = ContractType(contract_code)
+            except ValueError:
+                return WriteResult(
+                    ok=False,
+                    code=WriteCode.VALIDATION_ERROR,
+                    message="Type de contrat inconnu pour le calcul de période d'essai.",
+                )
+            probation_errors = _validate_probation_rules(
+                command,
+                contract_type=contract_type,
+                previous=previous,
+            )
+            if probation_errors:
+                return WriteResult(
+                    ok=False,
+                    code=WriteCode.VALIDATION_ERROR,
+                    message=" ".join(probation_errors),
+                )
 
     return execute_transactional_insert(
         write=lambda: port.insert_contract(command),
