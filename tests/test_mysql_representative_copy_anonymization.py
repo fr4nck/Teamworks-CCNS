@@ -6,14 +6,13 @@ from pathlib import Path
 import subprocess
 import sys
 
-import mysql.connector
 import pytest
 
 
-pytestmark = pytest.mark.skipif(
-    os.getenv("TEAMWORKS_MYSQL_INTEGRATION") != "1",
-    reason="Recette MySQL désactivée",
-)
+if os.getenv("TEAMWORKS_MYSQL_INTEGRATION") != "1":
+    pytest.skip("Recette MySQL désactivée", allow_module_level=True)
+
+mysql = pytest.importorskip("mysql.connector")
 
 ROOT = Path(__file__).resolve().parents[1]
 TOOL = ROOT / "tools" / "anonymize_qt_vanilla_recipe_db.py"
@@ -31,7 +30,7 @@ def _server_connection(database=None):
     )
     if database:
         kwargs["database"] = database
-    return mysql.connector.connect(**kwargs)
+    return mysql.connect(**kwargs)
 
 
 def _create_fixture():
