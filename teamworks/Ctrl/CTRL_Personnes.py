@@ -352,7 +352,7 @@ class PanelPersonnes(wx.Panel):
         self.bouton_courrier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour créer un courrier ou un Email par publipostage")))
 
     def __do_layout(self):
-        actions = wx.WrapSizer(wx.HORIZONTAL)
+        actions = wx.WrapSizer(wx.HORIZONTAL, 0)
         groupes = [
             (self.bouton_ajouter, self.bouton_modifier, self.bouton_supprimer),
             (self.bouton_rechercher, self.bouton_affichertout, self.bouton_options),
