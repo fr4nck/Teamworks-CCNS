@@ -47,8 +47,8 @@ class Dialog(wx.Dialog):
         self.label_confirmation = wx.StaticText(self.panel_base_2, -1, txt)
         self.tree_taches = TreeCtrlTaches(self.panel_base_2)
         self.gauge = wx.Gauge(self.panel_base_2, -1, nbreTaches, size=(-1, 10))
-        self.bouton_ok = wx.BitmapButton(self.panel_base_2, -1, wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Ok_L72.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_annuler = wx.BitmapButton(self.panel_base_2, -1, wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Annuler_L72.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_ok = CTRL_Bouton_image.CTRL(self.panel_base_2, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/BoutonsImages/Ok_L72.png"))
+        self.bouton_annuler = CTRL_Bouton_image.CTRL(self.panel_base_2, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/BoutonsImages/Annuler_L72.png"))
 
         self.__set_properties()
         self.__do_layout()
