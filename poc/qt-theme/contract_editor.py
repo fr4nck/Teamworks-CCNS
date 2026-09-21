@@ -90,7 +90,7 @@ def _python_date(value: QDate) -> date:
 
 
 class ContractCreateDialog(QDialog):
-    """Création Qt initiale : CDI/CDD CCNS, sans accès direct à la base."""
+    """Création Qt contrôlée : CDI/CDD CCNS et CEE, sans accès direct à la base."""
 
     def __init__(
         self,
@@ -111,8 +111,8 @@ class ContractCreateDialog(QDialog):
         root.setSpacing(10)
 
         intro = QLabel(
-            "Création contrôlée CCNS · CDI/CDD. "
-            "CEE et parcours historiques restent volontairement hors de ce lot."
+            "Création contrôlée · CDI/CDD CCNS et CEE. "
+            "Les parcours historiques non extraits restent hors de ce lot."
         )
         intro.setWordWrap(True)
         intro.setProperty("muted", True)
@@ -120,7 +120,8 @@ class ContractCreateDialog(QDialog):
 
         panel = QFrame()
         panel.setObjectName("panel")
-        form = QFormLayout(panel)
+        self.form = QFormLayout(panel)
+        form = self.form
 
         self.contract_type = QComboBox()
         for code in available_types:
@@ -140,6 +141,12 @@ class ContractCreateDialog(QDialog):
         self.group = QComboBox()
         form.addRow("Groupe CCNS", self.group)
 
+        self.cee_qualification = QComboBox()
+        self.cee_qualification.addItem("—", None)
+        for code, label in _CEE_LABELS.items():
+            self.cee_qualification.addItem(label, code)
+        form.addRow("Qualification CEE", self.cee_qualification)
+
         self.weekly_hours = QDoubleSpinBox()
         self.weekly_hours.setRange(0.25, 80.0)
         self.weekly_hours.setDecimals(2)
@@ -155,8 +162,8 @@ class ContractCreateDialog(QDialog):
         self.annual_salary.setPlaceholderText("ex. 38 000,00")
         form.addRow("Brut annuel", self.annual_salary)
 
-        trial_row = QWidget()
-        trial_layout = QHBoxLayout(trial_row)
+        self.trial_row = QWidget()
+        trial_layout = QHBoxLayout(self.trial_row)
         trial_layout.setContentsMargins(0, 0, 0, 0)
         self.trial_value = QSpinBox()
         self.trial_value.setRange(0, 365)
@@ -165,7 +172,7 @@ class ContractCreateDialog(QDialog):
         self.trial_unit.addItem("mois", ProbationUnit.MONTH.value)
         trial_layout.addWidget(self.trial_value)
         trial_layout.addWidget(self.trial_unit, 1)
-        form.addRow("Période d'essai", trial_row)
+        form.addRow("Période d'essai", self.trial_row)
 
         self.confirm_no_trial = QCheckBox(
             "Je confirme l'absence de période d'essai pour ce contrat"
@@ -198,10 +205,38 @@ class ContractCreateDialog(QDialog):
     def _contract_type_code(self) -> str:
         return str(self.contract_type.currentData() or "").strip().upper()
 
+    def _set_form_field_visible(self, field: QWidget, visible: bool) -> None:
+        field.setVisible(visible)
+        label = self.form.labelForField(field)
+        if label is not None:
+            label.setVisible(visible)
+
     def _refresh_contract_type(self, *_args) -> None:
-        is_cdd = self._contract_type_code() == "CDD"
-        self.end_date.setEnabled(is_cdd)
+        code = self._contract_type_code()
+        is_cee = code == "CEE"
+        self.end_date.setEnabled(code in ("CDD", "CEE"))
+        self._set_form_field_visible(self.group, not is_cee)
+        self._set_form_field_visible(self.weekly_hours, not is_cee)
+        self._set_form_field_visible(self.cee_qualification, is_cee)
+        self._set_form_field_visible(self.trial_row, not is_cee)
+
+        if is_cee:
+            self.trial_value.blockSignals(True)
+            self.trial_unit.blockSignals(True)
+            self.trial_value.setValue(0)
+            day_index = self.trial_unit.findData(ProbationUnit.DAY.value)
+            if day_index >= 0:
+                self.trial_unit.setCurrentIndex(day_index)
+            self.trial_unit.blockSignals(False)
+            self.trial_value.blockSignals(False)
+            self.confirm_no_trial.setChecked(False)
+            self.confirm_no_trial.setVisible(False)
+            self._refresh_salary_mode()
+            return
+
+        self._refresh_salary_mode()
         self._refresh_trial()
+        self._refresh_no_trial_confirmation()
 
     def _refresh_groups(self, *_args) -> None:
         preserve = self.group.currentData()
@@ -225,6 +260,11 @@ class ContractCreateDialog(QDialog):
         self._refresh_trial()
 
     def _refresh_salary_mode(self) -> None:
+        if self._contract_type_code() == "CEE":
+            self._set_form_field_visible(self.monthly_salary, False)
+            self._set_form_field_visible(self.annual_salary, False)
+            return
+
         code = self.group.currentData()
         annual = False
         if code:
@@ -244,8 +284,8 @@ class ContractCreateDialog(QDialog):
                 )
             except Exception:
                 annual = False
-        self.monthly_salary.setVisible(not annual)
-        self.annual_salary.setVisible(annual)
+        self._set_form_field_visible(self.monthly_salary, not annual)
+        self._set_form_field_visible(self.annual_salary, annual)
 
     def _refresh_trial(self, *_args) -> None:
         code = self._contract_type_code()
@@ -277,6 +317,10 @@ class ContractCreateDialog(QDialog):
         self._refresh_no_trial_confirmation()
 
     def _refresh_no_trial_confirmation(self, *_args) -> None:
+        if self._contract_type_code() == "CEE":
+            self.confirm_no_trial.setChecked(False)
+            self.confirm_no_trial.setVisible(False)
+            return
         zero = self.trial_value.value() == 0
         self.confirm_no_trial.setVisible(zero)
         if not zero:
@@ -284,48 +328,66 @@ class ContractCreateDialog(QDialog):
 
     def _build_command(self) -> ContractCreateCommand:
         code = self._contract_type_code()
-        group = self.group.currentData()
-        monthly = parse_decimal_text(self.monthly_salary.text())
-        annual = parse_decimal_text(self.annual_salary.text())
+        is_cee = code == "CEE"
 
-        try:
-            choice = next(
-                (
-                    item
-                    for item in self._presenter.group_choices(
-                        _python_date(self.start_date.date())
-                    )
-                    if item.code == group
-                ),
-                None,
-            )
-        except Exception:
-            choice = None
-        if choice and choice.periodicity is SalaryMinimumPeriodicity.ANNUAL:
+        if is_cee:
+            group = None
+            cee_qualification = self.cee_qualification.currentData()
+            weekly_hours = None
             monthly = None
-        else:
             annual = None
+            trial_value = 0
+            trial_unit = ProbationUnit.DAY.value
+            confirm_no_trial = False
+        else:
+            group = self.group.currentData()
+            cee_qualification = None
+            weekly_hours = Decimal(str(self.weekly_hours.value())).quantize(
+                Decimal("0.01")
+            )
+            monthly = parse_decimal_text(self.monthly_salary.text())
+            annual = parse_decimal_text(self.annual_salary.text())
+
+            try:
+                choice = next(
+                    (
+                        item
+                        for item in self._presenter.group_choices(
+                            _python_date(self.start_date.date())
+                        )
+                        if item.code == group
+                    ),
+                    None,
+                )
+            except Exception:
+                choice = None
+            if choice and choice.periodicity is SalaryMinimumPeriodicity.ANNUAL:
+                monthly = None
+            else:
+                annual = None
+
+            trial_value = self.trial_value.value()
+            trial_unit = str(self.trial_unit.currentData())
+            confirm_no_trial = self.confirm_no_trial.isChecked()
 
         return ContractCreateCommand(
             person_id=self.person_id,
             contract_type_code=code,
             convention_code="CCNS",
             ccns_group=group,
-            cee_qualification=None,
-            weekly_hours=Decimal(str(self.weekly_hours.value())).quantize(
-                Decimal("0.01")
-            ),
+            cee_qualification=cee_qualification,
+            weekly_hours=weekly_hours,
             gross_monthly_salary=monthly,
             gross_annual_salary=annual,
             start_date=_python_date(self.start_date.date()),
             end_date=(
                 _python_date(self.end_date.date())
-                if code == "CDD"
+                if code in ("CDD", "CEE")
                 else None
             ),
-            trial_period_value=self.trial_value.value(),
-            trial_period_unit=str(self.trial_unit.currentData()),
-            confirm_no_trial=self.confirm_no_trial.isChecked(),
+            trial_period_value=trial_value,
+            trial_period_unit=trial_unit,
+            confirm_no_trial=confirm_no_trial,
         )
 
     def _on_accept(self) -> None:
