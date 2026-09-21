@@ -1,0 +1,44 @@
+name: Validation migration
+
+on:
+  pull_request:
+    branches:
+      - master
+    paths:
+      - "domain/migration/**"
+      - "docs/66-strategie-migration-noethys-teamworks.md"
+      - "docs/67-pilote-migration-frais.md"
+      - "tests/test_migration_reconciliation.py"
+      - "tests/test_migration_expense_pilot.py"
+      - ".github/workflows/migration-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  migration-contracts:
+    name: Contrats de migration
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v6
+
+      - name: Installer Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Installer pytest
+        run: python -m pip install pytest==8.4.1
+
+      - name: Compiler le domaine migration
+        run: python -m compileall -q domain/migration tests/test_migration_reconciliation.py tests/test_migration_expense_pilot.py
+
+      - name: Vérifier les contrats de réconciliation
+        run: >-
+          python -m pytest -q
+          tests/test_migration_reconciliation.py
+          tests/test_migration_expense_pilot.py
