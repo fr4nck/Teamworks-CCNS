@@ -32,6 +32,12 @@ from .merge_context import (
     build_merge_context,
     validate_required_fields,
 )
+from .template_files import (
+    TemplateFileAudit,
+    audit_template_directory,
+    audit_template_file,
+    extract_template_file_keywords,
+)
 from .templates import (
     CEE_LABELS,
     DocumentTemplate,
@@ -61,10 +67,14 @@ __all__ = [
     "KeywordDefinition",
     "MergeContext",
     "MissingMergeField",
+    "TemplateFileAudit",
     "TemplateKeywordValidation",
     "TemplateTarget",
     "build_generation_plan",
+    "audit_template_directory",
+    "audit_template_file",
     "build_merge_context",
+    "extract_template_file_keywords",
     "extract_template_keywords",
     "get_document_type",
     "is_contract_target_compatible",
