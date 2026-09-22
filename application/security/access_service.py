@@ -17,6 +17,15 @@ class ProfilePermissionView:
     enabled: bool
 
 
+@dataclass(frozen=True)
+class ProfileView:
+    """Contenu d'un profil prêt à afficher au super-utilisateur."""
+
+    profile_id: str
+    label: str
+    permissions: tuple[ProfilePermissionView, ...]
+
+
 class AccessService:
     def user_has_permission(self, *, user: User, roles: list[Role], permission: Permission) -> bool:
         role_map = {role.id: role for role in roles}
@@ -38,6 +47,17 @@ class AccessService:
                 enabled=role.has_permission(permission),
             )
             for permission in list_permissions()
+        )
+
+    def get_profile_view(self, *, role: Role) -> ProfileView:
+        """Retourne exactement les données nécessaires à l'affichage d'un profil."""
+
+        if not isinstance(role, Role):
+            raise ValueError("Un profil Teamworks est attendu.")
+        return ProfileView(
+            profile_id=role.id,
+            label=role.label,
+            permissions=self.list_profile_permissions(role=role),
         )
 
     def can_access_group(self, *, scope: AccessScope | None, group_number: int) -> bool:
