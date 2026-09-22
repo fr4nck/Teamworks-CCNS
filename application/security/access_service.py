@@ -28,6 +28,21 @@ class ProfileView:
 
 class AccessService:
     def user_has_permission(self, *, user: User, roles: list[Role], permission: Permission) -> bool:
+        """Autorise par droits explicites, jamais par le nom du profil.
+
+        Contrat transverse aligné avec Portail :
+        - compte inactif = aucun droit ;
+        - droit absent = refus ;
+        - plusieurs profils cumulent leurs droits.
+        """
+
+        if not isinstance(user, User):
+            raise ValueError("Un utilisateur Teamworks est attendu.")
+        if not isinstance(permission, Permission):
+            raise ValueError("Une autorisation Teamworks est attendue.")
+        if not user.is_active:
+            return False
+
         role_map = {role.id: role for role in roles}
         return any(
             role_map[role_id].has_permission(permission)
