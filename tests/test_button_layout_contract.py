@@ -9,7 +9,7 @@ EXTRA = (ROOT / "Gadget.py", ROOT / "Teamworks.py", ROOT / "Teamworks_core.py")
 BUTTON_ASSIGN_RE = re.compile(
     r"self\.(?P<name>\w+)\s*=\s*"
     r"(?:wx\.(?:Button|BitmapButton|ToggleButton)|"
-    r"CTRL_Bouton_image\.(?:CTRL|Toggle))\s*\(",
+    r"CTRL_Bouton_image\.(?:CTRL|Compact|Toggle))\s*\(",
     re.MULTILINE,
 )
 DEFAULT_WRAP_RE = re.compile(
