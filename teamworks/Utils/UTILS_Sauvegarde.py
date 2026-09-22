@@ -26,6 +26,7 @@ from Utils import UTILS_Config
 from Utils import UTILS_Cryptage_fichier
 from Utils import UTILS_Fichiers
 from Utils import UTILS_Envoi_email
+from Utils import UTILS_RestaurationFichiers
 
 
 LISTE_CATEGORIES = [
@@ -313,7 +314,11 @@ def Restauration(parent=None, fichier="", listeFichiersLocaux=[], listeFichiersR
         for fichier_temp in listeFichiersLocaux :
             dlgprogress.Update(numEtape, _(u"Restauration du fichier %s...") % fichier_temp);numEtape += 1
             try :
-                fichierZip.extract(fichier_temp, UTILS_Fichiers.GetRepData())
+                UTILS_RestaurationFichiers.ExtraireFichierAtomiquement(
+                    fichierZip,
+                    fichier_temp,
+                    UTILS_Fichiers.GetRepData(),
+                )
             except Exception as err:
                 dlgprogress.Destroy()
                 print(err)
