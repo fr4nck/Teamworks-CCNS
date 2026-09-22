@@ -1376,7 +1376,9 @@ class Panel_general(wx.Panel):
                 + ", "
                 + age
             )
-        self.GetParent().GetGrandParent().label_hd_naiss.SetLabel(texte)
+        fiche = self._GetFicheIndividuelle()
+        if fiche is not None and hasattr(fiche, "label_hd_naiss"):
+            fiche.label_hd_naiss.SetLabel(texte)
 
     def Importation(self):
         DB = GestionDB.DB()
