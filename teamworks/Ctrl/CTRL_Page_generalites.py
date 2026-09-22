@@ -1300,25 +1300,54 @@ class Panel_general(wx.Panel):
             )
         DB.Close()
 
+    def _GetFicheIndividuelle(self):
+        """Retrouve la vraie fiche sans dépendre d'une profondeur de parents.
+
+        Les wrappers responsive/lazy ont changé la hiérarchie wx de la page
+        Généralités. Les anciens GetParent().GetGrandParent() pointaient alors
+        vers un panel intermédiaire et provoquaient des AttributeError.
+        """
+        courant = self
+        visites = set()
+        while courant is not None and id(courant) not in visites:
+            visites.add(id(courant))
+            if (
+                hasattr(courant, "label_hd_nomPrenom")
+                and hasattr(courant, "label_hd_adresse")
+                and hasattr(courant, "MaJ_header")
+            ):
+                return courant
+            try:
+                courant = courant.GetParent()
+            except Exception:
+                courant = None
+        return None
+
     def MaJ_Header_Fiche(self):
-        self.parent.GetGrandParent().MaJ_header()
+        fiche = self._GetFicheIndividuelle()
+        if fiche is not None:
+            fiche.MaJ_header()
 
     def MaJ_NomPrenom_Fiche(self):
+        fiche = self._GetFicheIndividuelle()
+        if fiche is None:
+            return
         nom = self.text_nom.GetValue() or "NOM"
         prenom = self.text_prenom.GetValue() or _(u"Prénom")
-        self.GetParent().GetGrandParent().label_hd_nomPrenom.SetLabel(
-            nom + ", " + prenom
-        )
+        fiche.label_hd_nomPrenom.SetLabel(nom + ", " + prenom)
 
     def MaJ_Adresse_Fiche(self):
+        fiche = self._GetFicheIndividuelle()
+        if fiche is None:
+            return
         adresse = self.text_adresse.GetValue()
         cp = self.text_cp.GetValue()
         ville = self.text_ville.GetValue()
-        if adresse == "" and cp == "     " and ville == "":
+        if adresse == "" and cp.strip() == "" and ville == "":
             texte = _(u"Adresse inconnue")
         else:
             texte = _(u"Résidant ") + adresse + " " + cp + " " + ville
-        self.GetParent().GetGrandParent().label_hd_adresse.SetLabel(texte)
+        fiche.label_hd_adresse.SetLabel(texte)
 
     def MaJ_DateNaiss_Fiche(self):
         dateNaiss = self.text_date_naiss.GetValue()
