@@ -46,3 +46,47 @@ def test_full_access_default_profiles_follow_central_catalog():
     direction = next(role for role in roles if role.name == RoleName.DIRECTION)
 
     assert direction.permissions == set(Permission)
+
+
+def test_removing_permission_blocks_future_access_without_touching_history():
+    from application.security.history_service import HistoryService
+    from domain.security.user import User
+
+    role = Role(
+        name=RoleName.COORDINATION_PLANNING,
+        label="Encadrants",
+        permissions={Permission.EDIT_CONTRACTS},
+    )
+    user = User(username="encadrant1", display_name="Encadrant 1", role_ids=[role.id])
+    access = AccessService()
+    history = HistoryService().record_event(
+        user_id=user.id,
+        action_code="EDIT_CONTRACT",
+        object_type="contract",
+        object_id="contract-42",
+        message="Modification d'un contrat",
+    )
+
+    assert access.user_has_permission(
+        user=user,
+        roles=[role],
+        permission=Permission.EDIT_CONTRACTS,
+    ) is True
+
+    profile = access.set_profile_permission(
+        role=role,
+        permission=Permission.EDIT_CONTRACTS,
+        enabled=False,
+    )
+
+    assert access.user_has_permission(
+        user=user,
+        roles=[role],
+        permission=Permission.EDIT_CONTRACTS,
+    ) is False
+    assert next(
+        item for item in profile.permissions if item.code == Permission.EDIT_CONTRACTS.value
+    ).enabled is False
+    assert history.user_id == user.id
+    assert history.action_code == "EDIT_CONTRACT"
+    assert history.object_id == "contract-42"
