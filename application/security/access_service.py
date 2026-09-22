@@ -60,6 +60,29 @@ class AccessService:
             permissions=self.list_profile_permissions(role=role),
         )
 
+    def set_profile_permission(
+        self,
+        *,
+        role: Role,
+        permission: Permission,
+        enabled: bool,
+    ) -> ProfileView:
+        """Active ou désactive un droit du profil sans toucher à l'historique."""
+
+        if not isinstance(role, Role):
+            raise ValueError("Un profil Teamworks est attendu.")
+        if not isinstance(permission, Permission):
+            raise ValueError("Une autorisation Teamworks est attendue.")
+        if not isinstance(enabled, bool):
+            raise ValueError("L'état de l'autorisation doit être activé ou désactivé.")
+
+        if enabled:
+            role.permissions.add(permission)
+        else:
+            role.permissions.discard(permission)
+
+        return self.get_profile_view(role=role)
+
     def can_access_group(self, *, scope: AccessScope | None, group_number: int) -> bool:
         if scope is None or scope.max_group_number is None:
             return True
