@@ -4,16 +4,7 @@ from domain.security.role_name import RoleName
 
 
 def build_default_roles() -> list[Role]:
-    full_access = {
-        Permission.READ_CONTRACTS,
-        Permission.EDIT_CONTRACTS,
-        Permission.READ_ASSIGNMENTS,
-        Permission.EDIT_ASSIGNMENTS,
-        Permission.READ_CONTROLS,
-        Permission.READ_SENSITIVE_HISTORY,
-        Permission.EXPORT_SENSITIVE_DATA,
-        Permission.MANAGE_PERMISSIONS,
-    }
+    full_access = set(Permission)
     return [
         Role(name=RoleName.DIRECTION, label="Direction", permissions=set(full_access)),
         Role(name=RoleName.RH, label="Ressources humaines", permissions=set(full_access)),
