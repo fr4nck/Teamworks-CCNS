@@ -565,7 +565,19 @@ class Panel_general(wx.Panel):
     # ----------------------------------------------------------------------
     # Actions
     def MAJ_barre_problemes(self):
-        self.parent.GetGrandParent().MAJ_barre_problemes()
+        """Rafraîchit la barre de problèmes sans supposer une profondeur wx fixe."""
+        courant = self.parent
+        visites = set()
+        while courant is not None and id(courant) not in visites:
+            visites.add(id(courant))
+            rappel = getattr(courant, "MAJ_barre_problemes", None)
+            if callable(rappel):
+                rappel()
+                return
+            try:
+                courant = courant.GetParent()
+            except Exception:
+                courant = None
 
     def OnImageNumSecu(self, event):
         message = u"""

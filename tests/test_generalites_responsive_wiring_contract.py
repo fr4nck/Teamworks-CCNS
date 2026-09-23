@@ -48,3 +48,10 @@ def test_adaptateur_propage_les_minima_des_sections_apres_reparentage():
     assert "contenu.SetMinSize((-1, hauteur_contenu))" in source
     assert "section.SetMinSize((-1, hauteur_section))" in source
     assert "self._stabiliser_minimum_sections()" in source
+
+def test_zone_defilante_layout_sur_la_taille_virtuelle_sous_windows():
+    source = ADAPTER.read_text(encoding="utf-8")
+    assert "sizer.SetDimension(0, 0, largeur, hauteur)" in source
+    assert "virtual = self._scroll_host.GetVirtualSize()" in source
+    assert "max(hauteur, virtual.GetHeight())" in source
+

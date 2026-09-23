@@ -217,7 +217,21 @@ class Panel_general(LEGACY.Panel_general):
         largeur = max(client.GetWidth(), minimum.GetWidth())
         hauteur = max(client.GetHeight(), minimum.GetHeight())
         self._scroll_host.SetVirtualSize((largeur, hauteur))
+        # Sous MSW, Layout() peut continuer à dimensionner le sizer sur la
+        # seule zone cliente visible. Les enfants sont alors comprimés avant
+        # que la taille virtuelle ne soit prise en compte. On applique le
+        # layout sur le canevas virtuel calculé afin que les MinSize des
+        # contrôles multilignes restent effectifs.
+        sizer.SetDimension(0, 0, largeur, hauteur)
         self._scroll_host.FitInside()
+        virtual = self._scroll_host.GetVirtualSize()
+        if virtual.GetWidth() < largeur or virtual.GetHeight() < hauteur:
+            self._scroll_host.SetVirtualSize(
+                (
+                    max(largeur, virtual.GetWidth()),
+                    max(hauteur, virtual.GetHeight()),
+                )
+            )
 
     def _installer_zone_defilante(self):
         """Transforme la page historique en contenu scrollable sans le dupliquer."""

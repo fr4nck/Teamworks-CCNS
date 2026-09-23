@@ -27,3 +27,11 @@ def test_mises_a_jour_entete_ne_dependant_plus_dune_profondeur_wx_fixe():
     assert "self.GetParent().GetGrandParent().label_hd_nomPrenom" not in source
     assert "self.GetParent().GetGrandParent().label_hd_adresse" not in source
     assert "self.GetParent().GetGrandParent().label_hd_naiss" not in source
+
+def test_barre_problemes_ne_depend_plus_dun_grand_parent_fixe():
+    source = GENERALITES.read_text(encoding="utf-8")
+    bloc = source.split("def MAJ_barre_problemes", 1)[1].split("def OnImageNumSecu", 1)[0]
+    assert "self.parent.GetGrandParent().MAJ_barre_problemes()" not in bloc
+    assert 'getattr(courant, "MAJ_barre_problemes", None)' in bloc
+    assert "if callable(rappel):" in bloc
+
