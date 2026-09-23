@@ -123,6 +123,24 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 _smoke_generalites = _smoke_notebook.pageGeneralites
                 _smoke_generalites.Layout()
                 wx.Yield()
+                _smoke_address_content = _smoke_generalites.section_adresse.GetContentPanel()
+                _smoke_scroll = _smoke_generalites._scroll_host
+                print(
+                    "TEAMWORKS_SMOKE_PERSON_LAYOUT_METRICS:"
+                    "adresse=%s;adresse_min=%s;contenu=%s;contenu_min=%s;"
+                    "section=%s;section_min=%s;virtuel=%s;client=%s"
+                    % (
+                        tuple(_smoke_generalites.text_adresse.GetSize()),
+                        tuple(_smoke_generalites.text_adresse.GetMinSize()),
+                        tuple(_smoke_address_content.GetSize()),
+                        tuple(_smoke_address_content.GetMinSize()),
+                        tuple(_smoke_generalites.section_adresse.GetSize()),
+                        tuple(_smoke_generalites.section_adresse.GetMinSize()),
+                        tuple(_smoke_scroll.GetVirtualSize()),
+                        tuple(_smoke_scroll.GetClientSize()),
+                    ),
+                    flush=True,
+                )
                 assert _smoke_generalites.text_adresse.GetSize().GetHeight() >= 50
                 _smoke_scroll = _smoke_generalites._scroll_host
                 assert (
