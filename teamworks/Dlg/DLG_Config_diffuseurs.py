@@ -52,7 +52,7 @@ class Panel(CORE.Panel):
         self.bouton_modifier.Enable(False); self.bouton_supprimer.Enable(False)
         self.listCtrl = ListCtrl(contenu, self)
         if parent.GetName() != "treebook_configuration": self.bouton_aide.Show(False)
-        gap = UTILS_Styles.GetLayoutSpacing("field_gap"); actions = wx.WrapSizer(wx.HORIZONTAL)
+        gap = UTILS_Styles.GetLayoutSpacing("field_gap"); actions = wx.WrapSizer(wx.HORIZONTAL, 0)
         for bouton in (self.bouton_ajouter, self.bouton_modifier, self.bouton_supprimer, self.bouton_aide): actions.Add(bouton, 0, wx.RIGHT | wx.BOTTOM, gap)
         s = wx.BoxSizer(wx.VERTICAL); s.Add(self.listCtrl, 1, wx.EXPAND); s.AddSpacer(gap); s.Add(actions, 0, wx.EXPAND); contenu.SetSizer(s); root = wx.BoxSizer(wx.VERTICAL); root.Add(self.section, 1, wx.EXPAND); self.SetSizer(root)
         self.Bind(wx.EVT_BUTTON, self.OnBoutonAjouter, self.bouton_ajouter); self.Bind(wx.EVT_BUTTON, self.OnBoutonModifier, self.bouton_modifier); self.Bind(wx.EVT_BUTTON, self.OnBoutonSupprimer, self.bouton_supprimer); self.Bind(wx.EVT_BUTTON, self.OnBoutonAide, self.bouton_aide)
@@ -61,7 +61,15 @@ class Panel(CORE.Panel):
 class Dialog(wx.Dialog):
     def __init__(self, parent):
         wx.Dialog.__init__(self, parent, -1, style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER); self.parent = parent; self.panel_contenu = Panel(self); self.bouton_aide = CTRL_Bouton_image.CTRL(self, texte=_(u"Aide")); self.bouton_fermer = CTRL_Bouton_image.CTRL(self, texte=_(u"Fermer")); self.SetTitle(_(u"Gestion des diffuseurs"))
-        padding = UTILS_Styles.GetLayoutSpacing("dialog_padding"); actions = wx.BoxSizer(wx.HORIZONTAL); actions.Add(self.bouton_aide, 0); actions.AddStretchSpacer(1); actions.Add(self.bouton_fermer, 0); s = wx.BoxSizer(wx.VERTICAL); s.Add(self.panel_contenu, 1, wx.EXPAND | wx.ALL, padding); s.Add(actions, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, padding); self.SetSizer(s)
+        padding = UTILS_Styles.GetLayoutSpacing("dialog_padding")
+        actions = wx.BoxSizer(wx.HORIZONTAL)
+        actions.Add(self.bouton_aide, 0)
+        actions.AddStretchSpacer(1)
+        actions.Add(self.bouton_fermer, 0)
+        s = wx.BoxSizer(wx.VERTICAL)
+        s.Add(self.panel_contenu, 1, wx.EXPAND | wx.ALL, padding)
+        s.Add(actions, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, padding)
+        self.SetSizer(s)
         self.Bind(wx.EVT_BUTTON, lambda evt: self.panel_contenu.OnBoutonAide(evt), self.bouton_aide); self.Bind(wx.EVT_BUTTON, lambda evt: self.EndModal(wx.ID_CANCEL), self.bouton_fermer); UTILS_Styles.ApplyWindowProfile(self, "standard")
 
 

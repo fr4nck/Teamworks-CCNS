@@ -376,7 +376,7 @@ class Dialog(wx.Dialog):
         self.ctrl_pages = CTRL_Pages(self)
 
         self.bouton_aide = CTRL_Bouton_image.CTRL(self, texte=_(u"Aide"), cheminImage="Images/32x32/Aide.png")
-        self.bouton_detail = wx.Button(self, -1, _(u"Afficher la liste des adresses valides"))
+        self.bouton_detail = CTRL_Bouton_image.CTRL(self, texte=_(u"Afficher la liste des adresses valides"))
         self.bouton_ok = CTRL_Bouton_image.CTRL(self, texte=_(u"Ok"), cheminImage="Images/32x32/Valider.png")
         self.bouton_annuler = CTRL_Bouton_image.CTRL(self, id=wx.ID_CANCEL, texte=_(u"Annuler"), cheminImage="Images/32x32/Annuler.png")
 
@@ -406,7 +406,7 @@ class Dialog(wx.Dialog):
 
         grid_sizer_boutons = wx.FlexGridSizer(rows=1, cols=5, vgap=10, hgap=10)
         grid_sizer_boutons.Add(self.bouton_aide, 0, 0, 0)
-        grid_sizer_boutons.Add(self.bouton_detail, 0, wx.EXPAND, 0)
+        grid_sizer_boutons.Add(self.bouton_detail, 0, wx.ALIGN_CENTER_VERTICAL, 0)
         grid_sizer_boutons.Add((20, 20), 0, wx.EXPAND, 0)
         grid_sizer_boutons.Add(self.bouton_ok, 0, 0, 0)
         grid_sizer_boutons.Add(self.bouton_annuler, 0, 0, 0)

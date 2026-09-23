@@ -39,3 +39,19 @@ def test_basculement_responsive_detache_les_sections_avant_reemploi():
         "sizer = wx.BoxSizer(wx.VERTICAL)",
         source.index("def _appliquer_layout_responsive"),
     )
+
+
+def test_adaptateur_propage_les_minima_des_sections_apres_reparentage():
+    source = ADAPTER.read_text(encoding="utf-8")
+    assert "def _stabiliser_minimum_sections" in source
+    assert "self.text_adresse.SetMinSize((-1, UTILS_Styles.Scale(72)))" in source
+    assert "contenu.SetMinSize((-1, hauteur_contenu))" in source
+    assert "section.SetMinSize((-1, hauteur_section))" in source
+    assert "self._stabiliser_minimum_sections()" in source
+
+def test_zone_defilante_layout_sur_la_taille_virtuelle_sous_windows():
+    source = ADAPTER.read_text(encoding="utf-8")
+    assert "sizer.SetDimension(0, 0, largeur, hauteur)" in source
+    assert "virtual = self._scroll_host.GetVirtualSize()" in source
+    assert "max(hauteur, virtual.GetHeight())" in source
+

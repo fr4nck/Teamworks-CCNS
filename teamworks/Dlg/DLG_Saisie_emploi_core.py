@@ -54,9 +54,9 @@ class Panel(wx.Panel):
         self.label_periodes = wx.StaticText(self.sizer_disponibilites_staticbox, -1, _(u"Périodes :"))
         self.ctrl_periodes = ListBoxDisponibilites(self.sizer_disponibilites_staticbox)
         self.ctrl_periodes.SetMinSize((20, 20))
-        self.bouton_ajouter_periode = wx.BitmapButton(self.sizer_disponibilites_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_modifier_periode = wx.BitmapButton(self.sizer_disponibilites_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Modifier.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_supprimer_periode = wx.BitmapButton(self.sizer_disponibilites_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_ajouter_periode = CTRL_Bouton_image.CTRL(self.sizer_disponibilites_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Ajouter.png"))
+        self.bouton_modifier_periode = CTRL_Bouton_image.CTRL(self.sizer_disponibilites_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Modifier.png"))
+        self.bouton_supprimer_periode = CTRL_Bouton_image.CTRL(self.sizer_disponibilites_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Supprimer.png"))
         self.label_periodes_remarques = wx.StaticText(self.sizer_disponibilites_staticbox, -1, _(u"Remarques :"))
         self.ctrl_periodes_remarques = wx.TextCtrl(self.sizer_disponibilites_staticbox, -1, u"")
         
@@ -66,12 +66,12 @@ class Panel(wx.Panel):
         self.ctrl_fonction = CheckListBox(self.sizer_poste_staticbox)
         self.ctrl_fonction.SetMinSize((20, 20))
         self.ctrl_fonction.Remplissage(self.Importation_fonctions())
-        self.bouton_fonctions = wx.Button(self.sizer_poste_staticbox, -1, "...", size=(20, 20))
+        self.bouton_fonctions = CTRL_Bouton_image.Compact(self.sizer_poste_staticbox, texte="...")
         self.label_affectation = wx.StaticText(self.sizer_poste_staticbox, -1, _(u"Affectation :"))
         self.ctrl_affectations = CheckListBox(self.sizer_poste_staticbox)
         self.ctrl_affectations.SetMinSize((20, 20))
         self.ctrl_affectations.Remplissage(self.Importation_affectations())
-        self.bouton_affectations = wx.Button(self.sizer_poste_staticbox, -1, "...", size=(20, 20))
+        self.bouton_affectations = CTRL_Bouton_image.Compact(self.sizer_poste_staticbox, texte="...")
         self.label_poste_remarques = wx.StaticText(self.sizer_poste_staticbox, -1, _(u"Remarques :"))
         self.ctrl_poste_remarques = wx.TextCtrl(self.sizer_poste_staticbox, -1, "")
         
@@ -81,7 +81,7 @@ class Panel(wx.Panel):
         self.ctrl_diffuseurs = CheckListBox(self.sizer_diffusion_staticbox)
         self.ctrl_diffuseurs.SetMinSize((20, 20))
         self.ctrl_diffuseurs.Remplissage(self.Importation_diffuseurs())
-        self.bouton_diffuseurs = wx.Button(self.sizer_diffusion_staticbox, -1, "...", size=(20, 20))
+        self.bouton_diffuseurs = CTRL_Bouton_image.Compact(self.sizer_diffusion_staticbox, texte="...")
         
         # Commandes
         self.bouton_aide = CTRL_Bouton_image.CTRL(self, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))
@@ -793,6 +793,9 @@ class Dialog(wx.Dialog):
         wx.Dialog.__init__(self, parent, -1, style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX)
         self.parent = parent
         self.panel = Panel(self, IDemploi=IDemploi)
+        sizer_dialog = wx.BoxSizer(wx.VERTICAL)
+        sizer_dialog.Add(self.panel, 1, wx.EXPAND, 0)
+        self.SetSizer(sizer_dialog)
                 
         # Propriétés
         if IDemploi == None :

@@ -11,6 +11,7 @@
 import Chemins
 from Utils.UTILS_Traduction import _
 import wx
+from Ctrl import CTRL_Bouton_image
 import six
 import wx.lib.newevent
 import calendar
@@ -978,13 +979,13 @@ class CTRL(wx.Panel):
         if afficheAujourdhui == True and self.selectionInterdite == False :
             self.calendrier.SelectJours( [datetime.date.today(),] )
             
-        self.bouton_CalendrierAnnuel = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Calendrier_jour.png"), wx.BITMAP_TYPE_PNG), size=(28, 21))
+        self.bouton_CalendrierAnnuel = CTRL_Bouton_image.CTRL(self, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Calendrier_jour.png"))
         self.bouton_CalendrierAnnuel.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour afficher le calendrier annuel")))
         
         # Layout
         sizer =  wx.BoxSizer(wx.VERTICAL)
         sizerOptions = wx.FlexGridSizer(rows=1, cols=8, vgap=0, hgap=0)
-        sizerOptions.Add(self.bouton_CalendrierAnnuel, 0, wx.EXPAND|wx.RIGHT, 5)
+        sizerOptions.Add(self.bouton_CalendrierAnnuel, 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 5)
         sizerOptions.Add(self.combo_mois, 0, wx.EXPAND, 0)
         sizerOptions.Add(self.spin, 0, wx.EXPAND, 0)
         sizerOptions.Add( (5, 5), 0, wx.EXPAND, 0)

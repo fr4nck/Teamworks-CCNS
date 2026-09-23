@@ -12,6 +12,7 @@ largeur figée qui tronquait les libellés lorsque l'interface était agrandie.
 import wx
 
 from Utils import UTILS_Customize
+from Utils import UTILS_Diagnostic_performance as DiagnosticPerformance
 from Utils import UTILS_Interface
 
 
@@ -276,8 +277,21 @@ class NavigationPrincipale(wx.Panel):
     def MAJ_panel(self, numPage=0):
         page = self.GetPage(numPage)
         maj = getattr(page, "MAJpanel", None)
-        if maj is not None:
-            maj()
+        if maj is None:
+            return
+
+        # L'action englobe réellement InitPage() lorsqu'il s'agit du premier
+        # affichage Individus, contrairement aux mesures internes de la liste et
+        # de l'arbre qui ne couvraient pas la construction/layout du panel.
+        if page.GetName() == "Personnes":
+            with DiagnosticPerformance.mesurer_action(
+                "wx.personnes.panel.majpanel",
+                {"premier_chargement": not bool(getattr(page, "init", False))},
+            ):
+                maj()
+            return
+
+        maj()
 
     def ActiveToolBook(self, etat=True):
         """API historique conservée pour le reste de Teamworks."""

@@ -25,12 +25,14 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
             _smoke_host = None
             _smoke_host_reopen = None
             _smoke_host_edit = None
+            _smoke_question_dialog = None
             _smoke_person_id = None
             _smoke_category_ids = []
             _smoke_question_ids = []
             try:
                 import GestionDB as _smoke_gestiondb
                 from Ctrl import CTRL_Page_questionnaire as _smoke_questionnaire_page
+                from Dlg import DLG_Saisie_question as _smoke_saisie_question
 
                 _smoke_person_name = "__TEAMWORKS_SMOKE_QUESTIONNAIRE_PERSON__"
                 _smoke_text_create = "__TEAMWORKS_SMOKE_QUESTIONNAIRE_CREATE__"
@@ -113,6 +115,18 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                     _smoke_db.Commit()
                 finally:
                     _smoke_db.Close()
+
+                print("TEAMWORKS_SMOKE_QUESTIONNAIRE_STAGE:new-question-dialog", flush=True)
+                _smoke_question_dialog = _smoke_saisie_question.Dialog(
+                    frame, type="individu", IDquestion=None
+                )
+                assert _smoke_question_dialog.ctrl_controle.GetCode() is not None
+                assert _smoke_question_dialog.ctrl_hauteur is not None
+                assert _smoke_question_dialog.ctrl_valmin is not None
+                assert _smoke_question_dialog.ctrl_valmax is not None
+                _smoke_question_dialog.Destroy()
+                _smoke_question_dialog = None
+                wx.Yield()
 
                 print("TEAMWORKS_SMOKE_QUESTIONNAIRE_STAGE:create-page", flush=True)
                 _smoke_host = wx.Frame(frame, title="Smoke Questionnaire création")
@@ -258,6 +272,7 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                     "_smoke_host",
                     "_smoke_host_reopen",
                     "_smoke_host_edit",
+                    "_smoke_question_dialog",
                 ):
                     _smoke_window = locals().get(_smoke_window_name)
                     if _smoke_window is not None:

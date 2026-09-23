@@ -1,65 +1,59 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-#------------------------------------------------------------------------
-# Application :    Noethys, gestion multi-activités
-# Site internet :  www.noethys.com
-# Auteur:           Ivan LUCAS
-# Copyright:       (c) 2010-13 Ivan LUCAS
-# Licence:         Licence GNU GPL
-#------------------------------------------------------------------------
+"""Aide utilisateur Teamworks-CCNS.
 
+La documentation courante est publiée avec MkDocs. Les anciens identifiants
+d'aide restent acceptés et sont traduits vers les pages modernes lorsqu'une
+correspondance fiable existe.
+"""
 
-import Chemins
-from Utils.UTILS_Traduction import _
 import wx
-from Utils import UTILS_Config
-from Dlg import DLG_Financement
-import webbrowser
+
+from Utils.UTILS_Traduction import _
+
+
+DOCUMENTATION_BASE = "https://fr4nck.github.io/Teamworks-CCNS/"
+
+_PAGE_MAP = {
+    "Personnes": "utilisation/individus/",
+    "Laficheindividuelle": "utilisation/individus/",
+    "Contrats": "utilisation/contrats-ccns-cee/",
+    "DPAE": "utilisation/dpae-due/",
+    "DUE": "utilisation/dpae-due/",
+    "EditeurdEmails": "utilisation/documents/",
+    "Publipostage": "utilisation/documents/",
+    "Vacances": "administration/parametrage/",
+    "Lesgadgets": "administration/parametrage/",
+    "Rechercherunemisejourdulogiciel": "demarrage/mise-a-jour/",
+}
+
+
+def GetUrl(page=None):
+    """Retourne l'URL de documentation la plus précise connue."""
+    suffixe = _PAGE_MAP.get(page, "")
+    return DOCUMENTATION_BASE + suffixe
 
 
 def Aide(page=None):
-    """ Ouverture de l'aide dans le navigateur """
-    # None -> Renvoie vers le sommaire
-    # "" -> Rubrique non disponible
-    
-    # Récupération des codes de la licence
-    identifiant = UTILS_Config.GetParametre("enregistrement_identifiant", defaut=None)
-    code = UTILS_Config.GetParametre("enregistrement_code", defaut=None)
-    
-    # Redirection si aucune licence
-    if identifiant == None and code == None :
-        dlg = DLG_Financement.Dialog(None, code="documentation")
-        dlg.ShowModal() 
-        dlg.Destroy()
-        return
+    """Ouvre la documentation Teamworks-CCNS dans le navigateur par défaut."""
+    url = GetUrl(page)
+    try:
+        ouvert = wx.LaunchDefaultBrowser(url)
+    except Exception:
+        ouvert = False
 
-    # Si aucune aide existe, propose de renvoyer vers le sommaire
-    if page == "" :
-        dlg = wx.MessageDialog(None, _(u"Cette rubrique d'aide n'est pas encore disponible.\n\nSouhaitez-vous être redirigé vers le sommaire de l'aide ?"), _(u"Pas de rubrique disponible"), wx.YES_NO|wx.YES_DEFAULT|wx.CANCEL|wx.ICON_QUESTION)
-        reponse = dlg.ShowModal() 
-        dlg.Destroy()
-        if reponse != wx.ID_YES :
-            return
+    if ouvert is False:
+        wx.MessageBox(
+            _(
+                u"La documentation Teamworks-CCNS n'a pas pu être ouverte "
+                u"automatiquement.\n\nAdresse : %s"
+            ) % url,
+            _(u"Documentation Teamworks-CCNS"),
+            wx.OK | wx.ICON_INFORMATION,
+        )
+    return url
 
-    # Création de l'URL
-    listeOptions = []
-    
-    if identifiant != None and code != None :
-        listeOptions.append("identifiant=%s" % identifiant)
-        listeOptions.append("code=%s" % code)
-        
-    if page != None and page != "" :
-        listeOptions.append("page=%s.php" % page)
-        
-    url = "https://www.teamworks.ovh/aide/html/identification.php"
-    if len(listeOptions) > 0 :
-        url += "?" + "&".join(listeOptions)
-        
-    # Ouverture du navigateur
-    webbrowser.open(url)
 
-    
 if __name__ == "__main__":
     app = wx.App(0)
     Aide()
-    app.MainLoop()

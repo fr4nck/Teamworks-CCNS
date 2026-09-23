@@ -165,11 +165,11 @@ class PanelContacts(scrolled.ScrolledPanel):
         for IDpersonne, civilite, nom, prenom, date_naiss, adresse_resid, cp_resid, ville_resid, emails, fixes, fax, mobile in self.listeContacts:
             
             # Création des contrôles
-            bouton_synchro = wx.BitmapButton(self, 10000 + IDpersonne, wx.Bitmap('Images/16x16/Ok_2.png', wx.BITMAP_TYPE_ANY))
+            bouton_synchro = CTRL_Bouton_image.CTRL(self, id=10000 + IDpersonne, bitmap=wx.Bitmap('Images/16x16/Ok_2.png', wx.BITMAP_TYPE_ANY))
             setattr(self, "bouton_synchro_%s" % IDpersonne, bouton_synchro)
             bouton_synchro.SetBitmapDisabled(wx.Bitmap('Images/16x16/Ok_3.png', wx.BITMAP_TYPE_ANY))
             bouton_synchro.SetToolTip(wx.ToolTip(u'Cliquez ici pour synchroniser la fiche de ' + prenom + ' ' + nom + '.'))
-            bouton_suppr = wx.BitmapButton(self, 20000 + IDpersonne, wx.Bitmap('Images/16x16/Supprimer_2.png', wx.BITMAP_TYPE_ANY))
+            bouton_suppr = CTRL_Bouton_image.CTRL(self, id=20000 + IDpersonne, bitmap=wx.Bitmap('Images/16x16/Supprimer_2.png', wx.BITMAP_TYPE_ANY))
             setattr(self, "bouton_suppr_%s" % IDpersonne, bouton_suppr)
             bouton_suppr.SetBitmapDisabled(wx.Bitmap('Images/16x16/Supprimer_3.png', wx.BITMAP_TYPE_ANY))
             bouton_suppr.SetToolTip(wx.ToolTip(u'Cliquez ici pour supprimer la fiche de ' + prenom + ' ' + nom + ' de Outlook.'))
@@ -378,8 +378,8 @@ class Dialog(wx.Dialog):
         self.label_modif.SetBackgroundColour(COULEUR_MODIF)
         self.label_non_synchro.SetBackgroundColour(COULEUR_NON_SYNCHRO)
         
-        self.bouton_synchroTout = wx.Button(self.sizer_grid_staticbox, -1, _(u"Tout synchroniser"))
-        self.bouton_supprTout = wx.Button(self.sizer_grid_staticbox, -1, _(u"Tout désynchroniser"))
+        self.bouton_synchroTout = CTRL_Bouton_image.CTRL(self.sizer_grid_staticbox, texte=_(u"Tout synchroniser"))
+        self.bouton_supprTout = CTRL_Bouton_image.CTRL(self.sizer_grid_staticbox, texte=_(u"Tout désynchroniser"), role="danger")
 
         self.bouton_aide = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))
         self.bouton_annuler = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Fermer"), cheminImage=Chemins.GetStaticPath("Images/32x32/Fermer.png"))
@@ -420,8 +420,8 @@ class Dialog(wx.Dialog):
         grid_sizer_commandes.Add( self.label_modif, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 0)
         grid_sizer_commandes.Add( self.label_non_synchro, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 0)
         grid_sizer_commandes.Add( (5, 5), 1, wx.ALL|wx.EXPAND, 5)
-        grid_sizer_commandes.Add(self.bouton_synchroTout, 1, wx.ALL|wx.EXPAND, 5)
-        grid_sizer_commandes.Add(self.bouton_supprTout, 1, wx.ALL|wx.EXPAND, 5)
+        grid_sizer_commandes.Add(self.bouton_synchroTout, 0, wx.ALL | wx.ALIGN_CENTER_VERTICAL, 5)
+        grid_sizer_commandes.Add(self.bouton_supprTout, 0, wx.ALL | wx.ALIGN_CENTER_VERTICAL, 5)
         grid_sizer_commandes.AddGrowableCol(3)
         
         grid_sizer_2.Add(grid_sizer_commandes, 1, wx.ALL|wx.EXPAND, 0)

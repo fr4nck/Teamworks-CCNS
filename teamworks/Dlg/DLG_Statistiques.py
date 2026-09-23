@@ -505,8 +505,8 @@ class Dialog(wx.Dialog):
         self.staticbox_tableau = wx.StaticBox(self.panel, -1, _(u"Statistiques"))
         
         # Mode d'affichage
-        self.bouton_mode_tableau = wx.BitmapButton(self.staticbox_mode, -1, wx.Bitmap(Chemins.GetStaticPath("Images/32x32/Tableau.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_mode_graph = wx.BitmapButton(self.staticbox_mode, -1, wx.Bitmap(Chemins.GetStaticPath("Images/32x32/GraphNB.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_mode_tableau = CTRL_Bouton_image.CTRL(self.staticbox_mode, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/32x32/Tableau.png"))
+        self.bouton_mode_graph = CTRL_Bouton_image.CTRL(self.staticbox_mode, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/32x32/GraphNB.png"))
         
         # Période
         self.radio_dates = wx.RadioButton(self.staticbox_periode, -1, _(u"Dates sélectionnées"), size=(300, -1), style = wx.RB_GROUP)
@@ -575,11 +575,11 @@ class Dialog(wx.Dialog):
         
         # Boutons
         self.bouton_aide = CTRL_Bouton_image.CTRL(self.panel, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))
-        self.bouton_excel= wx.BitmapButton(self.panel, -1, wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Export_excel.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_imprimer_tableau = wx.BitmapButton(self.panel, -1, wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Imprimer_tableau.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_save_image = wx.BitmapButton(self.panel, -1, wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Enregistrer_graphe.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_clipboard_image = wx.BitmapButton(self.panel, -1, wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Clipboard_image.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_imprimer_image = wx.BitmapButton(self.panel, -1, wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Imprimer_graphe.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_excel= CTRL_Bouton_image.CTRL(self.panel, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/BoutonsImages/Export_excel.png"))
+        self.bouton_imprimer_tableau = CTRL_Bouton_image.CTRL(self.panel, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/BoutonsImages/Imprimer_tableau.png"))
+        self.bouton_save_image = CTRL_Bouton_image.CTRL(self.panel, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/BoutonsImages/Enregistrer_graphe.png"))
+        self.bouton_clipboard_image = CTRL_Bouton_image.CTRL(self.panel, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/BoutonsImages/Clipboard_image.png"))
+        self.bouton_imprimer_image = CTRL_Bouton_image.CTRL(self.panel, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/BoutonsImages/Imprimer_graphe.png"))
         self.bouton_fermer = CTRL_Bouton_image.CTRL(self.panel, texte=_(u"Fermer"), cheminImage=Chemins.GetStaticPath("Images/32x32/Fermer.png"))
 
         self.__set_properties()
@@ -635,8 +635,8 @@ class Dialog(wx.Dialog):
         
         # Mode d'affichage
         sizerStaticBox_mode = wx.StaticBoxSizer(self.staticbox_mode, wx.HORIZONTAL)
-        sizerStaticBox_mode.Add(self.bouton_mode_tableau, 1, wx.EXPAND|wx.TOP|wx.LEFT|wx.BOTTOM, 5)
-        sizerStaticBox_mode.Add(self.bouton_mode_graph, 1, wx.EXPAND|wx.ALL, 5)
+        sizerStaticBox_mode.Add(self.bouton_mode_tableau, 1, wx.EXPAND|wx.TOP|wx.LEFT|wx.BOTTOM, 5)  # button-stretch-ok: sélecteur de mode
+        sizerStaticBox_mode.Add(self.bouton_mode_graph, 1, wx.EXPAND|wx.ALL, 5)  # button-stretch-ok: sélecteur de mode
         grid_sizer_haut_gauche.Add(sizerStaticBox_mode, 1, wx.EXPAND|wx.ALL, 0)
                 
         # Période
@@ -728,6 +728,9 @@ class Dialog(wx.Dialog):
         grid_sizer_base.AddGrowableCol(0)
         
         self.panel.SetSizer(grid_sizer_base)
+        sizer_dialog = wx.BoxSizer(wx.VERTICAL)
+        sizer_dialog.Add(self.panel, 1, wx.EXPAND, 0)
+        self.SetSizer(sizer_dialog)
         self.Layout()
         
         self.SetSize((970, 700))

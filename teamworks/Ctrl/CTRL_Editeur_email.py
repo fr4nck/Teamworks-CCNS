@@ -13,6 +13,7 @@ import Chemins
 from Utils import UTILS_Adaptations
 from Utils.UTILS_Traduction import _
 import wx
+from Ctrl import CTRL_Bouton_image
 import wx.richtext as rt
 import six
 import copy
@@ -254,7 +255,7 @@ class Panel_Expediteur(wx.Panel):
         
         # Contrôles
         self.ctrl_exp = CTRL_Expediteur(self)
-        self.bouton_exp = self.bouton_exp = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Mecanisme.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_exp = CTRL_Bouton_image.CTRL(self, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Mecanisme.png"))
         
         # Propriétés
         self.ctrl_exp.SetToolTip(wx.ToolTip(_(u"Sélectionnez l'adresse d'expéditeur")))
@@ -263,7 +264,7 @@ class Panel_Expediteur(wx.Panel):
         # Layout
         grid_sizer = wx.FlexGridSizer(rows=1, cols=2, vgap=5, hgap=5)
         grid_sizer.Add(self.ctrl_exp, 0, wx.EXPAND, 0)
-        grid_sizer.Add(self.bouton_exp, 0, wx.EXPAND, 0)
+        grid_sizer.Add(self.bouton_exp, 0, wx.ALIGN_CENTER_VERTICAL, 0)
         grid_sizer.AddGrowableRow(0)
         grid_sizer.AddGrowableCol(0)
         self.SetSizer(grid_sizer)
@@ -792,7 +793,7 @@ class CTRL(wx.Panel):
         dlg = wx.Dialog(self, title="HTML", style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
         html = wx.html.HtmlWindow(dlg, size=(500,400), style=wx.BORDER_SUNKEN)
         html.SetPage(source)
-        btn = wx.Button(dlg, wx.ID_CANCEL)
+        btn = CTRL_Bouton_image.CTRL(dlg, id=wx.ID_CANCEL, texte=_(u"Fermer"))
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(html, 1, wx.ALL|wx.EXPAND, 5)
         sizer.Add(btn, 0, wx.ALL|wx.CENTER, 10)
@@ -865,10 +866,10 @@ class MyFrame(wx.Frame):
         sizer_1.Add(panel, 1, wx.ALL|wx.EXPAND)
         self.SetSizer(sizer_1)
         self.ctrl = CTRL(panel)
-        self.bouton_test = wx.Button(panel, -1, "Test")
+        self.bouton_test = CTRL_Bouton_image.CTRL(panel, texte="Test")
         sizer_2 = wx.BoxSizer(wx.VERTICAL)
         sizer_2.Add(self.ctrl, 1, wx.ALL|wx.EXPAND, 4)
-        sizer_2.Add(self.bouton_test, 0, wx.ALL | wx.EXPAND, 4)
+        sizer_2.Add(self.bouton_test, 0, wx.ALL, 4)
         panel.SetSizer(sizer_2)
         self.Layout()
         self.Bind(wx.EVT_BUTTON, self.OnBoutonTest, self.bouton_test)

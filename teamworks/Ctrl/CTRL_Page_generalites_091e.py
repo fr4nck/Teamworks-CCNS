@@ -143,6 +143,96 @@ class Panel_general(LEGACY.Panel_general):
         for section in self._sections():
             self._detach_window_from_sizer(sizer, section)
 
+    def _stabiliser_minimum_sections(self):
+        """Propage les minima des contrôles jusqu'aux sections.
+
+        wxWidgets peut conserver le BestSize calculé avant le Reparent des
+        sections. Dans ce cas, le TextCtrl multiligne Adresse possède bien un
+        MinSize de 72 px mais son panel/sa Section continuent d'annoncer une
+        hauteur plus petite au sizer responsive. On recalcule donc la chaîne
+        de minima de bas en haut, sans imposer une taille de fenêtre.
+        """
+        self.text_adresse.SetMinSize((-1, UTILS_Styles.Scale(72)))
+        self.text_memo.SetMinSize((-1, UTILS_Styles.Scale(130)))
+        self.list_ctrl_coords.SetMinSize((-1, UTILS_Styles.Scale(150)))
+
+        for section in self._sections():
+            contenu = section.GetContentPanel()
+            try:
+                contenu.InvalidateBestSize()
+            except Exception:
+                pass
+            contenu.Layout()
+            contenu_sizer = contenu.GetSizer()
+            if contenu_sizer is not None:
+                minimum_contenu = contenu_sizer.GetMinSize()
+                hauteur_contenu = max(
+                    1,
+                    minimum_contenu.GetHeight(),
+                    contenu.GetMinSize().GetHeight(),
+                )
+                contenu.SetMinSize((-1, hauteur_contenu))
+
+            try:
+                section.InvalidateBestSize()
+            except Exception:
+                pass
+            section.Layout()
+            section_sizer = section.GetSizer()
+            if section_sizer is not None:
+                minimum_section = section_sizer.GetMinSize()
+                hauteur_section = max(
+                    1,
+                    minimum_section.GetHeight(),
+                    section.GetMinSize().GetHeight(),
+                )
+                section.SetMinSize((-1, hauteur_section))
+
+    def _rafraichir_taille_virtuelle(self):
+        """Recalcule explicitement la hauteur scrollable après chaque relayout.
+
+        Sous Windows, le BestSize des panels reparentés pouvait rester basé sur
+        leur ancienne hauteur comprimée. La zone Adresse héritait alors d'une
+        hauteur minuscule en mode fenêtré malgré le SetMinSize du TextCtrl.
+        """
+        if self._scroll_host is None:
+            return
+        sizer = self._scroll_host.GetSizer()
+        if sizer is None:
+            return
+
+        self._stabiliser_minimum_sections()
+
+        for section in self._sections():
+            try:
+                section.GetContentPanel().Layout()
+                section.Layout()
+                section.InvalidateBestSize()
+            except Exception:
+                pass
+
+        self._scroll_host.Layout()
+        minimum = sizer.GetMinSize()
+        client = self._scroll_host.GetClientSize()
+        largeur = max(client.GetWidth(), minimum.GetWidth())
+        hauteur = max(client.GetHeight(), minimum.GetHeight())
+        self._scroll_host.SetVirtualSize((largeur, hauteur))
+        # Sous MSW, Layout() peut continuer à dimensionner le sizer sur la
+        # seule zone cliente visible. Les enfants sont alors comprimés avant
+        # que la taille virtuelle ne soit prise en compte. On applique le
+        # layout sur le canevas virtuel calculé afin que les MinSize des
+        # contrôles multilignes restent effectifs.
+        sizer.SetDimension(0, 0, largeur, hauteur)
+        self._scroll_host.FitInside()
+        virtual = self._scroll_host.GetVirtualSize()
+        if virtual.GetWidth() < largeur or virtual.GetHeight() < hauteur:
+            self._scroll_host.SetVirtualSize(
+                (
+                    max(largeur, virtual.GetWidth()),
+                    max(hauteur, virtual.GetHeight()),
+                )
+            )
+
     def _installer_zone_defilante(self):
         """Transforme la page historique en contenu scrollable sans le dupliquer."""
         ancien_sizer = self.GetSizer()
@@ -157,6 +247,8 @@ class Panel_general(LEGACY.Panel_general):
 
         for section in self._sections():
             section.Reparent(host)
+
+        self._stabiliser_minimum_sections()
 
         racine = wx.BoxSizer(wx.VERTICAL)
         racine.Add(host, 1, wx.EXPAND)
@@ -179,10 +271,7 @@ class Panel_general(LEGACY.Panel_general):
             scale_percent=self._scale_percent(),
         )
         if not force and colonnes == self._responsive_columns:
-            try:
-                self._scroll_host.FitInside()
-            except Exception:
-                pass
+            self._rafraichir_taille_virtuelle()
             return
 
         self._responsive_layout_busy = True
@@ -234,7 +323,7 @@ class Panel_general(LEGACY.Panel_general):
             self._scroll_host.SetSizer(sizer, deleteOld=True)
             self._responsive_columns = colonnes
             self._scroll_host.Layout()
-            self._scroll_host.FitInside()
+            self._rafraichir_taille_virtuelle()
             self.Layout()
             self._scroll_host.Refresh()
         finally:

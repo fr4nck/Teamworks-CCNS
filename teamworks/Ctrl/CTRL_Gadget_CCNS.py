@@ -81,7 +81,7 @@ class Panel(wx.Panel):
             8,
         )
 
-        sizer_buttons = wx.WrapSizer(wx.HORIZONTAL)
+        sizer_buttons = wx.WrapSizer(wx.HORIZONTAL, 0)
         sizer_buttons.Add(self.button_refresh, 0, wx.RIGHT | wx.BOTTOM, 8)
         sizer_buttons.Add(self.button_open_contract, 0, wx.BOTTOM, 8)
         sizer_base.Add(sizer_buttons, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, 8)

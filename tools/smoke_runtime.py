@@ -12,6 +12,12 @@ from typing import Iterable
 
 DEFAULT_ENCODINGS = ("utf-8",)
 TIMEOUT_RETURN_CODE = 124
+SQL_ERROR_RETURN_CODE = 125
+SQL_ERROR_MARKERS = (
+    "Requete SQL incorrecte :",
+    "Requete sql d'INSERT incorrecte :",
+    "Erreur dans creation table:",
+)
 
 
 def console_safe_text(value: str, encoding: str | None = None) -> str:
@@ -89,6 +95,10 @@ def _append_crash_reports(output: str, log_dir: Path) -> str:
     return output
 
 
+def _contient_erreur_sql(output: str) -> bool:
+    return any(marker in output for marker in SQL_ERROR_MARKERS)
+
+
 def run_entrypoint(
     patched: Path,
     *,
@@ -118,4 +128,7 @@ def run_entrypoint(
 
     output = decode_output(result.stdout) + "\n" + decode_output(result.stderr)
     output = _append_crash_reports(output, log_dir)
+    if _contient_erreur_sql(output):
+        output += "\nTEAMWORKS_SMOKE_SQL_ERROR\n"
+        return SQL_ERROR_RETURN_CODE, output
     return result.returncode, output

@@ -181,7 +181,7 @@ class Panel(CORE.Panel):
         self.ctrl_periodes_remarques = self._input_height(wx.TextCtrl(parent, -1, u""))
 
         gap = UTILS_Styles.GetLayoutSpacing("field_gap")
-        actions = wx.WrapSizer(wx.HORIZONTAL)
+        actions = wx.WrapSizer(wx.HORIZONTAL, 0)
         for bouton in (self.bouton_ajouter_periode, self.bouton_modifier_periode, self.bouton_supprimer_periode):
             actions.Add(bouton, 0, wx.RIGHT | wx.BOTTOM, gap)
         sizer = wx.BoxSizer(wx.VERTICAL)

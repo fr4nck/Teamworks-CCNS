@@ -106,7 +106,8 @@ class CTRL_Choix(FastObjectListView):
        
     def MAJ(self):
         self.InitObjectListView()
-        self.GetParent().MAJ_apercu() 
+        # Le parent wx est la StaticBox ; le dialogue propriétaire est au-dessus.
+        self.GetParent().GetParent().MAJ_apercu() 
 
     def OnContextMenu(self, event):
         """Ouverture du menu contextuel """      
@@ -291,7 +292,8 @@ class CTRL_Categorie(wx.Choice):
         return self.dictDonnees[index]["IDcategorie"]
     
     def OnChoix(self, event):
-        self.parent.MAJ_apercu() 
+        # Le parent wx est la StaticBox ; le dialogue propriétaire est au-dessus.
+        self.GetParent().GetParent().MAJ_apercu() 
         
             
 # -----------------------------------------------------------------------------------------------------------------------
@@ -335,32 +337,35 @@ class CTRL_Controle(BitmapComboBox):
             return {}
         
     def OnChoix(self, event=None, MAJ=True, insereValeursDefaut=True):
+        # Les contrôles vivent dans une wx.StaticBox, mais les options et
+        # méthodes pilotées appartiennent au Dialog qui en est le parent.
+        owner = self.GetParent().GetParent()
         dictOptions = self.GetDictOptions() 
         if "hauteur" in dictOptions :
-            self.parent.ctrl_hauteur.Enable(True) 
+            owner.ctrl_hauteur.Enable(True) 
             if insereValeursDefaut == True :
-                self.parent.ctrl_hauteur.SetValue(dictOptions["hauteur"])
+                owner.ctrl_hauteur.SetValue(dictOptions["hauteur"])
         else:
-            self.parent.ctrl_hauteur.Enable(False) 
+            owner.ctrl_hauteur.Enable(False) 
         if "min" in dictOptions :
-            self.parent.ctrl_valmin.Enable(True) 
+            owner.ctrl_valmin.Enable(True) 
             if insereValeursDefaut == True :
-                self.parent.ctrl_valmin.SetValue(dictOptions["min"])
+                owner.ctrl_valmin.SetValue(dictOptions["min"])
         else:
-            self.parent.ctrl_valmin.Enable(False) 
+            owner.ctrl_valmin.Enable(False) 
         if "max" in dictOptions :
-            self.parent.ctrl_valmax.Enable(True) 
+            owner.ctrl_valmax.Enable(True) 
             if insereValeursDefaut == True :
-                self.parent.ctrl_valmax.SetValue(dictOptions["max"])
+                owner.ctrl_valmax.SetValue(dictOptions["max"])
         else:
-            self.parent.ctrl_valmax.Enable(False) 
+            owner.ctrl_valmax.Enable(False) 
         if "choix" in dictOptions :
-            self.parent.ActiveCtrlChoix(True)
+            owner.ActiveCtrlChoix(True)
         else:
-            self.parent.ActiveCtrlChoix(False)
+            owner.ActiveCtrlChoix(False)
 
         if MAJ == True :
-            self.parent.MAJ_apercu() 
+            owner.MAJ_apercu() 
 
 
 # -----------------------------------------------------------------------------------------------------------------------
@@ -394,11 +399,11 @@ class Dialog(wx.Dialog):
         # Choix
         self.box_choix_staticbox = wx.StaticBox(self, -1, _(u"Liste de choix"))
         self.ctrl_choix = CTRL_Choix(self.box_choix_staticbox, IDquestion=IDquestion)
-        self.bouton_ajouter_choix = wx.BitmapButton(self.box_choix_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_modifier_choix = wx.BitmapButton(self.box_choix_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Modifier.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_supprimer_choix = wx.BitmapButton(self.box_choix_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_monter_choix = wx.BitmapButton(self.box_choix_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Fleche_haut.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_descendre_choix = wx.BitmapButton(self.box_choix_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Fleche_bas.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_ajouter_choix = CTRL_Bouton_image.CTRL(self.box_choix_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Ajouter.png"))
+        self.bouton_modifier_choix = CTRL_Bouton_image.CTRL(self.box_choix_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Modifier.png"))
+        self.bouton_supprimer_choix = CTRL_Bouton_image.CTRL(self.box_choix_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Supprimer.png"))
+        self.bouton_monter_choix = CTRL_Bouton_image.CTRL(self.box_choix_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Fleche_haut.png"))
+        self.bouton_descendre_choix = CTRL_Bouton_image.CTRL(self.box_choix_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Fleche_bas.png"))
 
         # Options
         self.box_options_staticbox = wx.StaticBox(self, -1, _(u"Options"))
@@ -629,7 +634,7 @@ class Dialog(wx.Dialog):
         
     def MAJ_apercu(self):
         label = self.GetLabel() 
-        IDcategorie = self.GetCategorie() 
+        IDcategorie = self.GetCategorie()
         controle = self.GetControle()
         visible = self.GetVisible() 
         listeChoix = self.GetListeChoix() 
@@ -687,7 +692,7 @@ class Dialog(wx.Dialog):
     def OnBoutonOk(self, event): 
         # Récupération des valeurs
         label = self.GetLabel() 
-        IDcategorie = self.GetCategorie() 
+        IDcategorie = self.GetCategorie()
         controle = self.GetControle()
         visible = self.GetVisible() 
         listeChoix = self.GetListeChoix() 

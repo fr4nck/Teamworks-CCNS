@@ -120,7 +120,7 @@ class Dialog(wx.Dialog):
         self.label_code = wx.StaticText(self.staticbox_code_staticbox, -1, _(u"Code :"))
         self.ctrl_code = masked.TextCtrl(self.staticbox_code_staticbox, -1, "", mask="AAAA-AAAA-AAAA-AAAA-AAAA", formatcodes="F!")
         self.ctrl_code.SetMinSize((190, -1))
-        self.bouton_validite = wx.Button(self.staticbox_code_staticbox, -1, _(u"Vérifier la validité"))
+        self.bouton_validite = CTRL_Bouton_image.CTRL(self.staticbox_code_staticbox, texte=_(u"Vérifier la validité"))
         self.ctrl_image = wx.StaticBitmap(self.staticbox_code_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Interdit.png"), wx.BITMAP_TYPE_ANY))
         self.label_validite = wx.StaticText(self.staticbox_code_staticbox, -1, _(u"Veuillez saisir un code."))
         
@@ -169,8 +169,8 @@ class Dialog(wx.Dialog):
         
         grid_sizer_code2 = wx.FlexGridSizer(rows=1, cols=2, vgap=5, hgap=5)
         grid_sizer_code2.Add(self.ctrl_code, 0, wx.EXPAND, 0)
-        grid_sizer_code2.Add(self.bouton_validite, 0, wx.EXPAND, 0)
-        grid_sizer_code2.AddGrowableCol(1)
+        grid_sizer_code2.Add(self.bouton_validite, 0, wx.ALIGN_CENTER_VERTICAL, 0)
+        grid_sizer_code2.AddGrowableCol(0)
         grid_sizer_code.Add(grid_sizer_code2, 0, wx.EXPAND, 0)
 
         grid_sizer_code.Add((5, 5), 0, wx.EXPAND, 0)

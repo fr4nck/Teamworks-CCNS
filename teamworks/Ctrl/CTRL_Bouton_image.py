@@ -97,6 +97,9 @@ def _appliquer_contrat_bouton(control, texte="", role="default", icon_only=False
     control.SetFont(UTILS_Styles.GetFont("label"))
     control._teamworks_font_scaled = True
     control.SetForegroundColour(UTILS_Interface.GetToken(_token_texte_bouton(role)))
+    # Recalculer le BestSize sans hériter d'une ancienne largeur maximale,
+    # notamment après SetTexte().
+    control.SetMaxSize((-1, -1))
     control.SetInitialSize()
 
     best = control.GetBestSize()
@@ -104,7 +107,11 @@ def _appliquer_contrat_bouton(control, texte="", role="default", icon_only=False
     largeur_min = best.GetWidth()
     if icon_only:
         largeur_min = max(largeur_min, hauteur_min)
-    control.SetMinSize((largeur_min, max(best.GetHeight(), hauteur_min)))
+    hauteur = max(best.GetHeight(), hauteur_min)
+    control.SetMinSize((largeur_min, hauteur))
+    # Un bouton d'action garde sa largeur naturelle. Le parent peut consommer
+    # l'espace restant avec un spacer, mais ne transforme pas le bouton en barre.
+    control.SetMaxSize((largeur_min, -1))
 
 
 class CTRL(wx.Button):
@@ -121,11 +128,14 @@ class CTRL(wx.Button):
         positionImage=wx.LEFT,
         margesTexte=None,
         role="default",
+        bitmap=None,
+        style=0,
     ):
-        wx.Button.__init__(self, parent, id=id, label=texte)
+        wx.Button.__init__(self, parent, id=id, label=texte, style=style)
         self.parent = parent
         self.texte = texte
         self.cheminImage = cheminImage
+        self.bitmapSource = bitmap
         self.role = role if role in BUTTON_ROLES else "default"
         taille_defaut = UTILS_Styles.ICON_SIZES["medium"]
         self.tailleImage = tailleImage or (taille_defaut, taille_defaut)
@@ -139,6 +149,13 @@ class CTRL(wx.Button):
         self.MAJ()
 
     def _bitmap(self):
+        if self.bitmapSource is not None:
+            try:
+                if self.bitmapSource.IsOk():
+                    return self.bitmapSource
+            except Exception:
+                pass
+
         taille_cible = _echelle_taille(self.tailleImage)
         chemin = _chemin_image_existant(self.cheminImage, max(taille_cible))
         if chemin is None:
@@ -189,7 +206,9 @@ class CTRL(wx.Button):
         largeur_min = best.GetWidth()
         if bitmap.IsOk() and not self.texte:
             largeur_min = max(largeur_min, hauteur_min)
-        self.SetMinSize((largeur_min, max(best.GetHeight(), hauteur_min)))
+        hauteur = max(best.GetHeight(), hauteur_min)
+        self.SetMinSize((largeur_min, hauteur))
+        self.SetMaxSize((largeur_min, -1))
         self._stabiliser_rendu()
 
     def AppliquerTheme(self):
@@ -197,7 +216,7 @@ class CTRL(wx.Button):
             self,
             texte=self.texte,
             role=self.role,
-            icon_only=bool(self.cheminImage and not self.texte),
+            icon_only=bool((self.cheminImage or self.bitmapSource is not None) and not self.texte),
         )
 
     def RafraichirVisuel(self):
@@ -218,6 +237,77 @@ class CTRL(wx.Button):
         self.role = role if role in BUTTON_ROLES else "default"
         self.AppliquerTheme()
         self._stabiliser_rendu()
+
+
+class Compact(wx.Button):
+    """Petit bouton technique Teamworks intégré à un champ ou une grille.
+
+    Il remplace les wx.Button/wx.BitmapButton historiques utilisés comme
+    sélecteurs "..." ou déclencheurs d'icône, tout en conservant leur encombrement
+    réduit. Contrairement à CTRL, il n'impose pas la hauteur d'un bouton d'action
+    principal mais il consomme quand même la charte et le contrat de largeur.
+    """
+
+    def __init__(
+        self,
+        parent,
+        id=-1,
+        texte="",
+        cheminImage=None,
+        bitmap=None,
+        size=(-1, -1),
+        role="quiet",
+        style=wx.BU_EXACTFIT,
+    ):
+        wx.Button.__init__(self, parent, id=id, label=texte, size=size, style=style)
+        self.parent = parent
+        self.texte = texte
+        self.cheminImage = cheminImage
+        self.bitmapSource = bitmap
+        self.role = role if role in BUTTON_ROLES else "quiet"
+        self._teamworks_text_style = "label"
+        self.MAJ()
+
+    def _bitmap(self):
+        if self.bitmapSource is not None:
+            try:
+                if self.bitmapSource.IsOk():
+                    return self.bitmapSource
+            except Exception:
+                pass
+        if not self.cheminImage:
+            return wx.NullBitmap
+        chemin = _chemin_image_existant(
+            self.cheminImage,
+            UTILS_Styles.ICON_SIZES["small"],
+        )
+        if chemin is None:
+            return wx.NullBitmap
+        try:
+            return wx.Bitmap(str(chemin), wx.BITMAP_TYPE_ANY)
+        except Exception:
+            return wx.NullBitmap
+
+    def MAJ(self):
+        self.SetFont(UTILS_Styles.GetFont("label"))
+        self.SetForegroundColour(
+            UTILS_Interface.GetToken(_token_texte_bouton(self.role))
+        )
+        bitmap = self._bitmap()
+        if bitmap.IsOk():
+            self.SetBitmap(bitmap)
+            self.SetBitmapMargins((2, 0))
+        self.SetInitialSize()
+        best = self.GetBestSize()
+        largeur = max(best.GetWidth(), 20)
+        hauteur = max(best.GetHeight(), 20)
+        self.SetMinSize((largeur, hauteur))
+        self.SetMaxSize((largeur, hauteur))
+        try:
+            self.InvalidateBestSize()
+            self.Refresh(False)
+        except Exception:
+            pass
 
 
 class Toggle(wx.ToggleButton):

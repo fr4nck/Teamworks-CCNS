@@ -49,7 +49,7 @@ def test_recruitment_page_removes_legacy_blue_chrome():
         assert legacy not in source
     assert "CTRL_Section.Section(" in source
     assert 'CTRL_Texte.H2(self.window_D, _(u"Candidats"))' in source
-    assert "wx.WrapSizer(wx.HORIZONTAL)" in source
+    assert "wx.WrapSizer(wx.HORIZONTAL, 0)" in source
 
 
 def test_recruitment_preserves_parent_chain_expected_by_object_list_views():
@@ -69,7 +69,7 @@ def test_recruitment_navigation_is_textual_and_flexible():
     source = _source(NAV)
     assert "class BoutonMode(CTRL_Bouton_image.Toggle):" in source
     assert "class BarreModes(wx.Panel):" in source
-    assert "wx.WrapSizer(wx.HORIZONTAL)" in source
+    assert "wx.WrapSizer(wx.HORIZONTAL, 0)" in source
     assert "CTRL_Bouton_image.Toggle.__init__" in source
     assert "Images/16x16" not in source
     assert "wx.StaticBitmap" not in source

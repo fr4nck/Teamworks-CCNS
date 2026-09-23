@@ -3,6 +3,7 @@
 """Pense-bête des références administratives RH de Teamworks CCNS."""
 
 import wx
+from Ctrl import CTRL_Bouton_image
 
 from Utils import UTILS_References_admin
 from Utils import UTILS_Styles
@@ -55,8 +56,8 @@ class Dialog(wx.Dialog):
         main.Add(notebook, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, 14)
 
         buttons = wx.StdDialogButtonSizer()
-        ok_button = wx.Button(panel, wx.ID_OK)
-        cancel_button = wx.Button(panel, wx.ID_CANCEL)
+        ok_button = CTRL_Bouton_image.CTRL(panel, id=wx.ID_OK, texte="Valider", role="primary")
+        cancel_button = CTRL_Bouton_image.CTRL(panel, id=wx.ID_CANCEL, texte="Annuler")
         buttons.AddButton(ok_button)
         buttons.AddButton(cancel_button)
         buttons.Realize()

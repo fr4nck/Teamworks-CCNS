@@ -19,28 +19,22 @@ import operator
 class Panel(wx.Panel):
     def __init__(self, parent, ID=-1):
         wx.Panel.__init__(self, parent, ID, style=wx.TAB_TRAVERSAL)
-        
-        self.barreTitre = FonctionsPerso.BarreTitre(self,  _(u"Configuration de la liste"), u"")
+        self.barreTitre = FonctionsPerso.BarreTitre(self, _(u"Configuration de la liste"), u"")
         texteIntro = _(u"Vous pouvez ici modifier les options d'affichage de la liste :")
         self.label_introduction = FonctionsPerso.StaticWrapText(self, -1, texteIntro)
         self.listCtrl = ListCtrl(self)
-        self.listCtrl.SetMinSize((20, 20)) 
-        self.bouton_haut = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Fleche_haut.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_bas = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Fleche_bas.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_reinit = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Actualiser.png"), wx.BITMAP_TYPE_ANY))
-
+        self.listCtrl.SetMinSize((20, 20))
+        self.bouton_haut = CTRL_Bouton_image.CTRL(self, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Fleche_haut.png"))
+        self.bouton_bas = CTRL_Bouton_image.CTRL(self, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Fleche_bas.png"))
+        self.bouton_reinit = CTRL_Bouton_image.CTRL(self, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Actualiser.png"))
         self.__set_properties()
         self.__do_layout()
-        
-        # Binds
         self.Bind(wx.EVT_BUTTON, self.OnBoutonReinit, self.bouton_reinit)
         self.Bind(wx.EVT_BUTTON, self.OnBoutonHaut, self.bouton_haut)
         self.Bind(wx.EVT_BUTTON, self.OnBoutonBas, self.bouton_bas)
-        
         self.bouton_haut.Enable(False)
         self.bouton_bas.Enable(False)
 
-        
     def __set_properties(self):
         self.bouton_reinit.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour réinitialiser les paramètres par défaut de l'affichage")))
         self.bouton_reinit.SetSize(self.bouton_reinit.GetBestSize())
@@ -48,7 +42,7 @@ class Panel(wx.Panel):
         self.bouton_haut.SetSize(self.bouton_haut.GetBestSize())
         self.bouton_bas.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour déplacer la colonne sélectionnée vers le bas")))
         self.bouton_bas.SetSize(self.bouton_bas.GetBestSize())
-        
+
     def __do_layout(self):
         grid_sizer_base = wx.FlexGridSizer(rows=5, cols=1, vgap=10, hgap=10)
         grid_sizer_base2 = wx.FlexGridSizer(rows=1, cols=2, vgap=5, hgap=5)
@@ -65,25 +59,22 @@ class Panel(wx.Panel):
         grid_sizer_base2.AddGrowableRow(0)
         grid_sizer_base2.AddGrowableCol(0)
         grid_sizer_base.Add(grid_sizer_base2, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
-##        grid_sizer_base.Add(self.label_conclusion, 0, 0, 0)
         self.SetSizer(grid_sizer_base)
         grid_sizer_base.Fit(self)
         grid_sizer_base.AddGrowableRow(2)
         grid_sizer_base.AddGrowableCol(0)
         self.SetAutoLayout(True)
 
-
     def OnBoutonReinit(self, event):
         self.Reinit()
 
     def Reinit(self):
-        # Avertissement
         dlg = wx.MessageDialog(self, _(u"Souhaitez-vous rétablir l'affichage par défaut ?"), "Confirmation", wx.YES_NO | wx.CANCEL | wx.ICON_EXCLAMATION)
         if dlg.ShowModal() == wx.ID_YES:
-            
-            OL = self.GetParent().GetGrandParent() 
-            listeCols = OL.listeColonnesOriginale
+            OL = self.GetParent().GetGrandParent()
+            listeCols = [list(colonne) for colonne in OL.listeColonnesOriginale]
             self.GetGrandParent().listeColonnes = listeCols
+            self.GetGrandParent().reinitialiser_presentation = True
             self.listCtrl.Importation()
             self.listCtrl.MAJListeCtrl()
             dlg.Destroy()
@@ -95,11 +86,9 @@ class Panel(wx.Panel):
         index = self.listCtrl.GetFirstSelected()
         ID = self.listCtrl.GetItemData(index)
         position = index + 1
-
         self.listCtrl.listeColonnes[index-1][8] = position
         self.listCtrl.listeColonnes[index][8] = position-1
-        
-        self.listCtrl.MAJListeCtrl(select=ID) 
+        self.listCtrl.MAJListeCtrl(select=ID)
         self.listCtrl.OnItemSelected(None)
         self.listCtrl.SetFocus()
 
@@ -107,20 +96,15 @@ class Panel(wx.Panel):
         index = self.listCtrl.GetFirstSelected()
         ID = self.listCtrl.GetItemData(index)
         position = index + 1
-        
         self.listCtrl.listeColonnes[index+1][8] = position
         self.listCtrl.listeColonnes[index][8] = position+1
-        
-        self.listCtrl.MAJListeCtrl(select=ID) 
+        self.listCtrl.MAJListeCtrl(select=ID)
         self.listCtrl.OnItemSelected(None)
         self.listCtrl.SetFocus()
 
     def MAJpanel(self):
-        self.listCtrl.MAJListeCtrl() 
-        
+        self.listCtrl.MAJListeCtrl()
 
-
-# -----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 class ListCtrl(wx.ListCtrl, CheckListCtrlMixin):
     def __init__(self, parent):
@@ -129,98 +113,65 @@ class ListCtrl(wx.ListCtrl, CheckListCtrlMixin):
         if 'phoenix' in wx.PlatformInfo:
             self.EnableCheckBoxes(True)
         self.parent = parent
-        
         self.Importation()
         self.Remplissage()
-        
         self.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.OnItemActivated)
         self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.OnItemSelected)
         self.Bind(wx.EVT_LIST_ITEM_DESELECTED, self.OnItemDeselected)
 
     def Remplissage(self, select=None):
-        # Création des colonnes
         self.InsertColumn(0, "Ordre")
         self.SetColumnWidth(0, 50)
         self.InsertColumn(1, "Label de la colonne")
         self.SetColumnWidth(1, 180)
         self.InsertColumn(2, "Description")
         self.SetColumnWidth(2, 900)
-        
-        # Remplissage avec les valeurs
         self.remplissage = True
         self.listeColonnes.sort(key=operator.itemgetter(8))
-        for ID, labelCol, alignement, largeur, nomChamp, args, description, affiche, ordre in self.listeColonnes :
-            if 'phoenix' in wx.PlatformInfo:
-                index = self.InsertItem(self.GetItemCount(), str(ordre))
-                self.SetItem(index, 1, labelCol)
-                self.SetItem(index, 2, description)
-            else:
-                index = self.InsertItem(self.GetItemCount(), str(ordre))
-                self.SetItem(index, 1, labelCol)
-                self.SetItem(index, 2, description)
+        for ID, labelCol, alignement, largeur, nomChamp, args, description, affiche, ordre in self.listeColonnes:
+            index = self.InsertItem(self.GetItemCount(), str(ordre))
+            self.SetItem(index, 1, labelCol)
+            self.SetItem(index, 2, description)
             self.SetItemData(index, ID)
-
-            # Check
-            if affiche == True :
+            if affiche:
                 self.CheckItem(index)
-
-            # Sélection
-            if ID == select :
+            if ID == select:
                 self.Select(index)
-        
         self.remplissage = False
 
     def MAJListeCtrl(self, select=None):
         self.ClearAll()
         self.Remplissage(select)
-        
+
     def OnItemActivated(self, evt):
         self.ToggleItem(evt.Index)
 
     def OnCheckItem(self, index, flag):
-        """ Ne fait rien si c'est le remplissage qui coche la case ! """
-        if self.remplissage == False :
+        if not self.remplissage:
             ID = self.GetItemData(index)
-            # Enregistre l'affichage True/False du gadget dans la base
             self.listeColonnes[ID][7] = flag
-        else:
-            pass
 
     def OnItemSelected(self, event):
         index = self.GetFirstSelected()
-        # Règle bouton haut
-        if index == 0 :
-            self.parent.bouton_haut.Enable(False)
-        else:
-            self.parent.bouton_haut.Enable(True)
-        # Règle bouton bas
-        if index == self.GetItemCount()-1 :
-            self.parent.bouton_bas.Enable(False)
-        else:
-            self.parent.bouton_bas.Enable(True)
-        
+        self.parent.bouton_haut.Enable(index != 0)
+        self.parent.bouton_bas.Enable(index != self.GetItemCount()-1)
+
     def OnItemDeselected(self, event):
         self.parent.bouton_haut.Enable(False)
         self.parent.bouton_bas.Enable(False)
 
     def Importation(self):
-        # Récupération des données
         listeCols = self.GetGrandParent().GetParent().listeColonnes
         self.listeColonnes = []
-        x = 0
-        for labelCol, alignement, largeur, nomChamp, args, description, affiche, ordre in listeCols : 
-            self.listeColonnes.append ([x, labelCol, alignement, largeur, nomChamp, args, description, affiche, ordre] )
-            x += 1
+        for x, (labelCol, alignement, largeur, nomChamp, args, description, affiche, ordre) in enumerate(listeCols):
+            self.listeColonnes.append([x, labelCol, alignement, largeur, nomChamp, args, description, affiche, ordre])
 
     def Exportation(self):
         self.listeColonnes.sort(key=operator.itemgetter(0))
-        self.listeColonnesExport = []
-        for ID, labelCol, alignement, largeur, nomChamp, args, description, affiche, ordre in self.listeColonnes : 
-            self.listeColonnesExport.append ([labelCol, alignement, largeur, nomChamp, args, description, affiche, ordre] )
-        return self.listeColonnesExport
-    
-    
-    
+        return [[labelCol, alignement, largeur, nomChamp, args, description, affiche, ordre]
+                for ID, labelCol, alignement, largeur, nomChamp, args, description, affiche, ordre in self.listeColonnes]
+
+
 class Dialog(wx.Dialog):
     def __init__(self, parent, listeColonnes=None):
         if listeColonnes is None:
@@ -228,6 +179,7 @@ class Dialog(wx.Dialog):
         wx.Dialog.__init__(self, parent, -1, style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX)
         self.parent = parent
         self.listeColonnes = listeColonnes
+        self.reinitialiser_presentation = False
         self.panel_base = wx.Panel(self, -1)
         self.panel_contenu = Panel(self.panel_base)
         self.panel_contenu.barreTitre.Show(False)
@@ -236,29 +188,21 @@ class Dialog(wx.Dialog):
         self.bouton_annuler = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Annuler"), cheminImage=Chemins.GetStaticPath("Images/32x32/Annuler.png"))
         self.__set_properties()
         self.__do_layout()
-        
         self.Bind(wx.EVT_BUTTON, self.Onbouton_aide, self.bouton_aide)
         self.Bind(wx.EVT_BUTTON, self.Onbouton_ok, self.bouton_ok)
         self.Bind(wx.EVT_BUTTON, self.Onbouton_annuler, self.bouton_annuler)
-
         self.SetMinSize((450, 350))
         self.SetSize((550, 380))
         self.Centre()
 
     def __set_properties(self):
         self.SetTitle(_(u"Configuration de la liste de personnes"))
-        if 'phoenix' in wx.PlatformInfo:
-            _icon = wx.Icon()
-        else :
-            _icon = wx.EmptyIcon()
+        _icon = wx.Icon() if 'phoenix' in wx.PlatformInfo else wx.EmptyIcon()
         _icon.CopyFromBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Logo.png"), wx.BITMAP_TYPE_ANY))
         self.SetIcon(_icon)
-        self.bouton_aide.SetToolTip(wx.ToolTip("Cliquez ici pour obtenir de l'aide"))
-        self.bouton_aide.SetSize(self.bouton_aide.GetBestSize())
+        self.bouton_aide.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour obtenir de l'aide")))
         self.bouton_ok.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour valider")))
-        self.bouton_ok.SetSize(self.bouton_ok.GetBestSize())
         self.bouton_annuler.SetToolTip(wx.ToolTip(_(u"Cliquez pour annuler et fermer")))
-        self.bouton_annuler.SetSize(self.bouton_annuler.GetBestSize())
 
     def __do_layout(self):
         sizer_base = wx.BoxSizer(wx.VERTICAL)
@@ -285,25 +229,36 @@ class Dialog(wx.Dialog):
     def Onbouton_aide(self, event):
         from Utils import UTILS_Aide
         UTILS_Aide.Aide("Lalistedespersonnes")
-            
+
     def Onbouton_annuler(self, event):
         self.EndModal(wx.ID_CANCEL)
-        
+
     def Onbouton_ok(self, event):
         listeColonnes = self.panel_contenu.listCtrl.Exportation()
-        # Envoie la nouvelle liste de colonnes au objectlistview personnes
-        self.GetParent().SetListeColonnes(listeColonnes)
-        self.GetParent().MAJ()
-        
-        # Fermeture
+        OL = self.GetParent()
+        OL.SetListeColonnes(listeColonnes)
+        if self.reinitialiser_presentation:
+            # Le reset est volontaire : ordre/visibilité ET largeurs/tri repartent
+            # des valeurs LISTE_COLONNES au lieu de réappliquer l'état courant.
+            largeurs_defaut = {colonne[3]: colonne[2] for colonne in OL.listeColonnesOriginale}
+            for index, colonne in enumerate(getattr(OL, "columns", [])):
+                champ = getattr(colonne, "valueGetter", None)
+                if champ in largeurs_defaut:
+                    OL.SetColumnWidth(index, largeurs_defaut[champ])
+            if hasattr(OL, "SetSortColumn"):
+                for colonne in getattr(OL, "columns", []):
+                    if getattr(colonne, "valueGetter", None) == "nom":
+                        OL.SetSortColumn(colonne)
+                        OL.sortAscending = True
+                        break
+            if hasattr(OL, "_sauvegarder_presentation_colonnes"):
+                OL._sauvegarder_presentation_colonnes()
+        OL.MAJ()
         self.EndModal(wx.ID_OK)
 
-        
-        
-        
+
 if __name__ == "__main__":
     app = wx.App(0)
-    #wx.InitAllImageHandlers()
     dlg = Dialog(None, [])
     dlg.ShowModal()
     dlg.Destroy()

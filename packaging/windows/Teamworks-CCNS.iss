@@ -1,7 +1,8 @@
 ; Teamworks-CCNS — installateur Windows x64
 ; Garde-fou : cet installateur ne doit jamais créer, migrer, déplacer,
-; supprimer ou écraser une base utilisateur. Il installe uniquement
-; les fichiers applicatifs sous {app} et les raccourcis Windows.
+; supprimer ou écraser une base utilisateur. Il installe les fichiers
+; applicatifs sous {app} et peut uniquement mémoriser la préférence
+; d'affichage des ressources historiques dans Customize.ini.
 
 #ifndef AppVersion
   #define AppVersion "0.0.0-dev"
@@ -49,3 +50,66 @@ Name: "{autodesktop}\Teamworks-CCNS"; Filename: "{app}\{#AppExeName}"; WorkingDi
 
 [Run]
 Filename: "{app}\{#AppExeName}"; Description: "{cm:LaunchProgram,Teamworks-CCNS}"; Flags: nowait postinstall skipifsilent
+
+
+[Code]
+var
+  LegacyResourcesPage: TInputOptionWizardPage;
+
+function LegacyCustomizePath(): String;
+begin
+  Result := ExpandConstant('{userappdata}\teamworks\Customize.ini');
+end;
+
+procedure InitializeWizard;
+var
+  ExistingValue: String;
+begin
+  LegacyResourcesPage := CreateInputOptionPage(
+    wpSelectTasks,
+    'Ressources historiques Teamworks / Noethys',
+    'Conserver les liens historiques du projet d''origine',
+    'Ces liens restent optionnels et n''affectent jamais les crédits, la licence '
+      + 'ou les mentions de provenance. Ce choix pourra aussi être modifié dans '
+      + 'les préférences de Teamworks-CCNS.',
+    False,
+    False
+  );
+  LegacyResourcesPage.Add(
+    'Afficher les liens et ressources historiques Teamworks / Noethys'
+  );
+
+  ExistingValue := GetIniString(
+    'historique',
+    'afficher_ressources',
+    '1',
+    LegacyCustomizePath()
+  );
+  LegacyResourcesPage.Values[0] := ExistingValue <> '0';
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+var
+  ConfigPath: String;
+  ConfigDir: String;
+  ConfigValue: String;
+begin
+  if CurStep = ssPostInstall then
+  begin
+    ConfigPath := LegacyCustomizePath();
+    ConfigDir := ExtractFileDir(ConfigPath);
+    ForceDirectories(ConfigDir);
+
+    if LegacyResourcesPage.Values[0] then
+      ConfigValue := '1'
+    else
+      ConfigValue := '0';
+
+    SetIniString(
+      'historique',
+      'afficher_ressources',
+      ConfigValue,
+      ConfigPath
+    );
+  end;
+end;

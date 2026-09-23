@@ -50,9 +50,9 @@ class Dialog(wx.Dialog):
         self.box_destinataires_staticbox = wx.StaticBox(self, -1, _(u"Destinataires"))
         self.ctrl_destinataires = OL_Destinataires_emails.ListView(self.box_destinataires_staticbox, id=-1, style=wx.LC_REPORT|wx.SUNKEN_BORDER|wx.LC_SINGLE_SEL|wx.LC_HRULES|wx.LC_VRULES)
         self.ctrl_destinataires.MAJ() 
-        self.bouton_modifier_dest = wx.BitmapButton(self.box_destinataires_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Email_destinataires.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_ajouter_piece_spec = wx.BitmapButton(self.box_destinataires_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_retirer_piece_spec = wx.BitmapButton(self.box_destinataires_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_modifier_dest = CTRL_Bouton_image.CTRL(self.box_destinataires_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Email_destinataires.png"))
+        self.bouton_ajouter_piece_spec = CTRL_Bouton_image.CTRL(self.box_destinataires_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Ajouter.png"))
+        self.bouton_retirer_piece_spec = CTRL_Bouton_image.CTRL(self.box_destinataires_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Supprimer.png"))
         
         # Paramètres
         self.box_param_staticbox = wx.StaticBox(self, -1, _(u"Paramètres"))
@@ -66,8 +66,8 @@ class Dialog(wx.Dialog):
         self.ctrl_pieces.SetMinSize((200, 70))
         self.ctrl_pieces.MAJ() 
         
-        self.bouton_ajouter_piece = wx.BitmapButton(self.box_pieces_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_suppr_piece = wx.BitmapButton(self.box_pieces_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_ajouter_piece = CTRL_Bouton_image.CTRL(self.box_pieces_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Ajouter.png"))
+        self.bouton_suppr_piece = CTRL_Bouton_image.CTRL(self.box_pieces_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Supprimer.png"))
 
         # Texte
         self.box_texte_staticbox = wx.StaticBox(self, -1, _(u"Message"))

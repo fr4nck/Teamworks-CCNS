@@ -159,6 +159,7 @@ class Dialog(wx.Dialog):
         self.contratEnCours = None
         self.AnnulationImpossible = False
         self.barre_problemes = None
+        self._fermeture_en_cours = False
         self.photo = None
 
         import locale
@@ -201,12 +202,10 @@ class Dialog(wx.Dialog):
 
         self.barre_problemes = self.IDpersonne in FonctionsPerso.Recherche_ContratsEnCoursOuAVenir()
 
-        self.bitmap_problemes_G = wx.StaticBitmap(
-            self.panel_1, -1, wx.Bitmap(Chemins.GetStaticPath("Images/Special/Problemes_G.png"), wx.BITMAP_TYPE_PNG)
-        )
-        self.bitmap_problemes_D = wx.StaticBitmap(
-            self.panel_1, -1, wx.Bitmap(Chemins.GetStaticPath("Images/Special/Problemes_D.png"), wx.BITMAP_TYPE_PNG)
-        )
+        # Le bandeau reste volontairement plat : les anciens bitmaps
+        # Problemes_G/Problemes_D fabriquaient des extrémités arrondies.
+        self.bitmap_problemes_G = None
+        self.bitmap_problemes_D = None
         hauteur_ticker = _taille_echelle(20, minimum=20, maximum=30)
         self.txtDefilant = Ticker(
             self.panel_1,
@@ -276,9 +275,7 @@ class Dialog(wx.Dialog):
         sizer_header_textes.Add(self.label_hd_naiss, 0, 0)
 
         sizer_problemes = wx.BoxSizer(wx.HORIZONTAL)
-        sizer_problemes.Add(self.bitmap_problemes_G, 0, wx.ALIGN_CENTER_VERTICAL)
         sizer_problemes.Add(self.txtDefilant, 1, wx.EXPAND)
-        sizer_problemes.Add(self.bitmap_problemes_D, 0, wx.ALIGN_CENTER_VERTICAL)
         sizer_header_textes.Add(sizer_problemes, 0, wx.EXPAND | wx.TOP, 12)
 
         sizer_header = wx.BoxSizer(wx.HORIZONTAL)
@@ -317,13 +314,9 @@ class Dialog(wx.Dialog):
 
     def Affichage_barre_problemes(self):
         if self.txtPbPersonne == "" or self.barre_problemes == False:
-            self.bitmap_problemes_G.Show(False)
-            self.bitmap_problemes_D.Show(False)
             self.txtDefilant.Show(False)
             self.txtDefilant.Stop()
         else:
-            self.bitmap_problemes_G.Show(True)
-            self.bitmap_problemes_D.Show(True)
             self.txtDefilant.Show(True)
             self.txtDefilant.Start()
         self.panel_1.Layout()
@@ -387,18 +380,68 @@ class Dialog(wx.Dialog):
             cp_naiss, ville_naiss, pays_naiss, nationalite, num_secu,
             adresse_resid, cp_resid, ville_resid, IDsituation
         ),)
-        dictNomsPersonnes, dictProblemesPersonnes = FonctionsPerso.Recherche_problemes_personnes(
-            listeIDpersonnes=(self.IDpersonne,), infosPersonne=infosPersonne
-        )
-        if self.IDpersonne in dictProblemesPersonnes:
-            txtProblemes = ""
-            for labelCategorie, listeProblemes in dictProblemesPersonnes[self.IDpersonne].items():
-                txtProblemes += labelCategorie + " ("
-                for labelProbleme in listeProblemes:
-                    txtProblemes += labelProbleme + ", "
-                txtProblemes = txtProblemes[:-2] + ")       "
-            return txtProblemes
-        return ""
+        # Les contrôles contiennent déjà toutes les informations de fiche.
+        # Ne pas rouvrir MySQL à chaque perte de focus : on recalcule localement
+        # la catégorie "informations manquantes" et on conserve les catégories
+        # pièces/contrats déjà mises en cache par la liste des individus.
+        problemesFiche = []
+        if civilite in ("", None):
+            problemesFiche.append(_(u"Civilité"))
+        if nom in ("", None):
+            problemesFiche.append(_(u"Nom de famille"))
+        if civilite == "Mme" and nom_jfille in ("", None):
+            problemesFiche.append(_(u"Nom de jeune fille"))
+        if prenom in ("", None):
+            problemesFiche.append(_(u"Prénom"))
+        if date_naiss is None:
+            problemesFiche.append(_(u"Date de naissance"))
+        if str(cp_naiss or "").strip() == "":
+            problemesFiche.append(_(u"Code postal de la ville de naissance"))
+        if ville_naiss in ("", None):
+            problemesFiche.append(_(u"Ville de naissance"))
+        if pays_naiss in ("", None, 0):
+            problemesFiche.append(_(u"Pays de naissance"))
+        if nationalite in ("", None, 0):
+            problemesFiche.append(_(u"Nationalité"))
+        if str(num_secu or "").strip() == "":
+            problemesFiche.append(_(u"Numéro de sécurité sociale"))
+        if adresse_resid in ("", None):
+            problemesFiche.append(_(u"Adresse de résidence"))
+        if str(cp_resid or "").strip() == "":
+            problemesFiche.append(_(u"Code postal de résidence"))
+        if ville_resid in ("", None):
+            problemesFiche.append(_(u"Ville de résidence"))
+        if IDsituation in ("", None, 0):
+            problemesFiche.append(_(u"Situation sociale"))
+
+        try:
+            _noms, cache_problemes = FonctionsPerso.Recup_liste_pb_personnes()
+            categories = dict(cache_problemes.get(self.IDpersonne, {}))
+        except Exception:
+            categories = {}
+
+        singulier = _(u"1 information manquante")
+        suffixe_pluriel = _(u" informations manquantes")
+        for categorie in list(categories):
+            if categorie == singulier or categorie.endswith(suffixe_pluriel):
+                categories.pop(categorie, None)
+
+        if problemesFiche:
+            if len(problemesFiche) == 1:
+                categorie = singulier
+            else:
+                categorie = str(len(problemesFiche)) + suffixe_pluriel
+            categories[categorie] = problemesFiche
+
+        if not categories:
+            return ""
+
+        morceaux = []
+        for labelCategorie, listeProblemes in categories.items():
+            morceaux.append(
+                "%s (%s)" % (labelCategorie, ", ".join(listeProblemes))
+            )
+        return "       ".join(morceaux)
 
     def MaJ_header(self):
         if self.IDpersonne == 0:
@@ -426,12 +469,35 @@ class Dialog(wx.Dialog):
             pass
 
     def OnMotionTxtDefilant(self, event):
-        self.txtDefilant.Stop()
+        if not self._fermeture_en_cours:
+            self.txtDefilant.Stop()
         event.Skip()
 
     def OnLeaveTxtDefilant(self, event):
-        self.txtDefilant.Start()
+        if not self._fermeture_en_cours:
+            self.txtDefilant.Start()
         event.Skip()
+
+    def _arreter_callbacks_avant_fermeture(self):
+        """Neutralise le ticker et ses événements avant EndModal/Destroy.
+
+        Des EVT_LEAVE_WINDOW déjà en file pouvaient redémarrer le timer pendant
+        la destruction native de la fiche. La fermeture devient idempotente et
+        aucun callback du bandeau ne peut réarmer le ticker ensuite.
+        """
+        if self._fermeture_en_cours:
+            return False
+        self._fermeture_en_cours = True
+        try:
+            self.txtDefilant.Stop()
+        except Exception:
+            pass
+        try:
+            self.txtDefilant.Unbind(wx.EVT_MOTION)
+            self.txtDefilant.Unbind(wx.EVT_LEAVE_WINDOW)
+        except Exception:
+            pass
+        return True
 
     def OnBoutonAide(self, event):
         from Utils import UTILS_Aide
@@ -440,23 +506,23 @@ class Dialog(wx.Dialog):
     def OnBoutonOk(self, event):
         self.AnnulationImpossible = False
         self.Fermer(save=True)
-        event.Skip()
 
     def OnBoutonAnnuler(self, event):
         if self.AnnulationImpossible == True:
             self.Fermer(save=True)
         else:
             self.Fermer(save=False)
-        event.Skip()
 
     def OnClose(self, event):
         if self.AnnulationImpossible == True:
             self.Fermer(save=True)
         else:
             self.Fermer(save=False)
-        event.Skip()
 
     def Fermer(self, save=True):
+        if self._fermeture_en_cours:
+            return False
+
         if save == False:
             if self.nouvelleFiche == True:
                 db = GestionDB.DB()
@@ -468,13 +534,20 @@ class Dialog(wx.Dialog):
                 self.notebook.pageGeneralites.Sauvegarde()
                 self.notebook.pageQuestionnaire.Sauvegarde()
             else:
-                return
+                return False
+
+        if not self._arreter_callbacks_avant_fermeture():
+            return False
 
         frm = FonctionsPerso.FrameOuverte("Personnes")
         if frm is not None:
             frm.listCtrl_personnes.MAJ(IDpersonne=self.IDpersonne)
             frm.panel_dossiers.tree_ctrl_problemes.MAJ_treeCtrl()
-        self.EndModal(wx.ID_OK)
+        if self.IsModal():
+            self.EndModal(wx.ID_OK)
+        else:
+            self.Destroy()
+        return True
 
     def Verifie_validite_donnees(self):
         if self.notebook.pageGeneralites.combo_box_civilite.GetStringSelection() == "":

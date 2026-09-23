@@ -5,6 +5,7 @@ import datetime
 from decimal import Decimal, InvalidOperation
 
 import wx
+from Ctrl import CTRL_Bouton_image
 if 'phoenix' in wx.PlatformInfo:
     from wx.adv import DatePickerCtrl, DP_DROPDOWN, EVT_DATE_CHANGED
 else:
@@ -70,8 +71,8 @@ class Dialog(wx.Dialog):
         # Les contrôles contenus dans un StaticBoxSizer sont parentés au
         # wx.StaticBox correspondant. Les boutons, eux, appartiennent au panel.
         buttons = wx.StdDialogButtonSizer()
-        self.bouton_ok = wx.Button(panel, wx.ID_OK, u"Valider")
-        self.bouton_annuler = wx.Button(panel, wx.ID_CANCEL, u"Annuler")
+        self.bouton_ok = CTRL_Bouton_image.CTRL(panel, id=wx.ID_OK, texte=u"Valider", role="primary")
+        self.bouton_annuler = CTRL_Bouton_image.CTRL(panel, id=wx.ID_CANCEL, texte=u"Annuler")
         buttons.AddButton(self.bouton_ok)
         buttons.AddButton(self.bouton_annuler)
         buttons.Realize()

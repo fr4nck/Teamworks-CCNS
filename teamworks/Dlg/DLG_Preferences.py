@@ -3,6 +3,7 @@
 """Préférences d'affichage de Teamworks-CCNS."""
 
 import wx
+from Ctrl import CTRL_Bouton_image
 
 from Ctrl import CTRL_Texte
 from Utils import (
@@ -146,9 +147,9 @@ class Dialog(wx.Dialog):
         self.adresse_rapport_bugs.SetValue(
             UTILS_Envoi_rapport_bug.GetAdresseRapportBugsConfiguree()
         )
-        self.reset_adresse_rapport_bugs = wx.Button(
+        self.reset_adresse_rapport_bugs = CTRL_Bouton_image.CTRL(
             self.body,
-            label="Rétablir le réglage d'origine",
+            texte="Rétablir le réglage d'origine",
         )
         adresse_rapport_bugs = wx.BoxSizer(wx.HORIZONTAL)
         adresse_rapport_bugs.Add(self.adresse_rapport_bugs, 1, wx.EXPAND)
@@ -173,22 +174,59 @@ class Dialog(wx.Dialog):
         )
 
         main.Add(
+            CTRL_Texte.Label(self.body, "Héritage Teamworks / Noethys"),
+            0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, padding,
+        )
+        self.ressources_historiques = wx.CheckBox(
+            self.body,
+            label="Afficher les liens et ressources historiques Teamworks / Noethys",
+        )
+        try:
+            afficher_historiques = UTILS_Customize.GetValeur(
+                "historique",
+                "afficher_ressources",
+                "1",
+                type_valeur=bool,
+            )
+        except Exception:
+            afficher_historiques = True
+        self.ressources_historiques.SetValue(bool(afficher_historiques))
+        main.Add(
+            self.ressources_historiques,
+            0,
+            wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP,
+            padding,
+        )
+        self.heritage_info = CTRL_Texte.BodySecondary(
+            self.body,
+            "Ces ressources conservent l'accès aux liens du projet d'origine. "
+            "Ce réglage n'affecte jamais les crédits, la licence ni les mentions "
+            "de provenance de Teamworks-CCNS.",
+        )
+        main.Add(
+            self.heritage_info,
+            0,
+            wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.TOP,
+            padding,
+        )
+
+        main.Add(
             CTRL_Texte.Label(self.body, "Organisation et références RH"),
             0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, padding,
         )
-        self.organisation_button = wx.Button(
-            self.body, label="Structure / association…",
+        self.organisation_button = CTRL_Bouton_image.CTRL(
+            self.body, texte="Structure / association…",
         )
-        self.admin_button = wx.Button(
-            self.body, label="Références administratives RH…",
+        self.admin_button = CTRL_Bouton_image.CTRL(
+            self.body, texte="Références administratives RH…",
         )
         main.Add(
             self.organisation_button, 0,
-            wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, padding,
+            wx.LEFT | wx.RIGHT | wx.TOP, padding,
         )
         main.Add(
             self.admin_button, 0,
-            wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP | wx.BOTTOM, padding,
+            wx.LEFT | wx.RIGHT | wx.TOP | wx.BOTTOM, padding,
         )
 
         self.body.SetSizer(main)
@@ -203,8 +241,8 @@ class Dialog(wx.Dialog):
         footer_sizer = wx.BoxSizer(wx.HORIZONTAL)
         footer_sizer.AddStretchSpacer()
         buttons = wx.StdDialogButtonSizer()
-        ok_button = wx.Button(self.footer, wx.ID_OK)
-        cancel_button = wx.Button(self.footer, wx.ID_CANCEL)
+        ok_button = CTRL_Bouton_image.CTRL(self.footer, id=wx.ID_OK, texte="Valider", role="primary")
+        cancel_button = CTRL_Bouton_image.CTRL(self.footer, id=wx.ID_CANCEL, texte="Annuler")
         buttons.AddButton(ok_button)
         buttons.AddButton(cancel_button)
         buttons.Realize()
@@ -248,7 +286,12 @@ class Dialog(wx.Dialog):
                 UTILS_Styles.Scale(240),
                 self.body.GetClientSize().GetWidth() - padding,
             )
-            for control in (self.intro, self.info, self.maintenance_info):
+            for control in (
+                self.intro,
+                self.info,
+                self.maintenance_info,
+                self.heritage_info,
+            ):
                 control.Wrap(largeur)
             self.body.Layout()
             self.body.FitInside()
@@ -286,6 +329,11 @@ class Dialog(wx.Dialog):
         scale = str(self.scale.GetValue())
         UTILS_Customize.SetValeur("interface", "echelle_interface", scale)
         UTILS_Customize.SetValeur("interface", "echelle_police", scale)
+        UTILS_Customize.SetValeur(
+            "historique",
+            "afficher_ressources",
+            "1" if self.ressources_historiques.GetValue() else "0",
+        )
 
         try:
             UTILS_Envoi_rapport_bug.SetAdresseRapportBugsConfiguree(

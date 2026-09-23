@@ -27,7 +27,9 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
             try:
                 print("TEAMWORKS_SMOKE_PERSON_STAGE:imports", flush=True)
                 import os as _smoke_os
+                import datetime as _smoke_datetime
                 import tempfile as _smoke_tempfile
+                import time as _smoke_time
                 import zipfile as _smoke_zipfile
                 import GestionDB as _smoke_gestiondb
                 from Utils import UTILS_Rapport_bugs as _smoke_bug_reports
@@ -58,7 +60,9 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 from Dlg import DLG_Liste_contrats
                 from Dlg import DLG_Preferences
                 from Dlg import DLG_Vacances
+                from Dlg import DLG_Importation_vacances
                 from Dlg import DLG_Feries
+                from Utils import UTILS_Calendrier_scolaire_officiel as _smoke_calendrier
 
                 def _smoke_descendants(_smoke_window):
                     _smoke_items = []
@@ -111,6 +115,52 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 assert _smoke_notebook.GetPageCount() == len(_smoke_expected_pages)
                 assert tuple(_smoke_notebook.GetPageText(_smoke_index) for _smoke_index in range(_smoke_notebook.GetPageCount())) == _smoke_expected_pages
 
+                print("TEAMWORKS_SMOKE_PERSON_STAGE:windowed-layout", flush=True)
+                _smoke_dialog.SetSize((900, 700))
+                _smoke_notebook.SetSelection(0)
+                _smoke_dialog.Layout()
+                wx.Yield()
+                _smoke_generalites = _smoke_notebook.pageGeneralites
+                _smoke_generalites.Layout()
+                wx.Yield()
+                _smoke_address_content = _smoke_generalites.section_adresse.GetContentPanel()
+                _smoke_scroll = _smoke_generalites._scroll_host
+                print(
+                    "TEAMWORKS_SMOKE_PERSON_LAYOUT_METRICS:"
+                    "adresse=%s;adresse_min=%s;contenu=%s;contenu_min=%s;"
+                    "section=%s;section_min=%s;virtuel=%s;client=%s"
+                    % (
+                        tuple(_smoke_generalites.text_adresse.GetSize()),
+                        tuple(_smoke_generalites.text_adresse.GetMinSize()),
+                        tuple(_smoke_address_content.GetSize()),
+                        tuple(_smoke_address_content.GetMinSize()),
+                        tuple(_smoke_generalites.section_adresse.GetSize()),
+                        tuple(_smoke_generalites.section_adresse.GetMinSize()),
+                        tuple(_smoke_scroll.GetVirtualSize()),
+                        tuple(_smoke_scroll.GetClientSize()),
+                    ),
+                    flush=True,
+                )
+                assert _smoke_generalites.text_adresse.GetSize().GetHeight() >= 50
+                _smoke_scroll = _smoke_generalites._scroll_host
+                assert (
+                    _smoke_scroll.GetVirtualSize().GetHeight()
+                    >= _smoke_scroll.GetClientSize().GetHeight()
+                )
+                # En fenêtre basse, Adresse peut légitimement se trouver sous le
+                # viewport : on vérifie qu'elle devient réellement accessible
+                # par le scroll et qu'elle n'est plus comprimée à quelques pixels.
+                _smoke_target_y = max(
+                    0,
+                    _smoke_generalites.section_adresse.GetPosition().y // 12,
+                )
+                _smoke_scroll.Scroll(-1, _smoke_target_y)
+                _smoke_scroll.Layout()
+                wx.Yield()
+                assert _smoke_generalites.text_adresse.IsShownOnScreen()
+                assert _smoke_generalites.text_cp.IsShownOnScreen()
+                print("TEAMWORKS_SMOKE_PERSON_WINDOWED_LAYOUT_OK", flush=True)
+
                 print("TEAMWORKS_SMOKE_PERSON_STAGE:pages", flush=True)
                 for _smoke_index in range(_smoke_notebook.GetPageCount()):
                     _smoke_notebook.SetSelection(_smoke_index)
@@ -131,6 +181,19 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 assert not _smoke_dialog.bitmap_button_annuler.IsEnabled()
                 _smoke_dialog.Destroy()
                 wx.Yield()
+
+                print("TEAMWORKS_SMOKE_PERSON_STAGE:close-reopen", flush=True)
+                for _smoke_cycle in range(3):
+                    _smoke_close_dialog = _smoke_person.Dialog(
+                        frame,
+                        IDpersonne=_smoke_person_id,
+                    )
+                    _smoke_close_dialog.Show()
+                    _smoke_close_dialog.Layout()
+                    wx.Yield()
+                    assert _smoke_close_dialog.Fermer(save=True) is True
+                    wx.Yield()
+                print("TEAMWORKS_SMOKE_PERSON_CLOSE_REOPEN_OK", flush=True)
 
                 print("TEAMWORKS_SMOKE_PERSON_STAGE:bug-report", flush=True)
                 _smoke_crash_dir = _smoke_tempfile.mkdtemp(prefix="teamworks-crash-dialog-")
@@ -185,6 +248,57 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                     _smoke_parameter_dialog.Destroy()
                     wx.Yield()
                     print("TEAMWORKS_SMOKE_PARAMETER_OK:%s" % _smoke_label, flush=True)
+
+                print("TEAMWORKS_SMOKE_PERSON_STAGE:vacances-officielles", flush=True)
+                _smoke_calendrier_original = _smoke_calendrier.charger_vacances
+                try:
+                    def _smoke_charger_vacances(_smoke_zone, timeout=8):
+                        _smoke_vacance = _smoke_calendrier.VacanceOfficielle(
+                            nom="Toussaint",
+                            date_debut=_smoke_datetime.date(2099, 10, 17),
+                            date_fin=_smoke_datetime.date(2099, 11, 1),
+                            annee_scolaire="2099-2100",
+                            zone="Zone %s" % _smoke_zone,
+                            academie="Smoke",
+                            population="-",
+                        )
+                        return _smoke_calendrier.ResultatCalendrier(
+                            (_smoke_vacance,),
+                            "api",
+                        )
+
+                    _smoke_calendrier.charger_vacances = _smoke_charger_vacances
+                    _smoke_vacances = DLG_Importation_vacances.Dialog(frame)
+                    _smoke_assert_populated(
+                        _smoke_vacances,
+                        "Importation vacances officielles",
+                    )
+                    _smoke_deadline = _smoke_time.time() + 5.0
+                    while (
+                        _smoke_vacances._chargement_en_cours
+                        and _smoke_time.time() < _smoke_deadline
+                    ):
+                        wx.Yield()
+                        _smoke_time.sleep(0.01)
+                    assert not _smoke_vacances._chargement_en_cours
+                    assert len(_smoke_vacances.ctrl_periodes.donnees) == 1
+                    assert _smoke_vacances.ctrl_periodes.donnees[0].nom == "Toussaint"
+                    _smoke_vacances.SetZone("B")
+                    _smoke_deadline = _smoke_time.time() + 5.0
+                    while (
+                        _smoke_vacances._chargement_en_cours
+                        and _smoke_time.time() < _smoke_deadline
+                    ):
+                        wx.Yield()
+                        _smoke_time.sleep(0.01)
+                    assert not _smoke_vacances._chargement_en_cours
+                    assert _smoke_vacances.GetZone() == "B"
+                    assert len(_smoke_vacances.ctrl_periodes.donnees) == 1
+                    _smoke_vacances._fermer(wx.ID_CANCEL)
+                    wx.Yield()
+                    print("TEAMWORKS_SMOKE_VACANCES_OFFICIELLES_OK", flush=True)
+                finally:
+                    _smoke_calendrier.charger_vacances = _smoke_calendrier_original
 
                 print("TEAMWORKS_SMOKE_PERSON_STAGE:subdialogs", flush=True)
                 _smoke_subdialogs = (

@@ -14,8 +14,8 @@ def test_vacations_dialog_uses_direct_responsive_layout():
     assert "wx.FlexGridSizer" not in source
     assert ".Fit(self)" not in source
     assert "wx.BoxSizer" in source
-    assert "wx.WrapSizer" in source
-    assert "AddStretchSpacer" in source
+    assert "wx.WrapSizer" not in source
+    assert "sizer_actions.AddStretchSpacer(1)" in source
 
 
 def test_vacations_dialog_has_no_legacy_tiny_actions_or_sunken_list():
