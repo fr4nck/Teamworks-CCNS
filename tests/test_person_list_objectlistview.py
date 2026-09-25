@@ -707,3 +707,55 @@ def test_filtered_refresh_recovers_neutral_view_after_zero_results(person_list):
     assert person_list.GetSelectedObject() is None
     assert person_list.GetFocusedItem() == -1
     assert person_list.GetObjectAt(person_list.GetTopItem()).IDpersonne == _visible_ids(person_list)[0]
+
+
+def test_filtered_anchor_reappearance_uses_new_position_without_automatic_selection(person_list):
+    text_filter = Filter.TextSearch(person_list, person_list.columns[1:4])
+    text_filter.SetText("dupont")
+    person_list.SetFilter(text_filter)
+
+    name_column = person_list.columns[1]
+    person_list.SetSortColumn(name_column)
+    person_list.sortAscending = True
+    person_list.RepopulateList()
+    _flush_wx_events()
+
+    visible_before = person_list.GetFilteredObjects()
+    assert len(visible_before) > 4
+
+    anchor = visible_before[3]
+    anchor_id = anchor.IDpersonne
+    old_index = person_list.GetIndexOf(anchor)
+    person_list.EnsureVisible(old_index)
+    person_list.DeselectAll()
+    _flush_wx_events()
+
+    without_anchor = [
+        row for row in _replacement_rows() if row.IDpersonne != anchor_id
+    ]
+    person_list.SetObjects(without_anchor)
+    _flush_wx_events()
+
+    assert anchor_id not in _visible_ids(person_list)
+    assert person_list.GetSelectedObject() is None
+
+    reappearing_rows = _replacement_rows()
+    reappearing = next(
+        row for row in reappearing_rows if row.IDpersonne == anchor_id
+    )
+    reappearing.nom = "DUPONT ZZZ"
+
+    person_list.SetObjects(reappearing_rows)
+    assert anchor_id in _visible_ids(person_list)
+
+    new_index = person_list.GetIndexOf(reappearing)
+    assert new_index != old_index
+
+    # Restore by identity after filtering/sorting, never by the stale row index.
+    person_list.EnsureVisible(new_index)
+    _flush_wx_events()
+
+    assert person_list.GetSelectedObject() is None
+    assert person_list.GetObjectAt(new_index).IDpersonne == anchor_id
+    top_index = person_list.GetTopItem()
+    assert top_index <= new_index < top_index + person_list.GetCountPerPage()
