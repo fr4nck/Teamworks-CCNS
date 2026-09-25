@@ -27,6 +27,9 @@ PEOPLE = [
     person("P16", "MARTIN", "Martin"),
     person("P17", "MARTINEAU", "Martine"),
     person("P18", "LE MARTIN", "Marie"),
+    person("P19", "TOUR", "Anne"),
+    person("P20", "DE MARTIN", "Anne"),
+    person("P21", "LE GALL-LE GOFF", "Yann"),
 ]
 
 
@@ -124,3 +127,55 @@ def test_equivalent_queries_have_same_certain_results(left, right):
 
 def test_unknown_query_has_no_results():
     assert search_people("xyzabc", PEOPLE) == []
+
+
+
+@pytest.mark.parametrize(
+    ("query", "expected"),
+    [
+        ("De La Tour Anne", {"P11"}),
+        ("de   la   tour anne", {"P11"}),
+        ("anne de la tour", {"P11"}),
+        ("de la tou anne", {"P11"}),
+        ("tour anne", {"P11", "P19"}),
+        ("d'arvor mael", {"P13"}),
+        ("d’arvor mael", {"P13"}),
+        ("d arvor mael", {"P13"}),
+        ("le-goff helene", {"P06", "P07"}),
+        ("le gall le goff yann", {"P21"}),
+    ],
+)
+def test_particle_matching_contract(query, expected):
+    assert codes(search_people(query, PEOPLE), "certain") == expected
+
+
+@pytest.mark.parametrize(
+    ("query", "forbidden"),
+    [
+        ("delatour anne", {"P11"}),
+        ("darvor mael", {"P13"}),
+        ("legall elodie", {"P09"}),
+        ("le gall elodie", {"P10"}),
+        ("legoff helene", {"P06", "P07"}),
+    ],
+)
+def test_fused_particle_variants_are_not_silent_equivalences(query, forbidden):
+    assert codes(search_people(query, PEOPLE), "certain").isdisjoint(forbidden)
+
+
+@pytest.mark.parametrize("query", ["d", "de", "la", "le", "du", "des"])
+def test_particle_only_short_queries_never_trigger_fuzzy(query):
+    assert not codes(search_people(query, PEOPLE), "suggestion")
+
+
+def test_exact_simple_surname_ranks_before_same_token_in_compound_surname():
+    results = search_people("martin", PEOPLE)
+    result_codes = [r.person.code_internal for r in results]
+    assert result_codes.index("P16") < result_codes.index("P18")
+    assert result_codes.index("P16") < result_codes.index("P20")
+
+
+def test_exact_simple_tour_ranks_before_de_la_tour():
+    results = search_people("tour", PEOPLE)
+    result_codes = [r.person.code_internal for r in results]
+    assert result_codes.index("P19") < result_codes.index("P11")
