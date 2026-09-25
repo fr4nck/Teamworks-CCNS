@@ -146,6 +146,10 @@ def install(module):
                 )
                 if not fast_path:
                     frame.listCtrl_personnes.MAJ(IDpersonne=self.IDpersonne)
+                else:
+                    # Ne jamais dépendre d'un EVT_LIST_ITEM_SELECTED implicite :
+                    # SelectObject() peut resélectionner l'objet déjà actif.
+                    frame.listCtrl_personnes.SyncSummary(self.IDpersonne)
 
                 tree_ctrl = frame.panel_dossiers.tree_ctrl_problemes
                 tree_fast_path = fast_path and _refresh_current_problem_tree(
