@@ -759,3 +759,56 @@ def test_filtered_anchor_reappearance_uses_new_position_without_automatic_select
     assert person_list.GetObjectAt(new_index).IDpersonne == anchor_id
     top_index = person_list.GetTopItem()
     assert top_index <= new_index < top_index + person_list.GetCountPerPage()
+
+
+def test_filter_change_without_selection_keeps_read_anchor_when_still_visible(person_list):
+    initial_filter = Filter.TextSearch(person_list, person_list.columns[1:4])
+    initial_filter.SetText("dupont")
+    person_list.SetFilter(initial_filter)
+    person_list.RepopulateList()
+    _flush_wx_events()
+
+    visible_before = person_list.GetFilteredObjects()
+    assert len(visible_before) > 3
+
+    anchor = visible_before[3]
+    anchor_id = anchor.IDpersonne
+    anchor_index = person_list.GetIndexOf(anchor)
+    person_list.EnsureVisible(anchor_index)
+    person_list.DeselectAll()
+
+    focused_before = person_list.GetFocusedItem()
+    if focused_before >= 0:
+        person_list.SetItemState(focused_before, 0, wx.LIST_STATE_FOCUSED)
+    _flush_wx_events()
+
+    assert person_list.GetSelectedObject() is None
+    assert person_list.GetFocusedItem() == -1
+
+    # Broaden/change the filter while keeping the anchor identity visible.
+    changed_filter = Filter.TextSearch(person_list, person_list.columns[1:4])
+    changed_filter.SetText("rennes")
+    person_list.SetFilter(changed_filter)
+    person_list.RepopulateList()
+    _flush_wx_events()
+
+    if anchor_id not in _visible_ids(person_list):
+        # Make the new filter deterministic for the fixture while preserving
+        # the same identity as the reading anchor.
+        replacement_rows = _replacement_rows()
+        replacement = next(row for row in replacement_rows if row.IDpersonne == anchor_id)
+        replacement.ville = "Rennes"
+        person_list.SetObjects(replacement_rows)
+
+    assert anchor_id in _visible_ids(person_list)
+
+    anchor_replacement = _find_by_id(person_list, anchor_id)
+    new_index = person_list.GetIndexOf(anchor_replacement)
+    person_list.EnsureVisible(new_index)
+    _flush_wx_events()
+
+    assert person_list.GetSelectedObject() is None
+    assert person_list.GetFocusedItem() == -1
+    assert person_list.GetObjectAt(new_index).IDpersonne == anchor_id
+    top_index = person_list.GetTopItem()
+    assert top_index <= new_index < top_index + person_list.GetCountPerPage()
