@@ -215,3 +215,59 @@ def test_removed_selected_id_leaves_no_selection(person_list):
 
     assert _find_by_id(person_list, person_id) is None
     assert person_list.GetSelectedObject() is None
+
+
+def test_teamworks_maj_restores_selected_identity_without_rebuilding_view(person_list, monkeypatch):
+    from Ol import OL_personnes
+
+    person_id = 420
+    target = _find_by_id(person_list, person_id)
+    person_list.SelectObject(target, deselectOthers=True, ensureVisible=True)
+
+    calls = {"init_view": 0, "summary": []}
+    replacement_rows = _replacement_rows()
+
+    monkeypatch.setattr(person_list, "InitModel", lambda: setattr(person_list, "donnees", replacement_rows))
+    monkeypatch.setattr(
+        person_list,
+        "InitObjectListView",
+        lambda: calls.__setitem__("init_view", calls["init_view"] + 1),
+    )
+    monkeypatch.setattr(
+        person_list,
+        "SyncSummary",
+        lambda selected_id=None: calls["summary"].append(selected_id),
+    )
+
+    OL_personnes.ListView.MAJ(person_list, IDpersonne=person_id)
+
+    selected = person_list.GetSelectedObject()
+    assert calls["init_view"] == 0
+    assert selected.IDpersonne == person_id
+    assert selected is _find_by_id(person_list, person_id)
+    assert calls["summary"] == [person_id]
+
+
+def test_teamworks_maj_clears_missing_identity_and_summary(person_list, monkeypatch):
+    from Ol import OL_personnes
+
+    person_id = 420
+    target = _find_by_id(person_list, person_id)
+    person_list.SelectObject(target, deselectOthers=True, ensureVisible=True)
+
+    replacement_rows = [
+        row for row in _replacement_rows() if row.IDpersonne != person_id
+    ]
+    summary_calls = []
+
+    monkeypatch.setattr(person_list, "InitModel", lambda: setattr(person_list, "donnees", replacement_rows))
+    monkeypatch.setattr(
+        person_list,
+        "SyncSummary",
+        lambda selected_id=None: summary_calls.append(selected_id),
+    )
+
+    OL_personnes.ListView.MAJ(person_list, IDpersonne=person_id)
+
+    assert person_list.GetSelectedObject() is None
+    assert summary_calls == [None]
