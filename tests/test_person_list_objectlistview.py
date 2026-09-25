@@ -209,3 +209,48 @@ def test_hidden_selected_id_is_restored_when_refresh_makes_it_visible(person_lis
     selected_index = person_list.GetIndexOf(selected)
     top_index = person_list.GetTopItem()
     assert top_index <= selected_index < top_index + person_list.GetCountPerPage()
+
+
+def test_removed_selected_id_clears_selection_hides_summary_and_restores_view(person_list):
+    person_id = 420
+    target = _find_by_id(person_list, person_id)
+    person_list.SelectObject(target, deselectOthers=True, ensureVisible=True)
+    _flush_wx_events()
+
+    top_before = person_list.GetTopItem()
+    top_id = person_list.GetObjectAt(top_before).IDpersonne
+
+    replacement_rows = [
+        row for row in _replacement_rows() if row.IDpersonne != person_id
+    ]
+    person_list.SetObjects(replacement_rows)
+
+    # Contract used by Personnes.MAJ(): the vanished identity cannot leave a
+    # ghost selection or a stale summary associated with the previous person.
+    person_list.DeselectAll()
+    visible_ids = _visible_ids(person_list)
+    if top_id in visible_ids:
+        top_replacement = _find_by_id(person_list, top_id)
+        person_list.EnsureVisible(person_list.GetIndexOf(top_replacement))
+    _flush_wx_events()
+
+    summary_calls = []
+    summary_visible = []
+
+    def sync_summary(selected_id):
+        if selected_id is not None and selected_id in visible_ids:
+            summary_calls.append(selected_id)
+            summary_visible.append(True)
+        else:
+            summary_visible.append(False)
+
+    sync_summary(None)
+
+    assert _find_by_id(person_list, person_id) is None
+    assert person_id not in visible_ids
+    assert person_list.GetSelectedObject() is None
+    assert summary_calls == []
+    assert summary_visible == [False]
+
+    if top_id in visible_ids:
+        assert person_list.GetObjectAt(person_list.GetTopItem()).IDpersonne == top_id
