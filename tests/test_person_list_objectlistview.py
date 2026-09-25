@@ -551,3 +551,52 @@ def test_refresh_without_initial_selection_keeps_no_row_focused_and_read_positio
     assert person_list.GetSelectedObject() is None
     assert person_list.GetFocusedItem() == -1
     assert person_list.GetObjectAt(person_list.GetTopItem()).IDpersonne == top_id
+
+
+def test_filtered_refresh_without_selection_keeps_read_position_when_visible_count_changes(person_list):
+    text_filter = Filter.TextSearch(person_list, person_list.columns[1:4])
+    text_filter.SetText("dupont")
+    person_list.SetFilter(text_filter)
+    person_list.RepopulateList()
+    _flush_wx_events()
+
+    visible_before = person_list.GetFilteredObjects()
+    assert len(visible_before) > 3
+
+    anchor = visible_before[3]
+    anchor_id = anchor.IDpersonne
+    anchor_index = person_list.GetIndexOf(anchor)
+    person_list.EnsureVisible(anchor_index)
+    _flush_wx_events()
+
+    top_before = person_list.GetTopItem()
+    top_id = person_list.GetObjectAt(top_before).IDpersonne
+    count_before = len(_visible_ids(person_list))
+
+    person_list.DeselectAll()
+    focused_before = person_list.GetFocusedItem()
+    if focused_before >= 0:
+        person_list.SetItemState(focused_before, 0, wx.LIST_STATE_FOCUSED)
+    _flush_wx_events()
+
+    replacement_rows = _replacement_rows()
+    # Change the filtered population without removing the row anchoring the
+    # current reading position.
+    replacement_rows = [
+        row for row in replacement_rows
+        if row.IDpersonne not in (70, 140)
+    ]
+    replacement_rows.append(PersonRow(999, "DUPONT", "Nouvelle", "Rennes"))
+
+    person_list.SetObjects(replacement_rows)
+    count_after = len(_visible_ids(person_list))
+    assert count_after != count_before
+    assert top_id in _visible_ids(person_list)
+
+    top_replacement = _find_by_id(person_list, top_id)
+    person_list.EnsureVisible(person_list.GetIndexOf(top_replacement))
+    _flush_wx_events()
+
+    assert person_list.GetSelectedObject() is None
+    assert person_list.GetFocusedItem() == -1
+    assert person_list.GetObjectAt(person_list.GetTopItem()).IDpersonne == top_id
