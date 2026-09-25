@@ -254,3 +254,57 @@ def test_removed_selected_id_clears_selection_hides_summary_and_restores_view(pe
 
     if top_id in visible_ids:
         assert person_list.GetObjectAt(person_list.GetTopItem()).IDpersonne == top_id
+
+
+def test_refresh_without_initial_selection_does_not_select_arbitrary_person(person_list):
+    person_list.DeselectAll()
+    _flush_wx_events()
+    top_before = person_list.GetTopItem()
+    top_id = person_list.GetObjectAt(top_before).IDpersonne
+
+    person_list.SetObjects(_replacement_rows())
+    _flush_wx_events()
+
+    assert person_list.GetSelectedObject() is None
+    assert person_list.GetObjectAt(person_list.GetTopItem()).IDpersonne == top_id
+
+
+def test_filter_remains_active_when_previously_selected_id_disappears(person_list):
+    person_id = 420
+    text_filter = Filter.TextSearch(person_list, person_list.columns[1:4])
+    text_filter.SetText("dupont")
+    person_list.SetFilter(text_filter)
+    person_list.RepopulateList()
+    _flush_wx_events()
+
+    target = _find_by_id(person_list, person_id)
+    assert person_id in _visible_ids(person_list)
+    person_list.SelectObject(target, deselectOthers=True, ensureVisible=True)
+    assert person_list.GetSelectedObject().IDpersonne == person_id
+
+    expected_visible_ids = [
+        row.IDpersonne
+        for row in _replacement_rows()
+        if row.IDpersonne != person_id and "dupont" in row.nom.lower()
+    ]
+    replacement_rows = [
+        row for row in _replacement_rows() if row.IDpersonne != person_id
+    ]
+    person_list.SetObjects(replacement_rows)
+    person_list.DeselectAll()
+    _flush_wx_events()
+
+    assert person_list.GetSelectedObject() is None
+    assert person_id not in _visible_ids(person_list)
+    assert _visible_ids(person_list) == expected_visible_ids
+
+    # The same filter object must still govern subsequent refreshes.
+    added = PersonRow(999, "DUPONT", "Nouvelle", "Rennes")
+    person_list.SetObjects(replacement_rows + [added])
+    _flush_wx_events()
+
+    assert 999 in _visible_ids(person_list)
+    assert all(
+        "dupont" in _find_by_id(person_list, visible_id).nom.lower()
+        for visible_id in _visible_ids(person_list)
+    )
