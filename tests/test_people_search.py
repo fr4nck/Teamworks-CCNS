@@ -179,3 +179,21 @@ def test_exact_simple_tour_ranks_before_de_la_tour():
     results = search_people("tour", PEOPLE)
     result_codes = [r.person.code_internal for r in results]
     assert result_codes.index("P19") < result_codes.index("P11")
+
+
+def test_full_surname_is_not_treated_as_prefix_of_longer_surname():
+    results = search_people("martin", PEOPLE)
+    assert "P17" not in codes(results, "certain")
+
+
+def test_short_prefix_still_supports_abbreviated_entry():
+    assert {"P01", "P02", "P03", "P05"}.issubset(
+        codes(search_people("dup mar", PEOPLE), "certain")
+    )
+
+
+def test_exact_simple_surname_gets_higher_score_than_compound_surnames():
+    results = search_people("martin", PEOPLE)
+    by_code = {result.person.code_internal: result for result in results}
+    assert by_code["P16"].score > by_code["P18"].score
+    assert by_code["P16"].score > by_code["P20"].score
