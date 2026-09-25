@@ -422,3 +422,45 @@ def test_sorted_refresh_repositions_person_without_changing_selected_identity(pe
     assert selected is replacement
     assert new_index != old_index
     assert new_index < old_index
+
+
+def test_sorted_refresh_keeps_keyboard_focus_on_moved_selected_person(person_list):
+    person_id = 420
+    name_column = person_list.columns[1]
+    person_list.SetSortColumn(name_column)
+    person_list.sortAscending = True
+    person_list.RepopulateList()
+
+    target = _find_by_id(person_list, person_id)
+    person_list.SelectObject(target, deselectOthers=True, ensureVisible=True)
+    person_list.SetFocus()
+    _flush_wx_events()
+
+    old_index = person_list.GetIndexOf(target)
+    assert person_list.GetFocusedItem() == old_index
+
+    replacement_rows = _replacement_rows()
+    replacement = next(row for row in replacement_rows if row.IDpersonne == person_id)
+    replacement.nom = "ZZZZZ"
+
+    person_list.SetObjects(replacement_rows)
+    person_list.SelectObject(replacement, deselectOthers=True, ensureVisible=True)
+    new_index = person_list.GetIndexOf(replacement)
+    person_list.SetItemState(
+        new_index,
+        wx.LIST_STATE_FOCUSED,
+        wx.LIST_STATE_FOCUSED,
+    )
+    person_list.SetFocus()
+    _flush_wx_events()
+
+    focused_index = person_list.GetFocusedItem()
+    selected = person_list.GetSelectedObject()
+
+    assert new_index != old_index
+    assert new_index > 0
+    assert selected is replacement
+    assert selected.IDpersonne == person_id
+    assert focused_index == new_index
+    assert focused_index != 0
+    assert person_list.GetObjectAt(focused_index).IDpersonne == person_id
