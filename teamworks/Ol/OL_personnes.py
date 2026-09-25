@@ -95,6 +95,90 @@ class ListView(CORE.ListView):
                 self.selectionTrack = track
         return objets
 
+    def _selected_person_id(self):
+        selection = self.Selection()
+        if not selection:
+            return None
+        return getattr(selection[0], "IDpersonne", None)
+
+    def _top_person_id(self):
+        if not self.GetItemCount():
+            return None
+        try:
+            top_index = self.GetTopItem()
+            top_object = self.GetObjectAt(top_index)
+        except Exception:
+            return None
+        return getattr(top_object, "IDpersonne", None)
+
+    def _find_track(self, person_id, objects=None):
+        if person_id is None:
+            return None
+        if objects is None:
+            objects = self.GetObjects()
+        for track in objects:
+            if getattr(track, "IDpersonne", None) == person_id:
+                return track
+        return None
+
+    def _visible_person_ids(self):
+        return {
+            getattr(track, "IDpersonne", None)
+            for track in self.GetFilteredObjects()
+        }
+
+    def SyncSummary(self, person_id=None):
+        """Synchronise explicitement le résumé avec la sélection visible."""
+        if person_id is None:
+            person_id = self._selected_person_id()
+
+        visible = person_id is not None and person_id in self._visible_person_ids()
+        try:
+            frame = self.GetGrandParent().GetParent()
+            if visible:
+                frame.panel_resume.OnSelectPersonne(IDpersonne=person_id)
+                frame.AffichePanelResume(True)
+            else:
+                frame.AffichePanelResume(False)
+        except Exception:
+            pass
+
+    def MAJ(self, IDpersonne=None, presents=None):
+        """Recharge les données sans reconstruire la configuration ObjectListView."""
+        selected_id = IDpersonne if IDpersonne is not None else self._selected_person_id()
+        top_id = self._top_person_id()
+
+        if presents is not None:
+            self.presents = presents
+
+        # InitModel utilise selectionID uniquement pour retrouver le Track demandé.
+        self.selectionID = selected_id
+        self.selectionTrack = None
+        self.InitModel()
+
+        # SetObjects conserve colonnes, largeurs, filtre et configuration de tri.
+        self.SetObjects(self.donnees)
+
+        visible_ids = self._visible_person_ids()
+        selected_track = self._find_track(selected_id)
+        if selected_track is not None and selected_id in visible_ids:
+            self.SelectObject(selected_track, deselectOthers=True, ensureVisible=True)
+        else:
+            self.DeselectAll()
+
+        # En l'absence d'une sélection visible à restaurer, conserver autant que
+        # possible la zone de lecture précédente.
+        if selected_track is None or selected_id not in visible_ids:
+            top_track = self._find_track(top_id, self.GetFilteredObjects())
+            if top_track is not None:
+                top_index = self.GetIndexOf(top_track)
+                if top_index >= 0:
+                    self.EnsureVisible(top_index)
+
+        self.SyncSummary(selected_id if selected_id in visible_ids else None)
+        self.selectionID = None
+        self.selectionTrack = None
+
     def Supprimer(self):
         selection = self.Selection()
         if not selection:
