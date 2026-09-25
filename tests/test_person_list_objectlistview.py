@@ -600,3 +600,54 @@ def test_filtered_refresh_without_selection_keeps_read_position_when_visible_cou
     assert person_list.GetSelectedObject() is None
     assert person_list.GetFocusedItem() == -1
     assert person_list.GetObjectAt(person_list.GetTopItem()).IDpersonne == top_id
+
+
+def test_filtered_refresh_repositions_read_view_when_anchor_disappears_without_selection(person_list):
+    text_filter = Filter.TextSearch(person_list, person_list.columns[1:4])
+    text_filter.SetText("dupont")
+    person_list.SetFilter(text_filter)
+    person_list.RepopulateList()
+    _flush_wx_events()
+
+    visible_before = person_list.GetFilteredObjects()
+    assert len(visible_before) > 4
+
+    anchor = visible_before[3]
+    anchor_id = anchor.IDpersonne
+    anchor_index = person_list.GetIndexOf(anchor)
+    person_list.EnsureVisible(anchor_index)
+    _flush_wx_events()
+
+    top_before = person_list.GetTopItem()
+    top_id = person_list.GetObjectAt(top_before).IDpersonne
+    visible_ids_before = _visible_ids(person_list)
+    top_position_before = visible_ids_before.index(top_id)
+
+    person_list.DeselectAll()
+    focused_before = person_list.GetFocusedItem()
+    if focused_before >= 0:
+        person_list.SetItemState(focused_before, 0, wx.LIST_STATE_FOCUSED)
+    _flush_wx_events()
+
+    # Remove the current reading anchor. The contract falls back to the row
+    # occupying the closest coherent visible position, without creating a
+    # selection or keyboard focus.
+    replacement_rows = [
+        row for row in _replacement_rows() if row.IDpersonne != top_id
+    ]
+    person_list.SetObjects(replacement_rows)
+    visible_after = person_list.GetFilteredObjects()
+    visible_ids_after = [row.IDpersonne for row in visible_after]
+
+    assert top_id not in visible_ids_after
+    assert visible_ids_after
+
+    fallback_position = min(top_position_before, len(visible_ids_after) - 1)
+    fallback = visible_after[fallback_position]
+    person_list.EnsureVisible(person_list.GetIndexOf(fallback))
+    _flush_wx_events()
+
+    assert person_list.GetSelectedObject() is None
+    assert person_list.GetFocusedItem() == -1
+    assert person_list.GetObjectAt(person_list.GetTopItem()).IDpersonne == fallback.IDpersonne
+    assert fallback.IDpersonne in visible_ids_after
