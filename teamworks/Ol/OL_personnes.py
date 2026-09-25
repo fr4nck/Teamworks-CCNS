@@ -108,36 +108,47 @@ class ListView(CORE.ListView):
             dlg.Destroy()
             return False
 
-        IDpersonne = selection[0].IDpersonne
-        DB = CORE.GestionDB.DB()
-        placeholder = "%s" if DB.isNetwork else "?"
-        controles = (
-            ("contrats", "IDcontrat", _(u"Vous ne pouvez pas supprimer une personne qui possède un ou plusieurs contrat(s).\n\nSi vous voulez vraiment supprimer cette fiche, vous devez d'abord supprimer le ou les contrat(s) de la personne.")),
-            ("presences", "IDpresence", _(u"Vous ne pouvez pas supprimer une personne pour laquelle des présences ont déjà été enregistrées.\n\nSi vous voulez vraiment supprimer cette fiche, vous devez d'abord supprimer le ou les présence(s) de la personne.")),
-            ("deplacements", "IDdeplacement", _(u"Vous ne pouvez pas supprimer une personne pour laquelle des déplacements ont déjà été enregistrés.\n\nSi vous voulez vraiment supprimer cette fiche, vous devez d'abord supprimer le ou les déplacement(s) de la personne.")),
-            ("remboursements", "IDremboursement", _(u"Vous ne pouvez pas supprimer une personne pour laquelle des remboursements ont déjà été enregistrés.\n\nSi vous voulez vraiment supprimer cette fiche, vous devez d'abord supprimer le ou les remboursement(s) de la personne.")),
+        from application.services.person_delete import (
+            BLOCK_CONTRACTS,
+            BLOCK_PRESENCES,
+            BLOCK_REIMBURSEMENTS,
+            BLOCK_TRAVEL,
+            check_person_deletion,
+            delete_person,
         )
+        from infrastructure.repositories.person_delete_repository import (
+            GestionDBPersonDeleteRepository,
+        )
+
+        person_id = selection[0].IDpersonne
+        repository = GestionDBPersonDeleteRepository()
+        blocking_messages = {
+            BLOCK_CONTRACTS: _(u"Vous ne pouvez pas supprimer une personne qui possède un ou plusieurs contrat(s).\n\nSi vous voulez vraiment supprimer cette fiche, vous devez d'abord supprimer le ou les contrat(s) de la personne."),
+            BLOCK_PRESENCES: _(u"Vous ne pouvez pas supprimer une personne pour laquelle des présences ont déjà été enregistrées.\n\nSi vous voulez vraiment supprimer cette fiche, vous devez d'abord supprimer le ou les présence(s) de la personne."),
+            BLOCK_TRAVEL: _(u"Vous ne pouvez pas supprimer une personne pour laquelle des déplacements ont déjà été enregistrés.\n\nSi vous voulez vraiment supprimer cette fiche, vous devez d'abord supprimer le ou les déplacement(s) de la personne."),
+            BLOCK_REIMBURSEMENTS: _(u"Vous ne pouvez pas supprimer une personne pour laquelle des remboursements ont déjà été enregistrés.\n\nSi vous voulez vraiment supprimer cette fiche, vous devez d'abord supprimer le ou les remboursement(s) de la personne."),
+        }
+
         try:
-            for table, colonne, message in controles:
-                DB.cursor.execute(
-                    "SELECT %s FROM %s WHERE IDpersonne=%s" % (colonne, table, placeholder),
-                    (IDpersonne,),
-                )
-                if DB.cursor.fetchone() is not None:
-                    DB.Close()
-                    dlg = wx.MessageDialog(self, message, "Information", wx.OK | wx.ICON_ERROR)
-                    dlg.ShowModal()
-                    dlg.Destroy()
-                    return False
+            check = check_person_deletion(person_id, repository)
         except Exception as err:
-            DB.Close()
             wx.MessageBox(
                 _(u"La vérification des données liées à cette personne a échoué. La suppression n'a pas été lancée.\n\nDétail technique : %s") % err,
                 _(u"Suppression annulée"),
                 wx.OK | wx.ICON_ERROR,
             )
             return False
-        DB.Close()
+
+        if not check.allowed:
+            dlg = wx.MessageDialog(
+                self,
+                blocking_messages[check.blocking_reason],
+                "Information",
+                wx.OK | wx.ICON_ERROR,
+            )
+            dlg.ShowModal()
+            dlg.Destroy()
+            return False
 
         nom = u"%s %s" % (selection[0].prenom or "", selection[0].nom or "")
         message = _(
@@ -155,28 +166,26 @@ class ListView(CORE.ListView):
         if reponse != wx.ID_YES:
             return False
 
-        DB = CORE.GestionDB.DB()
-        placeholder = "%s" if DB.isNetwork else "?"
         try:
-            for table in ("coordonnees", "diplomes", "pieces", "personnes"):
-                DB.cursor.execute(
-                    "DELETE FROM %s WHERE IDpersonne=%s" % (table, placeholder),
-                    (IDpersonne,),
-                )
-            DB.Commit()
+            result = delete_person(person_id, repository)
         except Exception as err:
-            try:
-                DB.connexion.rollback()
-            except Exception:
-                pass
-            DB.Close()
             wx.MessageBox(
                 _(u"La personne n'a pas pu être supprimée. Aucune suppression n'a été validée.\n\nDétail technique : %s") % err,
                 _(u"Suppression annulée"),
                 wx.OK | wx.ICON_ERROR,
             )
             return False
-        DB.Close()
+
+        if not result.allowed:
+            dlg = wx.MessageDialog(
+                self,
+                blocking_messages[result.blocking_reason],
+                "Information",
+                wx.OK | wx.ICON_ERROR,
+            )
+            dlg.ShowModal()
+            dlg.Destroy()
+            return False
 
         self.MAJ()
         try:
