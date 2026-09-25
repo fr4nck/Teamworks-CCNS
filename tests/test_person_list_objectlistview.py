@@ -308,3 +308,56 @@ def test_filter_remains_active_when_previously_selected_id_disappears(person_lis
         "dupont" in _find_by_id(person_list, visible_id).nom.lower()
         for visible_id in _visible_ids(person_list)
     )
+
+
+def test_summary_hides_when_filtered_selection_disappears_then_returns_for_new_selection(person_list):
+    hidden_person_id = 420
+    next_person_id = 490
+
+    text_filter = Filter.TextSearch(person_list, person_list.columns[1:4])
+    text_filter.SetText("dupont")
+    person_list.SetFilter(text_filter)
+    person_list.RepopulateList()
+    _flush_wx_events()
+
+    hidden_target = _find_by_id(person_list, hidden_person_id)
+    person_list.SelectObject(hidden_target, deselectOthers=True, ensureVisible=True)
+    assert person_list.GetSelectedObject().IDpersonne == hidden_person_id
+
+    summary_calls = []
+    summary_visible = []
+
+    def sync_summary(selected_id):
+        visible_ids = _visible_ids(person_list)
+        if selected_id is not None and selected_id in visible_ids:
+            summary_calls.append(selected_id)
+            summary_visible.append(True)
+        else:
+            summary_visible.append(False)
+
+    sync_summary(hidden_person_id)
+    assert summary_calls == [hidden_person_id]
+    assert summary_visible == [True]
+
+    replacement_rows = [
+        row for row in _replacement_rows() if row.IDpersonne != hidden_person_id
+    ]
+    person_list.SetObjects(replacement_rows)
+    person_list.DeselectAll()
+    _flush_wx_events()
+
+    sync_summary(None)
+    assert person_list.GetSelectedObject() is None
+    assert summary_calls == [hidden_person_id]
+    assert summary_visible[-1] is False
+
+    next_target = _find_by_id(person_list, next_person_id)
+    assert next_person_id in _visible_ids(person_list)
+    person_list.SelectObject(next_target, deselectOthers=True, ensureVisible=True)
+    _flush_wx_events()
+
+    sync_summary(next_person_id)
+
+    assert person_list.GetSelectedObject() is next_target
+    assert summary_visible == [True, False, True]
+    assert summary_calls == [hidden_person_id, next_person_id]
