@@ -54,3 +54,23 @@ def test_delete_calls_repository_once_when_allowed():
     result = delete_person(42, repository)
     assert result.allowed is True
     assert repository.deleted == [42]
+
+
+class MultiBlockedRepository(FakeRepository):
+    def has_contracts(self, person_id):
+        return True
+
+    def has_presences(self, person_id):
+        return True
+
+    def has_travel(self, person_id):
+        return True
+
+    def has_reimbursements(self, person_id):
+        return True
+
+
+def test_delete_check_really_preserves_legacy_blocking_priority():
+    result = check_person_deletion(42, MultiBlockedRepository())
+    assert result.allowed is False
+    assert result.blocking_reason == BLOCK_CONTRACTS
