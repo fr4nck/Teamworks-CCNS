@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import Counter
 from dataclasses import dataclass
 from difflib import SequenceMatcher
 import re
@@ -31,17 +32,41 @@ def _person_tokens(person: Person) -> tuple[str, ...]:
     return _tokens(f"{person.first_name} {person.last_name}")
 
 
+def _tokens_fit_exactly(
+    query_tokens: tuple[str, ...],
+    person_tokens: tuple[str, ...],
+) -> bool:
+    query_counts = Counter(query_tokens)
+    person_counts = Counter(person_tokens)
+    return all(person_counts[token] >= count for token, count in query_counts.items())
+
+
+def _tokens_fit_as_prefixes(
+    query_tokens: tuple[str, ...],
+    person_tokens: tuple[str, ...],
+) -> bool:
+    remaining = list(person_tokens)
+    for token in query_tokens:
+        for index, candidate in enumerate(remaining):
+            if candidate.startswith(token):
+                remaining.pop(index)
+                break
+        else:
+            return False
+    return True
+
+
 def _certain_score(query_tokens: tuple[str, ...], person_tokens: tuple[str, ...]) -> int | None:
     if not query_tokens:
         return None
-    if all(token in person_tokens for token in query_tokens):
+    if _tokens_fit_exactly(query_tokens, person_tokens):
         return 300
-    # Les préfixes servent à la saisie abrégée ("dup", "mar"), pas à
+    # Les préfixes servent à la saisie abrégée ("dupo", "mar"), pas à
     # transformer un patronyme complet en un autre ("martin" != "martineau").
-    if all(
-        any(candidate.startswith(token) for candidate in person_tokens)
-        for token in query_tokens
-    ) and all(len(token) <= 4 for token in query_tokens):
+    # Chaque token de la personne ne peut satisfaire qu'un token de la requête.
+    if all(len(token) <= 4 for token in query_tokens) and _tokens_fit_as_prefixes(
+        query_tokens, person_tokens
+    ):
         return 200
     return None
 
