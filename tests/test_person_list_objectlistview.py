@@ -361,3 +361,64 @@ def test_summary_hides_when_filtered_selection_disappears_then_returns_for_new_s
     assert person_list.GetSelectedObject() is next_target
     assert summary_visible == [True, False, True]
     assert summary_calls == [hidden_person_id, next_person_id]
+
+
+def test_sorted_refresh_keeps_selection_visible_when_person_moves(person_list):
+    person_id = 420
+    name_column = person_list.columns[1]
+    person_list.SetSortColumn(name_column)
+    person_list.sortAscending = True
+    person_list.RepopulateList()
+
+    target = _find_by_id(person_list, person_id)
+    person_list.SelectObject(target, deselectOthers=True, ensureVisible=True)
+    old_index = person_list.GetIndexOf(target)
+
+    replacement_rows = _replacement_rows()
+    replacement = next(row for row in replacement_rows if row.IDpersonne == person_id)
+    replacement.nom = "ZZZZZ"
+
+    person_list.SetObjects(replacement_rows)
+    person_list.SelectObject(replacement, deselectOthers=True, ensureVisible=True)
+    _flush_wx_events()
+
+    selected = person_list.GetSelectedObject()
+    new_index = person_list.GetIndexOf(selected)
+    top_index = person_list.GetTopItem()
+
+    assert person_list.GetSortColumn() is name_column
+    assert person_list.sortAscending is True
+    assert selected is replacement
+    assert selected.IDpersonne == person_id
+    assert new_index != old_index
+    assert new_index > old_index
+    assert top_index <= new_index < top_index + person_list.GetCountPerPage()
+
+
+def test_sorted_refresh_repositions_person_without_changing_selected_identity(person_list):
+    person_id = 490
+    city_column = person_list.columns[3]
+    person_list.SetSortColumn(city_column)
+    person_list.sortAscending = True
+    person_list.RepopulateList()
+
+    target = _find_by_id(person_list, person_id)
+    person_list.SelectObject(target, deselectOthers=True, ensureVisible=True)
+    old_index = person_list.GetIndexOf(target)
+
+    replacement_rows = _replacement_rows()
+    replacement = next(row for row in replacement_rows if row.IDpersonne == person_id)
+    replacement.ville = "Aaa"
+
+    person_list.SetObjects(replacement_rows)
+    person_list.SelectObject(replacement, deselectOthers=True, ensureVisible=True)
+    _flush_wx_events()
+
+    selected = person_list.GetSelectedObject()
+    new_index = person_list.GetIndexOf(selected)
+
+    assert person_list.GetSortColumn() is city_column
+    assert selected.IDpersonne == person_id
+    assert selected is replacement
+    assert new_index != old_index
+    assert new_index < old_index
