@@ -4,10 +4,11 @@ from dataclasses import dataclass
 import pytest
 
 
-pytestmark = pytest.mark.skipif(
-    sys.platform != "win32",
-    reason="ObjectListView integration contract is exercised on Windows",
-)
+if sys.platform != "win32":
+    pytest.skip(
+        "ObjectListView integration contract is exercised on Windows",
+        allow_module_level=True,
+    )
 
 wx = pytest.importorskip("wx")
 olv_module = pytest.importorskip("ObjectListView")
