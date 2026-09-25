@@ -651,3 +651,59 @@ def test_filtered_refresh_repositions_read_view_when_anchor_disappears_without_s
     assert person_list.GetFocusedItem() == -1
     assert person_list.GetObjectAt(person_list.GetTopItem()).IDpersonne == fallback.IDpersonne
     assert fallback.IDpersonne in visible_ids_after
+
+
+def test_filtered_refresh_with_no_visible_rows_keeps_neutral_selection_focus_and_view(person_list):
+    text_filter = Filter.TextSearch(person_list, person_list.columns[1:4])
+    text_filter.SetText("dupont")
+    person_list.SetFilter(text_filter)
+    person_list.RepopulateList()
+    _flush_wx_events()
+
+    assert _visible_ids(person_list)
+
+    person_list.DeselectAll()
+    focused_before = person_list.GetFocusedItem()
+    if focused_before >= 0:
+        person_list.SetItemState(focused_before, 0, wx.LIST_STATE_FOCUSED)
+    _flush_wx_events()
+
+    assert person_list.GetSelectedObject() is None
+    assert person_list.GetFocusedItem() == -1
+
+    replacement_rows = [
+        PersonRow(row.IDpersonne, "MARTIN%03d" % row.IDpersonne, row.prenom, row.ville)
+        for row in _replacement_rows()
+    ]
+    person_list.SetObjects(replacement_rows)
+    _flush_wx_events()
+
+    assert _visible_ids(person_list) == []
+    assert person_list.GetItemCount() == 0
+    assert person_list.GetSelectedObject() is None
+    assert person_list.GetFocusedItem() == -1
+
+
+def test_filtered_refresh_recovers_neutral_view_after_zero_results(person_list):
+    text_filter = Filter.TextSearch(person_list, person_list.columns[1:4])
+    text_filter.SetText("dupont")
+    person_list.SetFilter(text_filter)
+    person_list.RepopulateList()
+
+    no_match_rows = [
+        PersonRow(row.IDpersonne, "MARTIN%03d" % row.IDpersonne, row.prenom, row.ville)
+        for row in _replacement_rows()
+    ]
+    person_list.SetObjects(no_match_rows)
+    person_list.DeselectAll()
+    _flush_wx_events()
+    assert person_list.GetItemCount() == 0
+
+    restored_rows = _replacement_rows()
+    person_list.SetObjects(restored_rows)
+    _flush_wx_events()
+
+    assert _visible_ids(person_list)
+    assert person_list.GetSelectedObject() is None
+    assert person_list.GetFocusedItem() == -1
+    assert person_list.GetObjectAt(person_list.GetTopItem()).IDpersonne == _visible_ids(person_list)[0]
