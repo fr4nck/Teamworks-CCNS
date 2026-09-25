@@ -597,81 +597,74 @@ class ListView(FastObjectListView):
             dlg.ShowModal()
             dlg.Destroy()
             return False
-        IDpersonne = self.Selection()[0].IDpersonne
-        
-        # Vérifie qu'il n'y a aucun contrat enregistré pour cette personne
-        DB = GestionDB.DB()
-        req = """SELECT IDcontrat FROM contrats WHERE IDpersonne=%d;""" % IDpersonne
-        DB.ExecuterReq(req)
-        listeContrats = DB.ResultatReq()
-        DB.Close()
-        if len(listeContrats)>0 :
-            dlg = wx.MessageDialog(self, _(u"Vous ne pouvez pas supprimer une personne qui possède un ou plusieurs contrat(s).\n\nSi vous voulez vraiment supprimer cette fiche, vous devez d'abord supprimer le ou les contrat(s) de la personne."), "Information", wx.OK | wx.ICON_ERROR)
+
+        selection = self.Selection()[0]
+        IDpersonne = selection.IDpersonne
+
+        from application.services.person_delete import (
+            BLOCK_CONTRACTS,
+            BLOCK_PRESENCES,
+            BLOCK_REIMBURSEMENTS,
+            BLOCK_TRAVEL,
+            check_person_deletion,
+            delete_person,
+        )
+        from infrastructure.repositories.person_delete_repository import (
+            GestionDBPersonDeleteRepository,
+        )
+
+        repository = GestionDBPersonDeleteRepository()
+        check = check_person_deletion(IDpersonne, repository)
+        blocking_messages = {
+            BLOCK_CONTRACTS: _(u"Vous ne pouvez pas supprimer une personne qui possède un ou plusieurs contrat(s).\n\nSi vous voulez vraiment supprimer cette fiche, vous devez d'abord supprimer le ou les contrat(s) de la personne."),
+            BLOCK_PRESENCES: _(u"Vous ne pouvez pas supprimer une personne pour laquelle des présences ont déjà été enregistrées.\n\nSi vous voulez vraiment supprimer cette fiche, vous devez d'abord supprimer le ou les présence(s) de la personne."),
+            BLOCK_TRAVEL: _(u"Vous ne pouvez pas supprimer une personne pour laquelle des déplacements ont déjà été enregistrés.\n\nSi vous voulez vraiment supprimer cette fiche, vous devez d'abord supprimer le ou les déplacements(s) de la personne."),
+            BLOCK_REIMBURSEMENTS: _(u"Vous ne pouvez pas supprimer une personne pour laquelle des remboursements ont déjà été enregistrés.\n\nSi vous voulez vraiment supprimer cette fiche, vous devez d'abord supprimer le ou les remboursement(s) de la personne."),
+        }
+        if not check.allowed:
+            dlg = wx.MessageDialog(
+                self,
+                blocking_messages[check.blocking_reason],
+                "Information",
+                wx.OK | wx.ICON_ERROR,
+            )
             dlg.ShowModal()
             dlg.Destroy()
-            return
-        
-        # Vérifie qu'il n'y a aucune présence enregistrée pour cette personne
-        DB = GestionDB.DB()
-        req = """SELECT IDpresence FROM presences WHERE IDpersonne=%d;""" % IDpersonne
-        DB.ExecuterReq(req)
-        listePresences = DB.ResultatReq()
-        DB.Close()
-        if len(listePresences)>0 :
-            dlg = wx.MessageDialog(self, _(u"Vous ne pouvez pas supprimer une personne pour laquelle des présences ont déjà été enregistrées.\n\nSi vous voulez vraiment supprimer cette fiche, vous devez d'abord supprimer le ou les présence(s) de la personne."), "Information", wx.OK | wx.ICON_ERROR)
-            dlg.ShowModal()
-            dlg.Destroy()
-            return
-        
-        # Vérifie qu'il n'y a aucun déplacement enregistré pour cette personne
-        DB = GestionDB.DB()
-        req = """SELECT IDdeplacement FROM deplacements WHERE IDpersonne=%d;""" % IDpersonne
-        DB.ExecuterReq(req)
-        listeDeplacements = DB.ResultatReq()
-        DB.Close()
-        if len(listeDeplacements)>0 :
-            dlg = wx.MessageDialog(self, _(u"Vous ne pouvez pas supprimer une personne pour laquelle des déplacements ont déjà été enregistrés.\n\nSi vous voulez vraiment supprimer cette fiche, vous devez d'abord supprimer le ou les déplacements(s) de la personne."), "Information", wx.OK | wx.ICON_ERROR)
-            dlg.ShowModal()
-            dlg.Destroy()
-            return
-        
-        # Vérifie qu'il n'y a aucun remboursement enregistré pour cette personne
-        DB = GestionDB.DB()
-        req = """SELECT IDremboursement FROM remboursements WHERE IDpersonne=%d;""" % IDpersonne
-        DB.ExecuterReq(req)
-        listeRemboursements= DB.ResultatReq()
-        DB.Close()
-        if len(listeRemboursements)>0 :
-            dlg = wx.MessageDialog(self, _(u"Vous ne pouvez pas supprimer une personne pour laquelle des remboursements ont déjà été enregistrés.\n\nSi vous voulez vraiment supprimer cette fiche, vous devez d'abord supprimer le ou les remboursement(s) de la personne."), "Information", wx.OK | wx.ICON_ERROR)
-            dlg.ShowModal()
-            dlg.Destroy()
-            return
-        
-        # Demande de confirmation
-        Nom = self.Selection()[0].prenom + " " + self.Selection()[0].nom
-        txtMessage = six.text_type((_(u"Voulez-vous vraiment supprimer cette identité ? \n\n> ") + Nom + _(u"\n\n\nAttention : Les coordonnées, diplômes ou pièces de cette personne seront également supprimés.")))
-        dlgConfirm = wx.MessageDialog(self, txtMessage, _(u"Confirmation de suppression"), wx.YES_NO|wx.NO_DEFAULT|wx.ICON_QUESTION)
+            return False
+
+        nom = selection.prenom + " " + selection.nom
+        txtMessage = six.text_type(
+            _(u"Voulez-vous vraiment supprimer cette identité ? \n\n> ")
+            + nom
+            + _(u"\n\n\nAttention : Les coordonnées, diplômes ou pièces de cette personne seront également supprimés.")
+        )
+        dlgConfirm = wx.MessageDialog(
+            self,
+            txtMessage,
+            _(u"Confirmation de suppression"),
+            wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION,
+        )
         reponse = dlgConfirm.ShowModal()
         dlgConfirm.Destroy()
-        if reponse == wx.ID_NO:
-            return
-        
-        # Suppression
-        DB = GestionDB.DB()
-        # Suppression de la fiche
-        DB.ReqDEL("personnes", "IDpersonne", IDpersonne)
-        # Suppression des coordonnées
-        DB.ReqDEL("coordonnees", "IDpersonne", IDpersonne)
-        # Suppression des diplômes
-        DB.ReqDEL("diplomes", "IDpersonne", IDpersonne)
-        # Suppression des pièces
-        DB.ReqDEL("pieces", "IDpersonne", IDpersonne)
-        
-        DB.Close()
+        if reponse != wx.ID_YES:
+            return False
 
-        # MàJ du ListCtrl
+        try:
+            delete_person(IDpersonne, repository)
+        except Exception as err:
+            dlg = wx.MessageDialog(
+                self,
+                _(u"La suppression de cette personne a échoué. Aucune donnée n'a été supprimée.\n\nErreur : %s") % six.text_type(err),
+                _(u"Erreur"),
+                wx.OK | wx.ICON_ERROR,
+            )
+            dlg.ShowModal()
+            dlg.Destroy()
+            return False
+
         self.MAJ()
         self.GetGrandParent().GetParent().AffichePanelResume(False)
+        return True
 
     def Rechercher(self):
         """ Rechercher les présents sur une période donnée """
