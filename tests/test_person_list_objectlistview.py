@@ -272,3 +272,70 @@ def test_teamworks_maj_clears_missing_identity_and_summary(person_list, monkeypa
 
     assert person_list.GetSelectedObject() is None
     assert summary_calls == [None]
+
+
+def test_teamworks_maj_preserves_sort_width_and_filter(person_list, monkeypatch):
+    from Ol import OL_personnes
+
+    person_id = 420
+    target = _find_by_id(person_list, person_id)
+    person_list.SelectObject(target, deselectOthers=True, ensureVisible=True)
+
+    city_column = person_list.columns[3]
+    person_list.SetSortColumn(city_column)
+    person_list.sortAscending = False
+    person_list.SetColumnWidth(1, 317)
+
+    text_filter = Filter.TextSearch(person_list, person_list.columns[1:4])
+    text_filter.SetText("rennes")
+    person_list.SetFilter(text_filter)
+    person_list.RepopulateList()
+    expected_visible_ids = _visible_ids(person_list)
+    expected_sort_column = person_list.GetSortColumn()
+
+    replacement_rows = _replacement_rows()
+    monkeypatch.setattr(
+        person_list,
+        "InitModel",
+        lambda: setattr(person_list, "donnees", replacement_rows),
+    )
+    monkeypatch.setattr(person_list, "SyncSummary", lambda selected_id=None: None)
+
+    OL_personnes.ListView.MAJ(person_list)
+
+    assert person_list.GetSortColumn() is expected_sort_column
+    assert person_list.sortAscending is False
+    assert person_list.GetColumnWidth(1) == 317
+    assert _visible_ids(person_list) == expected_visible_ids
+
+
+def test_teamworks_maj_hidden_requested_person_clears_selection_and_summary(person_list, monkeypatch):
+    from Ol import OL_personnes
+
+    person_id = 420
+    target = _find_by_id(person_list, person_id)
+    person_list.SelectObject(target, deselectOthers=True, ensureVisible=True)
+
+    text_filter = Filter.TextSearch(person_list, person_list.columns[1:4])
+    text_filter.SetText("brest")
+    person_list.SetFilter(text_filter)
+    person_list.RepopulateList()
+    assert person_id not in _visible_ids(person_list)
+
+    summary_calls = []
+    replacement_rows = _replacement_rows()
+    monkeypatch.setattr(
+        person_list,
+        "InitModel",
+        lambda: setattr(person_list, "donnees", replacement_rows),
+    )
+    monkeypatch.setattr(
+        person_list,
+        "SyncSummary",
+        lambda selected_id=None: summary_calls.append(selected_id),
+    )
+
+    OL_personnes.ListView.MAJ(person_list, IDpersonne=person_id)
+
+    assert person_list.GetSelectedObject() is None
+    assert summary_calls == [None]
