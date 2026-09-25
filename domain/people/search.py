@@ -36,9 +36,24 @@ def _certain_score(query_tokens: tuple[str, ...], person_tokens: tuple[str, ...]
         return None
     if all(token in person_tokens for token in query_tokens):
         return 300
-    if all(any(candidate.startswith(token) for candidate in person_tokens) for token in query_tokens):
+    # Les préfixes servent à la saisie abrégée ("dup", "mar"), pas à
+    # transformer un patronyme complet en un autre ("martin" != "martineau").
+    if all(
+        any(candidate.startswith(token) for candidate in person_tokens)
+        for token in query_tokens
+    ) and all(len(token) <= 4 for token in query_tokens):
         return 200
     return None
+
+
+def _exact_simple_surname_bonus(
+    query_tokens: tuple[str, ...],
+    person: Person,
+) -> int:
+    if len(query_tokens) != 1:
+        return 0
+    surname_tokens = _tokens(person.last_name)
+    return 10 if surname_tokens == query_tokens else 0
 
 
 def _suggestion_score(query_tokens: tuple[str, ...], person_tokens: tuple[str, ...]) -> int | None:
@@ -67,6 +82,7 @@ def search_people(query: str, people: list[Person]) -> list[PersonSearchResult]:
         person_tokens = _person_tokens(person)
         score = _certain_score(query_tokens, person_tokens)
         if score is not None:
+            score += _exact_simple_surname_bonus(query_tokens, person)
             certain.append(PersonSearchResult(person, "certain", score))
             continue
         suggestion_score = _suggestion_score(query_tokens, person_tokens)
