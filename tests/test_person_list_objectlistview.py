@@ -812,3 +812,63 @@ def test_filter_change_without_selection_keeps_read_anchor_when_still_visible(pe
     assert person_list.GetObjectAt(new_index).IDpersonne == anchor_id
     top_index = person_list.GetTopItem()
     assert top_index <= new_index < top_index + person_list.GetCountPerPage()
+
+
+def test_filter_change_without_selection_tracks_anchor_when_sort_reorders_visible_rows(person_list):
+    initial_filter = Filter.TextSearch(person_list, person_list.columns[1:4])
+    initial_filter.SetText("dupont")
+    person_list.SetFilter(initial_filter)
+
+    name_column = person_list.columns[1]
+    person_list.SetSortColumn(name_column)
+    person_list.sortAscending = True
+    person_list.RepopulateList()
+    _flush_wx_events()
+
+    visible_before = person_list.GetFilteredObjects()
+    assert len(visible_before) > 3
+
+    anchor = visible_before[3]
+    anchor_id = anchor.IDpersonne
+    old_index = person_list.GetIndexOf(anchor)
+    person_list.EnsureVisible(old_index)
+    person_list.DeselectAll()
+
+    focused_before = person_list.GetFocusedItem()
+    if focused_before >= 0:
+        person_list.SetItemState(focused_before, 0, wx.LIST_STATE_FOCUSED)
+    _flush_wx_events()
+
+    assert person_list.GetSelectedObject() is None
+    assert person_list.GetFocusedItem() == -1
+
+    # Change the filtered population and the anchor's sort key so its visible
+    # position changes. Restoration must follow IDpersonne, not the old index.
+    replacement_rows = _replacement_rows()
+    anchor_replacement = next(
+        row for row in replacement_rows if row.IDpersonne == anchor_id
+    )
+    anchor_replacement.nom = "DUPONT ZZZ"
+    anchor_replacement.ville = "Rennes"
+
+    changed_filter = Filter.TextSearch(person_list, person_list.columns[1:4])
+    changed_filter.SetText("rennes")
+    person_list.SetFilter(changed_filter)
+    person_list.SetObjects(replacement_rows)
+    _flush_wx_events()
+
+    assert anchor_id in _visible_ids(person_list)
+    new_index = person_list.GetIndexOf(anchor_replacement)
+    assert new_index != old_index
+
+    person_list.EnsureVisible(new_index)
+    _flush_wx_events()
+
+    assert person_list.GetSortColumn() is name_column
+    assert person_list.sortAscending is True
+    assert person_list.GetSelectedObject() is None
+    assert person_list.GetFocusedItem() == -1
+    assert person_list.GetObjectAt(new_index).IDpersonne == anchor_id
+
+    top_index = person_list.GetTopItem()
+    assert top_index <= new_index < top_index + person_list.GetCountPerPage()
