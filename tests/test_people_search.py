@@ -66,7 +66,7 @@ def test_normalization(raw, expected):
         ("le goff helene", {"P06", "P07"}),
         ("   helene    le   goff   ", {"P06", "P07"}),
         ("le-goff helene", {"P06", "P07"}),
-        ("dup mar", {"P01", "P02", "P03", "P05"}),
+        ("dupo mar", {"P01", "P02", "P03", "P05"}),
         ("de la tour anne", {"P11"}),
         ("kerjean le gall anais", {"P15"}),
         ("martin martin", {"P16"}),
@@ -187,9 +187,26 @@ def test_full_surname_is_not_treated_as_prefix_of_longer_surname():
 
 
 def test_short_prefix_still_supports_abbreviated_entry():
-    assert {"P01", "P02", "P03", "P05"}.issubset(
-        codes(search_people("dup mar", PEOPLE), "certain")
-    )
+    assert codes(search_people("dupo mar", PEOPLE), "certain") == {
+        "P01",
+        "P02",
+        "P03",
+        "P05",
+    }
+
+
+def test_ambiguous_short_prefix_keeps_all_literal_prefix_matches():
+    assert codes(search_people("dup mar", PEOPLE), "certain") == {
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+    }
+
+
+def test_repeated_token_requires_distinct_occurrences():
+    assert codes(search_people("martin martin", PEOPLE), "certain") == {"P16"}
 
 
 def test_exact_simple_surname_gets_higher_score_than_compound_surnames():
