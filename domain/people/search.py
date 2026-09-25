@@ -1,0 +1,79 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from difflib import SequenceMatcher
+import re
+import unicodedata
+
+from domain.people.person import Person
+
+
+@dataclass(frozen=True, slots=True)
+class PersonSearchResult:
+    person: Person
+    kind: str
+    score: int
+
+
+def normalize_search_text(value: str) -> str:
+    value = unicodedata.normalize("NFKD", value or "")
+    value = "".join(ch for ch in value if not unicodedata.combining(ch))
+    value = value.casefold().replace("’", "'")
+    value = re.sub(r"[-']", " ", value)
+    return " ".join(value.split())
+
+
+def _tokens(value: str) -> tuple[str, ...]:
+    return tuple(normalize_search_text(value).split())
+
+
+def _person_tokens(person: Person) -> tuple[str, ...]:
+    return _tokens(f"{person.first_name} {person.last_name}")
+
+
+def _certain_score(query_tokens: tuple[str, ...], person_tokens: tuple[str, ...]) -> int | None:
+    if not query_tokens:
+        return None
+    if all(token in person_tokens for token in query_tokens):
+        return 300
+    if all(any(candidate.startswith(token) for candidate in person_tokens) for token in query_tokens):
+        return 200
+    return None
+
+
+def _suggestion_score(query_tokens: tuple[str, ...], person_tokens: tuple[str, ...]) -> int | None:
+    if not query_tokens or any(len(token) < 4 for token in query_tokens):
+        return None
+    unmatched = []
+    for token in query_tokens:
+        if token in person_tokens:
+            continue
+        ratios = [SequenceMatcher(None, token, candidate).ratio() for candidate in person_tokens]
+        best = max(ratios, default=0.0)
+        if best < 0.75:
+            return None
+        unmatched.append(best)
+    if not unmatched:
+        return None
+    return 100 + round(sum(unmatched) / len(unmatched) * 50)
+
+
+def search_people(query: str, people: list[Person]) -> list[PersonSearchResult]:
+    query_tokens = _tokens(query)
+    certain: list[PersonSearchResult] = []
+    suggestions: list[PersonSearchResult] = []
+
+    for person in people:
+        person_tokens = _person_tokens(person)
+        score = _certain_score(query_tokens, person_tokens)
+        if score is not None:
+            certain.append(PersonSearchResult(person, "certain", score))
+            continue
+        suggestion_score = _suggestion_score(query_tokens, person_tokens)
+        if suggestion_score is not None:
+            suggestions.append(PersonSearchResult(person, "suggestion", suggestion_score))
+
+    key = lambda result: (-result.score, normalize_search_text(result.person.display_name), str(result.person.id))
+    if certain:
+        return sorted(certain, key=key)
+    return sorted(suggestions, key=key)
