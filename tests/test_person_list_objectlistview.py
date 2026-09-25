@@ -515,3 +515,39 @@ def test_filtered_refresh_keeps_keyboard_focus_on_moved_visible_selection(person
     assert focused_index == new_index
     assert person_list.GetObjectAt(focused_index).IDpersonne == person_id
     assert person_id in _visible_ids(person_list)
+
+
+def test_refresh_without_initial_selection_keeps_no_row_focused_and_read_position_stable(person_list):
+    # Establish a non-trivial reading position, then remove both selection and
+    # item focus before refreshing.
+    anchor = _find_by_id(person_list, 420)
+    anchor_index = person_list.GetIndexOf(anchor)
+    person_list.EnsureVisible(anchor_index)
+    _flush_wx_events()
+
+    top_before = person_list.GetTopItem()
+    top_id = person_list.GetObjectAt(top_before).IDpersonne
+
+    person_list.DeselectAll()
+    focused_before = person_list.GetFocusedItem()
+    if focused_before >= 0:
+        person_list.SetItemState(
+            focused_before,
+            0,
+            wx.LIST_STATE_FOCUSED,
+        )
+    _flush_wx_events()
+
+    assert person_list.GetSelectedObject() is None
+    assert person_list.GetFocusedItem() == -1
+
+    person_list.SetObjects(_replacement_rows())
+
+    top_replacement = _find_by_id(person_list, top_id)
+    top_index = person_list.GetIndexOf(top_replacement)
+    person_list.EnsureVisible(top_index)
+    _flush_wx_events()
+
+    assert person_list.GetSelectedObject() is None
+    assert person_list.GetFocusedItem() == -1
+    assert person_list.GetObjectAt(person_list.GetTopItem()).IDpersonne == top_id
