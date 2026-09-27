@@ -1,7 +1,6 @@
 """Intégration de la machine DpaeCase avec MySQL/MariaDB réel."""
 import os
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime
 
 import pytest
 
@@ -23,7 +22,7 @@ def connect():
 def seed_case(status="DRAFT", version=0):
     conn=connect(); cur=conn.cursor()
     try:
-        cur.execute("INSERT INTO tw_dpae_case (id,case_key,employee_id,contract_id,establishment_id,expected_hiring_at,status,origin,created_at,version) VALUES ('c1','case-key','e1','ct1','est1',%s,%s,'TEAMWORKS',NOW(),%s)",(datetime(2026,10,1,8),status,version)); conn.commit()
+        cur.execute("INSERT INTO tw_dpae_case (id,case_key,contract_id,status,origin,created_at,version) VALUES ('c1','case-key','ct1',%s,'TEAMWORKS',NOW(),%s)",(status,version)); conn.commit()
     finally: cur.close(); conn.close()
 
 
