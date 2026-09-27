@@ -6,6 +6,8 @@ sont résolues par un port read-only avant d'être figées par la persistance DP
 from dataclasses import dataclass
 from typing import Optional, Protocol
 
+from application.services.dpae_errors import DpaeConfigurationError, DpaeDataError
+
 
 @dataclass(frozen=True)
 class PrepareDpae:
@@ -80,10 +82,19 @@ class DpaeService:
         if replayed is not None:
             return replayed
         if self._resolver is None:
-            raise RuntimeError("DPAE_BUSINESS_RESOLVER_REQUIRED")
+            raise DpaeConfigurationError(
+                "DPAE_BUSINESS_RESOLVER_REQUIRED",
+                entity_type="contract",
+                entity_id=command.contract_id,
+            )
         business_data = self._resolver.resolve(command.contract_id)
         if business_data.contract_id != command.contract_id:
-            raise ValueError("DPAE_RESOLVER_CONTRACT_MISMATCH")
+            raise DpaeDataError(
+                "DPAE_RESOLVER_CONTRACT_MISMATCH",
+                field="contract_id",
+                entity_type="contract",
+                entity_id=command.contract_id,
+            )
         return self._adapter.prepare(command, business_data)
 
     def _send_durable(self, durable):
