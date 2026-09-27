@@ -16,6 +16,11 @@ on:
         required: false
         default: false
         type: boolean
+      build_docs:
+        description: Construire la documentation utilisateur
+        required: false
+        default: false
+        type: boolean
       cleanup_actions:
         description: Nettoyer l'historique GitHub Actions
         required: false
@@ -103,10 +108,56 @@ jobs:
     if: ${{ github.event_name != 'schedule' && (github.event_name != 'workflow_dispatch' || inputs.cleanup_actions == 'none') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    outputs:
+      docs_changed: ${{ steps.docs_changes.outputs.changed }}
 
     steps:
       - name: Récupérer le dépôt
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 2
+
+      - name: Détecter les changements de documentation utilisateur
+        id: docs_changes
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE_SHA: ${{ github.event.before }}
+          CURRENT_SHA: ${{ github.sha }}
+          FORCE_DOCS: ${{ inputs.build_docs }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            if [[ "${FORCE_DOCS:-false}" == "true" ]]; then
+              echo "changed=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "changed=false" >> "$GITHUB_OUTPUT"
+            fi
+            exit 0
+          fi
+
+          if [[ "$EVENT_NAME" == "pull_request" ]]; then
+            files="$(git diff --name-only HEAD^1 HEAD^2)"
+          elif [[ "$EVENT_NAME" == "push" ]]; then
+            if [[ -z "${BEFORE_SHA:-}" || "$BEFORE_SHA" == "0000000000000000000000000000000000000000" ]]; then
+              files="$(git show --pretty='' --name-only "$CURRENT_SHA")"
+            else
+              if ! git cat-file -e "$BEFORE_SHA^{commit}" 2>/dev/null; then
+                git fetch --no-tags --depth=1 origin "$BEFORE_SHA"
+              fi
+              files="$(git diff --name-only "$BEFORE_SHA" "$CURRENT_SHA")"
+            fi
+          else
+            files=""
+          fi
+
+          printf '%s\n' "$files"
+          if printf '%s\n' "$files" | grep -Eq '^(documentation/|mkdocs\.yml$|requirements/docs\.txt$)'; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Installer Python 3.11
         uses: actions/setup-python@v6
@@ -767,16 +818,13 @@ jobs:
 
   docs:
     name: Documentation MkDocs
-    if: ${{ github.event_name != 'schedule' && (github.event_name != 'workflow_dispatch' || inputs.cleanup_actions == 'none') }}
+    needs: tests
+    if: ${{ always() && needs.tests.outputs.docs_changed == 'true' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
       contents: read
       pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
       - name: Récupérer le dépôt
@@ -805,7 +853,21 @@ jobs:
         with:
           path: site
 
+  docs-deploy:
+    name: Publier la documentation GitHub Pages
+    needs: docs
+    if: ${{ github.ref == 'refs/heads/master' && github.event_name == 'push' && needs.docs.result == 'success' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
       - name: Publier sur GitHub Pages
-        if: ${{ github.ref == 'refs/heads/master' && github.event_name == 'push' }}
         id: deployment
         uses: actions/deploy-pages@v4
