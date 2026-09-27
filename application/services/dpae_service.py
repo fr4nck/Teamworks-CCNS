@@ -44,6 +44,12 @@ class RetryDpaeSubmission:
 
 
 @dataclass(frozen=True)
+class RecoverInterruptedDpaeSubmission:
+    """Matérialise l'issue inconnue d'une tentative restée durablement SENDING."""
+    submission_id: str
+
+
+@dataclass(frozen=True)
 class IngestDpaeReturn:
     provider: str
     return_type: str
@@ -107,6 +113,10 @@ class DpaeService:
             return durable
         self._adapter.start_transmission(durable["submission_id"])
         return self._send_durable(durable)
+
+    def recover_interrupted_submission(self, command: RecoverInterruptedDpaeSubmission):
+        """Récupère un SENDING abandonné sans transport ni relecture Teamworks."""
+        return self._adapter.recover_interrupted_submission(command.submission_id)
 
     def retry_submission(self, command: RetryDpaeSubmission):
         """Reprend la même Submission et son snapshot ; ne consulte jamais le resolver."""
