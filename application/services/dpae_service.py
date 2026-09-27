@@ -18,7 +18,6 @@ class PrepareDpae:
 @dataclass(frozen=True)
 class DpaeBusinessData:
     """Résultat canonique du resolver Teamworks, sans dépendance au schéma legacy."""
-
     contract_id: str
     canonical_payload: str
     source_fingerprint: str
@@ -27,8 +26,6 @@ class DpaeBusinessData:
 
 
 class DpaeBusinessDataResolver(Protocol):
-    """Port read-only vers les sources métier Teamworks."""
-
     def resolve(self, contract_id: str) -> DpaeBusinessData:
         ...
 
@@ -53,17 +50,13 @@ class IngestDpaeReturn:
 
 @dataclass(frozen=True)
 class TransmissionResult:
-    outcome: str  # SENT | REJECTED | UNKNOWN
+    outcome: str
     external_flux_id: Optional[str] = None
     reason_code: Optional[str] = None
 
 
 class DpaeService:
-    """Unique façade métier appelée par Teamworks.
-
-    Le resolver est strictement read-only. Le transport ne connaît ni MariaDB
-    ni les états du Case et reçoit l'empreinte du snapshot durable.
-    """
+    """Façade DPAE ; les retries de transport travaillent sur le snapshot durable."""
 
     def __init__(self, adapter, transport=None, resolver: Optional[DpaeBusinessDataResolver] = None):
         self._adapter = adapter
@@ -71,6 +64,12 @@ class DpaeService:
         self._resolver = resolver
 
     def prepare(self, command: PrepareDpae):
+        # DATA-001 : reconnaître un replay durable AVANT de relire les données
+        # RH vivantes. Une correction Teamworks ne transforme donc pas un replay
+        # exact en nouvelle préparation.
+        replayed = self._adapter.replay_prepare(command)
+        if replayed is not None:
+            return replayed
         if self._resolver is None:
             raise RuntimeError("DPAE_BUSINESS_RESOLVER_REQUIRED")
         business_data = self._resolver.resolve(command.contract_id)
