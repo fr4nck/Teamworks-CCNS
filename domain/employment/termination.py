@@ -41,6 +41,28 @@ class CheckState(str, Enum):
     PROVIDED = "PROVIDED"
 
 
+def _coerce_enum(enum_type, value, code: str):
+    """Accepte l'énumération ou sa valeur texte (relecture SQL), refuse le reste."""
+    if isinstance(value, enum_type):
+        return value
+    try:
+        return enum_type(value)
+    except (TypeError, ValueError):
+        raise TerminationDomainError(code, f"invalid {enum_type.__name__} value: {value!r}") from None
+
+
+def _require_aware(value: object, name: str) -> None:
+    if not isinstance(value, datetime):
+        raise TerminationDomainError("TIMESTAMP_REQUIRED", f"{name} must be a datetime")
+    if value.tzinfo is None or value.utcoffset() is None:
+        raise TerminationDomainError("TIMESTAMP_TIMEZONE_REQUIRED", f"{name} must be timezone-aware")
+
+
+def _require_optional_date(value: object, name: str) -> None:
+    if value is not None and type(value) is not date:
+        raise TerminationDomainError("INVALID_DATE", f"{name} must be a date or None")
+
+
 class TerminationWorkflowStatus(str, Enum):
     A_PREPARER = "A_PREPARER"
     PRET_IMPACT_EMPLOI = "PRET_IMPACT_EMPLOI"
@@ -58,6 +80,12 @@ class HrInputChecks:
     leave: CheckState = CheckState.UNKNOWN
     variable_pay: CheckState = CheckState.UNKNOWN
     exceptional_items: CheckState = CheckState.UNKNOWN
+
+    def __post_init__(self) -> None:
+        for name in ("hours", "absences", "leave", "variable_pay", "exceptional_items"):
+            object.__setattr__(
+                self, name, _coerce_enum(CheckState, getattr(self, name), "INVALID_HR_CHECK_STATE")
+            )
 
     def unknown_fields(self) -> tuple[str, ...]:
         return tuple(
@@ -107,25 +135,46 @@ class ContractTermination:
     workflow_status: TerminationWorkflowStatus = TerminationWorkflowStatus.A_PREPARER
     created_at: datetime = field(default_factory=_utcnow)
     updated_at: datetime = field(default_factory=_utcnow)
+    # Révision persistée : 0 = jamais enregistrée. Seul le repository la fait
+    # avancer, d'exactement +1 par sauvegarde réussie ; les mutations du domaine
+    # ne la modifient pas, afin qu'elle reste la version attendue en base.
     version: int = 0
 
     def __post_init__(self) -> None:
-        if not self.contract_id.strip():
+        if not isinstance(self.contract_id, str) or not self.contract_id.strip():
             raise TerminationDomainError("CONTRACT_ID_REQUIRED", "contract_id is required")
-        if not self.created_by.strip():
+        if not isinstance(self.created_by, str) or not self.created_by.strip():
             raise TerminationDomainError("CREATED_BY_REQUIRED", "created_by is required")
+        _require_aware(self.known_at, "known_at")
+        _require_aware(self.created_at, "created_at")
+        _require_aware(self.updated_at, "updated_at")
+        if self.known_at > self.created_at:
+            raise TerminationDomainError("KNOWN_AFTER_RECORDED", "known_at cannot be after created_at")
+        if type(self.version) is not int or self.version < 0:
+            raise TerminationDomainError("INVALID_VERSION", "version cannot be negative")
+        self.workflow_status = _coerce_enum(
+            TerminationWorkflowStatus, self.workflow_status, "INVALID_WORKFLOW_STATUS"
+        )
+        self._validate_state()
+
+    def _validate_state(self) -> None:
+        """Invariants communs à la construction et à toute mise à jour."""
         if type(self.effective_end_date) is not date:
             raise TerminationDomainError("EFFECTIVE_END_DATE_REQUIRED", "effective_end_date must be a date")
         if type(self.last_worked_date) is not date:
             raise TerminationDomainError("LAST_WORKED_DATE_REQUIRED", "last_worked_date must be a date")
+        for name in ("decision_date", "notification_date", "notice_start", "notice_end"):
+            _require_optional_date(getattr(self, name), name)
+        if not isinstance(self.comments, str):
+            raise TerminationDomainError("INVALID_COMMENTS", "comments must be a string")
+        if not isinstance(self.hr_checks, HrInputChecks):
+            raise TerminationDomainError("INVALID_HR_CHECKS", "hr_checks must be HrInputChecks")
+        self.termination_reason = _coerce_enum(
+            TerminationReason, self.termination_reason, "INVALID_TERMINATION_REASON"
+        )
+        self.notice_status = _coerce_enum(NoticeStatus, self.notice_status, "INVALID_NOTICE_STATUS")
         if self.last_worked_date > self.effective_end_date:
             raise TerminationDomainError("LAST_WORKED_AFTER_END", "last_worked_date cannot be after effective_end_date")
-        if not isinstance(self.known_at, datetime) or not isinstance(self.created_at, datetime):
-            raise TerminationDomainError("TIMESTAMP_REQUIRED", "known_at and created_at must be datetimes")
-        if self.known_at > self.created_at:
-            raise TerminationDomainError("KNOWN_AFTER_RECORDED", "known_at cannot be after created_at")
-        if self.version < 0:
-            raise TerminationDomainError("INVALID_VERSION", "version cannot be negative")
         self._validate_notice()
 
     @property
@@ -194,9 +243,12 @@ class ContractTermination:
         try:
             for name, value in changes.items():
                 setattr(self, name, value)
-            if self.last_worked_date > self.effective_end_date:
-                raise TerminationDomainError("LAST_WORKED_AFTER_END", "last_worked_date cannot be after effective_end_date")
-            self._validate_notice()
+            self._validate_state()
+            if self.workflow_status is TerminationWorkflowStatus.PRET_IMPACT_EMPLOI:
+                # Un dossier déclaré prêt ne peut pas redevenir incomplet en silence.
+                errors = self.readiness_errors()
+                if errors:
+                    raise TerminationDomainError(errors[0], ", ".join(errors))
         except Exception:
             for name, value in previous.items():
                 setattr(self, name, value)
@@ -205,4 +257,3 @@ class ContractTermination:
 
     def _touch(self) -> None:
         self.updated_at = _utcnow()
-        self.version += 1

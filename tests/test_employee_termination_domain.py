@@ -175,13 +175,85 @@ def test_closure_requires_explicit_external_checklist_and_is_not_automatic():
     assert_error("TERMINATION_CLOSED", lambda: termination.update_transmittable(comments="late edit"))
 
 
-def test_version_increments_on_successful_mutation_for_future_optimistic_locking():
+def test_domain_mutations_do_not_advance_persisted_version():
+    # La version est la révision persistée attendue par l'optimistic locking :
+    # seul le repository la fait avancer (+1 par sauvegarde), jamais le domaine,
+    # sinon une seule mutation donnerait N -> N+1 (domaine) -> N+2 (SQL).
     termination = ready_termination()
     assert termination.version == 0
+    before = termination.updated_at
     termination.update_transmittable(comments="checked")
-    assert termination.version == 1
     termination.transition_to(TerminationWorkflowStatus.PRET_IMPACT_EMPLOI)
-    assert termination.version == 2
+    assert termination.version == 0
+    assert termination.updated_at >= before
+
+
+def test_textual_states_read_back_from_storage_are_coerced_and_still_block():
+    termination = ready_termination(
+        termination_reason="UNKNOWN",
+        notice_status="NONE",
+        workflow_status="A_PREPARER",
+        hr_checks=HrInputChecks(
+            hours="UNKNOWN", absences="NONE", leave="PROVIDED",
+            variable_pay="NONE", exceptional_items="NONE",
+        ),
+    )
+    assert termination.termination_reason is TerminationReason.UNKNOWN
+    assert termination.hr_checks.hours is CheckState.UNKNOWN
+    assert termination.workflow_status is TerminationWorkflowStatus.A_PREPARER
+    assert termination.readiness_errors() == (
+        "TERMINATION_REASON_UNKNOWN",
+        "HR_CHECK_HOURS_UNKNOWN",
+    )
+
+
+@pytest.mark.parametrize(
+    ("overrides", "code"),
+    [
+        ({"notice_status": "PEUT-ETRE"}, "INVALID_NOTICE_STATUS"),
+        ({"termination_reason": "ABANDON"}, "INVALID_TERMINATION_REASON"),
+        ({"workflow_status": "ARCHIVE"}, "INVALID_WORKFLOW_STATUS"),
+    ],
+)
+def test_invalid_textual_states_are_rejected(overrides, code):
+    assert_error(code, lambda: ready_termination(**overrides))
+
+
+def test_invalid_hr_check_state_is_rejected():
+    assert_error("INVALID_HR_CHECK_STATE", lambda: HrInputChecks(hours="MAYBE"))
+
+
+def test_ready_termination_cannot_silently_become_unknown_again():
+    termination = ready_termination()
+    termination.transition_to(TerminationWorkflowStatus.PRET_IMPACT_EMPLOI)
+    previous_checks = termination.hr_checks
+    assert_error(
+        "HR_CHECK_HOURS_UNKNOWN",
+        lambda: termination.update_transmittable(hr_checks=HrInputChecks()),
+    )
+    assert_error(
+        "TERMINATION_REASON_UNKNOWN",
+        lambda: termination.update_transmittable(termination_reason=TerminationReason.UNKNOWN),
+    )
+    assert termination.hr_checks == previous_checks
+    assert termination.termination_reason is TerminationReason.END_OF_FIXED_TERM
+    assert termination.workflow_status is TerminationWorkflowStatus.PRET_IMPACT_EMPLOI
+
+
+def test_naive_timestamps_are_rejected_with_domain_error():
+    assert_error(
+        "TIMESTAMP_TIMEZONE_REQUIRED",
+        lambda: ready_termination(known_at=datetime(2026, 10, 1, 9, 0)),
+    )
+
+
+def test_invalid_update_type_is_a_domain_error_and_restores_state():
+    termination = ready_termination()
+    assert_error(
+        "EFFECTIVE_END_DATE_REQUIRED",
+        lambda: termination.update_transmittable(effective_end_date="2026-10-30"),
+    )
+    assert termination.effective_end_date == date(2026, 10, 31)
 
 
 def test_failed_mutation_restores_previous_values():
