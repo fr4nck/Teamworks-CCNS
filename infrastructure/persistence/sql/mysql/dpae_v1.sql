@@ -18,8 +18,6 @@ CREATE TABLE IF NOT EXISTS tw_dpae_case (
     UNIQUE KEY uq_tw_dpae_case_key (case_key)
 ) ENGINE=InnoDB;
 
--- Journal métier append-only. Une commande logique ne peut produire qu'un seul
--- événement et une version donnée d'un Case ne peut avoir qu'un seul auteur.
 CREATE TABLE IF NOT EXISTS tw_dpae_case_event (
     id VARCHAR(64) NOT NULL,
     case_id VARCHAR(64) NOT NULL,
@@ -41,8 +39,37 @@ CREATE TABLE IF NOT EXISTS tw_dpae_case_event (
     UNIQUE KEY uq_tw_dpae_case_event_version (case_id, version_after),
     KEY ix_tw_dpae_case_event_timeline (case_id, occurred_at, id),
     KEY ix_tw_dpae_case_event_type (event_type, occurred_at),
-    CONSTRAINT fk_tw_dpae_case_event_case FOREIGN KEY (case_id)
-        REFERENCES tw_dpae_case(id) ON DELETE RESTRICT
+    CONSTRAINT fk_tw_dpae_case_event_case FOREIGN KEY (case_id) REFERENCES tw_dpae_case(id) ON DELETE RESTRICT
+) ENGINE=InnoDB;
+
+-- Audit des commandes, y compris celles refusées. Ne contient aucun payload RH :
+-- seulement les identités techniques, empreintes, versions et codes de décision.
+CREATE TABLE IF NOT EXISTS tw_dpae_command_audit (
+    id VARCHAR(64) NOT NULL,
+    command_id VARCHAR(128) NOT NULL,
+    command_type VARCHAR(64) NOT NULL,
+    command_hash CHAR(64) NOT NULL,
+    actor_type VARCHAR(16) NOT NULL,
+    actor_id VARCHAR(64) NOT NULL,
+    execution_id VARCHAR(128) NULL,
+    initiated_by_type VARCHAR(16) NULL,
+    initiated_by_id VARCHAR(64) NULL,
+    case_id VARCHAR(64) NULL,
+    submission_id VARCHAR(64) NULL,
+    requested_at DATETIME NOT NULL,
+    decided_at DATETIME NOT NULL,
+    decision VARCHAR(32) NOT NULL,
+    decision_code VARCHAR(64) NULL,
+    case_version_seen INTEGER NULL,
+    submission_version_seen INTEGER NULL,
+    reason_code VARCHAR(64) NULL,
+    correlation_id VARCHAR(128) NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_tw_dpae_command_audit_command (command_id),
+    KEY ix_tw_dpae_command_audit_case_date (case_id, requested_at),
+    KEY ix_tw_dpae_command_audit_actor_date (actor_type, actor_id, requested_at),
+    KEY ix_tw_dpae_command_audit_decision_date (decision, requested_at),
+    CONSTRAINT fk_tw_dpae_command_audit_case FOREIGN KEY (case_id) REFERENCES tw_dpae_case(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS tw_dpae_submission (
@@ -62,8 +89,7 @@ CREATE TABLE IF NOT EXISTS tw_dpae_submission (
     UNIQUE KEY uq_tw_dpae_submission_idempotency (idempotency_key),
     KEY ix_tw_dpae_submission_case_created (case_id, created_at),
     KEY ix_tw_dpae_submission_external_flux (external_flux_id),
-    CONSTRAINT fk_tw_dpae_submission_case FOREIGN KEY (case_id)
-        REFERENCES tw_dpae_case(id) ON DELETE RESTRICT
+    CONSTRAINT fk_tw_dpae_submission_case FOREIGN KEY (case_id) REFERENCES tw_dpae_case(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS tw_dpae_case_submission_lock (
