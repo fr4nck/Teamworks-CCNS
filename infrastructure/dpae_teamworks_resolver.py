@@ -15,7 +15,7 @@ from application.services.dpae_service import DpaeBusinessData
 
 # Cette version évolue seulement lorsqu'un mapping, une canonicalisation ou une
 # règle d'interprétation modifie les données déclaratives produites.
-DPAE_RULES_VERSION = "2026-09-27.1"
+DPAE_RULES_VERSION = "2026-09-27.2"
 
 
 class DpaeBusinessDataMissing(ValueError):
@@ -70,6 +70,18 @@ class TeamworksDpaeBusinessDataResolver:
             raise DpaeBusinessDataMissing(missing_code)
         return row
 
+    @staticmethod
+    def _legacy_due_value(cur, code):
+        """Lit une valeur déclarative mémorisée par le dialogue DUE historique.
+
+        ``due_valeurs`` est un magasin global de valeurs de formulaire, pas une
+        extension du contrat. La valeur n'est donc lue qu'au Prepare puis figée
+        dans le Snapshot ; aucun retry/replay ne doit revenir à cette table.
+        """
+        cur.execute("SELECT valeur FROM due_valeurs WHERE code=%s", (code,))
+        row = cur.fetchone()
+        return _clean(row[0]) if row else ""
+
     def resolve(self, contract_id: str) -> DpaeBusinessData:
         conn = self._connect()
         try:
@@ -116,6 +128,11 @@ class TeamworksDpaeBusinessDataResolver:
                 cur.execute("SELECT nom FROM pays WHERE IDpays=%s", (birth_country_id,))
                 row = cur.fetchone()
                 birth_country = _clean(row[0]) if row else ""
+
+            # Le dialogue legacy DLG_Edition_DUE mémorise HEURE_EMBAUCHE dans
+            # due_valeurs à chaque édition. C'est une donnée déclarative globale
+            # réutilisée par la DUE suivante, et non une colonne du contrat.
+            hiring_time = self._legacy_due_value(cur, "HEURE_EMBAUCHE")
         finally:
             conn.close()
 
@@ -138,9 +155,7 @@ class TeamworksDpaeBusinessDataResolver:
             "contract": {
                 "contract_id": str(contract_id),
                 "start_date": _clean(date_debut),
-                # Aucune source canonique persistée d'heure d'embauche n'est
-                # démontrée : le legacy DUE la laisse éditable/mémorisable.
-                "hiring_time": None,
+                "hiring_time": hiring_time or None,
                 "end_date": _clean(date_fin),
                 "trial_period": _clean(essai),
                 "type": _clean(contract_type[0]),
