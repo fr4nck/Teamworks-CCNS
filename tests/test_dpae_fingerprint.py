@@ -17,7 +17,6 @@ def _source(**changes):
         "employee_fields": {"last_name": "Martin", "first_name": "Alice"},
         "contract_fields": {},
         "employer_fields": {},
-        "planning_first_start": time(8, 30),
     }
     values.update(changes)
     return DpaeSourceProjection(**values)
@@ -27,15 +26,9 @@ def test_source_fingerprint_is_deterministic():
     assert compute_source_fingerprint(_source()) == compute_source_fingerprint(_source())
 
 
-def test_source_fingerprint_changes_when_hiring_time_changes():
+def test_source_fingerprint_changes_when_contract_hiring_time_changes():
     before = compute_source_fingerprint(_source())
     after = compute_source_fingerprint(_source(hiring_time=time(8, 30)))
-    assert before != after
-
-
-def test_source_fingerprint_changes_when_planning_warning_input_changes():
-    before = compute_source_fingerprint(_source())
-    after = compute_source_fingerprint(_source(planning_first_start=time(8, 45)))
     assert before != after
 
 
