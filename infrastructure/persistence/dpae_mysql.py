@@ -86,6 +86,32 @@ class DpaeMariaDbAdapter:
         except Exception: conn.rollback(); raise
         finally: conn.close()
 
+    def recover_interrupted_submission(self, submission_id):
+        """Matérialise un SENDING abandonné comme issue inconnue, sans nouvel envoi."""
+        conn = self._connect()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT state,version,case_id,snapshot_id,payload_hash FROM tw_dpae_submission WHERE id=%s FOR UPDATE", (submission_id,))
+            row = cur.fetchone()
+            if not row: raise InvalidDpaeTransition("SUBMISSION_NOT_FOUND")
+            state, version, case_id, snapshot_id, payload_hash = row
+            if state in ("OUTCOME_UNKNOWN", "UNKNOWN"):
+                conn.rollback()
+                return {"case_id": case_id, "submission_id": submission_id, "snapshot_id": snapshot_id, "payload_hash": payload_hash, "state": "OUTCOME_UNKNOWN", "replayed": True}
+            if state != "SENDING": raise InvalidDpaeTransition("SUBMISSION_NOT_RECOVERABLE")
+            cur.execute("UPDATE tw_dpae_submission SET state='OUTCOME_UNKNOWN',version=%s WHERE id=%s AND state='SENDING' AND version=%s", (version + 1, submission_id, version))
+            if cur.rowcount != 1: raise InvalidDpaeTransition("SUBMISSION_RECOVERY_RACE")
+            cur.execute("SELECT status,version FROM tw_dpae_case WHERE id=%s FOR UPDATE", (case_id,))
+            case = cur.fetchone()
+            if case and case[0] in ("SUBMITTING", "OUTCOME_UNKNOWN", "UNKNOWN"):
+                cur.execute("UPDATE tw_dpae_case SET status='OUTCOME_UNKNOWN',version=%s WHERE id=%s AND version=%s", (case[1] + 1, case_id, case[1]))
+            conn.commit()
+            return {"case_id": case_id, "submission_id": submission_id, "snapshot_id": snapshot_id, "payload_hash": payload_hash, "state": "OUTCOME_UNKNOWN", "replayed": False}
+        except Exception:
+            conn.rollback(); raise
+        finally:
+            conn.close()
+
     def retry_submission(self, submission_id):
         """Réarme la même tentative incertaine et recharge exclusivement son snapshot durable.
 
@@ -108,11 +134,7 @@ class DpaeMariaDbAdapter:
         finally: conn.close()
 
     def finish_transmission(self, submission_id, result):
-        transport_to_submission = {
-            "SENT": "TECHNICALLY_ACCEPTED",
-            "REJECTED": "REJECTED",
-            "UNKNOWN": "OUTCOME_UNKNOWN",
-        }
+        transport_to_submission = {"SENT": "TECHNICALLY_ACCEPTED", "REJECTED": "REJECTED", "UNKNOWN": "OUTCOME_UNKNOWN"}
         if result.outcome not in transport_to_submission: raise ValueError("invalid transmission outcome")
         submission_state = transport_to_submission[result.outcome]
         conn=self._connect()
