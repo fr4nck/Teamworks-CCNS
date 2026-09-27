@@ -38,6 +38,12 @@ class SubmitDpae:
 
 
 @dataclass(frozen=True)
+class RetryDpaeSubmission:
+    """Retry purement technique d'une tentative durable, sans résolution RH."""
+    submission_id: str
+
+
+@dataclass(frozen=True)
 class IngestDpaeReturn:
     provider: str
     return_type: str
@@ -64,9 +70,6 @@ class DpaeService:
         self._resolver = resolver
 
     def prepare(self, command: PrepareDpae):
-        # DATA-001 : reconnaître un replay durable AVANT de relire les données
-        # RH vivantes. Une correction Teamworks ne transforme donc pas un replay
-        # exact en nouvelle préparation.
         replayed = self._adapter.replay_prepare(command)
         if replayed is not None:
             return replayed
@@ -77,16 +80,15 @@ class DpaeService:
             raise ValueError("DPAE_RESOLVER_CONTRACT_MISMATCH")
         return self._adapter.prepare(command, business_data)
 
-    def submit(self, command: SubmitDpae):
-        durable = self._adapter.submit(command)
-        if durable.get("replayed") or self._transport is None:
+    def _send_durable(self, durable):
+        if self._transport is None:
             return durable
         submission_id = durable["submission_id"]
-        self._adapter.start_transmission(submission_id)
         try:
             result = self._transport.send(
                 submission_id=submission_id,
                 payload_hash=durable["payload_hash"],
+                canonical_payload=durable["canonical_payload"],
             )
         except Exception:
             self._adapter.finish_transmission(
@@ -98,6 +100,18 @@ class DpaeService:
         durable["transmission_outcome"] = result.outcome
         durable["external_flux_id"] = result.external_flux_id
         return durable
+
+    def submit(self, command: SubmitDpae):
+        durable = self._adapter.submit(command)
+        if durable.get("replayed") or self._transport is None:
+            return durable
+        self._adapter.start_transmission(durable["submission_id"])
+        return self._send_durable(durable)
+
+    def retry_submission(self, command: RetryDpaeSubmission):
+        """Reprend la même Submission et son snapshot ; ne consulte jamais le resolver."""
+        durable = self._adapter.retry_submission(command.submission_id)
+        return self._send_durable(durable)
 
     def ingest_return(self, command: IngestDpaeReturn):
         return self._adapter.ingest_return(command)
