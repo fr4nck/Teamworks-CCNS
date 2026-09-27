@@ -1,24 +1,42 @@
-"""Façade applicative DPAE de Teamworks."""
+"""Façade applicative DPAE de Teamworks.
+
+DATA-001 : l'appelant fournit la référence contrat. Les valeurs RH déclarables
+sont résolues par un port read-only avant d'être figées par la persistance DPAE.
+"""
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Protocol
 
 
 @dataclass(frozen=True)
 class PrepareDpae:
     command_id: str
     case_key: str
-    employee_id: str
     contract_id: str
-    establishment_id: str
-    expected_hiring_at: object
     actor_id: str
+
+
+@dataclass(frozen=True)
+class DpaeBusinessData:
+    """Résultat canonique du resolver Teamworks, sans dépendance au schéma legacy."""
+
+    contract_id: str
+    canonical_payload: str
+    source_fingerprint: str
+    rules_version: str
+    payload_hash: str
+
+
+class DpaeBusinessDataResolver(Protocol):
+    """Port read-only vers les sources métier Teamworks."""
+
+    def resolve(self, contract_id: str) -> DpaeBusinessData:
+        ...
 
 
 @dataclass(frozen=True)
 class SubmitDpae:
     command_id: str
     case_id: str
-    payload_hash: str
     actor_id: str
 
 
@@ -43,15 +61,22 @@ class TransmissionResult:
 class DpaeService:
     """Unique façade métier appelée par Teamworks.
 
-    Le transport est un port injecté. Il ne connaît ni MariaDB ni les états du Case.
+    Le resolver est strictement read-only. Le transport ne connaît ni MariaDB
+    ni les états du Case et reçoit l'empreinte du snapshot durable.
     """
 
-    def __init__(self, adapter, transport=None):
+    def __init__(self, adapter, transport=None, resolver: Optional[DpaeBusinessDataResolver] = None):
         self._adapter = adapter
         self._transport = transport
+        self._resolver = resolver
 
     def prepare(self, command: PrepareDpae):
-        return self._adapter.prepare(command)
+        if self._resolver is None:
+            raise RuntimeError("DPAE_BUSINESS_RESOLVER_REQUIRED")
+        business_data = self._resolver.resolve(command.contract_id)
+        if business_data.contract_id != command.contract_id:
+            raise ValueError("DPAE_RESOLVER_CONTRACT_MISMATCH")
+        return self._adapter.prepare(command, business_data)
 
     def submit(self, command: SubmitDpae):
         durable = self._adapter.submit(command)
@@ -60,9 +85,15 @@ class DpaeService:
         submission_id = durable["submission_id"]
         self._adapter.start_transmission(submission_id)
         try:
-            result = self._transport.send(submission_id=submission_id, payload_hash=command.payload_hash)
+            result = self._transport.send(
+                submission_id=submission_id,
+                payload_hash=durable["payload_hash"],
+            )
         except Exception:
-            self._adapter.finish_transmission(submission_id, TransmissionResult("UNKNOWN", reason_code="TRANSPORT_EXCEPTION"))
+            self._adapter.finish_transmission(
+                submission_id,
+                TransmissionResult("UNKNOWN", reason_code="TRANSPORT_EXCEPTION"),
+            )
             raise
         self._adapter.finish_transmission(submission_id, result)
         durable["transmission_outcome"] = result.outcome
