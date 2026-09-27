@@ -1,141 +1,80 @@
-"""E2E MariaDB via le vrai DpaeService et DpaeMariaDbAdapter."""
+"""E2E MariaDB via le vrai DpaeService, resolver Teamworks et adaptateur DPAE."""
+import json
 import os
-from datetime import datetime
-from pathlib import Path
 
 import pytest
 
 mysql = pytest.importorskip("mysql.connector")
 
-from application.services.dpae_service import DpaeService, PrepareDpae, SubmitDpae, IngestDpaeReturn
-from infrastructure.persistence.dpae_mysql import DpaeMariaDbAdapter, IdempotencyPayloadConflict
+from application.services.dpae_service import DpaeService, PrepareDpae, SubmitDpae
+from infrastructure.dpae_teamworks_resolver import TeamworksDpaeBusinessDataResolver
+from infrastructure.persistence.dpae_mysql import DpaeMariaDbAdapter
 
 REQUIRED = ("DPAE_MYSQL_HOST", "DPAE_MYSQL_USER", "DPAE_MYSQL_DATABASE")
 if not all(os.getenv(name) for name in REQUIRED):
     pytest.skip("base MySQL DPAE de recette non configurée", allow_module_level=True)
 
-SCHEMA = Path("infrastructure/persistence/sql/mysql/dpae_v1.sql")
-
 
 def connect():
-    return mysql.connect(host=os.environ["DPAE_MYSQL_HOST"], port=int(os.getenv("DPAE_MYSQL_PORT", "3306")), user=os.environ["DPAE_MYSQL_USER"], password=os.getenv("DPAE_MYSQL_PASSWORD", ""), database=os.environ["DPAE_MYSQL_DATABASE"], use_pure=True, autocommit=False)
+    return mysql.connect(
+        host=os.environ["DPAE_MYSQL_HOST"], port=int(os.getenv("DPAE_MYSQL_PORT", "3306")),
+        user=os.environ["DPAE_MYSQL_USER"], password=os.getenv("DPAE_MYSQL_PASSWORD", ""),
+        database=os.environ["DPAE_MYSQL_DATABASE"], use_pure=True, autocommit=False,
+    )
 
 
-@pytest.fixture(scope="module", autouse=True)
-def install_schema():
+def install_teamworks_fixture():
     conn = connect()
     try:
         cur = conn.cursor()
-        for statement in (p.strip() for p in SCHEMA.read_text(encoding="utf-8").split(";")):
-            if statement: cur.execute(statement)
-        conn.commit()
-    finally: conn.close()
-
-
-@pytest.fixture(autouse=True)
-def clean_tables():
-    conn = connect()
-    try:
-        cur = conn.cursor(); cur.execute("SET FOREIGN_KEY_CHECKS=0")
-        for table in ("tw_dpae_return_effect", "tw_dpae_current_correlation", "tw_dpae_correlation_decision", "tw_dpae_return", "tw_dpae_case_submission_lock", "tw_dpae_submission", "tw_dpae_command_audit", "tw_dpae_case_event", "tw_dpae_case"):
+        cur.execute("CREATE TABLE IF NOT EXISTS contrats (IDcontrat INT PRIMARY KEY, IDpersonne INT, IDtype INT, IDclassification INT, date_debut DATE, date_fin DATE, essai INT)")
+        cur.execute("CREATE TABLE IF NOT EXISTS personnes (IDpersonne INT PRIMARY KEY, civilite VARCHAR(16), nom VARCHAR(80), nom_jfille VARCHAR(80), prenom VARCHAR(80), date_naiss DATE, cp_naiss VARCHAR(16), ville_naiss VARCHAR(80), nationalite INT, num_secu VARCHAR(32), adresse_resid VARCHAR(160), cp_resid VARCHAR(16), ville_resid VARCHAR(80), pays_naiss INT)")
+        cur.execute("CREATE TABLE IF NOT EXISTS contrats_types (IDtype INT PRIMARY KEY, nom VARCHAR(80), nom_abrege VARCHAR(32), duree_indeterminee VARCHAR(16))")
+        cur.execute("CREATE TABLE IF NOT EXISTS contrats_class (IDclassification INT PRIMARY KEY, nom VARCHAR(80))")
+        cur.execute("CREATE TABLE IF NOT EXISTS pays (IDpays INT PRIMARY KEY, nom VARCHAR(80), nationalite VARCHAR(80))")
+        for table in ("contrats", "personnes", "contrats_types", "contrats_class", "pays"):
             cur.execute("DELETE FROM " + table)
-        cur.execute("SET FOREIGN_KEY_CHECKS=1"); conn.commit()
-    finally: conn.close()
-
-
-def test_full_dpae_e2e_uses_real_service_adapter_and_keeps_durable_evidence():
-    service = DpaeService(DpaeMariaDbAdapter(connect))
-    payload_hash = "c" * 64
-    return_hash = "d" * 64
-
-    prepared = service.prepare(PrepareDpae(
-        command_id="e2e-prepare-001", case_key="e2e-case-key",
-        employee_id="employee-e2e", contract_id="contract-e2e",
-        establishment_id="est-e2e", expected_hiring_at=datetime(2026, 10, 15, 8, 30),
-        actor_id="accounting-user",
-    ))
-    case_id = prepared["case_id"]
-    assert prepared["status"] == "READY"
-
-    submitted = service.submit(SubmitDpae(
-        command_id="e2e-submit-001", case_id=case_id,
-        payload_hash=payload_hash, actor_id="accounting-user",
-    ))
-    submission_id = submitted["submission_id"]
-    assert submitted["decision"] == "APPLIED"
-
-    # Reconnexion logique/replay : même commande, même résultat, aucune seconde tentative.
-    replay_service = DpaeService(DpaeMariaDbAdapter(connect))
-    replayed = replay_service.submit(SubmitDpae(
-        command_id="e2e-submit-001", case_id=case_id,
-        payload_hash=payload_hash, actor_id="accounting-user",
-    ))
-    assert replayed == {"case_id": case_id, "submission_id": submission_id, "decision": "APPLIED", "replayed": True}
-
-
-def test_same_command_id_with_different_payload_is_rejected_without_new_audit_or_mutation():
-    service = DpaeService(DpaeMariaDbAdapter(connect))
-    original_hash = "1" * 64
-    conflicting_hash = "2" * 64
-    command_id = "e2e-idempotency-conflict-001"
-
-    prepared = service.prepare(PrepareDpae(
-        command_id="e2e-prepare-conflict-001", case_key="e2e-conflict-case-key",
-        employee_id="employee-conflict", contract_id="contract-conflict",
-        establishment_id="est-conflict", expected_hiring_at=datetime(2026, 10, 16, 9, 0),
-        actor_id="accounting-user",
-    ))
-    case_id = prepared["case_id"]
-
-    first = service.submit(SubmitDpae(
-        command_id=command_id, case_id=case_id,
-        payload_hash=original_hash, actor_id="accounting-user",
-    ))
-    submission_id = first["submission_id"]
-
-    # Snapshot durable avant le rejeu conflictuel.
-    conn = connect()
-    try:
-        cur = conn.cursor()
-        cur.execute("SELECT status,version FROM tw_dpae_case WHERE id=%s", (case_id,))
-        case_before = cur.fetchone()
-        cur.execute("SELECT COUNT(*) FROM tw_dpae_submission WHERE case_id=%s", (case_id,))
-        submissions_before = cur.fetchone()[0]
-        cur.execute("SELECT COUNT(*) FROM tw_dpae_case_event WHERE case_id=%s", (case_id,))
-        events_before = cur.fetchone()[0]
-        cur.execute("SELECT COUNT(*) FROM tw_dpae_command_audit WHERE command_id=%s", (command_id,))
-        audits_before = cur.fetchone()[0]
-        cur.execute("SELECT command_hash,decision,submission_id FROM tw_dpae_command_audit WHERE command_id=%s", (command_id,))
-        audit_before = cur.fetchone()
+        cur.execute("INSERT INTO pays VALUES (33,'France','Française')")
+        cur.execute("INSERT INTO contrats_types VALUES (2,'CDD','CDD','non')")
+        cur.execute("INSERT INTO contrats_class VALUES (3,'Groupe B')")
+        cur.execute("INSERT INTO personnes VALUES (18,'Mme','Martin','Durand','Alice','1990-02-03','35000','Rennes',33,'','1 rue X','35650','Le Rheu',33)")
+        cur.execute("INSERT INTO contrats VALUES (742,18,2,3,'2026-10-15','2027-10-14',7)")
+        conn.commit()
     finally:
         conn.close()
 
-    assert audits_before == 1
-    assert audit_before == (original_hash, "APPLIED", submission_id)
 
-    replay_service = DpaeService(DpaeMariaDbAdapter(connect))
-    with pytest.raises(IdempotencyPayloadConflict, match="IDEMPOTENCY_PAYLOAD_CONFLICT"):
-        replay_service.submit(SubmitDpae(
-            command_id=command_id, case_id=case_id,
-            payload_hash=conflicting_hash, actor_id="accounting-user",
-        ))
+def test_full_v2_chain_uses_real_teamworks_resolver_and_durable_snapshot(clean_tables, tmp_path):
+    install_teamworks_fixture()
+    customize = tmp_path / "Customize.ini"
+    customize.write_text(
+        "[organisation]\nnom_officiel=Association Test\nsiret=12345678901234\n"
+        "siren=123456789\nape_naf=9499Z\nadresse=2 rue Y\ncode_postal=35650\nville=Le Rheu\n",
+        encoding="utf-8",
+    )
+    before_config = customize.read_bytes()
+    adapter = DpaeMariaDbAdapter(connect)
+    resolver = TeamworksDpaeBusinessDataResolver(connect, customize)
+    service = DpaeService(adapter, resolver=resolver)
 
-    # Le conflit est une collision avec la commande existante : il ne crée
-    # ni nouvel audit, ni nouvelle tentative, ni nouvel événement, ni transition.
+    prepared = service.prepare(PrepareDpae("e2e-prepare-v2", "contract-742", "742", "operator"))
+    submitted = service.submit(SubmitDpae("e2e-submit-v2", prepared["case_id"], "operator"))
+
+    assert prepared["snapshot_id"] == submitted["snapshot_id"]
+    assert prepared["payload_hash"] == submitted["payload_hash"]
+    assert customize.read_bytes() == before_config
+
     conn = connect()
     try:
         cur = conn.cursor()
-        cur.execute("SELECT status,version FROM tw_dpae_case WHERE id=%s", (case_id,))
-        assert cur.fetchone() == case_before
-        cur.execute("SELECT COUNT(*) FROM tw_dpae_submission WHERE case_id=%s", (case_id,))
-        assert cur.fetchone()[0] == submissions_before == 1
-        cur.execute("SELECT COUNT(*) FROM tw_dpae_case_event WHERE case_id=%s", (case_id,))
-        assert cur.fetchone()[0] == events_before == 1
-        cur.execute("SELECT COUNT(*) FROM tw_dpae_command_audit WHERE command_id=%s", (command_id,))
-        assert cur.fetchone()[0] == audits_before == 1
-        cur.execute("SELECT command_hash,decision,submission_id FROM tw_dpae_command_audit WHERE command_id=%s", (command_id,))
-        assert cur.fetchone() == audit_before
-        cur.execute("SELECT payload_hash FROM tw_dpae_submission WHERE id=%s", (submission_id,))
-        assert cur.fetchone() == (original_hash,)
+        cur.execute("SELECT contract_id FROM tw_dpae_case WHERE id=%s", (prepared["case_id"],))
+        assert str(cur.fetchone()[0]) == "742"
+        cur.execute("SELECT canonical_payload FROM tw_dpae_snapshot WHERE id=%s", (prepared["snapshot_id"],))
+        payload = json.loads(cur.fetchone()[0])
+        assert payload["employee"]["birth_name"] == "Durand"
+        assert "person_id" not in payload["employee"]
+        assert payload["contract"]["hiring_time"] is None
+        cur.execute("SELECT snapshot_id FROM tw_dpae_submission WHERE id=%s", (submitted["submission_id"],))
+        assert cur.fetchone()[0] == prepared["snapshot_id"]
     finally:
         conn.close()
