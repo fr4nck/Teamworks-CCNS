@@ -90,29 +90,36 @@ def request_submission_idempotently(command_id, command_hash, lose_response=Fals
     conn = connect()
     try:
         cur = conn.cursor()
-        cur.execute("SELECT command_hash,decision FROM tw_dpae_command_audit WHERE command_id=%s", (command_id,))
+        cur.execute("SELECT command_hash,decision,case_id,submission_id,decision_code FROM tw_dpae_command_audit WHERE command_id=%s", (command_id,))
         previous = cur.fetchone()
         if previous:
             if previous[0] != command_hash:
                 raise ValueError("IDEMPOTENCY_PAYLOAD_CONFLICT")
             conn.rollback()
-            return "ALREADY_APPLIED"
-        cur.execute("SELECT status,version FROM tw_dpae_case WHERE id='crb' FOR UPDATE")
-        assert cur.fetchone() == ("READY", 7)
-        cur.execute("UPDATE tw_dpae_case SET status='SUBMITTING',version=8 WHERE id='crb' AND version=7")
-        assert cur.rowcount == 1
+            return {"replayed": True, "decision": previous[1], "case_id": previous[2], "submission_id": previous[3], "decision_code": previous[4]}
+        cur.execute("SELECT status,version FROM tw_dpae_case WHERE id='crb' FOR UPDATE"); assert cur.fetchone() == ("READY", 7)
+        cur.execute("UPDATE tw_dpae_case SET status='SUBMITTING',version=8 WHERE id='crb' AND version=7"); assert cur.rowcount == 1
         cur.execute("INSERT INTO tw_dpae_case_event (id,case_id,event_type,state_before,state_after,version_before,version_after,actor_type,actor_id,idempotency_key,command_hash,occurred_at,recorded_at) VALUES ('ev-lost','crb','SUBMISSION_REQUESTED','READY','SUBMITTING',7,8,'USER','u1',%s,%s,NOW(),NOW())", (command_id, command_hash))
         cur.execute("INSERT INTO tw_dpae_submission (id,case_id,attempt_no,idempotency_key,payload_hash,state,created_at) VALUES ('s-lost','crb',1,%s,%s,'PREPARED',NOW())", (command_id, command_hash))
-        cur.execute("INSERT INTO tw_dpae_command_audit (id,command_id,command_type,command_hash,actor_type,actor_id,case_id,submission_id,requested_at,decided_at,decision,case_version_seen) VALUES ('audit-lost',%s,'RequestDpaeSubmission',%s,'USER','u1','crb','s-lost',NOW(),NOW(),'APPLIED',7)", (command_id, command_hash))
-        conn.commit()
-        if lose_response:
-            raise ConnectionError("simulated response loss after successful COMMIT")
-        return "APPLIED"
-    except ConnectionError:
-        # Le commit a déjà réussi : ne surtout pas rollbacker ni réexécuter.
-        raise
+        cur.execute("INSERT INTO tw_dpae_command_audit (id,command_id,command_type,command_hash,actor_type,actor_id,case_id,submission_id,requested_at,decided_at,decision,case_version_seen) VALUES ('audit-lost',%s,'RequestDpaeSubmission',%s,'USER','u1','crb','s-lost',NOW(),NOW(),'APPLIED',7)", (command_id, command_hash)); conn.commit()
+        result = {"replayed": False, "decision": "APPLIED", "case_id": "crb", "submission_id": "s-lost", "decision_code": None}
+        if lose_response: raise ConnectionError("simulated response loss after successful COMMIT")
+        return result
+    except ConnectionError: raise
     except Exception:
         conn.rollback(); raise
+    finally: conn.close()
+
+
+def durable_command_counts(command_id):
+    """État durable lu depuis une nouvelle connexion, comme après reconnexion client."""
+    conn = connect()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(*) FROM tw_dpae_case_event WHERE case_id='crb' AND idempotency_key=%s", (command_id,)); events = cur.fetchone()[0]
+        cur.execute("SELECT COUNT(*) FROM tw_dpae_command_audit WHERE command_id=%s", (command_id,)); audits = cur.fetchone()[0]
+        cur.execute("SELECT COUNT(*) FROM tw_dpae_submission WHERE case_id='crb'"); submissions = cur.fetchone()[0]
+        return events, audits, submissions
     finally: conn.close()
 
 
@@ -178,27 +185,30 @@ def test_case_event_and_command_audit_commit_together_on_success():
 
 
 def test_replay_after_successful_commit_and_lost_response_creates_no_duplicate_transition_or_submission():
-    seed_rollback_case()
-    command_id = "cmd-lost-response"
-    command_hash = "f" * 64
+    seed_rollback_case(); command_id = "cmd-lost-response"; command_hash = "f" * 64
+    with pytest.raises(ConnectionError, match="response loss"): request_submission_idempotently(command_id, command_hash, lose_response=True)
+    result = request_submission_idempotently(command_id, command_hash)
+    assert result == {"replayed": True, "decision": "APPLIED", "case_id": "crb", "submission_id": "s-lost", "decision_code": None}
+    assert durable_command_counts(command_id) == (1, 1, 1)
+
+
+def test_reconnect_recovers_durable_result_without_recreating_anything():
+    seed_rollback_case(); command_id = "cmd-reconnect"; command_hash = "d" * 64
     with pytest.raises(ConnectionError, match="response loss"):
         request_submission_idempotently(command_id, command_hash, lose_response=True)
 
-    # Le client ignore le résultat, mais MariaDB a durablement commité la première exécution.
-    assert request_submission_idempotently(command_id, command_hash) == "ALREADY_APPLIED"
+    # Photographie durable avant reconnexion : le commit a déjà produit exactement 1/1/1.
+    before_reconnect = durable_command_counts(command_id)
+    assert before_reconnect == (1, 1, 1)
 
+    # Nouvel appel = nouvelle connexion MariaDB. Le même command_id relit l'audit durable.
+    recovered = request_submission_idempotently(command_id, command_hash)
+    assert recovered == {"replayed": True, "decision": "APPLIED", "case_id": "crb", "submission_id": "s-lost", "decision_code": None}
+
+    # La récupération est strictement en lecture : aucun nouvel événement/audit/submission.
+    assert durable_command_counts(command_id) == before_reconnect
     conn = connect()
     try:
-        cur = conn.cursor()
-        cur.execute("SELECT status,version FROM tw_dpae_case WHERE id='crb'")
-        assert cur.fetchone() == ("SUBMITTING", 8)
-        cur.execute("SELECT COUNT(*) FROM tw_dpae_case_event WHERE case_id='crb' AND idempotency_key=%s", (command_id,))
-        assert cur.fetchone()[0] == 1
-        cur.execute("SELECT COUNT(*) FROM tw_dpae_submission WHERE case_id='crb'")
-        assert cur.fetchone()[0] == 1
-        cur.execute("SELECT attempt_no,idempotency_key FROM tw_dpae_submission WHERE case_id='crb'")
-        assert cur.fetchone() == (1, command_id)
-        cur.execute("SELECT COUNT(*),MIN(decision) FROM tw_dpae_command_audit WHERE command_id=%s", (command_id,))
-        assert cur.fetchone() == (1, "APPLIED")
-    finally:
-        conn.close()
+        cur = conn.cursor(); cur.execute("SELECT status,version FROM tw_dpae_case WHERE id='crb'"); assert cur.fetchone() == ("SUBMITTING", 8)
+        cur.execute("SELECT attempt_no,idempotency_key,state FROM tw_dpae_submission WHERE id='s-lost'"); assert cur.fetchone() == (1, command_id, "PREPARED")
+    finally: conn.close()
