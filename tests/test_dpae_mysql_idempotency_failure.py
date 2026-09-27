@@ -84,15 +84,39 @@ def test_close_after_idempotency_conflict_then_reconnect_keeps_durable_state_unc
 
 
 def test_idempotency_conflict_is_detected_before_case_lock_or_mutation_access():
-    """Un verrou exclusif concurrent sur Case ne doit jamais bloquer le conflit.
+    """Un verrou exclusif concurrent sur Case ne doit jamais bloquer le conflit."""
+    case_id = "conflict-lock-order-case"; command_id = "conflict-lock-order-command"; original_hash = "7" * 64; conflicting_hash = "8" * 64
+    seed_applied_command(case_id, command_id, original_hash); before = snapshot(case_id, command_id)
+    lock_ready = threading.Event(); release_lock = threading.Event(); holder_errors = []
+    def hold_case_write_lock():
+        conn = connect()
+        try:
+            cur = conn.cursor(); cur.execute("UPDATE tw_dpae_case SET version=version WHERE id=%s", (case_id,)); lock_ready.set(); assert release_lock.wait(timeout=10); conn.rollback()
+        except Exception as exc: holder_errors.append(exc); lock_ready.set()
+        finally: conn.close()
+    holder = threading.Thread(target=hold_case_write_lock, daemon=True); holder.start(); assert lock_ready.wait(timeout=5); assert not holder_errors
+    replay = connect()
+    try:
+        cur = replay.cursor(); cur.execute("SET SESSION innodb_lock_wait_timeout=1")
+        cur.execute("SELECT command_hash,decision FROM tw_dpae_command_audit WHERE command_id=%s", (command_id,)); known_hash, decision = cur.fetchone()
+        assert decision == "APPLIED"; assert known_hash == original_hash; assert known_hash != conflicting_hash
+        replay.rollback()
+    finally:
+        replay.close(); release_lock.set(); holder.join(timeout=5)
+    assert not holder.is_alive(); assert not holder_errors; assert snapshot(case_id, command_id) == before
 
-    Si le chemin de replay tentait SELECT ... FOR UPDATE ou UPDATE sur Case avant
-    de comparer command_hash, il expirerait sur innodb_lock_wait_timeout=1.
+
+def test_idempotency_conflict_reads_committed_audit_under_audit_row_lock_without_touching_case():
+    """Le replay conflictuel utilise une consistent read de l'audit.
+
+    Une autre transaction garde un verrou X sur la ligne d'audit. Le SELECT simple
+    doit lire la version commitée via MVCC sans attendre ce verrou. Le dossier ne
+    doit être ni verrouillé ni modifié par le chemin de conflit.
     """
-    case_id = "conflict-lock-order-case"
-    command_id = "conflict-lock-order-command"
-    original_hash = "7" * 64
-    conflicting_hash = "8" * 64
+    case_id = "conflict-audit-lock-case"
+    command_id = "conflict-audit-lock-command"
+    original_hash = "9" * 64
+    conflicting_hash = "a" * 64
     seed_applied_command(case_id, command_id, original_hash)
     before = snapshot(case_id, command_id)
 
@@ -100,13 +124,16 @@ def test_idempotency_conflict_is_detected_before_case_lock_or_mutation_access():
     release_lock = threading.Event()
     holder_errors = []
 
-    def hold_case_write_lock():
+    def hold_audit_row_lock():
         conn = connect()
         try:
             cur = conn.cursor()
-            # UPDATE sans changement fonctionnel : InnoDB prend néanmoins le verrou
-            # exclusif de ligne jusqu'au rollback final.
-            cur.execute("UPDATE tw_dpae_case SET version=version WHERE id=%s", (case_id,))
+            # Modification non commitée : elle prend un verrou X sur l'audit et
+            # permet de vérifier que le replay fait bien une lecture MVCC non bloquante.
+            cur.execute(
+                "UPDATE tw_dpae_command_audit SET decision_code='LOCKED-BUT-UNCOMMITTED' WHERE command_id=%s",
+                (command_id,),
+            )
             lock_ready.set()
             assert release_lock.wait(timeout=10)
             conn.rollback()
@@ -116,7 +143,7 @@ def test_idempotency_conflict_is_detected_before_case_lock_or_mutation_access():
         finally:
             conn.close()
 
-    holder = threading.Thread(target=hold_case_write_lock, daemon=True)
+    holder = threading.Thread(target=hold_audit_row_lock, daemon=True)
     holder.start()
     assert lock_ready.wait(timeout=5)
     assert not holder_errors
@@ -125,15 +152,17 @@ def test_idempotency_conflict_is_detected_before_case_lock_or_mutation_access():
     try:
         cur = replay.cursor()
         cur.execute("SET SESSION innodb_lock_wait_timeout=1")
-        # Le seul accès nécessaire au conflit est l'index UNIQUE(command_id) de
-        # l'audit. Aucun SELECT/UPDATE du Case n'est exécuté sur ce chemin.
-        cur.execute("SELECT command_hash,decision FROM tw_dpae_command_audit WHERE command_id=%s", (command_id,))
-        known_hash, decision = cur.fetchone()
-        assert decision == "APPLIED"
+        # Un SELECT ... FOR UPDATE ici attendrait le verrou X et échouerait.
+        # Le chemin attendu lit la dernière version commitée sans toucher au Case.
+        cur.execute(
+            "SELECT command_hash,decision,decision_code FROM tw_dpae_command_audit WHERE command_id=%s",
+            (command_id,),
+        )
+        known_hash, decision, decision_code = cur.fetchone()
         assert known_hash == original_hash
+        assert decision == "APPLIED"
+        assert decision_code is None
         assert known_hash != conflicting_hash
-        conflict = "IDEMPOTENCY_PAYLOAD_CONFLICT"
-        assert conflict == "IDEMPOTENCY_PAYLOAD_CONFLICT"
         replay.rollback()
     finally:
         replay.close()
@@ -142,6 +171,19 @@ def test_idempotency_conflict_is_detected_before_case_lock_or_mutation_access():
 
     assert not holder.is_alive()
     assert not holder_errors
-    # Malgré le verrou concurrent, le conflit a été résolu immédiatement par
-    # l'audit et aucune mutation/transition/tentative supplémentaire n'existe.
+    # Le rollback du détenteur supprime son changement temporaire et le replay
+    # n'a créé ni verrou/mutation métier durable, ni événement, ni nouvelle tentative.
     assert snapshot(case_id, command_id) == before
+    verify = connect()
+    try:
+        cur = verify.cursor()
+        cur.execute("SELECT status,version FROM tw_dpae_case WHERE id=%s", (case_id,))
+        assert cur.fetchone() == ("SUBMITTING", 8)
+        cur.execute("SELECT COUNT(*) FROM tw_dpae_case_event WHERE case_id=%s", (case_id,))
+        assert cur.fetchone()[0] == 1
+        cur.execute("SELECT COUNT(*) FROM tw_dpae_submission WHERE case_id=%s", (case_id,))
+        assert cur.fetchone()[0] == 1
+        cur.execute("SELECT COUNT(*),MIN(decision_code) FROM tw_dpae_command_audit WHERE command_id=%s", (command_id,))
+        assert cur.fetchone() == (1, None)
+    finally:
+        verify.close()
