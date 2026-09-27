@@ -30,9 +30,8 @@ class MysqlDpaeRepository:
 
     @staticmethod
     def _row_to_case(row) -> DpaeCase:
-        return DpaeCase(id=row[0], case_key=row[1], employee_id=row[2], contract_id=row[3],
-                        establishment_id=row[4], expected_hiring_at=row[5], status=DpaeCaseStatus(row[6]),
-                        origin=row[7], created_at=row[8], closed_at=row[9], version=row[10])
+        return DpaeCase(id=row[0], case_key=row[1], contract_id=row[2], status=DpaeCaseStatus(row[3]),
+                        origin=row[4], created_at=row[5], closed_at=row[6], version=row[7])
 
     @staticmethod
     def _row_to_return(row) -> DpaeReturn:
@@ -46,7 +45,7 @@ class MysqlDpaeRepository:
         return getattr(exc, "errno", None) == 1062 or "Duplicate entry" in str(exc)
 
     def _select_case(self, cur, case_id: str, *, for_update: bool = False):
-        sql = ("SELECT id,case_key,employee_id,contract_id,establishment_id,expected_hiring_at,status,origin,created_at,closed_at,version "
+        sql = ("SELECT id,case_key,contract_id,status,origin,created_at,closed_at,version "
                "FROM tw_dpae_case WHERE id=%s")
         if for_update: sql += " FOR UPDATE"
         cur.execute(sql, (case_id,)); return cur.fetchone()
@@ -57,11 +56,9 @@ class MysqlDpaeRepository:
             row = self._select_case(cur, case_id)
             if row is None: raise KeyError(case_id)
             return self._row_to_case(row)
-        finally:
-            cur.close(); conn.close()
+        finally: cur.close(); conn.close()
 
     def transition_case(self, case_id: str, event: DpaeCaseEvent, ctx: TransitionContext) -> DpaeCase:
-        """Verrouille le Case, applique les gardes domaine puis persiste état+version atomiquement."""
         with self._transaction() as (_, cur):
             row = self._select_case(cur, case_id, for_update=True)
             if row is None: raise KeyError(case_id)
@@ -69,27 +66,22 @@ class MysqlDpaeRepository:
             DpaeCaseTransitionService().transition(case, event, ctx)
             closed = case.closed_at
             if case.status in {DpaeCaseStatus.CLOSED, DpaeCaseStatus.CANCELLED}:
-                cur.execute("SELECT CURRENT_TIMESTAMP")
-                closed = cur.fetchone()[0]
+                cur.execute("SELECT CURRENT_TIMESTAMP"); closed = cur.fetchone()[0]
             cur.execute("UPDATE tw_dpae_case SET status=%s,version=%s,closed_at=%s WHERE id=%s AND version=%s",
                         (case.status.value, case.version, closed, case.id, ctx.expected_version))
-            if cur.rowcount != 1:
-                raise DpaeDomainError("DPAE-I010", "Version du dossier DPAE obsolète.")
-            case.closed_at = closed
-            return case
+            if cur.rowcount != 1: raise DpaeDomainError("DPAE-I010", "Version du dossier DPAE obsolète.")
+            case.closed_at = closed; return case
 
     def _select_return(self, cur, return_id: str, *, for_update: bool = False):
-        sql = ("SELECT id,provider,return_type,raw_hash,received_at,external_return_id,external_flux_id,employer_siret,"
-               "submission_id,case_id,correlation_status,version FROM tw_dpae_return WHERE id=%s")
+        sql = ("SELECT id,provider,return_type,raw_hash,received_at,external_return_id,external_flux_id,employer_siret,submission_id,case_id,correlation_status,version FROM tw_dpae_return WHERE id=%s")
         if for_update: sql += " FOR UPDATE"
         cur.execute(sql, (return_id,)); return cur.fetchone()
 
     def ingest_return(self, item: DpaeReturn) -> Tuple[DpaeReturn, str]:
         try:
             with self._transaction() as (_, cur):
-                cur.execute("INSERT INTO tw_dpae_return (id,provider,return_type,raw_hash,received_at,external_return_id,external_flux_id,employer_siret,submission_id,case_id,correlation_status,version) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
-                            (item.id,item.provider,item.return_type.value,item.raw_hash,item.received_at,item.external_return_id,item.external_flux_id,item.employer_siret,item.submission_id,item.case_id,item.correlation_status.value,item.version))
-            return item, "CREATED"
+                cur.execute("INSERT INTO tw_dpae_return (id,provider,return_type,raw_hash,received_at,external_return_id,external_flux_id,employer_siret,submission_id,case_id,correlation_status,version) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",(item.id,item.provider,item.return_type.value,item.raw_hash,item.received_at,item.external_return_id,item.external_flux_id,item.employer_siret,item.submission_id,item.case_id,item.correlation_status.value,item.version))
+            return item,"CREATED"
         except Exception as exc:
             if not self._is_duplicate(exc): raise
         conn=self._connection_factory(); cur=conn.cursor()
@@ -97,7 +89,6 @@ class MysqlDpaeRepository:
             row=None
             if item.external_return_id:
                 cur.execute("SELECT id,provider,return_type,raw_hash,received_at,external_return_id,external_flux_id,employer_siret,submission_id,case_id,correlation_status,version FROM tw_dpae_return WHERE provider=%s AND external_return_id=%s",(item.provider,item.external_return_id)); row=cur.fetchone()
-            if row is None: row=self._select_return(cur,item.id)
             if row is None:
                 cur.execute("SELECT id,provider,return_type,raw_hash,received_at,external_return_id,external_flux_id,employer_siret,submission_id,case_id,correlation_status,version FROM tw_dpae_return WHERE provider=%s AND return_type=%s AND raw_hash=%s",(item.provider,item.return_type.value,item.raw_hash)); row=cur.fetchone()
             if row is None: raise DpaeDomainError("RETURN_INTEGRITY_CONFLICT","Collision DPAE non résolue après contrainte SQL.")
@@ -131,13 +122,7 @@ class MysqlDpaeRepository:
                 if decision.action=="CONFIRM_MATCH" and decision.candidate_submission_id:
                     cur.execute("INSERT INTO tw_dpae_current_correlation (return_id,submission_id,decision_id,confirmed_at) VALUES (%s,%s,%s,%s)",(decision.return_id,decision.candidate_submission_id,decision.id,decision.decided_at))
         except Exception as exc:
-            if self._is_duplicate(exc):
-                conn=self._connection_factory(); cur=conn.cursor()
-                try:
-                    cur.execute("SELECT return_id,action,actor_id,candidate_submission_id FROM tw_dpae_correlation_decision WHERE id=%s",(decision.id,)); row=cur.fetchone()
-                    if row==(decision.return_id,decision.action,decision.actor_id,decision.candidate_submission_id): return
-                finally: cur.close(); conn.close()
-                raise DpaeDomainError("CONCURRENT_CORRELATION_CONFLICT","Une autre corrélation courante existe déjà pour ce retour.") from exc
+            if self._is_duplicate(exc): raise DpaeDomainError("CONCURRENT_CORRELATION_CONFLICT","Une autre corrélation courante existe déjà pour ce retour.") from exc
             raise
 
     def record_effect_once(self, effect: DpaeReturnEffect) -> bool:
@@ -145,8 +130,7 @@ class MysqlDpaeRepository:
             with self._transaction() as (_,cur):
                 row=self._select_return(cur,effect.return_id,for_update=True)
                 if row is None: raise KeyError(effect.return_id)
-                item=self._row_to_return(row)
-                if not item.may_have_business_effect: raise DpaeDomainError("DPAE_UNCONFIRMED_RETURN_EFFECT","Un retour non confirmé ne peut produire aucun effet métier.")
+                if not self._row_to_return(row).may_have_business_effect: raise DpaeDomainError("DPAE_UNCONFIRMED_RETURN_EFFECT","Un retour non confirmé ne peut produire aucun effet métier.")
                 cur.execute("INSERT INTO tw_dpae_return_effect (return_id,effect_type,created_at) VALUES (%s,%s,%s)",(effect.return_id,effect.effect_type,effect.created_at))
             return True
         except Exception as exc:
@@ -155,8 +139,7 @@ class MysqlDpaeRepository:
 
     def effect_count(self, return_id: str, effect_type: str) -> int:
         conn=self._connection_factory(); cur=conn.cursor()
-        try:
-            cur.execute("SELECT COUNT(*) FROM tw_dpae_return_effect WHERE return_id=%s AND effect_type=%s",(return_id,effect_type)); return int(cur.fetchone()[0])
+        try: cur.execute("SELECT COUNT(*) FROM tw_dpae_return_effect WHERE return_id=%s AND effect_type=%s",(return_id,effect_type)); return int(cur.fetchone()[0])
         finally: cur.close(); conn.close()
 
     def acquire_submission_lock(self, case_id: str, submission_id: str, acquired_at) -> bool:
