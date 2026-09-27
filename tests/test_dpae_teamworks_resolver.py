@@ -21,7 +21,7 @@ class Cursor:
         if " from contrats where " in normalized:
             self.row = (18, 2, 3, "2026-10-15", "2027-10-14", 7)
         elif " from personnes where " in normalized:
-            self.row = ("Mme", "Martin", "Durand", "Alice", "1990-02-03", "35000", "Rennes", 1, "2 90 02 35 123 456", "1 rue X", "35650", "Le Rheu", 33)
+            self.row = ("Mme", "Martin", "Durand", "Alice", "1990-02-03", "35000", "Rennes", 1, "", "1 rue X", "35650", "Le Rheu", 33)
         elif " from contrats_types where " in normalized:
             self.row = ("CDD", "CDD", "non")
         elif " from contrats_class where " in normalized:
@@ -64,11 +64,12 @@ def test_resolver_reads_real_legacy_sources_without_sql_mutation_or_config_write
     payload = json.loads(data.canonical_payload)
     assert payload["contract"]["contract_id"] == "742"
     assert payload["contract"]["hiring_time"] is None
-    assert payload["employee"]["person_id"] == "18"
+    assert "person_id" not in payload["employee"]
     assert payload["employee"]["birth_name"] == "Durand"
     assert payload["employee"]["sex"] == "F"
     assert payload["employer"]["siret"] == "12345678901234"
     assert data.payload_hash == hashlib.sha256(data.canonical_payload.encode("utf-8")).hexdigest()
+    assert data.source_fingerprint != data.payload_hash
 
 
 def test_missing_customize_is_not_created(tmp_path):
