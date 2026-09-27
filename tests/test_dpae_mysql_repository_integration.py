@@ -8,7 +8,7 @@ import pytest
 mysql = pytest.importorskip("mysql.connector")
 
 from domain.dpae.model import (
-    CorrelationStatus, DpaeCorrelationDecision, DpaeDomainError,
+    DpaeCorrelationDecision, DpaeDomainError,
     DpaeReturn, DpaeReturnEffect, DpaeReturnType,
 )
 from infrastructure.persistence.mysql_dpae_repository import MysqlDpaeRepository
@@ -35,9 +35,10 @@ def repo():
 def seed_case_submissions():
     conn = connect(); cur = conn.cursor()
     try:
-        cur.execute("INSERT INTO tw_dpae_case (id,case_key,employee_id,contract_id,establishment_id,expected_hiring_at,status,origin,created_at) VALUES ('c1','case-1','e1','ct1','est1',NOW(),'IN_PROGRESS','TEAMWORKS',NOW())")
+        cur.execute("INSERT INTO tw_dpae_case (id,case_key,contract_id,status,origin,created_at) VALUES ('c1','case-1','ct1','IN_PROGRESS','TEAMWORKS',NOW())")
+        cur.execute("INSERT INTO tw_dpae_snapshot (id,case_id,contract_id,rules_version,source_fingerprint,canonical_payload,payload_hash,created_at) VALUES ('snap1','c1','ct1','test-rules',%s,'{}',%s,NOW())", ("f" * 64, "a" * 64))
         for sid, attempt in (("s1", 1), ("s2", 2)):
-            cur.execute("INSERT INTO tw_dpae_submission (id,case_id,attempt_no,idempotency_key,payload_hash,state,created_at) VALUES (%s,'c1',%s,%s,%s,'SENDING',NOW())", (sid, attempt, "cmd-" + sid, (sid * 64)[:64]))
+            cur.execute("INSERT INTO tw_dpae_submission (id,case_id,snapshot_id,attempt_no,idempotency_key,payload_hash,state,created_at) VALUES (%s,'c1','snap1',%s,%s,%s,'SENDING',NOW())", (sid, attempt, "cmd-" + sid, (sid * 64)[:64]))
         conn.commit()
     finally:
         cur.close(); conn.close()
@@ -70,7 +71,6 @@ def test_adapter_correlation_is_compare_and_swap(clean_tables):
 
 def test_adapter_current_correlation_constraint_survives_concurrency(clean_tables):
     seed_case_submissions(); r = repo(); r.ingest_return(make_return())
-    # Le CAS décide d'abord le candidat gagnant.
     assert r.confirm_correlation("r1", "s1", "c1", 0) == "CONFIRMED"
 
     def append(args):
