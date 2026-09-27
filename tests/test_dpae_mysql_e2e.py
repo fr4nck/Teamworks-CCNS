@@ -96,9 +96,17 @@ def test_retry_and_return_keep_historical_snapshot_after_rh_change(clean_tables,
     with pytest.raises(TimeoutError): service.submit(SubmitDpae("retry-submit",prepared["case_id"],"operator"))
     conn=connect()
     try:
-        cur=conn.cursor(); cur.execute("UPDATE personnes SET prenom='Alicia' WHERE IDpersonne=18"); conn.commit()
+        cur=conn.cursor(); cur.execute("SELECT id,snapshot_id,payload_hash,state,attempt_no FROM tw_dpae_submission"); before_retry=cur.fetchone(); assert before_retry[3]=="OUTCOME_UNKNOWN"; assert before_retry[4]==1
+        cur.execute("SELECT status FROM tw_dpae_case WHERE id=%s",(prepared["case_id"],)); assert cur.fetchone()[0]=="OUTCOME_UNKNOWN"
+        cur.execute("UPDATE personnes SET prenom='Alicia' WHERE IDpersonne=18"); conn.commit()
     finally: conn.close()
     retried=service.retry_submission(RetryDpaeSubmission(transport.calls[0]["submission_id"])); assert retried["snapshot_id"]==prepared["snapshot_id"]; assert retried["payload_hash"]==prepared["payload_hash"]; assert retried["attempt_no"]==1
     assert transport.calls[0]["canonical_payload"]==transport.calls[1]["canonical_payload"]
+    conn=connect()
+    try:
+        cur=conn.cursor(); cur.execute("SELECT id,snapshot_id,payload_hash,state,attempt_no FROM tw_dpae_submission WHERE id=%s",(retried["submission_id"],)); after_retry=cur.fetchone()
+        assert after_retry[0:3]==before_retry[0:3]; assert after_retry[3]=="TECHNICALLY_ACCEPTED"; assert after_retry[4]==1
+        cur.execute("SELECT status FROM tw_dpae_case WHERE id=%s",(prepared["case_id"],)); assert cur.fetchone()[0]=="WAITING_RETURN"
+    finally: conn.close()
     returned=service.ingest_return(IngestDpaeReturn(provider="URSSAF",return_type="AEE",raw_hash=hashlib.sha256(b"return-1").hexdigest(),received_at=datetime(2026,9,27,12,0),external_return_id="return-e2e-1",external_flux_id="flux-e2e-1",employer_siret="12345678901234")); assert returned["correlation_status"]=="MATCHED"
     evidence=adapter.get_historical_evidence(returned["return_id"]); assert evidence["submission_id"]==retried["submission_id"]; assert evidence["snapshot_id"]==prepared["snapshot_id"]; assert evidence["contract_id"]=="742"; assert evidence["canonical_payload"]==transport.calls[0]["canonical_payload"]
