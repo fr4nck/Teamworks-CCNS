@@ -107,83 +107,83 @@ def test_idempotency_conflict_is_detected_before_case_lock_or_mutation_access():
 
 
 def test_idempotency_conflict_reads_committed_audit_under_audit_row_lock_without_touching_case():
-    """Le replay conflictuel utilise une consistent read de l'audit.
-
-    Une autre transaction garde un verrou X sur la ligne d'audit. Le SELECT simple
-    doit lire la version commitée via MVCC sans attendre ce verrou. Le dossier ne
-    doit être ni verrouillé ni modifié par le chemin de conflit.
-    """
-    case_id = "conflict-audit-lock-case"
-    command_id = "conflict-audit-lock-command"
-    original_hash = "9" * 64
-    conflicting_hash = "a" * 64
-    seed_applied_command(case_id, command_id, original_hash)
-    before = snapshot(case_id, command_id)
-
-    lock_ready = threading.Event()
-    release_lock = threading.Event()
-    holder_errors = []
-
+    case_id = "conflict-audit-lock-case"; command_id = "conflict-audit-lock-command"; original_hash = "9" * 64; conflicting_hash = "a" * 64
+    seed_applied_command(case_id, command_id, original_hash); before = snapshot(case_id, command_id)
+    lock_ready = threading.Event(); release_lock = threading.Event(); holder_errors = []
     def hold_audit_row_lock():
         conn = connect()
         try:
-            cur = conn.cursor()
-            # Modification non commitée : elle prend un verrou X sur l'audit et
-            # permet de vérifier que le replay fait bien une lecture MVCC non bloquante.
-            cur.execute(
-                "UPDATE tw_dpae_command_audit SET decision_code='LOCKED-BUT-UNCOMMITTED' WHERE command_id=%s",
-                (command_id,),
-            )
-            lock_ready.set()
-            assert release_lock.wait(timeout=10)
-            conn.rollback()
-        except Exception as exc:
-            holder_errors.append(exc)
-            lock_ready.set()
-        finally:
-            conn.close()
+            cur = conn.cursor(); cur.execute("UPDATE tw_dpae_command_audit SET decision_code='LOCKED-BUT-UNCOMMITTED' WHERE command_id=%s", (command_id,)); lock_ready.set(); assert release_lock.wait(timeout=10); conn.rollback()
+        except Exception as exc: holder_errors.append(exc); lock_ready.set()
+        finally: conn.close()
+    holder = threading.Thread(target=hold_audit_row_lock, daemon=True); holder.start(); assert lock_ready.wait(timeout=5); assert not holder_errors
+    replay = connect()
+    try:
+        cur = replay.cursor(); cur.execute("SET SESSION innodb_lock_wait_timeout=1")
+        cur.execute("SELECT command_hash,decision,decision_code FROM tw_dpae_command_audit WHERE command_id=%s", (command_id,)); known_hash, decision, decision_code = cur.fetchone()
+        assert known_hash == original_hash; assert decision == "APPLIED"; assert decision_code is None; assert known_hash != conflicting_hash; replay.rollback()
+    finally:
+        replay.close(); release_lock.set(); holder.join(timeout=5)
+    assert not holder.is_alive(); assert not holder_errors; assert snapshot(case_id, command_id) == before
+    verify = connect()
+    try:
+        cur = verify.cursor(); cur.execute("SELECT status,version FROM tw_dpae_case WHERE id=%s", (case_id,)); assert cur.fetchone() == ("SUBMITTING", 8)
+        cur.execute("SELECT COUNT(*) FROM tw_dpae_case_event WHERE case_id=%s", (case_id,)); assert cur.fetchone()[0] == 1
+        cur.execute("SELECT COUNT(*) FROM tw_dpae_submission WHERE case_id=%s", (case_id,)); assert cur.fetchone()[0] == 1
+        cur.execute("SELECT COUNT(*),MIN(decision_code) FROM tw_dpae_command_audit WHERE command_id=%s", (command_id,)); assert cur.fetchone() == (1, None)
+    finally: verify.close()
 
-    holder = threading.Thread(target=hold_audit_row_lock, daemon=True)
-    holder.start()
-    assert lock_ready.wait(timeout=5)
-    assert not holder_errors
 
+def test_original_payload_replay_after_audit_lock_rollback_recovers_durable_result_without_mutation():
+    """Après rollback du verrou audit, le replay identique relit le résultat durable."""
+    case_id = "audit-rollback-replay-case"
+    command_id = "audit-rollback-replay-command"
+    original_hash = "b" * 64
+    seed_applied_command(case_id, command_id, original_hash)
+    before = snapshot(case_id, command_id)
+    assert before == (("SUBMITTING", 8), 1, 1, 1, (original_hash, "APPLIED"))
+
+    # Une session prend le verrou X sur l'audit et modifie temporairement son
+    # decision_code. Le rollback doit rendre cette modification inexistante.
+    holder = connect()
+    try:
+        cur = holder.cursor()
+        cur.execute("UPDATE tw_dpae_command_audit SET decision_code='TEMPORARY-LOCK' WHERE command_id=%s", (command_id,))
+        holder.rollback()
+    finally:
+        holder.close()
+
+    # Reconnexion réelle après libération du verrou : même command_id + même
+    # payload. Le résultat doit être récupéré depuis l'audit durable, sans
+    # repasser par la mutation du Case ni recréer les artefacts de la commande.
     replay = connect()
     try:
         cur = replay.cursor()
-        cur.execute("SET SESSION innodb_lock_wait_timeout=1")
-        # Un SELECT ... FOR UPDATE ici attendrait le verrou X et échouerait.
-        # Le chemin attendu lit la dernière version commitée sans toucher au Case.
-        cur.execute(
-            "SELECT command_hash,decision,decision_code FROM tw_dpae_command_audit WHERE command_id=%s",
-            (command_id,),
-        )
-        known_hash, decision, decision_code = cur.fetchone()
-        assert known_hash == original_hash
+        cur.execute("SELECT command_hash,decision,case_id,submission_id,decision_code FROM tw_dpae_command_audit WHERE command_id=%s", (command_id,))
+        command_hash, decision, recovered_case_id, submission_id, decision_code = cur.fetchone()
+        assert command_hash == original_hash
         assert decision == "APPLIED"
+        assert recovered_case_id == case_id
+        assert submission_id == case_id + "-submission"
         assert decision_code is None
-        assert known_hash != conflicting_hash
         replay.rollback()
     finally:
         replay.close()
-        release_lock.set()
-        holder.join(timeout=5)
 
-    assert not holder.is_alive()
-    assert not holder_errors
-    # Le rollback du détenteur supprime son changement temporaire et le replay
-    # n'a créé ni verrou/mutation métier durable, ni événement, ni nouvelle tentative.
-    assert snapshot(case_id, command_id) == before
+    # Le replay est une récupération pure : aucun événement, audit ou essai
+    # supplémentaire, et aucune transition supplémentaire du dossier.
+    after = snapshot(case_id, command_id)
+    assert after == before
     verify = connect()
     try:
         cur = verify.cursor()
         cur.execute("SELECT status,version FROM tw_dpae_case WHERE id=%s", (case_id,))
         assert cur.fetchone() == ("SUBMITTING", 8)
-        cur.execute("SELECT COUNT(*) FROM tw_dpae_case_event WHERE case_id=%s", (case_id,))
+        cur.execute("SELECT COUNT(*) FROM tw_dpae_case_event WHERE case_id=%s AND idempotency_key=%s", (case_id, command_id))
         assert cur.fetchone()[0] == 1
-        cur.execute("SELECT COUNT(*) FROM tw_dpae_submission WHERE case_id=%s", (case_id,))
+        cur.execute("SELECT COUNT(*) FROM tw_dpae_command_audit WHERE command_id=%s", (command_id,))
         assert cur.fetchone()[0] == 1
-        cur.execute("SELECT COUNT(*),MIN(decision_code) FROM tw_dpae_command_audit WHERE command_id=%s", (command_id,))
-        assert cur.fetchone() == (1, None)
+        cur.execute("SELECT COUNT(*),MIN(attempt_no),MIN(payload_hash) FROM tw_dpae_submission WHERE case_id=%s", (case_id,))
+        assert cur.fetchone() == (1, 1, original_hash)
     finally:
         verify.close()
