@@ -54,7 +54,8 @@ def clean_tables():
         for table in (
             "tw_dpae_return_effect", "tw_dpae_current_correlation",
             "tw_dpae_correlation_decision", "tw_dpae_return",
-            "tw_dpae_case_submission_lock", "tw_dpae_submission", "tw_dpae_case",
+            "tw_dpae_case_submission_lock", "tw_dpae_submission",
+            "tw_dpae_command_audit", "tw_dpae_case_event", "tw_dpae_case",
         ):
             cur.execute("DELETE FROM " + table)
         cur.execute("SET FOREIGN_KEY_CHECKS=1")
@@ -76,6 +77,57 @@ def seed_case_submission_return():
         conn.close()
 
 
+def seed_rollback_case():
+    conn = connect()
+    try:
+        cur = conn.cursor()
+        cur.execute("INSERT INTO tw_dpae_case (id,case_key,employee_id,contract_id,establishment_id,expected_hiring_at,status,origin,created_at,version) VALUES ('crb','case-rollback','erb','ctrb','estrb',NOW(),'READY','TEAMWORKS',NOW(),7)")
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def execute_atomic_transition(failure_point=None):
+    """Transaction de test : Case + CaseEvent + CommandAudit sont indivisibles."""
+    conn = connect()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT status,version FROM tw_dpae_case WHERE id='crb' FOR UPDATE")
+        assert cur.fetchone() == ("READY", 7)
+        cur.execute("UPDATE tw_dpae_case SET status='SUBMITTING',version=8 WHERE id='crb' AND version=7")
+        assert cur.rowcount == 1
+        if failure_point == "AFTER_CASE_MUTATION":
+            raise RuntimeError(failure_point)
+        cur.execute("INSERT INTO tw_dpae_case_event (id,case_id,event_type,state_before,state_after,version_before,version_after,actor_type,actor_id,idempotency_key,command_hash,occurred_at,recorded_at) VALUES ('ev-rb','crb','SUBMISSION_REQUESTED','READY','SUBMITTING',7,8,'USER','u1','cmd-rb',%s,NOW(),NOW())", ("e" * 64,))
+        if failure_point == "AFTER_CASE_EVENT":
+            raise RuntimeError(failure_point)
+        cur.execute("INSERT INTO tw_dpae_command_audit (id,command_id,command_type,command_hash,actor_type,actor_id,case_id,requested_at,decided_at,decision,case_version_seen) VALUES ('audit-rb','cmd-rb','RequestDpaeSubmission',%s,'USER','u1','crb',NOW(),NOW(),'APPLIED',7)", ("e" * 64,))
+        if failure_point == "AFTER_COMMAND_AUDIT":
+            raise RuntimeError(failure_point)
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+def durable_atomic_state():
+    """Relit via une nouvelle connexion : uniquement l'état réellement commité."""
+    conn = connect()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT status,version FROM tw_dpae_case WHERE id='crb'")
+        case = cur.fetchone()
+        cur.execute("SELECT COUNT(*) FROM tw_dpae_case_event WHERE case_id='crb'")
+        events = cur.fetchone()[0]
+        cur.execute("SELECT COUNT(*) FROM tw_dpae_command_audit WHERE command_id='cmd-rb'")
+        audits = cur.fetchone()[0]
+        return case, events, audits
+    finally:
+        conn.close()
+
+
 def test_unique_case_key_and_idempotency_are_enforced_by_mysql():
     seed_case_submission_return()
     conn = connect()
@@ -92,21 +144,16 @@ def test_unique_case_key_and_idempotency_are_enforced_by_mysql():
 
 def test_two_workers_cannot_hold_uncertain_submission_lock_for_same_case():
     seed_case_submission_return()
-
     def acquire(submission_id):
         conn = connect()
         try:
             cur = conn.cursor()
             try:
                 cur.execute("INSERT INTO tw_dpae_case_submission_lock (case_id,submission_id,acquired_at) VALUES ('c1',%s,NOW())", (submission_id,))
-                conn.commit()
-                return "ACQUIRED"
+                conn.commit(); return "ACQUIRED"
             except mysql.IntegrityError:
-                conn.rollback()
-                return "CONFLICT"
-        finally:
-            conn.close()
-
+                conn.rollback(); return "CONFLICT"
+        finally: conn.close()
     with ThreadPoolExecutor(max_workers=2) as pool:
         results = list(pool.map(acquire, ("s1", "s2")))
     assert sorted(results) == ["ACQUIRED", "CONFLICT"]
@@ -114,7 +161,6 @@ def test_two_workers_cannot_hold_uncertain_submission_lock_for_same_case():
 
 def test_two_operators_cannot_create_two_current_correlations():
     seed_case_submission_return()
-
     def confirm(args):
         decision_id, submission_id = args
         conn = connect()
@@ -123,14 +169,10 @@ def test_two_operators_cannot_create_two_current_correlations():
             try:
                 cur.execute("INSERT INTO tw_dpae_correlation_decision (id,return_id,action,actor_id,decided_at,candidate_submission_id) VALUES (%s,'r1','CONFIRM_MATCH',%s,NOW(),%s)", (decision_id, decision_id, submission_id))
                 cur.execute("INSERT INTO tw_dpae_current_correlation (return_id,submission_id,decision_id,confirmed_at) VALUES ('r1',%s,%s,NOW())", (submission_id, decision_id))
-                conn.commit()
-                return "CONFIRMED"
+                conn.commit(); return "CONFIRMED"
             except mysql.IntegrityError:
-                conn.rollback()
-                return "CONFLICT"
-        finally:
-            conn.close()
-
+                conn.rollback(); return "CONFLICT"
+        finally: conn.close()
     with ThreadPoolExecutor(max_workers=2) as pool:
         results = list(pool.map(confirm, (("d1", "s1"), ("d2", "s2"))))
     assert sorted(results) == ["CONFIRMED", "CONFLICT"]
@@ -138,21 +180,30 @@ def test_two_operators_cannot_create_two_current_correlations():
 
 def test_return_effect_is_exactly_once_under_concurrency():
     seed_case_submission_return()
-
     def apply(_):
         conn = connect()
         try:
             cur = conn.cursor()
             try:
                 cur.execute("INSERT INTO tw_dpae_return_effect (return_id,effect_type,created_at) VALUES ('r1','MARK_DPAE_REGISTERED',NOW())")
-                conn.commit()
-                return "CREATED"
+                conn.commit(); return "CREATED"
             except mysql.IntegrityError:
-                conn.rollback()
-                return "REPLAY"
-        finally:
-            conn.close()
-
+                conn.rollback(); return "REPLAY"
+        finally: conn.close()
     with ThreadPoolExecutor(max_workers=2) as pool:
         results = list(pool.map(apply, range(2)))
     assert sorted(results) == ["CREATED", "REPLAY"]
+
+
+@pytest.mark.parametrize("failure_point", ["AFTER_CASE_MUTATION", "AFTER_CASE_EVENT", "AFTER_COMMAND_AUDIT"])
+def test_case_event_and_command_audit_are_all_rolled_back(failure_point):
+    seed_rollback_case()
+    with pytest.raises(RuntimeError, match=failure_point):
+        execute_atomic_transition(failure_point)
+    assert durable_atomic_state() == (("READY", 7), 0, 0)
+
+
+def test_case_event_and_command_audit_commit_together_on_success():
+    seed_rollback_case()
+    execute_atomic_transition()
+    assert durable_atomic_state() == (("SUBMITTING", 8), 1, 1)
