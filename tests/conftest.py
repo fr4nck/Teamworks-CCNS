@@ -11,10 +11,8 @@ import pytest
 _CONTAINER = "teamworks-dpae-mariadb-ci"
 _IMAGE = "mariadb:10.11.14"
 _CI_ENV = {
-    "DPAE_MYSQL_HOST": "127.0.0.1",
-    "DPAE_MYSQL_PORT": "33306",
-    "DPAE_MYSQL_USER": "teamworks",
-    "DPAE_MYSQL_PASSWORD": "teamworks-ci-only",
+    "DPAE_MYSQL_HOST": "127.0.0.1", "DPAE_MYSQL_PORT": "33306",
+    "DPAE_MYSQL_USER": "teamworks", "DPAE_MYSQL_PASSWORD": "teamworks-ci-only",
     "DPAE_MYSQL_DATABASE": "teamworks_dpae_ci",
 }
 _started = False
@@ -71,33 +69,52 @@ def pytest_configure(config) -> None:
          "-e", "MARIADB_USER=teamworks", "-e", "MARIADB_PASSWORD=teamworks-ci-only",
          "--health-cmd=healthcheck.sh --connect --innodb_initialized",
          "--health-interval=2s", "--health-timeout=3s", "--health-retries=30", _IMAGE)
-    _started = True
-    _wait_ready()
-    _apply_schema()
+    _started = True; _wait_ready(); _apply_schema()
 
 
 @pytest.fixture
 def clean_tables():
-    """Nettoyage partagé par toutes les suites DPAE MySQL/MariaDB."""
     if not all(os.getenv(k) for k in ("DPAE_MYSQL_HOST", "DPAE_MYSQL_USER", "DPAE_MYSQL_DATABASE")):
         pytest.skip("base MySQL DPAE non configurée")
     conn = _connect()
     try:
         cur = conn.cursor(); cur.execute("SET FOREIGN_KEY_CHECKS=0")
-        for table in (
-            "tw_dpae_return_effect", "tw_dpae_current_correlation", "tw_dpae_correlation_decision",
-            "tw_dpae_return", "tw_dpae_case_submission_lock", "tw_dpae_submission", "tw_dpae_case",
-        ):
+        for table in ("tw_dpae_return_effect", "tw_dpae_current_correlation", "tw_dpae_correlation_decision",
+                      "tw_dpae_return", "tw_dpae_case_submission_lock", "tw_dpae_submission", "tw_dpae_case"):
             cur.execute("DELETE FROM " + table)
         cur.execute("SET FOREIGN_KEY_CHECKS=1"); conn.commit(); cur.close()
     finally:
         conn.close()
 
 
+def _write_innodb_diagnostics() -> None:
+    """Conserve les informations exploitables d'un deadlock/attente InnoDB."""
+    out = Path("mariadb-dpae-diagnostics.txt")
+    parts = []
+    try:
+        conn = _connect(); cur = conn.cursor()
+        try:
+            for label, sql in (
+                ("INNODB STATUS", "SHOW ENGINE INNODB STATUS"),
+                ("PROCESSLIST", "SHOW FULL PROCESSLIST"),
+            ):
+                parts.append("===== " + label + " =====")
+                cur.execute(sql)
+                for row in cur.fetchall():
+                    parts.append("\t".join("" if value is None else str(value) for value in row))
+        finally:
+            cur.close(); conn.close()
+    except Exception as exc:
+        parts.append("Diagnostic SQL indisponible: " + repr(exc))
+    logs = _run("docker", "logs", _CONTAINER, check=False)
+    parts.extend(("===== DOCKER LOGS =====", logs.stdout, logs.stderr))
+    out.write_text("\n".join(parts), encoding="utf-8")
+    print("\n===== Diagnostics MariaDB DPAE =====\n" + "\n".join(parts))
+
+
 def pytest_sessionfinish(session, exitstatus) -> None:
     if not _started:
         return
     if exitstatus != 0:
-        logs = _run("docker", "logs", _CONTAINER, check=False)
-        print("\n===== MariaDB DPAE CI logs =====\n" + logs.stdout + logs.stderr)
+        _write_innodb_diagnostics()
     _run("docker", "rm", "-f", _CONTAINER, check=False)
