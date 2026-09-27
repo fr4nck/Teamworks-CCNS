@@ -61,54 +61,68 @@ def clean_tables():
         conn.close()
 
 
-def test_submit_exception_after_submission_write_rolls_back_everything():
-    base_adapter = DpaeMariaDbAdapter(connect)
-    prepared = base_adapter.prepare(PrepareDpae(
-        command_id="atomicity-prepare-001",
-        case_key="atomicity-case-key-001",
+def prepare_case(suffix):
+    adapter = DpaeMariaDbAdapter(connect)
+    return adapter.prepare(PrepareDpae(
+        command_id="atomicity-prepare-" + suffix,
+        case_key="atomicity-case-key-" + suffix,
         employee_id="employee-atomicity",
         contract_id="contract-atomicity",
         establishment_id="est-atomicity",
         expected_hiring_at=datetime(2026, 10, 20, 8, 30),
         actor_id="accounting-user",
-    ))
-    case_id = prepared["case_id"]
+    ))["case_id"]
 
-    def fail_after_submission_write(point):
-        if point == "after_submission_write":
-            raise RuntimeError("injected failure after submission write")
 
-    adapter = DpaeMariaDbAdapter(connect, failure_injector=fail_after_submission_write)
-    command_id = "atomicity-submit-001"
-    payload_hash = "a" * 64
-
-    with pytest.raises(RuntimeError, match="injected failure after submission write"):
-        adapter.submit(SubmitDpae(
-            command_id=command_id,
-            case_id=case_id,
-            payload_hash=payload_hash,
-            actor_id="accounting-user",
-        ))
-
+def assert_submit_rolled_back(case_id, command_id, prepare_command_id):
     # Nouvelle connexion : seules les données réellement commitées sont observées.
     conn = connect()
     try:
         cur = conn.cursor()
         cur.execute("SELECT status,version FROM tw_dpae_case WHERE id=%s", (case_id,))
         assert cur.fetchone() == ("READY", 0)
-
         cur.execute("SELECT COUNT(*) FROM tw_dpae_submission WHERE case_id=%s", (case_id,))
         assert cur.fetchone()[0] == 0
-
         cur.execute("SELECT COUNT(*) FROM tw_dpae_case_event WHERE case_id=%s", (case_id,))
         assert cur.fetchone()[0] == 0
-
         cur.execute("SELECT COUNT(*) FROM tw_dpae_command_audit WHERE command_id=%s", (command_id,))
         assert cur.fetchone()[0] == 0
-
-        # L'audit de préparation est antérieur et commité : le rollback de submit
-        # ne doit évidemment pas l'effacer.
-        cur.execute("SELECT COUNT(*) FROM tw_dpae_command_audit WHERE command_id='atomicity-prepare-001'")
+        cur.execute("SELECT COUNT(*) FROM tw_dpae_command_audit WHERE command_id=%s", (prepare_command_id,))
         assert cur.fetchone()[0] == 1
     finally:
         conn.close()
+
+
+def test_submit_exception_after_submission_write_rolls_back_everything():
+    suffix = "001"
+    case_id = prepare_case(suffix)
+
+    def failure(point):
+        if point == "after_submission_write":
+            raise RuntimeError("injected failure after submission write")
+
+    adapter = DpaeMariaDbAdapter(connect, failure_injector=failure)
+    command_id = "atomicity-submit-001"
+    with pytest.raises(RuntimeError, match="injected failure after submission write"):
+        adapter.submit(SubmitDpae(command_id, case_id, "a" * 64, "accounting-user"))
+
+    assert_submit_rolled_back(case_id, command_id, "atomicity-prepare-001")
+
+
+def test_submit_exception_after_case_event_write_rolls_back_everything():
+    suffix = "002"
+    case_id = prepare_case(suffix)
+
+    def failure(point):
+        if point == "after_case_event_write":
+            raise RuntimeError("injected failure after case event write")
+
+    adapter = DpaeMariaDbAdapter(connect, failure_injector=failure)
+    command_id = "atomicity-submit-002"
+    with pytest.raises(RuntimeError, match="injected failure after case event write"):
+        adapter.submit(SubmitDpae(command_id, case_id, "b" * 64, "accounting-user"))
+
+    # À cet instant UPDATE Case + INSERT Submission + INSERT CaseEvent ont tous
+    # réellement été exécutés sur la même transaction. L'exception doit annuler
+    # les trois, et aucun audit SubmitDpae ne doit apparaître.
+    assert_submit_rolled_back(case_id, command_id, "atomicity-prepare-002")
