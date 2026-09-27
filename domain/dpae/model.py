@@ -1,6 +1,8 @@
 """Modèle métier minimal de la DPAE.
 
 Aucune dépendance UI ou persistence : ce module porte les invariants purs.
+DATA-001 : Teamworks reste la source de vérité RH ; le domaine DPAE ne conserve
+que la référence contrat, les snapshots déclaratifs et le cycle transactionnel.
 """
 from __future__ import annotations
 
@@ -78,12 +80,14 @@ _ALLOWED_TRANSITIONS = {
 
 @dataclass
 class DpaeCase:
+    """Dossier logique DPAE.
+
+    Il référence le contrat Teamworks mais ne duplique aucune donnée RH vivante.
+    """
+
     id: str
     case_key: str
-    employee_id: str
     contract_id: str
-    establishment_id: str
-    expected_hiring_at: datetime
     status: DpaeCaseStatus = DpaeCaseStatus.DRAFT
     origin: str = "TEAMWORKS"
     created_at: datetime = field(default_factory=datetime.utcnow)
@@ -91,10 +95,30 @@ class DpaeCase:
     version: int = 0
 
 
+@dataclass(frozen=True)
+class DpaeSnapshot:
+    """Photographie immuable des valeurs utilisées pour une déclaration.
+
+    ``canonical_payload`` est la représentation canonique des données métier
+    déclarables après résolution/validation. Le payload fournisseur peut en être
+    dérivé sans relire les données RH vivantes.
+    """
+
+    id: str
+    case_id: str
+    contract_id: str
+    rules_version: str
+    source_fingerprint: str
+    canonical_payload: str
+    payload_hash: str
+    created_at: datetime
+
+
 @dataclass
 class DpaeSubmission:
     id: str
     case_id: str
+    snapshot_id: str
     attempt_no: int
     idempotency_key: str
     payload_hash: str
