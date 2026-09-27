@@ -1,8 +1,8 @@
 """Canonical fingerprint for an ephemeral DPAE preparation.
 
 The fingerprint deliberately covers the DPAE projection of Teamworks source
-records, not complete database rows.  Unrelated changes must not make a
-preparation stale.
+records, not complete database rows. Unrelated changes must not make a
+preparation stale. In particular, planning changes are not DPAE source data.
 """
 
 from __future__ import annotations
@@ -22,8 +22,9 @@ class DpaeSourceProjection:
     """Minimal canonical projection used to prepare a DPAE.
 
     ``employee_fields`` and ``contract_fields`` contain only fields actually
-    consumed by the DPAE payload/validation layer.  They must not contain row
-    versions, ``updated_at`` values, UI state or unrelated HR data.
+    consumed by the DPAE payload/validation layer. They must not contain row
+    versions, ``updated_at`` values, UI state, planning data or unrelated HR
+    data.
     """
 
     contract_id: str
@@ -34,7 +35,6 @@ class DpaeSourceProjection:
     employee_fields: dict[str, object]
     contract_fields: dict[str, object]
     employer_fields: dict[str, object]
-    planning_first_start: time | None = None
 
 
 def _normalise(value: object) -> object:
