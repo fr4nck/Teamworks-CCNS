@@ -5,9 +5,14 @@ class IdempotencyPayloadConflict(Exception): pass
 class InvalidDpaeTransition(Exception): pass
 
 class DpaeMariaDbAdapter:
-    def __init__(self, connection_factory): self._connect = connection_factory
+    def __init__(self, connection_factory, failure_injector=None):
+        self._connect = connection_factory
+        self._failure_injector = failure_injector
     @staticmethod
     def _id(): return uuid.uuid4().hex
+    def _failure_point(self, name):
+        if self._failure_injector is not None:
+            self._failure_injector(name)
 
     def prepare(self, cmd):
         conn=self._connect()
@@ -35,6 +40,7 @@ class DpaeMariaDbAdapter:
             if case != ("READY",0): raise InvalidDpaeTransition("DPAE_NOT_SUBMITTABLE")
             submission_id=self._id(); cur.execute("UPDATE tw_dpae_case SET status='SUBMITTING',version=1 WHERE id=%s AND version=0",(cmd.case_id,))
             cur.execute("INSERT INTO tw_dpae_submission (id,case_id,attempt_no,idempotency_key,payload_hash,state,created_at,version) VALUES (%s,%s,1,%s,%s,'PREPARED',NOW(),0)",(submission_id,cmd.case_id,cmd.command_id,cmd.payload_hash))
+            self._failure_point("after_submission_write")
             cur.execute("INSERT INTO tw_dpae_case_event (id,case_id,event_type,state_before,state_after,version_before,version_after,actor_type,actor_id,idempotency_key,command_hash,occurred_at,recorded_at) VALUES (%s,%s,'SUBMISSION_REQUESTED','READY','SUBMITTING',0,1,'USER',%s,%s,%s,NOW(),NOW())",(self._id(),cmd.case_id,cmd.actor_id,cmd.command_id,cmd.payload_hash))
             cur.execute("INSERT INTO tw_dpae_command_audit (id,command_id,command_type,command_hash,actor_type,actor_id,case_id,submission_id,requested_at,decided_at,decision,case_version_seen) VALUES (%s,%s,'SubmitDpae',%s,'USER',%s,%s,%s,NOW(),NOW(),'APPLIED',0)",(self._id(),cmd.command_id,cmd.payload_hash,cmd.actor_id,cmd.case_id,submission_id)); conn.commit()
             return {"case_id":cmd.case_id,"submission_id":submission_id,"decision":"APPLIED","replayed":False}
