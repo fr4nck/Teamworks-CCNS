@@ -80,7 +80,8 @@ def clean_tables():
     try:
         cur = conn.cursor(); cur.execute("SET FOREIGN_KEY_CHECKS=0")
         for table in ("tw_dpae_return_effect", "tw_dpae_current_correlation", "tw_dpae_correlation_decision",
-                      "tw_dpae_return", "tw_dpae_case_submission_lock", "tw_dpae_submission", "tw_dpae_case"):
+                      "tw_dpae_return", "tw_dpae_case_submission_lock", "tw_dpae_submission",
+                      "tw_dpae_snapshot", "tw_dpae_case"):
             cur.execute("DELETE FROM " + table)
         cur.execute("SET FOREIGN_KEY_CHECKS=1"); conn.commit(); cur.close()
     finally:
