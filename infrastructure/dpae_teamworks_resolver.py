@@ -13,6 +13,8 @@ from pathlib import Path
 
 from application.services.dpae_service import DpaeBusinessData
 
+# Cette version évolue seulement lorsqu'un mapping, une canonicalisation ou une
+# règle d'interprétation modifie les données déclaratives produites.
 DPAE_RULES_VERSION = "2026-09-27.1"
 
 
@@ -147,7 +149,9 @@ class TeamworksDpaeBusinessDataResolver:
                 "classification": _clean(classification),
             },
             "employee": {
-                "person_id": str(person_id),
+                # IDpersonne sert uniquement à résoudre la personne. C'est un
+                # identifiant technique Teamworks, pas une donnée déclarative :
+                # il ne doit donc influencer ni snapshot ni fingerprint.
                 "birth_name": birth_name,
                 "married_name": married_name,
                 "first_names": _clean(prenom),
