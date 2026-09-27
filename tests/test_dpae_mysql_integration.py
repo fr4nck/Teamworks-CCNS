@@ -196,19 +196,45 @@ def test_reconnect_recovers_durable_result_without_recreating_anything():
     seed_rollback_case(); command_id = "cmd-reconnect"; command_hash = "d" * 64
     with pytest.raises(ConnectionError, match="response loss"):
         request_submission_idempotently(command_id, command_hash, lose_response=True)
-
-    # Photographie durable avant reconnexion : le commit a déjà produit exactement 1/1/1.
     before_reconnect = durable_command_counts(command_id)
     assert before_reconnect == (1, 1, 1)
-
-    # Nouvel appel = nouvelle connexion MariaDB. Le même command_id relit l'audit durable.
     recovered = request_submission_idempotently(command_id, command_hash)
     assert recovered == {"replayed": True, "decision": "APPLIED", "case_id": "crb", "submission_id": "s-lost", "decision_code": None}
-
-    # La récupération est strictement en lecture : aucun nouvel événement/audit/submission.
     assert durable_command_counts(command_id) == before_reconnect
     conn = connect()
     try:
         cur = conn.cursor(); cur.execute("SELECT status,version FROM tw_dpae_case WHERE id='crb'"); assert cur.fetchone() == ("SUBMITTING", 8)
         cur.execute("SELECT attempt_no,idempotency_key,state FROM tw_dpae_submission WHERE id='s-lost'"); assert cur.fetchone() == (1, command_id, "PREPARED")
     finally: conn.close()
+
+
+def test_replay_with_same_command_id_and_different_payload_conflicts_before_any_mutation():
+    seed_rollback_case()
+    command_id = "cmd-payload-conflict"
+    original_hash = "1" * 64
+    conflicting_hash = "2" * 64
+
+    first = request_submission_idempotently(command_id, original_hash)
+    assert first["decision"] == "APPLIED"
+    before_conflict = durable_command_counts(command_id)
+    assert before_conflict == (1, 1, 1)
+
+    # Même identifiant, autre payload : le conflit doit être détecté à la lecture
+    # de l'audit existant, avant SELECT ... FOR UPDATE et avant toute mutation.
+    with pytest.raises(ValueError, match="IDEMPOTENCY_PAYLOAD_CONFLICT"):
+        request_submission_idempotently(command_id, conflicting_hash)
+
+    assert durable_command_counts(command_id) == before_conflict
+    conn = connect()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT status,version FROM tw_dpae_case WHERE id='crb'")
+        assert cur.fetchone() == ("SUBMITTING", 8)
+        cur.execute("SELECT COUNT(*),MIN(command_hash),MIN(decision) FROM tw_dpae_command_audit WHERE command_id=%s", (command_id,))
+        assert cur.fetchone() == (1, original_hash, "APPLIED")
+        cur.execute("SELECT COUNT(*),MIN(command_hash) FROM tw_dpae_case_event WHERE case_id='crb' AND idempotency_key=%s", (command_id,))
+        assert cur.fetchone() == (1, original_hash)
+        cur.execute("SELECT COUNT(*),MIN(attempt_no),MIN(payload_hash) FROM tw_dpae_submission WHERE case_id='crb'")
+        assert cur.fetchone() == (1, 1, original_hash)
+    finally:
+        conn.close()
