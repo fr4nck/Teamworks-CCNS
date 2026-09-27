@@ -1,21 +1,34 @@
--- DPAE v1 — contraintes MySQL/MariaDB compatibles avec le socle historique.
+-- DPAE DATA-001 / V2 — contraintes MySQL/MariaDB compatibles avec le socle historique.
 -- Pas d'index partiel, colonne générée ni CHECK requis : les verrous logiques
 -- sont matérialisés dans des tables dédiées pour rester compatibles MySQL 5.5.
 
 CREATE TABLE IF NOT EXISTS tw_dpae_case (
     id VARCHAR(64) NOT NULL,
     case_key VARCHAR(128) NOT NULL,
-    employee_id VARCHAR(64) NOT NULL,
     contract_id VARCHAR(64) NOT NULL,
-    establishment_id VARCHAR(64) NOT NULL,
-    expected_hiring_at DATETIME NOT NULL,
     status VARCHAR(32) NOT NULL,
     origin VARCHAR(16) NOT NULL DEFAULT 'TEAMWORKS',
     created_at DATETIME NOT NULL,
     closed_at DATETIME NULL,
     version INTEGER NOT NULL DEFAULT 0,
     PRIMARY KEY (id),
-    UNIQUE KEY uq_tw_dpae_case_key (case_key)
+    UNIQUE KEY uq_tw_dpae_case_key (case_key),
+    KEY ix_tw_dpae_case_contract (contract_id)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS tw_dpae_snapshot (
+    id VARCHAR(64) NOT NULL,
+    case_id VARCHAR(64) NOT NULL,
+    contract_id VARCHAR(64) NOT NULL,
+    rules_version VARCHAR(64) NOT NULL,
+    source_fingerprint CHAR(64) NOT NULL,
+    canonical_payload LONGTEXT NOT NULL,
+    payload_hash CHAR(64) NOT NULL,
+    created_at DATETIME NOT NULL,
+    PRIMARY KEY (id),
+    KEY ix_tw_dpae_snapshot_case_created (case_id, created_at),
+    KEY ix_tw_dpae_snapshot_contract_created (contract_id, created_at),
+    CONSTRAINT fk_tw_dpae_snapshot_case FOREIGN KEY (case_id) REFERENCES tw_dpae_case(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS tw_dpae_case_event (
@@ -75,6 +88,7 @@ CREATE TABLE IF NOT EXISTS tw_dpae_command_audit (
 CREATE TABLE IF NOT EXISTS tw_dpae_submission (
     id VARCHAR(64) NOT NULL,
     case_id VARCHAR(64) NOT NULL,
+    snapshot_id VARCHAR(64) NOT NULL,
     attempt_no INTEGER NOT NULL,
     idempotency_key VARCHAR(128) NOT NULL,
     payload_hash CHAR(64) NOT NULL,
@@ -88,8 +102,10 @@ CREATE TABLE IF NOT EXISTS tw_dpae_submission (
     UNIQUE KEY uq_tw_dpae_submission_attempt (case_id, attempt_no),
     UNIQUE KEY uq_tw_dpae_submission_idempotency (idempotency_key),
     KEY ix_tw_dpae_submission_case_created (case_id, created_at),
+    KEY ix_tw_dpae_submission_snapshot (snapshot_id),
     KEY ix_tw_dpae_submission_external_flux (external_flux_id),
-    CONSTRAINT fk_tw_dpae_submission_case FOREIGN KEY (case_id) REFERENCES tw_dpae_case(id) ON DELETE RESTRICT
+    CONSTRAINT fk_tw_dpae_submission_case FOREIGN KEY (case_id) REFERENCES tw_dpae_case(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_tw_dpae_submission_snapshot FOREIGN KEY (snapshot_id) REFERENCES tw_dpae_snapshot(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS tw_dpae_case_submission_lock (
