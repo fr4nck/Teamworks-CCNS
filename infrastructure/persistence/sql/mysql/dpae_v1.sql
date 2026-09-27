@@ -18,6 +18,33 @@ CREATE TABLE IF NOT EXISTS tw_dpae_case (
     UNIQUE KEY uq_tw_dpae_case_key (case_key)
 ) ENGINE=InnoDB;
 
+-- Journal métier append-only. Une commande logique ne peut produire qu'un seul
+-- événement et une version donnée d'un Case ne peut avoir qu'un seul auteur.
+CREATE TABLE IF NOT EXISTS tw_dpae_case_event (
+    id VARCHAR(64) NOT NULL,
+    case_id VARCHAR(64) NOT NULL,
+    event_type VARCHAR(64) NOT NULL,
+    state_before VARCHAR(32) NOT NULL,
+    state_after VARCHAR(32) NOT NULL,
+    version_before INTEGER NOT NULL,
+    version_after INTEGER NOT NULL,
+    actor_type VARCHAR(16) NOT NULL,
+    actor_id VARCHAR(64) NULL,
+    reason_code VARCHAR(64) NULL,
+    reason_text VARCHAR(512) NULL,
+    idempotency_key VARCHAR(128) NOT NULL,
+    command_hash CHAR(64) NOT NULL,
+    occurred_at DATETIME NOT NULL,
+    recorded_at DATETIME NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_tw_dpae_case_event_idempotency (case_id, idempotency_key),
+    UNIQUE KEY uq_tw_dpae_case_event_version (case_id, version_after),
+    KEY ix_tw_dpae_case_event_timeline (case_id, occurred_at, id),
+    KEY ix_tw_dpae_case_event_type (event_type, occurred_at),
+    CONSTRAINT fk_tw_dpae_case_event_case FOREIGN KEY (case_id)
+        REFERENCES tw_dpae_case(id) ON DELETE RESTRICT
+) ENGINE=InnoDB;
+
 CREATE TABLE IF NOT EXISTS tw_dpae_submission (
     id VARCHAR(64) NOT NULL,
     case_id VARCHAR(64) NOT NULL,
@@ -39,19 +66,14 @@ CREATE TABLE IF NOT EXISTS tw_dpae_submission (
         REFERENCES tw_dpae_case(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB;
 
--- Une seule tentative SENDING/OUTCOME_UNKNOWN par Case.
--- Le service insère la ligne au passage dans un état incertain et la retire
--- uniquement lors d'une résolution définitive, dans la même transaction.
 CREATE TABLE IF NOT EXISTS tw_dpae_case_submission_lock (
     case_id VARCHAR(64) NOT NULL,
     submission_id VARCHAR(64) NOT NULL,
     acquired_at DATETIME NOT NULL,
     PRIMARY KEY (case_id),
     UNIQUE KEY uq_tw_dpae_case_submission_lock_submission (submission_id),
-    CONSTRAINT fk_tw_dpae_lock_case FOREIGN KEY (case_id)
-        REFERENCES tw_dpae_case(id) ON DELETE RESTRICT,
-    CONSTRAINT fk_tw_dpae_lock_submission FOREIGN KEY (submission_id)
-        REFERENCES tw_dpae_submission(id) ON DELETE RESTRICT
+    CONSTRAINT fk_tw_dpae_lock_case FOREIGN KEY (case_id) REFERENCES tw_dpae_case(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_tw_dpae_lock_submission FOREIGN KEY (submission_id) REFERENCES tw_dpae_submission(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS tw_dpae_return (
@@ -74,10 +96,8 @@ CREATE TABLE IF NOT EXISTS tw_dpae_return (
     KEY ix_tw_dpae_return_flux (external_flux_id),
     KEY ix_tw_dpae_return_submission_received (submission_id, received_at),
     KEY ix_tw_dpae_return_status_received (correlation_status, received_at),
-    CONSTRAINT fk_tw_dpae_return_submission FOREIGN KEY (submission_id)
-        REFERENCES tw_dpae_submission(id) ON DELETE RESTRICT,
-    CONSTRAINT fk_tw_dpae_return_case FOREIGN KEY (case_id)
-        REFERENCES tw_dpae_case(id) ON DELETE RESTRICT
+    CONSTRAINT fk_tw_dpae_return_submission FOREIGN KEY (submission_id) REFERENCES tw_dpae_submission(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_tw_dpae_return_case FOREIGN KEY (case_id) REFERENCES tw_dpae_case(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS tw_dpae_correlation_decision (
@@ -91,15 +111,11 @@ CREATE TABLE IF NOT EXISTS tw_dpae_correlation_decision (
     supersedes_id VARCHAR(64) NULL,
     PRIMARY KEY (id),
     KEY ix_tw_dpae_decision_return_date (return_id, decided_at),
-    CONSTRAINT fk_tw_dpae_decision_return FOREIGN KEY (return_id)
-        REFERENCES tw_dpae_return(id) ON DELETE RESTRICT,
-    CONSTRAINT fk_tw_dpae_decision_submission FOREIGN KEY (candidate_submission_id)
-        REFERENCES tw_dpae_submission(id) ON DELETE RESTRICT,
-    CONSTRAINT fk_tw_dpae_decision_supersedes FOREIGN KEY (supersedes_id)
-        REFERENCES tw_dpae_correlation_decision(id) ON DELETE RESTRICT
+    CONSTRAINT fk_tw_dpae_decision_return FOREIGN KEY (return_id) REFERENCES tw_dpae_return(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_tw_dpae_decision_submission FOREIGN KEY (candidate_submission_id) REFERENCES tw_dpae_submission(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_tw_dpae_decision_supersedes FOREIGN KEY (supersedes_id) REFERENCES tw_dpae_correlation_decision(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB;
 
--- Une seule corrélation courante par retour, sans dépendre d'un index partiel.
 CREATE TABLE IF NOT EXISTS tw_dpae_current_correlation (
     return_id VARCHAR(64) NOT NULL,
     submission_id VARCHAR(64) NOT NULL,
@@ -107,20 +123,15 @@ CREATE TABLE IF NOT EXISTS tw_dpae_current_correlation (
     confirmed_at DATETIME NOT NULL,
     PRIMARY KEY (return_id),
     UNIQUE KEY uq_tw_dpae_current_correlation_decision (decision_id),
-    CONSTRAINT fk_tw_dpae_current_return FOREIGN KEY (return_id)
-        REFERENCES tw_dpae_return(id) ON DELETE RESTRICT,
-    CONSTRAINT fk_tw_dpae_current_submission FOREIGN KEY (submission_id)
-        REFERENCES tw_dpae_submission(id) ON DELETE RESTRICT,
-    CONSTRAINT fk_tw_dpae_current_decision FOREIGN KEY (decision_id)
-        REFERENCES tw_dpae_correlation_decision(id) ON DELETE RESTRICT
+    CONSTRAINT fk_tw_dpae_current_return FOREIGN KEY (return_id) REFERENCES tw_dpae_return(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_tw_dpae_current_submission FOREIGN KEY (submission_id) REFERENCES tw_dpae_submission(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_tw_dpae_current_decision FOREIGN KEY (decision_id) REFERENCES tw_dpae_correlation_decision(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB;
 
--- Exactly-once par type d'effet métier et retour.
 CREATE TABLE IF NOT EXISTS tw_dpae_return_effect (
     return_id VARCHAR(64) NOT NULL,
     effect_type VARCHAR(64) NOT NULL,
     created_at DATETIME NOT NULL,
     PRIMARY KEY (return_id, effect_type),
-    CONSTRAINT fk_tw_dpae_effect_return FOREIGN KEY (return_id)
-        REFERENCES tw_dpae_return(id) ON DELETE RESTRICT
+    CONSTRAINT fk_tw_dpae_effect_return FOREIGN KEY (return_id) REFERENCES tw_dpae_return(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB;
