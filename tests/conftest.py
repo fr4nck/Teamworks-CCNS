@@ -24,12 +24,24 @@ def _apply_schema()->None:
   conn.commit(); cur.close()
  finally: conn.close()
 def pytest_configure(config)->None:
- global _started
+ # Les variables doivent exister avant l'import des modules DPAE, dont certains
+ # décident au niveau module s'ils peuvent être collectés. Le conteneur, lui,
+ # est démarré paresseusement par clean_tables uniquement lorsqu'un test SQL
+ # DPAE en dépend réellement.
  if os.getenv("GITHUB_ACTIONS")!="true": return
  for key,value in _CI_ENV.items(): os.environ[key]=value
- _run("docker","rm","-f",_CONTAINER,check=False); _run("docker","run","-d","--name",_CONTAINER,"-p","33306:3306","-e","MARIADB_ROOT_PASSWORD=root-ci-only","-e","MARIADB_DATABASE=teamworks_dpae_ci","-e","MARIADB_USER=teamworks","-e","MARIADB_PASSWORD=teamworks-ci-only","--health-cmd=healthcheck.sh --connect --innodb_initialized","--health-interval=2s","--health-timeout=3s","--health-retries=30",_IMAGE); _started=True; _wait_ready(); _apply_schema()
+def _ensure_ci_database()->None:
+ global _started
+ if _started or os.getenv("GITHUB_ACTIONS")!="true": return
+ _run("docker","rm","-f",_CONTAINER,check=False)
+ try:
+  _run("docker","run","-d","--name",_CONTAINER,"-p","33306:3306","-e","MARIADB_ROOT_PASSWORD=root-ci-only","-e","MARIADB_DATABASE=teamworks_dpae_ci","-e","MARIADB_USER=teamworks","-e","MARIADB_PASSWORD=teamworks-ci-only","--health-cmd=healthcheck.sh --connect --innodb_initialized","--health-interval=2s","--health-timeout=3s","--health-retries=30",_IMAGE)
+ except subprocess.CalledProcessError as exc:
+  raise RuntimeError("Impossible de démarrer MariaDB DPAE CI:\n"+(exc.stdout or "")+(exc.stderr or "")) from exc
+ _started=True; _wait_ready(); _apply_schema()
 @pytest.fixture
 def clean_tables():
+ _ensure_ci_database()
  if not all(os.getenv(k) for k in ("DPAE_MYSQL_HOST","DPAE_MYSQL_USER","DPAE_MYSQL_DATABASE")): pytest.skip("base MySQL DPAE non configurée")
  conn=_connect()
  try:
