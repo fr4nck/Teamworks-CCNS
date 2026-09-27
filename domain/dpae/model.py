@@ -12,11 +12,16 @@ from typing import Optional
 
 class DpaeCaseStatus(str, Enum):
     DRAFT = "DRAFT"
-    READY = "READY"
-    IN_PROGRESS = "IN_PROGRESS"
+    TO_VALIDATE = "TO_VALIDATE"
     ACTION_REQUIRED = "ACTION_REQUIRED"
+    READY = "READY"
+    SUBMITTING = "SUBMITTING"
+    WAITING_RETURN = "WAITING_RETURN"
+    OUTCOME_UNKNOWN = "OUTCOME_UNKNOWN"
+    REJECTED = "REJECTED"
     REGISTERED = "REGISTERED"
     CLOSED = "CLOSED"
+    CANCELLED = "CANCELLED"
 
 
 class DpaeSubmissionState(str, Enum):
@@ -48,9 +53,10 @@ class CorrelationStatus(str, Enum):
 
 
 class DpaeDomainError(ValueError):
-    def __init__(self, code: str, message: str) -> None:
+    def __init__(self, code: str, message: str, **details) -> None:
         super().__init__(message)
         self.code = code
+        self.details = details
 
 
 _ALLOWED_TRANSITIONS = {
@@ -82,6 +88,7 @@ class DpaeCase:
     origin: str = "TEAMWORKS"
     created_at: datetime = field(default_factory=datetime.utcnow)
     closed_at: Optional[datetime] = None
+    version: int = 0
 
 
 @dataclass
@@ -128,23 +135,13 @@ class DpaeReturn:
 
     def confirm_correlation(self, submission_id: str, case_id: str, expected_version: int) -> str:
         if expected_version != self.version:
-            if (
-                self.correlation_status is CorrelationStatus.CONFIRMED
-                and self.submission_id == submission_id
-                and self.case_id == case_id
-            ):
+            if self.correlation_status is CorrelationStatus.CONFIRMED and self.submission_id == submission_id and self.case_id == case_id:
                 return "ALREADY_CONFIRMED"
-            raise DpaeDomainError(
-                "DPAE_CORRELATION_STALE",
-                "Le retour DPAE a été modifié depuis sa lecture.",
-            )
+            raise DpaeDomainError("DPAE_CORRELATION_STALE", "Le retour DPAE a été modifié depuis sa lecture.")
         if self.correlation_status is CorrelationStatus.CONFIRMED:
             if self.submission_id == submission_id and self.case_id == case_id:
                 return "ALREADY_CONFIRMED"
-            raise DpaeDomainError(
-                "CONCURRENT_CORRELATION_CONFLICT",
-                "Le retour DPAE est déjà corrélé à une autre tentative.",
-            )
+            raise DpaeDomainError("CONCURRENT_CORRELATION_CONFLICT", "Le retour DPAE est déjà corrélé à une autre tentative.")
         self.submission_id = submission_id
         self.case_id = case_id
         self.correlation_status = CorrelationStatus.CONFIRMED
