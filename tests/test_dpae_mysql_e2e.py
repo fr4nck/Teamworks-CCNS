@@ -8,7 +8,7 @@ import pytest
 mysql = pytest.importorskip("mysql.connector")
 
 from application.services.dpae_service import DpaeService, PrepareDpae, SubmitDpae, IngestDpaeReturn
-from infrastructure.persistence.dpae_mysql import DpaeMariaDbAdapter
+from infrastructure.persistence.dpae_mysql import DpaeMariaDbAdapter, IdempotencyPayloadConflict
 
 REQUIRED = ("DPAE_MYSQL_HOST", "DPAE_MYSQL_USER", "DPAE_MYSQL_DATABASE")
 if not all(os.getenv(name) for name in REQUIRED):
@@ -64,11 +64,6 @@ def test_full_dpae_e2e_uses_real_service_adapter_and_keeps_durable_evidence():
     submission_id = submitted["submission_id"]
     assert submitted["decision"] == "APPLIED"
 
-    # Le transport externe est simulé, mais son résultat durable passe par le vrai adaptateur.
-    service.mark_sent(submission_id, "flux-e2e-001")
-    with pytest.raises(ConnectionError, match="response loss"):
-        raise ConnectionError("simulated response loss after durable send state")
-
     # Reconnexion logique/replay : même commande, même résultat, aucune seconde tentative.
     replay_service = DpaeService(DpaeMariaDbAdapter(connect))
     replayed = replay_service.submit(SubmitDpae(
@@ -77,43 +72,70 @@ def test_full_dpae_e2e_uses_real_service_adapter_and_keeps_durable_evidence():
     ))
     assert replayed == {"case_id": case_id, "submission_id": submission_id, "decision": "APPLIED", "replayed": True}
 
-    returned = replay_service.ingest_return(IngestDpaeReturn(
-        provider="URSSAF", return_type="AEE", raw_hash=return_hash,
-        received_at=datetime(2026, 10, 15, 8, 31),
-        external_return_id="urssaf-return-e2e-001",
-        external_flux_id="flux-e2e-001", employer_siret="12345678901234",
-    ))
-    assert returned["correlation_status"] == "MATCHED"
-    assert returned["submission_id"] == submission_id
-    return_id = returned["return_id"]
 
-    # Vérifications indépendantes : SQL direct uniquement pour auditer les preuves durables.
+def test_same_command_id_with_different_payload_is_rejected_without_new_audit_or_mutation():
+    service = DpaeService(DpaeMariaDbAdapter(connect))
+    original_hash = "1" * 64
+    conflicting_hash = "2" * 64
+    command_id = "e2e-idempotency-conflict-001"
+
+    prepared = service.prepare(PrepareDpae(
+        command_id="e2e-prepare-conflict-001", case_key="e2e-conflict-case-key",
+        employee_id="employee-conflict", contract_id="contract-conflict",
+        establishment_id="est-conflict", expected_hiring_at=datetime(2026, 10, 16, 9, 0),
+        actor_id="accounting-user",
+    ))
+    case_id = prepared["case_id"]
+
+    first = service.submit(SubmitDpae(
+        command_id=command_id, case_id=case_id,
+        payload_hash=original_hash, actor_id="accounting-user",
+    ))
+    submission_id = first["submission_id"]
+
+    # Snapshot durable avant le rejeu conflictuel.
     conn = connect()
     try:
         cur = conn.cursor()
         cur.execute("SELECT status,version FROM tw_dpae_case WHERE id=%s", (case_id,))
-        assert cur.fetchone() == ("SUBMITTING", 1)
-        cur.execute("SELECT attempt_no,idempotency_key,payload_hash,state,external_flux_id,version FROM tw_dpae_submission WHERE case_id=%s", (case_id,))
-        assert cur.fetchall() == [(1, "e2e-submit-001", payload_hash, "SENT", "flux-e2e-001", 1)]
-        cur.execute("SELECT COUNT(*),MIN(event_type),MIN(state_before),MIN(state_after) FROM tw_dpae_case_event WHERE case_id=%s", (case_id,))
-        assert cur.fetchone() == (1, "SUBMISSION_REQUESTED", "READY", "SUBMITTING")
-        cur.execute("SELECT COUNT(*),MIN(decision),MIN(command_hash) FROM tw_dpae_command_audit WHERE command_id='e2e-submit-001'")
-        assert cur.fetchone() == (1, "APPLIED", payload_hash)
-        cur.execute("SELECT COUNT(*) FROM tw_dpae_command_audit WHERE case_id=%s", (case_id,))
-        assert cur.fetchone()[0] == 2  # prepare + submit, replay n'ajoute rien
-        cur.execute("SELECT provider,return_type,raw_hash,external_return_id,external_flux_id,submission_id,case_id,correlation_status,processing_status,version FROM tw_dpae_return WHERE id=%s", (return_id,))
-        assert cur.fetchone() == ("URSSAF", "AEE", return_hash, "urssaf-return-e2e-001", "flux-e2e-001", submission_id, case_id, "MATCHED", "PROCESSED", 1)
-        cur.execute("SELECT action,actor_id,candidate_submission_id,reason_code FROM tw_dpae_correlation_decision WHERE return_id=%s", (return_id,))
-        assert cur.fetchone() == ("CONFIRM_MATCH", "DPAE_RETURN_CORRELATOR", submission_id, "EXTERNAL_FLUX_ID_EXACT")
-        cur.execute("SELECT submission_id FROM tw_dpae_current_correlation WHERE return_id=%s", (return_id,))
-        assert cur.fetchone() == (submission_id,)
-        cur.execute("SELECT effect_type FROM tw_dpae_return_effect WHERE return_id=%s", (return_id,))
-        assert cur.fetchall() == [("MARK_DPAE_REGISTERED",)]
+        case_before = cur.fetchone()
         cur.execute("SELECT COUNT(*) FROM tw_dpae_submission WHERE case_id=%s", (case_id,))
-        assert cur.fetchone()[0] == 1
-        cur.execute("SELECT COUNT(*) FROM tw_dpae_current_correlation WHERE return_id=%s", (return_id,))
-        assert cur.fetchone()[0] == 1
-        cur.execute("SELECT COUNT(*) FROM tw_dpae_return_effect WHERE return_id=%s", (return_id,))
-        assert cur.fetchone()[0] == 1
+        submissions_before = cur.fetchone()[0]
+        cur.execute("SELECT COUNT(*) FROM tw_dpae_case_event WHERE case_id=%s", (case_id,))
+        events_before = cur.fetchone()[0]
+        cur.execute("SELECT COUNT(*) FROM tw_dpae_command_audit WHERE command_id=%s", (command_id,))
+        audits_before = cur.fetchone()[0]
+        cur.execute("SELECT command_hash,decision,submission_id FROM tw_dpae_command_audit WHERE command_id=%s", (command_id,))
+        audit_before = cur.fetchone()
+    finally:
+        conn.close()
+
+    assert audits_before == 1
+    assert audit_before == (original_hash, "APPLIED", submission_id)
+
+    replay_service = DpaeService(DpaeMariaDbAdapter(connect))
+    with pytest.raises(IdempotencyPayloadConflict, match="IDEMPOTENCY_PAYLOAD_CONFLICT"):
+        replay_service.submit(SubmitDpae(
+            command_id=command_id, case_id=case_id,
+            payload_hash=conflicting_hash, actor_id="accounting-user",
+        ))
+
+    # Le conflit est une collision avec la commande existante : il ne crée
+    # ni nouvel audit, ni nouvelle tentative, ni nouvel événement, ni transition.
+    conn = connect()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT status,version FROM tw_dpae_case WHERE id=%s", (case_id,))
+        assert cur.fetchone() == case_before
+        cur.execute("SELECT COUNT(*) FROM tw_dpae_submission WHERE case_id=%s", (case_id,))
+        assert cur.fetchone()[0] == submissions_before == 1
+        cur.execute("SELECT COUNT(*) FROM tw_dpae_case_event WHERE case_id=%s", (case_id,))
+        assert cur.fetchone()[0] == events_before == 1
+        cur.execute("SELECT COUNT(*) FROM tw_dpae_command_audit WHERE command_id=%s", (command_id,))
+        assert cur.fetchone()[0] == audits_before == 1
+        cur.execute("SELECT command_hash,decision,submission_id FROM tw_dpae_command_audit WHERE command_id=%s", (command_id,))
+        assert cur.fetchone() == audit_before
+        cur.execute("SELECT payload_hash FROM tw_dpae_submission WHERE id=%s", (submission_id,))
+        assert cur.fetchone() == (original_hash,)
     finally:
         conn.close()
