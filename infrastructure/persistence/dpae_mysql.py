@@ -42,6 +42,7 @@ class DpaeMariaDbAdapter:
             cur.execute("INSERT INTO tw_dpae_submission (id,case_id,attempt_no,idempotency_key,payload_hash,state,created_at,version) VALUES (%s,%s,1,%s,%s,'PREPARED',NOW(),0)",(submission_id,cmd.case_id,cmd.command_id,cmd.payload_hash))
             self._failure_point("after_submission_write")
             cur.execute("INSERT INTO tw_dpae_case_event (id,case_id,event_type,state_before,state_after,version_before,version_after,actor_type,actor_id,idempotency_key,command_hash,occurred_at,recorded_at) VALUES (%s,%s,'SUBMISSION_REQUESTED','READY','SUBMITTING',0,1,'USER',%s,%s,%s,NOW(),NOW())",(self._id(),cmd.case_id,cmd.actor_id,cmd.command_id,cmd.payload_hash))
+            self._failure_point("after_case_event_write")
             cur.execute("INSERT INTO tw_dpae_command_audit (id,command_id,command_type,command_hash,actor_type,actor_id,case_id,submission_id,requested_at,decided_at,decision,case_version_seen) VALUES (%s,%s,'SubmitDpae',%s,'USER',%s,%s,%s,NOW(),NOW(),'APPLIED',0)",(self._id(),cmd.command_id,cmd.payload_hash,cmd.actor_id,cmd.case_id,submission_id)); conn.commit()
             return {"case_id":cmd.case_id,"submission_id":submission_id,"decision":"APPLIED","replayed":False}
         except Exception: conn.rollback(); raise
