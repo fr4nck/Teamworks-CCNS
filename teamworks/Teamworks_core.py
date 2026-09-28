@@ -103,6 +103,16 @@ class Toolbook(wx.Toolbook):
         if index == self.GetSelection():
             self.MAJ_panel(index)
 
+    def OnChangementDossier(self, ancienFichier="", nouveauFichier=""):
+        """Notifie les pages d'un changement explicite de contexte métier."""
+        if ancienFichier == nouveauFichier:
+            return
+        for index in range(self.GetPageCount()):
+            page = self.GetPage(index)
+            callback = getattr(page, "OnChangementDossier", None)
+            if callback is not None:
+                callback(ancienFichier, nouveauFichier)
+
     def MAJ_panel(self, numPage=0):
         """ Test de MAJ des panels lors d'un changement d'onglet """
         self.Freeze() # Gèle l'affichage pour éviter des clignements
@@ -590,6 +600,23 @@ class MyFrame(wx.Frame):
                 if self.nomDernierFichier != "":
                     self.OuvrirFichier(self.nomDernierFichier)
 
+    def InvaliderContexteDossier(self, ancienFichier="", nouveauFichier=""):
+        """Invalide les états mémoire liés au dossier courant, sans recharger l'application."""
+        if ancienFichier == nouveauFichier:
+            return
+
+        for attribut in ("dictNomsPersonnes", "dictProblemesPersonnes"):
+            if hasattr(self, attribut):
+                delattr(self, attribut)
+
+        try:
+            from CcnsCore import home_gadgets_ccns
+            home_gadgets_ccns.clear_ccns_home_cache()
+        except Exception:
+            pass
+
+        self.toolBook.OnChangementDossier(ancienFichier, nouveauFichier)
+
     def OuvrirFichier(self, nomFichier):
         """ Suite de la commande menu Ouvrir """
         self.SetStatusText(_(u"Ouverture d'un fichier en cours..."))
@@ -627,8 +654,11 @@ class MyFrame(wx.Frame):
                 self.SetStatusText(_(u"Echec de l'ouverture du fichier '%s'.") % nomFichier)
                 return False
 
-        # Applique le changement de fichier en cours
+        # Applique le changement de fichier en cours et invalide les seuls états
+        # d'interface qui dépendent du contexte métier.
+        ancienFichier = self.userConfig.get("nomFichier", "")
         self.userConfig["nomFichier"] = nomFichier
+        self.InvaliderContexteDossier(ancienFichier, nomFichier)
 
         # Remplissage de la table DIVERS pour la date de dernière ouverture
         if nomFichier != "":
@@ -920,7 +950,9 @@ class MyFrame(wx.Frame):
             return
 
         # change le nom de fichier
+        ancienFichier = self.userConfig.get("nomFichier", "")
         self.userConfig["nomFichier"] = ""
+        self.InvaliderContexteDossier(ancienFichier, "")
         self.SetTitleFrame()
 
         # Désactive les items du toolbook et sélectionne la page accueil
@@ -1109,6 +1141,9 @@ class MyFrame(wx.Frame):
         newID = DB.ReqInsert("divers", listeDonnees)
         DB.Close()
         
+        # Le nouveau fichier devient maintenant le contexte métier courant.
+        self.InvaliderContexteDossier(ancienFichier, nomFichier)
+
         # Met à jour l'affichage des panels
         self.MAJAffichage()
         self.SetTitleFrame(nomFichier=nomFichier)

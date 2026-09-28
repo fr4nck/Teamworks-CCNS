@@ -31,6 +31,7 @@ class EspaceGadgets(wx.Panel):
         self._restauration_en_cours = False
         self._timer_perspective = None
         self._timers_visibilite = {}
+        self._changement_dossier_en_attente = False
 
         self.Bind(aui.EVT_AUI_PANE_CLOSE, self.OnPaneClose)
         self.Bind(wx.EVT_CONTEXT_MENU, self.OnContextMenu)
@@ -264,13 +265,20 @@ class EspaceGadgets(wx.Panel):
         self.PopupMenu(menu)
         menu.Destroy()
 
+    def OnChangementDossier(self, ancienFichier="", nouveauFichier=""):
+        """Diffère le rechargement métier jusqu'à ce que le nouveau dossier soit actif."""
+        if ancienFichier != nouveauFichier:
+            self._changement_dossier_en_attente = True
+
     def MAJ(self, listeGadgets=None):
         if listeGadgets is not None:
             self.listeGadgets = listeGadgets
         if self.manager is None:
             self.Construire()
+            self._changement_dossier_en_attente = False
             return
 
+        recharger_contexte = self._changement_dossier_en_attente
         visibles = {
             nom: (index, parametres)
             for index, (nom, parametres) in enumerate(self.listeGadgets)
@@ -296,8 +304,16 @@ class EspaceGadgets(wx.Panel):
                 largeur, hauteur = self._taille_persisted_or_default(parametres.get("taille"))
                 pane.BestSize((largeur, hauteur))
                 pane.Show(True)
-                self.AppliquerThemeGadget(self._gadgets[nom])
+
+                gadget = self._gadgets[nom]
+                gadget.MAJContexte(
+                    index=index,
+                    parametres=parametres,
+                    recharger_contexte=recharger_contexte,
+                )
+                self.AppliquerThemeGadget(gadget)
             self.manager.Update()
+            self._changement_dossier_en_attente = False
         finally:
             self.Thaw()
         self.PlanifierSauvegardePerspective()

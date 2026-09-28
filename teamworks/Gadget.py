@@ -140,6 +140,20 @@ class PanelGadget(wx.Panel):
         self.Layout()
         event.Skip()
 
+    def MAJContexte(self, index, parametres, recharger_contexte=False):
+        """Raccorde le gadget au dossier courant sans reconstruire son pane AUI."""
+        self.index = int(index)
+        self.paramGadget = parametres
+        self.texteTitre = self.paramGadget.get("label", self.nomGadget)
+        self.titre.SetLabel(self.texteTitre)
+
+        if recharger_contexte:
+            callback = getattr(self.contenu, "RechargerContexte", None)
+            if callback is not None:
+                callback()
+
+        self.Layout()
+
     def OnFermerGadget(self, event):
         # Le host AUI masque immédiatement le pane puis persiste l'état hors de
         # l'événement souris afin qu'une écriture SQLite ne fige pas l'interface.
@@ -212,26 +226,36 @@ class Gadget_BlocNotes(wx.Panel):
         else:
             style = wx.TE_MULTILINE | wx.NO_BORDER | wx.TE_NO_VSCROLL
         self.texte = wx.TextCtrl(self, -1, dictParam["texte"], style=style)
-        couleurFond = dictParam["couleur_fond"]
-        self.texte.SetBackgroundColour(couleurFond)
-        self.parent.couleurFondCadre = couleurFond
-        couleurPolice = dictParam["couleur_police"]
-        self.texte.SetForegroundColour(couleurPolice)
-        font = wx.Font(
-            dictParam["taillePolice"],
-            dictParam["familyPolice"],
-            dictParam["stylePolice"],
-            dictParam["weightPolice"],
-            False,
-            dictParam["nomPolice"],
-        )
-        self.texte.SetFont(font)
+        self._AppliquerParametres(dictParam, recharger_texte=False)
 
         self.sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.sizer.Add(self.texte, 1, wx.EXPAND)
         self.SetSizer(self.sizer)
 
         self.texte.Bind(wx.EVT_KILL_FOCUS, self.OnKillFocus)
+
+    def _AppliquerParametres(self, dictParam, recharger_texte=True):
+        if recharger_texte:
+            try:
+                self.texte.ChangeValue(dictParam["texte"])
+            except Exception:
+                self.texte.SetValue(dictParam["texte"])
+        couleurFond = dictParam["couleur_fond"]
+        self.texte.SetBackgroundColour(couleurFond)
+        self.parent.couleurFondCadre = couleurFond
+        self.texte.SetForegroundColour(dictParam["couleur_police"])
+        self.texte.SetFont(wx.Font(
+            dictParam["taillePolice"],
+            dictParam["familyPolice"],
+            dictParam["stylePolice"],
+            dictParam["weightPolice"],
+            False,
+            dictParam["nomPolice"],
+        ))
+        self.Refresh()
+
+    def RechargerContexte(self):
+        self._AppliquerParametres(self.parent.paramGadget, recharger_texte=True)
 
     def OnKillFocus(self, event):
         self.parent.SaveConfig({"texte": self.texte.GetValue()})
@@ -255,6 +279,14 @@ class Gadget_DossiersIncomplets(wx.Panel):
         from Ctrl import CTRL_Gadget_pb_personnes as pbPersonnes
         self.tree = pbPersonnes.TreeCtrl(self)
 
+        self._AppliquerParametres(dictParam)
+        self.tree.MAJ_treeCtrl()
+
+        self.sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.sizer.Add(self.tree, 1, wx.EXPAND)
+        self.SetSizer(self.sizer)
+
+    def _AppliquerParametres(self, dictParam):
         self.tree.couleurFond = dictParam["couleur_fond"]
         self.tree.couleurPersonne = dictParam["couleurPersonne"]
         self.tree.couleurType = dictParam["couleurType"]
@@ -264,11 +296,9 @@ class Gadget_DossiersIncomplets(wx.Panel):
         self.tree.expandTypes = dictParam["expandTypes"]
         self.parent.couleurFondCadre = dictParam["couleur_fond"]
 
+    def RechargerContexte(self):
+        self._AppliquerParametres(self.parent.paramGadget)
         self.tree.MAJ_treeCtrl()
-
-        self.sizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.sizer.Add(self.tree, 1, wx.EXPAND)
-        self.SetSizer(self.sizer)
 
     def Config(self):
         from Dlg import DLG_Parametres_dossiers
@@ -287,17 +317,23 @@ class Gadget_Horloge(wx.Panel):
 
         import wx.lib.analogclock as clock
 
-        couleurFace = dictParam["couleur_face"]
-        couleurFond = dictParam["couleur_fond"]
-
         self.horloge = clock.AnalogClock(self, size=(160, 160))
-        self.horloge.SetBackgroundColour(couleurFond)
-        self.parent.couleurFondCadre = couleurFond
-        self.horloge.SetFaceFillColour(couleurFace)
+        self._AppliquerParametres(dictParam)
 
         self.sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.sizer.Add(self.horloge, 1, wx.EXPAND)
         self.SetSizer(self.sizer)
+
+    def _AppliquerParametres(self, dictParam):
+        couleurFace = dictParam["couleur_face"]
+        couleurFond = dictParam["couleur_fond"]
+        self.horloge.SetBackgroundColour(couleurFond)
+        self.parent.couleurFondCadre = couleurFond
+        self.horloge.SetFaceFillColour(couleurFace)
+        self.horloge.Refresh()
+
+    def RechargerContexte(self):
+        self._AppliquerParametres(self.parent.paramGadget)
 
     def Config(self):
         from Dlg import DLG_Parametres_horloge
@@ -342,6 +378,9 @@ class Gadget_Updater(wx.Panel):
 
         self.Bind(wx.EVT_BUTTON, self.OnBoutonTelecharger, self.bouton_telecharger)
 
+    def RechargerContexte(self):
+        pass
+
     def Config(self):
         pass
 
@@ -362,8 +401,9 @@ class Gadget_Calendrier(CTRL_Calendrier_tw.Panel):
             afficheAujourdhui=False,
         )
         self.parent = parent
-        dictParam = self.GetParent().paramGadget
+        self._AppliquerParametres(self.parent.paramGadget)
 
+    def _AppliquerParametres(self, dictParam):
         self.calendrier.SetBackgroundColour(dictParam["colFond"])
         self.SetBackgroundColour(dictParam["colFond"])
         self.parent.couleurFondCadre = dictParam["colFond"]
@@ -376,6 +416,10 @@ class Gadget_Calendrier(CTRL_Calendrier_tw.Panel):
         self.calendrier.couleurVacances = dictParam["colVacs"]
         self.calendrier.couleurFontJoursAvecPresents = dictParam["colFontPresents"]
         self.calendrier.couleurFerie = dictParam["colFeries"]
+
+    def RechargerContexte(self):
+        self._AppliquerParametres(self.parent.paramGadget)
+        self.MAJpanel()
 
     def Config(self):
         from Dlg import DLG_Parametres_calendrier

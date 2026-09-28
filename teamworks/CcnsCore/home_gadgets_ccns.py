@@ -21,8 +21,25 @@ def clear_ccns_home_cache():
     _cache_home_data.clear()
 
 
+def _current_context_key():
+    """Retourne l'identité du dossier courant sans lecture de configuration disque."""
+    try:
+        import wx
+        app = wx.GetApp()
+        top_window = app.GetTopWindow() if app is not None else None
+        if top_window is not None and top_window.GetName() == "general":
+            return top_window.userConfig.get("nomFichier", "") or ""
+    except Exception:
+        pass
+    return ""
+
+
 def _cache_key(limit, max_lines):
-    return (int(limit) if limit is not None else None, int(max_lines))
+    return (
+        _current_context_key(),
+        int(limit) if limit is not None else None,
+        int(max_lines),
+    )
 
 
 def _build_stats(rows):
