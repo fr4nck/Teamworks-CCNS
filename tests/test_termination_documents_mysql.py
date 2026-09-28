@@ -8,7 +8,7 @@ from domain.employment.termination_documents import (
 )
 from domain.employment.termination_repository import TerminationPersistenceError
 from infrastructure.persistence.mysql_termination_document_repository import MySqlTerminationDocumentRepository
-from infrastructure.persistence.mysql_termination_repository import MySqlTerminationRepository
+from infrastructure.persistence.mysql_termination_repository import MySqlContractTerminationRepository
 from tests.test_employee_termination_domain import ready_termination
 from tests.termination_mysql_support import termination_db  # noqa: F401
 
@@ -17,7 +17,7 @@ NOW = datetime(2026, 10, 31, 18, 0, tzinfo=timezone.utc)
 
 def setup_termination(connect):
     termination = ready_termination()
-    MySqlTerminationRepository(connect).add(termination)
+    MySqlContractTerminationRepository(connect).add(termination)
     return termination
 
 
