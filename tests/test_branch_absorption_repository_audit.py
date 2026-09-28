@@ -5,6 +5,7 @@ import json
 import os
 import subprocess
 import sys
+from functools import lru_cache
 from pathlib import Path
 
 import pytest
@@ -17,6 +18,11 @@ mod = importlib.util.module_from_spec(spec)
 assert spec.loader
 sys.modules[spec.name] = mod
 spec.loader.exec_module(mod)
+
+# A full repository audit reuses the same historical commits many times.
+# Cache patch ids for this one-shot qualification so frugality does not
+# weaken the proof while comparing ~187 remote branches.
+mod.Git.patch_id = lru_cache(maxsize=None)(mod.Git.patch_id)
 
 
 def _git(*args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
@@ -35,7 +41,7 @@ def test_full_repository_branch_absorption_audit(capsys):
     if os.environ.get("GITHUB_HEAD_REF") != "audit/branch-absorption":
         pytest.skip("one-shot audit only on audit/branch-absorption")
 
-    # actions/checkout is intentionally shallow in the normal CI.  This test
+    # actions/checkout is intentionally shallow in the normal CI. This test
     # fetches history only for this audit PR, without changing the workflow.
     _git("fetch", "--unshallow", "origin", check=False)
     fetch = _git(
