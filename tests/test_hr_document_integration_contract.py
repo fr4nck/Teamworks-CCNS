@@ -37,6 +37,14 @@ def test_structure_dialog_allows_and_validates_hr_email() -> None:
     assert '(("email", "générale"), ("email_rh", "RH / recrutement"))' in source
 
 
+def test_runtime_bridge_loads_the_legacy_provider_lazily() -> None:
+    source = DOCUMENT_BRIDGE.read_text(encoding="utf-8")
+    top_level = source.split("def _load_legacy_values", 1)[0]
+    assert "UTILS_Publipostage_donnees" not in top_level
+    assert "data_loader=None" in source
+    assert "data_loader(categorie=" in source
+
+
 def test_runtime_bridge_preserves_legacy_keywords_and_adds_canonical_namespaces() -> None:
     source = DOCUMENT_BRIDGE.read_text(encoding="utf-8")
     assert "UTILS_Publipostage_donnees.GetDonneesDocument" in source

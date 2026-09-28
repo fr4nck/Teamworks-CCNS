@@ -47,6 +47,22 @@ Ce pourcentage mesure le développement fonctionnel et son intégration automati
 - stabiliser la lecture persistée des versions de grille seulement dans un lot dédié et testé ;
 - conserver la veille réglementaire descriptive tant qu'une validation métier/juridique n'a pas autorisé son activation automatique.
 
+
+## Rail C — Documents RH / publipostage
+
+Le chantier d'extraction du moteur documentaire RH est désormais isolé de l'UI wx et de l'automatisation Office.
+
+Le noyau couvre progressivement :
+
+- le catalogue des mots-clés historiques et canoniques ;
+- la construction du dictionnaire de fusion `STRUCTURE_*` / `SALARIE_*` / `CONTRAT_*` ;
+- la distinction `clé connue vide → vide` / `clé inconnue → visible et signalée` ;
+- le ciblage pur des modèles par convention, groupe CCNS, qualification CEE et type de document ;
+- les états de préparation `ready`, `blocked` et `external_preparation` ;
+- des erreurs métier structurées pour les champs requis absents et les mots-clés inconnus.
+
+Le publiposteur wx historique reste un adaptateur de compatibilité. L'intégration Word/LibreOffice finale est volontairement hors de ce rail et devra être qualifiée séparément sur Windows.
+
 ## Rapports de crash
 
 Le dialogue de crash peut envoyer, après confirmation explicite, le seul rapport

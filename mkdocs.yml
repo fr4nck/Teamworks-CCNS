@@ -73,6 +73,7 @@ nav:
       - Vue d'ensemble: publipostage/index.md
       - Référence des mots-clés: publipostage/mots-cles.md
       - Contextes d'utilisation: publipostage/contextes.md
+      - Modèles livrés et audit: publipostage/modeles-livres.md
       - Exemples: publipostage/exemples.md
   - Administration:
       - Paramétrage: administration/parametrage.md
