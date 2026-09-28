@@ -543,11 +543,32 @@ def analyze_repository(
                         branch_ref,
                         target_ref,
                         target,
-                        run_tests,
+                        False,
                         python_executable,
                         timeout_seconds,
                     )
                 )
+
+            # Frugality: compare all targets statically, then execute the
+            # branch-specific tests only once against the strongest target.
+            if run_tests:
+                best = choose_target(evidence)
+                if best is not None:
+                    best_target_ref = git.resolve_branch(best.target, remote)
+                    if best_target_ref:
+                        (
+                            best.tests_result,
+                            best.tests_returncode,
+                            best.tests_output_tail,
+                            best.tests_executed,
+                        ) = run_tests_on_target(
+                            git,
+                            branch_ref,
+                            best_target_ref,
+                            best.tests_detected,
+                            python_executable,
+                            timeout_seconds,
+                        )
 
         verdict, justification, confidence = classify(
             branch, structural_flag, reasons, evidence
