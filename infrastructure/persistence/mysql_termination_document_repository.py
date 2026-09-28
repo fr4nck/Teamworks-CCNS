@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from domain.employment.termination import TerminationDomainError
 from domain.employment.termination_documents import TerminationDocument
 from domain.employment.termination_repository import TerminationPersistenceError
 
@@ -29,12 +28,11 @@ def _from_storage(value):
 def _row(row):
     v = dict(zip(_COLUMNS, row))
     return TerminationDocument(
-        document_id=v["document_id"], termination_id=v["termination_id"],
-        document_type=v["document_type"], source=v["source"], document_date=v["document_date"],
-        received_at=_from_storage(v["received_at"]), received_by=v["received_by"],
-        file_reference=v["file_reference"], sha256=v["sha256"], external_reference=v["external_reference"],
-        archived_at=_from_storage(v["archived_at"]), archived_by=v["archived_by"],
-        delivered_at=_from_storage(v["delivered_at"]), delivered_by=v["delivered_by"],
+        document_id=v["document_id"], termination_id=v["termination_id"], document_type=v["document_type"],
+        source=v["source"], document_date=v["document_date"], received_at=_from_storage(v["received_at"]),
+        received_by=v["received_by"], file_reference=v["file_reference"], sha256=v["sha256"],
+        external_reference=v["external_reference"], archived_at=_from_storage(v["archived_at"]),
+        archived_by=v["archived_by"], delivered_at=_from_storage(v["delivered_at"]), delivered_by=v["delivered_by"],
     )
 
 
@@ -62,17 +60,15 @@ class MySqlTerminationDocumentRepository:
         try:
             cur = conn.cursor()
             values = (
-                document.document_id, document.termination_id, document.document_type.value,
-                document.source.value, document.document_date, _to_storage(document.received_at),
-                document.received_by, document.file_reference, document.sha256, document.external_reference,
+                document.document_id, document.termination_id, document.document_type.value, document.source.value,
+                document.document_date, _to_storage(document.received_at), document.received_by,
+                document.file_reference, document.sha256, document.external_reference,
                 _to_storage(document.archived_at), document.archived_by,
                 _to_storage(document.delivered_at), document.delivered_by,
             )
             try:
-                cur.execute(
-                    "INSERT INTO " + TABLE + " (" + ", ".join(_COLUMNS) + ") VALUES (" +
-                    ", ".join(["%s"] * len(_COLUMNS)) + ")", values,
-                )
+                cur.execute("INSERT INTO " + TABLE + " (" + ", ".join(_COLUMNS) + ") VALUES (" +
+                            ", ".join(["%s"] * len(_COLUMNS)) + ")", values)
             except Exception as exc:
                 if _duplicate(exc):
                     raise TerminationPersistenceError("DOCUMENT_DUPLICATE", "same document is already recorded for this termination") from exc
@@ -92,8 +88,7 @@ class MySqlTerminationDocumentRepository:
             row = cur.fetchone()
             return None if row is None else _row(row)
         finally:
-            conn.rollback()
-            conn.close()
+            conn.rollback(); conn.close()
 
     def list_for_termination(self, termination_id: str):
         conn = self._open()
@@ -102,16 +97,15 @@ class MySqlTerminationDocumentRepository:
             cur.execute(_SELECT + " WHERE termination_id = %s ORDER BY received_at, document_id", (termination_id,))
             return tuple(_row(row) for row in cur.fetchall())
         finally:
-            conn.rollback()
-            conn.close()
+            conn.rollback(); conn.close()
 
-    def _mark_once(self, document_id: str, *, column_at: str, column_by: str, at: datetime, by: str):
+    def _mark_once(self, document_id: str, *, column_at: str, column_by: str, at: datetime, by: str, extra_condition=""):
         conn = self._open()
         try:
             cur = conn.cursor()
             cur.execute(
                 "UPDATE " + TABLE + " SET " + column_at + " = %s, " + column_by + " = %s"
-                " WHERE document_id = %s AND " + column_at + " IS NULL AND received_at <= %s",
+                " WHERE document_id = %s AND " + column_at + " IS NULL AND received_at <= %s" + extra_condition,
                 (_to_storage(at), by, document_id, _to_storage(at)),
             )
             if cur.rowcount != 1:
@@ -119,11 +113,10 @@ class MySqlTerminationDocumentRepository:
                 row = cur.fetchone()
                 if row is None:
                     raise TerminationPersistenceError("DOCUMENT_NOT_FOUND", "termination document not found")
-                raise TerminationPersistenceError("DOCUMENT_STATE_CONFLICT", "document state was already changed or timestamp is invalid")
+                raise TerminationPersistenceError("DOCUMENT_STATE_CONFLICT", "document state was already changed or prerequisites/timestamp are invalid")
             conn.commit()
         except Exception:
-            conn.rollback()
-            raise
+            conn.rollback(); raise
         finally:
             conn.close()
 
@@ -131,4 +124,7 @@ class MySqlTerminationDocumentRepository:
         self._mark_once(document_id, column_at="archived_at", column_by="archived_by", at=at, by=by)
 
     def mark_delivered(self, document_id: str, *, at: datetime, by: str):
-        self._mark_once(document_id, column_at="delivered_at", column_by="delivered_by", at=at, by=by)
+        self._mark_once(
+            document_id, column_at="delivered_at", column_by="delivered_by", at=at, by=by,
+            extra_condition=" AND (document_type <> 'AER' OR archived_at IS NOT NULL)",
+        )
