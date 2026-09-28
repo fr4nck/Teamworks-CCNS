@@ -12,11 +12,7 @@ from enum import Enum
 from typing import Iterable, Optional
 from uuid import uuid4
 
-from domain.employment.termination import (
-    ContractTermination,
-    TerminationDomainError,
-    TerminationWorkflowStatus,
-)
+from domain.employment.termination import ContractTermination, TerminationDomainError, TerminationWorkflowStatus
 
 
 class TerminationDocumentType(str, Enum):
@@ -83,10 +79,7 @@ class TerminationDocument:
             raise TerminationDomainError("INVALID_DOCUMENT_SHA256", "sha256 must be 64 lowercase hexadecimal characters")
         if not isinstance(self.received_by, str) or not self.received_by.strip():
             raise TerminationDomainError("RECEIVED_BY_REQUIRED", "received_by is required")
-        for instant, actor, prefix in (
-            (self.archived_at, self.archived_by, "ARCHIVED"),
-            (self.delivered_at, self.delivered_by, "DELIVERED"),
-        ):
+        for instant, actor, prefix in ((self.archived_at, self.archived_by, "ARCHIVED"), (self.delivered_at, self.delivered_by, "DELIVERED")):
             if (instant is None) != (actor is None):
                 raise TerminationDomainError(prefix + "_PAIR_REQUIRED", prefix.lower() + " timestamp and actor must be set together")
             if instant is not None:
@@ -122,20 +115,15 @@ class TerminationClosureChecklist:
     work_certificate_received: bool
     final_settlement_receipt_received: bool
     aer_archived: bool
+    aer_delivered: bool
     work_certificate_delivered: bool
     final_settlement_receipt_delivered: bool
 
     @property
     def complete(self):
-        return all((
-            self.final_payslip_received,
-            self.aer_received,
-            self.work_certificate_received,
-            self.final_settlement_receipt_received,
-            self.aer_archived,
-            self.work_certificate_delivered,
-            self.final_settlement_receipt_delivered,
-        ))
+        return all((self.final_payslip_received, self.aer_received, self.work_certificate_received,
+                    self.final_settlement_receipt_received, self.aer_archived, self.aer_delivered,
+                    self.work_certificate_delivered, self.final_settlement_receipt_delivered))
 
     @classmethod
     def from_documents(cls, documents: Iterable[TerminationDocument]):
@@ -147,11 +135,9 @@ class TerminationClosureChecklist:
         certificates = of_type(TerminationDocumentType.WORK_CERTIFICATE)
         settlements = of_type(TerminationDocumentType.FINAL_SETTLEMENT_RECEIPT)
         return cls(
-            final_payslip_received=bool(payslips),
-            aer_received=bool(aers),
-            work_certificate_received=bool(certificates),
-            final_settlement_receipt_received=bool(settlements),
-            aer_archived=any(d.is_archived for d in aers),
+            final_payslip_received=bool(payslips), aer_received=bool(aers),
+            work_certificate_received=bool(certificates), final_settlement_receipt_received=bool(settlements),
+            aer_archived=any(d.is_archived for d in aers), aer_delivered=any(d.is_delivered for d in aers),
             work_certificate_delivered=any(d.is_delivered for d in certificates),
             final_settlement_receipt_delivered=any(d.is_delivered for d in settlements),
         )
@@ -171,7 +157,7 @@ def advance_results_workflow(termination: ContractTermination, documents: Iterab
             raise TerminationDomainError("RESULTS_INCOMPLETE", "final payslip and AER are required")
         termination.transition_to(TerminationWorkflowStatus.RESULTATS_RECUS)
     elif status is TerminationWorkflowStatus.RESULTATS_RECUS:
-        if not (checklist.work_certificate_delivered and checklist.final_settlement_receipt_delivered):
+        if not (checklist.aer_delivered and checklist.work_certificate_delivered and checklist.final_settlement_receipt_delivered):
             raise TerminationDomainError("DOCUMENTS_NOT_DELIVERED", "required employee documents have not been delivered")
         termination.transition_to(TerminationWorkflowStatus.DOCUMENTS_REMIS)
     elif status is TerminationWorkflowStatus.DOCUMENTS_REMIS:
@@ -179,8 +165,6 @@ def advance_results_workflow(termination: ContractTermination, documents: Iterab
             raise TerminationDomainError("CORRECTION_OPEN", "an open correction prevents closure")
         if not checklist.complete:
             raise TerminationDomainError("CLOSURE_CHECKLIST_INCOMPLETE", "documentary closure checklist is incomplete")
-        # Pont temporaire vers l'API SORTIE-001 ; la décision est désormais
-        # calculée exclusivement depuis les faits documentaires SORTIE-004.
         termination.transition_to(TerminationWorkflowStatus.CLOTURE, external_checklist_complete=True)
     else:
         raise TerminationDomainError("RESULT_WORKFLOW_NOT_APPLICABLE", "document workflow is not applicable from this status")
