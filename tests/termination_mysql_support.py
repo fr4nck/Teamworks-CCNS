@@ -1,11 +1,4 @@
-"""Base MariaDB/MySQL réelle pour les tests de persistance des sorties salarié.
-
-Configuration par variables d'environnement TERMINATION_MYSQL_HOST, _PORT,
-_USER, _PASSWORD, _DATABASE. Sur GitHub Actions, un conteneur MariaDB dédié
-est démarré sur un port propre (aucun partage avec d'autres suites) et
-l'absence de base fait échouer les tests au lieu de les ignorer : une preuve de
-concurrence ne doit jamais disparaître silencieusement de la CI.
-"""
+"""Base MariaDB/MySQL réelle pour les tests de persistance des sorties salarié."""
 from __future__ import annotations
 
 import os
@@ -22,9 +15,14 @@ SCHEMAS = (
     SQL_DIR / "termination_v1.sql",
     SQL_DIR / "termination_v2.sql",
     SQL_DIR / "termination_v2_guards.sql",
+    SQL_DIR / "termination_v3.sql",
 )
-# Ordre de suppression compatible avec les clés étrangères.
-TABLES = ("tw_termination_command", "tw_termination_transmission_snapshot", "tw_contract_termination")
+TABLES = (
+    "tw_termination_document",
+    "tw_termination_command",
+    "tw_termination_transmission_snapshot",
+    "tw_contract_termination",
+)
 
 _CONTAINER = "teamworks-termination-mariadb-ci"
 _IMAGE = "mariadb:10.11.14"
@@ -47,7 +45,6 @@ def _run(*args: str, check: bool = True) -> subprocess.CompletedProcess:
 
 def connect(**overrides):
     import mysql.connector
-
     options = dict(
         host=os.environ["TERMINATION_MYSQL_HOST"],
         port=int(os.environ.get("TERMINATION_MYSQL_PORT", "3306")),
@@ -79,24 +76,20 @@ def _start_ci_container() -> None:
         try:
             connect().close()
             return
-        except Exception as exc:  # serveur en cours de démarrage
+        except Exception as exc:
             last_error = exc
             time.sleep(1)
     logs = _run("docker", "logs", _CONTAINER, check=False)
-    raise RuntimeError(
-        "MariaDB termination CI non prête: %r\n%s%s" % (last_error, logs.stdout, logs.stderr)
-    )
+    raise RuntimeError("MariaDB termination CI non prête: %r\n%s%s" % (last_error, logs.stdout, logs.stderr))
 
 
 def _configured() -> bool:
-    return all(
-        os.getenv(key)
-        for key in ("TERMINATION_MYSQL_HOST", "TERMINATION_MYSQL_USER", "TERMINATION_MYSQL_DATABASE")
-    )
+    return all(os.getenv(key) for key in (
+        "TERMINATION_MYSQL_HOST", "TERMINATION_MYSQL_USER", "TERMINATION_MYSQL_DATABASE"
+    ))
 
 
 def schema_statements(path: Path) -> list[str]:
-    """Instructions d'un fichier SQL : commentaires retirés, séparateur ';'."""
     text = "\n".join(
         line for line in path.read_text(encoding="utf-8").splitlines()
         if not line.lstrip().startswith("--")
@@ -105,7 +98,6 @@ def schema_statements(path: Path) -> list[str]:
 
 
 def reset_schema(connect_fn=None, schemas=SCHEMAS) -> None:
-    """Recrée les tables : les tables en ajout seul refusent DELETE (déclencheurs)."""
     conn = (connect_fn or connect)()
     try:
         cur = conn.cursor()
@@ -131,14 +123,14 @@ def termination_mysql_server():
             _start_ci_container()
             started = True
         except Exception as exc:
-            pytest.fail("Base MariaDB requise en CI pour SORTIE-002: %s" % exc)
+            pytest.fail("Base MariaDB requise en CI pour SORTIE: %s" % exc)
     if not _configured():
         pytest.skip("base MySQL/MariaDB termination non configurée (TERMINATION_MYSQL_*)")
     try:
         import mysql.connector  # noqa: F401
     except ImportError:
         if _in_ci():
-            pytest.fail("mysql-connector-python requis en CI pour SORTIE-002")
+            pytest.fail("mysql-connector-python requis en CI pour SORTIE")
         pytest.skip("mysql-connector-python non installé")
     _apply_schema()
     try:
