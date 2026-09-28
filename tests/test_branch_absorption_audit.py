@@ -153,3 +153,43 @@ def test_wrong_target_fails_reinjected_branch_test(tmp_path: Path):
     assert ev.tests_result == "FAIL"
     verdict, _, _ = mod.classify("feature/change", False, [], [ev])
     assert verdict == mod.KEEP
+
+
+def test_ancestor_branch_uses_original_pr_base_for_its_tests(tmp_path: Path):
+    repo = init_repo(tmp_path)
+    original_base = git(repo, "rev-parse", "HEAD")
+
+    git(repo, "checkout", "-b", "feature/absorbed")
+    write(repo, "app.py", "def value():\n    return 4\n")
+    write(
+        repo,
+        "tests/test_app.py",
+        "from app import value\n\ndef test_value():\n    assert value() == 4\n",
+    )
+    git(repo, "add", ".")
+    git(repo, "commit", "-m", "absorbed feature")
+    feature = git(repo, "rev-parse", "HEAD")
+
+    git(repo, "checkout", "master")
+    git(repo, "merge", "--ff-only", "feature/absorbed")
+    write(repo, "README.md", "later target work\n")
+    git(repo, "add", "README.md")
+    git(repo, "commit", "-m", "later work")
+
+    ev = mod.analyze_target(
+        mod.Git(repo),
+        feature,
+        "master",
+        "master",
+        run_tests=True,
+        python_executable=sys.executable,
+        timeout_seconds=60,
+        source_base_ref=original_base,
+    )
+    assert ev.ancestor is True
+    assert ev.source_base == original_base
+    assert ev.tests_detected == ["tests/test_app.py"]
+    assert ev.tests_result == "PASS"
+    assert ev.patch_complete is True
+    verdict, _, _ = mod.classify("feature/absorbed", False, [], [ev])
+    assert verdict == mod.SAFE
