@@ -113,6 +113,7 @@ def test_full_repository_branch_absorption_audit(capsys):
     md_path.write_text(mod.markdown_report(payload), encoding="utf-8")
 
     safe = [item for item in payload["branches"] if item["verdict"] == mod.SAFE]
+    review = [item for item in payload["branches"] if item["verdict"] == mod.REVIEW]
     with capsys.disabled():
         print("BRANCH_AUDIT_COUNTS=" + json.dumps(payload["counts"], ensure_ascii=False), flush=True)
         print(
@@ -125,6 +126,22 @@ def test_full_repository_branch_absorption_audit(capsys):
                         "justification": item["justification"],
                     }
                     for item in safe
+                ],
+                ensure_ascii=False,
+            ),
+            flush=True,
+        )
+        print(
+            "BRANCH_AUDIT_REVIEW="
+            + json.dumps(
+                [
+                    {
+                        "branch": item["branch"],
+                        "sha": item["head_sha"],
+                        "justification": item["justification"],
+                        "confidence": item["confidence"],
+                    }
+                    for item in review
                 ],
                 ensure_ascii=False,
             ),
