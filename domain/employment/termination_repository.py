@@ -68,3 +68,29 @@ class ContractTerminationRepository(Protocol):
     def get_active_for_contract(self, contract_id: str) -> Optional[ContractTermination]: ...
 
     def save(self, termination: ContractTermination) -> None: ...
+
+
+class CommandIdempotencyConflict(TerminationPersistenceError):
+    """Même command_id rejoué avec une opération ou un contenu différent."""
+
+    def __init__(self, command_id: str) -> None:
+        super().__init__(
+            "COMMAND_IDEMPOTENCY_CONFLICT",
+            f"command {command_id} was already used for a different operation",
+        )
+        self.command_id = command_id
+
+
+class TransmissionRetryExhausted(TerminationPersistenceError):
+    """Interblocages InnoDB répétés : rien n'a été enregistré."""
+
+    def __init__(self, attempts: int) -> None:
+        super().__init__(
+            "TRANSMISSION_DEADLOCK_RETRY_EXHAUSTED",
+            f"transaction rolled back by deadlock {attempts} times; nothing was recorded",
+        )
+        self.attempts = attempts
+
+
+class SnapshotIntegrityError(TerminationPersistenceError):
+    """Un snapshot relu ne correspond plus à son hash ou à sa chaîne."""
