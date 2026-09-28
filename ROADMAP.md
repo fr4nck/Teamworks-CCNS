@@ -1,418 +1,285 @@
 # Teamworks-CCNS — Roadmap officielle et unique
 
-**Mise à jour : 31 août 2026**
+**Mise à jour : 28 septembre 2026**
 
-Ce fichier est l’unique roadmap de référence du projet. Toute autre documentation peut détailler un domaine, mais ne doit pas porter une roadmap concurrente ni annoncer un niveau de maturité différent.
+Ce fichier est l’unique roadmap d’exécution de Teamworks-CCNS. Il décrit l’état réel du produit et l’ordre des travaux. Les décisions d’architecture transverses entre Teamworks, Noethys, Portail/Connecthys, PMSL Équipe et les services externes relèvent de `fr4nck/PMSL-Arch`.
 
-Les décisions d’architecture transverses, le partage des responsabilités entre applications et les priorités interapplications sont définis dans **`fr4nck/PMSL-Arch`**. `ROADMAP.md` reste l’unique roadmap d’exécution propre à Teamworks-CCNS : elle traduit ces décisions en lots d’implémentation, tests, packaging et qualification du produit.
+La roadmap ne confond jamais : code préparé, tests automatisés, build produit, recette terrain et fonction disponible en production.
 
-En cas de divergence sur l’architecture ou les flux entre Teamworks, Noethys, Connecthys/Portail, PMSL Équipe ou un service externe, **PMSL-Arch fait foi**. En cas de divergence sur l’état d’implémentation, la maturité ou la qualification de Teamworks-CCNS, **le présent fichier fait foi**. Les priorités interapplications ne doivent donc pas être redéfinies ici sous la forme d’une roadmap concurrente.
+## 1. Recalage de septembre 2026
 
-## 1. État réel du projet
+La roadmap du 31 août n’est plus représentative du projet. Depuis, plusieurs rails structurants ont été ouverts en parallèle : stabilisation finale de la Vanilla wx 0.9.2, Qt Vanilla, migration Noethys/Teamworks, Contrats avancés, Présences, Frais, Documents RH, Scénarios, habilitations, DPAE et sorties salarié / Impact Emploi.
 
-Teamworks-CCNS porte actuellement la version **`0.9.1b`**, telle qu'indiquée par le fichier `VERSION`. Cette chaîne de version identifie le build courant mais ne vaut pas, à elle seule, qualification bêta : les critères de maturité du présent document restent seuls décisionnaires.
+Le projet n’est pas considéré comme « en retard » par rapport à l’ancienne roadmap : c’est la roadmap qui était devenue désynchronisée du périmètre réel.
 
-Le socle Python 3 / wxPython Phoenix, la CI et le packaging Windows sont largement stabilisés. Le dépôt sait construire un portable Windows reproductible, un installateur Windows, exécuter les parcours critiques Windows automatisés et publier une Release sur tag conforme.
+À compter de cette révision :
 
-Le chantier TW-189 de modernisation de l’interface a été fusionné dans `master` le 24 août 2026. Le 25 août 2026, la PR #268 a ensuite consolidé sélectivement les deltas encore utiles de TW-182 et TW-184 sans réintroduire les anciennes versions des fichiers refactorés par TW-189.
+- une idée ou une étude n’est pas automatiquement un chantier actif ;
+- une PR draft n’est pas une fonction livrée ;
+- les piles de PR doivent être terminées ou arbitrées avant d’ouvrir de nouveaux rails majeurs ;
+- les recettes Windows/MySQL réelles restent des stop-gates lorsqu’elles sont prévues ;
+- aucun pourcentage global d’avancement n’est utilisé ;
+- aucune date de sortie n’est annoncée sans preuve suffisante.
 
-Le 31 août 2026, la PR #314 a remis en cohérence la garde de non-régression de la fiche individuelle avec l’extraction déjà effective de son cœur historique. Elle a été fusionnée dans `master` par le commit **`4a226af71facf4fe201e022086e6dd00a46ecbf0`**.
+## 2. État de référence
 
-La CI **#789** exécutée sur ce commit a réussi : **1 893 tests pytest réussis, 3 ignorés**, **332/332 fichiers Python de l’inventaire compilables**, **0/0 chemin SQLite binaire**, parcours critiques Windows réussis, construction du portable et de l’installateur réussie, démarrage automatisé de l’exécutable réussi et manifeste d’intégrité vérifié.
+`master` reste la vérité intégrée du dépôt.
 
-L’artefact Windows de cette qualification machine contient :
+Au 28 septembre 2026 :
 
-- `Teamworks-CCNS-0.9.1b-windows-x64.zip` ;
-- `Teamworks-CCNS-0.9.1b-windows-x64-setup.exe` ;
-- `SHA256SUMS.txt`.
+- `VERSION` sur `master` : **0.9.1f** ;
+- dernier commit observé sur `master` : **`09ad795ec5c4729230a68cfeac6faa0e6634dba2`**, correction CI pour réserver MkDocs aux changements de documentation ;
+- la documentation MkDocs est intégrée à `master` ;
+- de nombreux travaux récents restent volontairement en PR draft et ne doivent pas être présentés comme intégrés ;
+- la Vanilla wx 0.9.2 RC3 existe comme candidate de clôture dans la PR #430, mais sa situation doit rester distinguée de `master` ;
+- la Qt Vanilla 0.1 existe comme candidate intégrée dans la PR #467, avec ses recettes terrain encore nécessaires ;
+- DPAE et Sorties salarié / Impact Emploi sont désormais deux domaines structurants explicites du programme.
 
-Les empreintes publiées par le build sont :
+## 3. Ordre de priorité
 
-- portable ZIP : `b53aad8bda071165b6696e120f17f86001445057b7f6be931a5053fe218fe65f` ;
-- installateur : `98917d083cb5cda827e4a8bb1b00985a8146d325a62e2030a53be53b8d2380ec`.
+La roadmap est désormais organisée en quatre horizons : **MAINTENANT**, **ENSUITE**, **PLUS TARD**, **PARKING**.
 
-Le `BUILD.txt` inclus dans le portable confirme la version `0.9.1b` et le commit `4a226af71facf4fe201e022086e6dd00a46ecbf0`.
+L’objectif est de réduire le travail en cours, fermer les boucles de qualification et empêcher qu’une nouvelle étude déplace implicitement les priorités.
 
-La qualification **bêta / RC / stable reste volontairement refusée** tant que le parcours Windows minimal n’a pas été validé manuellement sur une copie de base réelle par l’utilisateur. La qualification machine est désormais acquise ; la validation réelle reste le verrou suivant.
+# MAINTENANT — fermer les boucles déjà ouvertes
 
-Aucune CI verte, aucun pourcentage d’avancement et aucun ZIP généré ne suffisent à qualifier une version.
+## M1 — Stabiliser la base d’exécution et la CI
 
-## 2. Règles de vérité
+Objectif : disposer d’un socle de référence fiable pour juger toutes les piles de PR.
 
-Chaque annonce doit distinguer explicitement :
+À faire :
 
-- code modifié ;
-- tests automatisés réussis ;
-- exécutable construit ;
-- parcours Windows réellement exécuté ;
-- validation utilisateur obtenue.
+- vérifier les runs du HEAD exact de chaque PR active avant toute décision de merge ;
+- conserver le workflow CI unique ;
+- distinguer les échecs de code des limites/configurations GitHub ;
+- ne pas laisser MkDocs ou le packaging masquer le résultat réel des tests métier ;
+- maintenir `master` comme base intégrée lisible.
 
-Les formulations « presque fini » et les dates de sortie non démontrées sont interdites.
+Critère de sortie : les piles actives peuvent être évaluées sans ambiguïté sur leur SHA, leurs tests et leurs dépendances.
 
-## 3. Historique consolidé
+## M2 — Clôturer la Vanilla wx 0.9.2
 
-Les lots TW historiques ont été traités par PR successives. La quasi-totalité des PR récentes est fusionnée dans `master`.
+PR de référence : **#430 — 0.9.2 RC3 — clôture Vanilla wx**.
 
-### Stabilisation et runtime intégrés
+La Vanilla wx reste le produit historique à sécuriser tant que Qt n’a pas franchi ses recettes terrain et atteint le périmètre nécessaire.
 
-- TW-136 à TW-143 : dates, Unicode, UTF-8, workflow unique, filtres recrutement, sélection multiple et exports ;
-- TW-144 à TW-147 : audits wx/Python et inventaire des bare-excepts RH ;
-- TW-149 à TW-170 : extraction en lots ciblés des gardes runtime initialement regroupés dans l’audit TW-139 ;
-- TW-171 : compatibilité MySQL/MariaDB 5.5 et diagnostic du portable Windows ;
-- TW-172 : recherche phonétique des villes ;
-- TW-173 : publiposteur sous wxPython 4.3 ;
-- TW-174 : alignement du runtime Windows sur wxPython 4.3.1 ;
-- TW-175 : horaires à la minute ;
-- TW-176 : stabilisation du planning sous wxPython 4.3 ;
-- TW-177 : lanceur diagnostic ;
-- TW-178 : nettoyage des légendes de présence ;
-- TW-179 : robustesse des champs de contrat ;
-- TW-180 : suppression des doubles checkboxes Phoenix ;
-- TW-181 : nettoyage des avertissements et du packaging Windows ;
-- TW-182 : branding Teamworks CCNS, organisation, références administratives RH et comportement du thème Système Windows, intégré sélectivement après TW-189 ;
-- TW-184 : moteur de contrats, règles CCNS/CEE, schéma additif, modèles, opérations de contrat, publipostage et gardes métier, intégré sélectivement après TW-189 ;
-- TW-186 : libellés des dossiers incomplets clarifiés ;
-- TW-187 : diagnostics de crash transmissibles ;
-- TW-188 : boîte noire technique et détection des freezes ;
-- TW-189 : fondations UI modernes, thème et apparence séparés, échelle d’interface globale, navigation et layouts flexibles, modernisation progressive des écrans et découpage de plusieurs contrôleurs historiques.
+À faire :
 
-### Durcissements post-intégration
+- rejouer les parcours de recette Windows réellement nécessaires ;
+- valider MySQL réel et les intégrations natives utilisées en exploitation, notamment Word/LibreOffice lorsqu’elles sont dans le parcours ;
+- traiter uniquement les anomalies bloquantes ou les régressions démontrées ;
+- arrêter d’ajouter de nouvelles fonctions métier à la Vanilla sauf nécessité de production ;
+- décider explicitement de la clôture de la branche RC3 et de son statut de release.
 
-Avant fusion de #268, les parcours critiques ont aussi été durcis sur des défauts runtime réels :
+Les anciennes PR RC1/RC2 et correctifs wx restent des preuves/historique ou des dépendances à consolider ; elles ne constituent pas autant de nouveaux rails indépendants.
 
-- une copie finale de sauvegarde en échec ne peut plus être annoncée comme réussie ;
-- le publipostage tolère les dossiers incomplets, références pays absentes et sélections vides sans faux succès ni plantage ;
-- la restauration nettoie le fichier déchiffré temporaire, ferme les archives d’inventaire et restitue correctement le nom logique sans suffixe `_TDATA` parasite ;
-- les rapports d’audit runtime générés par la CI ne sont plus versionnés dans le dépôt.
+## M3 — Qualifier Qt Vanilla 0.1 sur l’environnement réel
 
-### PR d’audit historique #209
+PR d’intégration de référence : **#467 — Qt Vanilla 0.1 RC**.
 
-La PR #209 « TW-139 — Auditer et stabiliser les parcours runtime » a servi de chantier d’exploration et d’audit global. Son contenu utile a ensuite été extrait en lots ciblés, testés et fusionnés individuellement dans `master`.
+Les gates automatisés décrits dans cette PR sont largement préparés. Le verrou principal est désormais la preuve terrain :
 
-**La PR #209 est fermée comme supersédée depuis le 19 août 2026 et ne doit plus être utilisée comme branche de travail ni comme prérequis de merge.**
+- version MySQL réellement utilisée en exploitation ;
+- copie représentative et autorisée ;
+- recette Windows réelle ;
+- vérification avant/après de la base ;
+- absence de mutation inattendue du schéma ou des données ;
+- PV de recette.
 
-La PR technique #251, créée uniquement pour tester une remise à niveau de cette ancienne branche, a également été fermée sans fusion.
+Qt Vanilla 0.1 ne doit pas être qualifiée stable sur la seule base de la CI.
 
-### Collisions historiques d’identifiants TW
+## M4 — Terminer le socle DPAE avant le protocole externe
 
-Plusieurs identifiants ont été réutilisés dans l’historique avant la consolidation de la gouvernance documentaire, notamment `TW-087`, `TW-088`, `TW-117`, `TW-123`, `TW-126`, `TW-138` et `TW-139`.
+Pile active :
 
-Ces collisions sont conservées comme faits historiques et ne doivent pas être réécrites artificiellement.
+- **#477 — DATA-001 V2** : Case / Submission / Return, concurrence, idempotence et snapshots ;
+- **#478 — DATA-002A** : capture des données déclaratives nécessaires ;
+- **#481 — Incident Recovery** : récupération des `SENDING` interrompus ;
+- **#482 — erreurs applicatives structurées**.
 
-**Un identifiant `TW-*` déjà présent dans une branche, un commit, une issue ou une PR ne doit plus être réattribué.**
+Règle : **GATE PROTOCOLE NON LEVÉ** tant que le contrat réel DPAE-EDI 120, le XSD, le transport, l’authentification et les contraintes Urssaf ne sont pas vérifiés et documentés.
 
-## 4. État GitHub au 31 août 2026
+À faire avant d’élargir :
 
-État de référence :
+- stabiliser et revoir la pile DATA ;
+- obtenir les garanties MySQL/MariaDB réellement revendiquées ;
+- consolider les erreurs opérateur ;
+- documenter précisément ce qui est source de vérité Teamworks et ce qui est snapshot déclaratif ;
+- seulement ensuite ouvrir XML/XSD/transport.
 
-- `master` est la vérité courante ;
-- la PR #265 a fusionné TW-189 dans `master`, commit d’intégration `91dfb6d` ;
-- la PR #268 a consolidé les deltas encore utiles de TW-182/TW-184, commit d’intégration `8074a1a` ;
-- la PR #314 a corrigé la garde de non-régression devenue obsolète après l’extraction de `DLG_Fiche_individuelle_core.py` ;
-- la PR #314 a été fusionnée par le commit **`4a226af71facf4fe201e022086e6dd00a46ecbf0`** ;
-- la qualification automatisée de ce commit est la CI **#789** ;
-- les tests du socle, les parcours critiques Windows et le job de packaging Windows de la CI #789 sont tous réussis ;
-- l’artefact `Teamworks-CCNS-Windows` a été produit depuis ce même commit ;
-- aucune Release GitHub n’a été publiée : le run n’était pas déclenché par un tag de version ;
-- les anciennes branches peuvent rester comme historique, mais ne doivent pas piloter les décisions de développement ;
-- la PR #270 reste un profil de compatibilité MySQL 5.5 isolé et n’est pas un prérequis de qualification du produit courant.
-
-## 5. Priorité immédiate — validation réelle avant pré-release
-
-Les trois étapes de qualification machine sont désormais franchies sur le commit `4a226af71facf4fe201e022086e6dd00a46ecbf0` :
-
-1. **fait** — qualifier le code par la CI complète ;
-2. **fait** — produire le portable et l’installateur Windows depuis le même commit ;
-3. **fait** — vérifier archive, checksums, `BUILD.txt`, contenu du paquet, démarrage automatisé de l’exécutable et parcours critiques Windows ;
-4. **à faire** — exécuter le parcours minimal sur une copie de base réelle ;
-5. corriger uniquement les anomalies bloquantes réellement constatées ;
-6. documenter les résultats ;
-7. décider ensuite seulement si la version mérite une qualification bêta ou RC.
-
-La recette manuelle doit être enregistrée dans [`docs/VALIDATION_WINDOWS_0.9.1b.md`](docs/VALIDATION_WINDOWS_0.9.1b.md).
-
-Aucune nouvelle fonction métier, convention collective ou refonte visuelle importante ne passe devant cette validation réelle. Les corrections de qualification et les outils nécessaires à cette recette peuvent en revanche être traités immédiatement.
-
-## 6. Parcours minimal de validation Windows
-
-Un build n’est qualifiable en pré-release que si le parcours suivant est entièrement validé depuis un dossier fraîchement décompressé, sans dépendre d’un environnement développeur :
-
-- lancement de `Teamworks-CCNS.exe` ;
-- ouverture d’une copie de base réelle ;
-- affichage de l’accueil ;
-- affichage de la liste des salariés ;
-- ouverture d’une fiche salarié ;
-- ouverture de chaque onglet ;
-- modification d’une donnée de test ;
-- enregistrement ;
-- fermeture et redémarrage ;
-- vérification de la persistance ;
-- création d’une sauvegarde ;
-- restauration d’une copie ;
-- contrats / DUE ;
-- création d’un contrat CCNS moderne ;
-- création d’un contrat CEE ;
-- renouvellement CDD / transformation CDD vers CDI lorsque le jeu de données le permet ;
-- modèle de contrat et publipostage / impression ;
-- présences ;
-- recrutement ;
-- frais ;
-- paramètres, organisation et références administratives RH ;
-- rapports / publipostage / impression ;
-- fermeture sans processus résiduel.
-
-Chaque étape doit avoir un résultat daté et préciser sa nature : automatique, CI Windows, test machine sur exécutable ou validation utilisateur.
-
-## 7. Packaging Windows — état actuel
-
-Le workflow unique `.github/workflows/ci.yml` construit le paquet Windows uniquement sur demande explicite :
-
-- déclenchement manuel avec l’option de build ;
-- tag `v*` conforme à `VERSION` ;
-- commit `master` explicitement marqué `[windows]` pour une construction technique contrôlée.
-
-Il n’existe donc pas de génération systématique d’un paquet à chaque push ou à chaque PR.
-
-Le job portable dépend maintenant des tests Linux et, hors tag, des parcours critiques Windows. L’ancienne exception de build liée à la branche TW-189 a été supprimée.
-
-Le packaging est fondé sur Python 3.11, Windows Server 2022 et PyInstaller. Le runtime Windows automatisé utilise wxPython 4.3.1.
-
-Le build :
-
-- inventorie les modules internes ;
-- inclut les paquets chargés dynamiquement ;
-- inclut ressources et fichiers de version essentiels ;
-- exécute un smoke test de démarrage de l’exécutable ;
-- produit un manifeste d’intégrité du paquet ;
-- vérifie les empreintes SHA-256 des fichiers ;
-- produit la somme SHA-256 du ZIP ;
-- conserve la liste des dépendances réellement utilisées ;
-- écrit `BUILD.txt` avec le SHA de construction ;
-- publie une GitHub Release uniquement lorsqu’un tag correspond exactement à `VERSION`.
-
-Ce niveau de packaging est une condition nécessaire mais non suffisante pour une RC.
-
-## 8. CI — état actuel
-
-La CI doit rester **unique, lisible et frugale**.
-
-Le seul workflow autorisé est `.github/workflows/ci.yml`.
-
-Il regroupe :
-
-- compilation et audits sur Ubuntu 24.04 / Python 3.11 ;
-- politique UTF-8 ;
-- tests automatisés ;
-- refus de tout chemin SQLite binaire avec plafond **0** ;
-- parcours critiques Windows ;
-- contrôles des checklists Phoenix ;
-- dialogues critiques (personne, présence, recrutement, contrat) ;
-- sauvegarde / restauration ;
-- exports et impression PDF ;
-- aller-retour fonctionnel sur base de test ;
-- build portable et installateur uniquement sur demande explicite, marqueur `[windows]` sur `master` ou tag ;
-- nettoyage contrôlé de l’historique GitHub Actions sur déclenchement manuel.
-
-Qualification courante, CI **#789**, commit `4a226af71facf4fe201e022086e6dd00a46ecbf0` :
-
-- **1 893 tests pytest réussis, 3 ignorés** ;
-- **332/332 fichiers Python de l’inventaire compilables** ;
-- **0/0 chemin SQLite binaire** ;
-- tous les contrôles du socle réussis ;
-- tous les parcours critiques Windows réussis ;
-- construction du portable réussie ;
-- contrôle du contenu du paquet réussi ;
-- démarrage automatisé de l’exécutable réussi ;
-- manifeste d’intégrité réussi ;
-- archive portable créée ;
-- installateur Windows créé ;
-- artefact Windows publié par GitHub Actions ;
-- Release GitHub volontairement non publiée hors tag.
-
-Les anciennes qualifications, dont #463 et #571, restent des jalons historiques mais ne décrivent plus l’état courant du `master`.
-
-Aucun deuxième workflow ne doit être ajouté pour contourner ou dupliquer ces contrôles.
-
-## 9. Thèmes, affichage et branding
-
-Le mode `Système` suit le système d’exploitation. Sous Windows, le moteur consulte notamment la préférence `AppsUseLightTheme`. Les modes `Clair` et `Sombre` restent des surcharges explicites.
-
-Le socle consolidé comprend :
-
-- un moteur de thème central ;
-- des rôles de couleurs sémantiques ;
-- la séparation accent / apparence ;
-- une échelle unique de l’interface de 80 % à 200 % ;
-- la conservation de `echelle_police` uniquement comme compatibilité de migration ;
-- la mise à l’échelle conjointe des textes, icônes et métriques de contrôles ;
-- des layouts plus flexibles ;
-- une navigation principale modernisée ;
-- des composants et helpers typographiques communs ;
-- le branding Teamworks CCNS ;
-- un logo d’organisation configurable ;
-- les écrans Structure / association et Références administratives RH accessibles depuis les préférences ;
-- des gardes de non-régression sur le thème Système Windows et les assets de branding.
-
-Le cycle d’import Windows `UTILS_Traduction -> UTILS_Fichiers -> UTILS_Customize -> UTILS_Theme -> UTILS_Interface -> UTILS_Traduction` découvert pendant la consolidation TW-189 reste supprimé et verrouillé par test.
-
-La validation manuelle doit encore confirmer sur les écrans prioritaires :
-
-- lisibilité complète ;
-- absence de panneaux incohérents ;
-- absence de texte tronqué avec l’échelle choisie ;
-- persistance après redémarrage ;
-- comportement correct du mode Système en clair et sombre ;
-- comportement correct des sélections et états désactivés ;
-- affichage du branding et du logo d’organisation ;
-- absence de réapparition des anciens problèmes de grands espaces, séparateurs rigides ou doubles contrôles.
-
-## 10. Données, contrats et compatibilité
-
-État consolidé :
-
-- sources et ressources textuelles suivies en UTF-8 ;
-- compatibilité avec certains anciens encodages conservée aux frontières d’import ;
-- normalisation centrale des dates historiques ;
-- champs masqués de dates fiabilisés ;
-- connexion MySQL/MariaDB historique maintenue sans migration du serveur ;
-- schéma du moteur de contrats ajouté de manière additive, compatible avec MariaDB 5.5 ;
-- aucune migration destructive de la base réalisée dans ces lots ;
-- contrats historiques, CCNS modernes et CEE disposent de chemins de lecture / affichage et de publipostage dédiés ;
-- les règles de création, période d’essai, opérations CDD, préflights et contrôles de rémunération disposent de tests dédiés.
-
-Toute future migration de données devra rester séparée, sauvegardée et réversible.
-
-## 11. Dette technique encore autorisée
-
-Les audits de dette technique restent des outils de prévention, pas des prétextes à lancer des nettoyages massifs avant la validation Windows.
-
-Restent notamment à suivre :
-
-- bare-excepts historiques hors parcours critiques ;
-- dette Phoenix résiduelle hors parcours critique ;
-- avertissements wxWidgets non bloquants ;
-- validations multiplateformes non prioritaires par rapport au poste Windows cible.
-
-L’audit pré-RC à haute confiance exécuté pendant la consolidation post-TW-189 a rendu **0 bloqueur**. L’inventaire large de dette n’est pas assimilé à un échec de qualification.
-
-Ces sujets ne bloquent une pré-release que s’ils provoquent une anomalie réelle sur le parcours minimal ou enfreignent un gate automatisé explicite.
-
-## 12. Socle RH neutre après stabilisation
-
-Après validation du parcours minimal :
-
-- personnes ;
-- contrats ;
-- classifications ;
-- absences ;
-- congés ;
-- plannings ;
-- pointage ;
-- documents ;
-- droits ;
-- historique ;
-- sauvegardes ;
-- exports.
-
-Chaque bloc doit rester utilisable indépendamment des conventions collectives.
-
-## 13. Moteur réglementaire
-
-Les règles ne doivent pas être dispersées dans les écrans. Chaque règle doit comporter au minimum :
-
-- identifiant stable ;
-- domaine ;
-- source ;
-- date d’effet ;
-- population concernée ;
-- paramètres ;
-- méthode de calcul ;
-- message utilisateur ;
-- cas limites ;
-- tests associés ;
-- historique de version.
-
-Une règle n’est jamais déclarée prise en charge sans cas de tests démontrés.
-
-## 14. Périmètre CCNS PMSL après stabilisation
-
-Ordre de consolidation métier :
-
-1. groupes et classifications ;
-2. minima conventionnels et historique des grilles ;
-3. temps partiels ;
-4. ancienneté ;
-5. préparation et trajets ;
-6. durée du travail et dépassements ;
-7. congés et absences ;
-8. arrêts maladie et accidents du travail ;
-9. apprentis et alternants ;
-10. CEE ;
-11. stagiaires ;
-12. services civiques ;
-13. salariés mineurs.
-
-## 15. Intégrations après stabilisation
-
-- imports CSV ou Excel ;
-- rapprochement Noethys ;
-- exports paie et comptabilité ;
-- Dolibarr ;
-- rapports PDF ;
-- tableau de bord ;
-- interface web ;
-- autres conventions collectives.
-
-Aucune intégration ne doit fragiliser le socle local.
-
-## 16. Critères de maturité
-
-### Bêta interne
-
-- parcours minimal Windows validé ;
-- aucune perte de données connue ;
-- sauvegarde et restauration validées ;
-- erreurs bloquantes journalisées ;
-- fonctions annoncées réellement accessibles.
-
-### Release candidate
-
-- bêta utilisée sur copie réelle ;
-- anomalies bloquantes corrigées ;
-- tests de non-régression exécutés ;
-- packaging reproductible ;
-- validation explicite de l’utilisateur.
-
-### Version stable
-
-- période d’utilisation réelle sans anomalie bloquante ;
-- procédure de secours documentée ;
-- données récupérables ;
-- règles métier critiques sourcées et testées ;
-- limites connues publiées.
-
-## 17. Mode de développement continu
-
-- un seul fichier de roadmap : `ROADMAP.md` ;
-- `master` comme vérité courante ;
-- pas de ZIP à chaque PR ;
-- workflow GitHub Actions unique ;
-- PR regroupées par objectif testable ;
-- aucune fusion sans critère de sortie explicite ;
-- changelog fondé sur des fonctions vérifiées ;
-- priorité aux parcours complets plutôt qu’au nombre de commits ;
-- aucun nouvel identifiant TW sans vérification préalable de son absence dans l’historique ;
-- les lots déjà absorbés ou supersédés sont fermés et ne sont pas réactivés artificiellement ;
-- après une instruction générale de poursuite, les étapes techniques sûres peuvent être enchaînées sans demander une validation à chaque micro-étape ; seules les décisions métier, les conflits ambigus et les opérations risquées nécessitent un arrêt explicite.
-
-## 18. Prochain jalon
-
-Le prochain jalon est **la validation manuelle de Teamworks-CCNS 0.9.1b sur une copie de base réelle sous Windows**.
-
-Le build machine de référence est celui issu du commit `4a226af71facf4fe201e022086e6dd00a46ecbf0`, CI #789. Le test peut être réalisé avec l’installateur ou le portable issus du même artefact, en vérifiant l’empreinte correspondante avant la recette.
-
-Séquence :
-
-**installer ou décompresser le build qualifié → ouvrir une copie de base réelle → exécuter `docs/VALIDATION_WINDOWS_0.9.1b.md` → consigner chaque résultat → corriger uniquement les blocages constatés → reconstruire si du code change → décider ensuite de la qualification pré-release.**
-
-Tant que cette recette n’est pas terminée, le développement fonctionnel majeur reste derrière ce jalon.
+Aucun endpoint, secret ou comportement réseau ne doit être inventé.
+
+## M5 — Construire le parcours Sortie salarié / Impact Emploi
+
+Pile active :
+
+- **#479 — SORTIE-001** : socle métier ;
+- **#483 — SORTIE-002** : persistance MySQL/MariaDB et concurrence ;
+- **#484 — SORTIE-003** : snapshots immuables de communication à Impact Emploi et corrections versionnées.
+
+Le domaine doit rester distinct de `Contract.end_date` et de DPAE.
+
+Ordre retenu :
+
+1. consolider SORTIE-001 ;
+2. consolider SORTIE-002 ;
+3. consolider SORTIE-003 ;
+4. réaliser **SORTIE-004** : documents, réception/contrôle de l’AER, clôture réelle et anomalies ;
+5. raccorder ensuite l’UI opérateur ;
+6. seulement après, étudier les automatismes supplémentaires autour de DSN/FCTU si une source et une responsabilité réelles sont établies.
+
+Le modèle doit distinguer explicitement : décision/notification, fin effective, date de connaissance, préparation, communication à Impact Emploi, réception de l’AER et clôture.
+
+# ENSUITE — converger les rails Qt et l’architecture
+
+## E1 — Contrats avancés Qt
+
+Pile : **#448, #455, #457, #460, #462, #464**.
+
+Le code préparatoire est largement qualifié automatiquement, mais l’activation reste bloquée par le stop-gate Windows/MySQL réel du Rail A.
+
+Ordre :
+
+1. recette Windows/MySQL réelle ;
+2. CEE ;
+3. renouvellement CDD et CDD → CDI ;
+4. classification / valeur de point ;
+5. période d’essai complète ;
+6. activation explicite du feature gate ;
+7. recette de non-régression après activation.
+
+Aucun contournement du stop-gate n’est admis.
+
+## E2 — Présences et futur Planning Qt
+
+PR de référence : **#450**.
+
+Le métier d’écriture, le contrat de lecture, le CRUD Qt et la concurrence optimiste sont déjà fortement préparés.
+
+Suite :
+
+- recette sur base représentative ;
+- stabiliser le CRUD Présences ;
+- utiliser les contrats de lecture/écriture existants pour construire le futur Planning ;
+- ne pas porter `CTRL_Planning.py` comme un monolithe dans Qt ;
+- traiter ensuite les besoins planning avancés, banques de récupération et règles CCNS/CEE avec des contrats métier explicites.
+
+## E3 — Frais / remboursements
+
+PR de référence : **#444**.
+
+Le CRUD transactionnel et une qualification MySQL moderne existent. Reste à :
+
+- confirmer la version MySQL d’exploitation ;
+- tester une copie de données représentative ;
+- vérifier les variantes historiques `NULL/0`, codes postaux et montants ;
+- décider séparément du cache auxiliaire `distances`.
+
+## E4 — Documents RH / publipostage
+
+PR : **#452** puis **#453**.
+
+Objectif : conserver un moteur documentaire commun testable, puis brancher les sorties natives nécessaires sans réintroduire la logique métier dans wx ou Qt.
+
+Ordre : moteur commun → contexte/modèles Qt → génération réelle → Word/LibreOffice si requis → recette Windows native.
+
+## E5 — Scénarios
+
+PR de référence : **#446**.
+
+Le moteur transactionnel est préparé. Le raccord UI Qt et la recette réelle viennent après les rails nécessaires à Qt Vanilla et non avant eux.
+
+## E6 — Personnes, recherche et habilitations
+
+PR concernées : **#472, #473, #474, #475, #476**.
+
+Ces travaux forment un même axe de convergence :
+
+- autorisations explicites et refus par défaut ;
+- recherche de personnes indépendante de l’UI ;
+- use cases Personnes hors wx ;
+- rafraîchissement wx sans reconstruction inutile de l’interface ;
+- réutilisation future côté Qt.
+
+Avant merge, vérifier les bases empilées et éviter de maintenir plusieurs branches concurrentes portant les mêmes extractions.
+
+## E7 — Migration Noethys / Teamworks
+
+PR de référence : **#454**.
+
+La stratégie reste non destructive : inventaire, traçabilité ligne par ligne, import reproductible depuis copie/snapshot, aucune conversion en place.
+
+Étape suivante : qualification contre le vrai environnement historique, en particulier MySQL 5.5 si c’est encore la version réellement déployée, puis extension progressive du pilote Frais.
+
+La migration ne doit pas devenir un prétexte pour redéfinir simultanément tous les domaines métier.
+
+# PLUS TARD — après fermeture des stop-gates actuels
+
+Les sujets suivants restent légitimes mais ne doivent pas concurrencer les lots MAINTENANT :
+
+- parité fonctionnelle Qt plus large avec la Vanilla wx ;
+- Planning graphique complet ;
+- CRUD Scénarios Qt complet ;
+- automatisation documentaire Office/LibreOffice Qt ;
+- extension de la migration historique à d’autres domaines ;
+- formulaires/questionnaires conditionnels communs ;
+- approfondissement des banques de récupération, minicamps et règles conventionnelles après stabilisation du moteur Planning ;
+- facturation électronique : veille et cadrage d’architecture uniquement tant que le périmètre Teamworks n’est pas démontré ;
+- convergence plus large de la suite PMSL, à arbitrer dans PMSL-Arch et non dans cette roadmap seule.
+
+# PARKING — idées à ne pas transformer en chantier sans arbitrage
+
+Une idée entre ici lorsqu’elle est intéressante mais sans besoin immédiat, dépendance résolue ou preuve de priorité.
+
+Exemples actuels :
+
+- refonte visuelle supplémentaire de la Vanilla wx ;
+- réécriture générale de composants historiques qui fonctionnent sans incident démontré ;
+- nouveaux moteurs génériques avant qu’un deuxième consommateur réel les justifie ;
+- automatisation complète de flux externes dont le protocole réel n’est pas acquis ;
+- changement global d’ERP, intégration Dolibarr/WordPress ou transformation de la suite en plateforme générique sans étude dédiée PMSL-Arch.
+
+## 4. Règles de gouvernance des nouveaux travaux
+
+Avant d’ouvrir un nouveau rail majeur, répondre explicitement à cinq questions :
+
+1. quel problème utilisateur ou d’exploitation est démontré ?
+2. pourquoi ce problème passe-t-il devant les stop-gates en cours ?
+3. quel est le plus petit lot livrable ?
+4. quelle preuve permettra de déclarer ce lot terminé ?
+5. quel chantier actif est fermé, suspendu ou repoussé en contrepartie ?
+
+Sans réponse satisfaisante, le sujet va dans PLUS TARD ou PARKING.
+
+## 5. Politique de PR
+
+- les PR draft peuvent servir à préparer et qualifier un lot ;
+- une pile de PR doit annoncer explicitement sa base et son ordre de merge ;
+- aucune PR empilée ne doit être mergée avant sa base ;
+- les PR techniques de CI ne sont pas des fonctions produit ;
+- les anciennes PR supersédées doivent être fermées lorsqu’elles ne servent plus de base réelle ;
+- un merge n’équivaut pas à une recette utilisateur ;
+- les SHA et runs exacts priment sur les affirmations générales de maturité.
+
+## 6. Définition de « terminé »
+
+Un lot n’est terminé que lorsque les preuves nécessaires à son niveau sont acquises :
+
+- métier pur : tests contractuels et invariants ;
+- persistance : tests transactionnels et moteur SQL réellement revendiqué ;
+- UI : parcours natif sur l’OS concerné ;
+- intégration externe : protocole réel vérifié, erreurs et reprise documentées ;
+- release : build reproductible + recette terrain + absence de blocant connu + décision explicite de qualification.
+
+## 7. Cap produit
+
+La trajectoire reste :
+
+1. maintenir une Vanilla wx exploitable pendant la transition ;
+2. déplacer progressivement les règles métier vers des couches communes indépendantes de wx/Qt ;
+3. qualifier Qt sur les données et l’environnement réels avant d’étendre son périmètre ;
+4. fiabiliser les processus RH réglementaires prioritaires, notamment DPAE et sorties salarié ;
+5. migrer les données historiques sans perte ni conversion opaque ;
+6. réduire progressivement la dépendance au code UI historique sans réécriture massive non justifiée.
+
+La priorité n’est plus d’ouvrir davantage de fronts. Elle est de **transformer les travaux déjà engagés en chaînes terminées, recettées et compréhensibles**.
