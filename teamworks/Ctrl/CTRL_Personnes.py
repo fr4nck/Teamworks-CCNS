@@ -23,6 +23,9 @@ from Ctrl import CTRL_Photo
 
 from ObjectListView import Filter
 
+from application.services.person_summary import get_person_summary, select_contract_summary
+from infrastructure.repositories.person_summary_repository import GestionDBPersonSummaryRepository
+
 
 def _echelle_interface():
     try:
@@ -137,35 +140,23 @@ class PanelResume(wx.Panel):
         return codeIDfichier
 
     def OnSelectPersonne(self, IDpersonne=0):
-        DB = GestionDB.DB()
-        req = """SELECT civilite, nom, prenom, date_naiss, ville_naiss, adresse_resid, cp_resid, ville_resid
-        FROM personnes WHERE IDpersonne=%d; """ % IDpersonne
-        DB.ExecuterReq(req)
-        resultats = DB.ResultatReq()
-        DB.Close()
-        if not resultats:
+        summary = get_person_summary(IDpersonne, GestionDBPersonSummaryRepository())
+        if summary is None:
             return
-        donnees = resultats[0]
 
-        civilite = donnees[0]
-        nom = "?" if donnees[1] in ("", None) else donnees[1]
-        prenom = "?" if donnees[2] in ("", None) else donnees[2]
-        date_naiss = "?" if donnees[3] in ("", None) else FonctionsPerso.DateEngFr(donnees[3])
-        ville_naiss = u"?" if donnees[4] in ("", None) else donnees[4]
-        adresse_resid = u"?" if donnees[5] in ("", None) else donnees[5]
-        cp_resid = u"?" if donnees[6] in ("", None) else str(donnees[6])
-        ville_resid = u"?" if donnees[7] in ("", None) else donnees[7]
-        age = self.RetourneAge(donnees[3])
+        identity = summary.identity
+        civilite = identity.civilite
+        nom = "?" if identity.nom in ("", None) else identity.nom
+        prenom = "?" if identity.prenom in ("", None) else identity.prenom
+        date_naiss = "?" if identity.date_naiss in ("", None) else FonctionsPerso.DateEngFr(identity.date_naiss)
+        ville_naiss = u"?" if identity.ville_naiss in ("", None) else identity.ville_naiss
+        adresse_resid = u"?" if identity.adresse_resid in ("", None) else identity.adresse_resid
+        cp_resid = u"?" if identity.cp_resid in ("", None) else str(identity.cp_resid)
+        ville_resid = u"?" if identity.ville_resid in ("", None) else identity.ville_resid
+        age = self.RetourneAge(identity.date_naiss)
 
-        DB = GestionDB.DB()
-        req = """SELECT categorie, texte, intitule
-        FROM coordonnees WHERE IDpersonne=%d; """ % IDpersonne
-        DB.ExecuterReq(req)
-        listeCoords = DB.ResultatReq()
-        DB.Close()
-
-        if len(listeCoords) != 0:
-            texteCoords = _(u"Tél : ") + " | ".join(coord[1] for coord in listeCoords)
+        if summary.coordinates:
+            texteCoords = _(u"Tél : ") + " | ".join(summary.coordinates)
         else:
             texteCoords = _(u"Aucune coordonnée")
 
@@ -180,60 +171,43 @@ class PanelResume(wx.Panel):
             img = "Femme.png"
         else:
             img = "Personne.png"
+        self.bitmap_photo.SetPhoto(
+            IDpersonne,
+            "Images/128x128/" + img,
+            taillePhoto=(128, 128),
+        )
 
-        nomFichier = "Images/128x128/" + img
-        self.bitmap_photo.SetPhoto(IDpersonne, nomFichier, taillePhoto=(128, 128))
+        contract_summary = select_contract_summary(summary.contracts)
+        contract = contract_summary.contract
+        kind = contract_summary.kind
 
-        DB = GestionDB.DB()
-        req = """SELECT contrats_class.nom, contrats.date_debut, contrats.date_fin, contrats.date_rupture, contrats_types.duree_indeterminee
-        FROM contrats INNER JOIN contrats_class ON contrats.IDclassification = contrats_class.IDclassification INNER JOIN contrats_types ON contrats.IDtype = contrats_types.IDtype
-        WHERE contrats.IDpersonne=%d
-        ORDER BY contrats.date_fin;""" % IDpersonne
-        DB.ExecuterReq(req)
-        listeContrats = DB.ResultatReq()
-        DB.Close()
-
-        contratEnCours = False
-        if len(listeContrats) == 0:
+        if kind == "none":
             etatContrat = _(u"Aucun contrat à ce jour.")
             detailContrat = u""
+        elif kind == "current_fixed":
+            etatContrat = _(u">> Contrat en cours :")
+            detailContrat = contract.classification + " du " + FonctionsPerso.DateEngFr(contract.date_debut) + " au " + FonctionsPerso.DateEngFr(contract.date_fin) + "."
+        elif kind == "last_fixed":
+            etatContrat = _(u"Aucun contrat en cours. Dernier contrat :")
+            detailContrat = contract.classification + " du " + FonctionsPerso.DateEngFr(contract.date_debut) + " au " + FonctionsPerso.DateEngFr(contract.date_fin) + "."
+        elif kind == "next_fixed":
+            etatContrat = _(u"Aucun contrat en cours. Prochain contrat :")
+            detailContrat = contract.classification + " du " + FonctionsPerso.DateEngFr(contract.date_debut) + " au " + FonctionsPerso.DateEngFr(contract.date_fin) + "."
+        elif kind == "current_ended":
+            etatContrat = _(u">> Contrat en cours :")
+            detailContrat = contract.classification + " du " + FonctionsPerso.DateEngFr(contract.date_debut) + " au " + FonctionsPerso.DateEngFr(contract.date_rupture) + " (rupture)."
+        elif kind == "last_ended":
+            etatContrat = _(u"Aucun contrat en cours. Dernier contrat :")
+            detailContrat = contract.classification + " du " + FonctionsPerso.DateEngFr(contract.date_debut) + " au " + FonctionsPerso.DateEngFr(contract.date_rupture) + " (rupture)."
+        elif kind == "next_ended":
+            etatContrat = _(u"Aucun contrat en cours. Prochain contrat :")
+            detailContrat = contract.classification + " du " + FonctionsPerso.DateEngFr(contract.date_debut) + " au " + FonctionsPerso.DateEngFr(contract.date_rupture) + " (rupture)."
+        elif kind == "current_indefinite":
+            etatContrat = _(u">> Contrat en cours :")
+            detailContrat = contract.classification + _(u" depuis le ") + FonctionsPerso.DateEngFr(contract.date_debut) + _(u" (durée ind.).")
         else:
-            dateDuJour = str(datetime.date.today())
-            for classification, date_debut, date_fin, date_rupture, type in listeContrats:
-                if type == "non":
-                    if date_debut <= dateDuJour <= date_fin:
-                        etatContrat = _(u">> Contrat en cours :")
-                        detailContrat = classification + " du " + FonctionsPerso.DateEngFr(date_debut) + " au " + FonctionsPerso.DateEngFr(date_fin) + "."
-                        contratEnCours = True
-                        break
-                    elif date_fin < dateDuJour:
-                        etatContrat = _(u"Aucun contrat en cours. Dernier contrat :")
-                        detailContrat = classification + " du " + FonctionsPerso.DateEngFr(date_debut) + " au " + FonctionsPerso.DateEngFr(date_fin) + "."
-                    elif date_debut > dateDuJour:
-                        etatContrat = _(u"Aucun contrat en cours. Prochain contrat :")
-                        detailContrat = classification + " du " + FonctionsPerso.DateEngFr(date_debut) + " au " + FonctionsPerso.DateEngFr(date_fin) + "."
-                else:
-                    if date_rupture != "":
-                        if date_debut <= dateDuJour <= date_rupture:
-                            etatContrat = _(u">> Contrat en cours :")
-                            detailContrat = classification + " du " + FonctionsPerso.DateEngFr(date_debut) + " au " + FonctionsPerso.DateEngFr(date_rupture) + " (rupture)."
-                            contratEnCours = True
-                            break
-                        elif date_rupture < dateDuJour:
-                            etatContrat = _(u"Aucun contrat en cours. Dernier contrat :")
-                            detailContrat = classification + " du " + FonctionsPerso.DateEngFr(date_debut) + " au " + FonctionsPerso.DateEngFr(date_rupture) + " (rupture)."
-                        elif date_debut > dateDuJour:
-                            etatContrat = _(u"Aucun contrat en cours. Prochain contrat :")
-                            detailContrat = classification + " du " + FonctionsPerso.DateEngFr(date_debut) + " au " + FonctionsPerso.DateEngFr(date_rupture) + " (rupture)."
-                    else:
-                        if date_debut <= dateDuJour:
-                            etatContrat = _(u">> Contrat en cours :")
-                            detailContrat = classification + _(u" depuis le ") + FonctionsPerso.DateEngFr(date_debut) + _(u" (durée ind.).")
-                            contratEnCours = True
-                            break
-                        elif date_debut > dateDuJour:
-                            etatContrat = _(u"Aucun contrat en cours. Prochain contrat :")
-                            detailContrat = classification + _(u" à partir du ") + FonctionsPerso.DateEngFr(date_debut) + _(u" (durée ind.).")
+            etatContrat = _(u"Aucun contrat en cours. Prochain contrat :")
+            detailContrat = contract.classification + _(u" à partir du ") + FonctionsPerso.DateEngFr(contract.date_debut) + _(u" (durée ind.).")
 
         self.resume_L1.SetLabel(ligne1)
         self.resume_L2.SetLabel(ligne2)
@@ -241,11 +215,9 @@ class PanelResume(wx.Panel):
         self.resume_L4.SetLabel(texteCoords)
         self.resume_L5.SetLabel(etatContrat)
         self.resume_L6.SetLabel(detailContrat)
-
-        if contratEnCours:
-            self.resume_L5.SetForegroundColour(UTILS_Interface.GetToken("danger"))
-        else:
-            self.resume_L5.SetForegroundColour(UTILS_Interface.GetToken("on_surface"))
+        self.resume_L5.SetForegroundColour(
+            UTILS_Interface.GetToken("danger" if contract_summary.active else "on_surface")
+        )
 
         self.Layout()
         self.Refresh()
