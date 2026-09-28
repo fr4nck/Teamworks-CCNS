@@ -54,6 +54,21 @@ def make_termination(contract_id="contract-1", **overrides) -> ContractTerminati
     return ContractTermination(**values)
 
 
+def transmit_persisted(connect, termination: ContractTermination) -> ContractTermination:
+    """PRET -> TRANSMIS par la commande SORTIE-003 ; renvoie la sortie relue."""
+    from infrastructure.persistence.mysql_termination_transmission_store import (
+        MySqlTerminationTransmissionStore,
+    )
+    from tests.termination_transmission_support import fixed_clock, transmit_command
+
+    repository = MySqlContractTerminationRepository(connect)
+    if termination.workflow_status is TerminationWorkflowStatus.A_PREPARER:
+        termination.transition_to(TerminationWorkflowStatus.PRET_IMPACT_EMPLOI)
+        repository.save(termination)
+    MySqlTerminationTransmissionStore(connect, clock=fixed_clock).transmit(transmit_command(termination))
+    return repository.get(termination.termination_id)
+
+
 def stored_row(connect, termination_id):
     conn = connect()
     try:
@@ -181,9 +196,7 @@ def test_same_identifier_cannot_be_inserted_twice(termination_db):
     repository = MySqlContractTerminationRepository(termination_db)
     first = make_termination()
     repository.add(first)
-    first.workflow_status = TerminationWorkflowStatus.CLOTURE  # libère l'unicité active
-    repository.save(first)
-    duplicate = make_termination(termination_id=first.termination_id)
+    duplicate = make_termination(contract_id="contract-2", termination_id=first.termination_id)
     with pytest.raises(TerminationAlreadyExists):
         repository.add(duplicate)
 
@@ -230,9 +243,8 @@ def test_closed_termination_releases_the_active_slot(termination_db):
     repository = MySqlContractTerminationRepository(termination_db)
     termination = make_termination()
     repository.add(termination)
+    termination = transmit_persisted(termination_db, termination)
     for target in (
-        TerminationWorkflowStatus.PRET_IMPACT_EMPLOI,
-        TerminationWorkflowStatus.TRANSMIS_IMPACT_EMPLOI,
         TerminationWorkflowStatus.EN_ATTENTE_RESULTATS,
         TerminationWorkflowStatus.RESULTATS_RECUS,
         TerminationWorkflowStatus.DOCUMENTS_REMIS,

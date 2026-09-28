@@ -16,7 +16,9 @@ from datetime import datetime, timezone
 from typing import Callable, Optional
 
 from domain.employment.termination import (
+    POST_TRANSMISSION_STATUSES,
     ContractTermination,
+    CorrectionRequest,
     HrInputChecks,
     TerminationWorkflowStatus,
 )
@@ -38,13 +40,22 @@ _COLUMNS = (
     "notice_status", "notice_start", "notice_end", "comments", "hr_hours", "hr_absences",
     "hr_leave", "hr_variable_pay", "hr_exceptional_items", "workflow_status", "created_at",
     "created_by", "updated_at", "version",
+    # SORTIE-003 : correction ouverte, écrite uniquement par les commandes de
+    # transmission (jamais par save, qui vérifie qu'elle n'a pas changé).
+    "correction_reason", "correction_requested_at", "correction_requested_by",
 )
+_CORRECTION_COLUMNS = ("correction_reason", "correction_requested_at", "correction_requested_by")
 # Colonnes réécrites par save ; l'identité, le contrat et la création sont figés.
 _MUTABLE_COLUMNS = tuple(
     name for name in _COLUMNS
     if name not in ("termination_id", "contract_id", "created_at", "created_by", "version")
+    + _CORRECTION_COLUMNS
 )
 _SELECT = "SELECT " + ", ".join(_COLUMNS) + " FROM " + TABLE
+TERMINATION_COLUMNS = _COLUMNS
+_POST_TRANSMISSION_SQL = ", ".join("'%s'" % status.value for status in sorted(
+    POST_TRANSMISSION_STATUSES, key=lambda status: status.value
+))
 
 
 def _to_storage(value: datetime) -> datetime:
@@ -85,6 +96,17 @@ def _mutable_values(termination: ContractTermination) -> dict:
     }
 
 
+def correction_values(termination: ContractTermination) -> dict:
+    correction = termination.open_correction
+    if correction is None:
+        return dict.fromkeys(_CORRECTION_COLUMNS)
+    return {
+        "correction_reason": correction.reason,
+        "correction_requested_at": _to_storage(correction.requested_at),
+        "correction_requested_by": correction.requested_by,
+    }
+
+
 def _row_to_domain(row) -> ContractTermination:
     values = dict(zip(_COLUMNS, row))
     return ContractTermination(
@@ -112,7 +134,15 @@ def _row_to_domain(row) -> ContractTermination:
         created_by=values["created_by"],
         updated_at=_from_storage(values["updated_at"]),
         version=int(values["version"]),
+        open_correction=None if values["correction_requested_at"] is None else CorrectionRequest(
+            reason=values["correction_reason"],
+            requested_at=_from_storage(values["correction_requested_at"]),
+            requested_by=values["correction_requested_by"],
+        ),
     )
+
+
+row_to_termination = _row_to_domain
 
 
 def _is_duplicate_key(exc: BaseException) -> bool:
@@ -156,7 +186,13 @@ class MySqlContractTerminationRepository:
                 "TERMINATION_ALREADY_PERSISTED",
                 "only a never-persisted termination (version 0) can be added",
             )
+        if termination.workflow_status in POST_TRANSMISSION_STATUSES or termination.open_correction:
+            raise TerminationPersistenceError(
+                "TERMINATION_ADD_STATUS_INVALID",
+                "a new termination cannot already be transmitted or under correction",
+            )
         values = _mutable_values(termination)
+        values.update(correction_values(termination))
         values.update(
             termination_id=termination.termination_id,
             contract_id=termination.contract_id,
@@ -225,19 +261,30 @@ class MySqlContractTerminationRepository:
                 "TERMINATION_NOT_PERSISTED", "a termination must be added before being saved"
             )
         values = _mutable_values(termination)
+        corrections = correction_values(termination)
+        crosses_transmission = termination.workflow_status in POST_TRANSMISSION_STATUSES
         assignments = ", ".join(name + " = %s" for name in _MUTABLE_COLUMNS)
         conn = self._open()
         try:
             cur = conn.cursor()
+            # Garde-fous SORTIE-003 : save ne franchit jamais PRET -> TRANSMIS
+            # (réservé à la commande de transmission, avec snapshot V1) et ne
+            # modifie jamais l'état de correction (réservé aux commandes).
             cur.execute(
                 "UPDATE " + TABLE + " SET " + assignments + ", version = version + 1"
-                " WHERE termination_id = %s AND contract_id = %s AND version = %s",
+                " WHERE termination_id = %s AND contract_id = %s AND version = %s"
+                " AND (%s = 0 OR workflow_status IN (" + _POST_TRANSMISSION_SQL + "))"
+                + "".join(" AND " + name + " <=> %s" for name in _CORRECTION_COLUMNS),
                 tuple(values[name] for name in _MUTABLE_COLUMNS)
-                + (termination.termination_id, termination.contract_id, expected),
+                + (termination.termination_id, termination.contract_id, expected,
+                   1 if crosses_transmission else 0)
+                + tuple(corrections[name] for name in _CORRECTION_COLUMNS),
             )
             if cur.rowcount != 1:
                 cur.execute(
-                    "SELECT contract_id, version FROM " + TABLE + " WHERE termination_id = %s",
+                    "SELECT contract_id, version, workflow_status, "
+                    + ", ".join(_CORRECTION_COLUMNS)
+                    + " FROM " + TABLE + " WHERE termination_id = %s",
                     (termination.termination_id,),
                 )
                 current = cur.fetchone()
@@ -249,7 +296,19 @@ class MySqlContractTerminationRepository:
                         "TERMINATION_CONTRACT_IMMUTABLE",
                         "contract_id of a persisted termination cannot change",
                     )
-                raise TerminationVersionConflict(termination.termination_id, expected)
+                if int(current[1]) != expected:
+                    raise TerminationVersionConflict(termination.termination_id, expected)
+                if crosses_transmission and current[2] not in {
+                    status.value for status in POST_TRANSMISSION_STATUSES
+                }:
+                    raise TerminationPersistenceError(
+                        "TRANSMISSION_REQUIRES_SNAPSHOT",
+                        "PRET -> TRANSMIS is only recorded by the transmission command",
+                    )
+                raise TerminationPersistenceError(
+                    "CORRECTION_STATE_REQUIRES_COMMAND",
+                    "correction state changes only through correction commands",
+                )
             self._failure_point("after_update")
             conn.commit()
         except Exception:
