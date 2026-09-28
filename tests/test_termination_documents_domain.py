@@ -16,6 +16,7 @@ HASHES = {
     TerminationDocumentType.AER: "2" * 64,
     TerminationDocumentType.WORK_CERTIFICATE: "3" * 64,
     TerminationDocumentType.FINAL_SETTLEMENT_RECEIPT: "4" * 64,
+    TerminationDocumentType.OTHER: "5" * 64,
 }
 
 
@@ -79,6 +80,93 @@ def test_checklist_is_derived_from_documents_not_an_editable_boolean():
     termination = ready_termination()
     checklist = TerminationClosureChecklist.from_documents(complete_documents(termination))
     assert checklist.complete is True
+
+
+CHECKLIST_FIELDS_BY_TYPE = {
+    TerminationDocumentType.FINAL_PAYSLIP: ("final_payslip_received",),
+    TerminationDocumentType.AER: ("aer_received", "aer_archived", "aer_delivered"),
+    TerminationDocumentType.WORK_CERTIFICATE: ("work_certificate_received", "work_certificate_delivered"),
+    TerminationDocumentType.FINAL_SETTLEMENT_RECEIPT: (
+        "final_settlement_receipt_received", "final_settlement_receipt_delivered",
+    ),
+    TerminationDocumentType.OTHER: (),
+}
+ALL_CHECKLIST_FIELDS = tuple(
+    field for fields in CHECKLIST_FIELDS_BY_TYPE.values() for field in fields
+)
+DOCUMENT_STATES = ("received", "archived", "delivered")
+
+
+def document_in_state(termination, kind, state):
+    return doc(
+        termination,
+        kind,
+        archived=state in ("archived", "delivered"),
+        delivered=state == "delivered",
+    )
+
+
+@pytest.mark.parametrize("actual_type", tuple(TerminationDocumentType))
+@pytest.mark.parametrize("state", DOCUMENT_STATES)
+def test_document_type_only_satisfies_its_own_checklist_conditions(actual_type, state):
+    """A document may never satisfy a checklist condition belonging to another type."""
+    termination = ready_termination()
+    checklist = TerminationClosureChecklist.from_documents((
+        document_in_state(termination, actual_type, state),
+    ))
+
+    own_fields = set(CHECKLIST_FIELDS_BY_TYPE[actual_type])
+    for field in ALL_CHECKLIST_FIELDS:
+        if field not in own_fields:
+            assert getattr(checklist, field) is False, (
+                "%s in state %s incorrectly satisfied %s" % (actual_type.value, state, field)
+            )
+
+
+@pytest.mark.parametrize("missing_type", (
+    TerminationDocumentType.FINAL_PAYSLIP,
+    TerminationDocumentType.AER,
+    TerminationDocumentType.WORK_CERTIFICATE,
+    TerminationDocumentType.FINAL_SETTLEMENT_RECEIPT,
+))
+@pytest.mark.parametrize("replacement_type", tuple(TerminationDocumentType))
+@pytest.mark.parametrize("state", DOCUMENT_STATES)
+def test_wrong_document_type_cannot_replace_required_type(missing_type, replacement_type, state):
+    """Even received/archived/delivered wrong-type documents cannot fill another type's slot."""
+    if replacement_type is missing_type:
+        pytest.skip("same type is not a substitution")
+    termination = ready_termination()
+    documents = [
+        document_in_state(termination, kind, "delivered")
+        for kind in (
+            TerminationDocumentType.FINAL_PAYSLIP,
+            TerminationDocumentType.AER,
+            TerminationDocumentType.WORK_CERTIFICATE,
+            TerminationDocumentType.FINAL_SETTLEMENT_RECEIPT,
+        )
+        if kind is not missing_type
+    ]
+    documents.append(document_in_state(termination, replacement_type, state))
+
+    checklist = TerminationClosureChecklist.from_documents(documents)
+
+    for field in CHECKLIST_FIELDS_BY_TYPE[missing_type]:
+        assert getattr(checklist, field) is False, (
+            "%s in state %s incorrectly replaced %s for %s"
+            % (replacement_type.value, state, field, missing_type.value)
+        )
+    assert checklist.complete is False
+
+
+def test_other_document_never_changes_any_checklist_condition():
+    termination = ready_termination()
+    baseline = TerminationClosureChecklist.from_documents(())
+    for state in DOCUMENT_STATES:
+        with_other = TerminationClosureChecklist.from_documents((
+            document_in_state(termination, TerminationDocumentType.OTHER, state),
+        ))
+        assert with_other == baseline
+        assert with_other.complete is False
 
 
 def test_results_received_requires_final_payslip_and_aer():
