@@ -4,11 +4,8 @@ import pytest
 
 from domain.employment.termination import TerminationDomainError, TerminationWorkflowStatus
 from domain.employment.termination_documents import (
-    TerminationClosureChecklist,
-    TerminationDocument,
-    TerminationDocumentSource,
-    TerminationDocumentType,
-    advance_results_workflow,
+    TerminationClosureChecklist, TerminationDocument, TerminationDocumentSource,
+    TerminationDocumentType, advance_results_workflow,
 )
 from tests.test_employee_termination_domain import ready_termination, transmit
 
@@ -25,14 +22,9 @@ HASHES = {
 def doc(termination, kind, *, archived=False, delivered=False):
     source = TerminationDocumentSource.FRANCE_TRAVAIL if kind is TerminationDocumentType.AER else TerminationDocumentSource.IMPACT_EMPLOI
     value = TerminationDocument(
-        termination_id=termination.termination_id,
-        document_type=kind,
-        source=source,
-        document_date=date(2026, 10, 31),
-        received_at=NOW,
-        received_by="director-1",
-        file_reference="rh/%s.pdf" % kind.value.lower(),
-        sha256=HASHES[kind],
+        termination_id=termination.termination_id, document_type=kind, source=source,
+        document_date=date(2026, 10, 31), received_at=NOW, received_by="director-1",
+        file_reference="rh/%s.pdf" % kind.value.lower(), sha256=HASHES[kind],
     )
     if archived:
         value = value.mark_archived(at=NOW + timedelta(minutes=1), by="director-1")
@@ -77,7 +69,7 @@ def test_aer_cannot_be_marked_delivered_before_archive():
 def complete_documents(termination):
     return (
         doc(termination, TerminationDocumentType.FINAL_PAYSLIP, archived=True),
-        doc(termination, TerminationDocumentType.AER, archived=True),
+        doc(termination, TerminationDocumentType.AER, archived=True, delivered=True),
         doc(termination, TerminationDocumentType.WORK_CERTIFICATE, archived=True, delivered=True),
         doc(termination, TerminationDocumentType.FINAL_SETTLEMENT_RECEIPT, archived=True, delivered=True),
     )
@@ -97,6 +89,16 @@ def test_results_received_requires_final_payslip_and_aer():
     assert_code("RESULTS_INCOMPLETE", lambda: advance_results_workflow(
         termination, (doc(termination, TerminationDocumentType.FINAL_PAYSLIP),)
     ))
+
+
+def test_aer_must_be_delivered_before_documents_remis():
+    termination = ready_termination()
+    transmit(termination)
+    docs = list(complete_documents(termination))
+    docs[1] = doc(termination, TerminationDocumentType.AER, archived=True, delivered=False)
+    advance_results_workflow(termination, docs)
+    advance_results_workflow(termination, docs)
+    assert_code("DOCUMENTS_NOT_DELIVERED", lambda: advance_results_workflow(termination, docs))
 
 
 def test_full_documentary_path_reaches_closure():
