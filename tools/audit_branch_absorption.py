@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-"""Audit remote Git branches without deleting, merging, or rewriting anything.
+"""Audit non destructif de l'absorption des branches Git.
 
-The tool is deliberately conservative.  A branch is only classified as
-``SUPPRESSION SÛRE`` when it is not structurally active, its changes are
-accounted for in a target, its branch-specific tests pass against the target
-alone, and no unexplained semantic residue remains.
+Une branche n'est jamais déclarée ``SUPPRESSION SÛRE`` sur la seule
+ascendance Git. Le verdict exige une branche inactive, une preuve de contenu,
+des tests propres exécutés contre la cible seule et aucun résidu inexpliqué.
 """
 
 from __future__ import annotations
@@ -23,15 +22,11 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Sequence
 
-
 KEEP = "CONSERVER"
 SAFE = "SUPPRESSION SÛRE"
 REVIEW = "À REVOIR"
-
 DEFAULT_STRUCTURAL = ("master", "wx/master", "qt/master")
 TEST_PREFIXES = ("tests/", "test/")
-SQL_SUFFIXES = (".sql",)
-PY_SUFFIXES = (".py",)
 
 
 class AuditError(RuntimeError):
@@ -46,11 +41,14 @@ class PullRequestRef:
     base: str
     merged: bool = False
     title: str = ""
+    head_sha: str | None = None
+    base_sha: str | None = None
 
 
 @dataclass
 class TargetEvidence:
     target: str
+    source_base: str | None = None
     merge_base: str | None = None
     ancestor: bool = False
     ahead_commits: int | None = None
@@ -97,20 +95,10 @@ class Git:
     def __init__(self, root: Path):
         self.root = root
 
-    def run(
-        self,
-        *args: str,
-        check: bool = True,
-        input_text: str | None = None,
-        cwd: Path | None = None,
-    ) -> subprocess.CompletedProcess[str]:
+    def run(self, *args: str, check: bool = True, cwd: Path | None = None) -> subprocess.CompletedProcess[str]:
         proc = subprocess.run(
-            ["git", *args],
-            cwd=cwd or self.root,
-            input=input_text,
-            text=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            ["git", *args], cwd=cwd or self.root, text=True,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
         )
         if check and proc.returncode:
             raise AuditError(
@@ -136,15 +124,11 @@ class Git:
         rows = self.out(
             "for-each-ref", "--format=%(refname)", f"refs/remotes/{remote}"
         ).splitlines()
-        branches = []
-        for row in rows:
-            if not row.startswith(prefix):
-                continue
-            name = row[len(prefix):]
-            if name == "HEAD":
-                continue
-            branches.append(name)
-        return sorted(set(branches))
+        return sorted(
+            row[len(prefix):]
+            for row in rows
+            if row.startswith(prefix) and row[len(prefix):] != "HEAD"
+        )
 
     def sha(self, ref: str) -> str:
         return self.out("rev-parse", ref)
@@ -154,48 +138,45 @@ class Git:
 
     def merge_base(self, a: str, b: str) -> str | None:
         proc = self.run("merge-base", a, b, check=False)
-        return (proc.stdout.strip() or None) if proc.returncode == 0 else None
+        return proc.stdout.strip() if proc.returncode == 0 and proc.stdout.strip() else None
+
+    def first_parent(self, ref: str) -> str | None:
+        proc = self.run("rev-parse", f"{ref}^", check=False)
+        return proc.stdout.strip() if proc.returncode == 0 and proc.stdout.strip() else None
 
     def is_ancestor(self, ancestor: str, descendant: str) -> bool:
-        return self.run(
-            "merge-base", "--is-ancestor", ancestor, descendant, check=False
-        ).returncode == 0
+        return self.run("merge-base", "--is-ancestor", ancestor, descendant, check=False).returncode == 0
 
     def count(self, revision_range: str) -> int:
         return int(self.out("rev-list", "--count", revision_range) or "0")
 
     def changed_files(self, base: str, head: str) -> list[str]:
-        output = self.out("diff", "--name-only", "--find-renames", base, head)
-        return [line for line in output.splitlines() if line]
+        return [
+            line for line in self.out(
+                "diff", "--name-only", "--find-renames", base, head
+            ).splitlines() if line
+        ]
 
     def file_at(self, ref: str, path: str) -> bytes | None:
         proc = subprocess.run(
-            ["git", "show", f"{ref}:{path}"],
-            cwd=self.root,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            ["git", "show", f"{ref}:{path}"], cwd=self.root,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
         )
         return proc.stdout if proc.returncode == 0 else None
 
     def commits(self, revision_range: str) -> list[str]:
-        output = self.out("rev-list", "--reverse", revision_range)
-        return [line for line in output.splitlines() if line]
+        return [line for line in self.out("rev-list", "--reverse", revision_range).splitlines() if line]
 
     def patch_id(self, commit: str) -> str | None:
         show = subprocess.run(
             ["git", "show", "--pretty=format:", "--patch", "--binary", commit],
-            cwd=self.root,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            cwd=self.root, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
         )
         if show.returncode:
             return None
         patch = subprocess.run(
-            ["git", "patch-id", "--stable"],
-            cwd=self.root,
-            input=show.stdout,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            ["git", "patch-id", "--stable"], cwd=self.root, input=show.stdout,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
         )
         if patch.returncode or not patch.stdout.strip():
             return None
@@ -208,40 +189,38 @@ class GitHubClient:
         self.token = token
 
     def _get_json(self, url: str) -> object:
-        request = urllib.request.Request(
-            url,
-            headers={
-                "Accept": "application/vnd.github+json",
-                "User-Agent": "teamworks-branch-audit/1",
-                **({"Authorization": f"Bearer {self.token}"} if self.token else {}),
-            },
-        )
+        headers = {
+            "Accept": "application/vnd.github+json",
+            "User-Agent": "teamworks-branch-audit/1",
+        }
+        if self.token:
+            headers["Authorization"] = f"Bearer {self.token}"
+        request = urllib.request.Request(url, headers=headers)
         with urllib.request.urlopen(request, timeout=30) as response:
             return json.loads(response.read().decode("utf-8"))
 
     def list_prs(self) -> list[PullRequestRef]:
         prs: list[PullRequestRef] = []
         for page in range(1, 100):
-            url = (
+            payload = self._get_json(
                 f"https://api.github.com/repos/{self.slug}/pulls"
                 f"?state=all&per_page=100&page={page}&sort=updated&direction=desc"
             )
-            payload = self._get_json(url)
             if not isinstance(payload, list):
                 raise AuditError("unexpected GitHub pull request response")
             if not payload:
                 break
             for item in payload:
-                prs.append(
-                    PullRequestRef(
-                        number=int(item["number"]),
-                        state=str(item["state"]),
-                        head=str(item["head"]["ref"]),
-                        base=str(item["base"]["ref"]),
-                        merged=bool(item.get("merged_at")),
-                        title=str(item.get("title") or ""),
-                    )
-                )
+                prs.append(PullRequestRef(
+                    number=int(item["number"]),
+                    state=str(item["state"]),
+                    head=str(item["head"]["ref"]),
+                    base=str(item["base"]["ref"]),
+                    merged=bool(item.get("merged_at")),
+                    title=str(item.get("title") or ""),
+                    head_sha=item.get("head", {}).get("sha"),
+                    base_sha=item.get("base", {}).get("sha"),
+                ))
             if len(payload) < 100:
                 break
         return prs
@@ -249,16 +228,13 @@ class GitHubClient:
 
 def repository_slug(git: Git, remote: str) -> str | None:
     url = git.out("remote", "get-url", remote, check=False)
-    if not url:
-        return None
-    match = re.search(r"github\.com[/:]([^/]+/[^/]+?)(?:\.git)?$", url)
+    match = re.search(r"github\.com[/:]([^/]+/[^/]+?)(?:\.git)?$", url or "")
     return match.group(1) if match else None
 
 
 def _python_symbols(source: bytes, path: str) -> set[str]:
     try:
-        text = source.decode("utf-8")
-        tree = ast.parse(text, filename=path)
+        tree = ast.parse(source.decode("utf-8"), filename=path)
     except (UnicodeDecodeError, SyntaxError):
         return set()
     symbols: set[str] = set()
@@ -282,7 +258,7 @@ def _sql_symbols(source: bytes, path: str) -> set[str]:
         ("column", r"\bADD\s+(?:COLUMN\s+)?[`\"]?([A-Za-z0-9_]+)"),
         ("constraint", r"\bCONSTRAINT\s+[`\"]?([A-Za-z0-9_]+)"),
     )
-    out = set()
+    out: set[str] = set()
     for kind, pattern in patterns:
         for name in re.findall(pattern, text, flags=re.IGNORECASE):
             out.add(f"sql:{path}:{kind}:{name.lower()}")
@@ -292,14 +268,14 @@ def _sql_symbols(source: bytes, path: str) -> set[str]:
 def semantic_symbols(source: bytes | None, path: str) -> set[str]:
     if source is None:
         return set()
-    if path.endswith(PY_SUFFIXES):
+    if path.endswith(".py"):
         return _python_symbols(source, path)
-    if path.endswith(SQL_SUFFIXES):
+    if path.endswith(".sql"):
         return _sql_symbols(source, path)
     return set()
 
 
-def content_fingerprint(source: bytes | None) -> str | None:
+def fingerprint(source: bytes | None) -> str | None:
     return hashlib.sha256(source).hexdigest() if source is not None else None
 
 
@@ -316,7 +292,7 @@ def semantic_compare(
         target = git.file_at(target_ref, path)
         if candidate is None:
             continue
-        if content_fingerprint(candidate) == content_fingerprint(target):
+        if fingerprint(candidate) == fingerprint(target):
             found.append(f"file:{path}")
             continue
         candidate_symbols = semantic_symbols(candidate, path)
@@ -324,26 +300,25 @@ def semantic_compare(
         if candidate_symbols:
             found.extend(sorted(candidate_symbols & target_symbols))
             missing.extend(sorted(candidate_symbols - target_symbols))
-            continue
-        residue.append(f"file-diff:{path}")
+        else:
+            residue.append(f"file-diff:{path}")
     return sorted(set(found)), sorted(set(missing)), sorted(set(residue))
 
 
-def patch_evidence(git: Git, base: str, candidate: str, target: str) -> tuple[int, int, bool]:
-    candidate_commits = git.commits(f"{base}..{candidate}")
-    target_commits = git.commits(f"{base}..{target}")
-    target_ids = {pid for c in target_commits if (pid := git.patch_id(c))}
-    ids = [pid for c in candidate_commits if (pid := git.patch_id(c))]
+def patch_evidence(git: Git, source_base: str, candidate: str, target: str) -> tuple[int, int, bool]:
+    candidate_commits = git.commits(f"{source_base}..{candidate}")
+    target_commits = git.commits(f"{source_base}..{target}")
+    target_ids = {pid for commit in target_commits if (pid := git.patch_id(commit))}
+    ids = [pid for commit in candidate_commits if (pid := git.patch_id(commit))]
     if not ids:
         return 0, 0, False
-    absorbed = sum(1 for pid in ids if pid in target_ids)
+    absorbed = sum(pid in target_ids for pid in ids)
     return len(ids), absorbed, absorbed == len(ids)
 
 
-def test_files(git: Git, base: str, candidate: str) -> list[str]:
+def test_files(git: Git, source_base: str, candidate: str) -> list[str]:
     return [
-        path
-        for path in git.changed_files(base, candidate)
+        path for path in git.changed_files(source_base, candidate)
         if path.startswith(TEST_PREFIXES) and path.endswith(".py")
     ]
 
@@ -378,14 +353,11 @@ def run_tests_on_target(
             try:
                 proc = subprocess.run(
                     [python_executable, "-m", "pytest", "-q", *copied],
-                    cwd=worktree,
-                    text=True,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
-                    timeout=timeout_seconds,
+                    cwd=worktree, text=True, stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT, timeout=timeout_seconds,
                 )
             except subprocess.TimeoutExpired as exc:
-                output = (exc.stdout or "") if isinstance(exc.stdout, str) else ""
+                output = exc.stdout if isinstance(exc.stdout, str) else ""
                 return "TIMEOUT", None, output[-4000:], copied
             return (
                 "PASS" if proc.returncode == 0 else "FAIL",
@@ -401,7 +373,6 @@ def run_tests_on_target(
 def choose_target(evidence: Sequence[TargetEvidence]) -> TargetEvidence | None:
     if not evidence:
         return None
-
     def score(item: TargetEvidence) -> tuple[int, int, int, int]:
         return (
             1 if item.tests_result == "PASS" else 0,
@@ -409,7 +380,6 @@ def choose_target(evidence: Sequence[TargetEvidence]) -> TargetEvidence | None:
             1 if item.patch_complete else 0,
             1 if item.ancestor else 0,
         )
-
     return max(evidence, key=score)
 
 
@@ -450,24 +420,30 @@ def analyze_target(
     run_tests: bool,
     python_executable: str,
     timeout_seconds: int,
+    source_base_ref: str | None = None,
 ) -> TargetEvidence:
     ev = TargetEvidence(target=target_name)
-    base = git.merge_base(branch_ref, target_ref)
-    if not base:
+    merge_base = git.merge_base(branch_ref, target_ref)
+    if not merge_base:
         ev.unexplained_residue.append("no-merge-base")
         return ev
-    ev.merge_base = base
+    ev.merge_base = merge_base
     ev.ancestor = git.is_ancestor(branch_ref, target_ref)
     ev.ahead_commits = git.count(f"{target_ref}..{branch_ref}")
     ev.behind_commits = git.count(f"{branch_ref}..{target_ref}")
-    ev.changed_files = git.changed_files(base, branch_ref)
+
+    source_base = source_base_ref if source_base_ref and git.ref_exists(source_base_ref) else merge_base
+    if source_base == git.sha(branch_ref):
+        source_base = git.first_parent(branch_ref) or source_base
+    ev.source_base = source_base
+    ev.changed_files = git.changed_files(source_base, branch_ref)
     ev.patch_total, ev.patch_absorbed, ev.patch_complete = patch_evidence(
-        git, base, branch_ref, target_ref
+        git, source_base, branch_ref, target_ref
     )
     ev.semantic_found, ev.semantic_missing, ev.unexplained_residue = semantic_compare(
         git, branch_ref, target_ref, ev.changed_files
     )
-    ev.tests_detected = test_files(git, base, branch_ref)
+    ev.tests_detected = test_files(git, source_base, branch_ref)
     if run_tests:
         (
             ev.tests_result,
@@ -475,14 +451,20 @@ def analyze_target(
             ev.tests_output_tail,
             ev.tests_executed,
         ) = run_tests_on_target(
-            git,
-            branch_ref,
-            target_ref,
-            ev.tests_detected,
-            python_executable,
-            timeout_seconds,
+            git, branch_ref, target_ref, ev.tests_detected,
+            python_executable, timeout_seconds,
         )
     return ev
+
+
+def source_base_for_branch(git: Git, branch_ref: str, prs: Sequence[PullRequestRef]) -> str | None:
+    head_sha = git.sha(branch_ref)
+    candidates = [pr for pr in prs if pr.base_sha]
+    exact = [pr for pr in candidates if pr.head_sha == head_sha]
+    chosen = exact[0] if exact else (candidates[0] if candidates else None)
+    if chosen and chosen.base_sha and git.ref_exists(chosen.base_sha):
+        return chosen.base_sha
+    return None
 
 
 def analyze_repository(
@@ -509,7 +491,7 @@ def analyze_repository(
     for pr in prs:
         prs_by_branch.setdefault(pr.head, []).append(pr)
 
-    reports = []
+    reports: list[BranchReport] = []
     for branch in all_branches:
         branch_ref = git.resolve_branch(branch, remote)
         if not branch_ref:
@@ -517,76 +499,57 @@ def analyze_repository(
         structural_flag = branch in structural
         reasons: list[str] = []
         if branch in active_heads:
-            reasons.append(
-                "head de PR ouverte " + ", ".join(f"#{pr.number}" for pr in active_heads[branch])
-            )
+            reasons.append("head de PR ouverte " + ", ".join(f"#{p.number}" for p in active_heads[branch]))
         if branch in active_bases:
-            reasons.append(
-                "base de PR ouverte " + ", ".join(f"#{pr.number}" for pr in active_bases[branch])
-            )
+            reasons.append("base de PR ouverte " + ", ".join(f"#{p.number}" for p in active_bases[branch]))
 
+        branch_prs = prs_by_branch.get(branch, [])
+        source_base = source_base_for_branch(git, branch_ref, branch_prs)
         evidence: list[TargetEvidence] = []
         if not structural_flag and not reasons:
-            candidate_targets = list(dict.fromkeys(targets))
-            for pr in prs_by_branch.get(branch, []):
-                if pr.base not in candidate_targets:
-                    candidate_targets.append(pr.base)
+            candidate_targets = list(dict.fromkeys([*targets, *(p.base for p in branch_prs)]))
             for target in candidate_targets:
                 if target == branch:
                     continue
                 target_ref = git.resolve_branch(target, remote)
                 if not target_ref:
                     continue
-                evidence.append(
-                    analyze_target(
-                        git,
-                        branch_ref,
-                        target_ref,
-                        target,
-                        False,
-                        python_executable,
-                        timeout_seconds,
-                    )
-                )
+                evidence.append(analyze_target(
+                    git, branch_ref, target_ref, target, False,
+                    python_executable, timeout_seconds,
+                    source_base_ref=source_base,
+                ))
 
-            # Frugality: compare all targets statically, then execute the
-            # branch-specific tests only once against the strongest target.
+            # Frugalité : les cibles sont comparées statiquement, puis les
+            # tests propres ne sont exécutés qu'une fois sur la meilleure.
             if run_tests:
                 best = choose_target(evidence)
-                if best is not None:
-                    best_target_ref = git.resolve_branch(best.target, remote)
-                    if best_target_ref:
+                if best:
+                    target_ref = git.resolve_branch(best.target, remote)
+                    if target_ref:
                         (
                             best.tests_result,
                             best.tests_returncode,
                             best.tests_output_tail,
                             best.tests_executed,
                         ) = run_tests_on_target(
-                            git,
-                            branch_ref,
-                            best_target_ref,
-                            best.tests_detected,
-                            python_executable,
-                            timeout_seconds,
+                            git, branch_ref, target_ref, best.tests_detected,
+                            python_executable, timeout_seconds,
                         )
 
-        verdict, justification, confidence = classify(
-            branch, structural_flag, reasons, evidence
-        )
-        reports.append(
-            BranchReport(
-                branch=branch,
-                head_sha=git.sha(branch_ref),
-                last_activity=git.last_activity(branch_ref),
-                prs=[asdict(pr) for pr in prs_by_branch.get(branch, [])],
-                active_dependencies=reasons,
-                structural=structural_flag,
-                target_evidence=evidence,
-                verdict=verdict,
-                justification=justification,
-                confidence=confidence,
-            )
-        )
+        verdict, justification, confidence = classify(branch, structural_flag, reasons, evidence)
+        reports.append(BranchReport(
+            branch=branch,
+            head_sha=git.sha(branch_ref),
+            last_activity=git.last_activity(branch_ref),
+            prs=[asdict(pr) for pr in branch_prs],
+            active_dependencies=reasons,
+            structural=structural_flag,
+            target_evidence=evidence,
+            verdict=verdict,
+            justification=justification,
+            confidence=confidence,
+        ))
     return reports
 
 
@@ -612,15 +575,12 @@ def report_to_json(reports: Sequence[BranchReport]) -> dict:
 def markdown_report(payload: dict) -> str:
     counts = payload["counts"]
     lines = [
-        "# Audit d'absorption des branches",
-        "",
-        "> Rapport non destructif : aucun merge, fermeture de PR ou suppression de branche.",
-        "",
+        "# Audit d'absorption des branches", "",
+        "> Rapport non destructif : aucun merge, fermeture de PR ou suppression de branche.", "",
         f"- Total : **{counts['total']}**",
         f"- CONSERVER : **{counts[KEEP]}**",
         f"- SUPPRESSION SÛRE : **{counts[SAFE]}**",
-        f"- À REVOIR : **{counts[REVIEW]}**",
-        "",
+        f"- À REVOIR : **{counts[REVIEW]}**", "",
     ]
     for verdict in (KEEP, SAFE, REVIEW):
         lines.extend([f"## {verdict}", ""])
@@ -633,37 +593,35 @@ def markdown_report(payload: dict) -> str:
             "|---|---|---|---|---|",
         ])
         for branch in selected:
-            justification = branch["justification"].replace("|", "\\|")
+            reason = branch["justification"].replace("|", "\\|")
             lines.append(
                 f"| `{branch['branch']}` | `{branch['head_sha'][:12]}` | "
-                f"{branch['last_activity']} | {justification} | {branch['confidence']} |"
+                f"{branch['last_activity']} | {reason} | {branch['confidence']} |"
             )
         lines.append("")
     lines.extend([
-        "## Limites",
-        "",
+        "## Limites", "",
         "- Les réécritures sémantiques sans symbole stable restent volontairement `À REVOIR`.",
         "- Les fichiers non Python/SQL modifiés sans égalité exacte sont des résidus à revoir.",
         "- Une panne ou un timeout de pytest ne produit jamais `SUPPRESSION SÛRE`.",
-        "- Une branche sans tests propres ne peut pas être classée `SUPPRESSION SÛRE` automatiquement.",
-        "",
+        "- Une branche sans tests propres ne peut pas être classée `SUPPRESSION SÛRE` automatiquement.", "",
     ])
     return "\n".join(lines)
 
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--repo", default=".", help="checkout Git à auditer")
+    parser.add_argument("--repo", default=".")
     parser.add_argument("--remote", default="origin")
-    parser.add_argument("--github-repo", help="owner/repo ; déduit du remote si absent")
+    parser.add_argument("--github-repo")
     parser.add_argument("--github-token-env", default="GITHUB_TOKEN")
     parser.add_argument("--target", action="append", dest="targets")
     parser.add_argument("--structural", action="append", dest="structural")
-    parser.add_argument("--branch", action="append", dest="branches", help="limiter à une branche")
+    parser.add_argument("--branch", action="append", dest="branches")
     parser.add_argument("--run-tests", action="store_true")
     parser.add_argument("--test-timeout", type=int, default=900)
     parser.add_argument("--python", default=sys.executable)
-    parser.add_argument("--prs-json", help="source PR locale alternative à GitHub")
+    parser.add_argument("--prs-json")
     parser.add_argument("--json", dest="json_path")
     parser.add_argument("--markdown", dest="markdown_path")
     return parser.parse_args(argv)
@@ -676,8 +634,7 @@ def load_prs(args: argparse.Namespace, git: Git) -> list[PullRequestRef]:
     slug = args.github_repo or repository_slug(git, args.remote)
     if not slug:
         raise AuditError("GitHub repository slug is required (--github-repo owner/repo)")
-    token = os.environ.get(args.github_token_env)
-    return GitHubClient(slug, token=token).list_prs()
+    return GitHubClient(slug, os.environ.get(args.github_token_env)).list_prs()
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -699,9 +656,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     payload = report_to_json(reports)
     if args.json_path:
-        Path(args.json_path).write_text(
-            json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
-        )
+        Path(args.json_path).write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     if args.markdown_path:
         Path(args.markdown_path).write_text(markdown_report(payload), encoding="utf-8")
     print(json.dumps(payload["counts"], ensure_ascii=False, indent=2))
