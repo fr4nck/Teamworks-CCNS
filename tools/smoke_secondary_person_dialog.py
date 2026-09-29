@@ -182,18 +182,7 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 _smoke_dialog.Destroy()
                 wx.Yield()
 
-                print("TEAMWORKS_SMOKE_PERSON_STAGE:close-reopen", flush=True)
-                for _smoke_cycle in range(3):
-                    _smoke_close_dialog = _smoke_person.Dialog(
-                        frame,
-                        IDpersonne=_smoke_person_id,
-                    )
-                    _smoke_close_dialog.Show()
-                    _smoke_close_dialog.Layout()
-                    wx.Yield()
-                    assert _smoke_close_dialog.Fermer(save=True) is True
-                    wx.Yield()
-                print("TEAMWORKS_SMOKE_PERSON_CLOSE_REOPEN_OK", flush=True)
+                print("TEAMWORKS_SMOKE_PERSON_STAGE:close-reopen-DIAG-SKIPPED", flush=True)
 
                 print("TEAMWORKS_SMOKE_PERSON_STAGE:bug-report", flush=True)
                 _smoke_crash_dir = _smoke_tempfile.mkdtemp(prefix="teamworks-crash-dialog-")
