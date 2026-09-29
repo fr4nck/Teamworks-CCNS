@@ -22,6 +22,7 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
         reimbursement_write_port_factory=None,
         trip_write_port_factory=None,
         contract_document_workspace_factory=None,
+        advanced_contracts_enabled: bool = False,
     ):
         self._activity_loader_class = activity_loader_class
         self._reimbursement_write_port_factory = reimbursement_write_port_factory
@@ -41,6 +42,7 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
             parent,
             contract_write_port_factory=contract_write_port_factory,
             contract_document_workspace_factory=contract_document_workspace_factory,
+            advanced_contracts_enabled=advanced_contracts_enabled,
         )
         self.activity_presenter = IndividualActivityPresenter(self.legacy_tabs)
         expenses_page = getattr(self.legacy_tabs, "expenses_page", None)

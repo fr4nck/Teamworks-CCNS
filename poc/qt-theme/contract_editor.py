@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from datetime import date
+from dataclasses import replace
+from datetime import date, timedelta
 from decimal import Decimal, InvalidOperation
 
 from PySide6.QtCore import QDate, Qt
@@ -29,6 +30,8 @@ from application.services.contract_write import (
     ContractCreateCommand,
     ContractEditCommand,
     ContractEditSnapshot,
+    ContractLegacyClassificationCommand,
+    LegacyContractOptions,
     validate_contract_create,
     validate_contract_edit,
 )
@@ -90,7 +93,7 @@ def _python_date(value: QDate) -> date:
 
 
 class ContractCreateDialog(QDialog):
-    """Création Qt initiale : CDI/CDD CCNS, sans accès direct à la base."""
+    """Création Qt contrôlée : CDI/CDD CCNS et CEE, sans accès direct à la base."""
 
     def __init__(
         self,
@@ -111,8 +114,8 @@ class ContractCreateDialog(QDialog):
         root.setSpacing(10)
 
         intro = QLabel(
-            "Création contrôlée CCNS · CDI/CDD. "
-            "CEE et parcours historiques restent volontairement hors de ce lot."
+            "Création contrôlée · CDI/CDD CCNS et CEE. "
+            "Les parcours historiques non extraits restent hors de ce lot."
         )
         intro.setWordWrap(True)
         intro.setProperty("muted", True)
@@ -120,7 +123,8 @@ class ContractCreateDialog(QDialog):
 
         panel = QFrame()
         panel.setObjectName("panel")
-        form = QFormLayout(panel)
+        self.form = QFormLayout(panel)
+        form = self.form
 
         self.contract_type = QComboBox()
         for code in available_types:
@@ -140,6 +144,12 @@ class ContractCreateDialog(QDialog):
         self.group = QComboBox()
         form.addRow("Groupe CCNS", self.group)
 
+        self.cee_qualification = QComboBox()
+        self.cee_qualification.addItem("—", None)
+        for code, label in _CEE_LABELS.items():
+            self.cee_qualification.addItem(label, code)
+        form.addRow("Qualification CEE", self.cee_qualification)
+
         self.weekly_hours = QDoubleSpinBox()
         self.weekly_hours.setRange(0.25, 80.0)
         self.weekly_hours.setDecimals(2)
@@ -155,8 +165,8 @@ class ContractCreateDialog(QDialog):
         self.annual_salary.setPlaceholderText("ex. 38 000,00")
         form.addRow("Brut annuel", self.annual_salary)
 
-        trial_row = QWidget()
-        trial_layout = QHBoxLayout(trial_row)
+        self.trial_row = QWidget()
+        trial_layout = QHBoxLayout(self.trial_row)
         trial_layout.setContentsMargins(0, 0, 0, 0)
         self.trial_value = QSpinBox()
         self.trial_value.setRange(0, 365)
@@ -165,7 +175,7 @@ class ContractCreateDialog(QDialog):
         self.trial_unit.addItem("mois", ProbationUnit.MONTH.value)
         trial_layout.addWidget(self.trial_value)
         trial_layout.addWidget(self.trial_unit, 1)
-        form.addRow("Période d'essai", trial_row)
+        form.addRow("Période d'essai", self.trial_row)
 
         self.confirm_no_trial = QCheckBox(
             "Je confirme l'absence de période d'essai pour ce contrat"
@@ -198,10 +208,38 @@ class ContractCreateDialog(QDialog):
     def _contract_type_code(self) -> str:
         return str(self.contract_type.currentData() or "").strip().upper()
 
+    def _set_form_field_visible(self, field: QWidget, visible: bool) -> None:
+        field.setVisible(visible)
+        label = self.form.labelForField(field)
+        if label is not None:
+            label.setVisible(visible)
+
     def _refresh_contract_type(self, *_args) -> None:
-        is_cdd = self._contract_type_code() == "CDD"
-        self.end_date.setEnabled(is_cdd)
+        code = self._contract_type_code()
+        is_cee = code == "CEE"
+        self.end_date.setEnabled(code in ("CDD", "CEE"))
+        self._set_form_field_visible(self.group, not is_cee)
+        self._set_form_field_visible(self.weekly_hours, not is_cee)
+        self._set_form_field_visible(self.cee_qualification, is_cee)
+        self._set_form_field_visible(self.trial_row, not is_cee)
+
+        if is_cee:
+            self.trial_value.blockSignals(True)
+            self.trial_unit.blockSignals(True)
+            self.trial_value.setValue(0)
+            day_index = self.trial_unit.findData(ProbationUnit.DAY.value)
+            if day_index >= 0:
+                self.trial_unit.setCurrentIndex(day_index)
+            self.trial_unit.blockSignals(False)
+            self.trial_value.blockSignals(False)
+            self.confirm_no_trial.setChecked(False)
+            self.confirm_no_trial.setVisible(False)
+            self._refresh_salary_mode()
+            return
+
+        self._refresh_salary_mode()
         self._refresh_trial()
+        self._refresh_no_trial_confirmation()
 
     def _refresh_groups(self, *_args) -> None:
         preserve = self.group.currentData()
@@ -225,6 +263,11 @@ class ContractCreateDialog(QDialog):
         self._refresh_trial()
 
     def _refresh_salary_mode(self) -> None:
+        if self._contract_type_code() == "CEE":
+            self._set_form_field_visible(self.monthly_salary, False)
+            self._set_form_field_visible(self.annual_salary, False)
+            return
+
         code = self.group.currentData()
         annual = False
         if code:
@@ -244,8 +287,8 @@ class ContractCreateDialog(QDialog):
                 )
             except Exception:
                 annual = False
-        self.monthly_salary.setVisible(not annual)
-        self.annual_salary.setVisible(annual)
+        self._set_form_field_visible(self.monthly_salary, not annual)
+        self._set_form_field_visible(self.annual_salary, annual)
 
     def _refresh_trial(self, *_args) -> None:
         code = self._contract_type_code()
@@ -277,6 +320,10 @@ class ContractCreateDialog(QDialog):
         self._refresh_no_trial_confirmation()
 
     def _refresh_no_trial_confirmation(self, *_args) -> None:
+        if self._contract_type_code() == "CEE":
+            self.confirm_no_trial.setChecked(False)
+            self.confirm_no_trial.setVisible(False)
+            return
         zero = self.trial_value.value() == 0
         self.confirm_no_trial.setVisible(zero)
         if not zero:
@@ -284,48 +331,66 @@ class ContractCreateDialog(QDialog):
 
     def _build_command(self) -> ContractCreateCommand:
         code = self._contract_type_code()
-        group = self.group.currentData()
-        monthly = parse_decimal_text(self.monthly_salary.text())
-        annual = parse_decimal_text(self.annual_salary.text())
+        is_cee = code == "CEE"
 
-        try:
-            choice = next(
-                (
-                    item
-                    for item in self._presenter.group_choices(
-                        _python_date(self.start_date.date())
-                    )
-                    if item.code == group
-                ),
-                None,
-            )
-        except Exception:
-            choice = None
-        if choice and choice.periodicity is SalaryMinimumPeriodicity.ANNUAL:
+        if is_cee:
+            group = None
+            cee_qualification = self.cee_qualification.currentData()
+            weekly_hours = None
             monthly = None
-        else:
             annual = None
+            trial_value = 0
+            trial_unit = ProbationUnit.DAY.value
+            confirm_no_trial = False
+        else:
+            group = self.group.currentData()
+            cee_qualification = None
+            weekly_hours = Decimal(str(self.weekly_hours.value())).quantize(
+                Decimal("0.01")
+            )
+            monthly = parse_decimal_text(self.monthly_salary.text())
+            annual = parse_decimal_text(self.annual_salary.text())
+
+            try:
+                choice = next(
+                    (
+                        item
+                        for item in self._presenter.group_choices(
+                            _python_date(self.start_date.date())
+                        )
+                        if item.code == group
+                    ),
+                    None,
+                )
+            except Exception:
+                choice = None
+            if choice and choice.periodicity is SalaryMinimumPeriodicity.ANNUAL:
+                monthly = None
+            else:
+                annual = None
+
+            trial_value = self.trial_value.value()
+            trial_unit = str(self.trial_unit.currentData())
+            confirm_no_trial = self.confirm_no_trial.isChecked()
 
         return ContractCreateCommand(
             person_id=self.person_id,
             contract_type_code=code,
             convention_code="CCNS",
             ccns_group=group,
-            cee_qualification=None,
-            weekly_hours=Decimal(str(self.weekly_hours.value())).quantize(
-                Decimal("0.01")
-            ),
+            cee_qualification=cee_qualification,
+            weekly_hours=weekly_hours,
             gross_monthly_salary=monthly,
             gross_annual_salary=annual,
             start_date=_python_date(self.start_date.date()),
             end_date=(
                 _python_date(self.end_date.date())
-                if code == "CDD"
+                if code in ("CDD", "CEE")
                 else None
             ),
-            trial_period_value=self.trial_value.value(),
-            trial_period_unit=str(self.trial_unit.currentData()),
-            confirm_no_trial=self.confirm_no_trial.isChecked(),
+            trial_period_value=trial_value,
+            trial_period_unit=trial_unit,
+            confirm_no_trial=confirm_no_trial,
         )
 
     def _on_accept(self) -> None:
@@ -340,6 +405,198 @@ class ContractCreateDialog(QDialog):
 
     def command(self) -> ContractCreateCommand:
         return self._accepted_command or self._build_command()
+
+
+
+class ContractOperationDialog(ContractCreateDialog):
+    """Prépare un renouvellement CDD ou un passage CDD→CDI.
+
+    Ce dialogue n'est pas encore exposé par la barre d'outils du pilote Qt.
+    Il construit uniquement une commande conforme au service Contrats avancé.
+    """
+
+    def __init__(
+        self,
+        person_id: int,
+        previous: ContractEditSnapshot,
+        operation: ContractOperation,
+        parent: QWidget | None = None,
+    ):
+        if operation not in (
+            ContractOperation.CDD_RENEWAL,
+            ContractOperation.CDD_TO_CDI,
+        ):
+            raise ValueError("Opération de contrat avancée non prise en charge.")
+        if previous.contract_type_code.strip().upper() != ContractType.CDD.value:
+            raise ValueError("Le contrat précédent doit être un CDD.")
+        if previous.end_date is None:
+            raise ValueError("Le CDD précédent doit avoir une date de fin.")
+
+        self.previous = previous
+        self.operation = operation
+        target_type = (
+            ContractType.CDD.value
+            if operation is ContractOperation.CDD_RENEWAL
+            else ContractType.CDI.value
+        )
+        super().__init__(person_id, (target_type,), parent)
+
+        self.setWindowTitle(
+            "Renouveler le CDD"
+            if operation is ContractOperation.CDD_RENEWAL
+            else "Poursuivre le CDD en CDI"
+        )
+        self.contract_type.setEnabled(False)
+
+        expected_start = previous.end_date + timedelta(days=1)
+        self.start_date.setDate(_qdate(expected_start))
+        self.start_date.setEnabled(False)
+
+        previous_group = (previous.ccns_group or "").strip().upper()
+        if previous_group:
+            index = self.group.findData(previous_group)
+            if index >= 0:
+                self.group.setCurrentIndex(index)
+
+        self._refresh_contract_type()
+        self._refresh_trial()
+
+    def _refresh_trial(self, *_args) -> None:
+        code = self._contract_type_code()
+        group = self.group.currentData()
+        if code not in ("CDI", "CDD") or not group:
+            return
+        try:
+            proposal = propose_ccns_probation_period(
+                contract_type=ContractType(code),
+                operation=self.operation,
+                start_date=_python_date(self.start_date.date()),
+                end_date=(
+                    _python_date(self.end_date.date())
+                    if code == "CDD"
+                    else None
+                ),
+                ccns_group=group,
+                previous_contract_start=self.previous.start_date,
+                previous_contract_end=self.previous.end_date,
+            )
+        except Exception:
+            return
+
+        self.trial_value.blockSignals(True)
+        self.trial_unit.blockSignals(True)
+        self.trial_value.setValue(proposal.value)
+        unit_index = self.trial_unit.findData(proposal.unit.value)
+        if unit_index >= 0:
+            self.trial_unit.setCurrentIndex(unit_index)
+        self.trial_unit.blockSignals(False)
+        self.trial_value.blockSignals(False)
+        self._refresh_no_trial_confirmation()
+
+    def _build_command(self) -> ContractCreateCommand:
+        base = super()._build_command()
+        return replace(
+            base,
+            operation_type=self.operation.value,
+            previous_contract_id=self.previous.contract_id,
+        )
+
+
+class LegacyClassificationDialog(QDialog):
+    """Prépare la classification historique sans confondre ID et valeur monétaire."""
+
+    def __init__(
+        self,
+        options: LegacyContractOptions,
+        snapshot: ContractEditSnapshot,
+        parent: QWidget | None = None,
+    ):
+        super().__init__(parent)
+        self.options = options
+        self.snapshot = snapshot
+        self._accepted_command: ContractLegacyClassificationCommand | None = None
+
+        self.setWindowTitle("Classification historique")
+        self.setMinimumWidth(520)
+
+        root = QVBoxLayout(self)
+        root.setContentsMargins(16, 16, 16, 16)
+        root.setSpacing(10)
+
+        intro = QLabel(
+            "Parcours historique : la classification et la valeur de point sont "
+            "conservées par leurs identifiants d'origine."
+        )
+        intro.setWordWrap(True)
+        intro.setProperty("muted", True)
+        root.addWidget(intro)
+
+        panel = QFrame()
+        panel.setObjectName("panel")
+        form = QFormLayout(panel)
+
+        self.classification = QComboBox()
+        for item in options.classifications:
+            self.classification.addItem(item.label or f"Classification {item.classification_id}", item.classification_id)
+        current_class = self.classification.findData(snapshot.legacy_classification_id)
+        if current_class >= 0:
+            self.classification.setCurrentIndex(current_class)
+        form.addRow("Classification", self.classification)
+
+        self.point = QComboBox()
+        for item in options.point_values:
+            label = (
+                f"{str(item.value).replace('.', ',')} € · "
+                f"à partir du {item.effective_date.strftime('%d/%m/%Y')}"
+            )
+            self.point.addItem(label, item.point_id)
+        applicable = self.point.findData(options.applicable_point_id)
+        if applicable >= 0:
+            self.point.setCurrentIndex(applicable)
+        self.point.setEnabled(False)
+        form.addRow("Valeur de point applicable", self.point)
+
+        root.addWidget(panel)
+
+        self.error_label = QLabel("")
+        self.error_label.setWordWrap(True)
+        self.error_label.setProperty("error", True)
+        root.addWidget(self.error_label)
+
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel
+        )
+        buttons.accepted.connect(self._on_accept)
+        buttons.rejected.connect(self.reject)
+        root.addWidget(buttons)
+
+    def _build_command(self) -> ContractLegacyClassificationCommand | None:
+        classification_id = self.classification.currentData()
+        point_id = self.point.currentData()
+        if classification_id is None or point_id is None:
+            return None
+        return ContractLegacyClassificationCommand(
+            contract_id=self.snapshot.contract_id,
+            classification_id=int(classification_id),
+            point_id=int(point_id),
+        )
+
+    def _on_accept(self) -> None:
+        command = self._build_command()
+        if command is None:
+            self.error_label.setText(
+                "Classification historique ou valeur de point indisponible."
+            )
+            return
+        self.error_label.clear()
+        self._accepted_command = command
+        self.accept()
+
+    def command(self) -> ContractLegacyClassificationCommand:
+        command = self._accepted_command or self._build_command()
+        if command is None:
+            raise ValueError("Commande de classification historique incomplète.")
+        return command
 
 
 class ContractEditDialog(QDialog):
