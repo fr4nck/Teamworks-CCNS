@@ -1,8 +1,8 @@
 """Instrumentation temporaire de la RC3 pour isoler le crash wx.SearchCtrl.
 
 Pytest charge ce fichier automatiquement. Sous Linux il est inerte. Sous Windows,
-le job de contrats exécute les deux reproductions minimales dans des processus
-séparés avant les tests habituels. À retirer une fois la cause racine établie.
+le job de contrats exécute les reproductions minimales dans des processus séparés
+avant les tests habituels. À retirer une fois la cause racine établie.
 """
 
 from __future__ import annotations
@@ -25,6 +25,7 @@ def _diagnostic_searchctrl_windows() -> None:
 
     failures: list[str] = []
     scenarios = (
+        ("buttons-search", 40),
         ("backup-search", 30),
         ("backup-email", 30),
     )
