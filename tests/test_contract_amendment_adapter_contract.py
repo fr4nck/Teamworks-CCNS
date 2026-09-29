@@ -125,8 +125,10 @@ def test_network_adapter_locks_contract_row_before_reading_snapshot():
     assert snapshot.contract_id == 501
     assert snapshot.operation_type == "CDD_RENEWAL"
     assert snapshot.previous_contract_id == 400
+    assert len(db.cursor.executed) == 1
     lock_query, lock_params = db.cursor.executed[0]
-    assert "SELECT IDcontrat FROM contrats WHERE IDcontrat=%s FOR UPDATE" in lock_query
+    assert "FROM contrats c" in lock_query
+    assert "WHERE c.IDcontrat=%s FOR UPDATE" in lock_query
     assert lock_params == (501,)
     assert "?" not in lock_query
 
