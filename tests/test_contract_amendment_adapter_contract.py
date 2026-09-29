@@ -186,7 +186,10 @@ def test_mysql55_schema_uses_only_legacy_compatible_primitives():
         / "contract_amendment_v1.sql"
     )
     sql = sql_path.read_text(encoding="utf-8")
-    upper = sql.upper()
+    sql_without_comments = "\n".join(
+        line.split("--", 1)[0] for line in sql.splitlines()
+    )
+    upper = sql_without_comments.upper()
 
     assert "CREATE TABLE IF NOT EXISTS TW_CONTRACT_AMENDMENT" in upper
     assert "ENGINE=INNODB" in upper
