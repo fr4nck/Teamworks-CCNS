@@ -1,11 +1,13 @@
 #!/bin/bash
 # Rejoue l'intégration Qt 0.2 : RC #467 + #486 + #450 + #446 + #472.
+# Publié : qt/integration-0.2-rc1 = bb11275e881849ff802ae75fc722bdd324025f92 (PR #488, CI + packaging verts).
 # Usage : depuis un clone à jour de fr4nck/Teamworks-CCNS
 #   bash replay_qt_integration.sh [branche-cible]   (défaut : qt/integration-0.2-rc1)
 # Résultat attendu (arbre) : voir EXPECTED_TREE. Aucun ours/theirs : unions sémantiques vérifiées.
 # Qualification locale Linux (compileall, UTF-8, socle, audit runtime, pytest) : 2455 passed, 6 skipped ;
 # smoke runtime Qt offscreen OK ; benchmark de frugalité OK.
 set -euo pipefail
+TRAILER=$'Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_013UppPFGKQywDQS6eKtZU9T'
 TARGET=${1:-qt/integration-0.2-rc1}
 EXPECTED_TREE=2804c6b272d1427bf89fd0b95fcbe3cbf19abe22
 declare -A HEADS=(
@@ -35,7 +37,7 @@ PY
 m() { git merge --no-ff --no-commit "${HEADS[$1]}" || true; }
 m qt/contracts-amendment-foundation
 union .github/workflows/ci.yml poc/qt-theme/pilot_view.py poc/qt-theme/pilot_generalities.py
-git add -A; git commit -q -m "Intégration Qt — Contrats avancés (#486) sur la RC Vanilla 0.1 (#467)"
+git add -A; git commit -q -m "Intégration Qt — Contrats avancés (#486) sur la RC Vanilla 0.1 (#467)" -m "$TRAILER"
 m qt/presence-transactions
 union poc/qt-theme/launcher.py poc/qt-theme/pilot_generalities.py
 python3 - <<'PY'
@@ -43,8 +45,8 @@ p='tests/test_qt_expense_reimbursement_roundtrip.py'; s=open(p).read()
 old="    def list_scenarios(self, person_id):\n        return ()\n"; assert s.count(old)==1
 open(p,'w').write(s.replace(old,"    def list_presences(self, person_id):\n        return ()\n\n"+old))
 PY
-git add -A; git commit -q -m "Intégration Qt — Présences (#450)"
-git merge --no-ff -q -m "Intégration Qt — Scénarios (#446)" "${HEADS[qt/scenario-transactions]}"
-git merge --no-ff -q -m "Intégration Qt — Profils (#472)" "${HEADS[architecture/profils-autorisations]}"
+git add -A; git commit -q -m "Intégration Qt — Présences (#450)" -m "$TRAILER"
+git merge --no-ff -q -m "Intégration Qt — Scénarios (#446)" -m "$TRAILER" "${HEADS[qt/scenario-transactions]}"
+git merge --no-ff -q -m "Intégration Qt — Profils (#472)" -m "$TRAILER" "${HEADS[architecture/profils-autorisations]}"
 ! git grep -n '^<<<<<<<\|^>>>>>>>' || { echo "marqueurs de conflit restants"; exit 1; }
 [ "$(git rev-parse HEAD^{tree})" = "$EXPECTED_TREE" ] && echo "ARBRE CONFORME $EXPECTED_TREE" || { echo "ARBRE DIFFÉRENT"; exit 1; }
