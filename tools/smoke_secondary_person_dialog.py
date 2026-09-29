@@ -247,12 +247,18 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                         # Diagnostic : compteurs GDI (0) et USER (1) du processus avant
                         # chaque dialogue, pour distinguer un épuisement de handles.
                         import ctypes as _smoke_ctypes
-                        _smoke_process = _smoke_ctypes.windll.kernel32.GetCurrentProcess()
+                        from ctypes import wintypes as _smoke_wintypes
+                        _smoke_k32 = _smoke_ctypes.windll.kernel32
+                        _smoke_u32 = _smoke_ctypes.windll.user32
+                        _smoke_k32.GetCurrentProcess.restype = _smoke_wintypes.HANDLE
+                        _smoke_u32.GetGuiResources.argtypes = (_smoke_wintypes.HANDLE, _smoke_wintypes.DWORD)
+                        _smoke_u32.GetGuiResources.restype = _smoke_wintypes.DWORD
+                        _smoke_process = _smoke_k32.GetCurrentProcess()
                         print(
                             "TEAMWORKS_SMOKE_GUI_RESOURCES:%s:gdi=%d:user=%d" % (
                                 _smoke_label,
-                                _smoke_ctypes.windll.user32.GetGuiResources(_smoke_process, 0),
-                                _smoke_ctypes.windll.user32.GetGuiResources(_smoke_process, 1),
+                                _smoke_u32.GetGuiResources(_smoke_process, 0),
+                                _smoke_u32.GetGuiResources(_smoke_process, 1),
                             ),
                             flush=True,
                         )
