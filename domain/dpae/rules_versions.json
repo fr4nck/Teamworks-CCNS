@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "current": "2026-09-27.1",
+  "versions": [
+    {
+      "version": "2026-09-27.1",
+      "introduced_on": "2026-09-27",
+      "regulatory_effective_from": null,
+      "fingerprint_schema_version": 1,
+      "previous": null,
+      "invalidates_previous_preparations": true,
+      "status": "ACTIVE"
+    }
+  ]
+}
