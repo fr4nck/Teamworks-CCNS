@@ -24,7 +24,14 @@ REPORT_DIR = ROOT / "artifacts" / "searchctrl-lifecycle-smoke"
 MARKER_LINE = '            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)'
 READY_MARKER = "TEAMWORKS_SMOKE_SEARCHCTRL_READY"
 FAILURE_MARKER = "TEAMWORKS_SMOKE_SEARCHCTRL_FAILED"
-SCENARIOS = ("buttons-search", "backup-search", "backup-email")
+SCENARIOS = (
+    "buttons-search",
+    "backup-search",
+    "backup-email",
+    "params10-backup",
+    "params15-backup",
+    "params20-backup",
+)
 
 
 def build_injection(scenario: str, cycles: int) -> str:
@@ -33,10 +40,53 @@ def build_injection(scenario: str, cycles: int) -> str:
                 import Chemins as _smoke_chemins
                 import wx as _smoke_wx
                 from Ctrl import CTRL_Bouton_image as _smoke_buttons
+                from Dlg import DLG_Preferences as _smoke_preferences
+                from Dlg import DLG_Enregistrement as _smoke_registration
+                from Dlg import DLG_Config_questionnaires as _smoke_questionnaires
+                from Dlg import DLG_Config_types_diplomes as _smoke_diplomas
+                from Dlg import DLG_Config_types_pieces as _smoke_pieces
+                from Dlg import DLG_Config_situations as _smoke_situations
+                from Dlg import DLG_Config_pays as _smoke_countries
+                from Dlg import DLG_Config_categories_presences as _smoke_presence_categories
+                from Dlg import DLG_Config_classifications as _smoke_classifications
+                from Dlg import DLG_Config_champs_contrats as _smoke_contract_fields
+                from Dlg import DLG_Config_modeles_contrats as _smoke_contract_models
+                from Dlg import DLG_Config_types_contrats as _smoke_contract_types
+                from Dlg import DLG_Config_val_point as _smoke_point_values
+                from Dlg import DLG_Config_verrouillage_entretien as _smoke_interview_lock
+                from Dlg import DLG_Config_fonctions as _smoke_functions
+                from Dlg import DLG_Config_affectations as _smoke_assignments
+                from Dlg import DLG_Config_diffuseurs as _smoke_broadcasters
+                from Dlg import DLG_Config_emplois as _smoke_jobs
+                from Dlg import DLG_Config_gadgets as _smoke_gadgets
+                from Dlg import DLG_Config_password as _smoke_password
                 from Dlg import DLG_Config_sauvegarde as _smoke_backup
                 from Dlg import DLG_Emails_exp as _smoke_email
                 _smoke_scenario = {scenario!r}
                 _smoke_cycles = {cycles}
+
+                _smoke_parameter_factories = (
+                    ("Préférences d'affichage", _smoke_preferences.Dialog),
+                    ("Enregistrement", _smoke_registration.Dialog),
+                    ("Questionnaires", _smoke_questionnaires.Dialog),
+                    ("Qualifications", _smoke_diplomas.Dialog),
+                    ("Types de pièces", _smoke_pieces.Dialog),
+                    ("Situations", _smoke_situations.Dialog),
+                    ("Pays", _smoke_countries.Dialog),
+                    ("Catégories de présences", _smoke_presence_categories.Dialog),
+                    ("Classifications", _smoke_classifications.Dialog),
+                    ("Champs de contrats", _smoke_contract_fields.Dialog),
+                    ("Modèles de contrats", _smoke_contract_models.Dialog),
+                    ("Types de contrats", _smoke_contract_types.Dialog),
+                    ("Valeurs de points", _smoke_point_values.Dialog),
+                    ("Protection des entretiens", _smoke_interview_lock.Dialog),
+                    ("Fonctions", _smoke_functions.Dialog),
+                    ("Affectations", _smoke_assignments.Dialog),
+                    ("Diffuseurs", _smoke_broadcasters.Dialog),
+                    ("Offres d'emploi", _smoke_jobs.Dialog),
+                    ("Gadgets", _smoke_gadgets.Dialog),
+                    ("Protection par mot de passe", _smoke_password.Dialog),
+                )
 
                 def _smoke_show_destroy(_smoke_window):
                     _smoke_window.Show()
@@ -102,6 +152,16 @@ def build_injection(scenario: str, cycles: int) -> str:
                     _smoke_fixture.SetSizerAndFit(_smoke_root_sizer)
                     _smoke_show_destroy(_smoke_fixture)
 
+                def _smoke_parameter_prefix(_smoke_count):
+                    for _smoke_label, _smoke_factory in _smoke_parameter_factories[:_smoke_count]:
+                        print(
+                            "TEAMWORKS_SMOKE_SEARCHCTRL_PARAMETER:%s:%s"
+                            % (_smoke_scenario, _smoke_label),
+                            flush=True,
+                        )
+                        _smoke_dialog = _smoke_factory(frame)
+                        _smoke_show_destroy(_smoke_dialog)
+
                 for _smoke_cycle in range(_smoke_cycles):
                     print(
                         "TEAMWORKS_SMOKE_SEARCHCTRL_CYCLE:%s:%d/%d"
@@ -120,6 +180,13 @@ def build_injection(scenario: str, cycles: int) -> str:
                         _smoke_show_destroy(_smoke_backup_dialog)
                         _smoke_email_dialog = _smoke_email.Dialog(frame)
                         _smoke_show_destroy(_smoke_email_dialog)
+                    elif _smoke_scenario.startswith("params"):
+                        _smoke_prefix = int(
+                            _smoke_scenario.split("-", 1)[0].replace("params", "")
+                        )
+                        _smoke_parameter_prefix(_smoke_prefix)
+                        _smoke_backup_dialog = _smoke_backup.MyFrame(frame)
+                        _smoke_show_destroy(_smoke_backup_dialog)
                     else:
                         raise RuntimeError(
                             "scénario SearchCtrl inconnu: %s" % _smoke_scenario
@@ -181,7 +248,7 @@ def main() -> int:
             PATCHED,
             root=ROOT,
             teamworks_dir=TEAMWORKS_DIR,
-            timeout=max(180, args.cycles * 15),
+            timeout=max(240, args.cycles * 45),
         )
         write_diagnostic(
             report,
