@@ -121,39 +121,27 @@ def install(module):
     base_dialog = module.Dialog
 
     class TargetedRefreshDialog(base_dialog):
-        def Fermer(self, save=True):
-            if save is False:
-                if self.nouvelleFiche is True:
-                    db = module.GestionDB.DB()
-                    db.ReqDEL("coordonnees", "IDpersonne", self.IDpersonne)
-                    db.ReqDEL("personnes", "IDpersonne", self.IDpersonne)
-                    db.Close()
-            else:
-                if self.Verifie_validite_donnees() is True:
-                    self.notebook.pageGeneralites.Sauvegarde()
-                    if self.notebook.pageQuestionnaire is not None:
-                        self.notebook.pageQuestionnaire.Sauvegarde()
-                else:
-                    return
+        def _rafraichir_personnes(self, frame, save):
+            """Chemin rapide ciblé, repli intégral en cas de doute.
 
-            frame = module.FonctionsPerso.FrameOuverte("Personnes")
-            if frame is not None:
-                fast_path = (
-                    save is True
-                    and self.nouvelleFiche is False
-                    and _secondary_pages_are_unloaded(self.notebook)
-                    and _refresh_current_track(frame.listCtrl_personnes, self.IDpersonne)
-                )
-                if not fast_path:
-                    frame.listCtrl_personnes.MAJ(IDpersonne=self.IDpersonne)
+            La fermeture elle-même reste celle du cœur ; seule la mise à jour
+            de la liste et de l'arbre des problèmes est spécialisée ici.
+            """
+            fast_path = (
+                save is True
+                and self.nouvelleFiche is False
+                and _secondary_pages_are_unloaded(self.notebook)
+                and _refresh_current_track(frame.listCtrl_personnes, self.IDpersonne)
+            )
+            if not fast_path:
+                frame.listCtrl_personnes.MAJ(IDpersonne=self.IDpersonne)
 
-                tree_ctrl = frame.panel_dossiers.tree_ctrl_problemes
-                tree_fast_path = fast_path and _refresh_current_problem_tree(
-                    module, tree_ctrl, self.IDpersonne
-                )
-                if not tree_fast_path:
-                    tree_ctrl.MAJ_treeCtrl()
-            self.EndModal(module.wx.ID_OK)
+            tree_ctrl = frame.panel_dossiers.tree_ctrl_problemes
+            tree_fast_path = fast_path and _refresh_current_problem_tree(
+                module, tree_ctrl, self.IDpersonne
+            )
+            if not tree_fast_path:
+                tree_ctrl.MAJ_treeCtrl()
 
     TargetedRefreshDialog.__name__ = "Dialog"
     TargetedRefreshDialog.__module__ = module.__name__

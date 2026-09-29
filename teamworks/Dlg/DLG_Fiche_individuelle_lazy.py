@@ -186,26 +186,15 @@ def install(module):
     base_dialog = module.Dialog
 
     class LazyDialog(base_dialog):
-        def Fermer(self, save=True):
-            if save is False:
-                if self.nouvelleFiche is True:
-                    db = module.GestionDB.DB()
-                    db.ReqDEL("coordonnees", "IDpersonne", self.IDpersonne)
-                    db.ReqDEL("personnes", "IDpersonne", self.IDpersonne)
-                    db.Close()
-            else:
-                if self.Verifie_validite_donnees() is True:
-                    self.notebook.pageGeneralites.Sauvegarde()
-                    if self.notebook.pageQuestionnaire is not None:
-                        self.notebook.pageQuestionnaire.Sauvegarde()
-                else:
-                    return
+        def _sauvegarder_pages(self):
+            """Un questionnaire jamais ouvert n'a rien à sauvegarder.
 
-            frame = module.FonctionsPerso.FrameOuverte("Personnes")
-            if frame is not None:
-                frame.listCtrl_personnes.MAJ(IDpersonne=self.IDpersonne)
-                frame.panel_dossiers.tree_ctrl_problemes.MAJ_treeCtrl()
-            self.EndModal(module.wx.ID_OK)
+            La fermeture elle-même reste celle du cœur (garde de réentrance,
+            arrêt des callbacks, annulation atomique d'une fiche neuve).
+            """
+            self.notebook.pageGeneralites.Sauvegarde()
+            if self.notebook.pageQuestionnaire is not None:
+                self.notebook.pageQuestionnaire.Sauvegarde()
 
     LazyDialog.__name__ = "Dialog"
     LazyDialog.__module__ = module.__name__

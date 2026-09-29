@@ -213,10 +213,7 @@ class Dialog(CORE.Dialog):
             except Exception:
                 pass
 
-            frm = CORE.FonctionsPerso.FrameOuverte("Personnes")
-            if frm is not None:
-                frm.listCtrl_personnes.MAJ(IDpersonne=IDpersonne)
-                frm.panel_dossiers.tree_ctrl_problemes.MAJ_treeCtrl()
+            self._rafraichir_frame_personnes(save=False)
             if self.IsModal():
                 self.EndModal(wx.ID_OK)
             else:

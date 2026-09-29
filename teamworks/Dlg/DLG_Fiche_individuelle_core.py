@@ -531,23 +531,41 @@ class Dialog(wx.Dialog):
                 db.Close()
         else:
             if self.Verifie_validite_donnees() == True:
-                self.notebook.pageGeneralites.Sauvegarde()
-                self.notebook.pageQuestionnaire.Sauvegarde()
+                self._sauvegarder_pages()
             else:
                 return False
 
         if not self._arreter_callbacks_avant_fermeture():
             return False
 
-        frm = FonctionsPerso.FrameOuverte("Personnes")
-        if frm is not None:
-            frm.listCtrl_personnes.MAJ(IDpersonne=self.IDpersonne)
-            frm.panel_dossiers.tree_ctrl_problemes.MAJ_treeCtrl()
+        self._rafraichir_frame_personnes(save=save)
         if self.IsModal():
             self.EndModal(wx.ID_OK)
         else:
             self.Destroy()
         return True
+
+    def _sauvegarder_pages(self):
+        """Point d'extension : sauvegarde des pages avant fermeture."""
+        self.notebook.pageGeneralites.Sauvegarde()
+        self.notebook.pageQuestionnaire.Sauvegarde()
+
+    def _rafraichir_frame_personnes(self, save=True):
+        """Rafraîchit la page Personnes seulement si elle a déjà été construite.
+
+        PanelPersonnes crée sa liste et son arbre dans InitPage() au premier
+        affichage : une fiche ouverte depuis un autre écran ne doit pas échouer
+        à la fermeture, la liste sera lue à jour lors de son premier affichage.
+        """
+        frm = FonctionsPerso.FrameOuverte("Personnes")
+        if frm is None or getattr(frm, "listCtrl_personnes", None) is None:
+            return
+        self._rafraichir_personnes(frm, save)
+
+    def _rafraichir_personnes(self, frame, save):
+        """Point d'extension : rafraîchissement de la liste et de l'arbre."""
+        frame.listCtrl_personnes.MAJ(IDpersonne=self.IDpersonne)
+        frame.panel_dossiers.tree_ctrl_problemes.MAJ_treeCtrl()
 
     def Verifie_validite_donnees(self):
         if self.notebook.pageGeneralites.combo_box_civilite.GetStringSelection() == "":
