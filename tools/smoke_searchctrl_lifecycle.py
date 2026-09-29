@@ -24,13 +24,15 @@ REPORT_DIR = ROOT / "artifacts" / "searchctrl-lifecycle-smoke"
 MARKER_LINE = '            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)'
 READY_MARKER = "TEAMWORKS_SMOKE_SEARCHCTRL_READY"
 FAILURE_MARKER = "TEAMWORKS_SMOKE_SEARCHCTRL_FAILED"
-SCENARIOS = ("backup-search", "backup-email")
+SCENARIOS = ("buttons-search", "backup-search", "backup-email")
 
 
 def build_injection(scenario: str, cycles: int) -> str:
     return f'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
             try:
+                import Chemins as _smoke_chemins
                 import wx as _smoke_wx
+                from Ctrl import CTRL_Bouton_image as _smoke_buttons
                 from Dlg import DLG_Config_sauvegarde as _smoke_backup
                 from Dlg import DLG_Emails_exp as _smoke_email
                 _smoke_scenario = {scenario!r}
@@ -43,30 +45,85 @@ def build_injection(scenario: str, cycles: int) -> str:
                     _smoke_window.Destroy()
                     _smoke_wx.Yield()
 
+                def _smoke_search_probe():
+                    _smoke_probe = _smoke_wx.Dialog(
+                        frame,
+                        title="SearchCtrl lifecycle probe",
+                    )
+                    _smoke_search = _smoke_wx.SearchCtrl(
+                        _smoke_probe,
+                        style=_smoke_wx.TE_PROCESS_ENTER,
+                    )
+                    _smoke_sizer = _smoke_wx.BoxSizer(_smoke_wx.VERTICAL)
+                    _smoke_sizer.Add(
+                        _smoke_search,
+                        1,
+                        _smoke_wx.EXPAND | _smoke_wx.ALL,
+                        8,
+                    )
+                    _smoke_probe.SetSizerAndFit(_smoke_sizer)
+                    _smoke_show_destroy(_smoke_probe)
+
+                def _smoke_button_fixture():
+                    _smoke_fixture = _smoke_wx.Dialog(
+                        frame,
+                        title="Button lifecycle fixture",
+                    )
+                    _smoke_box = _smoke_wx.StaticBox(
+                        _smoke_fixture,
+                        label="Actions",
+                    )
+                    _smoke_box_sizer = _smoke_wx.StaticBoxSizer(
+                        _smoke_box,
+                        _smoke_wx.HORIZONTAL,
+                    )
+                    for _smoke_icon in (
+                        "Ajouter.png",
+                        "Modifier.png",
+                        "Supprimer.png",
+                        "Aide.png",
+                    ):
+                        _smoke_button = _smoke_buttons.CTRL(
+                            _smoke_box,
+                            id=-1,
+                            texte="",
+                            cheminImage=_smoke_chemins.GetStaticPath(
+                                "Images/16x16/%s" % _smoke_icon
+                            ),
+                        )
+                        _smoke_box_sizer.Add(_smoke_button, 0, _smoke_wx.ALL, 2)
+                    _smoke_root_sizer = _smoke_wx.BoxSizer(_smoke_wx.VERTICAL)
+                    _smoke_root_sizer.Add(
+                        _smoke_box_sizer,
+                        1,
+                        _smoke_wx.EXPAND | _smoke_wx.ALL,
+                        8,
+                    )
+                    _smoke_fixture.SetSizerAndFit(_smoke_root_sizer)
+                    _smoke_show_destroy(_smoke_fixture)
+
                 for _smoke_cycle in range(_smoke_cycles):
                     print(
                         "TEAMWORKS_SMOKE_SEARCHCTRL_CYCLE:%s:%d/%d"
                         % (_smoke_scenario, _smoke_cycle + 1, _smoke_cycles),
                         flush=True,
                     )
-                    _smoke_backup_dialog = _smoke_backup.MyFrame(frame)
-                    _smoke_show_destroy(_smoke_backup_dialog)
-
-                    if _smoke_scenario == "backup-search":
-                        _smoke_probe = _smoke_wx.Dialog(frame, title="SearchCtrl lifecycle probe")
-                        _smoke_search = _smoke_wx.SearchCtrl(
-                            _smoke_probe,
-                            style=_smoke_wx.TE_PROCESS_ENTER,
-                        )
-                        _smoke_sizer = _smoke_wx.BoxSizer(_smoke_wx.VERTICAL)
-                        _smoke_sizer.Add(_smoke_search, 1, _smoke_wx.EXPAND | _smoke_wx.ALL, 8)
-                        _smoke_probe.SetSizerAndFit(_smoke_sizer)
-                        _smoke_show_destroy(_smoke_probe)
+                    if _smoke_scenario == "buttons-search":
+                        _smoke_button_fixture()
+                        _smoke_search_probe()
+                    elif _smoke_scenario == "backup-search":
+                        _smoke_backup_dialog = _smoke_backup.MyFrame(frame)
+                        _smoke_show_destroy(_smoke_backup_dialog)
+                        _smoke_search_probe()
                     elif _smoke_scenario == "backup-email":
+                        _smoke_backup_dialog = _smoke_backup.MyFrame(frame)
+                        _smoke_show_destroy(_smoke_backup_dialog)
                         _smoke_email_dialog = _smoke_email.Dialog(frame)
                         _smoke_show_destroy(_smoke_email_dialog)
                     else:
-                        raise RuntimeError("scénario SearchCtrl inconnu: %s" % _smoke_scenario)
+                        raise RuntimeError(
+                            "scénario SearchCtrl inconnu: %s" % _smoke_scenario
+                        )
 
                 print("TEAMWORKS_SMOKE_SEARCHCTRL_READY", flush=True)
             except Exception:
