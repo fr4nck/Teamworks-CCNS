@@ -36,6 +36,21 @@ class IndividualActivityPresenter:
             expenses_page.trip_model.setRowCount(0)
             expenses_page.reimbursement_model.setRowCount(0)
 
+    def set_presences(self, views) -> None:
+        presences_page = getattr(self._legacy_tabs, "presences_page", None)
+        if presences_page is None:
+            return
+        _replace_rows(
+            presences_page.source_model,
+            (
+                (
+                    view,
+                    (view.date, view.vacation, view.schedule, view.duration, view.label),
+                )
+                for view in views
+            ),
+        )
+
     def set_payload(self, payload: dict) -> None:
         questionnaire_page = getattr(self._legacy_tabs, "questionnaire_page", None)
         presences_page = getattr(self._legacy_tabs, "presences_page", None)
@@ -50,16 +65,7 @@ class IndividualActivityPresenter:
                 ),
             )
         if presences_page is not None:
-            _replace_rows(
-                presences_page.source_model,
-                (
-                    (
-                        view,
-                        (view.date, view.vacation, view.schedule, view.duration, view.label),
-                    )
-                    for view in payload.get("presences", ())
-                ),
-            )
+            self.set_presences(payload.get("presences", ()))
         if scenarios_page is not None:
             _replace_rows(
                 scenarios_page.model,

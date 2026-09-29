@@ -123,6 +123,9 @@ class ExpenseRoundTripAdapter:
     def list_contracts(self, person_id):
         return ()
 
+    def list_presences(self, person_id):
+        return ()
+
     def list_scenarios(self, person_id):
         return ()
 

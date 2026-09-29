@@ -25,6 +25,12 @@ class DeferredPeopleAdapter:
     def list_contracts(self, person_id):
         return self._delegate.list_contracts(person_id)
 
+    def list_presences(self, person_id):
+        return self._delegate.list_presences(person_id)
+
+    def list_presence_categories(self):
+        return self._delegate.list_presence_categories()
+
     def list_scenarios(self, person_id):
         return self._delegate.list_scenarios(person_id)
 

@@ -4,6 +4,7 @@ import datetime as dt
 from typing import Iterable
 
 from data_adapter import PresenceView
+from domain.common.presence_revision import build_presence_revision
 from infrastructure.persistence.teamworks_contract_conversions import as_date
 
 
@@ -63,6 +64,14 @@ def project_presences(records, categories, vacations) -> tuple[PresenceView, ...
                 schedule=_format_schedule(record.heure_debut, record.heure_fin),
                 duration=_format_duration(record.heure_debut, record.heure_fin),
                 label=label,
+                revision=build_presence_revision(
+                    presence_id=int(record.IDpresence),
+                    presence_date=raw_date,
+                    start_time=record.heure_debut,
+                    end_time=record.heure_fin,
+                    category_id=category_id,
+                    title=title,
+                ),
             )
         )
         previous_date = raw_date
