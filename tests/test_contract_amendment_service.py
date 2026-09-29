@@ -56,12 +56,22 @@ def _edit(snapshot, **changes):
     return replace(base, **changes)
 
 
-def _command(snapshot, *, key="amendment-001", effective=date(2026, 9, 1), **changes):
+def _command(
+    snapshot,
+    *,
+    key="amendment-001",
+    effective=date(2026, 9, 1),
+    expected_person_id=None,
+    **changes,
+):
     return ContractAmendmentCommand(
         edit=_edit(snapshot, **changes),
         effective_date=effective,
         idempotency_key=key,
         expected_before_hash=contract_state_hash(snapshot),
+        expected_person_id=(
+            snapshot.person_id if expected_person_id is None else expected_person_id
+        ),
     )
 
 
@@ -77,6 +87,7 @@ class AmendmentRecordingPort:
         self.fail_insert = False
         self.fail_contract_readback_after_commit = False
         self.fail_amendment_readback = False
+        self.force_projection_mismatch = False
         self.committed_once = False
 
     def lock_contract(self, contract_id):
@@ -93,13 +104,16 @@ class AmendmentRecordingPort:
         return self.current is not None and self.current.contract_id == contract_id
 
     def update_contract(self, command):
+        salary = command.gross_monthly_salary
+        if self.force_projection_mismatch and salary is not None:
+            salary += Decimal("1.00")
         self.pending_snapshot = replace(
             self.current,
             convention_code=command.convention_code,
             ccns_group=command.ccns_group,
             cee_qualification=command.cee_qualification,
             weekly_hours=command.weekly_hours,
-            gross_monthly_salary=command.gross_monthly_salary,
+            gross_monthly_salary=salary,
             gross_annual_salary=command.gross_annual_salary,
             start_date=command.start_date,
             end_date=command.end_date,
@@ -118,7 +132,10 @@ class AmendmentRecordingPort:
         candidates = [record for record in self.records if record.contract_id == contract_id]
         if not candidates:
             return None
-        return sorted(candidates, key=lambda item: (item.effective_date, item.amendment_id))[-1]
+        return sorted(
+            candidates,
+            key=lambda item: (item.effective_date, item.amendment_id),
+        )[-1]
 
     def insert_amendment(self, **values):
         if self.fail_insert:
@@ -199,7 +216,9 @@ def test_cdi_remuneration_amendment_is_historized_and_applied_once():
     port = AmendmentRecordingPort(original)
     command = _command(original, gross_monthly_salary=Decimal("3200.00"))
 
-    result = apply_contract_amendment(port, command=command, business_date=date(2026, 9, 29))
+    result = apply_contract_amendment(
+        port, command=command, business_date=date(2026, 9, 29)
+    )
 
     assert result.ok is True
     assert result.committed is True
@@ -222,7 +241,9 @@ def test_duration_and_group_change_becomes_multi_clause_amendment():
         gross_monthly_salary=Decimal("3000.00"),
     )
 
-    result = apply_contract_amendment(port, command=command, business_date=date(2026, 9, 29))
+    result = apply_contract_amendment(
+        port, command=command, business_date=date(2026, 9, 29)
+    )
 
     assert result.ok is True
     assert result.value.kind == "MULTI_CLAUSE"
@@ -236,8 +257,12 @@ def test_same_idempotency_key_replays_without_second_write():
     port = AmendmentRecordingPort(original)
     command = _command(original, gross_monthly_salary=Decimal("3200.00"))
 
-    first = apply_contract_amendment(port, command=command, business_date=date(2026, 9, 29))
-    second = apply_contract_amendment(port, command=command, business_date=date(2026, 9, 29))
+    first = apply_contract_amendment(
+        port, command=command, business_date=date(2026, 9, 29)
+    )
+    second = apply_contract_amendment(
+        port, command=command, business_date=date(2026, 9, 29)
+    )
 
     assert first.ok is True
     assert second.ok is True
@@ -256,9 +281,12 @@ def test_reusing_idempotency_key_for_different_request_is_rejected():
         effective_date=date(2026, 9, 2),
         idempotency_key="amendment-001",
         expected_before_hash=contract_state_hash(port.current),
+        expected_person_id=port.current.person_id,
     )
 
-    result = apply_contract_amendment(port, command=second, business_date=date(2026, 9, 29))
+    result = apply_contract_amendment(
+        port, command=second, business_date=date(2026, 9, 29)
+    )
 
     assert result.code == WriteCode.VALIDATION_ERROR
     assert port.commit_count == 1
@@ -271,9 +299,31 @@ def test_stale_expected_state_is_rejected_as_concurrent_modification():
         replace(original, gross_monthly_salary=Decimal("3100.00"))
     )
 
-    result = apply_contract_amendment(port, command=command, business_date=date(2026, 9, 29))
+    result = apply_contract_amendment(
+        port, command=command, business_date=date(2026, 9, 29)
+    )
 
     assert result.code == CONCURRENT_MODIFICATION
+    assert result.committed is False
+    assert port.commit_count == 0
+    assert port.records == []
+
+
+def test_wrong_employee_is_rejected_before_history_is_written():
+    original = _snapshot(person_id=12)
+    port = AmendmentRecordingPort(original)
+    command = _command(
+        original,
+        expected_person_id=99,
+        gross_monthly_salary=Decimal("3200.00"),
+    )
+
+    result = apply_contract_amendment(
+        port, command=command, business_date=date(2026, 9, 29)
+    )
+
+    assert result.code == WriteCode.VALIDATION_ERROR
+    assert "personne attendue" in result.message
     assert result.committed is False
     assert port.commit_count == 0
     assert port.records == []
@@ -288,7 +338,9 @@ def test_future_effect_is_not_projected_early():
         gross_monthly_salary=Decimal("3200.00"),
     )
 
-    result = apply_contract_amendment(port, command=command, business_date=date(2026, 9, 29))
+    result = apply_contract_amendment(
+        port, command=command, business_date=date(2026, 9, 29)
+    )
 
     assert result.code == WriteCode.VALIDATION_ERROR
     assert "effet futur" in result.message
@@ -307,7 +359,9 @@ def test_cdd_amendment_preserves_renewal_chain_metadata():
     port = AmendmentRecordingPort(original)
     command = _command(original, weekly_hours=Decimal("32.00"))
 
-    result = apply_contract_amendment(port, command=command, business_date=date(2026, 9, 29))
+    result = apply_contract_amendment(
+        port, command=command, business_date=date(2026, 9, 29)
+    )
 
     assert result.ok is True
     assert port.current.operation_type == "CDD_RENEWAL"
@@ -327,9 +381,12 @@ def test_renewal_dates_cannot_be_smuggled_through_generic_amendment():
         effective_date=date(2026, 9, 1),
         idempotency_key="amendment-renewal-bypass",
         expected_before_hash=contract_state_hash(original),
+        expected_person_id=original.person_id,
     )
 
-    result = apply_contract_amendment(port, command=command, business_date=date(2026, 9, 29))
+    result = apply_contract_amendment(
+        port, command=command, business_date=date(2026, 9, 29)
+    )
 
     assert result.code == WriteCode.VALIDATION_ERROR
     assert "renouvellement CDD" in result.message
@@ -341,7 +398,9 @@ def test_business_validation_failure_rolls_back_pending_history():
     port = AmendmentRecordingPort(original)
     command = _command(original, gross_monthly_salary=Decimal("1.00"))
 
-    result = apply_contract_amendment(port, command=command, business_date=date(2026, 9, 29))
+    result = apply_contract_amendment(
+        port, command=command, business_date=date(2026, 9, 29)
+    )
 
     assert result.code == WriteCode.VALIDATION_ERROR
     assert result.committed is False
@@ -356,13 +415,32 @@ def test_readback_failure_after_commit_never_claims_a_rollback():
     port.fail_contract_readback_after_commit = True
     command = _command(original, gross_monthly_salary=Decimal("3200.00"))
 
-    result = apply_contract_amendment(port, command=command, business_date=date(2026, 9, 29))
+    result = apply_contract_amendment(
+        port, command=command, business_date=date(2026, 9, 29)
+    )
 
     assert result.code == WriteCode.READBACK_ERROR
     assert result.committed is True
     assert port.commit_count == 1
     assert len(port.records) == 1
     assert port.current.gross_monthly_salary == Decimal("3200.00")
+
+
+def test_projection_mismatch_after_commit_is_readback_error():
+    original = _snapshot()
+    port = AmendmentRecordingPort(original)
+    port.force_projection_mismatch = True
+    command = _command(original, gross_monthly_salary=Decimal("3200.00"))
+
+    result = apply_contract_amendment(
+        port, command=command, business_date=date(2026, 9, 29)
+    )
+
+    assert result.code == WriteCode.READBACK_ERROR
+    assert result.committed is True
+    assert port.commit_count == 1
+    assert len(port.records) == 1
+    assert port.current.gross_monthly_salary == Decimal("3201.00")
 
 
 def test_amendment_before_contract_start_is_rejected():
@@ -374,7 +452,9 @@ def test_amendment_before_contract_start_is_rejected():
         gross_monthly_salary=Decimal("3200.00"),
     )
 
-    result = apply_contract_amendment(port, command=command, business_date=date(2026, 9, 29))
+    result = apply_contract_amendment(
+        port, command=command, business_date=date(2026, 9, 29)
+    )
 
     assert result.code == WriteCode.VALIDATION_ERROR
     assert "antérieure au début" in result.message
