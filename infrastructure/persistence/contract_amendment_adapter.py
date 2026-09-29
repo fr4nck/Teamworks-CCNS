@@ -23,15 +23,7 @@ class GestionDbContractAmendmentAdapter(GestionDbContractWriteAdapter):
     """Ajoute verrouillage et journal d'avenants à l'adaptateur Contrats."""
 
     def lock_contract(self, contract_id: int):
-        suffix = " FOR UPDATE" if getattr(self.db, "isNetwork", False) else ""
-        self.db.cursor.execute(
-            "SELECT IDcontrat FROM contrats WHERE IDcontrat=%s%s"
-            % (self._placeholder, suffix),
-            (contract_id,),
-        )
-        if self.db.cursor.fetchone() is None:
-            return None
-        return self.read_contract(contract_id)
+        return self._read_contract(contract_id, for_update=True)
 
     @staticmethod
     def _as_record(row) -> ContractAmendmentRecord:
