@@ -7,6 +7,8 @@
 - SUPPRESSION SÛRE : **38**
 - À REVOIR : **69**
 
+> **Surcharge CRH (arbitrage final)** : pour les 41 branches `crh-*`, les verdicts ci-dessous sont remplacés par `artifacts/crh-branch-audit.md` : 40 SUPPRESSION SÛRE, 0 À REVOIR, 1 À CONSERVER (`crh-36-lifecycle-template-management`).
+
 ## Contexte d'exécution
 
 - généré_le : `2026-09-28T22:12:37Z`

@@ -6824,7 +6824,9 @@
           "history_mapping": null,
           "strong_anchor": false
         }
-      ]
+      ],
+      "crh_final_decision": "SUPPRESSION SÛRE",
+      "crh_final_decision_ref": "artifacts/crh-branch-audit.md"
     },
     {
       "branch": "crh-03-cases-workflow",
@@ -6937,7 +6939,9 @@
           "history_mapping": null,
           "strong_anchor": false
         }
-      ]
+      ],
+      "crh_final_decision": "SUPPRESSION SÛRE",
+      "crh_final_decision_ref": "artifacts/crh-branch-audit.md"
     },
     {
       "branch": "crh-04-event-journal",
@@ -7052,7 +7056,9 @@
           "history_mapping": null,
           "strong_anchor": false
         }
-      ]
+      ],
+      "crh_final_decision": "SUPPRESSION SÛRE",
+      "crh_final_decision_ref": "artifacts/crh-branch-audit.md"
     },
     {
       "branch": "crh-05-file-exchange-boundary",
@@ -7166,7 +7172,9 @@
           "history_mapping": null,
           "strong_anchor": false
         }
-      ]
+      ],
+      "crh_final_decision": "SUPPRESSION SÛRE",
+      "crh_final_decision_ref": "artifacts/crh-branch-audit.md"
     },
     {
       "branch": "crh-06-secret-store-contract",
@@ -7279,7 +7287,9 @@
           "history_mapping": null,
           "strong_anchor": false
         }
-      ]
+      ],
+      "crh_final_decision": "SUPPRESSION SÛRE",
+      "crh_final_decision_ref": "artifacts/crh-branch-audit.md"
     },
     {
       "branch": "crh-07-manual-portal-connector",
@@ -7388,7 +7398,9 @@
           "history_mapping": null,
           "strong_anchor": false
         }
-      ]
+      ],
+      "crh_final_decision": "SUPPRESSION SÛRE",
+      "crh_final_decision_ref": "artifacts/crh-branch-audit.md"
     },
     {
       "branch": "crh-08-reference-manual-connectors",
@@ -7499,7 +7511,9 @@
           "history_mapping": null,
           "strong_anchor": false
         }
-      ]
+      ],
+      "crh_final_decision": "SUPPRESSION SÛRE",
+      "crh_final_decision_ref": "artifacts/crh-branch-audit.md"
     },
     {
       "branch": "crh-09-additive-persistence",
@@ -7609,7 +7623,9 @@
           "history_mapping": null,
           "strong_anchor": false
         }
-      ]
+      ],
+      "crh_final_decision": "SUPPRESSION SÛRE",
+      "crh_final_decision_ref": "artifacts/crh-branch-audit.md"
     },
     {
       "branch": "crh-10-structure-configuration-service",
@@ -7786,7 +7802,9 @@
           "history_mapping": null,
           "strong_anchor": false
         }
-      ]
+      ],
+      "crh_final_decision": "SUPPRESSION SÛRE",
+      "crh_final_decision_ref": "artifacts/crh-branch-audit.md"
     },
     {
       "branch": "crh-10b-wx-structure-connections",
@@ -7904,7 +7922,9 @@
           "history_mapping": null,
           "strong_anchor": false
         }
-      ]
+      ],
+      "crh_final_decision": "SUPPRESSION SÛRE",
+      "crh_final_decision_ref": "artifacts/crh-branch-audit.md"
     },
     {
       "branch": "crh-11-employee-protection-model",
@@ -8016,7 +8036,9 @@
           "history_mapping": null,
           "strong_anchor": false
         }
-      ]
+      ],
+      "crh_final_decision": "SUPPRESSION SÛRE",
+      "crh_final_decision_ref": "artifacts/crh-branch-audit.md"
     },
     {
       "branch": "crh-12-employee-protection-service",
@@ -8141,7 +8163,9 @@
           "history_mapping": null,
           "strong_anchor": false
         }
-      ]
+      ],
+      "crh_final_decision": "SUPPRESSION SÛRE",
+      "crh_final_decision_ref": "artifacts/crh-branch-audit.md"
     },
     {
       "branch": "crh-13-employee-protection-persistence",
@@ -8251,7 +8275,9 @@
           "history_mapping": null,
           "strong_anchor": false
         }
-      ]
+      ],
+      "crh_final_decision": "SUPPRESSION SÛRE",
+      "crh_final_decision_ref": "artifacts/crh-branch-audit.md"
     },
     {
       "branch": "crh-14-employee-protection-summary",
@@ -8357,7 +8383,9 @@
           "history_mapping": null,
           "strong_anchor": false
         }
-      ]
+      ],
+      "crh_final_decision": "SUPPRESSION SÛRE",
+      "crh_final_decision_ref": "artifacts/crh-branch-audit.md"
     },
     {
       "branch": "crh-15-wx-employee-protection-panel",
@@ -8467,7 +8495,9 @@
           "history_mapping": null,
           "strong_anchor": false
         }
-      ]
+      ],
+      "crh_final_decision": "SUPPRESSION SÛRE",
+      "crh_final_decision_ref": "artifacts/crh-branch-audit.md"
     },
     {
       "branch": "crh-16-teamworks-production-persistence",
@@ -8573,7 +8603,9 @@
           "history_mapping": null,
           "strong_anchor": false
         }
-      ]
+      ],
+      "crh_final_decision": "SUPPRESSION SÛRE",
+      "crh_final_decision_ref": "artifacts/crh-branch-audit.md"
     },
     {
       "branch": "crh-17a-employee-protection-composition",
@@ -8665,7 +8697,9 @@
           "history_mapping": null,
           "strong_anchor": false
         }
-      ]
+      ],
+      "crh_final_decision": "SUPPRESSION SÛRE",
+      "crh_final_decision_ref": "artifacts/crh-branch-audit.md"
     },
     {
       "branch": "crh-17b-wx-employee-protection-wiring",
@@ -8767,7 +8801,9 @@
           "history_mapping": null,
           "strong_anchor": false
         }
-      ]
+      ],
+      "crh_final_decision": "SUPPRESSION SÛRE",
+      "crh_final_decision_ref": "artifacts/crh-branch-audit.md"
     },
     {
       "branch": "crh-18-employee-protection-actions",
@@ -8886,7 +8922,9 @@
           "history_mapping": null,
           "strong_anchor": false
         }
-      ]
+      ],
+      "crh_final_decision": "SUPPRESSION SÛRE",
+      "crh_final_decision_ref": "artifacts/crh-branch-audit.md"
     },
     {
       "branch": "crh-19-employee-protection-succession",
@@ -9006,7 +9044,9 @@
           "history_mapping": null,
           "strong_anchor": false
         }
-      ]
+      ],
+      "crh_final_decision": "SUPPRESSION SÛRE",
+      "crh_final_decision_ref": "artifacts/crh-branch-audit.md"
     },
     {
       "branch": "crh-20-wx-employee-protection-actions",
@@ -9109,7 +9149,9 @@
           "history_mapping": null,
           "strong_anchor": false
         }
-      ]
+      ],
+      "crh_final_decision": "SUPPRESSION SÛRE",
+      "crh_final_decision_ref": "artifacts/crh-branch-audit.md"
     },
     {
       "branch": "crh-21-case-dashboard-projection",
@@ -9216,7 +9258,9 @@
           "history_mapping": null,
           "strong_anchor": false
         }
-      ]
+      ],
+      "crh_final_decision": "SUPPRESSION SÛRE",
+      "crh_final_decision_ref": "artifacts/crh-branch-audit.md"
     },
     {
       "branch": "crh-21-structure-hr-connections-ui",
@@ -11328,7 +11372,9 @@
           "history_mapping": null,
           "strong_anchor": false
         }
-      ]
+      ],
+      "crh_final_decision": "SUPPRESSION SÛRE",
+      "crh_final_decision_ref": "artifacts/crh-branch-audit.md"
     },
     {
       "branch": "crh-21a-structure-hr-connections-dialog",
@@ -11404,7 +11450,9 @@
           "history_mapping": null,
           "strong_anchor": false
         }
-      ]
+      ],
+      "crh_final_decision": "SUPPRESSION SÛRE",
+      "crh_final_decision_ref": "artifacts/crh-branch-audit.md"
     },
     {
       "branch": "crh-22-teamworks-cases-persistence",
@@ -11501,7 +11549,9 @@
           "history_mapping": null,
           "strong_anchor": false
         }
-      ]
+      ],
+      "crh_final_decision": "SUPPRESSION SÛRE",
+      "crh_final_decision_ref": "artifacts/crh-branch-audit.md"
     },
     {
       "branch": "crh-22-teamworks-hr-cases-persistence",
@@ -13652,7 +13702,9 @@
           "history_mapping": null,
           "strong_anchor": false
         }
-      ]
+      ],
+      "crh_final_decision": "SUPPRESSION SÛRE",
+      "crh_final_decision_ref": "artifacts/crh-branch-audit.md"
     },
     {
       "branch": "crh-23-case-dashboard-runtime",
@@ -13751,7 +13803,9 @@
           "history_mapping": null,
           "strong_anchor": false
         }
-      ]
+      ],
+      "crh_final_decision": "SUPPRESSION SÛRE",
+      "crh_final_decision_ref": "artifacts/crh-branch-audit.md"
     },
     {
       "branch": "crh-24-wx-case-dashboard",
@@ -13860,7 +13914,9 @@
           "history_mapping": null,
           "strong_anchor": false
         }
-      ]
+      ],
+      "crh_final_decision": "SUPPRESSION SÛRE",
+      "crh_final_decision_ref": "artifacts/crh-branch-audit.md"
     },
     {
       "branch": "crh-25-case-workflow-service",
@@ -13968,7 +14024,9 @@
           "history_mapping": null,
           "strong_anchor": false
         }
-      ]
+      ],
+      "crh_final_decision": "SUPPRESSION SÛRE",
+      "crh_final_decision_ref": "artifacts/crh-branch-audit.md"
     },
     {
       "branch": "crh-26-wx-case-workflow-actions",
@@ -14082,7 +14140,9 @@
           "history_mapping": null,
           "strong_anchor": false
         }
-      ]
+      ],
+      "crh_final_decision": "SUPPRESSION SÛRE",
+      "crh_final_decision_ref": "artifacts/crh-branch-audit.md"
     },
     {
       "branch": "crh-27-case-audit-history",
@@ -14183,7 +14243,9 @@
           "history_mapping": null,
           "strong_anchor": false
         }
-      ]
+      ],
+      "crh_final_decision": "SUPPRESSION SÛRE",
+      "crh_final_decision_ref": "artifacts/crh-branch-audit.md"
     },
     {
       "branch": "crh-28-wire-case-history",
@@ -14296,7 +14358,9 @@
           "history_mapping": null,
           "strong_anchor": false
         }
-      ]
+      ],
+      "crh_final_decision": "SUPPRESSION SÛRE",
+      "crh_final_decision_ref": "artifacts/crh-branch-audit.md"
     },
     {
       "branch": "crh-29-case-creation-service",
@@ -14402,7 +14466,9 @@
           "history_mapping": null,
           "strong_anchor": false
         }
-      ]
+      ],
+      "crh_final_decision": "SUPPRESSION SÛRE",
+      "crh_final_decision_ref": "artifacts/crh-branch-audit.md"
     },
     {
       "branch": "crh-30-new-case-dialog",
@@ -14525,7 +14591,9 @@
           "history_mapping": null,
           "strong_anchor": false
         }
-      ]
+      ],
+      "crh_final_decision": "SUPPRESSION SÛRE",
+      "crh_final_decision_ref": "artifacts/crh-branch-audit.md"
     },
     {
       "branch": "crh-31-case-document-tracking",
@@ -14628,7 +14696,9 @@
           "history_mapping": null,
           "strong_anchor": false
         }
-      ]
+      ],
+      "crh_final_decision": "SUPPRESSION SÛRE",
+      "crh_final_decision_ref": "artifacts/crh-branch-audit.md"
     },
     {
       "branch": "crh-32-wx-case-document-checklist",
@@ -14708,7 +14778,9 @@
           "history_mapping": null,
           "strong_anchor": false
         }
-      ]
+      ],
+      "crh_final_decision": "SUPPRESSION SÛRE",
+      "crh_final_decision_ref": "artifacts/crh-branch-audit.md"
     },
     {
       "branch": "crh-33-dashboard-document-state",
@@ -14762,7 +14834,9 @@
           "history_mapping": null,
           "strong_anchor": false
         }
-      ]
+      ],
+      "crh_final_decision": "SUPPRESSION SÛRE",
+      "crh_final_decision_ref": "artifacts/crh-branch-audit.md"
     },
     {
       "branch": "crh-33-dashboard-document-status",
@@ -14843,7 +14917,9 @@
           "history_mapping": null,
           "strong_anchor": false
         }
-      ]
+      ],
+      "crh_final_decision": "SUPPRESSION SÛRE",
+      "crh_final_decision_ref": "artifacts/crh-branch-audit.md"
     },
     {
       "branch": "crh-34-lifecycle-planning",
@@ -14925,7 +15001,9 @@
           "history_mapping": null,
           "strong_anchor": false
         }
-      ]
+      ],
+      "crh_final_decision": "SUPPRESSION SÛRE",
+      "crh_final_decision_ref": "artifacts/crh-branch-audit.md"
     },
     {
       "branch": "crh-35-lifecycle-template-persistence",
@@ -15010,7 +15088,9 @@
           "history_mapping": null,
           "strong_anchor": false
         }
-      ]
+      ],
+      "crh_final_decision": "SUPPRESSION SÛRE",
+      "crh_final_decision_ref": "artifacts/crh-branch-audit.md"
     },
     {
       "branch": "crh-36-lifecycle-template-management",
@@ -15037,7 +15117,9 @@
       "confidence": "high",
       "absorption_chain": null,
       "notes": [],
-      "target_evidence": []
+      "target_evidence": [],
+      "crh_final_decision": "À CONSERVER",
+      "crh_final_decision_ref": "artifacts/crh-branch-audit.md"
     },
     {
       "branch": "dev-db-docker",
@@ -69008,7 +69090,8 @@
     "PR": "API REST GitHub (lecture seule), 485 PR dont 48 ouvertes — aucune minute GitHub Actions",
     "tests": "pytest local, python 3.11.15 ; tests propres réinjectés dans un worktree de la cible seule, après exécution de référence sur la branche",
     "cibles": "ancres conservées uniquement : master, wx/master, qt/master, têtes et bases des 48 PR ouvertes",
-    "ancres fortes": "architecture/migration-noethys-teamworks, architecture/person-delete-usecase, architecture/person-refresh-contract, architecture/person-refresh-wx, architecture/profils-autorisations, feature/dpae-declarative-data, feature/dpae-domain-foundation, feature/dpae-incident-recovery, feature/dpae-structured-errors, feature/employee-termination-domain, feature/employee-termination-persistence, feature/employee-termination-transmission, master, qt/contracts-cee-create, qt/contracts-classification-prep, qt/contracts-probation-prep, qt/contracts-renewal-prep, qt/contracts-ui-gate, qt/contracts-ui-prep, qt/convergence-0.9.2-rc3, qt/master, qt/presence-transactions, qt/scenario-transactions, qt/vanilla-0.1-rc, rail-c/documents-rh-publipostage, release/vanilla-wx-0.9.2-rc3, ux/person-search-contract, wx/master"
+    "ancres fortes": "architecture/migration-noethys-teamworks, architecture/person-delete-usecase, architecture/person-refresh-contract, architecture/person-refresh-wx, architecture/profils-autorisations, feature/dpae-declarative-data, feature/dpae-domain-foundation, feature/dpae-incident-recovery, feature/dpae-structured-errors, feature/employee-termination-domain, feature/employee-termination-persistence, feature/employee-termination-transmission, master, qt/contracts-cee-create, qt/contracts-classification-prep, qt/contracts-probation-prep, qt/contracts-renewal-prep, qt/contracts-ui-gate, qt/contracts-ui-prep, qt/convergence-0.9.2-rc3, qt/master, qt/presence-transactions, qt/scenario-transactions, qt/vanilla-0.1-rc, rail-c/documents-rh-publipostage, release/vanilla-wx-0.9.2-rc3, ux/person-search-contract, wx/master",
+    "crh_override": "Les verdicts des branches crh-* sont surchargés par crh_final_decision (audit CRH dédié : 40 SUPPRESSION SÛRE, 0 À REVOIR, 1 À CONSERVER)."
   },
   "limits": [
     "Une branche sans test propre (tests/*.py ajoutés ou modifiés) ne peut pas être SUPPRESSION SÛRE : elle reste À REVOIR, même absorbée par l'historique.",

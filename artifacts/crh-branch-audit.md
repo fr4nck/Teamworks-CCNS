@@ -26,10 +26,10 @@ Référence : PR #357 (ouverte, draft, base wx/master), HEAD 6a75377b1d799c4a710
 | crh-19-employee-protection-succession | 06b9b237 | #337 closed, non mergée | ancêtre de crh-36 | 12 (depuis crh-18-employee-protection-actions) ; cherry manquants=0 | complète ; résidus éventuels expliqués par commits ultérieurs de crh-36 (docs/04 cumulatif, docstrings/imports) | branche PASS ; réinjectés PASS | aucune PR ouverte | SUPPRESSION SÛRE | patch-id complet + contenu + tests |
 | crh-20-wx-employee-protection-actions | 28f35865 | #338 closed, non mergée | ancêtre de crh-36 | 3 (depuis crh-19-employee-protection-succession) ; cherry manquants=0 ; même SHA que crh-21a-structure-hr-connections-dialog | complète ; résidus éventuels expliqués par commits ultérieurs de crh-36 (docs/04 cumulatif, docstrings/imports) | branche PASS ; réinjectés PASS | aucune PR ouverte | SUPPRESSION SÛRE | patch-id complet + contenu + tests |
 | crh-21-case-dashboard-projection | 7ad90213 | #341 closed, non mergée | ancêtre de crh-36 | 5 (depuis crh-10b-wx-structure-connections) ; cherry manquants=0 | complète ; résidus éventuels expliqués par commits ultérieurs de crh-36 (docs/04 cumulatif, docstrings/imports) | branche PASS ; réinjectés PASS | aucune PR ouverte | SUPPRESSION SÛRE | patch-id complet + contenu + tests |
-| crh-21-structure-hr-connections-ui | 1e14e018 | #339 closed, non mergée | NON ancêtre | 10 (depuis crh-20-wx-employee-protection-actions) ; cherry manquants=10 | PARTIEL : dialogue repris par #340 (DLG_Organismes_connexions_rh) ; ABSENTS de crh-36 : bouton « Organismes RH… » de la fiche salarié (bouton_organismes/OnOrganismes), message d'aide, StructureOrganizationProfileRequest, structure_hr_connections_factory.py, DLG_Connexions_RH.py, docs/72 | PASS branche (10) ; réinjection FAIL (ModuleNotFoundError structure_hr_connections_factory) : perte réelle, non remplacée | aucune PR ouverte | À REVOIR | travail unique non absorbé |
+| crh-21-structure-hr-connections-ui | 1e14e018 | #339 closed, non mergée | NON ancêtre | 10 (depuis crh-20-wx-employee-protection-actions) ; cherry manquants=10 | PARTIEL : dialogue repris par #340 (DLG_Organismes_connexions_rh) ; ABSENTS de crh-36 : bouton « Organismes RH… » de la fiche salarié (bouton_organismes/OnOrganismes), message d'aide, StructureOrganizationProfileRequest, structure_hr_connections_factory.py, DLG_Connexions_RH.py, docs/72 | PASS branche (10) ; réinjection FAIL (ModuleNotFoundError structure_hr_connections_factory) : perte réelle, non remplacée | aucune PR ouverte | SUPPRESSION SÛRE | arbitrage final : voir section Arbitrage #339 / CRH-22 |
 | crh-21a-structure-hr-connections-dialog | 28f35865 | aucune | ancêtre de crh-36 | 3 (depuis crh-19-employee-protection-succession) ; cherry manquants=0 ; même SHA que crh-20-wx-employee-protection-actions | complète ; résidus éventuels expliqués par commits ultérieurs de crh-36 (docs/04 cumulatif, docstrings/imports) | branche PASS ; réinjectés PASS | aucune PR ouverte | SUPPRESSION SÛRE | patch-id complet + contenu + tests |
 | crh-22-teamworks-cases-persistence | 1afba764 | #342 closed, non mergée | ancêtre de crh-36 | 9 (depuis crh-21-case-dashboard-projection) ; cherry manquants=0 | complète ; résidus éventuels expliqués par commits ultérieurs de crh-36 (docs/04 cumulatif, docstrings/imports) | branche PASS ; réinjectés PASS | aucune PR ouverte | SUPPRESSION SÛRE | patch-id complet + contenu + tests |
-| crh-22-teamworks-hr-cases-persistence | 3f50b83b | aucune | NON ancêtre | 5 (depuis crh-21-structure-hr-connections-ui) ; cherry manquants=5 | Variante concurrente de CRH-22 (20:53-20:55) ; crh-36 porte la variante refaite (1049a5fb..1afba764) : même API (8 méthodes), mêmes 5 tables/colonnes ; écarts : index idx_tw_hr_events_target → idx_tw_hr_audit_target, idx organisation sans due_on, docs/73 remplacé par docs/74 ; EMBARQUE les 10 commits non absorbés de crh-21-ui | PASS branche (7) ; réinjection 6/7, l'échec est un grep de source (isNetwork) : l'adaptateur de dialecte est désormais importé de teamworks_hr_connections_repository (refactor, pas de perte) ; versions crh-36 : 6 PASS | aucune PR ouverte | À REVOIR | travail unique non absorbé |
+| crh-22-teamworks-hr-cases-persistence | 3f50b83b | aucune | NON ancêtre | 5 (depuis crh-21-structure-hr-connections-ui) ; cherry manquants=5 | Variante concurrente de CRH-22 (20:53-20:55) ; crh-36 porte la variante refaite (1049a5fb..1afba764) : même API (8 méthodes), mêmes 5 tables/colonnes ; écarts : index idx_tw_hr_events_target → idx_tw_hr_audit_target, idx organisation sans due_on, docs/73 remplacé par docs/74 ; EMBARQUE les 10 commits non absorbés de crh-21-ui | PASS branche (7) ; réinjection 6/7, l'échec est un grep de source (isNetwork) : l'adaptateur de dialecte est désormais importé de teamworks_hr_connections_repository (refactor, pas de perte) ; versions crh-36 : 6 PASS | aucune PR ouverte | SUPPRESSION SÛRE | arbitrage final : voir section Arbitrage #339 / CRH-22 |
 | crh-23-case-dashboard-runtime | 2ae8fdff | #343 closed, non mergée | ancêtre de crh-36 | 9 (depuis crh-22-teamworks-cases-persistence) ; cherry manquants=0 | complète ; résidus éventuels expliqués par commits ultérieurs de crh-36 (docs/04 cumulatif, docstrings/imports) | branche PASS ; réinjectés PASS | aucune PR ouverte | SUPPRESSION SÛRE | patch-id complet + contenu + tests |
 | crh-24-wx-case-dashboard | de48bf0a | #344 closed, non mergée | ancêtre de crh-36 | 6 (depuis crh-23-case-dashboard-runtime) ; cherry manquants=0 | complète ; résidus éventuels expliqués par commits ultérieurs de crh-36 (docs/04 cumulatif, docstrings/imports) | branche PASS ; réinjectés PASS | aucune PR ouverte | SUPPRESSION SÛRE | patch-id complet + contenu + tests |
 | crh-25-case-workflow-service | 71c44ddc | #345 closed, non mergée | ancêtre de crh-36 | 15 (depuis crh-24-wx-case-dashboard) ; cherry manquants=0 | complète ; résidus éventuels expliqués par commits ultérieurs de crh-36 (docs/04 cumulatif, docstrings/imports) | branche PASS ; réinjectés PASS | aucune PR ouverte | SUPPRESSION SÛRE | patch-id complet + contenu + tests |
@@ -46,10 +46,68 @@ Référence : PR #357 (ouverte, draft, base wx/master), HEAD 6a75377b1d799c4a710
 | crh-35-lifecycle-template-persistence | 2a2f20af | #356 closed, non mergée | ancêtre de crh-36 | 6 (depuis crh-34-lifecycle-planning) ; cherry manquants=0 | complète ; résidus éventuels expliqués par commits ultérieurs de crh-36 (docs/04 cumulatif, docstrings/imports) | branche PASS ; réinjectés PASS | aucune PR ouverte | SUPPRESSION SÛRE | patch-id complet + contenu + tests |
 | crh-36-lifecycle-template-management | 6a75377b | #357 ouverte | — (référence) | — | — | — | #357 | À CONSERVER | branche de sommet de la pile CRH |
 
-## Totaux
-- SUPPRESSION SÛRE : 38
-- À REVOIR : 2 (crh-21-structure-hr-connections-ui, crh-22-teamworks-hr-cases-persistence)
-- À CONSERVER : 1 (crh-36-lifecycle-template-management, PR #357)
+## Arbitrage #339 / CRH-22 (final)
+- crh-21-structure-hr-connections-ui : dialogue, factory, request object, docs et tests remplacés par #340 (`DLG_Organismes_connexions_rh`, `hr_connections_structure_factory.StructureHrConnectionsRuntimeFactory`, `StructureConnectionProfileRequest`, `docs/72-crh-10b`). Seul manque : le raccourci contextuel de la fiche salarié (lot distinct ci-dessous). Historique consultable via `refs/pull/339/head` (1e14e018).
+- crh-22-teamworks-hr-cases-persistence : variante remplacée par la pile CRH-22 ; ses commits #339 sont identiques à `refs/pull/339/head`. Index `due_on` : aucune requête actuelle ne l'exploite (list_cases filtre sur structure_ref et trie par opened_on, case_id ; filtrage du tableau de bord en Python) → ne pas le recréer, pas de changement de schéma.
+
+## Totaux (final)
+- SUPPRESSION SÛRE : 40
+- À REVOIR : 0
+- À CONSERVER : 1 (crh-36-lifecycle-template-management, PR #357 draft, non mergée)
 
 ## Suppressions
-Aucune suppression effectuée. Le HEAD de chaque branche a été revérifié par `git ls-remote` et correspondait à l'audit, mais `git push origin --delete` a été refusé en HTTP 403 par le proxy git de la session. Les 41 branches crh-* sont toujours présentes.
+Aucune suppression effectuée : `git push origin --delete` est refusé en HTTP 403 par le proxy git de la session (les pushes ne sont autorisés que vers la branche de session). Les 40 HEAD ont été revérifiés le 2026-09-29 et sont identiques à l'audit. À exécuter depuis une session autorisée, après un `git ls-remote` de contrôle :
+
+```sh
+git push origin --delete \
+  crh-01-02-domain-registry \
+  crh-03-cases-workflow \
+  crh-04-event-journal \
+  crh-05-file-exchange-boundary \
+  crh-06-secret-store-contract \
+  crh-07-manual-portal-connector \
+  crh-08-reference-manual-connectors \
+  crh-09-additive-persistence \
+  crh-10-structure-configuration-service \
+  crh-10b-wx-structure-connections \
+  crh-11-employee-protection-model \
+  crh-12-employee-protection-service \
+  crh-13-employee-protection-persistence \
+  crh-14-employee-protection-summary \
+  crh-15-wx-employee-protection-panel \
+  crh-16-teamworks-production-persistence \
+  crh-17a-employee-protection-composition \
+  crh-17b-wx-employee-protection-wiring \
+  crh-18-employee-protection-actions \
+  crh-19-employee-protection-succession \
+  crh-20-wx-employee-protection-actions \
+  crh-21-case-dashboard-projection \
+  crh-21-structure-hr-connections-ui \
+  crh-21a-structure-hr-connections-dialog \
+  crh-22-teamworks-cases-persistence \
+  crh-22-teamworks-hr-cases-persistence \
+  crh-23-case-dashboard-runtime \
+  crh-24-wx-case-dashboard \
+  crh-25-case-workflow-service \
+  crh-26-wx-case-workflow-actions \
+  crh-27-case-audit-history \
+  crh-28-wire-case-history \
+  crh-29-case-creation-service \
+  crh-30-new-case-dialog \
+  crh-31-case-document-tracking \
+  crh-32-wx-case-document-checklist \
+  crh-33-dashboard-document-state \
+  crh-33-dashboard-document-status \
+  crh-34-lifecycle-planning \
+  crh-35-lifecycle-template-persistence
+```
+
+## Lot distinct à planifier — raccourci « Organismes RH… » (non développé)
+- bouton « Organismes RH… » dans l'onglet Protection sociale de la fiche salarié ;
+- ouverture différée (import au clic) de `DLG_Organismes_connexions_rh.Dialog` ;
+- `LoadSummary()` après fermeture si un salarié est chargé ;
+- erreurs via `_show_action_error` ;
+- message « Aucun organisme compatible… » indiquant le bouton ou Paramétrage → Organismes & connexions RH ;
+- tests ciblés (import différé, message, handler avec dialogue simulé) ;
+- documentation dans `docs/72-crh-10b-ecran-organismes-connexions-rh.md`.
+Ne pas restaurer : `DLG_Connexions_RH.py`, `structure_hr_connections_factory.py`, `StructureOrganizationProfileRequest`, l'invalidation `_actions_runtime = None`, les anciens tests de #339, `docs/72-crh-21`.
