@@ -207,6 +207,18 @@ Si l'application graphique est modifiée de manière perceptible, prévoir une v
 - Décrire le problème, la solution, les tests, les mesures, les limites et les risques.
 - Ne jamais fusionner automatiquement.
 
+### Branches permanentes
+
+Teamworks-CCNS possède trois branches permanentes : `master`, `wx/master` et `qt/master`.
+
+- `master` : domaines, infrastructure, outillage, documentation et CI transversaux ;
+- `wx/master` : maintenance de l'application wxPython historique ;
+- `qt/master` : développement Qt intégré, installable depuis son HEAD qualifié.
+
+Toute autre branche est temporaire. Elle est créée depuis la branche permanente correspondant au domaine, intégrée rapidement après qualification, puis supprimée. Elle doit avoir un objectif ou une PR identifiable, une branche cible et une condition de suppression.
+
+Une ancienne PR ne constitue jamais une base de développement. Une branche ne sert pas d'archive : les jalons historiques sont conservés par tags, commits et PR fermées. Une branche n'est supprimée qu'après preuve que son contenu utile est présent sur une branche permanente ou explicitement abandonné.
+
 ## Philosophie du fork
 
 Teamworks-CCNS reste un fork autonome : les améliorations génériques peuvent être proposées au Teamworks d'origine lorsque cela est naturel, mais cette possibilité ne doit jamais ralentir ni contraindre les besoins CCNS. Lors d'une modification, identifier autant que possible les zones génériques Teamworks, les zones spécifiques CCNS et les zones d'intégration afin de préserver une migration progressive et lisible.
