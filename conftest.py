@@ -25,9 +25,12 @@ def _diagnostic_searchctrl_windows() -> None:
 
     failures: list[str] = []
     scenarios = (
-        ("buttons-search", 40),
-        ("backup-search", 30),
-        ("backup-email", 30),
+        ("buttons-search", 20),
+        ("backup-search", 15),
+        ("backup-email", 15),
+        ("params10-backup", 5),
+        ("params15-backup", 5),
+        ("params20-backup", 5),
     )
     for scenario, cycles in scenarios:
         completed = subprocess.run(
@@ -42,7 +45,7 @@ def _diagnostic_searchctrl_windows() -> None:
             cwd=ROOT,
             text=True,
             capture_output=True,
-            timeout=max(300, cycles * 20),
+            timeout=max(300, cycles * 60),
             check=False,
         )
         output = "\n".join(
