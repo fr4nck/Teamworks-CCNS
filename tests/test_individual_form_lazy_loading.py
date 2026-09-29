@@ -120,3 +120,14 @@ def test_historical_core_is_preserved_behind_active_wrapper():
     assert "from Dlg import DLG_Fiche_individuelle_core as CORE" in wrapper
     assert "class Dialog(CORE.Dialog):" in wrapper
     assert "DLG_Fiche_individuelle_lazy" not in wrapper
+
+
+def test_lazy_notebook_uses_the_same_generalites_adapter_as_the_core():
+    """La variante différée remplace le Notebook du cœur : elle doit conserver
+    l'adaptateur Généralités 0.9.1e/f (zone défilante, CP libre, pays)."""
+    core = CORE.read_text(encoding="utf-8")
+    lazy = LAZY.read_text(encoding="utf-8")
+    adapter_import = "from Ctrl import CTRL_Page_generalites_091e as CTRL_Page_generalites"
+    assert adapter_import in core
+    assert adapter_import in lazy
+    assert "\nfrom Ctrl import CTRL_Page_generalites\n" not in lazy

@@ -9,7 +9,7 @@ import wx
 import Chemins
 import GestionDB
 from Utils.UTILS_Traduction import _
-from Ctrl import CTRL_Page_generalites
+from Ctrl import CTRL_Page_generalites_091e as CTRL_Page_generalites
 from Ctrl import CTRL_Page_questionnaire
 from Ctrl import CTRL_Page_qualifications
 from Ctrl import CTRL_Page_contrats
