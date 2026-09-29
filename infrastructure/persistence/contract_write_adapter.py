@@ -146,8 +146,8 @@ class GestionDbContractWriteAdapter:
         ]
 
         optional = {
-            "operation_type": "NEW",
-            "previous_contract_id": None,
+            "operation_type": command.operation_type,
+            "previous_contract_id": command.previous_contract_id,
             "trial_period_value": command.trial_period_value,
             "trial_period_unit": command.trial_period_unit,
         }
@@ -160,7 +160,9 @@ class GestionDbContractWriteAdapter:
             raise RuntimeError("Le contrat principal n'a pas pu être créé.")
         return int(inserted)
 
-    def read_contract(self, contract_id: int) -> ContractEditSnapshot | None:
+    def _read_contract(
+        self, contract_id: int, *, for_update: bool = False
+    ) -> ContractEditSnapshot | None:
         modern_names = (
             "convention_code",
             "ccns_group",
@@ -169,16 +171,29 @@ class GestionDbContractWriteAdapter:
             "gross_monthly_salary",
             "gross_annual_salary",
         )
+        metadata_names = (
+            "operation_type",
+            "previous_contract_id",
+            "trial_period_value",
+            "trial_period_unit",
+        )
         modern_supported = all(name in self._contract_columns() for name in modern_names)
-        exprs = [self._optional_expr(name) for name in modern_names]
+        exprs = [self._optional_expr(name) for name in modern_names + metadata_names]
         req = (
             "SELECT c.IDpersonne, c.IDtype, COALESCE(t.nom_abrege, t.nom, ''), "
             "COALESCE(t.nom, t.nom_abrege, ''), "
             "c.date_debut, c.date_fin, c.date_rupture, "
+            "c.IDclassification, c.valeur_point, c.essai, "
             + ", ".join("c.%s" % expr if expr != "NULL" else "NULL" for expr in exprs)
             + " FROM contrats c "
             "LEFT JOIN contrats_types t ON t.IDtype=c.IDtype "
-            "WHERE c.IDcontrat=%s" % self._placeholder
+            "WHERE c.IDcontrat=%s%s"
+            % (
+                self._placeholder,
+                " FOR UPDATE"
+                if for_update and getattr(self.db, "isNetwork", False)
+                else "",
+            )
         )
         self.db.cursor.execute(req, (contract_id,))
         row = self.db.cursor.fetchone()
@@ -196,14 +211,51 @@ class GestionDbContractWriteAdapter:
             start_date=self._as_date(row[4]),
             end_date=end_date,
             break_date=self._as_date(row[6]),
-            convention_code=row[7],
-            ccns_group=row[8],
-            cee_qualification=row[9],
-            weekly_hours=self._as_decimal(row[10]),
-            gross_monthly_salary=self._as_decimal(row[11]),
-            gross_annual_salary=self._as_decimal(row[12]),
+            convention_code=row[10],
+            ccns_group=row[11],
+            cee_qualification=row[12],
+            weekly_hours=self._as_decimal(row[13]),
+            gross_monthly_salary=self._as_decimal(row[14]),
+            gross_annual_salary=self._as_decimal(row[15]),
             modern_fields_supported=modern_supported,
+            operation_type=row[16],
+            previous_contract_id=int(row[17]) if row[17] is not None else None,
+            legacy_classification_id=int(row[7]) if row[7] is not None else None,
+            legacy_point_id=int(row[8]) if row[8] is not None else None,
+            legacy_trial_days=int(row[9]) if row[9] is not None else None,
+            trial_period_value=int(row[18]) if row[18] is not None else None,
+            trial_period_unit=row[19],
         )
+
+    def read_contract(self, contract_id: int) -> ContractEditSnapshot | None:
+        return self._read_contract(contract_id)
+
+    def list_legacy_classifications(self):
+        self.db.cursor.execute(
+            "SELECT IDclassification, nom FROM contrats_class ORDER BY IDclassification"
+        )
+        return self.db.cursor.fetchall() or ()
+
+    def list_legacy_point_values(self):
+        self.db.cursor.execute(
+            "SELECT IDvaleur_point, valeur, date_debut "
+            "FROM valeurs_point ORDER BY date_debut, IDvaleur_point"
+        )
+        return self.db.cursor.fetchall() or ()
+
+    def update_legacy_classification(
+        self,
+        contract_id: int,
+        classification_id: int,
+        point_id: int,
+    ) -> int:
+        self.db.cursor.execute(
+            "UPDATE contrats SET IDclassification=%s, valeur_point=%s "
+            "WHERE IDcontrat=%s"
+            % (self._placeholder, self._placeholder, self._placeholder),
+            (classification_id, point_id, contract_id),
+        )
+        return int(self.db.cursor.rowcount)
 
     def update_contract(self, command: ContractEditCommand) -> int:
         fields = [

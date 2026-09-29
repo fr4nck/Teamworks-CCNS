@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 from typing import Optional, Protocol
 
@@ -23,8 +23,13 @@ from domain.contracts.contract_creation_rules import (
     ContractCreationRules,
     ConventionCode,
 )
+from domain.contracts.contract_operation import ContractOperation
 from domain.contracts.contract_type import ContractType
-from domain.contracts.probation_period import ProbationUnit, probation_calendar_days
+from domain.contracts.probation_period import (
+    ProbationUnit,
+    probation_calendar_days,
+    propose_ccns_probation_period,
+)
 from domain.convention.salary_grid_entry import SalaryMinimumPeriodicity
 
 
@@ -32,7 +37,7 @@ ALLOWED_INDICATOR_FIELDS = frozenset(("signature", "due"))
 ALLOWED_INDICATOR_VALUES = frozenset(("", "Oui"))
 FIXED_TERM_CODES = frozenset(("CDD", "CEE", "APPRENTISSAGE", "STAGE", "SERVICE CIVIQUE"))
 CEE_CODES = frozenset(item.value for item in CEEQualification)
-SUPPORTED_CREATE_TYPES = frozenset(("CDI", "CDD"))
+SUPPORTED_CREATE_TYPES = frozenset(("CDI", "CDD", "CEE"))
 
 
 @dataclass(frozen=True)
@@ -51,6 +56,13 @@ class ContractEditSnapshot:
     end_date: Optional[date]
     break_date: Optional[date]
     modern_fields_supported: bool
+    operation_type: Optional[str] = None
+    previous_contract_id: Optional[int] = None
+    legacy_classification_id: Optional[int] = None
+    legacy_point_id: Optional[int] = None
+    legacy_trial_days: Optional[int] = None
+    trial_period_value: Optional[int] = None
+    trial_period_unit: Optional[str] = None
 
 
 @dataclass(frozen=True)
@@ -68,6 +80,8 @@ class ContractCreateCommand:
     trial_period_value: int
     trial_period_unit: str
     confirm_no_trial: bool = False
+    operation_type: str = ContractOperation.NEW.value
+    previous_contract_id: Optional[int] = None
 
 
 @dataclass(frozen=True)
@@ -114,6 +128,17 @@ class ContractWritePort(Protocol):
     def update_contract(self, command: ContractEditCommand) -> int:
         ...
 
+    def list_legacy_classifications(self):
+        ...
+
+    def list_legacy_point_values(self):
+        ...
+
+    def update_legacy_classification(
+        self, contract_id: int, classification_id: int, point_id: int
+    ) -> int:
+        ...
+
     def commit(self) -> None:
         ...
 
@@ -121,12 +146,367 @@ class ContractWritePort(Protocol):
         ...
 
 
+@dataclass(frozen=True)
+class LegacyClassificationChoice:
+    classification_id: int
+    label: str
+
+
+@dataclass(frozen=True)
+class LegacyPointChoice:
+    point_id: int
+    value: Decimal
+    effective_date: date
+
+
+@dataclass(frozen=True)
+class LegacyContractOptions:
+    classifications: tuple[LegacyClassificationChoice, ...]
+    point_values: tuple[LegacyPointChoice, ...]
+    applicable_point_id: Optional[int]
+
+
+@dataclass(frozen=True)
+class ContractLegacyClassificationCommand:
+    contract_id: int
+    classification_id: int
+    point_id: int
+
+
 def _normalise_code(value: object) -> str:
     return str(value or "").strip().upper()
 
 
+def _as_legacy_date(value: object) -> date:
+    if type(value) is date:
+        return value
+    text = str(value or "").strip()
+    if not text:
+        raise ValueError("Date de valeur de point absente.")
+    return date.fromisoformat(text[:10])
+
+
+def _as_legacy_decimal(value: object) -> Decimal:
+    result = Decimal(str(value))
+    if not result.is_finite():
+        raise ValueError("Valeur de point invalide.")
+    return result
+
+
+def load_legacy_contract_options(
+    port: ContractWritePort,
+    *,
+    reference_date: date,
+) -> WriteResult[LegacyContractOptions]:
+    if type(reference_date) is not date:
+        return WriteResult(
+            ok=False,
+            code=WriteCode.VALIDATION_ERROR,
+            message="La date de référence historique est invalide.",
+        )
+
+    try:
+        raw_classifications = port.list_legacy_classifications()
+        raw_points = port.list_legacy_point_values()
+
+        classifications = tuple(
+            LegacyClassificationChoice(
+                classification_id=int(classification_id),
+                label=str(label or "").strip(),
+            )
+            for classification_id, label in raw_classifications
+            if is_valid_target_id(int(classification_id))
+        )
+        points = tuple(
+            LegacyPointChoice(
+                point_id=int(point_id),
+                value=_as_legacy_decimal(value),
+                effective_date=_as_legacy_date(effective_date),
+            )
+            for point_id, value, effective_date in raw_points
+            if is_valid_target_id(int(point_id))
+        )
+    except Exception as exc:
+        return WriteResult(
+            ok=False,
+            code=WriteCode.DATABASE_ERROR,
+            message="Lecture des classifications historiques impossible : %s" % exc,
+        )
+
+    applicable = [
+        item for item in points if item.effective_date <= reference_date
+    ]
+    applicable_point_id = (
+        max(applicable, key=lambda item: (item.effective_date, item.point_id)).point_id
+        if applicable
+        else None
+    )
+
+    return WriteResult(
+        ok=True,
+        code=WriteCode.OK,
+        message="Classifications historiques chargées.",
+        value=LegacyContractOptions(
+            classifications=classifications,
+            point_values=points,
+            applicable_point_id=applicable_point_id,
+        ),
+    )
+
+
+def _readback_legacy_classification(
+    port: ContractWritePort,
+    *,
+    contract_id: int,
+    classification_id: int,
+    point_id: int,
+) -> ContractEditSnapshot:
+    snapshot = _readback_contract(port, contract_id)
+    if snapshot.legacy_classification_id != classification_id:
+        raise LookupError(
+            "La classification historique relue ne correspond pas à la valeur enregistrée."
+        )
+    if snapshot.legacy_point_id != point_id:
+        raise LookupError(
+            "La valeur de point historique relue ne correspond pas à la valeur enregistrée."
+        )
+    return snapshot
+
+
+def update_contract_legacy_classification(
+    port: ContractWritePort,
+    *,
+    command: ContractLegacyClassificationCommand,
+) -> WriteResult[ContractEditSnapshot]:
+    if not is_valid_target_id(command.contract_id):
+        return invalid_target_result(command.contract_id)
+    if not is_valid_target_id(command.classification_id):
+        return WriteResult(
+            ok=False,
+            code=WriteCode.VALIDATION_ERROR,
+            message="Classification historique invalide.",
+            target_id=command.contract_id,
+        )
+    if not is_valid_target_id(command.point_id):
+        return WriteResult(
+            ok=False,
+            code=WriteCode.VALIDATION_ERROR,
+            message="Valeur de point historique invalide.",
+            target_id=command.contract_id,
+        )
+
+    loaded = load_contract_for_edit(port, contract_id=command.contract_id)
+    if not loaded.ok or loaded.value is None:
+        return loaded
+    original = loaded.value
+
+    if _normalise_code(original.contract_type_code) == ContractType.CEE.value:
+        return WriteResult(
+            ok=False,
+            code=WriteCode.VALIDATION_ERROR,
+            message="Un CEE n'utilise pas de classification historique.",
+            target_id=command.contract_id,
+        )
+    if _normalise_code(original.convention_code) == ConventionCode.CCNS.value:
+        return WriteResult(
+            ok=False,
+            code=WriteCode.VALIDATION_ERROR,
+            message="Un contrat CCNS moderne utilise le groupe CCNS, pas la classification historique.",
+            target_id=command.contract_id,
+        )
+
+    options_result = load_legacy_contract_options(
+        port,
+        reference_date=original.start_date,
+    )
+    if not options_result.ok or options_result.value is None:
+        return WriteResult(
+            ok=False,
+            code=options_result.code,
+            message=options_result.message,
+            target_id=command.contract_id,
+        )
+    options = options_result.value
+    valid_classification_ids = {
+        item.classification_id for item in options.classifications
+    }
+    if command.classification_id not in valid_classification_ids:
+        return WriteResult(
+            ok=False,
+            code=WriteCode.VALIDATION_ERROR,
+            message="La classification historique sélectionnée n'existe pas.",
+            target_id=command.contract_id,
+        )
+    if options.applicable_point_id is None:
+        return WriteResult(
+            ok=False,
+            code=WriteCode.VALIDATION_ERROR,
+            message="Aucune valeur de point historique n'est applicable à la date du contrat.",
+            target_id=command.contract_id,
+        )
+    if command.point_id != options.applicable_point_id:
+        return WriteResult(
+            ok=False,
+            code=WriteCode.VALIDATION_ERROR,
+            message="La valeur de point sélectionnée ne correspond pas à la date du contrat.",
+            target_id=command.contract_id,
+        )
+
+    return execute_transactional_update(
+        target_id=command.contract_id,
+        target_exists=lambda: port.contract_exists(command.contract_id),
+        write=lambda: port.update_legacy_classification(
+            command.contract_id,
+            command.classification_id,
+            command.point_id,
+        ),
+        commit=port.commit,
+        rollback=port.rollback,
+        readback=lambda: _readback_legacy_classification(
+            port,
+            contract_id=command.contract_id,
+            classification_id=command.classification_id,
+            point_id=command.point_id,
+        ),
+    )
+
+
 def _is_cee(command: ContractEditCommand) -> bool:
     return _normalise_code(command.contract_type_code) == "CEE"
+
+
+def _create_operation(command: ContractCreateCommand) -> ContractOperation | None:
+    try:
+        return ContractOperation(_normalise_code(command.operation_type))
+    except ValueError:
+        return None
+
+
+def _validate_create_operation_shape(
+    command: ContractCreateCommand,
+    *,
+    contract_type: ContractType,
+) -> tuple[str, ...]:
+    errors: list[str] = []
+    operation = _create_operation(command)
+    if operation is None:
+        return ("Nature de l'opération de contrat inconnue.",)
+
+    if operation is ContractOperation.NEW:
+        if command.previous_contract_id is not None:
+            errors.append(
+                "Un nouveau contrat ne doit pas référencer de contrat précédent."
+            )
+        return tuple(errors)
+
+    if not is_valid_target_id(command.previous_contract_id):
+        errors.append("Le contrat précédent est obligatoire pour cette opération.")
+
+    if operation is ContractOperation.CDD_RENEWAL:
+        if contract_type is not ContractType.CDD:
+            errors.append("Un renouvellement de CDD doit produire un CDD.")
+        if command.trial_period_value != 0:
+            errors.append("Un renouvellement de CDD ne doit pas recréer de période d'essai.")
+    elif operation is ContractOperation.CDD_TO_CDI:
+        if contract_type is not ContractType.CDI:
+            errors.append("Un passage CDD vers CDI doit produire un CDI.")
+
+    return tuple(errors)
+
+
+def _validate_probation_rules(
+    command: ContractCreateCommand,
+    *,
+    contract_type: ContractType,
+    previous: ContractEditSnapshot | None = None,
+    allow_deferred_previous: bool = False,
+) -> tuple[str, ...]:
+    operation = _create_operation(command)
+    if operation is None:
+        return ()
+
+    if (
+        operation is ContractOperation.CDD_TO_CDI
+        and previous is None
+        and allow_deferred_previous
+    ):
+        return ()
+
+    try:
+        unit = ProbationUnit(command.trial_period_unit)
+        proposal = propose_ccns_probation_period(
+            contract_type=contract_type,
+            operation=operation,
+            start_date=command.start_date,
+            end_date=command.end_date,
+            ccns_group=command.ccns_group,
+            previous_contract_start=previous.start_date if previous is not None else None,
+            previous_contract_end=previous.end_date if previous is not None else None,
+        )
+        entered_days = probation_calendar_days(
+            start_date=command.start_date,
+            value=command.trial_period_value,
+            unit=unit,
+        )
+        proposed_days = probation_calendar_days(
+            start_date=command.start_date,
+            value=proposal.value,
+            unit=proposal.unit,
+        )
+    except Exception as exc:
+        return ("La période d'essai ne peut pas être calculée : %s" % exc,)
+
+    errors: list[str] = []
+    if entered_days > 365:
+        errors.append("La période d'essai dépasse la capacité historique de 365 jours.")
+
+    if proposal.automatic and entered_days > proposed_days:
+        errors.append(
+            "La période d'essai saisie dépasse le maximum calculé pour ce parcours."
+        )
+
+    if command.trial_period_value == 0:
+        automatic_zero = proposal.automatic and proposal.value == 0
+        if (
+            contract_type is not ContractType.CEE
+            and operation is not ContractOperation.CDD_RENEWAL
+            and not automatic_zero
+            and not command.confirm_no_trial
+        ):
+            errors.append(
+                "Confirmez explicitement l'absence de période d'essai avant d'enregistrer."
+            )
+
+    return tuple(errors)
+
+
+def _validate_previous_contract(
+    command: ContractCreateCommand,
+    previous: ContractEditSnapshot | None,
+) -> tuple[str, ...]:
+    operation = _create_operation(command)
+    if operation not in (
+        ContractOperation.CDD_RENEWAL,
+        ContractOperation.CDD_TO_CDI,
+    ):
+        return ()
+
+    if previous is None:
+        return ("Le contrat précédent sélectionné n'existe plus.",)
+    if previous.person_id != command.person_id:
+        return ("Le contrat précédent n'appartient pas à la personne sélectionnée.",)
+    if _normalise_code(previous.contract_type_code) != ContractType.CDD.value:
+        return ("Le contrat précédent doit être un CDD.",)
+    if previous.end_date is None:
+        return ("Le CDD précédent doit avoir une date de fin exploitable.",)
+
+    expected_start = previous.end_date + timedelta(days=1)
+    if command.start_date != expected_start:
+        return (
+            "Le nouveau contrat doit débuter le lendemain du CDD précédent (%s attendu)."
+            % expected_start.isoformat(),
+        )
+    return ()
 
 
 def validate_contract_edit(
@@ -241,9 +621,9 @@ def validate_contract_edit(
 def validate_contract_create(command: ContractCreateCommand) -> tuple[str, ...]:
     """Valide une création avant toute écriture en base.
 
-    Ce premier lot active volontairement les créations CDI/CDD sous CCNS.
-    Les parcours CEE et conventions historiques restent hors de ce formulaire
-    tant que leurs compensations/classifications complètes ne sont pas extraites.
+    Le rail Qt autorise CDI/CDD sous CCNS et les CEE dont la qualification
+    est explicite. Les autres conventions et parcours historiques restent
+    hors de ce formulaire tant que leurs règles complètes ne sont pas extraites.
     """
 
     errors: list[str] = []
@@ -266,20 +646,33 @@ def validate_contract_create(command: ContractCreateCommand) -> tuple[str, ...]:
     except ValueError:
         return ("Type de contrat ou convention inconnu.",)
 
+    cee_context_qualification = None
+    invalid_cee_qualification = False
+    if contract_type is ContractType.CEE and command.cee_qualification:
+        try:
+            cee_context_qualification = CEEQualification(command.cee_qualification)
+        except (TypeError, ValueError):
+            invalid_cee_qualification = True
+
+    errors.extend(
+        _validate_create_operation_shape(command, contract_type=contract_type)
+    )
+
     context = ContractCreationContext(
         convention=convention,
         contract_type=contract_type,
         classification_code=command.ccns_group,
-        cee_qualification=None,
+        cee_qualification=cee_context_qualification,
     )
-    errors.extend(ContractCreationRules().validate_context(context))
+    if not invalid_cee_qualification:
+        errors.extend(ContractCreationRules().validate_context(context))
 
     edit_equivalent = ContractEditCommand(
         contract_id=1,
         contract_type_code=contract_code,
         convention_code=command.convention_code,
         ccns_group=command.ccns_group,
-        cee_qualification=None,
+        cee_qualification=command.cee_qualification,
         weekly_hours=command.weekly_hours,
         gross_monthly_salary=command.gross_monthly_salary,
         gross_annual_salary=command.gross_annual_salary,
@@ -298,27 +691,19 @@ def validate_contract_create(command: ContractCreateCommand) -> tuple[str, ...]:
         errors.append("L'unité de période d'essai est invalide.")
         trial_unit = None
 
-    if (
-        type(command.trial_period_value) is int
-        and command.trial_period_value == 0
-        and not command.confirm_no_trial
-    ):
-        errors.append(
-            "Confirmez explicitement l'absence de période d'essai avant d'enregistrer."
-        )
+    operation = _create_operation(command)
+    if contract_type is ContractType.CEE:
+        if type(command.trial_period_value) is int and command.trial_period_value != 0:
+            errors.append("Un CEE ne doit pas comporter de période d'essai.")
 
     if not errors and trial_unit is not None:
-        try:
-            legacy_days = probation_calendar_days(
-                start_date=command.start_date,
-                value=command.trial_period_value,
-                unit=trial_unit,
+        errors.extend(
+            _validate_probation_rules(
+                command,
+                contract_type=contract_type,
+                allow_deferred_previous=True,
             )
-        except Exception as exc:
-            errors.append("La période d'essai ne peut pas être calculée : %s" % exc)
-        else:
-            if legacy_days > 365:
-                errors.append("La période d'essai dépasse la capacité historique de 365 jours.")
+        )
 
     return tuple(errors)
 
@@ -346,12 +731,12 @@ def load_contract_creation_types(
             code=WriteCode.DATABASE_ERROR,
             message="Lecture des types de contrat impossible : %s" % exc,
         )
-    supported = tuple(code for code in ("CDI", "CDD") if code in available)
+    supported = tuple(code for code in ("CDI", "CDD", "CEE") if code in available)
     if not supported:
         return WriteResult(
             ok=False,
             code=WriteCode.VALIDATION_ERROR,
-            message="Aucun type CDI/CDD exploitable n'est configuré dans la base.",
+            message="Aucun type CDI/CDD/CEE exploitable n'est configuré dans la base.",
         )
     return WriteResult(
         ok=True,
@@ -399,6 +784,48 @@ def create_contract(
             code=WriteCode.VALIDATION_ERROR,
             message="Le type de contrat %s n'existe pas dans cette base." % contract_code,
         )
+
+    operation = _create_operation(command)
+    if operation in (
+        ContractOperation.CDD_RENEWAL,
+        ContractOperation.CDD_TO_CDI,
+    ):
+        try:
+            previous = port.read_contract(command.previous_contract_id)
+        except Exception as exc:
+            return WriteResult(
+                ok=False,
+                code=WriteCode.DATABASE_ERROR,
+                message="Lecture du contrat précédent impossible : %s" % exc,
+            )
+        operation_errors = _validate_previous_contract(command, previous)
+        if operation_errors:
+            return WriteResult(
+                ok=False,
+                code=WriteCode.VALIDATION_ERROR,
+                message=" ".join(operation_errors),
+            )
+
+        if operation is ContractOperation.CDD_TO_CDI:
+            try:
+                contract_type = ContractType(contract_code)
+            except ValueError:
+                return WriteResult(
+                    ok=False,
+                    code=WriteCode.VALIDATION_ERROR,
+                    message="Type de contrat inconnu pour le calcul de période d'essai.",
+                )
+            probation_errors = _validate_probation_rules(
+                command,
+                contract_type=contract_type,
+                previous=previous,
+            )
+            if probation_errors:
+                return WriteResult(
+                    ok=False,
+                    code=WriteCode.VALIDATION_ERROR,
+                    message=" ".join(probation_errors),
+                )
 
     return execute_transactional_insert(
         write=lambda: port.insert_contract(command),
