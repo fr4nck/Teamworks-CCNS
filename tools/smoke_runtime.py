@@ -42,6 +42,9 @@ def build_environment(root: Path, teamworks_dir: Path) -> dict[str, str]:
     env["TEAMWORKS_SMOKE_MODE"] = "main-window"
     env["TEAMWORKS_LOG_DIR"] = str(root / "artifacts" / "runtime-crash")
     env["PYTHONUTF8"] = "1"
+    # Une violation d'accès native (0xC0000005) ne laisse sinon aucune pile :
+    # faulthandler l'écrit sur stderr, déjà capturé dans le diagnostic.
+    env["PYTHONFAULTHANDLER"] = "1"
     search_paths = [str(root), str(teamworks_dir)]
     if env.get("PYTHONPATH"):
         search_paths.append(env["PYTHONPATH"])

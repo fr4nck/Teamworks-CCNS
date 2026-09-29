@@ -43,3 +43,14 @@ def test_le_coeur_ne_rafraichit_que_une_page_personnes_construite():
 def test_l_annulation_atomique_utilise_le_meme_rafraichissement_protege():
     assert "self._rafraichir_frame_personnes(save=False)" in WRAPPER
     assert "frm.listCtrl_personnes" not in WRAPPER
+
+
+def test_les_smokes_windows_activent_faulthandler_pour_les_crashs_natifs():
+    import sys
+    sys.path.insert(0, "tools")
+    try:
+        import smoke_runtime
+    finally:
+        sys.path.pop(0)
+    env = smoke_runtime.build_environment(Path("."), Path("teamworks"))
+    assert env["PYTHONFAULTHANDLER"] == "1"
