@@ -243,6 +243,19 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 )
                 for _smoke_label, _smoke_factory in _smoke_parameter_dialogs:
                     print("TEAMWORKS_SMOKE_PARAMETER_OPEN:%s" % _smoke_label, flush=True)
+                    if _smoke_os.name == "nt":
+                        # Diagnostic : compteurs GDI (0) et USER (1) du processus avant
+                        # chaque dialogue, pour distinguer un épuisement de handles.
+                        import ctypes as _smoke_ctypes
+                        _smoke_process = _smoke_ctypes.windll.kernel32.GetCurrentProcess()
+                        print(
+                            "TEAMWORKS_SMOKE_GUI_RESOURCES:%s:gdi=%d:user=%d" % (
+                                _smoke_label,
+                                _smoke_ctypes.windll.user32.GetGuiResources(_smoke_process, 0),
+                                _smoke_ctypes.windll.user32.GetGuiResources(_smoke_process, 1),
+                            ),
+                            flush=True,
+                        )
                     _smoke_parameter_dialog = _smoke_factory(frame)
                     _smoke_assert_populated(_smoke_parameter_dialog, _smoke_label)
                     _smoke_parameter_dialog.Destroy()
