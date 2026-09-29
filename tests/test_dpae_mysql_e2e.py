@@ -1,0 +1,271 @@
+"""E2E MariaDB via le vrai DpaeService, resolver Teamworks et adaptateur DPAE."""
+import hashlib
+import json
+import os
+from datetime import datetime
+
+import pytest
+
+mysql = pytest.importorskip("mysql.connector")
+
+from application.services.dpae_service import (
+    DpaeService, IngestDpaeReturn, PrepareDpae, RetryDpaeSubmission,
+    SubmitDpae, TransmissionResult,
+)
+from infrastructure.dpae_teamworks_resolver import TeamworksDpaeBusinessDataResolver
+from infrastructure.persistence.dpae_mysql import DpaeMariaDbAdapter
+
+REQUIRED = ("DPAE_MYSQL_HOST", "DPAE_MYSQL_USER", "DPAE_MYSQL_DATABASE")
+if not all(os.getenv(name) for name in REQUIRED):
+    pytest.skip("base MySQL DPAE de recette non configurée", allow_module_level=True)
+
+
+def connect():
+    return mysql.connect(
+        host=os.environ["DPAE_MYSQL_HOST"],
+        port=int(os.getenv("DPAE_MYSQL_PORT", "3306")),
+        user=os.environ["DPAE_MYSQL_USER"],
+        password=os.getenv("DPAE_MYSQL_PASSWORD", ""),
+        database=os.environ["DPAE_MYSQL_DATABASE"],
+        use_pure=True,
+        autocommit=False,
+    )
+
+
+def install_teamworks_fixture():
+    conn = connect()
+    try:
+        cur = conn.cursor()
+        cur.execute("CREATE TABLE IF NOT EXISTS contrats (IDcontrat INT PRIMARY KEY, IDpersonne INT, IDtype INT, IDclassification INT, date_debut DATE, date_fin DATE, essai INT)")
+        cur.execute("CREATE TABLE IF NOT EXISTS personnes (IDpersonne INT PRIMARY KEY, civilite VARCHAR(16), nom VARCHAR(80), nom_jfille VARCHAR(80), prenom VARCHAR(80), date_naiss DATE, cp_naiss VARCHAR(16), ville_naiss VARCHAR(80), nationalite INT, num_secu VARCHAR(32), adresse_resid VARCHAR(160), cp_resid VARCHAR(16), ville_resid VARCHAR(80), pays_naiss INT)")
+        cur.execute("CREATE TABLE IF NOT EXISTS contrats_types (IDtype INT PRIMARY KEY, nom VARCHAR(80), nom_abrege VARCHAR(32), duree_indeterminee VARCHAR(16))")
+        cur.execute("CREATE TABLE IF NOT EXISTS contrats_class (IDclassification INT PRIMARY KEY, nom VARCHAR(80))")
+        cur.execute("CREATE TABLE IF NOT EXISTS pays (IDpays INT PRIMARY KEY, nom VARCHAR(80), nationalite VARCHAR(80))")
+        # Schéma legacy exact de DATA_Tables.py : aucune contrainte UNIQUE sur code.
+        cur.execute("CREATE TABLE IF NOT EXISTS due_valeurs (IDvaleur INT PRIMARY KEY AUTO_INCREMENT, code VARCHAR(50), valeur VARCHAR(200))")
+        for table in ("contrats", "personnes", "contrats_types", "contrats_class", "pays", "due_valeurs"):
+            cur.execute("DELETE FROM " + table)
+        cur.execute("INSERT INTO pays VALUES (33,'France','Française')")
+        cur.execute("INSERT INTO contrats_types VALUES (2,'CDD','CDD','non')")
+        cur.execute("INSERT INTO contrats_class VALUES (3,'Groupe B')")
+        cur.execute("INSERT INTO personnes VALUES (18,'Mme','Martin','Durand','Alice','1990-02-03','35000','Rennes',33,'','1 rue X','35650','Le Rheu',33)")
+        cur.execute("INSERT INTO contrats VALUES (742,18,2,3,'2026-10-15','2027-10-14',7)")
+        cur.execute("INSERT INTO due_valeurs (code,valeur) VALUES ('HEURE_EMBAUCHE','0830')")
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def set_hiring_time(value):
+    conn = connect()
+    try:
+        cur = conn.cursor()
+        cur.execute("UPDATE due_valeurs SET valeur=%s WHERE code='HEURE_EMBAUCHE'", (value,))
+        assert cur.rowcount == 1
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def organisation_file(path):
+    path.write_text("[organisation]\nnom_officiel=Association Test\nsiret=12345678901234\nsiren=123456789\nape_naf=9499Z\nadresse=2 rue Y\ncode_postal=35650\nville=Le Rheu\n", encoding="utf-8")
+
+
+def rh_state():
+    conn = connect()
+    try:
+        cur = conn.cursor()
+        state = {}
+        for table in ("contrats", "personnes", "contrats_types", "contrats_class", "pays", "due_valeurs"):
+            cur.execute("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=%s ORDER BY ORDINAL_POSITION", (table,))
+            cols = tuple(r[0] for r in cur.fetchall())
+            cur.execute("SELECT * FROM " + table)
+            rows = tuple(cur.fetchall())
+            state[table] = (cols, rows)
+        return state
+    finally:
+        conn.close()
+
+
+def snapshot_row(snapshot_id):
+    conn = connect()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT canonical_payload,source_fingerprint,payload_hash FROM tw_dpae_snapshot WHERE id=%s", (snapshot_id,))
+        return cur.fetchone()
+    finally:
+        conn.close()
+
+
+def snapshot_count():
+    conn = connect()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(*) FROM tw_dpae_snapshot")
+        return cur.fetchone()[0]
+    finally:
+        conn.close()
+
+
+class CountingResolver:
+    """Spy qui compte les appels tout en déléguant au vrai resolver Teamworks."""
+    def __init__(self, delegate):
+        self.delegate = delegate
+        self.calls = 0
+
+    def resolve(self, contract_id):
+        self.calls += 1
+        return self.delegate.resolve(contract_id)
+
+
+class FlakyTransport:
+    def __init__(self):
+        self.calls = []
+
+    def send(self, **kwargs):
+        self.calls.append(kwargs)
+        if len(self.calls) == 1:
+            raise TimeoutError("lost ACK")
+        return TransmissionResult("SENT", external_flux_id="flux-e2e-1")
+
+
+def test_full_v2_chain_uses_real_teamworks_resolver_and_durable_snapshot(clean_tables, tmp_path):
+    install_teamworks_fixture()
+    customize = tmp_path / "Customize.ini"
+    organisation_file(customize)
+    before_config = customize.read_bytes()
+    before_rh = rh_state()
+    adapter = DpaeMariaDbAdapter(connect)
+    resolver = TeamworksDpaeBusinessDataResolver(connect, customize)
+    service = DpaeService(adapter, resolver=resolver)
+    prepared = service.prepare(PrepareDpae("e2e-prepare-v2", "contract-742", "742", "operator"))
+    submitted = service.submit(SubmitDpae("e2e-submit-v2", prepared["case_id"], "operator"))
+    assert prepared["snapshot_id"] == submitted["snapshot_id"]
+    assert prepared["payload_hash"] == submitted["payload_hash"]
+    assert customize.read_bytes() == before_config
+    assert rh_state() == before_rh
+    conn = connect()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT contract_id FROM tw_dpae_case WHERE id=%s", (prepared["case_id"],))
+        assert str(cur.fetchone()[0]) == "742"
+        cur.execute("SELECT canonical_payload FROM tw_dpae_snapshot WHERE id=%s", (prepared["snapshot_id"],))
+        payload = json.loads(cur.fetchone()[0])
+        assert payload["employee"]["birth_name"] == "Durand"
+        assert "person_id" not in payload["employee"]
+        assert payload["contract"]["hiring_time"] == "0830"
+        cur.execute("SELECT snapshot_id FROM tw_dpae_submission WHERE id=%s", (submitted["submission_id"],))
+        assert cur.fetchone()[0] == prepared["snapshot_id"]
+    finally:
+        conn.close()
+
+
+def test_real_teamworks_change_creates_s2_without_mutating_s1(clean_tables, tmp_path):
+    install_teamworks_fixture()
+    customize = tmp_path / "Customize.ini"
+    organisation_file(customize)
+    resolver = CountingResolver(TeamworksDpaeBusinessDataResolver(connect, customize))
+    service = DpaeService(DpaeMariaDbAdapter(connect), resolver=resolver)
+
+    s1 = service.prepare(PrepareDpae("s1-command", "contract-742-v1", "742", "operator"))
+    assert resolver.calls == 1
+    before = snapshot_row(s1["snapshot_id"])
+    assert json.loads(before[0])["contract"]["hiring_time"] == "0830"
+    f1, p1 = before[1], before[2]
+
+    set_hiring_time("0915")
+    unchanged = snapshot_row(s1["snapshot_id"])
+    assert unchanged == before
+    assert json.loads(unchanged[0])["contract"]["hiring_time"] == "0830"
+    assert unchanged[1] == f1
+    assert unchanged[2] == p1
+
+    calls_before_replay = resolver.calls
+    snapshots_before_replay = snapshot_count()
+    replayed = service.prepare(PrepareDpae("s1-command", "contract-742-v1", "742", "operator"))
+    assert resolver.calls == calls_before_replay == 1
+    assert snapshot_count() == snapshots_before_replay == 1
+    assert replayed["snapshot_id"] == s1["snapshot_id"]
+    assert replayed["payload_hash"] == p1
+    replay_row = snapshot_row(replayed["snapshot_id"])
+    assert replay_row[1] == f1
+    assert json.loads(replay_row[0])["contract"]["hiring_time"] == "0830"
+
+    s2 = service.prepare(PrepareDpae("s2-command", "contract-742-v2", "742", "operator"))
+    assert resolver.calls == 2
+    assert s1["snapshot_id"] != s2["snapshot_id"]
+    after = snapshot_row(s2["snapshot_id"])
+    assert json.loads(after[0])["contract"]["hiring_time"] == "0915"
+    assert snapshot_row(s1["snapshot_id"]) == before
+    assert before[1] != after[1]
+    assert before[2] != after[2]
+
+
+def test_retry_and_return_keep_historical_snapshot_after_rh_change(clean_tables, tmp_path):
+    install_teamworks_fixture()
+    customize = tmp_path / "Customize.ini"
+    organisation_file(customize)
+    transport = FlakyTransport()
+    adapter = DpaeMariaDbAdapter(connect)
+    resolver = CountingResolver(TeamworksDpaeBusinessDataResolver(connect, customize))
+    service = DpaeService(adapter, transport=transport, resolver=resolver)
+    prepared = service.prepare(PrepareDpae("retry-prepare", "contract-retry-742", "742", "operator"))
+    assert resolver.calls == 1
+    s1_row = snapshot_row(prepared["snapshot_id"])
+    assert json.loads(s1_row[0])["contract"]["hiring_time"] == "0830"
+
+    with pytest.raises(TimeoutError):
+        service.submit(SubmitDpae("retry-submit", prepared["case_id"], "operator"))
+    conn = connect()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT id,snapshot_id,payload_hash,state,attempt_no FROM tw_dpae_submission")
+        before_retry = cur.fetchone()
+        assert before_retry[3] == "OUTCOME_UNKNOWN"
+        assert before_retry[4] == 1
+        cur.execute("SELECT status FROM tw_dpae_case WHERE id=%s", (prepared["case_id"],))
+        assert cur.fetchone()[0] == "OUTCOME_UNKNOWN"
+    finally:
+        conn.close()
+
+    set_hiring_time("0915")
+    assert snapshot_row(prepared["snapshot_id"]) == s1_row
+    calls_before_retry = resolver.calls
+    retried = service.retry_submission(RetryDpaeSubmission(transport.calls[0]["submission_id"]))
+    assert resolver.calls == calls_before_retry == 1
+    assert retried["submission_id"] == before_retry[0]
+    assert retried["snapshot_id"] == prepared["snapshot_id"] == before_retry[1]
+    assert retried["payload_hash"] == prepared["payload_hash"] == before_retry[2]
+    assert retried["attempt_no"] == 1
+    assert transport.calls[0]["canonical_payload"] == transport.calls[1]["canonical_payload"]
+    assert json.loads(transport.calls[0]["canonical_payload"])["contract"]["hiring_time"] == "0830"
+    assert json.loads(transport.calls[1]["canonical_payload"])["contract"]["hiring_time"] == "0830"
+
+    conn = connect()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT id,snapshot_id,payload_hash,state,attempt_no FROM tw_dpae_submission WHERE id=%s", (retried["submission_id"],))
+        after_retry = cur.fetchone()
+        assert after_retry[0:3] == before_retry[0:3]
+        assert after_retry[3] == "TECHNICALLY_ACCEPTED"
+        assert after_retry[4] == 1
+        cur.execute("SELECT status FROM tw_dpae_case WHERE id=%s", (prepared["case_id"],))
+        assert cur.fetchone()[0] == "WAITING_RETURN"
+    finally:
+        conn.close()
+
+    returned = service.ingest_return(IngestDpaeReturn(
+        provider="URSSAF",
+        return_type="AEE",
+        raw_hash=hashlib.sha256(b"return-1").hexdigest(),
+        received_at=datetime(2026, 9, 27, 12, 0),
+        external_return_id="return-e2e-1",
+        external_flux_id="flux-e2e-1",
+        employer_siret="12345678901234",
+    ))
+    assert returned["correlation_status"] == "MATCHED"
+    evidence = adapter.get_historical_evidence(returned["return_id"])
+    assert evidence["submission_id"] == retried["submission_id"]
+    assert evidence["snapshot_id"] == prepared["snapshot_id"]
+    assert evidence["contract_id"] == "742"
+    assert evidence["canonical_payload"] == transport.calls[0]["canonical_payload"]
