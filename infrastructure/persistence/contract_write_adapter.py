@@ -160,7 +160,9 @@ class GestionDbContractWriteAdapter:
             raise RuntimeError("Le contrat principal n'a pas pu être créé.")
         return int(inserted)
 
-    def read_contract(self, contract_id: int) -> ContractEditSnapshot | None:
+    def _read_contract(
+        self, contract_id: int, *, for_update: bool = False
+    ) -> ContractEditSnapshot | None:
         modern_names = (
             "convention_code",
             "ccns_group",
@@ -185,7 +187,13 @@ class GestionDbContractWriteAdapter:
             + ", ".join("c.%s" % expr if expr != "NULL" else "NULL" for expr in exprs)
             + " FROM contrats c "
             "LEFT JOIN contrats_types t ON t.IDtype=c.IDtype "
-            "WHERE c.IDcontrat=%s" % self._placeholder
+            "WHERE c.IDcontrat=%s%s"
+            % (
+                self._placeholder,
+                " FOR UPDATE"
+                if for_update and getattr(self.db, "isNetwork", False)
+                else "",
+            )
         )
         self.db.cursor.execute(req, (contract_id,))
         row = self.db.cursor.fetchone()
@@ -218,6 +226,9 @@ class GestionDbContractWriteAdapter:
             trial_period_value=int(row[18]) if row[18] is not None else None,
             trial_period_unit=row[19],
         )
+
+    def read_contract(self, contract_id: int) -> ContractEditSnapshot | None:
+        return self._read_contract(contract_id)
 
     def list_legacy_classifications(self):
         self.db.cursor.execute(
