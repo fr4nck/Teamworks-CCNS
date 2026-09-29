@@ -60,6 +60,7 @@ class ContractAmendmentCommand:
     effective_date: date
     idempotency_key: str
     expected_before_hash: str
+    expected_person_id: int
 
 
 @dataclass(frozen=True)
@@ -181,6 +182,7 @@ def _request_hash(command: ContractAmendmentCommand) -> str:
     edit = command.edit
     payload = {
         "contract_id": edit.contract_id,
+        "expected_person_id": command.expected_person_id,
         "effective_date": _date_text(command.effective_date),
         "contract_type_code": str(edit.contract_type_code or "").strip().upper(),
         "convention_code": edit.convention_code,
@@ -242,6 +244,12 @@ def apply_contract_amendment(
         return invalid_target_result(edit.contract_id)
     contract_id = edit.contract_id
 
+    if not is_valid_target_id(command.expected_person_id):
+        return _validation_result(
+            contract_id,
+            "L'identifiant de la personne attendue est invalide.",
+        )
+
     if type(command.effective_date) is not date:
         return _validation_result(contract_id, "La date d'effet de l'avenant est invalide.")
 
@@ -298,6 +306,13 @@ def apply_contract_amendment(
             target_id=contract_id,
         )
 
+    if original.person_id != command.expected_person_id:
+        _safe_rollback(port)
+        return _validation_result(
+            contract_id,
+            "Le contrat sélectionné n'appartient pas à la personne attendue.",
+        )
+
     actual_hash = contract_state_hash(original)
     if actual_hash != expected_hash:
         _safe_rollback(port)
@@ -322,7 +337,11 @@ def apply_contract_amendment(
             contract_id,
             "Le changement de convention n'est pas pris en charge par le socle avenants V1.",
         )
-    if edit.start_date != original.start_date or edit.end_date != original.end_date or edit.break_date != original.break_date:
+    if (
+        edit.start_date != original.start_date
+        or edit.end_date != original.end_date
+        or edit.break_date != original.break_date
+    ):
         _safe_rollback(port)
         return _validation_result(
             contract_id,
@@ -382,7 +401,10 @@ def apply_contract_amendment(
     changed_fields = _changed_fields(original, edit)
     if not changed_fields:
         _safe_rollback(port)
-        return _validation_result(contract_id, "L'avenant ne modifie aucune clause prise en charge.")
+        return _validation_result(
+            contract_id,
+            "L'avenant ne modifie aucune clause prise en charge.",
+        )
 
     before_payload = contract_state_payload(original)
     target_state = _target_state_dict(original, edit)
@@ -409,7 +431,11 @@ def apply_contract_amendment(
             raced = port.find_amendment_by_key(key)
         except Exception:
             raced = None
-        if raced is not None and raced.contract_id == contract_id and raced.request_hash == request_hash:
+        if (
+            raced is not None
+            and raced.contract_id == contract_id
+            and raced.request_hash == request_hash
+        ):
             return _replay_result(raced)
         return WriteResult(
             ok=False,
@@ -433,6 +459,15 @@ def apply_contract_amendment(
             ok=False,
             code=result.code,
             message=result.message,
+            target_id=contract_id,
+            committed=True,
+        )
+
+    if result.value is None or contract_state_hash(result.value) != after_hash:
+        return WriteResult(
+            ok=False,
+            code=WriteCode.READBACK_ERROR,
+            message="Avenant validé, mais l'état contractuel relu ne correspond pas à l'état attendu.",
             target_id=contract_id,
             committed=True,
         )
