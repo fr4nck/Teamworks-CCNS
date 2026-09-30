@@ -16,16 +16,11 @@ import pytest
 ROOT = Path(__file__).resolve().parent
 SEARCHCTRL_SMOKE = ROOT / "tools" / "smoke_searchctrl_lifecycle.py"
 PRELUDE_SMOKE = ROOT / "tools" / "smoke_person_prelude_lifecycle.py"
-CLOSE_BISECT_SMOKE = ROOT / "tools" / "smoke_person_close_reopen_bisect.py"
+ORDER_SMOKE = ROOT / "tools" / "smoke_person_close_order.py"
 
 
 def _run_smoke(script: Path, scenario: str, cycles: int | None = None) -> str | None:
-    command = [
-        sys.executable,
-        str(script),
-        "--scenario",
-        scenario,
-    ]
+    command = [sys.executable, str(script), "--scenario", scenario]
     if cycles is not None:
         command.extend(["--cycles", str(cycles)])
     completed = subprocess.run(
@@ -33,7 +28,7 @@ def _run_smoke(script: Path, scenario: str, cycles: int | None = None) -> str | 
         cwd=ROOT,
         text=True,
         capture_output=True,
-        timeout=max(300, (cycles or 2) * 150),
+        timeout=1200,
         check=False,
     )
     output = "\n".join(
@@ -52,45 +47,29 @@ def _diagnostic_searchctrl_windows() -> None:
 
     failures: list[str] = []
 
-    # Contrôle : le composant cible et le couple sauvegarde→SearchCtrl restent
-    # stables lorsqu'ils sont exécutés sans le préambule Personne.
-    for scenario, cycles in (
-        ("backup-search", 10),
-        ("params20-backup", 3),
-    ):
-        failure = _run_smoke(SEARCHCTRL_SMOKE, scenario, cycles)
-        if failure:
-            failures.append(failure)
+    # Contrôle négatif : le SearchCtrl et la sauvegarde seuls restent stables.
+    failure = _run_smoke(SEARCHCTRL_SMOKE, "backup-search", 10)
+    if failure:
+        failures.append(failure)
 
-    # Bisection fonctionnelle de Fermer(save=True). D'abord le seuil 1/2/3,
-    # puis les trois effets supplémentaires par rapport à un Destroy direct :
-    # sauvegarde, arrêt des callbacks et refresh de la page Personnes.
+    # Mesure du seuil de la sauvegarde seule, puis stress de l'ordre réel de
+    # fermeture. callbacks-first est l'hypothèse de correctif, current-manual
+    # reproduit explicitement l'ordre actuellement codé dans Fermer().
     for scenario in (
-        "fermer-1",
-        "fermer-2",
-        "fermer-3",
+        "save-only-1",
+        "save-only-2",
         "save-only-3",
-        "callbacks-only-3",
-        "refresh-only-3",
-        "save-callbacks-3",
-        "save-refresh-3",
-        "callbacks-refresh-3",
+        "fermer-20",
+        "current-manual-20",
+        "callbacks-first-20",
     ):
-        failure = _run_smoke(CLOSE_BISECT_SMOKE, scenario)
+        failure = _run_smoke(ORDER_SMOKE, scenario)
         if failure:
             failures.append(failure)
 
-    # Contrôles historiques du diagnostic précédent.
-    for scenario, cycles in (
-        ("pages-backup", 3),
-        ("close-backup", 3),
-        ("bug-report-backup", 5),
-        ("prelude-backup", 3),
-        ("prelude-params10-backup", 2),
-        ("prelude-params20-backup", 2),
-    ):
-        failure = _run_smoke(PRELUDE_SMOKE, scenario, cycles)
-        if failure:
-            failures.append(failure)
+    # Garde de comparaison avec le reproducer historique.
+    failure = _run_smoke(PRELUDE_SMOKE, "close-backup", 1)
+    if failure:
+        failures.append(failure)
 
     assert not failures, "\n\n".join(failures)
