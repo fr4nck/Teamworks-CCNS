@@ -10,7 +10,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parent
 PRELUDE_SMOKE = ROOT / "tools" / "smoke_person_prelude_lifecycle.py"
-EVENTLOOP_SMOKE = ROOT / "tools" / "smoke_person_destroy_eventloop.py"
+MAINLOOP_SMOKE = ROOT / "tools" / "smoke_person_mainloop_lifecycle.py"
 
 
 def _run_smoke(script: Path, scenario: str | None = None, cycles: int | None = None) -> str | None:
@@ -36,19 +36,19 @@ def _run_smoke(script: Path, scenario: str | None = None, cycles: int | None = N
 
 
 @pytest.fixture(scope="session", autouse=True)
-def _diagnostic_destroy_eventloop_windows() -> None:
+def _diagnostic_mainloop_windows() -> None:
     if sys.platform != "win32":
         return
 
     failures: list[str] = []
 
-    # Cas conforme au lifecycle wx : 20 fermetures, chacune attend son
-    # EVT_WINDOW_DESTROY dans une vraie GUIEventLoop avant la réouverture.
-    failure = _run_smoke(EVENTLOOP_SMOKE)
+    # Même fiche, même Fermer(), vingt cycles, mais après OnInit dans le vrai
+    # MainLoop. Chaque réouverture attend EVT_WINDOW_DESTROY du cycle précédent.
+    failure = _run_smoke(MAINLOOP_SMOKE)
     if failure:
         failures.append(failure)
 
-    # Reproducer historique exécuté dans OnInit, conservé comme contrôle positif.
+    # Contrôle positif : ancien reproducer synchrone exécuté dans OnInit.
     failure = _run_smoke(PRELUDE_SMOKE, "close-backup", 1)
     if failure:
         failures.append(failure)
