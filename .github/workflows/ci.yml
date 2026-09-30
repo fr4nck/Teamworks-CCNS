@@ -6,10 +6,12 @@ on:
       - qt/master
       - qt/convergence-0.9.2-rc3
       - qt/vanilla-0.1-rc
+      - "qt/integration-*"
   push:
     branches:
       - qt/master
       - qt/vanilla-0.1-rc
+      - "qt/integration-*"
   workflow_dispatch:
 
 concurrency:

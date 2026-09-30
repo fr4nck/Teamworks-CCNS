@@ -5,6 +5,7 @@ on:
     branches:
       - qt/rail-c-documents-rh
       - qt/master
+      - "qt/integration-*"
     paths:
       - ".github/workflows/qt-vanilla-package.yml"
       - "requirements/qt-vanilla-0.1.txt"
@@ -20,6 +21,7 @@ on:
   push:
     branches:
       - qt/vanilla-0.1-rc
+      - "qt/integration-*"
     tags:
       - "qt-v0.1.*"
   workflow_dispatch:
