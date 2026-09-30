@@ -1,0 +1,209 @@
+#!/usr/bin/env python3
+"""Isole les effets de Fermer() dans le vrai MainLoop wx, un processus par cas."""
+
+from __future__ import annotations
+
+import argparse
+from pathlib import Path
+import traceback
+
+from smoke_runtime import github_error_summary, run_entrypoint, write_diagnostic
+
+ROOT = Path(__file__).resolve().parents[1]
+TEAMWORKS_DIR = ROOT / "teamworks"
+ENTRYPOINT_SOURCE = TEAMWORKS_DIR / "Teamworks.py"
+CORE_SOURCE = TEAMWORKS_DIR / "Teamworks_core.py"
+PATCHED = TEAMWORKS_DIR / "Teamworks_person_mainloop_close_matrix_smoke.py"
+PATCHED_CORE = TEAMWORKS_DIR / "Teamworks_core_person_mainloop_close_matrix_smoke.py"
+REPORT_DIR = ROOT / "artifacts" / "person-mainloop-close-matrix"
+MARKER_LINE = '            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)'
+READY_MARKER = "TEAMWORKS_SMOKE_PERSON_CLOSE_MATRIX_READY"
+FAILURE_MARKER = "TEAMWORKS_SMOKE_PERSON_CLOSE_MATRIX_FAILED"
+SCENARIOS = (
+    "destroy",
+    "save-destroy",
+    "callbacks-destroy",
+    "refresh-destroy",
+    "save-callbacks-destroy",
+    "callbacks-save-destroy",
+    "fermer-nosave",
+    "fermer-save",
+)
+
+
+def build_injection(scenario: str) -> str:
+    return f'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
+            import wx as _smoke_wx
+            import GestionDB as _smoke_gestiondb
+            from Dlg import DLG_Fiche_individuelle as _smoke_person
+
+            _smoke_scenario = {scenario!r}
+            _smoke_state = {{"failed": False, "dialog": None}}
+
+            def _fail():
+                if _smoke_state["failed"]:
+                    return
+                _smoke_state["failed"] = True
+                import traceback as _traceback
+                _traceback.print_exc()
+                print("TEAMWORKS_SMOKE_PERSON_CLOSE_MATRIX_FAILED", flush=True)
+                _smoke_wx.CallAfter(self.ExitMainLoop)
+
+            def _destroyed(_event, _dialog):
+                try:
+                    if _event.GetEventObject() is not _dialog:
+                        _event.Skip()
+                        return
+                    _event.Skip()
+                    print(
+                        "TEAMWORKS_SMOKE_PERSON_CLOSE_MATRIX_DESTROYED:%s"
+                        % _smoke_scenario,
+                        flush=True,
+                    )
+                    print("TEAMWORKS_SMOKE_PERSON_CLOSE_MATRIX_READY", flush=True)
+                    _smoke_wx.CallAfter(self.ExitMainLoop)
+                except Exception:
+                    _fail()
+
+            def _operate(_dialog):
+                try:
+                    print(
+                        "TEAMWORKS_SMOKE_PERSON_CLOSE_MATRIX_OPERATE:%s"
+                        % _smoke_scenario,
+                        flush=True,
+                    )
+                    if _smoke_scenario == "destroy":
+                        _dialog.Destroy()
+                    elif _smoke_scenario == "save-destroy":
+                        _dialog._sauvegarder_pages()
+                        _dialog.Destroy()
+                    elif _smoke_scenario == "callbacks-destroy":
+                        if not _dialog._arreter_callbacks_avant_fermeture():
+                            raise RuntimeError("arrêt callbacks refusé")
+                        _dialog.Destroy()
+                    elif _smoke_scenario == "refresh-destroy":
+                        _dialog._rafraichir_frame_personnes(save=True)
+                        _dialog.Destroy()
+                    elif _smoke_scenario == "save-callbacks-destroy":
+                        _dialog._sauvegarder_pages()
+                        if not _dialog._arreter_callbacks_avant_fermeture():
+                            raise RuntimeError("arrêt callbacks refusé")
+                        _dialog.Destroy()
+                    elif _smoke_scenario == "callbacks-save-destroy":
+                        if not _dialog._arreter_callbacks_avant_fermeture():
+                            raise RuntimeError("arrêt callbacks refusé")
+                        _dialog._sauvegarder_pages()
+                        _dialog.Destroy()
+                    elif _smoke_scenario == "fermer-nosave":
+                        if _dialog.Fermer(save=False) is not True:
+                            raise RuntimeError("Fermer(save=False) a échoué")
+                    elif _smoke_scenario == "fermer-save":
+                        if _dialog.Fermer(save=True) is not True:
+                            raise RuntimeError("Fermer(save=True) a échoué")
+                    else:
+                        raise RuntimeError("scénario inconnu")
+                    print(
+                        "TEAMWORKS_SMOKE_PERSON_CLOSE_MATRIX_REQUESTED:%s"
+                        % _smoke_scenario,
+                        flush=True,
+                    )
+                except Exception:
+                    _fail()
+
+            def _start():
+                try:
+                    _db = _smoke_gestiondb.DB()
+                    _db.ExecuterReq(
+                        "SELECT IDpersonne FROM personnes ORDER BY IDpersonne LIMIT 1"
+                    )
+                    _rows = _db.ResultatReq()
+                    _db.Close()
+                    if not _rows:
+                        raise RuntimeError("aucune personne disponible")
+                    _dialog = _smoke_person.Dialog(frame, IDpersonne=_rows[0][0])
+                    _smoke_state["dialog"] = _dialog
+                    _dialog.Bind(
+                        _smoke_wx.EVT_WINDOW_DESTROY,
+                        lambda _event, _dlg=_dialog: _destroyed(_event, _dlg),
+                    )
+                    _dialog.Show()
+                    _dialog.Layout()
+                    _smoke_wx.CallAfter(_operate, _dialog)
+                except Exception:
+                    _fail()
+
+            _smoke_wx.CallAfter(_start)
+            return True
+'''
+
+
+def build_patched_entrypoint(scenario: str) -> int:
+    core_source = CORE_SOURCE.read_text(encoding="utf-8")
+    marker_count = core_source.count(MARKER_LINE)
+    if marker_count < 1:
+        raise RuntimeError(f"ligne marqueur introuvable: count={marker_count}")
+    patched_core = core_source.replace(MARKER_LINE, build_injection(scenario), 1)
+    compile(patched_core, str(PATCHED_CORE), "exec")
+    PATCHED_CORE.write_text(patched_core, encoding="utf-8")
+
+    entrypoint = ENTRYPOINT_SOURCE.read_text(encoding="utf-8")
+    import_line = "import Teamworks_core as CORE"
+    patched_import = "import Teamworks_core_person_mainloop_close_matrix_smoke as CORE"
+    if import_line not in entrypoint:
+        raise RuntimeError("import du cœur Teamworks introuvable")
+    patched_entrypoint = entrypoint.replace(import_line, patched_import, 1)
+    compile(patched_entrypoint, str(PATCHED), "exec")
+    PATCHED.write_text(patched_entrypoint, encoding="utf-8")
+    return marker_count
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--scenario", choices=SCENARIOS, required=True)
+    args = parser.parse_args()
+    REPORT_DIR.mkdir(parents=True, exist_ok=True)
+    report = REPORT_DIR / f"diagnostic-{args.scenario}.txt"
+    marker_count = None
+    try:
+        marker_count = build_patched_entrypoint(args.scenario)
+        return_code, output = run_entrypoint(
+            PATCHED,
+            root=ROOT,
+            teamworks_dir=TEAMWORKS_DIR,
+            timeout=600,
+        )
+        write_diagnostic(
+            report,
+            return_code=return_code,
+            marker_count=marker_count,
+            ready_marker=READY_MARKER,
+            failure_marker=FAILURE_MARKER,
+            output=output,
+        )
+        if return_code != 0 or FAILURE_MARKER in output or READY_MARKER not in output:
+            github_error_summary(
+                f"Person close matrix failed ({args.scenario})", output
+            )
+            return return_code or 1
+        return 0
+    except Exception:
+        output = traceback.format_exc()
+        write_diagnostic(
+            report,
+            return_code=3,
+            marker_count=marker_count,
+            ready_marker=READY_MARKER,
+            failure_marker=FAILURE_MARKER,
+            output=output,
+        )
+        github_error_summary(
+            f"Person close matrix failed ({args.scenario})", output
+        )
+        return 3
+    finally:
+        PATCHED.unlink(missing_ok=True)
+        PATCHED_CORE.unlink(missing_ok=True)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
