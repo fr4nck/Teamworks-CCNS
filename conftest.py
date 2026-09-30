@@ -10,11 +10,13 @@ import pytest
 
 ROOT = Path(__file__).resolve().parent
 PRELUDE_SMOKE = ROOT / "tools" / "smoke_person_prelude_lifecycle.py"
-DESTROY_SMOKE = ROOT / "tools" / "smoke_person_destroy_completion.py"
+EVENTLOOP_SMOKE = ROOT / "tools" / "smoke_person_destroy_eventloop.py"
 
 
-def _run_smoke(script: Path, scenario: str, cycles: int | None = None) -> str | None:
-    command = [sys.executable, str(script), "--scenario", scenario]
+def _run_smoke(script: Path, scenario: str | None = None, cycles: int | None = None) -> str | None:
+    command = [sys.executable, str(script)]
+    if scenario is not None:
+        command.extend(["--scenario", scenario])
     if cycles is not None:
         command.extend(["--cycles", str(cycles)])
     completed = subprocess.run(
@@ -28,22 +30,25 @@ def _run_smoke(script: Path, scenario: str, cycles: int | None = None) -> str | 
     output = "\n".join(part for part in (completed.stdout, completed.stderr) if part)
     print(output)
     if completed.returncode != 0:
-        return f"{scenario}: return_code={completed.returncode}\n{output}"
+        label = scenario or script.name
+        return f"{label}: return_code={completed.returncode}\n{output}"
     return None
 
 
 @pytest.fixture(scope="session", autouse=True)
-def _diagnostic_destroy_completion_windows() -> None:
+def _diagnostic_destroy_eventloop_windows() -> None:
     if sys.platform != "win32":
         return
 
     failures: list[str] = []
-    for scenario in ("yield-20", "await-destroy-20"):
-        failure = _run_smoke(DESTROY_SMOKE, scenario)
-        if failure:
-            failures.append(failure)
 
-    # Reproducer historique, conservé pour corréler le diagnostic au défaut.
+    # Cas conforme au lifecycle wx : 20 fermetures, chacune attend son
+    # EVT_WINDOW_DESTROY dans une vraie GUIEventLoop avant la réouverture.
+    failure = _run_smoke(EVENTLOOP_SMOKE)
+    if failure:
+        failures.append(failure)
+
+    # Reproducer historique exécuté dans OnInit, conservé comme contrôle positif.
     failure = _run_smoke(PRELUDE_SMOKE, "close-backup", 1)
     if failure:
         failures.append(failure)
