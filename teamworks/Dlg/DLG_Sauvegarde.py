@@ -243,7 +243,7 @@ class CTRL_Parametres(wx.Panel) :
         self.box_destination_staticbox = wx.StaticBox(self, -1, _(u"Destination"))
         self.check_repertoire = wx.CheckBox(self.box_destination_staticbox, -1, _(u"Répertoire :"))
         self.ctrl_repertoire = wx.TextCtrl(self.box_destination_staticbox, -1, u"")
-        self.bouton_repertoire = wx.BitmapButton(self.box_destination_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath(u"Images/16x16/Repertoire.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_repertoire = CTRL_Bouton_image.CTRL(self.box_destination_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath(u"Images/16x16/Repertoire.png"))
         self.check_email = wx.CheckBox(self.box_destination_staticbox, -1, _(u"Envoi par Email :"))
         self.ctrl_email = wx.TextCtrl(self.box_destination_staticbox, -1, u"")
         

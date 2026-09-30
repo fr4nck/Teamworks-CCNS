@@ -9,6 +9,7 @@
 import Chemins
 from Utils.UTILS_Traduction import _
 import wx
+from Ctrl import CTRL_Bouton_image
 import GestionDB
 from Ctrl import CTRL_Calendrier_tw
 from Utils import UTILS_Customize
@@ -44,7 +45,7 @@ def _bitmap_titre(nom_image):
 
 def _bouton_titre(parent, nom_image, aide):
     bitmap = _bitmap_titre(nom_image)
-    bouton = wx.BitmapButton(parent, -1, bitmap, style=wx.BORDER_NONE)
+    bouton = CTRL_Bouton_image.CTRL(parent, id=-1, bitmap=bitmap, style=wx.BORDER_NONE)
     cote = max(30, bitmap.GetWidth() + 10)
     bouton.SetMinSize((cote, cote))
     bouton.SetToolTip(wx.ToolTip(aide))
@@ -309,35 +310,39 @@ class Gadget_Horloge(wx.Panel):
 # ----------------------------------------------------------------------------------------------------------------
 
 class Gadget_Updater(wx.Panel):
+    """Gadget informatif compatible avec l'updater CCNS neutralisé."""
+
     def __init__(self, parent):
         wx.Panel.__init__(self, parent, -1, name="panel_gadget_updater")
         self.parent = parent
-        couleurFondUpdater = (128, 221, 128)
-        self.parent.couleurFondCadre = couleurFondUpdater
+        couleur_fond = UTILS_Interface.GetToken("surface_container_low")
+        self.parent.couleurFondCadre = couleur_fond
+        self.SetBackgroundColour(couleur_fond)
 
         self.texte = wx.StaticText(
             self,
             -1,
-            _(u"Une nouvelle version du logiciel est disponible !\n\nCliquez ci-dessous pour la télécharger et l'installer dès maintenant."),
-        )
-        self.SetBackgroundColour(couleurFondUpdater)
-
-        self.bouton_telecharger = wx.BitmapButton(
-            self,
-            -1,
-            wx.Bitmap(
-                Chemins.GetStaticPath("Images/BoutonsImages/Telecharger_L140.png"),
-                wx.BITMAP_TYPE_ANY,
+            _(
+                u"Mises à jour Teamworks-CCNS\n\n"
+                u"La mise à jour automatique n'est pas activée. "
+                u"Vous pouvez consulter l'état de la version installée."
             ),
         )
-        self.bouton_telecharger.SetMinSize((-1, max(48, int(round(48 * _echelle_interface() / 100.0)))))
+        self.texte.Wrap(360)
+
+        self.bouton_telecharger = CTRL_Bouton_image.CTRL(
+            self,
+            texte=_(u"État des mises à jour"),
+        )
         self.bouton_telecharger.SetToolTip(
-            wx.ToolTip(_(u"Cliquez ici pour télécharger et installer\nla nouvelle version de TeamWorks"))
+            wx.ToolTip(
+                _(u"Cliquez ici pour afficher l'état des mises à jour Teamworks-CCNS")
+            )
         )
 
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.sizer.Add(self.texte, 1, wx.EXPAND | wx.BOTTOM, 8)
-        self.sizer.Add(self.bouton_telecharger, 0, wx.EXPAND)
+        self.sizer.Add(self.bouton_telecharger, 0)
         self.SetSizer(self.sizer)
 
         self.Bind(wx.EVT_BUTTON, self.OnBoutonTelecharger, self.bouton_telecharger)

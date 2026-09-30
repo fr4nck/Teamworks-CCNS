@@ -324,6 +324,11 @@ jobs:
           python -m pip install --requirement requirements/python311-core.txt
           python -m pip install pytest
 
+      - name: Vérifier les extensions wx de l'éditeur Email
+        shell: pwsh
+        run: |
+          python -c "import wx; import wx._xml; import wx._richtext; import wx.richtext"
+
       - name: Vérifier les contrats des dialogues
         id: windows_contracts
         continue-on-error: true
@@ -465,6 +470,7 @@ jobs:
           startsWith(github.ref, 'refs/tags/v')
           || (github.event_name == 'workflow_dispatch' && inputs.build_windows)
           || (github.ref == 'refs/heads/master' && contains(github.event.head_commit.message, '[windows]'))
+          || (github.event_name == 'pull_request' && github.head_ref == 'release/vanilla-wx-0.9.2-rc3')
         )
       }}
     runs-on: windows-2022
@@ -560,7 +566,10 @@ jobs:
             '--collect-all', 'reportlab',
             '--collect-all', 'PIL',
             '--collect-all', 'mysql.connector',
-            '--hidden-import', 'win32com.client'
+            '--hidden-import', 'win32com.client',
+            '--hidden-import', 'wx.richtext',
+            '--hidden-import', 'wx._richtext',
+            '--hidden-import', 'wx._xml'
           )
           foreach ($module in $modules) {
             $pyinstallerArgs += @('--hidden-import', $module)
@@ -575,6 +584,7 @@ jobs:
           }
           Copy-Item teamworks/Versions.txt "$package/Versions.txt" -Force
           Copy-Item VERSION "$package/VERSION" -Force
+          Copy-Item CHANGELOG.md "$package/CHANGELOG.md" -Force
           Copy-Item ROADMAP.md "$package/ROADMAP.md" -Force
           Copy-Item build/internal-modules.txt "$package/INTERNAL-MODULES.txt" -Force
           Copy-Item build-requirements.txt "$package/BUILD-REQUIREMENTS.txt" -Force
@@ -589,6 +599,7 @@ jobs:
             'Static',
             'Versions.txt',
             'VERSION',
+            'CHANGELOG.md',
             'ROADMAP.md',
             'INTERNAL-MODULES.txt',
             'BUILD-REQUIREMENTS.txt'
@@ -600,6 +611,15 @@ jobs:
           }
           if ((Get-Item "$package/Versions.txt").Length -eq 0) {
             throw 'Versions.txt est vide'
+          }
+
+          $wxXml = @(Get-ChildItem $package -Recurse -Filter '_xml*.pyd' -File)
+          if ($wxXml.Count -eq 0) {
+            throw 'Extension wx._xml absente du paquet Windows'
+          }
+          $wxRichText = @(Get-ChildItem $package -Recurse -Filter '_richtext*.pyd' -File)
+          if ($wxRichText.Count -eq 0) {
+            throw 'Extension wx._richtext absente du paquet Windows'
           }
 
           $manifest = @(Get-Content "$package/INTERNAL-MODULES.txt")

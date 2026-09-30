@@ -84,10 +84,10 @@ class Panel(wx.Panel):
         self.ctrl_listview.MAJ()
         self.ctrl_recherche = OL_Sauvegardes_auto.CTRL_Outils(self.staticbox1, listview=self.ctrl_listview)
 
-        self.bouton_ajouter = wx.BitmapButton(self.staticbox1, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_modifier = wx.BitmapButton(self.staticbox1, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Modifier.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_supprimer = wx.BitmapButton(self.staticbox1, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_aide = wx.BitmapButton(self.staticbox1, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Aide.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_ajouter = CTRL_Bouton_image.CTRL(self.staticbox1, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Ajouter.png"))
+        self.bouton_modifier = CTRL_Bouton_image.CTRL(self.staticbox1, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Modifier.png"))
+        self.bouton_supprimer = CTRL_Bouton_image.CTRL(self.staticbox1, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Supprimer.png"))
+        self.bouton_aide = CTRL_Bouton_image.CTRL(self.staticbox1, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Aide.png"))
 
         # Binds
         self.Bind(wx.EVT_BUTTON, self.ctrl_listview.Ajouter, self.bouton_ajouter)
@@ -299,7 +299,7 @@ class Saisie_sauvegarde_auto(wx.Frame):
         self.listBox_elements = wx.CheckListBox(self.staticbox, -1, (-1, -1), wx.DefaultSize, listeElements)
         self.label_destination = wx.StaticText(self.staticbox, -1, _(u"Destination :"))
         self.textctrl_destination = wx.TextCtrl(self.staticbox, -1, "", size=(-1, -1))
-        self.bouton_destination = wx.BitmapButton(self.staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Repertoire.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_destination = CTRL_Bouton_image.CTRL(self.staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Repertoire.png"))
         self.label_conservation = wx.StaticText(self.staticbox, -1, _(u"Conservation :"))
         self.choice_conservation = wx.Choice(self.staticbox, -1, choices = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"])
         self.label_destination2 = wx.StaticText(self.staticbox, -1, _(u"sauvegardes de sécurité seront conservées en archive."))
@@ -352,7 +352,7 @@ class Saisie_sauvegarde_auto(wx.Frame):
         
         grid_sizer_destination = wx.FlexGridSizer(rows=1, cols=2, vgap=10, hgap=10)
         grid_sizer_destination.Add(self.textctrl_destination, 0, wx.ALL|wx.EXPAND, 0)
-        grid_sizer_destination.Add(self.bouton_destination, 0, wx.ALL|wx.EXPAND, 0)
+        grid_sizer_destination.Add(self.bouton_destination, 0, wx.ALIGN_CENTER_VERTICAL, 0)
         grid_sizer_destination.AddGrowableCol(0)
         grid_sizer_param.Add(grid_sizer_destination, 1, wx.EXPAND|wx.ALL, 0)
         
@@ -515,7 +515,7 @@ class Saisie_sauvegarde_occasionnelle(wx.Frame):
         standardPath = wx.StandardPaths.Get()
         destination = standardPath.GetDocumentsDir()
         self.textctrl_destination = wx.TextCtrl(self.staticbox, -1, destination, size=(-1, -1))
-        self.bouton_destination = wx.BitmapButton(self.staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Repertoire.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_destination = CTRL_Bouton_image.CTRL(self.staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Repertoire.png"))
         
         self.bouton_aide = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))
         self.bouton_ok = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Ok"), cheminImage=Chemins.GetStaticPath("Images/32x32/Valider.png"))
@@ -575,7 +575,7 @@ class Saisie_sauvegarde_occasionnelle(wx.Frame):
         
         grid_sizer_destination = wx.FlexGridSizer(rows=1, cols=2, vgap=10, hgap=10)
         grid_sizer_destination.Add(self.textctrl_destination, 0, wx.ALL|wx.EXPAND, 0)
-        grid_sizer_destination.Add(self.bouton_destination, 0, wx.ALL|wx.EXPAND, 0)
+        grid_sizer_destination.Add(self.bouton_destination, 0, wx.ALIGN_CENTER_VERTICAL, 0)
         grid_sizer_destination.AddGrowableCol(0)
         grid_sizer_param.Add(grid_sizer_destination, 1, wx.EXPAND|wx.ALL, 0)
 

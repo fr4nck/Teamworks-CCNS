@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Point d'entrée de Teamworks et coque d'interface moderne.
+"""Point d'entrée de Teamworks-CCNS et coque d'interface wx.
 
-Le cœur historique reste isolé dans ``Teamworks_core``. Cette coque ne réécrit
-pas la logique métier : elle remplace uniquement le livre d'onglets principal
-par la navigation flexible et conserve les noms publics attendus par le reste
-de l'application.
+Le cœur historique reste isolé dans ``Teamworks_core``. Cette coque fournit la
+navigation actuelle, l'identité de version Teamworks-CCNS et retire du parcours
+utilisateur les sollicitations commerciales historiques.
 """
 
 import os
@@ -24,6 +23,8 @@ from Utils import UTILS_Customize
 from Utils import UTILS_Fichiers
 from Utils import UTILS_Rapport_bugs
 from Utils import UTILS_Qualifications_091g
+from Utils import UTILS_Schema_compat
+from Utils import UTILS_Version
 from Utils.UTILS_Traduction import _
 
 
@@ -32,10 +33,38 @@ from Utils.UTILS_Traduction import _
 UTILS_Qualifications_091g.install()
 
 
-VERSION_APPLICATION = CORE.VERSION_APPLICATION
-MAIL_AUTEUR = CORE.MAIL_AUTEUR
-ADRESSE_FORUM = CORE.ADRESSE_FORUM
+def _lire_version_teamworks_ccns():
+    """Lit la version distribuée depuis le fichier VERSION canonique.
+
+    En développement, VERSION est à la racine du dépôt. Dans le paquet
+    PyInstaller, il est copié à côté de l'exécutable.
+    """
+    candidats = (
+        Chemins.GetMainPath("VERSION"),
+        os.path.abspath(os.path.join(Chemins.GetMainPath(""), os.pardir, "VERSION")),
+    )
+    for chemin in candidats:
+        try:
+            with open(chemin, "r", encoding="utf-8") as fichier:
+                version = fichier.readline().strip()
+            if version:
+                return version
+        except (OSError, UnicodeError):
+            continue
+    raise RuntimeError("VERSION Teamworks-CCNS introuvable")
+
+
+VERSION_APPLICATION = _lire_version_teamworks_ccns()
+MAIL_AUTEUR = ""
+ADRESSE_FORUM = ""
 ID_DERNIER_FICHIER = CORE.ID_DERNIER_FICHIER
+
+# Le cœur historique consomme encore cette constante dans les journaux, les
+# nouveaux fichiers et certains dialogues. On lui fournit donc la même source
+# canonique au lieu de Versions.txt / v2.13.1.
+CORE.VERSION_APPLICATION = VERSION_APPLICATION
+CORE.MAIL_AUTEUR = MAIL_AUTEUR
+CORE.ADRESSE_FORUM = ADRESSE_FORUM
 
 
 class Toolbook(CTRL_Navigation_principale.NavigationPrincipale):
@@ -91,14 +120,165 @@ class Toolbook(CTRL_Navigation_principale.NavigationPrincipale):
 
 
 # Le cœur historique résout Toolbook au moment où MyFrame est instanciée.
-# Cette injection locale garde donc toute la logique existante tout en remplaçant
-# réellement le composant de navigation, sans monkey-patcher wxPython.
 CORE.Toolbook = Toolbook
 
-MyFrame = CORE.MyFrame
+
+class MyFrame(CORE.MyFrame):
+    """Fenêtre Teamworks-CCNS avec identité et menus actuels."""
+
+    _LIBELLES_COMMERCIAUX_A_RETIRER = {
+        u"Soutenir Teamworks",
+        u"Acheter une licence pour accéder au manuel de référence",
+    }
+    _LIBELLES_RESSOURCES_HISTORIQUES = {
+        u"Accéder au forum d'entraide",
+        u"Visionner des tutoriels vidéos",
+    }
+    _RENOMMAGES_MENU = {
+        u"Consulter l'aide": u"Documentation Teamworks-CCNS",
+        u"Accéder au forum d'entraide": u"Forum historique Teamworks / Noethys",
+        u"Visionner des tutoriels vidéos": u"Tutoriels historiques Teamworks / Noethys",
+    }
+
+    def ConvertVersionTuple(self, texteVersion=""):
+        """Normalise les versions CCNS tout en gardant la comparaison historique."""
+        return UTILS_Version.ConvertirTuple(texteVersion)
+
+    def ValidationVersionFichier(self, nomFichier):
+        """Valide le schéma sans confondre version produit 0.9.x et schéma 2.x."""
+        db_schema = CORE.UpgradeDB.DB(nomFichier=nomFichier)
+        try:
+            version_schema, source_version = UTILS_Schema_compat.DeterminerVersionSchema(
+                db_schema,
+                self.ConvertVersionTuple,
+            )
+
+            if UTILS_Schema_compat.NecessiteMigrationDonneesHistorique(version_schema):
+                resultat = db_schema.Upgrade(version_schema)
+                if resultat is not True:
+                    print(
+                        "Migration historique du schéma impossible (%s) : %s"
+                        % (source_version, resultat)
+                    )
+                    return False
+
+            rapport = UTILS_Schema_compat.Assurer(
+                db_schema,
+                CORE.UpgradeDB.Tables.DB_DATA,
+            )
+            UTILS_Schema_compat.MemoriserVersionSchema(db_schema)
+
+            if rapport["tables_creees"] or rapport["champs_ajoutes"]:
+                print(
+                    "Compatibilité schéma appliquée : tables=%s champs=%s"
+                    % (rapport["tables_creees"], rapport["champs_ajoutes"])
+                )
+        except Exception as err:
+            print("Compatibilité du schéma impossible : %s" % err)
+            return False
+        finally:
+            db_schema.Close()
+
+        return True
+
+    def AnnonceFinancement(self):
+        """Désactive les sollicitations commerciales automatiques historiques."""
+        return False
+
+    def SetTitleFrame(self, nomFichier=""):
+        if "[RESEAU]" in nomFichier:
+            _port, _hote, user, _mdp = nomFichier.split(";")
+            nom_affiche = nomFichier[nomFichier.index("[RESEAU]") + 8:]
+            nomFichier = _(u"Fichier réseau : %s | Utilisateur : %s") % (
+                nom_affiche,
+                user,
+            )
+        if nomFichier:
+            nomFichier = " - [" + nomFichier + "]"
+        self.SetTitle("Teamworks CCNS %s%s" % (VERSION_APPLICATION, nomFichier))
+
+    def RechercheMAJinternet(self):
+        """Ne contacte jamais l'infrastructure historique au démarrage."""
+        return False
+
+    @staticmethod
+    def _afficher_ressources_historiques():
+        try:
+            return bool(
+                UTILS_Customize.GetValeur(
+                    "historique",
+                    "afficher_ressources",
+                    "1",
+                    type_valeur=bool,
+                )
+            )
+        except Exception:
+            return True
+
+    @classmethod
+    def _nettoyer_separateurs(cls, menu):
+        items = list(menu.GetMenuItems())
+        precedent_separateur = True
+        for item in items:
+            if item.IsSeparator():
+                if precedent_separateur:
+                    menu.Delete(item)
+                else:
+                    precedent_separateur = True
+            else:
+                precedent_separateur = False
+        items = list(menu.GetMenuItems())
+        if items and items[-1].IsSeparator():
+            menu.Delete(items[-1])
+
+    @classmethod
+    def _nettoyer_menu(cls, menu, afficher_historiques):
+        """Présente la documentation moderne et filtre les liens hérités."""
+        for item in list(menu.GetMenuItems()):
+            sous_menu = item.GetSubMenu()
+            if sous_menu is not None:
+                cls._nettoyer_menu(sous_menu, afficher_historiques)
+            if item.IsSeparator():
+                continue
+
+            libelle = item.GetItemLabelText()
+            if libelle in cls._LIBELLES_COMMERCIAUX_A_RETIRER:
+                menu.Delete(item)
+                continue
+            if (
+                libelle in cls._LIBELLES_RESSOURCES_HISTORIQUES
+                and not afficher_historiques
+            ):
+                menu.Delete(item)
+                continue
+
+            nouveau = cls._RENOMMAGES_MENU.get(libelle)
+            if nouveau:
+                item.SetItemLabel(nouveau)
+
+        cls._nettoyer_separateurs(menu)
+
+    def CreationBarreMenus(self):
+        super(MyFrame, self).CreationBarreMenus()
+        barre = self.GetMenuBar()
+        if barre is None:
+            return
+        afficher_historiques = self._afficher_ressources_historiques()
+        for index in range(barre.GetMenuCount()):
+            self._nettoyer_menu(barre.GetMenu(index), afficher_historiques)
+
+
+CORE.MyFrame = MyFrame
 MyApp = CORE.MyApp
 SaisiePassword = CORE.SaisiePassword
-Redirect = CORE.Redirect
+
+
+class Redirect(CORE.Redirect):
+    """Redirection stdout compatible avec le protocole des flux Python."""
+
+    def flush(self):
+        if not self.filename.closed:
+            self.filename.flush()
 
 
 def _detruire_fenetres_smoke(app):
@@ -114,6 +294,17 @@ def _detruire_fenetres_smoke(app):
 
 def _initialiser_application():
     """Reprend le bootstrap historique en initialisant le cœur partagé."""
+    if os.environ.get("TEAMWORKS_PACKAGE_SMOKE_EMAIL") == "1":
+        # Ce hook ne s'active que dans le smoke du paquet PyInstaller. Il
+        # verrouille le défaut réel observé en recette : wx.richtext était
+        # présent mais son extension wx._xml manquait du bundle.
+        import wx._xml  # noqa: F401
+        import wx._richtext  # noqa: F401
+        import wx.richtext  # noqa: F401
+        from Ctrl import CTRL_Editeur_email  # noqa: F401
+        from Dlg import DLG_Mailer  # noqa: F401
+        print("TEAMWORKS_PACKAGE_EMAIL_IMPORT_OK", flush=True)
+
     for rep in ("Temp", "Updates", "Sync", "Lang", "Modeles", "Editions"):
         chemin = UTILS_Fichiers.GetRepUtilisateur(rep)
         if not os.path.isdir(chemin):

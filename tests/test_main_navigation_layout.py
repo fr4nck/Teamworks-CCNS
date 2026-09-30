@@ -145,7 +145,8 @@ def test_modern_entrypoint_keeps_historical_core_isolated():
     ast.parse(core)
     assert "import Teamworks_core as CORE" in main
     assert "CORE.Toolbook = Toolbook" in main
-    assert "MyFrame = CORE.MyFrame" in main
+    assert "class MyFrame(CORE.MyFrame)" in main
+    assert "CORE.MyFrame = MyFrame" in main
     assert "MyApp = CORE.MyApp" in main
     assert "CORE.CUSTOMIZE = customize" in main
     assert "class MyFrame(wx.Frame)" in core

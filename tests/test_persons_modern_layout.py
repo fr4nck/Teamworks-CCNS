@@ -33,7 +33,7 @@ def test_persons_screen_uses_native_flexible_layout():
 def test_persons_splitter_starts_proportional_then_stays_user_controlled():
     source = _source()
     init = source.split("def InitialiserSeparateur", 1)[1].split(
-        "def OnTailleListe", 1
+        "def AjusterColonnes", 1
     )[0]
 
     assert "GetClientSize().GetWidth()" in init
@@ -54,12 +54,15 @@ def test_persons_actions_use_the_common_scaled_button_contract():
     assert "ajouter_si_manquant=False" in source
 
 
-def test_persons_list_consumes_available_width_directly():
+def test_persons_list_preserves_user_column_widths():
     source = _source()
-    assert "AjusterColonnes" in source
-    assert "GetClientSize().GetWidth()" in source
-    assert "SetColumnWidth" in source
-    assert "largeur_dispo > total" in source
+    ajuster = source.split("def AjusterColonnes", 1)[1].split(
+        "def OnBoutonAjouter", 1
+    )[0]
+
+    assert "largeurs utilisateur sont autoritaires" in ajuster
+    assert "SetColumnWidth" not in ajuster
+    assert "return" in ajuster
 
 
 def test_persons_screen_uses_semantic_surfaces_instead_of_blue_fill():

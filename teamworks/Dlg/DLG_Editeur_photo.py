@@ -287,8 +287,8 @@ class Dialog(wx.Dialog):
         self.imgbox = ImgBox(self,-1, image=image, tailleCadre=tailleCadre)
         
         self.staticBox_rotation = wx.StaticBox(self, -1, _(u"Rotation"))
-        self.bouton_rotation_gauche = wx.BitmapButton(self.staticBox_rotation, -1, wx.Bitmap(Chemins.GetStaticPath("Images/22x22/RotationGauche.png"), wx.BITMAP_TYPE_PNG))
-        self.bouton_rotation_droite = wx.BitmapButton(self.staticBox_rotation, -1, wx.Bitmap(Chemins.GetStaticPath("Images/22x22/RotationDroite.png"), wx.BITMAP_TYPE_PNG))
+        self.bouton_rotation_gauche = CTRL_Bouton_image.CTRL(self.staticBox_rotation, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/22x22/RotationGauche.png"))
+        self.bouton_rotation_droite = CTRL_Bouton_image.CTRL(self.staticBox_rotation, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/22x22/RotationDroite.png"))
         
         self.staticBox_zoom = wx.StaticBox(self, -1, _(u"Zoom"))
         self.slider_zoom = wx.Slider(self.staticBox_zoom, -1,  500, 1, 1000, size=(-1, -1), style=wx.SL_HORIZONTAL)
@@ -303,7 +303,7 @@ class Dialog(wx.Dialog):
         self.texte_photo = wx.TextCtrl(self.staticBox_texte_photo, -1, "")
         
         self.staticBox_reinit = wx.StaticBox(self, -1, _(u"Réinitialisation"))
-        self.bouton_reinit = wx.BitmapButton(self.staticBox_reinit, -1, wx.Bitmap(Chemins.GetStaticPath("Images/22x22/Photo.png"), wx.BITMAP_TYPE_ANY), size=(70, -1))
+        self.bouton_reinit = CTRL_Bouton_image.CTRL(self.staticBox_reinit, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/22x22/Photo.png"))
         
         # Boutons
         self.bouton_aide = CTRL_Bouton_image.CTRL(self, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))

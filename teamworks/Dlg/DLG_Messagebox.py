@@ -82,7 +82,7 @@ class Dialog(wx.Dialog):
 
         id = 100
         for label in boutons :
-            bouton = wx.Button(self, id=id, label=label)
+            bouton = CTRL_Bouton_image.CTRL(self, id=id, texte=label)
             self.Bind(wx.EVT_BUTTON, self.OnBouton, bouton)
             boutonsSizer.Add(bouton, 0, wx.LEFT, 10)
             id += 1

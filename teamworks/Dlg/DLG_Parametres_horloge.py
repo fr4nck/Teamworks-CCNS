@@ -181,7 +181,10 @@ class Dialog(wx.Dialog):
             return
         
         # Recherche des paramètres par défaut dans la base DEFAUTS
-        DB = GestionDB.DB(nomDB="Defaut.db3")
+        DB = GestionDB.DB(
+            nomFichier=Chemins.GetStaticPath("Databases/Defaut.dat"),
+            suffixe=None,
+        )
         req = "SELECT taille, parametres FROM gadgets WHERE nom='%s';" % self.nomGadget
         DB.ExecuterReq(req)
         resultats = DB.ResultatReq()

@@ -116,8 +116,8 @@ class Dialog(wx.Dialog):
         
         # Boutons
         self.bouton_aide = CTRL_Bouton_image.CTRL(self.panel, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))
-        self.bouton_excel= wx.BitmapButton(self.panel, -1, wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Export_excel.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_imprimer_tableau = wx.BitmapButton(self.panel, -1, wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Imprimer_tableau.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_excel= CTRL_Bouton_image.CTRL(self.panel, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/BoutonsImages/Export_excel.png"))
+        self.bouton_imprimer_tableau = CTRL_Bouton_image.CTRL(self.panel, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/BoutonsImages/Imprimer_tableau.png"))
         self.bouton_ok = CTRL_Bouton_image.CTRL(self.panel, texte=_(u"Ok"), cheminImage=Chemins.GetStaticPath("Images/32x32/Valider.png"))
         self.bouton_annuler = CTRL_Bouton_image.CTRL(self.panel, texte=_(u"Annuler"), cheminImage=Chemins.GetStaticPath("Images/32x32/Annuler.png"))
 

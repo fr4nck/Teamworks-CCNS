@@ -9,6 +9,7 @@
 import Chemins
 from Utils.UTILS_Traduction import _
 import wx
+from Ctrl import CTRL_Bouton_image
 import six
 import FonctionsPerso
 import wx.lib.mixins.listctrl as listmix
@@ -36,7 +37,7 @@ class Page(wx.Panel):
         self.radio_non = wx.RadioButton(self, -1, "Non", style=wx.RB_GROUP)
         self.radio_oui = wx.RadioButton(self, -1, "Oui")
         self.listCtrl_modeles = ListCtrl(self.sizer_choix_modele_staticbox, controller=self)
-        self.bouton_modeles = wx.Button(self.sizer_choix_modele_staticbox, -1, "...", style=wx.BU_EXACTFIT)
+        self.bouton_modeles = CTRL_Bouton_image.Compact(self.sizer_choix_modele_staticbox, texte="...")
 
         self.__set_properties()
         self.__do_layout()

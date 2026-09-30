@@ -9,6 +9,7 @@
 import Chemins
 from Utils.UTILS_Traduction import _
 import wx
+from Ctrl import CTRL_Bouton_image
 import sys
 from wx.lib.mixins.listctrl import CheckListCtrlMixin
 import GestionDB
@@ -52,13 +53,13 @@ class Panel(wx.Panel):
         self.list_ctrl_personnes.SetMinSize((20, 80)) 
         self.list_ctrl_modeles = listCtrl_Modeles(self.sizer_modeles_staticbox)
         self.list_ctrl_modeles.SetMinSize((20, 20)) 
-        self.bouton_ajouter = wx.BitmapButton(self.sizer_modeles_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_modifier = wx.BitmapButton(self.sizer_modeles_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Modifier.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_dupliquer = wx.BitmapButton(self.sizer_modeles_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Dupliquer.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_supprimer = wx.BitmapButton(self.sizer_modeles_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_aide = wx.BitmapButton(self.panel_base_2, -1, wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Aide_L72.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_ok = wx.BitmapButton(self.panel_base_2, -1, wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Ok_L72.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_annuler = wx.BitmapButton(self.panel_base_2, -1, wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Annuler_L72.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_ajouter = CTRL_Bouton_image.CTRL(self.sizer_modeles_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Ajouter.png"))
+        self.bouton_modifier = CTRL_Bouton_image.CTRL(self.sizer_modeles_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Modifier.png"))
+        self.bouton_dupliquer = CTRL_Bouton_image.CTRL(self.sizer_modeles_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Dupliquer.png"))
+        self.bouton_supprimer = CTRL_Bouton_image.CTRL(self.sizer_modeles_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Supprimer.png"))
+        self.bouton_aide = CTRL_Bouton_image.CTRL(self.panel_base_2, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/BoutonsImages/Aide_L72.png"))
+        self.bouton_ok = CTRL_Bouton_image.CTRL(self.panel_base_2, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/BoutonsImages/Ok_L72.png"))
+        self.bouton_annuler = CTRL_Bouton_image.CTRL(self.panel_base_2, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/BoutonsImages/Annuler_L72.png"))
 
         self.__set_properties()
         self.__do_layout()

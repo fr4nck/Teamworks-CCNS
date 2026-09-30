@@ -28,11 +28,11 @@ class Panel(wx.Panel):
         # Questionnaire
         self.ctrl_questionnaire = CTRL_Questionnaire.CTRL(self, type="individu", menuActif=True, afficherInvisibles=True)
         
-        self.bouton_ajouter = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_modifier = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Modifier.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_supprimer = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_monter = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Fleche_haut.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_descendre = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Fleche_bas.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_ajouter = CTRL_Bouton_image.CTRL(self, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Ajouter.png"))
+        self.bouton_modifier = CTRL_Bouton_image.CTRL(self, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Modifier.png"))
+        self.bouton_supprimer = CTRL_Bouton_image.CTRL(self, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Supprimer.png"))
+        self.bouton_monter = CTRL_Bouton_image.CTRL(self, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Fleche_haut.png"))
+        self.bouton_descendre = CTRL_Bouton_image.CTRL(self, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Fleche_bas.png"))
 
         self.Bind(wx.EVT_BUTTON, self.OnBoutonAjouter, self.bouton_ajouter)
         self.Bind(wx.EVT_BUTTON, self.OnBoutonModifier, self.bouton_modifier)

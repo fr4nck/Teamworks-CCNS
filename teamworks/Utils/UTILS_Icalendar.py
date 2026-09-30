@@ -110,7 +110,7 @@ class Calendrier():
 
 
 if __name__ == "__main__":
-    cal = Calendrier(url="http://media.education.gouv.fr/ics/Calendrier_Scolaire_Zone_A.ics")
+    cal = Calendrier(url="https://fr.ftp.opendatasoft.com/openscol/fr-en-calendrier-scolaire/Zone-A.ics")
     print(">>", cal.GetTitre())
 ##    for event in cal.GetEvents() :
 ##        print event

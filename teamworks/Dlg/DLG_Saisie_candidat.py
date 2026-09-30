@@ -266,7 +266,7 @@ class Panel(CORE.Panel):
         self.bouton_modifier_coord = CTRL_Bouton_image.CTRL(parent, texte=_(u"Modifier"))
         self.bouton_supprimer_coord = CTRL_Bouton_image.CTRL(parent, texte=_(u"Supprimer"))
         gap = UTILS_Styles.GetLayoutSpacing("field_gap")
-        actions = wx.WrapSizer(wx.HORIZONTAL)
+        actions = wx.WrapSizer(wx.HORIZONTAL, 0)
         for bouton in (self.bouton_ajouter_coord, self.bouton_modifier_coord, self.bouton_supprimer_coord):
             actions.Add(bouton, 0, wx.RIGHT | wx.BOTTOM, gap)
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -304,7 +304,7 @@ class Panel(CORE.Panel):
 
     def _layout_liste_actions(self, parent, liste, boutons):
         gap = UTILS_Styles.GetLayoutSpacing("field_gap")
-        actions = wx.WrapSizer(wx.HORIZONTAL)
+        actions = wx.WrapSizer(wx.HORIZONTAL, 0)
         for bouton in boutons:
             actions.Add(bouton, 0, wx.RIGHT | wx.BOTTOM, gap)
         sizer = wx.BoxSizer(wx.VERTICAL)

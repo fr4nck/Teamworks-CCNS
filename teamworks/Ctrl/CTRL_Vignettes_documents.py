@@ -16,6 +16,7 @@ import os
 import FonctionsPerso
 from Utils import UTILS_Fichiers
 from Ctrl import CTRL_thumbnailctrl as TC
+from Ctrl import CTRL_Bouton_image
 from Utils import UTILS_Adaptations
 import GestionDB
 
@@ -501,12 +502,12 @@ class MyFrame(wx.Frame):
         sizer_1.Add(panel, 1, wx.ALL|wx.EXPAND)
         self.SetSizer(sizer_1)
         self.ctrl = CTRL(panel, IDpiece=18)
-        self.bouton_1 = wx.BitmapButton(panel, -1, wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Ok_L72.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_2 = wx.BitmapButton(panel, -1, wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Ok_L72.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_1 = CTRL_Bouton_image.Compact(panel, bitmap=wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Ok_L72.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_2 = CTRL_Bouton_image.Compact(panel, bitmap=wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Ok_L72.png"), wx.BITMAP_TYPE_ANY))
         sizer_2 = wx.BoxSizer(wx.VERTICAL)
         sizer_2.Add(self.ctrl, 1, wx.EXPAND|wx.ALL, 10)
-        sizer_2.Add(self.bouton_1, 0, wx.EXPAND|wx.ALL, 10)
-        sizer_2.Add(self.bouton_2, 0, wx.EXPAND|wx.ALL, 10)
+        sizer_2.Add(self.bouton_1, 0, wx.ALL, 10)
+        sizer_2.Add(self.bouton_2, 0, wx.ALL, 10)
         panel.SetSizer(sizer_2)
         self.SetSize((550, 550))
         self.Layout()

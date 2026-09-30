@@ -18,6 +18,15 @@ import threading
 from Utils import UTILS_Fichiers
 import sys
 
+
+def _database_ready(DB):
+    return (
+        getattr(DB, "echec", 1) == 0
+        and getattr(DB, "cursor", None) is not None
+        and getattr(DB, "connexion", None) is not None
+    )
+
+
 styles = {
     1 : (_(u"Texte normal"), 11.35, 20, 0),
     2 : (_(u"Grande case"), 11.35, 20, 2.25),
@@ -464,6 +473,7 @@ class Grid(gridlib.Grid):
         # Modification de la valeur dans le dict de données
         numRow = evt.GetRow()
         valeur = self.GetCellValue(numRow, 1)
+        ancienneValeur = self.dictValeurs[numRow][4]
         self.dictValeurs[numRow][4] = valeur
         code = self.dictValeurs[numRow][0]
         save = self.dictValeurs[numRow][5]
@@ -478,22 +488,45 @@ class Grid(gridlib.Grid):
 ##                pass
         
         DB = GestionDB.DB()
-        
+        if not _database_ready(DB):
+            DB.Close()
+            self.dictValeurs[numRow][4] = ancienneValeur
+            self.SetCellValue(numRow, 1, ancienneValeur)
+            wx.MessageBox(
+                _(u"La base de données est indisponible. La valeur DPAE/DUE n'a pas été enregistrée."),
+                _(u"DPAE/DUE"), wx.OK | wx.ICON_ERROR, parent=self,
+            )
+            return
+
         # Vérifie si le code existe déjà dans la base
         req = """SELECT IDvaleur, code, valeur FROM due_valeurs WHERE code='%s';""" % code
         DB.ExecuterReq(req)
         listeDonnees = DB.ResultatReq()
-        
-        if len(listeDonnees) == 0 :
-            # Enregistrement de la valeur
-            listeDonnees = [("code",  code), ("valeur",  valeur)]
-            newID = DB.ReqInsert("due_valeurs", listeDonnees)
-            DB.Close()
-        else:
-            # MAJ de la valeur
-            IDvaleur = listeDonnees[0][0]
-            listeDonnees = [("code",  code), ("valeur",  valeur)]
-            DB.ReqMAJ("due_valeurs", listeDonnees, "IDvaleur", IDvaleur)
+        placeholder = "%s" if DB.isNetwork else "?"
+
+        try:
+            if len(listeDonnees) == 0:
+                req = "INSERT INTO due_valeurs (code, valeur) VALUES (%s, %s)" % (placeholder, placeholder)
+                DB.cursor.execute(req, (code, valeur))
+            else:
+                IDvaleur = listeDonnees[0][0]
+                req = "UPDATE due_valeurs SET code=%s, valeur=%s WHERE IDvaleur=%s" % (
+                    placeholder, placeholder, placeholder
+                )
+                DB.cursor.execute(req, (code, valeur, IDvaleur))
+            DB.Commit()
+        except Exception:
+            try:
+                DB.connexion.rollback()
+            except Exception:
+                pass
+            self.dictValeurs[numRow][4] = ancienneValeur
+            self.SetCellValue(numRow, 1, ancienneValeur)
+            wx.MessageBox(
+                _(u"La valeur DPAE/DUE n'a pas pu être enregistrée. Vérifiez la connexion à la base puis réessayez."),
+                _(u"DPAE/DUE"), wx.OK | wx.ICON_ERROR, parent=self,
+            )
+        finally:
             DB.Close()
 
 
@@ -523,11 +556,12 @@ class Dialog(wx.Dialog):
         self.label_info.SetFont(font)
                
         # Préparation de la grid
-        self.Import_Donnees()
+        self.chargement_ok = self.Import_Donnees()
         self.gridChamps = Grid(self.sizer_grid_staticbox)
 
         self.bouton_aide = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))
         self.bouton_ok = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Aperçu"), cheminImage=Chemins.GetStaticPath("Images/32x32/Apercu.png"))
+        self.bouton_ok.Enable(self.chargement_ok)
         self.bouton_annuler = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Fermer"), cheminImage=Chemins.GetStaticPath("Images/32x32/Fermer.png"))
 
         self.__set_properties()
@@ -595,7 +629,14 @@ class Dialog(wx.Dialog):
         """ Importe les champs de la base de données """
         
         IDcontrat = self.IDcontrat
-        DB = GestionDB.DB()   
+        DB = GestionDB.DB()
+        if not _database_ready(DB):
+            DB.Close()
+            wx.MessageBox(
+                _(u"La base de données est indisponible. Les données DPAE/DUE ne peuvent pas être chargées."),
+                _(u"DPAE/DUE"), wx.OK | wx.ICON_ERROR, parent=self,
+            )
+            return False
         
         # Import des données enregistrées dans la base
         req = """
@@ -615,35 +656,34 @@ class Dialog(wx.Dialog):
                     champs[index][4] = valeur
                 index += 1
         
-        # Base Contrats
+        # Base Contrats. Les champs historiques IDclassification/valeur_point
+        # ne sont pas utilisés par la DPAE/DUE et peuvent être NULL sur TW-184.
         req = """
-            SELECT IDpersonne, IDclassification, IDtype, valeur_point, date_debut, date_fin, essai
+            SELECT IDpersonne, IDtype, date_debut, date_fin, essai
             FROM contrats WHERE IDcontrat=%d;
         """ % IDcontrat
         DB.ExecuterReq(req)
-        listeContrat = DB.ResultatReq()[0]
-        
-        IDpersonne = listeContrat[0]
-        IDclassification = listeContrat[1]
-        IDtype = listeContrat[2]
-        IDvaleur_point = listeContrat[3]
-        date_debut = listeContrat[4]
-        if date_debut != "" : date_debut = FonctionsPerso.DateEngFr(date_debut)
-        date_fin = listeContrat[5]
-        if date_fin != "" : date_fin = FonctionsPerso.DateEngFr(date_fin)
+        contrats = DB.ResultatReq()
+        if not contrats:
+            DB.Close()
+            wx.MessageBox(
+                _(u"Le contrat sélectionné est introuvable. La DPAE/DUE ne peut pas être préparée."),
+                _(u"DPAE/DUE"), wx.OK | wx.ICON_ERROR, parent=self,
+            )
+            return False
+
+        IDpersonne, IDtype, date_debut, date_fin, essai = contrats[0]
+        if date_debut not in ("", None):
+            date_debut = FonctionsPerso.DateEngFr(date_debut)
+        else:
+            date_debut = ""
+        if date_fin not in ("", None):
+            date_fin = FonctionsPerso.DateEngFr(date_fin)
+        else:
+            date_fin = ""
         date_debut = date_debut.replace("/", "")
         date_fin = date_fin.replace("/", "")
-        essai = str(listeContrat[6])
-        
-        # Base contrats_class
-        req = """
-            SELECT nom
-            FROM contrats_class WHERE IDclassification=%d;
-        """ % IDclassification
-        DB.ExecuterReq(req)
-        listeClassification = DB.ResultatReq()[0]
-        
-        classification = listeClassification[0]
+        essai = "" if essai in (None, "") else str(essai)
                 
         # Base contrats_types
         req = """
@@ -661,16 +701,6 @@ class Dialog(wx.Dialog):
         else:
             type_contrat = "" #_(u"Contrat à durée indéterminée")
                 
-        # Base valeurs_point
-        req = """
-            SELECT valeur, date_debut
-            FROM valeurs_point WHERE IDvaleur_point=%d;
-        """ % IDvaleur_point
-        DB.ExecuterReq(req)
-        listeValeursPoint = DB.ResultatReq()[0]
-        
-        valeur_point = listeValeursPoint[0]
-        
         # Base personnes
         req = """
             SELECT civilite, nom, nom_jfille, prenom, date_naiss, cp_naiss, ville_naiss, nationalite, num_secu, adresse_resid, cp_resid, ville_resid, IDsituation, pays_naiss
@@ -794,6 +824,7 @@ class Dialog(wx.Dialog):
                 index += 1
 
         DB.Close()
+        return True
 
 
 

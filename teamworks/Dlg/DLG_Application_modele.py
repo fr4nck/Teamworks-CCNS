@@ -410,7 +410,7 @@ class Panel(CORE.Panel):
         parametres.Add(self.sizer_manuel, 1, wx.EXPAND)
         contenu_parametres.SetSizer(parametres)
 
-        actions_modeles = wx.WrapSizer(wx.HORIZONTAL)
+        actions_modeles = wx.WrapSizer(wx.HORIZONTAL, 0)
         for bouton in (
             self.bouton_ajouter,
             self.bouton_modifier,

@@ -9,6 +9,7 @@
 import Chemins
 from Utils.UTILS_Traduction import _
 import wx
+from Ctrl import CTRL_Bouton_image
 from Utils.WX_COMPAT import wx_int
 import six
 import calendar
@@ -539,7 +540,12 @@ class Calendrier(wx.ScrolledWindow):
         dc.DrawText(texte, int(xMois+(largMois/2)-int(largTexte/2)), int(yMois+(hautHeader/2)-int(hautTexte/2)))
         # Dessin de la ligne
         dc.SetPen(wx.Pen((210, 210, 210), 1))
-        dc.DrawLine(xMois+2, yMois+hautHeader-2, xMois+largMois-2, yMois+hautHeader-2)
+        dc.DrawLine(
+            wx_int(xMois + 2),
+            wx_int(yMois + hautHeader - 2),
+            wx_int(xMois + largMois - 2),
+            wx_int(yMois + hautHeader - 2),
+        )
         
         return hautMois-hautHeader, yMois+hautHeader
 
@@ -958,13 +964,13 @@ class Panel(wx.Panel):
         if afficheAujourdhui == True :
             self.calendrier.SelectJours( [datetime.date.today(),] )
             
-        self.bouton_CalendrierAnnuel = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Calendrier_jour.png"), wx.BITMAP_TYPE_PNG), size=(28, 21))
+        self.bouton_CalendrierAnnuel = CTRL_Bouton_image.CTRL(self, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Calendrier_jour.png"))
         self.bouton_CalendrierAnnuel.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour afficher le calendrier annuel")))
 
         # Layout
         sizer =  wx.BoxSizer(wx.VERTICAL)
         sizerOptions = wx.FlexGridSizer(rows=1, cols=8, vgap=0, hgap=5)
-        sizerOptions.Add(self.bouton_CalendrierAnnuel, 0, wx.EXPAND, 0)
+        sizerOptions.Add(self.bouton_CalendrierAnnuel, 0, wx.ALIGN_CENTER_VERTICAL, 0)
         sizerOptions.Add(self.combo_mois, 0, wx.EXPAND, 0)
         sizerOptions.Add(self.ctrl_annee, 0, wx.EXPAND, 0)
         sizerOptions.Add(self.spin, 0, wx.EXPAND, 0)
