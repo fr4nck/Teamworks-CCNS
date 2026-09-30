@@ -16,22 +16,24 @@ import pytest
 ROOT = Path(__file__).resolve().parent
 SEARCHCTRL_SMOKE = ROOT / "tools" / "smoke_searchctrl_lifecycle.py"
 PRELUDE_SMOKE = ROOT / "tools" / "smoke_person_prelude_lifecycle.py"
+CLOSE_BISECT_SMOKE = ROOT / "tools" / "smoke_person_close_reopen_bisect.py"
 
 
-def _run_smoke(script: Path, scenario: str, cycles: int) -> str | None:
+def _run_smoke(script: Path, scenario: str, cycles: int | None = None) -> str | None:
+    command = [
+        sys.executable,
+        str(script),
+        "--scenario",
+        scenario,
+    ]
+    if cycles is not None:
+        command.extend(["--cycles", str(cycles)])
     completed = subprocess.run(
-        [
-            sys.executable,
-            str(script),
-            "--scenario",
-            scenario,
-            "--cycles",
-            str(cycles),
-        ],
+        command,
         cwd=ROOT,
         text=True,
         capture_output=True,
-        timeout=max(300, cycles * 150),
+        timeout=max(300, (cycles or 2) * 150),
         check=False,
     )
     output = "\n".join(
@@ -60,7 +62,25 @@ def _diagnostic_searchctrl_windows() -> None:
         if failure:
             failures.append(failure)
 
-    # Bisection du préambule du smoke Fiche personne.
+    # Bisection fonctionnelle de Fermer(save=True). D'abord le seuil 1/2/3,
+    # puis les trois effets supplémentaires par rapport à un Destroy direct :
+    # sauvegarde, arrêt des callbacks et refresh de la page Personnes.
+    for scenario in (
+        "fermer-1",
+        "fermer-2",
+        "fermer-3",
+        "save-only-3",
+        "callbacks-only-3",
+        "refresh-only-3",
+        "save-callbacks-3",
+        "save-refresh-3",
+        "callbacks-refresh-3",
+    ):
+        failure = _run_smoke(CLOSE_BISECT_SMOKE, scenario)
+        if failure:
+            failures.append(failure)
+
+    # Contrôles historiques du diagnostic précédent.
     for scenario, cycles in (
         ("pages-backup", 3),
         ("close-backup", 3),
