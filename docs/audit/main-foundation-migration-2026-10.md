@@ -302,7 +302,23 @@ run sur `1f97e18c`). La CI n'a pas été modifiée. Déclencheur sûr prévu par
 `build_windows=false`, `build_docs=false`) : jobs « Tests et règles du socle » et « Parcours critiques
 Windows ». Aucune PR n'a été ouverte, rien n'est fusionné.
 
-Résultat : voir ci-dessous (renseigné après exécution).
+**Résultat sur `7e89f72a75a9f1f9b0faeb389ec636d321862ebc`** (sommet de code `e1a0b449` + ce rapport en
+première version) : run `workflow_dispatch`
+[36905616479](https://github.com/fr4nck/Teamworks-CCNS/actions/runs/36905616479), `headSha` vérifié égal
+au SHA ci-dessus.
+
+| Job | Résultat |
+|---|---|
+| Tests et règles du socle (Ubuntu 24.04) | success — pytest : **2 473 passed, 3 skipped**, 0 failed (MariaDB 10.11.14 inclus : les 102 tests SQL font partie des 2 476 collectés) |
+| Parcours critiques Windows | success — **30 passed**, dont le test de fenêtre réelle wx rouge en local (§8.6) : l'échec local est donc bien propre au poste |
+| Nettoyage Actions, MkDocs, GitHub Pages, paquets Windows | skipped (conditions de déclenchement non remplies, attendu) |
+
+Les 3 skips sous Ubuntu sont les 3 tests wx marqués `skipif(sys.platform != "win32")`
+(`test_secondary_contract_smoke_contract` ×2, UAT « contrats 21h » ×1), exécutés par le job Windows.
+Réserve : l'étape « Exécuter les tests » est en `continue-on-error: true` dans `ci.yml` ; le vert du job ne
+suffit donc pas, le décompte pytest ci-dessus a été lu dans les logs. Le HEAD final (ce commit) ne
+modifie que ce rapport ; un run équivalent lui est appliqué et son résultat est donné dans la réponse
+finale (un fichier ne peut pas citer le résultat de son propre commit).
 
 ## 9. Stop-gates restants
 
@@ -319,11 +335,11 @@ Ouverts :
    ou extraire vers un module neutre) ; 3 tests de contrat de workflow déjà rouges sur `qt/master` ;
    qualification réelle PySide6 dans un environnement approprié (PySide6 absent ici).
 5. Test de fenêtre réelle wx rouge en local (§8.6), à valider par le job Windows de la CI.
-6. Qualification GitHub du SHA final : voir §8.8.
+6. Qualification GitHub : run vert sur `7e89f72a` (§8.8) ; le HEAD final, report-only, est contrôlé de la même façon (réponse finale).
 7. Nommage permanent (`master`/`wx/master`/`qt/master` vs `main`/`wx`/`qt`) : non décidé, non exécuté.
 8. Aucune écriture dans une base réelle ; tests SQL sur conteneurs jetables uniquement.
 
-Le candidat **n'est pas déclaré « qualifié »** tant que les points 3 à 6 restent ouverts ; en l'état il
+Le candidat **n'est pas déclaré « qualifié »** tant que les points 3 à 5 restent ouverts ; en l'état il
 est « qualifié localement sur les couches communes, hors wx/Qt ».
 
 ## 10. Ordre recommandé pour la suite
