@@ -59,6 +59,7 @@ from infrastructure.persistence.contract_write_adapter import (  # noqa: E402
     GestionDbContractWriteAdapter,
 )
 import GestionDB  # noqa: E402
+from Utils import UTILS_Config  # noqa: E402
 
 
 READY = "TEAMWORKS_RAIL_A_MYSQL_READY"
@@ -88,6 +89,30 @@ def _require_real_mysql(db) -> None:
         raise RecipeFailure(
             "Stop-gate refuse : le dossier actif n'est pas un backend MySQL reseau."
         )
+
+
+def _configure_mysql_interface() -> tuple[str, str]:
+    """Reprend la meme preference connecteur que le bootstrap Teamworks."""
+    configured = UTILS_Config.FichierConfig().GetItemConfig(
+        "interface_mysql", "mysql.connector"
+    )
+    configured = str(configured or "mysql.connector").strip().lower()
+    if configured in ("mysqldb", "mysql.connector"):
+        GestionDB.SetInterfaceMySQL(configured)
+    if not GestionDB.IMPORT_MYSQLDB_OK and GestionDB.IMPORT_MYSQLCONNECTOR_OK:
+        GestionDB.SetInterfaceMySQL("mysql.connector")
+
+    active = GestionDB.INTERFACE_MYSQL
+    available = (
+        active == "mysqldb" and GestionDB.IMPORT_MYSQLDB_OK
+    ) or (
+        active == "mysql.connector" and GestionDB.IMPORT_MYSQLCONNECTOR_OK
+    )
+    _require(
+        available,
+        "Connecteur MySQL Teamworks indisponible : %s." % active,
+    )
+    return configured, active
 
 
 def _git_value(*args: str) -> str:
@@ -242,6 +267,10 @@ def _server_preflight(db, port: GestionDbContractWriteAdapter) -> dict[str, obje
     group = _monthly_group(date.today())
 
     print("TEAMWORKS_RAIL_A_BACKEND:MYSQL", flush=True)
+    print(
+        "TEAMWORKS_RAIL_A_PREFLIGHT:CONNECTOR=%s" % GestionDB.INTERFACE_MYSQL,
+        flush=True,
+    )
     print("TEAMWORKS_RAIL_A_SOURCE:SHA=%s" % tested_sha, flush=True)
     print("TEAMWORKS_RAIL_A_SOURCE:BRANCH=%s" % branch, flush=True)
     print("TEAMWORKS_RAIL_A_SOURCE:TRACKED_WORKTREE=CLEAN", flush=True)
@@ -666,6 +695,7 @@ def run() -> int:
     )
     report = _new_report(run_id)
     print("TEAMWORKS_RAIL_A_RUN:%s" % run_id, flush=True)
+    configured_connector, active_connector = _configure_mysql_interface()
     contract_ids: list[int] = []
     db = None
     port = None
@@ -692,6 +722,8 @@ def run() -> int:
             "database": preflight["database"],
             "autocommit": preflight["autocommit"],
             "isolation": preflight["isolation"],
+            "configured_connector": configured_connector,
+            "active_connector": active_connector,
         }
 
         _scenario(
