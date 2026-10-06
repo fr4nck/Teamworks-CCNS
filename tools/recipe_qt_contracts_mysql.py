@@ -67,6 +67,7 @@ REPORT_DIR = ROOT / "artifacts" / "rail-a-mysql"
 REPORT_PATH = REPORT_DIR / "report.json"
 DDL_PATH = ROOT / "infrastructure" / "persistence" / "sql" / "contract_amendment_v1.sql"
 AMENDMENT_TABLE = "tw_contract_amendment"
+EXPECTED_BRANCH = "qt/contracts-amendment-foundation"
 
 
 class RecipeFailure(RuntimeError):
@@ -110,6 +111,34 @@ def _git_context() -> tuple[str, str]:
         or os.environ.get("GITHUB_HEAD_REF")
         or os.environ.get("GITHUB_REF_NAME")
         or "inconnue"
+    )
+    return sha, branch
+
+
+def _git_source_preflight() -> tuple[str, str]:
+    """Garantit que le SHA rapporte correspond exactement au code suivi execute."""
+    sha, branch = _git_context()
+    valid_sha = len(sha) == 40 and all(
+        character in "0123456789abcdefABCDEF" for character in sha
+    )
+    _require(valid_sha, "SHA Git du code teste introuvable ou invalide.")
+    _require(
+        branch == EXPECTED_BRANCH,
+        "Branche Git inattendue pour le stop-gate : %s." % branch,
+    )
+    try:
+        completed = subprocess.run(
+            ("git", "status", "--porcelain", "--untracked-files=no"),
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except Exception as exc:
+        raise RecipeFailure("Etat Git impossible a verifier : %s" % exc) from exc
+    _require(
+        not completed.stdout.strip(),
+        "Worktree Git suivi modifie : le SHA reporte ne correspondrait pas exactement au code execute.",
     )
     return sha, branch
 
@@ -177,6 +206,7 @@ def _query_one(db, query: str, params=()):
 
 def _server_preflight(db, port: GestionDbContractWriteAdapter) -> dict[str, object]:
     _require_real_mysql(db)
+    tested_sha, branch = _git_source_preflight()
 
     row = _query_one(db, "SELECT VERSION(), DATABASE(), @@autocommit")
     _require(row is not None and len(row) >= 3, "Preflight serveur MySQL incomplet.")
@@ -212,12 +242,18 @@ def _server_preflight(db, port: GestionDbContractWriteAdapter) -> dict[str, obje
     group = _monthly_group(date.today())
 
     print("TEAMWORKS_RAIL_A_BACKEND:MYSQL", flush=True)
+    print("TEAMWORKS_RAIL_A_SOURCE:SHA=%s" % tested_sha, flush=True)
+    print("TEAMWORKS_RAIL_A_SOURCE:BRANCH=%s" % branch, flush=True)
+    print("TEAMWORKS_RAIL_A_SOURCE:TRACKED_WORKTREE=CLEAN", flush=True)
     print("TEAMWORKS_RAIL_A_PREFLIGHT:VERSION=%s" % version, flush=True)
     print("TEAMWORKS_RAIL_A_PREFLIGHT:DATABASE=%s" % (database_name or "inconnue"), flush=True)
     print("TEAMWORKS_RAIL_A_PREFLIGHT:AUTOCOMMIT=%s" % autocommit, flush=True)
     print("TEAMWORKS_RAIL_A_PREFLIGHT:ISOLATION=%s" % isolation, flush=True)
 
     return {
+        "tested_sha": tested_sha,
+        "branch": branch,
+        "tracked_worktree_clean": True,
         "version": version,
         "database": database_name or None,
         "autocommit": autocommit,
@@ -629,6 +665,7 @@ def run() -> int:
         os.getpid(),
     )
     report = _new_report(run_id)
+    print("TEAMWORKS_RAIL_A_RUN:%s" % run_id, flush=True)
     contract_ids: list[int] = []
     selected_people: list[int] = []
     db = None
@@ -646,6 +683,11 @@ def run() -> int:
             None,
             lambda: _server_preflight(db, port),
         )
+        report["tested_sha"] = preflight["tested_sha"]
+        report["branch"] = preflight["branch"]
+        report["source"] = {
+            "tracked_worktree_clean": preflight["tracked_worktree_clean"],
+        }
         report["mysql"] = {
             "version": preflight["version"],
             "database": preflight["database"],
