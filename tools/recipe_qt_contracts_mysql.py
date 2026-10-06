@@ -667,7 +667,6 @@ def run() -> int:
     report = _new_report(run_id)
     print("TEAMWORKS_RAIL_A_RUN:%s" % run_id, flush=True)
     contract_ids: list[int] = []
-    selected_people: list[int] = []
     db = None
     port = None
     scenarios_ok = False
@@ -709,9 +708,7 @@ def run() -> int:
                 db,
                 start,
                 end + timedelta(days=1),
-                excluded_person_ids=tuple(selected_people),
             )
-            selected_people.append(person_id)
             group = _monthly_group(start)
             created = _create_checked(
                 port,
@@ -785,9 +782,7 @@ def run() -> int:
             db,
             cdi_start,
             date(2999, 1, 1),
-            excluded_person_ids=tuple(selected_people),
         )
-        selected_people.append(cdi_person)
         cdi_group = _monthly_group(cdi_start)
         cdi_create = _create_checked(
             port,
@@ -1183,9 +1178,7 @@ def run() -> int:
                 db,
                 previous_start,
                 renewal_end,
-                excluded_person_ids=tuple(selected_people),
             )
-            selected_people.append(person_id)
             previous_group = _monthly_group(previous_start)
             previous = _create_checked(
                 port,
