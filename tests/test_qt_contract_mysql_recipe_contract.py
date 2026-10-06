@@ -48,6 +48,7 @@ def test_rail_a_mysql_recipe_avoids_contract_overlap_before_writing():
     assert "c.date_debut<=%s" in source
     assert "c.date_fin>=%s" in source
     assert "excluded_person_ids" in source
+    assert "selected_people" not in source
     assert "_first_person_id" not in source
     assert "aucune ecriture n'a ete tentee" in source
 
