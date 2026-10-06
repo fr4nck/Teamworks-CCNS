@@ -52,6 +52,20 @@ def test_rail_a_mysql_recipe_avoids_contract_overlap_before_writing():
     assert "aucune ecriture n'a ete tentee" in source
 
 
+def test_rail_a_mysql_recipe_binds_evidence_to_clean_expected_git_source():
+    source = _source()
+
+    assert 'EXPECTED_BRANCH = "qt/contracts-amendment-foundation"' in source
+    assert "def _git_source_preflight" in source
+    assert '"status", "--porcelain", "--untracked-files=no"' in source
+    assert "branch == EXPECTED_BRANCH" in source
+    assert "TEAMWORKS_RAIL_A_RUN:" in source
+    assert "TEAMWORKS_RAIL_A_SOURCE:SHA=" in source
+    assert "TEAMWORKS_RAIL_A_SOURCE:BRANCH=" in source
+    assert "TEAMWORKS_RAIL_A_SOURCE:TRACKED_WORKTREE=CLEAN" in source
+    assert '"tracked_worktree_clean": preflight["tracked_worktree_clean"]' in source
+
+
 def test_rail_a_mysql_recipe_preflights_real_server_and_transaction_session():
     source = _source()
 
