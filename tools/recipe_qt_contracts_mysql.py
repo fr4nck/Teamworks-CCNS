@@ -1167,18 +1167,29 @@ def run() -> int:
             concurrency,
         )
 
+        released_cdi = delete_contract(
+            port,
+            command=ContractDeleteCommand(contract_id=cdi_id, confirmed=True),
+        )
+        _require(
+            released_cdi.ok and released_cdi.committed,
+            "Liberation du CDI temporaire refusee : %s - %s"
+            % (released_cdi.code, released_cdi.message),
+        )
+        _require(
+            not port.contract_exists(cdi_id),
+            "Le CDI temporaire existe encore avant le scenario CDD.",
+        )
+        print("TEAMWORKS_RAIL_A_STAGE:release-cdi-fixture", flush=True)
+
         cdd_key = run_id + "-cdd-renewal"
 
         def cdd_renewal():
-            previous_start = date.today() - timedelta(days=44)
+            previous_start = date.today() - timedelta(days=28)
             previous_end = date.today() - timedelta(days=15)
             renewal_start = date.today() - timedelta(days=14)
             renewal_end = date.today() + timedelta(days=14)
-            person_id = _safe_person_id(
-                db,
-                previous_start,
-                renewal_end,
-            )
+            person_id = cdi_person
             previous_group = _monthly_group(previous_start)
             previous = _create_checked(
                 port,
