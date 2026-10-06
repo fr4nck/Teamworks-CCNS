@@ -695,7 +695,8 @@ def run() -> int:
     )
     report = _new_report(run_id)
     print("TEAMWORKS_RAIL_A_RUN:%s" % run_id, flush=True)
-    configured_connector, active_connector = _configure_mysql_interface()
+    configured_connector = None
+    active_connector = None
     contract_ids: list[int] = []
     db = None
     port = None
@@ -703,6 +704,7 @@ def run() -> int:
     cleanup_ok = False
 
     try:
+        configured_connector, active_connector = _configure_mysql_interface()
         db = _new_connection()
         port = GestionDbContractAmendmentAdapter(db)
 
