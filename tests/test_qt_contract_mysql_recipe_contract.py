@@ -77,6 +77,8 @@ def test_rail_a_mysql_recipe_uses_teamworks_configured_mysql_connector():
     assert "GestionDB.IMPORT_MYSQLDB_OK" in source
     assert "GestionDB.IMPORT_MYSQLCONNECTOR_OK" in source
     assert "TEAMWORKS_RAIL_A_PREFLIGHT:CONNECTOR=" in source
+    assert "configured_connector = None" in source
+    assert "try:\n        configured_connector, active_connector = _configure_mysql_interface()" in source
     assert '"configured_connector": configured_connector' in source
     assert '"active_connector": active_connector' in source
 
