@@ -67,6 +67,20 @@ def test_rail_a_mysql_recipe_binds_evidence_to_clean_expected_git_source():
     assert '"tracked_worktree_clean": preflight["tracked_worktree_clean"]' in source
 
 
+def test_rail_a_mysql_recipe_uses_teamworks_configured_mysql_connector():
+    source = _source()
+
+    assert "from Utils import UTILS_Config" in source
+    assert "def _configure_mysql_interface" in source
+    assert '"interface_mysql", "mysql.connector"' in source
+    assert "GestionDB.SetInterfaceMySQL(configured)" in source
+    assert "GestionDB.IMPORT_MYSQLDB_OK" in source
+    assert "GestionDB.IMPORT_MYSQLCONNECTOR_OK" in source
+    assert "TEAMWORKS_RAIL_A_PREFLIGHT:CONNECTOR=" in source
+    assert '"configured_connector": configured_connector' in source
+    assert '"active_connector": active_connector' in source
+
+
 def test_rail_a_mysql_recipe_preflights_real_server_and_transaction_session():
     source = _source()
 
