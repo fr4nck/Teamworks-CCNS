@@ -159,6 +159,9 @@ def test_rail_a_mysql_recipe_runs_two_connection_concurrency_with_timeout():
 def test_rail_a_mysql_recipe_preserves_cdd_renewal_genealogy():
     source = _source()
 
+    assert "TEAMWORKS_RAIL_A_STAGE:release-cdi-fixture" in source
+    assert "not port.contract_exists(cdi_id)" in source
+    assert "person_id = cdi_person" in source
     assert "ContractOperation.CDD_RENEWAL.value" in source
     assert "previous_contract_id=previous_id" in source
     assert 'weekly_hours=Decimal("32.00")' in source
