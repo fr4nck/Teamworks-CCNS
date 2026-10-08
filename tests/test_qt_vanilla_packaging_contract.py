@@ -3,6 +3,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 REQ = ROOT / "requirements" / "qt-vanilla-0.1.txt"
+POC_REQ = ROOT / "poc" / "qt-theme" / "requirements.txt"
 BUILD = ROOT / "scripts" / "build_qt_vanilla_windows.ps1"
 INSTALLER = ROOT / "packaging" / "windows" / "Teamworks-CCNS-Qt.iss"
 ENTRY = ROOT / "poc" / "qt-theme" / "vanilla_launcher.py"
@@ -20,6 +21,14 @@ def test_qt_vanilla_runtime_requirements_do_not_install_wx():
     assert "mysql-connector-python" in text
     assert all(not line.startswith("wxpython") for line in lines)
     assert all(not line.startswith("wx==") for line in lines)
+
+
+def test_qt_runtime_uses_the_qualified_pyside_version():
+    release_lines = REQ.read_text(encoding="utf-8").splitlines()
+    pilot_lines = POC_REQ.read_text(encoding="utf-8").splitlines()
+
+    assert "PySide6==6.11.2" in release_lines
+    assert "PySide6==6.11.2" in pilot_lines
 
 
 def test_release_entry_point_defaults_to_production():
