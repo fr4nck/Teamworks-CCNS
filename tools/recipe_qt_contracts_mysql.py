@@ -59,6 +59,7 @@ from infrastructure.persistence.contract_write_adapter import (  # noqa: E402
     GestionDbContractWriteAdapter,
 )
 import GestionDB  # noqa: E402
+from Utils import UTILS_Config  # noqa: E402
 
 
 READY = "TEAMWORKS_RAIL_A_MYSQL_READY"
@@ -67,6 +68,7 @@ REPORT_DIR = ROOT / "artifacts" / "rail-a-mysql"
 REPORT_PATH = REPORT_DIR / "report.json"
 DDL_PATH = ROOT / "infrastructure" / "persistence" / "sql" / "contract_amendment_v1.sql"
 AMENDMENT_TABLE = "tw_contract_amendment"
+EXPECTED_BRANCH = "qt/master"
 
 
 class RecipeFailure(RuntimeError):
@@ -87,6 +89,30 @@ def _require_real_mysql(db) -> None:
         raise RecipeFailure(
             "Stop-gate refuse : le dossier actif n'est pas un backend MySQL reseau."
         )
+
+
+def _configure_mysql_interface() -> tuple[str, str]:
+    """Reprend la meme preference connecteur que le bootstrap Teamworks."""
+    configured = UTILS_Config.FichierConfig().GetItemConfig(
+        "interface_mysql", "mysql.connector"
+    )
+    configured = str(configured or "mysql.connector").strip().lower()
+    if configured in ("mysqldb", "mysql.connector"):
+        GestionDB.SetInterfaceMySQL(configured)
+    if not GestionDB.IMPORT_MYSQLDB_OK and GestionDB.IMPORT_MYSQLCONNECTOR_OK:
+        GestionDB.SetInterfaceMySQL("mysql.connector")
+
+    active = GestionDB.INTERFACE_MYSQL
+    available = (
+        active == "mysqldb" and GestionDB.IMPORT_MYSQLDB_OK
+    ) or (
+        active == "mysql.connector" and GestionDB.IMPORT_MYSQLCONNECTOR_OK
+    )
+    _require(
+        available,
+        "Connecteur MySQL Teamworks indisponible : %s." % active,
+    )
+    return configured, active
 
 
 def _git_value(*args: str) -> str:
@@ -110,6 +136,34 @@ def _git_context() -> tuple[str, str]:
         or os.environ.get("GITHUB_HEAD_REF")
         or os.environ.get("GITHUB_REF_NAME")
         or "inconnue"
+    )
+    return sha, branch
+
+
+def _git_source_preflight() -> tuple[str, str]:
+    """Garantit que le SHA rapporte correspond exactement au code suivi execute."""
+    sha, branch = _git_context()
+    valid_sha = len(sha) == 40 and all(
+        character in "0123456789abcdefABCDEF" for character in sha
+    )
+    _require(valid_sha, "SHA Git du code teste introuvable ou invalide.")
+    _require(
+        branch == EXPECTED_BRANCH,
+        "Branche Git inattendue pour le stop-gate : %s." % branch,
+    )
+    try:
+        completed = subprocess.run(
+            ("git", "status", "--porcelain", "--untracked-files=no"),
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except Exception as exc:
+        raise RecipeFailure("Etat Git impossible a verifier : %s" % exc) from exc
+    _require(
+        not completed.stdout.strip(),
+        "Worktree Git suivi modifie : le SHA reporte ne correspondrait pas exactement au code execute.",
     )
     return sha, branch
 
@@ -177,6 +231,7 @@ def _query_one(db, query: str, params=()):
 
 def _server_preflight(db, port: GestionDbContractWriteAdapter) -> dict[str, object]:
     _require_real_mysql(db)
+    tested_sha, branch = _git_source_preflight()
 
     row = _query_one(db, "SELECT VERSION(), DATABASE(), @@autocommit")
     _require(row is not None and len(row) >= 3, "Preflight serveur MySQL incomplet.")
@@ -212,12 +267,22 @@ def _server_preflight(db, port: GestionDbContractWriteAdapter) -> dict[str, obje
     group = _monthly_group(date.today())
 
     print("TEAMWORKS_RAIL_A_BACKEND:MYSQL", flush=True)
+    print(
+        "TEAMWORKS_RAIL_A_PREFLIGHT:CONNECTOR=%s" % GestionDB.INTERFACE_MYSQL,
+        flush=True,
+    )
+    print("TEAMWORKS_RAIL_A_SOURCE:SHA=%s" % tested_sha, flush=True)
+    print("TEAMWORKS_RAIL_A_SOURCE:BRANCH=%s" % branch, flush=True)
+    print("TEAMWORKS_RAIL_A_SOURCE:TRACKED_WORKTREE=CLEAN", flush=True)
     print("TEAMWORKS_RAIL_A_PREFLIGHT:VERSION=%s" % version, flush=True)
     print("TEAMWORKS_RAIL_A_PREFLIGHT:DATABASE=%s" % (database_name or "inconnue"), flush=True)
     print("TEAMWORKS_RAIL_A_PREFLIGHT:AUTOCOMMIT=%s" % autocommit, flush=True)
     print("TEAMWORKS_RAIL_A_PREFLIGHT:ISOLATION=%s" % isolation, flush=True)
 
     return {
+        "tested_sha": tested_sha,
+        "branch": branch,
+        "tracked_worktree_clean": True,
         "version": version,
         "database": database_name or None,
         "autocommit": autocommit,
@@ -629,14 +694,17 @@ def run() -> int:
         os.getpid(),
     )
     report = _new_report(run_id)
+    print("TEAMWORKS_RAIL_A_RUN:%s" % run_id, flush=True)
+    configured_connector = None
+    active_connector = None
     contract_ids: list[int] = []
-    selected_people: list[int] = []
     db = None
     port = None
     scenarios_ok = False
     cleanup_ok = False
 
     try:
+        configured_connector, active_connector = _configure_mysql_interface()
         db = _new_connection()
         port = GestionDbContractAmendmentAdapter(db)
 
@@ -646,11 +714,18 @@ def run() -> int:
             None,
             lambda: _server_preflight(db, port),
         )
+        report["tested_sha"] = preflight["tested_sha"]
+        report["branch"] = preflight["branch"]
+        report["source"] = {
+            "tracked_worktree_clean": preflight["tracked_worktree_clean"],
+        }
         report["mysql"] = {
             "version": preflight["version"],
             "database": preflight["database"],
             "autocommit": preflight["autocommit"],
             "isolation": preflight["isolation"],
+            "configured_connector": configured_connector,
+            "active_connector": active_connector,
         }
 
         _scenario(
@@ -667,9 +742,7 @@ def run() -> int:
                 db,
                 start,
                 end + timedelta(days=1),
-                excluded_person_ids=tuple(selected_people),
             )
-            selected_people.append(person_id)
             group = _monthly_group(start)
             created = _create_checked(
                 port,
@@ -743,9 +816,7 @@ def run() -> int:
             db,
             cdi_start,
             date(2999, 1, 1),
-            excluded_person_ids=tuple(selected_people),
         )
-        selected_people.append(cdi_person)
         cdi_group = _monthly_group(cdi_start)
         cdi_create = _create_checked(
             port,
@@ -1130,20 +1201,29 @@ def run() -> int:
             concurrency,
         )
 
+        released_cdi = delete_contract(
+            port,
+            command=ContractDeleteCommand(contract_id=cdi_id, confirmed=True),
+        )
+        _require(
+            released_cdi.ok and released_cdi.committed,
+            "Liberation du CDI temporaire refusee : %s - %s"
+            % (released_cdi.code, released_cdi.message),
+        )
+        _require(
+            not port.contract_exists(cdi_id),
+            "Le CDI temporaire existe encore avant le scenario CDD.",
+        )
+        print("TEAMWORKS_RAIL_A_STAGE:release-cdi-fixture", flush=True)
+
         cdd_key = run_id + "-cdd-renewal"
 
         def cdd_renewal():
-            previous_start = date.today() - timedelta(days=44)
+            previous_start = date.today() - timedelta(days=28)
             previous_end = date.today() - timedelta(days=15)
             renewal_start = date.today() - timedelta(days=14)
             renewal_end = date.today() + timedelta(days=14)
-            person_id = _safe_person_id(
-                db,
-                previous_start,
-                renewal_end,
-                excluded_person_ids=tuple(selected_people),
-            )
-            selected_people.append(person_id)
+            person_id = cdi_person
             previous_group = _monthly_group(previous_start)
             previous = _create_checked(
                 port,
