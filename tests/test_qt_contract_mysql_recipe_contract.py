@@ -48,8 +48,39 @@ def test_rail_a_mysql_recipe_avoids_contract_overlap_before_writing():
     assert "c.date_debut<=%s" in source
     assert "c.date_fin>=%s" in source
     assert "excluded_person_ids" in source
+    assert "selected_people" not in source
     assert "_first_person_id" not in source
     assert "aucune ecriture n'a ete tentee" in source
+
+
+def test_rail_a_mysql_recipe_binds_evidence_to_clean_expected_git_source():
+    source = _source()
+
+    assert 'EXPECTED_BRANCH = "qt/master"' in source
+    assert "def _git_source_preflight" in source
+    assert '"status", "--porcelain", "--untracked-files=no"' in source
+    assert "branch == EXPECTED_BRANCH" in source
+    assert "TEAMWORKS_RAIL_A_RUN:" in source
+    assert "TEAMWORKS_RAIL_A_SOURCE:SHA=" in source
+    assert "TEAMWORKS_RAIL_A_SOURCE:BRANCH=" in source
+    assert "TEAMWORKS_RAIL_A_SOURCE:TRACKED_WORKTREE=CLEAN" in source
+    assert '"tracked_worktree_clean": preflight["tracked_worktree_clean"]' in source
+
+
+def test_rail_a_mysql_recipe_uses_teamworks_configured_mysql_connector():
+    source = _source()
+
+    assert "from Utils import UTILS_Config" in source
+    assert "def _configure_mysql_interface" in source
+    assert '"interface_mysql", "mysql.connector"' in source
+    assert "GestionDB.SetInterfaceMySQL(configured)" in source
+    assert "GestionDB.IMPORT_MYSQLDB_OK" in source
+    assert "GestionDB.IMPORT_MYSQLCONNECTOR_OK" in source
+    assert "TEAMWORKS_RAIL_A_PREFLIGHT:CONNECTOR=" in source
+    assert "configured_connector = None" in source
+    assert "try:\n        configured_connector, active_connector = _configure_mysql_interface()" in source
+    assert '"configured_connector": configured_connector' in source
+    assert '"active_connector": active_connector' in source
 
 
 def test_rail_a_mysql_recipe_preflights_real_server_and_transaction_session():
@@ -144,6 +175,9 @@ def test_rail_a_mysql_recipe_runs_two_connection_concurrency_with_timeout():
 def test_rail_a_mysql_recipe_preserves_cdd_renewal_genealogy():
     source = _source()
 
+    assert "TEAMWORKS_RAIL_A_STAGE:release-cdi-fixture" in source
+    assert "not port.contract_exists(cdi_id)" in source
+    assert "person_id = cdi_person" in source
     assert "ContractOperation.CDD_RENEWAL.value" in source
     assert "previous_contract_id=previous_id" in source
     assert 'weekly_hours=Decimal("32.00")' in source
