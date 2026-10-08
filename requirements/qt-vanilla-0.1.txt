@@ -1,5 +1,5 @@
 # Runtime de la Qt Vanilla 0.1 — volontairement sans wxPython.
-PySide6>=6.8,<7
+PySide6==6.11.2
 qt-material>=2.17,<3
 six>=1.16,<2
 Pillow>=10,<13
