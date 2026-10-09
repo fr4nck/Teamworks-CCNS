@@ -139,13 +139,27 @@ def test_person_lifecycle_smoke_qualifies_create_edit_list_and_cleanup() -> None
     assert "DLG_Fiche_individuelle" in source
     assert "OL_personnes" in source
     assert "IDpersonne=0" in source
-    assert ".Sauvegarde()" in source
+    assert "ShowModal()" in source
+    assert "Fermer(save=True)" in source
     assert 'ReqDEL("personnes", "IDpersonne"' in source
     assert "__TEAMWORKS_SMOKE_PERSON_CREATE__" in source
     assert "__TEAMWORKS_SMOKE_PERSON_EDIT__" in source
     assert "PATCHED.unlink(missing_ok=True)" in source
     assert "PATCHED_CORE.unlink(missing_ok=True)" in source
 
+
+
+def test_person_smokes_follow_the_real_modal_contract() -> None:
+    person_source = SMOKE.read_text(encoding="utf-8")
+    lifecycle_source = PERSON_LIFECYCLE_SMOKE.read_text(encoding="utf-8")
+
+    assert "_smoke_dialog.ShowModal()" in person_source
+    assert "_smoke_close_dialog.ShowModal()" in person_source
+    assert "_smoke_close_dialog.Fermer(save=True)" in person_source
+    assert "_smoke_create_dialog.ShowModal()" in lifecycle_source
+    assert "_smoke_edit_dialog.ShowModal()" in lifecycle_source
+    assert "_smoke_create_dialog.Fermer(save=True)" in lifecycle_source
+    assert "_smoke_edit_dialog.Fermer(save=True)" in lifecycle_source
 
 def test_person_lifecycle_runs_in_real_windows_application() -> None:
     if sys.platform != "win32":
