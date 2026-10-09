@@ -20,6 +20,8 @@ MARKER_LINE = '            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)'
 READY_MARKER = "TEAMWORKS_SMOKE_PERSON_CLOSE_MATRIX_READY"
 FAILURE_MARKER = "TEAMWORKS_SMOKE_PERSON_CLOSE_MATRIX_FAILED"
 SCENARIOS = (
+    "core-destroy",
+    "wrapper-core-notebook-destroy",
     "destroy",
     "save-destroy",
     "callbacks-destroy",
@@ -36,6 +38,7 @@ def build_injection(scenario: str) -> str:
             import wx as _smoke_wx
             import GestionDB as _smoke_gestiondb
             from Dlg import DLG_Fiche_individuelle as _smoke_person
+            from Dlg import DLG_Fiche_individuelle_core as _smoke_person_core
 
             _smoke_scenario = {scenario!r}
             _smoke_state = {{"failed": False, "dialog": None, "guard": None}}
@@ -84,7 +87,11 @@ def build_injection(scenario: str) -> str:
                         % _smoke_scenario,
                         flush=True,
                     )
-                    if _smoke_scenario == "destroy":
+                    if _smoke_scenario in (
+                        "destroy",
+                        "core-destroy",
+                        "wrapper-core-notebook-destroy",
+                    ):
                         _dialog.Destroy()
                     elif _smoke_scenario == "save-destroy":
                         _dialog._sauvegarder_pages()
@@ -132,7 +139,23 @@ def build_injection(scenario: str) -> str:
                     _db.Close()
                     if not _rows:
                         raise RuntimeError("aucune personne disponible")
-                    _dialog = _smoke_person.Dialog(frame, IDpersonne=_rows[0][0])
+                    if _smoke_scenario == "core-destroy":
+                        _dialog = _smoke_person_core.Dialog(
+                            frame, IDpersonne=_rows[0][0]
+                        )
+                    elif _smoke_scenario == "wrapper-core-notebook-destroy":
+                        _original_notebook = _smoke_person.Notebook
+                        try:
+                            _smoke_person.Notebook = _smoke_person_core.Notebook
+                            _dialog = _smoke_person.Dialog(
+                                frame, IDpersonne=_rows[0][0]
+                            )
+                        finally:
+                            _smoke_person.Notebook = _original_notebook
+                    else:
+                        _dialog = _smoke_person.Dialog(
+                            frame, IDpersonne=_rows[0][0]
+                        )
                     _smoke_state["dialog"] = _dialog
                     _dialog.Bind(
                         _smoke_wx.EVT_WINDOW_DESTROY,
