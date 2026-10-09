@@ -334,11 +334,11 @@ jobs:
         continue-on-error: true
         shell: pwsh
         run: |
-          # Ici : contrats source uniquement. Les recettes wx réelles sont
-          # lancées une seule fois dans l'étape suivante, pas via pytest puis
-          # une seconde fois comme smokes explicites.
+          # Ici : contrats source et petit contrôle Blackbox uniquement.
+          # Les recettes wx longues sont qualifiées après le gate critique,
+          # juste avant la construction d'un paquet Windows.
           python -m pytest -q `
-            -k "not runs_in_real_windows_application and not blackbox_hooks_real_wx_mainloop_on_windows" `
+            -k "not runs_in_real_windows_application" `
             tests/test_secondary_presence_smoke_contract.py `
             tests/test_secondary_person_smoke_contract.py `
             tests/test_secondary_contract_smoke_contract.py
@@ -502,6 +502,42 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install -r .github/requirements-windows-build.txt
           python -m pip freeze | Set-Content build-requirements.txt
+
+      - name: Recette Windows étendue avant packaging
+        shell: pwsh
+        run: |
+          $failures = @()
+
+          function Invoke-Smoke {
+            param(
+              [string]$Name,
+              [string]$Script
+            )
+
+            Write-Host "::group::$Name"
+            & python $Script
+            $exitCode = $LASTEXITCODE
+            Write-Host "::endgroup::"
+
+            if ($exitCode -ne 0) {
+              $script:failures += $Name
+            }
+          }
+
+          Invoke-Smoke "Cycle création/modification individu" "tools/smoke_person_lifecycle.py"
+          Invoke-Smoke "Questionnaire" "tools/smoke_questionnaire_lifecycle.py"
+          Invoke-Smoke "Frais et remboursements" "tools/smoke_expenses_lifecycle.py"
+          Invoke-Smoke "Scénarios" "tools/smoke_scenarios_lifecycle.py"
+          Invoke-Smoke "Préparation mailing" "tools/smoke_mailing_preparation.py"
+          Invoke-Smoke "Configuration expéditeur" "tools/smoke_sender_config.py"
+          Invoke-Smoke "Planning PDF" "tools/smoke_planning_pdf.py"
+          Invoke-Smoke "Modèles planning" "tools/smoke_planning_models.py"
+          Invoke-Smoke "Opérations contrats CEE/CDD" "tools/smoke_contract_cee_cdd_operations.py"
+          Invoke-Smoke "Documents contrats" "tools/smoke_contract_documents.py"
+
+          if ($failures.Count -gt 0) {
+            throw "Recette Windows étendue en échec : $($failures -join ', ')"
+          }
 
       - name: Valider le tag de version
         if: startsWith(github.ref, 'refs/tags/')
