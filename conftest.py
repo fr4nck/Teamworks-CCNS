@@ -13,12 +13,13 @@ PRELUDE_SMOKE = ROOT / "tools" / "smoke_person_prelude_lifecycle.py"
 MAINLOOP_SMOKE = ROOT / "tools" / "smoke_person_mainloop_lifecycle.py"
 CLOSE_MATRIX_SMOKE = ROOT / "tools" / "smoke_person_mainloop_close_matrix.py"
 CLOSE_MATRIX_SCENARIOS = (
+    "bare-dialog-destroy",
     "core-destroy",
-    "core-no-ticker-destroy",
-    "core-no-photo-destroy",
-    "core-no-generalites-destroy",
-    "core-no-questionnaire-destroy",
-    "core-no-generalites-questionnaire-destroy",
+    "core-no-notebook-destroy",
+    "core-no-notebook-no-ticker-destroy",
+    "core-no-notebook-no-photo-destroy",
+    "core-no-notebook-no-ticker-photo-destroy",
+    "core-no-notebook-native-buttons-destroy",
 )
 
 
