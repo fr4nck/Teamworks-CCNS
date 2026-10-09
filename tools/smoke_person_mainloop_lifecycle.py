@@ -40,7 +40,7 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                     if _dialog.Fermer(save=True) is not True:
                         raise RuntimeError("Fermer(save=True) a échoué")
                     print(
-                        "TEAMWORKS_SMOKE_PERSON_MODAL_CLOSE:%d/5" % _cycle,
+                        "TEAMWORKS_SMOKE_PERSON_MODAL_CLOSE:%d/20" % _cycle,
                         flush=True,
                     )
                 except Exception:
@@ -59,7 +59,7 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                     _person_id = _rows[0][0]
                     print("TEAMWORKS_SMOKE_PERSON_MODAL_STARTED", flush=True)
 
-                    for _cycle in range(1, 6):
+                    for _cycle in range(1, 21):
                         _dialog = _smoke_person.Dialog(frame, IDpersonne=_person_id)
                         _dialog.Layout()
                         _smoke_wx.CallAfter(_smoke_close_modal, _dialog, _cycle)
@@ -73,7 +73,7 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                         _smoke_wx.YieldIfNeeded()
                         _smoke_wx.GetApp().ProcessPendingEvents()
                         print(
-                            "TEAMWORKS_SMOKE_PERSON_MODAL_DESTROYED:%d/5" % _cycle,
+                            "TEAMWORKS_SMOKE_PERSON_MODAL_DESTROYED:%d/20" % _cycle,
                             flush=True,
                         )
 
@@ -84,7 +84,7 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                         _canary.Hide()
                         _smoke_canaries.append(_canary)
                         print(
-                            "TEAMWORKS_SMOKE_PERSON_MODAL_CANARY_OK:%d/5" % _cycle,
+                            "TEAMWORKS_SMOKE_PERSON_MODAL_CANARY_OK:%d/20" % _cycle,
                             flush=True,
                         )
 

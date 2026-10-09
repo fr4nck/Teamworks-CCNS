@@ -129,7 +129,8 @@ class MyRichTextCtrl(rt.RichTextCtrl):
 class MyFrame(wx.Frame):
     def __init__(self, parent, motsCles=[], size=(800, 600)):
         wx.Frame.__init__(self, parent, -1, title=_(u"Teamword"), name="frm_Teamword", size=size, style=wx.DEFAULT_FRAME_STYLE|wx.CLIP_CHILDREN)
-        wx.Locale(wx.LANGUAGE_FRENCH)
+        from Utils import UTILS_Locale
+        self.locale = UTILS_Locale.GetLocaleFrancais()
         self.motsCles = motsCles # [_(u"{CIVILITE}"), _(u"{NOM}"), _(u"{PRENOM}"),]
         
         self._mgr = wx.aui.AuiManager()

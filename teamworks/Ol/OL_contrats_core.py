@@ -101,7 +101,8 @@ class Track(object):
 
 class ListView(FastObjectListView):
     def __init__(self, *args, **kwds):
-        wx.Locale(wx.LANGUAGE_FRENCH)
+        from Utils import UTILS_Locale
+        self.locale = UTILS_Locale.GetLocaleFrancais()
         # Récupération des paramètres perso
         self.IDpersonne = kwds.pop("IDpersonne", None)
         self.modeAffichage = kwds.pop("modeAffichage", None)

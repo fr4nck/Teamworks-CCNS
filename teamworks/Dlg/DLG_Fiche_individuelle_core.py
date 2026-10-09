@@ -163,7 +163,8 @@ class Dialog(wx.Dialog):
         self.photo = None
 
         import locale
-        self.locale = wx.Locale(wx.LANGUAGE_FRENCH)
+        from Utils import UTILS_Locale
+        self.locale = UTILS_Locale.GetLocaleFrancais()
         try:
             locale.setlocale(locale.LC_ALL, 'FR')
         except Exception:
