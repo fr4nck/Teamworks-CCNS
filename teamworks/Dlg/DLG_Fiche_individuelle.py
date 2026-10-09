@@ -175,6 +175,8 @@ class Dialog(CORE.Dialog):
 
             if self._fermeture_en_cours:
                 return False
+            if not self.IsModal():
+                return False
 
             IDpersonne = self.IDpersonne
             DB = CORE.GestionDB.DB()
@@ -214,10 +216,7 @@ class Dialog(CORE.Dialog):
                 pass
 
             self._rafraichir_frame_personnes(save=False)
-            if self.IsModal():
-                self.EndModal(wx.ID_OK)
-            else:
-                self.Destroy()
+            self.EndModal(wx.ID_OK)
             return True
         finally:
             DiagnosticPerformance.terminer_action(action)
