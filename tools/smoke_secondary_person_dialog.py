@@ -279,10 +279,26 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                             ),
                             flush=True,
                         )
-                    _smoke_parameter_dialog = _smoke_factory(frame)
-                    _smoke_assert_populated(_smoke_parameter_dialog, _smoke_label)
-                    _smoke_parameter_dialog.Destroy()
-                    wx.Yield()
+                    _smoke_enregistrement_verifie = None
+                    if _smoke_label == "Enregistrement":
+                        _smoke_enregistrement_verifie = DLG_Enregistrement.Dialog.VerifieEtat
+                        DLG_Enregistrement.Dialog.VerifieEtat = (
+                            lambda _self, identifiant="", code="": False
+                        )
+                        print(
+                            "TEAMWORKS_SMOKE_ENREGISTREMENT_NETWORK_DISABLED",
+                            flush=True,
+                        )
+                    try:
+                        _smoke_parameter_dialog = _smoke_factory(frame)
+                        _smoke_assert_populated(_smoke_parameter_dialog, _smoke_label)
+                        _smoke_parameter_dialog.Destroy()
+                        wx.Yield()
+                    finally:
+                        if _smoke_enregistrement_verifie is not None:
+                            DLG_Enregistrement.Dialog.VerifieEtat = (
+                                _smoke_enregistrement_verifie
+                            )
                     print("TEAMWORKS_SMOKE_PARAMETER_OK:%s" % _smoke_label, flush=True)
 
                     # Canari natif conservé vivant : on ne détruit pas le
