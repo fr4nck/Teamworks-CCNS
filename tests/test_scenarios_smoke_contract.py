@@ -39,14 +39,16 @@ def test_scenarios_smoke_qualifies_create_edit_management_and_cleanup() -> None:
     assert "PATCHED_CORE.unlink(missing_ok=True)" in source
 
 
-def test_scenario_dialog_persists_parent_and_category_tables() -> None:
+def test_scenario_dialog_delegates_parent_and_categories_to_atomic_persistence() -> None:
     source = SCENARIO_DIALOG.read_text(encoding="utf-8")
 
-    assert 'ReqInsert("scenarios", listeDonnees)' in source
-    assert 'ReqMAJ("scenarios", listeDonnees, "IDscenario", self.IDscenario)' in source
-    assert 'ReqInsert("scenarios_cat", listeDonnees)' in source
-    assert 'ReqMAJ("scenarios_cat", listeDonnees, "IDscenario_cat", IDscenario_cat)' in source
-    assert 'ReqDEL("scenarios_cat", "IDscenario_cat", IDscenario_cat)' in source
+    assert "sauvegarder_scenario_atomique" in source
+    assert "self.ctrl_tableau.dictVirtualDB" in source
+    assert 'ReqInsert("scenarios", listeDonnees)' not in source
+    assert 'ReqMAJ("scenarios", listeDonnees, "IDscenario", self.IDscenario)' not in source
+    assert 'ReqInsert("scenarios_cat", listeDonnees)' not in source
+    assert 'ReqMAJ("scenarios_cat", listeDonnees, "IDscenario_cat", IDscenario_cat)' not in source
+    assert 'ReqDEL("scenarios_cat", "IDscenario_cat", IDscenario_cat)' not in source
     assert "return IDscenario" in source
 
 

@@ -15,6 +15,11 @@ import FonctionsPerso
 import wx.lib.agw.hypertreelist as HTL
 from Dlg import DLG_Scenario
 from Utils import UTILS_Adaptations, UTILS_Dates, UTILS_Interface
+from Utils.UTILS_ScenarioTransactions import (
+    ScenarioReferenceError,
+    dupliquer_scenario_atomique,
+    supprimer_scenario_atomique,
+)
 import six
 
 
@@ -112,30 +117,6 @@ class Panel(wx.Panel):
             dlg.Destroy()
             return
 
-        DB = GestionDB.DB()
-        req = "SELECT IDscenario_cat, IDscenario, IDcategorie, prevision, report, date_debut_realise, date_fin_realise FROM scenarios_cat;"
-        DB.ExecuterReq(req)
-        listeDonnees = DB.ResultatReq()
-        DB.Close()
-        nbreReports = 0
-        for IDscenario_cat, IDscenarioTmp, IDcategorie, prevision, report, date_debut_realise, date_fin_realise in listeDonnees:
-            if report != "" and report is not None:
-                if report[0] == "A":
-                    IDscenarioReport, IDcategorie = report[1:].split(";")
-                    if int(IDscenarioReport) == IDscenario:
-                        nbreReports += 1
-
-        if nbreReports > 0:
-            if nbreReports == 1:
-                txtMessage = six.text_type(_(u"Un report utilise ce scénario.\n\nSouhaitez-vous tout de même le supprimer ?"))
-            else:
-                txtMessage = six.text_type(_(u"%d reports utilisent ce scénario.\n\nSouhaitez-vous tout de même le supprimer ?") % nbreReports)
-            dlgConfirm = wx.MessageDialog(self, txtMessage, _(u"Confirmation de suppression"), wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
-            reponse = dlgConfirm.ShowModal()
-            dlgConfirm.Destroy()
-            if reponse == wx.ID_NO:
-                return
-
         Nom = self.listCtrl.GetItemText(item)
         txtMessage = six.text_type((_(u"Voulez-vous vraiment supprimer ce scénario ? \n\n> ") + Nom))
         dlgConfirm = wx.MessageDialog(self, txtMessage, _(u"Confirmation de suppression"), wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
@@ -145,9 +126,31 @@ class Panel(wx.Panel):
             return
 
         DB = GestionDB.DB()
-        DB.ReqDEL("scenarios", "IDscenario", IDscenario)
-        DB.ReqDEL("scenarios_cat", "IDscenario", IDscenario)
-        DB.Close()
+        try:
+            supprimer_scenario_atomique(DB, IDscenario)
+        except ScenarioReferenceError as err:
+            dlg = wx.MessageDialog(
+                self,
+                _(u"Ce scénario ne peut pas être supprimé tant qu'il est utilisé par un report.\n\n%s") % six.text_type(err),
+                _(u"Suppression impossible"),
+                wx.OK | wx.ICON_ERROR,
+            )
+            dlg.ShowModal()
+            dlg.Destroy()
+            return
+        except Exception as err:
+            dlg = wx.MessageDialog(
+                self,
+                _(u"La suppression du scénario a échoué. Aucune modification n'a été conservée.\n\n%s") % six.text_type(err),
+                _(u"Erreur de suppression"),
+                wx.OK | wx.ICON_ERROR,
+            )
+            dlg.ShowModal()
+            dlg.Destroy()
+            return
+        finally:
+            DB.Close()
+
         self.listCtrl.MAJ()
 
     def OnBoutonDupliquer(self, event):
@@ -170,41 +173,21 @@ class Panel(wx.Panel):
             return
 
         DB = GestionDB.DB()
-        req = "SELECT IDpersonne, nom, description, mode_heure, detail_mois, date_debut, date_fin, toutes_categories FROM scenarios WHERE IDscenario=%d ;" % IDscenario
-        DB.ExecuterReq(req)
-        listeDonnees = DB.ResultatReq()
+        try:
+            newIDscenario = dupliquer_scenario_atomique(DB, IDscenario, prefixe_nom=_(u"Copie de "))
+        except Exception as err:
+            dlg = wx.MessageDialog(
+                self,
+                _(u"La duplication du scénario a échoué. Aucune copie partielle n'a été conservée.\n\n%s") % six.text_type(err),
+                _(u"Erreur de duplication"),
+                wx.OK | wx.ICON_ERROR,
+            )
+            dlg.ShowModal()
+            dlg.Destroy()
+            return
+        finally:
+            DB.Close()
 
-        for IDpersonne, nom, description, mode_heure, detail_mois, date_debut, date_fin, toutes_categories in listeDonnees:
-            listeDonnees = [
-                ("IDpersonne", IDpersonne),
-                ("nom", _(u"Copie de %s") % nom),
-                ("description", description),
-                ("mode_heure", mode_heure),
-                ("detail_mois", detail_mois),
-                ("date_debut", date_debut),
-                ("date_fin", date_fin),
-                ("toutes_categories", toutes_categories),
-            ]
-            newIDscenario = DB.ReqInsert("scenarios", listeDonnees)
-            DB.Commit()
-
-        req = "SELECT IDscenario_cat, IDscenario, IDcategorie, prevision, report, date_debut_realise, date_fin_realise FROM scenarios_cat WHERE IDscenario=%d;" % IDscenario
-        DB.ExecuterReq(req)
-        listeDonnees = DB.ResultatReq()
-
-        for IDscenario_cat, IDscenario, IDcategorie, prevision, report, date_debut_realise, date_fin_realise in listeDonnees:
-            listeDonnees = [
-                ("IDscenario", newIDscenario),
-                ("IDcategorie", IDcategorie),
-                ("prevision", prevision),
-                ("report", report),
-                ("date_debut_realise", date_debut_realise),
-                ("date_fin_realise", date_fin_realise),
-            ]
-            IDscenario_cat = DB.ReqInsert("scenarios_cat", listeDonnees)
-            DB.Commit()
-
-        DB.Close()
         dlg = DLG_Scenario.Dialog(self, IDscenario=newIDscenario, IDpersonne=self.IDpersonne)
         dlg.ShowModal()
         dlg.Destroy()
