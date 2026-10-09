@@ -334,7 +334,11 @@ jobs:
         continue-on-error: true
         shell: pwsh
         run: |
+          # Ici : contrats source uniquement. Les recettes wx réelles sont
+          # lancées une seule fois dans l'étape suivante, pas via pytest puis
+          # une seconde fois comme smokes explicites.
           python -m pytest -q `
+            -k "not runs_in_real_windows_application and not blackbox_hooks_real_wx_mainloop_on_windows" `
             tests/test_secondary_presence_smoke_contract.py `
             tests/test_secondary_person_smoke_contract.py `
             tests/test_secondary_contract_smoke_contract.py
