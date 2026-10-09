@@ -201,11 +201,25 @@ Si l'application graphique est modifiée de manière perceptible, prévoir une v
 
 ## Git et Pull Requests
 
-- Travailler sur une branche dédiée.
+- Travailler sur la branche permanente correspondant au périmètre.
 - Produire des commits thématiques en français.
 - Rédiger les PR en français.
 - Décrire le problème, la solution, les tests, les mesures, les limites et les risques.
 - Ne jamais fusionner automatiquement.
+
+### Branches permanentes
+
+Les seules branches de travail autorisées sont `master`, `wx/master` et `qt/master`.
+
+- `master` : domaines, infrastructure, outillage, documentation et CI transversaux ;
+- `wx/master` : maintenance de l'application wxPython historique ;
+- `qt/master` : développement Qt intégré.
+
+Ne pas créer de nouvelle branche temporaire. Travailler directement sur le rail concerné, avec des commits thématiques et une qualification adaptée.
+
+Les anciennes branches sont résorbées progressivement. Ne les supprimer qu'après vérification de la conservation de leur contenu utile, ou décision explicite d'abandon. Ne jamais effectuer de merge massif entre rails pour nettoyer les branches.
+
+Les jalons historiques sont conservés par tags, commits, PR et sauvegardes Git.
 
 ## Philosophie du fork
 
