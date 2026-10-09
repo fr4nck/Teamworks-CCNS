@@ -338,7 +338,7 @@ jobs:
           # Les recettes wx longues sont qualifiées après le gate critique,
           # juste avant la construction d'un paquet Windows.
           python -m pytest -q `
-            -k "not runs_in_real_windows_application" `
+            -k "not runs_in_real_windows_application and not run_in_real_windows_application" `
             tests/test_secondary_presence_smoke_contract.py `
             tests/test_secondary_person_smoke_contract.py `
             tests/test_secondary_contract_smoke_contract.py
