@@ -6,6 +6,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 SMOKE = ROOT / "tools" / "smoke_secondary_person_dialog.py"
 PERSON_LIFECYCLE_SMOKE = ROOT / "tools" / "smoke_person_lifecycle.py"
+MAINLOOP_LIFECYCLE_SMOKE = ROOT / "tools" / "smoke_person_mainloop_lifecycle.py"
 QUESTIONNAIRE_LIFECYCLE_SMOKE = ROOT / "tools" / "smoke_questionnaire_lifecycle.py"
 QUESTIONNAIRE_CORE = ROOT / "teamworks" / "Ctrl" / "CTRL_Questionnaire.py"
 EXPENSES_LIFECYCLE_SMOKE = ROOT / "tools" / "smoke_expenses_lifecycle.py"
@@ -152,10 +153,13 @@ def test_person_lifecycle_smoke_qualifies_create_edit_list_and_cleanup() -> None
 def test_person_smokes_follow_the_real_modal_contract() -> None:
     person_source = SMOKE.read_text(encoding="utf-8")
     lifecycle_source = PERSON_LIFECYCLE_SMOKE.read_text(encoding="utf-8")
+    mainloop_source = MAINLOOP_LIFECYCLE_SMOKE.read_text(encoding="utf-8")
 
     assert "_smoke_dialog.ShowModal()" in person_source
-    assert "_smoke_close_dialog.ShowModal()" in person_source
-    assert "_smoke_close_dialog.Fermer(save=True)" in person_source
+    assert "TEAMWORKS_SMOKE_PERSON_LIFECYCLE_DELEGATED" in person_source
+    assert "_dialog.ShowModal()" in mainloop_source
+    assert "_dialog.Fermer(save=True)" in mainloop_source
+    assert "TEAMWORKS_SMOKE_PERSON_MODAL_CANARY_OK" in mainloop_source
     assert "_smoke_create_dialog.ShowModal()" in lifecycle_source
     assert "_smoke_edit_dialog.ShowModal()" in lifecycle_source
     assert "_smoke_create_dialog.Fermer(save=True)" in lifecycle_source
