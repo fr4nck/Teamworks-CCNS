@@ -11,11 +11,6 @@ import pytest
 ROOT = Path(__file__).resolve().parent
 PRELUDE_SMOKE = ROOT / "tools" / "smoke_person_prelude_lifecycle.py"
 MAINLOOP_SMOKE = ROOT / "tools" / "smoke_person_mainloop_lifecycle.py"
-CLOSE_MATRIX_SMOKE = ROOT / "tools" / "smoke_person_mainloop_close_matrix.py"
-CLOSE_MATRIX_SCENARIOS = (
-    "bare-unbound",
-    "backup-unbound",
-)
 
 
 def _run_smoke(script: Path, scenario: str | None = None, cycles: int | None = None) -> str | None:
@@ -47,14 +42,13 @@ def _diagnostic_mainloop_windows() -> None:
 
     failures: list[str] = []
 
-    # Bisection native : chaque scénario vit dans son propre processus afin
-    # qu'une corruption du tas n'empêche pas les scénarios suivants de parler.
-    for scenario in CLOSE_MATRIX_SCENARIOS:
-        failure = _run_smoke(CLOSE_MATRIX_SMOKE, scenario)
-        if failure:
-            failures.append(failure)
+    # Même fiche, même Fermer(), vingt cycles, mais après OnInit dans le vrai
+    # MainLoop. Chaque réouverture attend EVT_WINDOW_DESTROY du cycle précédent.
+    failure = _run_smoke(MAINLOOP_SMOKE)
+    if failure:
+        failures.append(failure)
 
-    # Contrôle de référence : le reproducer synchrone historique reste vert.
+    # Contrôle positif : ancien reproducer synchrone exécuté dans OnInit.
     failure = _run_smoke(PRELUDE_SMOKE, "close-backup", 1)
     if failure:
         failures.append(failure)
