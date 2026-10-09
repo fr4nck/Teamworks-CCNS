@@ -163,12 +163,22 @@ def _dialogue_remboursement(checked=(7, 8), unchecked=(), IDremboursement=None):
     )
 
 
+def _euros_decimal_test(value):
+    return decimal.Decimal(str(value)).quantize(
+        decimal.Decimal("0.01"), rounding=decimal.ROUND_HALF_UP
+    )
+
+
 def _sauvegarde(db: _DB):
     return _load_method(
         REMBOURSEMENT,
         "SaisieRemboursement",
         "Sauvegarde",
-        globals_={"GestionDB": SimpleNamespace(DB=lambda: db), "_": lambda value: value},
+        globals_={
+            "GestionDB": SimpleNamespace(DB=lambda: db),
+            "_": lambda value: value,
+            "_euros_decimal": _euros_decimal_test,
+        },
     )
 
 
