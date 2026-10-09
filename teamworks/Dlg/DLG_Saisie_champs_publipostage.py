@@ -143,6 +143,10 @@ class Dialog(wx.Dialog):
         if not resultats:
             return
         IDchamp, categorie, nom, mot_cle, defaut = resultats[0]
+        # Les colonnes texte SQL optionnelles peuvent contenir NULL.
+        nom = "" if nom is None else nom
+        mot_cle = "" if mot_cle is None else mot_cle
+        defaut = "" if defaut is None else defaut
         # Place les valeurs dans les controles
         self.text_nom.SetValue(nom)
         self.text_defaut.SetValue(defaut)

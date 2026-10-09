@@ -241,3 +241,11 @@ Il serait trompeur de calculer maintenant un « pourcentage de Teamworks Vanilla
 Pas de migration Python 3, pas de nouveau thème, pas de CCNS et pas de fonctionnalités supplémentaires.
 
 La branche `vanilla-bugfix` part directement de la base 2.1.3.1 et sert de zone de préparation. Les patches propres restent également conservés dans `patches/vanilla/` afin d'être auditables et transmissibles indépendamment du fork moderne.
+
+## Qualification du traitement NULL en publipostage — 2026-10-09
+
+Le dialogue de champs de publipostage transmet directement les valeurs SQL aux contrôles texte dans la référence Noethys/Teamworks `00bd52ef85853eb617361a15c2f0cc0cfa1b898e`. Ce motif est donc hérité ; son comportement dans le runtime historique reste à vérifier.
+
+Sur le fork actuel, les tests reproduisent le rejet de `None` par le contrat des contrôles texte. Le correctif de `master` transforme uniquement les valeurs SQL NULL en chaînes vides et conserve les autres valeurs.
+
+Qualification locale Windows, Python 3.10.11 : 33 tests passés, couvrant publipostage et atomicité des contrats. Ces tests ne constituent ni une recette GUI native ni une validation MySQL réelle. Aucun runtime Vanilla historique n'a été exécuté pour ce lot.
