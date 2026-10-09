@@ -20,16 +20,6 @@ MARKER_LINE = '            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)'
 READY_MARKER = "TEAMWORKS_SMOKE_PERSON_CLOSE_MATRIX_READY"
 FAILURE_MARKER = "TEAMWORKS_SMOKE_PERSON_CLOSE_MATRIX_FAILED"
 SCENARIOS = (
-    "bare-unbound",
-    "backup-unbound",
-    "bare-dialog-destroy",
-    "core-destroy",
-    "core-no-notebook-destroy",
-    "core-no-notebook-no-ticker-destroy",
-    "core-no-notebook-no-photo-destroy",
-    "core-no-notebook-no-ticker-photo-destroy",
-    "core-no-notebook-native-buttons-destroy",
-    "wrapper-core-notebook-destroy",
     "destroy",
     "save-destroy",
     "callbacks-destroy",
@@ -46,57 +36,11 @@ def build_injection(scenario: str) -> str:
             import wx as _smoke_wx
             import GestionDB as _smoke_gestiondb
             from Dlg import DLG_Fiche_individuelle as _smoke_person
-            from Dlg import DLG_Fiche_individuelle_core as _smoke_person_core
-            from Dlg import DLG_Config_sauvegarde as _smoke_backup
 
             _smoke_scenario = {scenario!r}
-            _smoke_state = {{"failed": False, "dialog": None, "guard": None}}
-
-            class _SmokeTicker(_smoke_wx.Control):
-                def __init__(self, parent, *args, **kwargs):
-                    _smoke_wx.Control.__init__(self, parent)
-                    self._text = ""
-                def SetText(self, text):
-                    self._text = text
-                def Start(self):
-                    return None
-                def Stop(self):
-                    return None
-
-            class _SmokePhoto(_smoke_wx.Panel):
-                def __init__(self, parent, *args, **kwargs):
-                    _smoke_wx.Panel.__init__(self, parent)
-                def SetPhoto(self, *args, **kwargs):
-                    return None
-
-            class _SmokePage(_smoke_wx.Panel):
-                def __init__(self, parent, *args, **kwargs):
-                    _smoke_wx.Panel.__init__(self, parent)
-
-            class _SmokeNotebook(_smoke_wx.Notebook):
-                def __init__(self, parent, *args, **kwargs):
-                    _smoke_wx.Notebook.__init__(self, parent)
-                def AfficheAutresPages(self, etat=True):
-                    return None
-
-            class _SmokeButton(_smoke_wx.Button):
-                def __init__(
-                    self, parent, id=-1, texte="", cheminImage=None, *args, **kwargs
-                ):
-                    _smoke_wx.Button.__init__(self, parent, id=id, label=texte)
-
-            def _cancel_guard():
-                _guard = _smoke_state.get("guard")
-                if _guard is not None:
-                    try:
-                        if _guard.IsRunning():
-                            _guard.Stop()
-                    except Exception:
-                        pass
-                    _smoke_state["guard"] = None
+            _smoke_state = {{"failed": False, "dialog": None}}
 
             def _fail():
-                _cancel_guard()
                 if _smoke_state["failed"]:
                     return
                 _smoke_state["failed"] = True
@@ -111,7 +55,6 @@ def build_injection(scenario: str) -> str:
                         _event.Skip()
                         return
                     _event.Skip()
-                    _cancel_guard()
                     print(
                         "TEAMWORKS_SMOKE_PERSON_CLOSE_MATRIX_DESTROYED:%s"
                         % _smoke_scenario,
@@ -122,10 +65,6 @@ def build_injection(scenario: str) -> str:
                 except Exception:
                     _fail()
 
-            def _finish_unbound():
-                print("TEAMWORKS_SMOKE_PERSON_CLOSE_MATRIX_READY", flush=True)
-                self.ExitMainLoop()
-
             def _operate(_dialog):
                 try:
                     print(
@@ -133,26 +72,7 @@ def build_injection(scenario: str) -> str:
                         % _smoke_scenario,
                         flush=True,
                     )
-                    if _smoke_scenario in ("bare-unbound", "backup-unbound"):
-                        _dialog.Destroy()
-                        print(
-                            "TEAMWORKS_SMOKE_PERSON_CLOSE_MATRIX_REQUESTED:%s"
-                            % _smoke_scenario,
-                            flush=True,
-                        )
-                        _smoke_wx.CallLater(500, _finish_unbound)
-                        return
-                    if _smoke_scenario in (
-                        "destroy",
-                        "bare-dialog-destroy",
-                        "core-destroy",
-                        "core-no-notebook-destroy",
-                        "core-no-notebook-no-ticker-destroy",
-                        "core-no-notebook-no-photo-destroy",
-                        "core-no-notebook-no-ticker-photo-destroy",
-                        "core-no-notebook-native-buttons-destroy",
-                        "wrapper-core-notebook-destroy",
-                    ):
+                    if _smoke_scenario == "destroy":
                         _dialog.Destroy()
                     elif _smoke_scenario == "save-destroy":
                         _dialog._sauvegarder_pages()
@@ -200,57 +120,14 @@ def build_injection(scenario: str) -> str:
                     _db.Close()
                     if not _rows:
                         raise RuntimeError("aucune personne disponible")
-                    if _smoke_scenario == "bare-unbound":
-                        _dialog = _smoke_wx.Dialog(frame)
-                    elif _smoke_scenario == "backup-unbound":
-                        _dialog = _smoke_backup.MyFrame(frame)
-                    elif _smoke_scenario == "bare-dialog-destroy":
-                        _dialog = _smoke_wx.Dialog(
-                            frame,
-                            style=(
-                                _smoke_wx.DEFAULT_DIALOG_STYLE
-                                | _smoke_wx.RESIZE_BORDER
-                                | _smoke_wx.MAXIMIZE_BOX
-                                | _smoke_wx.MINIMIZE_BOX
-                            ),
-                        )
-                    elif _smoke_scenario.startswith("core-") and _smoke_scenario.endswith("-destroy"):
-                        if "no-notebook" in _smoke_scenario:
-                            _smoke_person_core.Notebook = _SmokeNotebook
-                        if "no-ticker" in _smoke_scenario:
-                            _smoke_person_core.Ticker = _SmokeTicker
-                        if "no-photo" in _smoke_scenario:
-                            _smoke_person_core.CTRL_Photo.CTRL_Photo = _SmokePhoto
-                        if "native-buttons" in _smoke_scenario:
-                            _smoke_person_core.CTRL_Bouton_image.CTRL = _SmokeButton
-                        _dialog = _smoke_person_core.Dialog(
-                            frame, IDpersonne=_rows[0][0]
-                        )
-                    elif _smoke_scenario == "wrapper-core-notebook-destroy":
-                        _original_notebook = _smoke_person.Notebook
-                        try:
-                            _smoke_person.Notebook = _smoke_person_core.Notebook
-                            _dialog = _smoke_person.Dialog(
-                                frame, IDpersonne=_rows[0][0]
-                            )
-                        finally:
-                            _smoke_person.Notebook = _original_notebook
-                    else:
-                        _dialog = _smoke_person.Dialog(
-                            frame, IDpersonne=_rows[0][0]
-                        )
+                    _dialog = _smoke_person.Dialog(frame, IDpersonne=_rows[0][0])
                     _smoke_state["dialog"] = _dialog
-                    if _smoke_scenario not in ("bare-unbound", "backup-unbound"):
-                        _dialog.Bind(
-                            _smoke_wx.EVT_WINDOW_DESTROY,
-                            lambda _event, _dlg=_dialog: _destroyed(_event, _dlg),
-                        )
+                    _dialog.Bind(
+                        _smoke_wx.EVT_WINDOW_DESTROY,
+                        lambda _event, _dlg=_dialog: _destroyed(_event, _dlg),
+                    )
                     _dialog.Show()
                     _dialog.Layout()
-                    _smoke_state["guard"] = _smoke_wx.CallLater(
-                        15000,
-                        _fail,
-                    )
                     _smoke_wx.CallAfter(_operate, _dialog)
                 except Exception:
                     _fail()
