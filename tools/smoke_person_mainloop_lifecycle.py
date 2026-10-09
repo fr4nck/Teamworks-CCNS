@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Exécute les close/reopen après OnInit, dans le vrai MainLoop wx."""
+"""Qualifie le lifecycle modal réel de la fiche individuelle sous Windows."""
 
 from __future__ import annotations
 
@@ -24,105 +24,25 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
             import wx as _smoke_wx
             import GestionDB as _smoke_gestiondb
             from Dlg import DLG_Fiche_individuelle as _smoke_person
-            from Dlg import DLG_Config_sauvegarde as _smoke_backup
 
-            _smoke_state = {
-                "cycle": 0,
-                "cycles": 20,
-                "person_id": None,
-                "dialog": None,
-                "failed": False,
-            }
+            _smoke_canaries = []
 
             def _smoke_fail():
-                if _smoke_state["failed"]:
-                    return
-                _smoke_state["failed"] = True
                 import traceback as _smoke_traceback
                 _smoke_traceback.print_exc()
                 print("TEAMWORKS_SMOKE_PERSON_MAINLOOP_FAILED", flush=True)
                 _smoke_wx.CallAfter(self.ExitMainLoop)
 
-            def _smoke_finish_backup(_event=None):
+            def _smoke_close_modal(_dialog, _cycle):
                 try:
-                    if _event is not None:
-                        _event.Skip()
-                    print("TEAMWORKS_SMOKE_PERSON_MAINLOOP_READY", flush=True)
-                    _smoke_wx.CallAfter(self.ExitMainLoop)
-                except Exception:
-                    _smoke_fail()
-
-            def _smoke_open_backup():
-                try:
-                    print("TEAMWORKS_SMOKE_PERSON_MAINLOOP_BACKUP", flush=True)
-                    _probe = _smoke_backup.MyFrame(frame)
-                    _probe.Bind(
-                        _smoke_wx.EVT_WINDOW_DESTROY,
-                        lambda _event: _smoke_finish_backup(_event)
-                        if _event.GetEventObject() is _probe
-                        else _event.Skip(),
-                    )
-                    _probe.Show()
-                    _probe.Layout()
-                    _probe.Destroy()
-                except Exception:
-                    _smoke_fail()
-
-            def _smoke_on_person_destroy(_event, _dialog):
-                try:
-                    if _event.GetEventObject() is not _dialog:
-                        _event.Skip()
-                        return
-                    _event.Skip()
-                    _smoke_state["cycle"] += 1
-                    print(
-                        "TEAMWORKS_SMOKE_PERSON_MAINLOOP_DESTROYED:%d/%d"
-                        % (_smoke_state["cycle"], _smoke_state["cycles"]),
-                        flush=True,
-                    )
-                    _smoke_state["dialog"] = None
-                    if _smoke_state["cycle"] >= _smoke_state["cycles"]:
-                        _smoke_wx.CallAfter(_smoke_open_backup)
-                    else:
-                        _smoke_wx.CallAfter(_smoke_open_person)
-                except Exception:
-                    _smoke_fail()
-
-            def _smoke_close_person(_dialog):
-                try:
+                    if not _dialog.IsModal():
+                        raise RuntimeError("la fiche n'est pas entrée en mode modal")
                     if _dialog.Fermer(save=True) is not True:
                         raise RuntimeError("Fermer(save=True) a échoué")
                     print(
-                        "TEAMWORKS_SMOKE_PERSON_MAINLOOP_CLOSE_REQUESTED:%d/%d"
-                        % (_smoke_state["cycle"] + 1, _smoke_state["cycles"]),
+                        "TEAMWORKS_SMOKE_PERSON_MODAL_CLOSE:%d/5" % _cycle,
                         flush=True,
                     )
-                except Exception:
-                    _smoke_fail()
-
-            def _smoke_open_person():
-                try:
-                    _dialog = _smoke_person.Dialog(
-                        frame,
-                        IDpersonne=_smoke_state["person_id"],
-                    )
-                    _smoke_state["dialog"] = _dialog
-                    _dialog.Bind(
-                        _smoke_wx.EVT_WINDOW_DESTROY,
-                        lambda _event, _dlg=_dialog: _smoke_on_person_destroy(
-                            _event, _dlg
-                        ),
-                    )
-                    _dialog.Show()
-                    _dialog.Layout()
-                    print(
-                        "TEAMWORKS_SMOKE_PERSON_MAINLOOP_OPEN:%d/%d"
-                        % (_smoke_state["cycle"] + 1, _smoke_state["cycles"]),
-                        flush=True,
-                    )
-                    # Une itération de la vraie boucle sépare l'affichage de la
-                    # fermeture, comme pour une interaction utilisateur.
-                    _smoke_wx.CallAfter(_smoke_close_person, _dialog)
                 except Exception:
                     _smoke_fail()
 
@@ -136,15 +56,43 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                     _db.Close()
                     if not _rows:
                         raise RuntimeError("aucune personne disponible")
-                    _smoke_state["person_id"] = _rows[0][0]
-                    print("TEAMWORKS_SMOKE_PERSON_MAINLOOP_STARTED", flush=True)
-                    _smoke_open_person()
+                    _person_id = _rows[0][0]
+                    print("TEAMWORKS_SMOKE_PERSON_MODAL_STARTED", flush=True)
+
+                    for _cycle in range(1, 6):
+                        _dialog = _smoke_person.Dialog(frame, IDpersonne=_person_id)
+                        _dialog.Layout()
+                        _smoke_wx.CallAfter(_smoke_close_modal, _dialog, _cycle)
+                        _result = _dialog.ShowModal()
+                        if _result != _smoke_wx.ID_OK:
+                            raise RuntimeError(
+                                "résultat modal inattendu au cycle %d: %s"
+                                % (_cycle, _result)
+                            )
+                        _dialog.Destroy()
+                        _smoke_wx.YieldIfNeeded()
+                        _smoke_wx.GetApp().ProcessPendingEvents()
+                        print(
+                            "TEAMWORKS_SMOKE_PERSON_MODAL_DESTROYED:%d/5" % _cycle,
+                            flush=True,
+                        )
+
+                        # Canari natif conservé vivant jusqu'à la fin du smoke :
+                        # sa construction après chaque destruction détecte une
+                        # corruption du tas sans introduire un second lifecycle.
+                        _canary = _smoke_wx.SearchCtrl(frame)
+                        _canary.Hide()
+                        _smoke_canaries.append(_canary)
+                        print(
+                            "TEAMWORKS_SMOKE_PERSON_MODAL_CANARY_OK:%d/5" % _cycle,
+                            flush=True,
+                        )
+
+                    print("TEAMWORKS_SMOKE_PERSON_MAINLOOP_READY", flush=True)
+                    _smoke_wx.CallAfter(self.ExitMainLoop)
                 except Exception:
                     _smoke_fail()
 
-            # La différence essentielle avec l'ancien smoke : OnInit se termine
-            # d'abord. Les fenêtres sont ensuite créées/détruites par le vrai
-            # MainLoop, qui traite la PendingDeleteList de wxWidgets.
             _smoke_wx.CallAfter(_smoke_start)
             return True
 '''
@@ -179,7 +127,7 @@ def main() -> int:
             PATCHED,
             root=ROOT,
             teamworks_dir=TEAMWORKS_DIR,
-            timeout=1200,
+            timeout=300,
         )
         write_diagnostic(
             REPORT,
