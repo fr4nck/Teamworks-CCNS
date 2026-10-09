@@ -65,6 +65,7 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 from Utils import UTILS_Calendrier_scolaire_officiel as _smoke_calendrier
 
                 _smoke_canaries = []
+                _smoke_retained_windows = []
 
                 def _smoke_probe_searchctrl(_smoke_label):
                     print(
@@ -131,6 +132,15 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
 
                     if _smoke_state["error"] is not None:
                         raise AssertionError(_smoke_state["error"])
+
+                    # Ce smoke tourne encore dans App.OnInit : détruire un
+                    # top-level ici ne reproduit pas le lifecycle utilisateur
+                    # et peut laisser wxMSW traiter sa PendingDeleteList trop
+                    # tard. On le cache et on le conserve jusqu'à l'arrêt du
+                    # processus ; la destruction est qualifiée dans le smoke
+                    # lifecycle exécuté après OnInit.
+                    _smoke_dialog.Hide()
+                    _smoke_retained_windows.append(_smoke_dialog)
 
                 print("TEAMWORKS_SMOKE_PERSON_STAGE:database", flush=True)
                 _smoke_db = _smoke_gestiondb.DB()
@@ -223,34 +233,10 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                     "Fiche individuelle",
                     _smoke_actions=_smoke_check_person,
                 )
-                _smoke_dialog.Destroy()
-                wx.YieldIfNeeded()
-
-                print("TEAMWORKS_SMOKE_PERSON_STAGE:close-reopen", flush=True)
-                for _smoke_cycle in range(1, 4):
-                    _smoke_close_dialog = _smoke_person.Dialog(
-                        frame,
-                        IDpersonne=_smoke_person_id,
-                    )
-
-                    def _smoke_close_current(_dialog=_smoke_close_dialog, _cycle=_smoke_cycle):
-                        assert _dialog.IsModal()
-                        assert _dialog.Fermer(save=True) is True
-                        print(
-                            "TEAMWORKS_SMOKE_PERSON_MODAL_CLOSE:%d/3" % _cycle,
-                            flush=True,
-                        )
-
-                    wx.CallAfter(_smoke_close_current)
-                    assert _smoke_close_dialog.ShowModal() == wx.ID_OK
-                    _smoke_close_dialog.Destroy()
-                    wx.YieldIfNeeded()
-                    print(
-                        "TEAMWORKS_SMOKE_PERSON_MODAL_DESTROYED:%d/3" % _smoke_cycle,
-                        flush=True,
-                    )
-                print("TEAMWORKS_SMOKE_PERSON_CLOSE_REOPEN_OK", flush=True)
-                _smoke_probe_searchctrl("apres-close-reopen")
+                print(
+                    "TEAMWORKS_SMOKE_PERSON_LIFECYCLE_DELEGATED",
+                    flush=True,
+                )
 
                 print("TEAMWORKS_SMOKE_PERSON_STAGE:bug-report", flush=True)
                 _smoke_crash_dir = _smoke_tempfile.mkdtemp(prefix="teamworks-crash-dialog-")
@@ -265,10 +251,8 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 _smoke_assert_populated(_smoke_crash_dialog, "Rapport de crash")
                 assert _smoke_crash_dialog.bouton_envoyer.GetLabel() == "Envoyer le rapport"
                 assert _smoke_crash_dialog.bouton_envoyer.IsEnabled()
-                _smoke_crash_dialog.Destroy()
                 _smoke_os.remove(_smoke_crash_path)
                 _smoke_os.rmdir(_smoke_crash_dir)
-                wx.Yield()
                 _smoke_probe_searchctrl("apres-bug-report")
 
                 print("TEAMWORKS_SMOKE_PERSON_STAGE:parametrage", flush=True)
@@ -333,8 +317,7 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                     try:
                         _smoke_parameter_dialog = _smoke_factory(frame)
                         _smoke_assert_populated(_smoke_parameter_dialog, _smoke_label)
-                        _smoke_parameter_dialog.Destroy()
-                        wx.Yield()
+                        # Fenêtre conservée par _smoke_assert_populated().
                     finally:
                         if _smoke_enregistrement_verifie is not None:
                             DLG_Enregistrement.Dialog.VerifieEtat = (
@@ -392,8 +375,6 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                     assert not _smoke_vacances._chargement_en_cours
                     assert _smoke_vacances.GetZone() == "B"
                     assert len(_smoke_vacances.ctrl_periodes.donnees) == 1
-                    _smoke_vacances._fermer(wx.ID_CANCEL)
-                    wx.Yield()
                     print("TEAMWORKS_SMOKE_VACANCES_OFFICIELLES_OK", flush=True)
                 finally:
                     _smoke_calendrier.charger_vacances = _smoke_calendrier_original
@@ -410,8 +391,7 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                     print("TEAMWORKS_SMOKE_SUBDIALOG_OPEN:%s" % _smoke_label, flush=True)
                     _smoke_subdialog = _smoke_factory(frame)
                     _smoke_assert_populated(_smoke_subdialog, _smoke_label)
-                    _smoke_subdialog.Destroy()
-                    wx.Yield()
+                    # Sous-dialogue conservé jusqu'à la fin du smoke.
                     print("TEAMWORKS_SMOKE_SUBDIALOG_OK:%s" % _smoke_label, flush=True)
 
                 print("TEAMWORKS_SMOKE_PERSON_STAGE:restore", flush=True)
@@ -421,8 +401,7 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                     _smoke_archive.writestr("data===smoke.dat", b"smoke")
                 _smoke_restore = DLG_Config_sauvegarde.Restauration(frame, fichierRestauration=_smoke_restore_zip)
                 _smoke_assert_populated(_smoke_restore, "Restauration")
-                _smoke_restore.Destroy()
-                wx.Yield()
+                # Restauration conservée jusqu'à la fin du smoke.
                 print("TEAMWORKS_SMOKE_RESTORE_OK", flush=True)
 
                 print("TEAMWORKS_SMOKE_PERSON_DIALOG_READY", flush=True)
