@@ -16,7 +16,15 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-SCHEMA = ROOT / "infrastructure" / "persistence" / "sql" / "mysql" / "termination_v1.sql"
+SQL_DIR = ROOT / "infrastructure" / "persistence" / "sql" / "mysql"
+SCHEMA = SQL_DIR / "termination_v1.sql"
+SCHEMAS = (
+    SQL_DIR / "termination_v1.sql",
+    SQL_DIR / "termination_v2.sql",
+    SQL_DIR / "termination_v2_guards.sql",
+)
+# Ordre de suppression compatible avec les clés étrangères.
+TABLES = ("tw_termination_command", "tw_termination_transmission_snapshot", "tw_contract_termination")
 
 _CONTAINER = "teamworks-termination-mariadb-ci"
 _IMAGE = "mariadb:10.11.14"
@@ -87,15 +95,32 @@ def _configured() -> bool:
     )
 
 
-def _apply_schema() -> None:
-    conn = connect()
+def schema_statements(path: Path) -> list[str]:
+    """Instructions d'un fichier SQL : commentaires retirés, séparateur ';'."""
+    text = "\n".join(
+        line for line in path.read_text(encoding="utf-8").splitlines()
+        if not line.lstrip().startswith("--")
+    )
+    return [statement.strip() for statement in text.split(";") if statement.strip()]
+
+
+def reset_schema(connect_fn=None, schemas=SCHEMAS) -> None:
+    """Recrée les tables : les tables en ajout seul refusent DELETE (déclencheurs)."""
+    conn = (connect_fn or connect)()
     try:
         cur = conn.cursor()
-        cur.execute("DROP TABLE IF EXISTS tw_contract_termination")
-        cur.execute(SCHEMA.read_text(encoding="utf-8").strip().rstrip(";"))
+        for table in TABLES:
+            cur.execute("DROP TABLE IF EXISTS " + table)
+        for path in schemas:
+            for statement in schema_statements(path):
+                cur.execute(statement)
         conn.commit()
     finally:
         conn.close()
+
+
+def _apply_schema() -> None:
+    reset_schema()
 
 
 @pytest.fixture(scope="session")
@@ -125,11 +150,5 @@ def termination_mysql_server():
 
 @pytest.fixture
 def termination_db(termination_mysql_server):
-    conn = termination_mysql_server()
-    try:
-        cur = conn.cursor()
-        cur.execute("DELETE FROM tw_contract_termination")
-        conn.commit()
-    finally:
-        conn.close()
+    reset_schema(termination_mysql_server)
     return termination_mysql_server

@@ -39,6 +39,11 @@ def ready_termination(**overrides):
     return ContractTermination(**values)
 
 
+def transmit(termination):
+    from tests.termination_transmission_support import transmit_in_memory
+    return transmit_in_memory(termination)
+
+
 def assert_error(code, callable_):
     with pytest.raises(TerminationDomainError) as exc:
         callable_()
@@ -148,8 +153,8 @@ def test_workflow_rejects_skipping_steps():
 
 def test_transmitted_data_cannot_be_silently_modified():
     termination = ready_termination()
-    termination.transition_to(TerminationWorkflowStatus.PRET_IMPACT_EMPLOI)
-    termination.transition_to(TerminationWorkflowStatus.TRANSMIS_IMPACT_EMPLOI)
+    transmit(termination)
+    assert termination.workflow_status is TerminationWorkflowStatus.TRANSMIS_IMPACT_EMPLOI
     assert_error(
         "CORRECTION_REQUIRED",
         lambda: termination.update_transmittable(effective_end_date=date(2026, 10, 30)),
@@ -158,9 +163,8 @@ def test_transmitted_data_cannot_be_silently_modified():
 
 def test_closure_requires_explicit_external_checklist_and_is_not_automatic():
     termination = ready_termination()
+    transmit(termination)
     for target in (
-        TerminationWorkflowStatus.PRET_IMPACT_EMPLOI,
-        TerminationWorkflowStatus.TRANSMIS_IMPACT_EMPLOI,
         TerminationWorkflowStatus.EN_ATTENTE_RESULTATS,
         TerminationWorkflowStatus.RESULTATS_RECUS,
         TerminationWorkflowStatus.DOCUMENTS_REMIS,

@@ -104,6 +104,41 @@ _ALLOWED_TRANSITIONS = {
     TerminationWorkflowStatus.DOCUMENTS_REMIS: TerminationWorkflowStatus.CLOTURE,
 }
 
+# Statuts atteints uniquement après une première transmission enregistrée
+# (snapshot V1) : la frontière PRET -> TRANSMIS ne se franchit qu'avec lui.
+POST_TRANSMISSION_STATUSES = frozenset({
+    TerminationWorkflowStatus.TRANSMIS_IMPACT_EMPLOI,
+    TerminationWorkflowStatus.EN_ATTENTE_RESULTATS,
+    TerminationWorkflowStatus.RESULTATS_RECUS,
+    TerminationWorkflowStatus.DOCUMENTS_REMIS,
+    TerminationWorkflowStatus.CLOTURE,
+})
+
+CORRECTION_REASON_MAX_LENGTH = 2000
+
+
+@dataclass(frozen=True, slots=True)
+class CorrectionRequest:
+    """Correction ouverte : dimension orthogonale au workflow.
+
+    Elle autorise la modification explicite des données déjà transmises et
+    reste ouverte jusqu'à l'enregistrement de la transmission corrective.
+    """
+
+    reason: str
+    requested_at: datetime
+    requested_by: str
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.reason, str) or not self.reason.strip():
+            raise TerminationDomainError("CORRECTION_REASON_REQUIRED", "a correction reason is required")
+        if len(self.reason) > CORRECTION_REASON_MAX_LENGTH:
+            raise TerminationDomainError("CORRECTION_REASON_TOO_LONG", "correction reason is too long")
+        _require_aware(self.requested_at, "requested_at")
+        if not isinstance(self.requested_by, str) or not self.requested_by.strip():
+            raise TerminationDomainError("CORRECTION_REQUESTED_BY_REQUIRED", "requested_by is required")
+
+
 _PROTECTED_AFTER_TRANSMISSION = {
     "effective_end_date",
     "termination_reason",
@@ -135,6 +170,7 @@ class ContractTermination:
     workflow_status: TerminationWorkflowStatus = TerminationWorkflowStatus.A_PREPARER
     created_at: datetime = field(default_factory=_utcnow)
     updated_at: datetime = field(default_factory=_utcnow)
+    open_correction: Optional[CorrectionRequest] = None
     # Révision persistée : 0 = jamais enregistrée. Seul le repository la fait
     # avancer, d'exactement +1 par sauvegarde réussie ; les mutations du domaine
     # ne la modifient pas, afin qu'elle reste la version attendue en base.
@@ -169,6 +205,16 @@ class ContractTermination:
             raise TerminationDomainError("INVALID_COMMENTS", "comments must be a string")
         if not isinstance(self.hr_checks, HrInputChecks):
             raise TerminationDomainError("INVALID_HR_CHECKS", "hr_checks must be HrInputChecks")
+        if self.open_correction is not None:
+            if not isinstance(self.open_correction, CorrectionRequest):
+                raise TerminationDomainError("INVALID_CORRECTION", "open_correction must be a CorrectionRequest")
+            if self.workflow_status not in POST_TRANSMISSION_STATUSES or (
+                self.workflow_status is TerminationWorkflowStatus.CLOTURE
+            ):
+                raise TerminationDomainError(
+                    "CORRECTION_REQUIRES_TRANSMISSION",
+                    "a correction can only be open on a transmitted, non-closed termination",
+                )
         self.termination_reason = _coerce_enum(
             TerminationReason, self.termination_reason, "INVALID_TERMINATION_REASON"
         )
@@ -210,14 +256,75 @@ class ContractTermination:
     def can_be_ready_for_impact_emploi(self) -> bool:
         return not self.readiness_errors()
 
+    @property
+    def has_open_correction(self) -> bool:
+        return self.open_correction is not None
+
+    def _require_ready(self) -> None:
+        errors = self.readiness_errors()
+        if errors:
+            raise TerminationDomainError(errors[0], ", ".join(errors))
+
+    def record_first_transmission(self, snapshot) -> None:
+        """PRET -> TRANSMIS, uniquement adossé au snapshot V1 de cette sortie."""
+        if self.workflow_status is not TerminationWorkflowStatus.PRET_IMPACT_EMPLOI:
+            raise TerminationDomainError(
+                "NOT_READY_FOR_TRANSMISSION", f"cannot transmit from {self.workflow_status.value}"
+            )
+        if (
+            getattr(snapshot, "termination_id", None) != self.termination_id
+            or getattr(snapshot, "version", None) != 1
+            or getattr(snapshot, "supersedes_snapshot_id", None) is not None
+        ):
+            raise TerminationDomainError(
+                "TRANSMISSION_SNAPSHOT_MISMATCH", "first transmission requires this termination's V1 snapshot"
+            )
+        self._require_ready()
+        self.workflow_status = TerminationWorkflowStatus.TRANSMIS_IMPACT_EMPLOI
+        self._touch()
+
+    def request_correction(self, reason: str, *, requested_by: str, requested_at: datetime) -> None:
+        if self.workflow_status is TerminationWorkflowStatus.CLOTURE:
+            raise TerminationDomainError("TERMINATION_CLOSED", "closed termination cannot be corrected")
+        if self.workflow_status not in POST_TRANSMISSION_STATUSES:
+            raise TerminationDomainError(
+                "CORRECTION_REQUIRES_TRANSMISSION", "nothing has been transmitted yet: edit the termination instead"
+            )
+        if self.open_correction is not None:
+            raise TerminationDomainError("CORRECTION_ALREADY_OPEN", "a correction is already open")
+        self.open_correction = CorrectionRequest(reason, requested_at, requested_by)
+        self._touch()
+
+    def record_correction_transmission(self, snapshot) -> None:
+        """Ferme la correction ouverte, adossée au snapshot correctif V2+."""
+        if self.open_correction is None:
+            raise TerminationDomainError("CORRECTION_NOT_OPEN", "no open correction to transmit")
+        if (
+            getattr(snapshot, "termination_id", None) != self.termination_id
+            or not isinstance(getattr(snapshot, "version", None), int)
+            or snapshot.version < 2
+            or getattr(snapshot, "supersedes_snapshot_id", None) is None
+        ):
+            raise TerminationDomainError(
+                "TRANSMISSION_SNAPSHOT_MISMATCH", "a correction requires this termination's V2+ snapshot"
+            )
+        self._require_ready()
+        self.open_correction = None
+        self._touch()
+
     def transition_to(self, target: TerminationWorkflowStatus, *, external_checklist_complete: bool = False) -> None:
         expected = _ALLOWED_TRANSITIONS.get(self.workflow_status)
         if target is not expected:
             raise TerminationDomainError("INVALID_WORKFLOW_TRANSITION", f"cannot transition from {self.workflow_status.value} to {target.value}")
         if target is TerminationWorkflowStatus.PRET_IMPACT_EMPLOI:
-            errors = self.readiness_errors()
-            if errors:
-                raise TerminationDomainError(errors[0], ", ".join(errors))
+            self._require_ready()
+        if target is TerminationWorkflowStatus.TRANSMIS_IMPACT_EMPLOI:
+            raise TerminationDomainError(
+                "TRANSMISSION_SNAPSHOT_REQUIRED",
+                "use record_first_transmission with the V1 snapshot",
+            )
+        if target is TerminationWorkflowStatus.CLOTURE and self.open_correction is not None:
+            raise TerminationDomainError("CORRECTION_OPEN", "an open correction prevents closure")
         if target is TerminationWorkflowStatus.CLOTURE and not external_checklist_complete:
             raise TerminationDomainError("CLOSURE_CHECKLIST_INCOMPLETE", "external closure checklist must be complete")
         self.workflow_status = target
@@ -226,12 +333,11 @@ class ContractTermination:
     def update_transmittable(self, **changes: object) -> None:
         if self.workflow_status is TerminationWorkflowStatus.CLOTURE:
             raise TerminationDomainError("TERMINATION_CLOSED", "closed termination cannot be modified")
-        if self.workflow_status in {
-            TerminationWorkflowStatus.TRANSMIS_IMPACT_EMPLOI,
-            TerminationWorkflowStatus.EN_ATTENTE_RESULTATS,
-            TerminationWorkflowStatus.RESULTATS_RECUS,
-            TerminationWorkflowStatus.DOCUMENTS_REMIS,
-        } and _PROTECTED_AFTER_TRANSMISSION.intersection(changes):
+        if (
+            self.workflow_status in POST_TRANSMISSION_STATUSES
+            and self.open_correction is None
+            and _PROTECTED_AFTER_TRANSMISSION.intersection(changes)
+        ):
             raise TerminationDomainError("CORRECTION_REQUIRED", "transmitted data require an explicit correction")
         unknown = set(changes) - {
             "decision_date", "effective_end_date", "termination_reason", "notification_date",
@@ -244,11 +350,12 @@ class ContractTermination:
             for name, value in changes.items():
                 setattr(self, name, value)
             self._validate_state()
-            if self.workflow_status is TerminationWorkflowStatus.PRET_IMPACT_EMPLOI:
-                # Un dossier déclaré prêt ne peut pas redevenir incomplet en silence.
-                errors = self.readiness_errors()
-                if errors:
-                    raise TerminationDomainError(errors[0], ", ".join(errors))
+            if self.workflow_status is TerminationWorkflowStatus.PRET_IMPACT_EMPLOI or (
+                self.open_correction is not None
+            ):
+                # Un dossier prêt, ou déjà transmis puis en correction, ne peut
+                # pas redevenir incomplet en silence.
+                self._require_ready()
         except Exception:
             for name, value in previous.items():
                 setattr(self, name, value)

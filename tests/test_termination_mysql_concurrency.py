@@ -18,7 +18,7 @@ from domain.employment.termination_repository import (
 )
 from infrastructure.persistence.mysql_termination_repository import MySqlContractTerminationRepository
 from tests.termination_mysql_support import termination_db, termination_mysql_server  # noqa: F401
-from tests.test_termination_mysql_repository import make_termination, stored_row
+from tests.test_termination_mysql_repository import make_termination, stored_row, transmit_persisted
 
 WAIT = 20.0
 
@@ -166,8 +166,7 @@ def test_transmission_committed_first_blocks_a_stale_data_change(termination_db)
 
     editor = base.get(original.termination_id)
     transmitter = base.get(original.termination_id)
-    transmitter.transition_to(TerminationWorkflowStatus.TRANSMIS_IMPACT_EMPLOI)
-    base.save(transmitter)
+    transmit_persisted(termination_db, transmitter)
 
     # Encore PRET dans sa copie : le domaine l'autorise localement…
     editor.update_transmittable(effective_end_date=date(2026, 10, 30), last_worked_date=date(2026, 10, 30))
@@ -184,9 +183,8 @@ def test_closure_committed_first_blocks_a_stale_update(termination_db):
     original = make_termination()
     base.add(original)
     stale = base.get(original.termination_id)
+    original = transmit_persisted(termination_db, original)
     for target in (
-        TerminationWorkflowStatus.PRET_IMPACT_EMPLOI,
-        TerminationWorkflowStatus.TRANSMIS_IMPACT_EMPLOI,
         TerminationWorkflowStatus.EN_ATTENTE_RESULTATS,
         TerminationWorkflowStatus.RESULTATS_RECUS,
         TerminationWorkflowStatus.DOCUMENTS_REMIS,
