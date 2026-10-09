@@ -38,9 +38,20 @@ def build_injection(scenario: str) -> str:
             from Dlg import DLG_Fiche_individuelle as _smoke_person
 
             _smoke_scenario = {scenario!r}
-            _smoke_state = {{"failed": False, "dialog": None}}
+            _smoke_state = {{"failed": False, "dialog": None, "guard": None}}
+
+            def _cancel_guard():
+                _guard = _smoke_state.get("guard")
+                if _guard is not None:
+                    try:
+                        if _guard.IsRunning():
+                            _guard.Stop()
+                    except Exception:
+                        pass
+                    _smoke_state["guard"] = None
 
             def _fail():
+                _cancel_guard()
                 if _smoke_state["failed"]:
                     return
                 _smoke_state["failed"] = True
@@ -55,6 +66,7 @@ def build_injection(scenario: str) -> str:
                         _event.Skip()
                         return
                     _event.Skip()
+                    _cancel_guard()
                     print(
                         "TEAMWORKS_SMOKE_PERSON_CLOSE_MATRIX_DESTROYED:%s"
                         % _smoke_scenario,
@@ -128,6 +140,10 @@ def build_injection(scenario: str) -> str:
                     )
                     _dialog.Show()
                     _dialog.Layout()
+                    _smoke_state["guard"] = _smoke_wx.CallLater(
+                        15000,
+                        _fail,
+                    )
                     _smoke_wx.CallAfter(_operate, _dialog)
                 except Exception:
                     _fail()
