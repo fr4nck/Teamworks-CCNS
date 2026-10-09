@@ -64,6 +64,21 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 from Dlg import DLG_Feries
                 from Utils import UTILS_Calendrier_scolaire_officiel as _smoke_calendrier
 
+                _smoke_canaries = []
+
+                def _smoke_probe_searchctrl(_smoke_label):
+                    print(
+                        "TEAMWORKS_SMOKE_SEARCH_CANARY:%s" % _smoke_label,
+                        flush=True,
+                    )
+                    _smoke_canary = wx.SearchCtrl(frame)
+                    _smoke_canary.Hide()
+                    _smoke_canaries.append(_smoke_canary)
+                    print(
+                        "TEAMWORKS_SMOKE_SEARCH_CANARY_OK:%s" % _smoke_label,
+                        flush=True,
+                    )
+
                 def _smoke_descendants(_smoke_window):
                     _smoke_items = []
                     _smoke_stack = list(_smoke_window.GetChildren())
@@ -194,6 +209,7 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                     assert _smoke_close_dialog.Fermer(save=True) is True
                     wx.Yield()
                 print("TEAMWORKS_SMOKE_PERSON_CLOSE_REOPEN_OK", flush=True)
+                _smoke_probe_searchctrl("apres-close-reopen")
 
                 print("TEAMWORKS_SMOKE_PERSON_STAGE:bug-report", flush=True)
                 _smoke_crash_dir = _smoke_tempfile.mkdtemp(prefix="teamworks-crash-dialog-")
@@ -212,6 +228,7 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 _smoke_os.remove(_smoke_crash_path)
                 _smoke_os.rmdir(_smoke_crash_dir)
                 wx.Yield()
+                _smoke_probe_searchctrl("apres-bug-report")
 
                 print("TEAMWORKS_SMOKE_PERSON_STAGE:parametrage", flush=True)
                 _smoke_parameter_dialogs = (
@@ -268,21 +285,10 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                     wx.Yield()
                     print("TEAMWORKS_SMOKE_PARAMETER_OK:%s" % _smoke_label, flush=True)
 
-                    # Canari natif : le crash observé sur Sauvegardes automatiques
-                    # se manifeste dans wx.SearchCtrl.__init__. Construire le même
-                    # contrôle juste après chaque dialogue permet d'identifier le
-                    # premier destructeur qui laisse le tas Windows incohérent.
-                    print(
-                        "TEAMWORKS_SMOKE_PARAMETER_CANARY:%s" % _smoke_label,
-                        flush=True,
-                    )
-                    _smoke_canary = wx.SearchCtrl(frame)
-                    _smoke_canary.Destroy()
-                    wx.Yield()
-                    print(
-                        "TEAMWORKS_SMOKE_PARAMETER_CANARY_OK:%s" % _smoke_label,
-                        flush=True,
-                    )
+                    # Canari natif conservé vivant : on ne détruit pas le
+                    # SearchCtrl ici afin qu'un éventuel défaut de son propre
+                    # lifecycle ne puisse pas être attribué au dialogue précédent.
+                    _smoke_probe_searchctrl("apres-%s" % _smoke_label)
 
                 print("TEAMWORKS_SMOKE_PERSON_STAGE:vacances-officielles", flush=True)
                 _smoke_calendrier_original = _smoke_calendrier.charger_vacances
