@@ -20,6 +20,8 @@ MARKER_LINE = '            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)'
 READY_MARKER = "TEAMWORKS_SMOKE_PERSON_CLOSE_MATRIX_READY"
 FAILURE_MARKER = "TEAMWORKS_SMOKE_PERSON_CLOSE_MATRIX_FAILED"
 SCENARIOS = (
+    "bare-unbound",
+    "backup-unbound",
     "bare-dialog-destroy",
     "core-destroy",
     "core-no-notebook-destroy",
@@ -45,6 +47,7 @@ def build_injection(scenario: str) -> str:
             import GestionDB as _smoke_gestiondb
             from Dlg import DLG_Fiche_individuelle as _smoke_person
             from Dlg import DLG_Fiche_individuelle_core as _smoke_person_core
+            from Dlg import DLG_Config_sauvegarde as _smoke_backup
 
             _smoke_scenario = {scenario!r}
             _smoke_state = {{"failed": False, "dialog": None, "guard": None}}
@@ -119,6 +122,10 @@ def build_injection(scenario: str) -> str:
                 except Exception:
                     _fail()
 
+            def _finish_unbound():
+                print("TEAMWORKS_SMOKE_PERSON_CLOSE_MATRIX_READY", flush=True)
+                self.ExitMainLoop()
+
             def _operate(_dialog):
                 try:
                     print(
@@ -126,6 +133,15 @@ def build_injection(scenario: str) -> str:
                         % _smoke_scenario,
                         flush=True,
                     )
+                    if _smoke_scenario in ("bare-unbound", "backup-unbound"):
+                        _dialog.Destroy()
+                        print(
+                            "TEAMWORKS_SMOKE_PERSON_CLOSE_MATRIX_REQUESTED:%s"
+                            % _smoke_scenario,
+                            flush=True,
+                        )
+                        _smoke_wx.CallLater(500, _finish_unbound)
+                        return
                     if _smoke_scenario in (
                         "destroy",
                         "bare-dialog-destroy",
@@ -184,7 +200,11 @@ def build_injection(scenario: str) -> str:
                     _db.Close()
                     if not _rows:
                         raise RuntimeError("aucune personne disponible")
-                    if _smoke_scenario == "bare-dialog-destroy":
+                    if _smoke_scenario == "bare-unbound":
+                        _dialog = _smoke_wx.Dialog(frame)
+                    elif _smoke_scenario == "backup-unbound":
+                        _dialog = _smoke_backup.MyFrame(frame)
+                    elif _smoke_scenario == "bare-dialog-destroy":
                         _dialog = _smoke_wx.Dialog(
                             frame,
                             style=(
@@ -220,10 +240,11 @@ def build_injection(scenario: str) -> str:
                             frame, IDpersonne=_rows[0][0]
                         )
                     _smoke_state["dialog"] = _dialog
-                    _dialog.Bind(
-                        _smoke_wx.EVT_WINDOW_DESTROY,
-                        lambda _event, _dlg=_dialog: _destroyed(_event, _dlg),
-                    )
+                    if _smoke_scenario not in ("bare-unbound", "backup-unbound"):
+                        _dialog.Bind(
+                            _smoke_wx.EVT_WINDOW_DESTROY,
+                            lambda _event, _dlg=_dialog: _destroyed(_event, _dlg),
+                        )
                     _dialog.Show()
                     _dialog.Layout()
                     _smoke_state["guard"] = _smoke_wx.CallLater(
