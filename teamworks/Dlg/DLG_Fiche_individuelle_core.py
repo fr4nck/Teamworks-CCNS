@@ -523,6 +523,13 @@ class Dialog(wx.Dialog):
         if self._fermeture_en_cours:
             return False
 
+        # La fiche individuelle est un dialogue strictement modal dans
+        # l'application (ShowModal puis Destroy par l'appelant). Le chemin
+        # non modal ajouté pendant RC3 provoque une corruption du tas wxMSW
+        # lors de Destroy ; on refuse donc explicitement ce mode non supporté.
+        if not self.IsModal():
+            return False
+
         if save == False:
             if self.nouvelleFiche == True:
                 db = GestionDB.DB()
@@ -539,10 +546,7 @@ class Dialog(wx.Dialog):
             return False
 
         self._rafraichir_frame_personnes(save=save)
-        if self.IsModal():
-            self.EndModal(wx.ID_OK)
-        else:
-            self.Destroy()
+        self.EndModal(wx.ID_OK)
         return True
 
     def _sauvegarder_pages(self):
