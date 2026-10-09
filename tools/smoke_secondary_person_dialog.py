@@ -268,6 +268,22 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                     wx.Yield()
                     print("TEAMWORKS_SMOKE_PARAMETER_OK:%s" % _smoke_label, flush=True)
 
+                    # Canari natif : le crash observé sur Sauvegardes automatiques
+                    # se manifeste dans wx.SearchCtrl.__init__. Construire le même
+                    # contrôle juste après chaque dialogue permet d'identifier le
+                    # premier destructeur qui laisse le tas Windows incohérent.
+                    print(
+                        "TEAMWORKS_SMOKE_PARAMETER_CANARY:%s" % _smoke_label,
+                        flush=True,
+                    )
+                    _smoke_canary = wx.SearchCtrl(frame)
+                    _smoke_canary.Destroy()
+                    wx.Yield()
+                    print(
+                        "TEAMWORKS_SMOKE_PARAMETER_CANARY_OK:%s" % _smoke_label,
+                        flush=True,
+                    )
+
                 print("TEAMWORKS_SMOKE_PERSON_STAGE:vacances-officielles", flush=True)
                 _smoke_calendrier_original = _smoke_calendrier.charger_vacances
                 try:
