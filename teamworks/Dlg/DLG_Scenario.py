@@ -23,7 +23,9 @@ import wx.lib.scrolledpanel as scrolled
 import os
 import sys
 from Utils import UTILS_Fichiers
+from Utils.UTILS_Duration import operation_heures_wx
 from Utils.UTILS_ScenarioReports import ProtegerReportContreCycles
+from Utils.UTILS_Duration import duree_presence_wx
 from Dlg import DLG_Scenario_select_categories
 from Dlg import DLG_Scenario_select_periode
 from Dlg import DLG_Scenario_saisie_prevision
@@ -1267,6 +1269,12 @@ class Tableau(gridlib.Grid):
         dictHeuresRealisees, listeLabelsDetails = self.GetHeuresRealisees(IDpersonne, date_debut_realise, date_fin_realise, IDcategorie, mode_detail)
         # Total heures réalisées
         total_heures_realisees = dictHeuresRealisees["total_heures_realisees"]
+        if dictHeuresRealisees.get("erreur_presence") is not None:
+            dictDonnees["total_heures_realisees"] = "ERREUR"
+            dictDonnees["listeLabelsDetails"] = []
+            dictDonnees["erreur_presence"] = dictHeuresRealisees["erreur_presence"]
+            dictDonnees["total_reste_heures"] = "ERREUR"
+            return dictDonnees
         dictDonnees["total_heures_realisees"] = total_heures_realisees
         # Détail Jour ou Mois des heures réalisées :
         dictDonnees["listeLabelsDetails"] = listeLabelsDetails
@@ -1280,34 +1288,10 @@ class Tableau(gridlib.Grid):
         return dictDonnees
     
     def OperationHeures(self, heureA=None, heureB=None, operation="addition"):
-        # Préparation heure A
-        if heureA == None :
-            totalMinutesA = 0
-        else:
-            signeA = heureA[0]
-            hrA, mnA = heureA[1:].split(":")
-            hrA, mnA = int(float(hrA)), int(float(mnA))
-            totalMinutesA = (hrA*60) + mnA
-            if signeA == "-" : totalMinutesA = -totalMinutesA
-        # Préparation heure B
-        if heureB == None :
-            totalMinutesB = 0
-        else:
-            signeB = heureB[0]
-            hrB, mnB = heureB[1:].split(":")
-            hrB, mnB = int(float(hrB)), int(float(mnB))
-            totalMinutesB = (hrB*60) + mnB
-            if signeB == "-" : totalMinutesB = -totalMinutesB
-        # Opération
-        if operation == "addition" : totalMinutes = totalMinutesA + totalMinutesB
-        if operation == "soustraction" : totalMinutes = totalMinutesA - totalMinutesB
-        # Formatage du résultat : le signe porte sur la durée complète,
-        # y compris lorsque la partie heures vaut zéro.
-        signe = "+" if totalMinutes >= 0 else "-"
-        totalMinutesAbs = abs(totalMinutes)
-        nbreHeures = totalMinutesAbs // 60
-        nbreMinutes = totalMinutesAbs % 60
-        return "%s%d:%02d" % (signe, nbreHeures, nbreMinutes)
+        valeur, resultat = operation_heures_wx(heureA, heureB, operation)
+        if resultat.ok:
+            return valeur
+        raise ValueError(resultat.error.message)
         
         
     @ProtegerReportContreCycles
@@ -1368,7 +1352,17 @@ class Tableau(gridlib.Grid):
         for IDpresence, date, heure_debut, heure_fin in listePresences :
             dateDD = DateEngEnDateDD(date)
             # Addition pour le total de la catégorie
-            duree = self.OperationHeures("+" + heure_fin, "+" + heure_debut, "soustraction")
+            duree, resultat_presence = duree_presence_wx(heure_debut, heure_fin)
+            if not resultat_presence.ok:
+                erreur = resultat_presence.error
+                dictHeuresRealisees["total_heures_realisees"] = "ERREUR"
+                dictHeuresRealisees["erreur_presence"] = {
+                    "IDpresence": IDpresence,
+                    "code": erreur.code if erreur is not None else "INVALID_PRESENCE",
+                    "message": erreur.message if erreur is not None else "Présence invalide.",
+                    "field": erreur.field if erreur is not None else "horaire",
+                }
+                return dictHeuresRealisees, listeLabelsDetails
             total_heure_realisees = self.OperationHeures(total_heure_realisees, duree, "addition")
             dictHeuresRealisees["total_heures_realisees"] = total_heure_realisees
             # Détail
@@ -1584,6 +1578,12 @@ class GetDictColonnes():
         dictHeuresRealisees, listeLabelsDetails = self.GetHeuresRealisees(self.IDpersonne, date_debut_realise, date_fin_realise, IDcategorie, detail_mois)
         # Total heures réalisées
         total_heures_realisees = dictHeuresRealisees["total_heures_realisees"]
+        if dictHeuresRealisees.get("erreur_presence") is not None:
+            dictDonnees["total_heures_realisees"] = "ERREUR"
+            dictDonnees["listeLabelsDetails"] = []
+            dictDonnees["erreur_presence"] = dictHeuresRealisees["erreur_presence"]
+            dictDonnees["total_reste_heures"] = "ERREUR"
+            return dictDonnees
         dictDonnees["total_heures_realisees"] = total_heures_realisees
         # Détail Jour ou Mois des heures réalisées :
         dictDonnees["listeLabelsDetails"] = listeLabelsDetails
@@ -1619,34 +1619,10 @@ class GetDictColonnes():
         return dictTotauxLignes
 
     def OperationHeures(self, heureA=None, heureB=None, operation="addition"):
-        # Préparation heure A
-        if heureA == None :
-            totalMinutesA = 0
-        else:
-            signeA = heureA[0]
-            hrA, mnA = heureA[1:].split(":")
-            hrA, mnA = int(hrA), int(mnA)
-            totalMinutesA = (hrA*60) + mnA
-            if signeA == "-" : totalMinutesA = -totalMinutesA
-        # Préparation heure B
-        if heureB == None :
-            totalMinutesB = 0
-        else:
-            signeB = heureB[0]
-            hrB, mnB = heureB[1:].split(":")
-            hrB, mnB = int(hrB), int(mnB)
-            totalMinutesB = (hrB*60) + mnB
-            if signeB == "-" : totalMinutesB = -totalMinutesB
-        # Opération
-        if operation == "addition" : totalMinutes = totalMinutesA + totalMinutesB
-        if operation == "soustraction" : totalMinutes = totalMinutesA - totalMinutesB
-        # Formatage du résultat : le signe porte sur la durée complète,
-        # y compris lorsque la partie heures vaut zéro.
-        signe = "+" if totalMinutes >= 0 else "-"
-        totalMinutesAbs = abs(totalMinutes)
-        nbreHeures = totalMinutesAbs // 60
-        nbreMinutes = totalMinutesAbs % 60
-        return "%s%d:%02d" % (signe, nbreHeures, nbreMinutes)
+        valeur, resultat = operation_heures_wx(heureA, heureB, operation)
+        if resultat.ok:
+            return valeur
+        raise ValueError(resultat.error.message)
         
         
     @ProtegerReportContreCycles
@@ -1687,7 +1663,17 @@ class GetDictColonnes():
         for IDpresence, date, heure_debut, heure_fin in listePresences :
             dateDD = DateEngEnDateDD(date)
             # Addition pour le total de la catégorie
-            duree = self.OperationHeures("+" + heure_fin, "+" + heure_debut, "soustraction")
+            duree, resultat_presence = duree_presence_wx(heure_debut, heure_fin)
+            if not resultat_presence.ok:
+                erreur = resultat_presence.error
+                dictHeuresRealisees["total_heures_realisees"] = "ERREUR"
+                dictHeuresRealisees["erreur_presence"] = {
+                    "IDpresence": IDpresence,
+                    "code": erreur.code if erreur is not None else "INVALID_PRESENCE",
+                    "message": erreur.message if erreur is not None else "Présence invalide.",
+                    "field": erreur.field if erreur is not None else "horaire",
+                }
+                return dictHeuresRealisees, listeLabelsDetails
             total_heure_realisees = self.OperationHeures(total_heure_realisees, duree, "addition")
             dictHeuresRealisees["total_heures_realisees"] = total_heure_realisees
             # Détail
