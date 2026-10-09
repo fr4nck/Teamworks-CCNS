@@ -21,6 +21,11 @@ READY_MARKER = "TEAMWORKS_SMOKE_PERSON_CLOSE_MATRIX_READY"
 FAILURE_MARKER = "TEAMWORKS_SMOKE_PERSON_CLOSE_MATRIX_FAILED"
 SCENARIOS = (
     "core-destroy",
+    "core-no-ticker-destroy",
+    "core-no-photo-destroy",
+    "core-no-generalites-destroy",
+    "core-no-questionnaire-destroy",
+    "core-no-generalites-questionnaire-destroy",
     "wrapper-core-notebook-destroy",
     "destroy",
     "save-destroy",
@@ -42,6 +47,27 @@ def build_injection(scenario: str) -> str:
 
             _smoke_scenario = {scenario!r}
             _smoke_state = {{"failed": False, "dialog": None, "guard": None}}
+
+            class _SmokeTicker(_smoke_wx.Control):
+                def __init__(self, parent, *args, **kwargs):
+                    _smoke_wx.Control.__init__(self, parent)
+                    self._text = ""
+                def SetText(self, text):
+                    self._text = text
+                def Start(self):
+                    return None
+                def Stop(self):
+                    return None
+
+            class _SmokePhoto(_smoke_wx.Panel):
+                def __init__(self, parent, *args, **kwargs):
+                    _smoke_wx.Panel.__init__(self, parent)
+                def SetPhoto(self, *args, **kwargs):
+                    return None
+
+            class _SmokePage(_smoke_wx.Panel):
+                def __init__(self, parent, *args, **kwargs):
+                    _smoke_wx.Panel.__init__(self, parent)
 
             def _cancel_guard():
                 _guard = _smoke_state.get("guard")
@@ -90,6 +116,11 @@ def build_injection(scenario: str) -> str:
                     if _smoke_scenario in (
                         "destroy",
                         "core-destroy",
+                        "core-no-ticker-destroy",
+                        "core-no-photo-destroy",
+                        "core-no-generalites-destroy",
+                        "core-no-questionnaire-destroy",
+                        "core-no-generalites-questionnaire-destroy",
                         "wrapper-core-notebook-destroy",
                     ):
                         _dialog.Destroy()
@@ -139,7 +170,21 @@ def build_injection(scenario: str) -> str:
                     _db.Close()
                     if not _rows:
                         raise RuntimeError("aucune personne disponible")
-                    if _smoke_scenario == "core-destroy":
+                    if _smoke_scenario.startswith("core-") and _smoke_scenario.endswith("-destroy"):
+                        if _smoke_scenario == "core-no-ticker-destroy":
+                            _smoke_person_core.Ticker = _SmokeTicker
+                        if _smoke_scenario == "core-no-photo-destroy":
+                            _smoke_person_core.CTRL_Photo.CTRL_Photo = _SmokePhoto
+                        if _smoke_scenario in (
+                            "core-no-generalites-destroy",
+                            "core-no-generalites-questionnaire-destroy",
+                        ):
+                            _smoke_person_core.CTRL_Page_generalites.Panel_general = _SmokePage
+                        if _smoke_scenario in (
+                            "core-no-questionnaire-destroy",
+                            "core-no-generalites-questionnaire-destroy",
+                        ):
+                            _smoke_person_core.CTRL_Page_questionnaire.Panel = _SmokePage
                         _dialog = _smoke_person_core.Dialog(
                             frame, IDpersonne=_rows[0][0]
                         )
