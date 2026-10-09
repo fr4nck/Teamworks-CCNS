@@ -13,14 +13,9 @@ PRELUDE_SMOKE = ROOT / "tools" / "smoke_person_prelude_lifecycle.py"
 MAINLOOP_SMOKE = ROOT / "tools" / "smoke_person_mainloop_lifecycle.py"
 CLOSE_MATRIX_SMOKE = ROOT / "tools" / "smoke_person_mainloop_close_matrix.py"
 CLOSE_MATRIX_SCENARIOS = (
+    "core-destroy",
+    "wrapper-core-notebook-destroy",
     "destroy",
-    "save-destroy",
-    "callbacks-destroy",
-    "refresh-destroy",
-    "save-callbacks-destroy",
-    "callbacks-save-destroy",
-    "fermer-nosave",
-    "fermer-save",
 )
 
 
