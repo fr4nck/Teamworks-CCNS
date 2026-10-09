@@ -35,14 +35,14 @@ class Dialog(wx.Dialog):
             listeAdresses.append(dictTemp["adresse"])
         
         # Navigation
-        self.bouton_premier = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Premier.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_reculer = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Reculer.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_premier = CTRL_Bouton_image.CTRL(self, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Premier.png"))
+        self.bouton_reculer = CTRL_Bouton_image.CTRL(self, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Reculer.png"))
         self.ctrl_adresse = wx.ComboBox(self, -1, choices=listeAdresses, style=wx.CB_DROPDOWN )
         self.ctrl_adresse.SetEditable(False)
         if len(listeAdresses) > 0 :
             self.ctrl_adresse.Select(0)
-        self.bouton_avancer = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Avancer.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_dernier = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Dernier.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_avancer = CTRL_Bouton_image.CTRL(self, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Avancer.png"))
+        self.bouton_dernier = CTRL_Bouton_image.CTRL(self, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Dernier.png"))
         
         # Aperçu
         self.ctrl_editeur = CTRL_Editeur_email.Editeur(self)

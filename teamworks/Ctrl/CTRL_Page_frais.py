@@ -118,7 +118,7 @@ class Panel(wx.Panel):
 
     def _barre_actions(self, *boutons):
         gap = UTILS_Styles.GetLayoutSpacing("toolbar_gap")
-        sizer = wx.WrapSizer(wx.HORIZONTAL)
+        sizer = wx.WrapSizer(wx.HORIZONTAL, 0)
         for bouton in boutons:
             sizer.Add(bouton, 0, wx.RIGHT | wx.BOTTOM, gap)
         return sizer

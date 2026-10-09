@@ -70,10 +70,10 @@ class Dialog(wx.Dialog):
         self.ctrl_filtres = OL_Filtres_listes.ListView(self.staticbox_filtres_staticbox, ctrl_listview=ctrl_listview, id=-1, name="OL_test", style=wx.LC_REPORT|wx.SUNKEN_BORDER|wx.LC_SINGLE_SEL|wx.LC_HRULES|wx.LC_VRULES)
         self.ctrl_filtres.MAJ() 
 
-        self.bouton_ajouter = wx.BitmapButton(self.staticbox_filtres_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_modifier = wx.BitmapButton(self.staticbox_filtres_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Modifier.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_supprimer = wx.BitmapButton(self.staticbox_filtres_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_tout_supprimer = wx.BitmapButton(self.staticbox_filtres_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Filtre_supprimer.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_ajouter = CTRL_Bouton_image.CTRL(self.staticbox_filtres_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Ajouter.png"))
+        self.bouton_modifier = CTRL_Bouton_image.CTRL(self.staticbox_filtres_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Modifier.png"))
+        self.bouton_supprimer = CTRL_Bouton_image.CTRL(self.staticbox_filtres_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Supprimer.png"))
+        self.bouton_tout_supprimer = CTRL_Bouton_image.CTRL(self.staticbox_filtres_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Filtre_supprimer.png"))
 
         # Profil
         if self.ctrl_listview != None :

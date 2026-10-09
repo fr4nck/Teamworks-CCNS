@@ -15,7 +15,7 @@ import datetime
 import FonctionsPerso
 from Utils import UTILS_Dates
 import sys
-from Ctrl import CTRL_Gadget_candidatures
+from Ctrl import CTRL_Bouton_image, CTRL_Gadget_candidatures
 from Ol import OL_candidatures
 from Ol import OL_candidats
 from Ol import OL_entretiens
@@ -686,17 +686,17 @@ class Panel(wx.Panel):
         self.listCtrl_entretiens.SetMinSize((20, 20))
         self.listCtrl_emplois.SetMinSize((20, 20))
         
-        self.bouton_ajouter = wx.BitmapButton(self.window_D, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_modifier = wx.BitmapButton(self.window_D, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Modifier.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_supprimer = wx.BitmapButton(self.window_D, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_rechercher = wx.BitmapButton(self.window_D, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Loupe.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_affichertout = wx.BitmapButton(self.window_D, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Actualiser.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_options = wx.BitmapButton(self.window_D, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Mecanisme.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_courrier = wx.BitmapButton(self.window_D, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Mail.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_imprimer = wx.BitmapButton(self.window_D, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Imprimante.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_export_texte = wx.BitmapButton(self.window_D, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Document.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_export_excel = wx.BitmapButton(self.window_D, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Excel.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_aide = wx.BitmapButton(self.window_D, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Aide.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_ajouter = CTRL_Bouton_image.CTRL(self.window_D, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Ajouter.png"))
+        self.bouton_modifier = CTRL_Bouton_image.CTRL(self.window_D, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Modifier.png"))
+        self.bouton_supprimer = CTRL_Bouton_image.CTRL(self.window_D, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Supprimer.png"))
+        self.bouton_rechercher = CTRL_Bouton_image.CTRL(self.window_D, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Loupe.png"))
+        self.bouton_affichertout = CTRL_Bouton_image.CTRL(self.window_D, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Actualiser.png"))
+        self.bouton_options = CTRL_Bouton_image.CTRL(self.window_D, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Mecanisme.png"))
+        self.bouton_courrier = CTRL_Bouton_image.CTRL(self.window_D, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Mail.png"))
+        self.bouton_imprimer = CTRL_Bouton_image.CTRL(self.window_D, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Imprimante.png"))
+        self.bouton_export_texte = CTRL_Bouton_image.CTRL(self.window_D, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Document.png"))
+        self.bouton_export_excel = CTRL_Bouton_image.CTRL(self.window_D, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Excel.png"))
+        self.bouton_aide = CTRL_Bouton_image.CTRL(self.window_D, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Aide.png"))
         
         self.barreTitre_liste = FonctionsPerso.BarreTitre(self.window_D,  _(u"Liste des candidats"), _(u"Liste des candidats"))
         

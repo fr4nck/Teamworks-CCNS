@@ -6,6 +6,7 @@ import os
 import re
 
 import wx
+from Ctrl import CTRL_Bouton_image
 
 from Utils import UTILS_Branding
 from Utils import UTILS_Organisation
@@ -65,8 +66,8 @@ class Dialog(wx.Dialog):
         main.Add(notebook, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, 14)
 
         buttons = wx.StdDialogButtonSizer()
-        ok_button = wx.Button(panel, wx.ID_OK)
-        cancel_button = wx.Button(panel, wx.ID_CANCEL)
+        ok_button = CTRL_Bouton_image.CTRL(panel, id=wx.ID_OK, texte="Valider", role="primary")
+        cancel_button = CTRL_Bouton_image.CTRL(panel, id=wx.ID_CANCEL, texte="Annuler")
         buttons.AddButton(ok_button)
         buttons.AddButton(cancel_button)
         buttons.Realize()
@@ -132,7 +133,7 @@ class Dialog(wx.Dialog):
             style=wx.FLP_OPEN | wx.FLP_FILE_MUST_EXIST | wx.FLP_USE_TEXTCTRL,
         )
         logo_row.Add(self.logo_picker, 1, wx.EXPAND | wx.RIGHT, 8)
-        remove = wx.Button(logo_parent, label="Retirer")
+        remove = CTRL_Bouton_image.CTRL(logo_parent, texte="Retirer", role="danger")
         logo_row.Add(remove, 0)
         logo_box.Add(logo_row, 0, wx.EXPAND | wx.ALL, 10)
         hint = wx.StaticText(
@@ -226,7 +227,7 @@ class Dialog(wx.Dialog):
         )
         preview_box.Add(self.preview, 1, wx.EXPAND | wx.ALL, 8)
         main.Add(preview_box, 1, wx.EXPAND | wx.ALL, 12)
-        refresh = wx.Button(page, label="Actualiser l’aperçu")
+        refresh = CTRL_Bouton_image.CTRL(page, texte="Actualiser l’aperçu")
         main.Add(refresh, 0, wx.ALIGN_RIGHT | wx.RIGHT | wx.BOTTOM, 12)
         refresh.Bind(wx.EVT_BUTTON, self.OnPreview)
         self._refresh_preview()

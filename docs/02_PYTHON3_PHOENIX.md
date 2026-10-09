@@ -1,6 +1,6 @@
 # Teamworks — suivi Python 3 / wxPython Phoenix
 
-**Mise à jour : 28 août 2026**
+**Mise à jour : 16 septembre 2026**
 
 ## Objectif
 
@@ -51,6 +51,59 @@ Le build manuel du 28 août a confirmé une anomalie de packaging Python 3 :
 avec un `--specpath` distinct, PyInstaller résolvait le chemin relatif de
 l'icône depuis le dossier du fichier `.spec`. Le workflow utilise désormais le
 chemin absolu résolu avant l'appel à PyInstaller, avec un test de contrat dédié.
+
+## Recette Windows 0.9.2 RC1 — correctifs techniques préparant RC2
+
+La recette réelle du 8 septembre 2026 a révélé deux incompatibilités techniques
+qui n'étaient pas correctement couvertes par les smokes automatisés :
+
+- le publipostage utilisait encore `Thread.isAlive()`, supprimé en Python 3
+  moderne, derrière un `except` silencieux. Le garde pouvait donc laisser partir
+  un second worker alors que le premier possédait encore des proxies COM. Le
+  flux manipulait en outre des contrôles wx depuis ce worker et pouvait fermer
+  Word/Writer au milieu d'une opération. Le correctif RC2 impose un worker
+  propriétaire unique de l'automatisation, une annulation coopérative, des
+  mises à jour UI via `wx.CallAfter` et une libération COM unique dans le thread
+  propriétaire ; la disparition du crash natif reste à confirmer en recette
+  Windows réelle avec Word/Writer ;
+- la saisie des champs de publipostage transmettait directement des colonnes SQL
+  nullables à `wx.TextCtrl.SetValue()`. Phoenix exige une chaîne : les valeurs
+  `NULL` sont désormais normalisées avant l'appel wx et couvertes par un test de
+  non-régression.
+
+Qualification automatisée dédiée au commit applicatif RC2 : compilation ciblée,
+**11 tests passés / 2 ignorés sous Linux** et **13 tests passés sous Windows
+Server 2022 avec wxPython 4.3.1**. Cette qualification ne lance aucun packaging
+et ne remplace pas la recette Word/COM réelle.
+
+## Recette Windows 0.9.2 RC3 — updater historique neutralisé
+
+La recette Windows réelle du 16 septembre 2026 a reproduit un `ValueError` dans
+`DLG_Updater.ConvertVersionTuple()` avec la version locale `0.9.2-rc3` : le
+parseur hérité de Teamworks convertissait chaque composant séparé par un point
+en entier et ne connaissait donc pas les suffixes de prérelease `-rcN`.
+
+L'audit du module a également confirmé que ce même parcours utilisait encore
+les services de mise à jour historiques Teamworks/Noethys et pouvait télécharger
+un ancien paquet Teamworks. Le dépôt Teamworks-CCNS possède des releases GitHub,
+mais aucun protocole d'auto-mise-à-jour applicatif n'est encore qualifié pour la
+RC3 (canal de release, intégrité, téléchargement, installation et relance).
+
+Décision RC3 : **désactiver proprement l'updater hérité** plutôt que de le rendre
+compatible avec le nouveau numéro de version tout en conservant une source de
+mise à jour obsolète. Le dialogue conserve son point d'entrée utilisateur,
+affiche la version locale issue du fichier canonique `VERSION`, indique que la
+mise à jour automatique n'est pas encore disponible et n'effectue aucun accès
+réseau ni téléchargement.
+
+Le parseur commun accepte explicitement `X.Y.Z` et `X.Y.Z-rcN` et impose
+l'ordre `rc1 < rc2 < ... < version finale`. Les formats inconnus restent rejetés
+par le parseur, tandis que le lecteur utilisé par l'interface transforme un
+fichier `VERSION` absent ou invalide en état « version locale inconnue » sans
+exception UI non interceptée.
+
+La correction reste à qualifier sur un nouvel EXE Windows réel avant de pouvoir
+considérer le défaut RC3 comme fermé.
 
 ## Références
 

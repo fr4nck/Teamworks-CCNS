@@ -65,27 +65,29 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
 
                 print("TEAMWORKS_SMOKE_PERSON_LIFECYCLE_STAGE:create-dialog", flush=True)
                 _smoke_create_dialog = _smoke_person_dialog.Dialog(frame, IDpersonne=0)
-                _smoke_create_dialog.Show()
-                wx.Yield()
-                _smoke_page = _smoke_create_dialog.notebook.pageGeneralites
                 _smoke_person_id = _smoke_create_dialog.IDpersonne
                 assert _smoke_person_id not in (None, 0)
-                _smoke_page.autoComplete = False
-                _smoke_page.combo_box_civilite.SetStringSelection("Mme")
-                _smoke_page.text_nom.SetValue(_smoke_create_name)
-                _smoke_page.text_prenom.SetValue("Recette")
-                _smoke_page.text_date_naiss.SetValue("15/04/1990")
-                _smoke_page.text_cp_naiss.SetValue("35000")
-                _smoke_page.text_ville_naiss.SetValue("RENNES")
-                _smoke_page.IDpays_naiss = _smoke_country_id
-                _smoke_page.IDpays_nation = _smoke_country_id
-                _smoke_page.text_adresse.SetValue("1 rue de la Recette")
-                _smoke_page.text_cp.SetValue("35000")
-                _smoke_page.text_ville.SetValue("RENNES")
-                _smoke_page.text_memo.SetValue("Création UAT Individu")
 
-                print("TEAMWORKS_SMOKE_PERSON_LIFECYCLE_STAGE:create-save", flush=True)
-                _smoke_page.Sauvegarde()
+                def _smoke_fill_and_close_create():
+                    _smoke_page = _smoke_create_dialog.notebook.pageGeneralites
+                    _smoke_page.autoComplete = False
+                    _smoke_page.combo_box_civilite.SetStringSelection("Mme")
+                    _smoke_page.text_nom.SetValue(_smoke_create_name)
+                    _smoke_page.text_prenom.SetValue("Recette")
+                    _smoke_page.text_date_naiss.SetValue("15/04/1990")
+                    _smoke_page.text_cp_naiss.SetValue("35000")
+                    _smoke_page.text_ville_naiss.SetValue("RENNES")
+                    _smoke_page.IDpays_naiss = _smoke_country_id
+                    _smoke_page.IDpays_nation = _smoke_country_id
+                    _smoke_page.text_adresse.SetValue("1 rue de la Recette")
+                    _smoke_page.text_cp.SetValue("35000")
+                    _smoke_page.text_ville.SetValue("RENNES")
+                    _smoke_page.text_memo.SetValue("Création UAT Individu")
+                    print("TEAMWORKS_SMOKE_PERSON_LIFECYCLE_STAGE:create-save", flush=True)
+                    assert _smoke_create_dialog.Fermer(save=True) is True
+
+                wx.CallAfter(_smoke_fill_and_close_create)
+                assert _smoke_create_dialog.ShowModal() == wx.ID_OK
 
                 print("TEAMWORKS_SMOKE_PERSON_LIFECYCLE_STAGE:create-readback", flush=True)
                 _smoke_db = _smoke_gestiondb.DB()
@@ -112,26 +114,29 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
 
                 _smoke_create_dialog.Destroy()
                 _smoke_create_dialog = None
-                wx.Yield()
+                wx.YieldIfNeeded()
+                wx.GetApp().ProcessPendingEvents()
 
                 print("TEAMWORKS_SMOKE_PERSON_LIFECYCLE_STAGE:edit-dialog", flush=True)
                 _smoke_edit_dialog = _smoke_person_dialog.Dialog(frame, IDpersonne=_smoke_person_id)
-                _smoke_edit_dialog.Show()
-                wx.Yield()
-                _smoke_edit_page = _smoke_edit_dialog.notebook.pageGeneralites
-                _smoke_edit_page.autoComplete = False
-                assert _smoke_edit_page.text_nom.GetValue() == _smoke_create_name
-                assert _smoke_edit_page.text_prenom.GetValue() == "Recette"
-                assert _smoke_edit_page.text_memo.GetValue() == "Création UAT Individu"
-                _smoke_edit_page.text_nom.SetValue(_smoke_edit_name)
-                _smoke_edit_page.text_prenom.SetValue("Validée")
-                _smoke_edit_page.text_adresse.SetValue("2 avenue du Contrôle")
-                _smoke_edit_page.text_cp.SetValue("35500")
-                _smoke_edit_page.text_ville.SetValue("VITRE")
-                _smoke_edit_page.text_memo.SetValue("Modification UAT Individu")
 
-                print("TEAMWORKS_SMOKE_PERSON_LIFECYCLE_STAGE:edit-save", flush=True)
-                _smoke_edit_page.Sauvegarde()
+                def _smoke_fill_and_close_edit():
+                    _smoke_edit_page = _smoke_edit_dialog.notebook.pageGeneralites
+                    _smoke_edit_page.autoComplete = False
+                    assert _smoke_edit_page.text_nom.GetValue() == _smoke_create_name
+                    assert _smoke_edit_page.text_prenom.GetValue() == "Recette"
+                    assert _smoke_edit_page.text_memo.GetValue() == "Création UAT Individu"
+                    _smoke_edit_page.text_nom.SetValue(_smoke_edit_name)
+                    _smoke_edit_page.text_prenom.SetValue("Validée")
+                    _smoke_edit_page.text_adresse.SetValue("2 avenue du Contrôle")
+                    _smoke_edit_page.text_cp.SetValue("35500")
+                    _smoke_edit_page.text_ville.SetValue("VITRE")
+                    _smoke_edit_page.text_memo.SetValue("Modification UAT Individu")
+                    print("TEAMWORKS_SMOKE_PERSON_LIFECYCLE_STAGE:edit-save", flush=True)
+                    assert _smoke_edit_dialog.Fermer(save=True) is True
+
+                wx.CallAfter(_smoke_fill_and_close_edit)
+                assert _smoke_edit_dialog.ShowModal() == wx.ID_OK
 
                 print("TEAMWORKS_SMOKE_PERSON_LIFECYCLE_STAGE:edit-readback", flush=True)
                 _smoke_db = _smoke_gestiondb.DB()
@@ -151,7 +156,8 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
 
                 _smoke_edit_dialog.Destroy()
                 _smoke_edit_dialog = None
-                wx.Yield()
+                wx.YieldIfNeeded()
+                wx.GetApp().ProcessPendingEvents()
 
                 print("TEAMWORKS_SMOKE_PERSON_LIFECYCLE_STAGE:list-readback", flush=True)
                 _smoke_list_host = wx.Frame(frame, title="Smoke Individus")

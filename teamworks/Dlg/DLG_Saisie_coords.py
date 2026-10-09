@@ -118,7 +118,7 @@ class Dialog(wx.Dialog):
         sizer_base = wx.BoxSizer(wx.VERTICAL)
         sizer_base.Add(self.titre_categories, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, padding)
 
-        sizer_categories = wx.WrapSizer(wx.HORIZONTAL)
+        sizer_categories = wx.WrapSizer(wx.HORIZONTAL, 0)
         for button in (self.bouton_fixe, self.bouton_mobile, self.bouton_fax, self.bouton_email):
             sizer_categories.Add(button, 0, wx.RIGHT | wx.BOTTOM, toolbar_gap)
         sizer_base.Add(sizer_categories, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, padding)

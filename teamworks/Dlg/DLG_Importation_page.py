@@ -26,8 +26,8 @@ class Dialog(wx.Dialog):
         titre = _(u"Importation d'un document")
         self.ctrl_bandeau = CTRL_Bandeau.Bandeau(self, titre=titre, texte=intro, hauteurHtml=30, nomImage=Chemins.GetStaticPath("Images/32x32/Document.png"))
 
-        self.bouton_dossier = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Page_dossier_2.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_scanner = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Page_scanner_2.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_dossier = CTRL_Bouton_image.CTRL(self, bitmap=wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Page_dossier_2.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_scanner = CTRL_Bouton_image.CTRL(self, bitmap=wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Page_scanner_2.png"), wx.BITMAP_TYPE_ANY))
         
         self.bouton_aide = CTRL_Bouton_image.CTRL(self, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))
         self.bouton_annuler = CTRL_Bouton_image.CTRL(self, id=wx.ID_CANCEL, texte=_(u"Annuler"), cheminImage=Chemins.GetStaticPath("Images/32x32/Annuler.png"))

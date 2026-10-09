@@ -77,40 +77,40 @@ class Panel(wx.Panel):
         self.label_ville = wx.StaticText(self.sizer_adresse_staticbox, -1, _(u"Ville :"))
         self.ctrl_ville = TextCtrlVille(self.sizer_adresse_staticbox, value="", ctrlCp=self.ctrl_cp, listeVilles=self.listeVilles, listeNomsVilles=self.listeNomsVilles)
         self.ctrl_cp.ctrlVille = self.ctrl_ville
-        self.bouton_villes = wx.Button(self.sizer_adresse_staticbox, -1, u"...")
+        self.bouton_villes = CTRL_Bouton_image.Compact(self.sizer_adresse_staticbox, texte="...")
         
         # Coords
         self.sizer_coords_staticbox = wx.StaticBox(self, -1, _(u"Coordonnées"))
         self.ctrl_coords = ListCtrlCoords(self.sizer_coords_staticbox, -1)
         self.ctrl_coords.SetMinSize((20, 20))
-        self.bouton_ajouter_coord = wx.BitmapButton(self.sizer_coords_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_modifier_coord = wx.BitmapButton(self.sizer_coords_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Modifier.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_supprimer_coord = wx.BitmapButton(self.sizer_coords_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_ajouter_coord = CTRL_Bouton_image.CTRL(self.sizer_coords_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Ajouter.png"))
+        self.bouton_modifier_coord = CTRL_Bouton_image.CTRL(self.sizer_coords_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Modifier.png"))
+        self.bouton_supprimer_coord = CTRL_Bouton_image.CTRL(self.sizer_coords_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Supprimer.png"))
 
         # Qualifications
         self.sizer_qualifications_staticbox = wx.StaticBox(self, -1, _(u"Qualifications"))
         self.ctrl_qualifications = ListCtrl_Diplomes(self.sizer_qualifications_staticbox, -1)
         self.ctrl_qualifications.SetMinSize((20, 20))
         self.ctrl_qualifications.SetBackgroundColour((236, 233, 216))
-        self.bouton_qualifications = wx.BitmapButton(self.sizer_qualifications_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Modifier.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_qualifications = CTRL_Bouton_image.CTRL(self.sizer_qualifications_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Modifier.png"))
 
         # Candidatures
         self.sizer_candidatures_staticbox = wx.StaticBox(self, -1, _(u"Candidatures"))
         self.ctrl_candidatures = OL_candidatures.ListView(self.sizer_candidatures_staticbox, id=-1, name="OL_candidatures", IDcandidat=self.IDcandidat, style=wx.LC_REPORT|wx.SUNKEN_BORDER|wx.LC_SINGLE_SEL|wx.LC_HRULES|wx.LC_VRULES)
         self.ctrl_candidatures.SetMinSize((20, 20))
         self.ctrl_candidatures.MAJ(IDpersonne=self.IDcandidat)
-        self.bouton_ajouter_cand = wx.BitmapButton(self.sizer_candidatures_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_modifier_cand = wx.BitmapButton(self.sizer_candidatures_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Modifier.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_supprimer_cand = wx.BitmapButton(self.sizer_candidatures_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_ajouter_cand = CTRL_Bouton_image.CTRL(self.sizer_candidatures_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Ajouter.png"))
+        self.bouton_modifier_cand = CTRL_Bouton_image.CTRL(self.sizer_candidatures_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Modifier.png"))
+        self.bouton_supprimer_cand = CTRL_Bouton_image.CTRL(self.sizer_candidatures_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Supprimer.png"))
         
         # Entretiens
         self.sizer_entretiens_staticbox = wx.StaticBox(self, -1, _(u"Entretiens"))
         self.ctrl_entretiens = OL_entretiens.ListView(self.sizer_entretiens_staticbox, id=-1, name="OL_entretiens", IDcandidat=self.IDcandidat, style=wx.LC_REPORT|wx.SUNKEN_BORDER|wx.LC_SINGLE_SEL|wx.LC_HRULES|wx.LC_VRULES)
         self.ctrl_entretiens.SetMinSize((20, 20))
         self.ctrl_entretiens.MAJ(IDcandidat=self.IDcandidat)
-        self.bouton_ajouter_entretien = wx.BitmapButton(self.sizer_entretiens_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_modifier_entretien = wx.BitmapButton(self.sizer_entretiens_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Modifier.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_supprimer_entretien = wx.BitmapButton(self.sizer_entretiens_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_ajouter_entretien = CTRL_Bouton_image.CTRL(self.sizer_entretiens_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Ajouter.png"))
+        self.bouton_modifier_entretien = CTRL_Bouton_image.CTRL(self.sizer_entretiens_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Modifier.png"))
+        self.bouton_supprimer_entretien = CTRL_Bouton_image.CTRL(self.sizer_entretiens_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Supprimer.png"))
         
         # Memo
         self.sizer_memo_staticbox = wx.StaticBox(self, -1, _(u"Mémo"))
@@ -118,9 +118,9 @@ class Panel(wx.Panel):
         self.ctrl_memo.SetMinSize((200, 30))
         
         # Boutons de commande
-        self.bouton_convertir = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Convertir_candidat.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_convertir = CTRL_Bouton_image.CTRL(self, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/BoutonsImages/Convertir_candidat.png"))
         self.bouton_aide = CTRL_Bouton_image.CTRL(self, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))
-        self.bouton_courrier = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Envoyer_courrier.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_courrier = CTRL_Bouton_image.CTRL(self, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/BoutonsImages/Envoyer_courrier.png"))
         self.bouton_ok = CTRL_Bouton_image.CTRL(self, texte=_(u"Ok"), cheminImage=Chemins.GetStaticPath("Images/32x32/Valider.png"))
         self.bouton_annuler = CTRL_Bouton_image.CTRL(self, texte=_(u"Annuler"), cheminImage=Chemins.GetStaticPath("Images/32x32/Annuler.png"))
             
@@ -1358,6 +1358,9 @@ class Dialog(wx.Dialog):
         wx.Dialog.__init__(self, parent, -1, style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX)
         self.parent = parent
         self.panel = Panel(self, IDcandidat=IDcandidat)
+        sizer_dialog = wx.BoxSizer(wx.VERTICAL)
+        sizer_dialog.Add(self.panel, 1, wx.EXPAND, 0)
+        self.SetSizer(sizer_dialog)
                 
         # Propriétés
         if IDcandidat == None :

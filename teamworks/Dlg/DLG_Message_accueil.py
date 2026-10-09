@@ -65,7 +65,7 @@ class Dialog(wx.Dialog):
         self.ctrl_html = MyHtml(self, texte=texte, hauteur=30)
         
         # Boutons de commande
-        self.bouton_ok = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Demarrer.png"), wx.BITMAP_TYPE_ANY), size=(200, -1))
+        self.bouton_ok = CTRL_Bouton_image.CTRL(self, texte=_(u"Démarrer"), role="primary")
 
         self.__set_properties()
         self.__do_layout()

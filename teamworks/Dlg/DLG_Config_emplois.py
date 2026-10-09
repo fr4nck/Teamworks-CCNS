@@ -131,7 +131,7 @@ class Panel(CORE.Panel):
             self.bouton_aide.Show(False)
 
         gap = UTILS_Styles.GetLayoutSpacing("field_gap")
-        actions = wx.WrapSizer(wx.HORIZONTAL)
+        actions = wx.WrapSizer(wx.HORIZONTAL, 0)
         for bouton in (
             self.bouton_ajouter,
             self.bouton_modifier,

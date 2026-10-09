@@ -140,7 +140,7 @@ class Dialog(wx.Dialog):
         
         # Vidéo
         self.ctrl_video = CTRL_Video(self, -1)
-        self.bouton_capture = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Capturer_photo.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_capture = CTRL_Bouton_image.CTRL(self, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/BoutonsImages/Capturer_photo.png"))
         
         # Boutons
         self.ctrl_ligne = wx.StaticLine(self, -1)
@@ -190,7 +190,7 @@ class Dialog(wx.Dialog):
         grid_sizer_boutons = wx.FlexGridSizer(rows=1, cols=5, vgap=10, hgap=10)
         grid_sizer_base.Add(self.ctrl_bandeau, 0, wx.EXPAND, 0)
         grid_sizer_base.Add(self.ctrl_video, 0, wx.LEFT|wx.RIGHT|wx.EXPAND, 10)
-        grid_sizer_base.Add(self.bouton_capture, 0, wx.LEFT|wx.RIGHT|wx.EXPAND, 10)
+        grid_sizer_base.Add(self.bouton_capture, 0, wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_HORIZONTAL, 10)
         grid_sizer_base.Add(self.ctrl_ligne, 0, wx.LEFT|wx.RIGHT|wx.EXPAND, 10)
         grid_sizer_boutons.Add(self.bouton_aide, 0, 0, 0)
         grid_sizer_boutons.Add(self.bouton_options, 0, 0, 0)

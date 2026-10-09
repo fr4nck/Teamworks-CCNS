@@ -22,6 +22,7 @@ from Utils.UTILS_Traduction import _
 
 """
 import wx
+from Ctrl import CTRL_Bouton_image
 from Utils import UTILS_Adaptations
 import wx.aui
 import wx.richtext as rt
@@ -363,7 +364,7 @@ class MyFrame(wx.Frame):
         dlg = wx.Dialog(self, title="HTML", style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
         html = wx.html.HtmlWindow(dlg, size=(500,400), style=wx.BORDER_SUNKEN)
         html.SetPage(source)
-        btn = wx.Button(dlg, wx.ID_CANCEL)
+        btn = CTRL_Bouton_image.CTRL(dlg, id=wx.ID_CANCEL, texte=_(u"Fermer"))
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(html, 1, wx.ALL|wx.EXPAND, 5)
         sizer.Add(btn, 0, wx.ALL|wx.CENTER, 10)

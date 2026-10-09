@@ -27,7 +27,9 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
             try:
                 print("TEAMWORKS_SMOKE_PERSON_STAGE:imports", flush=True)
                 import os as _smoke_os
+                import datetime as _smoke_datetime
                 import tempfile as _smoke_tempfile
+                import time as _smoke_time
                 import zipfile as _smoke_zipfile
                 import GestionDB as _smoke_gestiondb
                 from Utils import UTILS_Rapport_bugs as _smoke_bug_reports
@@ -58,7 +60,25 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 from Dlg import DLG_Liste_contrats
                 from Dlg import DLG_Preferences
                 from Dlg import DLG_Vacances
+                from Dlg import DLG_Importation_vacances
                 from Dlg import DLG_Feries
+                from Utils import UTILS_Calendrier_scolaire_officiel as _smoke_calendrier
+
+                _smoke_canaries = []
+                _smoke_retained_windows = []
+
+                def _smoke_probe_searchctrl(_smoke_label):
+                    print(
+                        "TEAMWORKS_SMOKE_SEARCH_CANARY:%s" % _smoke_label,
+                        flush=True,
+                    )
+                    _smoke_canary = wx.SearchCtrl(frame)
+                    _smoke_canary.Hide()
+                    _smoke_canaries.append(_smoke_canary)
+                    print(
+                        "TEAMWORKS_SMOKE_SEARCH_CANARY_OK:%s" % _smoke_label,
+                        flush=True,
+                    )
 
                 def _smoke_descendants(_smoke_window):
                     _smoke_items = []
@@ -69,23 +89,58 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                         _smoke_stack.extend(_smoke_child.GetChildren())
                     return _smoke_items
 
-                def _smoke_assert_populated(_smoke_dialog, _smoke_label):
-                    _smoke_dialog.Show()
-                    _smoke_dialog.Layout()
-                    wx.Yield()
-                    _smoke_size = _smoke_dialog.GetClientSize()
-                    _smoke_desc = _smoke_descendants(_smoke_dialog)
-                    _smoke_visible = [
-                        _smoke_child for _smoke_child in _smoke_desc
-                        if _smoke_child.IsShownOnScreen()
-                        and _smoke_child.GetSize().GetWidth() > 0
-                        and _smoke_child.GetSize().GetHeight() > 0
-                    ]
-                    assert _smoke_dialog.IsShown(), "%s: dialogue non affiché" % _smoke_label
-                    assert _smoke_size.GetWidth() >= 100, "%s: largeur vide" % _smoke_label
-                    assert _smoke_size.GetHeight() >= 80, "%s: hauteur vide" % _smoke_label
-                    assert len(_smoke_desc) >= 2, "%s: contenu non construit" % _smoke_label
-                    assert len(_smoke_visible) >= 1, "%s: aucun contrôle visible" % _smoke_label
+                def _smoke_assert_populated(_smoke_dialog, _smoke_label, _smoke_actions=None):
+                    _smoke_state = {"error": None}
+
+                    def _smoke_inspect():
+                        try:
+                            _smoke_dialog.Layout()
+                            _smoke_size = _smoke_dialog.GetClientSize()
+                            _smoke_desc = _smoke_descendants(_smoke_dialog)
+                            _smoke_visible = [
+                                _smoke_child for _smoke_child in _smoke_desc
+                                if _smoke_child.IsShownOnScreen()
+                                and _smoke_child.GetSize().GetWidth() > 0
+                                and _smoke_child.GetSize().GetHeight() > 0
+                            ]
+                            assert _smoke_dialog.IsShown(), "%s: dialogue non affiché" % _smoke_label
+                            assert _smoke_size.GetWidth() >= 100, "%s: largeur vide" % _smoke_label
+                            assert _smoke_size.GetHeight() >= 80, "%s: hauteur vide" % _smoke_label
+                            assert len(_smoke_desc) >= 2, "%s: contenu non construit" % _smoke_label
+                            assert len(_smoke_visible) >= 1, "%s: aucun contrôle visible" % _smoke_label
+                            if _smoke_actions is not None:
+                                _smoke_actions(_smoke_dialog)
+                        except Exception:
+                            import traceback as _smoke_traceback
+                            _smoke_state["error"] = _smoke_traceback.format_exc()
+                        finally:
+                            if isinstance(_smoke_dialog, wx.Dialog) and _smoke_dialog.IsModal():
+                                _smoke_dialog.EndModal(wx.ID_OK)
+
+                    if isinstance(_smoke_dialog, wx.Dialog):
+                        wx.CallAfter(_smoke_inspect)
+                        _smoke_result = _smoke_dialog.ShowModal()
+                        if _smoke_result != wx.ID_OK:
+                            raise RuntimeError(
+                                "%s: résultat modal inattendu %s"
+                                % (_smoke_label, _smoke_result)
+                            )
+                    else:
+                        _smoke_dialog.Show()
+                        wx.YieldIfNeeded()
+                        _smoke_inspect()
+
+                    if _smoke_state["error"] is not None:
+                        raise AssertionError(_smoke_state["error"])
+
+                    # Ce smoke tourne encore dans App.OnInit : détruire un
+                    # top-level ici ne reproduit pas le lifecycle utilisateur
+                    # et peut laisser wxMSW traiter sa PendingDeleteList trop
+                    # tard. On le cache et on le conserve jusqu'à l'arrêt du
+                    # processus ; la destruction est qualifiée dans le smoke
+                    # lifecycle exécuté après OnInit.
+                    _smoke_dialog.Hide()
+                    _smoke_retained_windows.append(_smoke_dialog)
 
                 print("TEAMWORKS_SMOKE_PERSON_STAGE:database", flush=True)
                 _smoke_db = _smoke_gestiondb.DB()
@@ -97,40 +152,91 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 _smoke_person_id = _smoke_rows[0][0]
 
                 print("TEAMWORKS_SMOKE_PERSON_STAGE:dialog", flush=True)
-                _smoke_dialog = _smoke_person.Dialog(frame, IDpersonne=_smoke_person_id)
-                _smoke_assert_populated(_smoke_dialog, "Fiche individuelle")
 
-                print("TEAMWORKS_SMOKE_PERSON_STAGE:notebook", flush=True)
-                _smoke_notebook = _smoke_dialog.notebook
-                _smoke_expected_pages = (
-                    "Généralités", "Questionnaire", "Qualifications", "Contrats",
-                    "Présences", "Scénarios", "Frais", "Recrutement",
-                )
-                assert _smoke_dialog.IDpersonne == _smoke_person_id
-                assert _smoke_dialog.GetTitle() == "Fiche individuelle"
-                assert _smoke_notebook.GetPageCount() == len(_smoke_expected_pages)
-                assert tuple(_smoke_notebook.GetPageText(_smoke_index) for _smoke_index in range(_smoke_notebook.GetPageCount())) == _smoke_expected_pages
+                def _smoke_check_person(_smoke_dialog):
+                    print("TEAMWORKS_SMOKE_PERSON_STAGE:notebook", flush=True)
+                    _smoke_notebook = _smoke_dialog.notebook
+                    _smoke_expected_pages = (
+                        "Généralités", "Questionnaire", "Qualifications", "Contrats",
+                        "Présences", "Scénarios", "Frais", "Recrutement",
+                    )
+                    assert _smoke_dialog.IDpersonne == _smoke_person_id
+                    assert _smoke_dialog.GetTitle() == "Fiche individuelle"
+                    assert _smoke_notebook.GetPageCount() == len(_smoke_expected_pages)
+                    assert tuple(
+                        _smoke_notebook.GetPageText(_smoke_index)
+                        for _smoke_index in range(_smoke_notebook.GetPageCount())
+                    ) == _smoke_expected_pages
 
-                print("TEAMWORKS_SMOKE_PERSON_STAGE:pages", flush=True)
-                for _smoke_index in range(_smoke_notebook.GetPageCount()):
-                    _smoke_notebook.SetSelection(_smoke_index)
+                    print("TEAMWORKS_SMOKE_PERSON_STAGE:windowed-layout", flush=True)
+                    _smoke_dialog.SetSize((900, 700))
+                    _smoke_notebook.SetSelection(0)
                     _smoke_dialog.Layout()
-                    wx.Yield()
-                    _smoke_page = _smoke_notebook.GetCurrentPage()
-                    assert _smoke_page is not None
-                    assert _smoke_page.GetSize().GetWidth() > 0
-                    assert _smoke_page.GetSize().GetHeight() > 0
-                    assert len(_smoke_descendants(_smoke_page)) >= 1
+                    wx.YieldIfNeeded()
+                    _smoke_generalites = _smoke_notebook.pageGeneralites
+                    _smoke_generalites.Layout()
+                    _smoke_address_content = _smoke_generalites.section_adresse.GetContentPanel()
+                    _smoke_scroll = _smoke_generalites._scroll_host
+                    print(
+                        "TEAMWORKS_SMOKE_PERSON_LAYOUT_METRICS:"
+                        "adresse=%s;adresse_min=%s;contenu=%s;contenu_min=%s;"
+                        "section=%s;section_min=%s;virtuel=%s;client=%s"
+                        % (
+                            tuple(_smoke_generalites.text_adresse.GetSize()),
+                            tuple(_smoke_generalites.text_adresse.GetMinSize()),
+                            tuple(_smoke_address_content.GetSize()),
+                            tuple(_smoke_address_content.GetMinSize()),
+                            tuple(_smoke_generalites.section_adresse.GetSize()),
+                            tuple(_smoke_generalites.section_adresse.GetMinSize()),
+                            tuple(_smoke_scroll.GetVirtualSize()),
+                            tuple(_smoke_scroll.GetClientSize()),
+                        ),
+                        flush=True,
+                    )
+                    assert _smoke_generalites.text_adresse.GetSize().GetHeight() >= 50
+                    assert (
+                        _smoke_scroll.GetVirtualSize().GetHeight()
+                        >= _smoke_scroll.GetClientSize().GetHeight()
+                    )
+                    _smoke_target_y = max(
+                        0,
+                        _smoke_generalites.section_adresse.GetPosition().y // 12,
+                    )
+                    _smoke_scroll.Scroll(-1, _smoke_target_y)
+                    _smoke_scroll.Layout()
+                    assert _smoke_generalites.text_adresse.IsShownOnScreen()
+                    assert _smoke_generalites.text_cp.IsShownOnScreen()
+                    print("TEAMWORKS_SMOKE_PERSON_WINDOWED_LAYOUT_OK", flush=True)
 
-                assert _smoke_notebook.pageGeneralites is not None
-                assert _smoke_notebook.pageContrats is not None
-                assert _smoke_notebook.pagePresences is not None
-                assert _smoke_notebook.pageCandidatures is not None
-                assert _smoke_dialog.bitmap_button_Ok.IsEnabled()
-                assert _smoke_dialog.AnnulationImpossible is True
-                assert not _smoke_dialog.bitmap_button_annuler.IsEnabled()
-                _smoke_dialog.Destroy()
-                wx.Yield()
+                    print("TEAMWORKS_SMOKE_PERSON_STAGE:pages", flush=True)
+                    for _smoke_index in range(_smoke_notebook.GetPageCount()):
+                        _smoke_notebook.SetSelection(_smoke_index)
+                        _smoke_dialog.Layout()
+                        wx.YieldIfNeeded()
+                        _smoke_page = _smoke_notebook.GetCurrentPage()
+                        assert _smoke_page is not None
+                        assert _smoke_page.GetSize().GetWidth() > 0
+                        assert _smoke_page.GetSize().GetHeight() > 0
+                        assert len(_smoke_descendants(_smoke_page)) >= 1
+
+                    assert _smoke_notebook.pageGeneralites is not None
+                    assert _smoke_notebook.pageContrats is not None
+                    assert _smoke_notebook.pagePresences is not None
+                    assert _smoke_notebook.pageCandidatures is not None
+                    assert _smoke_dialog.bitmap_button_Ok.IsEnabled()
+                    assert _smoke_dialog.AnnulationImpossible is True
+                    assert not _smoke_dialog.bitmap_button_annuler.IsEnabled()
+
+                _smoke_dialog = _smoke_person.Dialog(frame, IDpersonne=_smoke_person_id)
+                _smoke_assert_populated(
+                    _smoke_dialog,
+                    "Fiche individuelle",
+                    _smoke_actions=_smoke_check_person,
+                )
+                print(
+                    "TEAMWORKS_SMOKE_PERSON_LIFECYCLE_DELEGATED",
+                    flush=True,
+                )
 
                 print("TEAMWORKS_SMOKE_PERSON_STAGE:bug-report", flush=True)
                 _smoke_crash_dir = _smoke_tempfile.mkdtemp(prefix="teamworks-crash-dialog-")
@@ -145,10 +251,9 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 _smoke_assert_populated(_smoke_crash_dialog, "Rapport de crash")
                 assert _smoke_crash_dialog.bouton_envoyer.GetLabel() == "Envoyer le rapport"
                 assert _smoke_crash_dialog.bouton_envoyer.IsEnabled()
-                _smoke_crash_dialog.Destroy()
                 _smoke_os.remove(_smoke_crash_path)
                 _smoke_os.rmdir(_smoke_crash_dir)
-                wx.Yield()
+                _smoke_probe_searchctrl("apres-bug-report")
 
                 print("TEAMWORKS_SMOKE_PERSON_STAGE:parametrage", flush=True)
                 _smoke_parameter_dialogs = (
@@ -180,11 +285,99 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 )
                 for _smoke_label, _smoke_factory in _smoke_parameter_dialogs:
                     print("TEAMWORKS_SMOKE_PARAMETER_OPEN:%s" % _smoke_label, flush=True)
-                    _smoke_parameter_dialog = _smoke_factory(frame)
-                    _smoke_assert_populated(_smoke_parameter_dialog, _smoke_label)
-                    _smoke_parameter_dialog.Destroy()
-                    wx.Yield()
+                    if _smoke_os.name == "nt":
+                        # Diagnostic : compteurs GDI (0) et USER (1) du processus avant
+                        # chaque dialogue, pour distinguer un épuisement de handles.
+                        import ctypes as _smoke_ctypes
+                        from ctypes import wintypes as _smoke_wintypes
+                        _smoke_k32 = _smoke_ctypes.windll.kernel32
+                        _smoke_u32 = _smoke_ctypes.windll.user32
+                        _smoke_k32.GetCurrentProcess.restype = _smoke_wintypes.HANDLE
+                        _smoke_u32.GetGuiResources.argtypes = (_smoke_wintypes.HANDLE, _smoke_wintypes.DWORD)
+                        _smoke_u32.GetGuiResources.restype = _smoke_wintypes.DWORD
+                        _smoke_process = _smoke_k32.GetCurrentProcess()
+                        print(
+                            "TEAMWORKS_SMOKE_GUI_RESOURCES:%s:gdi=%d:user=%d" % (
+                                _smoke_label,
+                                _smoke_u32.GetGuiResources(_smoke_process, 0),
+                                _smoke_u32.GetGuiResources(_smoke_process, 1),
+                            ),
+                            flush=True,
+                        )
+                    _smoke_enregistrement_verifie = None
+                    if _smoke_label == "Enregistrement":
+                        _smoke_enregistrement_verifie = DLG_Enregistrement.Dialog.VerifieEtat
+                        DLG_Enregistrement.Dialog.VerifieEtat = (
+                            lambda _self, identifiant="", code="": False
+                        )
+                        print(
+                            "TEAMWORKS_SMOKE_ENREGISTREMENT_NETWORK_DISABLED",
+                            flush=True,
+                        )
+                    try:
+                        _smoke_parameter_dialog = _smoke_factory(frame)
+                        _smoke_assert_populated(_smoke_parameter_dialog, _smoke_label)
+                        # Fenêtre conservée par _smoke_assert_populated().
+                    finally:
+                        if _smoke_enregistrement_verifie is not None:
+                            DLG_Enregistrement.Dialog.VerifieEtat = (
+                                _smoke_enregistrement_verifie
+                            )
                     print("TEAMWORKS_SMOKE_PARAMETER_OK:%s" % _smoke_label, flush=True)
+
+                    # Canari natif conservé vivant : on ne détruit pas le
+                    # SearchCtrl ici afin qu'un éventuel défaut de son propre
+                    # lifecycle ne puisse pas être attribué au dialogue précédent.
+                    _smoke_probe_searchctrl("apres-%s" % _smoke_label)
+
+                print("TEAMWORKS_SMOKE_PERSON_STAGE:vacances-officielles", flush=True)
+                _smoke_calendrier_original = _smoke_calendrier.charger_vacances
+                try:
+                    def _smoke_charger_vacances(_smoke_zone, timeout=8):
+                        _smoke_vacance = _smoke_calendrier.VacanceOfficielle(
+                            nom="Toussaint",
+                            date_debut=_smoke_datetime.date(2099, 10, 17),
+                            date_fin=_smoke_datetime.date(2099, 11, 1),
+                            annee_scolaire="2099-2100",
+                            zone="Zone %s" % _smoke_zone,
+                            academie="Smoke",
+                            population="-",
+                        )
+                        return _smoke_calendrier.ResultatCalendrier(
+                            (_smoke_vacance,),
+                            "api",
+                        )
+
+                    _smoke_calendrier.charger_vacances = _smoke_charger_vacances
+                    _smoke_vacances = DLG_Importation_vacances.Dialog(frame)
+                    _smoke_assert_populated(
+                        _smoke_vacances,
+                        "Importation vacances officielles",
+                    )
+                    _smoke_deadline = _smoke_time.time() + 5.0
+                    while (
+                        _smoke_vacances._chargement_en_cours
+                        and _smoke_time.time() < _smoke_deadline
+                    ):
+                        wx.Yield()
+                        _smoke_time.sleep(0.01)
+                    assert not _smoke_vacances._chargement_en_cours
+                    assert len(_smoke_vacances.ctrl_periodes.donnees) == 1
+                    assert _smoke_vacances.ctrl_periodes.donnees[0].nom == "Toussaint"
+                    _smoke_vacances.SetZone("B")
+                    _smoke_deadline = _smoke_time.time() + 5.0
+                    while (
+                        _smoke_vacances._chargement_en_cours
+                        and _smoke_time.time() < _smoke_deadline
+                    ):
+                        wx.Yield()
+                        _smoke_time.sleep(0.01)
+                    assert not _smoke_vacances._chargement_en_cours
+                    assert _smoke_vacances.GetZone() == "B"
+                    assert len(_smoke_vacances.ctrl_periodes.donnees) == 1
+                    print("TEAMWORKS_SMOKE_VACANCES_OFFICIELLES_OK", flush=True)
+                finally:
+                    _smoke_calendrier.charger_vacances = _smoke_calendrier_original
 
                 print("TEAMWORKS_SMOKE_PERSON_STAGE:subdialogs", flush=True)
                 _smoke_subdialogs = (
@@ -198,8 +391,7 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                     print("TEAMWORKS_SMOKE_SUBDIALOG_OPEN:%s" % _smoke_label, flush=True)
                     _smoke_subdialog = _smoke_factory(frame)
                     _smoke_assert_populated(_smoke_subdialog, _smoke_label)
-                    _smoke_subdialog.Destroy()
-                    wx.Yield()
+                    # Sous-dialogue conservé jusqu'à la fin du smoke.
                     print("TEAMWORKS_SMOKE_SUBDIALOG_OK:%s" % _smoke_label, flush=True)
 
                 print("TEAMWORKS_SMOKE_PERSON_STAGE:restore", flush=True)
@@ -209,8 +401,7 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                     _smoke_archive.writestr("data===smoke.dat", b"smoke")
                 _smoke_restore = DLG_Config_sauvegarde.Restauration(frame, fichierRestauration=_smoke_restore_zip)
                 _smoke_assert_populated(_smoke_restore, "Restauration")
-                _smoke_restore.Destroy()
-                wx.Yield()
+                # Restauration conservée jusqu'à la fin du smoke.
                 print("TEAMWORKS_SMOKE_RESTORE_OK", flush=True)
 
                 print("TEAMWORKS_SMOKE_PERSON_DIALOG_READY", flush=True)

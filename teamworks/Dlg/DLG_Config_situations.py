@@ -74,7 +74,7 @@ class Panel(wx.Panel):
         sizer.Add(self.titre, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, padding)
         sizer.Add(self.label_introduction, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, gap)
 
-        actions = wx.WrapSizer(wx.HORIZONTAL)
+        actions = wx.WrapSizer(wx.HORIZONTAL, 0)
         for bouton in (
             self.bouton_ajouter,
             self.bouton_modifier,

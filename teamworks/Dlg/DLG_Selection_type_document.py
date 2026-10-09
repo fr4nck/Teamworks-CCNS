@@ -38,7 +38,7 @@ class Dialog(wx.Dialog):
         index = 1
         for image, infobulle in self.listeBoutons :
             bitmap = wx.Bitmap(image, wx.BITMAP_TYPE_ANY)
-            bouton = wx.BitmapButton(self, index, bitmap)
+            bouton = CTRL_Bouton_image.CTRL(self, id=index, bitmap=bitmap)
             # wxPython 4.3 ne déduit plus toujours la hauteur d'un BitmapButton
             # depuis son image. Sans taille minimale, les aperçus 155x200 sont
             # écrasés en bandelettes d'une vingtaine de pixels sous Windows.

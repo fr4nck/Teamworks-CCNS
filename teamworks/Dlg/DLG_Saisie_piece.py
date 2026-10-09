@@ -32,7 +32,10 @@ class Dialog(wx.Dialog):
         self.sizer_type_staticbox = wx.StaticBox(self.panel_base, -1, _(u"1. Sélectionnez un type de pièce"))
         self.radio_pieces_1 = wx.RadioButton(self.sizer_type_staticbox, -1, _(u"Dans la liste de pièces que la personne doit fournir :"), style = wx.RB_GROUP)
         
-        self.list_ctrl_pieces = ListCtrl_Pieces(self.sizer_type_staticbox, -1)
+        self.list_ctrl_pieces = ListCtrl_Pieces(
+            self.sizer_type_staticbox, -1,
+            IDpersonne=self.IDpersonne, IDpiece=self.IDpiece,
+        )
         
         self.radio_pieces_2 = wx.RadioButton(self.sizer_type_staticbox, -1, _(u"Dans la liste des autres types de pièces :"))
 
@@ -49,11 +52,11 @@ class Dialog(wx.Dialog):
         # Pages capturées
         self.sizer_pages_staticbox = wx.StaticBox(self.panel_base, -1, _(u"Documents associés"))
         self.ctrl_pages = CTRL_Vignettes_documents.CTRL(self.sizer_pages_staticbox, IDpiece=self.IDpiece, style=wx.BORDER_SUNKEN)
-        self.bouton_ajouter_page = wx.BitmapButton(self.sizer_pages_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_supprimer_page = wx.BitmapButton(self.sizer_pages_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_visualiser_page = wx.BitmapButton(self.sizer_pages_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Loupe.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_zoom_plus = wx.BitmapButton(self.sizer_pages_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/zoom_plus.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_zoom_moins = wx.BitmapButton(self.sizer_pages_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/zoom_moins.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_ajouter_page = CTRL_Bouton_image.CTRL(self.sizer_pages_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Ajouter.png"))
+        self.bouton_supprimer_page = CTRL_Bouton_image.CTRL(self.sizer_pages_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Supprimer.png"))
+        self.bouton_visualiser_page = CTRL_Bouton_image.CTRL(self.sizer_pages_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Loupe.png"))
+        self.bouton_zoom_plus = CTRL_Bouton_image.CTRL(self.sizer_pages_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/zoom_plus.png"))
+        self.bouton_zoom_moins = CTRL_Bouton_image.CTRL(self.sizer_pages_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/zoom_moins.png"))
 
         self.bouton_aide = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))
         self.bouton_ok = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Ok"), cheminImage=Chemins.GetStaticPath("Images/32x32/Valider.png"))
@@ -557,12 +560,12 @@ class Dialog(wx.Dialog):
 
 
 class ListCtrl_Pieces(wx.ListCtrl):
-    def __init__(self, parent, id):
+    def __init__(self, parent, id, IDpersonne=0, IDpiece=0):
         wx.ListCtrl.__init__(self, parent, id, size=(180, -1), style=wx.LC_REPORT|wx.LC_NO_HEADER|wx.LC_HRULES|wx.LC_SINGLE_SEL|wx.SUNKEN_BORDER)
 
         self.parent = parent
-        self.IDpersonne = self.GetGrandParent().IDpersonne
-        self.IDpiece = self.GetGrandParent().IDpiece
+        self.IDpersonne = IDpersonne
+        self.IDpiece = IDpiece
 
         # ImageList
         self.il = wx.ImageList(16,16)

@@ -195,19 +195,70 @@ def GetFieldSizerFlag(role=FIELD_TEXT):
     return wx.EXPAND if FieldExpands(role) else wx.ALIGN_CENTER_VERTICAL
 
 
-def GetWindowSize(profile="standard", display_size=None):
-    definition = WINDOW_PROFILES.get(profile, WINDOW_PROFILES["standard"])
-    if display_size is None:
+def _GetDisplaySize():
+    try:
+        width, height = wx.GetDisplaySize()
+        width, height = int(width), int(height)
+        if width > 0 and height > 0:
+            return width, height
+    except Exception:
+        pass
+    return 1280, 800
+
+
+def _GetClientAreaSize(area):
+    try:
+        width, height = area.GetWidth(), area.GetHeight()
+    except Exception:
         try:
-            display_size = wx.GetDisplaySize()
+            width, height = area.width, area.height
         except Exception:
-            display_size = (1280, 800)
-    width = int(round(display_size[0] * definition["width_ratio"]))
-    height = int(round(display_size[1] * definition["height_ratio"]))
+            width, height = area[2], area[3]
+    width, height = int(width), int(height)
+    if width <= 0 or height <= 0:
+        raise ValueError("invalid display client area")
+    return width, height
+
+
+def _GetWorkAreaSize(window=None):
+    try:
+        display_class = wx.Display
+        display_index = 0
+        if window is not None:
+            display_index = display_class.GetFromWindow(window)
+        if display_index == getattr(wx, "NOT_FOUND", -1) or display_index < 0:
+            raise ValueError("no display for window")
+        display = display_class(display_index)
+        if hasattr(display, "IsOk") and not display.IsOk():
+            raise ValueError("invalid display")
+        return _GetClientAreaSize(display.GetClientArea())
+    except Exception:
+        return _GetDisplaySize()
+
+
+def _GetAvailableSize(display_size=None, window=None):
+    if display_size is None:
+        return _GetWorkAreaSize(window)
+    try:
+        width, height = int(display_size[0]), int(display_size[1])
+        if width > 0 and height > 0:
+            return width, height
+    except Exception:
+        pass
+    return _GetDisplaySize()
+
+
+def GetWindowSize(profile="standard", display_size=None, window=None):
+    definition = WINDOW_PROFILES.get(profile, WINDOW_PROFILES["standard"])
+    display_width, display_height = _GetAvailableSize(display_size, window)
+    width = int(round(display_width * definition["width_ratio"]))
+    height = int(round(display_height * definition["height_ratio"]))
     min_width, min_height = definition["min_size"]
     max_width, max_height = definition["max_size"]
     width = max(Scale(min_width), min(Scale(max_width), width))
     height = max(Scale(min_height), min(Scale(max_height), height))
+    width = max(0, min(display_width, width))
+    height = max(0, min(display_height, height))
     return width, height
 
 
@@ -254,10 +305,11 @@ def RefitWindow(window, centre=False, lock=False):
 def ApplyWindowProfile(window, profile="standard", centre=True):
     if profile == "fit":
         return FitWindowToContent(window, centre=centre)
-    size = GetWindowSize(profile)
+    size = GetWindowSize(profile, window=window)
     window.SetSize(size)
     definition = WINDOW_PROFILES.get(profile, WINDOW_PROFILES["standard"])
-    window.SetMinSize(tuple(Scale(value) for value in definition["min_size"]))
+    min_size = tuple(Scale(value) for value in definition["min_size"])
+    window.SetMinSize((min(min_size[0], size[0]), min(min_size[1], size[1])))
     window._teamworks_window_profile = profile
     if centre:
         _CentreWindow(window)

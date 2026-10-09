@@ -9,6 +9,7 @@
 import Chemins
 from Utils.UTILS_Traduction import _
 import wx
+from Ctrl import CTRL_Bouton_image
 import GestionDB
 import datetime
 import FonctionsPerso
@@ -54,6 +55,14 @@ def DateFrEng(textDate):
     return str(textDate[6:10]) + "/" + str(textDate[3:5]) + "/" + str(textDate[:2])
 
 
+def _database_ready(DB):
+    return (
+        getattr(DB, "echec", 1) == 0
+        and getattr(DB, "cursor", None) is not None
+        and getattr(DB, "connexion", None) is not None
+    )
+
+
 def _echelle_interface():
     try:
         valeur = UTILS_Customize.GetValeur(
@@ -73,7 +82,7 @@ def _bouton_action(parent, nom_image):
     bitmap = wx.Bitmap(Chemins.GetStaticPath("Images/16x16/%s" % nom_image), wx.BITMAP_TYPE_PNG)
     if bitmap.IsOk() and (bitmap.GetWidth() != taille or bitmap.GetHeight() != taille):
         bitmap = wx.Bitmap(bitmap.ConvertToImage().Scale(taille, taille, wx.IMAGE_QUALITY_HIGH))
-    bouton = wx.BitmapButton(parent, -1, bitmap)
+    bouton = CTRL_Bouton_image.CTRL(parent, id=-1, bitmap=bitmap)
     cote = max(36, taille + 12)
     bouton.SetMinSize((cote, cote))
     return bouton
@@ -120,7 +129,7 @@ class Panel_Contrats(wx.Panel):
         self.Bind(wx.EVT_BUTTON, self.OnBoutonImprimer, self.bouton_imprimer)
 
     def __do_layout(self):
-        actions = wx.WrapSizer(wx.HORIZONTAL)
+        actions = wx.WrapSizer(wx.HORIZONTAL, 0)
         for numero, groupe in enumerate((
             (self.bouton_contrats_ajouter, self.bouton_contrats_modifier, self.bouton_contrats_supprimer),
             (self.bouton_signature, self.bouton_due),
@@ -230,8 +239,30 @@ class Panel_Contrats(wx.Panel):
         etatDue = "" if etatDue == "Oui" else "Oui"
 
         DB = GestionDB.DB()
-        DB.ReqMAJ("contrats", [("due", etatDue)], "IDcontrat", IDcontrat)
-        DB.Commit()
+        if not _database_ready(DB):
+            DB.Close()
+            wx.MessageBox(
+                _(u"La base de données est indisponible. L'état DPAE/DUE n'a pas été modifié."),
+                _(u"DPAE/DUE"), wx.OK | wx.ICON_ERROR, parent=self,
+            )
+            return
+
+        placeholder = "%s" if DB.isNetwork else "?"
+        try:
+            req = "UPDATE contrats SET due=%s WHERE IDcontrat=%s" % (placeholder, placeholder)
+            DB.cursor.execute(req, (etatDue, IDcontrat))
+            DB.Commit()
+        except Exception:
+            try:
+                DB.connexion.rollback()
+            except Exception:
+                pass
+            DB.Close()
+            wx.MessageBox(
+                _(u"L'état DPAE/DUE n'a pas pu être enregistré. Vérifiez la connexion à la base puis réessayez."),
+                _(u"DPAE/DUE"), wx.OK | wx.ICON_ERROR, parent=self,
+            )
+            return
         DB.Close()
 
         self.list_ctrl_contrats.SetItem(index, 5, etatDue)

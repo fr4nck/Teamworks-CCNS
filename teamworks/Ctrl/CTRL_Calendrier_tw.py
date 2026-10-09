@@ -154,7 +154,7 @@ class Panel(wx.Panel):
         top = max(0, UTILS_Styles.Scale(bordHaut))
         bottom = max(0, UTILS_Styles.Scale(bordBas))
 
-        navigation = wx.WrapSizer(wx.HORIZONTAL)
+        navigation = wx.WrapSizer(wx.HORIZONTAL, 0)
         navigation.Add(
             self.bouton_CalendrierAnnuel,
             0,

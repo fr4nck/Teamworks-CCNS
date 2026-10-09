@@ -65,7 +65,7 @@ class Panel(CORE.Panel):
         self.bouton_modifier.Enable(False); self.bouton_supprimer.Enable(False)
         self.listCtrl = ListCtrl(contenu, self)
         if parent.GetName() != "treebook_configuration": self.bouton_aide.Show(False)
-        gap = UTILS_Styles.GetLayoutSpacing("field_gap"); actions = wx.WrapSizer(wx.HORIZONTAL)
+        gap = UTILS_Styles.GetLayoutSpacing("field_gap"); actions = wx.WrapSizer(wx.HORIZONTAL, 0)
         for bouton in (self.bouton_ajouter, self.bouton_modifier, self.bouton_supprimer, self.bouton_aide): actions.Add(bouton, 0, wx.RIGHT | wx.BOTTOM, gap)
         s = wx.BoxSizer(wx.VERTICAL); s.Add(self.listCtrl, 1, wx.EXPAND); s.AddSpacer(gap); s.Add(actions, 0, wx.EXPAND); contenu.SetSizer(s)
         root = wx.BoxSizer(wx.VERTICAL); root.Add(self.section, 1, wx.EXPAND); self.SetSizer(root)

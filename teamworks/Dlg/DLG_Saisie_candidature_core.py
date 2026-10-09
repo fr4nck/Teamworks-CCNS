@@ -62,16 +62,16 @@ class Panel(wx.Panel):
         self.label_emploi = wx.StaticText(self.sizer_emploi_staticbox, -1, _(u"         Offre :"))
         self.ctrl_emploi = ChoiceEmploi(self.sizer_emploi_staticbox)
         self.ctrl_emploi.Remplissage(self.Importation_emplois())
-        self.bouton_emplois = wx.Button(self.sizer_emploi_staticbox, -1, "...", size=(20, 20))
+        self.bouton_emplois = CTRL_Bouton_image.Compact(self.sizer_emploi_staticbox, texte="...")
         
         # Disponibilités
         self.sizer_disponibilites_staticbox = wx.StaticBox(self, -1, _(u"3. Disponibilités"))
         self.label_periodes = wx.StaticText(self.sizer_disponibilites_staticbox, -1, _(u"Périodes :"))
         self.ctrl_periodes = ListBoxDisponibilites(self.sizer_disponibilites_staticbox)
         self.ctrl_periodes.SetMinSize((200, -1))
-        self.bouton_ajouter_periode = wx.BitmapButton(self.sizer_disponibilites_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Ajouter.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_modifier_periode = wx.BitmapButton(self.sizer_disponibilites_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Modifier.png"), wx.BITMAP_TYPE_ANY))
-        self.bouton_supprimer_periode = wx.BitmapButton(self.sizer_disponibilites_staticbox, -1, wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Supprimer.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_ajouter_periode = CTRL_Bouton_image.CTRL(self.sizer_disponibilites_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Ajouter.png"))
+        self.bouton_modifier_periode = CTRL_Bouton_image.CTRL(self.sizer_disponibilites_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Modifier.png"))
+        self.bouton_supprimer_periode = CTRL_Bouton_image.CTRL(self.sizer_disponibilites_staticbox, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/16x16/Supprimer.png"))
         self.label_periodes_remarques = wx.StaticText(self.sizer_disponibilites_staticbox, -1, _(u"Remarques :"))
         self.ctrl_periodes_remarques = wx.TextCtrl(self.sizer_disponibilites_staticbox, -1, u"")
         
@@ -80,11 +80,11 @@ class Panel(wx.Panel):
         self.label_fonction = wx.StaticText(self.sizer_poste_staticbox, -1, _(u"Fonction :"))
         self.ctrl_fonction = CheckListBox(self.sizer_poste_staticbox)
         self.ctrl_fonction.Remplissage(self.Importation_fonctions())
-        self.bouton_fonctions = wx.Button(self.sizer_poste_staticbox, -1, "...", size=(20, 20))
+        self.bouton_fonctions = CTRL_Bouton_image.Compact(self.sizer_poste_staticbox, texte="...")
         self.label_affectation = wx.StaticText(self.sizer_poste_staticbox, -1, _(u"Affectation :"))
         self.ctrl_affectations = CheckListBox(self.sizer_poste_staticbox)
         self.ctrl_affectations.Remplissage(self.Importation_affectations())
-        self.bouton_affectations = wx.Button(self.sizer_poste_staticbox, -1, "...", size=(20, 20))
+        self.bouton_affectations = CTRL_Bouton_image.Compact(self.sizer_poste_staticbox, texte="...")
         self.label_poste_remarques = wx.StaticText(self.sizer_poste_staticbox, -1, _(u"Remarques :"))
         self.ctrl_poste_remarques = wx.TextCtrl(self.sizer_poste_staticbox, -1, "")
         
@@ -117,7 +117,7 @@ class Panel(wx.Panel):
 
         # Commandes
         self.bouton_aide = CTRL_Bouton_image.CTRL(self, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))
-        self.bouton_courrier = wx.BitmapButton(self, -1, wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Envoyer_courrier.png"), wx.BITMAP_TYPE_ANY))
+        self.bouton_courrier = CTRL_Bouton_image.CTRL(self, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/BoutonsImages/Envoyer_courrier.png"))
         self.bouton_ok = CTRL_Bouton_image.CTRL(self, texte=_(u"Ok"), cheminImage=Chemins.GetStaticPath("Images/32x32/Valider.png"))
         self.bouton_annuler = CTRL_Bouton_image.CTRL(self, texte=_(u"Annuler"), cheminImage=Chemins.GetStaticPath("Images/32x32/Annuler.png"))
         self.bouton_aide.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour obtenir de l'aide")))
@@ -216,7 +216,7 @@ class Panel(wx.Panel):
         grid_sizer_emploi.Add(self.label_emploi, 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL, 0)
         grid_sizer_emploi2 = wx.FlexGridSizer(rows=1, cols=2, vgap=5, hgap=5)
         grid_sizer_emploi2.Add(self.ctrl_emploi, 0, wx.EXPAND, 0)
-        grid_sizer_emploi2.Add(self.bouton_emplois, 0, wx.EXPAND, 0)
+        grid_sizer_emploi2.Add(self.bouton_emplois, 0, wx.ALIGN_CENTER_VERTICAL, 0)
         grid_sizer_emploi2.AddGrowableCol(0)
         grid_sizer_emploi.Add(grid_sizer_emploi2, 0, wx.EXPAND, 0)
         grid_sizer_emploi.AddGrowableCol(1)
@@ -1005,6 +1005,9 @@ class Dialog(wx.Dialog):
         wx.Dialog.__init__(self, parent, -1, style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX)
         self.parent = parent
         self.panel = Panel(self, IDcandidat=IDcandidat, IDpersonne=IDpersonne, IDcandidature=IDcandidature)
+        sizer_dialog = wx.BoxSizer(wx.VERTICAL)
+        sizer_dialog.Add(self.panel, 1, wx.EXPAND, 0)
+        self.SetSizer(sizer_dialog)
 
         # Propriétés
         nom_complet = self.GetNomCandidat(IDcandidat, IDpersonne)

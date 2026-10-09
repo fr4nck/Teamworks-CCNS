@@ -21,8 +21,8 @@ def test_preferences_keep_actions_outside_scrollable_body():
     # distinct afin de rester accessibles même à fort zoom ou petite hauteur.
     assert "self.body = wx.ScrolledWindow(" in source
     assert "self.footer = wx.Panel(self.panel)" in source
-    assert "wx.Button(self.footer, wx.ID_OK)" in source
-    assert "wx.Button(self.footer, wx.ID_CANCEL)" in source
+    assert "CTRL_Bouton_image.CTRL(self.footer, id=wx.ID_OK" in source
+    assert "CTRL_Bouton_image.CTRL(self.footer, id=wx.ID_CANCEL" in source
     assert "shell.Add(self.footer, 0, wx.EXPAND)" in source
     assert not any(
         isinstance(call.func, ast.Attribute)

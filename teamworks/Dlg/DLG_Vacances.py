@@ -30,7 +30,7 @@ class Dialog(wx.Dialog):
         self.parent = parent
         self.SetBackgroundColour(UTILS_Interface.GetToken("surface"))
 
-        intro = _(u"Vous pouvez ici saisir, modifier ou supprimer des périodes de vacances. Cliquez sur 'Importer depuis Internet' pour télécharger automatiquement les périodes depuis le site de l'Education Nationale.")
+        intro = _(u"Vous pouvez ici saisir, modifier ou supprimer des périodes de vacances. Cliquez sur 'Importer depuis l’Éducation nationale' pour charger les périodes officielles correspondant à votre zone.")
         titre = _(u"Gestion des périodes de vacances")
         self.ctrl_bandeau = CTRL_Bandeau.Bandeau(
             self,
@@ -63,7 +63,7 @@ class Dialog(wx.Dialog):
         )
         self.bouton_importation = CTRL_Bouton_image.CTRL(
             self,
-            texte=_(u"Importer depuis internet"),
+            texte=_(u"Importer depuis l’Éducation nationale"),
             cheminImage="Images/32x32/Fleche_bas.png",
         )
         self.bouton_fermer = CTRL_Bouton_image.CTRL(
@@ -88,7 +88,7 @@ class Dialog(wx.Dialog):
         self.bouton_modifier.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour modifier la période de vacances sélectionnée dans la liste")))
         self.bouton_supprimer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour supprimer la période de vacances sélectionnée dans la liste")))
         self.bouton_aide.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour obtenir de l'aide")))
-        self.bouton_importation.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour importer des périodes depuis le site internet de l'Education Nationale")))
+        self.bouton_importation.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour importer les périodes officielles de l’Éducation nationale")))
         self.bouton_fermer.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour fermer")))
         UTILS_Styles.ApplyWindowProfile(self, "wide")
 
@@ -112,10 +112,11 @@ class Dialog(wx.Dialog):
             field_gap,
         )
 
-        sizer_actions = wx.WrapSizer(wx.HORIZONTAL)
+        sizer_actions = wx.BoxSizer(wx.HORIZONTAL)
         sizer_actions.Add(self.bouton_ajouter, 0, wx.RIGHT | wx.BOTTOM, toolbar_gap)
         sizer_actions.Add(self.bouton_modifier, 0, wx.RIGHT | wx.BOTTOM, toolbar_gap)
         sizer_actions.Add(self.bouton_supprimer, 0, wx.RIGHT | wx.BOTTOM, toolbar_gap)
+        sizer_actions.AddStretchSpacer(1)
         sizer_base.Add(
             sizer_actions,
             0,

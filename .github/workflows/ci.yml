@@ -324,12 +324,21 @@ jobs:
           python -m pip install --requirement requirements/python311-core.txt
           python -m pip install pytest
 
+      - name: Vérifier les extensions wx de l'éditeur Email
+        shell: pwsh
+        run: |
+          python -c "import wx; import wx._xml; import wx._richtext; import wx.richtext"
+
       - name: Vérifier les contrats des dialogues
         id: windows_contracts
         continue-on-error: true
         shell: pwsh
         run: |
+          # Ici : contrats source et petit contrôle Blackbox uniquement.
+          # Les recettes wx longues sont qualifiées après le gate critique,
+          # juste avant la construction d'un paquet Windows.
           python -m pytest -q `
+            -k "not runs_in_real_windows_application and not run_in_real_windows_application" `
             tests/test_secondary_presence_smoke_contract.py `
             tests/test_secondary_person_smoke_contract.py `
             tests/test_secondary_contract_smoke_contract.py
@@ -364,6 +373,7 @@ jobs:
           Invoke-Smoke "Impression PDF" @("tools/smoke_pdf_impression.py")
           Invoke-Smoke "Navigation et thème sombre" @("tools/smoke_main_navigation.py")
           Invoke-Smoke "Fiche personne" @("tools/smoke_secondary_person_dialog.py")
+          Invoke-Smoke "Cycle fermeture fiche personne" @("tools/smoke_person_mainloop_lifecycle.py")
           Invoke-Smoke "Saisie présence" @("tools/smoke_secondary_presence_dialog.py")
           Invoke-Smoke "Recrutement" @("tools/smoke_secondary_recruitment.py")
 
@@ -465,6 +475,7 @@ jobs:
           startsWith(github.ref, 'refs/tags/v')
           || (github.event_name == 'workflow_dispatch' && inputs.build_windows)
           || (github.ref == 'refs/heads/master' && contains(github.event.head_commit.message, '[windows]'))
+          || (github.event_name == 'pull_request' && github.head_ref == 'release/vanilla-wx-0.9.2-rc3')
         )
       }}
     runs-on: windows-2022
@@ -491,6 +502,42 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install -r .github/requirements-windows-build.txt
           python -m pip freeze | Set-Content build-requirements.txt
+
+      - name: Recette Windows étendue avant packaging
+        shell: pwsh
+        run: |
+          $failures = @()
+
+          function Invoke-Smoke {
+            param(
+              [string]$Name,
+              [string]$Script
+            )
+
+            Write-Host "::group::$Name"
+            & python $Script
+            $exitCode = $LASTEXITCODE
+            Write-Host "::endgroup::"
+
+            if ($exitCode -ne 0) {
+              $script:failures += $Name
+            }
+          }
+
+          Invoke-Smoke "Cycle création/modification individu" "tools/smoke_person_lifecycle.py"
+          Invoke-Smoke "Questionnaire" "tools/smoke_questionnaire_lifecycle.py"
+          Invoke-Smoke "Frais et remboursements" "tools/smoke_expenses_lifecycle.py"
+          Invoke-Smoke "Scénarios" "tools/smoke_scenarios_lifecycle.py"
+          Invoke-Smoke "Préparation mailing" "tools/smoke_mailing_preparation.py"
+          Invoke-Smoke "Configuration expéditeur" "tools/smoke_sender_config.py"
+          Invoke-Smoke "Planning PDF" "tools/smoke_planning_pdf.py"
+          Invoke-Smoke "Modèles planning" "tools/smoke_planning_models.py"
+          Invoke-Smoke "Opérations contrats CEE/CDD" "tools/smoke_contract_cee_cdd_operations.py"
+          Invoke-Smoke "Documents contrats" "tools/smoke_contract_documents.py"
+
+          if ($failures.Count -gt 0) {
+            throw "Recette Windows étendue en échec : $($failures -join ', ')"
+          }
 
       - name: Valider le tag de version
         if: startsWith(github.ref, 'refs/tags/')
@@ -560,7 +607,10 @@ jobs:
             '--collect-all', 'reportlab',
             '--collect-all', 'PIL',
             '--collect-all', 'mysql.connector',
-            '--hidden-import', 'win32com.client'
+            '--hidden-import', 'win32com.client',
+            '--hidden-import', 'wx.richtext',
+            '--hidden-import', 'wx._richtext',
+            '--hidden-import', 'wx._xml'
           )
           foreach ($module in $modules) {
             $pyinstallerArgs += @('--hidden-import', $module)
@@ -575,6 +625,7 @@ jobs:
           }
           Copy-Item teamworks/Versions.txt "$package/Versions.txt" -Force
           Copy-Item VERSION "$package/VERSION" -Force
+          Copy-Item CHANGELOG.md "$package/CHANGELOG.md" -Force
           Copy-Item ROADMAP.md "$package/ROADMAP.md" -Force
           Copy-Item build/internal-modules.txt "$package/INTERNAL-MODULES.txt" -Force
           Copy-Item build-requirements.txt "$package/BUILD-REQUIREMENTS.txt" -Force
@@ -589,6 +640,7 @@ jobs:
             'Static',
             'Versions.txt',
             'VERSION',
+            'CHANGELOG.md',
             'ROADMAP.md',
             'INTERNAL-MODULES.txt',
             'BUILD-REQUIREMENTS.txt'
@@ -600,6 +652,15 @@ jobs:
           }
           if ((Get-Item "$package/Versions.txt").Length -eq 0) {
             throw 'Versions.txt est vide'
+          }
+
+          $wxXml = @(Get-ChildItem $package -Recurse -Filter '_xml*.pyd' -File)
+          if ($wxXml.Count -eq 0) {
+            throw 'Extension wx._xml absente du paquet Windows'
+          }
+          $wxRichText = @(Get-ChildItem $package -Recurse -Filter '_richtext*.pyd' -File)
+          if ($wxRichText.Count -eq 0) {
+            throw 'Extension wx._richtext absente du paquet Windows'
           }
 
           $manifest = @(Get-Content "$package/INTERNAL-MODULES.txt")
