@@ -2,6 +2,26 @@
 
 **Mise à jour : 5 septembre 2026**
 
+## Correctif du 9 octobre 2026 — durée de vie de la locale native
+
+Les six créations de `wx.Locale(wx.LANGUAGE_FRENCH)` dans la fiche individuelle,
+l'assistant de nouveau fichier, Teamword et les listes contrats, candidats et
+candidatures existent également dans `Noethys/Teamworks` (branche `master`
+inspectée le 9 octobre). Elles créent un état global depuis des fenêtres à
+durée de vie variable ; trois listes et Teamword ne conservaient même pas
+l'objet Python. Cette provenance est historique, sans ajout CCNS ni thème.
+
+Le crash est confirmé sous Phoenix 4.3.1 / wxWidgets 3.3.3 : le run post-fusion
+`37907756088` échoue lors de la création du canari SearchCtrl après destruction
+d'une fiche. Le même défaut se reproduit localement sous Windows, Python 3.10.
+La qualification wx Classic d'origine reste à faire ; elle n'est pas déduite
+du résultat Phoenix.
+
+Le backport minimal `patches/vanilla/VFIX-locale-application.patch` conserve une
+unique locale française sur `wx.GetApp()` et réutilise cette référence dans
+les six sites. Le helper reste compatible avec la syntaxe Python historique.
+Le patch est préparé pour l'amont ; il n'y a pas été publié ni qualifié.
+
 ## Objectif
 
 Ce fichier recense uniquement les anomalies réellement présentes dans la version originale de Teamworks (`Noethys/Teamworks`) que nous rencontrons ou retrouvons pendant le développement de Teamworks-CCNS.

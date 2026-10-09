@@ -1,0 +1,61 @@
+--- a/teamworks/Dlg/DLG_Fiche_individuelle.py
++++ b/teamworks/Dlg/DLG_Fiche_individuelle.py
+@@ -162 +162,2 @@
+-        self.locale = wx.Locale(wx.LANGUAGE_FRENCH)
++        from Utils import UTILS_Locale
++        self.locale = UTILS_Locale.GetLocaleFrancais()
+--- a/teamworks/Dlg/DLG_Saisie_nouveau_fichier.py
++++ b/teamworks/Dlg/DLG_Saisie_nouveau_fichier.py
+@@ -73 +73,2 @@
+-        self.locale = wx.Locale(wx.LANGUAGE_FRENCH)
++        from Utils import UTILS_Locale
++        self.locale = UTILS_Locale.GetLocaleFrancais()
+--- a/teamworks/Dlg/DLG_Teamword.py
++++ b/teamworks/Dlg/DLG_Teamword.py
+@@ -131 +131,2 @@
+-        wx.Locale(wx.LANGUAGE_FRENCH)
++        from Utils import UTILS_Locale
++        self.locale = UTILS_Locale.GetLocaleFrancais()
+--- a/teamworks/Ol/OL_candidats.py
++++ b/teamworks/Ol/OL_candidats.py
+@@ -121 +121,2 @@
+-        wx.Locale(wx.LANGUAGE_FRENCH)
++        from Utils import UTILS_Locale
++        self.locale = UTILS_Locale.GetLocaleFrancais()
+--- a/teamworks/Ol/OL_candidatures.py
++++ b/teamworks/Ol/OL_candidatures.py
+@@ -156 +156,2 @@
+-        wx.Locale(wx.LANGUAGE_FRENCH)
++        from Utils import UTILS_Locale
++        self.locale = UTILS_Locale.GetLocaleFrancais()
+--- a/teamworks/Ol/OL_contrats.py
++++ b/teamworks/Ol/OL_contrats.py
+@@ -104 +104,2 @@
+-        wx.Locale(wx.LANGUAGE_FRENCH)
++        from Utils import UTILS_Locale
++        self.locale = UTILS_Locale.GetLocaleFrancais()
+--- /dev/null
++++ b/teamworks/Utils/UTILS_Locale.py
+@@ -0,0 +1,22 @@
++#!/usr/bin/env python
++# -*- coding: utf-8 -*-
++"""Conserve la locale native pendant toute la vie de l'application wx."""
++
++import wx
++
++
++def GetLocaleFrancais():
++    """Partage une locale française sans la recréer à chaque fenêtre.
++
++    wx.Locale modifie un état natif global. Des locales détenues par des
++    dialogues peuvent être détruites dans un ordre différent de leur création,
++    laissant les contrôles suivants utiliser une locale native déjà libérée.
++    """
++    app = wx.GetApp()
++    if app is None:
++        raise RuntimeError("La locale nécessite une application wx active")
++    locale = getattr(app, "_teamworks_locale_fr", None)
++    if locale is None:
++        locale = wx.Locale(wx.LANGUAGE_FRENCH)
++        app._teamworks_locale_fr = locale
++    return locale

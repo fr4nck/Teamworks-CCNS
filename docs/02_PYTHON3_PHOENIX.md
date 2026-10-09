@@ -105,6 +105,28 @@ exception UI non interceptée.
 La correction reste à qualifier sur un nouvel EXE Windows réel avant de pouvoir
 considérer le défaut RC3 comme fermé.
 
+## Qualification du 9 octobre 2026 — locale native partagée
+
+Le run post-fusion de la PR #430 (`37907756088`, commit `6024750e`) a confirmé
+un crash natif intermittent lors du cycle modal de la fiche personne. Une
+relance du job Windows n'a pas validé le bilan. Localement, dix processus de
+cinq cycles passaient, puis un processus prolongé a reproduit le crash dès
+le troisième cycle : une relance verte isolée ne prouve donc pas la correction.
+
+Le défaut de durée de vie est hérité de Vanilla : voir
+`01_VANILLA_BUGFIX.md` pour la comparaison amont et le backport. La locale
+native est désormais conservée par l'application wx et partagée entre les
+six fenêtres/listes concernées. Aucun callback ni contrôle n'est désactivé.
+La documentation wxPython décrit le risque de crash si des locales natives
+se chevauchent : https://docs.wxpython.org/internationalization.html.
+
+Qualification locale : Windows 11, Python 3.10.11, wxPython 4.3.1 /
+wxWidgets 3.3.3 ; un passage de 50 cycles puis trois passages supplémentaires
+de 50 cycles réussis, avec création du canari natif après chaque destruction ;
+24 tests ciblés réussis. Le smoke CI passe de 5 à 20 cycles et un garde-fou
+AST interdit les créations de locale natives hors du propriétaire partagé.
+La CI Python 3.11 Linux/Windows et la recette EXE restent des niveaux distincts.
+
 ## Références
 
 - `ROADMAP.md`

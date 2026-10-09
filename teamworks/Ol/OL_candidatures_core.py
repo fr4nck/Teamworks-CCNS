@@ -153,7 +153,8 @@ class Track(object):
     
 class ListView(ObjectListView):
     def __init__(self, *args, **kwds):
-        wx.Locale(wx.LANGUAGE_FRENCH)
+        from Utils import UTILS_Locale
+        self.locale = UTILS_Locale.GetLocaleFrancais()
         # Récupération des paramètres perso
         self.IDcandidat = kwds.pop("IDcandidat", None)
         self.IDpersonne = kwds.pop("IDpersonne", None)
