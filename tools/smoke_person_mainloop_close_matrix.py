@@ -20,12 +20,13 @@ MARKER_LINE = '            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)'
 READY_MARKER = "TEAMWORKS_SMOKE_PERSON_CLOSE_MATRIX_READY"
 FAILURE_MARKER = "TEAMWORKS_SMOKE_PERSON_CLOSE_MATRIX_FAILED"
 SCENARIOS = (
+    "bare-dialog-destroy",
     "core-destroy",
-    "core-no-ticker-destroy",
-    "core-no-photo-destroy",
-    "core-no-generalites-destroy",
-    "core-no-questionnaire-destroy",
-    "core-no-generalites-questionnaire-destroy",
+    "core-no-notebook-destroy",
+    "core-no-notebook-no-ticker-destroy",
+    "core-no-notebook-no-photo-destroy",
+    "core-no-notebook-no-ticker-photo-destroy",
+    "core-no-notebook-native-buttons-destroy",
     "wrapper-core-notebook-destroy",
     "destroy",
     "save-destroy",
@@ -68,6 +69,18 @@ def build_injection(scenario: str) -> str:
             class _SmokePage(_smoke_wx.Panel):
                 def __init__(self, parent, *args, **kwargs):
                     _smoke_wx.Panel.__init__(self, parent)
+
+            class _SmokeNotebook(_smoke_wx.Notebook):
+                def __init__(self, parent, *args, **kwargs):
+                    _smoke_wx.Notebook.__init__(self, parent)
+                def AfficheAutresPages(self, etat=True):
+                    return None
+
+            class _SmokeButton(_smoke_wx.Button):
+                def __init__(
+                    self, parent, id=-1, texte="", cheminImage=None, *args, **kwargs
+                ):
+                    _smoke_wx.Button.__init__(self, parent, id=id, label=texte)
 
             def _cancel_guard():
                 _guard = _smoke_state.get("guard")
@@ -115,12 +128,13 @@ def build_injection(scenario: str) -> str:
                     )
                     if _smoke_scenario in (
                         "destroy",
+                        "bare-dialog-destroy",
                         "core-destroy",
-                        "core-no-ticker-destroy",
-                        "core-no-photo-destroy",
-                        "core-no-generalites-destroy",
-                        "core-no-questionnaire-destroy",
-                        "core-no-generalites-questionnaire-destroy",
+                        "core-no-notebook-destroy",
+                        "core-no-notebook-no-ticker-destroy",
+                        "core-no-notebook-no-photo-destroy",
+                        "core-no-notebook-no-ticker-photo-destroy",
+                        "core-no-notebook-native-buttons-destroy",
                         "wrapper-core-notebook-destroy",
                     ):
                         _dialog.Destroy()
@@ -170,21 +184,25 @@ def build_injection(scenario: str) -> str:
                     _db.Close()
                     if not _rows:
                         raise RuntimeError("aucune personne disponible")
-                    if _smoke_scenario.startswith("core-") and _smoke_scenario.endswith("-destroy"):
-                        if _smoke_scenario == "core-no-ticker-destroy":
+                    if _smoke_scenario == "bare-dialog-destroy":
+                        _dialog = _smoke_wx.Dialog(
+                            frame,
+                            style=(
+                                _smoke_wx.DEFAULT_DIALOG_STYLE
+                                | _smoke_wx.RESIZE_BORDER
+                                | _smoke_wx.MAXIMIZE_BOX
+                                | _smoke_wx.MINIMIZE_BOX
+                            ),
+                        )
+                    elif _smoke_scenario.startswith("core-") and _smoke_scenario.endswith("-destroy"):
+                        if "no-notebook" in _smoke_scenario:
+                            _smoke_person_core.Notebook = _SmokeNotebook
+                        if "no-ticker" in _smoke_scenario:
                             _smoke_person_core.Ticker = _SmokeTicker
-                        if _smoke_scenario == "core-no-photo-destroy":
+                        if "no-photo" in _smoke_scenario:
                             _smoke_person_core.CTRL_Photo.CTRL_Photo = _SmokePhoto
-                        if _smoke_scenario in (
-                            "core-no-generalites-destroy",
-                            "core-no-generalites-questionnaire-destroy",
-                        ):
-                            _smoke_person_core.CTRL_Page_generalites.Panel_general = _SmokePage
-                        if _smoke_scenario in (
-                            "core-no-questionnaire-destroy",
-                            "core-no-generalites-questionnaire-destroy",
-                        ):
-                            _smoke_person_core.CTRL_Page_questionnaire.Panel = _SmokePage
+                        if "native-buttons" in _smoke_scenario:
+                            _smoke_person_core.CTRL_Bouton_image.CTRL = _SmokeButton
                         _dialog = _smoke_person_core.Dialog(
                             frame, IDpersonne=_rows[0][0]
                         )
