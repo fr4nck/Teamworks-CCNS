@@ -54,3 +54,30 @@ def test_les_smokes_windows_activent_faulthandler_pour_les_crashs_natifs():
         sys.path.pop(0)
     env = smoke_runtime.build_environment(Path("."), Path("teamworks"))
     assert env["PYTHONFAULTHANDLER"] == "1"
+
+
+def test_la_fiche_reste_strictement_modale():
+    fermer = CORE.split("def Fermer(self, save=True):", 1)[1].split(
+        "def _sauvegarder_pages", 1
+    )[0]
+    assert "if not self.IsModal():" in fermer
+    assert "self.EndModal(wx.ID_OK)" in fermer
+    assert "self.Destroy()" not in fermer
+
+    annulation = WRAPPER.split("def Fermer(self, save=True):", 1)[1].split(
+        "if __name__ == ", 1
+    )[0]
+    assert "if not self.IsModal():" in annulation
+    assert "self.EndModal(wx.ID_OK)" in annulation
+    assert "self.Destroy()" not in annulation
+
+
+def test_les_appelants_personnes_utilisent_showmodal_puis_destroy():
+    source = Path("teamworks/Ol/OL_personnes_core.py").read_text(encoding="utf-8")
+    ajouter = source.split("def Ajouter(self):", 1)[1].split("def Modifier(self):", 1)[0]
+    modifier = source.split("def Modifier(self):", 1)[1].split("def Supprimer(self):", 1)[0]
+    for bloc in (ajouter, modifier):
+        assert "DLG_Fiche_individuelle.Dialog" in bloc
+        assert "dlg.ShowModal()" in bloc
+        assert "dlg.Destroy()" in bloc
+        assert bloc.index("dlg.ShowModal()") < bloc.index("dlg.Destroy()")
