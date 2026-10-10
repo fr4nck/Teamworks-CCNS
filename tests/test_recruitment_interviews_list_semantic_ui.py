@@ -48,5 +48,5 @@ def test_interviews_lock_is_explicit_and_password_dialog_is_semantic():
     assert '_(u"Verrouiller les avis")' in source
     assert "class SaisiePassword(wx.Dialog):" in source
     assert "CTRL_Section.Section(" in source
-    assert 'UTILS_Styles.ApplyWindowProfile(self, "compact")' in source
+    assert 'UTILS_Styles.ApplyWindowProfile(self, "fit")' in source
     assert 'style=wx.TE_PASSWORD' in source or 'wx.TE_PASSWORD | wx.TE_PROCESS_ENTER' in source
