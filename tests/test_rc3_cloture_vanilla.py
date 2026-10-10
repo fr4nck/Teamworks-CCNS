@@ -21,10 +21,10 @@ def test_individus_rendu_atomique_et_pas_de_largeur_forcee_au_resize():
     source = _read("teamworks/Ctrl/CTRL_Personnes.py")
     assert "self.Freeze()" in source
     assert "self.Thaw()" in source
-    assert "def AjusterColonnes(self):" in source
-    bloc = source.split("def AjusterColonnes(self):", 1)[1].split("def OnBoutonAjouter", 1)[0]
-    assert "SetColumnWidth" not in bloc
-    assert "EVT_SIZE" not in source or "AjusterColonnes" not in source.split("EVT_SIZE", 1)[-1][:120]
+    assert "AjusterColonnes" not in source
+    assert "SetColumnWidth" not in source
+    assert "listCtrl_personnes.Bind(wx.EVT_SIZE" not in source
+    assert 'view_id="personnes.main"' in source
 
 
 def test_individus_connexion_bornee_pour_liste_et_arbre():

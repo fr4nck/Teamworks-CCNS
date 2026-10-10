@@ -13,6 +13,7 @@ import wx
 from Utils import UTILS_Adaptations, UTILS_Dates
 import GestionDB
 import operator
+import copy
 import FonctionsPerso
 from Dlg import DLG_Fiche_individuelle
 import os
@@ -165,10 +166,13 @@ class ListView(FastObjectListView):
         self.presents = False
         self.criteres = ""
         self.itemSelected = False
-        # Initialisation du listCtrl
-        self.listeColonnesTemp = LISTE_COLONNES
-        self.listeColonnesOriginale = list(self.listeColonnesTemp)
+        self._colonnes_a_reconstruire = True
+        # Chaque vue possède sa copie : une personnalisation ne modifie jamais
+        # les valeurs par défaut globales ni une autre instance.
+        self.listeColonnesTemp = copy.deepcopy(LISTE_COLONNES)
+        self.listeColonnesOriginale = copy.deepcopy(LISTE_COLONNES)
         FastObjectListView.__init__(self, *args, **kwds)
+        self._AppliquerPreferencesColonnes()
         self.Importation_pays()
         self.InitModel()
         self.InitObjectListView()
@@ -296,6 +300,26 @@ class ListView(FastObjectListView):
         for pays in listePays :
             DICT_PAYS[pays[0]] = (pays[1], pays[2])
 
+    def _AppliquerPreferencesColonnes(self):
+        if not self.view_id:
+            return
+
+        colonnes = sorted(self.listeColonnesTemp, key=operator.itemgetter(7))
+        codes = [colonne[3] for colonne in colonnes]
+        visibilite_defaut = {colonne[3]: bool(colonne[6]) for colonne in colonnes}
+        preferences = self.GetPreferencesColonnes(
+            colonnes_disponibles=codes,
+            ordre_defaut=codes,
+            visibilite_defaut=visibilite_defaut,
+        )
+
+        rang = {code: index + 1 for index, code in enumerate(preferences["order"])}
+        for colonne in self.listeColonnesTemp:
+            code = colonne[3]
+            colonne[6] = preferences["visible"].get(code, bool(colonne[6]))
+            if code in rang:
+                colonne[7] = rang[code]
+
     def InitObjectListView(self):
         # Images
         imgHomme = self.AddNamedImages("homme", wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Homme.png"), wx.BITMAP_TYPE_PNG))
@@ -344,12 +368,13 @@ class ListView(FastObjectListView):
 
         if self.activeCheckBoxes == True :
             self.CreateCheckStateColumn(0)
-        # Dans les deux modes la colonne Nom est à l'index 2 :
-        # pictogramme/civilité/nom ou checkbox/civilité/nom.
-        self.SetSortColumn(self.columns[2])
+        # The saved column order can move or hide Nom. Resolve its stable key.
+        self.SetSortColumn(next((column for column in self.columns
+                                 if column.valueGetter == "nom"), None))
         self.SetEmptyListMsg(_(u"Aucune personne"))
         self.SetEmptyListMsgFont(wx.FFont(11, wx.DEFAULT, False, "Tekton"))
         self.SetObjects(self.donnees)
+        self._colonnes_a_reconstruire = False
        
     def MAJ(self, IDpersonne=None, presents=None):
         if IDpersonne != None :
@@ -361,7 +386,11 @@ class ListView(FastObjectListView):
         if presents != None :
             self.presents = presents
         self.InitModel()
-        self.InitObjectListView()
+        if self._colonnes_a_reconstruire:
+            self.InitObjectListView()
+        else:
+            # Les colonnes sont stables : seule la donnée métier est remplacée.
+            self.SetObjects(self.donnees)
         # Sélection d'un item
         if self.selectionTrack != None :
             self.SelectObject(self.selectionTrack, deselectOthers=True, ensureVisible=True)
@@ -372,7 +401,12 @@ class ListView(FastObjectListView):
         return self.GetSelectedObjects()
     
     def SetListeColonnes(self, listeColonnes):
-        self.listeColonnesTemp = listeColonnes
+        self.listeColonnesTemp = copy.deepcopy(listeColonnes)
+        colonnes = sorted(self.listeColonnesTemp, key=operator.itemgetter(7))
+        ordre = [colonne[3] for colonne in colonnes]
+        visibilite = {colonne[3]: bool(colonne[6]) for colonne in colonnes}
+        self.DefinirPreferencesColonnes(ordre=ordre, visibilite=visibilite)
+        self._colonnes_a_reconstruire = True
 
 
 # --------------------------------------------------------------------------------------------------------------------------------------------------

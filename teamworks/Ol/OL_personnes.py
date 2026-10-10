@@ -83,6 +83,9 @@ class ListView(CORE.ListView):
     """Liste historique avec présentation persistante et connexion DB bornée."""
 
     def __init__(self, *args, **kwds):
+        # Keep the existing Config.json state as the sole authority for this view.
+        # Generic Customize.ini persistence remains available to core views.
+        kwds.pop("view_id", None)
         DiagnosticPerformance.installer_instrumentation_sql(CORE.GestionDB)
         self._premier_maj_redondant = True
         self._etat_colonnes_charge = None

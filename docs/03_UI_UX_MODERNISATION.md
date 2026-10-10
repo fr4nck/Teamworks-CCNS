@@ -128,3 +128,31 @@ Qualification locale Windows : tests de contexte, cache, gadgets, layout,
 comportement des selections, smoke natif Personnes et verification native
 du calendrier G reussis. Aucun schema ni aucune base metier modifies par
 l'absorption. La recette utilisateur du changement de dossier reste a faire.
+
+## Absorption 442 - persistance du tableau Personnes
+
+Second lot cible de fix/rc2-ui-state-context-refresh-20260919 : etat versionne
+par vue pour les vues core dans Customize.ini (ui_views), largeur et ordre des colonnes, choix
+visibles/masques. Les colonnes ne sont plus reconstruites a chaque MAJ des donnees.
+La vue Personnes moderne conserve son stockage Config.json existant, sa
+sauvegarde du tri et ses largeurs par defaut (telephone 200, qualifications 90).
+Le view_id generique y est retire avant construction : aucune seconde source
+de preferences ne peut ecraser les choix existants ni leur reinitialisation.
+Les parametres sont propres a chaque instance ; les defaults globaux ne sont
+pas modifies par une personnalisation. Un etat invalide revient aux defaults.
+Le tri initial par nom est resolu par sa cle stable meme si la colonne a change
+de position. Le rendu groupe Freeze/Thaw et l'invalidation du dossier du premier
+lot sont conserves. Aucun changement du calendrier, du rail Qt ou des gates.
+
+Provenance : UI/UX du fork moderne (persistance des preferences utilisateur),
+aucune modification du schema ni des bases metier, aucun backport Vanilla.
+Qualification locale : tests de normalisation/etats/layouts et smokes natifs de
+l'application ; controle wx reel du rafraichissement, fermeture/reouverture,
+largeurs, ordre, colonnes masquees et isolation entre instances, preferences
+et donnees synthetiques isolees. Ce controle n'ecrit pas la configuration usuelle.
+
+La persistance du tableau precedemment indiquee comme restante est absorbee
+par ce second lot. Recette utilisateur restante : sur une copie de base,
+changer de dossier, verifier selections/filtres/gadgets et retrouver les
+preferences de colonnes apres redemarrage. Conserver la PR 442 et sa source
+jusqu'a cette verification et a l'audit final des autres fichiers.

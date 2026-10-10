@@ -13,7 +13,6 @@ import GestionDB
 import datetime
 import FonctionsPerso
 from Utils import UTILS_Dates
-from Utils import UTILS_Customize
 from Utils import UTILS_Interface
 from Ctrl import CTRL_Bouton_image, CTRL_Gadget_pb_personnes
 import sys
@@ -24,18 +23,6 @@ from Ctrl import CTRL_Photo
 from ObjectListView import Filter
 
 
-def _echelle_interface():
-    try:
-        valeur = UTILS_Customize.GetValeur(
-            "interface", "echelle_interface", "", ajouter_si_manquant=False
-        )
-        if valeur in (None, ""):
-            valeur = UTILS_Customize.GetValeur(
-                "interface", "echelle_police", "100", type_valeur=int
-            )
-        return max(80, min(200, int(valeur)))
-    except Exception:
-        return 100
 
 
 def _bouton_action(parent, nom_image):
@@ -289,6 +276,7 @@ class PanelPersonnes(wx.Panel):
             self.window_D,
             id=-1,
             name="OL_personnes",
+            view_id="personnes.main",
             style=wx.LC_REPORT | wx.LC_SINGLE_SEL | wx.LC_HRULES | wx.LC_VRULES,
         )
         self.listCtrl_personnes.SetMinSize((200, 160))
@@ -335,7 +323,7 @@ class PanelPersonnes(wx.Panel):
         self.AffichePanelResume(False)
 
         self.init = True
-        wx.CallAfter(self.InitialiserSeparateur)
+        self.InitialiserSeparateur()
 
     def __set_properties(self):
         self.barreRecherche.SetToolTip(wx.ToolTip(_(u"Saisissez ici un nom, un prénom, un nom de ville, etc... pour retrouver une personne donnée.")))
@@ -393,15 +381,6 @@ class PanelPersonnes(wx.Panel):
         self.splitter.SetSashPosition(cible, True)
         self._separateur_initialise = True
 
-    def AjusterColonnes(self):
-        """Compatibilité historique : les largeurs utilisateur sont autoritaires.
-
-        L'ancien ajustement recalculait toutes les colonnes à chaque EVT_SIZE et
-        réimposait notamment une largeur élevée à « Téléphones ». Les valeurs
-        par défaut restent définies dans LISTE_COLONNES ; après création, seule
-        l'action explicite de l'utilisateur ou Réinitialiser doit les changer.
-        """
-        return
 
     def OnBoutonAjouter(self, event):
         self.listCtrl_personnes.Ajouter()
