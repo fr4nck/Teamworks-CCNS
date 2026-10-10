@@ -98,3 +98,47 @@ def test_contract_documents_run_in_real_windows_application() -> None:
 
     output = "\n".join(part for part in (completed.stdout, completed.stderr) if part)
     assert completed.returncode == 0, output
+
+
+@pytest.mark.skipif(
+    sys.platform != "win32",
+    reason="Recette clavier reservee a Windows",
+)
+def test_wx_keyboard_accessibility_extended_windows() -> None:
+    import os
+
+    if os.environ.get("TEAMWORKS_RUN_EXTENDED_WINDOWS_SMOKES") != "1":
+        pytest.skip("Recette Windows etendue non demandee")
+
+    keyboard_smoke = ROOT / "tools" / "smoke_wx_keyboard_accessibility.py"
+    assert keyboard_smoke.is_file()
+
+    env = os.environ.copy()
+    env["TEAMWORKS_SMOKE_MODE"] = "main-window"
+    env["TEAMWORKS_LOG_DIR"] = str(
+        ROOT / "artifacts" / "keyboard-accessibility-smoke" / "runtime-crash"
+    )
+    env["PYTHONUTF8"] = "1"
+
+    search_paths = [str(ROOT), str(ROOT / "teamworks")]
+    if env.get("PYTHONPATH"):
+        search_paths.append(env["PYTHONPATH"])
+    env["PYTHONPATH"] = os.pathsep.join(search_paths)
+
+    completed = subprocess.run(
+        [sys.executable, str(keyboard_smoke)],
+        cwd=ROOT / "teamworks",
+        env=env,
+        text=True,
+        capture_output=True,
+        timeout=240,
+        check=False,
+    )
+
+    output = "\n".join(
+        part for part in (completed.stdout, completed.stderr) if part
+    )
+
+    assert completed.returncode == 0, output
+    assert "TEAMWORKS_WX_KEYBOARD_ACCESSIBILITY_READY" in output
+    assert "TEAMWORKS_WX_KEYBOARD_ACCESSIBILITY_FAILED" not in output
