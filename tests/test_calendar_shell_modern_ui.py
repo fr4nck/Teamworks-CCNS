@@ -40,8 +40,8 @@ def test_calendar_shell_uses_charter_instead_of_fixed_legacy_chrome():
     assert "SetSashPosition(450" not in source
     assert "CTRL_Bouton_image.CTRL" in source
     assert "wx.WrapSizer" in source
-    assert "UTILS_Styles.GetControlMetric" in source
-    assert "UTILS_Styles.GetLayoutSpacing" in source
+    assert "wx.BoxSizer(wx.HORIZONTAL)" in source
+    assert "UTILS_Styles.Scale" in source
 
 
 def test_calendar_shell_palette_stays_inside_semantic_families():

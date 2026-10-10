@@ -38,6 +38,7 @@ CONTROL_METRICS = {
 }
 GADGET_METRICS = {
     "default_size": (220, 180),
+    "calendar_min_size": (320, 280),  # Proposition G validée par l’utilisateur.
     "min_size": (180, 120),
     "columns": 3,
 }

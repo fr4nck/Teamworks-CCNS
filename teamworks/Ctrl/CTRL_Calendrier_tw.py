@@ -27,7 +27,7 @@ class CTRL_Annee(wx.SpinCtrl):
     def __init__(self, parent):
         wx.SpinCtrl.__init__(self, parent, -1, min=1950, max=2999)
         self.parent = parent
-        self.SetMinSize((UTILS_Styles.Scale(78), -1))
+        self.SetMinSize((UTILS_Styles.Scale(60), -1))
         self.SetToolTip(wx.ToolTip(_(u"Sélectionnez une année")))
         self.SetAnnee(datetime.date.today().year)
 
@@ -91,12 +91,12 @@ class Panel(wx.Panel):
             choices=self.listeMois,
             style=wx.CB_READONLY,
         )
-        self.combo_mois.SetMinSize((UTILS_Styles.Scale(118), -1))
+        self.combo_mois.SetMinSize((UTILS_Styles.Scale(70), -1))
 
         self.ctrl_annee = CTRL_Annee(self)
         self.spin = wx.SpinButton(self, -1, style=wx.SP_HORIZONTAL)
-        taille_controle = UTILS_Styles.GetControlMetric("input_min_height")
-        self.spin.SetMinSize((UTILS_Styles.Scale(42), taille_controle))
+        # Largeurs historiques, mises à l’échelle ; hauteur native des contrôles.
+        self.spin.SetMinSize((UTILS_Styles.Scale(25), -1))
         self.spin.SetRange(-1, 1)
 
         self.bouton_CalendrierAnnuel = CTRL_Bouton_image.CTRL(
@@ -142,59 +142,31 @@ class Panel(wx.Panel):
         self.calendrier.MAJAffichage()
 
     def _do_layout(self, bordHaut, bordBas, bordLateral):
-        gap = UTILS_Styles.GetLayoutSpacing("control_gap")
-        padding_horizontal = (
-            max(
-                UTILS_Styles.GetLayoutSpacing("content_padding"),
-                UTILS_Styles.Scale(bordLateral),
-            )
-            if bordLateral
-            else UTILS_Styles.GetLayoutSpacing("content_padding")
-        )
+        # Le calendrier garde les proportions historiques : une seule ligne
+        # mois/année/flèches, sans marges internes ajoutées au dessin.
+        gap = UTILS_Styles.Scale(5)
+        padding_horizontal = max(0, UTILS_Styles.Scale(bordLateral))
         top = max(0, UTILS_Styles.Scale(bordHaut))
         bottom = max(0, UTILS_Styles.Scale(bordBas))
 
-        navigation = wx.WrapSizer(wx.HORIZONTAL, 0)
-        navigation.Add(
-            self.bouton_CalendrierAnnuel,
-            0,
-            wx.ALIGN_CENTER_VERTICAL | wx.RIGHT | wx.BOTTOM,
-            gap,
-        )
-        navigation.Add(
-            self.combo_mois,
-            0,
-            wx.ALIGN_CENTER_VERTICAL | wx.RIGHT | wx.BOTTOM,
-            gap,
-        )
-        navigation.Add(
-            self.ctrl_annee,
-            0,
-            wx.ALIGN_CENTER_VERTICAL | wx.RIGHT | wx.BOTTOM,
-            gap,
-        )
-        navigation.Add(
-            self.spin,
-            0,
-            wx.ALIGN_CENTER_VERTICAL | wx.BOTTOM,
-            gap,
-        )
+        mois_annee = wx.BoxSizer(wx.HORIZONTAL)
+        mois_annee.Add(self.combo_mois, 1, wx.EXPAND | wx.RIGHT, gap)
+        mois_annee.Add(self.ctrl_annee, 0, wx.EXPAND | wx.RIGHT, gap)
+        mois_annee.Add(self.spin, 0, wx.ALIGN_CENTER_VERTICAL)
+
+        if self.afficheBoutonAnnuel:
+            navigation = wx.WrapSizer(wx.HORIZONTAL, 0)
+            navigation.Add(self.bouton_CalendrierAnnuel, 0,
+                           wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, gap)
+            navigation.Add(mois_annee, 1, wx.EXPAND)
+        else:
+            navigation = mois_annee
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         if top:
             sizer.AddSpacer(top)
-        sizer.Add(
-            navigation,
-            0,
-            wx.EXPAND | wx.LEFT | wx.RIGHT,
-            padding_horizontal,
-        )
-        sizer.Add(
-            self.calendrier,
-            1,
-            wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP,
-            padding_horizontal,
-        )
+        sizer.Add(navigation, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, padding_horizontal)
+        sizer.Add(self.calendrier, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, padding_horizontal)
         if bottom:
             sizer.AddSpacer(bottom)
         self.SetSizer(sizer)

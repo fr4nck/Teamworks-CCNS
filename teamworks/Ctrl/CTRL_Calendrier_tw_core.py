@@ -503,7 +503,9 @@ class Calendrier(wx.ScrolledWindow):
         taille = self.tailleFont(largCase, hautCase)
         font = wx.Font(taille, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
         dc.SetFont(font)
-        hautHeader = taille*2
+        # Réserver la hauteur réelle des libellés, notamment avec le DPI Windows.
+        hauteur_texte = max(self.GetTextExtent(jour)[1] for jour in listeJours)
+        hautHeader = max(taille*2, hauteur_texte + self.ecartCases*2)
         x = 0
         for jour in range(7):
             texte = listeJours[jour]
@@ -515,7 +517,7 @@ class Calendrier(wx.ScrolledWindow):
                 texte = texte[0]
             largTexte, hautTexte = self.GetTextExtent(texte)
             coordX = xMois+x+(largCase/2)-int(largTexte/2)
-            coordY = yMois+(hautHeader/2)-int(hautTexte/2)
+            coordY = int(yMois + (hautHeader - hautTexte) / 2)
             dc.DrawText(texte, int(coordX), int(coordY))
             # Mémorisation des jours et de leurs coordonnées
             self.listeCasesJours.append((coordX, coordY, largTexte, hautTexte, texteComplet))

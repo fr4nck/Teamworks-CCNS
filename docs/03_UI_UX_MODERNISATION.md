@@ -104,3 +104,12 @@ Cadrage retenu :
 - `PMSL-Arch/docs/DESIGN_SYSTEM.md`
 - `AGENTS.md`
 - chantier TW-189 et garde-fous associés
+
+## Calendrier partagé — proportions et libellés (2026-10-10)
+
+- Provenance : UI/UX. L’écrasement des jours vient de la coque modernisée, pas du métier Présences.
+- Mesure Windows native, mois de six semaines, gadget 220 × 180 : dessin historique 208 × 113 et cases 27,71 × 11 ; coque moderne 170 × 44 et cases 22,29 × 0,33.
+- Choix utilisateur : proposition G, calendrier d’accueil 320 × 280 ; autres gadgets inchangés. Les tailles persistées plus grandes sont conservées, les tailles trop petites et les anciennes perspectives AUI sont bornées au minimum du calendrier.
+- Rétablissement d’une ligne mois/année/flèches et des bordures explicites historiques, avec mise à l’échelle. Palette et callbacks conservés.
+- Les noms des jours réservent leur hauteur de texte réellement mesurée et un espace avant les cases pour éviter le recouvrement à différents DPI.
+- Qualification locale Windows : Python 3.11.9 / wxPython 4.3.1, 39 tests ciblés passés ; contrôle natif du format G, accueil et restauration d’une ancienne perspective : SUCCESS. À 120 % : gadget 384 × 336, cases 50,86 × 31,83 après restauration, espace texte/cases de 2 pixels. Captures contrôlées dans artifacts/calendar-g-native/. CI du commit exact à contre-valider après push. Aucun merge entre rails, aucune modification de gate Qt.

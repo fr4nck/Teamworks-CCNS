@@ -82,19 +82,23 @@ class EspaceGadgets(wx.Panel):
         except Exception:
             pass
 
-    def _taille_persisted_or_default(self, taille):
+    def _minimum_pane_size(self, nom):
+        role = "calendar_min_size" if nom == "calendrier" else "min_size"
+        return UTILS_Styles.GetGadgetMetric(role)
+
+    def _taille_persisted_or_default(self, taille, nom=None):
         if taille in (None, wx.DefaultSize):
-            return UTILS_Styles.GetGadgetMetric("default_size")
+            taille = UTILS_Styles.GetGadgetMetric("default_size")
         try:
             largeur, hauteur = int(taille[0]), int(taille[1])
         except Exception:
-            return UTILS_Styles.GetGadgetMetric("default_size")
-        min_width, min_height = UTILS_Styles.GetGadgetMetric("min_size")
+            largeur, hauteur = UTILS_Styles.GetGadgetMetric("default_size")
+        min_width, min_height = self._minimum_pane_size(nom)
         return max(min_width, largeur), max(min_height, hauteur)
 
     def _info_pane(self, nom, label, taille, index):
-        largeur, hauteur = self._taille_persisted_or_default(taille)
-        min_size = UTILS_Styles.GetGadgetMetric("min_size")
+        largeur, hauteur = self._taille_persisted_or_default(taille, nom)
+        min_size = self._minimum_pane_size(nom)
         colonnes = UTILS_Styles.GetGadgetMetric("columns")
         return (
             aui.AuiPaneInfo()
@@ -125,7 +129,7 @@ class EspaceGadgets(wx.Panel):
             self,
             self.couleur_fond,
             index,
-            size=self._taille_persisted_or_default(taille),
+            size=self._taille_persisted_or_default(taille, nom),
         )
         self.AppliquerThemeGadget(gadget)
         self._gadgets[nom] = gadget
@@ -196,6 +200,11 @@ class EspaceGadgets(wx.Panel):
             if pane.IsOk():
                 pane.Dock().Top().Layer(0).Row(index // colonnes).Position(index % colonnes)
                 pane.Floatable(False).Show(True)
+                # Une perspective ancienne ne doit pas réécraser le calendrier.
+                if nom == "calendrier":
+                    minimum = self._minimum_pane_size(nom)
+                    pane.MinSize(minimum)
+                    pane.BestSize(self._taille_persisted_or_default(pane.best_size, nom))
 
     def SauverPerspective(self):
         if self._restauration_en_cours or self.manager is None:
@@ -293,7 +302,7 @@ class EspaceGadgets(wx.Panel):
                 if not pane.IsOk():
                     continue
                 pane.Caption(parametres.get("label", nom))
-                largeur, hauteur = self._taille_persisted_or_default(parametres.get("taille"))
+                largeur, hauteur = self._taille_persisted_or_default(parametres.get("taille"), nom)
                 pane.BestSize((largeur, hauteur))
                 pane.Show(True)
                 self.AppliquerThemeGadget(self._gadgets[nom])
