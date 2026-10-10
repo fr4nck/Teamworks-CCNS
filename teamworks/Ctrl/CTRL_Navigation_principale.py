@@ -63,6 +63,7 @@ class BoutonNavigation(wx.Control):
             style=wx.BORDER_NONE | wx.WANTS_CHARS,
         )
         self.label = label
+        self.SetLabel(label)
         self.bitmap = bitmap if bitmap is not None else wx.NullBitmap
         self._actif = False
         self._survol = False

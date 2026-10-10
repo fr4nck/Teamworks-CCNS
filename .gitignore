@@ -145,3 +145,6 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+
+# Recette UI Windows
+/artifacts/recette-windows/
