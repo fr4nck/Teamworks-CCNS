@@ -3,27 +3,33 @@
 
 from __future__ import annotations
 
+import logging
+
 import wx
 
 from Ctrl import CTRL_Bouton_image
+from Utils import UTILS_Styles
 from teamworks.CcnsCore.seed_teamworks_reference_data import seed_teamworks_reference_data
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 class Dialog(wx.Dialog):
     def __init__(self, parent):
-        wx.Dialog.__init__(self, parent, -1, "Initialiser les donnees CCNS", style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
+        wx.Dialog.__init__(self, parent, -1, "Initialiser les donn?es CCNS", style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
 
         self.label_intro = wx.StaticText(
             self,
             -1,
-            "Cet assistant injecte des donnees de reference CCNS dans Teamworks.\n"
+            "Cet assistant injecte des donn?es de r?f?rence CCNS dans Teamworks.\n"
             "Il peut alimenter les tables historiques et les nouvelles tables tw_*.",
         )
 
         self.checkbox_sync_legacy = wx.CheckBox(self, -1, "Synchroniser aussi les tables historiques (contrats_class, contrats_types)")
         self.checkbox_sync_legacy.SetValue(True)
 
-        self.checkbox_show_details = wx.CheckBox(self, -1, "Afficher le detail des insertions")
+        self.checkbox_show_details = wx.CheckBox(self, -1, "Afficher le d?tail des insertions")
         self.checkbox_show_details.SetValue(True)
 
         self.text_result = wx.TextCtrl(self, -1, "", style=wx.TE_MULTILINE | wx.TE_READONLY | wx.HSCROLL)
@@ -43,8 +49,8 @@ class Dialog(wx.Dialog):
         self.button_launch.Bind(wx.EVT_BUTTON, self.OnLaunch)
 
         self.__do_layout()
-        self.SetMinSize((620, 420))
-        self.CentreOnScreen()
+        UTILS_Styles.ApplyWindowProfile(self, "standard")
+        self.checkbox_sync_legacy.SetFocus()
 
     def __do_layout(self):
         sizer_base = wx.BoxSizer(wx.VERTICAL)
@@ -67,27 +73,29 @@ class Dialog(wx.Dialog):
 
         try:
             result = seed_teamworks_reference_data(sync_legacy_tables=sync_legacy)
-        except Exception as exc:
+        except Exception:
+            LOGGER.exception("Echec de l'initialisation CCNS")
             wx.MessageBox(
-                "Une erreur est survenue pendant l'initialisation CCNS.\n\n%s" % exc,
-                "Erreur",
+                "Les donnees de reference CCNS n'ont pas pu etre initialisees. "
+                "Verifiez l'acces aux donnees puis reessayez.",
+                "Initialisation impossible",
                 wx.OK | wx.ICON_ERROR,
                 self,
             )
             return
 
-        lines = ["Initialisation CCNS terminee."]
+        lines = ["Initialisation CCNS termin?e."]
         if show_details:
             for key in sorted(result.keys()):
                 lines.append("- %s : %d" % (key, result[key]))
         else:
             total = sum(result.values())
-            lines.append("- total inserts : %d" % total)
+            lines.append("- total des insertions : %d" % total)
 
         self.text_result.SetValue("\n".join(lines))
         wx.MessageBox(
-            "Les donnees de reference CCNS ont ete initialisees.",
-            "Operation terminee",
+            "Les donn?es de r?f?rence CCNS ont ?t? initialis?es.",
+            "Op?ration termin?e",
             wx.OK | wx.ICON_INFORMATION,
             self,
         )

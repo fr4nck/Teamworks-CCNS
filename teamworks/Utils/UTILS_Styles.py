@@ -258,9 +258,10 @@ def GetWindowSize(profile="standard", display_size=None, window=None):
     max_width, max_height = definition["max_size"]
     width = max(Scale(min_width), min(Scale(max_width), width))
     height = max(Scale(min_height), min(Scale(max_height), height))
-    width = max(0, min(display_width, width))
-    height = max(0, min(display_height, height))
-    return width, height
+    margin = Scale(12, minimum=0)
+    available_width = max(1, display_width - 2 * margin)
+    available_height = max(1, display_height - 2 * margin)
+    return min(width, available_width), min(height, available_height)
 
 
 def _CentreWindow(window):
