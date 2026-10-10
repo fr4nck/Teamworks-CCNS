@@ -474,7 +474,7 @@ jobs:
         && (
           startsWith(github.ref, 'refs/tags/v')
           || (github.event_name == 'workflow_dispatch' && inputs.build_windows)
-          || (github.ref == 'refs/heads/master' && contains(github.event.head_commit.message, '[windows]'))
+          || ((github.ref == 'refs/heads/master' || github.ref == 'refs/heads/wx/master') && contains(github.event.head_commit.message, '[windows]'))
           || (github.event_name == 'pull_request' && github.head_ref == 'release/vanilla-wx-0.9.2-rc3')
         )
       }}
@@ -492,15 +492,13 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
-          cache-dependency-path: |
-            requirements.txt
-            .github/requirements-windows-build.txt
+          cache-dependency-path: .github/requirements-windows-lock.txt
 
       - name: Installer les dépendances
         shell: pwsh
         run: |
-          python -m pip install -r requirements.txt
-          python -m pip install -r .github/requirements-windows-build.txt
+          python -m pip install --only-binary=:all: --no-deps -r .github/requirements-windows-lock.txt
+          python -m pip check
           python -m pip freeze | Set-Content build-requirements.txt
 
       - name: Recette Windows étendue avant packaging
@@ -771,6 +769,80 @@ jobs:
           $hash = (Get-FileHash $installer.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
           "$hash  $($installer.Name)" | Add-Content SHA256SUMS.txt -Encoding ascii
 
+      - name: Tester installation et desinstallation Windows
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $installer = Get-ChildItem 'dist/installer/Teamworks-CCNS-*-windows-x64-setup.exe' |
+            Select-Object -First 1
+          if (-not $installer) {
+            throw 'Installateur introuvable'
+          }
+
+          $installDir = Join-Path $env:RUNNER_TEMP 'Teamworks-CCNS-Install-Test'
+          $app = Join-Path $installDir 'Teamworks-CCNS.exe'
+          $uninstaller = Join-Path $installDir 'unins000.exe'
+
+          if (Test-Path $installDir) {
+            throw 'Repertoire de test deja present'
+          }
+
+          $installed = $false
+          $proc = $null
+
+          try {
+            $setup = Start-Process -FilePath $installer.FullName `
+              -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/SP-', "/DIR=$installDir") `
+              -Wait -PassThru
+
+            if ($setup.ExitCode -ne 0) {
+              throw "Installation echouee : $($setup.ExitCode)"
+            }
+            $installed = $true
+
+            if (-not (Test-Path $app -PathType Leaf)) {
+              throw 'Executable installe introuvable'
+            }
+            if (-not (Test-Path $uninstaller -PathType Leaf)) {
+              throw 'Desinstallateur introuvable'
+            }
+
+            $proc = Start-Process -FilePath $app `
+              -WorkingDirectory $installDir -PassThru
+
+            $deadline = [DateTime]::UtcNow.AddSeconds(30)
+            do {
+              Start-Sleep -Milliseconds 500
+              $proc.Refresh()
+              if ($proc.HasExited) {
+                throw "Application installee fermee prematurement : $($proc.ExitCode)"
+              }
+            } while ($proc.MainWindowHandle -eq [IntPtr]::Zero -and
+                     [DateTime]::UtcNow -lt $deadline)
+
+            if ($proc.MainWindowHandle -eq [IntPtr]::Zero) {
+              throw 'Aucune fenetre principale de l application installee'
+            }
+          }
+          finally {
+            if ($null -ne $proc -and -not $proc.HasExited) {
+              Stop-Process -Id $proc.Id -Force -ErrorAction Stop
+              $proc.WaitForExit()
+            }
+
+            if ($installed -and (Test-Path $uninstaller)) {
+              $uninstall = Start-Process -FilePath $uninstaller `
+                -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART') `
+                -Wait -PassThru
+
+              if ($uninstall.ExitCode -ne 0) {
+                throw "Desinstallation echouee : $($uninstall.ExitCode)"
+              }
+              if (Test-Path $app -PathType Leaf) {
+                throw 'Executable toujours present apres desinstallation'
+              }
+            }
+          }
       - name: Publier les artefacts Windows
         uses: actions/upload-artifact@v6
         with:

@@ -61,6 +61,7 @@ class MyDialog(wx.Dialog):
 
         self._layout()
         UTILS_Styles.ApplyWindowProfile(self, "compact")
+        self.radio1.SetFocus()
 
     def _layout(self):
         padding = UTILS_Styles.GetLayoutSpacing("dialog_padding")

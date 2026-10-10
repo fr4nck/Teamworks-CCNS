@@ -22,7 +22,25 @@ $process = Start-Process `
     -RedirectStandardError $stderr
 
 try {
-    Start-Sleep -Seconds 12
+    $deadline = [DateTime]::UtcNow.AddSeconds(30)
+    $mainWindow = [IntPtr]::Zero
+
+    do {
+        Start-Sleep -Milliseconds 500
+        $process.Refresh()
+
+        if ($process.HasExited) {
+            throw "Teamworks-CCNS s'est ferme avant l'ouverture de sa fenetre."
+        }
+
+        $mainWindow = $process.MainWindowHandle
+    } while ($mainWindow -eq [IntPtr]::Zero -and [DateTime]::UtcNow -lt $deadline)
+
+    if ($mainWindow -eq [IntPtr]::Zero) {
+        throw "Aucune fenetre principale Windows detectee apres 30 secondes."
+    }
+
+    Write-Host "Fenetre principale detectee : $mainWindow"
 
     if ($process.HasExited) {
         $out = if (Test-Path $stdout) { Get-Content $stdout -Raw } else { '' }
@@ -35,7 +53,7 @@ try {
         throw "Le paquet n'a pas confirmé l'import de l'éditeur Email. STDOUT: $out"
     }
 
-    Write-Host "Smoke test réussi : l'application est restée active pendant 12 secondes et l'éditeur Email est importable."
+    Write-Host "Smoke test réussi : une fenêtre principale Windows a été détectée et l'éditeur Email est importable."
 }
 finally {
     Remove-Item Env:TEAMWORKS_PACKAGE_SMOKE_EMAIL -ErrorAction SilentlyContinue
