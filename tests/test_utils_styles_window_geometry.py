@@ -97,30 +97,30 @@ def test_size_is_unchanged_when_work_area_is_larger(styles):
 
 
 def test_width_is_clamped_to_work_area(styles):
-    assert styles.GetWindowSize("standard", display_size=(500, 1000)) == (500, 640)
+    assert styles.GetWindowSize("standard", display_size=(500, 1000)) == (476, 640)
 
 
 def test_height_is_clamped_to_work_area(styles):
-    assert styles.GetWindowSize("standard", display_size=(2000, 400)) == (1120, 400)
+    assert styles.GetWindowSize("standard", display_size=(2000, 400)) == (1120, 376)
 
 
 def test_width_and_height_are_clamped_to_work_area(styles):
-    assert styles.GetWindowSize("standard", display_size=(500, 400)) == (500, 400)
+    assert styles.GetWindowSize("standard", display_size=(500, 400)) == (476, 376)
 
 
 def test_apply_profile_clamps_minimum_and_uses_window_display(styles):
     styles.wx.Display.areas = {0: (1920, 1040), 1: (700, 500)}
     window = FakeWindow(display_index=1)
 
-    assert styles.ApplyWindowProfile(window, "workspace", centre=False) == (700, 500)
-    assert window.size == (700, 500)
-    assert window.min_size == (700, 500)
+    assert styles.ApplyWindowProfile(window, "workspace", centre=False) == (676, 476)
+    assert window.size == (676, 476)
+    assert window.min_size == (676, 476)
     assert window._teamworks_window_profile == "workspace"
 
 
 @pytest.mark.parametrize("profile", ["compact", "standard", "wide", "workspace"])
 def test_profiles_fit_a_small_work_area(styles, profile):
-    assert styles.GetWindowSize(profile, display_size=(320, 240)) == (320, 240)
+    assert styles.GetWindowSize(profile, display_size=(320, 240)) == (296, 216)
 
 
 def test_display_client_area_falls_back_to_screen_size(styles):
