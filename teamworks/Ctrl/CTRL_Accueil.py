@@ -177,6 +177,10 @@ class Panel(wx.Panel):
         self.listeGadgets = self.GetListeGadgets()
         self.html.MAJ(self.listeGadgets)
 
+    def OnChangementDossier(self, ancienFichier="", nouveauFichier=""):
+        """Marque le dashboard pour un rechargement métier ciblé au prochain MAJ."""
+        self.html.OnChangementDossier(ancienFichier, nouveauFichier)
+
     def MAJpanel(self, listeElements=None):
         if listeElements is None:
             listeElements = []

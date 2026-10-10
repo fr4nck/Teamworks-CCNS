@@ -113,3 +113,18 @@ Cadrage retenu :
 - Rétablissement d’une ligne mois/année/flèches et des bordures explicites historiques, avec mise à l’échelle. Palette et callbacks conservés.
 - Les noms des jours réservent leur hauteur de texte réellement mesurée et un espace avant les cases pour éviter le recouvrement à différents DPI.
 - Qualification locale Windows : Python 3.11.9 / wxPython 4.3.1, 39 tests ciblés passés ; contrôle natif du format G, accueil et restauration d’une ancienne perspective : SUCCESS. À 120 % : gadget 384 × 336, cases 50,86 × 31,83 après restauration, espace texte/cases de 2 pixels. Captures contrôlées dans artifacts/calendar-g-native/. CI du commit exact à contre-valider après push. Aucun merge entre rails, aucune modification de gate Qt.
+
+## Absorption 442 - changement de dossier
+
+Premier lot cible de la branche fix/rc2-ui-state-context-refresh-20260919 :
+invalidation des caches et selections de l'ancien dossier, notification des
+pages et rechargement du contenu des gadgets sans reconstruire les panes AUI.
+
+Les protections de taille du calendrier et le rendu groupe de Personnes
+sont conserves. La persistance generique des tableaux reste a integrer ;
+la PR 442 et sa branche source restent ouvertes et conservees.
+
+Qualification locale Windows : tests de contexte, cache, gadgets, layout,
+comportement des selections, smoke natif Personnes et verification native
+du calendrier G reussis. Aucun schema ni aucune base metier modifies par
+l'absorption. La recette utilisateur du changement de dossier reste a faire.

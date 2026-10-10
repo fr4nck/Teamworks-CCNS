@@ -2,13 +2,23 @@ import sys
 import types
 from pathlib import Path
 
-sys.modules.setdefault("wx", types.SimpleNamespace())
-sys.modules.setdefault("GestionDB", types.SimpleNamespace(DB=object))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "teamworks"))
 
-from teamworks.CcnsCore.audit_contracts_ccns import AuditRow
-from teamworks.CcnsCore import home_gadgets_ccns as home
-from teamworks.CcnsCore.audit_sorting import compute_row_severity
+# Temporary import substitutes must not leak into native wx tests.
+_missing = object()
+_original_modules = {name: sys.modules.get(name, _missing) for name in ("wx", "GestionDB")}
+try:
+    sys.modules.setdefault("wx", types.SimpleNamespace())
+    sys.modules.setdefault("GestionDB", types.SimpleNamespace(DB=object))
+    from teamworks.CcnsCore.audit_contracts_ccns import AuditRow
+    from teamworks.CcnsCore import home_gadgets_ccns as home
+    from teamworks.CcnsCore.audit_sorting import compute_row_severity
+finally:
+    for _name, _original in _original_modules.items():
+        if _original is _missing:
+            sys.modules.pop(_name, None)
+        else:
+            sys.modules[_name] = _original
 
 
 def _rows():
@@ -130,3 +140,21 @@ def test_mesures_accueil_ccns_separe_sql_et_transformation(monkeypatch):
     assert "total_action" in categories
     assert "accueil_ccns.audit_contracts" in noms
     diag.reinitialiser_mesures()
+
+
+def test_cache_ne_traverse_pas_un_changement_de_dossier(monkeypatch):
+    appels = []
+    contexte = {"nom": "dossier-a"}
+    monkeypatch.setattr(home, "_current_context_key", lambda: contexte["nom"])
+    monkeypatch.setattr(
+        home,
+        "audit_contracts",
+        lambda limit=None: appels.append((contexte["nom"], limit)) or _rows(),
+    )
+
+    first = home.build_ccns_home_data(limit=5000, max_lines=12)
+    contexte["nom"] = "dossier-b"
+    second = home.build_ccns_home_data(limit=5000, max_lines=12)
+
+    assert appels == [("dossier-a", 5000), ("dossier-b", 5000)]
+    assert second is not first

@@ -275,6 +275,16 @@ class NavigationPrincipale(wx.Panel):
         if index == self.GetSelection():
             self.MAJ_panel(index)
 
+    def OnChangementDossier(self, ancienFichier="", nouveauFichier=""):
+        """Notify all pages after a dossier context switch."""
+        if ancienFichier == nouveauFichier:
+            return
+        for index in range(self.GetPageCount()):
+            page = self.GetPage(index)
+            callback = getattr(page, "OnChangementDossier", None)
+            if callback is not None:
+                callback(ancienFichier, nouveauFichier)
+
     def MAJ_panel(self, numPage=0):
         page = self.GetPage(numPage)
         maj = getattr(page, "MAJpanel", None)
