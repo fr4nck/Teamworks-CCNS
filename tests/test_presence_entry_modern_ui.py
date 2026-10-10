@@ -71,5 +71,5 @@ def test_presence_entry_keeps_validation_and_persistence_contract():
     ):
         assert "def %s" % method in source
     assert 'DB.ReqMAJ("presences"' in source
-    assert 'DB.ReqInsert(\n                "presences"' in source
+    assert "DB.ReqInsert('presences'," in ast.unparse(ast.parse(source))
     assert "UTILS_Presences.normaliser_intitule_presence" in source

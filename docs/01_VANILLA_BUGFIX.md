@@ -261,3 +261,11 @@ Il serait trompeur de calculer maintenant un « pourcentage de Teamworks Vanilla
 Pas de migration Python 3, pas de nouveau thème, pas de CCNS et pas de fonctionnalités supplémentaires.
 
 La branche `vanilla-bugfix` part directement de la base 2.1.3.1 et sert de zone de préparation. Les patches propres restent également conservés dans `patches/vanilla/` afin d'être auditables et transmissibles indépendamment du fork moderne.
+
+## Présences — heures valides et atomicité du lot (2026-10-10)
+
+- Provenance : Vanilla confirmée sur la référence Noethys locale `00bd52ef85853eb617361a15c2f0cc0cfa1b898e`. Les validations historiques acceptent 24:00 avant une conversion datetime.time ; SauvegardeNouveau valide chaque insertion séparément et peut laisser un lot partiel en cas d’échec.
+- Absorption wx ciblée de `fix/0.9.2-presences-moteur` (`bbd08d66ad58be5ddc5a277e97673a808cd21fcc`) : heures civiles limitées à 23:59, transaction unique des insertions admissibles, rollback en cas d’échec et fermeture garantie. Les chevauchements restent des exclusions métier.
+- Qualification du fork : Python 3.11.9 / wxPython 4.3.1, 22 tests locaux passés, dont commit/rollback réellement exercés sur SQLite et smokes Windows Présences/PDF/modèles. Le calendrier est qualifié séparément par le commit `cbe8bb1023d2e60762c58225189c80098e1eb469`.
+- Backport historique minimal préparé séparément dans le dossier de travail de l’audit, sous le nom `VFIX-presences-integrite.patch` (contexte nul et encodage iso-8859-15). Son intégration à `patches/vanilla/` et sa recette runtime historique restent à qualifier ; ne pas le présenter comme livré.
+- CI du commit wx exact à contre-valider après push. Aucune nouvelle preuve MySQL/MariaDB de ce chemin wx n’est revendiquée par ces tests SQLite.
