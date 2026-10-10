@@ -148,3 +148,9 @@ $RECYCLE.BIN/
 
 # Documentation MkDocs (site généré)
 /site/
+
+# Local database environment
+dev/db/.env
+dev/db/anonymization-report.txt
+dev/db/imports/
+dev/db/exports/
