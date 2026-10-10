@@ -20,6 +20,16 @@ NEXT_CLASS = re.compile(r"^class\s+\w+\s*\(", re.MULTILINE)
 LITERAL_SIZE = re.compile(r"(?:\bsize\s*=|Set(?:Min|Max)?Size\s*\()\s*\(?\s*\d+\s*,\s*\d+")
 STRETCH_SIZER = re.compile(r"(?P<sizer>\w+)\.AddStretchSpacer\s*\(")
 
+# Indice d'expansion : enfant d'un sizer avec proportion positive et wx.EXPAND.
+# Une simple occurrence de wx.EXPAND ne suffit pas.
+EXPANDING_SIZER_CHILD = re.compile(
+    r"\.Add\s*\(\s*(?:self\.)?[\w.]+\s*,\s*"
+    r"(?:[1-9]\d*|proportion\s*=\s*[1-9]\d*)\s*,"
+    r"[^)]{0,180}?wx\.EXPAND",
+    re.MULTILINE,
+)
+
+
 EXPANDABLE_MARKERS = (
     "wx.ListCtrl", "ListCtrl", "wx.TreeCtrl", "TreeCtrl", "wx.Grid", "grid.Grid",
     "wx.SplitterWindow", "wx.ScrolledWindow", "ScrolledPanel", "wx.TE_MULTILINE",
@@ -89,7 +99,7 @@ def _stretch_is_action_alignment(block):
 
 def classify(block):
     resizable = "wx.RESIZE_BORDER" in block
-    expandable = _has_any(block, EXPANDABLE_MARKERS)
+    expandable = (_has_any(block, EXPANDABLE_MARKERS) or bool(EXPANDING_SIZER_CHILD.search(block)))
     dynamic = ".Show(" in block or ".Hide(" in block
     fit = _has_any(block, FIT_MARKERS)
     refit = _has_any(block, REFIT_MARKERS)
