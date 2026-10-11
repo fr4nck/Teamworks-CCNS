@@ -120,7 +120,7 @@ function Invoke-IsolatedLaunch {
             }
 
             $window = $process.MainWindowHandle
-            $emailMarker = (Read-TestLog $stdout).Contains("TEAMWORKS_PACKAGE_EMAIL_IMPORT_OK")
+            $emailMarker = ([string](Read-TestLog -Path $stdout)).Contains("TEAMWORKS_PACKAGE_EMAIL_IMPORT_OK")
         } while (($window -eq [IntPtr]::Zero -or -not $emailMarker) -and [DateTime]::UtcNow -lt $deadline)
 
         if ($window -eq [IntPtr]::Zero -or -not $emailMarker) {
