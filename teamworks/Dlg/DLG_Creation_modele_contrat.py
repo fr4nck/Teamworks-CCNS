@@ -27,8 +27,8 @@ class Dialog(wx.Dialog):
         self.panel_base = wx.Panel(self, -1)
         self.static_line = wx.StaticLine(self.panel_base, -1)
         self.bouton_aide = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))
-        self.bouton_retour = CTRL_Bouton_image.CTRL(self.panel_base, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/BoutonsImages/Retour_L72.png"))
-        self.bouton_suite = CTRL_Bouton_image.CTRL(self.panel_base, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/BoutonsImages/Suite_L72.png"))
+        self.bouton_retour = CTRL_Bouton_image.CTRL(self.panel_base, id=-1, texte=_(u"Retour"))
+        self.bouton_suite = CTRL_Bouton_image.CTRL(self.panel_base, id=-1, texte=_(u"Suivant"))
         self.bouton_annuler = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Annuler"), cheminImage=Chemins.GetStaticPath("Images/32x32/Annuler.png"))
         self.__set_properties()
         self.__do_layout()
@@ -150,7 +150,7 @@ class Dialog(wx.Dialog):
         self.sizer_pages.Layout()
         if self.pageVisible == self.nbrePages-1:
             self.bouton_suite.Enable(True)
-            self.bouton_suite.SetBitmapLabel(wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Suite_L72.png"), wx.BITMAP_TYPE_ANY))
+            self.bouton_suite.SetTexte(_(u"Suivant"))
         if self.pageVisible == 1:
             self.bouton_retour.Enable(False)
 
@@ -165,7 +165,7 @@ class Dialog(wx.Dialog):
         getattr(self, "page%d" % self.pageVisible).Show(True)
         self.sizer_pages.Layout()
         if self.pageVisible == self.nbrePages:
-            self.bouton_suite.SetBitmapLabel(wx.Bitmap(Chemins.GetStaticPath("Images/BoutonsImages/Valider_L72.png"), wx.BITMAP_TYPE_ANY))
+            self.bouton_suite.SetTexte(_(u"Valider"))
         if self.pageVisible > 1:
             self.bouton_retour.Enable(True)
 

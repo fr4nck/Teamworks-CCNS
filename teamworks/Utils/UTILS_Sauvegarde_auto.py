@@ -294,9 +294,20 @@ class Sauvegarde_auto():
             return False
         
         try :
-            image = wx.Bitmap(Chemins.GetStaticPath("Images/48x48/Sauvegarder.png"), wx.BITMAP_TYPE_ANY)
             message1 = _(u"Vous n'avez paramétré aucune sauvegarde automatique.\n\nSouhaitez-vous le faire maintenant ?")
-            dlg = dialogs.MultiMessageDialog(self.parent, message1, caption=_(u"Rappel de sauvegarde"), msg2=None, style = wx.NO | wx.CANCEL | wx.YES | wx.YES_DEFAULT, icon=image, btnLabels={wx.ID_YES : _(u"Oui"), wx.ID_NO : _(u"Ne plus rappeler"), wx.ID_CANCEL : _(u"Pas maintenant")})
+            dlg = wx.MessageDialog(
+                self.parent,
+                message1,
+                caption=_(u"Rappel de sauvegarde"),
+                style=wx.YES_NO | wx.CANCEL | wx.YES_DEFAULT | wx.ICON_INFORMATION,
+            )
+            if not dlg.SetYesNoCancelLabels(
+                _(u"Oui"),
+                _(u"Ne plus rappeler"),
+                _(u"Pas maintenant"),
+            ):
+                dlg.Destroy()
+                raise RuntimeError("Custom dialog labels unavailable")
             reponse = dlg.ShowModal() 
             dlg.Destroy() 
         except :

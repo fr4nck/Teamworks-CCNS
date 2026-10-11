@@ -69,7 +69,7 @@ class Page(wx.Panel):
         )
         self.bouton_modeles = CTRL_Bouton_image.CTRL(
             self.sizer_choix_modele_staticbox,
-            texte=_(u"G?rer les mod?les"),
+            texte=_(u"Gérer les modèles"),
         )
 
         self.__set_properties()

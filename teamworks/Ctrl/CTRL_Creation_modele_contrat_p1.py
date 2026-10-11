@@ -360,7 +360,7 @@ class ListCtrl_champs(wx.ListCtrl):
         self.EnableCheckBoxes(True)
         self.parent = parent
 
-        listeIDchamps = list(self.GetGrandParent().GetParent().dictChamps.keys())
+        listeIDchamps = list(wx.GetTopLevelParent(self).dictChamps.keys())
         self.selections = listeIDchamps if len(listeIDchamps) != 0 else []
 
         self.Remplissage()
