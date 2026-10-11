@@ -9,13 +9,13 @@
 import Chemins
 from Utils.UTILS_Traduction import _
 import wx
-from Ctrl import CTRL_Bouton_image
+from Ctrl import CTRL_Bouton_image, CTRL_Texte
 import six
 import FonctionsPerso
 import wx.lib.mixins.listctrl as listmix
 from Dlg import DLG_Config_modeles_contrats as ConfigModeles
 import GestionDB
-from Utils import UTILS_Adaptations, UTILS_Contrats_schema
+from Utils import UTILS_Adaptations, UTILS_Contrats_schema, UTILS_Styles
 
 
 def _resolve_model_convention(current_convention, model_convention, is_legacy_model, is_cee_model):
@@ -31,13 +31,46 @@ class Page(wx.Panel):
     def __init__(self, *args, **kwds):
         kwds["style"] = wx.TAB_TRAVERSAL
         wx.Panel.__init__(self, *args, **kwds)
-        self.sizer_choix_modele_staticbox = wx.StaticBox(self, -1, _(u"Choix du modèle"))
-        self.label_titre = wx.StaticText(self, -1, _(u"1. Importation d'un modèle de contrat"))
-        self.label_intro = wx.StaticText(self, -1, _(u"Souhaitez-vous utiliser un modèle de contrat pour faciliter votre saisie ?"))
-        self.radio_non = wx.RadioButton(self, -1, "Non", style=wx.RB_GROUP)
-        self.radio_oui = wx.RadioButton(self, -1, "Oui")
-        self.listCtrl_modeles = ListCtrl(self.sizer_choix_modele_staticbox, controller=self)
-        self.bouton_modeles = CTRL_Bouton_image.Compact(self.sizer_choix_modele_staticbox, texte="...")
+
+        self.label_titre = CTRL_Texte.H2(self, _(u"1. Point de départ"))
+        self.label_intro = CTRL_Texte.BodySecondary(
+            self,
+            _(u"Choisissez simplement comment démarrer. Vous pourrez modifier tous les éléments du contrat ensuite."),
+        )
+
+        self.radio_non = wx.RadioButton(
+            self,
+            -1,
+            _(u"Créer le contrat sans modèle"),
+            style=wx.RB_GROUP,
+        )
+        self.radio_oui = wx.RadioButton(
+            self,
+            -1,
+            _(u"Utiliser un modèle existant"),
+        )
+        self.aide_sans_modele = CTRL_Texte.BodySecondary(
+            self,
+            _(u"Recommandé pour un contrat ponctuel ou lorsque vous voulez repartir d'une saisie propre."),
+        )
+        self.aide_avec_modele = CTRL_Texte.BodySecondary(
+            self,
+            _(u"Pratique pour reprendre une structure de contrat déjà utilisée sans ressaisir les mêmes paramètres."),
+        )
+
+        self.sizer_choix_modele_staticbox = wx.StaticBox(
+            self,
+            -1,
+            _(u"Modèles disponibles"),
+        )
+        self.listCtrl_modeles = ListCtrl(
+            self.sizer_choix_modele_staticbox,
+            controller=self,
+        )
+        self.bouton_modeles = CTRL_Bouton_image.CTRL(
+            self.sizer_choix_modele_staticbox,
+            texte=_(u"G?rer les mod?les"),
+        )
 
         self.__set_properties()
         self.__do_layout()
@@ -49,34 +82,61 @@ class Page(wx.Panel):
         self.Init_radio(position="non")
 
     def __set_properties(self):
-        self.label_titre.SetFont(wx.Font(8, wx.DEFAULT, wx.NORMAL, wx.BOLD, 0, ""))
-        self.bouton_modeles.SetMinSize((20, 20))
-        self.bouton_modeles.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour ajouter, modifier ou supprimer des modèles de contrat")))
+        self.bouton_modeles.SetMinSize(
+            (-1, UTILS_Styles.GetControlMetric("button_min_height"))
+        )
+        self.bouton_modeles.SetToolTip(
+            wx.ToolTip(
+                _(u"Ajouter, modifier ou supprimer les modèles de contrat")
+            )
+        )
+        self.listCtrl_modeles.SetMinSize(
+            (-1, UTILS_Styles.Scale(180))
+        )
 
     def __do_layout(self):
-        grid_sizer_base = wx.FlexGridSizer(rows=4, cols=1, vgap=10, hgap=10)
-        grid_sizer_question = wx.FlexGridSizer(rows=3, cols=1, vgap=5, hgap=5)
-        sizer_choix_modele = wx.StaticBoxSizer(self.sizer_choix_modele_staticbox, wx.VERTICAL)
-        grid_sizer_choix = wx.FlexGridSizer(rows=1, cols=2, vgap=5, hgap=5)
-        grid_sizer_boutons = wx.FlexGridSizer(rows=3, cols=1, vgap=5, hgap=5)
-        grid_sizer_base.Add(self.label_titre, 0, 0, 0)
-        grid_sizer_base.Add(self.label_intro, 0, wx.LEFT, 20)
-        grid_sizer_question.Add(self.radio_non, 0, 0)
-        grid_sizer_question.Add(self.radio_oui, 0, 0)
-        grid_sizer_choix.Add(self.listCtrl_modeles, 1, wx.EXPAND, 0)
-        grid_sizer_boutons.Add(self.bouton_modeles, 0, 0, 0)
-        grid_sizer_choix.Add(grid_sizer_boutons, 1, wx.EXPAND, 0)
-        grid_sizer_choix.AddGrowableRow(0)
-        grid_sizer_choix.AddGrowableCol(0)
-        sizer_choix_modele.Add(grid_sizer_choix, 1, wx.ALL|wx.EXPAND, 5)
-        grid_sizer_question.Add(sizer_choix_modele, 1, wx.LEFT|wx.EXPAND, 18)
-        grid_sizer_question.AddGrowableRow(2)
-        grid_sizer_question.AddGrowableCol(0)
-        grid_sizer_base.Add(grid_sizer_question, 1, wx.EXPAND|wx.LEFT, 35)
-        self.SetSizer(grid_sizer_base)
-        grid_sizer_base.Fit(self)
-        grid_sizer_base.AddGrowableRow(2)
-        grid_sizer_base.AddGrowableCol(0)
+        page_gap = UTILS_Styles.GetLayoutSpacing("page_gap")
+        section_gap = UTILS_Styles.GetLayoutSpacing("section_gap")
+        field_gap = UTILS_Styles.GetLayoutSpacing("field_gap")
+        control_gap = UTILS_Styles.GetLayoutSpacing("control_gap")
+
+        sizer_base = wx.BoxSizer(wx.VERTICAL)
+        sizer_base.Add(self.label_titre, 0, wx.EXPAND | wx.BOTTOM, field_gap)
+        sizer_base.Add(self.label_intro, 0, wx.EXPAND | wx.BOTTOM, section_gap)
+
+        bloc_sans = wx.BoxSizer(wx.VERTICAL)
+        bloc_sans.Add(self.radio_non, 0, wx.BOTTOM, control_gap)
+        bloc_sans.Add(self.aide_sans_modele, 0, wx.LEFT, UTILS_Styles.GetSpacing("lg"))
+        sizer_base.Add(bloc_sans, 0, wx.EXPAND | wx.BOTTOM, section_gap)
+
+        bloc_avec = wx.BoxSizer(wx.VERTICAL)
+        bloc_avec.Add(self.radio_oui, 0, wx.BOTTOM, control_gap)
+        bloc_avec.Add(self.aide_avec_modele, 0, wx.LEFT, UTILS_Styles.GetSpacing("lg"))
+        sizer_base.Add(bloc_avec, 0, wx.EXPAND | wx.BOTTOM, field_gap)
+
+        sizer_choix_modele = wx.BoxSizer(wx.VERTICAL)
+        sizer_choix_modele.Add(
+            self.listCtrl_modeles,
+            1,
+            wx.EXPAND | wx.BOTTOM,
+            field_gap,
+        )
+        ligne_actions = wx.BoxSizer(wx.HORIZONTAL)
+        ligne_actions.AddStretchSpacer(1)
+        ligne_actions.Add(self.bouton_modeles, 0)
+        sizer_choix_modele.Add(ligne_actions, 0, wx.EXPAND)
+        self.sizer_choix_modele_staticbox.SetSizer(sizer_choix_modele)
+
+        sizer_base.Add(
+            self.sizer_choix_modele_staticbox,
+            1,
+            wx.EXPAND | wx.TOP,
+            field_gap,
+        )
+
+        outer = wx.BoxSizer(wx.VERTICAL)
+        outer.Add(sizer_base, 1, wx.EXPAND | wx.ALL, page_gap)
+        self.SetSizer(outer)
 
     def OnRadioNon(self, event):
         self.Init_radio(position="non")
@@ -93,14 +153,13 @@ class Page(wx.Panel):
         dlg.Destroy()
 
     def Init_radio(self, position="non"):
-        if position == "non":
-            self.radio_non.SetValue(True)
-            self.listCtrl_modeles.Enable(False)
-            self.bouton_modeles.Enable(False)
-        else:
-            self.radio_oui.SetValue(True)
-            self.listCtrl_modeles.Enable(True)
-            self.bouton_modeles.Enable(True)
+        utilise_modele = position == "oui"
+        self.radio_non.SetValue(not utilise_modele)
+        self.radio_oui.SetValue(utilise_modele)
+        self.listCtrl_modeles.Enable(utilise_modele)
+        self.bouton_modeles.Enable(utilise_modele)
+        self.sizer_choix_modele_staticbox.Show(utilise_modele)
+        self.Layout()
 
     def MAJ_ListCtrl(self):
         self.listCtrl_modeles.MAJListeCtrl()
