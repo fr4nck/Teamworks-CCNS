@@ -144,5 +144,15 @@
       "tag": "archive/2026-10-12/three-rails/pr-442-closed",
       "integration_status": "REVIEW"
     }
+  ],
+  "remote_branch_count_after_first_validated_lot": 13,
+  "deletions": [
+    {
+      "branch": "ccns/session-actual-hr-inbox",
+      "expected_sha": "3dadf2d0adc338bf2b5b45fcb49461d5bcfa37b1",
+      "qualification_commit": "4bc6244c",
+      "publication_and_deletion_atomic": true,
+      "archive_verified_after_deletion": true
+    }
   ]
 }

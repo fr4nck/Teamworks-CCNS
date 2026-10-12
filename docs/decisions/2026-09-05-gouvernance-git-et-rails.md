@@ -130,3 +130,10 @@ de libellé d'erreur. Les 48 tests historiques/courants/mailbox passent.
 Voir `docs/04_CCNS_EXTENSIONS.md` pour le périmètre et les limites exactes.
 Après publication de cette preuve, ce sommet peut être retiré avec un contrôle
 du SHA distant ; aucun autre lot n'est déclaré supprimable ici.
+
+Résultat réel : la publication de `4bc6244c` sur `wx/master` et la suppression
+de `ccns/session-actual-hr-inbox` ont été effectuées dans une seule opération
+atomique, sous contrôle des deux SHA distants. Le tag d'archive a été revérifié
+après suppression. L'inventaire GitHub compte désormais **13 branches** :
+la cible de trois n'est pas encore atteinte. Les dix autres branches historiques
+restent à reprendre et qualifier ; les archives n'autorisent pas leur retrait.
