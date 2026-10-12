@@ -290,6 +290,38 @@ class MyFrame(CORE.MyFrame):
         finally:
             dlg.Destroy()
 
+    def On_demarches_rh(self, event):
+        """Ouvre le cockpit CRH-24 en lecture seule sur demande explicite."""
+        if self.userConfig.get("nomFichier", "") == "":
+            dlg = wx.MessageDialog(
+                self,
+                _(u"Vous devez d'abord ouvrir un fichier Teamworks."),
+                _(u"Démarches RH"),
+                wx.OK | wx.ICON_INFORMATION,
+            )
+            dlg.ShowModal()
+            dlg.Destroy()
+            return
+
+        try:
+            from Dlg import DLG_Demarches_rh
+
+            dlg = DLG_Demarches_rh.Dialog(self)
+        except Exception as exc:
+            wx.MessageBox(
+                _(u"Le cockpit des démarches RH est momentanément indisponible.\n\n%s")
+                % str(exc),
+                _(u"Démarches RH"),
+                wx.OK | wx.ICON_ERROR,
+                self,
+            )
+            return
+
+        try:
+            dlg.ShowModal()
+        finally:
+            dlg.Destroy()
+
     def CreationBarreMenus(self):
         super(MyFrame, self).CreationBarreMenus()
         menu_parametrage = self.dictInfosMenu["menu_parametrage"]["ctrl"]
@@ -311,6 +343,27 @@ class MyFrame(CORE.MyFrame):
         menu_parametrage.Append(item)
         self.Bind(wx.EVT_MENU, self.On_param_connexions_rh, id=item_id)
         self.dictInfosMenu["connexions_rh"] = {"id": item_id, "ctrl": item}
+
+
+        dashboard_id = wx.Window.NewControlId()
+        dashboard_item = wx.MenuItem(
+            menu_parametrage,
+            dashboard_id,
+            _(u"Démarches RH"),
+            _(u"Afficher les démarches, échéances et anomalies RH de la structure"),
+        )
+        dashboard_item.SetBitmap(
+            wx.Bitmap(
+                Chemins.GetStaticPath("Images/16x16/Utilisateur_reseau.png"),
+                wx.BITMAP_TYPE_PNG,
+            )
+        )
+        menu_parametrage.Append(dashboard_item)
+        self.Bind(wx.EVT_MENU, self.On_demarches_rh, id=dashboard_id)
+        self.dictInfosMenu["demarches_rh"] = {
+            "id": dashboard_id,
+            "ctrl": dashboard_item,
+        }
 
 
         barre = self.GetMenuBar()

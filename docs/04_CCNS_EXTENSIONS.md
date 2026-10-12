@@ -129,3 +129,12 @@ Qualification et limites : voir `docs/CRH_CONSERVATION_CRH22_CRH36.md`. Ces déf
 ## Conservation complète des tests métier CRH
 
 Six tests avaient été écartés lors du premier portage par une détection trop large du mot teamworks. Les tests des événements, secrets et protections/actions/successions sont réintégrés sans changement métier. La qualification du socle passe de 278 à 319 tests, sous Windows et Linux, avec les deux tests exclusivement réseau réservés à leur suite SQL.
+
+
+## Portage des écrans Démarches RH
+
+Le cockpit, la création, les transitions, l'historique et le suivi des pièces de CRH-36 sont raccordés au menu Paramétrage de la coque actuelle. La fiche salarié et la fermeture sûre restent intactes. Le portage conserve la confirmation explicite avant écriture, les statuts métier/échange séparés, le refus des transitions périmées et la lecture seule des pièces après clôture.
+
+Une erreur de rafraîchissement après une sauvegarde réussie ne doit plus annoncer une écriture échouée : le message indique que l'action est enregistrée et bloque les actions sur la projection périmée jusqu'à une actualisation. Cette famille est traitée pour création, transition, réception et retrait de pièce ; les erreurs de rechargement secondaires ne sont plus silencieuses. Il s'agit de composants nouveaux du fork, classés CCNS/extensions.
+
+Trois parcours natifs complets sur une base SQLite jetable sont vérifiés, chacun avec six événements d'audit, ainsi que les annulations, l'état périmé, la clôture et les quatre échecs de rafraîchissement après écriture. Les confirmations sont automatisées par un dialogue wx générique de test. Les tests ne valent pas recette utilisateur et n'ouvrent aucune base réelle.
