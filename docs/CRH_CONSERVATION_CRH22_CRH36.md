@@ -39,8 +39,19 @@ Le test wx natif utilise wxPython 4.3.1 / wxWidgets 3.3.3 sous Windows, une conf
 
 Les portages sont construits depuis master `47a3bf07` et wx/master `c6dabe16`, sans reprise des 230 commits historiques. Les exports existants des packages sont conservés. Aucun dépôt DPAE, Sorties salarié ou Session RH existant n'est remplacé.
 
-Le lot wx ajoute seulement les panneaux Protection sociale, les dialogues d'action et de configuration des organismes, l'onglet différé en fin de fiche et le menu des organismes. Les écrans cockpit, historique et pièces de démarches restent sur la branche historique CRH-36 ; leur raccord constitue un autre lot. Qt n'est pas modifié.
+Le lot wx ajoute seulement les panneaux Protection sociale, les dialogues d'action et de configuration des organismes, l'onglet différé en fin de fiche et le menu des organismes. Les écrans cockpit, création, workflow, historique et pièces sont désormais raccordés dans un lot wx distinct, avec leur menu chargé à la demande. Qt n'est pas modifié.
 
 Sur les arbres finaux du portage : 278 tests passent pour le socle master et 325 pour wx, sous Windows et Linux ; les deux tests réservés au moteur SQL sont ignorés dans ces suites SQLite. Les 12 tests réseau passent sur chacun des serveurs jetables MySQL 5.5.62 et MariaDB 10.11.14. Le vrai événement du bouton Organismes RH est exercé sur cinq cycles modaux wx natifs avec rechargement et invalidation du cache d'actions.
 
-Cette qualification est locale et ciblée. Aucune CI distante, construction de paquet ou recette sur base utilisateur n'est revendiquée. Aucune branche historique ne doit être supprimée à ce stade : les raccordements wx restants de CRH-36 ne sont pas encore portés.
+Cette qualification est locale et ciblée. Aucune CI distante, construction de paquet ou recette sur base utilisateur n'est revendiquée. Les raccordements wx de CRH-36 sont maintenant portés localement. Aucune branche distante ne doit être supprimée avant publication des commits locaux, vérification des SHA distants et accord distinct de suppression.
+
+
+## Qualification des écrans de démarches
+
+Les six tests métier omis par un classement trop large du mot teamworks sont présents sur master et wx/master. Le socle partagé passe 319 tests sous Windows et Linux. Les écrans sont testés avec tous les tests CRH, les gardes de fermeture différée et de durée de vie de locale, et les tests de compatibilité du snapshot de salaire existant.
+
+Le test natif traverse trois fois création, préparation, réception/retrait d'une pièce, historique, transmission déclarée et acceptation. Chaque dossier conserve six événements réels sur une base SQLite jetable, avec le statut technique d'échange inchangé. Une confirmation annulée n'écrit rien ; une modification concurrente empêche la transition depuis une projection périmée ; les pièces d'un dossier accepté restent en lecture seule. Les confirmations sont automatisées via wx.GenericMessageDialog, tandis que les formulaires et événements des boutons sont réels.
+
+Les erreurs de rafraîchissement après création, transition, réception ou retrait affichent désormais que l'action est enregistrée et invalident la projection/action périmée. Ces scénarios sont injectés après les écritures réelles, puis vérifiés dans la base et l'interface. Les erreurs d'écriture conservent leur signalement séparé.
+
+Les documents historiques CRH-17B à CRH-36 restent disponibles sous le tag d'archive exact de la branche CRH-36 ; leur absence dans le rail ne signifie pas perte de contenu. Cette synthèse décrit les contrats actuels, notamment le schéma version 2, au lieu de réintroduire leurs anciens états version 1.
