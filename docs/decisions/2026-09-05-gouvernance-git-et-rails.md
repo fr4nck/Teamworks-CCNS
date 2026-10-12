@@ -98,3 +98,10 @@ contrôles statiques, sans nouvelle recette graphique, sans construction ni
 exécution du portable et sans validation des quatre sommets historiques.
 Qt, `artifacts/`, les fichiers de référence synchronisés et les branches
 historiques n'ont pas été modifiés ; aucune PR créée, fermée ou fusionnée.
+
+Suite du tri #391 : l'ancien point d'entrée portable délègue maintenant au
+harnais isolé courant. Le test installateur, initialement identique à la
+source #391, possède désormais une garde supplémentaire contre `BUILD.txt`
+vide. Voir `docs/CI_POLICY.md` pour les garanties conservées, la migration du
+rapport et les limites. La PR #391 reste ouverte : le masquage historique du
+checkout n'a pas été repris et aucune nouvelle recette EXE n'est déclarée.

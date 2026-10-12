@@ -55,7 +55,10 @@ foreach ($relative in $requiredInstalledResources) {
     }
 }
 
-$buildMarker = Get-Content (Join-Path $installRoot 'BUILD.txt') -Raw
+$buildMarker = [string](Get-Content (Join-Path $installRoot 'BUILD.txt') -Raw)
+if ([string]::IsNullOrWhiteSpace($buildMarker)) {
+    throw 'BUILD.txt vide : aucune provenance de construction a qualifier.'
+}
 if ($ExpectedCommit -and $buildMarker -notmatch [regex]::Escape($ExpectedCommit)) {
     throw "L'installation ne référence pas le commit construit $ExpectedCommit"
 }

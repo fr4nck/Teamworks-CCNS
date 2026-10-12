@@ -74,7 +74,10 @@ foreach ($relative in $requiredResources) {
     }
 }
 
-$buildMarker = Get-Content -LiteralPath (Join-Path $portableRoot "BUILD.txt") -Raw
+$buildMarker = [string](Get-Content -LiteralPath (Join-Path $portableRoot "BUILD.txt") -Raw)
+if ([string]::IsNullOrWhiteSpace($buildMarker)) {
+    throw "BUILD.txt vide : aucune provenance de construction a qualifier."
+}
 if ($ExpectedCommit -and $buildMarker -notmatch [regex]::Escape($ExpectedCommit)) {
     throw "Le BUILD.txt du paquet ne correspond pas au commit attendu : $ExpectedCommit"
 }
@@ -137,6 +140,9 @@ function Invoke-IsolatedLaunch {
         }
         if (-not $process.WaitForExit(10000)) {
             throw "Demarrage $Round : fermeture non terminee apres 10 secondes."
+        }
+        if ($process.ExitCode -ne 0) {
+            throw "Demarrage $Round : fermeture en erreur (code $($process.ExitCode)). STDOUT: $(Read-TestLog $stdout) STDERR: $(Read-TestLog $stderr)"
         }
 
         return [pscustomobject]@{
