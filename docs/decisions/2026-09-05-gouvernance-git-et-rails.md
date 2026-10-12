@@ -67,3 +67,34 @@ Un GO technique automatisé ne vaut pas autorisation de merge ni validation util
 Les décisions Teamworks propres au code et à la migration résident dans ce dépôt.
 
 Les décisions transverses concernant Portail, Connecthys, hébergement et infrastructure peuvent également relever de `fr4nck/PMSL-Arch`. Lorsqu'un sujet est transverse, éviter de le redéfinir contradictoirement dans plusieurs dépôts.
+
+## 10. Nettoyage : état vérifié le 12 octobre 2026
+
+Point de comparaison : `wx/master` à
+`2abc1d8ddac60b06b33da9536e95edd8135c52ec`.
+Les quatre PR ci-dessous sont ouvertes sur GitHub. Cette vérification est
+un inventaire de récupération, pas une autorisation de fusion. Les références
+distantes ont été actualisées sans suppression ni élagage de branches.
+
+| PR | Sommet source | Constat sur le wx courant | Suite du tri |
+| --- | --- | --- | --- |
+| [#391](https://github.com/fr4nck/Teamworks-CCNS/pull/391) | `adce8bd09a282b7a339e6bda8c8c010d3162baac` | `scripts/test_windows_installer.ps1` est identique octet pour octet. Le test portable source reste différent et renomme temporairement les dossiers du checkout. | Ne pas réimporter le script historique en bloc. Comparer ses garanties au test actuel `test_windows_portable_isolated.ps1`, qui ne masque pas les sources. Aucun portable ni installateur exécuté pendant cet inventaire. |
+| [#452](https://github.com/fr4nck/Teamworks-CCNS/pull/452) | `8edfb4ded5342f3e772ead8715204a5c0b9f9d5a` | Les services `hr_document_workflow`, `mail_merge_data`, `document_template_catalog` et plusieurs modules `domain/documents` sont absents de wx. La branche contient aussi des changements de documentation et de CI. | Récupération métier à examiner par fichiers et dépendances ; aucune intégration globale ni validation Office présumée. |
+| [#383](https://github.com/fr4nck/Teamworks-CCNS/pull/383) | `b808c722d3df473619ff519134bc44d0b8a6ce88` | `DLG_Documents_RH.py` et `DLG_Publiposteur_rh.py` sont absents de wx. | Travail UI historique distinct du moteur #452 ; vérifier le besoin et les raccordements avant toute reprise. |
+| [#357](https://github.com/fr4nck/Teamworks-CCNS/pull/357) | `6a75377b1d799c4a710c1f6ecf268efd6955be43` | Sommet de consolidation CRH conservé ; 230 commits propres à la source et 584 propres au wx courant depuis leur ancêtre commun. | Préserver les travaux et reprendre domaine, persistance et UI par lots ; ces compteurs ne mesurent pas le nombre de fonctions manquantes. |
+
+La PR [#442](https://github.com/fr4nck/Teamworks-CCNS/pull/442) est déjà fermée
+sans fusion depuis le 11 octobre. Sa branche distante a déjà disparu ; le
+sommet `5712aa019c557736045b05a214af41b11f579f77` reste disponible sous
+`refs/pull/442/head`. L'état ancien « PR et branche ouvertes » est corrigé dans
+`docs/03_UI_UX_MODERNISATION.md`. La disparition de cette branche est un constat
+antérieur à ce lot, pas une action de nettoyage effectuée ici.
+
+Validation de cet inventaire : 23 tests ciblés réussis sur l'invalidation de
+contexte, l'état des vues, les tableaux Personnes et le contrat installateur.
+Les parseurs PowerShell ne signalent aucune erreur de syntaxe sur les scripts
+installateur et portable isolé actuels. Il s'agit de tests automatisés et de
+contrôles statiques, sans nouvelle recette graphique, sans construction ni
+exécution du portable et sans validation des quatre sommets historiques.
+Qt, `artifacts/`, les fichiers de référence synchronisés et les branches
+historiques n'ont pas été modifiés ; aucune PR créée, fermée ou fusionnée.

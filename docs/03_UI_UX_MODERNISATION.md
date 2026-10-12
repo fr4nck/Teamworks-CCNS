@@ -121,8 +121,8 @@ invalidation des caches et selections de l'ancien dossier, notification des
 pages et rechargement du contenu des gadgets sans reconstruire les panes AUI.
 
 Les protections de taille du calendrier et le rendu groupe de Personnes
-sont conserves. La persistance generique des tableaux reste a integrer ;
-la PR 442 et sa branche source restent ouvertes et conservees.
+sont conserves. Au terme de ce premier lot, la persistance generique des
+tableaux restait a integrer ; elle est absorbee par le second lot ci-dessous.
 
 Qualification locale Windows : tests de contexte, cache, gadgets, layout,
 comportement des selections, smoke natif Personnes et verification native
@@ -154,5 +154,13 @@ et donnees synthetiques isolees. Ce controle n'ecrit pas la configuration usuell
 La persistance du tableau precedemment indiquee comme restante est absorbee
 par ce second lot. Recette utilisateur restante : sur une copie de base,
 changer de dossier, verifier selections/filtres/gadgets et retrouver les
-preferences de colonnes apres redemarrage. Conserver la PR 442 et sa source
-jusqu'a cette verification et a l'audit final des autres fichiers.
+preferences de colonnes apres redemarrage.
+
+Etat GitHub reverifie le 12 octobre 2026 : la PR #442 est fermee sans fusion
+depuis le 11 octobre ; sa branche distante n'existe plus. Ce chantier n'a
+supprime aucune branche. Le sommet historique `5712aa019c557736045b05a214af41b11f579f77`
+reste accessible via `refs/pull/442/head` pour reprendre l'audit des autres
+fichiers. Les deux lots absorbes ne prouvent pas l'integration de tous les
+changements de cette PR. Ne pas rejouer le sommet en bloc :
+`UTILS_Etat_vues.py` contient deja des gardes supplementaires sur `wx/master`
+(types de collections et `OverflowError`) absentes de la source historique.
