@@ -1,0 +1,148 @@
+{
+  "schema": "teamworks.branch-preservation.v1",
+  "date": "2026-10-12",
+  "target_branches": [
+    "master",
+    "wx/master",
+    "qt/master"
+  ],
+  "rule": "Integrer et valider avant suppression ; archive seule insuffisante",
+  "remote_branches_before": [
+    {
+      "sha": "780b6bc7b953bd7e039332e093b6e6d4cb05d5ae",
+      "branch": "architecture/person-refresh-wx"
+    },
+    {
+      "sha": "3dadf2d0adc338bf2b5b45fcb49461d5bcfa37b1",
+      "branch": "ccns/session-actual-hr-inbox"
+    },
+    {
+      "sha": "3f50b83b02ce5b93a3e449f4db6c66aed33ce1b9",
+      "branch": "crh-22-teamworks-hr-cases-persistence"
+    },
+    {
+      "sha": "6a75377b1d799c4a710c1f6ecf268efd6955be43",
+      "branch": "crh-36-lifecycle-template-management"
+    },
+    {
+      "sha": "345d963dd5c748822a1fa4353c077f825a4ad2b6",
+      "branch": "feature/home-calendar-hr-foundation"
+    },
+    {
+      "sha": "b808c722d3df473619ff519134bc44d0b8a6ce88",
+      "branch": "feature/hr-document-selector-2026-08-29"
+    },
+    {
+      "sha": "fdbb42e7767a9950493627aa3975be8505ec091d",
+      "branch": "fix/0.9.1g-render-transaction"
+    },
+    {
+      "sha": "047244fcb8355411f6d93fa64555ce5f79a9fdff",
+      "branch": "integration/main-foundation-2026-10"
+    },
+    {
+      "sha": "47a3bf07f07d035da490b2716826e4b67079f4ee",
+      "branch": "master"
+    },
+    {
+      "sha": "5c8b5981dc567d64836f27c3d8535cd8289ca860",
+      "branch": "qt/document-core-iteration-3"
+    },
+    {
+      "sha": "0d7851a1bb1b83ec1bcd03c93ded5839c9698bee",
+      "branch": "qt/master"
+    },
+    {
+      "sha": "8edfb4ded5342f3e772ead8715204a5c0b9f9d5a",
+      "branch": "rail-c/documents-rh-publipostage"
+    },
+    {
+      "sha": "adce8bd09a282b7a339e6bda8c8c010d3162baac",
+      "branch": "tw10-04-windows-release-qualification"
+    },
+    {
+      "sha": "63596c7831a9a36b10151775d91ef976829c7d6a",
+      "branch": "wx/master"
+    }
+  ],
+  "bundle_file": "teamworks-before-three-rails-20261012.bundle",
+  "bundle_sha256": "464214e5d5c7727bd8bd0c672e373395f6c918cb6ff8164790425d3bf66fe144",
+  "bundle_complete_history_verified": true,
+  "bundle_independent_restore_verified": true,
+  "remote_annotated_tags_peeled_shas_verified": true,
+  "archives": [
+    {
+      "branch": "architecture/person-refresh-wx",
+      "sha": "780b6bc7b953bd7e039332e093b6e6d4cb05d5ae",
+      "tag": "archive/2026-10-12/three-rails/architecture/person-refresh-wx",
+      "integration_status": "REVIEW"
+    },
+    {
+      "branch": "ccns/session-actual-hr-inbox",
+      "sha": "3dadf2d0adc338bf2b5b45fcb49461d5bcfa37b1",
+      "tag": "archive/2026-10-12/three-rails/ccns/session-actual-hr-inbox",
+      "integration_status": "REIMPLEMENTED_AND_HISTORICAL_TESTS_VALIDATED",
+      "validation": "48 tests Windows Python 3.11 + SQLite ; pas de recette reseau MySQL ou graphique"
+    },
+    {
+      "branch": "crh-22-teamworks-hr-cases-persistence",
+      "sha": "3f50b83b02ce5b93a3e449f4db6c66aed33ce1b9",
+      "tag": "archive/2026-10-12/three-rails/crh-22-teamworks-hr-cases-persistence",
+      "integration_status": "REVIEW"
+    },
+    {
+      "branch": "crh-36-lifecycle-template-management",
+      "sha": "6a75377b1d799c4a710c1f6ecf268efd6955be43",
+      "tag": "archive/2026-10-12/three-rails/crh-36-lifecycle-template-management",
+      "integration_status": "REVIEW"
+    },
+    {
+      "branch": "feature/home-calendar-hr-foundation",
+      "sha": "345d963dd5c748822a1fa4353c077f825a4ad2b6",
+      "tag": "archive/2026-10-12/three-rails/feature/home-calendar-hr-foundation",
+      "integration_status": "REVIEW"
+    },
+    {
+      "branch": "feature/hr-document-selector-2026-08-29",
+      "sha": "b808c722d3df473619ff519134bc44d0b8a6ce88",
+      "tag": "archive/2026-10-12/three-rails/feature/hr-document-selector-2026-08-29",
+      "integration_status": "REVIEW"
+    },
+    {
+      "branch": "fix/0.9.1g-render-transaction",
+      "sha": "fdbb42e7767a9950493627aa3975be8505ec091d",
+      "tag": "archive/2026-10-12/three-rails/fix/0.9.1g-render-transaction",
+      "integration_status": "REVIEW"
+    },
+    {
+      "branch": "integration/main-foundation-2026-10",
+      "sha": "047244fcb8355411f6d93fa64555ce5f79a9fdff",
+      "tag": "archive/2026-10-12/three-rails/integration/main-foundation-2026-10",
+      "integration_status": "REVIEW"
+    },
+    {
+      "branch": "qt/document-core-iteration-3",
+      "sha": "5c8b5981dc567d64836f27c3d8535cd8289ca860",
+      "tag": "archive/2026-10-12/three-rails/qt/document-core-iteration-3",
+      "integration_status": "REVIEW"
+    },
+    {
+      "branch": "rail-c/documents-rh-publipostage",
+      "sha": "8edfb4ded5342f3e772ead8715204a5c0b9f9d5a",
+      "tag": "archive/2026-10-12/three-rails/rail-c/documents-rh-publipostage",
+      "integration_status": "REVIEW"
+    },
+    {
+      "branch": "tw10-04-windows-release-qualification",
+      "sha": "adce8bd09a282b7a339e6bda8c8c010d3162baac",
+      "tag": "archive/2026-10-12/three-rails/tw10-04-windows-release-qualification",
+      "integration_status": "REVIEW"
+    },
+    {
+      "branch": "pr-442-closed",
+      "sha": "5712aa019c557736045b05a214af41b11f579f77",
+      "tag": "archive/2026-10-12/three-rails/pr-442-closed",
+      "integration_status": "REVIEW"
+    }
+  ]
+}

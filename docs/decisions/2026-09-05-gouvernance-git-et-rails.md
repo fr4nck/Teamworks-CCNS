@@ -105,3 +105,28 @@ source #391, possède désormais une garde supplémentaire contre `BUILD.txt`
 vide. Voir `docs/CI_POLICY.md` pour les garanties conservées, la migration du
 rapport et les limites. La PR #391 reste ouverte : le masquage historique du
 checkout n'a pas été repris et aucune nouvelle recette EXE n'est déclarée.
+
+## 11. Cible finale à trois branches — décision du 12 octobre 2026
+
+La cible finale confirmée est `master`, `wx/master`, `qt/master`. La décision
+historique de conserver temporairement `master` évolue : ce rail reste le socle
+commun permanent, comme défini dans les instructions Git actuelles du dépôt.
+L'utilisateur exige l'intégration et la validation des corrections avant
+suppression. Un tag d'archive seul ne permet donc pas de déclarer un lot terminé.
+
+L'inventaire distant de départ contient 14 branches. Le registre
+`docs/audit/branch-preservation-2026-10-12.json` conserve leurs noms et SHA exacts,
+les trois rails à garder et les tags annotés des 11 sommets à résorber.
+Le sommet de la PR #442 déjà fermée est également conservé.
+Les 12 tags ont été publiés et leurs SHA de commits vérifiés sur GitHub.
+Une sauvegarde Git complète a été vérifiée, restaurée dans un dépôt séparé,
+puis ses 12 sommets comparés aux originaux. Son SHA-256 figure dans le registre.
+Les sources non intégrées restent classées `REVIEW`, et non « absorbées ».
+
+Premier lot repris : `ccns/session-actual-hr-inbox`. Les contrats du lot sont
+déjà implémentés dans une version plus récente sur les rails ; ses deux fichiers
+de tests historiques sont repris sur `wx/master`, avec une seule adaptation
+de libellé d'erreur. Les 48 tests historiques/courants/mailbox passent.
+Voir `docs/04_CCNS_EXTENSIONS.md` pour le périmètre et les limites exactes.
+Après publication de cette preuve, ce sommet peut être retiré avec un contrôle
+du SHA distant ; aucun autre lot n'est déclaré supprimable ici.

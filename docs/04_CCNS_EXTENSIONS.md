@@ -80,6 +80,31 @@ Le bearer de transport et la clé HMAC de l'enveloppe restent des secrets distin
 Le transport HTTP est isolé de l'orchestration métier afin de pouvoir être remplacé
 ultérieurement par une queue ou un broker sans modifier le consommateur RH.
 
+### Conservation et qualification du lot historique — 12 octobre 2026
+
+Le sommet `3dadf2d0adc338bf2b5b45fcb49461d5bcfa37b1` de
+`ccns/session-actual-hr-inbox` est conservé intégralement dans le tag annoté
+`archive/2026-10-12/three-rails/ccns/session-actual-hr-inbox`, publié et vérifié.
+Le domaine, les deux services, le repository, les exports et les trois migrations
+SQL sont déjà présents sur les rails courants. Les huit fichiers de production
+concernés sont identiques entre `master` et `wx/master` au constat du lot ;
+les trois migrations et les exports sont identiques au sommet historique.
+Les implémentations métier ont évolué, notamment pour distinguer les erreurs
+techniques réessayables des refus déterministes et valider strictement les nombres.
+La documentation conserve le mapping explicite, l'identité immuable du réalisé,
+l'atomicité journal/inbox et l'interdiction de toucher contrats, planning et paie.
+
+Les deux fichiers de tests historiques sont désormais repris sur `wx/master`.
+Seul le motif d'erreur du test concurrent est adapté de « concurrente » à
+« concurr », pour accepter le libellé actuel « modifiée concurremment » ;
+les assertions de révision conservée et de nombre d'écritures restent intactes.
+Avec les tests courants et le client mailbox, **48 tests passent** sous Windows,
+Python 3.11, avec SQLite en mémoire et transports doublés. La compilation et
+`git diff --check` passent. Aucune base réelle, recette réseau MySQL, application
+graphique ou nouvelle CI Linux n'a été utilisée pour cette qualification.
+Cette preuve porte sur la reprise des corrections et contrats automatisés du
+lot historique, pas sur une qualification de production du transport RH.
+
 ## Références principales
 
 - `ROADMAP.md`
