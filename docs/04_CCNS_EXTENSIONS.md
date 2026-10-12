@@ -112,3 +112,15 @@ lot historique, pas sur une qualification de production du transport RH.
 - `docs/50-scope-metier.md`
 - `docs/60-scenario-utilisation-controle-salarial.md`
 - documentation `docs/40-*` à `docs/65-*`
+
+
+## Conservation CRH sur les rails permanents
+
+
+Portage ciblé du socle partagé sur master et du raccord salarié sur wx/master, sans merge massif ni publication distante. La régression des champs résultat/commentaire de CRH-36 est reproduite sur MySQL 5.5.62 et MariaDB 10.11.14 : erreur 1406 en mode strict, troncature en mode permissif. La migration du composant `hr_cases_runtime` vers la version 2 élargit les champs sans réduire les données, contrôle les schémas connus et le moteur transactionnel, normalise les index et sérialise l'initialisation.
+
+La configuration conserve les capacités existantes ; un nouveau profil reçoit uniquement les capacités manuelles du connecteur de référence disponible. OTHER reste configurable sans connecteur ni capacités annoncées.
+
+Le raccord salarié réemploie le dialogue CRH-36 et invalide le runtime d'actions avant le rechargement. Les collisions concurrentes d'événements/créations sont converties en erreurs métier avec rollback. Le `save_case` générique conserve sa limite historique de dernière écriture gagnante ; les actions métier doivent utiliser les adaptateurs transactionnels dédiés.
+
+Qualification et limites : voir `docs/CRH_CONSERVATION_CRH22_CRH36.md`. Ces défauts relèvent des extensions du fork ; aucune correction Vanilla n'est déduite.
