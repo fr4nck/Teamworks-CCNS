@@ -99,3 +99,8 @@ La configuration conserve les capacités existantes ; un nouveau profil reçoit 
 Le raccord salarié réemploie le dialogue CRH-36 et invalide le runtime d'actions avant le rechargement. Les collisions concurrentes d'événements/créations sont converties en erreurs métier avec rollback. Le `save_case` générique conserve sa limite historique de dernière écriture gagnante ; les actions métier doivent utiliser les adaptateurs transactionnels dédiés.
 
 Qualification et limites : voir `docs/CRH_CONSERVATION_CRH22_CRH36.md`. Ces défauts relèvent des extensions du fork ; aucune correction Vanilla n'est déduite.
+
+
+## Conservation complète des tests métier CRH
+
+Six tests avaient été écartés lors du premier portage par une détection trop large du mot teamworks. Les tests des événements, secrets et protections/actions/successions sont réintégrés sans changement métier. La qualification du socle passe de 278 à 319 tests, sous Windows et Linux, avec les deux tests exclusivement réseau réservés à leur suite SQL.
