@@ -18,7 +18,6 @@ import socket
 import os
 import glob
 import random
-import wx.lib.dialogs as dialogs
 
 import GestionDB
 from Utils import UTILS_Sauvegarde
@@ -58,14 +57,20 @@ class Sauvegarde_auto():
 
             # Demande de confirmation
             if valide == True and dictSauvegarde["option_demander"] in (1, "1"):
-                image = wx.Bitmap(Chemins.GetStaticPath("Images/48x48/Sauvegarder.png"), wx.BITMAP_TYPE_ANY)
                 message1 = _(u"Souhaitez-vous lancer la procédure de sauvegarde '%s' ?") % dictSauvegarde["nom"]
-                dlg = dialogs.MultiMessageDialog(self.parent, message1, caption=_(u"Sauvegarde automatique"), msg2=None, style = wx.NO | wx.CANCEL | wx.YES | wx.YES_DEFAULT, icon=image, btnLabels={wx.ID_YES : _(u"Oui"), wx.ID_NO : _(u"Non"), wx.ID_CANCEL : _(u"Annuler")})
-                reponse = dlg.ShowModal() 
-                try :
-                    dlg.Destroy() 
-                except :
-                    pass
+                # Comme le rappel sans procédure, utiliser le dialogue natif :
+                # ses boutons sont dimensionnés par Windows selon le DPI.
+                dlg = wx.MessageDialog(
+                    self.parent,
+                    message1,
+                    caption=_(u"Sauvegarde automatique"),
+                    style=wx.YES_NO | wx.CANCEL | wx.YES_DEFAULT | wx.ICON_QUESTION,
+                )
+                try:
+                    dlg.SetYesNoCancelLabels(_(u"Oui"), _(u"Non"), _(u"Annuler"))
+                    reponse = dlg.ShowModal()
+                finally:
+                    dlg.Destroy()
                 if reponse == wx.ID_NO :
                     valide = False
                 if reponse == wx.ID_CANCEL :

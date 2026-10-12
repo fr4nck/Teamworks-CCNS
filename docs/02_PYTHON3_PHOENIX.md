@@ -134,3 +134,56 @@ La CI Python 3.11 Linux/Windows et la recette EXE restent des niveaux distincts.
 - `docs/MATRICE_COMPATIBILITE.md`
 - `docs/CI_POLICY.md`
 - `docs/01_VANILLA_BUGFIX.md`
+## Confirmation de sauvegarde à la fermeture — 12 octobre 2026
+
+Correction sur le rail existant `wx/master`, base
+`03f7439d` : `Teamworks_core.OnClose` / `Quitter` appelle
+`SauvegardeAutomatique`, puis `UTILS_Sauvegarde_auto.Sauvegarde_auto.Start`.
+Lorsqu'une procédure configurée demande confirmation, le code utilisait
+encore `wx.lib.dialogs.MultiMessageDialog`. Le rappel sans procédure avait
+déjà été migré vers `wx.MessageDialog` dans `5267043b`.
+
+L'ancien dialogue construit des `wx.Button` via
+`CreateStdDialogButtonSizer`, change leurs libellés, ajoute le sizer de boutons
+avec `wx.EXPAND`, puis appelle `Fit`. Il ne consomme pas
+`CTRL_Bouton_image.CTRL` : son contrat `GetBestSize` / `SetMinSize`, sa hauteur
+minimale `button_min_height=36` multipliée par l'échelle d'interface, et sa
+largeur naturelle ne s'appliquent donc pas. Le moteur de thème peut ensuite
+modifier police et minima de contrôles wx ; aucun ajustement local de ce
+composant partagé n'est nécessaire pour ce correctif.
+
+La confirmation utilise désormais `wx.MessageDialog` avec Oui/Non/Annuler,
+Oui par défaut et une icône question. Windows gère le dimensionnement natif
+et le DPI, sans sizer applicatif ni hauteur fixe. Les identifiants et les
+effets métier restent inchangés. La destruction du dialogue est garantie par
+`finally`.
+
+Provenance : le même appel historique existe dans
+[Noethys/Teamworks](https://github.com/Noethys/Teamworks/blob/master/teamworks/Utils/UTILS_Sauvegarde_auto.py).
+Cela confirme l'origine du code, **pas** le défaut visuel sur wx Classic.
+Ce lot est une adaptation de compatibilité wxPython Phoenix / Windows du
+rail Vanilla wx, sans refonte du design system ni backport Classic qualifié.
+Ratissage : plus aucun `MultiMessageDialog` dans les sauvegardes automatiques.
+L'occurrence restante dans `DLG_Selection_mails` possède un second message
+détaillé ; elle est un candidat hors fermeture, sans défaut graphique confirmé,
+et reste inchangée.
+
+Validation : 17 tests ciblés réussis (8 régressions de confirmation,
+contrat des boutons/sizers, API Phoenix, messagebox et cycle du thème),
+compilation Python et `git diff --check` réussis. Les tests sans affichage
+exécutent la vraie méthode `Start` avec dialogues et stockage doublés ; ils
+couvrent Oui/Non/Annuler, les options `1` / `"1"` et l'échec de `ShowModal`.
+
+Vérification graphique réelle : harnais isolé exécutant la même méthode
+`Start`, avec dialogue wx natif et stockage fictif, sous Windows,
+Python 3.10.11, wxPython 4.3.1 / wxWidgets 3.3.3, écran à 96 DPI.
+Observation visuelle et clics Oui, Non, Annuler réussis : sauvegarde simulée
+et date uniquement pour Oui, aucune écriture pour Non/Annuler,
+`wx.ID_CANCEL` renvoyé pour Annuler. Aucune base réelle ni configuration
+utilisateur utilisée. Cette vérification ne qualifie ni le portable RC3
+existant, ni les DPI 125/150/200 %, ni le parcours complet de l'application.
+Recette restante : reconstruire depuis le commit corrigé, puis fermer
+l'application sur une copie de base avec procédure automatique configurée,
+vérifier les trois réponses et les échelles des postes utilisateurs.
+Pas de CI lourde déclenchée, pas de modification Qt ou `artifacts/`,
+pas de PR ni de suppression de branche historique.
