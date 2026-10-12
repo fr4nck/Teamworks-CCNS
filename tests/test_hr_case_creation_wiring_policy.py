@@ -80,7 +80,7 @@ def test_new_case_button_is_explicit_and_independent_from_selection():
     source = _source(COCKPIT)
     update_state = ast.unparse(_find_method(COCKPIT, "Dialog", "_update_action_state"))
 
-    assert 'self.new_case = wx.Button(self, -1, _(u"Nouvelle démarche"))' in source
+    assert 'self.new_case = CTRL_Bouton_image.CTRL(self, id=-1, texte=_(u"Nouvelle démarche"), role="primary")' in source
     assert "self.new_case.Bind(wx.EVT_BUTTON, self.OnNewCase)" in source
     assert "self.new_case.Enable" not in update_state
 

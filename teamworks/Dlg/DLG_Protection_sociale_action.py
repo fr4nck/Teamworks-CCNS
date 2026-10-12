@@ -17,6 +17,7 @@ from domain.hr_connections import (
     EmployeeProtectionStatus,
     OrganizationKind,
 )
+from Ctrl import CTRL_Bouton_image
 from Utils import UTILS_Styles
 from Utils.UTILS_Traduction import _
 
@@ -154,8 +155,8 @@ class Dialog(wx.Dialog):
             _(u"Dates : JJ/MM/AAAA. Les champs non applicables peuvent rester vides."),
         )
 
-        self.bouton_ok = wx.Button(self, wx.ID_OK, _(u"Enregistrer"))
-        self.bouton_annuler = wx.Button(self, wx.ID_CANCEL, _(u"Annuler"))
+        self.bouton_ok = CTRL_Bouton_image.CTRL(self, id=wx.ID_OK, texte=_(u"Enregistrer"), role="primary")
+        self.bouton_annuler = CTRL_Bouton_image.CTRL(self, id=wx.ID_CANCEL, texte=_(u"Annuler"), role="quiet")
 
         self.choice_organization.Bind(wx.EVT_CHOICE, self.OnOrganizationChanged)
         self.choice_relation.Bind(wx.EVT_CHOICE, self.OnRelationChanged)
@@ -428,8 +429,8 @@ class ClotureDialog(wx.Dialog):
             _(u"Date d'effet actuelle : %s") % _format_date(start),
         )
         self.ctrl_end = wx.TextCtrl(self, value=_format_date(default_date))
-        self.bouton_ok = wx.Button(self, wx.ID_OK, _(u"Clôturer"))
-        self.bouton_annuler = wx.Button(self, wx.ID_CANCEL, _(u"Annuler"))
+        self.bouton_ok = CTRL_Bouton_image.CTRL(self, id=wx.ID_OK, texte=_(u"Clôturer"), role="primary")
+        self.bouton_annuler = CTRL_Bouton_image.CTRL(self, id=wx.ID_CANCEL, texte=_(u"Annuler"), role="quiet")
         self.bouton_ok.Bind(wx.EVT_BUTTON, self.OnOk)
 
         gap = UTILS_Styles.GetLayoutSpacing("field_gap")

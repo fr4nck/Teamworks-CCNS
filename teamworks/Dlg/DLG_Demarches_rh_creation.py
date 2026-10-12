@@ -13,6 +13,7 @@ import wx
 
 from application.services.hr_connections.hr_case_creation import HrCaseCreationRequest
 from domain.hr_connections import ExpectedDocument, HrCaseSubjectKind
+from Ctrl import CTRL_Bouton_image
 from Utils import UTILS_Interface, UTILS_Styles
 from Utils.UTILS_Traduction import _
 
@@ -204,8 +205,8 @@ class Dialog(wx.Dialog):
         comment_label = wx.StaticText(self, -1, _(u"Commentaire facultatif"))
         comment_label.SetForegroundColour(UTILS_Interface.GetToken("on_surface_variant"))
 
-        validate = wx.Button(self, wx.ID_OK, _(u"Continuer"))
-        cancel = wx.Button(self, wx.ID_CANCEL, _(u"Annuler"))
+        validate = CTRL_Bouton_image.CTRL(self, id=wx.ID_OK, texte=_(u"Continuer"), role="primary")
+        cancel = CTRL_Bouton_image.CTRL(self, id=wx.ID_CANCEL, texte=_(u"Annuler"), role="quiet")
         validate.SetDefault()
         validate.Bind(wx.EVT_BUTTON, self.OnValidate)
 

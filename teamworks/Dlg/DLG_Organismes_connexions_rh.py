@@ -89,8 +89,8 @@ class ReferenceDialog(wx.Dialog):
             ),
         )
         self.info.Wrap(UTILS_Styles.Scale(470, minimum=380))
-        self.ok = wx.Button(self, wx.ID_OK, _(u"Valider"))
-        self.cancel = wx.Button(self, wx.ID_CANCEL, _(u"Annuler"))
+        self.ok = CTRL_Bouton_image.CTRL(self, id=wx.ID_OK, texte=_(u"Valider"), role="primary")
+        self.cancel = CTRL_Bouton_image.CTRL(self, id=wx.ID_CANCEL, texte=_(u"Annuler"), role="quiet")
         self.ok.Bind(wx.EVT_BUTTON, self.OnOk)
         self._layout()
         self.Fit()
@@ -163,8 +163,8 @@ class PortalDialog(wx.Dialog):
             ),
         )
         self.info.Wrap(UTILS_Styles.Scale(470, minimum=380))
-        self.ok = wx.Button(self, wx.ID_OK, _(u"Valider"))
-        self.cancel = wx.Button(self, wx.ID_CANCEL, _(u"Annuler"))
+        self.ok = CTRL_Bouton_image.CTRL(self, id=wx.ID_OK, texte=_(u"Valider"), role="primary")
+        self.cancel = CTRL_Bouton_image.CTRL(self, id=wx.ID_CANCEL, texte=_(u"Annuler"), role="quiet")
         self.ok.Bind(wx.EVT_BUTTON, self.OnOk)
         self._layout()
         self.Fit()
@@ -291,14 +291,14 @@ class ProfileDialog(wx.Dialog):
                 index, label, width=UTILS_Styles.Scale(width, minimum=90)
             )
 
-        self.ref_add = wx.Button(self.references_static_box, -1, _(u"Ajouter"))
-        self.ref_edit = wx.Button(self.references_static_box, -1, _(u"Modifier"))
-        self.ref_remove = wx.Button(self.references_static_box, -1, _(u"Retirer"))
-        self.portal_add = wx.Button(self.portals_static_box, -1, _(u"Ajouter"))
-        self.portal_edit = wx.Button(self.portals_static_box, -1, _(u"Modifier"))
-        self.portal_remove = wx.Button(self.portals_static_box, -1, _(u"Retirer"))
-        self.ok = wx.Button(self, wx.ID_OK, _(u"Enregistrer"))
-        self.cancel = wx.Button(self, wx.ID_CANCEL, _(u"Annuler"))
+        self.ref_add = CTRL_Bouton_image.CTRL(self.references_static_box, id=-1, texte=_(u"Ajouter"))
+        self.ref_edit = CTRL_Bouton_image.CTRL(self.references_static_box, id=-1, texte=_(u"Modifier"))
+        self.ref_remove = CTRL_Bouton_image.CTRL(self.references_static_box, id=-1, texte=_(u"Retirer"))
+        self.portal_add = CTRL_Bouton_image.CTRL(self.portals_static_box, id=-1, texte=_(u"Ajouter"))
+        self.portal_edit = CTRL_Bouton_image.CTRL(self.portals_static_box, id=-1, texte=_(u"Modifier"))
+        self.portal_remove = CTRL_Bouton_image.CTRL(self.portals_static_box, id=-1, texte=_(u"Retirer"))
+        self.ok = CTRL_Bouton_image.CTRL(self, id=wx.ID_OK, texte=_(u"Enregistrer"), role="primary")
+        self.cancel = CTRL_Bouton_image.CTRL(self, id=wx.ID_CANCEL, texte=_(u"Annuler"), role="quiet")
 
         self.ref_add.Bind(wx.EVT_BUTTON, self.OnAddReference)
         self.ref_edit.Bind(wx.EVT_BUTTON, self.OnEditReference)
@@ -559,7 +559,7 @@ class Dialog(wx.Dialog):
             cheminImage=Chemins.GetStaticPath("Images/16x16/Modifier.png"),
             tailleImage=(16, 16),
         )
-        self.close = wx.Button(self, wx.ID_CLOSE, _(u"Fermer"))
+        self.close = CTRL_Bouton_image.CTRL(self, id=wx.ID_CLOSE, texte=_(u"Fermer"), role="quiet")
         self.edit.Enable(False)
 
         self.add.Bind(wx.EVT_BUTTON, self.OnAdd)

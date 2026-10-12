@@ -18,6 +18,7 @@ import wx
 
 from application.bootstrap.hr_case_dashboard_factory import HrCaseDashboardRuntimeFactory
 from domain.hr_connections import ExchangeStatus, HrCaseStatus, HrCaseSubjectKind
+from Ctrl import CTRL_Bouton_image
 from Utils import UTILS_Interface, UTILS_Styles
 from Utils.UTILS_Traduction import _
 
@@ -172,7 +173,7 @@ class DetailDialog(wx.Dialog):
         )
         notes.SetForegroundColour(UTILS_Interface.GetToken("on_surface"))
 
-        close = wx.Button(self, wx.ID_CLOSE, _(u"Fermer"))
+        close = CTRL_Bouton_image.CTRL(self, id=wx.ID_CLOSE, texte=_(u"Fermer"), role="quiet")
         close.Bind(wx.EVT_BUTTON, lambda event: self.EndModal(wx.ID_CLOSE))
 
         page_gap = UTILS_Styles.GetLayoutSpacing("page_gap")
@@ -269,8 +270,8 @@ class TransitionDialog(wx.Dialog):
         info.Wrap(UTILS_Styles.Scale(560, minimum=420))
         info.SetForegroundColour(UTILS_Interface.GetToken("on_surface_variant"))
 
-        validate = wx.Button(self, wx.ID_OK, _(u"Continuer"))
-        cancel = wx.Button(self, wx.ID_CANCEL, _(u"Annuler"))
+        validate = CTRL_Bouton_image.CTRL(self, id=wx.ID_OK, texte=_(u"Continuer"), role="primary")
+        cancel = CTRL_Bouton_image.CTRL(self, id=wx.ID_CANCEL, texte=_(u"Annuler"), role="quiet")
         validate.SetDefault()
 
         buttons = wx.BoxSizer(wx.HORIZONTAL)
@@ -386,13 +387,13 @@ class Dialog(wx.Dialog):
                 width=UTILS_Styles.Scale(width, minimum=70),
             )
 
-        self.refresh = wx.Button(self, -1, _(u"Actualiser"))
-        self.new_case = wx.Button(self, -1, _(u"Nouvelle démarche"))
-        self.details = wx.Button(self, -1, _(u"Voir le détail"))
-        self.documents = wx.Button(self, -1, _(u"Pièces"))
-        self.history = wx.Button(self, -1, _(u"Historique"))
-        self.advance = wx.Button(self, -1, _(u"Faire évoluer"))
-        self.close = wx.Button(self, wx.ID_CLOSE, _(u"Fermer"))
+        self.refresh = CTRL_Bouton_image.CTRL(self, id=-1, texte=_(u"Actualiser"), role="quiet")
+        self.new_case = CTRL_Bouton_image.CTRL(self, id=-1, texte=_(u"Nouvelle démarche"), role="primary")
+        self.details = CTRL_Bouton_image.CTRL(self, id=-1, texte=_(u"Voir le détail"))
+        self.documents = CTRL_Bouton_image.CTRL(self, id=-1, texte=_(u"Pièces"))
+        self.history = CTRL_Bouton_image.CTRL(self, id=-1, texte=_(u"Historique"), role="quiet")
+        self.advance = CTRL_Bouton_image.CTRL(self, id=-1, texte=_(u"Faire évoluer"))
+        self.close = CTRL_Bouton_image.CTRL(self, id=wx.ID_CLOSE, texte=_(u"Fermer"), role="quiet")
         self.details.Enable(False)
         self.documents.Enable(False)
         self.history.Enable(False)

@@ -101,7 +101,7 @@ def test_closed_case_is_presented_read_only_and_backend_remains_authoritative():
 def test_cockpit_wiring_stays_lazy_and_only_passes_case_identity_and_read_only_state():
     source = _source(COCKPIT)
 
-    assert "self.documents = wx.Button" in source
+    assert "self.documents = CTRL_Bouton_image.CTRL(" in source
     assert "self.documents.Bind(wx.EVT_BUTTON, self.OnDocuments)" in source
     assert "def OnDocuments(" in source
     assert "from Dlg import DLG_Demarches_rh_pieces" in source

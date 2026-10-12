@@ -14,6 +14,7 @@ import logging
 import wx
 
 from domain.hr_connections import HrCaseDocumentState
+from Ctrl import CTRL_Bouton_image
 from Utils import UTILS_Interface, UTILS_Styles
 from Utils.UTILS_Traduction import _
 
@@ -123,8 +124,8 @@ class ReceiveDocumentDialog(wx.Dialog):
         hint.Wrap(UTILS_Styles.Scale(560, minimum=420))
         hint.SetForegroundColour(UTILS_Interface.GetToken("on_surface_variant"))
 
-        validate = wx.Button(self, wx.ID_OK, _(u"Continuer"))
-        cancel = wx.Button(self, wx.ID_CANCEL, _(u"Annuler"))
+        validate = CTRL_Bouton_image.CTRL(self, id=wx.ID_OK, texte=_(u"Continuer"), role="primary")
+        cancel = CTRL_Bouton_image.CTRL(self, id=wx.ID_CANCEL, texte=_(u"Annuler"), role="quiet")
         validate.SetDefault()
         buttons = wx.BoxSizer(wx.HORIZONTAL)
         buttons.AddStretchSpacer(1)
@@ -227,10 +228,10 @@ class Dialog(wx.Dialog):
                 width=UTILS_Styles.Scale(width, minimum=80),
             )
 
-        self.refresh = wx.Button(self, -1, _(u"Actualiser"))
-        self.received = wx.Button(self, -1, _(u"Marquer reçue"))
-        self.withdraw = wx.Button(self, -1, _(u"Retirer l'état reçue"))
-        self.close = wx.Button(self, wx.ID_CLOSE, _(u"Fermer"))
+        self.refresh = CTRL_Bouton_image.CTRL(self, id=-1, texte=_(u"Actualiser"), role="quiet")
+        self.received = CTRL_Bouton_image.CTRL(self, id=-1, texte=_(u"Marquer reçue"))
+        self.withdraw = CTRL_Bouton_image.CTRL(self, id=-1, texte=_(u"Retirer l'état reçue"))
+        self.close = CTRL_Bouton_image.CTRL(self, id=wx.ID_CLOSE, texte=_(u"Fermer"), role="quiet")
         self.received.Enable(False)
         self.withdraw.Enable(False)
 

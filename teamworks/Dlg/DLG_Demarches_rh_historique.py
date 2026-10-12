@@ -6,6 +6,7 @@ import wx
 
 from application.bootstrap.hr_case_history_factory import HrCaseHistoryRuntimeFactory
 from domain.hr_connections import HrCaseStatus, HrEventKind
+from Ctrl import CTRL_Bouton_image
 from Utils import UTILS_Interface, UTILS_Styles
 from Utils.UTILS_Traduction import _
 
@@ -144,7 +145,7 @@ class Dialog(wx.Dialog):
         else:
             self.empty = None
 
-        close = wx.Button(self, wx.ID_CLOSE, _(u"Fermer"))
+        close = CTRL_Bouton_image.CTRL(self, id=wx.ID_CLOSE, texte=_(u"Fermer"), role="quiet")
         close.Bind(wx.EVT_BUTTON, lambda event: self.EndModal(wx.ID_CLOSE))
 
         gap = UTILS_Styles.GetLayoutSpacing("field_gap")
