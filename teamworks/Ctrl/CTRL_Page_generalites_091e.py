@@ -152,12 +152,14 @@ class Panel_general(LEGACY.Panel_general):
         hauteur plus petite au sizer responsive. On recalcule donc la chaîne
         de minima de bas en haut, sans imposer une taille de fenêtre.
         """
-        self.text_adresse.SetMinSize((-1, UTILS_Styles.Scale(72)))
-        self.text_memo.SetMinSize((-1, UTILS_Styles.Scale(130)))
-        self.list_ctrl_coords.SetMinSize((-1, UTILS_Styles.Scale(150)))
+        self.text_adresse.SetMinSize((-1, UTILS_Styles.GetFormContentHeight(self.text_adresse, "address")))
+        self.text_memo.SetMinSize((-1, UTILS_Styles.GetFormContentHeight(self.text_memo, "memo")))
+        self.list_ctrl_coords.SetMinSize((-1, UTILS_Styles.GetFormContentHeight(self.list_ctrl_coords, "coordinates")))
 
         for section in self._sections():
             contenu = section.GetContentPanel()
+            contenu.SetMinSize((-1, -1))
+            section.SetMinSize((-1, -1))
             try:
                 contenu.InvalidateBestSize()
             except Exception:
@@ -169,7 +171,6 @@ class Panel_general(LEGACY.Panel_general):
                 hauteur_contenu = max(
                     1,
                     minimum_contenu.GetHeight(),
-                    contenu.GetMinSize().GetHeight(),
                 )
                 contenu.SetMinSize((-1, hauteur_contenu))
 
@@ -184,7 +185,6 @@ class Panel_general(LEGACY.Panel_general):
                 hauteur_section = max(
                     1,
                     minimum_section.GetHeight(),
-                    section.GetMinSize().GetHeight(),
                 )
                 section.SetMinSize((-1, hauteur_section))
 
@@ -286,10 +286,14 @@ class Panel_general(LEGACY.Panel_general):
                 # « tenir » artificiellement dans la fenêtre : le défilement
                 # vertical est précisément là pour absorber la hauteur.
                 for index, section in enumerate(self._sections()):
-                    bord = wx.LEFT | wx.RIGHT | wx.TOP
+                    bord = wx.LEFT | wx.RIGHT
+                    if index == 0:
+                        bord |= wx.TOP
                     if index == len(self._sections()) - 1:
                         bord |= wx.BOTTOM
                     sizer.Add(section, 0, wx.EXPAND | bord, page_gap)
+                    if index < len(self._sections()) - 1:
+                        sizer.AddSpacer(section_gap)
             else:
                 gauche = wx.BoxSizer(wx.VERTICAL)
                 gauche.Add(

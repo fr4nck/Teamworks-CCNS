@@ -164,6 +164,28 @@ def GetGadgetMetric(role="default_size", scaled=True):
     return Scale(value)
 
 
+FORM_VISIBLE_ROWS = {
+    "address": 2,
+    "coordinates": 5,
+    "memo": 3,
+}
+
+
+def GetFormContentHeight(control, role):
+    """Useful visible rows, not a limit on stored content."""
+    rows = FORM_VISIBLE_ROWS[role]
+    try:
+        line_height = max(1, int(control.GetCharHeight()))
+    except (AttributeError, RuntimeError, TypeError, ValueError):
+        line_height = Scale(18)
+    if role == "coordinates":
+        line_height = max(line_height, GetIconSize("medium")[1])
+    return max(
+        GetControlMetric("input_min_height"),
+        rows * (line_height + GetSpacing("xs")) + GetSpacing("xs"),
+    )
+
+
 def GetFieldMetric(role=FIELD_TEXT):
     return dict(FIELD_METRICS.get(role, FIELD_METRICS[FIELD_TEXT]))
 

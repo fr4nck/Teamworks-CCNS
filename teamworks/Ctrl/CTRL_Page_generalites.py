@@ -53,7 +53,7 @@ class Panel_general(wx.Panel):
         # ------------------------------------------------------------------
         # Identité
         self.section_identite = CTRL_Section.Section(
-            self, titre=_(u"Identité"), niveau=2
+            self, titre=_(u"Identité"), niveau=2, padding_role="field_gap"
         )
         panel_identite = self.section_identite.GetContentPanel()
 
@@ -136,7 +136,7 @@ class Panel_general(wx.Panel):
         # ------------------------------------------------------------------
         # Situation sociale
         self.section_situation = CTRL_Section.Section(
-            self, titre=_(u"Situation sociale"), niveau=2
+            self, titre=_(u"Situation sociale"), niveau=2, padding_role="field_gap"
         )
         panel_situation = self.section_situation.GetContentPanel()
         self.combo_box_situation = wx.Choice(panel_situation, -1, choices=[])
@@ -148,7 +148,7 @@ class Panel_general(wx.Panel):
         # ------------------------------------------------------------------
         # Adresse
         self.section_adresse = CTRL_Section.Section(
-            self, titre=_(u"Adresse"), niveau=2
+            self, titre=_(u"Adresse"), niveau=2, padding_role="field_gap"
         )
         panel_adresse = self.section_adresse.GetContentPanel()
         self.label_adresse = CTRL_Texte.Label(panel_adresse, _(u"Adresse"))
@@ -168,7 +168,7 @@ class Panel_general(wx.Panel):
         # ------------------------------------------------------------------
         # Coordonnées
         self.section_coords = CTRL_Section.Section(
-            self, titre=_(u"Coordonnées"), niveau=2
+            self, titre=_(u"Coordonnées"), niveau=2, padding_role="field_gap"
         )
         panel_coords = self.section_coords.GetContentPanel()
         self.list_ctrl_coords = ListCtrlCoords(
@@ -196,7 +196,7 @@ class Panel_general(wx.Panel):
         # ------------------------------------------------------------------
         # Mémo
         self.section_memo = CTRL_Section.Section(
-            self, titre=_(u"Mémo"), niveau=2
+            self, titre=_(u"Mémo"), niveau=2, padding_role="field_gap"
         )
         panel_memo = self.section_memo.GetContentPanel()
         self.text_memo = wx.TextCtrl(
@@ -327,7 +327,7 @@ class Panel_general(wx.Panel):
             wx.ToolTip(_(u"Saisissez la date de naissance"))
         )
         self.text_numsecu.SetMinSize((UTILS_Styles.Scale(210), -1))
-        self.text_adresse.SetMinSize((-1, UTILS_Styles.Scale(72)))
+        self.text_adresse.SetMinSize((-1, UTILS_Styles.GetFormContentHeight(self.text_adresse, "address")))
         self.text_adresse.SetToolTip(wx.ToolTip(_(u"Saisissez l'adresse")))
         self.text_age.SetMinSize((UTILS_Styles.Scale(88), -1))
         self.text_cp_naiss.SetMinSize((UTILS_Styles.Scale(82), -1))
@@ -534,13 +534,13 @@ class Panel_general(wx.Panel):
         ):
             actions_coords.Add(bouton, 0, wx.RIGHT | wx.BOTTOM, toolbar_gap)
         coords.Add(actions_coords, 0, wx.EXPAND | wx.BOTTOM, field_gap)
-        self.list_ctrl_coords.SetMinSize((-1, UTILS_Styles.Scale(150)))
+        self.list_ctrl_coords.SetMinSize((-1, UTILS_Styles.GetFormContentHeight(self.list_ctrl_coords, "coordinates")))
         coords.Add(self.list_ctrl_coords, 1, wx.EXPAND)
         panel_coords.SetSizer(coords)
 
         # Mémo -------------------------------------------------------------
         memo = wx.BoxSizer(wx.VERTICAL)
-        self.text_memo.SetMinSize((-1, UTILS_Styles.Scale(130)))
+        self.text_memo.SetMinSize((-1, UTILS_Styles.GetFormContentHeight(self.text_memo, "memo")))
         memo.Add(self.text_memo, 1, wx.EXPAND)
         panel_memo.SetSizer(memo)
 

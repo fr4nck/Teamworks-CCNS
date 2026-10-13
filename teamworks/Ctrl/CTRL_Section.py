@@ -14,9 +14,10 @@ from Utils import UTILS_Interface, UTILS_Styles
 
 
 class Section(wx.Panel):
-    def __init__(self, parent, titre=u"", niveau=2, description=u"", surface="surface_container_lowest"):
+    def __init__(self, parent, titre=u"", niveau=2, description=u"", surface="surface_container_lowest", padding_role="content_padding"):
         wx.Panel.__init__(self, parent, -1, style=wx.TAB_TRAVERSAL)
         self.surface = surface
+        self._padding_role = padding_role
         self.SetBackgroundColour(UTILS_Interface.GetToken(surface))
 
         fabrique_titre = {
@@ -35,7 +36,7 @@ class Section(wx.Panel):
         self._layout()
 
     def _layout(self):
-        padding = UTILS_Styles.GetLayoutSpacing("content_padding")
+        padding = UTILS_Styles.GetLayoutSpacing(self._padding_role)
         gap = UTILS_Styles.GetLayoutSpacing("field_gap")
         sizer = wx.BoxSizer(wx.VERTICAL)
         if self.titre is not None:
