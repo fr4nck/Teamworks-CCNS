@@ -108,7 +108,13 @@ def _appliquer_contrat_bouton(control, texte="", role="default", icon_only=False
     control.SetForegroundColour(UTILS_Interface.GetToken(_token_texte_bouton(role)))
     # Recalculer le BestSize sans hériter d'une ancienne largeur maximale,
     # notamment après SetTexte().
+    # Idem pour la largeur minimale mémorisée par un précédent calcul : sans
+    # ce reset, un bouton ne peut pas rétrécir après changement de texte/zoom
+    # et le BestSize mis en cache reste celui de l'ancien état.
+    control.SetMinSize((-1, -1))
     control.SetMaxSize((-1, -1))
+    if hasattr(control, "InvalidateBestSize"):
+        control.InvalidateBestSize()
     control.SetInitialSize()
 
     best = control.GetBestSize()

@@ -10,6 +10,7 @@ import Chemins
 from Utils.UTILS_Traduction import _
 import wx
 from Ctrl import CTRL_Bouton_image
+from Utils import UTILS_Styles
 import GestionDB
 import FonctionsPerso
 import wx.lib.agw.hyperlink as hl
@@ -66,7 +67,7 @@ class PanelReseau(wx.Panel):
 
 class MyDialog(wx.Dialog):
     def __init__(self, parent):
-        wx.Dialog.__init__(self, parent, -1, title=_(u"Création d'un fichier"))       
+        wx.Dialog.__init__(self, parent, -1, title=_(u"Création d'un fichier"), style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
         self.parent = parent
         
         import locale
@@ -84,20 +85,20 @@ class MyDialog(wx.Dialog):
         self.listeTablesImportation = DATA_Tables.TABLES_IMPORTATION_OPTIONNELLES
         
         # Radio Local/Réseau
-        self.radio_local = wx.RadioButton(self.sizer_type_staticbox, -1, _(u"Local"), style = wx.RB_GROUP )
-        self.radio_reseau = wx.RadioButton(self.sizer_type_staticbox, -1, _(u"Réseau") )
-        
+        self.radio_local = wx.RadioButton(self, -1, _(u"Local"), style = wx.RB_GROUP )
+        self.radio_reseau = wx.RadioButton(self, -1, _(u"Réseau") )
+
         # Nom à saisir
-        self.label_nom = wx.StaticText(self.sizer_contenu_staticbox, -1, _(u"Nom de fichier :"))
-        self.text_nom = wx.TextCtrl(self.sizer_contenu_staticbox, -1, "")
-        
+        self.label_nom = wx.StaticText(self, -1, _(u"Nom de fichier :"))
+        self.text_nom = wx.TextCtrl(self, -1, "")
+
         # Sélection des tables à importer
-        self.checkbox_details = wx.CheckBox(self.sizer_contenu_staticbox, -1, _(u"Importer les données par défaut"))
+        self.checkbox_details = wx.CheckBox(self, -1, _(u"Importer les données par défaut"))
         self.checkbox_details.SetValue(True)
         self.hyperlink_details = self.Build_Hyperlink()
         
         # Panel Fichier RESEAU
-        self.panelReseau = PanelReseau(self.sizer_reseau_staticbox)
+        self.panelReseau = PanelReseau(self)
         self.panelReseau.Enable(False)
         
         self.bouton_aide = CTRL_Bouton_image.CTRL(self, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))
@@ -122,11 +123,8 @@ class MyDialog(wx.Dialog):
         self.checkbox_details.SetToolTip(wx.ToolTip(_(u"Il est recommandé de conserver cette case\n cochée afin d'importer les données par défaut")))
         self.text_nom.SetToolTip(wx.ToolTip(_(u"Saisissez ici le nom de votre nouveau fichier.\nExemples : 'CLSH Lannilis', 'Colo Auvergne' ou 'Mon fichier à moi'...")))
         self.bouton_aide.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour obtenir de l'aide")))
-        self.bouton_aide.SetSize(self.bouton_aide.GetBestSize())
         self.bouton_ok.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour valider")))
-        self.bouton_ok.SetSize(self.bouton_ok.GetBestSize())
         self.bouton_annuler.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour annuler la saisie")))
-        self.bouton_annuler.SetSize(self.bouton_annuler.GetBestSize())
         self.radio_local.SetToolTip(wx.ToolTip(_(u"Le mode local est utilisé pour une utilisation mono-poste")))
         self.radio_reseau.SetToolTip(wx.ToolTip(_(u"Le mode réseau est utilisateur pour une utilisation multipostes. \nMySQL doit être obligatoirement installé et configuré avant utilisation.")))
 
@@ -177,9 +175,8 @@ class MyDialog(wx.Dialog):
         grid_sizer_base.Add(grid_sizer_boutons, 1, wx.LEFT|wx.RIGHT|wx.BOTTOM|wx.EXPAND, 10)
         self.SetSizer(grid_sizer_base)
         sizer_base.Add(self, 1, wx.EXPAND, 0)
-        grid_sizer_base.Fit(self)
-        self.Layout()
-        self.CentreOnScreen()
+        UTILS_Styles.FitWindowToContent(self, centre=True)
+        self.SetMinSize(self.GetSize())
         self.grid_sizer_base = grid_sizer_base
 
     def OnRadioLocal(self, event):
@@ -190,8 +187,8 @@ class MyDialog(wx.Dialog):
         
     def Build_Hyperlink(self) :
         """ Construit un hyperlien """
-        self.SetFont(wx.Font(8, wx.SWISS, wx.NORMAL, wx.NORMAL, False))
         hyper = hl.HyperLinkCtrl(self, -1, _(u"(Détails)"), URL="")
+        hyper.SetFont(UTILS_Styles.GetFont("caption"))
         hyper.Bind(hl.EVT_HYPERLINK_LEFT, self.OnLeftLink)
         hyper.AutoBrowse(False)
         hyper.SetColours("BLUE", "BLUE", "BLUE")
