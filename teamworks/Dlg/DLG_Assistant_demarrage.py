@@ -69,7 +69,13 @@ class Dialog(wx.Dialog):
 
         # Boutons classiques
         self.bouton_aide = CTRL_Bouton_image.CTRL(self, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))
-        self.bouton_ok = CTRL_Bouton_image.CTRL(self, id=-1, texte="", cheminImage=Chemins.GetStaticPath("Images/BoutonsImages/Fermer_assistant.png"))
+        self.bouton_ok = CTRL_Bouton_image.CTRL(
+            self,
+            id=-1,
+            texte=_(u"Fermer"),
+            cheminImage=Chemins.GetStaticPath("Images/32x32/Fermer.png"),
+            role="primary",
+        )
 
         self.__set_properties()
         self.__do_layout()

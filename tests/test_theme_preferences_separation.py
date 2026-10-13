@@ -136,7 +136,9 @@ def test_preferences_use_charter_typography_spacing_and_scrollable_window():
     assert "SetPointSize" not in source
     assert "SetSize((560, 430))" not in source
     assert "wx.ALIGN_CENTER_VERTICAL | wx.EXPAND" not in source
-    assert "ligne.Add(control, 3, wx.EXPAND)" in source
+    assert "ligne = wx.BoxSizer(wx.VERTICAL)" in source
+    assert "ligne.Add(etiquette, 0, wx.EXPAND | wx.BOTTOM, gap)" in source
+    assert "ligne.Add(control, 0, wx.EXPAND)" in source
 
 
 def test_global_theme_targets_dense_desktop_controls():

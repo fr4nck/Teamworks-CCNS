@@ -68,7 +68,10 @@ def test_no_other_dialog_method_loads_history_component():
 def test_history_button_is_selection_scoped_but_available_on_closed_cases():
     source = _source()
 
-    assert 'self.history = wx.Button(self, -1, _(u"Historique"))' in source
+    assert (
+        'self.history = CTRL_Bouton_image.CTRL('
+        'self, id=-1, texte=_(u"Historique"), role="quiet")'
+    ) in source
     assert "self.history.Enable(False)" in source
     assert "self.history.Enable(has_selection)" in source
     assert "self.history.Bind(wx.EVT_BUTTON, self.OnHistory)" in source

@@ -32,7 +32,10 @@ class Page(wx.Panel):
         kwds["style"] = wx.TAB_TRAVERSAL
         wx.Panel.__init__(self, *args, **kwds)
 
-        self.label_titre = CTRL_Texte.H2(self, _(u"1. Point de départ"))
+        self.label_titre = CTRL_Texte.H2(
+            self,
+            _(u"1. Point de départ et caractéristiques du contrat"),
+        )
         self.label_intro = CTRL_Texte.BodySecondary(
             self,
             _(u"Choisissez simplement comment démarrer. Vous pourrez modifier tous les éléments du contrat ensuite."),

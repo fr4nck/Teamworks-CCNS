@@ -1120,22 +1120,21 @@ class Page4(wx.Panel):
     def __do_layout(self):
         grid_sizer_base = wx.FlexGridSizer(rows=5, cols=1, vgap=10, hgap=10)
         sizer_choix = wx.StaticBoxSizer(self.sizer_choix_staticbox, wx.VERTICAL)
-        grid_sizer_choix = wx.FlexGridSizer(rows=1, cols=2, vgap=5, hgap=5)
-        grid_sizer_boutons = wx.FlexGridSizer(rows=6, cols=1, vgap=5, hgap=5)
+        sizer_choix_contenu = wx.BoxSizer(wx.VERTICAL)
+        sizer_boutons = wx.WrapSizer(wx.HORIZONTAL, 0)
         grid_sizer_base.Add(self.label_titre, 0, 0, 0)
         grid_sizer_base.Add(self.label_intro, 1, wx.EXPAND|wx.LEFT|wx.RIGHT, 20)
-        grid_sizer_choix.Add(self.listCtrl, 1, wx.EXPAND, 0)
-        grid_sizer_boutons.Add(self.bouton_importer, 0, 0, 0)
-        grid_sizer_boutons.Add(self.bouton_actualiser, 0, 0, 0)
-        grid_sizer_boutons.Add((10, 10), 0, 0, 0)
-        grid_sizer_boutons.Add(self.bouton_ajouter, 0, 0, 0)
-        grid_sizer_boutons.Add(self.bouton_modifier, 0, 0, 0)
-        grid_sizer_boutons.Add(self.bouton_supprimer, 0, 0, 0)
-        grid_sizer_boutons.AddGrowableRow(2)
-        grid_sizer_choix.Add(grid_sizer_boutons, 1, wx.EXPAND, 0)
-        grid_sizer_choix.AddGrowableCol(0)
-        grid_sizer_choix.AddGrowableRow(0)
-        sizer_choix.Add(grid_sizer_choix, 1, wx.ALL|wx.EXPAND, 5)
+        sizer_choix_contenu.Add(self.listCtrl, 1, wx.EXPAND | wx.BOTTOM, 5)
+        for bouton in (
+            self.bouton_importer,
+            self.bouton_actualiser,
+            self.bouton_ajouter,
+            self.bouton_modifier,
+            self.bouton_supprimer,
+        ):
+            sizer_boutons.Add(bouton, 0, wx.RIGHT | wx.BOTTOM, 5)
+        sizer_choix_contenu.Add(sizer_boutons, 0, wx.EXPAND)
+        sizer_choix.Add(sizer_choix_contenu, 1, wx.ALL|wx.EXPAND, 5)
         grid_sizer_base.Add(sizer_choix, 1, wx.LEFT|wx.EXPAND, 20)
 ##        grid_sizer_base.Add(self.texte_aide, 1,wx.EXPAND| wx.LEFT, 20)
         #grid_sizer_base.AddGrowableRow(1)
@@ -1145,8 +1144,8 @@ class Page4(wx.Panel):
         grid_sizer_base.AddGrowableCol(0)
         
         self.grid_sizer_base = grid_sizer_base
-        self.grid_sizer_choix = grid_sizer_choix
-        self.grid_sizer_boutons = grid_sizer_boutons
+        self.sizer_choix_contenu = sizer_choix_contenu
+        self.sizer_boutons = sizer_boutons
         
 
     def MAJaffichage(self):
@@ -1157,8 +1156,8 @@ class Page4(wx.Panel):
         self.choixModele = FonctionsPerso.Parametres(mode="get", categorie="document_%s" % categorie_document, nom="choix_modele", valeur="")
         # Layout
         self.grid_sizer_base.Layout()
-        self.grid_sizer_choix.Layout()
-        self.grid_sizer_boutons.Layout()
+        self.sizer_choix_contenu.Layout()
+        self.sizer_boutons.Layout()
         # MAJ du ListCtrl
         self.MAJ_ListCtrl()
         

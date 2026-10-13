@@ -1,6 +1,6 @@
 # Teamworks — suivi UI/UX / thème graphique
 
-**Mise à jour : 27 août 2026**
+**Mise à jour : 13 octobre 2026**
 
 ## Objectif
 
@@ -164,3 +164,34 @@ fichiers. Les deux lots absorbes ne prouvent pas l'integration de tous les
 changements de cette PR. Ne pas rejouer le sommet en bloc :
 `UTILS_Etat_vues.py` contient deja des gardes supplementaires sur `wx/master`
 (types de collections et `OverflowError`) absentes de la source historique.
+
+## Recette Windows Vanilla wx 0.9.2 RC3 (2026-10-13)
+
+Les constats certains de la vidéo de recette ont été corrigés dans leur portée
+propre :
+
+- l'assistant de démarrage utilisait une image historique de 136 × 24 contenant
+  déjà le mot « Fermer » comme si elle était une icône carrée du bouton commun ;
+  l'action utilise désormais le libellé natif, l'icône carrée existante et le
+  focus clavier du contrôle commun ;
+- les cinq commandes de choix du document de publipostage ne forment plus une
+  colonne latérale contrainte : elles se redistribuent sous la liste et gardent
+  leur largeur naturelle ;
+- « Point de départ » et « Caractéristiques générales » constituent une seule
+  étape logique. Les deux validations sont exécutées dans l'ordre et la
+  navigation saute une action « Suivant » sans changer les données produites ;
+- les couples libellé/contrôle des préférences sont empilés et le réglage long
+  de l'adresse de rapport se redistribue verticalement dans le corps défilant ;
+- l'en-tête de la fiche individuelle est rafraîchi après l'import de l'identité
+  et couvre les cas nom seul, prénom seul et nom avec prénom.
+
+La densité de l'onglet Généralités reste régie par les métriques communes et le
+correctif `b1aafb05`. Les groupes Identité, Adresse, Coordonnées et Mémo gardent
+leur séparation sémantique ; aucune marge locale supplémentaire n'a été ajoutée.
+Les états transitoires entrevus dans Présences et dans les données de contrat
+n'ont entraîné aucune modification faute de reproduction.
+
+La qualification automatisée couvre les contrats de disposition, la navigation
+fusionnée, le formatage de l'en-tête, les garde-fous de densité, le thème, le DPI
+et la compatibilité wx. Elle ne remplace pas une recette visuelle Windows aux
+échelles réelles ; aucune validation visuelle DPI n'est revendiquée pour ce lot.

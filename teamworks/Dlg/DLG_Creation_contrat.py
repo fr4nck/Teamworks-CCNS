@@ -24,8 +24,20 @@ from Ctrl.CTRL_Creation_contrat_p5 import Page as LegacyPage5
 from Ctrl.CTRL_Creation_contrat_p6 import Page as Page6
 
 
+def _contract_navigation_pages(has_custom_fields):
+    pages = [1, 2, 4]
+    if has_custom_fields:
+        pages.append(5)
+    pages.append(6)
+    return tuple(pages)
+
+
 class Page3(LegacyPage3):
     """Isole les calculs modernes et rafraîchit les champs dérivés du régime."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.label_titre.SetLabel(_(u"Caractéristiques générales du contrat"))
 
     def _MonthlySalaryDecimal(self):
         with localcontext() as context:
@@ -61,7 +73,7 @@ class Page4(LegacyPage4):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.label_titre.SetLabel(_(u"3. Informations complémentaires (optionnel)"))
+        self.label_titre.SetLabel(_(u"2. Informations complémentaires (optionnel)"))
         self.label_intro.SetLabel(
             _(u"Cochez uniquement les informations supplémentaires nécessaires à ce contrat.\n"
               u"Les données déjà gérées par le contrat sont renseignées automatiquement.")
@@ -112,15 +124,17 @@ class Page4(LegacyPage4):
 
 
 class Page5(LegacyPage5):
-    """Saisie des seuls compléments explicitement sélectionnés à l'étape 3."""
+    """Saisie des seuls compléments explicitement sélectionnés à l'étape 2."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.label_titre.SetLabel(_(u"4. Saisie des informations complémentaires"))
+        self.label_titre.SetLabel(_(u"3. Saisie des informations complémentaires"))
         self.label_intro.SetLabel(_(u"Renseignez les informations complémentaires sélectionnées :"))
 
 
 class Dialog(wx.Dialog):
+    NAVIGATION_PAGES = _contract_navigation_pages(True)
+
     def __init__(self, parent, title="", IDcontrat=0, IDpersonne=0):
         wx.Dialog.__init__(self, parent, -1, name="frm_creation_contrats",style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX)
         self.parent = parent
@@ -228,11 +242,33 @@ class Dialog(wx.Dialog):
                 raise RuntimeError("Page de contrat inconnue : %s" % self.listePages[numPage-1])
             page = page_class(self.panel_base)
             setattr(self, "page" + str(numPage), page)
-            self.sizer_pages.Add(page, 1, wx.EXPAND, 0)
+            proportion = 0 if numPage == 2 else 1
+            self.sizer_pages.Add(page, proportion, wx.EXPAND, 0)
             self.sizer_pages.Layout()
             page.Show(False)
         self.page1.Show(True)
         self.sizer_pages.Layout()
+
+    def _PagesForStep(self, page_number):
+        """Retourne les panneaux physiques composant une étape logique."""
+        if page_number == 2:
+            return (self.page2, self.page3)
+        return (getattr(self, "page%d" % page_number),)
+
+    def _ShowStep(self, page_number, visible):
+        for page in self._PagesForStep(page_number):
+            page.Show(visible)
+
+    def _NavigationPages(self):
+        return _contract_navigation_pages(self._HasSelectedCustomFields())
+
+    def _RefreshNavigationButtons(self):
+        self.bouton_retour.Enable(self.pageVisible != self.NAVIGATION_PAGES[0])
+        if self.pageVisible == self.NAVIGATION_PAGES[-1]:
+            self.bouton_suite.SetTexte(_(u"Valider"))
+        else:
+            self.bouton_suite.SetTexte(_(u"Suivant"))
+        self.bouton_suite.Enable(True)
 
     def _ApplyInitialResponsiveSize(self):
         """Dimensionne une fois le wizard sur sa page la plus exigeante.
@@ -251,6 +287,15 @@ class Dialog(wx.Dialog):
             minimum = page.GetMinSize()
             content_width = max(content_width, best.GetWidth(), minimum.GetWidth())
             content_height = max(content_height, best.GetHeight(), minimum.GetHeight())
+
+        # L'étape 1 réunit désormais les deux anciens panneaux. Son besoin est
+        # leur hauteur cumulée, pas la hauteur du plus grand pris isolément.
+        combined_height = 0
+        for page in self._PagesForStep(2):
+            best = page.GetBestSize()
+            minimum = page.GetMinSize()
+            combined_height += max(best.GetHeight(), minimum.GetHeight())
+        content_height = max(content_height, combined_height)
 
         button_height = max(
             self.bouton_aide.GetBestSize().GetHeight(),
@@ -338,25 +383,15 @@ class Dialog(wx.Dialog):
         return bool(self.page4.listCtrl_champs.selections)
 
     def Onbouton_retour(self, event):
-        pageCible = getattr(self, "page%d" % self.pageVisible)
-        pageCible.Show(False)
-
-        # Si aucune information complémentaire n'a été choisie, la page 5
-        # n'a jamais été affichée : Retour depuis la validation revient donc
-        # directement au choix facultatif de la page 4.
-        if self.pageVisible == 6 and not self._HasSelectedCustomFields():
-            self.pageVisible = 4
-        else:
-            self.pageVisible -= 1
-
-        pageCible = getattr(self, "page%d" % self.pageVisible)
-        pageCible.Show(True)
+        pages = self._NavigationPages()
+        index = pages.index(self.pageVisible)
+        if index == 0:
+            return
+        self._ShowStep(self.pageVisible, False)
+        self.pageVisible = pages[index - 1]
+        self._ShowStep(self.pageVisible, True)
         self.sizer_pages.Layout()
-        if self.pageVisible < self.nbrePages:
-            self.bouton_suite.Enable(True)
-            self.bouton_suite.SetTexte(_(u"Suivant"))
-        if self.pageVisible == 1:
-            self.bouton_retour.Enable(False)
+        self._RefreshNavigationButtons()
 
     def Onbouton_suite(self, event):
         validation = self.ValidationPages()
@@ -366,31 +401,23 @@ class Dialog(wx.Dialog):
             self.Terminer()
             return
 
-        pageCible = getattr(self, "page%d" % self.pageVisible)
-        pageCible.Show(False)
-
-        # Sans champ complémentaire, l'ancien écran « aucun champ à remplir »
-        # est inutile : on passe directement du choix facultatif à la validation.
-        if self.pageVisible == 4 and not self._HasSelectedCustomFields():
-            self.pageVisible = 6
-        else:
-            self.pageVisible += 1
-
-        pageCible = getattr(self, "page%d" % self.pageVisible)
-        pageCible.Show(True)
+        pages = self._NavigationPages()
+        index = pages.index(self.pageVisible)
+        self._ShowStep(self.pageVisible, False)
+        self.pageVisible = pages[index + 1]
+        self._ShowStep(self.pageVisible, True)
         self.sizer_pages.Layout()
-        if self.pageVisible == self.nbrePages:
-            self.bouton_suite.SetTexte(_(u"Valider"))
-        if self.pageVisible > 1:
-            self.bouton_retour.Enable(True)
+        self._RefreshNavigationButtons()
 
     def Onbouton_annuler(self, event):
         self.EndModal(wx.ID_CANCEL)
 
     def ValidationPages(self):
         """ Validation des données avant changement de pages """
-        validation = getattr(self, "page%s" % self.pageVisible).Validation()
-        return validation
+        for page in self._PagesForStep(self.pageVisible):
+            if page.Validation() is False:
+                return False
+        return True
 
     def Terminer(self):
         self.EndModal(wx.ID_OK)

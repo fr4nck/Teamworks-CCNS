@@ -22,7 +22,8 @@ def test_section_uses_semantic_typography_and_surfaces():
 
 def test_section_consumes_global_spacing_only():
     source = _source()
-    assert 'UTILS_Styles.GetLayoutSpacing("content_padding")' in source
+    assert 'padding_role="content_padding"' in source
+    assert "UTILS_Styles.GetLayoutSpacing(self._padding_role)" in source
     assert 'UTILS_Styles.GetLayoutSpacing("field_gap")' in source
     assert "wx.StaticBox" not in source
     assert "wx.FlexGridSizer" not in source

@@ -28,6 +28,15 @@ import FonctionsPerso
 import GestionDB
 
 
+def _formater_nom_prenom(nom, prenom, valeur_vide=u"NOM, Prénom"):
+    """Construit le libellé d'en-tête sans ponctuation ni valeur fantôme."""
+    nom = (nom or "").strip()
+    prenom = (prenom or "").strip()
+    if nom and prenom:
+        return u"%s, %s" % (nom, prenom)
+    return nom or prenom or valeur_vide
+
+
 class Panel_general(wx.Panel):
     def __init__(self, parent, id, IDpersonne=0):
         wx.Panel.__init__(
@@ -305,6 +314,7 @@ class Panel_general(wx.Panel):
 
         self.SetEtatNumSecu()
         self.MAJ_Photo()
+        self.MaJ_NomPrenom_Fiche()
         self.MaJ_Adresse_Fiche()
         self.MaJ_DateNaiss_Fiche()
         self.remplissageEnCours = False
@@ -1344,9 +1354,13 @@ class Panel_general(wx.Panel):
         fiche = self._GetFicheIndividuelle()
         if fiche is None:
             return
-        nom = self.text_nom.GetValue() or "NOM"
-        prenom = self.text_prenom.GetValue() or _(u"Prénom")
-        fiche.label_hd_nomPrenom.SetLabel(nom + ", " + prenom)
+        fiche.label_hd_nomPrenom.SetLabel(
+            _formater_nom_prenom(
+                self.text_nom.GetValue(),
+                self.text_prenom.GetValue(),
+                _(u"NOM, Prénom"),
+            )
+        )
 
     def MaJ_Adresse_Fiche(self):
         fiche = self._GetFicheIndividuelle()

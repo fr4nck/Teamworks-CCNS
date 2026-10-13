@@ -151,10 +151,13 @@ class Dialog(wx.Dialog):
             self.body,
             texte="Rétablir le réglage d'origine",
         )
-        adresse_rapport_bugs = wx.BoxSizer(wx.HORIZONTAL)
+        adresse_rapport_bugs = wx.BoxSizer(wx.VERTICAL)
         adresse_rapport_bugs.Add(self.adresse_rapport_bugs, 1, wx.EXPAND)
         adresse_rapport_bugs.Add(
-            self.reset_adresse_rapport_bugs, 0, wx.LEFT, field_gap,
+            self.reset_adresse_rapport_bugs,
+            0,
+            wx.ALIGN_RIGHT | wx.TOP,
+            field_gap,
         )
         main.Add(
             self._ligne(
@@ -268,11 +271,11 @@ class Dialog(wx.Dialog):
 
     @staticmethod
     def _ligne(parent, label, control):
-        ligne = wx.BoxSizer(wx.HORIZONTAL)
+        ligne = wx.BoxSizer(wx.VERTICAL)
         etiquette = CTRL_Texte.Label(parent, label)
         gap = UTILS_Styles.GetLayoutSpacing("field_gap")
-        ligne.Add(etiquette, 2, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, gap)
-        ligne.Add(control, 3, wx.EXPAND)
+        ligne.Add(etiquette, 0, wx.EXPAND | wx.BOTTOM, gap)
+        ligne.Add(control, 0, wx.EXPAND)
         return ligne
 
     def OnSize(self, event):
