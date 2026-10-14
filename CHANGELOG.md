@@ -1,5 +1,13 @@
 # Teamworks-CCNS 0.9.2
 
+## Candidate RC4 — 14 octobre 2026 (qualification en cours)
+
+- Préremplissage des caractéristiques du contrat dès la sélection du modèle, sans écrasement des retouches au clic sur « Suivant ».
+- Réalignement des smokes Windows sur l'étape fusionnée du contrat, le contexte des modèles, l'onglet « Protection sociale » et la densité ADR-005.
+- Référence des correctifs : `caa11956` sur `wx/master` (CI Linux et Windows verte avant changement de version).
+- Construction du ZIP portable et de l'installateur Windows demandée par le déclencheur `[windows]` ; aucune installation ou migration de données automatisée.
+- Restent à qualifier sur Windows réel : choix du modèle, recette sur copie de base, et smoke PMSL 21 h hors CI (bloqué par une modale).
+
 ## Performance
 
 - réduction des connexions MySQL répétées au premier affichage **Individus** ;
