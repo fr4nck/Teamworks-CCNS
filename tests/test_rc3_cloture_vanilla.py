@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 
@@ -8,9 +9,14 @@ def _read(relative):
     return (ROOT / relative).read_text(encoding="utf-8")
 
 
-def test_version_canonique_rc3_et_runtime_aligne():
-    assert _read("VERSION").strip() == "0.9.2-rc3"
+def test_version_canonique_et_runtime_aligne():
+    version = _read("VERSION").strip()
+    assert re.fullmatch(r"0\\.9\\.2-rc[1-9]\\d*", version)
+    assert f"Statut actuel : \`{version}\`" in _read("README.md")
+    assert _read("teamworks/Versions.txt").splitlines()[0] == f"Version {version} :"
+    assert _read("CHANGELOG.md").startswith(f"# Teamworks-CCNS {version.split('-')[0]}")
     source = _read("teamworks/Teamworks.py")
+    assert 'Chemins.GetMainPath("VERSION")' in source
     assert "VERSION_APPLICATION = _lire_version_teamworks_ccns()" in source
     assert "CORE.VERSION_APPLICATION = VERSION_APPLICATION" in source
     assert "Teamworks CCNS %s" in source

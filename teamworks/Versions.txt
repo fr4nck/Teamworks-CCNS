@@ -1,3 +1,10 @@
+Version 0.9.2-rc4 :
+
+- Candidate de recette Windows préparée depuis la branche wx/master ; les preuves de recette utilisateur restent nécessaires.
+- Correction du préremplissage du contrat dès le choix du modèle, sans écraser les retouches lors du clic sur « Suivant ».
+- Réalignement des parcours automatisés Windows : modèle de contrat, étapes de l'assistant, onglet Protection sociale et géométrie ADR-005.
+- La validation sur copie de base réelle et le smoke PMSL 21 h hors CI restent à qualifier.
+
 Version 0.9.2-rc3 :
 
 - Teamworks-CCNS utilise désormais sa version distribuée comme identité de l'application.
