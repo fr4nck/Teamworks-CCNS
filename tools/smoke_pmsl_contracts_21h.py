@@ -76,10 +76,9 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                     assert dialog.pageVisible == 1
                     dialog.Onbouton_suite(None)
                     wx.Yield()
+                    # Étape fusionnée RC3 : page2 et page3 sont visibles ensemble.
                     assert dialog.pageVisible == 2
-                    dialog.Onbouton_suite(None)
-                    wx.Yield()
-                    assert dialog.pageVisible == 3
+                    assert dialog.page3.IsShown()
                     return dialog
 
                 def _smoke_prepare_ccns_21h(page, start_date, end_date=None):

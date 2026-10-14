@@ -1,6 +1,6 @@
 # Teamworks — suivi UI/UX / thème graphique
 
-**Mise à jour : 13 octobre 2026**
+**Mise à jour : 14 octobre 2026**
 
 ## Objectif
 
@@ -195,3 +195,39 @@ La qualification automatisée couvre les contrats de disposition, la navigation
 fusionnée, le formatage de l'en-tête, les garde-fous de densité, le thème, le DPI
 et la compatibilité wx. Elle ne remplace pas une recette visuelle Windows aux
 échelles réelles ; aucune validation visuelle DPI n'est revendiquée pour ce lot.
+
+## CI Windows RC4 — réalignement des parcours critiques (2026-10-14)
+
+Le job « Parcours critiques Windows » échouait depuis `5267043b` puis sur
+`0f126db2` (run 38369194970). Trois smokes décrivaient encore la structure
+antérieure de l'interface :
+
+- **modèle de contrat** : `ListCtrl_champs` lit désormais `dictChamps` sur sa
+  fenêtre de premier niveau (`5267043b`). Les deux smokes de checklists
+  plaçaient ce dictionnaire sur un panneau intermédiaire ; ils construisent
+  maintenant un `wx.Dialog` de contexte avec la StaticBox réelle ;
+- **assistant contrat** : depuis l'étape fusionnée RC3, la page 3 n'est jamais
+  atteinte seule. Les smokes appuyaient une seconde fois sur « Suivant » avant
+  de renseigner les caractéristiques : la validation conjointe ouvrait une boîte
+  modale et le smoke expirait après 180 s. Trois smokes sont réalignés, dont
+  `smoke_pmsl_contracts_21h.py`, qui n'est pas exécuté par la CI. Ce dernier
+  expire encore plus loin, sur une boîte modale de validation du premier CDD :
+  il reste non qualifié ;
+- **fiche individuelle** : le seuil absolu `hauteur adresse >= 50 px` venait de
+  l'ancien minimum fixe de 72 px. ADR-005 (`b1aafb05`) fixe deux lignes
+  visibles, soit 42 px à 100 % sous Windows. Le smoke vérifie désormais que le
+  champ ne descend pas sous son minimum sémantique ni sous deux lignes de texte.
+
+Une régression fonctionnelle de la fusion RC3 est corrigée dans le même lot.
+Le modèle choisi n'était appliqué qu'au clic sur « Suivant » : les
+caractéristiques affichées sur le même écran n'étaient pas pré-remplies, puis
+la saisie de l'utilisateur était écrasée sans avertissement. Le modèle est
+maintenant appliqué dès sa sélection. « Suivant » ne le réapplique que si la
+sélection a changé depuis, ou si la liste des modèles a été rechargée.
+L'affirmation RC3 « sans changer les données produites » ne valait donc pas
+pour le parcours avec modèle.
+
+Garde-fou : `tests/test_rc4_windows_smoke_alignment.py` vérifie que les étapes
+attendues par les smokes contrat sont atteignables, que la liste d'onglets du
+smoke fiche correspond à `DLG_Fiche_individuelle_lazy`, le contexte de premier
+niveau des smokes de checklists et la non-réapplication du modèle.

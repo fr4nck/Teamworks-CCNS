@@ -74,12 +74,12 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 print("TEAMWORKS_SMOKE_CONTRACT_STAGE:new-contract", flush=True)
                 _smoke_dialog.Onbouton_suite(None)
                 wx.Yield()
+                # Depuis RC3, l'étape 1 réunit le point de départ (page2) et les
+                # caractéristiques (page3) : elles sont validées ensemble.
                 assert _smoke_dialog.pageVisible == 2
                 assert _smoke_dialog.page2.radio_non.GetValue()
-
-                _smoke_dialog.Onbouton_suite(None)
-                wx.Yield()
-                assert _smoke_dialog.pageVisible == 3
+                assert _smoke_dialog.page2.IsShown()
+                assert _smoke_dialog.page3.IsShown()
 
                 print("TEAMWORKS_SMOKE_CONTRACT_STAGE:ccns", flush=True)
                 assert _smoke_dialog.page3._SelectContractTypeCode("CDI")

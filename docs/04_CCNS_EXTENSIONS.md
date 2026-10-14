@@ -1,6 +1,6 @@
 # Teamworks-CCNS — suivi CCNS et extensions
 
-**Mise à jour : 4 septembre 2026**
+**Mise à jour : 14 octobre 2026**
 
 ## Objectif
 
@@ -138,3 +138,8 @@ Le cockpit, la création, les transitions, l'historique et le suivi des pièces 
 Une erreur de rafraîchissement après une sauvegarde réussie ne doit plus annoncer une écriture échouée : le message indique que l'action est enregistrée et bloque les actions sur la projection périmée jusqu'à une actualisation. Cette famille est traitée pour création, transition, réception et retrait de pièce ; les erreurs de rechargement secondaires ne sont plus silencieuses. Il s'agit de composants nouveaux du fork, classés CCNS/extensions.
 
 Trois parcours natifs complets sur une base SQLite jetable sont vérifiés, chacun avec six événements d'audit, ainsi que les annulations, l'état périmé, la clôture et les quatre échecs de rafraîchissement après écriture. Les confirmations sont automatisées par un dialogue wx générique de test. Les tests ne valent pas recette utilisateur et n'ouvrent aucune base réelle.
+
+
+## Onglet Protection sociale dans le smoke de la fiche (14 octobre 2026)
+
+L'onglet « Protection sociale » ajouté par `e2c59dc6` porte la fiche à neuf onglets. Le smoke Windows de la fiche en attendait encore huit et échouait avant d'atteindre le contrôle des pages. La liste attendue inclut maintenant cet onglet. Le parcours ouvre chaque onglet, donc charge aussi `CTRL_Page_protection_sociale_runtime`, et vérifie que `pageProtectionSociale` est construite. Un test statique aligne cette liste sur `DLG_Fiche_individuelle_lazy`. Défaut d'outillage d'une extension du fork : aucune correction Vanilla n'est déduite.

@@ -159,6 +159,7 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                     _smoke_expected_pages = (
                         "Généralités", "Questionnaire", "Qualifications", "Contrats",
                         "Présences", "Scénarios", "Frais", "Recrutement",
+                        "Protection sociale",
                     )
                     assert _smoke_dialog.IDpersonne == _smoke_person_id
                     assert _smoke_dialog.GetTitle() == "Fiche individuelle"
@@ -193,7 +194,15 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                         ),
                         flush=True,
                     )
-                    assert _smoke_generalites.text_adresse.GetSize().GetHeight() >= 50
+                    # ADR-005 (docs/05_FORMULAIRES_DENSITE.md) fixe l'adresse
+                    # à deux lignes visibles : l'ancien seuil absolu de 50 px
+                    # venait du minimum fixe de 72 px. On vérifie désormais
+                    # que le champ n'est pas écrasé sous son minimum sémantique.
+                    _smoke_adresse = _smoke_generalites.text_adresse
+                    assert _smoke_adresse.GetSize().GetHeight() >= max(
+                        _smoke_adresse.GetMinSize().GetHeight(),
+                        2 * _smoke_adresse.GetCharHeight(),
+                    )
                     assert (
                         _smoke_scroll.GetVirtualSize().GetHeight()
                         >= _smoke_scroll.GetClientSize().GetHeight()
@@ -223,6 +232,7 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                     assert _smoke_notebook.pageContrats is not None
                     assert _smoke_notebook.pagePresences is not None
                     assert _smoke_notebook.pageCandidatures is not None
+                    assert _smoke_notebook.pageProtectionSociale is not None
                     assert _smoke_dialog.bitmap_button_Ok.IsEnabled()
                     assert _smoke_dialog.AnnulationImpossible is True
                     assert not _smoke_dialog.bitmap_button_annuler.IsEnabled()

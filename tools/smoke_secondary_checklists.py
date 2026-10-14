@@ -95,12 +95,14 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 _controls.append(_modeles.listCtrl_Modeles(_host))
 
                 print("TEAMWORKS_SMOKE_CHECKLIST_STAGE:modele-contrat", flush=True)
-                # ListCtrl_champs lit dictChamps via
-                # self.GetGrandParent().GetParent().
-                _modele_context = wx.Panel(_host, -1)
-                _modele_context.dictChamps = {}
-                _modele_page = wx.Panel(_modele_context, -1)
-                _controls.append(_modele_contrat.ListCtrl_champs(_modele_page))
+                # ListCtrl_champs lit dictChamps sur sa fenêtre de premier
+                # niveau, comme dans DLG_Creation_modele_contrat où il est
+                # enfant de la StaticBox de la page 1.
+                _modele_dialog = wx.Dialog(_host, -1, "Smoke modèle de contrat")
+                _modele_dialog.dictChamps = {}
+                _modele_page = wx.Panel(_modele_dialog, -1)
+                _modele_box = wx.StaticBox(_modele_page, -1, "Champs")
+                _controls.append(_modele_contrat.ListCtrl_champs(_modele_box))
 
                 print("TEAMWORKS_SMOKE_CHECKLIST_STAGE:assertions", flush=True)
                 for _control in _controls:
@@ -123,6 +125,7 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                         _control.Destroy()
                 for _dialog in reversed(_dialogs):
                     _dialog.Destroy()
+                _modele_dialog.Destroy()
                 _host.Destroy()
             except Exception:
                 import traceback as _smoke_traceback
