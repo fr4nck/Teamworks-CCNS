@@ -6,6 +6,12 @@ Les anciens fichiers restent utilisables : l'absence de métadonnées signifie
 "modèle historique / secours" et ne bloque jamais une migration progressive.
 """
 
+from domain.documents import (
+    TemplateTarget,
+    is_contract_target_compatible,
+    is_document_kind_compatible,
+)
+
 TABLE = "contrats_documents_modeles"
 DOCUMENT_KIND_COLUMN = "document_kind"
 DOCUMENT_KIND_TYPE = "VARCHAR(48)"
@@ -147,39 +153,28 @@ def GetMetadata(DB, nom_fichier):
     }
 
 
-def IsCompatible(contract_data, metadata):
-    """Teste la compatibilité contrat sans accès DB.
-
-    ``metadata is None`` correspond à un fichier historique : il reste visible
-    comme solution de secours pour garantir la rétrocompatibilité.
-    """
+def _to_domain_target(metadata):
     if metadata is None:
-        return True
-    contract_data = contract_data or {}
-    c_convention = _clean(contract_data.get("CONVENTION_CODE") or contract_data.get("CONVENTION"))
-    c_group = _clean(contract_data.get("GROUPECCNS"))
-    c_cee = _normalize_cee(contract_data.get("QUALIFICATIONCEE_CODE") or contract_data.get("QUALIFICATIONCEE"))
-    m_convention = _clean(metadata.get("convention_code"))
-    m_group = _clean(metadata.get("ccns_group"))
-    m_cee = _normalize_cee(metadata.get("cee_qualification"))
+        return None
+    return TemplateTarget(
+        convention_code=_clean(metadata.get("convention_code")),
+        ccns_group=_clean(metadata.get("ccns_group")),
+        cee_qualification=_normalize_cee(metadata.get("cee_qualification")),
+        document_kind=_clean(metadata.get("document_kind")),
+    )
 
-    if m_convention == "CCNS":
-        return c_convention == "CCNS" and (m_group is None or m_group == c_group)
-    if m_convention == "CEE" or m_cee:
-        return (c_convention == "CEE" or c_cee is not None) and (m_cee is None or m_cee == c_cee)
-    return m_convention is None and m_group is None and m_cee is None
+
+def IsCompatible(contract_data, metadata):
+    """Teste la compatibilité contrat sans accès DB via le domaine documentaire."""
+    return is_contract_target_compatible(contract_data, _to_domain_target(metadata))
 
 
 def IsDocumentKindCompatible(metadata, document_kind, include_legacy=True):
-    requested = _clean(document_kind)
-    if requested is None:
-        return True
-    if metadata is None:
-        return bool(include_legacy)
-    current = _clean(metadata.get("document_kind"))
-    if current is None:
-        return bool(include_legacy)
-    return current == requested
+    return is_document_kind_compatible(
+        _to_domain_target(metadata),
+        document_kind,
+        include_legacy=include_legacy,
+    )
 
 
 def FilterFilenames(DB, filenames, contract_data, document_kind=None, include_legacy=True):

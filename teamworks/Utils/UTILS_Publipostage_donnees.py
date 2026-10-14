@@ -68,33 +68,14 @@ def _get_country_value(country_id, field):
 
 
 def GetDictDonnees(categorie=None, listeID=None):
-    # Paramètres standards
-    if listeID is None:
-        listeID = []
-    dict_donnees = {}
-    dict_donnees["CATEGORIE"] = categorie
-    dict_donnees["NBREDOCUMENTS"] = len(listeID)
-    dict_donnees["NOMEDITION"] = NOMS_EDITION[categorie]
-    listeMotscles = []
-    
-    # Importe les données uniques pour chaque document
-    numDoc = 1
-    for ID in listeID :
-        listeMotsclesDocument, dictDonneesDocument = GetDonneesDocument(categorie, ID)
-        if listeMotsclesDocument:
-            listeMotscles = listeMotsclesDocument
-        dict_donnees[numDoc] = dictDonneesDocument
-        numDoc += 1
-    
-    # Préparation de la liste des mots-clés
-    listeMotsclesTemp = []
-    for motcle in listeMotscles :
-        listeMotsclesTemp.append( (motcle, "base") )
-    dict_donnees["MOTSCLES"] = listeMotsclesTemp
-    
-    return dict_donnees
+    from application.services.mail_merge_data import build_legacy_mail_merge_batch
 
-
+    return build_legacy_mail_merge_batch(
+        category=categorie,
+        record_ids=listeID,
+        edition_name=NOMS_EDITION[categorie],
+        loader=GetDonneesDocument,
+    )
 
 def GetDonneesDocument(categorie=None, ID=None):
     """ categorie = candidat, candidature, personne... """
@@ -110,23 +91,12 @@ def GetDonneesDocument(categorie=None, ID=None):
         IDpersonne = dictDonneesContrat["_IDPERSONNE"]
         listeMotsclesPersonne, dictDonneesPersonne = Importation_personne(IDpersonne=IDpersonne)
         
-        listeMotscles = []
-        for motcle in listeMotsclesPersonne :
-            if not motcle.startswith("_") :
-                listeMotscles.append(motcle)
-        for motcle in listeMotsclesContrat :
-            if not motcle.startswith("_") :
-                listeMotscles.append(motcle)
-        
-        dictDonnees = {}
-        for motcle, valeur in dictDonneesPersonne.items() :
-            if not motcle.startswith("_") :
-                dictDonnees[motcle] = valeur
-        for motcle, valeur in dictDonneesContrat.items() :
-            if not motcle.startswith("_") :
-                dictDonnees[motcle] = valeur
-        
-        return listeMotscles, dictDonnees
+        from application.services.mail_merge_data import compose_mail_merge_record
+        record = compose_mail_merge_record(
+            (listeMotsclesPersonne, dictDonneesPersonne),
+            (listeMotsclesContrat, dictDonneesContrat),
+        )
+        return list(record.keywords), record.values
             
     if categorie == "candidat" :
         listeMotscles, dictDonnees = Importation_candidat(IDcandidat=ID)
@@ -143,23 +113,12 @@ def GetDonneesDocument(categorie=None, ID=None):
         else:
             listeMotsclesPersonne, dictDonneesPersonne = Importation_personne(IDpersonne=IDpersonne)
         
-        listeMotscles = []
-        for motcle in listeMotsclesPersonne :
-            if not motcle.startswith("_") :
-                listeMotscles.append(motcle)
-        for motcle in listeMotsclesCandidature :
-            if not motcle.startswith("_") :
-                listeMotscles.append(motcle)
-        
-        dictDonnees = {}
-        for motcle, valeur in dictDonneesPersonne.items() :
-            if not motcle.startswith("_") :
-                dictDonnees[motcle] = valeur
-        for motcle, valeur in dictDonneesCandidature.items() :
-            if not motcle.startswith("_") :
-                dictDonnees[motcle] = valeur
-        
-        return listeMotscles, dictDonnees
+        from application.services.mail_merge_data import compose_mail_merge_record
+        record = compose_mail_merge_record(
+            (listeMotsclesPersonne, dictDonneesPersonne),
+            (listeMotsclesCandidature, dictDonneesCandidature),
+        )
+        return list(record.keywords), record.values
     
     
 

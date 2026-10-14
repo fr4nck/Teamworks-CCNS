@@ -5,21 +5,18 @@
 from application.services.hr_documents import prepare_hr_document
 from domain.documents import DocumentScope, get_document_type
 from Utils import UTILS_Organisation
-from Utils import UTILS_Publipostage_donnees
 
 
-def _load_legacy_values(IDpersonne=None, IDcontrat=None):
+def _load_legacy_values(IDpersonne=None, IDcontrat=None, data_loader=None):
+    if data_loader is None:
+        from Utils import UTILS_Publipostage_donnees
+        data_loader = UTILS_Publipostage_donnees.GetDonneesDocument
+
     if IDcontrat not in (None, 0, ""):
-        _keywords, values = UTILS_Publipostage_donnees.GetDonneesDocument(
-            categorie="contrat",
-            ID=IDcontrat,
-        )
+        _keywords, values = data_loader(categorie="contrat", ID=IDcontrat)
         return dict(values or {})
     if IDpersonne not in (None, 0, ""):
-        _keywords, values = UTILS_Publipostage_donnees.GetDonneesDocument(
-            categorie="personne",
-            ID=IDpersonne,
-        )
+        _keywords, values = data_loader(categorie="personne", ID=IDpersonne)
         return dict(values or {})
     return {}
 
@@ -65,21 +62,26 @@ def _prepare_from_values(document_code, legacy_values):
     )
 
 
-def PrepareDocument(document_code, IDpersonne=None, IDcontrat=None):
+def PrepareDocument(document_code, IDpersonne=None, IDcontrat=None, data_loader=None):
     """Prépare un document RH en conservant tous les mots-clés historiques.
 
     Les nouveaux modèles disposent en plus de STRUCTURE_*, SALARIE_* et CONTRAT_*.
     """
-    legacy_values = _load_legacy_values(IDpersonne=IDpersonne, IDcontrat=IDcontrat)
+    legacy_values = _load_legacy_values(
+        IDpersonne=IDpersonne,
+        IDcontrat=IDcontrat,
+        data_loader=data_loader,
+    )
     return _prepare_from_values(document_code, legacy_values)
 
 
-def GetDonneesPublipostage(document_code, IDpersonne=None, IDcontrat=None):
+def GetDonneesPublipostage(document_code, IDpersonne=None, IDcontrat=None, data_loader=None):
     """Retourne les mots-clés prêts pour un modèle et l'état de préparation."""
     prepared = PrepareDocument(
         document_code,
         IDpersonne=IDpersonne,
         IDcontrat=IDcontrat,
+        data_loader=data_loader,
     )
     values = prepared.merge_context.as_dict()
     keywords = tuple(sorted(values))

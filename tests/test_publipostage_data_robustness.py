@@ -48,7 +48,10 @@ def test_empty_mailmerge_selection_has_an_empty_keyword_list():
     func = next(node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == "GetDictDonnees")
     module = ast.Module(body=[func], type_ignores=[])
     ast.fix_missing_locations(module)
-    namespace = {"NOMS_EDITION": {"contrat": "NOM"}}
+    namespace = {
+        "NOMS_EDITION": {"contrat": "NOM"},
+        "GetDonneesDocument": lambda categorie, ID: ([], {}),
+    }
     exec(compile(module, str(SOURCE_PATH), "exec"), namespace)
     result = namespace["GetDictDonnees"]("contrat", [])
     assert result["NBREDOCUMENTS"] == 0
