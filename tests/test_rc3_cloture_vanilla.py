@@ -11,8 +11,8 @@ def _read(relative):
 
 def test_version_canonique_et_runtime_aligne():
     version = _read("VERSION").strip()
-    assert re.fullmatch(r"0\\.9\\.2-rc[1-9]\\d*", version)
-    assert f"Statut actuel : \`{version}\`" in _read("README.md")
+    assert re.fullmatch(r"0\.9\.2-rc[1-9]\d*", version)
+    assert f"Statut actuel : `{version}`" in _read("README.md")
     assert _read("teamworks/Versions.txt").splitlines()[0] == f"Version {version} :"
     assert _read("CHANGELOG.md").startswith(f"# Teamworks-CCNS {version.split('-')[0]}")
     source = _read("teamworks/Teamworks.py")
