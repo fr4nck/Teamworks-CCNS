@@ -31,6 +31,7 @@ class Page(wx.Panel):
     def __init__(self, *args, **kwds):
         kwds["style"] = wx.TAB_TRAVERSAL
         wx.Panel.__init__(self, *args, **kwds)
+        self._IDmodele_applique = None
 
         self.label_titre = CTRL_Texte.H2(
             self,
@@ -165,7 +166,22 @@ class Page(wx.Panel):
         self.Layout()
 
     def MAJ_ListCtrl(self):
+        # Le contenu des modèles a pu être modifié : le prochain choix sera
+        # réappliqué même s'il porte le même identifiant.
+        self._IDmodele_applique = None
         self.listCtrl_modeles.MAJListeCtrl()
+
+    def OnModeleSelectionne(self, index):
+        """Pré-remplit les caractéristiques affichées sous le choix du modèle.
+
+        Depuis la recette RC3, le point de départ et les caractéristiques
+        forment une seule étape : le modèle doit être appliqué dès sa sélection
+        pour que l'utilisateur voie et ajuste les valeurs avant « Suivant ».
+        """
+        if not hasattr(self.GetGrandParent(), "page3"):
+            return
+        if self.radio_oui.GetValue() and index != -1:
+            self.AppliquerModele(index)
 
     def Validation(self):
         if self.radio_oui.GetValue() == False:
@@ -178,7 +194,17 @@ class Page(wx.Panel):
             dlg.Destroy()
             return False
 
-        IDmodele = int(self.listCtrl_modeles.GetItem(index, 0).GetText())
+        # Ne pas réappliquer un modèle déjà affiché : cela écraserait les
+        # ajustements saisis entre-temps dans les caractéristiques du contrat.
+        if self._IDmodele_applique == self._IDmodele(index):
+            return True
+        return self.AppliquerModele(index)
+
+    def _IDmodele(self, index):
+        return int(self.listCtrl_modeles.GetItem(index, 0).GetText())
+
+    def AppliquerModele(self, index):
+        IDmodele = self._IDmodele(index)
 
         DB = GestionDB.DB()
         UTILS_Contrats_schema.EnsureContractModelColumns(DB)
@@ -196,7 +222,9 @@ class Page(wx.Panel):
                 wx.OK | wx.ICON_ERROR,
                 parent=self,
             )
-            self.MAJ_ListCtrl()
+            # Différé : l'appel peut provenir de l'événement de sélection de
+            # cette même liste, qu'il ne faut pas vider pendant son traitement.
+            wx.CallAfter(self.MAJ_ListCtrl)
             return False
 
         IDclassification, IDtype, convention_code, ccns_group, cee_qualification = rows[0]
@@ -234,6 +262,7 @@ class Page(wx.Panel):
         self.GetGrandParent().page3.Importation()
         self.GetGrandParent().page3.RefreshContractRules()
         self.GetGrandParent().page4.MAJ_ListCtrl()
+        self._IDmodele_applique = IDmodele
         return True
 
 
@@ -281,7 +310,8 @@ class ListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ColumnSorter
         self.SortListItems(1, 1)
 
     def OnItemSelected(self, event):
-        pass
+        self.parent.OnModeleSelectionne(event.GetIndex())
+        event.Skip()
 
     def OnItemDeselected(self, event):
         pass
