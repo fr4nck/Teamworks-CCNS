@@ -283,3 +283,8 @@ La trajectoire reste :
 6. réduire progressivement la dépendance au code UI historique sans réécriture massive non justifiée.
 
 La priorité n’est plus d’ouvrir davantage de fronts. Elle est de **transformer les travaux déjà engagés en chaînes terminées, recettées et compréhensibles**.
+
+
+## Effectifs / ETP multi-référentiels (chantier ouvert le 21 octobre 2026)
+
+Objectif : un seul calcul métier contrôlable, réutilisé dans wx et Qt, pour produire les effectifs 2025 et futurs selon les règles propres à chaque partenaire. Première brique en `domain/effectifs.py` sur `master` : quatre simulations CEE/apprentis, aucun profil réglementaire certifié, aucun écran de production. Étapes suivantes : référentiels officiels par exercice et dispositif, données RH/avenants/absences et CDD de remplacement, traitement des CEE en jours, auditabilité et exports, raccordement wx puis Qt, recette réelle sur copie PMSL et rapprochement Urssaf/OPCO. **Aucune déclaration ne doit être effectuée à partir de ce lot seul.**

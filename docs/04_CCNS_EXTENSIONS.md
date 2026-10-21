@@ -104,3 +104,10 @@ Qualification et limites : voir `docs/CRH_CONSERVATION_CRH22_CRH36.md`. Ces déf
 ## Conservation complète des tests métier CRH
 
 Six tests avaient été écartés lors du premier portage par une détection trop large du mot teamworks. Les tests des événements, secrets et protections/actions/successions sont réintégrés sans changement métier. La qualification du socle passe de 278 à 319 tests, sous Windows et Linux, avec les deux tests exclusivement réseau réservés à leur suite SQL.
+
+
+## Effectifs et ETP multi-référentiels — 21 octobre 2026
+
+Chantier **CCNS/extensions**, lot 1 : moteur de simulation pure `domain/effectifs.py`, adaptateur en lecture seule des contrats historiques, quatre combinaisons CEE/apprentis, calculs mensuels/annuels et anomalies bloquantes. Tests ciblés `tests/test_effectifs.py`. Détail et limites dans `docs/64-effectifs-et-etp.md`.
+
+**État : code préparé, qualification CI et rapprochement des données réelles encore nécessaires.** Aucun profil légal Urssaf/Afdas n'est livré comme déclarable ; ni interface wx ni interface Qt ne sont modifiées par ce lot. Un ETP calculé n'est pas automatiquement un effectif légal.
