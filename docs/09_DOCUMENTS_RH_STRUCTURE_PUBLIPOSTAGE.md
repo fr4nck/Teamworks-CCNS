@@ -148,3 +148,41 @@ Un service GED transverse peut fournir stockage technique, indexation, prévisua
 4. créer un adaptateur lecture historique → profil canonique ;
 5. ajouter une validation de modèle distinguant clé connue vide et clé inconnue ;
 6. seulement ensuite faire évoluer le stockage ou l'interface de gestion de la structure.
+
+
+## 11. Rail C — extraction du moteur indépendant de l'UI
+
+Le Rail C matérialise cette architecture dans `domain/documents/` et `application/services/hr_documents.py`.
+
+Le périmètre automatisable hors UI couvre maintenant le catalogue de mots-clés, la validation des balises, la préparation du contexte de fusion, le ciblage des modèles et un plan de génération portant des états et erreurs métier explicites. Les modèles historiques non classés restent compatibles comme solution de secours.
+
+Le rendu texte pur sert uniquement de contrat de prévisualisation et de test. Il applique la règle définie plus haut : une clé connue sans valeur est remplacée par une chaîne vide ; une clé inconnue reste visible et est signalée.
+
+La génération Office réelle (`.doc`, `.odt`, automatisation Word/LibreOffice, impression et ouverture applicative) reste hors de ce lot. Elle devra être branchée derrière ce contrat puis qualifiée sur Windows avant d'être déclarée prête.
+
+
+## 12. Contrat de service pour les interfaces wx et Qt
+
+Les interfaces ne doivent pas reconstruire elles-mêmes les règles de publipostage.
+
+Le service `application/services/mail_merge_data.py` prend en charge l'assemblage pur des données de fusion : composition de plusieurs sources, exclusion des clés internes commençant par `_` et préparation du format de lot attendu par le publiposteur historique.
+
+Le service `application/services/document_template_catalog.py` inventorie les fichiers modèles disponibles par format (.doc, .odt, .twd) et peut les enrichir avec un fournisseur de métadonnées injecté, sans dépendance wx ni lancement d'une suite bureautique.
+
+Le service `application/services/hr_document_workflow.py` constitue la façade de plus haut niveau pour une future interface Qt. Il prend un type de document, les données Structure/Salarié/Contrat, les modèles disponibles et, si nécessaire, le texte du modèle. Il retourne :
+
+- le type documentaire reconnu ;
+- les modèles compatibles avec ce document et le contrat ;
+- un plan de génération ;
+- les erreurs de workflow structurées.
+
+Deux erreurs de workflow sont actuellement normalisées :
+
+- `unknown_document_type` : code documentaire inconnu ;
+- `no_compatible_template` : aucun modèle compatible alors qu'un modèle interne est requis.
+
+Les erreurs de contenu ne sont pas dupliquées au niveau du workflow : champs requis manquants, mots-clés inconnus et génération externe restent portés par `generation_plan.issues`.
+
+Ainsi wx et Qt peuvent présenter des messages différents sans modifier la décision métier sous-jacente.
+
+La source historique `UTILS_Publipostage_donnees.py` reste utilisée pour les lectures SQL existantes, mais son assemblage métier est délégué au service pur. La passerelle `UTILS_Documents_RH.py` charge ce fournisseur de façon paresseuse et accepte désormais une source de données injectée pour les tests ou un futur adaptateur.
