@@ -68,6 +68,18 @@ def _ccns_group_label(group_code, date_debut):
     return _as_text(choice.label if choice is not None else code)
 
 
+_CEE_LEGACY_DOCUMENT_ROLES = {
+    # Libellés contractuels, indépendants des codes de qualification métier.
+    "bafa titulaire": u"animateur.rice occasionnel.le diplômé.e",
+    "bafa_holder": u"animateur.rice occasionnel.le diplômé.e",
+    "bafa stagiaire": u"animateur.rice occasionnel.le stagiaire",
+    "bafa_trainee": u"animateur.rice occasionnel.le stagiaire",
+    "non diplômé": u"animateur.rice occasionnel.le non diplômé.e",
+    "non diplome": u"animateur.rice occasionnel.le non diplômé.e",
+    "unqualified": u"animateur.rice occasionnel.le non diplômé.e",
+}
+
+
 def classification_for_contract(data, has_legacy_classification=False):
     """Résout la balise historique depuis les données réellement sélectionnées.
 
@@ -88,7 +100,8 @@ def classification_for_contract(data, has_legacy_classification=False):
     # Compatibilité des anciens modèles CEE (ex. « en tant que
     # {CLASSIFICATION} ») : qualification et groupe CCNS restent distincts
     # dans les données métier et dans les mots-clés canoniques.
-    return _as_text(data.get("QUALIFICATIONCEE", "")).strip()
+    qualification = _as_text(data.get("QUALIFICATIONCEE", "")).strip()
+    return _CEE_LEGACY_DOCUMENT_ROLES.get(qualification.casefold(), qualification)
 
 
 def _has_legacy_classification(module, contract_id):

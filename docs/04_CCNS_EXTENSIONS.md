@@ -173,3 +173,30 @@ utilisant cette balise se retrouvaient incomplets.
 **Qualification :** tests synthétiques de substitution sans données réelles.
 La vérification sur Word/Writer Windows avec le modèle concerné doit être
 faite séparément sur une copie de données. Le tag `v0.9.2-rc4` reste inchangé.
+
+### Formulations contractuelles CEE — 27 octobre 2026
+
+À la demande de la recette utilisateur, la balise historique
+`{CLASSIFICATION}` peut être développée en libellé de fonction occasionnelle,
+distinct du statut de qualification utilisé dans le métier :
+
+| Donnée de qualification CEE | Texte de l'alias documentaire |
+| --- | --- |
+| BAFA titulaire | `animateur.rice occasionnel.le diplômé.e` |
+| BAFA stagiaire | `animateur.rice occasionnel.le stagiaire` |
+| Non diplômé | `animateur.rice occasionnel.le non diplômé.e` |
+
+Seul un contrat explicitement marqué **Non diplômé** bénéficie de cette
+dernière formulation : l'absence de BAFA ne suffit pas à conclure que la
+personne n'a pas d'autre diplôme/qualification d'animation. Les qualifications
+équivalentes et le BAFD conservent leur valeur propre, sans conversion
+automatique. `QUALIFICATIONCEE` demeure inchangé dans le publipostage et
+dans les calculs CEE ; seul l'alias historique `CLASSIFICATION` est
+amélioré en l'absence d'une classification enregistrée.
+
+Pour la grammaire de la phrase, les modèles éditables peuvent préférer
+« en qualité de {CLASSIFICATION} » à « en tant que {CLASSIFICATION} »
+(« que animateur.rice ») ; **aucun modèle privé n'est modifié**.
+
+Les tests vérifient les trois formulations et protègent les
+qualifications équivalentes de toute assimilation à « non diplômé.e ».

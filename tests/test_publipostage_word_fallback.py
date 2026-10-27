@@ -104,4 +104,4 @@ def test_word_and_writer_callsites_apply_exact_token_matching():
     assert "UTILS_Publipostage_controle.verify_word_merge(self.doc, listeValeurs)" in source
     assert "self.Word.Selection.Delete()" in source
     assert "find.ClearFormatting()" in source
-    assert "oremp.SearchWords = False" in source
+    assert "orempl.SearchWords = False" in source

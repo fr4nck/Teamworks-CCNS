@@ -112,8 +112,26 @@ def test_contract_mapping_ccns_group_and_cee_legacy_document_alias():
     }
     # Pour les modèles historiques, CLASSIFICATION est un alias de document
     # uniquement ; QUALIFICATIONCEE reste le champ canonique CEE.
-    assert mapping.classification_for_contract(cee, has_legacy_classification=False) == "BAFA titulaire"
+    assert mapping.classification_for_contract(cee, has_legacy_classification=False) == "animateur.rice occasionnel.le diplômé.e"
     assert cee["QUALIFICATIONCEE"] == "BAFA titulaire"
+    variants = [
+        ("BAFA stagiaire", "animateur.rice occasionnel.le stagiaire"),
+        ("Non diplômé", "animateur.rice occasionnel.le non diplômé.e"),
+        ("BAFA_HOLDER", "animateur.rice occasionnel.le diplômé.e"),
+        ("BAFA_TRAINEE", "animateur.rice occasionnel.le stagiaire"),
+        ("UNQUALIFIED", "animateur.rice occasionnel.le non diplômé.e"),
+    ]
+    for qualification, role in variants:
+        assert mapping.classification_for_contract(
+            dict(cee, QUALIFICATIONCEE=qualification),
+            has_legacy_classification=False,
+        ) == role
+    # Qualification distincte d'un diplôme BAFA : ne pas l'indiquer
+    # « non diplômé.e » par absence de BAFA.
+    assert mapping.classification_for_contract(
+        dict(cee, QUALIFICATIONCEE="Qualification équivalente"),
+        has_legacy_classification=False,
+    ) == "Qualification équivalente"
     cee_sans_qualification = dict(cee, CLASSIFICATION="", QUALIFICATIONCEE="")
     assert mapping.classification_for_contract(cee_sans_qualification, has_legacy_classification=False) == ""
 
