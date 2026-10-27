@@ -1,5 +1,18 @@
 # Teamworks-CCNS 0.9.2
 
+## Candidate RC7 — 27 octobre 2026 (recette utilisateur Windows requise)
+
+- **État des dossiers interactif :** un double-clic (ou la touche Entrée) sur la personne ou une alerte ouvre le parcours métier correspondant, à partir des identifiants exacts et non du libellé de l'arbre.
+- **Information manquante :** ouvre la fiche individuelle, avec focus ciblé si un champ d'identité connu correspond à l'alerte.
+- **Pièce manquante ou bientôt périmée :** ouvre la saisie de pièce au bon type pour la bonne personne ; les dates, validations et pièces numérisées restent traitées par le dialogue existant, sans mutation automatique.
+- **Contrat non signé :** ouvre la fiche sur le contrat exact ; une confirmation explicite est exigée avant d'enregistrer le statut signé.
+- **DUE à faire :** ouvre le dialogue de préparation de la DPAE pour le contrat exact ; l'édition d'un PDF ne vaut pas dépôt, le statut « effectué » n'est jamais coché automatiquement.
+- **Lisibilité :** les textes coupés dans la colonne gauche sont visibles entièrement en infobulle. Les catégories restent repliables/dépliables.
+- **Performance et sécurité :** aucun SQL par personne ajouté : les identifiants sont associés à l'arbre dans les requêtes existantes. Le moteur conserve l'API historique de calcul lorsqu'aucune action n'est demandée.
+- **Preuves automatisées :** contrôles et simulations avec données fictives, CI Linux et Windows vertes sur `5834cc31` avant passage en version. **Les interactions exactes de souris et les dialogues imbriqués restent à vérifier manuellement sous Windows.**
+- **Publication :** RC6 conservée intacte, base d'exploitation non modifiée par le packaging.
+
+
 ## Candidate RC6 — 27 octobre 2026 (qualification utilisateur requise)
 
 - **Création et modification des contrats sur un seul écran :** suppression du passage obligé par l'introduction, les informations complémentaires et la conclusion ; page de choix du modèle et caractéristiques immédiatement visible.

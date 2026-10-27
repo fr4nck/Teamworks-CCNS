@@ -1,3 +1,11 @@
+Version 0.9.2-rc7 :
+
+- Alertes « État des dossiers » interactives au double-clic ou Entrée : accès direct aux fiches, pièces et contrats exacts.
+- Confirmation avant marquage de la signature ; DPAE à préparer sans validation automatique du dépôt.
+- Texte complet des éléments disponible par infobulle lorsque la colonne est étroite.
+- Aucune modification des règles métier de contrat, signature, DPAE ou pièces.
+- Recettes automatiques Linux/Windows réussies avant packaging ; clics réels à vérifier sur une copie de base.
+
 Version 0.9.2-rc6 :
 
 - Création et modification de contrats sur une page unique, avec validation et sauvegarde directe.

@@ -4,7 +4,7 @@ Fork de **Teamworks** orienté **CCNS** pour la gestion d’équipes, de contrat
 
 Projet d’origine : Teamworks.
 
-> **Statut actuel : `0.9.2-rc6` — candidate Windows de recette du formulaire contrat unique.** CI Linux/Windows réussie avant packaging ; validation visuelle et tests de publipostage sur copie de base nécessaires avant remplacement de la version en exploitation.
+> **Statut actuel : `0.9.2-rc7` — candidate Windows de recette des alertes de dossiers interactives.** CI Linux/Windows réussie avant packaging ; navigation au double-clic, validation visuelle et contrôle sur copie de base restent nécessaires avant remplacement de la version en exploitation.
 
 ## Positionnement
 
