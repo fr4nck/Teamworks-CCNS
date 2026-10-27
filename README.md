@@ -4,7 +4,7 @@ Fork de **Teamworks** orienté **CCNS** pour la gestion d’équipes, de contrat
 
 Projet d’origine : Teamworks.
 
-> **Statut actuel : `0.9.2-rc4` — candidate de recette Windows, non qualifiée pour remplacer la version en exploitation.** La validation manuelle sur copie de base réelle reste obligatoire.
+> **Statut actuel : `0.9.2-rc5` — candidate de recette Windows.** Tests automatisés Linux/Windows passés avant packaging ; le rendu visuel et le publipostage sur copie de base restent à qualifier avant remplacement de la version en exploitation.
 
 ## Positionnement
 

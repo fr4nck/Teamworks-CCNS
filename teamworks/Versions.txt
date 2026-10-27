@@ -1,3 +1,10 @@
+Version 0.9.2-rc5 :
+
+- Correctifs de la navigation du publiposteur : vraies icônes carrées, libellés lisibles, transitions préservées.
+- Atténuation du scintillement du tableau des contrats sous Windows avec styles de liste adaptés, remplissage gelé et redimensionnement non redondant.
+- Compatibilité des anciens modèles CEE avec {CLASSIFICATION} et formulations diplômé.e / stagiaire / non diplômé.e, sans modification des qualifications métier.
+- Vérifications automatisées réussies avant mise en version ; recette humaine requise avant déploiement.
+
 Version 0.9.2-rc4 :
 
 - Candidate de recette Windows préparée depuis la branche wx/master ; les preuves de recette utilisateur restent nécessaires.

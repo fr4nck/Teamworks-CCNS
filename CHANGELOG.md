@@ -1,5 +1,14 @@
 # Teamworks-CCNS 0.9.2
 
+## Candidate RC5 — 27 octobre 2026 (recette visuelle Windows à confirmer)
+
+- Assistant de publipostage : remplacer les PNG 72×24 comportant déjà du texte par de véritables icônes carrées dans Retour, Suivant, Valider, Arrêter et Fermer ; éviter toute compression des anciens sprites dans le bouton commun.
+- Tableau des contrats : désactiver sous Windows les règles de liste responsables d'effacements au survol (comportement wxWidgets connu), grouper le remplissage avec Freeze/Thaw et éviter les écritures identiques de largeur de colonne.
+- Contrat CEE : restauration de {CLASSIFICATION} pour les modèles anciens, clarification des trois libellés d'animateur.rice occasionnel.le selon la qualification enregistrée, et sécurisation du remplacement des champs Word/Writer.
+- Corriger uniquement le code distribué : aucun contrat existant, aucune base d'exploitation ni aucun modèle Word privé n'est modifié.
+- Tests automatisés Linux et Windows réussis sur le correctif préliminaire `dcd75a09`. Restent à vérifier dans le portable RC5 : rendu des boutons à 100 %/125 %, survol du tableau, et fusion Word du modèle CEE sur copie de base.
+
+
 ## Candidate RC4 — 14 octobre 2026 (qualification en cours)
 
 - Préremplissage des caractéristiques du contrat dès la sélection du modèle, sans écrasement des retouches au clic sur « Suivant ».
