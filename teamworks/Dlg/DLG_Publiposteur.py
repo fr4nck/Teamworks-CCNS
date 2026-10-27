@@ -57,13 +57,17 @@ class Dialog(wx.Dialog):
         self.bouton_retour = CTRL_Bouton_image.CTRL(
             self.panel_base,
             texte=_(u"Retour"),
-            cheminImage=Chemins.GetStaticPath("Images/BoutonsImages/Retour_L72.png"),
+            cheminImage=Chemins.GetStaticPath("Images/32x32/Precedent.png"),
+            tailleImage=(18, 18),
+            margesTexte=(6, 0),
             role="quiet",
         )
         self.bouton_suite = CTRL_Bouton_image.CTRL(
             self.panel_base,
             texte=_(u"Suivant"),
-            cheminImage=Chemins.GetStaticPath("Images/BoutonsImages/Suite_L72.png"),
+            cheminImage=Chemins.GetStaticPath("Images/32x32/Suivant.png"),
+            tailleImage=(18, 18),
+            margesTexte=(6, 0),
             role="primary",
         )
         self.bouton_annuler = CTRL_Bouton_image.CTRL(
@@ -88,12 +92,22 @@ class Dialog(wx.Dialog):
         self.Creation_Pages()
 
     def SetSuiteAction(self, texte, nom_image, role="primary"):
-        """Met à jour l'action principale avec le contrat de bouton commun."""
-        self.bouton_suite.SetTexte(_(texte))
-        self.bouton_suite.SetImage(
-            Chemins.GetStaticPath("Images/BoutonsImages/%s" % nom_image)
+        """Conserve les transitions historiques, avec de vraies icônes carrées."""
+        actions = {
+            "Suite_L72.png": "Suivant.png",
+            "Valider_L72.png": "Valider.png",
+            "Arreter_L72.png": "Annuler.png",
+            "Fermer_L72.png": "Fermer.png",
+        }
+        nom_icone = actions.get(nom_image)
+        chemin_icone = (
+            Chemins.GetStaticPath("Images/32x32/%s" % nom_icone)
+            if nom_icone else ""
         )
+        self.bouton_suite.SetTexte(_(texte))
+        self.bouton_suite.SetImage(chemin_icone)
         self.bouton_suite.SetRole(role)
+        self.panel_base.Layout()
     
     def Creation_Pages(self):
         """ Creation des pages """

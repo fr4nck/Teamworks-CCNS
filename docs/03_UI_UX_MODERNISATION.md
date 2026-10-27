@@ -273,3 +273,37 @@ d'éventuels déclenchements répétés seulement si les traces le justifient.
 Il s'agit d'une anomalie **UI/UX non bloquante métier dans la vidéo**,
 mais gênante pour la qualité visuelle. La vidéo ne prouve ni régression
 de données ni cause liée à SQL.
+
+
+## Lot RC5 — boutons de navigation et scintillement contrats (27 octobre 2026)
+
+**Correctifs candidats intégrés à wx/master, validation visuelle Windows encore requise.**
+
+- **Retour/Suivant du publiposteur :** les images historiques
+  `BoutonsImages/*_L72.png` mesurent **72 × 24 pixels** et contiennent déjà
+  un libellé. La RC4 les compressait dans une icône de 22 × 22 pixels puis
+  dessinait une seconde fois le texte natif du bouton. Les actions utilisent
+  désormais de vraies icônes `Images/32x32`, affichées à 18 × 18 et
+  séparées du texte. `SetSuiteAction` conserve les transitions Suivant,
+  Valider, Arrêter et Fermer, mais remplace leurs anciens visuels 72 × 24.
+  Le bouton commun ne compacte plus un sprite `*_L72.png` lorsqu'il
+  possède déjà un libellé natif.
+- **Scintillement des listes contrats :** sur Windows, la liste native
+  `wx.ListCtrl` n'utilise plus `LC_HRULES` et `LC_VRULES`, impliqués
+  dans un bug connu de wxWidgets sous Windows au survol ; le mode Report
+  et la sélection unique restent inchangés. Les règles sont conservées sur
+  les autres plateformes. `Remplissage` regroupe les opérations via
+  `Freeze/Thaw` et le redimensionnement évite les écritures identiques
+  de largeur de colonnes. Pas de modification SQL ni de contrat.
+- **Classification CEE :** reprendre les correctifs précédents déjà
+  qualifiés pour `CLASSIFICATION` et les trois libellés contractuels,
+  sans changer les codes métier ou les données des contrats.
+
+**Contrôles automatiques :** tests du mapping des icônes, exclusion des
+sprites larges, style natif de la liste selon la plateforme, mises à jour
+groupées et validation des boutons dans le smoke de publipostage Windows.
+
+**Recette manuelle restant obligatoire :** captures Windows du publiposteur
+à 100 % et 125 %, navigation Suivant/Retour/Valider/Arrêter/Fermer et
+survol de plusieurs lignes de contrats, puis édition Word d'un CEE sur
+copie de base. Le tag RC4 publié n'est pas réécrit.

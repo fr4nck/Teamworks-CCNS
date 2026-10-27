@@ -312,13 +312,23 @@ class Panel_Contrats(wx.Panel):
         dlg.Destroy()
 
 
+def _style_liste_contrats(platform=None):
+    """Évite le défaut natif wxMSW : règles effacées au survol des lignes."""
+    if platform is None:
+        platform = wx.Platform
+    style = wx.LC_REPORT | wx.LC_SINGLE_SEL
+    if platform != "__WXMSW__":
+        style |= wx.LC_HRULES | wx.LC_VRULES
+    return style
+
+
 class ListCtrl_contrats(wx.ListCtrl):
     def __init__(self, parent, id):
         wx.ListCtrl.__init__(
             self,
             parent,
             id,
-            style=wx.LC_REPORT | wx.LC_HRULES | wx.LC_VRULES | wx.LC_SINGLE_SEL,
+            style=_style_liste_contrats(),
         )
         self.parent = parent
         self.IDpersonne = self.GetParent().IDpersonne
@@ -365,7 +375,9 @@ class ListCtrl_contrats(wx.ListCtrl):
         self._ajustement_en_cours = True
         try:
             for index, taille in enumerate(minimums):
-                self.SetColumnWidth(index, taille)
+                # SetColumnWidth force une peinture Win32 même sans changement.
+                if self.GetColumnWidth(index) != taille:
+                    self.SetColumnWidth(index, taille)
         finally:
             self._ajustement_en_cours = False
 
@@ -373,37 +385,42 @@ class ListCtrl_contrats(wx.ListCtrl):
         self.Importation_Classifications()
         self.Importation()
 
-        if self.GetItemCount() != 0:
-            self.DeleteAllItems()
+        # Grouper les écritures de cellules : pas de repaints intermédiaires.
+        self.Freeze()
+        try:
+            if self.GetItemCount() != 0:
+                self.DeleteAllItems()
 
-        index = 0
-        for IDcontrat, valeurs in self.DictContrats.items():
-            etat, classification, date_debut, date_fin, date_rupture, signature, due = valeurs
+            index = 0
+            for IDcontrat, valeurs in self.DictContrats.items():
+                etat, classification, date_debut, date_fin, date_rupture, signature, due = valeurs
 
-            self.InsertItem(index, str(IDcontrat))
-            if etat == "Perim":
-                item = self.GetItem(index)
-                item.SetTextColour(UTILS_Interface.GetToken("disabled"))
-                self.SetItem(item)
+                self.InsertItem(index, str(IDcontrat))
+                if etat == "Perim":
+                    item = self.GetItem(index)
+                    item.SetTextColour(UTILS_Interface.GetToken("disabled"))
+                    self.SetItem(item)
 
-            self.SetItem(index, 1, DateEngFr(date_debut))
-            if date_fin == "2999-01-01":
-                date_fin_affichee = _(u"Indétermin.")
-            else:
-                date_fin_affichee = DateEngFr(date_fin)
-            if date_rupture != "":
-                date_fin_affichee = DateEngFr(date_rupture) + "-R"
-            self.SetItem(index, 2, date_fin_affichee)
-            self.SetItem(index, 3, classification)
-            self.SetItem(index, 4, signature or "")
-            self.SetItem(index, 5, due or "")
-            self.SetItemData(index, IDcontrat)
-            index += 1
+                self.SetItem(index, 1, DateEngFr(date_debut))
+                if date_fin == "2999-01-01":
+                    date_fin_affichee = _(u"Indétermin.")
+                else:
+                    date_fin_affichee = DateEngFr(date_fin)
+                if date_rupture != "":
+                    date_fin_affichee = DateEngFr(date_rupture) + "-R"
+                self.SetItem(index, 2, date_fin_affichee)
+                self.SetItem(index, 3, classification)
+                self.SetItem(index, 4, signature or "")
+                self.SetItem(index, 5, due or "")
+                self.SetItemData(index, IDcontrat)
+                index += 1
 
-        self.SortItems(self.ColumnSorter)
-        nbreItems = self.GetItemCount()
-        if nbreItems > 0:
-            self.EnsureVisible(nbreItems - 1)
+            self.SortItems(self.ColumnSorter)
+            nbreItems = self.GetItemCount()
+            if nbreItems > 0:
+                self.EnsureVisible(nbreItems - 1)
+        finally:
+            self.Thaw()
         wx.CallAfter(self.AjusterColonnes)
 
     def ColumnSorter(self, key1, key2):

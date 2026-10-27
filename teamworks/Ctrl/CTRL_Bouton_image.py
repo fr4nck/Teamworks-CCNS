@@ -81,6 +81,15 @@ def _chemin_image_existant(chemin, taille_cible=None):
     return max(candidates, key=lambda item: item[0])[1]
 
 
+def _est_image_bouton_avec_libelle(chemin):
+    """Les anciens PNG *_L72 contiennent déjà l'intitulé du bouton.
+
+    Les réduire à 22x22 et leur adjoindre un label wx crée un doublon
+    illisible (constaté sous Windows dans le publiposteur RC4).
+    """
+    return bool(chemin and Path(chemin).name.endswith("_L72.png"))
+
+
 def _token_texte_bouton(role):
     if role == "danger":
         return "danger"
@@ -155,6 +164,11 @@ class CTRL(wx.Button):
                     return self.bitmapSource
             except Exception:
                 pass
+
+        # Ne jamais écraser une image de bouton historique 72x24 contenant
+        # du texte dans l'emplacement carré réservé à une icône.
+        if self.texte and _est_image_bouton_avec_libelle(self.cheminImage):
+            return wx.NullBitmap
 
         taille_cible = _echelle_taille(self.tailleImage)
         chemin = _chemin_image_existant(self.cheminImage, max(taille_cible))

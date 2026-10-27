@@ -118,6 +118,26 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 _smoke_pub_dialog = _smoke_pub.Dialog(frame, "", dictDonnees=_smoke_data)
                 _smoke_pub_dialog.Show()
                 wx.Yield()
+                # Vérifier les véritables bitmaps carrés, et non les vieux PNG
+                # 72x24 écrasés sur un libellé natif (régression RC4 Windows).
+                for _smoke_button in (
+                    _smoke_pub_dialog.bouton_retour,
+                    _smoke_pub_dialog.bouton_suite,
+                ):
+                    assert "32x32" in str(_smoke_button.cheminImage)
+                    _smoke_bitmap = _smoke_button.GetBitmap()
+                    assert _smoke_bitmap.IsOk()
+                    assert _smoke_bitmap.GetWidth() < 48
+                    assert _smoke_bitmap.GetHeight() < 48
+                for _smoke_label, _smoke_icon in (
+                    (u"Valider", "Valider_L72.png"),
+                    (u"Arrêter", "Arreter_L72.png"),
+                    (u"Fermer", "Fermer_L72.png"),
+                    (u"Suivant", "Suite_L72.png"),
+                ):
+                    _smoke_pub_dialog.SetSuiteAction(_smoke_label, _smoke_icon)
+                    assert _smoke_pub_dialog.bouton_suite.GetLabel() == _smoke_label
+                    assert "32x32" in str(_smoke_pub_dialog.bouton_suite.cheminImage)
                 _smoke_pub_dialog.page4.choixLogiciel = 3
                 _smoke_visible = _smoke_pub_dialog.page4.listCtrl.GetListeDocuments()
                 _smoke_visible_names = {values[0] for values in _smoke_visible.values()}
