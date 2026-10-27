@@ -25,11 +25,8 @@ from Ctrl.CTRL_Creation_contrat_p6 import Page as Page6
 
 
 def _contract_navigation_pages(has_custom_fields):
-    pages = [1, 2, 4]
-    if has_custom_fields:
-        pages.append(5)
-    pages.append(6)
-    return tuple(pages)
+    # Une seule page visible, quel que soit le modèle ou les anciens champs.
+    return (2,)
 
 
 class Page3(LegacyPage3):
@@ -138,25 +135,33 @@ class Dialog(wx.Dialog):
     def __init__(self, parent, title="", IDcontrat=0, IDpersonne=0):
         wx.Dialog.__init__(self, parent, -1, name="frm_creation_contrats",style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX)
         self.parent = parent
-        self.listePages = ("Page1", "Page2", "Page3", "Page4", "Page5", "Page6")
+        self.listePages = ("Page2",)
 
         self.panel_base = wx.Panel(self, -1)
         self.static_line = wx.StaticLine(self.panel_base, -1)
         self.bouton_aide = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Aide"), cheminImage=Chemins.GetStaticPath("Images/32x32/Aide.png"))
-        self.bouton_retour = CTRL_Bouton_image.CTRL(self.panel_base, id=-1, texte=_(u"Retour"))
-        self.bouton_suite = CTRL_Bouton_image.CTRL(self.panel_base, id=-1, texte=_(u"Suivant"))
+        self.bouton_options = CTRL_Bouton_image.CTRL(
+            self.panel_base, texte=_(u"Champs spécifiques…"),
+            cheminImage=Chemins.GetStaticPath("Images/32x32/Modifier.png"),
+            role="quiet",
+        )
+        self.bouton_suite = CTRL_Bouton_image.CTRL(
+            self.panel_base, id=-1, texte=_(u"Valider"),
+            cheminImage=Chemins.GetStaticPath("Images/32x32/Valider.png"),
+            role="primary",
+        )
         self.bouton_annuler = CTRL_Bouton_image.CTRL(self.panel_base, texte=_(u"Annuler"), cheminImage=Chemins.GetStaticPath("Images/32x32/Annuler.png"))
         self.__set_properties()
         self.__do_layout()
 
         self.Bind(wx.EVT_BUTTON, self.Onbouton_aide, self.bouton_aide)
-        self.Bind(wx.EVT_BUTTON, self.Onbouton_retour, self.bouton_retour)
+        self.Bind(wx.EVT_BUTTON, self.OnBoutonChampsSpecifiques, self.bouton_options)
         self.Bind(wx.EVT_BUTTON, self.Onbouton_suite, self.bouton_suite)
         self.Bind(wx.EVT_BUTTON, self.Onbouton_annuler, self.bouton_annuler)
 
-        self.bouton_retour.Enable(False)
-        self.nbrePages = len(self.listePages)
-        self.pageVisible = 1
+        self.nbrePages = 1
+        self.pageVisible = 2
+        self._enregistrement_en_cours = False
 
         self.dictContrats = {
             "IDcontrat": IDcontrat,
@@ -188,7 +193,9 @@ class Dialog(wx.Dialog):
             self.Importation(IDcontrat)
 
         self.Creation_Pages()
+        self.bouton_options.Show(bool(self.page4.listCtrl_champs.dictChamps))
         self._ApplyInitialResponsiveSize()
+        self.bouton_suite.SetDefault()
 
     def Importation(self, IDcontrat=0):
         DB = GestionDB.DB()
@@ -235,40 +242,26 @@ class Dialog(wx.Dialog):
         DB.Close()
 
     def Creation_Pages(self):
-        """ Creation des pages """
-        for numPage in range(1, self.nbrePages+1):
-            page_class = globals().get(self.listePages[numPage-1])
-            if not callable(page_class):
-                raise RuntimeError("Page de contrat inconnue : %s" % self.listePages[numPage-1])
-            page = page_class(self.panel_base)
-            setattr(self, "page" + str(numPage), page)
-            proportion = 0 if numPage == 2 else 1
-            self.sizer_pages.Add(page, proportion, wx.EXPAND, 0)
-            self.sizer_pages.Layout()
-            page.Show(False)
-        self.page1.Show(True)
+        """Un seul formulaire ; champs historiques et sauvegarde non affichés."""
+        self.page2 = Page2(self.panel_base)
+        self.page3 = Page3(self.panel_base)
+        self.page4 = Page4(self.panel_base)
+        self.page6 = Page6(self.panel_base)
+        self.page4.Hide()
+        self.page6.Hide()
+
+        self.sizer_pages.Add(self.page2, 0, wx.EXPAND)
+        self.sizer_pages.Add(self.page3, 1, wx.EXPAND)
+        self.page2.label_titre.SetLabel(
+            _(u"Créer un contrat") if not self.dictContrats["IDcontrat"]
+            else _(u"Modifier le contrat")
+        )
         self.sizer_pages.Layout()
 
     def _PagesForStep(self, page_number):
-        """Retourne les panneaux physiques composant une étape logique."""
-        if page_number == 2:
-            return (self.page2, self.page3)
-        return (getattr(self, "page%d" % page_number),)
-
-    def _ShowStep(self, page_number, visible):
-        for page in self._PagesForStep(page_number):
-            page.Show(visible)
-
-    def _NavigationPages(self):
-        return _contract_navigation_pages(self._HasSelectedCustomFields())
-
-    def _RefreshNavigationButtons(self):
-        self.bouton_retour.Enable(self.pageVisible != self.NAVIGATION_PAGES[0])
-        if self.pageVisible == self.NAVIGATION_PAGES[-1]:
-            self.bouton_suite.SetTexte(_(u"Valider"))
-        else:
-            self.bouton_suite.SetTexte(_(u"Suivant"))
-        self.bouton_suite.Enable(True)
+        if page_number != 2:
+            raise ValueError("Page de contrat inconnue : %s" % page_number)
+        return (self.page2, self.page3)
 
     def _ApplyInitialResponsiveSize(self):
         """Dimensionne une fois le wizard sur sa page la plus exigeante.
@@ -281,8 +274,7 @@ class Dialog(wx.Dialog):
         """
         content_width = 0
         content_height = 0
-        for numPage in range(1, self.nbrePages + 1):
-            page = getattr(self, "page%d" % numPage)
+        for page in self._PagesForStep(2):
             best = page.GetBestSize()
             minimum = page.GetMinSize()
             content_width = max(content_width, best.GetWidth(), minimum.GetWidth())
@@ -299,7 +291,7 @@ class Dialog(wx.Dialog):
 
         button_height = max(
             self.bouton_aide.GetBestSize().GetHeight(),
-            self.bouton_retour.GetBestSize().GetHeight(),
+            self.bouton_options.GetBestSize().GetHeight(),
             self.bouton_suite.GetBestSize().GetHeight(),
             self.bouton_annuler.GetBestSize().GetHeight(),
         )
@@ -336,9 +328,9 @@ class Dialog(wx.Dialog):
         self.SetIcon(_icon)
         self.bouton_aide.SetToolTip(wx.ToolTip("Cliquez ici pour obtenir de l'aide"))
         self.bouton_aide.SetSize(self.bouton_aide.GetBestSize())
-        self.bouton_retour.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour revenir à la page précédente")))
-        self.bouton_retour.SetSize(self.bouton_retour.GetBestSize())
-        self.bouton_suite.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour passer à l'étape suivante")))
+        self.bouton_options.SetToolTip(wx.ToolTip(_(u"Accéder aux anciens champs spécifiques d'un modèle")))
+        self.bouton_options.SetSize(self.bouton_options.GetBestSize())
+        self.bouton_suite.SetToolTip(wx.ToolTip(_(u"Contrôler et enregistrer le contrat")))
         self.bouton_suite.SetSize(self.bouton_suite.GetBestSize())
         self.bouton_annuler.SetToolTip(wx.ToolTip(_(u"Cliquez pour annuler la création du contrat")))
         self.bouton_annuler.SetSize(self.bouton_annuler.GetBestSize())
@@ -356,9 +348,9 @@ class Dialog(wx.Dialog):
 
         # Toutes les actions du wizard restent groupées : Aide est secondaire,
         # mais n'a aucune raison d'être isolée à l'extrémité opposée de la fenêtre.
-        sizer_boutons.AddStretchSpacer(1)
         sizer_boutons.Add(self.bouton_aide, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 10)
-        sizer_boutons.Add(self.bouton_retour, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 10)
+        sizer_boutons.AddStretchSpacer(1)
+        sizer_boutons.Add(self.bouton_options, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 10)
         sizer_boutons.Add(self.bouton_suite, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 10)
         sizer_boutons.Add(self.bouton_annuler, 0, wx.ALIGN_CENTER_VERTICAL)
         grid_sizer_base.Add(sizer_boutons, 0, wx.ALL|wx.EXPAND, 10)
@@ -377,37 +369,39 @@ class Dialog(wx.Dialog):
         from Utils import UTILS_Aide
         UTILS_Aide.Aide("Creruncontrat")
 
-    def _HasSelectedCustomFields(self):
-        if not hasattr(self, "page4"):
-            return False
-        return bool(self.page4.listCtrl_champs.selections)
-
-    def Onbouton_retour(self, event):
-        pages = self._NavigationPages()
-        index = pages.index(self.pageVisible)
-        if index == 0:
-            return
-        self._ShowStep(self.pageVisible, False)
-        self.pageVisible = pages[index - 1]
-        self._ShowStep(self.pageVisible, True)
-        self.sizer_pages.Layout()
-        self._RefreshNavigationButtons()
+    def OnBoutonChampsSpecifiques(self, event):
+        """Accès facultatif aux champs des modèles anciens."""
+        from Dlg import DLG_Contrat_champs_specifiques
+        definitions = dict(self.page4.listCtrl_champs.dictChamps)
+        preserved = {
+            key: value for key, value in self.dictChamps.items()
+            if key not in definitions
+        }
+        dlg = DLG_Contrat_champs_specifiques.Dialog(
+            self, definitions, self.dictChamps
+        )
+        try:
+            if dlg.ShowModal() != wx.ID_OK:
+                return
+            self.dictChamps = dict(preserved)
+            self.dictChamps.update(dlg.champs)
+        finally:
+            dlg.Destroy()
+        self.page4.MAJ_ListCtrl()
 
     def Onbouton_suite(self, event):
-        validation = self.ValidationPages()
-        if validation == False:
+        """Les contrôles métier précèdent l'enregistrement transactionnel."""
+        if self._enregistrement_en_cours:
             return
-        if self.pageVisible == self.nbrePages:
+        self._enregistrement_en_cours = True
+        try:
+            if not self.ValidationPages():
+                return
+            if not self.page6.Validation():
+                return
             self.Terminer()
-            return
-
-        pages = self._NavigationPages()
-        index = pages.index(self.pageVisible)
-        self._ShowStep(self.pageVisible, False)
-        self.pageVisible = pages[index + 1]
-        self._ShowStep(self.pageVisible, True)
-        self.sizer_pages.Layout()
-        self._RefreshNavigationButtons()
+        finally:
+            self._enregistrement_en_cours = False
 
     def Onbouton_annuler(self, event):
         self.EndModal(wx.ID_CANCEL)
