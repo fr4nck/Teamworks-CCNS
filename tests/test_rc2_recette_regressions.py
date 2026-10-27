@@ -89,7 +89,7 @@ def test_runtime_patch_is_installed_without_removing_existing_lazy_fiche_patch()
     assert "refresh.install(module)" in dlg_init
 
 
-def test_contract_mapping_uses_real_ccns_group_and_keeps_cee_distinct():
+def test_contract_mapping_ccns_group_and_cee_legacy_document_alias():
     mapping = _load(
         "teamworks/Utils/UTILS_Publipostage_donnees_rc2.py",
         "utils_publipostage_donnees_rc2",
@@ -110,7 +110,12 @@ def test_contract_mapping_uses_real_ccns_group_and_keeps_cee_distinct():
         "QUALIFICATIONCEE": "BAFA titulaire",
         "DATEDEBUT": "01/02/2026",
     }
-    assert mapping.classification_for_contract(cee, has_legacy_classification=False) == ""
+    # Pour les modèles historiques, CLASSIFICATION est un alias de document
+    # uniquement ; QUALIFICATIONCEE reste le champ canonique CEE.
+    assert mapping.classification_for_contract(cee, has_legacy_classification=False) == "BAFA titulaire"
+    assert cee["QUALIFICATIONCEE"] == "BAFA titulaire"
+    cee_sans_qualification = dict(cee, CLASSIFICATION="", QUALIFICATIONCEE="")
+    assert mapping.classification_for_contract(cee_sans_qualification, has_legacy_classification=False) == ""
 
     historical = {
         "CLASSIFICATION": "Technicien",

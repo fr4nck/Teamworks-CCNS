@@ -143,3 +143,33 @@ Trois parcours natifs complets sur une base SQLite jetable sont vérifiés, chac
 ## Onglet Protection sociale dans le smoke de la fiche (14 octobre 2026)
 
 L'onglet « Protection sociale » ajouté par `e2c59dc6` porte la fiche à neuf onglets. Le smoke Windows de la fiche en attendait encore huit et échouait avant d'atteindre le contrôle des pages. La liste attendue inclut maintenant cet onglet. Le parcours ouvre chaque onglet, donc charge aussi `CTRL_Page_protection_sociale_runtime`, et vérifie que `pageProtectionSociale` est construite. Un test statique aligne cette liste sur `DLG_Fiche_individuelle_lazy`. Défaut d'outillage d'une extension du fork : aucune correction Vanilla n'est déduite.
+
+
+## Publipostage de contrat — RC4 / balise CLASSIFICATION (27 octobre 2026)
+
+Lors de la recette Windows, un modèle CEE historique a conservé la balise
+`{CLASSIFICATION}` dans la rubrique « Rémunération », bien que
+`QUALIFICATIONCEE` soit disponible. La pièce de recette privée ne doit pas
+être archivée dans le dépôt public : elle comporte des données personnelles.
+
+**Cause identifiée :** le correctif runtime
+`UTILS_Publipostage_donnees_rc2.classification_for_contract` remplaçait
+`CLASSIFICATION` par une chaîne vide pour les CEE sans classification
+historique, annulant le fallback du module source. Les modèles historiques
+utilisant cette balise se retrouvaient incomplets.
+
+**Correctif sur wx/master (postérieur au tag RC4) :**
+- préserver en priorité une classification historique réellement renseignée ;
+- pour la CCNS moderne, utiliser le groupe conventionnel documenté ;
+- pour les CEE, utiliser la qualification CEE comme **alias de compatibilité
+  documentaire** de `CLASSIFICATION` ; la donnée métier canonique demeure
+  `QUALIFICATIONCEE` et aucun groupe CCNS n'est déduit de cette valeur ;
+- Word : supprimer explicitement une sélection lorsque la valeur est vide,
+  réessayer les mots-clés non résolus via `document.Content.Find`, et
+  refuser silencieusement un document laissant une balise annoncée visible ;
+- Writer Windows : ne pas exiger la recherche « mot entier » pour des
+  balises déjà délimitées par des accolades.
+
+**Qualification :** tests synthétiques de substitution sans données réelles.
+La vérification sur Word/Writer Windows avec le modèle concerné doit être
+faite séparément sur une copie de données. Le tag `v0.9.2-rc4` reste inchangé.

@@ -2677,15 +2677,24 @@ class Publipostage_Word():
         if listeValeurs is None:
             listeValeurs = []
         try :
-            find = self.doc.Content.Find
-            w = win32com.client.constants
-            find.Format = True
             for motCle, valeur in listeValeurs :
                 self.Word.Selection.HomeKey(Unit=6)
                 find = self.Word.Selection.Find
+                find.ClearFormatting()
+                find.Format = False
+                find.MatchWildcards = False
+                find.Wrap = 0  # wdFindStop : évite un rebouclage sur le même champ
                 find.Text = "{" + motCle + "}"
-                while self.Word.Selection.Find.Execute() :
-                    self.Word.Selection.TypeText(Text=valeur)
+                while find.Execute() :
+                    if valeur in (None, ""):
+                        # TypeText("") peut laisser la sélection inchangée.
+                        self.Word.Selection.Delete()
+                    else:
+                        self.Word.Selection.TypeText(Text=str(valeur))
+            # Second passage sur la plage du document : une recherche basée sur
+            # Selection.Find peut manquer certaines occurrences.
+            from Utils import UTILS_Publipostage_controle
+            UTILS_Publipostage_controle.verify_word_merge(self.doc, listeValeurs)
         except Exception as err :
             print("Erreur dans le remplacement des valeurs du document : %s" % err)
             self.erreur = _(u"Impossible de remplacer les valeurs")
@@ -2792,7 +2801,7 @@ class Publipostage_Writer_Windows():
                 orempl = self.objDocument.createReplaceDescriptor()
                 orempl.SearchString= "{" + motCle + "}"
                 orempl.ReplaceString= valeur
-                orempl.SearchWords = True  #mots entiers seulement ?
+                orempl.SearchWords = False  # Les accolades délimitent déjà le mot-clé exact.
                 orempl.SearchCaseSensitive = True    # sensible à la casse ?
                 nbre = self.objDocument.replaceAll(orempl)
         except Exception as err :

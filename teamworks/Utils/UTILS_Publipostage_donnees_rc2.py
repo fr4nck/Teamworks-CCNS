@@ -73,8 +73,9 @@ def classification_for_contract(data, has_legacy_classification=False):
 
     Une classification historique enregistrée reste prioritaire. Pour un contrat
     CCNS moderne sans ``IDclassification``, la source métier est ``ccns_group``.
-    La qualification CEE reste distincte et n'est jamais transformée en
-    classification.
+    Les anciens modèles CEE peuvent utiliser {CLASSIFICATION} pour désigner la
+    qualification d'animation : ce mot-clé est alors un alias documentaire de
+    QUALIFICATIONCEE, sans créer de classification juridique CCNS.
     """
     data = data or {}
     current = _as_text(data.get("CLASSIFICATION", ""))
@@ -84,7 +85,10 @@ def classification_for_contract(data, has_legacy_classification=False):
     group = _as_text(data.get("GROUPECCNS", "")).strip().upper()
     if convention == "CCNS" and group:
         return _ccns_group_label(group, data.get("DATEDEBUT"))
-    return ""
+    # Compatibilité des anciens modèles CEE (ex. « en tant que
+    # {CLASSIFICATION} ») : qualification et groupe CCNS restent distincts
+    # dans les données métier et dans les mots-clés canoniques.
+    return _as_text(data.get("QUALIFICATIONCEE", "")).strip()
 
 
 def _has_legacy_classification(module, contract_id):
