@@ -58,7 +58,10 @@ def test_contract_smoke_exercises_ccns_creation_and_database_readback() -> None:
     assert "_MonthlySalaryDecimal()" in source
     assert "RefreshTrialProposal(force=True)" in source
     assert "trial_value.GetValue() > 0" in source
-    assert "_smoke_dialog.Onbouton_suite(None)" in source
+    # Le smoke non modal vérifie la validation directe, sans ancienne étape Suivant.
+    assert "_smoke_dialog.Onbouton_suite(None)" not in source
+    assert "assert _smoke_dialog.page6.Validation()" in source
+    assert "assert _smoke_dialog.pageVisible == 2" in source
     assert "_smoke_dialog.ValidationPages()" in source
     assert "SELECT IDcontrat, convention_code, ccns_group, gross_monthly_salary" in source
     assert 'ReqDEL("contrats", "IDcontrat", _smoke_created_contract_id)' in source
