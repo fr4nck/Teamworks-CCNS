@@ -42,7 +42,9 @@ def test_individus_connexion_bornee_pour_liste_et_arbre():
     assert "def InitModel(self):" in liste
     assert "def GetTracks(self):" in liste
     assert "def _contrats_en_cours_ou_a_venir(DB):" in arbre
-    assert "Recherche_problemes_personnes(tuple(liste_ids), DB=DB)" in arbre
+    assert "Recherche_problemes_personnes(tuple(liste_ids), DB=DB, include_targets=include_targets)" in arbre
+    # Les identifiants d'action réutilisent les résultats de la même lecture,
+    # sans rétablir les ouvertures SQL par personne.
 
 
 def test_telephones_reste_redimensionnable_et_persistant():
