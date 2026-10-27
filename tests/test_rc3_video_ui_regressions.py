@@ -61,18 +61,24 @@ def test_publisher_document_commands_wrap_below_the_list() -> None:
     assert "grid_sizer_choix = wx.FlexGridSizer(rows=1, cols=2" not in page
 
 
-def test_contract_start_and_characteristics_share_one_logical_step() -> None:
+def test_contract_creation_is_one_visible_form_with_direct_save() -> None:
     dialog = CONTRACT.read_text(encoding="utf-8")
     start = CONTRACT_START.read_text(encoding="utf-8")
     navigation = _load_function(CONTRACT, "_contract_navigation_pages")
 
-    assert navigation(False) == (1, 2, 4, 6)
-    assert navigation(True) == (1, 2, 4, 5, 6)
+    assert navigation(False) == (2,)
+    assert navigation(True) == (2,)
     assert "NAVIGATION_PAGES = _contract_navigation_pages(True)" in dialog
     assert "return (self.page2, self.page3)" in dialog
     assert "for page in self._PagesForStep(self.pageVisible):" in dialog
     assert "if page.Validation() is False:" in dialog
-    assert "proportion = 0 if numPage == 2 else 1" in dialog
+    assert "self.page2 = Page2(self.panel_base)" in dialog
+    assert "self.page3 = Page3(self.panel_base)" in dialog
+    assert "self.page4.Hide()" in dialog
+    assert "self.page6.Hide()" in dialog
+    assert "self.page6.Validation()" in dialog
+    assert "self.bouton_suite.SetDefault()" in dialog
+    assert "self.page1.Show(True)" not in dialog
     assert "1. Point de départ et caractéristiques du contrat" in start
     assert 'self.label_titre.SetLabel(_(u"Caractéristiques générales du contrat"))' in dialog
 

@@ -60,7 +60,7 @@ def _load_method(path, class_name, method_name, namespace):
 def test_contract_smokes_only_expect_reachable_wizard_steps() -> None:
     navigation = _load_function(CONTRACT_DIALOG, "_contract_navigation_pages")
     reachable = set(navigation(True)) | set(navigation(False))
-    assert 3 not in reachable, "page3 est affichée avec page2 dans l'étape fusionnée"
+    assert reachable == {2}, "le formulaire de contrat n'a qu'un seul écran"
 
     smokes = [
         path for path in TOOLS.glob("smoke_*.py")
