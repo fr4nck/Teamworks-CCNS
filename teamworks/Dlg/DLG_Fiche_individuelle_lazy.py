@@ -23,7 +23,12 @@ class LazyNotebook(wx.Notebook):
     """Ne construit les onglets secondaires qu'à leur premier affichage."""
 
     def __init__(self, parent, id=-1, IDpersonne=0):
-        wx.Notebook.__init__(self, parent, id, style=wx.BK_DEFAULT)
+        # Sous wxMSW, limiter les redessins des enfants du notebook.
+        # La recette visuelle Windows reste nécessaire pour confirmer le résultat.
+        style = wx.BK_DEFAULT
+        if wx.Platform == "__WXMSW__":
+            style |= wx.CLIP_CHILDREN
+        wx.Notebook.__init__(self, parent, id, style=style)
         self.IDpersonne = IDpersonne
         self._lazy_pages = {}
 
