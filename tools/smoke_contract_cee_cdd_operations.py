@@ -98,11 +98,9 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                     dialog = _smoke_contract.Dialog(frame, IDcontrat=0, IDpersonne=_smoke_person_id)
                     dialog.Show()
                     wx.Yield()
-                    assert dialog.pageVisible == 1
-                    dialog.Onbouton_suite(None)
-                    wx.Yield()
-                    # Étape fusionnée RC3 : page2 et page3 sont visibles ensemble.
+                    # Le formulaire est unique : aucune navigation préalable.
                     assert dialog.pageVisible == 2
+                    assert dialog.page2.IsShown()
                     assert dialog.page3.IsShown()
                     return dialog
 
@@ -112,13 +110,11 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                     baseline = int(probe.ResultatReq()[0][0])
                     probe.Close()
 
-                    dialog.Onbouton_suite(None)
-                    wx.Yield()
-                    assert dialog.pageVisible == 4
-                    dialog.Onbouton_suite(None)
-                    wx.Yield()
-                    assert dialog.pageVisible == 6
+                    # La validation du formulaire suivie du service de
+                    # sauvegarde reproduit Valider sans appeler EndModal sur
+                    # une fenêtre non modale de smoke.
                     assert dialog.ValidationPages()
+                    assert dialog.page6.Validation()
 
                     probe = _smoke_gestiondb.DB()
                     probe.ExecuterReq(

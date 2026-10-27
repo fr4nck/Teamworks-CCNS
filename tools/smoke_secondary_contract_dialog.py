@@ -58,13 +58,17 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 wx.Yield()
 
                 print("TEAMWORKS_SMOKE_CONTRACT_STAGE:initial", flush=True)
-                assert _smoke_dialog.nbrePages == 6
-                assert _smoke_dialog.pageVisible == 1
-                assert len(_smoke_dialog.listePages) == 6
-                assert all(hasattr(_smoke_dialog, "page%d" % number) for number in range(1, 7))
-                assert _smoke_dialog.page1.IsShown()
-                assert not _smoke_dialog.page2.IsShown()
-                assert not _smoke_dialog.bouton_retour.IsEnabled()
+                assert _smoke_dialog.nbrePages == 1
+                assert _smoke_dialog.pageVisible == 2
+                assert _smoke_dialog.listePages == ("Page2",)
+                assert all(hasattr(_smoke_dialog, "page%d" % n) for n in (2, 3, 4, 6))
+                assert not hasattr(_smoke_dialog, "page1")
+                assert _smoke_dialog.page2.IsShown()
+                assert _smoke_dialog.page3.IsShown()
+                assert not _smoke_dialog.page4.IsShown()
+                assert not _smoke_dialog.page6.IsShown()
+                assert not hasattr(_smoke_dialog, "bouton_retour")
+                assert _smoke_dialog.bouton_suite.GetLabel() == "Valider"
                 assert _smoke_dialog.bouton_suite.IsEnabled()
                 assert _smoke_dialog.bouton_annuler.IsEnabled()
                 assert _smoke_dialog.dictContrats["IDcontrat"] == 0
@@ -72,10 +76,7 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 assert _smoke_dialog.GetTitle() == "Création d'un contrat"
 
                 print("TEAMWORKS_SMOKE_CONTRACT_STAGE:new-contract", flush=True)
-                _smoke_dialog.Onbouton_suite(None)
-                wx.Yield()
-                # Depuis RC3, l'étape 1 réunit le point de départ (page2) et les
-                # caractéristiques (page3) : elles sont validées ensemble.
+                # Le formulaire complet est affiché dès son ouverture.
                 assert _smoke_dialog.pageVisible == 2
                 assert _smoke_dialog.page2.radio_non.GetValue()
                 assert _smoke_dialog.page2.IsShown()
@@ -103,20 +104,14 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 assert _smoke_dialog.page3.last_ccns_preview.compliant
 
                 print("TEAMWORKS_SMOKE_CONTRACT_STAGE:validation", flush=True)
-                _smoke_dialog.Onbouton_suite(None)
-                wx.Yield()
-                assert _smoke_dialog.pageVisible == 4
+                # Les smokes utilisent Show() (non modal) ; EndModal n'y est
+                # pas autorisé. Rejouer la chaîne exacte du bouton Valider.
+                assert _smoke_dialog.ValidationPages()
                 assert _smoke_dialog.dictContrats["convention_code"] == "CCNS"
                 assert _smoke_dialog.dictContrats["ccns_group"] == "G1"
                 assert _smoke_dialog.dictContrats["gross_monthly_salary"] == float(_smoke_salary)
-
-                _smoke_dialog.Onbouton_suite(None)
-                wx.Yield()
-                assert _smoke_dialog.pageVisible == 6
-                assert _smoke_dialog.page6.IsShown()
-
                 print("TEAMWORKS_SMOKE_CONTRACT_STAGE:save", flush=True)
-                assert _smoke_dialog.ValidationPages()
+                assert _smoke_dialog.page6.Validation()
 
                 print("TEAMWORKS_SMOKE_CONTRACT_STAGE:database-readback", flush=True)
                 _smoke_db = _smoke_gestiondb.DB()
