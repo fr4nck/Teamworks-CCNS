@@ -194,9 +194,30 @@ automatique. `QUALIFICATIONCEE` demeure inchangé dans le publipostage et
 dans les calculs CEE ; seul l'alias historique `CLASSIFICATION` est
 amélioré en l'absence d'une classification enregistrée.
 
-Pour la grammaire de la phrase, les modèles éditables peuvent préférer
-« en qualité de {CLASSIFICATION} » à « en tant que {CLASSIFICATION} »
-(« que animateur.rice ») ; **aucun modèle privé n'est modifié**.
+**Rédaction contractuelle validée le 27 octobre 2026 :**
 
-Les tests vérifient les trois formulations et protègent les
-qualifications équivalentes de toute assimilation à « non diplômé.e ».
+Pour le modèle CEE privé utilisé lors de la recette, remplacer la phrase
+« un forfait journalier brut de {BRUTJOUR} en tant que {CLASSIFICATION} »
+par :
+
+> « un forfait journalier brut de {BRUTJOUR} pour exercer les fonctions
+> d’{CLASSIFICATION}. »
+
+Cette formulation donne, pour les trois qualifications explicitement ciblées :
+- « pour exercer les fonctions d’animateur.rice occasionnel.le diplômé.e » ;
+- « pour exercer les fonctions d’animateur.rice occasionnel.le stagiaire » ;
+- « pour exercer les fonctions d’animateur.rice occasionnel.le non diplômé.e ».
+
+**Périmètre :** cette rédaction s'applique aux trois libellés ci-dessus ;
+ne pas l'appliquer mécaniquement aux autres qualifications comme BAFD
+ou « Qualification équivalente » : « d’BAFD titulaire » ne constitue
+pas une formulation correcte de fonction.
+
+**Modèle de document :** le modèle Word/Writer privé n'est pas stocké
+dans ce dépôt et n'a pas été modifié. Pour appliquer réellement la
+nouvelle rédaction, éditer ce modèle, sauvegarder une copie et régénérer
+un PDF sur une base de test. Ne pas réécrire des contrats déjà signés.
+
+Les tests protègent les trois libellés de {CLASSIFICATION}, les codes
+métier QUALIFICATIONCEE et l'absence d'assimilation arbitraire des
+qualifications équivalentes à « non diplômé.e ».
