@@ -307,3 +307,30 @@ groupées et validation des boutons dans le smoke de publipostage Windows.
 à 100 % et 125 %, navigation Suivant/Retour/Valider/Arrêter/Fermer et
 survol de plusieurs lignes de contrats, puis édition Word d'un CEE sur
 copie de base. Le tag RC4 publié n'est pas réécrit.
+
+## Contrats — formulaire unique (27 octobre 2026)
+
+Depuis la recette utilisateur RC5, les écrans de bienvenue, de saisie des
+compléments en plusieurs étapes et de conclusion ont été retirés du parcours
+normal. La création/modification s'ouvre directement sur la sélection de
+modèle et les caractéristiques du contrat. **Valider** déclenche dans
+l'ordre la validation du modèle, les contrôles CCNS/CEE et les règles modernes
+puis l'ancien service `Page6.Validation()` de prévol final et d'écriture
+transactionnelle. La fermeture ne suit qu'une sauvegarde réussie.
+
+Les champs historiques présents dans `contrats_champs` restent disponibles
+dans **Champs spécifiques…** si le catalogue n'est pas vide. Les anciennes
+valeurs existantes sont conservées tant que l'utilisateur n'ouvre pas
+volontairement cette option. Les valeurs non exposées par la liste filtrée
+restent conservées. Le contrôle optionnel n'est pas une étape du parcours
+principal.
+
+Les boutons visibles sont **Aide**, **Champs spécifiques…** (si nécessaire),
+**Valider** avec icône carrée, et **Annuler**. Aucun bouton Retour/Suivant
+ou page de confirmation vide ne ralentit la saisie.
+
+Les trois smokes Windows de création et opérations CEE/CDD vérifient le nouveau
+parcours et l'enregistrement dans les bases de qualification ; l'ouverture
+du dialogue avancé et le bitmap Valider sont vérifiés dans le smoke natif.
+La validation manuelle Windows à 100 %/125 % et sur copie de base reste
+nécessaire avant le remplacement d'une RC en exploitation.

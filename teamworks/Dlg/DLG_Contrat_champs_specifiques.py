@@ -34,6 +34,7 @@ class Dialog(wx.Dialog):
               u"rémunérations sont déjà gérées dans le formulaire principal."),
         )
         root.Add(title, 0, wx.ALL, 12)
+        description.Wrap(620)
         root.Add(description, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 12)
 
         scroll = wx.ScrolledWindow(

@@ -69,7 +69,21 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                 assert not _smoke_dialog.page6.IsShown()
                 assert not hasattr(_smoke_dialog, "bouton_retour")
                 assert _smoke_dialog.bouton_suite.GetLabel() == "Valider"
+                assert _smoke_dialog.bouton_suite.GetBitmap().IsOk()
                 assert _smoke_dialog.bouton_suite.IsEnabled()
+                # Exercicer l'initialisation du formulaire avancé dans wxMSW
+                # sans toucher à la base ni simuler de saisie utilisateur.
+                from Dlg import DLG_Contrat_champs_specifiques as _smoke_extra
+                _smoke_extra_dialog = _smoke_extra.Dialog(
+                    _smoke_dialog,
+                    {999999: (999999, "Champ fictif", "Test", "TEST", "", "")},
+                    {999999: "Valeur fictive"},
+                )
+                try:
+                    assert _smoke_extra_dialog._fields[999999][0].GetValue()
+                    assert _smoke_extra_dialog._fields[999999][1].GetValue() == "Valeur fictive"
+                finally:
+                    _smoke_extra_dialog.Destroy()
                 assert _smoke_dialog.bouton_annuler.IsEnabled()
                 assert _smoke_dialog.dictContrats["IDcontrat"] == 0
                 assert _smoke_dialog.dictContrats["IDpersonne"] == _smoke_person_id
