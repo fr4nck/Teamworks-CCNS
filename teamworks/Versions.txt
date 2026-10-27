@@ -1,3 +1,11 @@
+Version 0.9.2-rc6 :
+
+- Création et modification de contrats sur une page unique, avec validation et sauvegarde directe.
+- Champs historiques des modèles accessibles en option sans supprimer les valeurs déjà enregistrées.
+- Icône Valider harmonisée et touche Entrée rétablie au dialogue de mot de passe.
+- Catalogue de mots-clés contractuels allégé et réduction candidate des rafraîchissements des onglets wx.
+- Recettes automatiques vertes ; validation métier et visuelle sur copie de base requise.
+
 Version 0.9.2-rc5 :
 
 - Correctifs de la navigation du publiposteur : vraies icônes carrées, libellés lisibles, transitions préservées.

@@ -1,5 +1,16 @@
 # Teamworks-CCNS 0.9.2
 
+## Candidate RC6 — 27 octobre 2026 (qualification utilisateur requise)
+
+- **Création et modification des contrats sur un seul écran :** suppression du passage obligé par l'introduction, les informations complémentaires et la conclusion ; page de choix du modèle et caractéristiques immédiatement visible.
+- **Validation directe :** « Valider » avec icône carrée remplace Retour/Suivant ; garde la validation du modèle, les contrôles réglementaires CCNS/CEE, le prévol final et l'enregistrement transactionnel. Le double déclenchement est protégé.
+- **Compatibilité historique :** accès facultatif aux anciens champs spécifiques dans une fenêtre dédiée ; valeurs et modèles préexistants préservés, aucune donnée effacée par le changement de parcours.
+- **Ergonomie :** touche Entrée pour valider le mot de passe de protection d'un fichier ; mots-clés contractuels facultatifs vides masqués dans le publiposteur avec option « Afficher aussi les champs vides ».
+- **Affichage Windows :** protection candidate des onglets contre des rafraîchissements parasites ; la disparition intermittente des titres d'onglets et le scintillement doivent encore être vérifiés en vidéo sur Windows réel.
+- **Recettes automatisées :** Linux, parcours critiques Windows, création de contrat CCNS, opérations CEE/CDD, popup des champs spécifiques et icône Valider verts sur le commit `24194a90` avant changement de version.
+- **Réserves :** l'ancienne RC5 et la base d'exploitation ne sont pas modifiées ; le modèle Word/Writer privé doit toujours recevoir la rédaction CEE validée, et le résultat de publipostage doit être inspecté avant diffusion.
+
+
 ## Candidate RC5 — 27 octobre 2026 (recette visuelle Windows à confirmer)
 
 - Assistant de publipostage : remplacer les PNG 72×24 comportant déjà du texte par de véritables icônes carrées dans Retour, Suivant, Valider, Arrêter et Fermer ; éviter toute compression des anciens sprites dans le bouton commun.
