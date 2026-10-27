@@ -47,17 +47,17 @@ def _contrats_en_cours_ou_a_venir(DB):
     return _ids_uniques(row[0] for row in DB.ResultatReq())
 
 
-def Creation_liste_pb_personnes():
+def Creation_liste_pb_personnes(include_targets=False):
     """Calcule l'arbre avec une unique connexion DB bornée à cette action."""
     DB = GestionDB.DB()
     try:
         liste_ids = _contrats_en_cours_ou_a_venir(DB)
-        return Recherche_problemes_personnes(tuple(liste_ids), DB=DB)
+        return Recherche_problemes_personnes(tuple(liste_ids), DB=DB, include_targets=include_targets)
     finally:
         DB.Close()
 
 
-def Recherche_problemes_personnes(listeIDpersonnes=(), infosPersonne=None, DB=None):
+def Recherche_problemes_personnes(listeIDpersonnes=(), infosPersonne=None, DB=None, include_targets=False):
     """Calcule les problèmes dossier avec des lectures SQL regroupées.
 
     ``DB`` est optionnel pour préserver les appels historiques. Lorsqu'il est
@@ -71,6 +71,8 @@ def Recherche_problemes_personnes(listeIDpersonnes=(), infosPersonne=None, DB=No
     clause_ids = _clause_ids(liste_ids)
     dictProblemes = {}
     dictNoms = {}
+    # Actions métier liées aux identifiants, jamais au texte traduit ni au rang.
+    dictTargets = {}
 
     possede_db = DB is None
     if possede_db:
@@ -151,6 +153,10 @@ def Recherche_problemes_personnes(listeIDpersonnes=(), infosPersonne=None, DB=No
                 else:
                     categorie = str(len(problemesFiche)) + _(u" informations manquantes")
                 dictProblemes[IDpersonne][categorie] = problemesFiche
+                dictTargets.setdefault(IDpersonne, {})[categorie] = [
+                    {"kind": "information", "field": field}
+                    for field in problemesFiche
+                ]
 
         req = """SELECT diplomes.IDpersonne, types_pieces.IDtype_piece, types_pieces.nom_piece
         FROM diplomes
@@ -186,14 +192,14 @@ def Recherche_problemes_personnes(listeIDpersonnes=(), infosPersonne=None, DB=No
         for IDpersonne, IDtype_piece, date_debut, date_fin in DB.ResultatReq():
             pieces_possedees.setdefault(IDpersonne, {})[IDtype_piece] = (date_debut, date_fin)
 
-        req = """SELECT IDpersonne, signature, due
+        req = """SELECT IDpersonne, IDcontrat, signature, due
         FROM contrats
         WHERE IDpersonne IN %s
         ORDER BY IDpersonne, date_debut;""" % clause_ids
         DB.ExecuterReq(req)
         contrats = {}
-        for IDpersonne, signature, due in DB.ResultatReq():
-            contrats.setdefault(IDpersonne, []).append((signature, due))
+        for IDpersonne, IDcontrat, signature, due in DB.ResultatReq():
+            contrats.setdefault(IDpersonne, []).append((IDcontrat, signature, due))
     finally:
         if possede_db:
             DB.Close()
@@ -201,6 +207,8 @@ def Recherche_problemes_personnes(listeIDpersonnes=(), infosPersonne=None, DB=No
     for IDpersonne in liste_ids:
         piecesManquantes = []
         piecesPerimees = []
+        actionsManquantes = []
+        actionsPerimees = []
         DictPieces = {}
         listePiecesAFournir = list(pieces_specifiques.get(IDpersonne, []))
         listePiecesAFournir.extend(pieces_basiques)
@@ -229,29 +237,51 @@ def Recherche_problemes_personnes(listeIDpersonnes=(), infosPersonne=None, DB=No
             etat, nom_piece = donnees
             if etat == "PasOk":
                 piecesManquantes.append(nom_piece)
+                actionsManquantes.append({
+                    "kind": "piece", "IDtype_piece": IDtype_piece,
+                    "state": "missing",
+                })
             elif etat == "Attention":
                 piecesPerimees.append(nom_piece)
+                actionsPerimees.append({
+                    "kind": "piece", "IDtype_piece": IDtype_piece,
+                    "state": "expiring",
+                })
 
         if piecesManquantes:
             dictProblemes.setdefault(IDpersonne, {})
             categorie = (_(u"1 pièce manquante") if len(piecesManquantes) == 1 else str(len(piecesManquantes)) + _(u" pièces manquantes"))
             dictProblemes[IDpersonne][categorie] = piecesManquantes
+            dictTargets.setdefault(IDpersonne, {})[categorie] = actionsManquantes
 
         if piecesPerimees:
             dictProblemes.setdefault(IDpersonne, {})
             categorie = (_(u"1 pièce bientôt périmée") if len(piecesPerimees) == 1 else str(len(piecesPerimees)) + _(u" pièces bientôt périmées"))
             dictProblemes[IDpersonne][categorie] = piecesPerimees
+            dictTargets.setdefault(IDpersonne, {})[categorie] = actionsPerimees
 
         problemesContrats = []
-        for signature, due in contrats.get(IDpersonne, []):
-            if signature in ("", "Non"):
+        actionsContrats = []
+        for IDcontrat, signature, due in contrats.get(IDpersonne, []):
+            if signature in ("", "Non", None):
                 problemesContrats.append(_(u"Contrat non signé"))
-            if due in ("", "Non"):
+                actionsContrats.append({
+                    "kind": "contract", "IDcontrat": IDcontrat,
+                    "operation": "signature",
+                })
+            if due in ("", "Non", None):
                 problemesContrats.append(_(u"DUE à faire"))
+                actionsContrats.append({
+                    "kind": "contract", "IDcontrat": IDcontrat,
+                    "operation": "due",
+                })
 
         if problemesContrats:
             dictProblemes.setdefault(IDpersonne, {})
             categorie = (_(u"1 contrat à voir") if len(problemesContrats) == 1 else str(len(problemesContrats)) + _(u" contrats à voir"))
             dictProblemes[IDpersonne][categorie] = problemesContrats
+            dictTargets.setdefault(IDpersonne, {})[categorie] = actionsContrats
 
+    if include_targets:
+        return dictNoms, dictProblemes, dictTargets
     return dictNoms, dictProblemes
