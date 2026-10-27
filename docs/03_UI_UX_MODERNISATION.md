@@ -1,6 +1,6 @@
 # Teamworks — suivi UI/UX / thème graphique
 
-**Mise à jour : 14 octobre 2026**
+**Mise à jour : 27 octobre 2026**
 
 ## Objectif
 
@@ -231,3 +231,45 @@ Garde-fou : `tests/test_rc4_windows_smoke_alignment.py` vérifie que les étapes
 attendues par les smokes contrat sont atteignables, que la liste d'onglets du
 smoke fiche correspond à `DLG_Fiche_individuelle_lazy`, le contexte de premier
 niveau des smokes de checklists et la non-réapplication du modèle.
+
+## Recette Windows RC4 — surbrillance instable des contrats (27 octobre 2026)
+
+**Statut : défaut visuel signalé, observé sur vidéo, cause non encore confirmée ; aucun correctif livré.**
+
+Dans la version `0.9.2-rc4` sous Windows 11, lors du déplacement du pointeur
+sur les lignes de l'onglet **Contrats** d'une fiche individuelle, une bande
+bleue pâle suit le pointeur et change rapidement de ligne tandis que la
+ligne sélectionnée conserve son surlignage. La vidéo de recette de 11,8 s
+montre ce phénomène notamment entre 3,5 et 4,3 s ; le reste de la fenêtre
+demeure stable, sans rechargement général visible.
+
+**Confidentialité :** la vidéo contient des informations personnelles ;
+ne pas la joindre au dépôt public ni reprendre d'identité ou de contrat
+réel dans la documentation.
+
+**Point d'entrée du code :** `teamworks/Ctrl/CTRL_Page_contrats_core.py`,
+classe `ListCtrl_contrats`, liste `wx.ListCtrl` avec `LC_REPORT`,
+`LC_HRULES`, `LC_VRULES` et `LC_SINGLE_SEL`. Cette classe ne lie pas
+`EVT_MOTION` : un effet de survol natif Windows et/ou une interaction avec
+les séparateurs est une **hypothèse**, et non un diagnostic confirmé.
+L'ajustement des colonnes est différé lors de `EVT_SIZE` : rechercher
+d'éventuels déclenchements répétés seulement si les traces le justifient.
+
+**Qualification ciblée à effectuer :**
+
+1. Reproduire avec plusieurs contrats, sélectionner une ligne, puis
+   déplacer lentement la souris sur les autres sans cliquer ; comparer
+   avec la souris immobile.
+2. Comparer sur une copie de test la liste avec et sans `LC_HRULES` et
+   `LC_VRULES` ; distinguer les surbrillances de survol de l'effacement
+   réel des traits.
+3. Vérifier le double buffering natif déjà fourni par wxWidgets avant
+   d'envisager une correction de peinture.
+4. Vérifier sélection, double-clic, clavier, menu contextuel et les
+   échelles Windows 100 %/125 % après toute correction.
+5. Ratisser les autres listes uniquement si la cause générique est
+   confirmée, puis publier dans un **nouveau jalon** sans réécrire le tag RC4.
+
+Il s'agit d'une anomalie **UI/UX non bloquante métier dans la vidéo**,
+mais gênante pour la qualité visuelle. La vidéo ne prouve ni régression
+de données ni cause liée à SQL.
