@@ -91,8 +91,36 @@ def _apply_legacy_cee_aliases(dict_donnees):
             has_brutjour = True
 
 
+_ESSENTIAL_CONTRACT_FIELDS = frozenset((
+    "CLASSIFICATION", "QUALIFICATIONCEE", "BRUTJOUR", "BAREMECEE",
+    "DATEDEBUT", "DATEFIN", "NOM", "PRENOM",
+    "CONTRAT_TYPE", "CONTRAT_CLASSIFICATION",
+    "CONTRAT_DATE_DEBUT", "CONTRAT_DATE_FIN",
+))
+
+
+def _visible_contract_rows(data, show_all=False):
+    """Indices d'origine des lignes visibles, sans modifier MOTSCLES."""
+    keywords = data.get("MOTSCLES", ())
+    if show_all:
+        return tuple(range(len(keywords)))
+    n = int(data.get("NBREDOCUMENTS", 0) or 0)
+    rows = []
+    for i, (keyword, kind) in enumerate(keywords):
+        if kind != "base" or keyword in _ESSENTIAL_CONTRACT_FIELDS:
+            rows.append(i)
+        elif any(str((data.get(j) or {}).get(keyword) or "").strip()
+                 for j in range(1, n + 1)):
+            rows.append(i)
+    return tuple(rows)
+
+
 class Grid_donnees(_base.Grid_donnees):
     """Grille contrat dont la colonne des mots-clés s'adapte au contenu."""
+
+    def __init__(self, *args, **kwargs):
+        self._show_all_keywords = False
+        super(Grid_donnees, self).__init__(*args, **kwargs)
 
     def Remplissage(self):
         super(Grid_donnees, self).Remplissage()
@@ -104,6 +132,44 @@ class Grid_donnees(_base.Grid_donnees):
             return
         largeur = max(self.GetTextExtent(label)[0] for label in labels) + 28
         self.SetRowLabelSize(max(140, min(320, largeur)))
+        self.AppliquerFiltre()
+
+    def AppliquerFiltre(self):
+        visible = set(_visible_contract_rows(
+            _base.DICT_DONNEES, self._show_all_keywords
+        ))
+        self.BeginBatch()
+        try:
+            for index in range(self.GetNumberRows()):
+                if index in visible:
+                    self.ShowRow(index)
+                else:
+                    self.HideRow(index)
+        finally:
+            self.EndBatch()
+
+    def SetAfficherTous(self, value):
+        self._show_all_keywords = bool(value)
+        self.AppliquerFiltre()
+
+
+class Page2(_base.Page2):
+    """Option explicite pour rendre tous les mots-clés visibles."""
+
+    def __init__(self, *args, **kwargs):
+        super(Page2, self).__init__(*args, **kwargs)
+        self.checkbox_afficher_tous = wx.CheckBox(
+            self, -1, _(u"Afficher aussi les champs vides")
+        )
+        self.GetSizer().Add(
+            self.checkbox_afficher_tous, 0, wx.LEFT | wx.BOTTOM, 20
+        )
+        self.Bind(wx.EVT_CHECKBOX, self.OnAfficherTous,
+                  self.checkbox_afficher_tous)
+        self.Layout()
+
+    def OnAfficherTous(self, event):
+        self.grid.SetAfficherTous(self.checkbox_afficher_tous.GetValue())
 
 
 class ListCtrl_fichiers(_base.ListCtrl_fichiers):
@@ -302,10 +368,13 @@ class Dialog(_base.Dialog):
 
         original_list = _base.ListCtrl_fichiers
         original_grid = _base.Grid_donnees
+        original_page2 = _base.Page2
         _base.ListCtrl_fichiers = ListCtrl_fichiers
         _base.Grid_donnees = Grid_donnees
+        _base.Page2 = Page2
         try:
             _base.Dialog.__init__(self, *args, **kwargs)
         finally:
             _base.ListCtrl_fichiers = original_list
             _base.Grid_donnees = original_grid
+            _base.Page2 = original_page2
