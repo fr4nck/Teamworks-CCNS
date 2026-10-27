@@ -151,7 +151,9 @@ class TreeCtrl(CT.CustomTreeCtrl):
                 _(u"Ville de résidence"): "text_ville",
                 _(u"Situation sociale"): "combo_box_situation",
             }
-            control = getattr(notebook.pageGeneralites, controls.get(target.get("field")), None)
+            control_name = controls.get(target.get("field"))
+            control = (getattr(notebook.pageGeneralites, control_name, None)
+                       if control_name else None)
             if control is not None and control.IsEnabled():
                 control.SetFocus()
             return
