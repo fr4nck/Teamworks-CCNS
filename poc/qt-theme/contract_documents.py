@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from PySide6.QtCore import Qt, QUrl
-from PySide6.QtGui import QFont, QImage, QTextDocument
+from PySide6.QtGui import QColor, QFont, QImage, QPalette, QTextDocument
 from PySide6.QtWidgets import (
     QComboBox,
     QDialog,
@@ -233,8 +233,24 @@ class ContractDocumentsDialog(QDialog):
             layout.addWidget(label)
 
         browser = QTextBrowser(preview_dialog)
-        browser.document().setDefaultFont(QFont("Segoe UI", 10))
         browser.setObjectName("twdPreviewBrowser")
+        # A TWD is a paper document: keep its canvas white even when the
+        # host application uses a dark palette or a global QTextBrowser QSS.
+        # Historical TWD spans often specify black text explicitly.
+        browser.setStyleSheet(
+            "QTextBrowser#twdPreviewBrowser {"
+            " background-color: #ffffff;"
+            " color: #111111;"
+            " selection-background-color: #cfe5ff;"
+            " selection-color: #111111;"
+            " }"
+        )
+        paper_palette = browser.palette()
+        paper_palette.setColor(QPalette.ColorRole.Base, QColor("#ffffff"))
+        paper_palette.setColor(QPalette.ColorRole.Text, QColor("#111111"))
+        browser.setPalette(paper_palette)
+        browser.document().setDefaultFont(QFont("Segoe UI", 10))
+        browser.document().setDocumentMargin(16)
         browser.setOpenLinks(False)
         browser.setOpenExternalLinks(False)
 

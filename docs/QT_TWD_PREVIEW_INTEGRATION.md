@@ -47,3 +47,19 @@ Branche : qt/integration-document-core
   des contenus contractuels validés ; CEE et CDD requièrent un audit métier.
 - La recette Windows avec une copie représentative de base et de MySQL
   reste obligatoire avant toute fusion.
+
+## QT-DOC-08C - Contraste de l'aperçu en theme sombre
+
+- Recette Windows native sur les deux premiers exemples : ouverture, bandeau
+  de non-validite et fusion corrects, mais texte noir sur fond gris fonce.
+  Verdict visuel KO malgre la validation automatique precedente.
+- Correction isolee dans QTextBrowser : fond du document blanc, texte par
+  defaut sombre, selection lisible et marge de page de 16 px. Le reste de
+  l'interface conserve son theme, sans changement du moteur TWD.
+- Test GUI : la fenetre parente impose volontairement une feuille de style
+  sombre ; controle de la palette du document et d'un pixel reel de la
+  surface peinte. Le pilote Windows verifie les memes invariants et les
+  enregistre dans report.json.
+- Gate : la recette graphique des six documents doit etre rejouee apres
+  publication ; aucune fusion avant validation du nouveau HEAD et de la
+  recette sur base representative.

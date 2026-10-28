@@ -196,7 +196,8 @@ def test_preview_distinguishes_regular_template_from_example(tmp_path):
 def test_qt_preview_displays_example_warning_and_both_field_categories():
     pytest.importorskip("PySide6")
     from PySide6.QtCore import QTimer
-    from PySide6.QtWidgets import QApplication, QDialog, QLabel
+    from PySide6.QtGui import QPalette
+    from PySide6.QtWidgets import QApplication, QDialog, QLabel, QTextBrowser
     from contract_documents import ContractDocumentsDialog
 
     path = (
@@ -208,6 +209,11 @@ def test_qt_preview_displays_example_warning_and_both_field_categories():
     )
     app = QApplication.instance() or QApplication([])
     dialog = ContractDocumentsDialog(workspace)
+    # Reproduce the dark host theme that previously rendered black
+    # historical text on a dark QTextBrowser viewport.
+    dialog.setStyleSheet(
+        "QTextBrowser { background-color: #2e2e2e; color: #050505; }"
+    )
     errors = []
     observed = []
 
@@ -233,6 +239,17 @@ def test_qt_preview_displays_example_warning_and_both_field_categories():
                 assert any("Données métier manquantes" in x for x in labels)
                 assert any("Variables historiques sans correspondance" in x
                            for x in labels)
+                browser = modal.findChild(QTextBrowser, "twdPreviewBrowser")
+                assert browser is not None
+                paper = browser.palette().color(QPalette.ColorRole.Base)
+                text = browser.palette().color(QPalette.ColorRole.Text)
+                assert paper.name() == "#ffffff"
+                assert text.name() == "#111111"
+                # Check actual painting, not only palette properties.
+                screenshot = browser.viewport().grab().toImage()
+                assert screenshot.width() > 20 and screenshot.height() > 20
+                pixel = screenshot.pixelColor(8, 8)
+                assert min(pixel.red(), pixel.green(), pixel.blue()) >= 245
                 observed.append(True)
             except Exception as exc:
                 errors.append(exc)

@@ -18,6 +18,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "poc" / "qt-theme"))
 
 from PySide6.QtCore import QTimer
+from PySide6.QtGui import QPalette
 from PySide6.QtWidgets import QApplication, QDialog, QLabel, QTextBrowser
 
 from application.services.contract_document_workspace import (
@@ -96,6 +97,22 @@ def capture(workspace, path: Path, output: Path) -> dict:
                 visible_text = browser.toPlainText()
                 if len(visible_text) < 80:
                     raise RuntimeError("Document preview is unexpectedly short")
+                base = browser.palette().color(QPalette.ColorRole.Base)
+                foreground = browser.palette().color(QPalette.ColorRole.Text)
+                if base.name() != "#ffffff" or foreground.name() != "#111111":
+                    raise RuntimeError(
+                        f"Unreadable preview palette: {base.name()} / "
+                        f"{foreground.name()}"
+                    )
+                surface = browser.viewport().grab().toImage()
+                if surface.width() < 20 or surface.height() < 20:
+                    raise RuntimeError("Empty document preview viewport")
+                pixel = surface.pixelColor(8, 8)
+                if min(pixel.red(), pixel.green(), pixel.blue()) < 245:
+                    raise RuntimeError(
+                        "Document viewport is not white at its paper margin: "
+                        f"{pixel.name()}"
+                    )
                 png = output / (path.stem + ".png")
                 if not modal.grab().save(str(png), "PNG"):
                     raise RuntimeError("Qt screenshot could not be saved")
@@ -108,6 +125,9 @@ def capture(workspace, path: Path, output: Path) -> dict:
                     "screenshot": png.name,
                     "text_characters": len(visible_text),
                     "has_example_banner": True,
+                    "paper_background": base.name(),
+                    "paper_text": foreground.name(),
+                    "paper_margin_pixel": pixel.name(),
                     "reports_missing_business_fields": any(
                         "Données métier manquantes" in x for x in labels
                     ),
