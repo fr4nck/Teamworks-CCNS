@@ -16,6 +16,7 @@ import sqlite3
 import os
 from infrastructure.persistence.current_database_config import read_current_database_name
 from infrastructure.persistence.legacy_network_target import parse_legacy_network_target
+from infrastructure.persistence.legacy_mysql_connection import open_legacy_mysql
 from infrastructure.persistence.legacy_sqlite_connection import open_legacy_sqlite
 from infrastructure.persistence.legacy_connection_lifecycle import commit_if_connected, close_if_connected
 import base64
@@ -946,33 +947,20 @@ class DB:
 
 
 def GetConnexionReseau(nomFichier=""):
+    """Pont historique vers l'usine MySQL sans dependance a la carrosserie."""
     target = parse_legacy_network_target(nomFichier)
-    port, host, user = target.port, target.host, target.user
-    passwd = target.password_token
-    nomFichier = target.database
-
-    passwd = DecodeMdpReseau(passwd)
-
-    if INTERFACE_MYSQL == "mysqldb":
-        my_conv = conversions
-        my_conv[FIELD_TYPE.LONG] = int
-        connexion = MySQLdb.connect(host=host, user=user, passwd=passwd, port=int(port), use_unicode=True, conv=my_conv, ssl=CERTIFICATS_SSL)
-        connexion.set_character_set('utf8')
-
-    if INTERFACE_MYSQL == "mysql.connector":
-        options = UTILS_MySQL.ConstruireOptionsConnexion(
-            host, user, passwd, port, CERTIFICATS_SSL
-        )
-        try:
-            connexion = mysql.connector.connect(**options)
-        except Exception as err:
-            version_connecteur = getattr(mysql.connector, "__version__", "inconnue")
-            diagnostic = UTILS_MySQL.FormaterDiagnosticConnexion(
-                err, host, port, INTERFACE_MYSQL, version_connecteur
-            )
-            raise RuntimeError(diagnostic) from err
-
-    return connexion, nomFichier
+    return open_legacy_mysql(
+        target,
+        driver=INTERFACE_MYSQL,
+        decode_password=DecodeMdpReseau,
+        certificates=CERTIFICATS_SSL,
+        mysql_connector=mysql.connector if IMPORT_MYSQLCONNECTOR_OK else None,
+        mysqldb_driver=MySQLdb if IMPORT_MYSQLDB_OK else None,
+        connector_options=UTILS_MySQL.ConstruireOptionsConnexion,
+        connector_diagnostic=UTILS_MySQL.FormaterDiagnosticConnexion,
+        mysqldb_conversions=conversions if IMPORT_MYSQLDB_OK else None,
+        mysqldb_long_field=FIELD_TYPE.LONG if IMPORT_MYSQLDB_OK else None,
+    )
 
 
 def GetChampsTable(nomTable=""):

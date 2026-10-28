@@ -151,3 +151,22 @@ Le raccordement cible est exclusif a `qt/master`. `wx/master` n'est pas
 modifiee. Le module `GestionDB` conserve provisoirement le code historique
 des photos, imports/exports SQLite, les drivers MySQL et les transactions SQL
 specialisees. Les tests du module ne remplacent pas la recette Windows/DB reelle.
+
+## Ouverture MySQL independante de la carrosserie
+
+La fonction `infrastructure.persistence.legacy_mysql_connection.open_legacy_mysql`
+ouvre une connexion pour un `LegacyNetworkTarget` deja qualifie,
+sans charger wxPython, PySide6, mysql.connector, MySQLdb ou GestionDB.
+Les pilotes, decodeurs de mots de passe historiques, options SSL et formats
+de diagnostics lui sont injectes par l'adaptateur applicatif.
+
+Le chemin mysql.connector conserve le mode Python pur et les parametres
+compatibles MySQL/MariaDB historiques, via l'usine d'options existante.
+Le chemin MySQLdb conserve la conversion LONG et le jeu de caracteres utf8.
+Une erreur d'initialisation du jeu de caracteres libere la connexion ouverte.
+Le module ne cree pas de base, ne selectionne pas de schema et ne fait
+aucun commit/rollback implicite.
+
+La qualification de ce moteur ne constitue pas une validation de la
+base de production. Le raccordement a GestionDB est exclusivement
+effectue sur qt/master ; wx/master reste intacte.

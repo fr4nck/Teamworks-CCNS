@@ -12,6 +12,7 @@ from types import SimpleNamespace
 import pytest
 
 from infrastructure.persistence.legacy_network_target import parse_legacy_network_target
+from infrastructure.persistence.legacy_mysql_connection import open_legacy_mysql
 
 
 SOURCE = Path(__file__).resolve().parents[1] / "teamworks/GestionDB.py"
@@ -79,9 +80,15 @@ def test_qt_legacy_connection_passes_decoded_token_to_existing_mysql_adapter():
         "GetConnexionReseau",
         globals_={
             "parse_legacy_network_target": parse_legacy_network_target,
+            "open_legacy_mysql": open_legacy_mysql,
             "DecodeMdpReseau": decode_password,
             "INTERFACE_MYSQL": "mysql.connector",
-            "UTILS_MySQL": MysqlOptions,
+            "IMPORT_MYSQLCONNECTOR_OK": True,
+            "IMPORT_MYSQLDB_OK": False,
+            "UTILS_MySQL": SimpleNamespace(
+                ConstruireOptionsConnexion=MysqlOptions.ConstruireOptionsConnexion,
+                FormaterDiagnosticConnexion=lambda *_args: "safe diagnostic",
+            ),
             "mysql": SimpleNamespace(connector=Connector),
             "CERTIFICATS_SSL": {},
         },
@@ -138,3 +145,81 @@ def test_qt_legacy_network_references_use_single_core_parser():
             if isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
         ]
         assert "parse_legacy_network_target" in calls
+
+
+def test_qt_legacy_mysqldb_bridge_preserves_encoding_and_conversion():
+    events = []
+    my_conversions = {}
+    class Connection:
+        def set_character_set(self, charset):
+            events.append(("charset", charset))
+
+    class Driver:
+        @staticmethod
+        def connect(**kwargs):
+            events.append(("connect", kwargs.copy()))
+            return Connection()
+
+    connect = _load_legacy_function(
+        "GetConnexionReseau",
+        globals_={
+            "parse_legacy_network_target": parse_legacy_network_target,
+            "open_legacy_mysql": open_legacy_mysql,
+            "DecodeMdpReseau": lambda token: token,
+            "INTERFACE_MYSQL": "mysqldb",
+            "IMPORT_MYSQLCONNECTOR_OK": False,
+            "IMPORT_MYSQLDB_OK": True,
+            "UTILS_MySQL": SimpleNamespace(
+                ConstruireOptionsConnexion=lambda *args: {},
+                FormaterDiagnosticConnexion=lambda *args: "diagnostic",
+            ),
+            "MySQLdb": Driver,
+            "conversions": my_conversions,
+            "FIELD_TYPE": SimpleNamespace(LONG=3),
+            "CERTIFICATS_SSL": {},
+        },
+    )
+    connection, name = connect("3307;db.local;user;encoded[RESEAU]Sport_TDATA")
+    assert isinstance(connection, Connection)
+    assert name == "sport_tdata"
+    assert events[0][0] == "connect"
+    assert events[0][1]["port"] == 3307
+    assert events[0][1]["passwd"] == "encoded"
+    assert events[0][1]["conv"] is my_conversions
+    assert my_conversions[3] is int
+    assert events[1] == ("charset", "utf8")
+
+
+def test_qt_legacy_mysql_driver_unavailable_fails_closed_without_decoding():
+    connect = _load_legacy_function(
+        "GetConnexionReseau",
+        globals_={
+            "parse_legacy_network_target": parse_legacy_network_target,
+            "open_legacy_mysql": open_legacy_mysql,
+            "DecodeMdpReseau": lambda _token: pytest.fail("decoding forbidden"),
+            "INTERFACE_MYSQL": "mysql.connector",
+            "IMPORT_MYSQLCONNECTOR_OK": False,
+            "IMPORT_MYSQLDB_OK": False,
+            "UTILS_MySQL": SimpleNamespace(
+                ConstruireOptionsConnexion=lambda *_args: {},
+                FormaterDiagnosticConnexion=lambda *_args: "",
+            ),
+            "CERTIFICATS_SSL": {},
+        },
+    )
+    with pytest.raises(RuntimeError, match="mysql.connector is unavailable"):
+        connect("3306;db.local;user;secret[RESEAU]RH")
+
+
+def test_qt_mysql_connection_is_a_headless_core_delegation():
+    tree = ast.parse(SOURCE.read_text(encoding="utf-8"))
+    fn = next(node for node in tree.body
+              if isinstance(node, ast.FunctionDef) and node.name == "GetConnexionReseau")
+    direct_calls = [
+        node.func.id for node in ast.walk(fn)
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
+    ]
+    assert "open_legacy_mysql" in direct_calls
+    assert "parse_legacy_network_target" in direct_calls
+    assert "DecodeMdpReseau" not in direct_calls
+    assert "GetConnexionReseau" not in direct_calls
