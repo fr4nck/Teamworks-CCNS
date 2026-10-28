@@ -165,6 +165,24 @@ class TeamworksProductionReadAdapter(TeamworksReadAdapter):
         records = self._contract_reader.lire_contrats_personne(historical_id)
         return tuple(self._contract_to_view(record) for record in records)
 
+    def build_person_details_write_port(self):
+        """A dedicated GUI-thread write connection, separate from read workers."""
+        self._ensure_open()
+        import GestionDB
+        from infrastructure.persistence.person_generalities_write_adapter import (
+            GestionDbPersonDetailsWriteAdapter,
+        )
+
+        db = GestionDB.DB()
+        try:
+            return GestionDbPersonDetailsWriteAdapter(db)
+        except Exception:
+            try:
+                db.Close()
+            except Exception:
+                pass
+            raise
+
     def build_contract_write_port(self):
         """Construit le port d'écriture sur la même session DB que le reader Contrats."""
         self._ensure_open()

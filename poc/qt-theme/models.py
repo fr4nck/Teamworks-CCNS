@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from dataclasses import replace
 
 from PySide6.QtCore import QAbstractTableModel, QModelIndex, Qt
 
@@ -63,6 +64,25 @@ class PeopleTableModel(QAbstractTableModel):
         if 0 <= row < len(self._people):
             return self._people[row]
         return None
+
+    def update_person_identity(self, person_id: int, *, first_name: str, last_name: str) -> bool:
+        """Update one displayed identity without resetting selection or sorting."""
+        if type(person_id) is not int or person_id <= 0:
+            return False
+        for row, person in enumerate(self._people):
+            if person.id_historique == person_id:
+                people = list(self._people)
+                people[row] = replace(
+                    person, first_name=first_name, last_name=last_name,
+                    name=" ".join((first_name, last_name)).strip(),
+                )
+                self._people = tuple(people)
+                self.dataChanged.emit(
+                    self.index(row, 1), self.index(row, 1),
+                    [int(Qt.ItemDataRole.DisplayRole)],
+                )
+                return True
+        return False
 
 
 class ContractsTableModel(QAbstractTableModel):

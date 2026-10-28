@@ -134,6 +134,7 @@ def main() -> None:
     trip_write_port_factory = None
     contract_document_workspace_factory = None
     presence_write_port_factory = None
+    person_details_write_port_factory = None
     if source == "production":
         phase = time.perf_counter()
         from deferred_people import DeferredPeopleAdapter, ProductionPeopleLoader
@@ -147,6 +148,7 @@ def main() -> None:
         trip_write_port_factory = adapter.build_trip_write_port
         contract_document_workspace_factory = adapter.prepare_contract_document_workspace
         presence_write_port_factory = adapter.build_presence_write_port
+        person_details_write_port_factory = adapter.build_person_details_write_port
 
     phase = time.perf_counter()
     from pilot_generalities import PeopleContractsGeneralitiesPilot
@@ -163,6 +165,7 @@ def main() -> None:
             trip_write_port_factory=trip_write_port_factory,
             contract_document_workspace_factory=contract_document_workspace_factory,
             presence_write_port_factory=presence_write_port_factory,
+            person_details_write_port_factory=person_details_write_port_factory,
         )
         after_window = time.perf_counter()
         window.show()

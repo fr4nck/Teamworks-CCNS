@@ -1,6 +1,10 @@
 from __future__ import annotations
 
 from PySide6.QtCore import QThread, QTimer
+from PySide6.QtWidgets import QDialog
+
+from application.services.person_generalities_write import save_person_details
+from person_editor import PersonDetailsEditDialog
 
 from generalities_page import GeneralitiesPage
 from individual_activity_presenter import IndividualActivityPresenter
@@ -25,7 +29,9 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
         contract_document_workspace_factory=None,
         advanced_contracts_enabled: bool = False,
         presence_write_port_factory=None,
+        person_details_write_port_factory=None,
     ):
+        self._person_details_write_port_factory = person_details_write_port_factory
         self._activity_loader_class = activity_loader_class
         self._reimbursement_write_port_factory = reimbursement_write_port_factory
         self._trip_write_port_factory = trip_write_port_factory
@@ -47,6 +53,8 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
             contract_document_workspace_factory=contract_document_workspace_factory,
             advanced_contracts_enabled=advanced_contracts_enabled,
         )
+        self.person_edit_button.clicked.connect(self._edit_selected_person)
+        self.people_table.doubleClicked.connect(lambda _index: self._edit_selected_person())
         self.activity_presenter = IndividualActivityPresenter(self.legacy_tabs)
         expenses_page = getattr(self.legacy_tabs, "expenses_page", None)
         if expenses_page is not None:
@@ -77,6 +85,70 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
         self.generalities_page = GeneralitiesPage(self)
         return self.generalities_page
 
+    def _edit_selected_person(self) -> None:
+        """Edit a real fiche in its own DB session; never reuse a worker connection."""
+        person_id = self._current_contract_person_key
+        if (
+            self._closing_requested
+            or not callable(self._person_details_write_port_factory)
+            or type(person_id) is not int
+            or person_id <= 0
+        ):
+            return
+
+        port = None
+        result = None
+        try:
+            port = self._person_details_write_port_factory()
+            snapshot = port.load(person_id)
+            if snapshot is None:
+                self.statusBar().showMessage("Fiche introuvable · rechargez la liste")
+                return
+            dialog = PersonDetailsEditDialog(snapshot, self)
+            if dialog.exec() != QDialog.DialogCode.Accepted:
+                self.statusBar().showMessage("Modification annulée · aucune écriture")
+                return
+            result = save_person_details(port, snapshot, dialog.values())
+        except Exception:
+            self.statusBar().showMessage("Modification impossible · connexion ou lecture indisponible")
+            return
+        finally:
+            if port is not None:
+                try:
+                    port.close()
+                except Exception:
+                    self.statusBar().showMessage("Fermeture de la connexion de modification incomplète")
+
+        if result is None:
+            return
+        if result.committed:
+            if result.verified and result.value is not None:
+                saved = result.value.details
+                self.people_model.update_person_identity(
+                    person_id, first_name=saved.first_name, last_name=saved.last_name
+                )
+                display_name = " ".join((saved.first_name, saved.last_name)).strip()
+                self.detail_title.setText(display_name)
+                self.person_avatar.setText(_initials(display_name))
+                for widget, value in (
+                    (self.generalities_page.last_name, saved.last_name),
+                    (self.generalities_page.first_name, saved.first_name),
+                    (self.generalities_page.postcode, str(saved.postcode).zfill(5)
+                     if saved.postcode is not None else "—"),
+                    (self.generalities_page.city, saved.city),
+                ):
+                    widget.setText(value or "—")
+                self.generalities_page.address.setPlainText(saved.address or "")
+                self.generalities_page.memo.setPlainText(saved.memo or "")
+
+            # A fresh worker connection reads the committed row; the old
+            # worker may still be finishing a stale snapshot.
+            if self._activity_thread is not None and self._activity_thread.isRunning():
+                self._activity_pending_person_id = person_id
+            else:
+                self._request_activity(person_id)
+        self.statusBar().showMessage(result.message)
+
     def is_closing_requested(self) -> bool:
         return self._closing_requested
 
@@ -95,6 +167,8 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
         page = getattr(self, "generalities_page", None)
         if page is not None:
             page.clear()
+        if hasattr(self, "person_edit_button"):
+            self.person_edit_button.setEnabled(False)
         self._activity_selected_person_id = None
         controller = getattr(self, "presence_controller", None)
         if controller is not None:
@@ -119,6 +193,10 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
 
         contract_key = person.id_historique if person.id_historique is not None else person.id
         self._current_contract_person_key = contract_key
+        self.person_edit_button.setEnabled(
+            callable(self._person_details_write_port_factory)
+            and type(contract_key) is int and contract_key > 0
+        )
         self.contract_create_button.setEnabled(
             callable(self._contract_write_port_factory)
             and isinstance(contract_key, int)

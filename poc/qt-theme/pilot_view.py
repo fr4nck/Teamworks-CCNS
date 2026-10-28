@@ -253,9 +253,12 @@ class PeopleContractsPilot(QMainWindow):
 
         tools = QVBoxLayout()
         tools.setSpacing(5)
+        self.person_edit_button = self._legacy_tool_button(
+            "Modifier.png", "Modifier la fiche sélectionnée", fallback="M"
+        )
         for button in (
             self._legacy_tool_button("Ajouter.png", "Créer une nouvelle fiche individuelle", fallback="+"),
-            self._legacy_tool_button("Modifier.png", "Modifier la fiche sélectionnée", fallback="M"),
+            self.person_edit_button,
             self._legacy_tool_button("Supprimer.png", "Supprimer la fiche sélectionnée", fallback="−"),
         ):
             tools.addWidget(button)
