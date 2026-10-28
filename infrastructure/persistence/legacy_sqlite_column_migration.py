@@ -1,59 +1,49 @@
-"""SQLite column removal with a reversible, nested savepoint boundary.
+"""Lossless SQLite column removal using native ALTER TABLE DROP COLUMN.
 
-The historical table-copy approach is preserved, including its known loss
-of constraints and indexes that are not reconstructed. This helper improves
-failure atomicity; it does not make legacy schema reconstruction lossless.
+SQLite 3.35+ preserves unrelated indexes, triggers, views, keys and table
+constraints, and refuses to drop columns referenced by those schema objects.
+Earlier versions fail closed: the old CREATE/COPY/DROP reconstruction would
+silently discard schema constraints and is deliberately not used.
 """
 from __future__ import annotations
 
+import sqlite3
 from collections.abc import Iterable
 
 from infrastructure.persistence.legacy_table_transfer import legacy_sql_identifier
-from infrastructure.persistence.legacy_table_ddl import _legacy_type
 
 
 _SAVEPOINT = "teamworks_legacy_drop_column"
+_MIN_NATIVE_DROP = (3, 35, 0)
 
 
 def drop_legacy_sqlite_column(
-    cursor: object, table: str, column: str, existing_columns: Iterable[tuple[str, str]],
+    cursor: object,
+    table: str,
+    column: str,
+    existing_columns: Iterable[tuple[str, str]],
 ) -> bool:
-    """Drop one SQLite column atomically; return False for historical no-ops.
+    """Drop one column atomically, keeping the surrounding transaction intact.
 
-    A SAVEPOINT avoids ending any surrounding caller-managed transaction.
-    Failed reconstruction rolls back both schema and copied rows. Failure
-    exceptions propagate, rather than treating an incomplete copy as success.
+    Return False without any SQL for an unknown column or sole remaining
+    column. SQLite rejects referenced/PK/UNIQUE/CHECK/FK/generated columns
+    without modifying the schema. ROLLBACK TO undoes failed DDL inside the
+    savepoint; RELEASE of a nested savepoint never commits its parent.
     """
     table = legacy_sql_identifier(table)
     column = legacy_sql_identifier(column)
-    remaining = []
-    found = False
-    for name, type_name in existing_columns:
-        name = legacy_sql_identifier(name)
-        if name == column:
-            found = True
-            continue
-        remaining.append((name, "" if type_name == "" else _legacy_type(type_name, is_network=False)))
-    if not found or not remaining:
+    names = [legacy_sql_identifier(name) for name, _type in existing_columns]
+    if column not in names or len(names) <= 1:
         return False
 
-    declarations = ", ".join("%s %s" % pair for pair in remaining)
-    names = ", ".join(name for name, _ in remaining)
-    backup = "%s_backup" % table
-    legacy_sql_identifier(backup)
-    sql = (
-        "CREATE TEMPORARY TABLE %s(%s);" % (backup, declarations),
-        "INSERT INTO %s SELECT %s FROM %s;" % (backup, names, table),
-        "DROP TABLE %s;" % table,
-        "CREATE TABLE %s(%s);" % (table, declarations),
-        "INSERT INTO %s SELECT %s FROM %s;" % (table, names, backup),
-        "DROP TABLE %s;" % backup,
-    )
+    # Native DROP COLUMN is available from SQLite 3.35 (2021). Do not
+    # silently fall back to a destructive custom rebuild on older runtimes.
+    if sqlite3.sqlite_version_info < _MIN_NATIVE_DROP:
+        raise RuntimeError("SQLite 3.35 or newer is required for safe DROP COLUMN")
 
     cursor.execute("SAVEPOINT %s" % _SAVEPOINT)
     try:
-        for statement in sql:
-            cursor.execute(statement)
+        cursor.execute("ALTER TABLE %s DROP COLUMN %s;" % (table, column))
     except BaseException:
         try:
             cursor.execute("ROLLBACK TO SAVEPOINT %s" % _SAVEPOINT)

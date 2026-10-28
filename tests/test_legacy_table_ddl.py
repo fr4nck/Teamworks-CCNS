@@ -133,11 +133,11 @@ def test_drop_column_failure_rolls_back_schema_and_rows():
 
         class FailingCursor:
             def execute(self, sql):
-                if sql.startswith("CREATE TABLE demo("):
-                    raise RuntimeError("injected failure after DROP")
+                if sql.startswith("ALTER TABLE demo DROP COLUMN cible"):
+                    raise RuntimeError("injected failure before native ALTER")
                 return cursor.execute(sql)
 
-        with pytest.raises(RuntimeError, match="injected failure"):
+        with pytest.raises(RuntimeError, match="injected failure before native ALTER"):
             drop_legacy_sqlite_column(
                 FailingCursor(), "demo", "cible", previous_columns
             )
@@ -221,3 +221,165 @@ def test_new_ddl_modules_have_no_ui_or_database_driver_imports():
             "wx", "wxPython", "PySide6", "PyQt6",
             "mysql", "MySQLdb", "teamworks", "psycopg",
         } for name in imports)
+
+
+
+def test_native_drop_preserves_unrelated_schema_objects_and_foreign_keys():
+    connection = sqlite3.connect(":memory:")
+    try:
+        connection.execute("PRAGMA foreign_keys=ON")
+        connection.executescript("""
+            CREATE TABLE parent (id INTEGER PRIMARY KEY);
+            CREATE TABLE audit (demo_id INTEGER);
+            CREATE TABLE demo (
+                id INTEGER PRIMARY KEY, parent_id INTEGER REFERENCES parent(id),
+                obsolete TEXT, email TEXT UNIQUE NOT NULL,
+                state TEXT CHECK(state IN ('ok', 'hold'))
+            );
+            CREATE INDEX idx_demo_parent ON demo(parent_id);
+            CREATE TRIGGER tr_demo_state AFTER UPDATE OF state ON demo
+            BEGIN INSERT INTO audit(demo_id) VALUES (NEW.id); END;
+            CREATE VIEW vw_demo AS SELECT id, email FROM demo;
+            INSERT INTO parent VALUES (1);
+            INSERT INTO demo VALUES (10, 1, 'discard', 'a@example.fr', 'ok');
+        """)
+        objects_before = connection.execute(
+            "SELECT type,name,sql FROM sqlite_master "
+            "WHERE (tbl_name='demo' AND type IN ('index','trigger')) "
+            "OR name='vw_demo' ORDER BY type,name"
+        ).fetchall()
+        foreign_keys_before = connection.execute(
+            "PRAGMA foreign_key_list(demo)"
+        ).fetchall()
+
+        assert drop_legacy_sqlite_column(
+            connection.cursor(), "demo", "obsolete",
+            [(row[1], row[2]) for row in connection.execute(
+                "PRAGMA table_info('demo')"
+            )],
+        )
+        assert connection.execute("SELECT * FROM demo").fetchall() == [
+            (10, 1, "a@example.fr", "ok")
+        ]
+        assert connection.execute(
+            "SELECT type,name,sql FROM sqlite_master "
+            "WHERE (tbl_name='demo' AND type IN ('index','trigger')) "
+            "OR name='vw_demo' ORDER BY type,name"
+        ).fetchall() == objects_before
+        assert connection.execute("PRAGMA foreign_key_list(demo)").fetchall() == foreign_keys_before
+        assert connection.execute("PRAGMA foreign_key_check").fetchall() == []
+        assert connection.execute("PRAGMA integrity_check").fetchone() == ("ok",)
+
+        # The unique index, CHECK constraint, trigger and view remain usable.
+        with pytest.raises(sqlite3.IntegrityError):
+            connection.execute(
+                "INSERT INTO demo VALUES (11,1,'a@example.fr','ok')"
+            )
+        with pytest.raises(sqlite3.IntegrityError):
+            connection.execute(
+                "UPDATE demo SET state='invalid' WHERE id=10"
+            )
+        connection.execute("UPDATE demo SET state='hold' WHERE id=10")
+        assert connection.execute("SELECT * FROM audit").fetchall() == [(10,)]
+        assert connection.execute("SELECT email FROM vw_demo").fetchall() == [
+            ("a@example.fr",)
+        ]
+    finally:
+        connection.close()
+
+
+@pytest.mark.parametrize("dependent_object", (
+    "CREATE INDEX ix_obsolete ON demo(obsolete)",
+    "CREATE VIEW vw_obsolete AS SELECT obsolete FROM demo",
+    "CREATE TRIGGER tr_obsolete AFTER UPDATE ON demo "
+    "BEGIN INSERT INTO audit(value) VALUES (NEW.obsolete); END",
+    "CREATE INDEX ix_partial ON demo(keep) WHERE obsolete IS NOT NULL",
+))
+def test_native_drop_refuses_referenced_columns_and_leaves_schema_intact(dependent_object):
+    connection = sqlite3.connect(":memory:")
+    try:
+        connection.execute("CREATE TABLE demo (id INTEGER PRIMARY KEY, obsolete TEXT, keep TEXT)")
+        connection.execute("CREATE TABLE audit (value TEXT)")
+        connection.execute(dependent_object)
+        connection.execute("INSERT INTO demo VALUES (1,'X','Y')")
+        connection.commit()
+        original_schema = connection.execute(
+            "SELECT type,name,sql FROM sqlite_master ORDER BY name"
+        ).fetchall()
+        with pytest.raises(sqlite3.OperationalError):
+            drop_legacy_sqlite_column(
+                connection.cursor(), "demo", "obsolete",
+                [("id","INTEGER"), ("obsolete","TEXT"), ("keep","TEXT")]
+            )
+        assert connection.execute(
+            "SELECT type,name,sql FROM sqlite_master ORDER BY name"
+        ).fetchall() == original_schema
+        assert connection.execute("SELECT * FROM demo").fetchall() == [(1,"X","Y")]
+        assert connection.execute("PRAGMA integrity_check").fetchone() == ("ok",)
+    finally:
+        connection.close()
+
+
+@pytest.mark.parametrize("definition,column", (
+    ("CREATE TABLE demo (id INTEGER PRIMARY KEY, obsolete TEXT, keep TEXT)", "id"),
+    ("CREATE TABLE demo (id INTEGER, obsolete TEXT UNIQUE, keep TEXT)", "obsolete"),
+    ("CREATE TABLE demo (id INTEGER, obsolete TEXT, keep TEXT CHECK(obsolete <> 'X'))", "obsolete"),
+))
+def test_native_drop_refuses_primary_unique_or_check_dependent_columns(definition, column):
+    connection = sqlite3.connect(":memory:")
+    try:
+        connection.execute(definition)
+        initial_schema = connection.execute(
+            "SELECT sql FROM sqlite_master WHERE name='demo'"
+        ).fetchone()
+        with pytest.raises(sqlite3.OperationalError):
+            drop_legacy_sqlite_column(
+                connection.cursor(), "demo", column,
+                [("id","INTEGER"), ("obsolete","TEXT"), ("keep","TEXT")]
+            )
+        assert connection.execute(
+            "SELECT sql FROM sqlite_master WHERE name='demo'"
+        ).fetchone() == initial_schema
+    finally:
+        connection.close()
+
+
+def test_native_drop_fails_closed_on_old_sqlite_without_running_sql(monkeypatch):
+    from infrastructure.persistence import legacy_sqlite_column_migration as migration
+
+    class NoSQL:
+        def execute(self, statement):
+            pytest.fail("Legacy destructive SQL must not execute: " + statement)
+
+    monkeypatch.setattr(migration.sqlite3, "sqlite_version_info", (3, 34, 1))
+    with pytest.raises(RuntimeError, match="3.35"):
+        migration.drop_legacy_sqlite_column(
+            NoSQL(), "demo", "obsolete",
+            [("id","INTEGER"), ("obsolete","TEXT")]
+        )
+
+
+def test_native_drop_rolls_back_nested_ddl_without_affecting_outer_edits():
+    connection = sqlite3.connect(":memory:")
+    try:
+        connection.execute("CREATE TABLE demo (id INTEGER, obsolete TEXT, keep TEXT)")
+        connection.execute("INSERT INTO demo VALUES (1,'a','b')")
+        connection.commit()
+        connection.execute("UPDATE demo SET keep='changed' WHERE id=1")
+        # ALTER fails because a partial index still references obsolete.
+        connection.execute(
+            "CREATE INDEX ix_dep ON demo(keep) WHERE obsolete IS NOT NULL"
+        )
+        with pytest.raises(sqlite3.OperationalError):
+            drop_legacy_sqlite_column(
+                connection.cursor(), "demo", "obsolete",
+                [("id","INTEGER"), ("obsolete","TEXT"), ("keep","TEXT")]
+            )
+        assert connection.in_transaction
+        assert connection.execute("SELECT keep FROM demo").fetchall() == [
+            ("changed",)
+        ]
+        connection.rollback()
+        assert connection.execute("SELECT keep FROM demo").fetchall() == [("b",)]
+    finally:
+        connection.close()
