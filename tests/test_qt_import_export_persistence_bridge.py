@@ -7,6 +7,11 @@ from types import SimpleNamespace
 
 from infrastructure.persistence.legacy_mysql_schema import activate_legacy_mysql_schema
 from infrastructure.persistence.legacy_sql_batch import execute_legacy_batch
+from infrastructure.persistence.legacy_table_transfer import (
+    legacy_select_all_query,
+    legacy_mysql_columns_query,
+    plan_legacy_table_transfer,
+)
 
 
 SOURCE = Path(__file__).resolve().parents[1] / "teamworks/GestionDB.py"
@@ -20,6 +25,9 @@ def _legacy_method(name, **dependencies):
         "Chemins": SimpleNamespace(GetStaticPath=lambda path: path),
         "activate_legacy_mysql_schema": activate_legacy_mysql_schema,
         "execute_legacy_batch": execute_legacy_batch,
+        "legacy_select_all_query": legacy_select_all_query,
+        "legacy_mysql_columns_query": legacy_mysql_columns_query,
+        "plan_legacy_table_transfer": plan_legacy_table_transfer,
         "sqlite3": sqlite3,
         "_": lambda text: text,
     }
@@ -184,3 +192,40 @@ def test_import_export_bridges_do_not_add_a_new_database_driver():
             direct_modules.update(alias.name for alias in node.names)
     assert "psycopg" not in direct_modules
     assert "psycopg2" not in direct_modules
+
+
+def test_import_export_bridges_plan_all_table_transfer_sql_in_infrastructure():
+    tree = ast.parse(SOURCE.read_text(encoding="utf-8"))
+    cls = next(node for node in tree.body
+               if isinstance(node, ast.ClassDef) and node.name == "DB")
+    for name in ("Importation_table", "Importation_table_reseau", "Exportation_vers_base_defaut"):
+        fn = next(node for node in cls.body
+                  if isinstance(node, ast.FunctionDef) and node.name == name)
+        helper_calls = {
+            node.func.id for node in ast.walk(fn)
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
+        }
+        assert "legacy_select_all_query" in helper_calls
+        assert "plan_legacy_table_transfer" in helper_calls
+        if name == "Importation_table_reseau":
+            assert "legacy_mysql_columns_query" in helper_calls
+
+
+def test_importation_table_rejects_unsafe_table_name_before_select():
+    source = _MySqlSourceConnection()
+    destination = sqlite3.connect(":memory:")
+    try:
+        method = _legacy_method(
+            "Importation_table",
+            GetConnexionReseau=lambda _: (source, "source_tdata"),
+        )
+        adapter = SimpleNamespace(
+            cursor=destination.cursor(), connexion=destination, isNetwork=False
+        )
+        import pytest
+        with pytest.raises(ValueError, match="Invalid legacy SQL identifier"):
+            method(adapter, "demo; DROP TABLE personnel",
+                   nomFichierdefault="legacy-ref", mode="network")
+        assert source.cursor_object.executed == ["USE \x60source_tdata\x60;"]
+    finally:
+        destination.close()

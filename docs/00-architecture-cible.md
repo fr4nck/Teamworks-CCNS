@@ -216,3 +216,19 @@ representative, tests RH/CCNS/CEE/ETP, contrats d'echange avec Portail,
 verification des imports/exports et un retour arriere valide. Aucune
 migration automatique de production ou ajout de pilote PostgreSQL dans
 l'application Qt n'est autorise dans le lot de decouplage en cours.
+
+## SQL de transfert des tables : compilation hors interface
+
+Le fichier `infrastructure/persistence/legacy_table_transfer.py` prepare
+les projections de colonnes et les requetes de copie historiques SQLite/MySQL.
+Il ne charge ni wx/Qt, ni pilote de base, et n'ouvre pas de connexion.
+Le moteur conserve l'ordre des colonnes de la source et les marqueurs
+de parametres `?` (SQLite) et `%s` (MySQL). Le catalogue de tables
+declarees dans `teamworks/Data/DATA_Tables.py` est teste : les identifiants
+doivent etre compatibles avec une construction SQL non quotee.
+
+Ce composant isole le dialecte legacy sans prejuger du futur dialecte
+PostgreSQL. Il ne modifie ni le schema, ni les donnees, ni les transactions.
+Son raccordement a GestionDB est reserve a `qt/master` avec tests de
+non-regression ; `wx/master` reste intacte. L'inventaire des bases reelles
+et la recette applicative demeurent necessaires avant la future migration.

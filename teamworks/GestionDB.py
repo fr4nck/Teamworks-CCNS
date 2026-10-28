@@ -19,6 +19,7 @@ from infrastructure.persistence.legacy_network_target import parse_legacy_networ
 from infrastructure.persistence.legacy_mysql_connection import open_legacy_mysql
 from infrastructure.persistence.legacy_mysql_schema import activate_legacy_mysql_schema
 from infrastructure.persistence.legacy_sql_batch import execute_legacy_batch
+from infrastructure.persistence.legacy_table_transfer import legacy_select_all_query, legacy_mysql_columns_query, plan_legacy_table_transfer
 from infrastructure.persistence.legacy_sqlite_connection import open_legacy_sqlite
 from infrastructure.persistence.legacy_connection_lifecycle import commit_if_connected, close_if_connected
 import base64
@@ -746,7 +747,7 @@ class DB:
                 return (False, "La connexion avec la base de donnees MYSQL a importer a echouee : \nErreur detectee :%s" % err)
 
         # Recherche des noms de champs de la table
-        req = "SELECT * FROM %s" % nomTable
+        req = legacy_select_all_query(nomTable)
         cursor.execute(req)
         listeDonneesTmp = cursor.fetchall()
         listeNomsChamps = []
@@ -754,26 +755,20 @@ class DB:
             listeNomsChamps.append(fieldDesc[0])
             
         # Préparation des noms de champs pour le transfert
-        listeChamps = []
-        listeMarks = []
         dictTypesChamps = GetChampsTable(nomTable)
-        for nomChamp in listeNomsChamps[0:] :
-            if nomChamp in dictTypesChamps:
-                listeChamps.append(nomChamp)
-                if self.isNetwork == True :
-                    # Version MySQL
-                    listeMarks.append("%s")
-                else:
-                    # Version Sqlite
-                    listeMarks.append("?")
+        transfert = plan_legacy_table_transfer(
+            nomTable, listeNomsChamps,
+            destination_is_network=(self.isNetwork == True),
+            destination_columns=dictTypesChamps,
+        )
 
         # Récupération des données
-        req = "SELECT %s FROM %s" % (", ".join(listeChamps), nomTable)
+        req = transfert.select_query
         cursor.execute(req)
         listeDonnees = cursor.fetchall()
 
         # Importation des données vers la nouvelle table
-        req = "INSERT INTO %s (%s) VALUES (%s)" % (nomTable, ", ".join(listeChamps), ", ".join(listeMarks))
+        req = transfert.insert_query
         try :
             execute_legacy_batch(
                 self.cursor, self.connexion, req, listeDonnees,
@@ -801,21 +796,23 @@ class DB:
             return (False, "La connexion avec la base de donnees MYSQL a importer a echouee : \nErreur detectee :%s" % err)
 
         # Recherche des noms de champs de la table
-        req = "SELECT * FROM %s" % nomTable
+        req = legacy_select_all_query(nomTable)
         cursor.execute(req)
         listeDonneesTmp = cursor.fetchall()
 
         # Lecture des champs
         listeChamps = []
-        req = "SHOW COLUMNS FROM %s;" % nomTable
+        req = legacy_mysql_columns_query(nomTable)
         cursor.execute(req)
         listeTmpChamps = cursor.fetchall()
         for valeurs in listeTmpChamps:
             listeChamps.append((valeurs[0], valeurs[1]))
 
         # Préparation des noms de champs pour le transfert
-        txtChamps = "(" + ", ".join([nomChamp for nomChamp, typeChamp in listeChamps]) + ")"
-        txtQMarks = "(" + ", ".join(["?" for nomChamp, typeChamp in listeChamps]) + ")"
+        transfert = plan_legacy_table_transfer(
+            nomTable, (nomChamp for nomChamp, typeChamp in listeChamps),
+            destination_is_network=False,
+        )
 
         # Récupération des données
         listeDonnees = []
@@ -833,7 +830,7 @@ class DB:
             listeDonnees.append(tuple(listeValeurs))
 
         # Importation des données vers la nouvelle table
-        req = "INSERT INTO %s %s VALUES %s" % (nomTable, txtChamps, txtQMarks)
+        req = transfert.insert_query
         # Cette destination historique utilise les marqueurs SQLite '?'.
         execute_legacy_batch(
             self.cursor, self.connexion, req, listeDonnees,
@@ -899,18 +896,15 @@ class DB:
         listeChamps = self.GetListeChamps2(nomTable)
         
         # Récupération des données à exporter
-        req = "SELECT * FROM %s" % nomTable
+        req = legacy_select_all_query(nomTable)
         self.ExecuterReq(req)
         listeDonnees = self.ResultatReq()
             
         # Préparation des noms de champs pour le transfert
-        txtChamps = "("
-        txtQMarks = "("
-        for nomChamp, typeChamp in listeChamps :
-            txtChamps += nomChamp + ", "
-            txtQMarks += "?, "
-        txtChamps = txtChamps[:-2] + ")"
-        txtQMarks = txtQMarks[:-2] + ")"
+        transfert = plan_legacy_table_transfer(
+            nomTable, (nomChamp for nomChamp, typeChamp in listeChamps),
+            destination_is_network=False,
+        )
 
         # Récupération des données
         listeDonnees2 = []
@@ -918,7 +912,7 @@ class DB:
             listeDonnees2.append(donnees[0:])
         
         # Importation des données vers la nouvelle table
-        req = "INSERT INTO %s %s VALUES %s" % (nomTable, txtChamps, txtQMarks)
+        req = transfert.insert_query
         execute_legacy_batch(
             cursorDefaut, connexionDefaut, req, listeDonnees2,
             is_network=False, commit=True
