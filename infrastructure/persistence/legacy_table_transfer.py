@@ -70,3 +70,8 @@ def plan_legacy_table_transfer(
         select_query="SELECT %s FROM %s" % (names, table),
         insert_query="INSERT INTO %s (%s) VALUES (%s)" % (table, names, marks),
     )
+
+
+def legacy_sql_identifier(name: str) -> str:
+    """Public, stable validator shared by legacy table-copy and DDL adapters."""
+    return _identifier(name)
