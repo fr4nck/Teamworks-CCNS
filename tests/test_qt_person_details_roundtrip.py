@@ -184,3 +184,106 @@ def test_editor_validation_blocks_blank_name_without_commit(tmp_path, monkeypatc
         dialog.close()
     finally:
         port.close()
+
+
+
+def test_employee_create_from_button_persists_selects_and_avoids_social_fields(tmp_path, monkeypatch):
+    _app()
+    path = _db_file(tmp_path)
+    window = _window(path)
+    try:
+        assert window.person_create_button.isEnabled()
+        assert window.people_model.rowCount() == 1
+
+        def fill_creation(self):
+            assert "Créer une fiche" in self.windowTitle()
+            self.last_name.setText("LE GALL")
+            self.first_name.setText("Maëlle")
+            self.address.setPlainText("8 avenue des sports")
+            self.postcode.setText("35000")
+            self.city.setText("Rennes")
+            self.memo.setPlainText("Première inscription")
+            self._validate_and_accept()
+            return self.result()
+
+        monkeypatch.setattr(PersonDetailsEditDialog, "exec", fill_creation)
+        window.search.setText("inconnu")
+        window.person_create_button.click()
+        QApplication.processEvents()
+
+        with sqlite3.connect(path) as db:
+            new_records = db.execute(
+                "SELECT IDpersonne,nom,prenom,adresse_resid,cp_resid,"
+                "ville_resid,memo,num_secu,date_naiss FROM personnes "
+                "WHERE IDpersonne<>12"
+            ).fetchall()
+            assert new_records == [
+                (13, "LE GALL", "Maëlle", "8 avenue des sports", 35000,
+                 "Rennes", "Première inscription", None, None)
+            ]
+            assert db.execute("SELECT nom,num_secu FROM personnes WHERE IDpersonne=12").fetchone() == (
+                "DUPONT", "DONNEE-SENSIBLE"
+            )
+        assert window.people_model.rowCount() == 2
+        assert window.people_model.person_at(1).id_historique == 13
+        assert window.people_model.person_at(1).name == "Maëlle LE GALL"
+        assert window.search.text() == ""
+        assert window._current_contract_person_key == 13
+        assert "créée et vérifiée" in window.statusBar().currentMessage()
+    finally:
+        window.close()
+        QApplication.processEvents()
+
+
+def test_cancel_employee_creation_never_opens_write_session(tmp_path, monkeypatch):
+    _app()
+    path = _db_file(tmp_path)
+    open_sessions = []
+    window = PeopleContractsGeneralitiesPilot(
+        EmployeeAdapter(),
+        person_details_write_port_factory=lambda: open_sessions.append("open") or
+        GestionDbPersonDetailsWriteAdapter(WriteDb(path)),
+    )
+    try:
+        monkeypatch.setattr(
+            PersonDetailsEditDialog, "exec",
+            lambda _self: QDialog.DialogCode.Rejected
+        )
+        window.person_create_button.click()
+        assert open_sessions == []
+        with sqlite3.connect(path) as db:
+            assert db.execute("SELECT COUNT(*) FROM personnes").fetchone() == (1,)
+        assert window.people_model.rowCount() == 1
+        assert "annulée" in window.statusBar().currentMessage()
+    finally:
+        window.close()
+        QApplication.processEvents()
+
+
+def test_employee_creation_requires_name_and_keeps_dialog_open(tmp_path, monkeypatch):
+    _app()
+    dialog = PersonDetailsEditDialog(None)
+    alerts = []
+    try:
+        monkeypatch.setattr(QMessageBox, "warning", lambda *args: alerts.append(args))
+        assert dialog.last_name.text() == ""
+        assert dialog.first_name.text() == ""
+        dialog._validate_and_accept()
+        assert dialog.result() != QDialog.DialogCode.Accepted
+        assert alerts
+        with pytest.raises(RuntimeError, match="validation"):
+            dialog.values()
+    finally:
+        dialog.close()
+
+
+def test_create_button_stays_disabled_without_real_write_port():
+    _app()
+    window = PeopleContractsGeneralitiesPilot(EmployeeAdapter())
+    try:
+        assert not window.person_create_button.isEnabled()
+        window._create_person()
+        assert window.people_model.rowCount() == 1
+    finally:
+        window.close()
+        QApplication.processEvents()

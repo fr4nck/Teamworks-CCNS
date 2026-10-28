@@ -17,7 +17,7 @@ from application.services.person_generalities_write import (
 class PersonDetailsEditDialog(QDialog):
     """Edit only the six approved fields; sensitive and linked fields stay read-only."""
 
-    def __init__(self, snapshot: PersonDetailsSnapshot, parent=None):
+    def __init__(self, snapshot: PersonDetailsSnapshot | None, parent=None):
         super().__init__(parent)
         self._validated: PersonDetails | None = None
         creating = snapshot is None
