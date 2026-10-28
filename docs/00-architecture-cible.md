@@ -266,3 +266,24 @@ Elle n'a PAS ete migree par ce lot. Elle doit etre requalifiee en preserve-
 schema avec les index, triggers, contraintes, vues et cles etrangeres reels.
 Toute intervention sur une copie d'exploitation necessite backup et comparaison
 schema + donnees avant/apres ; les tests unitaires n'en tiennent pas lieu.
+
+## ReparationTable : mode non destructif par ajout de colonnes
+
+La fonction `infrastructure/persistence/legacy_sqlite_table_repair.py`
+propose un repair SQLite additif, sans wx ni Qt : elle analyse le schema
+existant, refuse une table absente ou les definitions incompatibles,
+puis ajoute sous SAVEPOINT les seules colonnes ordinaires manquantes
+du catalogue. Elle conserve les donnees, les colonnes supplementaires,
+les index, triggers, vues, cles etrangeres et contraintes existants.
+Une erreur pendant plusieurs ALTER entraine le rollback de toutes les
+colonnes ajoutees ; aucune transaction de l'appelant n'est validee.
+
+Ce n'est PAS une reconstruction integrale du schema ni une conversion
+de type : une cle primaire manquante, un type different, une contrainte
+manquante ou un dommage structurel requiert une migration separee.
+Le moteur ne tente pas de remplacer aveuglement une table deja presente.
+Le raccordement a GestionDB est reserve au rail Qt ; wx reste inchange.
+
+La recette sur copie reelle de la base et les tests Windows packaging
+restent des qualifications distinctes. Ne jamais lancer ce repair sur
+une base d'exploitation sans sauvegarde verifiee et inspection du diff.
