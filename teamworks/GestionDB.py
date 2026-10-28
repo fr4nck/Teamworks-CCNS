@@ -15,6 +15,7 @@ import sys
 import sqlite3
 import os
 from infrastructure.persistence.current_database_config import read_current_database_name
+from infrastructure.persistence.legacy_network_target import parse_legacy_network_target
 import base64
 import datetime
 import random
@@ -142,14 +143,8 @@ class DB:
             self.echec = 0
     
     def GetParamConnexionReseau(self):
-        """ Récupération des paramètres de connexion si fichier MySQL """
-        pos = self.nomFichier.index("[RESEAU]")
-        paramConnexions = self.nomFichier[:pos]
-        port, host, user, passwd = paramConnexions.split(";")
-        nomFichier = self.nomFichier[pos:].replace("[RESEAU]", "")
-        nomFichier = nomFichier.lower() 
-        dictDonnees = {"port":int(port), "hote":host, "host":host, "user":user, "utilisateur":user, "mdp":passwd, "password":passwd, "fichier":nomFichier}
-        return dictDonnees
+        """Expose les noms de champs historiques sans logique de parsing dans le driver."""
+        return parse_legacy_network_target(self.nomFichier).as_legacy_parameters()
 
     def OuvertureFichierReseau(self, nomFichier, suffixe):
         """ Version RESEAU avec MYSQL """
@@ -952,11 +947,10 @@ class DB:
 
 
 def GetConnexionReseau(nomFichier=""):
-    pos = nomFichier.index("[RESEAU]")
-    paramConnexions = nomFichier[:pos]
-    port, host, user, passwd = paramConnexions.split(";")
-    nomFichier = nomFichier[pos:].replace("[RESEAU]", "")
-    nomFichier = nomFichier.lower()
+    target = parse_legacy_network_target(nomFichier)
+    port, host, user = target.port, target.host, target.user
+    passwd = target.password_token
+    nomFichier = target.database
 
     passwd = DecodeMdpReseau(passwd)
 

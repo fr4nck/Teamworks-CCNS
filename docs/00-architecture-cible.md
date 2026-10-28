@@ -95,3 +95,40 @@ Principe : **on corrige ce qui dysfonctionne dans wxPython, mais on évite d'y i
 La PR **#366** a qualifié le POC Qt initial sur Linux et Windows. Son HEAD qualifié a servi de point de départ au rail durable **`qt/master`**.
 
 Les PR techniques **#377**, **#378** et **#380** ont été convergées par **#381**, puis fermées comme superseded. La PR #366 a ensuite été fermée sans merge vers la branche historique `master` : elle reste une archive de qualification, pas le mécanisme de développement courant du rail Qt.
+
+## Frontière moteur / carrosserie : premier lot sans wx
+
+Le moteur partagé est constitué de `domain/`, `application/` et `infrastructure/`.
+Il ne doit importer ni wxPython ni PySide6. Les widgets et les événements
+restent dans les carrosseries (`wx/master` pour l'historique et `qt/master` pour Qt).
+
+La sélection de la base active est désormais isolée dans
+`infrastructure/persistence/current_database_config.py`, qui lit uniquement
+le `nomFichier` du `Config.json` historique, sans créer ni modifier de fichier
+et sans interface graphique. Les noms de bases locaux et les références
+réseau historiques sont conservés tels quels.
+
+Dans la carrosserie Qt, `GestionDB` et `UTILS_Fichiers` doivent consommer
+la configuration par cette frontière et par un lecteur INI sans wx.
+Cette étape ne modifie pas le comportement de l'application historique
+sur `wx/master`; l'extraction progressive du reste de `GestionDB` est à
+qualifier indépendamment avant de supprimer l'adaptateur legacy.
+
+Le maintien de la compatibilité SQLite/MySQL, la fermeture des connexions,
+les transactions et la recette Windows sur copie réelle restent des gates
+distincts. Une CI verte ne constitue pas une recette terrain.
+
+## Connexion MySQL historique : frontière sans UI
+
+Le module infrastructure/persistence/legacy_network_target.py decode le format
+port;hote;utilisateur;jeton[RESEAU]base sans acces a wx, Qt ou a la base.
+Il conserve les alias des parametres historiques, l'abaissement du nom de
+base et le jeton opaque de mot de passe (y compris #64#). Il masque
+le secret dans sa representation et n'inclut pas la reference brute dans
+ses erreurs de validation.
+
+Ce composant ne connecte pas MySQL : le choix du pilote, le decodeur de jeton
+et les operations SQL restent provisoirement dans l'adaptateur legacy. Les
+tests unitaires couvrent le format, les erreurs et l'absence de dependance UI.
+La recette serveur MySQL/MariaDB reel et la verification des versions historiques
+restent obligatoires avant toute qualification de production.
