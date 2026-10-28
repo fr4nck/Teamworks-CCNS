@@ -16,6 +16,8 @@ import sqlite3
 import os
 from infrastructure.persistence.current_database_config import read_current_database_name
 from infrastructure.persistence.legacy_network_target import parse_legacy_network_target
+from infrastructure.persistence.legacy_sqlite_connection import open_legacy_sqlite
+from infrastructure.persistence.legacy_connection_lifecycle import commit_if_connected, close_if_connected
 import base64
 import datetime
 import random
@@ -124,24 +126,22 @@ class DB:
         return self.GetParamConnexionReseau()["user"]
         
     def OuvertureFichierLocal(self, nomFichier):
-        """ Version LOCALE avec SQLITE """
-        # Vérifie que le fichier sqlite existe bien
-        if self.modeCreation == False :
-            if os.path.isfile(nomFichier)  == False :
-                #print "Le fichier SQLITE demande n'est pas present sur le disque dur."
-                self.echec = 1
-                return
-        # Initialisation de la connexion
-        try :
-            self.connexion = sqlite3.connect(nomFichier)
-            self.cursor = self.connexion.cursor()
+        """Ouvre les fichiers SQLite historiques par le moteur sans GUI."""
+        try:
+            resultat = open_legacy_sqlite(
+                nomFichier, allow_creation=(self.modeCreation != False)
+            )
         except Exception as err:
             print("La connexion avec la base de donnees SQLITE a echouee : \nErreur detectee :%s" % err)
             self.erreur = err
             self.echec = 1
-        else:
-            self.echec = 0
-    
+            return
+        if resultat is None:
+            self.echec = 1
+            return
+        self.connexion, self.cursor = resultat
+        self.echec = 0
+
     def GetParamConnexionReseau(self):
         """Expose les noms de champs historiques sans logique de parsing dans le driver."""
         return parse_legacy_network_target(self.nomFichier).as_legacy_parameters()
@@ -279,18 +279,17 @@ class DB:
         return resultat
 
     def Commit(self):
-        if self.connexion:
-            self.connexion.commit()
+        commit_if_connected(self.connexion)
 
     def Close(self):
-        try :
-            self.connexion.close()
-        except Exception as err :
+        try:
+            close_if_connected(self.connexion)
+        except Exception as err:
             pass
 
-        if self.IDconnexion in DICT_CONNEXIONS :
+        if self.IDconnexion in DICT_CONNEXIONS:
             del DICT_CONNEXIONS[self.IDconnexion]
-                
+
     def Executermany(self, req="", listeDonnees=[], commit=True):
         """ Executemany pour local ou réseau """    
         """ Exemple de req : "INSERT INTO table (IDtable, nom) VALUES (?, ?)" """  
