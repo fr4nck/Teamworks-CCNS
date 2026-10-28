@@ -15,7 +15,8 @@ POC = ROOT / "poc" / "qt-theme"
 if str(POC) not in sys.path:
     sys.path.insert(0, str(POC))
 
-from PySide6.QtCore import QDate, QTimer  # noqa: E402
+from PySide6.QtCore import QDate, QTimer, Qt  # noqa: E402
+from PySide6.QtTest import QTest  # noqa: E402
 from PySide6.QtWidgets import QApplication, QMessageBox  # noqa: E402
 
 from contract_editor import ContractCreateDialog, ContractEditDialog  # noqa: E402
@@ -29,13 +30,16 @@ from production_read_adapter import TeamworksProductionReadAdapter  # noqa: E402
 
 
 class SqliteGestionDbCompat:
-    def __init__(self):
-        self.connexion = sqlite3.connect(":memory:")
+    def __init__(self, db_path=None, *, initialize=True):
+        self.connexion = sqlite3.connect(
+            str(db_path) if db_path is not None else ":memory:"
+        )
         self.cursor = self.connexion.cursor()
         self.echec = 0
         self.isNetwork = False
         self.commit_count = 0
-        self._create_fixture()
+        if initialize:
+            self._create_fixture()
 
     def _create_fixture(self):
         self.cursor.executescript(
@@ -614,6 +618,129 @@ def test_invalid_business_validation_blocks_write_shows_error_and_preserves_data
     finally:
         window.close()
         reader.close()
+
+
+def test_double_click_contract_edits_and_persists_after_window_reopened(tmp_path):
+    """Actual table double-click -> edit -> commit -> new DB connection and UI."""
+    _app()
+    path = tmp_path / "teamworks-contracts.sqlite"
+    db = SqliteGestionDbCompat(path)
+    reader = CcnsDataReader(db_factory=lambda: db)
+    window = _window(db, reader)
+    reopened = None
+    reopened_reader = None
+
+    try:
+        window.show()
+        QApplication.processEvents()
+        _select_contract(window)
+        window.tabs.setCurrentIndex(3)  # Contrats
+        QApplication.processEvents()
+
+        assert window.contract_edit_button.isEnabled() is True
+        assert window.contracts_table.isVisible()
+        index = window.contracts_model.index(0, 0)
+        rect = window.contracts_table.visualRect(index)
+        assert rect.isValid()
+        assert window.contracts_table.viewport().rect().intersects(rect)
+
+        seen = []
+        errors = []
+
+        def fill_edit_dialog():
+            dialog = QApplication.activeModalWidget()
+            try:
+                assert isinstance(dialog, ContractEditDialog)
+                seen.append("opened")
+                dialog.start_date.setDate(QDate(2026, 10, 1))
+                group_index = dialog.group.findData("G4")
+                assert group_index >= 0
+                dialog.group.setCurrentIndex(group_index)
+                dialog.weekly_hours.setValue(28.0)
+                dialog.monthly_salary.setText("3000,00")
+                dialog._on_accept()
+                assert dialog.result() == 1
+            except Exception as exc:
+                errors.append(repr(exc))
+                if dialog is not None:
+                    dialog.reject()
+
+        QTimer.singleShot(0, fill_edit_dialog)
+        QTest.mouseDClick(
+            window.contracts_table.viewport(),
+            Qt.MouseButton.LeftButton,
+            pos=rect.center(),
+        )
+        QApplication.processEvents()
+
+        assert not errors, errors
+        assert seen == ["opened"]
+        assert db.commit_count == 1
+        assert window.contracts_model.contract_at(0).start == "01/10/2026"
+        assert window.contracts_model.contract_at(0).classification == "Groupe 4"
+        assert "modifié et relu" in window.statusBar().currentMessage()
+
+        # Close the first real Qt window and its original reader/connection.
+        window.close()
+        reader.close()
+
+        # Reopen the on-disk database from a completely new connection.
+        with sqlite3.connect(path) as verification:
+            assert verification.execute(
+                "SELECT date_debut, ccns_group, weekly_hours, "
+                "gross_monthly_salary FROM contrats WHERE IDcontrat=417"
+            ).fetchone() == ("2026-10-01", "G4", 28.0, 3000.0)
+
+        next_db = SqliteGestionDbCompat(path, initialize=False)
+        reopened_reader = CcnsDataReader(db_factory=lambda: next_db)
+        reopened = _window(next_db, reopened_reader)
+        reopened.show()
+        QApplication.processEvents()
+        _select_contract(reopened)
+        restored = reopened.contracts_model.contract_at(0)
+        assert restored.id_historique == 417
+        assert restored.start == "01/10/2026"
+        assert restored.classification == "Groupe 4"
+        assert restored.duration == "28 h"
+        assert reopened.contract_edit_button.isEnabled() is True
+    finally:
+        window.close()
+        reader.close()
+        if reopened is not None:
+            reopened.close()
+        if reopened_reader is not None:
+            reopened_reader.close()
+        QApplication.processEvents()
+
+
+def test_double_click_read_only_contract_never_opens_editor():
+    """Double-click must not bypass missing write permission."""
+    _app()
+    db = SqliteGestionDbCompat()
+    reader = CcnsDataReader(db_factory=lambda: db)
+    window = PeopleContractsPilot(RoundTripAdapter(reader))
+    try:
+        window.show()
+        QApplication.processEvents()
+        _select_contract(window)
+        window.tabs.setCurrentIndex(3)
+        QApplication.processEvents()
+        assert not window.contract_edit_button.isEnabled()
+        index = window.contracts_model.index(0, 0)
+        rect = window.contracts_table.visualRect(index)
+        assert rect.isValid()
+        QTest.mouseDClick(
+            window.contracts_table.viewport(),
+            Qt.MouseButton.LeftButton,
+            pos=rect.center(),
+        )
+        QApplication.processEvents()
+        assert QApplication.activeModalWidget() is None
+        assert db.commit_count == 0
+    finally:
+        window.close()
+        reader.close()
+        QApplication.processEvents()
 
 
 def test_contract_widgets_contain_no_sql():

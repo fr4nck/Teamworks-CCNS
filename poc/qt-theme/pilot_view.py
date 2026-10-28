@@ -607,6 +607,9 @@ class PeopleContractsPilot(QMainWindow):
         self.contracts_table.selectionModel().selectionChanged.connect(
             self._on_contract_selection
         )
+        self.contracts_table.doubleClicked.connect(
+            self._edit_contract_from_double_click
+        )
         return widget
 
     def _selected_contract(self):
@@ -614,6 +617,14 @@ class PeopleContractsPilot(QMainWindow):
         if not rows:
             return None
         return self.contracts_model.contract_at(rows[0].row())
+
+    def _edit_contract_from_double_click(self, index) -> None:
+        """Edit the clicked contract, not the previously selected contract."""
+        if not index.isValid():
+            return
+        self.contracts_table.selectRow(index.row())
+        if self.contract_edit_button.isEnabled():
+            self._edit_selected_contract()
 
     def _on_contract_selection(self, *_args) -> None:
         contract = self._selected_contract()
