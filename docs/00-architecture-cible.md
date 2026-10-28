@@ -132,3 +132,22 @@ et les operations SQL restent provisoirement dans l'adaptateur legacy. Les
 tests unitaires couvrent le format, les erreurs et l'absence de dependance UI.
 La recette serveur MySQL/MariaDB reel et la verification des versions historiques
 restent obligatoires avant toute qualification de production.
+
+## SQLite legacy : ouverture et cycle de vie sans interface
+
+L'ouverture de fichiers SQLite historiques est extraite dans
+`infrastructure/persistence/legacy_sqlite_connection.py`, sans aucun import
+wxPython ni Qt. Le mode lecture refuse de creer un fichier absent ; la creation
+reste explicite. Les parametres sqlite3 restent ceux de l'application historique.
+En cas d'echec de creation de curseur, la connexion ouverte est refermee.
+
+`infrastructure/persistence/legacy_connection_lifecycle.py` fournit des
+primitives de commit et fermeture, communes aux connexions SQLite/MySQL,
+sans imposer un commit ou un rollback implicite. Les diagnostics, l'identite
+des connexions, la gestion d'erreurs et les frontieres transactionnelles
+restent pilotes par l'adaptateur appelant.
+
+Le raccordement cible est exclusif a `qt/master`. `wx/master` n'est pas
+modifiee. Le module `GestionDB` conserve provisoirement le code historique
+des photos, imports/exports SQLite, les drivers MySQL et les transactions SQL
+specialisees. Les tests du module ne remplacent pas la recette Windows/DB reelle.
