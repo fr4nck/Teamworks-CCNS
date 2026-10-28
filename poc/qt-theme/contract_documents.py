@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from PySide6.QtCore import Qt, QUrl
-from PySide6.QtGui import QImage, QTextDocument
+from PySide6.QtGui import QFont, QImage, QTextDocument
 from PySide6.QtWidgets import (
     QComboBox,
     QDialog,
@@ -188,13 +188,37 @@ class ContractDocumentsDialog(QDialog):
 
         layout = QVBoxLayout(preview_dialog)
 
+        banner = QLabel(
+            "MODÈLE HISTORIQUE D'EXEMPLE — NON VALIDÉ POUR SIGNATURE"
+            if preview.is_example_template
+            else "APERÇU EN LECTURE SEULE — AUCUNE GÉNÉRATION ACTIVE",
+            preview_dialog,
+        )
+        banner.setObjectName("twdPreviewQualificationBanner")
+        banner.setTextFormat(Qt.TextFormat.PlainText)
+        banner.setWordWrap(True)
+        layout.addWidget(banner)
+
         issues = []
-        if preview.unresolved_fields:
+        if preview.is_example_template:
             issues.append(
-                "Champs non r\u00e9solus : "
-                + ", ".join(preview.unresolved_fields)
+                "Exemple historique : dates fixes et clauses à vérifier "
+                "avant tout usage réel."
             )
-        issues.extend(preview.warnings)
+        if preview.missing_known_fields:
+            issues.append(
+                "Données métier manquantes : "
+                + ", ".join(preview.missing_known_fields)
+            )
+        if preview.unknown_legacy_tokens:
+            issues.append(
+                "Variables historiques sans correspondance : "
+                + ", ".join(preview.unknown_legacy_tokens)
+            )
+        issues.extend(
+            warning for warning in preview.warnings
+            if not warning.startswith("Variables historiques non mappées")
+        )
 
         if preview.unsupported_features:
             issues.append(
@@ -209,6 +233,7 @@ class ContractDocumentsDialog(QDialog):
             layout.addWidget(label)
 
         browser = QTextBrowser(preview_dialog)
+        browser.document().setDefaultFont(QFont("Segoe UI", 10))
         browser.setObjectName("twdPreviewBrowser")
         browser.setOpenLinks(False)
         browser.setOpenExternalLinks(False)

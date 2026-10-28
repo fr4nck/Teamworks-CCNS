@@ -159,3 +159,103 @@ def test_qt_dialog_opens_fused_preview(tmp_path):
     finally:
         dialog.close()
         app.processEvents()
+
+
+def test_preview_classifies_known_missing_and_unknown_historical_tokens():
+    path = (
+        ROOT / "teamworks" / "Static" / "Documents"
+        / "Contrat d'engagement éducatif - Exemple.twd"
+    )
+    before = path.read_bytes()
+    preview = preview_twd_template(
+        DocumentTemplate(path.name, location=str(path)),
+        MergeContext({"SALARIE_NOM": "MARTIN"}),
+    )
+    assert preview.is_example_template
+    assert "SALARIE_DATE_NAISSANCE" in preview.missing_known_fields
+    assert "CONTRAT_DUREE_ESSAI_JOURS" in preview.missing_known_fields
+    assert "{NBREJOURS}" in preview.unknown_legacy_tokens
+    assert "{REPARTITION}" in preview.unknown_legacy_tokens
+    assert "{BRUTJOUR}" in preview.unknown_legacy_tokens
+    assert all(not field.startswith("{") for field in preview.missing_known_fields)
+    assert path.read_bytes() == before
+
+
+def test_preview_distinguishes_regular_template_from_example(tmp_path):
+    path = tmp_path / "document.twd"
+    make_twd(path)
+    preview = preview_twd_template(
+        DocumentTemplate(path.name, location=str(path)),
+        MergeContext({}),
+    )
+    assert preview.is_example_template is False
+    assert preview.missing_known_fields == ("SALARIE_NOM",)
+    assert preview.unknown_legacy_tokens == ()
+
+
+def test_qt_preview_displays_example_warning_and_both_field_categories():
+    pytest.importorskip("PySide6")
+    from PySide6.QtCore import QTimer
+    from PySide6.QtWidgets import QApplication, QDialog, QLabel
+    from contract_documents import ContractDocumentsDialog
+
+    path = (
+        ROOT / "teamworks" / "Static" / "Documents"
+        / "Contrat d'engagement éducatif - Exemple.twd"
+    )
+    workspace = prepare_contract_document_workspace(
+        Port(path), contract_id=417
+    )
+    app = QApplication.instance() or QApplication([])
+    dialog = ContractDocumentsDialog(workspace)
+    errors = []
+    observed = []
+
+    try:
+        index = next(
+            i for i, choice in enumerate(workspace.choices)
+            if choice.code == "contract"
+        )
+        dialog.document_choice.setCurrentIndex(index)
+        dialog.templates.setCurrentRow(0)
+        assert dialog.preview_button.isEnabled()
+
+        def inspect():
+            modal = QApplication.activeModalWidget()
+            try:
+                assert isinstance(modal, QDialog)
+                banner = modal.findChild(
+                    QLabel, "twdPreviewQualificationBanner"
+                )
+                assert banner is not None
+                assert "NON VALIDÉ POUR SIGNATURE" in banner.text()
+                labels = [label.text() for label in modal.findChildren(QLabel)]
+                assert any("Données métier manquantes" in x for x in labels)
+                assert any("Variables historiques sans correspondance" in x
+                           for x in labels)
+                observed.append(True)
+            except Exception as exc:
+                errors.append(exc)
+            finally:
+                if modal is not None:
+                    modal.reject()
+
+        def rescue():
+            modal = QApplication.activeModalWidget()
+            if modal is not None:
+                modal.reject()
+
+        timeout = QTimer()
+        timeout.setSingleShot(True)
+        timeout.timeout.connect(rescue)
+        timeout.start(3000)
+        QTimer.singleShot(0, inspect)
+        try:
+            dialog.preview_button.click()
+        finally:
+            timeout.stop()
+        assert not errors, errors
+        assert observed
+    finally:
+        dialog.close()
+        app.processEvents()
