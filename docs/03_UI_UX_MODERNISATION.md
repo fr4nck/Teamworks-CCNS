@@ -334,3 +334,40 @@ parcours et l'enregistrement dans les bases de qualification ; l'ouverture
 du dialogue avancé et le bitmap Valider sont vérifiés dans le smoke natif.
 La validation manuelle Windows à 100 %/125 % et sur copie de base reste
 nécessaire avant le remplacement d'une RC en exploitation.
+
+
+## Arbre des dossiers : clic direct et pages différées (28 octobre 2026)
+
+Sur l'onglet Individus, l'arbre « État des dossiers » permet
+d'ouvrir un dossier sans repasser par la recherche :
+
+- clic **sur le libellé** d'une personne : ouverture de sa fiche ;
+- double-clic ou Entrée sur une alerte de pièce (BAFA, certificat médical,
+  bulletin n°3) : ouverture de l'onglet Qualifications puis du formulaire
+  prépositionné sur le **type de pièce exact** ;
+- double-clic ou Entrée sur « Contrat non signé » : sélectionner le contrat
+  par `IDcontrat` et demander une confirmation explicite avant de marquer
+  son statut « signé » ; ne pas créer de preuve de signature ;
+- double-clic ou Entrée sur « DUE à faire » : ouvrir l'éditeur DPAE/DUE pour
+  le contrat exact, **sans** attester son dépôt ;
+- un clic sur l'icône d'expansion ou sur une rubrique groupée ne lance
+  aucune action de gestion.
+
+Les pages Qualifications et Contrats sont chargées à la demande. Pour
+éviter qu'une action soit perdue sur un placeholder, le chargement
+`LazyNotebook.EnsurePageLoaded(index)` est déclenché de manière
+synchrone avant l'action ciblée ; l'appel différé prévu par le notebook
+reste idempotent.
+
+Les actions d'ouverture sont placées dans la file des événements wx
+pour empêcher un dialogue modal de se lancer pendant le traitement
+du clic ; un garde-fou évite les doubles ouvertures sur clic suivi
+d'une activation. À la fermeture de la fiche, l'arbre est recalculé
+depuis la base. Les libellés traduits ne servent jamais à déterminer
+l'identité de la personne, de la pièce ou du contrat.
+
+**Vérification :** tests synthétiques du hit-test et du chargement
+différé ; navigation réelle au clavier/souris et mise à jour des
+alertes restent à contrôler sur une copie de base sous Windows avant
+de déclarer la fonction entièrement qualifiée. Ne publier aucune
+capture de dossier réel dans GitHub.
