@@ -739,7 +739,7 @@ class DB:
                 cursor = connexionDefaut.cursor()
                 
                 # Ouverture Database
-                cursor.execute("USE %s;" % nomFichier)
+                activate_legacy_mysql_schema(cursor, nomFichier)
                 
             except Exception as err:
                 print("La connexion avec la base de donnees MYSQL a importer a echouee : \nErreur detectee :%s" % err)
@@ -775,7 +775,10 @@ class DB:
         # Importation des données vers la nouvelle table
         req = "INSERT INTO %s (%s) VALUES (%s)" % (nomTable, ", ".join(listeChamps), ", ".join(listeMarks))
         try :
-            self.cursor.executemany(req, listeDonnees)
+            execute_legacy_batch(
+                self.cursor, self.connexion, req, listeDonnees,
+                is_network=(self.isNetwork == True), commit=False
+            )
         except Exception as err :
             print("Erreur dans l'importation de la table %s :" % nomTable)
             print(err)
@@ -791,7 +794,7 @@ class DB:
             cursor = connexionDefaut.cursor()
 
             # Ouverture Database
-            cursor.execute("USE %s;" % nomFichier)
+            activate_legacy_mysql_schema(cursor, nomFichier)
 
         except Exception as err:
             print("La connexion avec la base de donnees MYSQL a importer a echouee : \nErreur detectee :%s" % err)
@@ -831,8 +834,11 @@ class DB:
 
         # Importation des données vers la nouvelle table
         req = "INSERT INTO %s %s VALUES %s" % (nomTable, txtChamps, txtQMarks)
-        self.cursor.executemany(req, listeDonnees)
-        self.connexion.commit()
+        # Cette destination historique utilise les marqueurs SQLite '?'.
+        execute_legacy_batch(
+            self.cursor, self.connexion, req, listeDonnees,
+            is_network=False, commit=True
+        )
         connexionDefaut.close()
         return (True, None)
 
@@ -913,8 +919,10 @@ class DB:
         
         # Importation des données vers la nouvelle table
         req = "INSERT INTO %s %s VALUES %s" % (nomTable, txtChamps, txtQMarks)
-        cursorDefaut.executemany(req, listeDonnees2)
-        connexionDefaut.commit()
+        execute_legacy_batch(
+            cursorDefaut, connexionDefaut, req, listeDonnees2,
+            is_network=False, commit=True
+        )
         connexionDefaut.close() 
 
     def CreationIndex(self, nomIndex=""):
