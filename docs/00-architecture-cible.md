@@ -170,3 +170,24 @@ aucun commit/rollback implicite.
 La qualification de ce moteur ne constitue pas une validation de la
 base de production. Le raccordement a GestionDB est exclusivement
 effectue sur qt/master ; wx/master reste intacte.
+
+## Selection MySQL et batches transactionnels
+
+`infrastructure/persistence/legacy_mysql_schema.py` prepare et execute
+l'activation des bases MySQL sans wx, Qt ni driver explicite. La creation
+n'est executee que si demandee. Les noms de schema sont quotes comme
+identifiants MySQL, avec verification des caracteres interdits avant SQL.
+Les options historiques `utf8` / `utf8_unicode_ci` sont preservees.
+La valeur sentinelle `_tdata` et les noms vides ne declenchent pas USE
+lors d'une connexion ordinaire.
+
+`infrastructure/persistence/legacy_sql_batch.py` centralise l'adaptation
+historique des marqueurs SQLite/MySQL pour `executemany`, avec commit
+explicite par defaut et aucune annulation automatique : la decision de
+rollback appartient toujours au service appelant. Ces primitives ne
+remplacent pas les services transactionnels metier deja existants.
+
+Le raccordement des deux composants au `GestionDB` Qt est cible, qualifie
+par tests unitaires, SQL SQLite reel et parcours Windows/MySQL de CI.
+`wx/master` reste inchangee. Les cas de bases historiques non conformes
+a la validation des identifiants doivent etre examines avant recette reelle.
