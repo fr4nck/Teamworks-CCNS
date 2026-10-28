@@ -4,6 +4,8 @@ from PySide6.QtCore import QThread, QTimer
 from PySide6.QtWidgets import QDialog
 
 from application.services.person_generalities_write import save_person_details
+from application.services.person_generalities_create import create_person_details
+from data_adapter import PersonView
 from person_editor import PersonDetailsEditDialog
 
 from generalities_page import GeneralitiesPage
@@ -54,6 +56,8 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
             advanced_contracts_enabled=advanced_contracts_enabled,
         )
         self.person_edit_button.clicked.connect(self._edit_selected_person)
+        self.person_create_button.setEnabled(callable(self._person_details_write_port_factory))
+        self.person_create_button.clicked.connect(self._create_person)
         self.people_table.doubleClicked.connect(lambda _index: self._edit_selected_person())
         self.activity_presenter = IndividualActivityPresenter(self.legacy_tabs)
         expenses_page = getattr(self.legacy_tabs, "expenses_page", None)
@@ -84,6 +88,55 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
     def _build_general_tab(self):
         self.generalities_page = GeneralitiesPage(self)
         return self.generalities_page
+
+    def _create_person(self) -> None:
+        """Create one minimal employee in an isolated DB session and select it."""
+        if self._closing_requested or not callable(self._person_details_write_port_factory):
+            return
+
+        dialog = PersonDetailsEditDialog(None, self)
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            self.statusBar().showMessage("Création annulée · aucune écriture")
+            return
+
+        port = None
+        result = None
+        try:
+            port = self._person_details_write_port_factory()
+            result = create_person_details(port, dialog.values())
+        except Exception:
+            self.statusBar().showMessage(
+                "Création non confirmée · vérifiez la liste avant de réessayer"
+            )
+            return
+        finally:
+            if port is not None:
+                try:
+                    port.close()
+                except Exception:
+                    self.statusBar().showMessage("Fermeture connexion création incomplète")
+
+        if result is None:
+            return
+        if result.verified and result.value is not None:
+            saved = result.value.details
+            identifier = result.value.person_id
+            label = " ".join((saved.first_name, saved.last_name)).strip()
+            view = PersonView(
+                id="—", id_historique=identifier,
+                name=label, first_name=saved.first_name,
+                last_name=saved.last_name, birth_date="—",
+                role="—", classification="—", contract="—",
+                weekly_hours="—", status="À compléter", site="—",
+                medical="—", mutual="—",
+            )
+            row = self.people_model.append_person(view)
+            self.search.clear()
+            self.people_count.setText(self._people_count_text())
+            index = self.people_proxy.mapFromSource(self.people_model.index(row, 0))
+            if index.isValid():
+                self.people_table.selectRow(index.row())
+        self.statusBar().showMessage(result.message)
 
     def _edit_selected_person(self) -> None:
         """Edit a real fiche in its own DB session; never reuse a worker connection."""

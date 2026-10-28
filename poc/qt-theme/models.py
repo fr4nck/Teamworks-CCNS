@@ -65,6 +65,19 @@ class PeopleTableModel(QAbstractTableModel):
             return self._people[row]
         return None
 
+    def append_person(self, person: PersonView) -> int:
+        """Insert a real persisted employee without resetting the current view."""
+        if type(person.id_historique) is not int or person.id_historique <= 0:
+            raise ValueError("Invalid persisted person id")
+        for row, current in enumerate(self._people):
+            if current.id_historique == person.id_historique:
+                return row
+        row = len(self._people)
+        self.beginInsertRows(QModelIndex(), row, row)
+        self._people = (*self._people, person)
+        self.endInsertRows()
+        return row
+
     def update_person_identity(self, person_id: int, *, first_name: str, last_name: str) -> bool:
         """Update one displayed identity without resetting selection or sorting."""
         if type(person_id) is not int or person_id <= 0:

@@ -20,14 +20,21 @@ class PersonDetailsEditDialog(QDialog):
     def __init__(self, snapshot: PersonDetailsSnapshot, parent=None):
         super().__init__(parent)
         self._validated: PersonDetails | None = None
-        details = snapshot.details
-        self.setWindowTitle("Modifier la fiche salarié")
+        creating = snapshot is None
+        details = snapshot.details if snapshot is not None else PersonDetails(
+            last_name="", first_name="", address=None, postcode=None,
+            city=None, memo=None,
+        )
+        self.setWindowTitle("Créer une fiche salarié" if creating else "Modifier la fiche salarié")
         self.setMinimumWidth(470)
 
         layout = QVBoxLayout(self)
         label = QLabel(
-            "Identité, adresse et mémo uniquement. Les contrats et les "
-            "informations sociales sont conservés sans modification."
+            ("Nouvelle fiche minimale : nom et prénom obligatoires. "
+             "Contrat et informations sociales à compléter ensuite."
+             if creating else
+             "Identité, adresse et mémo uniquement. Les contrats et les "
+             "informations sociales sont conservés sans modification.")
         )
         label.setWordWrap(True)
         layout.addWidget(label)

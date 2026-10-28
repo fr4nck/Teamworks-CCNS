@@ -27,7 +27,7 @@ class Database:
                 IDpersonne INTEGER PRIMARY KEY,
                 nom TEXT, prenom TEXT, adresse_resid TEXT,
                 cp_resid INTEGER, ville_resid TEXT, memo TEXT,
-                num_secu TEXT NOT NULL, date_naiss TEXT, IDsituation INTEGER
+                num_secu TEXT, date_naiss TEXT, IDsituation INTEGER
             );
             INSERT INTO personnes VALUES (
                 12, 'DUPONT', 'Alice', 'Rue du stade', 3510,
