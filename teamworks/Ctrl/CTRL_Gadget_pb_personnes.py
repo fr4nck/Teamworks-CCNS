@@ -55,6 +55,8 @@ class TreeCtrl(CT.CustomTreeCtrl):
     ):
         CT.CustomTreeCtrl.__init__(self, parent, id, pos, size, style)
         self.parent = parent
+        # Empêche une ouverture double lorsque clic et activation se suivent.
+        self._opening_target = False
 
         self.SetAGWWindowStyleFlag(
             wx.TR_HIDE_ROOT
@@ -74,10 +76,11 @@ class TreeCtrl(CT.CustomTreeCtrl):
             self.expandTypes = False
 
         self.Bind(wx.EVT_LEAVE_WINDOW, self.OnLeftDown)
-        # CustomTreeCtrl: double-clic ou Entrée ouvre l'action ciblée.
+        # Clic simple sur un nom ; double-clic/Entrée sur une alerte.
+        self.Bind(wx.EVT_LEFT_UP, self.OnTreeMouseUp)
         self.Bind(CT.EVT_TREE_ITEM_ACTIVATED, self.OnItemActivated)
         self.Bind(CT.EVT_TREE_ITEM_GETTOOLTIP, self.OnItemTooltip)
-        self.SetToolTip(_(u"Double-cliquez sur une alerte pour la traiter."))
+        self.SetToolTip(_(u"Cliquez sur un salarié pour ouvrir sa fiche ; double-cliquez sur une alerte pour la traiter."))
 
     def AppliquerTheme(self):
         self.couleurFond = UTILS_Interface.GetToken("surface_container_lowest")
@@ -98,9 +101,28 @@ class TreeCtrl(CT.CustomTreeCtrl):
         if item and item.IsOk():
             label = self.GetItemText(item)
             target = self.GetItemData(item)
-            if isinstance(target, dict) and target.get("kind") != "category":
-                label += _(u"\nDouble-cliquez ou appuyez sur Entrée pour ouvrir.")
+            if isinstance(target, dict):
+                if target.get("kind") == "person":
+                    label += _(u"\nCliquez pour ouvrir la fiche individuelle.")
+                elif target.get("kind") != "category":
+                    label += _(u"\nDouble-cliquez ou appuyez sur Entrée pour ouvrir.")
             event.SetToolTip(label)
+
+    def OnTreeMouseUp(self, event):
+        """N'ouvre au clic simple que le libellé d'une personne.
+
+        Les boutons d'expansion, catégories et alertes ne déclenchent pas
+        d'ouverture involontaire ; les raccourcis clavier restent natifs.
+        """
+        item, flags = self.HitTest(event.GetPosition())
+        event.Skip()
+        if not item or not item.IsOk():
+            return
+        if not (flags & CT.TREE_HITTEST_ONITEMLABEL):
+            return
+        target = self.GetItemData(item)
+        if isinstance(target, dict) and target.get("kind") == "person":
+            self._QueueOpenProblem(target)
 
     def OnItemActivated(self, event):
         item = event.GetItem()
@@ -108,7 +130,21 @@ class TreeCtrl(CT.CustomTreeCtrl):
         if not isinstance(target, dict) or target.get("kind") == "category":
             event.Skip()  # Garde le repliement/expansion des catégories.
             return
-        self._OpenProblem(target)
+        self._QueueOpenProblem(target)
+
+    def _QueueOpenProblem(self, target):
+        # Toujours différer l'ouverture : ne pas bloquer le traitement souris
+        # du CustomTreeCtrl sous une nouvelle boucle modale.
+        if self._opening_target:
+            return
+        self._opening_target = True
+        wx.CallAfter(self._RunOpenProblem, dict(target))
+
+    def _RunOpenProblem(self, target):
+        try:
+            self._OpenProblem(target)
+        finally:
+            self._opening_target = False
 
     def _OpenProblem(self, target):
         """Ouvre la bonne fiche et garde la confirmation des actes sensibles."""
@@ -135,6 +171,13 @@ class TreeCtrl(CT.CustomTreeCtrl):
         if notebook.GetPageCount() <= page_index:
             return
         notebook.SetSelection(page_index)
+        # LazyNotebook insère un placeholder et ne construit son onglet
+        # qu'au prochain wx.CallAfter. Or une action ciblée a besoin du vrai
+        # contrôle *immédiatement* (ajout pièce, sélection du contrat, DPAE).
+        # EnsurePageLoaded est idempotent ; le CallAfter natif deviendra no-op.
+        ensure_page = getattr(notebook, "EnsurePageLoaded", None)
+        if callable(ensure_page) and page_index:
+            ensure_page(page_index)
 
         if kind == "information":
             controls = {
