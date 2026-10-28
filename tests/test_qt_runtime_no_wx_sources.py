@@ -51,10 +51,15 @@ def test_qt_python_modules_contain_no_static_wx_import_or_dynamic_import_literal
 
 
 def test_qualifying_qt_runtime_excludes_wx_and_does_not_depend_on_wx_buttons():
-    req = (ROOT / "requirements" / "qt-vanilla-0.1.txt").read_text(encoding="utf-8").lower()
+    requirements = (ROOT / "requirements" / "qt-vanilla-0.1.txt").read_text(encoding="utf-8")
+    packages = [
+        line.split("#", 1)[0].strip().lower()
+        for line in requirements.splitlines()
+        if line.split("#", 1)[0].strip()
+    ]
     build = (ROOT / "scripts" / "build_qt_vanilla_windows.ps1").read_text(encoding="utf-8")
-    assert "pyside6" in req
-    assert "wxpython" not in req
+    assert any(line.startswith("pyside6") for line in packages)
+    assert not any(line.startswith(("wxpython", "wx==", "wx>=", "wx<=")) for line in packages)
     assert '"--exclude-module", "wx"' in build
     assert '"--exclude-module", "wxPython"' in build
     editor = (QT_SOURCE / "person_editor.py").read_text(encoding="utf-8")
