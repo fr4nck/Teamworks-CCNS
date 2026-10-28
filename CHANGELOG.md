@@ -1,5 +1,16 @@
 # Teamworks-CCNS 0.9.2
 
+## Candidate RC8 — 28 octobre 2026 (recette utilisateur Windows requise)
+
+- **Clic direct sur le salarié :** un clic sur le libellé d'une personne dans l'arbre « État des dossiers » ouvre sa fiche ; les clics sur les catégories, les icônes d'expansion et les alertes n'entraînent aucune ouverture involontaire.
+- **Alertes actionnables :** double-clic ou Entrée sur une information, une pièce ou un contrat ouvre le parcours ciblé déjà introduit en RC7, avec identifiants exacts, sans recherche manuelle.
+- **Onglets à chargement différé :** charger synchroniquement Qualifications ou Contrats avant de lancer la saisie de pièce ou la DPAE ; éviter une action perdue sur un onglet encore vide.
+- **Navigation robuste :** ouverture différée hors traitement de souris et protection contre les doubles boîtes de dialogue en cas de clic suivi d'une activation.
+- **Sécurité métier :** confirmation explicite avant marquage de la signature et aucune attestation automatique de dépôt DPAE ; recalcul des alertes après fermeture de la fiche.
+- **Qualification :** tests synthétiques des clics, de l'activation clavier, des onglets différés et des cibles contractuelles ; CI Linux et Windows vertes sur `ba5f35a5` avant changement de version. Vérification manuelle de la souris et des données réelles encore nécessaire.
+- **Exploitation :** aucune base en production modifiée, aucune donnée personnelle de capture publiée et aucun tag RC7 réécrit.
+
+
 ## Candidate RC7 — 27 octobre 2026 (recette utilisateur Windows requise)
 
 - **État des dossiers interactif :** un double-clic (ou la touche Entrée) sur la personne ou une alerte ouvre le parcours métier correspondant, à partir des identifiants exacts et non du libellé de l'arbre.

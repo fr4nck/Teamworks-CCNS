@@ -1,3 +1,11 @@
+Version 0.9.2-rc8 :
+
+- Clic simple sur le nom d'une personne dans « État des dossiers » pour ouvrir sa fiche.
+- Double-clic ou Entrée conservés sur les alertes ; actions par identifiant de personne, pièce et contrat.
+- Correction du chargement de Qualifications/Contrats avant l'ouverture des dialogues de pièce ou DPAE.
+- Protection des doubles ouvertures, rafraîchissement des alertes et confirmation obligatoire pour la signature.
+- Tests Linux/Windows réussis avant packaging ; recette utilisateur Windows et copie de base toujours requises.
+
 Version 0.9.2-rc7 :
 
 - Alertes « État des dossiers » interactives au double-clic ou Entrée : accès direct aux fiches, pièces et contrats exacts.
