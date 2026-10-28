@@ -134,8 +134,8 @@ def test_qt_sqlite_drop_reconstruction_failure_rolls_back():
 
         class FaultyCursor:
             def execute(self, sql):
-                if sql.startswith("CREATE TABLE demo("):
-                    raise RuntimeError("failure after DROP")
+                if sql.startswith("ALTER TABLE demo DROP COLUMN removed"):
+                    raise RuntimeError("failure before native ALTER")
                 return cursor.execute(sql)
 
         class DB:
@@ -147,7 +147,7 @@ def test_qt_sqlite_drop_reconstruction_failure_rolls_back():
                     "PRAGMA table_info('demo')"
                 )]
 
-        with pytest.raises(RuntimeError, match="failure after DROP"):
+        with pytest.raises(RuntimeError, match="failure before native ALTER"):
             _legacy_method("SupprChamp")(DB(), "demo", "removed")
         assert connection.execute("SELECT * FROM demo").fetchall() == [(1, "x", "ok")]
         assert [x[1] for x in connection.execute("PRAGMA table_info('demo')")] == [

@@ -241,17 +241,28 @@ SQLite/MySQL du catalogue `Data/DATA_Tables.py`, notamment les seuils
 VARCHAR, et valide les identifiants et types avant toute execution.
 Les commandes ALTER et INDEX conservent leurs types historiques tels quels.
 
-`legacy_sqlite_column_migration.py` reconstruit une table lors de la
-suppression d'une colonne a l'interieur d'un SAVEPOINT SQLite. En cas
+`legacy_sqlite_column_migration.py` supprime une colonne par `ALTER TABLE
+DROP COLUMN` natif sous SQLite 3.35+ et SAVEPOINT. Aucun fallback destructeur
+n'est autorise sur les versions plus anciennes. En cas
 d'exception, ROLLBACK TO restaure la table et ses lignes ; en cas de
 succes, RELEASE n'engage pas de commit de la transaction englobante.
-Les tests couvrent le cas d'un echec apres DROP TABLE et le rollback
-explicite du code appelant. La suppression d'une colonne continue toutefois
-d'utiliser la reconstruction historique qui ne preserve pas automatiquement
-index, contraintes et triggers : ne pas la considerer comme une migration
-de schema sans perte. MySQL DDL peut valider implicitement des transactions,
-cette garantie de rollback ne s'applique donc PAS a MySQL.
+Les tests couvrent l'echec injecte, le rollback explicite du code appelant,
+la preservation des index et triggers non dependants, des vues, des cles
+etrangeres et des contraintes, ainsi que l'echec sans modification du schema
+si la colonne est encore utilisee. Le moteur SQLite refuse les suppressions
+ambiguës plutot que de reconstruire silencieusement la table. Cette garantie
+ne s'applique PAS a MySQL : son DDL peut provoquer un commit implicite.
+Le RELEASE d'un SAVEPOINT exterieur est un commit ; au sein d'une transaction
+englobante, il ne valide pas cette transaction.
 
 `ReparationTable` et les conversions completes de bases demeurent hors
 de ce lot compte tenu des risques d'integrite des donnees.
 La version wx sur `wx/master` ne recoit aucune modification.
+
+### Limites de schema avant migration de ReparationTable
+
+`ReparationTable` utilise toujours une reconstruction historique destructive.
+Elle n'a PAS ete migree par ce lot. Elle doit etre requalifiee en preserve-
+schema avec les index, triggers, contraintes, vues et cles etrangeres reels.
+Toute intervention sur une copie d'exploitation necessite backup et comparaison
+schema + donnees avant/apres ; les tests unitaires n'en tiennent pas lieu.
