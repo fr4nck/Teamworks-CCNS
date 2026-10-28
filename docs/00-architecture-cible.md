@@ -232,3 +232,26 @@ PostgreSQL. Il ne modifie ni le schema, ni les donnees, ni les transactions.
 Son raccordement a GestionDB est reserve a `qt/master` avec tests de
 non-regression ; `wx/master` reste intacte. L'inventaire des bases reelles
 et la recette applicative demeurent necessaires avant la future migration.
+
+## DDL historique et suppression SQLite reversible
+
+Le composant `legacy_table_ddl.py` construit le DDL des tables de
+`GestionDB` sans wx, Qt ou pilote SQL. Il conserve les adaptations de types
+SQLite/MySQL du catalogue `Data/DATA_Tables.py`, notamment les seuils
+VARCHAR, et valide les identifiants et types avant toute execution.
+Les commandes ALTER et INDEX conservent leurs types historiques tels quels.
+
+`legacy_sqlite_column_migration.py` reconstruit une table lors de la
+suppression d'une colonne a l'interieur d'un SAVEPOINT SQLite. En cas
+d'exception, ROLLBACK TO restaure la table et ses lignes ; en cas de
+succes, RELEASE n'engage pas de commit de la transaction englobante.
+Les tests couvrent le cas d'un echec apres DROP TABLE et le rollback
+explicite du code appelant. La suppression d'une colonne continue toutefois
+d'utiliser la reconstruction historique qui ne preserve pas automatiquement
+index, contraintes et triggers : ne pas la considerer comme une migration
+de schema sans perte. MySQL DDL peut valider implicitement des transactions,
+cette garantie de rollback ne s'applique donc PAS a MySQL.
+
+`ReparationTable` et les conversions completes de bases demeurent hors
+de ce lot compte tenu des risques d'integrite des donnees.
+La version wx sur `wx/master` ne recoit aucune modification.

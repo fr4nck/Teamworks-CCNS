@@ -1,6 +1,8 @@
 import ast
 import sqlite3
 import textwrap
+
+from infrastructure.persistence.legacy_sqlite_column_migration import drop_legacy_sqlite_column
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -20,7 +22,7 @@ def _method(name):
     )
     lines = source.splitlines(keepends=True)
     method_source = textwrap.dedent("".join(lines[node.lineno - 1:node.end_lineno]))
-    namespace = {}
+    namespace = {"drop_legacy_sqlite_column": drop_legacy_sqlite_column}
     exec(compile(method_source, str(SOURCE_PATH), "exec"), namespace)
     return namespace[name]
 
