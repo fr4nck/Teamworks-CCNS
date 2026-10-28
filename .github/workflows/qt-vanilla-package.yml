@@ -17,7 +17,7 @@ on:
       - "teamworks/GestionDB.py"
       - "teamworks/Utils/UTILS_Fichiers.py"
       - "tests/test_qt_vanilla_packaging_contract.py"
-  # Build a qualification installer when the Qt packaging contract changes.
+  # Build an installer for selected user-facing Qt milestones and packaging edits.
   # Routine engine commits keep the fast Qt validation workflow only.
   push:
     branches:
@@ -28,6 +28,9 @@ on:
       - "scripts/build_qt_vanilla_windows.ps1"
       - "packaging/windows/Teamworks-CCNS-Qt.iss"
       - "poc/qt-theme/vanilla_launcher.py"
+      - "poc/qt-theme/person_editor.py"
+      - "poc/qt-theme/pilot_generalities.py"
+      - "infrastructure/persistence/person_generalities_write_adapter.py"
   workflow_dispatch:
 
 permissions:
@@ -70,7 +73,10 @@ jobs:
             tests/test_qt_vanilla_packaging_contract.py `
             tests/test_contract_document_workspace.py `
             tests/test_qt_contract_documents.py `
-            tests/test_qt_contract_write_roundtrip.py
+            tests/test_qt_contract_write_roundtrip.py `
+            tests/test_person_generalities_write.py `
+            tests/test_person_generalities_write_adapter.py `
+            tests/test_qt_person_details_roundtrip.py
 
       - name: Construire Qt Vanilla et le portable
         shell: pwsh
