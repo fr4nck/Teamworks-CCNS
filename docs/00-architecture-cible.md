@@ -117,3 +117,18 @@ qualifier indépendamment avant de supprimer l'adaptateur legacy.
 Le maintien de la compatibilité SQLite/MySQL, la fermeture des connexions,
 les transactions et la recette Windows sur copie réelle restent des gates
 distincts. Une CI verte ne constitue pas une recette terrain.
+
+## Connexion MySQL historique : frontière sans UI
+
+Le module infrastructure/persistence/legacy_network_target.py decode le format
+port;hote;utilisateur;jeton[RESEAU]base sans acces a wx, Qt ou a la base.
+Il conserve les alias des parametres historiques, l'abaissement du nom de
+base et le jeton opaque de mot de passe (y compris #64#). Il masque
+le secret dans sa representation et n'inclut pas la reference brute dans
+ses erreurs de validation.
+
+Ce composant ne connecte pas MySQL : le choix du pilote, le decodeur de jeton
+et les operations SQL restent provisoirement dans l'adaptateur legacy. Les
+tests unitaires couvrent le format, les erreurs et l'absence de dependance UI.
+La recette serveur MySQL/MariaDB reel et la verification des versions historiques
+restent obligatoires avant toute qualification de production.
