@@ -20,6 +20,15 @@ class MergeContext:
     def as_dict(self) -> dict[str, object]:
         return dict(self.values)
 
+    @classmethod
+    def from_mapping(cls, values: Mapping[str, object]) -> "MergeContext":
+        normalized: dict[str, object] = {}
+        for key, value in values.items():
+            normalized_key = str(key).strip().upper()
+            if normalized_key:
+                normalized[normalized_key] = _clean_value(value)
+        return cls(values=normalized)
+
 
 def _clean_value(value: object) -> object:
     if value is None:
