@@ -14,23 +14,12 @@ import sys
 import shutil
 import platform
 import subprocess
-try:
-    from Utils import UTILS_Customize
-except ImportError:
-    # Le runtime Qt Vanilla doit pouvoir réutiliser les chemins historiques
-    # sans installer wxPython. Le lecteur INI minimal ci-dessous prend alors le relais.
-    UTILS_Customize = None
 import appdirs
 from six.moves import configparser
 
 
 def _get_custom_data_directory():
-    if UTILS_Customize is not None:
-        try:
-            return UTILS_Customize.GetValeur("repertoire_donnees", "chemin", "") or ""
-        except Exception:
-            pass
-
+    """Lit le chemin historique sans charger le module graphique de preferences."""
     try:
         path = GetRepUtilisateur("Customize.ini")
         if not os.path.isfile(path):
@@ -39,10 +28,9 @@ def _get_custom_data_directory():
         parser.read(path, encoding="utf-8")
         if parser.has_option("repertoire_donnees", "chemin"):
             return parser.get("repertoire_donnees", "chemin") or ""
-    except Exception:
-        pass
+    except (OSError, UnicodeError, ValueError, configparser.Error):
+        return ""
     return ""
-
 
 def GetRepData(fichier=""):
     # Vérifie si un répertoire 'Portable' existe
