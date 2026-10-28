@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Iterable, Mapping, Protocol
 
@@ -8,6 +8,8 @@ from domain.documents import (
     DocumentScope,
     DocumentTemplate,
     GenerationStatus,
+    MergeContext,
+    build_merge_context,
     list_document_types,
 )
 
@@ -58,6 +60,9 @@ class ContractDocumentWorkspace:
     contract_id: int | None
     choices: tuple[ContractDocumentChoice, ...]
     errors: tuple[ContractDocumentWorkspaceError, ...]
+    merge_context: MergeContext | None = field(
+        default=None, repr=False, compare=False
+    )
 
     @property
     def ok(self) -> bool:
@@ -155,4 +160,10 @@ def prepare_contract_document_workspace(
         contract_id=contract_id,
         choices=tuple(choices),
         errors=(),
+        merge_context=build_merge_context(
+            structure=context.structure,
+            employee=context.employee,
+            contract=context.contract,
+            extra=context.extra,
+        ),
     )

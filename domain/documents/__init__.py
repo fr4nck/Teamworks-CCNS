@@ -49,6 +49,28 @@ from .templates import (
     target_from_mapping,
 )
 
+from .fields import (
+    DEFAULT_DOCUMENT_FIELD_REGISTRY,
+    FieldStatus,
+    FieldValueType,
+    MergeField,
+    MergeFieldRegistry,
+)
+from .html_format import sanitize_html
+from .merge import (
+    HtmlMergeRenderer,
+    MergeError,
+    RenderResult,
+    UnknownMergeFieldError,
+)
+from .model import (
+    Asset,
+    CURRENT_DOCUMENT_FORMAT_VERSION,
+    DocumentFormatError,
+    DocumentMetadata,
+    DocumentModel,
+)
+
 __all__ = [
     "CEE_LABELS",
     "DEFAULT_HR_DOCUMENT_CATALOG",
@@ -88,4 +110,19 @@ __all__ = [
     "target_from_mapping",
     "validate_required_fields",
     "validate_template_keywords",
+    "Asset",
+    "CURRENT_DOCUMENT_FORMAT_VERSION",
+    "DEFAULT_DOCUMENT_FIELD_REGISTRY",
+    "DocumentFormatError",
+    "DocumentMetadata",
+    "DocumentModel",
+    "FieldStatus",
+    "FieldValueType",
+    "HtmlMergeRenderer",
+    "MergeError",
+    "MergeField",
+    "MergeFieldRegistry",
+    "RenderResult",
+    "UnknownMergeFieldError",
+    "sanitize_html",
 ]
