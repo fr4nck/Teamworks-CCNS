@@ -17,6 +17,8 @@ import os
 from infrastructure.persistence.current_database_config import read_current_database_name
 from infrastructure.persistence.legacy_network_target import parse_legacy_network_target
 from infrastructure.persistence.legacy_mysql_connection import open_legacy_mysql
+from infrastructure.persistence.legacy_mysql_schema import activate_legacy_mysql_schema
+from infrastructure.persistence.legacy_sql_batch import execute_legacy_batch
 from infrastructure.persistence.legacy_sqlite_connection import open_legacy_sqlite
 from infrastructure.persistence.legacy_connection_lifecycle import commit_if_connected, close_if_connected
 import base64
@@ -153,13 +155,10 @@ class DB:
             self.connexion, nomFichier = GetConnexionReseau(nomFichier)
             self.cursor = self.connexion.cursor()
 
-            # Création
-            if self.modeCreation == True :
-                self.cursor.execute("CREATE DATABASE IF NOT EXISTS %s CHARSET utf8 COLLATE utf8_unicode_ci;" % nomFichier)
-            
-            # Utilisation
-            if nomFichier not in ("", None, "_tdata") :
-                self.cursor.execute("USE %s;" % nomFichier)
+            # CREATE/USE est gere par une frontiere sans interface graphique.
+            activate_legacy_mysql_schema(
+                self.cursor, nomFichier, allow_creation=(self.modeCreation == True)
+            )
             
         except Exception as err:
             diagnostic = UTILS_MySQL.ConsommerDiagnosticConnexion(err)
@@ -292,20 +291,11 @@ class DB:
             del DICT_CONNEXIONS[self.IDconnexion]
 
     def Executermany(self, req="", listeDonnees=[], commit=True):
-        """ Executemany pour local ou réseau """    
-        """ Exemple de req : "INSERT INTO table (IDtable, nom) VALUES (?, ?)" """  
-        """ Exemple de listeDonnees : [(1, 2), (3, 4), (5, 6)] """     
-        # Adaptation réseau/local
-        if self.isNetwork == True :
-            # Version MySQL
-            req = req.replace("?", "%s")
-        else:
-            # Version Sqlite
-            req = req.replace("%s", "?")
-        # Executemany
-        self.cursor.executemany(req, listeDonnees)
-        if commit == True :
-            self.connexion.commit()
+        """Execute un lot SQL en conservant la frontiere de commit historique."""
+        return execute_legacy_batch(
+            self.cursor, self.connexion, req, listeDonnees,
+            is_network=(self.isNetwork == True), commit=commit
+        )
 
     def Ajouter(self, table, champs, valeurs):
         # champs et valeurs sont des tuples
@@ -1107,7 +1097,7 @@ def TestConnexionMySQL(typeTest="fichier", nomFichier=""):
                 listeDatabases.append(valeurs[0])
             if nomFichier in listeDatabases :
                 # Ouverture Database
-                cursor.execute("USE %s;" % nomFichier)
+                activate_legacy_mysql_schema(cursor, nomFichier)
                 # Vérification des tables
                 cursor.execute("SHOW TABLES;")
                 listeTables = cursor.fetchall()
