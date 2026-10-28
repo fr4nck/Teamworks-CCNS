@@ -72,6 +72,18 @@ class GestionDbPersonDetailsWriteAdapter:
         )
         return int(self.db.cursor.rowcount)
 
+    def insert(self, details: PersonDetails) -> int:
+        """Insert the six approved columns; leave other historical fields untouched."""
+        sql = (
+            "INSERT INTO personnes (" + ", ".join(_COLUMNS) + ") VALUES (" +
+            ", ".join(self._p for _ in _COLUMNS) + ")"
+        )
+        self.db.cursor.execute(sql, (
+            details.last_name, details.first_name, details.address,
+            details.postcode, details.city, details.memo,
+        ))
+        return self._id(self.db.cursor.lastrowid)
+
     def commit(self) -> None:
         self.db.connexion.commit()
 

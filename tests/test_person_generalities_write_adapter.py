@@ -161,3 +161,78 @@ def test_sqlite_user_can_clear_optional_fields_without_replacing_null_with_dash(
         ).fetchone() == (None, None, None, None)
     finally:
         port.close()
+
+
+def test_sqlite_create_one_new_person_without_touching_existing_sensitive_fields():
+    from application.services.person_generalities_create import create_person_details
+
+    db = Database()
+    port = GestionDbPersonDetailsWriteAdapter(db)
+    try:
+        new_details = validate_person_details(
+            last_name="O'NEILL", first_name="Aïcha",
+            address="Rue du port", postcode="35000",
+            city="Rennes", memo="Inscription",
+        )
+        result = create_person_details(port, new_details)
+        assert result.ok and result.committed and result.verified
+        assert result.value.person_id == 13
+        assert port.load(13).details == new_details
+        assert db.connexion.execute(
+            "SELECT nom, prenom, cp_resid, num_secu, IDsituation "
+            "FROM personnes WHERE IDpersonne=13"
+        ).fetchone() == ("O'NEILL", "Aïcha", 35000, None, None)
+        assert db.connexion.execute(
+            "SELECT num_secu FROM personnes WHERE IDpersonne=12"
+        ).fetchone() == ("sensitive-value",)
+    finally:
+        port.close()
+
+
+def test_sqlite_rollback_on_insert_trigger_failure_creates_no_duplicate():
+    from application.services.person_generalities_create import create_person_details
+
+    db = Database()
+    port = GestionDbPersonDetailsWriteAdapter(db)
+    try:
+        db.connexion.execute(
+            "CREATE TRIGGER fail_insert BEFORE INSERT ON personnes "
+            "BEGIN SELECT RAISE(ABORT, 'injected failure'); END;"
+        )
+        db.connexion.commit()
+        before = db.connexion.execute("SELECT COUNT(*) FROM personnes").fetchone()[0]
+        result = create_person_details(port, validate_person_details(
+            last_name="MARTIN", first_name="Élodie",
+            address=None, postcode=None, city=None, memo=None,
+        ))
+        assert result.code == "WRITE_UNCONFIRMED" and not result.committed
+        assert db.connexion.execute("SELECT COUNT(*) FROM personnes").fetchone()[0] == before
+        assert not db.connexion.in_transaction
+    finally:
+        port.close()
+
+
+def test_mysql_insert_parameters_never_include_interpolated_user_text():
+    captured = []
+
+    class Cursor:
+        lastrowid = 74
+
+        def execute(self, sql, params):
+            captured.append((sql, params))
+
+    db = SimpleNamespace(
+        echec=0, isNetwork=True, cursor=Cursor(), connexion=SimpleNamespace(),
+    )
+    port = GestionDbPersonDetailsWriteAdapter(db)
+    value = validate_person_details(
+        last_name="L'ESSAI", first_name="Zoé",
+        address=None, postcode="35000", city="Rennes", memo="Mme O'Neill",
+    )
+    assert port.insert(value) == 74
+    sql, parameters = captured[0]
+    assert sql.startswith("INSERT INTO personnes")
+    assert sql.count("%s") == 6
+    assert "O'Neill" not in sql
+    assert "L'ESSAI" not in sql
+    assert parameters == ("L'ESSAI", "Zoé", None, 35000, "Rennes", "Mme O'Neill")
