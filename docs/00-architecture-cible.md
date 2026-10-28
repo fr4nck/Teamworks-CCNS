@@ -191,3 +191,28 @@ Le raccordement des deux composants au `GestionDB` Qt est cible, qualifie
 par tests unitaires, SQL SQLite reel et parcours Windows/MySQL de CI.
 `wx/master` reste inchangee. Les cas de bases historiques non conformes
 a la validation des identifiants doivent etre examines avant recette reelle.
+
+## Trajectoire PostgreSQL (renvoi a PMSL-Arch ADR-010)
+
+La decision transverse reste PMSL-Arch, ADR-010 (acceptee le 2026-08-29).
+Il ne faut pas la redefinir dans le depot Teamworks.
+
+- Portail (`fr4nck/Portails`) : PostgreSQL 18 est une cible candidate
+  qualifiee en CI ; aucune bascule en production n'en decoule automatiquement.
+- Teamworks : conserve aujourd'hui son fonctionnement SQLite et MySQL/MariaDB.
+  Toute adoption de PostgreSQL vient **apres** la recette representatrice
+  de Portail et doit faire l'objet d'un lot de migration propre a Teamworks.
+- Noethys : conservation du socle MySQL 5.7 pendant la transition, sans
+  imposer a Portail ou Teamworks une migration simultanee.
+
+Les extractions actuelles dans `infrastructure/persistence/` sont des
+adaptateurs aux moteurs historiques, pas une decision implicite de garder
+MySQL pour toujours. Le domaine et les services metier doivent rester
+independants du SQL, des transactions techniques, de wx et de Qt.
+
+Les conditions de la future migration Teamworks incluent un inventaire
+du schema et des dialectes, des migrations reversibles, une copie anonymisee
+representative, tests RH/CCNS/CEE/ETP, contrats d'echange avec Portail,
+verification des imports/exports et un retour arriere valide. Aucune
+migration automatique de production ou ajout de pilote PostgreSQL dans
+l'application Qt n'est autorise dans le lot de decouplage en cours.
