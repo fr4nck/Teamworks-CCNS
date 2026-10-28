@@ -23,6 +23,7 @@ from infrastructure.persistence.legacy_table_transfer import legacy_select_all_q
 from infrastructure.persistence.legacy_sqlite_connection import open_legacy_sqlite
 from infrastructure.persistence.legacy_table_ddl import legacy_create_table_query, legacy_add_column_query, legacy_drop_mysql_column_query, legacy_change_mysql_column_query, legacy_create_index_query
 from infrastructure.persistence.legacy_sqlite_column_migration import drop_legacy_sqlite_column
+from infrastructure.persistence.legacy_sqlite_table_repair import repair_legacy_sqlite_table
 from infrastructure.persistence.legacy_connection_lifecycle import commit_if_connected, close_if_connected
 import base64
 import datetime
@@ -589,57 +590,13 @@ class DB:
         self.Commit()
 
     def ReparationTable(self, nomTable="", dicoDB=Tables.DB_DATA):
-        """ Réparation d'une table (re-création de la table) """
-        if self.isNetwork == False :
-            # Récupération des noms et types de champs
-            listeChamps = []
-            listeNomsChamps = []
-            for descr in dicoDB[nomTable]:
-                nomChamp = descr[0]
-                typeChamp = descr[1]
-                if self.isNetwork == False and typeChamp == "LONGBLOB" : typeChamp = "BLOB"
-                if self.isNetwork == False and typeChamp == "BIGINT": typeChamp = "INTEGER"
-                listeChamps.append("%s %s" % (nomChamp, typeChamp))
-                listeNomsChamps.append(nomChamp)
-            varChamps = ", ".join(listeChamps)
-##            varNomsChamps = ", ".join(listeNomsChamps)
+        """Repare sans re-creer les tables : ajout des seules colonnes manquantes.
 
-            # Procédure de mise à jour de la table
-##            req = "BEGIN TRANSACTION;"
-##            req += "CREATE TEMPORARY TABLE %s_backup(%s);" % (nomTable, varChamps)
-##            req += "INSERT INTO %s_backup SELECT %s FROM %s;" % (nomTable, ", ".join(listeNomsChamps[1:]), nomTable)
-##            req += "DROP TABLE %s;" % nomTable
-##            req += "CREATE TABLE %s(%s);" % (nomTable, varChamps)
-##            req += "INSERT INTO %s SELECT %s FROM %s_backup;" % (nomTable, ", ".join(listeNomsChamps[1:]), nomTable)
-##            req += "DROP TABLE %s_backup;" % nomTable
-##            req += "COMMIT;"
-            
-            # Création de la table temporaire
-            req = "BEGIN TRANSACTION;"
-            req += "CREATE TEMPORARY TABLE %s_backup(%s);" % (nomTable, varChamps.replace(" PRIMARY KEY AUTOINCREMENT", ""))
-            req += "INSERT INTO %s_backup SELECT %s FROM %s;" % (nomTable, ", ".join(listeNomsChamps), nomTable)
-            req += "DROP TABLE %s;" % nomTable
-            req += "CREATE TABLE %s(%s);" % (nomTable, varChamps)
-            req += "COMMIT;"
-            self.cursor.executescript(req)
-            
-            # Copie des données dans la table temporaire
-            req = "SELECT %s FROM %s_backup;" % (", ".join(listeNomsChamps[1:]), nomTable)
-            self.cursor.execute(req)
-            listeDonnees = self.cursor.fetchall()
-            
-            for ligne in listeDonnees :
-                temp = []
-                for x in range(0, len(ligne)) :
-                    temp.append("?")
-                req = "INSERT INTO %s (%s) VALUES (%s)" % (nomTable, ", ".join(listeNomsChamps[1:]), ", ".join(temp))
-                self.cursor.execute(req, ligne)
-                self.Commit() 
-            
-            # Suppression de la table temporaire
-            self.cursor.execute("DROP TABLE %s_backup;" % nomTable)
-            self.Commit() 
-            
+        Les incoherences de types, cles et contraintes exigent une migration
+        explicite afin de preserver l'integrite des donnees historiques.
+        """
+        if self.isNetwork == False:
+            repair_legacy_sqlite_table(self.cursor, nomTable, dicoDB[nomTable])
             print("Reparation de la table '%s' terminee." % nomTable)
 
     def Importation_table(self, nomTable="", nomFichierdefault=Chemins.GetStaticPath("Databases/Defaut.dat"), mode="local"):

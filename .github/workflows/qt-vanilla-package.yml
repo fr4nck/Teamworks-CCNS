@@ -17,11 +17,17 @@ on:
       - "teamworks/GestionDB.py"
       - "teamworks/Utils/UTILS_Fichiers.py"
       - "tests/test_qt_vanilla_packaging_contract.py"
+  # Build a qualification installer when the Qt packaging contract changes.
+  # Routine engine commits keep the fast Qt validation workflow only.
   push:
     branches:
-      - qt/vanilla-0.1-rc
-    tags:
-      - "qt-v0.1.*"
+      - qt/master
+    paths:
+      - ".github/workflows/qt-vanilla-package.yml"
+      - "requirements/qt-vanilla-0.1.txt"
+      - "scripts/build_qt_vanilla_windows.ps1"
+      - "packaging/windows/Teamworks-CCNS-Qt.iss"
+      - "poc/qt-theme/vanilla_launcher.py"
   workflow_dispatch:
 
 permissions:
