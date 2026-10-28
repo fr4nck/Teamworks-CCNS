@@ -117,6 +117,8 @@ jobs:
             tests/test_qt_contract_classification.py `
             tests/test_qt_contract_write_roundtrip.py `
             tests/test_qt_contract_documents.py `
+            tests/test_qt_twd_preview.py `
+            tests/test_document_qt_editor_v1.py `
             tests/test_qt_expense_reimbursement_roundtrip.py `
             tests/test_qt_contract_advanced_ui_prep.py `
             tests/test_contract_create_service.py `

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from PySide6.QtCore import Qt, QUrl
+from PySide6.QtGui import QImage, QTextDocument
 from PySide6.QtWidgets import (
     QComboBox,
     QDialog,
@@ -7,12 +9,16 @@ from PySide6.QtWidgets import (
     QFormLayout,
     QLabel,
     QListWidget,
+    QMessageBox,
+    QPushButton,
+    QTextBrowser,
     QVBoxLayout,
     QWidget,
 )
 
 from application.services.contract_document_workspace import ContractDocumentWorkspace
 from domain.documents import GenerationStatus
+from document_preview_adapter import preview_twd_template
 
 
 _STATUS_LABELS = {
@@ -74,6 +80,22 @@ class ContractDocumentsDialog(QDialog):
             self.templates = QListWidget()
             root.addWidget(self.templates, 1)
 
+            self.preview_button = QPushButton(
+                "Aper\u00e7u du mod\u00e8le TWD"
+            )
+            self.preview_button.setObjectName("twdPreviewButton")
+            self.preview_button.setEnabled(False)
+            self.preview_button.clicked.connect(
+                self._preview_selected_twd
+            )
+            self.templates.currentRowChanged.connect(
+                lambda _row: self._update_preview_action()
+            )
+            self.templates.itemDoubleClicked.connect(
+                lambda _item: self._preview_selected_twd()
+            )
+            root.addWidget(self.preview_button)
+
             root.addWidget(QLabel("Contrôles et informations"))
             self.issues = QListWidget()
             root.addWidget(self.issues, 1)
@@ -94,6 +116,7 @@ class ContractDocumentsDialog(QDialog):
             self.status_value.setText("Indisponible")
             self.templates.clear()
             self.issues.clear()
+            self._update_preview_action()
             return
 
         choice = self.workspace.choices[index]
@@ -116,3 +139,100 @@ class ContractDocumentsDialog(QDialog):
             self.issues.addItem(issue)
         if not choice.issues:
             self.issues.addItem("Aucune anomalie détectée")
+        self._update_preview_action()
+
+    def _selected_template(self):
+        index = self.document_choice.currentIndex()
+        if not 0 <= index < len(self.workspace.choices):
+            return None
+
+        templates = self.workspace.choices[index].templates
+        row = self.templates.currentRow()
+
+        if not 0 <= row < len(templates):
+            return None
+
+        return templates[row]
+
+    def _update_preview_action(self):
+        template = self._selected_template()
+        enabled = bool(
+            self.workspace.merge_context is not None
+            and template is not None
+            and template.location
+            and str(template.location).lower().endswith(".twd")
+        )
+        self.preview_button.setEnabled(enabled)
+
+    def _preview_selected_twd(self):
+        template = self._selected_template()
+        context = self.workspace.merge_context
+
+        if template is None or context is None:
+            return
+
+        try:
+            preview = preview_twd_template(template, context)
+        except (OSError, ValueError) as exc:
+            QMessageBox.warning(
+                self, "Aper\u00e7u TWD impossible", str(exc)
+            )
+            return
+
+        preview_dialog = QDialog(self)
+        preview_dialog.setObjectName("twdPreviewDialog")
+        preview_dialog.setWindowTitle(
+            f"Aper\u00e7u TWD - {template.name}"
+        )
+        preview_dialog.resize(900, 700)
+
+        layout = QVBoxLayout(preview_dialog)
+
+        issues = []
+        if preview.unresolved_fields:
+            issues.append(
+                "Champs non r\u00e9solus : "
+                + ", ".join(preview.unresolved_fields)
+            )
+        issues.extend(preview.warnings)
+
+        if preview.unsupported_features:
+            issues.append(
+                "Fonctions non prises en charge : "
+                + ", ".join(preview.unsupported_features)
+            )
+
+        if issues:
+            label = QLabel("\n".join(issues), preview_dialog)
+            label.setTextFormat(Qt.TextFormat.PlainText)
+            label.setWordWrap(True)
+            layout.addWidget(label)
+
+        browser = QTextBrowser(preview_dialog)
+        browser.setObjectName("twdPreviewBrowser")
+        browser.setOpenLinks(False)
+        browser.setOpenExternalLinks(False)
+
+        document = browser.document()
+        for asset in preview.assets:
+            if not asset.mime_type.startswith("image/"):
+                continue
+
+            image = QImage.fromData(asset.to_bytes())
+            if not image.isNull():
+                document.addResource(
+                    QTextDocument.ResourceType.ImageResource,
+                    QUrl(asset.uri),
+                    image,
+                )
+
+        browser.setHtml(preview.html)
+        layout.addWidget(browser, 1)
+
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Close
+        )
+        buttons.rejected.connect(preview_dialog.reject)
+        layout.addWidget(buttons)
+
+        preview_dialog.exec()
