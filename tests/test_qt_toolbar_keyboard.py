@@ -59,13 +59,21 @@ def _select_first(window):
     QApplication.processEvents()
 
 
-def test_tool_buttons_share_one_size_and_keep_accessible_names(window):
-    buttons = window.findChildren(QToolButton, "legacyToolButton")
-    assert len(buttons) >= 15
-    for button in buttons:
+def test_tool_buttons_share_consistent_sizing_and_accessible_names(window):
+    icons = window.findChildren(QToolButton, "legacyToolButton")
+    contracts = window.findChildren(QToolButton, "contractActionButton")
+    assert len(icons) >= 7  # fonctions historiques désactivées, accessibles dans Autres
+    assert len(contracts) == 9
+    for button in icons:
         assert button.maximumSize().toTuple() == (TOOL_BUTTON_SIZE, TOOL_BUTTON_SIZE)
         assert button.iconSize().width() == 20
         assert button.accessibleName()
+    for button in contracts:
+        assert button.text()
+        assert button.accessibleName()
+        assert button.toolTip().startswith(button.accessibleName())
+        assert button.toolButtonStyle() == Qt.ToolButtonStyle.ToolButtonTextBesideIcon
+        assert button.minimumHeight() >= 38
 
 
 def test_unavailable_commands_are_disabled_and_say_so(window):
@@ -147,6 +155,27 @@ def test_individual_actions_show_labels_and_keep_inactive_commands_explicit(wind
     window.resize(1380, 860)
     QApplication.processEvents()
     assert window.people_table.width() >= 300
+
+def test_contract_actions_are_labeled_and_table_uses_full_width(window):
+    _select_first(window)
+    window.tabs.setCurrentIndex(3)
+    window.resize(900, 620)
+    QApplication.processEvents()
+    expected = (
+        (window.contract_create_button, "Ajouter"),
+        (window.contract_edit_button, "Modifier"),
+        (window.contract_delete_button, "Supprimer"),
+        (window.contract_signature_button, "Signature"),
+        (window.contract_due_button, "DUE"),
+        (window.contract_document_button, "Documents"),
+    )
+    for button, label in expected:
+        assert button.text() == label
+        assert button.width() >= 86
+        assert button.isVisible()
+    assert window.contracts_table.isVisible()
+    assert window.contracts_table.width() >= 300
+
 
 def test_enter_on_contract_row_opens_edit_and_delete_key_asks_confirmation(window):
     _select_first(window)
