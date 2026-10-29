@@ -133,6 +133,7 @@ jobs:
             tests/test_qt_usable_recipe_regressions.py `
             tests/test_qt_contract_create_required_fields.py `
             tests/test_qt_toolbar_keyboard.py `
+            tests/test_qt_domain_smoke_selection.py `
             tests/test_qt_active_database.py `
             tests/test_qt_contract_concurrency.py `
             tests/test_qt_mysql_diagnostic.py `
