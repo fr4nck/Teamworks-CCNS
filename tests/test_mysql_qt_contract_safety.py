@@ -260,6 +260,53 @@ def test_mysql_row_locked_by_another_session_fails_cleanly_then_retry_succeeds(b
     assert _salary(contract_id) == (3300.0, 28.0)
 
 
+def _diagnose(password):
+    from infrastructure.persistence.mysql_connection_diagnostic import run_mysql_diagnostic
+
+    def schema():
+        db = _session()
+        try:
+            return check_schema(db)
+        finally:
+            _OPEN_SESSIONS.remove(db)
+            db.Close()
+
+    return run_mysql_diagnostic(
+        f"{PORT};{HOST};{USER};{GestionDB.EncodeMdpReseau(password)}[RESEAU]{DB_NAME}",
+        suffix="",
+        connector=mysql.connector,
+        open_connection=GestionDB.GetConnexionReseau,
+        check_schema=schema,
+        decode_password=GestionDB.DecodeMdpReseau,
+        tls_label="désactivé",
+    )
+
+
+def test_mysql_diagnostic_passes_the_five_steps_on_this_server(base):
+    before = _checksums(base, UNTOUCHED)
+    report = _diagnose(PASSWORD)
+    text = report.text()
+    print(text)
+    assert report.ok, text
+    assert "Modules dynamiques du pilote : tous présents" in text
+    expected = os.environ.get("TEAMWORKS_MYSQL_EXPECTED_VERSION")
+    if expected:
+        assert f"serveur MySQL {expected}" in report.steps[1].detail, text
+    assert PASSWORD == "" or PASSWORD not in text
+    assert _checksums(base, UNTOUCHED) == before
+
+
+def test_mysql_diagnostic_reports_a_rejected_password_as_authentication(base):
+    wrong = "mauvais-mdp-fictif"
+    report = _diagnose(wrong)
+    text = report.text()
+    print(text)
+    assert [step.status for step in report.steps[:4]] == ["OK", "OK", "ÉCHEC", "NON TESTÉ"], text
+    assert "1045" in report.steps[2].detail and "identifiant ou mot de passe refusé" in report.steps[2].detail
+    assert "ImportError" not in text and wrong not in text
+    assert GestionDB.EncodeMdpReseau(wrong) not in text
+
+
 def test_mysql_non_transactional_tables_are_refused_by_the_precheck(base):
     base.cursor.execute("ALTER TABLE contrats ENGINE=MyISAM")
     report = check_schema(base)

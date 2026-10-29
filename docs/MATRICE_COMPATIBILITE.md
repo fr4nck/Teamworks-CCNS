@@ -35,7 +35,7 @@ Cette matrice distingue les environnements **réellement exercés** des platefor
 | Pillow | images | conservé dans le packaging | API dépréciées et ressources graphiques |
 | matplotlib | graphiques | collecté dans le paquet Windows | poids et backends inutiles |
 | reportlab | PDF | collecté dans le paquet Windows | régressions d’export / packaging |
-| mysql-connector-python | accès MySQL | paquet complet collecté au build ; mode Python pur pour MySQL/MariaDB 5.5 | réseau réel, TLS, reconnexion |
+| mysql-connector-python | accès MySQL | wx : paquet complet collecté au build (26.7.0 en rc8) ; Qt : **9.7.0** figé, exe testé contre MySQL 5.7.31 ; mode Python pur | réseau réel, TLS, reconnexion |
 | win32com / intégration Windows | fonctions Windows historiques | import explicitement prévu au build | dépendance spécifique Windows |
 | XlsxWriter / exports | exports tableurs | parcours export couvert par smoke/tests ciblés | formats, encodage, boîtes de dialogue |
 

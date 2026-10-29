@@ -18,7 +18,8 @@ def test_qt_vanilla_runtime_requirements_do_not_install_wx():
     ]
     text = "\n".join(lines)
     assert "pyside6" in text
-    assert "mysql-connector-python" in text
+    # Version exacte qualifiée contre MySQL 5.7.31 : pas de dérive silencieuse du pilote.
+    assert "mysql-connector-python==9.7.0" in lines
     assert all(not line.startswith("wxpython") for line in lines)
     assert all(not line.startswith("wx==") for line in lines)
 
@@ -44,6 +45,9 @@ def test_build_explicitly_excludes_wx_and_creates_portable_mode():
     # Importes dynamiquement par mysql-connector-python : indispensables en exe.
     assert '"--hidden-import", "mysql.connector.locales.eng.client_error"' in text
     assert '"--collect-submodules", "mysql.connector.plugins"' in text
+    # Le binaire construit est diagnostiqué contre un vrai MySQL 5.7.31.
+    workflow = WORKFLOW.read_text(encoding="utf-8")
+    assert '$version = "5.7.31"' in workflow and '"--diagnostic-mysql"' in workflow
     assert 'New-Item -ItemType Directory -Force -Path (Join-Path $portableApp "Portable")' in text
     assert "Static/Documents" in text
     assert "VANILLA_VERSION.txt" in text
