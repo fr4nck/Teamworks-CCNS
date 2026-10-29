@@ -4,7 +4,7 @@ Fork de **Teamworks** orienté **CCNS** pour la gestion d’équipes, de contrat
 
 Projet d’origine : Teamworks.
 
-> **Statut actuel : `0.9.2-rc9` — candidate Windows de recette des sauvegardes limitées au dossier ouvert et du correctif de licence.** Tests Linux/Windows réussis avant packaging ; valider ensuite les sauvegardes sur copie de base et le rendu des fenêtres avant remplacement en exploitation.
+> **Statut actuel : `0.9.2-rc10` — candidate Windows intégrant le correctif du crash de sélection de période et la hauteur des onglets de fiche individuelle.** CI Linux/Windows verte avant packaging ; valider le paquet exact et les parcours métier sur une copie de base avant remplacement en exploitation.
 
 ## Positionnement
 

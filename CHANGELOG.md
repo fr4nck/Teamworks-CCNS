@@ -1,6 +1,13 @@
 # Teamworks-CCNS 0.9.2
 
 
+## Candidate RC10 — 29 octobre 2026 (recette utilisateur Windows requise)
+
+- **Sélecteur de période :** correction de l'exception `AttributeError: ctrl_mois` de RC9 : les événements de la liste s'adressent au dialogue réel (et non au panneau de section), et les contrôles mois, année et dates sont construits avant la liste. La sélection native précoce est couverte par une régression Windows et des tests synthétiques (`d00f417`).
+- **Fiche individuelle :** les neuf onglets natifs passent de 20 à 38 px à l'échelle d'interface 100 %, avec centrage vertical amélioré et largeur stabilisée pendant la navigation. Mesure native `TCM_GETITEMRECT` et smoke Windows (`4887bba`).
+- **Validation avant packaging :** CI Linux et parcours critiques Windows verts sur `4887bba`, run `40898264166`. La construction du portable et de l'installateur de la RC10 doit être validée sur le commit de version exact.
+- **Réserves :** les véritables DPI système Windows 125 % et 150 % n'ont pas été qualifiés ; recette utilisateur sur copie de base requise, notamment pour la sélection des périodes et les écrans métiers. Un échec de test contrat 21 h, déjà observé sur le code antérieur hors de ce périmètre, reste à analyser séparément. Aucun changement des données MySQL ni des règles métier dans ces deux corrections.
+
 ## Candidate RC9 — 29 octobre 2026 (recette utilisateur Windows requise)
 
 - **Crash À propos → Licence corrigé :** le paquet Windows portable et l'installateur incluent obligatoirement `Licence.txt` à la racine de l'exécutable. Son contenu est vérifié contre le fichier source avant publication ; le dialogue traite l'absence ou l'illisibilité sans exception Python. Régression constatée sur RC6 `154da83c`.

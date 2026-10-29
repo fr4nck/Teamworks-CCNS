@@ -1,3 +1,10 @@
+Version 0.9.2-rc10 :
+
+- Sélection de période : correction du crash ctrl_mois (événements de liste dirigés vers le dialogue après initialisation des champs).
+- Fiche individuelle : neuf onglets à 38 px à 100 % et largeur stable pendant la navigation.
+- Tests Linux/Windows et régressions ciblées validés sur wx/master avant packaging ; validation du paquet RC10 et recette utilisateur sur copie de base requises.
+- DPI système Windows 125 % et 150 % non validés.
+
 Version 0.9.2-rc9 :
 
 - Correction du crash À propos > Licence : Licence.txt présent et vérifié dans le paquet Windows ; message contrôlé s'il manque.
