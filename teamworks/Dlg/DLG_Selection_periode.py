@@ -21,23 +21,23 @@ else:
 class ListCtrl_vacances(wx.ListCtrl):
     """Périodes enregistrées, sans liste virtuelle ni zébrage décoratif."""
 
-    def __init__(self, parent):
+    def __init__(self, parent, owner):
         wx.ListCtrl.__init__(
             self,
             parent,
             -1,
             style=wx.LC_REPORT | wx.LC_SINGLE_SEL | wx.LC_HRULES,
         )
-        self.parent = parent
+        self.owner = owner
         self.rows = []
         self.SetBackgroundColour(UTILS_Interface.GetToken("surface_container_lowest"))
         self.SetForegroundColour(UTILS_Interface.GetToken("on_surface"))
         self.InsertColumn(0, _(u"Période"))
         self.InsertColumn(1, _(u"Dates"))
-        self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.OnItemSelected)
-        self.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.OnItemSelected)
         self.Bind(wx.EVT_SIZE, self.OnSize)
         self.Remplissage()
+        self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.OnItemSelected)
+        self.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.OnItemSelected)
 
     def Remplissage(self):
         self.DeleteAllItems()
@@ -81,9 +81,9 @@ class ListCtrl_vacances(wx.ListCtrl):
         IDperiode, nom, annee, date_debut, date_fin = self.rows[index]
         debut = datetime.date(int(date_debut[:4]), int(date_debut[5:7]), int(date_debut[8:10]))
         fin = datetime.date(int(date_fin[:4]), int(date_fin[5:7]), int(date_fin[8:10]))
-        self.parent.ctrl_mois.SetSelection(0)
-        self.parent.ctrl_annee.SetSelection(0)
-        self.parent.SetDates(debut, fin)
+        self.owner.ctrl_mois.SetSelection(0)
+        self.owner.ctrl_annee.SetSelection(0)
+        self.owner.SetDates(debut, fin)
         event.Skip()
 
 
@@ -107,12 +107,6 @@ class SelectionPeriode(wx.Dialog):
         self.section_vacances = CTRL_Section.Section(self, titre=_(u"Périodes de vacances"), niveau=2)
         self.section_calendrier = CTRL_Section.Section(self, titre=_(u"Mois et année"), niveau=2)
         self.section_dates = CTRL_Section.Section(self, titre=_(u"Dates"), niveau=2)
-
-        self.ctrl_vacances = ListCtrl_vacances(self.section_vacances.GetContentPanel())
-        self.ctrl_vacances.SetMinSize((-1, UTILS_Styles.Scale(150)))
-        vac_sizer = wx.BoxSizer(wx.VERTICAL)
-        vac_sizer.Add(self.ctrl_vacances, 1, wx.EXPAND)
-        self.section_vacances.GetContentPanel().SetSizer(vac_sizer)
 
         self.listeMois = [
             u"", _(u"Janvier"), _(u"Février"), _(u"Mars"), _(u"Avril"), _(u"Mai"), _(u"Juin"),
@@ -149,6 +143,14 @@ class SelectionPeriode(wx.Dialog):
             bloc.Add(control, 0, wx.EXPAND)
             dates_sizer.Add(bloc, 1, wx.EXPAND | wx.RIGHT, gap)
         dates.SetSizer(dates_sizer)
+
+        # Une sélection native peut arriver dès la création de la liste.
+        # Son destinataire est le dialogue, dont les champs sont maintenant prêts.
+        self.ctrl_vacances = ListCtrl_vacances(self.section_vacances.GetContentPanel(), self)
+        self.ctrl_vacances.SetMinSize((-1, UTILS_Styles.Scale(150)))
+        vac_sizer = wx.BoxSizer(wx.VERTICAL)
+        vac_sizer.Add(self.ctrl_vacances, 1, wx.EXPAND)
+        self.section_vacances.GetContentPanel().SetSizer(vac_sizer)
 
         self.bouton_ok = CTRL_Bouton_image.CTRL(self, texte=_(u"Valider"))
         self.bouton_annuler = CTRL_Bouton_image.CTRL(self, id=wx.ID_CANCEL, texte=_(u"Annuler"))

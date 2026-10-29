@@ -1,6 +1,6 @@
 # Teamworks — suivi UI/UX / thème graphique
 
-**Mise à jour : 27 octobre 2026**
+**Mise à jour : 29 octobre 2026**
 
 ## Objectif
 
@@ -14,6 +14,67 @@ Ce fichier suit la **modernisation graphique et ergonomique** de Teamworks-CCNS 
 - comportement métier nouveau → `04_CCNS_EXTENSIONS.md`.
 
 Les correctifs de contrôleurs/listes intervenant après introduction de `section.GetContentPanel()`, des tokens sémantiques ou d'un nouveau découplage owner/parent sont classés ici, et non comme bugs Vanilla.
+
+## Sélection de période : destinataire et événements précoces
+
+Dans `DLG_Selection_periode`, la modernisation `fac7d62f` a remplacé le
+parent direct de `ListCtrl_vacances` par le panneau de contenu d'une section,
+tout en conservant les accès `self.parent.ctrl_mois`, `ctrl_annee` et
+`SetDates`. Le panneau ne possède pas ces champs : une sélection valide
+peut donc provoquer un `AttributeError`, y compris après l'ouverture.
+Les événements étaient aussi liés avant le remplissage de la liste,
+elle-même créée avant les champs destinataires.
+
+**Provenance : UI/UX.** Le fichier original `Noethys/Teamworks`
+(`teamworks/Dlg/DLG_Selection_periode.py`, blob
+`9ac8b46633cf73f722af6ebf86cbecf53b6840f5`) donne directement le dialogue
+comme parent et remplit la liste avant les liaisons. La régression de
+parentage et l'anticipation des liaisons viennent de la modernisation ;
+aucun backport Vanilla ni changement de règle CCNS n'est nécessaire.
+
+Le parent wx reste le panneau de la section. Un destinataire `owner`
+explicite désigne désormais le dialogue. Les choix mois/année et les deux
+champs date sont créés avant la liste ; ses événements de sélection et
+d'activation sont liés après le remplissage. Les requêtes, conversions de
+dates, règles mois/année et API publique `SelectionPeriode` sont conservées.
+
+**Ratissage :** recherche des appels de `ListCtrl_vacances` dans tout
+`teamworks` (une seule construction), lecture des sélecteurs voisins
+`DLG_Selection_liste`, `DLG_Scenario_select_periode` et
+`DLG_Saisie_periode_vacances`, ainsi que de `CTRL_Section`. Un contrôle AST
+des 364 modules Python analyse également les classes définies et instanciées
+dans le même fichier avec `GetContentPanel()` et utilisant `self.parent.*` :
+aucun candidat restant dans ce périmètre. Ce contrôle ne prouve pas
+l'absence de cette famille dans les constructions indirectes ou intermodules.
+
+**Non-régression :** `tests/test_period_selection_events.py` exécute les
+vrais constructeurs et gestionnaires, avec panneaux stricts et données
+synthétiques. Les événements sont injectés pendant l'insertion, la liaison
+et le dimensionnement initial. Sélection et activation, dates exactes,
+remise à zéro du calendrier, liste vide, index invalide et février bissextile
+sont couverts. Le test natif Windows utilise aussi le vrai `CTRL_Section`
+et les contrôles wx ; il envoie les événements avant le retour du
+constructeur de la liste, puis affiche et ferme le dialogue. Il est ajouté
+aux contrôles de la CI Windows existante.
+
+**Validation locale du correctif :**
+
+```text
+python -m pytest -q tests/test_period_selection_events.py tests/test_period_selection_modern_ui.py tests/test_tw163_selection_periode_layout.py tests/test_selection_list_checkboxes.py
+```
+
+- avant correction, les 11 cas synthétiques donnent 8 échecs et 3 succès,
+  avec reproduction de l'`AttributeError` sur `ctrl_mois` à la ligne 84 ;
+- Windows, Python 3.11.9 / pytest 9.1.1 sans wx installé : 18 succès,
+  1 test natif ignoré ;
+- Windows, Python 3.10.11 / pytest 9.1.1 / wxPython 4.3.1 msw
+  (wxWidgets 3.3.3) : 19 succès, dont le test natif ;
+- compilation des deux fichiers Python et `git diff --check` réussis.
+
+Ces résultats locaux ne qualifient pas un portable construit. La CI sur
+le commit publié, le paquet Windows exact et la recette sur copie de base
+réelle doivent être rapportés séparément. Aucun rapport de crash privé ni
+aucune donnée utilisateur n'est ajouté au dépôt.
 
 ## Méthode de mesure
 

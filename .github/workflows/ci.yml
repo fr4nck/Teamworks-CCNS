@@ -341,7 +341,8 @@ jobs:
             -k "not runs_in_real_windows_application and not run_in_real_windows_application" `
             tests/test_secondary_presence_smoke_contract.py `
             tests/test_secondary_person_smoke_contract.py `
-            tests/test_secondary_contract_smoke_contract.py
+            tests/test_secondary_contract_smoke_contract.py `
+            tests/test_period_selection_events.py
 
       - name: Exécuter tous les parcours critiques
         id: windows_critical_smokes
