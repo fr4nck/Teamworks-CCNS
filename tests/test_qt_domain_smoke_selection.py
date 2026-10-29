@@ -44,6 +44,8 @@ def test_real_qt_pilot_can_select_a_smoke_person() -> None:
         app.processEvents()
         assert window.detail_stack.currentIndex() == 1
         assert window.contracts_model.rowCount() == 1
+        assert "dossier affiché" in window.statusBar().currentMessage()
+        assert window.people_table.horizontalHeader().sectionSize(0) >= 108
         assert window.legacy_tabs.presences_page.source_model.rowCount() == 0
         window.tabs.setCurrentIndex(3)
         app.processEvents()
