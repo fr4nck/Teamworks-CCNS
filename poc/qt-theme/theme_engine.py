@@ -189,7 +189,8 @@ class ThemeEngine:
                 border-color: {t.focus};
             }}
             QToolButton#peopleActionButton,
-            QToolButton#peopleMoreActions {{
+            QToolButton#peopleMoreActions,
+            QToolButton#contractActionButton {{
                 background: {t.surface_container_lowest};
                 color: {t.on_surface};
                 border: 1px solid {t.outline_variant};
@@ -204,17 +205,24 @@ class ThemeEngine:
                 font-weight: 600;
             }}
             QToolButton#peopleActionButton:hover,
-            QToolButton#peopleMoreActions:hover {{
+            QToolButton#peopleMoreActions:hover,
+            QToolButton#contractActionButton:hover {{
                 background: {t.surface_container_high};
                 border-color: {t.focus};
             }}
             QToolButton#peopleActionButton:focus,
-            QToolButton#peopleMoreActions:focus {{
+            QToolButton#peopleMoreActions:focus,
+            QToolButton#contractActionButton:focus {{
                 border: 2px solid {t.focus};
             }}
-            QToolButton#peopleActionButton:disabled {{
+            QToolButton#peopleActionButton:disabled,
+            QToolButton#contractActionButton:disabled {{
                 color: {t.disabled};
                 background: {t.surface_container_high};
+                border-color: {t.outline_variant};
+            }}
+            QToolButton#contractActionButton {{
+                font-weight: 600;
             }}
             QToolButton#legacyToolButton {{
                 min-height: 34px;
