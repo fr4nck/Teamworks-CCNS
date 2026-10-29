@@ -93,6 +93,7 @@ def test_all_eight_sections_are_readable_and_switch_with_real_clicks(window):
     for size in ((900, 620), (1380, 860)):
         window.resize(*size)
         QApplication.processEvents()
+        assert window.section_navigation.columns == (2 if size[0] == 900 else 4)
         for index, button in enumerate(window.section_buttons):
             assert button.isVisible()
             assert button.height() >= 40
@@ -118,6 +119,34 @@ def test_person_summary_is_compact_and_has_no_prototype_heading(window):
         isinstance(label, QLabel) and "Transposition Qt" in label.text()
         for label in window.findChildren(QLabel)
     )
+
+
+
+def test_individual_actions_show_labels_and_keep_inactive_commands_explicit(window):
+    _select_first(window)
+    for button, label in (
+        (window.person_create_button, "Ajouter"),
+        (window.person_edit_button, "Modifier"),
+    ):
+        assert button.isVisible()
+        assert button.text() == label
+        assert button.accessibleName() and button.toolTip()
+        assert button.minimumSize().width() >= 99
+        assert button.iconSize().width() == 18
+
+    other_actions = window.people_more_actions
+    assert other_actions.isVisible()
+    assert other_actions.text() == "Autres"
+    menu = other_actions.menu()
+    assert menu is not None
+    assert len(menu.actions()) >= 7
+    assert all(not action.isEnabled() for action in menu.actions())
+    assert all("indisponible" in action.text() for action in menu.actions())
+
+    # La colonne d'outils a disparu : le tableau dispose de la largeur du panneau.
+    window.resize(1380, 860)
+    QApplication.processEvents()
+    assert window.people_table.width() >= 300
 
 def test_enter_on_contract_row_opens_edit_and_delete_key_asks_confirmation(window):
     _select_first(window)
