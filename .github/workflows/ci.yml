@@ -235,6 +235,29 @@ jobs:
         shell: pwsh
         run: python poc/qt-theme/benchmark_models.py
 
+      - name: Captures Qt synthétiques — Windows, 100 / 125 / 150 %
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $env:QT_QPA_PLATFORM = "offscreen"
+          foreach ($scale in @("1", "1.25", "1.5")) {
+            $label = $scale.Replace(".", "_")
+            $env:QT_SCALE_FACTOR = $scale
+            python tools/qt_capture_visual_recipe.py --scale $scale --output "visual-evidence/$label"
+            if ($LASTEXITCODE -ne 0) {
+              throw "Capture visuelle Qt echouee: echelle $scale"
+            }
+          }
+
+      - name: Publier les preuves visuelles Qt Windows
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qt-visual-windows-${{ github.sha }}
+          path: visual-evidence/
+          if-no-files-found: warn
+          retention-days: 30
+
   mysql-historique:
     name: MySQL historique ${{ matrix.server }} — connecteur ${{ matrix.connector }}
     runs-on: ubuntu-24.04
