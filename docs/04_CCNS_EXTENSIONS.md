@@ -101,7 +101,8 @@ d'ouverture et d'écriture, puis corrigés :
   `ExecuterReq` est un candidat Vanilla **non vérifié** dans `Noethys/Teamworks` ;
 - **base active non affichée** : la base réellement ouverte (fichier SQLite ou
   serveur MySQL, sans mot de passe) est affichée en permanence dans la barre
-  d'état et le titre ; sans base sélectionnée dans `Config.json`, Qt refuse de
+  d'état (nom accessible complet, lu par les lecteurs d'écran) et le titre ;
+  sans base sélectionnée dans `Config.json`, Qt refuse de
   démarrer sans rien ouvrir ;
 - **sauvegardes SQLite** : nom réservé en création exclusive (deux sauvegardes au
   même instant ne partagent jamais un fichier) et contrôle du contenu table par

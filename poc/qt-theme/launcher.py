@@ -318,7 +318,8 @@ def main() -> None:
         if ACTIVE_DATABASE_LABEL:
             active_label = QLabel(ACTIVE_DATABASE_LABEL)
             active_label.setObjectName("activeDatabaseLabel")
-            active_label.setAccessibleName("Base active")
+            active_label.setAccessibleName(ACTIVE_DATABASE_LABEL)
+            active_label.setAccessibleDescription("Base active")
             active_label.setToolTip(ACTIVE_DATABASE_LABEL)
             window.statusBar().addPermanentWidget(active_label)
             window.setWindowTitle(f"{window.windowTitle()} — {ACTIVE_DATABASE_LABEL}")

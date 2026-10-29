@@ -60,11 +60,18 @@ DB_NAME = "teamworks_qt_contrat_ci"
 UNTOUCHED = ("contrats_class", "contrats_types", "valeurs_point", "parametres")
 
 
+_OPEN_SESSIONS = []
+
+
 def _admin():
-    return mysql.connector.connect(
+    connection = mysql.connector.connect(
         host=HOST, port=PORT, user=USER, password=PASSWORD,
         use_pure=True, ssl_disabled=True, connection_timeout=10,
     )
+    cursor = connection.cursor()
+    cursor.execute("SET SESSION lock_wait_timeout=10")
+    cursor.close()
+    return connection
 
 
 def _session():
@@ -74,7 +81,19 @@ def _session():
     # Une attente de verrou (ligne ou métadonnées) doit échouer vite, jamais bloquer la CI.
     db.cursor.execute("SET SESSION lock_wait_timeout=10")
     db.cursor.execute("SET SESSION innodb_lock_wait_timeout=10")
+    _OPEN_SESSIONS.append(db)
     return db
+
+
+def _close_all_sessions():
+    """Une session laissée ouverte par un test en échec bloquerait le DROP DATABASE suivant."""
+    while _OPEN_SESSIONS:
+        db = _OPEN_SESSIONS.pop()
+        try:
+            db.connexion.rollback()
+        except Exception:
+            pass
+        db.Close()
 
 
 def _checksums(db, tables):
@@ -91,18 +110,18 @@ def base():
     cursor.close()
     admin.close()
 
-    db = _session()
-    db.CreationTables(Tables.DB_DATA)
-    db.cursor.execute(
-        "INSERT INTO parametres (categorie, nom, parametre) VALUES ('fichier', 'version', '2.1.2.0')"
-    )
-    db.cursor.execute("INSERT INTO personnes (IDpersonne, nom, prenom, ville_resid) VALUES (12, 'MARTIN', 'Ada', 'BREST')")
-    db.cursor.execute("INSERT INTO contrats_types (IDtype, nom, nom_abrege, duree_indeterminee) VALUES (4, 'Contrat à Durée Indéterminée', 'CDI', 'True')")
-    db.Commit()
     try:
+        db = _session()
+        db.CreationTables(Tables.DB_DATA)
+        db.cursor.execute(
+            "INSERT INTO parametres (categorie, nom, parametre) VALUES ('fichier', 'version', '2.1.2.0')"
+        )
+        db.cursor.execute("INSERT INTO personnes (IDpersonne, nom, prenom, ville_resid) VALUES (12, 'MARTIN', 'Ada', 'BREST')")
+        db.cursor.execute("INSERT INTO contrats_types (IDtype, nom, nom_abrege, duree_indeterminee) VALUES (4, 'Contrat à Durée Indéterminée', 'CDI', 'True')")
+        db.Commit()
         yield db
     finally:
-        db.Close()
+        _close_all_sessions()
         admin = _admin()
         cursor = admin.cursor()
         cursor.execute(f"DROP DATABASE IF EXISTS {DB_NAME}")
