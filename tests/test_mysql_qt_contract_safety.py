@@ -117,7 +117,7 @@ def base():
             "INSERT INTO parametres (categorie, nom, parametre) VALUES ('fichier', 'version', '2.1.2.0')"
         )
         db.cursor.execute("INSERT INTO personnes (IDpersonne, nom, prenom, ville_resid) VALUES (12, 'MARTIN', 'Ada', 'BREST')")
-        db.cursor.execute("INSERT INTO contrats_types (IDtype, nom, nom_abrege, duree_indeterminee) VALUES (4, 'Contrat à Durée Indéterminée', 'CDI', 'True')")
+        db.cursor.execute("INSERT INTO contrats_types (IDtype, nom, nom_abrege, duree_indeterminee) VALUES (4, 'Contrat à Durée Indéterminée', 'CDI', 'oui')")
         db.Commit()
         yield db
     finally:
