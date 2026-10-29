@@ -122,6 +122,41 @@ def run() -> None:
             assert restored_hashes == original_hashes
             assert {_integrity(restore_dir / name) for name in FILES} == {"ok"}
 
+            print("TEAMWORKS_BACKUP_STAGE:reject-missing-mysql-login", flush=True)
+            refused = UTILS_Sauvegarde.Sauvegarde(
+                listeFichiersLocaux=FILES,
+                listeFichiersReseau=["exemple_tdata"],
+                dictConnexion=None,
+                nom="refus_mysql_manquant",
+                repertoire=str(backup_dir),
+            )
+            assert refused is False
+            assert not (backup_dir / "refus_mysql_manquant.twd").exists()
+
+            print("TEAMWORKS_BACKUP_STAGE:atomic-failure", flush=True)
+            # Écrire dans une archive existante ne doit jamais la tronquer
+            # lorsque le support de destination échoue.
+            previous_digest = _digest(archive)
+            original_copy = UTILS_Sauvegarde.shutil.copy2
+
+            def fail_publish(src, dst, *args, **kwargs):
+                if Path(dst).name.startswith(".teamworks-sauvegarde-"):
+                    raise OSError("synthetic target disk error")
+                return original_copy(src, dst, *args, **kwargs)
+
+            UTILS_Sauvegarde.shutil.copy2 = fail_publish
+            try:
+                refused = UTILS_Sauvegarde.Sauvegarde(
+                    listeFichiersLocaux=FILES,
+                    nom="recette_teamworks",
+                    repertoire=str(backup_dir),
+                )
+            finally:
+                UTILS_Sauvegarde.shutil.copy2 = original_copy
+            assert refused is False
+            assert _digest(archive) == previous_digest
+            assert not list(backup_dir.glob(".teamworks-sauvegarde-*"))
+
             print("TEAMWORKS_BACKUP_RESTORE_OK", flush=True)
             print(f"archive={archive}", flush=True)
             print(f"files={','.join(FILES)}", flush=True)
