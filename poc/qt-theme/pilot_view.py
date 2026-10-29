@@ -206,6 +206,12 @@ class PeopleContractsPilot(QMainWindow):
         self.setCentralWidget(central)
         self._show_empty_detail()
         self._install_keyboard_shortcuts()
+        # Ordonner TAB une fois tous les panneaux réunis dans cette fenêtre.
+        QWidget.setTabOrder(self.people_table, self.search)
+        QWidget.setTabOrder(self.search, self.people_reset_button)
+        QWidget.setTabOrder(self.people_reset_button, self.person_create_button)
+        QWidget.setTabOrder(self.person_create_button, self.person_edit_button)
+        QWidget.setTabOrder(self.person_edit_button, self.people_more_actions)
 
     def _install_keyboard_shortcuts(self) -> None:
         """Entrée = modifier, Suppr = supprimer le contrat, Ctrl+N = nouvelle fiche, Échap = liste complète."""
@@ -317,6 +323,7 @@ class PeopleContractsPilot(QMainWindow):
         self.people_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.people_table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.people_table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.people_table.setTabKeyNavigation(False)
         self.people_table.setAlternatingRowColors(True)
         self.people_table.setTextElideMode(Qt.TextElideMode.ElideRight)
         self.people_table.setWordWrap(False)
@@ -353,6 +360,7 @@ class PeopleContractsPilot(QMainWindow):
             enabled=True, fallback="R", shortcut="Échap",
         )
         show_all_button.clicked.connect(self._clear_people_filter)
+        self.people_reset_button = show_all_button
         search_layout.addWidget(show_all_button)
         layout.addWidget(search_bar)
 
@@ -441,12 +449,6 @@ class PeopleContractsPilot(QMainWindow):
         layout.addLayout(actions)
         layout.addWidget(self.people_table, 1)
 
-        # Ordre clavier conservé lorsque les contrôles changent de place.
-        QWidget.setTabOrder(self.people_table, self.search)
-        QWidget.setTabOrder(self.search, show_all_button)
-        QWidget.setTabOrder(show_all_button, self.person_create_button)
-        QWidget.setTabOrder(self.person_create_button, self.person_edit_button)
-        QWidget.setTabOrder(self.person_edit_button, more)
         return frame
 
     def _build_detail_panel(self) -> QWidget:
