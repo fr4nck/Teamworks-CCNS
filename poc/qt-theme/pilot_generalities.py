@@ -282,8 +282,13 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
             expenses_page.set_expense_person(historical_id)
 
         self._request_activity(historical_id)
+        status = (
+            "chargement du dossier…"
+            if self._activity_loader_class is not None
+            else "dossier affiché"
+        )
         self.statusBar().showMessage(
-            f"{person.name} · {contract_count} contrat(s) · chargement du dossier…"
+            f"{person.name} · {contract_count} contrat(s) · {status}"
         )
 
     def _request_activity(self, person_id) -> None:
