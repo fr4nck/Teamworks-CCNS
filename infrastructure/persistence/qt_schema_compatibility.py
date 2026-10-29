@@ -176,15 +176,20 @@ def _non_transactional_tables(db, tables: set[str]) -> tuple[str, ...]:
     wanted = sorted(name for name in QT_REQUIRED_SCHEMA if name in tables)
     if not wanted:
         return ()
-    listed = ", ".join("'%s'" % name for name in wanted)
-    if not db.ExecuterReq(
-        "SELECT TABLE_NAME, ENGINE FROM information_schema.TABLES "
-        "WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME IN (%s);" % listed
-    ):
+    # Curseur direct : GestionDB.ExecuterReq réécrit tout « () » pour MySQL, ce qui
+    # rendrait DATABASE() invalide. Une lecture impossible reste un refus.
+    try:
+        db.cursor.execute(
+            "SELECT TABLE_NAME, ENGINE FROM information_schema.TABLES "
+            "WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME IN (%s)"
+            % ", ".join("%s" for _ in wanted),
+            tuple(wanted),
+        )
+        rows = db.cursor.fetchall() or ()
+    except Exception:
         return ("(moteur de stockage illisible)",)
     return tuple(
-        sorted(str(name) for name, engine in (db.ResultatReq() or ())
-               if str(engine or "").upper() != "INNODB")
+        sorted(str(name) for name, engine in rows if str(engine or "").upper() != "INNODB")
     )
 
 

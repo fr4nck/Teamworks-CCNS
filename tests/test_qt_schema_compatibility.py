@@ -237,15 +237,33 @@ def test_evolution_refused_on_incompatible_base_without_any_write(base):
     assert not list(base.parent.glob("*.bak"))
 
 
+class _EngineCursor:
+    """Réponse MySQL ≥ 5.5 à la requête information_schema, moteur InnoDB par défaut."""
+
+    def __init__(self, db):
+        self._db = db
+        self._rows = []
+
+    def execute(self, req, params=()):
+        assert "information_schema.TABLES" in req and "DATABASE()" in req
+        self._rows = [(name, self._db.engines.get(name, "InnoDB")) for name in params]
+
+    def fetchall(self):
+        return self._rows
+
+
 class _NetworkDb:
     """MySQL simulé à partir du schéma de la fixture : seule l'absence d'ALTER compte."""
 
     isNetwork = True
 
+    engines: dict[str, str] = {}
+
     def __init__(self, path):
         self._c = sqlite3.connect(path)
         self._rows = []
         self.alters = []
+        self.cursor = _EngineCursor(self)
 
     def GetListeTables(self):
         return self._c.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
@@ -254,11 +272,10 @@ class _NetworkDb:
         return [(r[1], r[2]) for r in self._c.execute(f"PRAGMA table_info({table})")]
 
     def ExecuterReq(self, req):
-        if "information_schema.TABLES" in req:
-            # Moteur InnoDB pour toutes les tables demandées, comme un MySQL ≥ 5.5.
-            listed = req.split("IN (", 1)[1].rsplit(")", 1)[0]
-            self._rows = [(name.strip(" '"), "InnoDB") for name in listed.split(",")]
-            return 1
+        # Comme GestionDB en réseau : « () » est réécrit, ce qui casse DATABASE().
+        req = req.replace("()", "(10000000, 10000001)")
+        if "information_schema" in req:
+            return 0
         self._rows = self._c.execute(req).fetchall()
         return 1
 
@@ -278,11 +295,7 @@ def test_network_base_is_never_altered_automatically(base):
 
 
 class _MyIsamNetworkDb(_NetworkDb):
-    def ExecuterReq(self, req):
-        result = super().ExecuterReq(req)
-        if "information_schema.TABLES" in req:
-            self._rows = [(name, "MyISAM" if name == "contrats" else engine) for name, engine in self._rows]
-        return result
+    engines = {"contrats": "MyISAM"}
 
 
 def test_network_tables_without_transactions_make_the_base_refused(base):

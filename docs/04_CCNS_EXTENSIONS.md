@@ -109,7 +109,13 @@ d'ouverture et d'écriture, puis corrigés :
   table ; nouvelle restauration isolée qui refuse la base active, une destination
   existante et une sauvegarde corrompue.
 
-Le gate MySQL/MariaDB reste **BLOCKED** : aucun serveur ni copie représentative
+Le gate MySQL synthétique de la CI (MySQL 8.0, schéma historique) a révélé que le
+contrôle du moteur de stockage passait par `GestionDB.ExecuterReq`, qui réécrit
+tout `()` pour MySQL et rendait `DATABASE()` invalide : toute base MySQL aurait été
+refusée. La requête passe désormais par le curseur, et le faux MySQL des tests
+reproduit cette réécriture.
+
+Le gate MySQL/MariaDB sur copie représentative reste **BLOCKED** : aucun serveur ni copie représentative
 autorisée n'est disponible sur le poste de recette.
 
 ## Références principales
