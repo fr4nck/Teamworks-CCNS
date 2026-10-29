@@ -71,6 +71,9 @@ def _session():
     db = GestionDB.DB(nomFichier=f"{PORT};{HOST};{USER};{PASSWORD}[RESEAU]{DB_NAME}", suffixe=None)
     assert db.echec == 0, getattr(db, "erreur", None)
     assert db.isNetwork is True
+    # Une attente de verrou (ligne ou métadonnées) doit échouer vite, jamais bloquer la CI.
+    db.cursor.execute("SET SESSION lock_wait_timeout=10")
+    db.cursor.execute("SET SESSION innodb_lock_wait_timeout=10")
     return db
 
 

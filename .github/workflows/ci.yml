@@ -223,7 +223,8 @@ jobs:
 
       - name: Recette Qt contrats — Windows + MySQL synthétique
         shell: pwsh
-        run: python -m pytest -q tests/test_mysql_qt_contract_safety.py
+        timeout-minutes: 8
+        run: python -m pytest -v -o faulthandler_timeout=90 tests/test_mysql_qt_contract_safety.py
 
       - name: Smoke runtime Qt Windows natif
         shell: pwsh
