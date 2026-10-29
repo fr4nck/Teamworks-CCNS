@@ -138,23 +138,14 @@ class PeopleContractsPilot(QMainWindow):
 
         central = QWidget(self)
         root = QVBoxLayout(central)
-        root.setContentsMargins(14, 12, 14, 12)
-        root.setSpacing(8)
-
-        heading = QLabel("Individus / Contrats")
-        font = heading.font()
-        font.setPointSize(16)
-        font.setBold(True)
-        heading.setFont(font)
-        root.addWidget(heading)
-
-        subheading = QLabel("Transposition Qt de l’organisation historique Teamworks · écritures Contrats contrôlées")
-        subheading.setProperty("muted", True)
-        root.addWidget(subheading)
+        # La liste et la fiche possèdent déjà leurs titres : pas de bandeau
+        # de prototype au-dessus du travail quotidien.
+        root.setContentsMargins(8, 8, 8, 8)
+        root.setSpacing(6)
 
         people_panel = self._build_people_panel()
         detail_panel = self._build_detail_panel()
-        people_panel.setMinimumWidth(390)
+        people_panel.setMinimumWidth(360)
         detail_panel.setMinimumWidth(460)
         people_panel.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         detail_panel.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
@@ -163,9 +154,9 @@ class PeopleContractsPilot(QMainWindow):
         self.splitter.setChildrenCollapsible(False)
         self.splitter.addWidget(people_panel)
         self.splitter.addWidget(detail_panel)
-        self.splitter.setStretchFactor(0, 3)
+        self.splitter.setStretchFactor(0, 2)
         self.splitter.setStretchFactor(1, 5)
-        self.splitter.setSizes([500, 820])
+        self.splitter.setSizes([380, 940])
         root.addWidget(self.splitter, 1)
 
         self.setCentralWidget(central)
@@ -393,6 +384,37 @@ class PeopleContractsPilot(QMainWindow):
         self.tabs.addTab(self.legacy_tabs.scenarios(), _legacy_icon("Scenario.png"), "Scénarios")
         self.tabs.addTab(self.legacy_tabs.expenses(), _legacy_icon("Calculatrice.png"), "Frais")
         self.tabs.addTab(self.legacy_tabs.recruitment(), _legacy_icon("Candidature.png"), "Recrutement")
+
+        # Une rangée de huit onglets était tronquée dès 900 px de largeur.
+        # Conserver le vrai QTabWidget (état et intégrations existants), mais
+        # exposer ses huit pages via deux rangées de boutons entièrement lisibles.
+        self.tabs.tabBar().hide()
+        nav = QWidget(detail_page)
+        nav.setObjectName("twSectionNavigation")
+        nav_grid = QGridLayout(nav)
+        nav_grid.setContentsMargins(0, 0, 0, 0)
+        nav_grid.setHorizontalSpacing(5)
+        nav_grid.setVerticalSpacing(5)
+        self.section_buttons = []
+        for index in range(self.tabs.count()):
+            name = self.tabs.tabText(index)
+            button = QPushButton(name)
+            button.setObjectName("twSectionTab")
+            button.setCheckable(True)
+            button.setMinimumHeight(40)
+            button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+            button.setAccessibleName(f"Ouvrir {name}")
+            button.setToolTip(f"Afficher la rubrique {name}")
+            button.clicked.connect(
+                lambda _checked=False, selected=index: self.tabs.setCurrentIndex(selected)
+            )
+            nav_grid.addWidget(button, index // 4, index % 4)
+            self.section_buttons.append(button)
+        for column in range(4):
+            nav_grid.setColumnStretch(column, 1)
+        self.tabs.currentChanged.connect(self._sync_section_navigation)
+        self._sync_section_navigation(self.tabs.currentIndex())
+        detail_layout.addWidget(nav)
         detail_layout.addWidget(self.tabs, 1)
 
         footer = QHBoxLayout()
@@ -411,45 +433,57 @@ class PeopleContractsPilot(QMainWindow):
         layout.addWidget(self.detail_stack, 1)
         return frame
 
+    def _sync_section_navigation(self, index: int) -> None:
+        """Synchronise les boutons à deux lignes et la page Qt réelle."""
+        for current, button in enumerate(self.section_buttons):
+            button.setChecked(current == index)
+
     def _build_person_header(self) -> QWidget:
         person_summary = QFrame()
         person_summary.setObjectName("personSummary")
         summary_layout = QHBoxLayout(person_summary)
-        summary_layout.setContentsMargins(10, 8, 10, 8)
-        summary_layout.setSpacing(12)
+        summary_layout.setContentsMargins(8, 4, 8, 4)
+        summary_layout.setSpacing(8)
 
         summary_text = QWidget()
         summary_text_layout = QVBoxLayout(summary_text)
         summary_text_layout.setContentsMargins(0, 0, 0, 0)
         summary_text_layout.setSpacing(2)
-        self.detail_id = QLabel("Aucun contrat en cours | ID : —")
-        self.detail_id.setProperty("muted", True)
-        summary_text_layout.addWidget(self.detail_id, 0, Qt.AlignmentFlag.AlignRight)
-        separator = QFrame()
-        separator.setFrameShape(QFrame.Shape.HLine)
-        separator.setProperty("separator", True)
-        summary_text_layout.addWidget(separator)
+
+        identity_row = QHBoxLayout()
+        identity_row.setContentsMargins(0, 0, 0, 0)
+        identity_row.setSpacing(8)
         self.detail_title = QLabel("Fiche individuelle")
         self.detail_title.setObjectName("personSummaryName")
-        summary_text_layout.addWidget(self.detail_title)
+        identity_row.addWidget(self.detail_title, 1)
+        self.detail_id = QLabel("ID : —")
+        self.detail_id.setProperty("muted", True)
+        identity_row.addWidget(self.detail_id, 0, Qt.AlignmentFlag.AlignVCenter)
+        summary_text_layout.addLayout(identity_row)
+
         self.detail_context = QLabel("Adresse / situation : —")
         self.detail_context.setProperty("muted", True)
         self.detail_context.setWordWrap(True)
         summary_text_layout.addWidget(self.detail_context)
+
+        details_row = QHBoxLayout()
+        details_row.setContentsMargins(0, 0, 0, 0)
+        details_row.setSpacing(8)
         self.detail_birth = QLabel("Date et lieu de naissance inconnus")
         self.detail_birth.setProperty("muted", True)
-        summary_text_layout.addWidget(self.detail_birth)
+        self.detail_birth.setWordWrap(True)
+        details_row.addWidget(self.detail_birth, 1)
         self.detail_contracts = QLabel("Aucun contrat enregistré")
         self.detail_contracts.setProperty("muted", True)
-        summary_text_layout.addWidget(self.detail_contracts)
-        summary_text_layout.addStretch(1)
+        details_row.addWidget(self.detail_contracts)
+        summary_text_layout.addLayout(details_row)
         summary_layout.addWidget(summary_text, 1)
 
         self.person_avatar = QLabel("—")
         self.person_avatar.setObjectName("personAvatar")
         self.person_avatar.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.person_avatar.setFixedSize(96, 96)
-        summary_layout.addWidget(self.person_avatar, 0, Qt.AlignmentFlag.AlignTop)
+        self.person_avatar.setFixedSize(62, 62)
+        summary_layout.addWidget(self.person_avatar, 0, Qt.AlignmentFlag.AlignVCenter)
         return person_summary
 
     def _build_general_tab(self) -> QWidget:

@@ -18,7 +18,7 @@ for path in (POC, ROOT / "teamworks", ROOT):
 
 from PySide6.QtCore import Qt, QTimer  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
-from PySide6.QtWidgets import QApplication, QDialogButtonBox, QMessageBox, QToolButton  # noqa: E402
+from PySide6.QtWidgets import QApplication, QDialogButtonBox, QLabel, QMessageBox, QToolButton  # noqa: E402
 
 from data_adapter import ContractView, PersonView  # noqa: E402
 from person_editor import PersonDetailsEditDialog  # noqa: E402
@@ -79,6 +79,45 @@ def test_unavailable_commands_are_disabled_and_say_so(window):
         assert not button.isEnabled()
         assert UNAVAILABLE_SUFFIX in button.toolTip()
 
+
+
+def test_all_eight_sections_are_readable_and_switch_with_real_clicks(window):
+    _select_first(window)
+    assert window.tabs.count() == 8
+    assert window.tabs.tabBar().isHidden()
+    assert len(window.section_buttons) == 8
+    assert [b.text() for b in window.section_buttons] == [
+        "Généralités", "Questionnaire", "Qualifications", "Contrats",
+        "Présences", "Scénarios", "Frais", "Recrutement",
+    ]
+    for size in ((900, 620), (1380, 860)):
+        window.resize(*size)
+        QApplication.processEvents()
+        for index, button in enumerate(window.section_buttons):
+            assert button.isVisible()
+            assert button.height() >= 40
+            assert button.width() > button.fontMetrics().horizontalAdvance(button.text()) + 8
+            QTest.mouseClick(button, Qt.MouseButton.LeftButton)
+            QApplication.processEvents()
+            assert window.tabs.currentIndex() == index
+            assert sum(b.isChecked() for b in window.section_buttons) == 1
+            assert button.isChecked()
+
+    # Le code historique peut toujours selectionner une page directement.
+    window.tabs.setCurrentIndex(3)
+    assert window.section_buttons[3].isChecked()
+
+
+def test_person_summary_is_compact_and_has_no_prototype_heading(window):
+    _select_first(window)
+    assert window.person_avatar.width() <= 64
+    assert window.person_avatar.height() <= 64
+    assert window.detail_title.text() == "Paul AUTRET"
+    assert window.findChildren(QLabel, "personSummaryName")
+    assert not any(
+        isinstance(label, QLabel) and "Transposition Qt" in label.text()
+        for label in window.findChildren(QLabel)
+    )
 
 def test_enter_on_contract_row_opens_edit_and_delete_key_asks_confirmation(window):
     _select_first(window)

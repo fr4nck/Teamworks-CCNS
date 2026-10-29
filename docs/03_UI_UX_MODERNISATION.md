@@ -114,3 +114,8 @@ Cadrage retenu :
 - `PMSL-Arch/docs/DESIGN_SYSTEM.md`
 - `AGENTS.md`
 - chantier TW-189 et garde-fous associés
+
+
+## 29 octobre 2026 — Qt, lisibilité de la fiche individuelle
+
+Sur la copie de production affichant les huit rubriques, la barre Qt native les tronquait et n'offrait que des flèches de défilement minuscules. La navigation conserve le QTabWidget et ses huit pages pour préserver les contrôleurs, mais les expose sur **deux lignes de quatre boutons** accessibles (texte intégral, état sélectionné, clic et suivi des changements de page). Vérification demandée à 900 × 620 et 1380 × 860 via QTest. L'en-tête de fiche et son avatar sont plus compacts, le bandeau de prototype est supprimé, la liste garde une largeur adaptée. Cette évolution concerne uniquement Qt ; aucune requête SQL ni règle métier n'est modifiée.

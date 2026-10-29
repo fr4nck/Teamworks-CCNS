@@ -136,12 +136,12 @@ class ThemeEngine:
                 background: {t.selection};
                 color: {t.primary};
                 border: 1px solid {t.outline};
-                border-radius: 48px;
-                font-size: 22px;
+                border-radius: 31px;
+                font-size: 18px;
                 font-weight: 700;
             }}
             QLabel#personSummaryName {{
-                font-size: 18px;
+                font-size: 16px;
                 font-weight: 600;
             }}
             QLabel#twDialogTitle, QLabel#twSectionTitle {{
@@ -424,6 +424,29 @@ class ThemeEngine:
                 border-bottom: 1px solid {t.outline};
                 padding: 6px;
                 font-weight: 600;
+            }}
+            /* Navigation individuelle sur deux lignes, sans onglets tronqués. */
+            QPushButton#twSectionTab {{
+                background: {t.surface_container_lowest};
+                color: {t.on_surface};
+                border: 1px solid {t.outline};
+                border-radius: {r.button}px;
+                padding: 4px 3px;
+                min-height: 36px;
+                font-weight: 600;
+                text-align: center;
+            }}
+            QPushButton#twSectionTab:hover {{
+                background: {t.surface_container_high};
+                border-color: {t.primary};
+            }}
+            QPushButton#twSectionTab:checked {{
+                background: {t.selection};
+                color: {t.selection_text};
+                border: 2px solid {t.primary};
+            }}
+            QPushButton#twSectionTab:focus {{
+                border: 2px solid {t.focus};
             }}
             QTabWidget::pane {{
                 border: 1px solid {t.outline};
