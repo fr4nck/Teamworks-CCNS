@@ -19,6 +19,7 @@ import GestionDB
 import subprocess
 import shutil
 import time
+import tempfile
 
 import GestionDB
 from Utils import UTILS_Fichiers
@@ -26,6 +27,7 @@ from Utils import UTILS_Config
 from Utils import UTILS_Cryptage_fichier
 from Utils import UTILS_Fichiers
 from Utils import UTILS_Envoi_email
+from Utils import UTILS_MySQL_backup
 
 
 LISTE_CATEGORIES = [
@@ -53,10 +55,23 @@ def _decode_process_output(output):
 
 def Sauvegarde(listeFichiersLocaux=[], listeFichiersReseau=[], nom="", repertoire=None, motdepasse=None, listeEmails=None, dictConnexion=None, inclure_modeles=False, inclure_editions=False):
     """ Processus de de création du ZIP """
-    # Si aucun fichier à sauvegarder
-    if len(listeFichiersLocaux) == 0 and len(listeFichiersReseau) == 0 : 
+    # Un vieux profil peut conserver des bases reseau cochees, alors que la
+    # connexion a disparu. Ne jamais confirmer un ZIP incomplet.
+    if not (listeFichiersLocaux or listeFichiersReseau
+            or inclure_modeles or inclure_editions):
         return False
-    
+    if listeFichiersReseau and dictConnexion is None:
+        dlg = wx.MessageDialog(
+            None,
+            _(u"Des bases MySQL sont sélectionnées, mais les paramètres de "
+              u"connexion sont absents. La sauvegarde intégrale est refusée ; "
+              u"aucun fichier incomplet ne sera publié."),
+            _(u"Sauvegarde réseau impossible"), wx.OK | wx.ICON_ERROR,
+        )
+        dlg.ShowModal()
+        dlg.Destroy()
+        return False
+
     # Initialisation de la barre de progression
     nbreEtapes = 3
     nbreEtapes += len(listeFichiersLocaux)
@@ -95,7 +110,16 @@ def Sauvegarde(listeFichiersLocaux=[], listeFichiersReseau=[], nom="", repertoir
     
     # Création du fichier ZIP temporaire
     nomFichierTemp = u"%s.%s" % (nom, EXTENSIONS["decrypte"])
-    fichierZip = zipfile.ZipFile(UTILS_Fichiers.GetRepTemp(fichier=nomFichierTemp), "w", compression=zipfile.ZIP_DEFLATED)
+    chemin_archive_temp = UTILS_Fichiers.GetRepTemp(fichier=nomFichierTemp)
+    fichierZip = zipfile.ZipFile(
+        chemin_archive_temp, "w", compression=zipfile.ZIP_DEFLATED
+    )
+
+    def abandonner_archive():
+        fichierZip.close()
+        if os.path.isfile(chemin_archive_temp):
+            os.remove(chemin_archive_temp)
+
     numEtape = 1
     dlgprogress.Update(numEtape, _(u"Création du fichier de compression..."));numEtape += 1
     
@@ -106,74 +130,87 @@ def Sauvegarde(listeFichiersLocaux=[], listeFichiersReseau=[], nom="", repertoir
         if os.path.isfile(fichier) == True :
             fichierZip.write(fichier, nomFichier)
         else :
+            abandonner_archive()
             dlgprogress.Destroy()
             dlgErreur = wx.MessageDialog(None, _(u"Le fichier '%s' n'existe plus sur cet ordinateur. \n\nVeuillez ôter ce fichier de la procédure de sauvegarde automatique (Menu Fichier > Sauvegardes automatiques)") % nomFichier, _(u"Erreur"), wx.OK | wx.ICON_ERROR)
             dlgErreur.ShowModal() 
             dlgErreur.Destroy()
             return False
         
-    # Intégration des fichiers réseau
-    if len(listeFichiersReseau) > 0 and dictConnexion != None :
-        
-        # Création du répertoire temporaire
-        repTemp = UTILS_Fichiers.GetRepTemp(fichier="savetemp")
-        if os.path.isdir(repTemp) == True :
-            shutil.rmtree(repTemp)
-        os.mkdir(repTemp)
-
+    # Intégration des fichiers réseau : les sorties SQL sont des copies
+    # en lecture seule. Les erreurs, les blocages et les retours non nuls
+    # interdisent la publication de toute archive partielle.
+    if listeFichiersReseau:
+        repTemp = tempfile.mkdtemp(
+            prefix="teamworks-savetemp-",
+            dir=UTILS_Fichiers.GetRepTemp(fichier=""),
+        )
         try:
-            # Recherche du répertoire d'installation de MySQL
-            repMySQL = GetRepertoireMySQL(dictConnexion) 
-            if repMySQL == None :
-                dlgprogress.Destroy()
-                dlgErreur = wx.MessageDialog(None, _(u"Teamworks n'a pas réussi à localiser MySQL sur votre ordinateur.\n\nNotez bien que MySQL doit être installé obligatoirement pour créer une sauvegarde réseau."), _(u"Erreur"), wx.OK | wx.ICON_ERROR)
-                dlgErreur.ShowModal() 
-                dlgErreur.Destroy()
-                return False
-            
-            # Création du fichier de login
-            nomFichierLoginTemp = repTemp + "/logintemp.cnf"
-            CreationFichierLoginTemp(host=dictConnexion["host"], port=dictConnexion["port"], user=dictConnexion["user"], password=dictConnexion["password"], nomFichier=nomFichierLoginTemp)
-            
-            # Création du backup pour chaque fichier MySQL
-            for nomFichier in listeFichiersReseau :
-                dlgprogress.Update(numEtape, _(u"Compression du fichier %s...") % nomFichier);numEtape += 1
-                fichierSave = u"%s/%s.sql" % (repTemp, nomFichier)
+            repMySQL = GetRepertoireMySQL(dictConnexion)
+            if repMySQL is None:
+                raise RuntimeError(
+                    _(u"mysqldump introuvable : indiquez le répertoire "
+                      u"d'installation du client MySQL.")
+                )
 
+            nomFichierLoginTemp = os.path.join(repTemp, "logintemp.cnf")
+            CreationFichierLoginTemp(
+                host=dictConnexion["host"], port=dictConnexion["port"],
+                user=dictConnexion["user"], password=dictConnexion["password"],
+                nomFichier=nomFichierLoginTemp,
+            )
+
+            for nomFichier in listeFichiersReseau:
+                dlgprogress.Update(
+                    numEtape, _(u"Export MySQL de %s...") % nomFichier
+                )
+                numEtape += 1
+                fichierSave = os.path.join(repTemp, nomFichier + ".sql")
                 args = [
                     _mysql_executable(repMySQL, "mysqldump"),
                     "--defaults-extra-file=%s" % nomFichierLoginTemp,
-                    "--single-transaction",
                     "--opt",
-                    "--databases",
-                    nomFichier,
+                    "--single-transaction", "--skip-lock-tables", "--quick",
+                    "--hex-blob", "--routines", "--events", "--triggers",
+                    "--comments", "--dump-date", "--max-allowed-packet=1G",
+                    "--databases", nomFichier,
                 ]
-                print(("Chemin mysqldump =", args[0]))
-                with open(fichierSave, "wb") as sortie_sql:
-                    proc = subprocess.Popen(args, stdout=sortie_sql, stderr=subprocess.PIPE)
-                    _stdout, stderr = proc.communicate()
-                erreur = _decode_process_output(stderr)
 
-                if proc.returncode != 0:
-                    print((erreur,))
-                    dlgprogress.Destroy()
-                    dlgErreur = wx.MessageDialog(None, _(u"Une erreur a été détectée dans la procédure de sauvegarde !\n\nErreur : %s") % erreur, _(u"Erreur"), wx.OK | wx.ICON_ERROR)
-                    dlgErreur.ShowModal() 
-                    dlgErreur.Destroy()
-                    return False
-                if erreur:
-                    print(("Avertissement mysqldump :", erreur))
+                def progression_mysql(octets):
+                    dlgprogress.Update(
+                        numEtape - 1,
+                        _(u"Export MySQL %s : %d Mio reçus...")
+                        % (nomFichier, octets // (1024 * 1024)),
+                    )
 
-                # Insère le fichier Sql dans le ZIP
-                try :
-                    fichierZip.write(fichierSave, u"%s.sql" % nomFichier)
-                except Exception as err :
-                    dlgprogress.Destroy()
-                    print(("insertion sql dans zip : ", err,))
-                    dlgErreur = wx.MessageDialog(None, _(u"Une erreur est survenue dans la sauvegarde !\n\nErreur : %s") % err, _(u"Erreur"), wx.OK | wx.ICON_ERROR)
-                    dlgErreur.ShowModal() 
-                    dlgErreur.Destroy()
-                    return False
+                bilan = UTILS_MySQL_backup.ExporterSQL(
+                    args, fichierSave, progression=progression_mysql,
+                    secrets=(
+                        dictConnexion.get("user"),
+                        dictConnexion.get("password"),
+                        dictConnexion.get("mdp"),
+                    ),
+                )
+                if bilan["erreur"]:
+                    raise RuntimeError(
+                        _(u"Base %s non sauvegardée : %s")
+                        % (nomFichier, bilan["erreur"])
+                    )
+                # ZIP et SQL ne sont considérés terminés que si le processus
+                # mysqldump a réellement quitté avec code zéro et données.
+                fichierZip.write(fichierSave, nomFichier + ".sql")
+        except Exception as err:
+            abandonner_archive()
+            dlgprogress.Destroy()
+            dlg = wx.MessageDialog(
+                None,
+                _(u"La sauvegarde MySQL n'a pas abouti. Aucune archive "
+                  u"partielle n'a été publiée.\n\n%s") % err,
+                _(u"Échec de la sauvegarde MySQL"), wx.OK | wx.ICON_ERROR,
+            )
+            dlg.ShowModal()
+            dlg.Destroy()
+            return False
         finally:
             shutil.rmtree(repTemp, ignore_errors=True)
 
@@ -189,9 +226,40 @@ def Sauvegarde(listeFichiersLocaux=[], listeFichiersReseau=[], nom="", repertoir
         for nomFichier in os.listdir(rep):
             fichierZip.write(rep + "/" + nomFichier, u"editions/" + nomFichier)
 
-    # Finalise le fichier ZIP
+    # Ne publier une sauvegarde que si tous les fichiers demandés sont
+    # présents, lisibles et non vides (sauf modèles facultatifs).
     fichierZip.close()
-    
+    try:
+        dlgprogress.Update(numEtape, _(u"Vérification des données sauvegardées..."))
+        with zipfile.ZipFile(chemin_archive_temp, "r") as archive_controle:
+            membres = archive_controle.namelist()
+            attendus = set(listeFichiersLocaux)
+            attendus.update(nom + ".sql" for nom in listeFichiersReseau)
+            if len(membres) != len(set(membres)):
+                raise ValueError("Fichiers dupliqués dans l'archive")
+            manquants = attendus.difference(membres)
+            if manquants:
+                raise ValueError(
+                    "Fichiers manquants : %s" % ", ".join(sorted(manquants))
+                )
+            mauvais = archive_controle.testzip()
+            if mauvais is not None:
+                raise ValueError("Fichier ZIP illisible : %s" % mauvais)
+            for membre in attendus:
+                if archive_controle.getinfo(membre).file_size <= 0:
+                    raise ValueError("Fichier sauvegardé vide : %s" % membre)
+    except (OSError, ValueError, zipfile.BadZipFile, RuntimeError) as err:
+        abandonner_archive()
+        dlgprogress.Destroy()
+        dlg = wx.MessageDialog(
+            None,
+            _(u"Archive incomplète ou corrompue : %s") % err,
+            _(u"Vérification de sauvegarde"), wx.OK | wx.ICON_ERROR,
+        )
+        dlg.ShowModal()
+        dlg.Destroy()
+        return False
+
     # Cryptage du fichier
     if motdepasse != None :
         dlgprogress.Update(numEtape, _(u"Cryptage du fichier..."));numEtape += 1
@@ -208,8 +276,19 @@ def Sauvegarde(listeFichiersLocaux=[], listeFichiersReseau=[], nom="", repertoir
     if repertoire != None :
         dlgprogress.Update(numEtape, _(u"Création du fichier dans le répertoire cible..."));numEtape += 1
         fichier_source = UTILS_Fichiers.GetRepTemp(fichier=nomFichierTemp)
+        copie_temp = None
         try :
-            shutil.copy2(fichier_source, fichierDest)
+            # La copie se fait dans le même répertoire que la destination :
+            # os.replace n'expose jamais un fichier à moitié écrit.
+            fd, copie_temp = tempfile.mkstemp(
+                prefix=".teamworks-sauvegarde-", dir=repertoire,
+            )
+            os.close(fd)
+            shutil.copy2(fichier_source, copie_temp)
+            if os.path.getsize(copie_temp) != os.path.getsize(fichier_source):
+                raise IOError("La taille de la copie diffère de la source")
+            os.replace(copie_temp, fichierDest)
+            copie_temp = None
         except OSError as err:
             dlgprogress.Destroy()
             print(("Echec de la copie de sauvegarde :", err))
@@ -227,6 +306,9 @@ def Sauvegarde(listeFichiersLocaux=[], listeFichiersReseau=[], nom="", repertoir
             dlgErreur.ShowModal()
             dlgErreur.Destroy()
             return False
+        finally:
+            if copie_temp and os.path.isfile(copie_temp):
+                os.remove(copie_temp)
 
     # Envoi par Email
     if listeEmails != None :
