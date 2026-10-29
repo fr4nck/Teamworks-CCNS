@@ -16,6 +16,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QLineEdit,
     QMainWindow,
+    QMenu,
     QMessageBox,
     QPushButton,
     QScrollArea,
@@ -99,6 +100,46 @@ class ReadValue(QLabel):
         self.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         self.setWordWrap(True)
         self.setProperty("readValue", True)
+
+
+class _AdaptiveSectionNavigation(QWidget):
+    """Disposition 4 colonnes larges ou 2 colonnes et 4 lignes à 900 px."""
+
+    WIDE_THRESHOLD = 760
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setObjectName("twSectionNavigation")
+        self._grid = QGridLayout(self)
+        self._grid.setContentsMargins(0, 0, 0, 0)
+        self._grid.setHorizontalSpacing(5)
+        self._grid.setVerticalSpacing(5)
+        self._buttons = []
+        self._columns = 0
+
+    @property
+    def columns(self) -> int:
+        return self._columns
+
+    def set_buttons(self, buttons) -> None:
+        self._buttons = list(buttons)
+        self._reflow(self.width())
+
+    def _reflow(self, width: int) -> None:
+        columns = 4 if width >= self.WIDE_THRESHOLD else 2
+        if columns == self._columns:
+            return
+        for button in self._buttons:
+            self._grid.removeWidget(button)
+        for index, button in enumerate(self._buttons):
+            self._grid.addWidget(button, index // columns, index % columns)
+        for column in range(4):
+            self._grid.setColumnStretch(column, 1 if column < columns else 0)
+        self._columns = columns
+
+    def resizeEvent(self, event) -> None:
+        super().resizeEvent(event)
+        self._reflow(event.size().width())
 
 
 class PeopleContractsPilot(QMainWindow):
@@ -251,7 +292,7 @@ class PeopleContractsPilot(QMainWindow):
         frame.setObjectName("panel")
         layout = QVBoxLayout(frame)
         layout.setContentsMargins(8, 8, 8, 8)
-        layout.setSpacing(6)
+        layout.setSpacing(7)
 
         title_row = QHBoxLayout()
         label = QLabel("Liste des individus")
@@ -265,11 +306,8 @@ class PeopleContractsPilot(QMainWindow):
         title_row.addWidget(self.people_count)
         layout.addLayout(title_row)
 
-        list_row = QHBoxLayout()
-        list_row.setSpacing(6)
-        list_column = QVBoxLayout()
-        list_column.setSpacing(5)
-
+        # La liste prend toute la largeur disponible : seules les commandes
+        # réellement fonctionnelles sont visibles sans ouvrir de menu.
         self.people_table = QTableView()
         self.people_table.setModel(self.people_proxy)
         self.people_table.setSortingEnabled(True)
@@ -280,8 +318,8 @@ class PeopleContractsPilot(QMainWindow):
         self.people_table.setTextElideMode(Qt.TextElideMode.ElideRight)
         self.people_table.setWordWrap(False)
         self.people_table.verticalHeader().setVisible(False)
-        self.people_table.verticalHeader().setDefaultSectionSize(24)
-        self.people_table.verticalHeader().setMinimumSectionSize(22)
+        self.people_table.verticalHeader().setDefaultSectionSize(26)
+        self.people_table.verticalHeader().setMinimumSectionSize(24)
         header = self.people_table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
@@ -296,62 +334,116 @@ class PeopleContractsPilot(QMainWindow):
         self.people_model.modelReset.connect(self._fit_people_columns)
         self.people_model.rowsInserted.connect(self._fit_people_columns)
         self._fit_people_columns()
-        list_column.addWidget(self.people_table, 1)
 
         search_bar = QFrame()
         search_bar.setObjectName("commandBar")
         search_layout = QHBoxLayout(search_bar)
-        search_layout.setContentsMargins(6, 4, 6, 4)
+        search_layout.setContentsMargins(5, 3, 5, 3)
+        search_layout.setSpacing(5)
         self.search = QLineEdit()
-        self.search.setPlaceholderText("Nom, prénom, ville, statut…")
+        self.search.setPlaceholderText("Rechercher un nom, une ville…")
         self.search.setClearButtonEnabled(True)
         self.search.textChanged.connect(self._on_search_changed)
         search_layout.addWidget(self.search, 1)
-        list_column.addWidget(search_bar)
-        list_row.addLayout(list_column, 1)
-
-        tools = QVBoxLayout()
-        tools.setSpacing(5)
-        self.person_create_button = self._legacy_tool_button(
-            "Ajouter.png", "Créer une nouvelle fiche individuelle", fallback="+",
-            shortcut="Ctrl+N",
-        )
-        self.person_edit_button = self._legacy_tool_button(
-            "Modifier.png", "Modifier la fiche sélectionnée", fallback="M",
-            shortcut="Entrée ou double-clic",
-        )
-        self.person_delete_button = self._legacy_tool_button(
-            "Supprimer.png", "Supprimer la fiche sélectionnée", fallback="−", unavailable=True
-        )
-        for button in (self.person_create_button, self.person_edit_button, self.person_delete_button):
-            tools.addWidget(button)
-        tools.addSpacing(10)
-        tools.addWidget(self._legacy_tool_button(
-            "Calendrier3jours.png", "Rechercher sur une période", fallback="P", unavailable=True
-        ))
         show_all_button = self._legacy_tool_button(
-            "Actualiser.png", "Réafficher toute la liste", enabled=True, fallback="R", shortcut="Échap"
+            "Actualiser.png", "Réafficher toute la liste",
+            enabled=True, fallback="R", shortcut="Échap",
         )
         show_all_button.clicked.connect(self._clear_people_filter)
-        tools.addWidget(show_all_button)
-        tools.addWidget(self._legacy_tool_button(
-            "Mecanisme.png", "Options de la liste", fallback="O", unavailable=True
+        search_layout.addWidget(show_all_button)
+        layout.addWidget(search_bar)
+
+        actions = QHBoxLayout()
+        actions.setSpacing(5)
+        self.person_create_button = self._legacy_tool_button(
+            "Ajouter.png", "Créer une nouvelle fiche individuelle",
+            fallback="+", shortcut="Ctrl+N",
+        )
+        self.person_edit_button = self._legacy_tool_button(
+            "Modifier.png", "Modifier la fiche sélectionnée",
+            fallback="M", shortcut="Entrée ou double-clic",
+        )
+        for button, short_label in (
+            (self.person_create_button, "Ajouter"),
+            (self.person_edit_button, "Modifier"),
+        ):
+            button.setObjectName("peopleActionButton")
+            button.setText(short_label)
+            button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+            button.setIconSize(QSize(18, 18))
+            button.setFixedSize(99, 38)
+            actions.addWidget(button)
+
+        # Les anciennes commandes non implémentées restent explicitement
+        # visibles dans « Autres », sans permettre un faux clic d'écriture.
+        # Leurs widgets historiques restent des enfants Qt pour préserver
+        # les contrats de test et les noms accessibles.
+        self._people_hidden_tools = QWidget(frame)
+        self._people_hidden_tools.hide()
+        self._people_disabled_commands = []
+        self.person_delete_button = self._legacy_tool_button(
+            "Supprimer.png", "Supprimer la fiche sélectionnée",
+            fallback="−", unavailable=True,
+        )
+
+        def register_unavailable(button):
+            button.setParent(self._people_hidden_tools)
+            self._people_disabled_commands.append(button)
+            return button
+
+        register_unavailable(self.person_delete_button)
+        register_unavailable(self._legacy_tool_button(
+            "Calendrier3jours.png", "Rechercher sur une période",
+            fallback="P", unavailable=True,
         ))
-        tools.addSpacing(10)
+        register_unavailable(self._legacy_tool_button(
+            "Mecanisme.png", "Options de la liste",
+            fallback="O", unavailable=True,
+        ))
         self.people_unavailable_buttons = []
         for icon, tooltip, fallback in (
             ("Mail.png", "Courrier ou publipostage", "@"),
             ("Imprimante.png", "Imprimer la liste", "I"),
             ("Excel.png", "Exporter la liste", "X"),
         ):
-            button = self._legacy_tool_button(icon, tooltip, fallback=fallback, unavailable=True)
+            button = register_unavailable(self._legacy_tool_button(
+                icon, tooltip, fallback=fallback, unavailable=True,
+            ))
             self.people_unavailable_buttons.append(button)
-            tools.addWidget(button)
-        tools.addSpacing(10)
-        tools.addWidget(self._legacy_tool_button("Aide.png", "Aide", fallback="?", unavailable=True))
-        tools.addStretch(1)
-        list_row.addLayout(tools)
-        layout.addLayout(list_row, 1)
+        register_unavailable(self._legacy_tool_button(
+            "Aide.png", "Aide", fallback="?", unavailable=True,
+        ))
+
+        more = QToolButton(frame)
+        more.setObjectName("peopleMoreActions")
+        more.setText("Autres")
+        more.setAccessibleName("Autres actions individuelles")
+        more.setToolTip("Voir les autres actions et leur disponibilité")
+        more.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        more.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextOnly)
+        more.setFixedHeight(38)
+        more.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        menu = QMenu(more)
+        menu.setToolTipsVisible(True)
+        for disabled_button in self._people_disabled_commands:
+            action = menu.addAction(
+                disabled_button.icon(),
+                disabled_button.accessibleName() + " — indisponible",
+            )
+            action.setEnabled(False)
+            action.setToolTip(disabled_button.toolTip())
+        more.setMenu(menu)
+        self.people_more_actions = more
+        actions.addWidget(more, 1)
+        layout.addLayout(actions)
+        layout.addWidget(self.people_table, 1)
+
+        # Ordre clavier conservé lorsque les contrôles changent de place.
+        QWidget.setTabOrder(self.people_table, self.search)
+        QWidget.setTabOrder(self.search, show_all_button)
+        QWidget.setTabOrder(show_all_button, self.person_create_button)
+        QWidget.setTabOrder(self.person_create_button, self.person_edit_button)
+        QWidget.setTabOrder(self.person_edit_button, more)
         return frame
 
     def _build_detail_panel(self) -> QWidget:
@@ -389,29 +481,23 @@ class PeopleContractsPilot(QMainWindow):
         # Conserver le vrai QTabWidget (état et intégrations existants), mais
         # exposer ses huit pages via deux rangées de boutons entièrement lisibles.
         self.tabs.tabBar().hide()
-        nav = QWidget(detail_page)
-        nav.setObjectName("twSectionNavigation")
-        nav_grid = QGridLayout(nav)
-        nav_grid.setContentsMargins(0, 0, 0, 0)
-        nav_grid.setHorizontalSpacing(5)
-        nav_grid.setVerticalSpacing(5)
+        nav = _AdaptiveSectionNavigation(detail_page)
+        self.section_navigation = nav
         self.section_buttons = []
         for index in range(self.tabs.count()):
             name = self.tabs.tabText(index)
-            button = QPushButton(name)
+            button = QPushButton(name, nav)
             button.setObjectName("twSectionTab")
             button.setCheckable(True)
-            button.setMinimumHeight(40)
+            button.setMinimumHeight(42)
             button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
             button.setAccessibleName(f"Ouvrir {name}")
             button.setToolTip(f"Afficher la rubrique {name}")
             button.clicked.connect(
-                lambda _checked=False, selected=index: self.tabs.setCurrentIndex(selected)
+                lambda _checked=False, selected=index: self._activate_section_navigation(selected)
             )
-            nav_grid.addWidget(button, index // 4, index % 4)
             self.section_buttons.append(button)
-        for column in range(4):
-            nav_grid.setColumnStretch(column, 1)
+        nav.set_buttons(self.section_buttons)
         self.tabs.currentChanged.connect(self._sync_section_navigation)
         self._sync_section_navigation(self.tabs.currentIndex())
         detail_layout.addWidget(nav)
@@ -433,8 +519,13 @@ class PeopleContractsPilot(QMainWindow):
         layout.addWidget(self.detail_stack, 1)
         return frame
 
+    def _activate_section_navigation(self, index: int) -> None:
+        """Même un clic sur la rubrique déjà active doit rester sélectionné."""
+        self.tabs.setCurrentIndex(index)
+        self._sync_section_navigation(self.tabs.currentIndex())
+
     def _sync_section_navigation(self, index: int) -> None:
-        """Synchronise les boutons à deux lignes et la page Qt réelle."""
+        """Synchronise les boutons et la page Qt réelle."""
         for current, button in enumerate(self.section_buttons):
             button.setChecked(current == index)
 
