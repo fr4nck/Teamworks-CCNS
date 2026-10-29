@@ -32,6 +32,7 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
         advanced_contracts_enabled: bool = False,
         presence_write_port_factory=None,
         person_details_write_port_factory=None,
+        contract_schema_port=None,
     ):
         self._person_details_write_port_factory = person_details_write_port_factory
         self._activity_loader_class = activity_loader_class
@@ -54,6 +55,7 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
             contract_write_port_factory=contract_write_port_factory,
             contract_document_workspace_factory=contract_document_workspace_factory,
             advanced_contracts_enabled=advanced_contracts_enabled,
+            contract_schema_port=contract_schema_port,
         )
         self.person_edit_button.clicked.connect(self._edit_selected_person)
         self.person_create_button.setEnabled(callable(self._person_details_write_port_factory))

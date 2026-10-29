@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import sys
 import time
 from pathlib import Path
 from decimal import Decimal, InvalidOperation, localcontext
@@ -41,7 +40,7 @@ class TeamworksProductionReadAdapter(TeamworksReadAdapter):
     def __init__(self, person_reader=None, contract_reader=None, activity_reader=None):
         self._closed = False
         self._contract_document_port = None
-        self._contract_schema_checked = False
+        self._contract_schema_report = None
         self.startup_timings: dict[str, float | int | bool] = {
             "person_reader_construction_seconds": 0.0,
             "contract_reader_construction_seconds": 0.0,
@@ -190,34 +189,28 @@ class TeamworksProductionReadAdapter(TeamworksReadAdapter):
         self._ensure_open()
         from infrastructure.persistence.contract_write_adapter import GestionDbContractWriteAdapter
 
-        self._ensure_contract_engine_columns()
         return GestionDbContractWriteAdapter(self._contract_reader.db)
 
-    def _ensure_contract_engine_columns(self) -> None:
-        """Applique une fois l'évolution additive wx des colonnes CCNS des contrats.
+    def contract_schema_report(self):
+        """Précontrôle lecture seule du schéma, sur la session Contrats."""
+        self._ensure_open()
+        from infrastructure.persistence.qt_schema_compatibility import check_schema
 
-        Teamworks wx ajoute ces colonnes à l'ouverture de sa page Contrats. Une
-        base qui n'y est jamais passée refuserait sinon toute création Qt.
-        Un échec (droits ALTER MySQL absents) ne bloque pas les autres
-        écritures : l'adaptateur refusera alors explicitement la création.
-        """
-        if self._contract_schema_checked:
-            return
-        self._contract_schema_checked = True
-        from Utils import UTILS_Contrats_schema
+        if self._contract_schema_report is None:
+            self._contract_schema_report = check_schema(self._contract_reader.db)
+        return self._contract_schema_report
 
-        try:
-            created = UTILS_Contrats_schema.EnsureContractEngineColumns(self._contract_reader.db)
-        except Exception as exc:
-            print(
-                "[Teamworks Qt] Colonnes CCNS des contrats non ajoutées : %s" % exc,
-                file=sys.stderr,
-            )
-            return
-        if created:
-            self._contract_reader.invalider_schema_contrats()
-            print("[Teamworks Qt] Colonnes CCNS ajoutées aux contrats : %s" % ", ".join(created))
+    def evolve_contract_schema(self):
+        """Ajout autorisé des colonnes CCNS : jamais appelé sans confirmation explicite."""
+        self._ensure_open()
+        from infrastructure.persistence.contract_schema_evolution import (
+            add_contract_engine_columns,
+        )
 
+        result = add_contract_engine_columns(self._contract_reader.db)
+        self._contract_schema_report = None
+        self._contract_reader.invalider_schema_contrats()
+        return result
     def prepare_contract_document_workspace(self, contract_id: int):
         """Prépare les documents du contrat sur les readers déjà ouverts."""
         self._ensure_open()

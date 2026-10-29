@@ -48,6 +48,43 @@ def install_french_qt_translation(qt_app) -> bool:
     return True
 
 
+def precheck_production_database():
+    """Lecture seule : la base configurée est-elle exploitable par Qt ?
+
+    Renvoie ``(rapport, message_bloquant)``. Aucune écriture, aucune migration.
+    """
+    import GestionDB
+    from infrastructure.persistence.qt_schema_compatibility import check_schema
+
+    db = GestionDB.DB()
+    try:
+        if getattr(db, "echec", 1) != 0:
+            detail = getattr(db, "erreur", "") or "fichier introuvable ou illisible"
+            return None, (
+                "Impossible d'ouvrir la base de données configurée "
+                f"({getattr(db, 'nomFichier', '') or 'aucune base sélectionnée'}).\n\n"
+                f"Détail : {detail}"
+            )
+        report = check_schema(db)
+    finally:
+        try:
+            db.Close()
+        except Exception:
+            pass
+    if not report.compatible:
+        return report, "Cette base n'est pas compatible avec Teamworks Qt :\n\n" + report.blocking_text()
+    return report, ""
+
+
+def refuse_database(qt_app, message: str) -> int:
+    print("[Teamworks Qt] Base refusée : " + message.replace("\n", " "), file=sys.stderr)
+    if not os.environ.get("TEAMWORKS_QT_AUTOCLOSE_MS"):
+        from PySide6.QtWidgets import QMessageBox
+
+        QMessageBox.critical(None, "Teamworks Qt — base de données", message)
+    return 3
+
+
 def build_adapter(source: str, timings: dict[str, float]):
     phase = time.perf_counter()
     if source == "production":
@@ -114,8 +151,10 @@ def start_people_loader(window, people_loader_class, total_to_show_seconds: floa
             ready_total=ready_total,
             after_show=after_show,
         )
+        notice = getattr(window, "schema_notice", "")
         window.statusBar().showMessage(
             f"{window.people_model.rowCount()} personnes · données prêtes en {ready_total:.2f}s"
+            + (f" · {notice}" if notice else "")
         )
         thread.quit()
 
@@ -161,6 +200,13 @@ def main() -> None:
     startup_timings["theme_apply"] = time.perf_counter() - phase
 
     source = os.environ.get("TEAMWORKS_QT_SOURCE", "smoke").strip().lower()
+    schema_report = None
+    if source == "production":
+        phase = time.perf_counter()
+        schema_report, refusal = precheck_production_database()
+        startup_timings["schema_precheck"] = time.perf_counter() - phase
+        if refusal:
+            raise SystemExit(refuse_database(qt_app, refusal))
     adapter = build_adapter(source, startup_timings)
     ui_adapter = adapter
 
@@ -172,6 +218,7 @@ def main() -> None:
     contract_document_workspace_factory = None
     presence_write_port_factory = None
     person_details_write_port_factory = None
+    contract_schema_port = None
     if source == "production":
         phase = time.perf_counter()
         from deferred_people import DeferredPeopleAdapter, ProductionPeopleLoader
@@ -186,6 +233,7 @@ def main() -> None:
         contract_document_workspace_factory = adapter.prepare_contract_document_workspace
         presence_write_port_factory = adapter.build_presence_write_port
         person_details_write_port_factory = adapter.build_person_details_write_port
+        contract_schema_port = adapter
 
     phase = time.perf_counter()
     from pilot_generalities import PeopleContractsGeneralitiesPilot
@@ -203,8 +251,12 @@ def main() -> None:
             contract_document_workspace_factory=contract_document_workspace_factory,
             presence_write_port_factory=presence_write_port_factory,
             person_details_write_port_factory=person_details_write_port_factory,
+            contract_schema_port=contract_schema_port,
         )
         after_window = time.perf_counter()
+        if schema_report is not None and schema_report.missing_contract_columns:
+            window.schema_notice = schema_report.summary()
+            print("[Teamworks Qt] " + schema_report.summary())
         window.show()
         shown_at = time.perf_counter()
 

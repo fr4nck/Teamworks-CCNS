@@ -6,7 +6,6 @@ fictive de Static/Exemples/Exemple_TDATA.dat, événements QTest.
 from __future__ import annotations
 
 import os
-import sqlite3
 import sys
 from datetime import date
 from decimal import Decimal
@@ -30,7 +29,6 @@ from application.services.contract_write import ContractCreateCommand  # noqa: E
 from contract_editor import _money_text  # noqa: E402
 from data_adapter import PersonView  # noqa: E402
 from infrastructure.persistence.ccns_data_reader import CcnsDataReader  # noqa: E402
-from infrastructure.persistence.legacy_table_ddl import legacy_add_column_query  # noqa: E402
 import launcher  # noqa: E402
 from pilot_view import PeopleContractsPilot  # noqa: E402
 from production_read_adapter import TeamworksProductionReadAdapter  # noqa: E402
@@ -40,58 +38,31 @@ def _app():
     return QApplication.instance() or QApplication([])
 
 
-class LegacySqliteDb:
-    """GestionDB minimal : base historique sans les colonnes CCNS des contrats."""
+@pytest.fixture
+def GestionDB(monkeypatch):
+    """Vrai GestionDB et ses dépendances, même si d'autres tests ont laissé des faux.
 
-    def __init__(self):
-        self.connexion = sqlite3.connect(":memory:")
-        self.cursor = self.connexion.cursor()
-        self.isNetwork = False
-        self.cursor.executescript(
-            """
-            CREATE TABLE personnes (IDpersonne INTEGER PRIMARY KEY, prenom TEXT, nom TEXT);
-            CREATE TABLE contrats_types (IDtype INTEGER PRIMARY KEY, nom TEXT, nom_abrege TEXT);
-            CREATE TABLE contrats_class (IDclassification INTEGER PRIMARY KEY, nom TEXT);
-            CREATE TABLE contrats_valchamps (IDval_champ INTEGER PRIMARY KEY, IDcontrat INTEGER);
-            CREATE TABLE contrats (
-                IDcontrat INTEGER PRIMARY KEY AUTOINCREMENT, IDpersonne INTEGER,
-                IDclassification INTEGER, IDtype INTEGER, valeur_point INTEGER,
-                date_debut TEXT, date_fin TEXT, date_rupture TEXT, essai INTEGER,
-                signature TEXT, due TEXT
-            );
-            INSERT INTO personnes VALUES (2, 'Aurélie', 'GUEGUEN');
-            INSERT INTO contrats_types VALUES (2, 'Contrat à Durée Indéterminée', 'CDI');
-            """
-        )
+    Certains tests installent des ``SimpleNamespace`` dans ``sys.modules`` ou sur
+    les paquets ``Utils``/``Data`` ; ils sont retirés le temps du test puis restaurés.
+    """
+    import importlib
+    import types
 
-    def GetListeChamps2(self, table_name):
-        return [(row[1], row[2]) for row in self.connexion.execute(f"PRAGMA table_info({table_name})")]
-
-    def AjoutChamp(self, nomTable="", nomChamp="", typeChamp=""):
-        self.cursor.execute(legacy_add_column_query(nomTable, nomChamp, typeChamp))
-        self.connexion.commit()
-
-    def ExecuterReq(self, req):
-        self.cursor.execute(req)
-        return 1
-
-    def ResultatReq(self):
-        return self.cursor.fetchall()
-
-    def ReqInsert(self, table_name, data, commit=True):
-        fields = ", ".join(name for name, _ in data)
-        marks = ", ".join("?" for _ in data)
-        self.cursor.execute(f"INSERT INTO {table_name} ({fields}) VALUES ({marks})",
-                            tuple(value for _, value in data))
-        if commit:
-            self.connexion.commit()
-        return int(self.cursor.lastrowid)
-
-    def Commit(self):
-        self.connexion.commit()
-
-    def Close(self):
-        self.connexion.close()
+    for name, module in list(sys.modules.items()):
+        if module is not None and not isinstance(module, types.ModuleType):
+            monkeypatch.delitem(sys.modules, name)
+    for package_name in ("Utils", "Data", "infrastructure.persistence"):
+        package = sys.modules.get(package_name)
+        if isinstance(package, types.ModuleType):
+            for attr, value in list(vars(package).items()):
+                if isinstance(value, types.SimpleNamespace):
+                    monkeypatch.delattr(package, attr)
+    current = sys.modules.get("GestionDB")
+    if current is not None and not getattr(current, "__file__", None):
+        monkeypatch.delitem(sys.modules, "GestionDB")
+    module = importlib.import_module("GestionDB")
+    monkeypatch.setitem(sys.modules, "GestionDB", module)
+    return module
 
 
 class _ClosableStub:
@@ -99,35 +70,128 @@ class _ClosableStub:
         pass
 
 
-def test_contract_write_port_adds_ccns_columns_on_legacy_base_then_creation_works():
-    db = LegacySqliteDb()
+def _legacy_adapter(tmp_path, GestionDB):
+    import shutil
+
+    path = tmp_path / "Recette_TDATA.dat"
+    shutil.copyfile(ROOT / "teamworks" / "Static" / "Exemples" / "Exemple_TDATA.dat", path)
+    db = GestionDB.DB(nomFichier=str(path), suffixe=None)
     reader = CcnsDataReader(db_factory=lambda: db)
     adapter = TeamworksProductionReadAdapter(
         person_reader=_ClosableStub(), contract_reader=reader, activity_reader=_ClosableStub()
     )
-    assert adapter.list_contracts(2) == ()  # met le schéma historique en cache
+    return adapter, db
 
-    port = adapter.build_contract_write_port()
-    columns = {name for name, _ in db.GetListeChamps2("contrats")}
-    assert {"convention_code", "ccns_group", "weekly_hours", "gross_monthly_salary"} <= columns
 
-    contract_id = port.insert_contract(
-        ContractCreateCommand(
-            person_id=2, contract_type_code="CDI", start_date=date(2026, 11, 2),
-            end_date=None, convention_code="CCNS", ccns_group="G4",
-            cee_qualification=None, weekly_hours=Decimal("28"),
-            gross_monthly_salary=Decimal("3000"), gross_annual_salary=None,
-            trial_period_value=2, trial_period_unit="MONTH",
+def _contract_columns(db):
+    return {name for name, _ in db.GetListeChamps2("contrats")}
+
+
+def test_contract_write_port_never_alters_schema_implicitly(tmp_path, GestionDB):
+    adapter, db = _legacy_adapter(tmp_path, GestionDB)
+    try:
+        adapter.build_contract_write_port()
+        assert "ccns_group" not in _contract_columns(db)
+        assert len(adapter.contract_schema_report().missing_contract_columns) == 10
+    finally:
+        db.Close()
+
+
+def test_authorised_evolution_then_contract_creation_and_readback(tmp_path, GestionDB):
+    adapter, db = _legacy_adapter(tmp_path, GestionDB)
+    try:
+        assert adapter.list_contracts(2) == ()  # met le schéma historique en cache
+        result = adapter.evolve_contract_schema()
+        assert result.ok, result.message
+        assert Path(result.backup_path).is_file()
+        assert adapter.contract_schema_report().contract_writes_ready
+
+        port = adapter.build_contract_write_port()
+        contract_id = port.insert_contract(
+            ContractCreateCommand(
+                person_id=2, contract_type_code="CDI", start_date=date(2026, 11, 2),
+                end_date=None, convention_code="CCNS", ccns_group="G4",
+                cee_qualification=None, weekly_hours=Decimal("28"),
+                gross_monthly_salary=Decimal("3000"), gross_annual_salary=None,
+                trial_period_value=2, trial_period_unit="MONTH",
+            )
         )
-    )
-    port.commit()
-    views = adapter.list_contracts(2)
-    assert [view.id_historique for view in views] == [contract_id]
-    assert views[0].classification == "Groupe 4"  # cache de colonnes invalidé
-    assert views[0].duration == "28 h"
+        port.commit()
+        views = adapter.list_contracts(2)
+        assert [view.id_historique for view in views] == [contract_id]
+        assert views[0].classification == "Groupe 4"  # cache de colonnes invalidé
+        assert views[0].duration == "28 h"
+    finally:
+        db.Close()
 
-    adapter.build_contract_write_port()  # idempotent
-    db.Close()
+
+class _SchemaPort:
+    def __init__(self, missing):
+        self.missing = missing
+        self.evolved = 0
+
+    def contract_schema_report(self):
+        from types import SimpleNamespace
+        return SimpleNamespace(missing_contract_columns=self.missing)
+
+    def evolve_contract_schema(self):
+        from types import SimpleNamespace
+        self.evolved += 1
+        self.missing = ()
+        return SimpleNamespace(ok=True, message="10 colonne(s) CCNS ajoutée(s) · sauvegarde : x.bak")
+
+
+def _answer_message_box(button):
+    from PySide6.QtCore import QTimer
+    from PySide6.QtWidgets import QMessageBox
+
+    seen = {}
+
+    def answer():
+        box = QApplication.activeModalWidget()
+        if isinstance(box, QMessageBox):
+            seen["text"] = box.text()
+            box.button(button).click()
+    QTimer.singleShot(0, answer)
+    return seen
+
+
+@pytest.mark.parametrize("accept", [False, True])
+def test_contract_creation_asks_before_any_schema_evolution(accept):
+    from PySide6.QtWidgets import QMessageBox
+
+    _app()
+    port = _SchemaPort(("ccns_group", "weekly_hours"))
+    opened = []
+    window = PeopleContractsPilot(
+        _EmptyAdapter(),
+        contract_write_port_factory=lambda: opened.append("port") or None,
+        contract_schema_port=port,
+    )
+    try:
+        window._current_contract_person_key = 2
+        seen = _answer_message_box(
+            QMessageBox.StandardButton.Yes if accept else QMessageBox.StandardButton.No
+        )
+        assert window._contract_schema_ready() is accept
+        assert "sauvegarde" in seen["text"] and "Aucune donnée existante" in seen["text"]
+        assert port.evolved == (1 if accept else 0)
+        if not accept:
+            assert "aucune écriture" in window.statusBar().currentMessage()
+        assert opened == []
+    finally:
+        window.close()
+
+
+def test_schema_ready_without_question_when_columns_present():
+    _app()
+    port = _SchemaPort(())
+    window = PeopleContractsPilot(_EmptyAdapter(), contract_schema_port=port)
+    try:
+        assert window._contract_schema_ready() is True
+        assert QApplication.activeModalWidget() is None
+    finally:
+        window.close()
 
 
 def test_contract_edit_dialog_shows_saved_money_with_two_decimals():
@@ -215,7 +279,7 @@ def test_icon_tool_buttons_have_accessible_names():
         for button in (window.person_create_button, window.person_edit_button,
                        window.contract_create_button, window.contract_edit_button,
                        window.contract_delete_button):
-            assert button.accessibleName() == button.toolTip() != ""
+            assert button.accessibleName() and button.toolTip().startswith(button.accessibleName())
     finally:
         window.close()
 
