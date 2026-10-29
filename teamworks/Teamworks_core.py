@@ -1541,13 +1541,35 @@ class MyFrame(wx.Frame):
         dlg.Destroy()
 
     def On_propos_licence(self, event):
-        """ A propos : Licence """
+        """À propos : licence présente dans l'installation, sinon alerte."""
+        try:
+            with open(Chemins.GetMainPath("Licence.txt"), "r",
+                      encoding="utf-8") as fichier:
+                licence = fichier.read()
+        except (OSError, UnicodeError):
+            # Les anciennes RC Windows omettaient Licence.txt du paquet.
+            # Ne jamais arrêter l'application à cause d'un document absent.
+            dlg = wx.MessageDialog(
+                self,
+                _(u"Le fichier Licence.txt est absent ou illisible dans "
+                  u"cette installation. Installez une version corrigée de "
+                  u"Teamworks-CCNS pour consulter les conditions complètes."),
+                _(u"Licence indisponible"), wx.OK | wx.ICON_ERROR,
+            )
+            try:
+                dlg.ShowModal()
+            finally:
+                dlg.Destroy()
+            return
+
         import wx.lib.dialogs
-        txtLicence = open(Chemins.GetMainPath("Licence.txt"), "r")
-        msg = txtLicence.read()
-        txtLicence.close()
-        dlg = wx.lib.dialogs.ScrolledMessageDialog(self, msg, _(u"A propos"), size=(500, 500))
-        dlg.ShowModal()
+        dlg = wx.lib.dialogs.ScrolledMessageDialog(
+            self, licence, _(u"À propos — Licence"), size=(650, 550),
+        )
+        try:
+            dlg.ShowModal()
+        finally:
+            dlg.Destroy()
 
     def On_propos_soutenir(self, event):
         """ A propos : Soutenir """

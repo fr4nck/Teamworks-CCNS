@@ -22,3 +22,11 @@ python -m PyInstaller `
 if ($LASTEXITCODE -ne 0) {
     throw "PyInstaller a échoué avec le code $LASTEXITCODE."
 }
+
+# Conserver la licence à la racine du paquet : Chemins.GetMainPath()
+# utilise le répertoire de l'exécutable lorsque l'application est figée.
+$package = Join-Path $repositoryRoot 'dist/Teamworks-CCNS'
+Copy-Item -LiteralPath (Join-Path $repositoryRoot 'teamworks/Licence.txt') `
+    -Destination (Join-Path $package 'Licence.txt') -Force -ErrorAction Stop
+Copy-Item -LiteralPath (Join-Path $repositoryRoot 'teamworks/Versions.txt') `
+    -Destination (Join-Path $package 'Versions.txt') -Force -ErrorAction Stop

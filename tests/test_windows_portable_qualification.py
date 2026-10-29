@@ -56,7 +56,7 @@ try {
 def test_empty_build_marker_is_rejected_before_launch(tmp_path):
     package = tmp_path / "package"
     package.mkdir()
-    for name in ("Teamworks-CCNS.exe", "BUILD.txt", "VERSION", "Versions.txt",
+    for name in ("Teamworks-CCNS.exe", "BUILD.txt", "VERSION", "Versions.txt", "Licence.txt",
                  "Static/Databases/Defaut.dat", "Static/Databases/Textes.dat",
                  "Static/Databases/Villes.db3"):
         path = package / name

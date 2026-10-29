@@ -60,6 +60,7 @@ $requiredResources = @(
     "BUILD.txt",
     "VERSION",
     "Versions.txt",
+    "Licence.txt",
     "Static/Databases/Defaut.dat",
     "Static/Databases/Textes.dat",
     "Static/Databases/Villes.db3",

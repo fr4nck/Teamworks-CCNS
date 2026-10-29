@@ -64,3 +64,17 @@ def test_windows_packages_are_not_built_on_every_commit():
     assert "Teamworks-CCNS-*-windows-x64-setup.exe" in build
     assert "$icon = (Resolve-Path 'teamworks/Static/Images/Branding/Teamworks-CCNS.ico').Path" in build
     assert "'--icon', $icon" in build
+
+
+def test_packaging_includes_complete_licence_at_executable_root():
+    """La RC6 copiait Versions.txt mais oubliait Licence.txt : crash à propos."""
+    workflow = WORKFLOW.read_text(encoding="utf-8")
+    assert 'Copy-Item teamworks/Licence.txt "$package/Licence.txt" -Force' in workflow
+    assert "'Licence.txt'," in workflow
+    assert 'Get-FileHash "$package/Licence.txt" -Algorithm SHA256' in workflow
+    assert "Join-Path $installDir 'Licence.txt'" in workflow
+    portable_test = (
+        ROOT / "scripts" / "test_windows_portable_isolated.ps1"
+    ).read_text(encoding="utf-8-sig")
+    assert '"Licence.txt",' in portable_test
+    assert (ROOT / "teamworks" / "Licence.txt").stat().st_size > 1000

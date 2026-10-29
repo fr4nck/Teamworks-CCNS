@@ -622,6 +622,7 @@ jobs:
             Copy-Item teamworks/Data "$package/Data" -Recurse -Force
           }
           Copy-Item teamworks/Versions.txt "$package/Versions.txt" -Force
+          Copy-Item teamworks/Licence.txt "$package/Licence.txt" -Force
           Copy-Item VERSION "$package/VERSION" -Force
           Copy-Item CHANGELOG.md "$package/CHANGELOG.md" -Force
           Copy-Item ROADMAP.md "$package/ROADMAP.md" -Force
@@ -637,6 +638,7 @@ jobs:
             'Teamworks-CCNS.exe',
             'Static',
             'Versions.txt',
+            'Licence.txt',
             'VERSION',
             'CHANGELOG.md',
             'ROADMAP.md',
@@ -650,6 +652,13 @@ jobs:
           }
           if ((Get-Item "$package/Versions.txt").Length -eq 0) {
             throw 'Versions.txt est vide'
+          }
+          if ((Get-Item "$package/Licence.txt").Length -eq 0) {
+            throw 'Licence.txt est vide'
+          }
+          if ((Get-FileHash "$package/Licence.txt" -Algorithm SHA256).Hash -ne
+              (Get-FileHash "teamworks/Licence.txt" -Algorithm SHA256).Hash) {
+            throw 'La licence du paquet diffère du texte source'
           }
 
           $wxXml = @(Get-ChildItem $package -Recurse -Filter '_xml*.pyd' -File)
@@ -805,6 +814,9 @@ jobs:
             }
             if (-not (Test-Path $uninstaller -PathType Leaf)) {
               throw 'Desinstallateur introuvable'
+            }
+            if (-not (Test-Path (Join-Path $installDir 'Licence.txt') -PathType Leaf)) {
+              throw 'Licence.txt absent de l installation'
             }
 
             $proc = Start-Process -FilePath $app `
