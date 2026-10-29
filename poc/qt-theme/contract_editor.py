@@ -267,6 +267,18 @@ class ContractCreateDialog(QDialog):
         self._refresh_contract_type()
         self._refresh_groups()
 
+        # Un message de validation ne doit jamais survivre à la correction du champ.
+        for signal in (
+            self.contract_type.currentIndexChanged, self.start_date.dateChanged,
+            self.end_date.dateChanged, self.group.currentIndexChanged,
+            self.cee_qualification.currentIndexChanged, self.weekly_hours.valueChanged,
+            self.monthly_salary.textEdited, self.annual_salary.textEdited,
+        ):
+            signal.connect(self._clear_validation_message)
+
+    def _clear_validation_message(self, *_args) -> None:
+        self.error_label.clear()
+
     def _contract_type_code(self) -> str:
         return str(self.contract_type.currentData() or "").strip().upper()
 
@@ -822,6 +834,15 @@ class ContractEditDialog(QDialog):
         self.group.currentIndexChanged.connect(self._refresh_salary_mode)
         self._configure_regime()
         self._refresh_groups()
+
+        for signal in (
+            self.start_date.dateChanged, self.end_date.dateChanged,
+            self.break_date.dateChanged, self.open_ended.toggled, self.has_break.toggled,
+            self.group.currentIndexChanged, self.cee_qualification.currentIndexChanged,
+            self.weekly_hours.valueChanged, self.monthly_salary.textEdited,
+            self.annual_salary.textEdited,
+        ):
+            signal.connect(self.error_label.clear)
 
     def _configure_regime(self) -> None:
         modern = self.snapshot.modern_fields_supported

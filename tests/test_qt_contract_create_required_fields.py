@@ -61,6 +61,21 @@ def test_save_without_choices_stays_open_and_lists_missing_fields_inline():
         dialog.close()
 
 
+def test_validation_message_disappears_as_soon_as_a_field_is_corrected():
+    dialog = _dialog()
+    try:
+        dialog._on_accept()
+        assert "type de contrat" in dialog.error_label.text()
+        dialog.contract_type.setCurrentIndex(dialog.contract_type.findData("CDI"))
+        assert dialog.error_label.text() == ""
+        dialog._on_accept()
+        assert "brut mensuel" in dialog.error_label.text()
+        dialog.weekly_hours.setValue(28.0)
+        assert dialog.error_label.text() == ""
+    finally:
+        dialog.close()
+
+
 def test_types_are_distinguished_by_labels_hints_and_required_fields():
     dialog = _dialog()
     try:
