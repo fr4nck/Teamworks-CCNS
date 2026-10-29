@@ -25,6 +25,7 @@ def capture(output: Path, expected_scale: str) -> None:
     if os.environ.get("QT_SCALE_FACTOR") != expected_scale:
         raise RuntimeError("QT_SCALE_FACTOR must be set before QApplication starts")
 
+    from PySide6.QtCore import QPoint
     from PySide6.QtWidgets import QApplication
     from domain_read_adapter import build_domain_smoke_adapter
     from pilot_generalities import PeopleContractsGeneralitiesPilot
@@ -74,8 +75,24 @@ def capture(output: Path, expected_scale: str) -> None:
                     raise AssertionError(f"Selected section {section_name} is not checked")
                 if not window.people_table.isVisible():
                     raise AssertionError("People list missing from visible screen")
-                if section == 3 and not window.contracts_table.isVisible():
-                    raise AssertionError("Contracts table missing from visible screen")
+                if section == 3:
+                    if not window.contracts_table.isVisible():
+                        raise AssertionError("Contracts table missing from visible screen")
+                    if window.contracts_table.height() < 160:
+                        raise AssertionError("Contracts table compressed below its readable minimum")
+                    table_y = window.contracts_table.mapToGlobal(QPoint(0, 0)).y()
+                    buttons_y = max(
+                        button.mapToGlobal(QPoint(0, 0)).y() + button.height()
+                        for button in (
+                            window.contract_create_button, window.contract_edit_button,
+                            window.contract_delete_button, window.contract_signature_button,
+                            window.contract_due_button, window.contract_document_button,
+                        )
+                    )
+                    if buttons_y > table_y:
+                        raise AssertionError("Contracts command rows overlap the table")
+                    if width == 900 and window.contracts_scroll.verticalScrollBar().maximum() <= 0:
+                        raise AssertionError("Short contracts tab must offer vertical scrolling")
                 image = window.grab()
                 if image.isNull():
                     raise AssertionError("Qt returned an empty capture")
