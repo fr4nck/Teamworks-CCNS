@@ -25,6 +25,7 @@ from Utils import UTILS_Sauvegarde
 from Utils import UTILS_Config
 from Dlg import DLG_Saisie_param_reseau
 from Utils import UTILS_Fichiers
+from Utils import UTILS_Sauvegarde_perimetre as PerimetreSauvegarde
 
 
 LISTE_CATEGORIES = UTILS_Sauvegarde.LISTE_CATEGORIES
@@ -52,7 +53,7 @@ class CTRL_Donnees(CT.CustomTreeCtrl):
         # Fichiers locaux
         listeFichiersLocaux = self.GetListeFichiersLocaux()
         if len(listeFichiersLocaux) > 0 and self.parent.check_locaux.GetValue() == True :
-            brancheType = self.AppendItem(self.root, _(u"Fichiers locaux"), ct_type=1)
+            brancheType = self.AppendItem(self.root, _(u"Dossier Teamworks ouvert - local"), ct_type=1)
             self.SetItemData(brancheType, _(u"locaux"))
             self.SetItemBold(brancheType)
             
@@ -71,7 +72,7 @@ class CTRL_Donnees(CT.CustomTreeCtrl):
         # Fichiers réseaux
         listeFichiersReseau, listeBases = self.GetListeFichiersReseau()
         if len(listeFichiersReseau) > 0  and self.parent.check_reseau.GetValue() == True :
-            brancheType = self.AppendItem(self.root, _(u"Fichiers réseau"), ct_type=1)
+            brancheType = self.AppendItem(self.root, _(u"Dossier Teamworks ouvert - MySQL"), ct_type=1)
             self.SetItemData(brancheType, _(u"reseau"))
             self.SetItemBold(brancheType)
             
@@ -106,30 +107,35 @@ class CTRL_Donnees(CT.CustomTreeCtrl):
         self.AfficheNbreElements()
         
     def GetListeFichiersLocaux(self):
-        """ Trouver les fichiers présents sur le DD """
-        listeFichiersTmp = os.listdir(UTILS_Fichiers.GetRepData())
-        listeFichiers = []
-        for fichier in listeFichiersTmp :
-            if fichier[-10:] == "_TDATA.dat" :
-                nomFichier = fichier[:-10]
-                if "EXEMPLE" not in nomFichier and "Exemple" not in nomFichier :
-                    listeFichiers.append(nomFichier)
-        listeFichiers.sort()
-        return listeFichiers
+        """N'affiche que le fichier local actuellement ouvert par Teamworks."""
+        actif = self.parent.fichier_actif
+        scope = PerimetreSauvegarde.analyser_fichier_actif(actif)
+        if not scope or scope["mode"] != "local":
+            return []
+        tdata = "%s_TDATA.dat" % scope["nom"]
+        if os.path.isfile(UTILS_Fichiers.GetRepData(tdata)):
+            return [scope["nom"]]
+        return []
 
     def GetListeFichiersReseau(self):
-        """ Trouver les fichiers MySQL """
-        listeFichiers = []
-        if self.parent.dictConnexion == None :
+        """Ne montre aucune autre base MySQL que le dossier courant."""
+        actif = self.parent.fichier_actif
+        scope = PerimetreSauvegarde.analyser_fichier_actif(actif)
+        connexion = self.parent.dictConnexion
+        if (not scope or scope["mode"] != "reseau" or
+                not PerimetreSauvegarde.connexion_correspond(actif, connexion)):
             return [], []
-        
-        listeBases = UTILS_Sauvegarde.GetListeFichiersReseau(self.parent.dictConnexion)
-        for fichier in listeBases :
-            if fichier[-6:] == "_TDATA".lower() :
-                nomFichier = fichier[:-6]
-                listeFichiers.append(nomFichier)
-        listeFichiers.sort()
-        return listeFichiers, listeBases
+
+        toutes_bases = UTILS_Sauvegarde.GetListeFichiersReseau(connexion)
+        autorisees = set(
+            PerimetreSauvegarde.composants_du_dossier(actif)["reseau"]
+        )
+        presentes = sorted(
+            {base.lower() for base in toutes_bases if base.lower() in autorisees}
+        )
+        if ("%s_tdata" % scope["nom"].lower()) not in presentes:
+            return [], []
+        return [scope["nom"]], presentes
 
     def GetCoches(self):
         """ Obtient la liste des éléments cochés """
@@ -214,7 +220,7 @@ class CTRL_Donnees(CT.CustomTreeCtrl):
             nbreElements += 1
         if "editions" in dictDonnees:
             nbreElements += 1
-        texte = _(u"Données à sauvegarder (%d éléments cochés)") % nbreElements
+        texte = _(u"Données du dossier Teamworks ouvert (%d éléments cochés)") % nbreElements
         self.parent.box_donnees_staticbox.SetLabel(texte)
         
 
@@ -250,7 +256,7 @@ class CTRL_Parametres(wx.Panel) :
         # Données
         self.box_donnees_staticbox = wx.StaticBox(self, -1, _(u"Données à sauvegarder"))
         self.ctrl_donnees = CTRL_Donnees(self.box_donnees_staticbox, controller=self)
-        self.ctrl_donnees.SetMinSize((300, -1))
+        self.ctrl_donnees.SetMinSize((370, 270))
         self.check_locaux = wx.CheckBox(self.box_donnees_staticbox, -1, _(u"Fichiers locaux"))
         self.check_reseau = wx.CheckBox(self.box_donnees_staticbox, -1, _(u"Fichiers réseau"))
 
@@ -270,17 +276,28 @@ class CTRL_Parametres(wx.Panel) :
         self.OnCheckRepertoire(None) 
         self.OnCheckEmail(None) 
 
-        self.check_locaux.SetValue(True)
-        # Récupération des paramètres de connexion réseau
+        # Les données Noethys peuvent partager le même répertoire historique.
+        # Seul le dossier effectivement ouvert a le droit d'apparaître ici.
+        self.fichier_actif = PerimetreSauvegarde.fichier_actif()
+        self.scope = PerimetreSauvegarde.analyser_fichier_actif(
+            self.fichier_actif
+        )
+        mode = self.scope["mode"] if self.scope else None
+        self.check_locaux.SetValue(mode == "local")
+        self.check_reseau.SetValue(mode == "reseau")
+        self.check_locaux.Show(mode == "local")
+        self.check_reseau.Show(mode == "reseau")
+
         self.dictConnexion = None
-        DB = GestionDB.DB() 
-        if DB.echec != 1 :
-            if DB.isNetwork == True :
-                self.check_reseau.SetValue(True)
-                self.dictConnexion = DB.GetParamConnexionReseau() 
-        DB.Close() 
-        
-        self.ctrl_donnees.MAJ() 
+        if mode == "reseau":
+            DB = GestionDB.DB()
+            try:
+                if DB.echec != 1 and DB.isNetwork:
+                    self.dictConnexion = DB.GetParamConnexionReseau()
+            finally:
+                DB.Close()
+
+        self.ctrl_donnees.MAJ()
 
     def __set_properties(self):
         self.check_cryptage.SetToolTip(wx.ToolTip(_(u"Cochez cette case pour crypter le fichier de sauvegarde (utile pour un stockage en ligne)")))
@@ -293,11 +310,12 @@ class CTRL_Parametres(wx.Panel) :
         self.bouton_repertoire.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour sélectionner un répertoire de destination")))
         self.check_email.SetToolTip(wx.ToolTip(_(u"Cochez cette case pour envoyer la sauvegarde par Email")))
         self.ctrl_email.SetToolTip(wx.ToolTip(_(u"Saisissez ici une ou plusieurs adresses Email (separées par des points-virgules)")))
-        self.check_locaux.SetToolTip(wx.ToolTip(_(u"Cochez cette case pour afficher les fichiers locaux")))
+        self.check_locaux.SetToolTip(wx.ToolTip(_(
+            u"Affiche exclusivement le dossier local actuellement ouvert."
+        )))
         self.check_reseau.SetToolTip(wx.ToolTip(_(
-            u"Affiche les bases Teamworks du serveur MySQL courant "
-            u"(suffixes _tdata, _tphotos, _tdocuments). "
-            u"Ce n'est pas une sauvegarde de toutes les bases Noethys."
+            u"Affiche exclusivement les bases du dossier actuellement ouvert "
+            u"sur son serveur MySQL."
         )))
 
     def __do_layout(self):
@@ -399,6 +417,9 @@ class CTRL_Parametres(wx.Panel) :
         self.ctrl_donnees.MAJ() 
         
     def OnCheckReseau(self, event):
+        if not self.scope or self.scope["mode"] != "reseau":
+            self.check_reseau.SetValue(False)
+            return
         if self.dictConnexion == None :
             # Demande les paramètres de connexion
             intro = _(u"Pour accéder à la liste des fichiers réseau disponibles, un accès MySQL \nest nécessaire. Veuillez saisir vos paramètres de connexion réseau :")
@@ -419,6 +440,16 @@ class CTRL_Parametres(wx.Panel) :
                 self.check_reseau.SetValue(False)
                 return
             self.dictConnexion = dictValeurs
+        if not PerimetreSauvegarde.connexion_correspond(
+                self.fichier_actif, self.dictConnexion):
+            wx.MessageBox(
+                _(u"La connexion ne correspond pas au dossier Teamworks ouvert."),
+                _(u"Sauvegarde limitée au dossier courant"),
+                wx.OK | wx.ICON_ERROR,
+                parent=self,
+            )
+            self.check_reseau.SetValue(False)
+            return
         # MAJ de la liste des données
         self.ctrl_donnees.MAJ() 
     
@@ -463,15 +494,23 @@ class CTRL_Parametres(wx.Panel) :
         inclure_modeles = dictDonnees["sauvegarde_modeles"]
         inclure_editions = dictDonnees["sauvegarde_editions"]
 
-        if listeFichiersReseau != None :
+        if (listeFichiersReseau is not None and self.scope and
+                self.scope["mode"] == "reseau"):
             self.check_reseau.SetValue(True)
             self.OnCheckReseau(None)
-            liste = listeFichiersReseau.split(";")
-            self.ctrl_donnees.SetCoches(liste)
+            self.ctrl_donnees.SetCoches(listeFichiersReseau.split(";"))
 
-        if listeFichiersLocaux != None :
-            liste = listeFichiersLocaux.split(";")
-            self.ctrl_donnees.SetCoches(liste)
+        if (listeFichiersLocaux is not None and self.scope and
+                self.scope["mode"] == "local"):
+            self.ctrl_donnees.SetCoches(listeFichiersLocaux.split(";"))
+
+        if listeFichiersReseau is None and listeFichiersLocaux is None:
+            autorises = PerimetreSauvegarde.composants_du_dossier(
+                self.fichier_actif
+            )
+            self.ctrl_donnees.SetCoches(
+                list(autorises["locaux"]) + list(autorises["reseau"])
+            )
 
         if inclure_modeles == True:
             self.ctrl_donnees.SetCoches("modeles")
@@ -592,12 +631,18 @@ class CTRL_Parametres(wx.Panel) :
 
 class Dialog(wx.Dialog):
     def __init__(self, parent, dictDonnees=None):
-        wx.Dialog.__init__(self, parent, -1, style=wx.DEFAULT_DIALOG_STYLE)#|wx.RESIZE_BORDER|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX)
+        wx.Dialog.__init__(
+            self, parent, -1, style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER
+        )
         self.parent = parent
         self.dictDonnees = dictDonnees
         self.resultat = False
 
-        intro = _(u"Vous pouvez créer ici une sauvegarde des données afin d'en la conservation ou de les transférer sur un autre ordinateur. Il est possible de crypter le fichier de sauvegarde et de l'enregistrer sur le disque dur ou une clé USB et de l'expédier par Email.")
+        intro = _(
+            u"Sauvegarde du dossier Teamworks actuellement ouvert et de ses "
+            u"données associées. Les autres dossiers et logiciels ne sont pas "
+            u"proposés. Vous pouvez protéger le fichier et choisir sa destination."
+        )
         titre = _(u"Sauvegarde")
         self.SetTitle(titre)
         self.ctrl_bandeau = CTRL_Bandeau.Bandeau(self, titre=titre, texte=intro, hauteurHtml=30, nomImage=Chemins.GetStaticPath("Images/32x32/Sauvegarder.png"))
@@ -647,8 +692,19 @@ class Dialog(wx.Dialog):
         grid_sizer_base.AddGrowableRow(1)
         grid_sizer_base.AddGrowableCol(0)
         self.Layout()
-        self.CenterOnScreen() 
-    
+        # Respecte la zone de travail Windows et laisse l'arbre extensible.
+        try:
+            rect = wx.GetClientDisplayRect()
+            largeur_max = max(650, rect.GetWidth() - 36)
+            hauteur_max = max(460, rect.GetHeight() - 36)
+        except Exception:
+            largeur_max, hauteur_max = 950, 660
+        largeur = min(max(self.GetSize().GetWidth(), 860), largeur_max)
+        hauteur = min(max(self.GetSize().GetHeight(), 570), hauteur_max)
+        self.SetMinSize((min(740, largeur_max), min(490, hauteur_max)))
+        self.SetSize((largeur, hauteur))
+        self.Layout()
+        self.CenterOnScreen()
 
     def OnBoutonAide(self, event): 
         from Utils import UTILS_Aide
@@ -704,17 +760,14 @@ class Dialog(wx.Dialog):
         if self.resultat == False :
             return False
 
-        # Fin du processus
-        # Un succès technique ne doit pas être pris pour une sauvegarde
-        # exhaustive de Noethys et de toutes les bases du serveur.
+        # Fin du processus : uniquement les bases du dossier courant.
         message = _(
-            u"La procédure de sauvegarde est terminée.\n\n"
+            u"Sauvegarde du dossier Teamworks ouvert terminée.\n\n"
             u"Fichiers locaux : %d\n"
-            u"Bases MySQL Teamworks : %d\n"
+            u"Bases MySQL du dossier : %d\n"
             u"Modèles sélectionnés : %s\n"
             u"Éditions sélectionnées : %s\n\n"
-            u"Seuls les éléments cochés ont été archivés. "
-            u"Les bases d'autres logiciels Noethys ne sont pas incluses automatiquement."
+            u"Aucun autre dossier n'a été sélectionné."
         ) % (
             len(listeFichiersLocaux), len(listeFichiersReseau),
             _(u"Oui") if inclure_modeles else _(u"Non"),
