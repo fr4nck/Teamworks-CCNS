@@ -97,6 +97,34 @@ jobs:
             throw "Le runtime Qt figé a quitté avec le code $($process.ExitCode)."
           }
 
+      - name: Smoke production sur base fictive (copie Portable isolée)
+        shell: pwsh
+        run: |
+          # Chaîne réelle : précontrôle de schéma, GestionDB, chargement des personnes.
+          # Effectué sur une copie : le dossier livré et l'installateur restent sans Portable.
+          $source = (Resolve-Path "dist/qt-vanilla/Teamworks-CCNS-Qt").Path
+          $copy = Join-Path $env:RUNNER_TEMP "qt-production-smoke"
+          Remove-Item $copy -Recurse -Force -ErrorAction SilentlyContinue
+          Copy-Item $source $copy -Recurse
+          $data = Join-Path $copy "Portable/Data"
+          New-Item -ItemType Directory -Force -Path $data | Out-Null
+          foreach ($suffix in "TDATA", "TPHOTOS", "TDOCUMENTS") {
+            Copy-Item "teamworks/Static/Exemples/Exemple_$suffix.dat" (Join-Path $data "Recette_$suffix.dat")
+          }
+          '{"nomFichier": "Recette"}' | Set-Content -Path (Join-Path $copy "Portable/Config.json") -Encoding utf8
+          $env:TEAMWORKS_QT_SOURCE = "production"
+          $env:TEAMWORKS_QT_AUTOCLOSE_MS = "4000"
+          $process = Start-Process -FilePath (Join-Path $copy "Teamworks-CCNS-Qt.exe") -PassThru
+          if (-not $process.WaitForExit(30000)) {
+            Stop-Process -Id $process.Id -Force
+            throw "Le runtime Qt figé (production) ne s'est pas fermé."
+          }
+          if ($process.ExitCode -ne 0) {
+            Get-ChildItem (Join-Path $copy "Portable/Logs") -ErrorAction SilentlyContinue | ForEach-Object { Get-Content $_.FullName -Tail 40 }
+            throw "Le runtime Qt figé (production) a quitté avec le code $($process.ExitCode)."
+          }
+          if (Test-Path (Join-Path $source "Portable")) { throw "Le dossier livré ne doit pas contenir de Portable." }
+
       - name: Installer Inno Setup
         shell: pwsh
         run: choco install innosetup --yes --no-progress

@@ -351,3 +351,22 @@ def test_launcher_installs_french_qt_standard_buttons():
         box.button(QDialogButtonBox.StandardButton.Cancel).text().replace("&", ""),
     )
     assert labels == ("Enregistrer", "Annuler")
+
+
+def test_frozen_runtime_drops_only_subdirectories_added_by_chemins(tmp_path):
+    runtime = tmp_path / "Teamworks-CCNS-Qt"
+    for name in ("charset_normalizer", "numpy", "win32"):
+        (runtime / name).mkdir(parents=True)
+    before = [str(runtime / "base_library.zip"), str(runtime), str(runtime / "win32")]
+    after = before[:2] + [str(runtime / "charset_normalizer"), str(runtime / "numpy")] + before[2:] + [
+        str(tmp_path / "ailleurs")
+    ]
+    added = launcher.frozen_paths_added_by_chemins(before, after, str(runtime))
+    # « import models » ne doit plus pouvoir résoudre charset_normalizer.models.
+    assert added == [str(runtime / "charset_normalizer"), str(runtime / "numpy")]
+
+
+def test_production_precheck_imports_chemins_through_the_safe_path():
+    source = (POC / "launcher.py").read_text(encoding="utf-8")
+    body = source[source.index("def precheck_production_database"):]
+    assert body.index("import_chemins_safely()") < body.index("import GestionDB")

@@ -48,11 +48,41 @@ def install_french_qt_translation(qt_app) -> bool:
     return True
 
 
+def frozen_paths_added_by_chemins(before, after, runtime_dir):
+    """Sous-dossiers du runtime figé ajoutés à sys.path par ``import Chemins``.
+
+    En exécutable PyInstaller, Chemins insère chaque sous-dossier du répertoire
+    de l'exe (charset_normalizer, numpy…) : un ``import models`` y résoudrait
+    alors ``charset_normalizer.models``. Seules ces entrées nouvelles sont visées.
+    """
+    base = os.path.normcase(os.path.abspath(runtime_dir))
+    existing = set(before)
+    added = []
+    for entry in after:
+        if not entry or entry in existing:
+            continue
+        normalized = os.path.normcase(os.path.abspath(entry))
+        if normalized != base and os.path.dirname(normalized) == base:
+            added.append(entry)
+    return added
+
+
+def import_chemins_safely() -> None:
+    before = list(sys.path)
+    import Chemins  # noqa: F401  (résolution des chemins Teamworks)
+
+    if getattr(sys, "frozen", False):
+        for entry in frozen_paths_added_by_chemins(before, list(sys.path), os.path.dirname(sys.executable)):
+            while entry in sys.path:
+                sys.path.remove(entry)
+
+
 def precheck_production_database():
     """Lecture seule : la base configurée est-elle exploitable par Qt ?
 
     Renvoie ``(rapport, message_bloquant)``. Aucune écriture, aucune migration.
     """
+    import_chemins_safely()
     import GestionDB
     from infrastructure.persistence.qt_schema_compatibility import check_schema
 
