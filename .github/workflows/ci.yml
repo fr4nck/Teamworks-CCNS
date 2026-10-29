@@ -128,7 +128,11 @@ jobs:
             tests/test_qt_contract_mysql_recipe_contract.py `
             tests/test_contract_legacy_classification_service.py `
             tests/test_qt_presence_integration.py `
-            tests/test_qt_blocking_thread_lifecycle_runtime.py
+            tests/test_qt_blocking_thread_lifecycle_runtime.py `
+            tests/test_qt_schema_compatibility.py `
+            tests/test_qt_usable_recipe_regressions.py `
+            tests/test_qt_contract_create_required_fields.py `
+            tests/test_qt_toolbar_keyboard.py
       - name: Démarrer MySQL local pour la recette Frais
         shell: pwsh
         run: |

@@ -60,9 +60,67 @@ def GestionDB(monkeypatch):
     current = sys.modules.get("GestionDB")
     if current is not None and not getattr(current, "__file__", None):
         monkeypatch.delitem(sys.modules, "GestionDB")
-    module = importlib.import_module("GestionDB")
+    try:
+        import appdirs  # noqa: F401  (dépendance de GestionDB/UTILS_Fichiers)
+        legacy_runtime = True
+    except ImportError:
+        legacy_runtime = False
+    if not legacy_runtime:
+        # CI Linux minimale : GestionDB réel inimportable ; le job Windows natif
+        # exécute ces mêmes tests sur le vrai module.
+        module = types.SimpleNamespace(DB=_SqliteGestionDbShim)
+    else:
+        module = importlib.import_module("GestionDB")
     monkeypatch.setitem(sys.modules, "GestionDB", module)
     return module
+
+class _SqliteGestionDbShim:
+    """Sous-ensemble fidèle de GestionDB.DB (SQLite local) pour les CI sans appdirs."""
+
+    def __init__(self, nomFichier="", suffixe=None, modeCreation=False):
+        import sqlite3
+
+        self.nomFichier = nomFichier
+        self.isNetwork = False
+        self.connexion = sqlite3.connect(nomFichier)
+        self.cursor = self.connexion.cursor()
+        self.echec = 0
+
+    def ExecuterReq(self, req):
+        self.cursor.execute(req)
+        return 1
+
+    def ResultatReq(self):
+        return self.cursor.fetchall()
+
+    def GetListeTables(self):
+        self.ExecuterReq("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;")
+        return self.ResultatReq()
+
+    def GetListeChamps2(self, nomTable=""):
+        self.ExecuterReq("PRAGMA table_info('%s');" % nomTable)
+        return [(row[1], row[2]) for row in self.ResultatReq()]
+
+    def AjoutChamp(self, nomTable="", nomChamp="", typeChamp=""):
+        from infrastructure.persistence.legacy_table_ddl import legacy_add_column_query
+
+        self.ExecuterReq(legacy_add_column_query(nomTable, nomChamp, typeChamp))
+        self.connexion.commit()
+
+    def ReqInsert(self, nomTable, listeDonnees, commit=True):
+        fields = ", ".join(name for name, _ in listeDonnees)
+        marks = ", ".join("?" for _ in listeDonnees)
+        self.cursor.execute("INSERT INTO %s (%s) VALUES (%s)" % (nomTable, fields, marks),
+                            tuple(value for _, value in listeDonnees))
+        if commit:
+            self.connexion.commit()
+        return int(self.cursor.lastrowid)
+
+    def Commit(self):
+        self.connexion.commit()
+
+    def Close(self):
+        self.connexion.close()
 
 
 class _ClosableStub:
