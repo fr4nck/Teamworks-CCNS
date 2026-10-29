@@ -15,11 +15,10 @@ Teamworks wx (page Contrats). ``UpgradeDB`` n'est jamais appelé.
 
 from __future__ import annotations
 
-import os
-import sqlite3
 from dataclasses import dataclass
 from datetime import datetime
 
+from infrastructure.persistence.sqlite_backup import backup_open_sqlite
 from infrastructure.persistence.qt_schema_compatibility import (
     CONTRACT_ENGINE_COLUMNS,
     check_schema,
@@ -50,27 +49,10 @@ def _contracts_fingerprint(connection, columns: tuple[str, ...]) -> int:
 
 
 def backup_sqlite(db, *, now: datetime | None = None) -> str:
-    """Copie cohérente du fichier SQLite ouvert (API backup), puis contrôle d'intégrité."""
-    source_path = str(getattr(db, "nomFichier", "") or "")
-    if not source_path or not os.path.isfile(source_path):
-        raise RuntimeError("Fichier SQLite introuvable : sauvegarde impossible.")
-    stamp = (now or datetime.now()).strftime("%Y%m%d-%H%M%S")
-    base, _ext = os.path.splitext(source_path)
-    target = "%s.avant-colonnes-ccns-%s.bak" % (base, stamp)
-    if os.path.exists(target):
-        raise RuntimeError("Une sauvegarde porte déjà ce nom : %s" % target)
-    destination = sqlite3.connect(target)
-    try:
-        db.connexion.backup(destination)
-        destination.commit()
-        status = destination.execute("PRAGMA integrity_check").fetchone()[0]
-        if status != "ok":
-            raise RuntimeError("Sauvegarde corrompue : %s" % status)
-        if _row_counts(destination) != _row_counts(db.connexion):
-            raise RuntimeError("Sauvegarde incomplète : effectifs différents.")
-    finally:
-        destination.close()
-    return target
+    """Copie cohérente du fichier SQLite ouvert (API backup), puis contrôle du contenu."""
+    return backup_open_sqlite(
+        db.connexion, str(getattr(db, "nomFichier", "") or ""), "avant-colonnes-ccns", now=now
+    )
 
 
 def add_contract_engine_columns(db, *, now: datetime | None = None) -> ContractSchemaEvolution:

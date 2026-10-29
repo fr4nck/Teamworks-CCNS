@@ -58,6 +58,16 @@ garde AST recherche cette famille de défauts dans toutes les sources Python. Ce
 parcours réel a également détecté puis éliminé une combinaison contradictoire
 `wx.EXPAND` / alignement dans un `BoxSizer`, devenue bloquante avec wxPython 4.3.
 
+### Sauvegardes successives du profil d'affichage (`tools/tw121_display_profile.py`)
+
+Le test `test_sequential_backups_do_not_overwrite_each_other` échouait par
+intermittence sous Windows : deux applications rapprochées lisaient le même
+horodatage (résolution d'horloge de l'ordre de la milliseconde), produisaient
+le même nom et `shutil.copy2` écrasait la première sauvegarde, c'est-à-dire le
+profil d'origine. Le nom est désormais réservé en création exclusive avec un
+suffixe `-2`, `-3`… en cas de collision ; le format `Customize.ini.tw121-<horodatage>.bak`
+reste inchangé pour la première sauvegarde.
+
 ## Cohérence du dashboard sombre
 
 La recette Windows de la version `0.9.1` a révélé deux défauts du composant

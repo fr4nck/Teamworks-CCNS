@@ -100,6 +100,29 @@ def test_sequential_backups_do_not_overwrite_each_other(tmp_path):
     assert first.is_file() and second.is_file()
 
 
+def test_backups_with_identical_timestamp_keep_both_contents(tmp_path, monkeypatch):
+    """Cause de l'instabilité Windows : deux appels peuvent lire le même instant."""
+    import datetime as real_datetime
+
+    frozen = real_datetime.datetime(2026, 10, 29, 12, 0, 0, 0)
+
+    class FrozenDatetime(real_datetime.datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return frozen
+
+    monkeypatch.setattr(MODULE, "datetime", FrozenDatetime)
+    path = tmp_path / "Customize.ini"
+    path.write_text("[interface]\ntheme = Systeme\nechelle_police = 100\n", encoding="utf-8")
+    first = MODULE.apply_profile(path, "Clair", 125)
+    second = MODULE.apply_profile(path, "Sombre", 150)
+    third = MODULE.apply_profile(path, "Systeme", 175)
+    assert len({first, second, third}) == 3
+    assert MODULE.read_profile(first) == ("Systeme", 100)
+    assert MODULE.read_profile(second) == ("Clair", 125)
+    assert MODULE.read_profile(third) == ("Sombre", 150)
+
+
 def test_restore_backup_recovers_original_profile_and_other_sections(tmp_path):
     path = tmp_path / "Customize.ini"
     path.write_text(
