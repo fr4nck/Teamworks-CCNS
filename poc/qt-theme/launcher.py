@@ -137,6 +137,87 @@ def precheck_production_database():
     return report, ""
 
 
+DIAGNOSTIC_ARGUMENT = "--diagnostic-mysql"
+
+
+def _write_diagnostic_report(directory: str, text: str, now) -> str:
+    """Écrit le rapport dans un fichier neuf, sans jamais en écraser un autre."""
+    stem = os.path.join(directory, "diagnostic-mysql-" + now.strftime("%Y%m%d-%H%M%S"))
+    for index in range(1, 1000):
+        path = stem + ("" if index == 1 else f"-{index}") + ".txt"
+        try:
+            with open(path, "x", encoding="utf-8") as stream:
+                stream.write(text)
+            return path
+        except FileExistsError:
+            continue
+    raise FileExistsError(stem)
+
+
+def run_mysql_diagnostic_command(qt_app) -> int:
+    """``--diagnostic-mysql`` : cinq étapes en lecture seule, rapport sans secret.
+
+    Code 0 si toutes les étapes passent, 6 sinon. Aucune base n'est modifiée.
+    """
+    from datetime import datetime
+
+    import_chemins_safely()
+    import GestionDB
+    from Utils import UTILS_Fichiers
+    from infrastructure.persistence.current_database_config import read_current_database_name
+    from infrastructure.persistence.mysql_connection_diagnostic import run_mysql_diagnostic
+    from infrastructure.persistence.qt_schema_compatibility import check_schema
+
+    now = datetime.now()
+    config_path = UTILS_Fichiers.GetRepUtilisateur("Config.json")
+    reference = read_current_database_name(config_path)
+    if "[RESEAU]" not in reference:
+        text = (
+            "Diagnostic MySQL Teamworks Qt — lecture seule\n"
+            f"Configuration lue : {config_path}\n"
+            + ("Aucune base n'est sélectionnée." if not reference else "La base sélectionnée est une base locale SQLite.")
+            + "\nRésultat : NON CONFORME — aucune base réseau MySQL à diagnostiquer\n"
+        )
+        ok = False
+    else:
+        def schema_report():
+            db = GestionDB.DB()
+            try:
+                if getattr(db, "echec", 1) != 0:
+                    raise RuntimeError(str(getattr(db, "erreur", "") or "ouverture impossible"))
+                return check_schema(db)
+            finally:
+                try:
+                    db.Close()
+                except Exception:
+                    pass
+
+        connector = GestionDB.mysql.connector if GestionDB.IMPORT_MYSQLCONNECTOR_OK else None
+        report = run_mysql_diagnostic(
+            reference,
+            connector=connector,
+            open_connection=GestionDB.GetConnexionReseau,
+            check_schema=schema_report,
+            decode_password=GestionDB.DecodeMdpReseau,
+            tls_label=(
+                "TLS avec les certificats configurés" if GestionDB.CERTIFICATS_SSL.get("ca")
+                else "désactivé, aucun certificat configuré (comportement de Teamworks wx)"
+            ),
+            now=now,
+        )
+        text = report.text().replace("Cible :", f"Configuration lue : {config_path}\nCible :", 1)
+        ok = report.ok
+    directory = os.environ.get("TEAMWORKS_QT_DIAGNOSTIC_DIR") or os.path.dirname(config_path)
+    path = _write_diagnostic_report(directory, text, now)
+    print(text)
+    if not os.environ.get("TEAMWORKS_QT_AUTOCLOSE_MS"):
+        from PySide6.QtWidgets import QMessageBox
+
+        show = QMessageBox.information if ok else QMessageBox.warning
+        show(None, "Teamworks Qt — diagnostic MySQL", text + "\nRapport enregistré : " + path)
+    return 0 if ok else 6
+
+
 def refuse_database(qt_app, message: str) -> int:
     print("[Teamworks Qt] Base refusée : " + message.replace("\n", " "), file=sys.stderr)
     if not os.environ.get("TEAMWORKS_QT_AUTOCLOSE_MS"):
@@ -250,6 +331,8 @@ def main() -> None:
     qt_app.setOrganizationName("Pêle-Mêle Sports et Loisirs")
     install_french_qt_translation(qt_app)
     startup_timings["qapplication"] = time.perf_counter() - phase
+    if DIAGNOSTIC_ARGUMENT in sys.argv[1:]:
+        raise SystemExit(run_mysql_diagnostic_command(qt_app))
 
     phase = time.perf_counter()
     from theme_engine import ThemeEngine

@@ -118,6 +118,35 @@ reproduit cette réécriture.
 Le gate MySQL/MariaDB sur copie représentative reste **BLOCKED** : aucun serveur ni copie représentative
 autorisée n'est disponible sur le poste de recette.
 
+### Connexion MySQL de l'exe Qt Windows
+
+- **défaut d'empaquetage** : PyInstaller n'embarquait pas les modules chargés
+  dynamiquement par `mysql.connector` (traductions des erreurs client, plugins
+  d'authentification). Toute erreur côté client devenait
+  `ImportError: No localization support for language 'eng'`, et un compte
+  `mysql_native_password` (MySQL 5.7) n'avait pas de plugin. Ces modules sont
+  désormais embarqués (`d3134cf`) ; l'inventaire de l'archive du binaire le
+  confirme, seuls `aio` et `django`, inutilisés, en sont absents ;
+- **diagnostic en lecture seule** : `Teamworks-CCNS-Qt.exe --diagnostic-mysql`
+  distingue l'accès TCP, la négociation MySQL (version du serveur, méthode
+  d'authentification annoncée), l'authentification, la sélection de la base et
+  la compatibilité du schéma. Il n'exécute que `USE`, `SELECT` et `SHOW` et
+  écrit un rapport neuf `diagnostic-mysql-*.txt` à côté de `Config.json`, sans
+  jeton ni mot de passe. Code 0 si les cinq étapes passent, 6 sinon ;
+- **compatibilité historique** : le pilote est figé à
+  `mysql-connector-python==9.7.0`. Le packaging teste le binaire réel contre
+  MySQL 5.7.31 sous Windows : diagnostic complet, démarrage en production,
+  mot de passe refusé (1045), port fermé et base inaccessible. Le job CI
+  `mysql-historique` exécute le parcours contrats et le diagnostic contre
+  MySQL 5.7.31 (bloquant), ainsi que contre 5.5.62 et avec le connecteur 26.7.0
+  de wx rc8 (à titre d'information) ;
+- **écart avec wx** : Qt lit le même `Config.json` que wx (hors mode Portable),
+  avec les mêmes options de connexion (`UTILS_MySQL` : Python pur, `utf8`, TLS
+  seulement si des certificats sont configurés). En revanche, wx rc8 embarque
+  `mysql-connector-python` 26.7.0, et Qt ignore `interface_mysql`, car MySQLdb
+  n'est pas embarqué. La connexion au serveur de production n'est pas vérifiée
+  depuis le poste de développement.
+
 ## Références principales
 
 - `ROADMAP.md`
