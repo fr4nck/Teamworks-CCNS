@@ -697,7 +697,7 @@ class PeopleContractsPilot(QMainWindow):
         root.setContentsMargins(5, 5, 5, 5)
 
         group = QGroupBox("Contrats")
-        group_layout = QHBoxLayout(group)
+        group_layout = QVBoxLayout(group)
         group_layout.setContentsMargins(8, 10, 8, 8)
         self.contracts_stack = QStackedWidget()
         empty_page = QWidget()
@@ -720,21 +720,20 @@ class PeopleContractsPilot(QMainWindow):
         self.contracts_stack.addWidget(empty_page)
         self.contracts_stack.addWidget(self.contracts_table)
         self.contracts_stack.setCurrentIndex(0)
-        group_layout.addWidget(self.contracts_stack, 1)
-
-        tools = QVBoxLayout()
-        tools.setSpacing(5)
+        tools = QGridLayout()
+        tools.setHorizontalSpacing(6)
+        tools.setVerticalSpacing(5)
         self.contract_create_button = self._legacy_tool_button(
             "Ajouter.png", "Ajouter un contrat", fallback="+"
         )
         self.contract_create_button.clicked.connect(self._create_contract)
-        tools.addWidget(self.contract_create_button)
+        tools.addWidget(self.contract_create_button, 0, 0)
         self.contract_edit_button = self._legacy_tool_button(
             "Modifier.png", "Modifier le contrat", fallback="M",
             shortcut="Entrée ou double-clic",
         )
         self.contract_edit_button.clicked.connect(self._edit_selected_contract)
-        tools.addWidget(self.contract_edit_button)
+        tools.addWidget(self.contract_edit_button, 0, 1)
 
         self.contract_renew_button = self._legacy_tool_button(
             "Modifier.png", "Renouveler le CDD", fallback="R"
@@ -745,7 +744,7 @@ class PeopleContractsPilot(QMainWindow):
             )
         )
         self.contract_renew_button.setVisible(self._advanced_contracts_enabled)
-        tools.addWidget(self.contract_renew_button)
+        tools.addWidget(self.contract_renew_button, 2, 0)
 
         self.contract_to_cdi_button = self._legacy_tool_button(
             "Modifier.png", "Poursuivre le CDD en CDI", fallback="C"
@@ -756,7 +755,7 @@ class PeopleContractsPilot(QMainWindow):
             )
         )
         self.contract_to_cdi_button.setVisible(self._advanced_contracts_enabled)
-        tools.addWidget(self.contract_to_cdi_button)
+        tools.addWidget(self.contract_to_cdi_button, 2, 1)
 
         self.contract_legacy_classification_button = self._legacy_tool_button(
             "Modifier.png", "Classification historique / valeur de point", fallback="H"
@@ -767,14 +766,13 @@ class PeopleContractsPilot(QMainWindow):
         self.contract_legacy_classification_button.setVisible(
             self._advanced_contracts_enabled
         )
-        tools.addWidget(self.contract_legacy_classification_button)
+        tools.addWidget(self.contract_legacy_classification_button, 2, 2)
 
         self.contract_delete_button = self._legacy_tool_button(
             "Supprimer.png", "Supprimer le contrat", fallback="−", shortcut="Suppr"
         )
         self.contract_delete_button.clicked.connect(self._delete_selected_contract)
-        tools.addWidget(self.contract_delete_button)
-        tools.addSpacing(8)
+        tools.addWidget(self.contract_delete_button, 0, 2)
         self.contract_signature_button = self._legacy_tool_button(
             "Signature.png", "Basculer l'état de signature du contrat", fallback="S"
         )
@@ -787,18 +785,40 @@ class PeopleContractsPilot(QMainWindow):
         self.contract_due_button.clicked.connect(
             lambda: self._toggle_contract_indicator("due")
         )
-        tools.addWidget(self.contract_signature_button)
-        tools.addWidget(self.contract_due_button)
-        tools.addSpacing(8)
+        tools.addWidget(self.contract_signature_button, 1, 0)
+        tools.addWidget(self.contract_due_button, 1, 1)
         self.contract_document_button = self._legacy_tool_button(
             "Imprimante.png",
             "Préparer un document RH / publipostage",
             fallback="I",
         )
         self.contract_document_button.clicked.connect(self._open_contract_documents)
-        tools.addWidget(self.contract_document_button)
-        tools.addStretch(1)
+        tools.addWidget(self.contract_document_button, 1, 2)
+        # Des commandes textuelles accessibles sur deux lignes, puis le tableau
+        # sur toute sa largeur. Les actions avancées conservent leur gate.
+        for button, label in (
+            (self.contract_create_button, "Ajouter"),
+            (self.contract_edit_button, "Modifier"),
+            (self.contract_delete_button, "Supprimer"),
+            (self.contract_signature_button, "Signature"),
+            (self.contract_due_button, "DUE"),
+            (self.contract_document_button, "Documents"),
+            (self.contract_renew_button, "Renouveler"),
+            (self.contract_to_cdi_button, "CDD vers CDI"),
+            (self.contract_legacy_classification_button, "Classification"),
+        ):
+            button.setObjectName("contractActionButton")
+            button.setText(label)
+            button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+            button.setIconSize(QSize(18, 18))
+            button.setFixedHeight(38)
+            button.setMinimumWidth(86)
+            button.setMaximumWidth(16777215)
+            button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        for column in range(3):
+            tools.setColumnStretch(column, 1)
         group_layout.addLayout(tools)
+        group_layout.addWidget(self.contracts_stack, 1)
         root.addWidget(group, 1)
 
         command_bar = QFrame()
@@ -809,7 +829,7 @@ class PeopleContractsPilot(QMainWindow):
         simulate_button.clicked.connect(self._open_contract_compliance_dialog)
         command_layout.addWidget(simulate_button)
         command_layout.addStretch(1)
-        readonly = QLabel("Écriture contrôlée · Créer / Modifier / Supprimer / Signature / DUE")
+        readonly = QLabel("Double-clic : modifier · Suppr : supprimer")
         readonly.setProperty("muted", True)
         command_layout.addWidget(readonly)
         root.addWidget(command_bar)
