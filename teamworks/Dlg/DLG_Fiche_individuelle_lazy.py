@@ -17,6 +17,11 @@ from Ctrl import CTRL_Page_presences
 from Ctrl import CTRL_Page_frais
 from Ctrl import CTRL_Page_scenarios
 from Ctrl import CTRL_Page_candidatures
+from Utils import UTILS_Theme
+
+# Marge verticale minimale des onglets, en pixels indépendants de la résolution :
+# 12 donne des onglets de 38 px à 100 % (20 px avec la marge native).
+PADDING_VERTICAL_ONGLETS = 12
 
 
 class LazyNotebook(wx.Notebook):
@@ -31,6 +36,16 @@ class LazyNotebook(wx.Notebook):
         wx.Notebook.__init__(self, parent, id, style=style)
         self.IDpersonne = IDpersonne
         self._lazy_pages = {}
+
+        # wxMSW ne calcule la hauteur des onglets qu'à leur création, ou à un
+        # changement de police, avec le dernier padding reçu. Le padding du
+        # thème, appliqué à l'affichage, n'élargissait donc que les onglets
+        # réinsérés : il est fixé ici, avant le premier onglet.
+        ui = UTILS_Theme.metrics()
+        self._padding_vertical_onglets = max(
+            ui["tab_padding_y"], self.FromDIP(PADDING_VERTICAL_ONGLETS)
+        )
+        self.SetPadding((ui["tab_padding_x"], ui["tab_padding_y"]))
 
         images = wx.ImageList(16, 16)
         self.img1 = images.Add(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Identite.png"), wx.BITMAP_TYPE_PNG))
@@ -87,6 +102,12 @@ class LazyNotebook(wx.Notebook):
         ]
         self._add_secondary_pages()
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnPageChanged)
+
+    def SetPadding(self, padding):
+        """Le thème réapplique son padding à chaque affichage : la hauteur ne descend pas."""
+        padding = wx.Size(padding)
+        minimum = getattr(self, "_padding_vertical_onglets", 0)
+        wx.Notebook.SetPadding(self, wx.Size(padding.width, max(padding.height, minimum)))
 
     def _create_protection_sociale_page(self):
         """Charge le runtime RH uniquement à l'ouverture de cet onglet."""

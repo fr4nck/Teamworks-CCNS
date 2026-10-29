@@ -217,6 +217,34 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                     assert _smoke_generalites.text_cp.IsShownOnScreen()
                     print("TEAMWORKS_SMOKE_PERSON_WINDOWED_LAYOUT_OK", flush=True)
 
+                    def _smoke_tab_metrics():
+                        # Géométrie native des onglets (TCM_GETITEMRECT) : une
+                        # taille demandée au contrôle n'est pas forcément honorée.
+                        import ctypes as _smoke_ctypes
+                        from ctypes import wintypes as _smoke_wintypes
+                        TCM_GETITEMRECT = 0x130A
+                        TCM_GETROWCOUNT = 0x132C
+                        _smoke_send = _smoke_ctypes.windll.user32.SendMessageW
+                        _smoke_send.argtypes = [
+                            _smoke_wintypes.HWND, _smoke_wintypes.UINT,
+                            _smoke_wintypes.WPARAM, _smoke_wintypes.LPARAM,
+                        ]
+                        _smoke_heights = set()
+                        _smoke_widths = 0
+                        for _smoke_tab in range(_smoke_notebook.GetPageCount()):
+                            _smoke_rect = _smoke_wintypes.RECT()
+                            _smoke_send(
+                                _smoke_notebook.GetHandle(), TCM_GETITEMRECT,
+                                _smoke_tab, _smoke_ctypes.addressof(_smoke_rect),
+                            )
+                            _smoke_heights.add(_smoke_rect.bottom - _smoke_rect.top)
+                            _smoke_widths += _smoke_rect.right - _smoke_rect.left
+                        _smoke_rows = _smoke_send(_smoke_notebook.GetHandle(), TCM_GETROWCOUNT, 0, 0)
+                        return sorted(_smoke_heights), _smoke_widths, _smoke_rows
+
+                    if wx.Platform == "__WXMSW__":
+                        _smoke_tabs_before = _smoke_tab_metrics()
+
                     print("TEAMWORKS_SMOKE_PERSON_STAGE:pages", flush=True)
                     for _smoke_index in range(_smoke_notebook.GetPageCount()):
                         _smoke_notebook.SetSelection(_smoke_index)
@@ -227,6 +255,30 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                         assert _smoke_page.GetSize().GetWidth() > 0
                         assert _smoke_page.GetSize().GetHeight() > 0
                         assert len(_smoke_descendants(_smoke_page)) >= 1
+
+                    if wx.Platform == "__WXMSW__":
+                        from Utils import UTILS_Theme as _smoke_theme
+                        _smoke_tabs_after = _smoke_tab_metrics()
+                        print(
+                            "TEAMWORKS_SMOKE_PERSON_TAB_METRICS:avant=%s;apres=%s;echelle=%s;dip36=%s"
+                            % (
+                                _smoke_tabs_before, _smoke_tabs_after,
+                                _smoke_theme.interface_scale_percent(),
+                                _smoke_notebook.FromDIP(36),
+                            ),
+                            flush=True,
+                        )
+                        _smoke_heights, _smoke_widths, _smoke_rows = _smoke_tabs_after
+                        assert len(_smoke_heights) == 1, _smoke_heights
+                        assert _smoke_rows == 1, _smoke_rows
+                        assert _smoke_heights[0] >= _smoke_notebook.FromDIP(36), _smoke_heights
+                        if _smoke_theme.interface_scale_percent() == 100:
+                            assert _smoke_heights[0] <= _smoke_notebook.FromDIP(40), _smoke_heights
+                        # Les onglets chargés en différé sont réinsérés : ni leur
+                        # hauteur ni leur largeur ne doivent changer.
+                        assert _smoke_tabs_before == _smoke_tabs_after, (
+                            _smoke_tabs_before, _smoke_tabs_after,
+                        )
 
                     assert _smoke_notebook.pageGeneralites is not None
                     assert _smoke_notebook.pageContrats is not None

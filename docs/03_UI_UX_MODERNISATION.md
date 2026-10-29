@@ -432,3 +432,46 @@ différé ; navigation réelle au clavier/souris et mise à jour des
 alertes restent à contrôler sur une copie de base sous Windows avant
 de déclarer la fonction entièrement qualifiée. Ne publier aucune
 capture de dossier réel dans GitHub.
+
+## Fiche individuelle : hauteur des onglets (29 octobre 2026)
+
+Les neuf onglets de la fiche individuelle (`LazyNotebook`, `wx.Notebook`
+natif) mesuraient 20 px à 100 %. wxMSW ne calcule la hauteur des onglets
+qu'à leur création, ou à un changement de police, avec le dernier padding
+reçu. Le padding du thème (`UTILS_Theme._apply_metrics`), appliqué à
+l'affichage, n'agissait donc que sur la largeur des onglets réinsérés par
+le chargement différé : la rangée s'élargissait pendant la navigation.
+
+Correction locale, dans `LazyNotebook` uniquement :
+
+- le padding du thème est fixé avant le premier onglet ;
+- `SetPadding` est surchargé pour que la marge verticale ne descende jamais
+  sous 12 DIP (`PADDING_VERTICAL_ONGLETS`), y compris quand le thème la
+  réapplique ;
+- la marge horizontale reste celle du thème : largeur des onglets inchangée.
+
+Mesures natives (`TCM_GETITEMRECT`) sur la vraie fiche, base Exemple,
+Windows 11, 96 DPI :
+
+| Échelle d'interface | Avant | Après |
+|---|---|---|
+| 100 % | 20 px | 38 px |
+| 125 % | 25 px | 43 px |
+| 150 % | 30 px | 48 px |
+
+Hauteur et largeur identiques avant et après le parcours des neuf onglets,
+une seule rangée, sélection conservée, fermeture puis réouverture sans
+exception. Le panneau sous les onglets perd 18 px de hauteur à 100 % ; le
+bandeau rouge n'est pas touché. Le smoke Windows
+`smoke_secondary_person_dialog.py` mesure désormais cette géométrie.
+
+**Limites :** la mise à l'échelle Windows 125 % et 150 % n'a pas été
+exercée (poste de recette à 96 DPI effectifs) ; le padding est exprimé en
+DIP pour suivre le DPI. À 150 % d'échelle d'interface et sous 1400 px de
+large, les onglets dépassent déjà la largeur et Windows affiche ses flèches
+de défilement, comme avant la correction.
+
+**Famille à ratisser (candidats, non corrigés) :** les autres
+`wx.Notebook` reçoivent le padding du thème après la création de leurs
+onglets ; sa composante verticale n'y a pas d'effet à 100 %. Les corriger
+changerait la hauteur de ces écrans : lot séparé, écran par écran.
