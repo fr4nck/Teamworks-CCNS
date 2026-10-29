@@ -316,8 +316,16 @@ def test_refuse_database_does_not_block_in_autoclose_mode(monkeypatch):
 def test_network_precheck_refusal_hides_encoded_password(monkeypatch, GestionDB, tmp_path):
     """Une erreur réseau ne doit jamais afficher la référence legacy complète."""
     import launcher
-    from Utils import UTILS_Fichiers
+    import Utils
+    from types import ModuleType
     from infrastructure.persistence import current_database_config
+
+    # Linux minimal n'installe pas appdirs : remplacer uniquement l'adaptateur
+    # de chemins, sans importer UTILS_Fichiers ni changer les dependances.
+    fake_files = ModuleType("Utils.UTILS_Fichiers")
+    fake_files.GetRepUtilisateur = lambda filename: str(tmp_path / filename)
+    monkeypatch.setitem(sys.modules, "Utils.UTILS_Fichiers", fake_files)
+    monkeypatch.setattr(Utils, "UTILS_Fichiers", fake_files, raising=False)
 
     token = "#64#c2VjcmV0LXRlc3Q="
     reference = f"3306;127.0.0.1;recette;{token}[RESEAU]recette"
@@ -333,11 +341,6 @@ def test_network_precheck_refusal_hides_encoded_password(monkeypatch, GestionDB,
 
     monkeypatch.setattr(GestionDB, "DB", lambda: FailedNetworkDb())
     monkeypatch.setattr(launcher, "import_chemins_safely", lambda: None)
-    monkeypatch.setattr(
-        UTILS_Fichiers,
-        "GetRepUtilisateur",
-        lambda filename: str(tmp_path / filename),
-    )
     monkeypatch.setattr(
         current_database_config,
         "read_current_database_name",
