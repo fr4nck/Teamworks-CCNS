@@ -1562,8 +1562,8 @@ class MyFrame(wx.Frame):
                 dlg.Destroy()
             return
 
-        import wx.lib.dialogs
-        dlg = wx.lib.dialogs.ScrolledMessageDialog(
+        from wx.lib import dialogs
+        dlg = dialogs.ScrolledMessageDialog(
             self, licence, _(u"À propos — Licence"), size=(650, 550),
         )
         try:
