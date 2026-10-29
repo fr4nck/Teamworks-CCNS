@@ -40,6 +40,7 @@ from application.services.contract_write import (
     update_contract_indicator,
     update_contract_legacy_classification,
 )
+from application.services.transactional_write import WriteCode
 from contract_editor import (
     ContractComplianceDialog,
     ContractCreateDialog,
@@ -971,8 +972,15 @@ class PeopleContractsPilot(QMainWindow):
             )
             return
 
-        result = update_contract(port, command=dialog.command())
+        result = update_contract(port, command=dialog.command(), expected=loaded.value)
         if not result.ok and not result.committed:
+            if result.code == WriteCode.CONFLICT:
+                QMessageBox.warning(self, "Contrat modifié ailleurs", result.message)
+                try:
+                    self._reload_contracts(selected_contract_id=contract.id_historique)
+                except Exception as exc:
+                    self.statusBar().showMessage(f"Rafraîchissement impossible · {exc}")
+                    return
             self.statusBar().showMessage(
                 f"Contrat non modifié · {result.code} · {result.message}"
             )
@@ -986,9 +994,14 @@ class PeopleContractsPilot(QMainWindow):
             )
             return
 
-        if result.committed:
+        if result.committed and not result.ok:
             self.statusBar().showMessage(
-                f"Contrat n°{contract.id_historique} modifié et relu depuis la base"
+                f"Contrat n°{contract.id_historique} enregistré · vérification après "
+                f"enregistrement en échec · {result.message}"
+            )
+        elif result.committed:
+            self.statusBar().showMessage(
+                f"Contrat n°{contract.id_historique} modifié · valeurs relues identiques en base"
             )
         else:
             self.statusBar().showMessage(
@@ -1265,7 +1278,15 @@ class PeopleContractsPilot(QMainWindow):
             and not isinstance(contract_key, bool)
             and contract_key > 0
         )
-        self.contracts_model.replace(self.adapter.list_contracts(contract_key))
+        # Une lecture en échec vide la liste : jamais les contrats de la fiche précédente.
+        contracts_read_error = ""
+        try:
+            contracts = tuple(self.adapter.list_contracts(contract_key))
+        except Exception as exc:
+            contracts = ()
+            contracts_read_error = f"Lecture des contrats impossible · {exc}"
+            self.contract_create_button.setEnabled(False)
+        self.contracts_model.replace(contracts)
         contract_count = self.contracts_model.rowCount()
         self.contracts_stack.setCurrentIndex(1 if contract_count else 0)
 
@@ -1278,4 +1299,8 @@ class PeopleContractsPilot(QMainWindow):
         self.detail_contracts.setText(_contract_count_text(contract_count))
         self.person_avatar.setText(_initials(person.name))
         self.detail_stack.setCurrentIndex(1)
-        self.statusBar().showMessage(f"{person.name} · {contract_count} contrat(s)")
+        if contracts_read_error:
+            self.detail_contracts.setText("Contrats non lus")
+            self.statusBar().showMessage(f"{person.name} · {contracts_read_error}")
+        else:
+            self.statusBar().showMessage(f"{person.name} · {contract_count} contrat(s)")

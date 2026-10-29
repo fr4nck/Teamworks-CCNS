@@ -149,3 +149,28 @@ def test_person_dialog_enter_validates_and_escape_cancels():
         assert not dialog.isVisible() and dialog.result() == 0
     finally:
         dialog.close()
+
+
+class _FailingSecondAdapter(_Adapter):
+    def list_contracts(self, person_id):
+        if person_id == 2:
+            raise RuntimeError("Lecture impossible (contrats) : base indisponible ou requête refusée.")
+        return super().list_contracts(person_id)
+
+
+def test_failed_contract_read_never_shows_the_previous_person_contracts():
+    QApplication.instance() or QApplication([])
+    w = PeopleContractsPilot(_FailingSecondAdapter(), contract_write_port_factory=lambda: None)
+    w.show()
+    try:
+        w.people_table.selectRow(0)
+        QApplication.processEvents()
+        assert w.contracts_model.rowCount() == 1
+        w.people_table.selectRow(1)
+        QApplication.processEvents()
+        assert w.contracts_model.rowCount() == 0
+        assert not w.contract_create_button.isEnabled()
+        assert "Lecture des contrats impossible" in w.statusBar().currentMessage()
+        assert w.detail_contracts.text() == "Contrats non lus"
+    finally:
+        w.close()

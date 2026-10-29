@@ -45,7 +45,9 @@ class CcnsDataReader:
 
     def _fetch(self, req: str, nom: str):
         with DiagnosticPerformance.mesurer("sql", "ccns_data_reader.%s.executer" % nom):
-            self.db.ExecuterReq(req)
+            # GestionDB.ExecuterReq avale l'erreur SQL et renvoie 0 : une lecture ratée ne doit jamais passer pour un résultat vide.
+            if self.db.ExecuterReq(req) == 0:
+                raise RuntimeError("Lecture impossible (%s) : base indisponible ou requête refusée." % nom)
         with DiagnosticPerformance.mesurer("sql_fetch", "ccns_data_reader.%s.resultats" % nom):
             rows = self.db.ResultatReq()
         DiagnosticPerformance.enregistrer_mesure(

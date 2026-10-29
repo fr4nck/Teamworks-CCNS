@@ -928,21 +928,91 @@ def _readback_contract(port: ContractWritePort, contract_id: int) -> ContractEdi
     return snapshot
 
 
+_EDITED_FIELDS = (
+    "convention_code",
+    "ccns_group",
+    "cee_qualification",
+    "weekly_hours",
+    "gross_monthly_salary",
+    "gross_annual_salary",
+    "start_date",
+    "end_date",
+    "break_date",
+)
+
+
+def _readback_matching_command(
+    port: ContractWritePort, command: ContractEditCommand
+) -> ContractEditSnapshot:
+    """Relecture après commit : chaque valeur saisie doit être relue à l'identique."""
+    snapshot = _readback_contract(port, command.contract_id)
+    fields = _EDITED_FIELDS if command.modern_fields_supported else _EDITED_FIELDS[-3:]
+    different = [name for name in fields if getattr(snapshot, name) != getattr(command, name)]
+    if different:
+        raise LookupError("valeurs relues différentes des valeurs saisies (%s)" % ", ".join(different))
+    return snapshot
+
+
 def update_contract(
     port: ContractWritePort,
     *,
     command: ContractEditCommand,
+    expected: ContractEditSnapshot | None = None,
 ) -> WriteResult[ContractEditSnapshot]:
+    """Met à jour un contrat ; ``expected`` est l'état affiché à l'ouverture.
+
+    Si le port sait verrouiller la ligne (``lock_contract_for_update``), la
+    comparaison avec ``expected`` et l'UPDATE ont lieu dans la même transaction :
+    une modification faite entre-temps par une autre session est refusée au lieu
+    d'être écrasée.
+    """
     if not is_valid_target_id(command.contract_id):
         return invalid_target_result(command.contract_id)
 
-    loaded = load_contract_for_edit(port, contract_id=command.contract_id)
-    if not loaded.ok or loaded.value is None:
-        return loaded
-    original = loaded.value
+    lock = getattr(port, "lock_contract_for_update", None)
+    # Un verrou pris doit être relâché si rien n'est écrit ; sans verrou, rien à relâcher.
+    release = (lambda: _release(port)) if callable(lock) else (lambda: None)
+    if callable(lock):
+        try:
+            current = lock(command.contract_id)
+        except Exception as exc:
+            release()
+            return WriteResult(
+                ok=False,
+                code=WriteCode.DATABASE_ERROR,
+                message="Contrat inaccessible en écriture (base occupée ou déconnectée) : %s" % exc,
+                target_id=command.contract_id,
+            )
+        if current is None:
+            release()
+            return WriteResult(
+                ok=False,
+                code=WriteCode.TARGET_NOT_FOUND,
+                message="Le contrat sélectionné n'existe plus.",
+                target_id=command.contract_id,
+            )
+        original = current
+    else:
+        loaded = load_contract_for_edit(port, contract_id=command.contract_id)
+        if not loaded.ok or loaded.value is None:
+            return loaded
+        original = loaded.value
+
+    if expected is not None and original != expected:
+        release()
+        return WriteResult(
+            ok=False,
+            code=WriteCode.CONFLICT,
+            message=(
+                "Ce contrat a été modifié par une autre session depuis son ouverture. "
+                "Rien n'a été enregistré : rouvrez le contrat pour voir sa version actuelle."
+            ),
+            target_id=command.contract_id,
+        )
 
     errors = validate_contract_edit(command, original=original)
     if errors:
+        release()
         return WriteResult(
             ok=False,
             code=WriteCode.VALIDATION_ERROR,
@@ -951,6 +1021,7 @@ def update_contract(
         )
 
     if not contract_edit_has_changes(original, command):
+        release()
         return WriteResult(
             ok=True,
             code=WriteCode.OK,
@@ -966,8 +1037,16 @@ def update_contract(
         write=lambda: port.update_contract(command),
         commit=port.commit,
         rollback=port.rollback,
-        readback=lambda: _readback_contract(port, command.contract_id),
+        readback=lambda: _readback_matching_command(port, command),
     )
+
+
+def _release(port: ContractWritePort) -> None:
+    """Libère un verrou d'écriture pris sans rien écrire."""
+    try:
+        port.rollback()
+    except Exception:
+        pass
 
 
 def update_contract_indicator(

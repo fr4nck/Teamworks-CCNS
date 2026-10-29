@@ -275,7 +275,7 @@ def test_modify_action_roundtrips_real_dialog_service_db_readback_and_refresh():
         assert window.contracts_table.selectionModel().selectedRows()[0].row() == 0
         assert (
             window.statusBar().currentMessage()
-            == "Contrat n°417 modifié et relu depuis la base"
+            == "Contrat n°417 modifié · valeurs relues identiques en base"
         )
     finally:
         window.close()
@@ -692,7 +692,7 @@ def test_double_click_contract_edits_and_persists_after_window_reopened(tmp_path
         assert db.commit_count == 1
         assert window.contracts_model.contract_at(0).start == "01/10/2026"
         assert window.contracts_model.contract_at(0).classification == "Groupe 4"
-        assert "modifié et relu" in window.statusBar().currentMessage()
+        assert "valeurs relues identiques" in window.statusBar().currentMessage()
 
         # Close the first real Qt window and its original reader/connection.
         window.close()

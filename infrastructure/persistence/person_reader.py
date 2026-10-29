@@ -46,7 +46,9 @@ class PersonReader:
 
     def _fetch(self, req: str, nom_mesure: str):
         with DiagnosticPerformance.mesurer("sql", nom_mesure, {"reader": "PersonReader"}):
-            self.db.ExecuterReq(req)
+            # GestionDB.ExecuterReq avale l'erreur SQL et renvoie 0 : une lecture ratée ne doit jamais passer pour un résultat vide.
+            if self.db.ExecuterReq(req) == 0:
+                raise RuntimeError("Lecture impossible (%s) : base indisponible ou requête refusée." % nom_mesure)
             return self.db.ResultatReq()
 
     def lire_identites(self) -> list[PersonIdentityRecord]:
