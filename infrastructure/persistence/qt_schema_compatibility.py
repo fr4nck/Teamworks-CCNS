@@ -169,6 +169,25 @@ def _file_version(db, tables: set[str]) -> tuple[int, ...] | None:
     return parse_file_version(rows[0][0]) if rows else None
 
 
+def _non_transactional_tables(db, tables: set[str]) -> tuple[str, ...]:
+    """MySQL : tables lues/écrites par Qt dont le moteur ignore les transactions."""
+    if not getattr(db, "isNetwork", False):
+        return ()
+    wanted = sorted(name for name in QT_REQUIRED_SCHEMA if name in tables)
+    if not wanted:
+        return ()
+    listed = ", ".join("'%s'" % name for name in wanted)
+    if not db.ExecuterReq(
+        "SELECT TABLE_NAME, ENGINE FROM information_schema.TABLES "
+        "WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME IN (%s);" % listed
+    ):
+        return ("(moteur de stockage illisible)",)
+    return tuple(
+        sorted(str(name) for name, engine in (db.ResultatReq() or ())
+               if str(engine or "").upper() != "INNODB")
+    )
+
+
 def check_schema(db) -> SchemaReport:
     """Inspecte le schéma via GestionDB (SQLite ou MySQL), sans aucune écriture."""
     tables = _table_names(db)
@@ -193,6 +212,15 @@ def check_schema(db) -> SchemaReport:
                 BLOQUANT, table, missing,
                 "Table « %s » : colonne(s) absente(s) %s." % (table, ", ".join(missing)),
             ))
+
+    non_transactional = _non_transactional_tables(db, tables)
+    if non_transactional:
+        issues.append(SchemaIssue(
+            BLOQUANT, "*", non_transactional,
+            "Tables MySQL sans transactions (moteur autre qu'InnoDB) : %s. Une écriture "
+            "interrompue ne pourrait pas être annulée ; conversion InnoDB à faire réaliser "
+            "par l'administrateur, après sauvegarde." % ", ".join(non_transactional),
+        ))
 
     if "contrats" in tables:
         present = _column_names(db, "contrats")

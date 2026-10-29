@@ -204,7 +204,7 @@ def test_evolution_backs_up_adds_only_columns_and_is_idempotent(base):
         assert result.ok, result.message
         assert set(result.created) == {n for n, _ in CONTRACT_ENGINE_COLUMNS}
         backup = Path(result.backup_path)
-        assert backup.name == "Recette_TDATA.avant-colonnes-ccns-20261029-100000.bak"
+        assert backup.name == "Recette_TDATA.avant-colonnes-ccns-20261029-100000-000000.bak"
         with sqlite3.connect(backup) as b:
             assert b.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
             assert b.execute("SELECT * FROM contrats ORDER BY IDcontrat").fetchall() == contracts_before
@@ -254,7 +254,13 @@ class _NetworkDb:
         return [(r[1], r[2]) for r in self._c.execute(f"PRAGMA table_info({table})")]
 
     def ExecuterReq(self, req):
+        if "information_schema.TABLES" in req:
+            # Moteur InnoDB pour toutes les tables demandées, comme un MySQL ≥ 5.5.
+            listed = req.split("IN (", 1)[1].rsplit(")", 1)[0]
+            self._rows = [(name.strip(" '"), "InnoDB") for name in listed.split(",")]
+            return 1
         self._rows = self._c.execute(req).fetchall()
+        return 1
 
     def ResultatReq(self):
         return self._rows
@@ -269,6 +275,21 @@ def test_network_base_is_never_altered_automatically(base):
     assert result.ok is False
     assert "MySQL" in result.message and "administrateur" in result.message
     assert db.alters == []
+
+
+class _MyIsamNetworkDb(_NetworkDb):
+    def ExecuterReq(self, req):
+        result = super().ExecuterReq(req)
+        if "information_schema.TABLES" in req:
+            self._rows = [(name, "MyISAM" if name == "contrats" else engine) for name, engine in self._rows]
+        return result
+
+
+def test_network_tables_without_transactions_make_the_base_refused(base):
+    report = check_schema(_MyIsamNetworkDb(base))
+    assert not report.compatible
+    assert "contrats" in report.blocking_text() and "InnoDB" in report.blocking_text()
+    assert check_schema(_NetworkDb(base)).compatible
 
 
 def test_refuse_database_does_not_block_in_autoclose_mode(monkeypatch):

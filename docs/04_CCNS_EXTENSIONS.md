@@ -80,6 +80,37 @@ Le bearer de transport et la clé HMAC de l'enveloppe restent des secrets distin
 Le transport HTTP est isolé de l'orchestration métier afin de pouvoir être remplacé
 ultérieurement par une queue ou un broker sans modifier le consommateur RH.
 
+## Teamworks Qt — sécurité des données (RC2)
+
+Défauts propres à l'application Qt du fork, confirmés à l'audit des chemins
+d'ouverture et d'écriture, puis corrigés :
+
+- **modification concurrente d'un contrat** : l'enregistrement relisait la base
+  au moment de la sauvegarde, si bien qu'une modification faite entre-temps par
+  une autre session (autre poste, Teamworks wx) était écrasée sans avertissement.
+  La ligne est désormais relue sous verrou d'écriture (`BEGIN IMMEDIATE` sous
+  SQLite, `SELECT … FOR UPDATE` sous MySQL) et comparée à l'état affiché à
+  l'ouverture ; toute différence refuse l'enregistrement (`CONFLICT`) ;
+- **relecture après commit non comparée** : le contrat relu est maintenant comparé
+  champ par champ aux valeurs saisies ; un écart est signalé comme
+  « enregistré · vérification en échec » et jamais comme un succès ;
+- **lecture SQL en échec présentée comme vide** : `GestionDB.ExecuterReq` avale
+  l'erreur et renvoie 0 ; les lecteurs Personnes, Contrats et Activité lèvent
+  désormais une erreur explicite, et une lecture ratée vide la liste des contrats
+  au lieu de laisser ceux de la fiche précédente. Le comportement d'origine de
+  `ExecuterReq` est un candidat Vanilla **non vérifié** dans `Noethys/Teamworks` ;
+- **base active non affichée** : la base réellement ouverte (fichier SQLite ou
+  serveur MySQL, sans mot de passe) est affichée en permanence dans la barre
+  d'état et le titre ; sans base sélectionnée dans `Config.json`, Qt refuse de
+  démarrer sans rien ouvrir ;
+- **sauvegardes SQLite** : nom réservé en création exclusive (deux sauvegardes au
+  même instant ne partagent jamais un fichier) et contrôle du contenu table par
+  table ; nouvelle restauration isolée qui refuse la base active, une destination
+  existante et une sauvegarde corrompue.
+
+Le gate MySQL/MariaDB reste **BLOCKED** : aucun serveur ni copie représentative
+autorisée n'est disponible sur le poste de recette.
+
 ## Références principales
 
 - `ROADMAP.md`
