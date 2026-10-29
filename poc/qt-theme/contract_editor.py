@@ -97,6 +97,60 @@ def _money_text(value) -> str:
 
 
 
+UNSET_DATE = QDate(1900, 1, 1)
+
+_TYPE_LABELS = {
+    "CDI": "CDI — contrat à durée indéterminée",
+    "CDD": "CDD — contrat à durée déterminée",
+    "CEE": "CEE — contrat d'engagement éducatif",
+}
+
+_TYPE_HINTS = {
+    "CDI": "Sans date de fin. Groupe CCNS, durée et rémunération obligatoires.",
+    "CDD": "Date de fin obligatoire. Groupe CCNS, durée et rémunération obligatoires.",
+    "CEE": "Dates de début et de fin obligatoires. Qualification CEE obligatoire ; "
+           "pas de groupe CCNS ni de durée hebdomadaire.",
+}
+
+
+class RequiredDateEdit(QDateEdit):
+    """Date sans valeur par défaut : « à saisir » tant que l'utilisateur n'y entre pas.
+
+    La date du jour n'est proposée qu'à la première interaction (clic, focus
+    clavier), jamais enregistrée par oubli.
+    """
+
+    def __init__(self, parent: QWidget | None = None):
+        super().__init__(parent)
+        self.setCalendarPopup(True)
+        self.setDisplayFormat("dd/MM/yyyy")
+        self.setMinimumDate(UNSET_DATE)
+        self.setSpecialValueText("jj/mm/aaaa à saisir")
+        self.setDate(UNSET_DATE)
+
+    def is_set(self) -> bool:
+        return self.date() != UNSET_DATE
+
+    def _engage(self) -> None:
+        if self.isEnabled() and not self.is_set():
+            self.setDate(QDate.currentDate())
+            self.setSelectedSection(QDateEdit.Section.DaySection)
+
+    def mousePressEvent(self, event) -> None:
+        self._engage()
+        super().mousePressEvent(event)
+
+    def focusInEvent(self, event) -> None:
+        if event.reason() in (
+            Qt.FocusReason.TabFocusReason,
+            Qt.FocusReason.BacktabFocusReason,
+            Qt.FocusReason.MouseFocusReason,
+            Qt.FocusReason.ShortcutFocusReason,
+        ):
+            self._engage()
+        super().focusInEvent(event)
+
+
 class ContractCreateDialog(QDialog):
     """Création Qt contrôlée : CDI/CDD CCNS et CEE, sans accès direct à la base."""
 
@@ -132,18 +186,20 @@ class ContractCreateDialog(QDialog):
         form = self.form
 
         self.contract_type = QComboBox()
+        self.contract_type.addItem("— Choisir le type de contrat —", None)
         for code in available_types:
-            self.contract_type.addItem(code, code)
+            self.contract_type.addItem(_TYPE_LABELS.get(code.strip().upper(), code), code)
         form.addRow("Type", self.contract_type)
 
-        self.start_date = QDateEdit(QDate.currentDate())
-        self.start_date.setCalendarPopup(True)
-        self.start_date.setDisplayFormat("dd/MM/yyyy")
+        self.type_hint = QLabel("")
+        self.type_hint.setWordWrap(True)
+        self.type_hint.setProperty("muted", True)
+        form.addRow("", self.type_hint)
+
+        self.start_date = RequiredDateEdit()
         form.addRow("Début", self.start_date)
 
-        self.end_date = QDateEdit(QDate.currentDate().addYears(1))
-        self.end_date.setCalendarPopup(True)
-        self.end_date.setDisplayFormat("dd/MM/yyyy")
+        self.end_date = RequiredDateEdit()
         form.addRow("Fin", self.end_date)
 
         self.group = QComboBox()
@@ -156,10 +212,11 @@ class ContractCreateDialog(QDialog):
         form.addRow("Qualification CEE", self.cee_qualification)
 
         self.weekly_hours = QDoubleSpinBox()
-        self.weekly_hours.setRange(0.25, 80.0)
+        self.weekly_hours.setRange(0.0, 80.0)
         self.weekly_hours.setDecimals(2)
         self.weekly_hours.setSingleStep(0.25)
-        self.weekly_hours.setValue(35.0)
+        self.weekly_hours.setSpecialValueText("À saisir")
+        self.weekly_hours.setValue(0.0)
         form.addRow("Durée hebdomadaire", self.weekly_hours)
 
         self.monthly_salary = QLineEdit()
@@ -213,6 +270,12 @@ class ContractCreateDialog(QDialog):
     def _contract_type_code(self) -> str:
         return str(self.contract_type.currentData() or "").strip().upper()
 
+    def _reference_date(self) -> date:
+        """Date de début saisie, sinon aujourd'hui pour lister la grille CCNS."""
+        if self.start_date.is_set():
+            return _python_date(self.start_date.date())
+        return date.today()
+
     def _set_form_field_visible(self, field: QWidget, visible: bool) -> None:
         field.setVisible(visible)
         label = self.form.labelForField(field)
@@ -222,7 +285,12 @@ class ContractCreateDialog(QDialog):
     def _refresh_contract_type(self, *_args) -> None:
         code = self._contract_type_code()
         is_cee = code == "CEE"
+        self.type_hint.setText(
+            _TYPE_HINTS.get(code, "Choisissez d'abord le type : CDI, CDD ou CEE.")
+        )
         self.end_date.setEnabled(code in ("CDD", "CEE"))
+        if code not in ("CDD", "CEE"):
+            self.end_date.setDate(UNSET_DATE)
         self._set_form_field_visible(self.group, not is_cee)
         self._set_form_field_visible(self.weekly_hours, not is_cee)
         self._set_form_field_visible(self.cee_qualification, is_cee)
@@ -251,9 +319,10 @@ class ContractCreateDialog(QDialog):
         self.group.blockSignals(True)
         self.group.clear()
         try:
-            choices = self._presenter.group_choices(_python_date(self.start_date.date()))
+            choices = self._presenter.group_choices(self._reference_date())
         except Exception:
             choices = ()
+        self.group.addItem("— Choisir le groupe CCNS —", None)
         for choice in choices:
             self.group.addItem(choice.label, choice.code)
         index = self.group.findData(preserve)
@@ -281,7 +350,7 @@ class ContractCreateDialog(QDialog):
                     (
                         item
                         for item in self._presenter.group_choices(
-                            _python_date(self.start_date.date())
+                            self._reference_date()
                         )
                         if item.code == code
                     ),
@@ -298,7 +367,9 @@ class ContractCreateDialog(QDialog):
     def _refresh_trial(self, *_args) -> None:
         code = self._contract_type_code()
         group = self.group.currentData()
-        if code not in ("CDI", "CDD") or not group:
+        if code not in ("CDI", "CDD") or not group or not self.start_date.is_set():
+            return
+        if code == "CDD" and not self.end_date.is_set():
             return
         try:
             proposal = propose_ccns_probation_period(
@@ -361,7 +432,7 @@ class ContractCreateDialog(QDialog):
                     (
                         item
                         for item in self._presenter.group_choices(
-                            _python_date(self.start_date.date())
+                            self._reference_date()
                         )
                         if item.code == group
                     ),
@@ -398,7 +469,36 @@ class ContractCreateDialog(QDialog):
             confirm_no_trial=confirm_no_trial,
         )
 
+    def missing_fields(self) -> list[tuple[QWidget, str]]:
+        """Champs obligatoires non renseignés, dans l'ordre du formulaire."""
+        code = self._contract_type_code()
+        if not code:
+            return [(self.contract_type, "Choisissez le type de contrat (CDI, CDD ou CEE).")]
+        missing: list[tuple[QWidget, str]] = []
+        if not self.start_date.is_set():
+            missing.append((self.start_date, "Saisissez la date de début."))
+        if code in ("CDD", "CEE") and not self.end_date.is_set():
+            missing.append((self.end_date, "Saisissez la date de fin."))
+        if code == "CEE":
+            if not self.cee_qualification.currentData():
+                missing.append((self.cee_qualification, "Choisissez la qualification CEE."))
+            return missing
+        if not self.group.currentData():
+            missing.append((self.group, "Choisissez le groupe CCNS."))
+        if self.weekly_hours.value() <= 0:
+            missing.append((self.weekly_hours, "Saisissez la durée hebdomadaire."))
+        annual = self.annual_salary.isVisibleTo(self)
+        salary = self.annual_salary if annual else self.monthly_salary
+        if parse_decimal_text(salary.text()) is None:
+            missing.append((salary, "Saisissez le brut %s." % ("annuel" if annual else "mensuel")))
+        return missing
+
     def _on_accept(self) -> None:
+        missing = self.missing_fields()
+        if missing:
+            self.error_label.setText("\n".join(message for _widget, message in missing))
+            missing[0][0].setFocus(Qt.FocusReason.OtherFocusReason)
+            return
         command = self._build_command()
         errors = validate_contract_create(command)
         if errors:
@@ -451,7 +551,10 @@ class ContractOperationDialog(ContractCreateDialog):
             if operation is ContractOperation.CDD_RENEWAL
             else "Poursuivre le CDD en CDI"
         )
+        self.contract_type.setCurrentIndex(self.contract_type.findData(target_type))
         self.contract_type.setEnabled(False)
+        if previous.weekly_hours is not None:
+            self.weekly_hours.setValue(float(previous.weekly_hours))
 
         expected_start = previous.end_date + timedelta(days=1)
         self.start_date.setDate(_qdate(expected_start))
@@ -469,7 +572,9 @@ class ContractOperationDialog(ContractCreateDialog):
     def _refresh_trial(self, *_args) -> None:
         code = self._contract_type_code()
         group = self.group.currentData()
-        if code not in ("CDI", "CDD") or not group:
+        if code not in ("CDI", "CDD") or not group or not self.start_date.is_set():
+            return
+        if code == "CDD" and not self.end_date.is_set():
             return
         try:
             proposal = propose_ccns_probation_period(

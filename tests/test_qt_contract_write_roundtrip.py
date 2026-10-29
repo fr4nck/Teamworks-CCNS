@@ -297,7 +297,9 @@ def test_create_action_roundtrips_dialog_insert_commit_readback_and_refresh():
         def drive_create_dialog():
             dialog = QApplication.activeModalWidget()
             assert isinstance(dialog, ContractCreateDialog)
-            assert dialog.contract_type.currentData() == "CDI"
+            # Aucun type présélectionné : le choix CDI/CDD/CEE est explicite.
+            assert dialog.contract_type.currentData() is None
+            dialog.contract_type.setCurrentIndex(dialog.contract_type.findData("CDI"))
 
             dialog.start_date.setDate(QDate(2026, 11, 1))
             group_index = dialog.group.findData("G4")
