@@ -28,6 +28,7 @@ from Utils import UTILS_Cryptage_fichier
 from Utils import UTILS_Fichiers
 from Utils import UTILS_Envoi_email
 from Utils import UTILS_MySQL_backup
+from Utils import UTILS_Sauvegarde_perimetre as PerimetreSauvegarde
 
 
 LISTE_CATEGORIES = [
@@ -60,6 +61,27 @@ def Sauvegarde(listeFichiersLocaux=[], listeFichiersReseau=[], nom="", repertoir
     if not (listeFichiersLocaux or listeFichiersReseau
             or inclure_modeles or inclure_editions):
         return False
+
+    # Double verrou : l'interface n'affiche que le dossier ouvert, et le
+    # moteur refuse aussi les anciennes sauvegardes automatiques capables
+    # d'inclure des bases d'autres dossiers/logiciels.
+    autorise, motif = PerimetreSauvegarde.valider_selection(
+        PerimetreSauvegarde.fichier_actif(),
+        locaux=listeFichiersLocaux,
+        reseau=listeFichiersReseau,
+        connexion=dictConnexion,
+    )
+    if not autorise:
+        dlg = wx.MessageDialog(
+            None, _(u"Sauvegarde refusée : %s\n\n"
+                    u"Modifiez la sélection pour ne conserver que les "
+                    u"données du dossier Teamworks ouvert.") % motif,
+            _(u"Périmètre de sauvegarde"), wx.OK | wx.ICON_ERROR,
+        )
+        dlg.ShowModal()
+        dlg.Destroy()
+        return False
+
     if listeFichiersReseau and dictConnexion is None:
         dlg = wx.MessageDialog(
             None,
