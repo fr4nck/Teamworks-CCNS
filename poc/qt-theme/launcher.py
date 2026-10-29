@@ -123,7 +123,7 @@ def precheck_production_database():
             detail = getattr(db, "erreur", "") or "fichier introuvable ou illisible"
             return None, (
                 "Impossible d'ouvrir la base de données configurée "
-                f"({getattr(db, 'nomFichier', '') or 'aucune base sélectionnée'}).\n\n"
+                f"({ACTIVE_DATABASE_LABEL}).\n\n"
                 f"Détail : {detail}"
             )
         report = check_schema(db)

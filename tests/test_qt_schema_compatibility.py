@@ -310,3 +310,43 @@ def test_refuse_database_does_not_block_in_autoclose_mode(monkeypatch):
 
     monkeypatch.setenv("TEAMWORKS_QT_AUTOCLOSE_MS", "100")
     assert launcher.refuse_database(None, "Table « presences » absente.") == 3
+
+
+
+def test_network_precheck_refusal_hides_encoded_password(monkeypatch, GestionDB, tmp_path):
+    """Une erreur réseau ne doit jamais afficher la référence legacy complète."""
+    import launcher
+    from Utils import UTILS_Fichiers
+    from infrastructure.persistence import current_database_config
+
+    token = "#64#c2VjcmV0LXRlc3Q="
+    reference = f"3306;127.0.0.1;recette;{token}[RESEAU]recette"
+
+    class FailedNetworkDb:
+        nomFichier = reference + "_TDATA"
+        isNetwork = True
+        echec = 1
+        erreur = RuntimeError("Connexion MySQL impossible")
+
+        def Close(self):
+            pass
+
+    monkeypatch.setattr(GestionDB, "DB", lambda: FailedNetworkDb())
+    monkeypatch.setattr(launcher, "import_chemins_safely", lambda: None)
+    monkeypatch.setattr(
+        UTILS_Fichiers,
+        "GetRepUtilisateur",
+        lambda filename: str(tmp_path / filename),
+    )
+    monkeypatch.setattr(
+        current_database_config,
+        "read_current_database_name",
+        lambda path: reference,
+    )
+
+    report, message = launcher.precheck_production_database()
+    assert report is None
+    assert "127.0.0.1:3306" in message
+    assert "recette_tdata" in message
+    assert token not in message
+    assert "[RESEAU]" not in message

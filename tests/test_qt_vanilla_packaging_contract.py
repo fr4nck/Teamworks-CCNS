@@ -41,6 +41,9 @@ def test_build_explicitly_excludes_wx_and_creates_portable_mode():
     text = BUILD.read_text(encoding="utf-8")
     assert '"--exclude-module", "wx"' in text
     assert '"--exclude-module", "wxPython"' in text
+    # Importes dynamiquement par mysql-connector-python : indispensables en exe.
+    assert '"--hidden-import", "mysql.connector.locales.eng.client_error"' in text
+    assert '"--collect-submodules", "mysql.connector.plugins"' in text
     assert 'New-Item -ItemType Directory -Force -Path (Join-Path $portableApp "Portable")' in text
     assert "Static/Documents" in text
     assert "VANILLA_VERSION.txt" in text
