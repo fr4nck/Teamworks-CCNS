@@ -64,8 +64,14 @@ def run() -> None:
     import wx
     from Utils import UTILS_Fichiers
     from Utils import UTILS_Sauvegarde
+    from Utils import UTILS_Sauvegarde_perimetre
 
     app = wx.App(False)
+    # Le smoke utilise exclusivement une base fictive Exemple.
+    # Le moteur de sauvegarde refuserait à juste titre toute opération
+    # sans un dossier Teamworks explicitement ouvert.
+    previous_current = UTILS_Sauvegarde_perimetre.fichier_actif
+    UTILS_Sauvegarde_perimetre.fichier_actif = lambda: "Exemple"
     try:
         with tempfile.TemporaryDirectory(prefix="teamworks-backup-") as temp:
             root = Path(temp)
@@ -161,6 +167,7 @@ def run() -> None:
             print(f"archive={archive}", flush=True)
             print(f"files={','.join(FILES)}", flush=True)
     finally:
+        UTILS_Sauvegarde_perimetre.fichier_actif = previous_current
         app.Destroy()
 
 
