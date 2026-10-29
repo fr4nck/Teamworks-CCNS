@@ -339,7 +339,8 @@ class PeopleContractsPilot(QMainWindow):
         header = self.people_table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
-        header.resizeSection(0, 82)
+        # Reserve enough room for the full MATRICULE heading and sort indicator.
+        header.resizeSection(0, max(108, header.fontMetrics().horizontalAdvance("MATRICULE") + 24))
         header.resizeSection(2, 112)
         header.resizeSection(3, 104)
         header.resizeSection(4, 84)
