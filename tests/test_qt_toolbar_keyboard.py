@@ -16,7 +16,7 @@ for path in (POC, ROOT / "teamworks", ROOT):
     if str(path) not in sys.path:
         sys.path.insert(0, str(path))
 
-from PySide6.QtCore import Qt, QTimer  # noqa: E402
+from PySide6.QtCore import QPoint, Qt, QTimer  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 from PySide6.QtWidgets import QApplication, QDialogButtonBox, QLabel, QMessageBox, QToolButton  # noqa: E402
 
@@ -161,6 +161,9 @@ def test_individual_actions_show_labels_and_keep_inactive_commands_explicit(wind
     window.resize(1380, 860)
     QApplication.processEvents()
     assert window.people_table.width() >= 300
+    assert not window.people_table.isColumnHidden(1)
+    assert all(window.people_table.isColumnHidden(c) for c in range(2, 8))
+    assert window.people_table.horizontalScrollBar().maximum() == 0
 
 def test_contract_actions_are_labeled_and_table_uses_full_width(window):
     _select_first(window)
@@ -181,6 +184,17 @@ def test_contract_actions_are_labeled_and_table_uses_full_width(window):
         assert button.isVisible()
     assert window.contracts_table.isVisible()
     assert window.contracts_table.width() >= 300
+
+    # La barre de commandes ne peut pas se superposer au tableau lorsque
+    # les quatre lignes de navigation prennent beaucoup de hauteur.
+    assert window.contracts_table.height() >= 160
+    table_top = window.contracts_table.mapToGlobal(QPoint(0, 0)).y()
+    actions_bottom = max(
+        button.mapToGlobal(QPoint(0, 0)).y() + button.height()
+        for button, _label in expected
+    )
+    assert actions_bottom <= table_top
+    assert window.contracts_scroll.verticalScrollBar().maximum() > 0
 
 
 def test_enter_on_contract_row_opens_edit_and_delete_key_asks_confirmation(window):
