@@ -208,6 +208,18 @@ def test_people_list_hides_empty_columns_and_keeps_name_readable():
         window.close()
 
 
+def test_icon_tool_buttons_have_accessible_names():
+    _app()
+    window = PeopleContractsPilot(_EmptyAdapter())
+    try:
+        for button in (window.person_create_button, window.person_edit_button,
+                       window.contract_create_button, window.contract_edit_button,
+                       window.contract_delete_button):
+            assert button.accessibleName() == button.toolTip() != ""
+    finally:
+        window.close()
+
+
 def test_launcher_installs_french_qt_standard_buttons():
     app = _app()
     assert launcher.install_french_qt_translation(app) is True

@@ -195,6 +195,8 @@ class PeopleContractsPilot(QMainWindow):
         button = QToolButton()
         button.setObjectName("legacyToolButton")
         button.setToolTip(tooltip)
+        # Icon-only button: without a name, screen readers and UI Automation see "".
+        button.setAccessibleName(tooltip)
         button.setIcon(_legacy_icon(icon_name))
         button.setIconSize(QSize(16, 16))
         button.setFixedSize(30, 30)
