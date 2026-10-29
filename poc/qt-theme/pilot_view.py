@@ -201,6 +201,7 @@ class PeopleContractsPilot(QMainWindow):
         self.splitter.setStretchFactor(0, 2)
         self.splitter.setStretchFactor(1, 5)
         self.splitter.setSizes([380, 940])
+        self.splitter.splitterMoved.connect(self._fit_people_columns)
         root.addWidget(self.splitter, 1)
 
         self.setCentralWidget(central)
@@ -253,8 +254,13 @@ class PeopleContractsPilot(QMainWindow):
         self.people_table.setFocus()
 
     def _fit_people_columns(self, *_args) -> None:
-        """Hide columns without any value so the name column stays readable."""
+        """Avoid truncated headers in the narrow people panel.
+
+        The full set is still searchable through the proxy model. Optional
+        columns are shown only when the user has enough horizontal room.
+        """
         model = self.people_model
+        compact = self.people_table.width() < 900
         rows = model.rowCount()
         for column in range(model.columnCount()):
             if column == 1:
@@ -263,7 +269,7 @@ class PeopleContractsPilot(QMainWindow):
                 str(model.data(model.index(row, column)) or "").strip() in ("", "—")
                 for row in range(rows)
             )
-            self.people_table.setColumnHidden(column, empty)
+            self.people_table.setColumnHidden(column, empty or (compact and column >= 2))
 
     def _legacy_tool_button(
         self,
@@ -694,6 +700,17 @@ class PeopleContractsPilot(QMainWindow):
         return page
 
     def _build_contracts_tab(self) -> QWidget:
+        # At 900x620 the four navigation rows leave too little height for both
+        # contract commands and the table. Scroll the whole tab instead of
+        # shrinking and overlaying the two command rows on the table header.
+        page = QWidget()
+        outer = QVBoxLayout(page)
+        outer.setContentsMargins(0, 0, 0, 0)
+        scroll = QScrollArea(page)
+        scroll.setObjectName("contractsScrollArea")
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         widget = QWidget()
         root = QVBoxLayout(widget)
         root.setContentsMargins(5, 5, 5, 5)
@@ -702,6 +719,9 @@ class PeopleContractsPilot(QMainWindow):
         group_layout = QVBoxLayout(group)
         group_layout.setContentsMargins(8, 10, 8, 8)
         self.contracts_stack = QStackedWidget()
+        # A fixed floor makes the table/header readable; overflow is handled
+        # by the QScrollArea, not by compressing the action buttons.
+        self.contracts_stack.setMinimumHeight(175)
         empty_page = QWidget()
         empty_layout = QVBoxLayout(empty_page)
         empty_message = QLabel("Aucun contrat enregistré pour cette personne")
@@ -841,7 +861,10 @@ class PeopleContractsPilot(QMainWindow):
         self.contracts_table.doubleClicked.connect(
             self._edit_contract_from_double_click
         )
-        return widget
+        scroll.setWidget(widget)
+        outer.addWidget(scroll, 1)
+        self.contracts_scroll = scroll
+        return page
 
     def _selected_contract(self):
         rows = self.contracts_table.selectionModel().selectedRows()
