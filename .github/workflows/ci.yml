@@ -128,7 +128,16 @@ jobs:
             tests/test_qt_contract_mysql_recipe_contract.py `
             tests/test_contract_legacy_classification_service.py `
             tests/test_qt_presence_integration.py `
-            tests/test_qt_blocking_thread_lifecycle_runtime.py
+            tests/test_qt_blocking_thread_lifecycle_runtime.py `
+            tests/test_qt_schema_compatibility.py `
+            tests/test_qt_usable_recipe_regressions.py `
+            tests/test_qt_contract_create_required_fields.py `
+            tests/test_qt_toolbar_keyboard.py `
+            tests/test_qt_domain_smoke_selection.py `
+            tests/test_qt_active_database.py `
+            tests/test_qt_contract_concurrency.py `
+            tests/test_qt_mysql_diagnostic.py `
+            tests/test_qt_sqlite_backup_restore.py
       - name: Démarrer MySQL local pour la recette Frais
         shell: pwsh
         run: |
@@ -214,6 +223,11 @@ jobs:
         shell: pwsh
         run: python -m pytest -q tests/test_mysql_qt_vanilla_evidence_snapshot.py
 
+      - name: Recette Qt contrats — Windows + MySQL synthétique
+        shell: pwsh
+        timeout-minutes: 8
+        run: python -m pytest -v -o faulthandler_timeout=90 tests/test_mysql_qt_contract_safety.py
+
       - name: Smoke runtime Qt Windows natif
         shell: pwsh
         run: python poc/qt-theme/runtime_async_smoke.py
@@ -221,3 +235,84 @@ jobs:
       - name: Benchmark de frugalité Qt
         shell: pwsh
         run: python poc/qt-theme/benchmark_models.py
+
+      - name: Captures Qt synthétiques — Windows, 100 / 125 / 150 %
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $env:QT_QPA_PLATFORM = "offscreen"
+          foreach ($scale in @("1", "1.25", "1.5")) {
+            $label = $scale.Replace(".", "_")
+            $env:QT_SCALE_FACTOR = $scale
+            python tools/qt_capture_visual_recipe.py --scale $scale --output "visual-evidence/$label"
+            if ($LASTEXITCODE -ne 0) {
+              throw "Capture visuelle Qt echouee: echelle $scale"
+            }
+          }
+
+      - name: Publier les preuves visuelles Qt Windows
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qt-visual-windows-${{ github.sha }}
+          path: visual-evidence/
+          if-no-files-found: warn
+          retention-days: 30
+
+  mysql-historique:
+    name: MySQL historique ${{ matrix.server }} — connecteur ${{ matrix.connector }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    # 5.7.31 est la version des exports historiques de production : bloquant.
+    # 5.5.62 et le connecteur de wx rc8 sont mesurés à titre d'information.
+    continue-on-error: ${{ matrix.informative }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { server: "5.7.31", connector: "9.7.0", informative: false }
+          - { server: "5.5.62", connector: "9.7.0", informative: true }
+          - { server: "5.7.31", connector: "26.7.0", informative: true }
+    services:
+      mysql:
+        image: mysql:${{ matrix.server }}
+        env:
+          MYSQL_ROOT_PASSWORD: ci-mdp-fictif
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -pci-mdp-fictif"
+          --health-interval=5s --health-timeout=5s --health-retries=30
+    env:
+      QT_QPA_PLATFORM: offscreen
+      TEAMWORKS_MYSQL_INTEGRATION: "1"
+      TEAMWORKS_MYSQL_HOST: 127.0.0.1
+      TEAMWORKS_MYSQL_PORT: "3306"
+      TEAMWORKS_MYSQL_USER: root
+      TEAMWORKS_MYSQL_PASSWORD: ci-mdp-fictif
+      TEAMWORKS_MYSQL_EXPECTED_VERSION: ${{ matrix.server }}
+
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v6
+
+      - name: Installer Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements/qt-vanilla-0.1.txt
+
+      - name: Installer le runtime embarqué par l'exe Qt
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends libegl1
+          python -m pip install --requirement requirements/qt-vanilla-0.1.txt pytest
+          python -m pip install "mysql-connector-python==${{ matrix.connector }}"
+          python -c "import mysql.connector as c; print('connecteur', c.__version__)"
+
+      - name: Recette Qt contrats et diagnostic sur MySQL synthétique
+        timeout-minutes: 8
+        run: |
+          export PYTHONPATH="$PWD/teamworks:$PWD"
+          python -m pytest -v -s -o faulthandler_timeout=90 tests/test_mysql_qt_contract_safety.py

@@ -4,7 +4,7 @@ import time
 from pathlib import Path
 
 from PySide6.QtCore import QSize, QSortFilterProxyModel, Qt
-from PySide6.QtGui import QIcon
+from PySide6.QtGui import QIcon, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QDialog,
@@ -16,6 +16,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QLineEdit,
     QMainWindow,
+    QMenu,
     QMessageBox,
     QPushButton,
     QScrollArea,
@@ -40,6 +41,7 @@ from application.services.contract_write import (
     update_contract_indicator,
     update_contract_legacy_classification,
 )
+from application.services.transactional_write import WriteCode
 from contract_editor import (
     ContractComplianceDialog,
     ContractCreateDialog,
@@ -75,9 +77,21 @@ def _contract_count_text(count: int) -> str:
     return f"{count} contrats enregistrés"
 
 
+TOOL_BUTTON_SIZE = 34
+TOOL_ICON_SIZE = 20
+UNAVAILABLE_SUFFIX = "non disponible dans Teamworks Qt 0.1 (utiliser Teamworks wx)"
+
+
 def _legacy_icon(name: str) -> QIcon:
+    """Icône historique multi-résolution : 16 px, et 32 px lorsqu'elle existe."""
     path = _LEGACY_ICONS / name
-    return QIcon(str(path)) if path.exists() else QIcon()
+    if not path.exists():
+        return QIcon()
+    icon = QIcon(str(path))
+    large = _LEGACY_ICONS.parent / "32x32" / name
+    if large.exists():
+        icon.addFile(str(large), QSize(32, 32))
+    return icon
 
 
 class ReadValue(QLabel):
@@ -86,6 +100,49 @@ class ReadValue(QLabel):
         self.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         self.setWordWrap(True)
         self.setProperty("readValue", True)
+
+
+class _AdaptiveSectionNavigation(QWidget):
+    """Disposition 4 colonnes larges ou 2 colonnes et 4 lignes à 900 px."""
+
+    WIDE_THRESHOLD = 760
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setObjectName("twSectionNavigation")
+        self._grid = QGridLayout(self)
+        self._grid.setContentsMargins(0, 0, 0, 0)
+        self._grid.setHorizontalSpacing(5)
+        self._grid.setVerticalSpacing(5)
+        self._buttons = []
+        self._columns = 0
+
+    @property
+    def columns(self) -> int:
+        return self._columns
+
+    def set_buttons(self, buttons) -> None:
+        self._buttons = list(buttons)
+        # La première disposition doit aussi placer les boutons quand le
+        # QWidget a déjà reçu un resizeEvent pendant sa construction.
+        self._columns = 0
+        self._reflow(self.width())
+
+    def _reflow(self, width: int) -> None:
+        columns = 4 if width >= self.WIDE_THRESHOLD else 2
+        if columns == self._columns:
+            return
+        for button in self._buttons:
+            self._grid.removeWidget(button)
+        for index, button in enumerate(self._buttons):
+            self._grid.addWidget(button, index // columns, index % columns)
+        for column in range(4):
+            self._grid.setColumnStretch(column, 1 if column < columns else 0)
+        self._columns = columns
+
+    def resizeEvent(self, event) -> None:
+        super().resizeEvent(event)
+        self._reflow(event.size().width())
 
 
 class PeopleContractsPilot(QMainWindow):
@@ -97,9 +154,11 @@ class PeopleContractsPilot(QMainWindow):
         contract_write_port_factory=None,
         contract_document_workspace_factory=None,
         advanced_contracts_enabled: bool = False,
+        contract_schema_port=None,
     ):
         super().__init__(parent)
         self.adapter = adapter
+        self._contract_schema_port = contract_schema_port
         self._contract_write_port_factory = contract_write_port_factory
         self._contract_document_workspace_factory = contract_document_workspace_factory
         self._advanced_contracts_enabled = advanced_contracts_enabled is True
@@ -123,23 +182,14 @@ class PeopleContractsPilot(QMainWindow):
 
         central = QWidget(self)
         root = QVBoxLayout(central)
-        root.setContentsMargins(14, 12, 14, 12)
-        root.setSpacing(8)
-
-        heading = QLabel("Individus / Contrats")
-        font = heading.font()
-        font.setPointSize(16)
-        font.setBold(True)
-        heading.setFont(font)
-        root.addWidget(heading)
-
-        subheading = QLabel("Transposition Qt de l’organisation historique Teamworks · écritures Contrats contrôlées")
-        subheading.setProperty("muted", True)
-        root.addWidget(subheading)
+        # La liste et la fiche possèdent déjà leurs titres : pas de bandeau
+        # de prototype au-dessus du travail quotidien.
+        root.setContentsMargins(8, 8, 8, 8)
+        root.setSpacing(6)
 
         people_panel = self._build_people_panel()
         detail_panel = self._build_detail_panel()
-        people_panel.setMinimumWidth(390)
+        people_panel.setMinimumWidth(360)
         detail_panel.setMinimumWidth(460)
         people_panel.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         detail_panel.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
@@ -148,13 +198,45 @@ class PeopleContractsPilot(QMainWindow):
         self.splitter.setChildrenCollapsible(False)
         self.splitter.addWidget(people_panel)
         self.splitter.addWidget(detail_panel)
-        self.splitter.setStretchFactor(0, 3)
+        self.splitter.setStretchFactor(0, 2)
         self.splitter.setStretchFactor(1, 5)
-        self.splitter.setSizes([500, 820])
+        self.splitter.setSizes([380, 940])
+        self.splitter.splitterMoved.connect(self._fit_people_columns)
         root.addWidget(self.splitter, 1)
 
         self.setCentralWidget(central)
         self._show_empty_detail()
+        self._install_keyboard_shortcuts()
+        # Ordonner TAB une fois tous les panneaux réunis dans cette fenêtre.
+        QWidget.setTabOrder(self.people_table, self.search)
+        QWidget.setTabOrder(self.search, self.people_reset_button)
+        QWidget.setTabOrder(self.people_reset_button, self.person_create_button)
+        QWidget.setTabOrder(self.person_create_button, self.person_edit_button)
+        QWidget.setTabOrder(self.person_edit_button, self.people_more_actions)
+
+    def _install_keyboard_shortcuts(self) -> None:
+        """Entrée = modifier, Suppr = supprimer le contrat, Ctrl+N = nouvelle fiche, Échap = liste complète."""
+        def bind(sequence, widget, button):
+            shortcut = QShortcut(QKeySequence(sequence), widget)
+            shortcut.setContext(Qt.ShortcutContext.WidgetShortcut)
+            shortcut.activated.connect(lambda: button.isEnabled() and button.click())
+            return shortcut
+
+        self._shortcuts = [
+            bind(Qt.Key.Key_Return, self.people_table, self.person_edit_button),
+            bind(Qt.Key.Key_Enter, self.people_table, self.person_edit_button),
+            bind(Qt.Key.Key_Return, self.contracts_table, self.contract_edit_button),
+            bind(Qt.Key.Key_Enter, self.contracts_table, self.contract_edit_button),
+            bind(Qt.Key.Key_Delete, self.contracts_table, self.contract_delete_button),
+        ]
+        create = QShortcut(QKeySequence("Ctrl+N"), self)
+        create.activated.connect(
+            lambda: self.person_create_button.isEnabled() and self.person_create_button.click()
+        )
+        clear = QShortcut(QKeySequence(Qt.Key.Key_Escape), self.search)
+        clear.setContext(Qt.ShortcutContext.WidgetShortcut)
+        clear.activated.connect(self._clear_people_filter)
+        self._shortcuts += [create, clear]
 
     def _people_count_text(self) -> str:
         total = self.people_model.rowCount()
@@ -171,6 +253,24 @@ class PeopleContractsPilot(QMainWindow):
         self.search.clear()
         self.people_table.setFocus()
 
+    def _fit_people_columns(self, *_args) -> None:
+        """Avoid truncated headers in the narrow people panel.
+
+        The full set is still searchable through the proxy model. Optional
+        columns are shown only when the user has enough horizontal room.
+        """
+        model = self.people_model
+        compact = self.people_table.width() < 900
+        rows = model.rowCount()
+        for column in range(model.columnCount()):
+            if column == 1:
+                continue
+            empty = rows > 0 and all(
+                str(model.data(model.index(row, column)) or "").strip() in ("", "—")
+                for row in range(rows)
+            )
+            self.people_table.setColumnHidden(column, empty or (compact and column >= 2))
+
     def _legacy_tool_button(
         self,
         icon_name: str,
@@ -178,13 +278,25 @@ class PeopleContractsPilot(QMainWindow):
         *,
         enabled: bool = False,
         fallback: str = "·",
+        shortcut: str = "",
+        unavailable: bool = False,
     ) -> QToolButton:
         button = QToolButton()
         button.setObjectName("legacyToolButton")
-        button.setToolTip(tooltip)
+        # Icon-only button: without a name, screen readers and UI Automation see "".
+        button.setAccessibleName(tooltip)
+        if unavailable:
+            # No fake feature: the command stays visibly and permanently off.
+            button.setToolTip(f"{tooltip} — {UNAVAILABLE_SUFFIX}")
+            button.setAccessibleDescription(UNAVAILABLE_SUFFIX)
+            button.setProperty("unavailable", True)
+            enabled = False
+        else:
+            button.setToolTip(f"{tooltip} ({shortcut})" if shortcut else tooltip)
         button.setIcon(_legacy_icon(icon_name))
-        button.setIconSize(QSize(16, 16))
-        button.setFixedSize(30, 30)
+        button.setIconSize(QSize(TOOL_ICON_SIZE, TOOL_ICON_SIZE))
+        button.setFixedSize(TOOL_BUTTON_SIZE, TOOL_BUTTON_SIZE)
+        button.setFocusPolicy(Qt.FocusPolicy.TabFocus)
         if button.icon().isNull():
             button.setText(fallback)
         button.setEnabled(enabled)
@@ -195,7 +307,7 @@ class PeopleContractsPilot(QMainWindow):
         frame.setObjectName("panel")
         layout = QVBoxLayout(frame)
         layout.setContentsMargins(8, 8, 8, 8)
-        layout.setSpacing(6)
+        layout.setSpacing(7)
 
         title_row = QHBoxLayout()
         label = QLabel("Liste des individus")
@@ -209,27 +321,26 @@ class PeopleContractsPilot(QMainWindow):
         title_row.addWidget(self.people_count)
         layout.addLayout(title_row)
 
-        list_row = QHBoxLayout()
-        list_row.setSpacing(6)
-        list_column = QVBoxLayout()
-        list_column.setSpacing(5)
-
+        # La liste prend toute la largeur disponible : seules les commandes
+        # réellement fonctionnelles sont visibles sans ouvrir de menu.
         self.people_table = QTableView()
         self.people_table.setModel(self.people_proxy)
         self.people_table.setSortingEnabled(True)
         self.people_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.people_table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.people_table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.people_table.setTabKeyNavigation(False)
         self.people_table.setAlternatingRowColors(True)
         self.people_table.setTextElideMode(Qt.TextElideMode.ElideRight)
         self.people_table.setWordWrap(False)
         self.people_table.verticalHeader().setVisible(False)
-        self.people_table.verticalHeader().setDefaultSectionSize(24)
-        self.people_table.verticalHeader().setMinimumSectionSize(22)
+        self.people_table.verticalHeader().setDefaultSectionSize(26)
+        self.people_table.verticalHeader().setMinimumSectionSize(24)
         header = self.people_table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
-        header.resizeSection(0, 82)
+        # Reserve enough room for the full MATRICULE heading and sort indicator.
+        header.resizeSection(0, max(108, header.fontMetrics().horizontalAdvance("MATRICULE") + 24))
         header.resizeSection(2, 112)
         header.resizeSection(3, 104)
         header.resizeSection(4, 84)
@@ -237,52 +348,114 @@ class PeopleContractsPilot(QMainWindow):
         header.resizeSection(6, 86)
         header.resizeSection(7, 100)
         self.people_table.selectionModel().selectionChanged.connect(self._on_person_selection)
-        list_column.addWidget(self.people_table, 1)
+        self.people_model.modelReset.connect(self._fit_people_columns)
+        self.people_model.rowsInserted.connect(self._fit_people_columns)
+        self._fit_people_columns()
 
         search_bar = QFrame()
         search_bar.setObjectName("commandBar")
         search_layout = QHBoxLayout(search_bar)
-        search_layout.setContentsMargins(6, 4, 6, 4)
+        search_layout.setContentsMargins(5, 3, 5, 3)
+        search_layout.setSpacing(5)
         self.search = QLineEdit()
-        self.search.setPlaceholderText("Nom, prénom, ville, statut…")
+        self.search.setPlaceholderText("Rechercher un nom, une ville…")
         self.search.setClearButtonEnabled(True)
         self.search.textChanged.connect(self._on_search_changed)
         search_layout.addWidget(self.search, 1)
-        list_column.addWidget(search_bar)
-        list_row.addLayout(list_column, 1)
+        show_all_button = self._legacy_tool_button(
+            "Actualiser.png", "Réafficher toute la liste",
+            enabled=True, fallback="R", shortcut="Échap",
+        )
+        show_all_button.clicked.connect(self._clear_people_filter)
+        self.people_reset_button = show_all_button
+        search_layout.addWidget(show_all_button)
+        layout.addWidget(search_bar)
 
-        tools = QVBoxLayout()
-        tools.setSpacing(5)
+        actions = QHBoxLayout()
+        actions.setSpacing(5)
         self.person_create_button = self._legacy_tool_button(
-            "Ajouter.png", "Créer une nouvelle fiche individuelle", fallback="+"
+            "Ajouter.png", "Créer une nouvelle fiche individuelle",
+            fallback="+", shortcut="Ctrl+N",
         )
         self.person_edit_button = self._legacy_tool_button(
-            "Modifier.png", "Modifier la fiche sélectionnée", fallback="M"
+            "Modifier.png", "Modifier la fiche sélectionnée",
+            fallback="M", shortcut="Entrée ou double-clic",
         )
-        for button in (
-            self.person_create_button,
-            self.person_edit_button,
-            self._legacy_tool_button("Supprimer.png", "Supprimer la fiche sélectionnée", fallback="−"),
+        for button, short_label in (
+            (self.person_create_button, "Ajouter"),
+            (self.person_edit_button, "Modifier"),
         ):
-            tools.addWidget(button)
-        tools.addSpacing(10)
-        tools.addWidget(self._legacy_tool_button("Calendrier3jours.png", "Rechercher sur une période", fallback="P"))
-        show_all_button = self._legacy_tool_button("Actualiser.png", "Réafficher toute la liste", enabled=True, fallback="R")
-        show_all_button.clicked.connect(self._clear_people_filter)
-        tools.addWidget(show_all_button)
-        tools.addWidget(self._legacy_tool_button("Mecanisme.png", "Options de la liste", fallback="O"))
-        tools.addSpacing(10)
+            button.setObjectName("peopleActionButton")
+            button.setText(short_label)
+            button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+            button.setIconSize(QSize(18, 18))
+            button.setFixedSize(99, 38)
+            actions.addWidget(button)
+
+        # Les anciennes commandes non implémentées restent explicitement
+        # visibles dans « Autres », sans permettre un faux clic d'écriture.
+        # Leurs widgets historiques restent des enfants Qt pour préserver
+        # les contrats de test et les noms accessibles.
+        self._people_hidden_tools = QWidget(frame)
+        self._people_hidden_tools.hide()
+        self._people_disabled_commands = []
+        self.person_delete_button = self._legacy_tool_button(
+            "Supprimer.png", "Supprimer la fiche sélectionnée",
+            fallback="−", unavailable=True,
+        )
+
+        def register_unavailable(button):
+            button.setParent(self._people_hidden_tools)
+            self._people_disabled_commands.append(button)
+            return button
+
+        register_unavailable(self.person_delete_button)
+        register_unavailable(self._legacy_tool_button(
+            "Calendrier3jours.png", "Rechercher sur une période",
+            fallback="P", unavailable=True,
+        ))
+        register_unavailable(self._legacy_tool_button(
+            "Mecanisme.png", "Options de la liste",
+            fallback="O", unavailable=True,
+        ))
+        self.people_unavailable_buttons = []
         for icon, tooltip, fallback in (
             ("Mail.png", "Courrier ou publipostage", "@"),
             ("Imprimante.png", "Imprimer la liste", "I"),
             ("Excel.png", "Exporter la liste", "X"),
         ):
-            tools.addWidget(self._legacy_tool_button(icon, tooltip, fallback=fallback))
-        tools.addSpacing(10)
-        tools.addWidget(self._legacy_tool_button("Aide.png", "Aide", fallback="?"))
-        tools.addStretch(1)
-        list_row.addLayout(tools)
-        layout.addLayout(list_row, 1)
+            button = register_unavailable(self._legacy_tool_button(
+                icon, tooltip, fallback=fallback, unavailable=True,
+            ))
+            self.people_unavailable_buttons.append(button)
+        register_unavailable(self._legacy_tool_button(
+            "Aide.png", "Aide", fallback="?", unavailable=True,
+        ))
+
+        more = QToolButton(frame)
+        more.setObjectName("peopleMoreActions")
+        more.setText("Autres")
+        more.setAccessibleName("Autres actions individuelles")
+        more.setToolTip("Voir les autres actions et leur disponibilité")
+        more.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        more.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextOnly)
+        more.setFixedHeight(38)
+        more.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        menu = QMenu(more)
+        menu.setToolTipsVisible(True)
+        for disabled_button in self._people_disabled_commands:
+            action = menu.addAction(
+                disabled_button.icon(),
+                disabled_button.accessibleName() + " — indisponible",
+            )
+            action.setEnabled(False)
+            action.setToolTip(disabled_button.toolTip())
+        more.setMenu(menu)
+        self.people_more_actions = more
+        actions.addWidget(more, 1)
+        layout.addLayout(actions)
+        layout.addWidget(self.people_table, 1)
+
         return frame
 
     def _build_detail_panel(self) -> QWidget:
@@ -315,11 +488,37 @@ class PeopleContractsPilot(QMainWindow):
         self.tabs.addTab(self.legacy_tabs.scenarios(), _legacy_icon("Scenario.png"), "Scénarios")
         self.tabs.addTab(self.legacy_tabs.expenses(), _legacy_icon("Calculatrice.png"), "Frais")
         self.tabs.addTab(self.legacy_tabs.recruitment(), _legacy_icon("Candidature.png"), "Recrutement")
+
+        # Une rangée de huit onglets était tronquée dès 900 px de largeur.
+        # Conserver le vrai QTabWidget (état et intégrations existants), mais
+        # exposer ses huit pages via deux rangées de boutons entièrement lisibles.
+        self.tabs.tabBar().hide()
+        nav = _AdaptiveSectionNavigation(detail_page)
+        self.section_navigation = nav
+        self.section_buttons = []
+        for index in range(self.tabs.count()):
+            name = self.tabs.tabText(index)
+            button = QPushButton(name, nav)
+            button.setObjectName("twSectionTab")
+            button.setCheckable(True)
+            button.setMinimumHeight(42)
+            button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+            button.setAccessibleName(f"Ouvrir {name}")
+            button.setToolTip(f"Afficher la rubrique {name}")
+            button.clicked.connect(
+                lambda _checked=False, selected=index: self._activate_section_navigation(selected)
+            )
+            self.section_buttons.append(button)
+        nav.set_buttons(self.section_buttons)
+        self.tabs.currentChanged.connect(self._sync_section_navigation)
+        self._sync_section_navigation(self.tabs.currentIndex())
+        detail_layout.addWidget(nav)
         detail_layout.addWidget(self.tabs, 1)
 
         footer = QHBoxLayout()
         footer_help = QPushButton("Aide")
         footer_help.setEnabled(False)
+        footer_help.setToolTip(f"Aide — {UNAVAILABLE_SUFFIX}")
         footer.addWidget(footer_help)
         footer.addStretch(1)
         footer_close = QPushButton("Fermer")
@@ -332,45 +531,62 @@ class PeopleContractsPilot(QMainWindow):
         layout.addWidget(self.detail_stack, 1)
         return frame
 
+    def _activate_section_navigation(self, index: int) -> None:
+        """Même un clic sur la rubrique déjà active doit rester sélectionné."""
+        self.tabs.setCurrentIndex(index)
+        self._sync_section_navigation(self.tabs.currentIndex())
+
+    def _sync_section_navigation(self, index: int) -> None:
+        """Synchronise les boutons et la page Qt réelle."""
+        for current, button in enumerate(self.section_buttons):
+            button.setChecked(current == index)
+
     def _build_person_header(self) -> QWidget:
         person_summary = QFrame()
         person_summary.setObjectName("personSummary")
         summary_layout = QHBoxLayout(person_summary)
-        summary_layout.setContentsMargins(10, 8, 10, 8)
-        summary_layout.setSpacing(12)
+        summary_layout.setContentsMargins(8, 4, 8, 4)
+        summary_layout.setSpacing(8)
 
         summary_text = QWidget()
         summary_text_layout = QVBoxLayout(summary_text)
         summary_text_layout.setContentsMargins(0, 0, 0, 0)
         summary_text_layout.setSpacing(2)
-        self.detail_id = QLabel("Aucun contrat en cours | ID : —")
-        self.detail_id.setProperty("muted", True)
-        summary_text_layout.addWidget(self.detail_id, 0, Qt.AlignmentFlag.AlignRight)
-        separator = QFrame()
-        separator.setFrameShape(QFrame.Shape.HLine)
-        separator.setProperty("separator", True)
-        summary_text_layout.addWidget(separator)
+
+        identity_row = QHBoxLayout()
+        identity_row.setContentsMargins(0, 0, 0, 0)
+        identity_row.setSpacing(8)
         self.detail_title = QLabel("Fiche individuelle")
         self.detail_title.setObjectName("personSummaryName")
-        summary_text_layout.addWidget(self.detail_title)
+        identity_row.addWidget(self.detail_title, 1)
+        self.detail_id = QLabel("ID : —")
+        self.detail_id.setProperty("muted", True)
+        identity_row.addWidget(self.detail_id, 0, Qt.AlignmentFlag.AlignVCenter)
+        summary_text_layout.addLayout(identity_row)
+
         self.detail_context = QLabel("Adresse / situation : —")
         self.detail_context.setProperty("muted", True)
         self.detail_context.setWordWrap(True)
         summary_text_layout.addWidget(self.detail_context)
+
+        details_row = QHBoxLayout()
+        details_row.setContentsMargins(0, 0, 0, 0)
+        details_row.setSpacing(8)
         self.detail_birth = QLabel("Date et lieu de naissance inconnus")
         self.detail_birth.setProperty("muted", True)
-        summary_text_layout.addWidget(self.detail_birth)
+        self.detail_birth.setWordWrap(True)
+        details_row.addWidget(self.detail_birth, 1)
         self.detail_contracts = QLabel("Aucun contrat enregistré")
         self.detail_contracts.setProperty("muted", True)
-        summary_text_layout.addWidget(self.detail_contracts)
-        summary_text_layout.addStretch(1)
+        details_row.addWidget(self.detail_contracts)
+        summary_text_layout.addLayout(details_row)
         summary_layout.addWidget(summary_text, 1)
 
         self.person_avatar = QLabel("—")
         self.person_avatar.setObjectName("personAvatar")
         self.person_avatar.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.person_avatar.setFixedSize(96, 96)
-        summary_layout.addWidget(self.person_avatar, 0, Qt.AlignmentFlag.AlignTop)
+        self.person_avatar.setFixedSize(62, 62)
+        summary_layout.addWidget(self.person_avatar, 0, Qt.AlignmentFlag.AlignVCenter)
         return person_summary
 
     def _build_general_tab(self) -> QWidget:
@@ -485,14 +701,28 @@ class PeopleContractsPilot(QMainWindow):
         return page
 
     def _build_contracts_tab(self) -> QWidget:
+        # At 900x620 the four navigation rows leave too little height for both
+        # contract commands and the table. Scroll the whole tab instead of
+        # shrinking and overlaying the two command rows on the table header.
+        page = QWidget()
+        outer = QVBoxLayout(page)
+        outer.setContentsMargins(0, 0, 0, 0)
+        scroll = QScrollArea(page)
+        scroll.setObjectName("contractsScrollArea")
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         widget = QWidget()
         root = QVBoxLayout(widget)
         root.setContentsMargins(5, 5, 5, 5)
 
         group = QGroupBox("Contrats")
-        group_layout = QHBoxLayout(group)
+        group_layout = QVBoxLayout(group)
         group_layout.setContentsMargins(8, 10, 8, 8)
         self.contracts_stack = QStackedWidget()
+        # A fixed floor makes the table/header readable; overflow is handled
+        # by the QScrollArea, not by compressing the action buttons.
+        self.contracts_stack.setMinimumHeight(175)
         empty_page = QWidget()
         empty_layout = QVBoxLayout(empty_page)
         empty_message = QLabel("Aucun contrat enregistré pour cette personne")
@@ -509,23 +739,24 @@ class PeopleContractsPilot(QMainWindow):
         header = self.contracts_table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         header.setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)
+        self.contracts_model.modelReset.connect(self.contracts_table.resizeColumnsToContents)
         self.contracts_stack.addWidget(empty_page)
         self.contracts_stack.addWidget(self.contracts_table)
         self.contracts_stack.setCurrentIndex(0)
-        group_layout.addWidget(self.contracts_stack, 1)
-
-        tools = QVBoxLayout()
-        tools.setSpacing(5)
+        tools = QGridLayout()
+        tools.setHorizontalSpacing(6)
+        tools.setVerticalSpacing(5)
         self.contract_create_button = self._legacy_tool_button(
             "Ajouter.png", "Ajouter un contrat", fallback="+"
         )
         self.contract_create_button.clicked.connect(self._create_contract)
-        tools.addWidget(self.contract_create_button)
+        tools.addWidget(self.contract_create_button, 0, 0)
         self.contract_edit_button = self._legacy_tool_button(
-            "Modifier.png", "Modifier le contrat", fallback="M"
+            "Modifier.png", "Modifier le contrat", fallback="M",
+            shortcut="Entrée ou double-clic",
         )
         self.contract_edit_button.clicked.connect(self._edit_selected_contract)
-        tools.addWidget(self.contract_edit_button)
+        tools.addWidget(self.contract_edit_button, 0, 1)
 
         self.contract_renew_button = self._legacy_tool_button(
             "Modifier.png", "Renouveler le CDD", fallback="R"
@@ -536,7 +767,7 @@ class PeopleContractsPilot(QMainWindow):
             )
         )
         self.contract_renew_button.setVisible(self._advanced_contracts_enabled)
-        tools.addWidget(self.contract_renew_button)
+        tools.addWidget(self.contract_renew_button, 2, 0)
 
         self.contract_to_cdi_button = self._legacy_tool_button(
             "Modifier.png", "Poursuivre le CDD en CDI", fallback="C"
@@ -547,7 +778,7 @@ class PeopleContractsPilot(QMainWindow):
             )
         )
         self.contract_to_cdi_button.setVisible(self._advanced_contracts_enabled)
-        tools.addWidget(self.contract_to_cdi_button)
+        tools.addWidget(self.contract_to_cdi_button, 2, 1)
 
         self.contract_legacy_classification_button = self._legacy_tool_button(
             "Modifier.png", "Classification historique / valeur de point", fallback="H"
@@ -558,14 +789,13 @@ class PeopleContractsPilot(QMainWindow):
         self.contract_legacy_classification_button.setVisible(
             self._advanced_contracts_enabled
         )
-        tools.addWidget(self.contract_legacy_classification_button)
+        tools.addWidget(self.contract_legacy_classification_button, 2, 2)
 
         self.contract_delete_button = self._legacy_tool_button(
-            "Supprimer.png", "Supprimer le contrat", fallback="−"
+            "Supprimer.png", "Supprimer le contrat", fallback="−", shortcut="Suppr"
         )
         self.contract_delete_button.clicked.connect(self._delete_selected_contract)
-        tools.addWidget(self.contract_delete_button)
-        tools.addSpacing(8)
+        tools.addWidget(self.contract_delete_button, 0, 2)
         self.contract_signature_button = self._legacy_tool_button(
             "Signature.png", "Basculer l'état de signature du contrat", fallback="S"
         )
@@ -578,18 +808,40 @@ class PeopleContractsPilot(QMainWindow):
         self.contract_due_button.clicked.connect(
             lambda: self._toggle_contract_indicator("due")
         )
-        tools.addWidget(self.contract_signature_button)
-        tools.addWidget(self.contract_due_button)
-        tools.addSpacing(8)
+        tools.addWidget(self.contract_signature_button, 1, 0)
+        tools.addWidget(self.contract_due_button, 1, 1)
         self.contract_document_button = self._legacy_tool_button(
             "Imprimante.png",
             "Préparer un document RH / publipostage",
             fallback="I",
         )
         self.contract_document_button.clicked.connect(self._open_contract_documents)
-        tools.addWidget(self.contract_document_button)
-        tools.addStretch(1)
+        tools.addWidget(self.contract_document_button, 1, 2)
+        # Des commandes textuelles accessibles sur deux lignes, puis le tableau
+        # sur toute sa largeur. Les actions avancées conservent leur gate.
+        for button, label in (
+            (self.contract_create_button, "Ajouter"),
+            (self.contract_edit_button, "Modifier"),
+            (self.contract_delete_button, "Supprimer"),
+            (self.contract_signature_button, "Signature"),
+            (self.contract_due_button, "DUE"),
+            (self.contract_document_button, "Documents"),
+            (self.contract_renew_button, "Renouveler"),
+            (self.contract_to_cdi_button, "CDD vers CDI"),
+            (self.contract_legacy_classification_button, "Classification"),
+        ):
+            button.setObjectName("contractActionButton")
+            button.setText(label)
+            button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+            button.setIconSize(QSize(18, 18))
+            button.setFixedHeight(38)
+            button.setMinimumWidth(86)
+            button.setMaximumWidth(16777215)
+            button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        for column in range(3):
+            tools.setColumnStretch(column, 1)
         group_layout.addLayout(tools)
+        group_layout.addWidget(self.contracts_stack, 1)
         root.addWidget(group, 1)
 
         command_bar = QFrame()
@@ -600,20 +852,34 @@ class PeopleContractsPilot(QMainWindow):
         simulate_button.clicked.connect(self._open_contract_compliance_dialog)
         command_layout.addWidget(simulate_button)
         command_layout.addStretch(1)
-        readonly = QLabel("Écriture contrôlée · Créer / Modifier / Supprimer / Signature / DUE")
+        readonly = QLabel("Double-clic : modifier · Suppr : supprimer")
         readonly.setProperty("muted", True)
         command_layout.addWidget(readonly)
         root.addWidget(command_bar)
         self.contracts_table.selectionModel().selectionChanged.connect(
             self._on_contract_selection
         )
-        return widget
+        self.contracts_table.doubleClicked.connect(
+            self._edit_contract_from_double_click
+        )
+        scroll.setWidget(widget)
+        outer.addWidget(scroll, 1)
+        self.contracts_scroll = scroll
+        return page
 
     def _selected_contract(self):
         rows = self.contracts_table.selectionModel().selectedRows()
         if not rows:
             return None
         return self.contracts_model.contract_at(rows[0].row())
+
+    def _edit_contract_from_double_click(self, index) -> None:
+        """Edit the clicked contract, not the previously selected contract."""
+        if not index.isValid():
+            return
+        self.contracts_table.selectRow(index.row())
+        if self.contract_edit_button.isEnabled():
+            self._edit_selected_contract()
 
     def _on_contract_selection(self, *_args) -> None:
         contract = self._selected_contract()
@@ -652,6 +918,54 @@ class PeopleContractsPilot(QMainWindow):
         )
 
 
+    def _contract_schema_ready(self) -> bool:
+        """Création/modification : colonnes CCNS présentes, ou ajout autorisé maintenant.
+
+        Aucune évolution de schéma sans confirmation explicite ; refus motivé
+        pour une base réseau (pas de sauvegarde automatique possible).
+        """
+        port = self._contract_schema_port
+        if port is None:
+            return True
+        try:
+            report = port.contract_schema_report()
+        except Exception as exc:
+            self.statusBar().showMessage(f"Contrôle du schéma impossible · {exc}")
+            return False
+        missing = report.missing_contract_columns
+        if not missing:
+            return True
+        answer = QMessageBox.question(
+            self,
+            "Colonnes CCNS des contrats",
+            (
+                "Cette base ne contient pas encore les colonnes CCNS des contrats "
+                f"({len(missing)} colonnes). Elles sont nécessaires pour créer ou "
+                "modifier un contrat dans Teamworks Qt.\n\n"
+                "Opération : ajout de colonnes vides. Aucune donnée existante "
+                "n'est modifiée. Une copie de sauvegarde de la base est créée "
+                "et vérifiée avant l'opération.\n\n"
+                "Ajouter les colonnes maintenant ?"
+            ),
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+        if answer != QMessageBox.StandardButton.Yes:
+            self.statusBar().showMessage(
+                "Colonnes CCNS non ajoutées · aucune écriture · contrats en consultation"
+            )
+            return False
+        try:
+            result = port.evolve_contract_schema()
+        except Exception as exc:
+            QMessageBox.warning(self, "Colonnes CCNS des contrats", f"Ajout impossible : {exc}")
+            return False
+        if not result.ok:
+            QMessageBox.warning(self, "Colonnes CCNS des contrats", result.message)
+            return False
+        self.statusBar().showMessage(result.message)
+        return True
+
     def _create_contract(self) -> None:
         person_id = self._current_contract_person_key
         if (
@@ -660,6 +974,8 @@ class PeopleContractsPilot(QMainWindow):
             or isinstance(person_id, bool)
             or person_id <= 0
         ):
+            return
+        if not self._contract_schema_ready():
             return
 
         try:
@@ -677,6 +993,7 @@ class PeopleContractsPilot(QMainWindow):
 
         dialog = ContractCreateDialog(person_id, type_result.value, self)
         if dialog.exec() != QDialog.DialogCode.Accepted:
+            self.statusBar().showMessage("Création du contrat annulée · aucune écriture")
             return
 
         result = create_contract(port, command=dialog.command())
@@ -803,6 +1120,8 @@ class PeopleContractsPilot(QMainWindow):
         contract = self._selected_contract()
         if contract is None or not callable(self._contract_write_port_factory):
             return
+        if not self._contract_schema_ready():
+            return
 
         try:
             port = self._contract_write_port_factory()
@@ -822,10 +1141,20 @@ class PeopleContractsPilot(QMainWindow):
 
         dialog = ContractEditDialog(loaded.value, self)
         if dialog.exec() != QDialog.DialogCode.Accepted:
+            self.statusBar().showMessage(
+                f"Modification du contrat n°{contract.id_historique} annulée · aucune écriture"
+            )
             return
 
-        result = update_contract(port, command=dialog.command())
+        result = update_contract(port, command=dialog.command(), expected=loaded.value)
         if not result.ok and not result.committed:
+            if result.code == WriteCode.CONFLICT:
+                QMessageBox.warning(self, "Contrat modifié ailleurs", result.message)
+                try:
+                    self._reload_contracts(selected_contract_id=contract.id_historique)
+                except Exception as exc:
+                    self.statusBar().showMessage(f"Rafraîchissement impossible · {exc}")
+                    return
             self.statusBar().showMessage(
                 f"Contrat non modifié · {result.code} · {result.message}"
             )
@@ -839,9 +1168,14 @@ class PeopleContractsPilot(QMainWindow):
             )
             return
 
-        if result.committed:
+        if result.committed and not result.ok:
             self.statusBar().showMessage(
-                f"Contrat n°{contract.id_historique} modifié et relu depuis la base"
+                f"Contrat n°{contract.id_historique} enregistré · vérification après "
+                f"enregistrement en échec · {result.message}"
+            )
+        elif result.committed:
+            self.statusBar().showMessage(
+                f"Contrat n°{contract.id_historique} modifié · valeurs relues identiques en base"
             )
         else:
             self.statusBar().showMessage(
@@ -1079,7 +1413,7 @@ class PeopleContractsPilot(QMainWindow):
             self.contract_renew_button.setEnabled(False)
             self.contract_to_cdi_button.setEnabled(False)
             self.contract_legacy_classification_button.setEnabled(False)
-        self.statusBar().showMessage("Lecture seule · aucune sélection")
+        self.statusBar().showMessage("Aucune sélection")
 
     def _on_person_selection(self, *_args) -> None:
         rows = self.people_table.selectionModel().selectedRows()
@@ -1118,7 +1452,15 @@ class PeopleContractsPilot(QMainWindow):
             and not isinstance(contract_key, bool)
             and contract_key > 0
         )
-        self.contracts_model.replace(self.adapter.list_contracts(contract_key))
+        # Une lecture en échec vide la liste : jamais les contrats de la fiche précédente.
+        contracts_read_error = ""
+        try:
+            contracts = tuple(self.adapter.list_contracts(contract_key))
+        except Exception as exc:
+            contracts = ()
+            contracts_read_error = f"Lecture des contrats impossible · {exc}"
+            self.contract_create_button.setEnabled(False)
+        self.contracts_model.replace(contracts)
         contract_count = self.contracts_model.rowCount()
         self.contracts_stack.setCurrentIndex(1 if contract_count else 0)
 
@@ -1131,4 +1473,8 @@ class PeopleContractsPilot(QMainWindow):
         self.detail_contracts.setText(_contract_count_text(contract_count))
         self.person_avatar.setText(_initials(person.name))
         self.detail_stack.setCurrentIndex(1)
-        self.statusBar().showMessage(f"Lecture seule · {person.name} · {contract_count} contrat(s)")
+        if contracts_read_error:
+            self.detail_contracts.setText("Contrats non lus")
+            self.statusBar().showMessage(f"{person.name} · {contracts_read_error}")
+        else:
+            self.statusBar().showMessage(f"{person.name} · {contract_count} contrat(s)")

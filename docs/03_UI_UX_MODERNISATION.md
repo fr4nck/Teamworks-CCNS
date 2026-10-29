@@ -58,6 +58,16 @@ garde AST recherche cette famille de défauts dans toutes les sources Python. Ce
 parcours réel a également détecté puis éliminé une combinaison contradictoire
 `wx.EXPAND` / alignement dans un `BoxSizer`, devenue bloquante avec wxPython 4.3.
 
+### Sauvegardes successives du profil d'affichage (`tools/tw121_display_profile.py`)
+
+Le test `test_sequential_backups_do_not_overwrite_each_other` échouait par
+intermittence sous Windows : deux applications rapprochées lisaient le même
+horodatage (résolution d'horloge de l'ordre de la milliseconde), produisaient
+le même nom et `shutil.copy2` écrasait la première sauvegarde, c'est-à-dire le
+profil d'origine. Le nom est désormais réservé en création exclusive avec un
+suffixe `-2`, `-3`… en cas de collision ; le format `Customize.ini.tw121-<horodatage>.bak`
+reste inchangé pour la première sauvegarde.
+
 ## Cohérence du dashboard sombre
 
 La recette Windows de la version `0.9.1` a révélé deux défauts du composant
@@ -104,3 +114,13 @@ Cadrage retenu :
 - `PMSL-Arch/docs/DESIGN_SYSTEM.md`
 - `AGENTS.md`
 - chantier TW-189 et garde-fous associés
+
+
+## 29 octobre 2026 — Qt, lisibilité de la fiche individuelle
+
+Sur la copie de production affichant les huit rubriques, la barre Qt native les tronquait et n'offrait que des flèches de défilement minuscules. La navigation conserve le QTabWidget et ses huit pages pour préserver les contrôleurs, mais les expose sur **deux lignes de quatre boutons** accessibles (texte intégral, état sélectionné, clic et suivi des changements de page). Vérification demandée à 900 × 620 et 1380 × 860 via QTest. L'en-tête de fiche et son avatar sont plus compacts, le bandeau de prototype est supprimé, la liste garde une largeur adaptée. Cette évolution concerne uniquement Qt ; aucune requête SQL ni règle métier n'est modifiée.
+
+La barre verticale des individus est remplacée par des commandes nommées « Ajouter » et « Modifier », une recherche pleine largeur et un menu « Autres » présentant explicitement les fonctions indisponibles. La navigation passe à deux colonnes sur une fenêtre étroite pour respecter la largeur réelle des intitulés ; cliquer de nouveau la rubrique active ne la désélectionne plus. Les tests vérifient ces contraintes sans accès à une base réelle.
+
+
+Dans la rubrique Contrats, les commandes Ajouter, Modifier, Supprimer, Signature, DUE et Documents sont désormais **nommées et regroupées en deux lignes** au-dessus du tableau, qui utilise toute la largeur. Les opérations avancées conservent leurs conditions de disponibilité. Les raccourcis Entrée et Suppr, les signaux Qt et les contrôles d'écriture ne changent pas. Recette QTest à 900 × 620 ; validation en CI et contrôle manuel du portable Windows requis avant qualification ergonomique finale.

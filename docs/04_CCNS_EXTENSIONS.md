@@ -80,6 +80,73 @@ Le bearer de transport et la clé HMAC de l'enveloppe restent des secrets distin
 Le transport HTTP est isolé de l'orchestration métier afin de pouvoir être remplacé
 ultérieurement par une queue ou un broker sans modifier le consommateur RH.
 
+## Teamworks Qt — sécurité des données (RC2)
+
+Défauts propres à l'application Qt du fork, confirmés à l'audit des chemins
+d'ouverture et d'écriture, puis corrigés :
+
+- **modification concurrente d'un contrat** : l'enregistrement relisait la base
+  au moment de la sauvegarde, si bien qu'une modification faite entre-temps par
+  une autre session (autre poste, Teamworks wx) était écrasée sans avertissement.
+  La ligne est désormais relue sous verrou d'écriture (`BEGIN IMMEDIATE` sous
+  SQLite, `SELECT … FOR UPDATE` sous MySQL) et comparée à l'état affiché à
+  l'ouverture ; toute différence refuse l'enregistrement (`CONFLICT`) ;
+- **relecture après commit non comparée** : le contrat relu est maintenant comparé
+  champ par champ aux valeurs saisies ; un écart est signalé comme
+  « enregistré · vérification en échec » et jamais comme un succès ;
+- **lecture SQL en échec présentée comme vide** : `GestionDB.ExecuterReq` avale
+  l'erreur et renvoie 0 ; les lecteurs Personnes, Contrats et Activité lèvent
+  désormais une erreur explicite, et une lecture ratée vide la liste des contrats
+  au lieu de laisser ceux de la fiche précédente. Le comportement d'origine de
+  `ExecuterReq` est un candidat Vanilla **non vérifié** dans `Noethys/Teamworks` ;
+- **base active non affichée** : la base réellement ouverte (fichier SQLite ou
+  serveur MySQL, sans mot de passe) est affichée en permanence dans la barre
+  d'état (nom accessible complet, lu par les lecteurs d'écran) et le titre ;
+  sans base sélectionnée dans `Config.json`, Qt refuse de
+  démarrer sans rien ouvrir ;
+- **sauvegardes SQLite** : nom réservé en création exclusive (deux sauvegardes au
+  même instant ne partagent jamais un fichier) et contrôle du contenu table par
+  table ; nouvelle restauration isolée qui refuse la base active, une destination
+  existante et une sauvegarde corrompue.
+
+Le gate MySQL synthétique de la CI (MySQL 8.0, schéma historique) a révélé que le
+contrôle du moteur de stockage passait par `GestionDB.ExecuterReq`, qui réécrit
+tout `()` pour MySQL et rendait `DATABASE()` invalide : toute base MySQL aurait été
+refusée. La requête passe désormais par le curseur, et le faux MySQL des tests
+reproduit cette réécriture.
+
+Le gate MySQL/MariaDB sur copie représentative reste **BLOCKED** : aucun serveur ni copie représentative
+autorisée n'est disponible sur le poste de recette.
+
+### Connexion MySQL de l'exe Qt Windows
+
+- **défaut d'empaquetage** : PyInstaller n'embarquait pas les modules chargés
+  dynamiquement par `mysql.connector` (traductions des erreurs client, plugins
+  d'authentification). Toute erreur côté client devenait
+  `ImportError: No localization support for language 'eng'`, et un compte
+  `mysql_native_password` (MySQL 5.7) n'avait pas de plugin. Ces modules sont
+  désormais embarqués (`d3134cf`) ; l'inventaire de l'archive du binaire le
+  confirme, seuls `aio` et `django`, inutilisés, en sont absents ;
+- **diagnostic en lecture seule** : `Teamworks-CCNS-Qt.exe --diagnostic-mysql`
+  distingue l'accès TCP, la négociation MySQL (version du serveur, méthode
+  d'authentification annoncée), l'authentification, la sélection de la base et
+  la compatibilité du schéma. Il n'exécute que `USE`, `SELECT` et `SHOW` et
+  écrit un rapport neuf `diagnostic-mysql-*.txt` à côté de `Config.json`, sans
+  jeton ni mot de passe. Code 0 si les cinq étapes passent, 6 sinon ;
+- **compatibilité historique** : le pilote est figé à
+  `mysql-connector-python==9.7.0`. Le packaging teste le binaire réel contre
+  MySQL 5.7.31 sous Windows : diagnostic complet, démarrage en production,
+  mot de passe refusé (1045), port fermé et base inaccessible. Le job CI
+  `mysql-historique` exécute le parcours contrats et le diagnostic contre
+  MySQL 5.7.31 (bloquant), ainsi que contre 5.5.62 et avec le connecteur 26.7.0
+  de wx rc8 (à titre d'information) ;
+- **écart avec wx** : Qt lit le même `Config.json` que wx (hors mode Portable),
+  avec les mêmes options de connexion (`UTILS_MySQL` : Python pur, `utf8`, TLS
+  seulement si des certificats sont configurés). En revanche, wx rc8 embarque
+  `mysql-connector-python` 26.7.0, et Qt ignore `interface_mysql`, car MySQLdb
+  n'est pas embarqué. La connexion au serveur de production n'est pas vérifiée
+  depuis le poste de développement.
+
 ## Références principales
 
 - `ROADMAP.md`

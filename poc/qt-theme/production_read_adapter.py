@@ -40,6 +40,7 @@ class TeamworksProductionReadAdapter(TeamworksReadAdapter):
     def __init__(self, person_reader=None, contract_reader=None, activity_reader=None):
         self._closed = False
         self._contract_document_port = None
+        self._contract_schema_report = None
         self.startup_timings: dict[str, float | int | bool] = {
             "person_reader_construction_seconds": 0.0,
             "contract_reader_construction_seconds": 0.0,
@@ -190,6 +191,26 @@ class TeamworksProductionReadAdapter(TeamworksReadAdapter):
 
         return GestionDbContractWriteAdapter(self._contract_reader.db)
 
+    def contract_schema_report(self):
+        """Précontrôle lecture seule du schéma, sur la session Contrats."""
+        self._ensure_open()
+        from infrastructure.persistence.qt_schema_compatibility import check_schema
+
+        if self._contract_schema_report is None:
+            self._contract_schema_report = check_schema(self._contract_reader.db)
+        return self._contract_schema_report
+
+    def evolve_contract_schema(self):
+        """Ajout autorisé des colonnes CCNS : jamais appelé sans confirmation explicite."""
+        self._ensure_open()
+        from infrastructure.persistence.contract_schema_evolution import (
+            add_contract_engine_columns,
+        )
+
+        result = add_contract_engine_columns(self._contract_reader.db)
+        self._contract_schema_report = None
+        self._contract_reader.invalider_schema_contrats()
+        return result
     def prepare_contract_document_workspace(self, contract_id: int):
         """Prépare les documents du contrat sur les readers déjà ouverts."""
         self._ensure_open()

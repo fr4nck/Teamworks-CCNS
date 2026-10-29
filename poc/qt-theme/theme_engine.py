@@ -136,12 +136,12 @@ class ThemeEngine:
                 background: {t.selection};
                 color: {t.primary};
                 border: 1px solid {t.outline};
-                border-radius: 48px;
-                font-size: 22px;
+                border-radius: 31px;
+                font-size: 18px;
                 font-weight: 700;
             }}
             QLabel#personSummaryName {{
-                font-size: 18px;
+                font-size: 16px;
                 font-weight: 600;
             }}
             QLabel#twDialogTitle, QLabel#twSectionTitle {{
@@ -187,6 +187,52 @@ class ThemeEngine:
                 background: {t.selection};
                 color: {t.selection_text};
                 border-color: {t.focus};
+            }}
+            QToolButton#peopleActionButton,
+            QToolButton#peopleMoreActions,
+            QToolButton#contractActionButton {{
+                background: {t.surface_container_lowest};
+                color: {t.on_surface};
+                border: 1px solid {t.outline_variant};
+                border-radius: {r.button}px;
+                min-height: 38px;
+                max-height: 38px;
+                padding: 2px 5px;
+            }}
+            QToolButton#peopleActionButton {{
+                min-width: 99px;
+                max-width: 99px;
+                font-weight: 600;
+            }}
+            QToolButton#peopleActionButton:hover,
+            QToolButton#peopleMoreActions:hover,
+            QToolButton#contractActionButton:hover {{
+                background: {t.surface_container_high};
+                border-color: {t.focus};
+            }}
+            QToolButton#peopleActionButton:focus,
+            QToolButton#peopleMoreActions:focus,
+            QToolButton#contractActionButton:focus {{
+                border: 2px solid {t.focus};
+            }}
+            QToolButton#peopleActionButton:disabled,
+            QToolButton#contractActionButton:disabled {{
+                color: {t.disabled};
+                background: {t.surface_container_high};
+                border-color: {t.outline_variant};
+            }}
+            QToolButton#contractActionButton {{
+                font-weight: 600;
+            }}
+            QToolButton#legacyToolButton {{
+                min-height: 34px;
+                max-height: 34px;
+                min-width: 34px;
+                max-width: 34px;
+                padding: 0px;
+            }}
+            QToolButton#legacyToolButton[unavailable="true"] {{
+                border-style: dashed;
             }}
             QToolButton#twActionButton[actionRole="destructive"] {{
                 color: {t.danger};
@@ -414,6 +460,29 @@ class ThemeEngine:
                 border-bottom: 1px solid {t.outline};
                 padding: 6px;
                 font-weight: 600;
+            }}
+            /* Navigation individuelle sur deux lignes, sans onglets tronqués. */
+            QPushButton#twSectionTab {{
+                background: {t.surface_container_lowest};
+                color: {t.on_surface};
+                border: 1px solid {t.outline};
+                border-radius: {r.button}px;
+                padding: 4px 3px;
+                min-height: 36px;
+                font-weight: 600;
+                text-align: center;
+            }}
+            QPushButton#twSectionTab:hover {{
+                background: {t.surface_container_high};
+                border-color: {t.primary};
+            }}
+            QPushButton#twSectionTab:checked {{
+                background: {t.selection};
+                color: {t.selection_text};
+                border: 2px solid {t.primary};
+            }}
+            QPushButton#twSectionTab:focus {{
+                border: 2px solid {t.focus};
             }}
             QTabWidget::pane {{
                 border: 1px solid {t.outline};

@@ -97,6 +97,154 @@ jobs:
             throw "Le runtime Qt figé a quitté avec le code $($process.ExitCode)."
           }
 
+      - name: Smoke production sur base fictive (copie Portable isolée)
+        shell: pwsh
+        run: |
+          # Chaîne réelle : précontrôle de schéma, GestionDB, chargement des personnes.
+          # Effectué sur une copie : le dossier livré et l'installateur restent sans Portable.
+          $source = (Resolve-Path "dist/qt-vanilla/Teamworks-CCNS-Qt").Path
+          $copy = Join-Path $env:RUNNER_TEMP "qt-production-smoke"
+          Remove-Item $copy -Recurse -Force -ErrorAction SilentlyContinue
+          Copy-Item $source $copy -Recurse
+          $data = Join-Path $copy "Portable/Data"
+          New-Item -ItemType Directory -Force -Path $data | Out-Null
+          foreach ($suffix in "TDATA", "TPHOTOS", "TDOCUMENTS") {
+            Copy-Item "teamworks/Static/Exemples/Exemple_$suffix.dat" (Join-Path $data "Recette_$suffix.dat")
+          }
+          '{"nomFichier": "Recette"}' | Set-Content -Path (Join-Path $copy "Portable/Config.json") -Encoding utf8
+          $env:TEAMWORKS_QT_SOURCE = "production"
+          $env:TEAMWORKS_QT_AUTOCLOSE_MS = "4000"
+          $process = Start-Process -FilePath (Join-Path $copy "Teamworks-CCNS-Qt.exe") -PassThru
+          if (-not $process.WaitForExit(30000)) {
+            Stop-Process -Id $process.Id -Force
+            throw "Le runtime Qt figé (production) ne s'est pas fermé."
+          }
+          if ($process.ExitCode -ne 0) {
+            Get-ChildItem (Join-Path $copy "Portable/Logs") -ErrorAction SilentlyContinue | ForEach-Object { Get-Content $_.FullName -Tail 40 }
+            throw "Le runtime Qt figé (production) a quitté avec le code $($process.ExitCode)."
+          }
+          if (Test-Path (Join-Path $source "Portable")) { throw "Le dossier livré ne doit pas contenir de Portable." }
+
+      - name: Exe réel contre MySQL 5.7.31 synthétique (diagnostic, démarrage, erreurs)
+        shell: pwsh
+        run: |
+          # Version des exports historiques de production. Serveur éphémère, base
+          # et compte fictifs ; l'exe testé est une copie, le dossier livré reste intact.
+          $ErrorActionPreference = "Stop"
+          $version = "5.7.31"
+          $zip = Join-Path $env:RUNNER_TEMP "mysql-$version-winx64.zip"
+          curl.exe -L --fail --retry 3 "https://downloads.mysql.com/archives/get/p/23/file/mysql-$version-winx64.zip" -o $zip
+          if ($LASTEXITCODE -ne 0) { throw "Téléchargement de MySQL $version impossible" }
+          7z x $zip "-o$env:RUNNER_TEMP" -y | Out-Null
+          $base = Join-Path $env:RUNNER_TEMP "mysql-$version-winx64"
+          if (-not (Test-Path "$env:WINDIR\System32\msvcr120.dll")) { choco install vcredist2013 --yes --no-progress }
+          $data = Join-Path $env:RUNNER_TEMP "mysql57-data"
+          & "$base\bin\mysqld.exe" --no-defaults --initialize-insecure "--basedir=$base" "--datadir=$data"
+          if ($LASTEXITCODE -ne 0) { throw "Initialisation de MySQL $version échouée" }
+          Start-Process "$base\bin\mysqld.exe" -ArgumentList @(
+            "--no-defaults", "--basedir=$base", "--datadir=$data", "--port=3308",
+            "--bind-address=127.0.0.1", "--log-error=$env:RUNNER_TEMP\mysql57.log"
+          ) | Out-Null
+
+          $env:PYTHONPATH = "$pwd\teamworks;$pwd"
+          $prepare = Join-Path $env:RUNNER_TEMP "prepare_mysql57.py"
+          @'
+          import sys, time
+          import mysql.connector
+          import GestionDB
+          from Data import DATA_Tables
+
+          for _ in range(90):
+              try:
+                  admin = mysql.connector.connect(host="127.0.0.1", port=3308, user="root", password="",
+                                                  use_pure=True, ssl_disabled=True, connection_timeout=2)
+                  break
+              except Exception as exc:
+                  last = exc
+                  time.sleep(1)
+          else:
+              raise SystemExit("MySQL 5.7.31 indisponible : %r" % (last,))
+          cursor = admin.cursor()
+          cursor.execute("SELECT VERSION()")
+          print("serveur", cursor.fetchone()[0])
+          cursor.execute("CREATE USER 'recette'@'127.0.0.1' IDENTIFIED BY 'mdp-fictif-ci'")
+          cursor.execute("GRANT ALL ON recette_tdata.* TO 'recette'@'127.0.0.1'")
+          admin.close()
+          db = GestionDB.DB(nomFichier="3308;127.0.0.1;root;[RESEAU]recette_tdata", suffixe=None, modeCreation=True)
+          assert db.echec == 0, getattr(db, "erreur", None)
+          db.CreationTables(DATA_Tables.DB_DATA)
+          db.cursor.execute("INSERT INTO parametres (categorie, nom, parametre) VALUES ('fichier', 'version', '2.1.2.0')")
+          db.cursor.execute("INSERT INTO personnes (IDpersonne, nom, prenom) VALUES (1, 'FICTIF', 'Ada')")
+          db.Commit()
+          db.Close()
+          print(GestionDB.EncodeMdpReseau(sys.argv[1]))
+          '@ | Set-Content -Path $prepare -Encoding utf8
+          $token = (python $prepare "mdp-fictif-ci" | Select-Object -Last 1)
+          $wrong = (python -c "import GestionDB; print(GestionDB.EncodeMdpReseau('mauvais-mdp-ci'))" | Select-Object -Last 1)
+
+          $copy = Join-Path $env:RUNNER_TEMP "qt-mysql57"
+          Copy-Item (Resolve-Path "dist/qt-vanilla/Teamworks-CCNS-Qt").Path $copy -Recurse
+          New-Item -ItemType Directory -Path (Join-Path $copy "Portable") | Out-Null
+          $evidence = Join-Path $env:RUNNER_TEMP "qt-mysql57-preuves"
+          New-Item -ItemType Directory -Path $evidence | Out-Null
+          $env:TEAMWORKS_QT_DIAGNOSTIC_DIR = $evidence
+          $env:TEAMWORKS_QT_AUTOCLOSE_MS = "4000"
+          $env:TEAMWORKS_QT_SOURCE = "production"
+
+          function Invoke-Exe([string]$Reference, [string[]]$Arguments, [int]$Expected, [string]$Label) {
+            ('{"nomFichier": "' + $Reference + '"}') | Set-Content -Path (Join-Path $copy "Portable/Config.json") -Encoding utf8
+            $before = @(Get-ChildItem $evidence -Filter "diagnostic-mysql-*.txt").Count
+            $process = if ($Arguments) { Start-Process (Join-Path $copy "Teamworks-CCNS-Qt.exe") -ArgumentList $Arguments -PassThru } else { Start-Process (Join-Path $copy "Teamworks-CCNS-Qt.exe") -PassThru }
+            $null = $process.Handle
+            if (-not $process.WaitForExit(60000)) { Stop-Process -Id $process.Id -Force; throw "$Label : l'exe ne s'est pas fermé" }
+            if ($process.ExitCode -ne $Expected) { throw "$Label : code $($process.ExitCode), attendu $Expected" }
+            $reports = @(Get-ChildItem $evidence -Filter "diagnostic-mysql-*.txt" | Sort-Object LastWriteTime)
+            if ($Arguments -and $reports.Count -ne $before + 1) { throw "$Label : rapport absent" }
+            Write-Host "$Label : code $($process.ExitCode) (attendu)"
+            Start-Sleep -Seconds 1
+            if ($Arguments) { return (Get-Content $reports[-1].FullName -Raw -Encoding utf8) }
+          }
+
+          function Assert-NoSecret([string]$Text) {
+            foreach ($secret in @($token, $token.Substring(4), "mdp-fictif-ci", $wrong, "mauvais-mdp-ci", "[RESEAU]")) {
+              if ($Text.Contains($secret)) { throw "Secret présent dans le rapport" }
+            }
+            if ($Text.Contains("ImportError") -or $Text.Contains("localization")) { throw "ImportError dans le rapport" }
+          }
+
+          $good = "3308;127.0.0.1;recette;$token[RESEAU]recette"
+          $text = Invoke-Exe $good @("--diagnostic-mysql") 0 "Diagnostic, compte valide"
+          Write-Host $text
+          foreach ($expected in "serveur MySQL 5.7.31", "mysql_native_password", "Modules dynamiques du pilote : tous présents", "« recette_tdata » ouverte", "Résultat : CONFORME") {
+            if (-not $text.Contains($expected)) { throw "Rapport incomplet : $expected" }
+          }
+          Assert-NoSecret $text
+          Invoke-Exe $good @() 0 "Démarrage production sur MySQL 5.7.31"
+
+          $text = Invoke-Exe "3308;127.0.0.1;recette;$wrong[RESEAU]recette" @("--diagnostic-mysql") 6 "Diagnostic, mot de passe refusé"
+          Write-Host $text
+          if (-not ($text.Contains("3. Authentification : ÉCHEC") -and $text.Contains("1045"))) { throw "Refus d'authentification mal diagnostiqué" }
+          Assert-NoSecret $text
+          Invoke-Exe "3308;127.0.0.1;recette;$wrong[RESEAU]recette" @() 3 "Démarrage production refusé (mot de passe)"
+
+          $text = Invoke-Exe "3309;127.0.0.1;recette;$token[RESEAU]recette" @("--diagnostic-mysql") 6 "Diagnostic, port fermé"
+          Write-Host $text
+          if (-not $text.Contains("1. TCP : ÉCHEC")) { throw "Port fermé mal diagnostiqué" }
+          Assert-NoSecret $text
+
+          $text = Invoke-Exe "3308;127.0.0.1;recette;$token[RESEAU]inconnue" @("--diagnostic-mysql") 6 "Diagnostic, base inconnue"
+          Write-Host $text
+          if (-not $text.Contains("4. Sélection de la base : ÉCHEC")) { throw "Base inconnue mal diagnostiquée" }
+          Assert-NoSecret $text
+
+      - name: Publier les rapports du diagnostic MySQL 5.7.31 (fictifs)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qt-mysql57-diagnostics
+          if-no-files-found: ignore
+          path: ${{ runner.temp }}/qt-mysql57-preuves
+
       - name: Installer Inno Setup
         shell: pwsh
         run: choco install innosetup --yes --no-progress

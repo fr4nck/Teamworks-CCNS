@@ -32,6 +32,7 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
         advanced_contracts_enabled: bool = False,
         presence_write_port_factory=None,
         person_details_write_port_factory=None,
+        contract_schema_port=None,
     ):
         self._person_details_write_port_factory = person_details_write_port_factory
         self._activity_loader_class = activity_loader_class
@@ -54,6 +55,7 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
             contract_write_port_factory=contract_write_port_factory,
             contract_document_workspace_factory=contract_document_workspace_factory,
             advanced_contracts_enabled=advanced_contracts_enabled,
+            contract_schema_port=contract_schema_port,
         )
         self.person_edit_button.clicked.connect(self._edit_selected_person)
         self.person_create_button.setEnabled(callable(self._person_details_write_port_factory))
@@ -280,8 +282,13 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
             expenses_page.set_expense_person(historical_id)
 
         self._request_activity(historical_id)
+        status = (
+            "chargement du dossier…"
+            if self._activity_loader_class is not None
+            else "dossier affiché"
+        )
         self.statusBar().showMessage(
-            f"Lecture seule · {person.name} · {contract_count} contrat(s) · chargement du dossier…"
+            f"{person.name} · {contract_count} contrat(s) · {status}"
         )
 
     def _request_activity(self, person_id) -> None:
@@ -401,7 +408,7 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
                 reimbursements = len(payload.get("reimbursements", ()))
                 seconds = float(payload.get("seconds", 0.0))
                 self.statusBar().showMessage(
-                    "Lecture seule · dossier prêt · "
+                    "Dossier prêt · "
                     f"{scenarios} scénario(s) · {trips} déplacement(s) · "
                     f"{reimbursements} remboursement(s) · {seconds:.2f}s"
                 )
@@ -417,7 +424,7 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
                 controller = getattr(self, "presence_controller", None)
                 if controller is not None:
                     controller.set_ready(False)
-                self.statusBar().showMessage("Lecture seule · échec du chargement du dossier")
+                self.statusBar().showMessage("Échec du chargement du dossier")
         if self._activity_thread is not None:
             self._activity_thread.quit()
 

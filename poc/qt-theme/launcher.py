@@ -8,9 +8,223 @@ import traceback
 STARTED_AT = time.perf_counter()
 
 _phase_started = time.perf_counter()
-from PySide6.QtCore import QThread, QTimer
-from PySide6.QtWidgets import QApplication
+from PySide6.QtCore import QObject, QThread, QTimer, Slot
+from PySide6.QtWidgets import QApplication, QLabel
 PYSIDE_IMPORT_SECONDS = time.perf_counter() - _phase_started
+
+
+class _GuiThreadReceiver(QObject):
+    """Receives worker signals in the GUI thread.
+
+    A plain Python callable connected to a worker signal runs in the worker
+    thread; the people model must only be touched from the GUI thread.
+    """
+
+    def __init__(self, parent, on_loaded, on_failed):
+        super().__init__(parent)
+        self._on_loaded = on_loaded
+        self._on_failed = on_failed
+
+    @Slot(object, object)
+    def loaded(self, people, timings) -> None:
+        self._on_loaded(people, timings)
+
+    @Slot(str)
+    def failed(self, details: str) -> None:
+        self._on_failed(details)
+
+
+def install_french_qt_translation(qt_app) -> bool:
+    """Translate Qt standard buttons and dialogs (Enregistrer, Annuler, Oui…)."""
+    from PySide6.QtCore import QLibraryInfo, QLocale, QTranslator
+
+    translator = QTranslator(qt_app)
+    directory = QLibraryInfo.path(QLibraryInfo.LibraryPath.TranslationsPath)
+    if not translator.load(QLocale(QLocale.Language.French), "qtbase", "_", directory):
+        print("[Teamworks Qt POC] Traduction Qt française introuvable : " + directory, file=sys.stderr)
+        return False
+    qt_app.installTranslator(translator)
+    QLocale.setDefault(QLocale(QLocale.Language.French, QLocale.Country.France))
+    return True
+
+
+def frozen_paths_added_by_chemins(before, after, runtime_dir):
+    """Sous-dossiers du runtime figé ajoutés à sys.path par ``import Chemins``.
+
+    En exécutable PyInstaller, Chemins insère chaque sous-dossier du répertoire
+    de l'exe (charset_normalizer, numpy…) : un ``import models`` y résoudrait
+    alors ``charset_normalizer.models``. Seules ces entrées nouvelles sont visées.
+    """
+    base = os.path.normcase(os.path.abspath(runtime_dir))
+    existing = set(before)
+    added = []
+    for entry in after:
+        if not entry or entry in existing:
+            continue
+        normalized = os.path.normcase(os.path.abspath(entry))
+        if normalized != base and os.path.dirname(normalized) == base:
+            added.append(entry)
+    return added
+
+
+def import_chemins_safely() -> None:
+    before = list(sys.path)
+    import Chemins  # noqa: F401  (résolution des chemins Teamworks)
+
+    if getattr(sys, "frozen", False):
+        for entry in frozen_paths_added_by_chemins(before, list(sys.path), os.path.dirname(sys.executable)):
+            while entry in sys.path:
+                sys.path.remove(entry)
+
+
+ACTIVE_DATABASE_LABEL = ""
+
+
+def describe_active_database(db) -> str:
+    """Libellé de la base réellement ouverte, sans mot de passe."""
+    name = str(getattr(db, "nomFichier", "") or "")
+    if getattr(db, "isNetwork", False):
+        from infrastructure.persistence.legacy_network_target import parse_legacy_network_target
+
+        try:
+            target = parse_legacy_network_target(name)
+        except ValueError:
+            return "Base réseau MySQL (référence illisible)"
+        return f"Base réseau MySQL « {target.database} » sur {target.host}:{target.port} · utilisateur {target.user}"
+    return f"Base locale SQLite {name}"
+
+
+def precheck_production_database():
+    """Lecture seule : la base configurée est-elle exploitable par Qt ?
+
+    Renvoie ``(rapport, message_bloquant)``. Aucune écriture, aucune migration.
+    """
+    global ACTIVE_DATABASE_LABEL
+    import_chemins_safely()
+    import GestionDB
+    from Utils import UTILS_Fichiers
+    from infrastructure.persistence.current_database_config import read_current_database_name
+    from infrastructure.persistence.qt_schema_compatibility import check_schema
+
+    config_path = UTILS_Fichiers.GetRepUtilisateur("Config.json")
+    if not read_current_database_name(config_path):
+        return None, (
+            "Aucune base Teamworks n'est sélectionnée dans la configuration "
+            f"({config_path}).\n\n"
+            "Ouvrez ou créez d'abord le fichier voulu dans Teamworks, "
+            "puis relancez Teamworks Qt. Aucune base n'a été ouverte."
+        )
+
+    db = GestionDB.DB()
+    ACTIVE_DATABASE_LABEL = describe_active_database(db)
+    print("[Teamworks Qt] " + ACTIVE_DATABASE_LABEL)
+    try:
+        if getattr(db, "echec", 1) != 0:
+            detail = getattr(db, "erreur", "") or "fichier introuvable ou illisible"
+            return None, (
+                "Impossible d'ouvrir la base de données configurée "
+                f"({ACTIVE_DATABASE_LABEL}).\n\n"
+                f"Détail : {detail}"
+            )
+        report = check_schema(db)
+    finally:
+        try:
+            db.Close()
+        except Exception:
+            pass
+    if not report.compatible:
+        return report, "Cette base n'est pas compatible avec Teamworks Qt :\n\n" + report.blocking_text()
+    return report, ""
+
+
+DIAGNOSTIC_ARGUMENT = "--diagnostic-mysql"
+
+
+def _write_diagnostic_report(directory: str, text: str, now) -> str:
+    """Écrit le rapport dans un fichier neuf, sans jamais en écraser un autre."""
+    stem = os.path.join(directory, "diagnostic-mysql-" + now.strftime("%Y%m%d-%H%M%S"))
+    for index in range(1, 1000):
+        path = stem + ("" if index == 1 else f"-{index}") + ".txt"
+        try:
+            with open(path, "x", encoding="utf-8") as stream:
+                stream.write(text)
+            return path
+        except FileExistsError:
+            continue
+    raise FileExistsError(stem)
+
+
+def run_mysql_diagnostic_command(qt_app) -> int:
+    """``--diagnostic-mysql`` : cinq étapes en lecture seule, rapport sans secret.
+
+    Code 0 si toutes les étapes passent, 6 sinon. Aucune base n'est modifiée.
+    """
+    from datetime import datetime
+
+    import_chemins_safely()
+    import GestionDB
+    from Utils import UTILS_Fichiers
+    from infrastructure.persistence.current_database_config import read_current_database_name
+    from infrastructure.persistence.mysql_connection_diagnostic import run_mysql_diagnostic
+    from infrastructure.persistence.qt_schema_compatibility import check_schema
+
+    now = datetime.now()
+    config_path = UTILS_Fichiers.GetRepUtilisateur("Config.json")
+    reference = read_current_database_name(config_path)
+    if "[RESEAU]" not in reference:
+        text = (
+            "Diagnostic MySQL Teamworks Qt — lecture seule\n"
+            f"Configuration lue : {config_path}\n"
+            + ("Aucune base n'est sélectionnée." if not reference else "La base sélectionnée est une base locale SQLite.")
+            + "\nRésultat : NON CONFORME — aucune base réseau MySQL à diagnostiquer\n"
+        )
+        ok = False
+    else:
+        def schema_report():
+            db = GestionDB.DB()
+            try:
+                if getattr(db, "echec", 1) != 0:
+                    raise RuntimeError(str(getattr(db, "erreur", "") or "ouverture impossible"))
+                return check_schema(db)
+            finally:
+                try:
+                    db.Close()
+                except Exception:
+                    pass
+
+        connector = GestionDB.mysql.connector if GestionDB.IMPORT_MYSQLCONNECTOR_OK else None
+        report = run_mysql_diagnostic(
+            reference,
+            connector=connector,
+            open_connection=GestionDB.GetConnexionReseau,
+            check_schema=schema_report,
+            decode_password=GestionDB.DecodeMdpReseau,
+            tls_label=(
+                "TLS avec les certificats configurés" if GestionDB.CERTIFICATS_SSL.get("ca")
+                else "désactivé, aucun certificat configuré (comportement de Teamworks wx)"
+            ),
+            now=now,
+        )
+        text = report.text().replace("Cible :", f"Configuration lue : {config_path}\nCible :", 1)
+        ok = report.ok
+    directory = os.environ.get("TEAMWORKS_QT_DIAGNOSTIC_DIR") or os.path.dirname(config_path)
+    path = _write_diagnostic_report(directory, text, now)
+    print(text)
+    if not os.environ.get("TEAMWORKS_QT_AUTOCLOSE_MS"):
+        from PySide6.QtWidgets import QMessageBox
+
+        show = QMessageBox.information if ok else QMessageBox.warning
+        show(None, "Teamworks Qt — diagnostic MySQL", text + "\nRapport enregistré : " + path)
+    return 0 if ok else 6
+
+
+def refuse_database(qt_app, message: str) -> int:
+    print("[Teamworks Qt] Base refusée : " + message.replace("\n", " "), file=sys.stderr)
+    if not os.environ.get("TEAMWORKS_QT_AUTOCLOSE_MS"):
+        from PySide6.QtWidgets import QMessageBox
+
+        QMessageBox.critical(None, "Teamworks Qt — base de données", message)
+    return 3
 
 
 def build_adapter(source: str, timings: dict[str, float]):
@@ -70,7 +284,7 @@ def start_people_loader(window, people_loader_class, total_to_show_seconds: floa
             return
         window.people_model.replace(tuple(people))
         window.people_proxy.invalidate()
-        QTimer.singleShot(0, lambda: window.people_count.setText(window._people_count_text()))
+        window.people_count.setText(window._people_count_text())
         ready_total = time.perf_counter() - STARTED_AT
         after_show = max(0.0, ready_total - total_to_show_seconds)
         _print_data_profile(
@@ -79,8 +293,10 @@ def start_people_loader(window, people_loader_class, total_to_show_seconds: floa
             ready_total=ready_total,
             after_show=after_show,
         )
+        notice = getattr(window, "schema_notice", "")
         window.statusBar().showMessage(
-            f"Lecture seule · {window.people_model.rowCount()} personnes · données prêtes en {ready_total:.2f}s"
+            f"{window.people_model.rowCount()} personnes · données prêtes en {ready_total:.2f}s"
+            + (f" · {notice}" if notice else "")
         )
         thread.quit()
 
@@ -88,11 +304,12 @@ def start_people_loader(window, people_loader_class, total_to_show_seconds: floa
         if not window.is_closing_requested():
             print("[Teamworks Qt POC] Échec du chargement asynchrone des personnes :", file=sys.stderr)
             print(details, file=sys.stderr)
-            window.statusBar().showMessage("Lecture seule · échec du chargement des personnes")
+            window.statusBar().showMessage("Échec du chargement des personnes")
         thread.quit()
 
-    worker.loaded.connect(on_people_loaded)
-    worker.failed.connect(on_people_failed)
+    receiver = _GuiThreadReceiver(window, on_people_loaded, on_people_failed)
+    worker.loaded.connect(receiver.loaded)
+    worker.failed.connect(receiver.failed)
     thread.started.connect(worker.run)
     thread.start()
     return thread
@@ -112,7 +329,10 @@ def main() -> None:
         os.environ.get("TEAMWORKS_QT_APP_NAME", "Teamworks Qt POC")
     )
     qt_app.setOrganizationName("Pêle-Mêle Sports et Loisirs")
+    install_french_qt_translation(qt_app)
     startup_timings["qapplication"] = time.perf_counter() - phase
+    if DIAGNOSTIC_ARGUMENT in sys.argv[1:]:
+        raise SystemExit(run_mysql_diagnostic_command(qt_app))
 
     phase = time.perf_counter()
     from theme_engine import ThemeEngine
@@ -124,6 +344,13 @@ def main() -> None:
     startup_timings["theme_apply"] = time.perf_counter() - phase
 
     source = os.environ.get("TEAMWORKS_QT_SOURCE", "smoke").strip().lower()
+    schema_report = None
+    if source == "production":
+        phase = time.perf_counter()
+        schema_report, refusal = precheck_production_database()
+        startup_timings["schema_precheck"] = time.perf_counter() - phase
+        if refusal:
+            raise SystemExit(refuse_database(qt_app, refusal))
     adapter = build_adapter(source, startup_timings)
     ui_adapter = adapter
 
@@ -135,6 +362,7 @@ def main() -> None:
     contract_document_workspace_factory = None
     presence_write_port_factory = None
     person_details_write_port_factory = None
+    contract_schema_port = None
     if source == "production":
         phase = time.perf_counter()
         from deferred_people import DeferredPeopleAdapter, ProductionPeopleLoader
@@ -149,6 +377,7 @@ def main() -> None:
         contract_document_workspace_factory = adapter.prepare_contract_document_workspace
         presence_write_port_factory = adapter.build_presence_write_port
         person_details_write_port_factory = adapter.build_person_details_write_port
+        contract_schema_port = adapter
 
     phase = time.perf_counter()
     from pilot_generalities import PeopleContractsGeneralitiesPilot
@@ -166,8 +395,20 @@ def main() -> None:
             contract_document_workspace_factory=contract_document_workspace_factory,
             presence_write_port_factory=presence_write_port_factory,
             person_details_write_port_factory=person_details_write_port_factory,
+            contract_schema_port=contract_schema_port,
         )
         after_window = time.perf_counter()
+        if ACTIVE_DATABASE_LABEL:
+            active_label = QLabel(ACTIVE_DATABASE_LABEL)
+            active_label.setObjectName("activeDatabaseLabel")
+            active_label.setAccessibleName(ACTIVE_DATABASE_LABEL)
+            active_label.setAccessibleDescription("Base active")
+            active_label.setToolTip(ACTIVE_DATABASE_LABEL)
+            window.statusBar().addPermanentWidget(active_label)
+            window.setWindowTitle(f"{window.windowTitle()} — {ACTIVE_DATABASE_LABEL}")
+        if schema_report is not None and schema_report.missing_contract_columns:
+            window.schema_notice = schema_report.summary()
+            print("[Teamworks Qt] " + schema_report.summary())
         window.show()
         shown_at = time.perf_counter()
 
@@ -185,7 +426,7 @@ def main() -> None:
         total_to_show_seconds = shown_at - STARTED_AT
 
         if people_loader_class is not None:
-            window.statusBar().showMessage("Lecture seule · chargement des personnes en arrière-plan…")
+            window.statusBar().showMessage("Chargement des personnes en arrière-plan…")
             start_people_loader(window, people_loader_class, total_to_show_seconds)
 
         def report_frugality() -> None:

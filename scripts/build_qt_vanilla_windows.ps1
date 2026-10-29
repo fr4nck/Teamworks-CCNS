@@ -46,6 +46,10 @@ $arguments = @(
     "--hidden-import", "GestionDB",
     "--hidden-import", "Chemins",
     "--hidden-import", "mysql.connector",
+    # Import dynamique de la traduction des erreurs MySQL : absent du bundle sinon.
+    "--hidden-import", "mysql.connector.locales.eng.client_error",
+    # Les plugins d'authentification MySQL sont aussi resolus dynamiquement.
+    "--collect-submodules", "mysql.connector.plugins",
     "--exclude-module", "wx",
     "--exclude-module", "wxPython",
     $entryPoint

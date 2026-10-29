@@ -45,7 +45,9 @@ class CcnsDataReader:
 
     def _fetch(self, req: str, nom: str):
         with DiagnosticPerformance.mesurer("sql", "ccns_data_reader.%s.executer" % nom):
-            self.db.ExecuterReq(req)
+            # GestionDB.ExecuterReq avale l'erreur SQL et renvoie 0 : une lecture ratée ne doit jamais passer pour un résultat vide.
+            if self.db.ExecuterReq(req) == 0:
+                raise RuntimeError("Lecture impossible (%s) : base indisponible ou requête refusée." % nom)
         with DiagnosticPerformance.mesurer("sql_fetch", "ccns_data_reader.%s.resultats" % nom):
             rows = self.db.ResultatReq()
         DiagnosticPerformance.enregistrer_mesure(
@@ -62,6 +64,10 @@ class CcnsDataReader:
             champs = self.db.GetListeChamps2("contrats") or ()
             self._contract_columns = {str(champ[0]) for champ in champs if champ}
         return self._contract_columns
+
+    def invalider_schema_contrats(self) -> None:
+        """Oublie les colonnes mémorisées après une évolution additive du schéma."""
+        self._contract_columns = None
 
     def _optional_contract_column(self, name: str) -> str:
         if name in self._contract_column_names():

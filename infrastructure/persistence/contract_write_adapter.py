@@ -230,6 +230,18 @@ class GestionDbContractWriteAdapter:
     def read_contract(self, contract_id: int) -> ContractEditSnapshot | None:
         return self._read_contract(contract_id)
 
+    def lock_contract_for_update(self, contract_id: int) -> ContractEditSnapshot | None:
+        """Ouvre la transaction d'écriture puis relit la ligne sous verrou.
+
+        SQLite : ``BEGIN IMMEDIATE`` réserve l'écriture (attente bornée par le
+        délai SQLite, puis « database is locked »). MySQL : ``SELECT … FOR UPDATE``.
+        Le caller termine toujours par commit ou rollback.
+        """
+        if not getattr(self.db, "isNetwork", False):
+            if not getattr(self.db.connexion, "in_transaction", False):
+                self.db.cursor.execute("BEGIN IMMEDIATE")
+        return self._read_contract(contract_id, for_update=True)
+
     def list_legacy_classifications(self):
         self.db.cursor.execute(
             "SELECT IDclassification, nom FROM contrats_class ORDER BY IDclassification"

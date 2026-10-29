@@ -48,10 +48,21 @@ def normalize_scale(value: int) -> int:
 def backup_file(path: Path) -> Path | None:
     if not path.exists():
         return None
+    # L'horloge Windows peut rendre deux fois le même horodatage : le nom est
+    # réservé en création exclusive, avec un suffixe en cas de collision, pour
+    # qu'une sauvegarde n'en écrase jamais une autre.
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
-    backup = path.with_name(f"{path.name}.tw121-{timestamp}.bak")
-    shutil.copy2(path, backup)
-    return backup
+    for index in range(1, 1000):
+        suffix = "" if index == 1 else f"-{index}"
+        backup = path.with_name(f"{path.name}.tw121-{timestamp}{suffix}.bak")
+        try:
+            with open(backup, "xb") as target, open(path, "rb") as source:
+                shutil.copyfileobj(source, target)
+        except FileExistsError:
+            continue
+        shutil.copystat(path, backup)
+        return backup
+    raise RuntimeError(f"Impossible de réserver un nom de sauvegarde unique pour {path}")
 
 
 def _decode_config(raw: bytes) -> tuple[str, str]:
