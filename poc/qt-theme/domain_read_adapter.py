@@ -62,6 +62,14 @@ class DomainPeopleReadAdapter(TeamworksReadAdapter):
     def list_reimbursements(self, person_id):
         return ()
 
+    def list_presences(self, person_id):
+        # Donnees fictives du pilote : aucune presence inventee.
+        return ()
+
+    def list_presence_categories(self):
+        # La recette en memoire n'a pas de catalogue historique.
+        return ()
+
     def _person_to_view(self, person: Person) -> PersonView:
         contracts = self._contracts_for(person.id)
         primary_contract = contracts[0] if contracts else None
