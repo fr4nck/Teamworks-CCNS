@@ -9,7 +9,7 @@ STARTED_AT = time.perf_counter()
 
 _phase_started = time.perf_counter()
 from PySide6.QtCore import QObject, QThread, QTimer, Slot
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QLabel
 PYSIDE_IMPORT_SECONDS = time.perf_counter() - _phase_started
 
 
@@ -77,16 +77,47 @@ def import_chemins_safely() -> None:
                 sys.path.remove(entry)
 
 
+ACTIVE_DATABASE_LABEL = ""
+
+
+def describe_active_database(db) -> str:
+    """Libellé de la base réellement ouverte, sans mot de passe."""
+    name = str(getattr(db, "nomFichier", "") or "")
+    if getattr(db, "isNetwork", False):
+        from infrastructure.persistence.legacy_network_target import parse_legacy_network_target
+
+        try:
+            target = parse_legacy_network_target(name)
+        except ValueError:
+            return "Base réseau MySQL (référence illisible)"
+        return f"Base réseau MySQL « {target.database} » sur {target.host}:{target.port} · utilisateur {target.user}"
+    return f"Base locale SQLite {name}"
+
+
 def precheck_production_database():
     """Lecture seule : la base configurée est-elle exploitable par Qt ?
 
     Renvoie ``(rapport, message_bloquant)``. Aucune écriture, aucune migration.
     """
+    global ACTIVE_DATABASE_LABEL
     import_chemins_safely()
     import GestionDB
+    from Utils import UTILS_Fichiers
+    from infrastructure.persistence.current_database_config import read_current_database_name
     from infrastructure.persistence.qt_schema_compatibility import check_schema
 
+    config_path = UTILS_Fichiers.GetRepUtilisateur("Config.json")
+    if not read_current_database_name(config_path):
+        return None, (
+            "Aucune base Teamworks n'est sélectionnée dans la configuration "
+            f"({config_path}).\n\n"
+            "Ouvrez ou créez d'abord le fichier voulu dans Teamworks, "
+            "puis relancez Teamworks Qt. Aucune base n'a été ouverte."
+        )
+
     db = GestionDB.DB()
+    ACTIVE_DATABASE_LABEL = describe_active_database(db)
+    print("[Teamworks Qt] " + ACTIVE_DATABASE_LABEL)
     try:
         if getattr(db, "echec", 1) != 0:
             detail = getattr(db, "erreur", "") or "fichier introuvable ou illisible"
@@ -284,6 +315,13 @@ def main() -> None:
             contract_schema_port=contract_schema_port,
         )
         after_window = time.perf_counter()
+        if ACTIVE_DATABASE_LABEL:
+            active_label = QLabel(ACTIVE_DATABASE_LABEL)
+            active_label.setObjectName("activeDatabaseLabel")
+            active_label.setAccessibleName("Base active")
+            active_label.setToolTip(ACTIVE_DATABASE_LABEL)
+            window.statusBar().addPermanentWidget(active_label)
+            window.setWindowTitle(f"{window.windowTitle()} — {ACTIVE_DATABASE_LABEL}")
         if schema_report is not None and schema_report.missing_contract_columns:
             window.schema_notice = schema_report.summary()
             print("[Teamworks Qt] " + schema_report.summary())
