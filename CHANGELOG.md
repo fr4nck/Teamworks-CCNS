@@ -1,5 +1,15 @@
 # Teamworks-CCNS 0.9.2
 
+
+## Candidate RC9 — 29 octobre 2026 (recette utilisateur Windows requise)
+
+- **Crash À propos → Licence corrigé :** le paquet Windows portable et l'installateur incluent obligatoirement `Licence.txt` à la racine de l'exécutable. Son contenu est vérifié contre le fichier source avant publication ; le dialogue traite l'absence ou l'illisibilité sans exception Python. Régression constatée sur RC6 `154da83c`.
+- **Sauvegardes limitées au contexte Teamworks :** l'écran ne parcourt plus tous les dossiers `_TDATA` du répertoire commun ni les bases `_tdata` du serveur MySQL. Il ne propose que le dossier Teamworks actuellement ouvert et ses composants de base, photos, documents. Les anciens profils automatiques qui demandent un autre dossier sont refusés plutôt qu'exportés silencieusement.
+- **Sauvegarde MySQL renforcée :** export par `mysqldump` sans console noire sous Windows, surveillance des blocages, refus des exports échoués ou vides, contrôle de l'archive ZIP avant publication et conservation de l'ancienne sauvegarde en cas de copie interrompue.
+- **Fenêtre de sauvegarde :** redimensionnable, arbres plus lisibles et message final précisant ce qui a été effectivement sélectionné.
+- **Tests automatisés :** couverture du fichier GPL manquant et présent (UTF-8), du contenu obligatoire des paquets, de la restriction aux bases du dossier actif et de l'intégrité des sauvegardes. CI Linux et Windows entièrement verte sur `77a985e6` avant changement de version.
+- **Réserves :** aucun serveur MySQL de production ni archive personnelle n'a été modifié. La conformité du rendu visuel, la navigation souris et la restauration effective d'une archive complète restent à valider sur une copie de base Windows. RC6/RC8 publiées restent intactes.
+
 ## Candidate RC8 — 28 octobre 2026 (recette utilisateur Windows requise)
 
 - **Clic direct sur le salarié :** un clic sur le libellé d'une personne dans l'arbre « État des dossiers » ouvre sa fiche ; les clics sur les catégories, les icônes d'expansion et les alertes n'entraînent aucune ouverture involontaire.

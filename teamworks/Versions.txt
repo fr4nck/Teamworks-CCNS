@@ -1,3 +1,11 @@
+Version 0.9.2-rc9 :
+
+- Correction du crash À propos > Licence : Licence.txt présent et vérifié dans le paquet Windows ; message contrôlé s'il manque.
+- Sauvegarde limitée au dossier Teamworks actuellement ouvert : aucune énumération ni export de bases des autres logiciels.
+- Suppression des fenêtres noires de mysqldump, contrôles d'intégrité de l'archive et protection contre les copies incomplètes.
+- Dialogue de sauvegarde redimensionnable, périmètre et nombre de fichiers annoncés explicitement.
+- Tests Linux/Windows réussis avant packaging ; recette utilisateur requise sur copie de base.
+
 Version 0.9.2-rc8 :
 
 - Clic simple sur le nom d'une personne dans « État des dossiers » pour ouvrir sa fiche.
