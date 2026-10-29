@@ -123,6 +123,9 @@ class _AdaptiveSectionNavigation(QWidget):
 
     def set_buttons(self, buttons) -> None:
         self._buttons = list(buttons)
+        # La première disposition doit aussi placer les boutons quand le
+        # QWidget a déjà reçu un resizeEvent pendant sa construction.
+        self._columns = 0
         self._reflow(self.width())
 
     def _reflow(self, width: int) -> None:
