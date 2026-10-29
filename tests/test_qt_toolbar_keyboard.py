@@ -111,6 +111,12 @@ def test_all_eight_sections_are_readable_and_switch_with_real_clicks(window):
             assert window.tabs.currentIndex() == index
             assert sum(b.isChecked() for b in window.section_buttons) == 1
             assert button.isChecked()
+            # Recliquer sur la rubrique deja active ne doit jamais la decocher.
+            QTest.mouseClick(button, Qt.MouseButton.LeftButton)
+            QApplication.processEvents()
+            assert window.tabs.currentIndex() == index
+            assert button.isChecked()
+            assert sum(item.isChecked() for item in window.section_buttons) == 1
 
     # Le code historique peut toujours selectionner une page directement.
     window.tabs.setCurrentIndex(3)
