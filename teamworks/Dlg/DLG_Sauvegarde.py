@@ -294,7 +294,11 @@ class CTRL_Parametres(wx.Panel) :
         self.check_email.SetToolTip(wx.ToolTip(_(u"Cochez cette case pour envoyer la sauvegarde par Email")))
         self.ctrl_email.SetToolTip(wx.ToolTip(_(u"Saisissez ici une ou plusieurs adresses Email (separées par des points-virgules)")))
         self.check_locaux.SetToolTip(wx.ToolTip(_(u"Cochez cette case pour afficher les fichiers locaux")))
-        self.check_reseau.SetToolTip(wx.ToolTip(_(u"Cochez cette case pour afficher les fichiers réseau")))
+        self.check_reseau.SetToolTip(wx.ToolTip(_(
+            u"Affiche les bases Teamworks du serveur MySQL courant "
+            u"(suffixes _tdata, _tphotos, _tdocuments). "
+            u"Ce n'est pas une sauvegarde de toutes les bases Noethys."
+        )))
 
     def __do_layout(self):
         grid_sizer_base = wx.FlexGridSizer(rows=1, cols=2, vgap=10, hgap=10)
@@ -701,7 +705,24 @@ class Dialog(wx.Dialog):
             return False
 
         # Fin du processus
-        dlg = wx.MessageDialog(self, _(u"La procédure de sauvegarde est terminée."), _(u"Sauvegarde"), wx.OK | wx.ICON_INFORMATION)
+        # Un succès technique ne doit pas être pris pour une sauvegarde
+        # exhaustive de Noethys et de toutes les bases du serveur.
+        message = _(
+            u"La procédure de sauvegarde est terminée.\n\n"
+            u"Fichiers locaux : %d\n"
+            u"Bases MySQL Teamworks : %d\n"
+            u"Modèles sélectionnés : %s\n"
+            u"Éditions sélectionnées : %s\n\n"
+            u"Seuls les éléments cochés ont été archivés. "
+            u"Les bases d'autres logiciels Noethys ne sont pas incluses automatiquement."
+        ) % (
+            len(listeFichiersLocaux), len(listeFichiersReseau),
+            _(u"Oui") if inclure_modeles else _(u"Non"),
+            _(u"Oui") if inclure_editions else _(u"Non"),
+        )
+        dlg = wx.MessageDialog(
+            self, message, _(u"Sauvegarde"), wx.OK | wx.ICON_INFORMATION
+        )
         dlg.ShowModal()
         dlg.Destroy()
 
