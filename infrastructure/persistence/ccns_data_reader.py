@@ -63,6 +63,10 @@ class CcnsDataReader:
             self._contract_columns = {str(champ[0]) for champ in champs if champ}
         return self._contract_columns
 
+    def invalider_schema_contrats(self) -> None:
+        """Oublie les colonnes mémorisées après une évolution additive du schéma."""
+        self._contract_columns = None
+
     def _optional_contract_column(self, name: str) -> str:
         if name in self._contract_column_names():
             return "contrats.%s" % name

@@ -91,6 +91,11 @@ def _python_date(value: QDate) -> date:
     return date(value.year(), value.month(), value.day())
 
 
+def _money_text(value) -> str:
+    """Montant relu en base, affiché comme saisi : deux décimales, virgule."""
+    return f"{value:.2f}".replace(".", ",")
+
+
 
 class ContractCreateDialog(QDialog):
     """Création Qt contrôlée : CDI/CDD CCNS et CEE, sans accès direct à la base."""
@@ -668,10 +673,10 @@ class ContractEditDialog(QDialog):
 
         self.monthly_salary = QLineEdit()
         if snapshot.gross_monthly_salary is not None:
-            self.monthly_salary.setText(str(snapshot.gross_monthly_salary).replace(".", ","))
+            self.monthly_salary.setText(_money_text(snapshot.gross_monthly_salary))
         self.annual_salary = QLineEdit()
         if snapshot.gross_annual_salary is not None:
-            self.annual_salary.setText(str(snapshot.gross_annual_salary).replace(".", ","))
+            self.annual_salary.setText(_money_text(snapshot.gross_annual_salary))
 
         self.cee_qualification = QComboBox()
         self.cee_qualification.addItem("—", None)

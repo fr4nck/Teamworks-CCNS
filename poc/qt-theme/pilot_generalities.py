@@ -281,7 +281,7 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
 
         self._request_activity(historical_id)
         self.statusBar().showMessage(
-            f"Lecture seule · {person.name} · {contract_count} contrat(s) · chargement du dossier…"
+            f"{person.name} · {contract_count} contrat(s) · chargement du dossier…"
         )
 
     def _request_activity(self, person_id) -> None:
@@ -401,7 +401,7 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
                 reimbursements = len(payload.get("reimbursements", ()))
                 seconds = float(payload.get("seconds", 0.0))
                 self.statusBar().showMessage(
-                    "Lecture seule · dossier prêt · "
+                    "Dossier prêt · "
                     f"{scenarios} scénario(s) · {trips} déplacement(s) · "
                     f"{reimbursements} remboursement(s) · {seconds:.2f}s"
                 )
@@ -417,7 +417,7 @@ class PeopleContractsGeneralitiesPilot(PeopleContractsPilot):
                 controller = getattr(self, "presence_controller", None)
                 if controller is not None:
                     controller.set_ready(False)
-                self.statusBar().showMessage("Lecture seule · échec du chargement du dossier")
+                self.statusBar().showMessage("Échec du chargement du dossier")
         if self._activity_thread is not None:
             self._activity_thread.quit()
 

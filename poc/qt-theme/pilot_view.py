@@ -171,6 +171,19 @@ class PeopleContractsPilot(QMainWindow):
         self.search.clear()
         self.people_table.setFocus()
 
+    def _fit_people_columns(self, *_args) -> None:
+        """Hide columns without any value so the name column stays readable."""
+        model = self.people_model
+        rows = model.rowCount()
+        for column in range(model.columnCount()):
+            if column == 1:
+                continue
+            empty = rows > 0 and all(
+                str(model.data(model.index(row, column)) or "").strip() in ("", "—")
+                for row in range(rows)
+            )
+            self.people_table.setColumnHidden(column, empty)
+
     def _legacy_tool_button(
         self,
         icon_name: str,
@@ -237,6 +250,9 @@ class PeopleContractsPilot(QMainWindow):
         header.resizeSection(6, 86)
         header.resizeSection(7, 100)
         self.people_table.selectionModel().selectionChanged.connect(self._on_person_selection)
+        self.people_model.modelReset.connect(self._fit_people_columns)
+        self.people_model.rowsInserted.connect(self._fit_people_columns)
+        self._fit_people_columns()
         list_column.addWidget(self.people_table, 1)
 
         search_bar = QFrame()
@@ -509,6 +525,7 @@ class PeopleContractsPilot(QMainWindow):
         header = self.contracts_table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         header.setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)
+        self.contracts_model.modelReset.connect(self.contracts_table.resizeColumnsToContents)
         self.contracts_stack.addWidget(empty_page)
         self.contracts_stack.addWidget(self.contracts_table)
         self.contracts_stack.setCurrentIndex(0)
@@ -688,6 +705,7 @@ class PeopleContractsPilot(QMainWindow):
 
         dialog = ContractCreateDialog(person_id, type_result.value, self)
         if dialog.exec() != QDialog.DialogCode.Accepted:
+            self.statusBar().showMessage("Création du contrat annulée · aucune écriture")
             return
 
         result = create_contract(port, command=dialog.command())
@@ -833,6 +851,9 @@ class PeopleContractsPilot(QMainWindow):
 
         dialog = ContractEditDialog(loaded.value, self)
         if dialog.exec() != QDialog.DialogCode.Accepted:
+            self.statusBar().showMessage(
+                f"Modification du contrat n°{contract.id_historique} annulée · aucune écriture"
+            )
             return
 
         result = update_contract(port, command=dialog.command())
@@ -1090,7 +1111,7 @@ class PeopleContractsPilot(QMainWindow):
             self.contract_renew_button.setEnabled(False)
             self.contract_to_cdi_button.setEnabled(False)
             self.contract_legacy_classification_button.setEnabled(False)
-        self.statusBar().showMessage("Lecture seule · aucune sélection")
+        self.statusBar().showMessage("Aucune sélection")
 
     def _on_person_selection(self, *_args) -> None:
         rows = self.people_table.selectionModel().selectedRows()
@@ -1142,4 +1163,4 @@ class PeopleContractsPilot(QMainWindow):
         self.detail_contracts.setText(_contract_count_text(contract_count))
         self.person_avatar.setText(_initials(person.name))
         self.detail_stack.setCurrentIndex(1)
-        self.statusBar().showMessage(f"Lecture seule · {person.name} · {contract_count} contrat(s)")
+        self.statusBar().showMessage(f"{person.name} · {contract_count} contrat(s)")

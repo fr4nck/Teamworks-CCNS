@@ -8,9 +8,44 @@ import traceback
 STARTED_AT = time.perf_counter()
 
 _phase_started = time.perf_counter()
-from PySide6.QtCore import QThread, QTimer
+from PySide6.QtCore import QObject, QThread, QTimer, Slot
 from PySide6.QtWidgets import QApplication
 PYSIDE_IMPORT_SECONDS = time.perf_counter() - _phase_started
+
+
+class _GuiThreadReceiver(QObject):
+    """Receives worker signals in the GUI thread.
+
+    A plain Python callable connected to a worker signal runs in the worker
+    thread; the people model must only be touched from the GUI thread.
+    """
+
+    def __init__(self, parent, on_loaded, on_failed):
+        super().__init__(parent)
+        self._on_loaded = on_loaded
+        self._on_failed = on_failed
+
+    @Slot(object, object)
+    def loaded(self, people, timings) -> None:
+        self._on_loaded(people, timings)
+
+    @Slot(str)
+    def failed(self, details: str) -> None:
+        self._on_failed(details)
+
+
+def install_french_qt_translation(qt_app) -> bool:
+    """Translate Qt standard buttons and dialogs (Enregistrer, Annuler, Oui…)."""
+    from PySide6.QtCore import QLibraryInfo, QLocale, QTranslator
+
+    translator = QTranslator(qt_app)
+    directory = QLibraryInfo.path(QLibraryInfo.LibraryPath.TranslationsPath)
+    if not translator.load(QLocale(QLocale.Language.French), "qtbase", "_", directory):
+        print("[Teamworks Qt POC] Traduction Qt française introuvable : " + directory, file=sys.stderr)
+        return False
+    qt_app.installTranslator(translator)
+    QLocale.setDefault(QLocale(QLocale.Language.French, QLocale.Country.France))
+    return True
 
 
 def build_adapter(source: str, timings: dict[str, float]):
@@ -70,7 +105,7 @@ def start_people_loader(window, people_loader_class, total_to_show_seconds: floa
             return
         window.people_model.replace(tuple(people))
         window.people_proxy.invalidate()
-        QTimer.singleShot(0, lambda: window.people_count.setText(window._people_count_text()))
+        window.people_count.setText(window._people_count_text())
         ready_total = time.perf_counter() - STARTED_AT
         after_show = max(0.0, ready_total - total_to_show_seconds)
         _print_data_profile(
@@ -80,7 +115,7 @@ def start_people_loader(window, people_loader_class, total_to_show_seconds: floa
             after_show=after_show,
         )
         window.statusBar().showMessage(
-            f"Lecture seule · {window.people_model.rowCount()} personnes · données prêtes en {ready_total:.2f}s"
+            f"{window.people_model.rowCount()} personnes · données prêtes en {ready_total:.2f}s"
         )
         thread.quit()
 
@@ -88,11 +123,12 @@ def start_people_loader(window, people_loader_class, total_to_show_seconds: floa
         if not window.is_closing_requested():
             print("[Teamworks Qt POC] Échec du chargement asynchrone des personnes :", file=sys.stderr)
             print(details, file=sys.stderr)
-            window.statusBar().showMessage("Lecture seule · échec du chargement des personnes")
+            window.statusBar().showMessage("Échec du chargement des personnes")
         thread.quit()
 
-    worker.loaded.connect(on_people_loaded)
-    worker.failed.connect(on_people_failed)
+    receiver = _GuiThreadReceiver(window, on_people_loaded, on_people_failed)
+    worker.loaded.connect(receiver.loaded)
+    worker.failed.connect(receiver.failed)
     thread.started.connect(worker.run)
     thread.start()
     return thread
@@ -112,6 +148,7 @@ def main() -> None:
         os.environ.get("TEAMWORKS_QT_APP_NAME", "Teamworks Qt POC")
     )
     qt_app.setOrganizationName("Pêle-Mêle Sports et Loisirs")
+    install_french_qt_translation(qt_app)
     startup_timings["qapplication"] = time.perf_counter() - phase
 
     phase = time.perf_counter()
@@ -185,7 +222,7 @@ def main() -> None:
         total_to_show_seconds = shown_at - STARTED_AT
 
         if people_loader_class is not None:
-            window.statusBar().showMessage("Lecture seule · chargement des personnes en arrière-plan…")
+            window.statusBar().showMessage("Chargement des personnes en arrière-plan…")
             start_people_loader(window, people_loader_class, total_to_show_seconds)
 
         def report_frugality() -> None:
