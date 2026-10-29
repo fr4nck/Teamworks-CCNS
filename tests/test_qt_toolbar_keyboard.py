@@ -1,0 +1,151 @@
+"""Barres d'outils et clavier de la fenêtre Individus / Contrats (événements QTest réels)."""
+from __future__ import annotations
+
+import os
+import sys
+from pathlib import Path
+
+import pytest
+
+pytest.importorskip("PySide6")
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
+ROOT = Path(__file__).resolve().parents[1]
+POC = ROOT / "poc" / "qt-theme"
+for path in (POC, ROOT / "teamworks", ROOT):
+    if str(path) not in sys.path:
+        sys.path.insert(0, str(path))
+
+from PySide6.QtCore import Qt, QTimer  # noqa: E402
+from PySide6.QtTest import QTest  # noqa: E402
+from PySide6.QtWidgets import QApplication, QDialogButtonBox, QMessageBox, QToolButton  # noqa: E402
+
+from data_adapter import ContractView, PersonView  # noqa: E402
+from person_editor import PersonDetailsEditDialog  # noqa: E402
+from pilot_view import TOOL_BUTTON_SIZE, UNAVAILABLE_SUFFIX, PeopleContractsPilot  # noqa: E402
+
+
+def _person(i, name):
+    first, last = name.split(" ", 1)
+    return PersonView(
+        id="—", id_historique=i, name=name, first_name=first, last_name=last,
+        birth_date="—", role="—", classification="—", contract="—", weekly_hours="—",
+        status="—", site="—", medical="—", mutual="—",
+    )
+
+
+class _Adapter:
+    def list_people(self):
+        return (_person(1, "Paul AUTRET"), _person(2, "Aurélie GUEGUEN"))
+
+    def list_contracts(self, person_id):
+        return (ContractView(kind="CDI", start="01/09/2026", end="Indétermin.",
+                             classification="Groupe 4", duration="28 h", status="—",
+                             id_historique=40 + person_id),)
+
+
+@pytest.fixture
+def window():
+    QApplication.instance() or QApplication([])
+    w = PeopleContractsPilot(_Adapter(), contract_write_port_factory=lambda: None)
+    w.show()
+    QApplication.processEvents()
+    yield w
+    w.close()
+
+
+def _select_first(window):
+    window.people_table.selectRow(0)
+    QApplication.processEvents()
+
+
+def test_tool_buttons_share_one_size_and_keep_accessible_names(window):
+    buttons = window.findChildren(QToolButton, "legacyToolButton")
+    assert len(buttons) >= 15
+    for button in buttons:
+        assert button.maximumSize().toTuple() == (TOOL_BUTTON_SIZE, TOOL_BUTTON_SIZE)
+        assert button.iconSize().width() == 20
+        assert button.accessibleName()
+
+
+def test_unavailable_commands_are_disabled_and_say_so(window):
+    unavailable = [b for b in window.findChildren(QToolButton, "legacyToolButton")
+                   if b.property("unavailable")]
+    names = {b.accessibleName() for b in unavailable}
+    assert {"Supprimer la fiche sélectionnée", "Imprimer la liste", "Exporter la liste",
+            "Aide", "Courrier ou publipostage"} <= names
+    _select_first(window)
+    for button in unavailable:
+        assert not button.isEnabled()
+        assert UNAVAILABLE_SUFFIX in button.toolTip()
+
+
+def test_enter_on_contract_row_opens_edit_and_delete_key_asks_confirmation(window):
+    _select_first(window)
+    window.tabs.setCurrentIndex(3)  # Contrats
+    window.contracts_table.selectRow(0)
+    QApplication.processEvents()
+    edits, deletes = [], []
+    window._edit_selected_contract = lambda: edits.append(1)
+    window.contract_edit_button.clicked.disconnect()
+    window.contract_edit_button.clicked.connect(window._edit_selected_contract)
+    window.contracts_table.setFocus()
+    QTest.keyClick(window.contracts_table, Qt.Key.Key_Return)
+    assert edits == [1]
+
+    def answer_no():
+        box = QApplication.activeModalWidget()
+        if isinstance(box, QMessageBox):
+            deletes.append(box.text())
+            box.button(QMessageBox.StandardButton.No).click()
+    QTimer.singleShot(0, answer_no)
+    QTest.keyClick(window.contracts_table, Qt.Key.Key_Delete)
+    QApplication.processEvents()
+    assert deletes and "supprimer ce contrat" in deletes[0]
+    assert window.statusBar().currentMessage() == "Suppression annulée · aucune écriture"
+
+
+def test_escape_in_search_restores_full_list(window):
+    window.search.setFocus()
+    QTest.keyClicks(window.search, "GUEG")
+    assert window.people_proxy.rowCount() == 1
+    QTest.keyClick(window.search, Qt.Key.Key_Escape)
+    assert window.search.text() == ""
+    assert window.people_proxy.rowCount() == 2
+
+
+def test_tab_order_walks_list_then_tools(window):
+    window.people_table.setFocus()
+    seen = []
+    for _ in range(4):
+        QTest.keyClick(QApplication.focusWidget(), Qt.Key.Key_Tab)
+        seen.append(QApplication.focusWidget())
+    assert window.search in seen
+    QTest.keyClick(QApplication.focusWidget(), Qt.Key.Key_Backtab)
+    assert QApplication.focusWidget() is seen[-2]
+
+
+def test_person_dialog_enter_validates_and_escape_cancels():
+    QApplication.instance() or QApplication([])
+    dialog = PersonDetailsEditDialog(None)
+    dialog.show()
+    QApplication.processEvents()
+    try:
+        save = dialog.findChild(QDialogButtonBox).button(QDialogButtonBox.StandardButton.Save)
+        assert save.text().replace("&", "") in ("Save", "Enregistrer")
+
+        def close_warning():
+            box = QApplication.activeModalWidget()
+            if isinstance(box, QMessageBox):
+                box.button(QMessageBox.StandardButton.Ok).click()
+        QTimer.singleShot(0, close_warning)
+        dialog.last_name.setFocus()
+        QTest.keyClick(dialog.last_name, Qt.Key.Key_Return)  # champs vides : refus
+        QApplication.processEvents()
+        assert dialog.isVisible() and dialog.result() == 0
+
+        QTest.keyClick(dialog.last_name, Qt.Key.Key_Escape)
+        QApplication.processEvents()
+        assert not dialog.isVisible() and dialog.result() == 0
+    finally:
+        dialog.close()

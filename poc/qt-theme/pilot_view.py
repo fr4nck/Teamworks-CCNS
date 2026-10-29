@@ -4,7 +4,7 @@ import time
 from pathlib import Path
 
 from PySide6.QtCore import QSize, QSortFilterProxyModel, Qt
-from PySide6.QtGui import QIcon
+from PySide6.QtGui import QIcon, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QDialog,
@@ -75,9 +75,21 @@ def _contract_count_text(count: int) -> str:
     return f"{count} contrats enregistrés"
 
 
+TOOL_BUTTON_SIZE = 34
+TOOL_ICON_SIZE = 20
+UNAVAILABLE_SUFFIX = "non disponible dans Teamworks Qt 0.1 (utiliser Teamworks wx)"
+
+
 def _legacy_icon(name: str) -> QIcon:
+    """Icône historique multi-résolution : 16 px, et 32 px lorsqu'elle existe."""
     path = _LEGACY_ICONS / name
-    return QIcon(str(path)) if path.exists() else QIcon()
+    if not path.exists():
+        return QIcon()
+    icon = QIcon(str(path))
+    large = _LEGACY_ICONS.parent / "32x32" / name
+    if large.exists():
+        icon.addFile(str(large), QSize(32, 32))
+    return icon
 
 
 class ReadValue(QLabel):
@@ -97,9 +109,11 @@ class PeopleContractsPilot(QMainWindow):
         contract_write_port_factory=None,
         contract_document_workspace_factory=None,
         advanced_contracts_enabled: bool = False,
+        contract_schema_port=None,
     ):
         super().__init__(parent)
         self.adapter = adapter
+        self._contract_schema_port = contract_schema_port
         self._contract_write_port_factory = contract_write_port_factory
         self._contract_document_workspace_factory = contract_document_workspace_factory
         self._advanced_contracts_enabled = advanced_contracts_enabled is True
@@ -155,6 +169,31 @@ class PeopleContractsPilot(QMainWindow):
 
         self.setCentralWidget(central)
         self._show_empty_detail()
+        self._install_keyboard_shortcuts()
+
+    def _install_keyboard_shortcuts(self) -> None:
+        """Entrée = modifier, Suppr = supprimer le contrat, Ctrl+N = nouvelle fiche, Échap = liste complète."""
+        def bind(sequence, widget, button):
+            shortcut = QShortcut(QKeySequence(sequence), widget)
+            shortcut.setContext(Qt.ShortcutContext.WidgetShortcut)
+            shortcut.activated.connect(lambda: button.isEnabled() and button.click())
+            return shortcut
+
+        self._shortcuts = [
+            bind(Qt.Key.Key_Return, self.people_table, self.person_edit_button),
+            bind(Qt.Key.Key_Enter, self.people_table, self.person_edit_button),
+            bind(Qt.Key.Key_Return, self.contracts_table, self.contract_edit_button),
+            bind(Qt.Key.Key_Enter, self.contracts_table, self.contract_edit_button),
+            bind(Qt.Key.Key_Delete, self.contracts_table, self.contract_delete_button),
+        ]
+        create = QShortcut(QKeySequence("Ctrl+N"), self)
+        create.activated.connect(
+            lambda: self.person_create_button.isEnabled() and self.person_create_button.click()
+        )
+        clear = QShortcut(QKeySequence(Qt.Key.Key_Escape), self.search)
+        clear.setContext(Qt.ShortcutContext.WidgetShortcut)
+        clear.activated.connect(self._clear_people_filter)
+        self._shortcuts += [create, clear]
 
     def _people_count_text(self) -> str:
         total = self.people_model.rowCount()
@@ -191,15 +230,25 @@ class PeopleContractsPilot(QMainWindow):
         *,
         enabled: bool = False,
         fallback: str = "·",
+        shortcut: str = "",
+        unavailable: bool = False,
     ) -> QToolButton:
         button = QToolButton()
         button.setObjectName("legacyToolButton")
-        button.setToolTip(tooltip)
         # Icon-only button: without a name, screen readers and UI Automation see "".
         button.setAccessibleName(tooltip)
+        if unavailable:
+            # No fake feature: the command stays visibly and permanently off.
+            button.setToolTip(f"{tooltip} — {UNAVAILABLE_SUFFIX}")
+            button.setAccessibleDescription(UNAVAILABLE_SUFFIX)
+            button.setProperty("unavailable", True)
+            enabled = False
+        else:
+            button.setToolTip(f"{tooltip} ({shortcut})" if shortcut else tooltip)
         button.setIcon(_legacy_icon(icon_name))
-        button.setIconSize(QSize(16, 16))
-        button.setFixedSize(30, 30)
+        button.setIconSize(QSize(TOOL_ICON_SIZE, TOOL_ICON_SIZE))
+        button.setFixedSize(TOOL_BUTTON_SIZE, TOOL_BUTTON_SIZE)
+        button.setFocusPolicy(Qt.FocusPolicy.TabFocus)
         if button.icon().isNull():
             button.setText(fallback)
         button.setEnabled(enabled)
@@ -272,32 +321,42 @@ class PeopleContractsPilot(QMainWindow):
         tools = QVBoxLayout()
         tools.setSpacing(5)
         self.person_create_button = self._legacy_tool_button(
-            "Ajouter.png", "Créer une nouvelle fiche individuelle", fallback="+"
+            "Ajouter.png", "Créer une nouvelle fiche individuelle", fallback="+",
+            shortcut="Ctrl+N",
         )
         self.person_edit_button = self._legacy_tool_button(
-            "Modifier.png", "Modifier la fiche sélectionnée", fallback="M"
+            "Modifier.png", "Modifier la fiche sélectionnée", fallback="M",
+            shortcut="Entrée ou double-clic",
         )
-        for button in (
-            self.person_create_button,
-            self.person_edit_button,
-            self._legacy_tool_button("Supprimer.png", "Supprimer la fiche sélectionnée", fallback="−"),
-        ):
+        self.person_delete_button = self._legacy_tool_button(
+            "Supprimer.png", "Supprimer la fiche sélectionnée", fallback="−", unavailable=True
+        )
+        for button in (self.person_create_button, self.person_edit_button, self.person_delete_button):
             tools.addWidget(button)
         tools.addSpacing(10)
-        tools.addWidget(self._legacy_tool_button("Calendrier3jours.png", "Rechercher sur une période", fallback="P"))
-        show_all_button = self._legacy_tool_button("Actualiser.png", "Réafficher toute la liste", enabled=True, fallback="R")
+        tools.addWidget(self._legacy_tool_button(
+            "Calendrier3jours.png", "Rechercher sur une période", fallback="P", unavailable=True
+        ))
+        show_all_button = self._legacy_tool_button(
+            "Actualiser.png", "Réafficher toute la liste", enabled=True, fallback="R", shortcut="Échap"
+        )
         show_all_button.clicked.connect(self._clear_people_filter)
         tools.addWidget(show_all_button)
-        tools.addWidget(self._legacy_tool_button("Mecanisme.png", "Options de la liste", fallback="O"))
+        tools.addWidget(self._legacy_tool_button(
+            "Mecanisme.png", "Options de la liste", fallback="O", unavailable=True
+        ))
         tools.addSpacing(10)
+        self.people_unavailable_buttons = []
         for icon, tooltip, fallback in (
             ("Mail.png", "Courrier ou publipostage", "@"),
             ("Imprimante.png", "Imprimer la liste", "I"),
             ("Excel.png", "Exporter la liste", "X"),
         ):
-            tools.addWidget(self._legacy_tool_button(icon, tooltip, fallback=fallback))
+            button = self._legacy_tool_button(icon, tooltip, fallback=fallback, unavailable=True)
+            self.people_unavailable_buttons.append(button)
+            tools.addWidget(button)
         tools.addSpacing(10)
-        tools.addWidget(self._legacy_tool_button("Aide.png", "Aide", fallback="?"))
+        tools.addWidget(self._legacy_tool_button("Aide.png", "Aide", fallback="?", unavailable=True))
         tools.addStretch(1)
         list_row.addLayout(tools)
         layout.addLayout(list_row, 1)
@@ -338,6 +397,7 @@ class PeopleContractsPilot(QMainWindow):
         footer = QHBoxLayout()
         footer_help = QPushButton("Aide")
         footer_help.setEnabled(False)
+        footer_help.setToolTip(f"Aide — {UNAVAILABLE_SUFFIX}")
         footer.addWidget(footer_help)
         footer.addStretch(1)
         footer_close = QPushButton("Fermer")
@@ -541,7 +601,8 @@ class PeopleContractsPilot(QMainWindow):
         self.contract_create_button.clicked.connect(self._create_contract)
         tools.addWidget(self.contract_create_button)
         self.contract_edit_button = self._legacy_tool_button(
-            "Modifier.png", "Modifier le contrat", fallback="M"
+            "Modifier.png", "Modifier le contrat", fallback="M",
+            shortcut="Entrée ou double-clic",
         )
         self.contract_edit_button.clicked.connect(self._edit_selected_contract)
         tools.addWidget(self.contract_edit_button)
@@ -580,7 +641,7 @@ class PeopleContractsPilot(QMainWindow):
         tools.addWidget(self.contract_legacy_classification_button)
 
         self.contract_delete_button = self._legacy_tool_button(
-            "Supprimer.png", "Supprimer le contrat", fallback="−"
+            "Supprimer.png", "Supprimer le contrat", fallback="−", shortcut="Suppr"
         )
         self.contract_delete_button.clicked.connect(self._delete_selected_contract)
         tools.addWidget(self.contract_delete_button)
@@ -682,6 +743,54 @@ class PeopleContractsPilot(QMainWindow):
         )
 
 
+    def _contract_schema_ready(self) -> bool:
+        """Création/modification : colonnes CCNS présentes, ou ajout autorisé maintenant.
+
+        Aucune évolution de schéma sans confirmation explicite ; refus motivé
+        pour une base réseau (pas de sauvegarde automatique possible).
+        """
+        port = self._contract_schema_port
+        if port is None:
+            return True
+        try:
+            report = port.contract_schema_report()
+        except Exception as exc:
+            self.statusBar().showMessage(f"Contrôle du schéma impossible · {exc}")
+            return False
+        missing = report.missing_contract_columns
+        if not missing:
+            return True
+        answer = QMessageBox.question(
+            self,
+            "Colonnes CCNS des contrats",
+            (
+                "Cette base ne contient pas encore les colonnes CCNS des contrats "
+                f"({len(missing)} colonnes). Elles sont nécessaires pour créer ou "
+                "modifier un contrat dans Teamworks Qt.\n\n"
+                "Opération : ajout de colonnes vides. Aucune donnée existante "
+                "n'est modifiée. Une copie de sauvegarde de la base est créée "
+                "et vérifiée avant l'opération.\n\n"
+                "Ajouter les colonnes maintenant ?"
+            ),
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+        if answer != QMessageBox.StandardButton.Yes:
+            self.statusBar().showMessage(
+                "Colonnes CCNS non ajoutées · aucune écriture · contrats en consultation"
+            )
+            return False
+        try:
+            result = port.evolve_contract_schema()
+        except Exception as exc:
+            QMessageBox.warning(self, "Colonnes CCNS des contrats", f"Ajout impossible : {exc}")
+            return False
+        if not result.ok:
+            QMessageBox.warning(self, "Colonnes CCNS des contrats", result.message)
+            return False
+        self.statusBar().showMessage(result.message)
+        return True
+
     def _create_contract(self) -> None:
         person_id = self._current_contract_person_key
         if (
@@ -690,6 +799,8 @@ class PeopleContractsPilot(QMainWindow):
             or isinstance(person_id, bool)
             or person_id <= 0
         ):
+            return
+        if not self._contract_schema_ready():
             return
 
         try:
@@ -833,6 +944,8 @@ class PeopleContractsPilot(QMainWindow):
     def _edit_selected_contract(self) -> None:
         contract = self._selected_contract()
         if contract is None or not callable(self._contract_write_port_factory):
+            return
+        if not self._contract_schema_ready():
             return
 
         try:

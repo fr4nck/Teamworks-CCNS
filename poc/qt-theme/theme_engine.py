@@ -188,6 +188,16 @@ class ThemeEngine:
                 color: {t.selection_text};
                 border-color: {t.focus};
             }}
+            QToolButton#legacyToolButton {{
+                min-height: 34px;
+                max-height: 34px;
+                min-width: 34px;
+                max-width: 34px;
+                padding: 0px;
+            }}
+            QToolButton#legacyToolButton[unavailable="true"] {{
+                border-style: dashed;
+            }}
             QToolButton#twActionButton[actionRole="destructive"] {{
                 color: {t.danger};
             }}
