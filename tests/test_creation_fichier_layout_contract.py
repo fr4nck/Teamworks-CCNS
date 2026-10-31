@@ -18,12 +18,22 @@ def test_creation_fichier_compile_et_garde_les_boutons_communs():
     assert source.count("CTRL_Bouton_image.CTRL(") == 3
 
 
-def test_creation_fichier_ne_parente_plus_les_controles_a_un_staticbox():
+def test_creation_fichier_parente_les_controles_a_leur_staticbox():
+    # Contrat wx.StaticBoxSizer (cf. tests/test_rc_static_audit.py) : les
+    # enfants d'un StaticBoxSizer doivent avoir la StaticBox pour parent.
     source = _lire(DLG)
-    for ligne in source.splitlines():
-        if "_staticbox" in ligne and "StaticBoxSizer" not in ligne:
-            # Seule la création des wx.StaticBox elles-mêmes peut y faire référence.
-            assert "wx.StaticBox(self, -1" in ligne or "self.sizer_" in ligne.split("=")[0]
+    attendus = {
+        "self.radio_local = wx.RadioButton(self.sizer_type_staticbox,": 1,
+        "self.radio_reseau = wx.RadioButton(self.sizer_type_staticbox,": 1,
+        "self.label_nom = wx.StaticText(self.sizer_contenu_staticbox,": 1,
+        "self.text_nom = wx.TextCtrl(self.sizer_contenu_staticbox,": 1,
+        "self.checkbox_details = wx.CheckBox(self.sizer_contenu_staticbox,": 1,
+        "self.hyperlink_details = self.Build_Hyperlink(self.sizer_contenu_staticbox)": 1,
+        "hl.HyperLinkCtrl(parent,": 1,
+        "self.panelReseau = PanelReseau(self.sizer_reseau_staticbox)": 1,
+    }
+    for fragment, nombre in attendus.items():
+        assert source.count(fragment) == nombre, fragment
 
 
 def test_creation_fichier_ne_force_plus_police_fixe_ni_taille_bouton():
