@@ -1,6 +1,15 @@
 # Teamworks-CCNS 0.9.2
 
 
+## Candidate RC11 — 31 octobre 2026 (recette utilisateur Windows requise)
+
+- **Boîte « Création d'un fichier » :** fenêtre redimensionnable, ajustée à son contenu et dotée d'une taille minimale ; retrait des tailles forcées des boutons. La police de légende est limitée au lien « Détails » (`d944496f`).
+- **Parentage wx corrigé :** boutons radio, saisie du nom, case d'importation, hyperlien et panneau réseau rattachés à leurs cadres `wx.StaticBox` respectifs. Le test de contrat vérifie chaque parent et l'audit global de parentage passe (`154ed1ae`).
+- **Boutons communs :** réinitialisation de la taille minimale et invalidation de `BestSize` avant recalcul pour éviter de conserver une largeur obsolète après changement de texte ou d'échelle (`d944496f`).
+- **Historique RH :** les six dialogues RH concernés utilisaient déjà `CTRL_Bouton_image` dans la RC10. Le commit `474f1e31`, conservé pour la traçabilité, est vide et n'introduit pas de changement fonctionnel.
+- **Validation antérieure au packaging :** 258 tests locaux ciblés PASS, 1 SKIP (wx indisponible dans l'environnement local), 0 FAIL ; contrôle syntaxique des 1 213 fichiers Python PASS. La CI GitHub du correctif `154ed1ae` est verte sur le socle et les parcours critiques Windows (run `41187427115`). Le paquet RC11 exact reste à construire et à qualifier.
+- **Réserves :** aucune recette graphique complète ni vérification des DPI système Windows 125 %/150 % ; essais utilisateurs et métier à réaliser sur une copie de base avant remplacement en exploitation. Aucun changement de règles métier ou de données MySQL dans ce lot.
+
 ## Candidate RC10 — 29 octobre 2026 (recette utilisateur Windows requise)
 
 - **Sélecteur de période :** correction de l'exception `AttributeError: ctrl_mois` de RC9 : les événements de la liste s'adressent au dialogue réel (et non au panneau de section), et les contrôles mois, année et dates sont construits avant la liste. La sélection native précoce est couverte par une régression Windows et des tests synthétiques (`d00f417`).

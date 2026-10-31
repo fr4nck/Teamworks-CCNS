@@ -1,3 +1,11 @@
+Version 0.9.2-rc11 :
+
+- Boîte « Création d'un fichier » : fenêtre redimensionnable, ajustée au contenu, taille minimale et boutons sans taille forcée ; police de légende limitée au lien « Détails ».
+- Les contrôles radio, nom, importation, hyperlien et panneau réseau sont rattachés aux cadres wx.StaticBox attendus ; audit statique de parentage validé.
+- Boutons communs : réinitialisation de la taille minimale et du cache BestSize pour le recalcul des dimensions.
+- Correctifs publiés sous d944496f et 154ed1ae ; le commit 474f1e31 est vide, les boutons RH communs étaient déjà présents.
+- Tests locaux ciblés : 258 PASS, 1 SKIP, 0 FAIL ; CI socle et parcours Windows verte sur 154ed1ae. Recette Windows réelle et vérification DPI toujours nécessaires.
+
 Version 0.9.2-rc10 :
 
 - Sélection de période : correction du crash ctrl_mois (événements de liste dirigés vers le dialogue après initialisation des champs).
