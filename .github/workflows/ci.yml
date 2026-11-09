@@ -994,12 +994,14 @@ jobs:
 
           Livrables : ZIP portable Windows x64, installateur Windows x64 et SHA256SUMS.txt. Il s'agit des binaires exacts du run qualifie, sans reconstruction.
           NOTES
-          current_tag="$(gh api "repos/$repo/git/ref/tags/$tag" --jq .object.sha 2>/dev/null || true)"
-          if [ -z "$current_tag" ]; then
+          if gh api "repos/$repo/git/ref/tags/$tag" --jq .object.sha > "$RUNNER_TEMP/rc12-tag.txt" 2>/dev/null; then
+            current_tag="$(cat "$RUNNER_TEMP/rc12-tag.txt")"
+            if [ "$current_tag" != "$RC12_SHA" ]; then
+              echo "STOP: tag existant different: $current_tag" >&2
+              exit 1
+            fi
+          else
             gh api -X POST "repos/$repo/git/refs" -f ref="refs/tags/$tag" -f sha="$RC12_SHA" >/dev/null
-          elif [ "$current_tag" != "$RC12_SHA" ]; then
-            echo "STOP: tag existant different: $current_tag" >&2
-            exit 1
           fi
           test "$(gh api "repos/$repo/git/ref/tags/$tag" --jq .object.sha)" = "$RC12_SHA"
           if ! gh release view "$tag" --repo "$repo" >/dev/null 2>&1; then
