@@ -36,6 +36,20 @@ packaging. Aucun ZIP de recette n'en est sorti. Une nouvelle tentative
 avec le même code et les mêmes garde-fous est effectuée séparément ;
 seul un run complet `SUCCESS` avec archive vérifiée permettra la recette.
 
+### Recette Windows étendue : adaptation du test après changement d'API
+
+Le run `42674247406` a réussi les tests Linux et Windows, mais
+`smoke_mailing_preparation.py` a expiré au premier envoi fictif (180 s).
+Le faux transport du test implémentait l'ancienne API `Envoyer_lot()`,
+alors que le Mailer utilise désormais `Connecter()/Envoyer()/Fermer()`.
+Une boîte d'erreur non pilotée par le smoke restait donc modale.
+
+Le smoke est corrigé **sans réduire ses vérifications** : il simule
+`Envoyer()` message par message, refuse l'ancien `Envoyer_lot()`,
+vérifie les deux envois, la fusion, la non-mutation des pièces personnelles
+et la fermeture du transport. Aucun email réel n'est émis.
+Cette explication doit être validée par la CI du nouveau candidat.
+
 ## 2. Contrôles avant essai
 
 1. Ouvrir le run GitHub Actions du commit candidat et relever son SHA.

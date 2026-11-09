@@ -238,16 +238,24 @@ INJECTION = r'''            print("TEAMWORKS_SMOKE_EXAMPLE_READY", flush=True)
                         self.kwargs = kwargs
                         self.connected = False
                         self.closed = False
+                        self.envois = []
 
                     def Connecter(self):
                         self.connected = True
+                        _smoke_batches.append(self.envois)
                         return True
 
-                    def Envoyer_lot(self, messages=None, dlg_progress=None, afficher_confirmation_envoi=True):
-                        assert self.connected
-                        messages = list(messages or [])
-                        _smoke_batches.append(messages)
-                        return messages
+                    def Envoyer(self, message):
+                        # TW-UI-01 utilise le transport unitaire dans un worker.
+                        # Pas de socket, pas de serveur et pas de mail reel.
+                        assert self.connected and not self.closed
+                        self.envois.append(message)
+                        return 1
+
+                    def Envoyer_lot(self, *args, **kwargs):
+                        raise AssertionError(
+                            "Le Mailer a reutilise l'ancienne boucle Envoyer_lot"
+                        )
 
                     def Fermer(self):
                         self.closed = True
