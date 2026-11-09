@@ -557,14 +557,15 @@ class Mailjet(Base_messagerie):
         # Analyse du résultat
         try:
             resultat = resultats.json()["Messages"][0][u'Status']
-        except Exception as err:
-            print(err)
-            print(resultats.status_code)
-            print(resultats.json())
-            raise Exception(err)
+        except (ValueError, TypeError, KeyError, IndexError) as err:
+            # La reponse API peut contenir des adresses et pieces jointes.
+            # Ne jamais imprimer le JSON brut ni son contenu dans les logs.
+            raise RuntimeError(
+                "Reponse Mailjet illisible : statut d'envoi incertain"
+            ) from err
 
         if resultat != u'success':
-            raise Exception(resultat)
+            raise RuntimeError("Mailjet : le serveur n'a pas confirme l'envoi")
 
         return resultat
 

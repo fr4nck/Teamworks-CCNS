@@ -267,3 +267,10 @@ def test_fausse_boucle_wx_reste_active_pendant_un_transport_lent(monkeypatch):
     assert next(t for name, _, t in moments if name == "gui") < next(
         t for name, _, t in moments if name == "ferme"
     )
+
+
+def test_mailjet_ne_journalise_pas_la_reponse_api_brute():
+    source = (ROOT / "teamworks/Utils/UTILS_Envoi_email.py").read_text(encoding="utf-8")
+    assert "print(resultats.json())" not in source
+    assert "print(resultats.status_code)" not in source
+    assert "statut d'envoi incertain" in source
