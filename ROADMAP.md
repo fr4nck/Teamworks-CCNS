@@ -56,6 +56,19 @@ Vanilla/Phoenix reste à comparer à l'amont ; aucune propagation automatique
 vers Qt ou master. Les preuves et limites sont détaillées dans
 `docs/TW-UI-01-MAILER-PHASE2.md`.
 
+### Phase 3 — Qualification complémentaire (9 novembre 2026)
+
+Commits : `711549ce` (vérification HTTP Mailjet), `0b131615` et
+`4adbcd19` (fermeture de la progression Windows et contrôle après idle).
+La CI `42664772427` est verte : 2 900 PASS, 12 SKIP, Windows PASS.
+Le banc wx natif mesure 23 battements, un retard maximal de 32 ms,
+aucun worker ni dialogue résiduel après traitement des événements.
+
+**PASS automatisé borné ; NO GO publication RC** : application complète,
+interruptions réseau réelles et recette utilisateur non vérifiées.
+Le prochain candidat proposé est `v0.9.2-rc12`, sans tag ni release.
+Rapport : `docs/TW-UI-01-MAILER-PHASE3.md`.
+
 ## 1. État réel du projet
 
 Teamworks-CCNS porte actuellement la version **`0.9.1b`**, telle qu'indiquée par le fichier `VERSION`. Cette chaîne de version identifie le build courant mais ne vaut pas, à elle seule, qualification bêta : les critères de maturité du présent document restent seuls décisionnaires.
