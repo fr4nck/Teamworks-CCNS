@@ -70,6 +70,20 @@ la separation des threads mais **ne teste pas les HWND Windows reels**.
 La CI doit aussi conserver les tests existants sauvegarde, rapport de
 crash, interfaces, permissions, compilation et packaging policy.
 
+## Banc Windows natif fictif
+
+Le script `tools/smoke_tw_ui_01_mailer_windows.py` est ajoute au job
+Windows existant (pas de nouveau workflow et pas de packaging). Il cree
+une vraie `wx.Frame` maximisee et une progression `wx.Dialog` rattachee,
+utilise un backend fictif lent et mesure pendant l'envoi :
+- retard entre les battements de timer wx ;
+- `IsMaximized` / `IsIconized` / `IsHungAppWindow` ;
+- propriete wx du dialogue et relation Win32 `GW_OWNER` ;
+- execution du transport hors du thread GUI et tentative unique.
+
+Il n'utilise ni base, ni SMTP, ni Mailjet reels. Son verdict CI Windows
+est distinct d'une recette utilisateur de l'application complete.
+
 ## Limites et gates de validation
 
 1. **Non demontre** : une fenetre fantome ou perte effective de maximisation

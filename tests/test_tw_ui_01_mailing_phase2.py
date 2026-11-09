@@ -285,3 +285,14 @@ def test_configuration_email_legacy_ne_bloque_plus_le_fil_wx():
     assert "messagerie.Connecter()" not in bloc
     assert "messagerie.Envoyer(" not in bloc
     assert "len(bilan.succes) != 1" in bloc
+
+
+def test_banc_win32_est_integre_au_workflow_existant():
+    ci = (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    smoke = (ROOT / "tools/smoke_tw_ui_01_mailer_windows.py").read_text(encoding="utf-8")
+    assert "smoke_tw_ui_01_mailer_windows.py" in ci
+    assert "GetWindow(fenetre.GetHandle(), 4)" in smoke
+    assert "IsHungAppWindow" in smoke
+    assert "frame.IsMaximized()" in smoke
+    assert "watchdog = threading.Timer(" in smoke
+    assert "def Envoyer(self, message)" in smoke
