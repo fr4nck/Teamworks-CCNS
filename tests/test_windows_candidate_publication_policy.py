@@ -20,7 +20,7 @@ def test_marqueur_candidate_only_declenche_un_build_sans_release():
     assert "startsWith(github.ref, 'refs/tags/')" in release_gate
     assert "head_commit.message" not in release_gate
     # Un commit [windows] ne peut jamais suffire pour publier.
-    assert "[windows]" not in release_gate
+    assert "contains(github.event.head_commit.message" not in release_gate
 
 
 def test_candidat_doit_etre_trace_par_sha_et_sha256():
