@@ -876,6 +876,7 @@ jobs:
             || (
               (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/wx/master')
               && contains(github.event.head_commit.message, '[windows]')
+              && !contains(github.event.head_commit.message, '[candidate-only]')
             )
           }}
         shell: pwsh
