@@ -554,6 +554,14 @@ class Mailjet(Base_messagerie):
         # Envoi de la requête à Mailjet
         resultats = self.connection.send.create(data={"Messages": [dict_message,]})
 
+        # Un Status JSON positif ne suffit pas si la requete HTTP a echoue.
+        # Ne pas exposer de donnees de la reponse brute dans le diagnostic.
+        statut_http = getattr(resultats, "status_code", None)
+        if type(statut_http) is not int or not 200 <= statut_http < 300:
+            raise RuntimeError(
+                "Mailjet : statut HTTP non confirme, resultat d'envoi incertain"
+            )
+
         # Analyse du résultat
         try:
             resultat = resultats.json()["Messages"][0][u'Status']
