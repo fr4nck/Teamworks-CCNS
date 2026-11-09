@@ -1,12 +1,36 @@
 # Teamworks-CCNS — Roadmap officielle et unique
 
-**Mise à jour : 31 août 2026**
+**Mise à jour : 9 novembre 2026**
 
 Ce fichier est l’unique roadmap de référence du projet. Toute autre documentation peut détailler un domaine, mais ne doit pas porter une roadmap concurrente ni annoncer un niveau de maturité différent.
 
 Les décisions d’architecture transverses, le partage des responsabilités entre applications et les priorités interapplications sont définis dans **`fr4nck/PMSL-Arch`**. `ROADMAP.md` reste l’unique roadmap d’exécution propre à Teamworks-CCNS : elle traduit ces décisions en lots d’implémentation, tests, packaging et qualification du produit.
 
 En cas de divergence sur l’architecture ou les flux entre Teamworks, Noethys, Connecthys/Portail, PMSL Équipe ou un service externe, **PMSL-Arch fait foi**. En cas de divergence sur l’état d’implémentation, la maturité ou la qualification de Teamworks-CCNS, **le présent fichier fait foi**. Les priorités interapplications ne doivent donc pas être redéfinies ici sous la forme d’une roadmap concurrente.
+
+## TW-UI-01 — Mailer wx et risque de fenêtre fantôme (9 novembre 2026)
+
+Le Mailer héritait d'envois SMTP/Mailjet synchrones, de délais entre messages
+sur le thread GUI, de progressions sans propriétaire et d'une reconnexion
+avec renvoi automatique après déconnexion. Ces mécanismes sont confirmés
+par inspection du code ; le phénomène Windows « Ghost » n'est **pas encore
+reproduit dans Teamworks**.
+
+Correction engagée sur `wx/master` : le parcours `DLG_Mailer.Envoyer`
+utilise une session séquentielle sur un thread réseau distinct et une boucle
+modale wx réactive, un propriétaire visible déterminé pour la progression,
+des issues « accepté / refusé / incertain / non tenté », sans renvoi automatique
+après erreur incertaine, une fermeture garantie et la non-mutation des
+pièces jointes individuelles. Le mode Mailer caché conserve un retour synchrone.
+
+**Gates encore ouverts :** mesure des battements du thread graphique,
+vérification Windows des HWND / `GW_OWNER`, absence de Ghost et maintien
+de maximisation, tests SMTP/Mailjet GUI simulés en conditions réelles,
+ratissage des appels `Envoyer_lot` historiques encore synchrones dans
+`UTILS_Envoi_email.py`, inspection des autres opérations longues et
+qualification utilisateur sur données fictives. Aucune RC ni release
+n'est déclarée prête sur ces seuls changements ; aucun portage Qt automatique.
+Provenance Vanilla/Phoenix à confirmer auprès de l'amont.
 
 ## 1. État réel du projet
 

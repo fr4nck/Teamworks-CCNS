@@ -23,6 +23,7 @@ from Ctrl import CTRL_Bandeau
 import  wx.lib.dialogs
 from Dlg import DLG_Messagebox
 from Utils import UTILS_Envoi_email
+from Utils import UTILS_MailingSession
 from Utils import UTILS_Parametres
 from Utils import UTILS_Dates
 from Ctrl import CTRL_Editeur_email
@@ -379,6 +380,8 @@ class Dialog(wx.Dialog):
     
     
     def Envoyer(self, listeDestinataires=None, adresseTest=None):
+        if getattr(self, "_envoi_en_cours", False):
+            return False
         # Expéditeur
         if listeDestinataires is None:
             listeDestinataires = []
@@ -458,8 +461,9 @@ class Dialog(wx.Dialog):
             dictChamps = track.champs
 
             # Pièces Personnelles + communes
-            listePieces = listePiecesPersonnelles
-            listePieces.extend(listePiecesCommunes)
+            listePieces = list(dict.fromkeys(
+                list(listePiecesPersonnelles) + list(listePiecesCommunes)
+            ))
 
             # Traitement des champs pour la fusion
             texte = copy.deepcopy(texteHTML)
@@ -483,48 +487,41 @@ class Dialog(wx.Dialog):
             )
             liste_messages.append(message)
 
-        # Connexion messagerie
-        dlg_progress = wx.ProgressDialog(_(u"Envoi des mails"), _(u"Connexion au serveur de messagerie..."), maximum=len(liste_messages)+1, parent=None)
-        dlg_progress.SetSize((450, 140))
-        dlg_progress.CenterOnScreen()
+        # Le transport réseau reste séquentiel mais fonctionne dans un worker.
+        # La boucle modale de progression traite les événements graphiques.
+        proprietaire = UTILS_MailingSession.proprietaire_visible(self, wx)
+        if proprietaire is None:
+            raise RuntimeError("Impossible de trouver une fenêtre propriétaire visible")
 
-        try :
-            messagerie = UTILS_Envoi_email.Messagerie(backend=dictExp["moteur"], hote=dictExp["smtp"], port=dictExp["port"], utilisateur=dictExp["utilisateur"], motdepasse=dictExp["motdepasse"],
-                                                    email_exp=dictExp["adresse"], nom_exp=dictExp["nom_adresse"], timeout=20, use_tls=dictExp["startTLS"], parametres=dictExp["parametres"])
-            messagerie.Connecter()
-        except Exception as err:
-            dlg_progress.Destroy()
-            err = str(err)
-            intro = _(u"La connexion au serveur de messagerie est impossible :")
-            conclusion = _(u"Vérifiez votre connexion internet ou les paramètres de votre adresse d'expédition.")
-            dlgErreur = DLG_Messagebox.Dialog(self, titre=_(u"Erreur"), introduction=intro, detail=err, conclusion=conclusion, icone=wx.ICON_ERROR, boutons=[_(u"Ok"),])
-            dlgErreur.ShowModal()
-            dlgErreur.Destroy()
-            return False
+        def fabrique_messagerie():
+            return UTILS_Envoi_email.Messagerie(
+                backend=dictExp["moteur"], hote=dictExp["smtp"],
+                port=dictExp["port"], utilisateur=dictExp["utilisateur"],
+                motdepasse=dictExp["motdepasse"], email_exp=dictExp["adresse"],
+                nom_exp=dictExp["nom_adresse"], timeout=20,
+                use_tls=dictExp["startTLS"], parametres=dictExp["parametres"]
+            )
 
-        # Envoi des messages
-        self.listeSucces = messagerie.Envoyer_lot(messages=liste_messages, dlg_progress=dlg_progress, afficher_confirmation_envoi=self.afficher_confirmation_envoi)
-
-        # Fermeture messagerie
-        try :
-            messagerie.Fermer()
-        except:
-            pass
-
-        # Fermeture dlg_progress si besoin
-        if dlg_progress != None:
-            try :
-                dlg_progress.Destroy()
-            except:
-                pass
-
-        # Suppression des images temporaires incluses dans le message
-        handler.DeleteTemporaryImages()
-
-        # Mémorisation dans l'historique
-        if self.listeSucces != False:
-            for message in self.listeSucces :
-                self.MemorisationHistorique(message.GetLabelDestinataires(), message.sujet)
+        self._envoi_en_cours = True
+        self.bouton_envoyer.Enable(False)
+        try:
+            bilan = UTILS_MailingSession.envoyer_avec_progression(
+                parent=proprietaire, fabrique=fabrique_messagerie,
+                messages=liste_messages,
+                afficher_confirmation_envoi=self.afficher_confirmation_envoi,
+            )
+            self.listeSucces = bilan.succes
+            self.listeAnomalies = bilan.refuses + bilan.incertains
+            for message in self.listeSucces:
+                self.MemorisationHistorique(
+                    message.GetLabelDestinataires(), message.sujet
+                )
+            return bilan.erreur_connexion is None
+        finally:
+            self._envoi_en_cours = False
+            self.bouton_envoyer.Enable(True)
+            # Ne pas conserver de fichiers images temporaires après exception.
+            handler.DeleteTemporaryImages()
 
     def MemorisationHistorique(self, adresse="", sujet=""):
         pass
