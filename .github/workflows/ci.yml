@@ -917,3 +917,103 @@ jobs:
           if ($LASTEXITCODE -ne 0) {
             throw "La publication de la release $releaseTag a échoué"
           }
+
+  publish-rc12:
+    name: Publication explicite RC12 depuis artefact qualifie
+    needs: [tests, windows-smokes]
+    if: >-
+      ${{
+        github.event_name == 'push'
+        && github.ref == 'refs/heads/wx/master'
+        && contains(github.event.head_commit.message, '[publish-rc12]')
+        && needs.tests.result == 'success'
+        && needs.windows-smokes.result == 'success'
+      }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      actions: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RC12_SHA: 9b02fbe94016b403255eabdaa856176d7f3e0ac5
+      RC12_RUN: '42675793471'
+      RC12_ARTIFACT: '13700786225'
+      RC12_DIGEST: sha256:acf327e5bd02ae21c2754679e8fe8989a457dad8b22aabd1931c088ae6776e9f
+      RC12_TAG: v0.9.2-rc12
+    steps:
+      - name: Qualifier la provenance et les binaires exacts
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          repo="$GITHUB_REPOSITORY"
+          test "$GITHUB_REF" = "refs/heads/wx/master"
+          test "$(gh api "repos/$repo/actions/runs/$RC12_RUN" --jq .head_sha)" = "$RC12_SHA"
+          test "$(gh api "repos/$repo/actions/runs/$RC12_RUN" --jq .conclusion)" = success
+          test "$(gh api "repos/$repo/actions/artifacts/$RC12_ARTIFACT" --jq .expired)" = false
+          test "$(gh api "repos/$repo/actions/artifacts/$RC12_ARTIFACT" --jq .digest)" = "$RC12_DIGEST"
+          test "$(gh api "repos/$repo/actions/artifacts/$RC12_ARTIFACT" --jq .workflow_run.id)" = "$RC12_RUN"
+          incoming="$RUNNER_TEMP/rc12-incoming"
+          verified="$RUNNER_TEMP/rc12-verified"
+          mkdir -p "$incoming" "$verified"
+          gh run download "$RC12_RUN" --repo "$repo" --name Teamworks-CCNS-Windows --dir "$incoming"
+          archive=$(find "$incoming" -type f -name 'Teamworks-CCNS-0.9.2-rc12-windows-x64.zip' -print -quit)
+          installer=$(find "$incoming" -type f -name 'Teamworks-CCNS-0.9.2-rc12-windows-x64-setup.exe' -print -quit)
+          sums=$(find "$incoming" -type f -name 'SHA256SUMS.txt' -print -quit)
+          test -n "$archive" && test -n "$installer" && test -n "$sums"
+          test "$(find "$incoming" -type f -name 'Teamworks-CCNS-0.9.2-rc12-windows-x64.zip' | wc -l)" -eq 1
+          test "$(find "$incoming" -type f -name 'Teamworks-CCNS-0.9.2-rc12-windows-x64-setup.exe' | wc -l)" -eq 1
+          test "$(find "$incoming" -type f -name 'SHA256SUMS.txt' | wc -l)" -eq 1
+          cp -- "$archive" "$installer" "$sums" "$verified/"
+          ( cd "$verified" && sha256sum --check SHA256SUMS.txt )
+          unzip -tqq "$verified/Teamworks-CCNS-0.9.2-rc12-windows-x64.zip"
+          test "$(unzip -p "$verified/Teamworks-CCNS-0.9.2-rc12-windows-x64.zip" VERSION | tr -d '\r\n')" = 0.9.2-rc12
+          unzip -p "$verified/Teamworks-CCNS-0.9.2-rc12-windows-x64.zip" BUILD.txt | grep -Fq "$RC12_SHA"
+          echo "PASS: provenance, ZIP, installateur, SHA256, commit"
+
+      - name: Publier le tag RC12 et la release en preversion
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          repo="$GITHUB_REPOSITORY"
+          tag="$RC12_TAG"
+          verified="$RUNNER_TEMP/rc12-verified"
+          note="$RUNNER_TEMP/rc12-notes.md"
+          cat > "$note" <<'NOTES'
+          ## Teamworks-CCNS 0.9.2 RC12 - Preversion Windows
+
+          Version wxPython issue du commit verifie 9b02fbe94016b403255eabdaa856176d7f3e0ac5 (Actions 42675793471).
+
+          - Mailer wx : transports SMTP/Mailjet sequentiels hors du fil graphique, gestion des refus et etats incertains, sans renvoi automatique.
+          - Fenetres : focus, modalite et reactivite qualifies par banc wx natif Windows sur transport fictif.
+          - SMTP V1/V2 et Mailjet : tests de transports fictifs, validation du code HTTP et de la reponse Mailjet.
+          - CI : 2 902 tests Python PASS, 12 SKIP ; parcours Windows et packaging valides.
+          - Essai utilisateur Windows 11 : ouverture du portable et reprise des parametres de connexion confirmees.
+
+          Attention : cette RC est une preversion, pas une version stable. Recette metier complete, envois SMTP/Mailjet reels et qualification sur base fictive restent a effectuer. Sauvegarder les donnees avant tout usage operationnel.
+
+          Livrables : ZIP portable Windows x64, installateur Windows x64 et SHA256SUMS.txt. Il s'agit des binaires exacts du run qualifie, sans reconstruction.
+          NOTES
+          current_tag="$(gh api "repos/$repo/git/ref/tags/$tag" --jq .object.sha 2>/dev/null || true)"
+          if [ -z "$current_tag" ]; then
+            gh api -X POST "repos/$repo/git/refs" -f ref="refs/tags/$tag" -f sha="$RC12_SHA" >/dev/null
+          elif [ "$current_tag" != "$RC12_SHA" ]; then
+            echo "STOP: tag existant different: $current_tag" >&2
+            exit 1
+          fi
+          test "$(gh api "repos/$repo/git/ref/tags/$tag" --jq .object.sha)" = "$RC12_SHA"
+          if ! gh release view "$tag" --repo "$repo" >/dev/null 2>&1; then
+            gh release create "$tag" \
+              "$verified/Teamworks-CCNS-0.9.2-rc12-windows-x64.zip" \
+              "$verified/Teamworks-CCNS-0.9.2-rc12-windows-x64-setup.exe" \
+              "$verified/SHA256SUMS.txt" \
+              --repo "$repo" --title "Teamworks-CCNS $tag" \
+              --notes-file "$note" --prerelease --latest=false --verify-tag
+          fi
+          gh api "repos/$repo/releases/tags/$tag" > "$RUNNER_TEMP/rc12-release.json"
+          jq -e --arg tag "$tag" '
+            .tag_name == $tag and .prerelease == true and
+            ([.assets[].name] | sort) ==
+            (["SHA256SUMS.txt", "Teamworks-CCNS-0.9.2-rc12-windows-x64-setup.exe", "Teamworks-CCNS-0.9.2-rc12-windows-x64.zip"] | sort)
+          ' "$RUNNER_TEMP/rc12-release.json"
+          echo "PASS: release RC12 sur le commit qualifie"
