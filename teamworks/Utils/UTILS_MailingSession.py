@@ -183,7 +183,9 @@ def envoyer_avec_progression(parent, fabrique, messages,
     dialogue.Bind(wx.EVT_CLOSE, _fermeture)
 
     try:
-        worker.start()
+        # Démarrer depuis la boucle modale : une connexion fictive instantanée
+        # ne peut ainsi appeler EndModal avant l'entrée dans ShowModal.
+        wx.CallAfter(worker.start)
         dialogue.ShowModal()
         worker.join()
     finally:
