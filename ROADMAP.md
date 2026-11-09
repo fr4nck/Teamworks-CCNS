@@ -69,6 +69,23 @@ interruptions réseau réelles et recette utilisateur non vérifiées.
 Le prochain candidat proposé est `v0.9.2-rc12`, sans tag ni release.
 Rapport : `docs/TW-UI-01-MAILER-PHASE3.md`.
 
+### Candidat Windows de recette — `0.9.2-rc12` (non publié)
+
+La construction portable est demandée avec le déclencheur CI existant
+`[windows] [candidate-only]`, après ajout d'une garde empêchant la
+publication automatique d'une Release depuis ce marqueur. Les tests Linux,
+Windows, le démarrage de l'exécutable et le contrôle des manifestes doivent
+être verts sur **le SHA exact du candidat** ; le seul fait de déclencher le
+workflow ne constitue pas une validation.
+
+La recette doit être effectuée dans un profil Windows isolé et sur une
+base fictive ; aucun courriel réel ne doit sortir et aucun dossier RH
+existant ne doit être consulté. Les gates métier G7 et utilisateur G9
+restent **NON TESTÉS** avant l'exécution effective de cette recette.
+Pas de tag `v0.9.2-rc12`, pas de release et pas de remplacement de la
+version utilisée en exploitation. Protocole :
+`docs/TW-UI-01-RECETTE-CANDIDAT-RC12.md`.
+
 ## 1. État réel du projet
 
 Teamworks-CCNS porte actuellement la version **`0.9.1b`**, telle qu'indiquée par le fichier `VERSION`. Cette chaîne de version identifie le build courant mais ne vaut pas, à elle seule, qualification bêta : les critères de maturité du présent document restent seuls décisionnaires.

@@ -1,5 +1,15 @@
 # Teamworks-CCNS 0.9.2
 
+## Candidat RC12 — 9 novembre 2026 (construction de recette isolée, non publiée)
+
+- **TW-UI-01 :** corrections SMTP/Mailjet et du Mailer wx, disparition des anciens envois de lots synchrones, absence de renvoi automatique des messages au statut incertain.
+- **Fermeture et fenêtres :** propriété Win32 vérifiée sur le banc natif, maintien de la boucle wx pendant le réseau ; fermeture du dialogue explicitement non assimilée à une annulation.
+- **Vérification des transports :** méthodes SMTP V1/V2 et Mailjet qualifiées sur des connexions fictives ; réponse Mailjet acceptée seulement si le code HTTP et le statut applicatif concordent.
+- **Régression précédant la demande de packaging :** 2 900 tests PASS, 12 SKIP et Windows PASS sur le commit `221d943d` (CI `42665465882`).
+- **Préparation de recette :** portable de test identifiable par SHA, construit uniquement si les gates CI de la révision candidate passent. Aucune release ni tag ; l'installateur éventuel est un artefact technique, pas un installateur destiné au poste de production.
+- **Réserves :** parcours applicatifs complets, interactions Windows sur poste utilisateur, coupures SMTP/HTTP réelles et recette sur profil et base fictifs restent ouverts.
+
+
 
 ## Candidate RC11 — 31 octobre 2026 (recette utilisateur Windows requise)
 
