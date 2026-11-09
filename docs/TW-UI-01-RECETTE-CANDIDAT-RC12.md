@@ -20,6 +20,14 @@ pas la publication d'une release ni l'envoi d'un courriel réel.
 - La rétention des artefacts du workflow est actuellement de **3 jours**.
   Un artefact expiré devra être reconstruit ; ne pas substituer un ancien.
 
+### Tentative de construction initiale (non qualifiante)
+
+Le run GitHub Actions `42672838525` a obtenu **Windows PASS**,
+mais GitHub Actions l'a clôturé sans avoir lancé le job Linux ni le
+packaging. Aucun ZIP de recette n'en est sorti. Une nouvelle tentative
+avec le même code et les mêmes garde-fous est effectuée séparément ;
+seul un run complet `SUCCESS` avec archive vérifiée permettra la recette.
+
 ## 2. Contrôles avant essai
 
 1. Ouvrir le run GitHub Actions du commit candidat et relever son SHA.
