@@ -36,15 +36,22 @@ redirigés vers la session séquentielle ; les dialogues Mailer cachés,
 les dialogues d'erreur ayant un parent et l'export Excel vers Mailer
 reçoivent des corrections ciblées de propriété et de cycle de vie.
 
-**Gates encore ouverts :** résultat de la CI sur le commit exact de cette
-phase, vérification graphique Windows interactive des HWND/`GW_OWNER`,
-mesures de battements et maximisation pendant les transports longs,
-parcours manuels de Mailer visible/caché et sauvegarde sur données fictives,
-qualifications des bibliothèques SMTP/Mailjet face aux interruptions
-réelles, inspection des autres traitements non liés à la messagerie.
+**Validation automatique du code** sur `959fd504a7a6629131d871d1dfe51ba5ee09b1e1`
+(run GitHub Actions `42613561411`) : 2 882 tests Python PASS,
+12 SKIP ; job Windows PASS ; banc wx natif Windows (backend fictif) PASS,
+23 battements pendant l'envoi, retard maximal 0,032 seconde, owner wx et
+Win32 `GW_OWNER` corrects, `IsMaximized` conserve,
+`IsIconized` faux, aucun `IsHungAppWindow` constate. Aucun email reel.
 
-**Statut : correction engagée, pas de qualification Windows interactive.
-Aucune RC ni release autorisée sur ce seul lot.** La provenance
+**Gates encore ouverts :** recette Windows interactive de l'application
+complete (Mailer visible/cache, sauvegarde et test de configuration sur donnees
+fictives), qualification des bibliotheques SMTP/Mailjet sur deconnexions
+reelles, test de minimisation volontaire et de fermeture en plein transfert,
+inspection des autres operations longues hors messagerie et comparaison
+avec l'amont Vanilla/Phoenix.
+
+**Statut : PASS automatise borne au transport fictif ; qualification
+complete et recette utilisateur NON ACQUISES. Aucune RC ni release autorisee.** La provenance
 Vanilla/Phoenix reste à comparer à l'amont ; aucune propagation automatique
 vers Qt ou master. Les preuves et limites sont détaillées dans
 `docs/TW-UI-01-MAILER-PHASE2.md`.

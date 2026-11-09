@@ -84,6 +84,21 @@ utilise un backend fictif lent et mesure pendant l'envoi :
 Il n'utilise ni base, ni SMTP, ni Mailjet reels. Son verdict CI Windows
 est distinct d'une recette utilisateur de l'application complete.
 
+## Qualification effectivement observee
+
+- Code qualifie : `959fd504a7a6629131d871d1dfe51ba5ee09b1e1`.
+- CI : https://github.com/fr4nck/Teamworks-CCNS/actions/runs/42613561411
+- Linux : 2 882 PASS, 12 SKIP, un avertissement ; compilation et autres
+  gardes du socle PASS.
+- Windows : job parcours critiques PASS ; banc `TW_UI01_WINDOWS_PASS`
+  avec 23 battements pendant le transport fictif, retard maximal de
+  0,032 seconde, proprio wx et `GW_OWNER` corrects, fenetre maximisee
+  sans iconisation et `IsHungAppWindow` faux durant les observations.
+- Repetitions : une connexion et une emission fictives ; aucune
+  transmission reseau ni donnees RH.
+- Ces observations concernent une vraie fenetre wx Windows sur runner
+  GitHub, et non l'application utilisateur connectee a une base.
+
 ## Limites et gates de validation
 
 1. **Non demontre** : une fenetre fantome ou perte effective de maximisation
