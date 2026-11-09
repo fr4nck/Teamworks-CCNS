@@ -4,7 +4,7 @@ Fork de **Teamworks** orienté **CCNS** pour la gestion d’équipes, de contrat
 
 Projet d’origine : Teamworks.
 
-> **Statut actuel : `0.9.2-rc11` — candidate Windows intégrant le redimensionnement et la correction du parentage StaticBox de la boîte « Création d'un fichier », ainsi que le recalcul des tailles des boutons communs.** Les tests ciblés et la CI de la base corrective sont verts ; vérifier le paquet RC11 exact et les parcours métier sur une copie de base avant remplacement en exploitation.
+> **Statut actuel : `0.9.2-rc12` — candidat Windows de recette non publié, intégrant les corrections TW-UI-01 (SMTP/Mailjet, progression wx et fermeture des dialogues).** La validation du code et les bancs Windows fictifs sont acquis ; la construction du paquet RC12 exact et les parcours dans l'application installée doivent encore être vérifiés sur un profil et une base de test, avant toute décision de publication.
 
 ## Positionnement
 

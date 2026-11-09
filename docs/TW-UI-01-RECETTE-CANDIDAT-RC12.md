@@ -20,6 +20,14 @@ pas la publication d'une release ni l'envoi d'un courriel réel.
 - La rétention des artefacts du workflow est actuellement de **3 jours**.
   Un artefact expiré devra être reconstruit ; ne pas substituer un ancien.
 
+### Contrôle de cohérence de la version
+
+Le run `42673834593` a constaté un défaut documentaire : `VERSION`
+indiquait `0.9.2-rc12`, tandis que `README.md` et la première
+entrée de `teamworks/Versions.txt` indiquaient encore RC11. Le garde
+de cohérence a bloqué le packaging. Les deux références sont alignées
+sur RC12 ; un nouveau run doit les vérifier avant la construction.
+
 ### Tentative de construction initiale (non qualifiante)
 
 Le run GitHub Actions `42672838525` a obtenu **Windows PASS**,
