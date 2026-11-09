@@ -168,8 +168,8 @@ def test_inventory_du_transport_ne_reintroduit_pas_des_anciens_appels():
             constructeurs.add(relatif)
     assert appels_lot == set(), "Appelants directs a qualifier : %r" % sorted(appels_lot)
     assert constructeurs == {
-        "Dlg/DLG_Mailer.py", "Utils/UTILS_Sauvegarde.py",
-        "Utils/UTILS_Envoi_rapport_bug.py",
+        "Dlg/DLG_Mailer.py", "Dlg/DLG_Saisie_email_exp_legacy.py",
+        "Utils/UTILS_Sauvegarde.py", "Utils/UTILS_Envoi_rapport_bug.py",
     }, "Nouveaux points d'entree de messagerie a auditer : %r" % sorted(constructeurs)
 
 
@@ -274,3 +274,14 @@ def test_mailjet_ne_journalise_pas_la_reponse_api_brute():
     assert "print(resultats.json())" not in source
     assert "print(resultats.status_code)" not in source
     assert "statut d'envoi incertain" in source
+
+
+def test_configuration_email_legacy_ne_bloque_plus_le_fil_wx():
+    source = (ROOT / "teamworks/Dlg/DLG_Saisie_email_exp_legacy.py").read_text(encoding="utf-8")
+    bloc = source.split("def OnBoutonTester(self, event):", 1)[1].split(
+        "def OnBoutonOk(self, event):", 1
+    )[0]
+    assert "UTILS_MailingSession.envoyer_avec_progression(" in bloc
+    assert "messagerie.Connecter()" not in bloc
+    assert "messagerie.Envoyer(" not in bloc
+    assert "len(bilan.succes) != 1" in bloc

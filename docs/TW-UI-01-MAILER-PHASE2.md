@@ -20,6 +20,7 @@ Cette fiche est technique ; `ROADMAP.md` reste la seule roadmap officielle.
 | Mailer d'export | `UTILS_Export` -> `DLG_Mailer.Dialog` | Dialogue rattache a la fenetre principale |
 | Backend SMTP historique | `SmtpV1.Envoyer_lot` herite de `Base_messagerie` | Adaptateur vers session unique, liste de succes conservee |
 | Backend SMTP | `SmtpV2.Envoyer_lot` herite de `Base_messagerie` | Ancienne boucle supprimee |
+| Test de configuration de messagerie | `DLG_Saisie_email_exp_legacy.OnBoutonTester` | Reutilise le worker commun, exige un resultat accepte |
 | Backend Mailjet | `Mailjet.Envoyer_lot` herite de `Base_messagerie` | Ancienne boucle supprimee |
 | Sauvegarde par email | `UTILS_Sauvegarde.Sauvegarde` | Un message, transport en worker, bilan positif obligatoire |
 | Rapport de crash | `UTILS_Envoi_rapport_bug.EnvoyerRapport` | Worker si boucle wx presente ; moteur pur sinon |

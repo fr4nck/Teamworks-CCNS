@@ -20,6 +20,7 @@ from Data import DATA_Serveurs_fai
 from Dlg import DLG_Messagebox
 from Utils import UTILS_Parametres
 from Utils import UTILS_Envoi_email
+from Utils import UTILS_MailingSession
 import wx.lib.agw.labelbook as LB
 import wx.html as html
 
@@ -664,8 +665,8 @@ class Dialog(wx.Dialog):
             texte_html=u"<p>Ceci est un <b>test de messagerie</b> envoyé à %s.</p>" % datetime.datetime.now().strftime("%H:%M:%S"),
         )
 
-        try :
-            messagerie = UTILS_Envoi_email.Messagerie(
+        def _fabrique_messagerie():
+            return UTILS_Envoi_email.Messagerie(
                 backend=dict_donnees["moteur"],
                 hote=dict_donnees["smtp"],
                 port=dict_donnees["port"],
@@ -677,16 +678,28 @@ class Dialog(wx.Dialog):
                 use_tls=dict_donnees["startTLS"],
                 parametres=dict_donnees["parametres"],
             )
-            messagerie.Connecter()
-            messagerie.Envoyer(message)
-            messagerie.Fermer()
-        except Exception as err:
-            err = str(err)
-            intro = _(u"L'envoi de l'email de test est impossible :")
-            conclusion = _(u"Vérifiez votre connexion internet ou les paramètres de votre adresse d'expédition.")
-            dlgErreur = DLG_Messagebox.Dialog(self, titre=_(u"Erreur"), introduction=intro, detail=err, conclusion=conclusion, icone=wx.ICON_ERROR, boutons=[_(u"Ok"),])
-            dlgErreur.ShowModal()
-            dlgErreur.Destroy()
+
+        try:
+            bilan = UTILS_MailingSession.envoyer_avec_progression(
+                parent=self, fabrique=_fabrique_messagerie,
+                messages=[message], afficher_confirmation_envoi=False,
+            )
+        except Exception:
+            dlgErreur = DLG_Messagebox.Dialog(
+                self, titre=_(u"Erreur"),
+                introduction=_(u"L'envoi de l'email de test est impossible :"),
+                conclusion=_(u"Verifiez la configuration de la messagerie "
+                              u"et le statut du message avant un nouvel essai."),
+                icone=wx.ICON_ERROR, boutons=[_(u"Ok"),],
+            )
+            try:
+                dlgErreur.ShowModal()
+            finally:
+                dlgErreur.Destroy()
+            return False
+
+        if len(bilan.succes) != 1:
+            # Le moteur commun a deja presente l'erreur, refus ou incertitude.
             return False
 
         dlg = wx.MessageDialog(self, _(u"L'email de test a été envoyé avec succès."), _(u"Test de connexion"), wx.OK | wx.ICON_INFORMATION)
