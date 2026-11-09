@@ -23,14 +23,31 @@ des issues « accepté / refusé / incertain / non tenté », sans renvoi automa
 après erreur incertaine, une fermeture garantie et la non-mutation des
 pièces jointes individuelles. Le mode Mailer caché conserve un retour synchrone.
 
-**Gates encore ouverts :** mesure des battements du thread graphique,
-vérification Windows des HWND / `GW_OWNER`, absence de Ghost et maintien
-de maximisation, tests SMTP/Mailjet GUI simulés en conditions réelles,
-ratissage des appels `Envoyer_lot` historiques encore synchrones dans
-`UTILS_Envoi_email.py`, inspection des autres opérations longues et
-qualification utilisateur sur données fictives. Aucune RC ni release
-n'est déclarée prête sur ces seuls changements ; aucun portage Qt automatique.
-Provenance Vanilla/Phoenix à confirmer auprès de l'amont.
+### Phase 2 — Suppression des anciens chemins synchrones (9 novembre 2026)
+
+Le correctif de cette phase remplace les deux boucles `SmtpV2.Envoyer_lot`
+et `Mailjet.Envoyer_lot` par une seule adaptation héritée de
+`Base_messagerie.Envoyer_lot`, elle-même reliée à `UTILS_MailingSession`.
+Les signatures historiques sont conservées, avec résultat `list` et bilan
+détaillé distinct `dernier_bilan`. `SmtpV1` hérite du même mécanisme.
+
+Les envois directs de sauvegardes et de rapports de crash sont également
+redirigés vers la session séquentielle ; les dialogues Mailer cachés,
+les dialogues d'erreur ayant un parent et l'export Excel vers Mailer
+reçoivent des corrections ciblées de propriété et de cycle de vie.
+
+**Gates encore ouverts :** résultat de la CI sur le commit exact de cette
+phase, vérification graphique Windows interactive des HWND/`GW_OWNER`,
+mesures de battements et maximisation pendant les transports longs,
+parcours manuels de Mailer visible/caché et sauvegarde sur données fictives,
+qualifications des bibliothèques SMTP/Mailjet face aux interruptions
+réelles, inspection des autres traitements non liés à la messagerie.
+
+**Statut : correction engagée, pas de qualification Windows interactive.
+Aucune RC ni release autorisée sur ce seul lot.** La provenance
+Vanilla/Phoenix reste à comparer à l'amont ; aucune propagation automatique
+vers Qt ou master. Les preuves et limites sont détaillées dans
+`docs/TW-UI-01-MAILER-PHASE2.md`.
 
 ## 1. État réel du projet
 

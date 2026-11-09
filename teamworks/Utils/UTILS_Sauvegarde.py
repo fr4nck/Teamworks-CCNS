@@ -27,6 +27,7 @@ from Utils import UTILS_Config
 from Utils import UTILS_Cryptage_fichier
 from Utils import UTILS_Fichiers
 from Utils import UTILS_Envoi_email
+from Utils import UTILS_MailingSession
 from Utils import UTILS_MySQL_backup
 from Utils import UTILS_Sauvegarde_perimetre as PerimetreSauvegarde
 
@@ -128,7 +129,12 @@ def Sauvegarde(listeFichiersLocaux=[], listeFichiersReseau=[], nom="", repertoir
             return False
 
     # Fenêtre de progression
-    dlgprogress = wx.ProgressDialog(_(u"Sauvegarde"), _(u"Lancement de la sauvegarde..."), maximum=nbreEtapes, parent=None, style= wx.PD_SMOOTH | wx.PD_AUTO_HIDE | wx.PD_APP_MODAL)
+    proprietaire_progression = UTILS_MailingSession.proprietaire_visible(None, wx)
+    dlgprogress = wx.ProgressDialog(
+        _(u"Sauvegarde"), _(u"Lancement de la sauvegarde..."),
+        maximum=nbreEtapes, parent=proprietaire_progression,
+        style=wx.PD_SMOOTH | wx.PD_AUTO_HIDE | wx.PD_APP_MODAL,
+    )
     
     # Création du fichier ZIP temporaire
     nomFichierTemp = u"%s.%s" % (nom, EXTENSIONS["decrypte"])
@@ -341,22 +347,40 @@ def Sauvegarde(listeFichiersLocaux=[], listeFichiersReseau=[], nom="", repertoir
                                             texte_html=_(u"Envoi de la sauvegarde de Teamworks"),
                                             fichiers=[UTILS_Fichiers.GetRepTemp(fichier=nomFichierTemp), ])
 
-        try :
-            messagerie = UTILS_Envoi_email.Messagerie(backend=dictAdresse["moteur"], hote=dictAdresse["smtp"], port=dictAdresse["port"], utilisateur=dictAdresse["utilisateur"],
-                                                      motdepasse=dictAdresse["motdepasse"], email_exp=dictAdresse["adresse"], use_tls=dictAdresse["startTLS"],
-                                                      timeout=60*3, parametres=dictAdresse["parametres"])
-            messagerie.Connecter()
-            messagerie.Envoyer(message)
-            messagerie.Fermer()
-        except Exception as err:
+        def _fabrique_messagerie():
+            return UTILS_Envoi_email.Messagerie(
+                backend=dictAdresse["moteur"], hote=dictAdresse["smtp"],
+                port=dictAdresse["port"], utilisateur=dictAdresse["utilisateur"],
+                motdepasse=dictAdresse["motdepasse"],
+                email_exp=dictAdresse["adresse"],
+                use_tls=dictAdresse["startTLS"],
+                timeout=60 * 3, parametres=dictAdresse["parametres"]
+            )
+
+        try:
+            bilan = UTILS_MailingSession.envoyer_avec_progression(
+                parent=dlgprogress, fabrique=_fabrique_messagerie,
+                messages=[message], afficher_confirmation_envoi=False,
+            )
+        except Exception:
             dlgprogress.Destroy()
-            print((err,))
-            err = str(err)
-            dlgErreur = wx.MessageDialog(None, _(u"Une erreur a été détectée dans l'envoi par Email !\n\nErreur : %s") % err, _(u"Erreur"), wx.OK | wx.ICON_ERROR)
-            dlgErreur.ShowModal() 
-            dlgErreur.Destroy()
+            dlgErreur = wx.MessageDialog(
+                proprietaire_progression,
+                _(u"L'envoi de la sauvegarde par Email a échoué. "
+                  u"Vérifiez la configuration et le statut du message."),
+                _(u"Erreur"), wx.OK | wx.ICON_ERROR,
+            )
+            try:
+                dlgErreur.ShowModal()
+            finally:
+                dlgErreur.Destroy()
             return False
-    
+        if len(bilan.succes) != 1:
+            # Echec ou statut incertain : ne jamais annoncer la sauvegarde
+            # par Email comme expediee avec succes.
+            dlgprogress.Destroy()
+            return False
+
     # Suppression des répertoires et fichiers temporaires
     dlgprogress.Update(numEtape, _(u"Suppression des fichiers temporaires..."));numEtape += 1
     fichier = UTILS_Fichiers.GetRepTemp(fichier=u"%s.%s" % (nom, EXTENSIONS["decrypte"]))

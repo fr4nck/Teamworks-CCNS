@@ -369,6 +369,16 @@ class Base_messagerie():
 
 
 
+    def Envoyer_lot(self, messages=None, dlg_progress=None,
+                   afficher_confirmation_envoi=True):
+        """Compatibilite de l'ancien contrat : connexion deja ouverte."""
+        from Utils import UTILS_MailingSession
+        return UTILS_MailingSession.envoyer_lot_heritage(
+            self, messages=messages, dlg_progress=dlg_progress,
+            afficher_confirmation_envoi=afficher_confirmation_envoi
+        )
+
+
 class SmtpV1(Base_messagerie):
     def __init__(self, **kwds):
         Base_messagerie.__init__(self, **kwds)
@@ -422,7 +432,12 @@ class SmtpV1(Base_messagerie):
         message.AttacheFichiersJoints(email)
 
         try:
-            self.connection.sendmail(self.email_exp, message.destinataires, email.as_string())
+            refus = self.connection.sendmail(
+                self.email_exp, message.destinataires, email.as_string()
+            )
+            if refus:
+                # Un succes partiel ne doit jamais entrainer un renvoi.
+                raise RuntimeError("Resultat SMTP partiel : statut incertain")
         except smtplib.SMTPException:
             if not self.fail_silently:
                 raise
@@ -470,131 +485,6 @@ class SmtpV2(Base_messagerie):
 
     def Fermer(self):
         self.connection.close()
-
-    def Envoyer_lot(self, messages=None, dlg_progress=None, afficher_confirmation_envoi=True):
-        """ Envoi des messages par lot """
-        if messages is None:
-            messages = []
-        # Envoi des mails
-        index = 1
-        listeAnomalies = []
-        listeSucces = []
-        ne_pas_signaler_erreurs = False
-        for message in messages:
-            while True:
-                adresse = message.GetLabelDestinataires()
-                try:
-                    labelAdresse = UTILS_Encodage.DecodeTexteExterne(adresse)
-                except:
-                    labelAdresse = adresse
-                label = _(u"Envoi %d/%d : %s...") % (index, len(messages), labelAdresse)
-
-                # Si la dlg_progress a été fermée, on la réouvre
-                if dlg_progress == None:
-                    dlg_progress = wx.ProgressDialog(_(u"Envoi des mails"), _(u""), maximum=len(messages) + 1, parent=None)
-                    dlg_progress.SetSize((450, 140))
-                    dlg_progress.CenterOnScreen()
-                dlg_progress.Update(index, label)
-
-                # Envoi
-                erreur = None
-                try:
-                    self.Envoyer(message)
-                    listeSucces.append(message)
-                except smtplib.SMTPServerDisconnected:
-                    erreur = "deconnexion"
-                except Exception as err:
-                    erreur = err
-
-                # Tentative de reconnexion du serveur de messagerie puis renvoi du mail
-                if erreur == "deconnexion":
-                    print("Reconnexion au serveur de messagerie...")
-                    try:
-                        self.Connecter()
-                        self.Envoyer(message)
-                        listeSucces.append(message)
-                        erreur = None
-                    except Exception as err:
-                        erreur = err
-
-                if erreur != None:
-                    err = str(erreur)
-                    listeAnomalies.append((message, err))
-                    print(("Erreur dans l'envoi d'un mail : %s...", err))
-                    traceback.print_exc(file=sys.stdout)
-
-                    if ne_pas_signaler_erreurs == False:
-
-                        # Fermeture de la dlg_progress
-                        dlg_progress.Destroy()
-                        dlg_progress = None
-
-                        # Affichage de l'erreur
-                        intro = _(u"L'erreur suivante a été détectée :")
-                        detail = err
-                        if index <= len(messages) - 1:
-                            conclusion = _(u"Souhaitez-vous quand même continuer l'envoi des autres emails ?")
-                            boutons = [_(u"Réessayer"), _(u"Continuer"),
-                                       _(u"Continuer et ne plus signaler les erreurs"), _(u"Arrêter")]
-                        else:
-                            conclusion = None
-                            boutons = [_(u"Réessayer"), _(u"Arrêter"), ]
-                        dlgErreur = DLG_Messagebox.Dialog(None, titre=_(u"Erreur"), introduction=intro, detail=detail,
-                                                          conclusion=conclusion, icone=wx.ICON_ERROR, boutons=boutons)
-                        reponse = dlgErreur.ShowModal()
-                        dlgErreur.Destroy()
-                        if reponse == 0:
-                            continue
-                        if reponse == 2:
-                            ne_pas_signaler_erreurs = True
-                        if reponse == 3:
-                            return listeSucces
-                break
-
-            if len(messages) > 1:
-                time.sleep(1)
-            index += 1
-
-        # Fin de la gauge
-        if dlg_progress != None:
-            dlg_progress.Update(index, _(u"Fin de l'envoi."))
-            dlg_progress.Destroy()
-
-        # Si tous les Emails envoyés avec succès
-        if len(listeAnomalies) == 0 and afficher_confirmation_envoi == True:
-            if len(listeSucces) == 1:
-                message = _(u"L'Email a été envoyé avec succès !")
-            else:
-                message = _(u"Les %d Emails ont été envoyés avec succès !") % len(listeSucces)
-            dlg = wx.MessageDialog(None, message, _(u"Fin de l'envoi"), wx.OK | wx.ICON_INFORMATION)
-            dlg.ShowModal()
-            dlg.Destroy()
-
-        # Si Anomalies
-        if len(listeAnomalies) > 0 and len(messages) > 1:
-            if len(listeSucces) > 0:
-                intro = _(u"%d Email(s) ont été envoyés avec succès mais les %d envois suivants ont échoué :") % (
-                len(listeSucces), len(listeAnomalies))
-            else:
-                intro = _(u"Tous les envois ont lamentablement échoué :")
-            lignes = []
-            for message, erreur in listeAnomalies:
-                adresse = message.GetLabelDestinataires()
-                try:
-                    lignes.append(u"- %s : %s" % (UTILS_Encodage.DecodeTexteExterne(adresse), erreur))
-                except:
-                    lignes.append(u"- %s : %s" % (adresse, erreur))
-            dlg = DLG_Messagebox.Dialog(None, titre=_(u"Compte-rendu de l'envoi"), introduction=intro,
-                                        detail="\n".join(lignes), icone=wx.ICON_INFORMATION, boutons=[_(u"Ok"), ])
-            dlg.ShowModal()
-            dlg.Destroy()
-
-        return listeSucces
-
-
-
-
-
 
 class Mailjet(Base_messagerie):
     def __init__(self, **kwds):
@@ -679,112 +569,10 @@ class Mailjet(Base_messagerie):
         return resultat
 
     def Fermer(self):
-        self.connection.close()
-
-    def Envoyer_lot(self, messages=None, dlg_progress=None, afficher_confirmation_envoi=True):
-        """ Envoi des messages par lot """
-        if messages is None:
-            messages = []
-        # Envoi des mails
-        index = 1
-        listeAnomalies = []
-        listeSucces = []
-        ne_pas_signaler_erreurs = False
-        for message in messages:
-            while True:
-                adresse = message.GetLabelDestinataires()
-                try:
-                    labelAdresse = UTILS_Encodage.DecodeTexteExterne(adresse)
-                except:
-                    labelAdresse = adresse
-                label = _(u"Envoi %d/%d : %s...") % (index, len(messages), labelAdresse)
-
-                # Si la dlg_progress a été fermée, on la réouvre
-                if dlg_progress == None:
-                    dlg_progress = wx.ProgressDialog(_(u"Envoi des mails"), _(u""), maximum=len(messages) + 1, parent=None)
-                    dlg_progress.SetSize((450, 140))
-                    dlg_progress.CenterOnScreen()
-                dlg_progress.Update(index, label)
-
-                # Envoi
-                try:
-                    self.Envoyer(message)
-                    listeSucces.append(message)
-                except Exception as err:
-                    err = str(err)
-                    listeAnomalies.append((message, err))
-                    print(("Erreur dans l'envoi d'un mail : %s...", err))
-                    traceback.print_exc(file=sys.stdout)
-
-                    if ne_pas_signaler_erreurs == False:
-
-                        # Fermeture de la dlg_progress
-                        dlg_progress.Destroy()
-                        dlg_progress = None
-
-                        # Affichage de l'erreur
-                        intro = _(u"L'erreur suivante a été détectée :")
-                        detail = err
-                        if index <= len(messages) - 1:
-                            conclusion = _(u"Souhaitez-vous quand même continuer l'envoi des autres emails ?")
-                            boutons = [_(u"Réessayer"), _(u"Continuer"),
-                                       _(u"Continuer et ne plus signaler les erreurs"), _(u"Arrêter")]
-                        else:
-                            conclusion = None
-                            boutons = [_(u"Réessayer"), _(u"Arrêter"), ]
-                        dlgErreur = DLG_Messagebox.Dialog(None, titre=_(u"Erreur"), introduction=intro, detail=detail,
-                                                          conclusion=conclusion, icone=wx.ICON_ERROR, boutons=boutons)
-                        reponse = dlgErreur.ShowModal()
-                        dlgErreur.Destroy()
-                        if reponse == 0:
-                            continue
-                        if reponse == 2:
-                            ne_pas_signaler_erreurs = True
-                        if reponse == 3:
-                            return listeSucces
-                break
-
-            if len(messages) > 1:
-                time.sleep(1)
-            index += 1
-
-        # Fin de la gauge
-        if dlg_progress != None:
-            dlg_progress.Update(index, _(u"Fin de l'envoi."))
-            dlg_progress.Destroy()
-
-        # Si tous les Emails envoyés avec succès
-        if len(listeAnomalies) == 0 and afficher_confirmation_envoi == True:
-            if len(listeSucces) == 1:
-                message = _(u"L'Email a été envoyé avec succès !")
-            else:
-                message = _(u"Les %d Emails ont été envoyés avec succès !") % len(listeSucces)
-            dlg = wx.MessageDialog(None, message, _(u"Fin de l'envoi"), wx.OK | wx.ICON_INFORMATION)
-            dlg.ShowModal()
-            dlg.Destroy()
-
-        # Si Anomalies
-        if len(listeAnomalies) > 0 and len(messages) > 1:
-            if len(listeSucces) > 0:
-                intro = _(u"%d Email(s) ont été envoyés avec succès mais les %d envois suivants ont échoué :") % ( len(listeSucces), len(listeAnomalies))
-            else:
-                intro = _(u"Tous les envois ont lamentablement échoué :")
-            lignes = []
-            for message, erreur in listeAnomalies:
-                adresse = message.GetLabelDestinataires()
-                try:
-                    lignes.append(u"- %s : %s" % (UTILS_Encodage.DecodeTexteExterne(adresse), erreur))
-                except:
-                    lignes.append(u"- %s : %s" % (adresse, erreur))
-            dlg = DLG_Messagebox.Dialog(None, titre=_(u"Compte-rendu de l'envoi"), introduction=intro, detail="\n".join(lignes), icone=wx.ICON_INFORMATION, boutons=[_(u"Ok"), ])
-            dlg.ShowModal()
-            dlg.Destroy()
-
-        return listeSucces
-
-    def Fermer(self):
-        pass
-
+        # Le client Mailjet n'expose pas necessairement close().
+        fermer = getattr(getattr(self, "connection", None), "close", None)
+        if callable(fermer):
+            fermer()
 
 
 

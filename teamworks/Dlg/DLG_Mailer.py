@@ -375,6 +375,16 @@ class Dialog(wx.Dialog):
         self.Envoyer(listeDestinataires=[listeDestinataires[0],], adresseTest=adresse)    
         
 
+    def _parent_dialogue(self):
+        # Un Mailer masque ne doit pas etre proprietaire d'un dialogue visible.
+        return UTILS_MailingSession.proprietaire_visible(self, wx) or self
+
+    def _afficher_si_masque(self):
+        # Correction en mode EnvoiEmailFamille(visible=False), sans modalite
+        # reentrante si le Mailer est deja ouvert dans ShowModal.
+        if not self.IsShown() and not self.IsModal():
+            self.ShowModal()
+
     def OnBoutonEnvoyer(self, event):       
         self.Envoyer(listeDestinataires = self.ctrl_destinataires.GetDonnees())    
     
@@ -387,10 +397,10 @@ class Dialog(wx.Dialog):
             listeDestinataires = []
         dictExp = self.ctrl_exp.GetDonnees()
         if dictExp == None :
-            dlg = wx.MessageDialog(self, _(u"Vous n'avez sélectionné aucune adresse d'expéditeur !"), _(u"Erreur de saisie"), wx.OK | wx.ICON_EXCLAMATION)
+            dlg = wx.MessageDialog(self._parent_dialogue(), _(u"Vous n'avez sélectionné aucune adresse d'expéditeur !"), _(u"Erreur de saisie"), wx.OK | wx.ICON_EXCLAMATION)
             dlg.ShowModal()
             dlg.Destroy()
-            if self.IsShown() == False : self.ShowModal()
+            self._afficher_si_masque()
             return
 
         # Accusé de réception
@@ -399,19 +409,19 @@ class Dialog(wx.Dialog):
         # Objet
         sujet = self.ctrl_objet.GetValue()
         if len(sujet) == 0 :
-            dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement saisir un objet pour ce message !"), _(u"Erreur de saisie"), wx.OK | wx.ICON_EXCLAMATION)
+            dlg = wx.MessageDialog(self._parent_dialogue(), _(u"Vous devez obligatoirement saisir un objet pour ce message !"), _(u"Erreur de saisie"), wx.OK | wx.ICON_EXCLAMATION)
             dlg.ShowModal()
             dlg.Destroy()
-            if self.IsShown() == False : self.ShowModal()
+            self._afficher_si_masque()
             self.ctrl_objet.SetFocus()
             return
         
         # Destinataires
         if len(listeDestinataires) == 0 :
-            dlg = wx.MessageDialog(self, _(u"Vous devez sélectionner au moins un destinataire !"), _(u"Erreur de saisie"), wx.OK | wx.ICON_EXCLAMATION)
+            dlg = wx.MessageDialog(self._parent_dialogue(), _(u"Vous devez sélectionner au moins un destinataire !"), _(u"Erreur de saisie"), wx.OK | wx.ICON_EXCLAMATION)
             dlg.ShowModal()
             dlg.Destroy()
-            if self.IsShown() == False : self.ShowModal()
+            self._afficher_si_masque()
             return
         
         nbreAnomalies = 0
@@ -419,24 +429,25 @@ class Dialog(wx.Dialog):
             if dest.adresse == None :
                 nbreAnomalies += 1
         if nbreAnomalies > 0 :
-            dlg = wx.MessageDialog(self, _(u"%d adresse(s) Email ne sont pas renseignées !") % nbreAnomalies, _(u"Erreur"), wx.OK | wx.ICON_EXCLAMATION)
+            dlg = wx.MessageDialog(self._parent_dialogue(), _(u"%d adresse(s) Email ne sont pas renseignées !") % nbreAnomalies, _(u"Erreur"), wx.OK | wx.ICON_EXCLAMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
             
         # Texte
         if len(self.ctrl_editeur.GetValue()) == 0 :
-            dlg = wx.MessageDialog(self, _(u"Vous devez obligatoirement saisir un texte !"), _(u"Erreur de saisie"), wx.OK | wx.ICON_EXCLAMATION)
+            dlg = wx.MessageDialog(self._parent_dialogue(), _(u"Vous devez obligatoirement saisir un texte !"), _(u"Erreur de saisie"), wx.OK | wx.ICON_EXCLAMATION)
             dlg.ShowModal()
             dlg.Destroy()
-            if self.IsShown() == False : self.ShowModal()
+            self._afficher_si_masque()
             self.ctrl_editeur.SetFocus()
             return
         texteHTML, listeImages, handler = self.ctrl_editeur.GetHTML(imagesIncluses=True)
         
         # Vérifie la fusion des mots-clés
         if self.VerifieFusion(texteHTML, listeDestinataires) == False :
-            if self.IsShown() == False : self.ShowModal()
+            handler.DeleteTemporaryImages()
+            self._afficher_si_masque()
             return
     
         # Pièces jointes
@@ -444,10 +455,11 @@ class Dialog(wx.Dialog):
 
         # Demande de confirmation
         if adresseTest == None and self.afficher_confirmation_envoi == True :
-            dlg = wx.MessageDialog(self, _(u"Confirmez-vous l'envoi de ce message pour %d destinataires ?\n\nAttention, l'envoi peut prendre quelques minutes...") % len(listeDestinataires), _(u"Confirmation"), wx.YES_NO|wx.YES_DEFAULT|wx.CANCEL|wx.ICON_QUESTION)
+            dlg = wx.MessageDialog(self._parent_dialogue(), _(u"Confirmez-vous l'envoi de ce message pour %d destinataires ?\n\nAttention, l'envoi peut prendre quelques minutes...") % len(listeDestinataires), _(u"Confirmation"), wx.YES_NO|wx.YES_DEFAULT|wx.CANCEL|wx.ICON_QUESTION)
             if dlg.ShowModal() != wx.ID_YES :
                 dlg.Destroy()
-                if self.IsShown() == False : self.ShowModal()
+                handler.DeleteTemporaryImages()
+                self._afficher_si_masque()
                 return
             dlg.Destroy()
 
@@ -577,11 +589,11 @@ class Dialog(wx.Dialog):
             if len(listeResultats) > affichageMax :
                 message += _(u"   - Ainsi que %d autres...\n") % (len(listeResultats) - affichageMax)
             message += _(u"\nSouhaitez-vous tout de même continuer l'envoi ?")
-            dlgErreur = wx.MessageDialog(self, message, _(u"Anomalies"), wx.YES_NO|wx.NO_DEFAULT|wx.CANCEL|wx.ICON_EXCLAMATION)
-            if dlgErreur.ShowModal() == wx.ID_YES :
-                return True
-            else :
-                return False
+            dlgErreur = wx.MessageDialog(self._parent_dialogue(), message, _(u"Anomalies"), wx.YES_NO|wx.NO_DEFAULT|wx.CANCEL|wx.ICON_EXCLAMATION)
+            try:
+                return dlgErreur.ShowModal() == wx.ID_YES
+            finally:
+                dlgErreur.Destroy()
         else :
             return True
 

@@ -421,7 +421,10 @@ def ExportExcel(listview=None, grid=None, titre=_(u"Liste"), listeColonnes=None,
     # Envoyer par Email
     if mode == "email" :
         from Dlg import DLG_Mailer
-        dlg = DLG_Mailer.Dialog(None)
+        # Le Mailer d'export doit appartenir a la fenetre principale.
+        app = wx.GetApp()
+        proprietaire = app.GetTopWindow() if app is not None else None
+        dlg = DLG_Mailer.Dialog(proprietaire)
         dlg.ChargerModeleDefaut()
         dlg.SetPiecesJointes([cheminFichier,])
         dlg.ShowModal()

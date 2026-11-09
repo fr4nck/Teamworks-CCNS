@@ -22,7 +22,13 @@ class Dialog(wx.Dialog):
     def __init__(self, parent, titre=None, introduction=None, detail=None, conclusion=None, icone=None, boutons=None, defaut=None):
         if boutons is None:
             boutons = []
-        wx.Dialog.__init__(self, parent, -1, style = wx.DEFAULT_DIALOG_STYLE | wx.STAY_ON_TOP | wx.DIALOG_NO_PARENT)
+        # Si un vrai parent est fourni, conserver son owner Win32 ;
+        # ne pas imposer TOPMOST et DIALOG_NO_PARENT aux dialogues possedes.
+        style_parent = wx.DEFAULT_DIALOG_STYLE
+        if parent is None:
+            # Compatibilite des anciennes boites autonomes non rattachees.
+            style_parent |= wx.STAY_ON_TOP | wx.DIALOG_NO_PARENT
+        wx.Dialog.__init__(self, parent, -1, style=style_parent)
         self.parent = parent
 
         self.largeur_max = 550

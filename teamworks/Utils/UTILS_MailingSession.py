@@ -21,6 +21,12 @@ class BilanEnvoi:
     erreur_fermeture: object = None
 
 
+def est_accepte(reponse):
+    """Seules les confirmations SMTP et Mailjet documentees sont positives."""
+    return (reponse is True or (type(reponse) is int and reponse > 0)
+            or reponse == "success")
+
+
 def envoyer_lot_sans_wx(fabrique, messages, progression=None, decision=None,
                        delai=1.0, pause=time.sleep):
     """Envoie un lot séquentiel, sans dépendance graphique ni relance cachée.
@@ -56,7 +62,7 @@ def envoyer_lot_sans_wx(fabrique, messages, progression=None, decision=None,
                 erreur = exc
                 bilan.incertains.append((message, exc))
             else:
-                if accepte:
+                if est_accepte(accepte):
                     bilan.succes.append(message)
                 else:
                     categorie = "refuse"
@@ -175,21 +181,34 @@ def envoyer_avec_progression(parent, fabrique, messages,
             wx.CallAfter(_terminer)
 
     worker = Thread(target=_travail, name="teamworks-mailer", daemon=False)
+
     def _fermeture(event):
-        if worker.is_alive():
+        # Pendant une transmission, fermer le dialogue pourrait laisser le
+        # worker attendre indefiniment un wx.CallAfter jamais traite.
+        if event.CanVeto():
             event.Veto()
         else:
             event.Skip()
-    dialogue.Bind(wx.EVT_CLOSE, _fermeture)
 
+    def _demarrer():
+        try:
+            worker.start()
+        except Exception as exc:
+            resultat["erreur_inattendue"] = exc
+            _terminer()
+
+    dialogue.Bind(wx.EVT_CLOSE, _fermeture)
+    dialogue.SetEscapeId(wx.ID_NONE)
     try:
-        # Démarrer depuis la boucle modale : une connexion fictive instantanée
-        # ne peut ainsi appeler EndModal avant l'entrée dans ShowModal.
-        wx.CallAfter(worker.start)
+        wx.CallAfter(_demarrer)
         dialogue.ShowModal()
-        worker.join()
+        if worker.ident is not None:
+            worker.join()
     finally:
         dialogue.Destroy()
+
+    if "bilan" not in resultat and "erreur_inattendue" not in resultat:
+        raise RuntimeError("Session de messagerie interrompue sans resultat")
 
     if "erreur_inattendue" in resultat:
         raise resultat["erreur_inattendue"]
@@ -253,3 +272,43 @@ def envoyer_avec_progression(parent, fabrique, messages,
         finally:
             dlg.Destroy()
     return bilan
+
+
+def envoyer_lot_heritage(backend, messages=None, dlg_progress=None,
+                         afficher_confirmation_envoi=True):
+    """Meme moteur asynchrone, contrat liste de succes historique preserve.
+
+    L'ancien appelant a deja ouvert la connexion et reste responsable de
+    Fermer(). Seul le thread principal est autorise a gerer les dialogues.
+    """
+    import wx
+    if not wx.IsMainThread():
+        raise RuntimeError("Envoyer_lot historique exige le fil graphique wx")
+    if getattr(backend, "connection", None) is None:
+        raise RuntimeError("Connecter() doit preceder Envoyer_lot()")
+
+    parent = dlg_progress.GetParent() if dlg_progress is not None else None
+    proprietaire = proprietaire_visible(parent, wx)
+    if proprietaire is None:
+        raise RuntimeError("Aucune fenetre proprietaire visible pour l'envoi")
+    if dlg_progress is not None:
+        dlg_progress.Destroy()
+
+    class TransportDejaConnecte:
+        def Connecter(self):
+            pass
+
+        def Envoyer(self, message):
+            return backend.Envoyer(message)
+
+        def Fermer(self):
+            # Connexion externe non possedee par l'adaptateur.
+            pass
+
+    bilan = envoyer_avec_progression(
+        parent=proprietaire, fabrique=TransportDejaConnecte,
+        messages=messages,
+        afficher_confirmation_envoi=afficher_confirmation_envoi,
+    )
+    backend.dernier_bilan = bilan
+    return bilan.succes

@@ -5,6 +5,8 @@
 
 import os
 
+from Utils import UTILS_MailingSession
+
 
 DESTINATAIRE_RAPPORTS_BUGS_HISTORIQUE = "noethys@gmail.com"
 CATEGORIE_PARAMETRE_RAPPORTS_BUGS = "maintenance"
@@ -121,10 +123,8 @@ def EnvoyerRapport(
         ),
         fichiers=[chemin],
     )
-    messagerie = None
-    connectee = False
-    try:
-        messagerie = module_email.Messagerie(
+    def _fabrique_messagerie():
+        return module_email.Messagerie(
             backend=adresse.get("moteur"),
             hote=adresse.get("smtp"),
             port=adresse.get("port"),
@@ -136,22 +136,42 @@ def EnvoyerRapport(
             timeout=60,
             parametres=adresse.get("parametres"),
         )
-        messagerie.Connecter()
-        connectee = True
-        resultat = messagerie.Envoyer(message)
-        if resultat in (False, 0, None):
-            raise ErreurEnvoiRapport("Le serveur de messagerie a refusé le rapport.")
+
+    try:
+        # La methode reste synchrone pour ses appelants historiques ; si une
+        # boucle wx existe, le reseau passe sur le worker de la progression.
+        # En contexte sans GUI, on utilise le meme moteur sans aucun widget.
+        try:
+            import wx
+        except ImportError:
+            wx = None
+        app = wx.GetApp() if wx is not None else None
+        if wx is not None and wx.IsMainThread() and app is not None:
+            proprietaire = UTILS_MailingSession.proprietaire_visible(None, wx)
+            if proprietaire is None:
+                raise ErreurEnvoiRapport(
+                    "Aucune fenetre principale visible pour envoyer le rapport."
+                )
+            bilan = UTILS_MailingSession.envoyer_avec_progression(
+                parent=proprietaire, fabrique=_fabrique_messagerie,
+                messages=[message], afficher_confirmation_envoi=False,
+            )
+        else:
+            bilan = UTILS_MailingSession.envoyer_lot_sans_wx(
+                _fabrique_messagerie, [message], delai=0,
+            )
+
+        if len(bilan.succes) != 1:
+            raise ErreurEnvoiRapport(
+                "L'envoi n'est pas confirme. Ne le relancez pas "
+                "avant d'en verifier le statut."
+            )
     except ErreurEnvoiRapport:
         raise
     except Exception as err:
         raise ErreurEnvoiRapport(
-            "L'envoi a échoué. Vérifiez la configuration de l'adresse expéditeur."
+            "L'envoi a echoue ou son statut est incertain. "
+            "Verifiez la configuration et le statut avant tout nouvel essai."
         ) from err
-    finally:
-        if messagerie is not None and connectee:
-            try:
-                messagerie.Fermer()
-            except Exception:
-                pass
 
     return destinataire
