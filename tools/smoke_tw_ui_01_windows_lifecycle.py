@@ -96,6 +96,12 @@ def main():
         assert dlg is not None and dlg.IsModal()
         etats["modal_apres_close"] = True
 
+    def verifier_destruction_differee():
+        # Le vrai critere est une fenetre encore visible/apparente apres
+        # la reprise normale de la boucle wx, pas juste apres Destroy().
+        etats["dialogue_residuel"] = trouver_progression() is not None
+        app.ExitMainLoop()
+
     def executer():
         appels = [
             wx.CallLater(90, tenter_fermeture),
@@ -106,7 +112,8 @@ def main():
                 cadre, TransportFictif, ["fictif"], afficher_confirmation_envoi=False
             )
             etats["resultat"] = bilan
-            etats["dialogue_residuel"] = trouver_progression() is not None
+            # wx.Window.Destroy() sur une TopLevelWindow est souvent differe
+            # jusqu'au prochain evenement idle. Ne pas mesurer trop tot.
             etats["worker_residuel"] = any(
                 t.name == "teamworks-mailer" and t.is_alive()
                 for t in threading.enumerate()
@@ -126,7 +133,7 @@ def main():
             for rappel in appels:
                 if rappel.IsRunning():
                     rappel.Stop()
-            app.ExitMainLoop()
+            wx.CallLater(120, verifier_destruction_differee)
 
     def expiration():
         if not fin.is_set():
