@@ -17,10 +17,10 @@ def test_marqueur_candidate_only_declenche_un_build_sans_release():
     # Le workflow existant doit compiler avec le marqueur explicite.
     assert "contains(github.event.head_commit.message, '[windows]')" in build_gate
     # La publication doit etre interdite au candidat de recette.
-    assert "contains(github.event.head_commit.message, '[windows]')" in release_gate
-    assert "!contains(github.event.head_commit.message, '[candidate-only]')" in release_gate
-    # Une publication sur tag reste une operation distincte.
     assert "startsWith(github.ref, 'refs/tags/')" in release_gate
+    assert "head_commit.message" not in release_gate
+    # Un commit [windows] ne peut jamais suffire pour publier.
+    assert "[windows]" not in release_gate
 
 
 def test_candidat_doit_etre_trace_par_sha_et_sha256():

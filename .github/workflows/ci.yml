@@ -870,15 +870,9 @@ jobs:
           retention-days: 3
 
       - name: Publier la release GitHub
-        if: >-
-          ${{
-            startsWith(github.ref, 'refs/tags/')
-            || (
-              (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/wx/master')
-              && contains(github.event.head_commit.message, '[windows]')
-              && !contains(github.event.head_commit.message, '[candidate-only]')
-            )
-          }}
+        # Seul un tag explicitement cree autorise une publication.
+        # Un simple push [windows] produit exclusivement un artefact Actions.
+        if: startsWith(github.ref, 'refs/tags/')
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
