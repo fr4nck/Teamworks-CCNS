@@ -183,10 +183,13 @@ def envoyer_avec_progression(parent, fabrique, messages,
     worker = Thread(target=_travail, name="teamworks-mailer", daemon=False)
 
     def _fermeture(event):
-        # Pendant une transmission, fermer le dialogue pourrait laisser le
-        # worker attendre indefiniment un wx.CallAfter jamais traite.
+        # Fermer la fenetre ne signifie pas annuler un envoi deja lance.
+        # Garder la boucle modale tant que le worker peut attendre CallAfter.
         if event.CanVeto():
             event.Veto()
+            etat.SetLabel(_(
+                u"L'envoi est en cours. Fermer cette fenetre ne l'annule pas."
+            ))
         else:
             event.Skip()
 

@@ -378,6 +378,7 @@ jobs:
           Invoke-Smoke "Saisie présence" @("tools/smoke_secondary_presence_dialog.py")
           Invoke-Smoke "Recrutement" @("tools/smoke_secondary_recruitment.py")
           Invoke-Smoke "TW-UI-01 mailer wx natif et HWND" @("tools/smoke_tw_ui_01_mailer_windows.py")
+          Invoke-Smoke "TW-UI-01 fermeture pendant envoi" @("tools/smoke_tw_ui_01_windows_lifecycle.py")
 
           New-Item -ItemType Directory -Force functional-report | Out-Null
           Invoke-Smoke "Aller-retour base fonctionnelle" @(
