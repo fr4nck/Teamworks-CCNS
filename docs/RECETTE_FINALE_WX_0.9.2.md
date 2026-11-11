@@ -18,8 +18,8 @@ Ce document est un **registre des contrôles effectivement réalisés**, non une
 | P0 | Provenance du build, manifestes, `VERSION`, `BUILD.txt` | PASS | Même commit que l'artefact qualifié |
 | P1 | Tests Python, parcours simulés Windows, packaging | PASS | CI `42675793471` |
 | P2 | Démarrage réel de RC12, récupération des paramètres du profil | PASS limité | Retour utilisateur ; **aucune écriture métier vérifiée** |
-| P3 | Précontrôle local renouvelé du portable | À exécuter | `tools/recette_windows/preflight_rc12.ps1` |
-| B0 | Copie de base indépendante et sauvegarde de secours vérifiées | NON TESTÉ | Pas d'identification d'une base de recette |
+| P3 | Précontrôle local renouvelé du portable | **PASS — 11/11/2026** | 5700X, PowerShell 5.1 : version/commit conformes ; **2 278/2 278** fichiers SHA-256 PASS ; rapport local `preflight-rc12-20261111-160030-c8e38994.json` ; contrôle sans lancement, SQL ni courriel |
+| B0 | Copie de base indépendante et sauvegarde de secours vérifiées | **BLOQUÉ — isolation non démontrée** | Profil courant contenant les paramètres de connexion existants. Avant tout test en écriture : profil Windows de recette + jeu de données fictif ou copie indépendante sur serveur/base distincts, avec sauvegarde et retour arrière |
 | B1 | Fiche salarié, neuf onglets, navigation et fermeture | NON TESTÉ | Pas de recette complète documentée |
 | B2 | Écriture fictive sur copie, enregistrement, redémarrage et persistance | NON TESTÉ | Ne jamais écrire sur la base de production pour tester |
 | B3 | Contrats CDI/CDD/CEE, renouvellement et transformation, DPAE/DUE | NON TESTÉ | Parcours complet sur copie manquant |
@@ -34,7 +34,7 @@ Ce document est un **registre des contrôles effectivement réalisés**, non une
 
 ## Exécution — ordre impératif
 
-1. **P3 : précontrôle en lecture seule**, sur le portable déjà extrait au 5700X. Lancer `powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\recette_windows\preflight_rc12.ps1` depuis une copie à jour de `wx/master`, ou télécharger ce script depuis le commit qui l'a introduit. Le contrôle ne lance pas Teamworks, n'accède à aucune base et ne supprime aucun fichier.
+1. **P3 : FAIT le 11/11/2026** sur le portable déjà extrait au 5700X ; 2 278 fichiers vérifiés en SHA-256, version et commit corrects. Rapport enregistré localement dans `C:\_Atelier_IA\Teamworks-CCNS\Stabilisation-wx-0.9.2\preflight-rc12-20261111-160030-c8e38994.json`. Aucune donnée métier n'a été ouverte ni modifiée par le contrôle.
 2. **B0 : figer une copie de base** et un plan de restauration, distincts de l'exploitation. Ni le fait que le portable soit dans un autre dossier, ni un simple changement de nom de dossier ne suffisent : Teamworks réemploie les paramètres du profil Windows.
 3. **B1 à B6, U1 :** exécuter sur la copie les opérations réellement utilisées par l'association. Relever précisément les résultats, sans exposer identifiants, salariés, coordonnées ni données RH dans GitHub.
 4. **M1–M2 :** uniquement sur jeu fictif et transport local instrumenté. Aucun mail réel ; un SMTP de production « pour essayer » n'est pas acceptable.
