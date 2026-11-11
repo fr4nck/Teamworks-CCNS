@@ -1,17 +1,17 @@
 # Teamworks-CCNS 0.9.2
 
-## Candidat RC12 — 9 novembre 2026 (construction de recette isolée, non publiée)
+## RC12 — publiée le 11 novembre 2026 (préversion wx Windows)
 
-- **TW-UI-01 :** corrections SMTP/Mailjet et du Mailer wx, disparition des anciens envois de lots synchrones, absence de renvoi automatique des messages au statut incertain.
-- **Fermeture et fenêtres :** propriété Win32 vérifiée sur le banc natif, maintien de la boucle wx pendant le réseau ; fermeture du dialogue explicitement non assimilée à une annulation.
-- **Vérification des transports :** méthodes SMTP V1/V2 et Mailjet qualifiées sur des connexions fictives ; réponse Mailjet acceptée seulement si le code HTTP et le statut applicatif concordent.
-- **Régression précédant la demande de packaging :** 2 900 tests PASS, 12 SKIP et Windows PASS sur le commit `221d943d` (CI `42665465882`).
-- **Préparation de recette :** portable de test identifiable par SHA, construit uniquement si les gates CI de la révision candidate passent. Aucune release ni tag ; l'installateur éventuel est un artefact technique, pas un installateur destiné au poste de production.
-- **Réserves :** parcours applicatifs complets, interactions Windows sur poste utilisateur, coupures SMTP/HTTP réelles et recette sur profil et base fictifs restent ouverts.
+- **Publication vérifiée :** [release `v0.9.2-rc12`](https://github.com/fr4nck/Teamworks-CCNS/releases/tag/v0.9.2-rc12), tag sur `9b02fbe94016b403255eabdaa856176d7f3e0ac5` ; ZIP portable, installateur Windows x64 et `SHA256SUMS.txt` présents.
+- **Provenance :** [run Actions `42675793471`](https://github.com/fr4nck/Teamworks-CCNS/actions/runs/42675793471) terminé en succès : **2 902 PASS, 12 SKIP**, parcours Windows et construction portable/installeur réussis ; sommes SHA-256 et `BUILD.txt` vérifiés.
+- **TW-UI-01 :** Mailer wx SMTP/Mailjet séquentiel hors fil graphique ; états de message accepté/refusé/incertain/non tenté ; aucune reprise automatique après échec incertain.
+- **Cycle des fenêtres :** focus et propriété Win32 du dialogue de progression, boucle wx réactive, fermeture explicitement distincte d'une annulation ; tests Windows natifs sur transport fictif.
+- **Retour utilisateur :** portable RC12 ouvert sur Windows 11 (5700X), configuration de connexion existante retrouvée. **Ce seul essai ne qualifie pas** les modifications métier, les bases réelles, les sauvegardes/restaurations ou les transports SMTP/Mailjet réels.
+- **Gel fonctionnel :** décision du 11 novembre 2026 : aucune nouvelle fonction wx avant la stable par défaut ; correctifs et dérogations motivées possibles selon `ROADMAP.md`.
+- **Réserves :** recette complète sur copie de données, contrats CDI/CDD/CEE et avenants, publipostage Word, sauvegarde/restauration, écrans DPI, Mailer complet et flux réseau contrôlés restent à qualifier ; **`v0.9.2` stable non publiée**.
 
 
-
-## Candidate RC11 — 31 octobre 2026 (recette utilisateur Windows requise)
+## Candidate RC11## Candidate RC11 — 31 octobre 2026 (recette utilisateur Windows requise)
 
 - **Boîte « Création d'un fichier » :** fenêtre redimensionnable, ajustée à son contenu et dotée d'une taille minimale ; retrait des tailles forcées des boutons. La police de légende est limitée au lien « Détails » (`d944496f`).
 - **Parentage wx corrigé :** boutons radio, saisie du nom, case d'importation, hyperlien et panneau réseau rattachés à leurs cadres `wx.StaticBox` respectifs. Le test de contrat vérifie chaque parent et l'audit global de parentage passe (`154ed1ae`).

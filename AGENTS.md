@@ -221,6 +221,16 @@ Les anciennes branches sont résorbées progressivement. Ne les supprimer qu'apr
 
 Les jalons historiques sont conservés par tags, commits, PR et sauvegardes Git.
 
+## Gel fonctionnel wx 0.9.2 (décision du 11 novembre 2026)
+
+Jusqu'à la qualification de `v0.9.2` stable, `wx/master` est en **gel des nouvelles fonctionnalités**, non en arrêt de maintenance. La source de vérité de cette décision et de ses exceptions est `ROADMAP.md`.
+
+- **Autorisés :** correction d'un bug reproduit, régression, sécurité, intégrité des données, sauvegarde/restauration, compatibilité nécessaire, fiabilisation de la CI ou du packaging, tests et documentation.
+- **Suspendus par défaut :** nouveau module, nouvelle fonction métier, changement gratuit de parcours utilisateur, refonte UI générale, réécriture structurelle ou migration de schéma non nécessaire à un correctif.
+- **Dérogation possible :** décision explicite du responsable du projet, documentant besoin concret, périmètre, risque, tests, impact sur les données et retour arrière. Si le code produit est touché, nouvelle qualification et nouveau jalon avant version stable ; ne jamais modifier le tag déjà publié `v0.9.2-rc12`.
+- **Portée :** gel du rail wx uniquement. Ne pas reporter ni fusionner automatiquement vers `master` ou `qt/master`. La version `v0.9.2` stable n'est pas autorisée sur la seule base d'une CI verte ou d'un démarrage Windows.
+
+
 ## Philosophie du fork
 
 Teamworks-CCNS reste un fork autonome : les améliorations génériques peuvent être proposées au Teamworks d'origine lorsque cela est naturel, mais cette possibilité ne doit jamais ralentir ni contraindre les besoins CCNS. Lors d'une modification, identifier autant que possible les zones génériques Teamworks, les zones spécifiques CCNS et les zones d'intégration afin de préserver une migration progressive et lisible.

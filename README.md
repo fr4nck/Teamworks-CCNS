@@ -4,7 +4,7 @@ Fork de **Teamworks** orienté **CCNS** pour la gestion d’équipes, de contrat
 
 Projet d’origine : Teamworks.
 
-> **Statut actuel : `0.9.2-rc12` — candidat Windows de recette non publié, intégrant les corrections TW-UI-01 (SMTP/Mailjet, progression wx et fermeture des dialogues).** La validation du code et les bancs Windows fictifs sont acquis ; la construction du paquet RC12 exact et les parcours dans l'application installée doivent encore être vérifiés sur un profil et une base de test, avant toute décision de publication.
+> **Statut au 11 novembre 2026 : `v0.9.2-rc12` est publiée sur GitHub en préversion wxPython Windows** (commit `9b02fbe9`, CI qualifiée). Le portable a démarré sur Windows 11 et a retrouvé la configuration de l'utilisateur. Cela ne vaut **pas** validation des parcours RH, des sauvegardes/restaurations ou des envois SMTP/Mailjet réels. La version stable `v0.9.2` n'est pas encore publiée.
 
 ## Positionnement
 
@@ -35,6 +35,10 @@ Le dépôt a désormais franchi plusieurs étapes importantes :
 - corrections récentes des listes, sélections multiples et boîtes d’export.
 
 La référence de planification est **uniquement `ROADMAP.md`**. Les autres documents détaillent un domaine mais ne doivent pas porter de roadmap concurrente.
+
+### Gel fonctionnel wx avant la version stable
+
+Depuis le **11 novembre 2026**, le rail `wx/master` est **gelé fonctionnellement** : pas de nouvelle fonctionnalité ni de refonte de confort par défaut. Les correctifs de bugs avérés, de sécurité, d'intégrité des données, les tests, la recette et la documentation restent autorisés. Une exception est possible après **décision explicite et motivée**, avec risques, retour arrière et requalification consignés dans `ROADMAP.md`. Le rail Qt conserve son propre calendrier ; aucun merge automatique. Voir [RC12 publiée](https://github.com/fr4nck/Teamworks-CCNS/releases/tag/v0.9.2-rc12) et [protocole de recette RC12](docs/TW-UI-01-RECETTE-CANDIDAT-RC12.md).
 
 ## Couche métier CCNS
 

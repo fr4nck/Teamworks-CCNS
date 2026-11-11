@@ -1,6 +1,6 @@
 # Teamworks-CCNS — Roadmap officielle et unique
 
-**Mise à jour : 9 novembre 2026**
+**Mise à jour : 11 novembre 2026**
 
 Ce fichier est l’unique roadmap de référence du projet. Toute autre documentation peut détailler un domaine, mais ne doit pas porter une roadmap concurrente ni annoncer un niveau de maturité différent.
 
@@ -8,112 +8,35 @@ Les décisions d’architecture transverses, le partage des responsabilités ent
 
 En cas de divergence sur l’architecture ou les flux entre Teamworks, Noethys, Connecthys/Portail, PMSL Équipe ou un service externe, **PMSL-Arch fait foi**. En cas de divergence sur l’état d’implémentation, la maturité ou la qualification de Teamworks-CCNS, **le présent fichier fait foi**. Les priorités interapplications ne doivent donc pas être redéfinies ici sous la forme d’une roadmap concurrente.
 
-## TW-UI-01 — Mailer wx et risque de fenêtre fantôme (9 novembre 2026)
+## Décision active — gel fonctionnel du rail wx 0.9.2 (11 novembre 2026)
 
-Le Mailer héritait d'envois SMTP/Mailjet synchrones, de délais entre messages
-sur le thread GUI, de progressions sans propriétaire et d'une reconnexion
-avec renvoi automatique après déconnexion. Ces mécanismes sont confirmés
-par inspection du code ; le phénomène Windows « Ghost » n'est **pas encore
-reproduit dans Teamworks**.
+**Statut : gel fonctionnel wx ACTIF, réversible sur décision explicite.** Objectif : terminer la recette et, si les critères sont acquis, publier `v0.9.2` stable. Cette décision ne signifie ni « logiciel sans bug », ni arrêt de la maintenance.
 
-Correction engagée sur `wx/master` : le parcours `DLG_Mailer.Envoyer`
-utilise une session séquentielle sur un thread réseau distinct et une boucle
-modale wx réactive, un propriétaire visible déterminé pour la progression,
-des issues « accepté / refusé / incertain / non tenté », sans renvoi automatique
-après erreur incertaine, une fermeture garantie et la non-mutation des
-pièces jointes individuelles. Le mode Mailer caché conserve un retour synchrone.
+- **Périmètre gelé :** `wx/master` ; pas de nouveau module, nouvelle fonctionnalité métier, refonte globale de l'interface, changement de schéma ou chantier d'architecture non indispensable avant la stable.
+- **Travaux autorisés :** correction d'anomalies réelles et reproduites, sécurité, exactitude CCNS, intégrité des données, sauvegarde/restauration, accessibilité d'un parcours existant réellement bloqué, tests, CI, packaging, documentation et recette.
+- **Exception possible :** le responsable du projet peut lever ponctuellement le gel pour un besoin justifié. Consigner avant le changement : motif, portée, impact métier et SQL, risques, preuves attendues, plan de retour arrière et décision explicite. Requalifier intégralement le périmètre touché ; publier un nouveau jalon si le code change, **sans réécrire RC12**.
+- **Branches :** `master`, `wx/master`, `qt/master` demeurent les trois branches permanentes ; aucune propagation automatique entre rails. Le chantier Qt n'est pas soumis à ce gel wx.
 
-### Phase 2 — Suppression des anciens chemins synchrones (9 novembre 2026)
+### Release de référence : `v0.9.2-rc12`
 
-Le correctif de cette phase remplace les deux boucles `SmtpV2.Envoyer_lot`
-et `Mailjet.Envoyer_lot` par une seule adaptation héritée de
-`Base_messagerie.Envoyer_lot`, elle-même reliée à `UTILS_MailingSession`.
-Les signatures historiques sont conservées, avec résultat `list` et bilan
-détaillé distinct `dernier_bilan`. `SmtpV1` hérite du même mécanisme.
+- [Préversion RC12 publiée le 11 novembre 2026](https://github.com/fr4nck/Teamworks-CCNS/releases/tag/v0.9.2-rc12) : tag sur `9b02fbe94016b403255eabdaa856176d7f3e0ac5`, ZIP portable, installateur x64 et fichier SHA-256.
+- [CI qualifiante `42675793471`](https://github.com/fr4nck/Teamworks-CCNS/actions/runs/42675793471) : 2 902 tests PASS, 12 SKIP ; parcours Windows et packaging réussis, provenance et sommes vérifiées.
+- **Essai utilisateur acquis :** lancement du portable RC12 sur Windows 11 / 5700X et reprise des paramètres de connexion de l'espace de travail.
+- **Non acquis :** recette métier de bout en bout sur **copie de données**, persistance et restauration, compatibilité Word/Writer, DPI 125/150 %, parcours complet du Mailer et comportement en réseau réel contrôlé. L'essai de démarrage sur le profil habituel n'est pas assimilé à une recette isolée ; aucune modification de données de production n'est présumée sûre.
 
-Les envois directs de sauvegardes et de rapports de crash sont également
-redirigés vers la session séquentielle ; les dialogues Mailer cachés,
-les dialogues d'erreur ayant un parent et l'export Excel vers Mailer
-reçoivent des corrections ciblées de propriété et de cycle de vie.
+### TW-UI-01 — état du chantier Mailer
 
-**Validation automatique du code** sur `959fd504a7a6629131d871d1dfe51ba5ee09b1e1`
-(run GitHub Actions `42613561411`) : 2 882 tests Python PASS,
-12 SKIP ; job Windows PASS ; banc wx natif Windows (backend fictif) PASS,
-23 battements pendant l'envoi, retard maximal 0,032 seconde, owner wx et
-Win32 `GW_OWNER` corrects, `IsMaximized` conserve,
-`IsIconized` faux, aucun `IsHungAppWindow` constate. Aucun email reel.
+Les corrections SMTP/Mailjet et de progression wx sont incluses dans RC12. Les bancs natifs Windows sur transport fictif sont PASS ; les scénarios de réseau réel et la validation interactive de l'application complète restent ouverts. Les preuves historiques sont conservées dans [Phase 3](docs/TW-UI-01-MAILER-PHASE3.md) et le [protocole RC12 mis à jour](docs/TW-UI-01-RECETTE-CANDIDAT-RC12.md). Les anciens constats « RC non publiée » décrivaient **l'état au 9 novembre**, avant publication, et ne sont plus le statut courant.
 
-**Gates encore ouverts :** recette Windows interactive de l'application
-complete (Mailer visible/cache, sauvegarde et test de configuration sur donnees
-fictives), qualification des bibliotheques SMTP/Mailjet sur deconnexions
-reelles, test de minimisation volontaire et de fermeture en plein transfert,
-inspection des autres operations longues hors messagerie et comparaison
-avec l'amont Vanilla/Phoenix.
-
-**Statut : PASS automatise borne au transport fictif ; qualification
-complete et recette utilisateur NON ACQUISES. Aucune RC ni release autorisee.** La provenance
-Vanilla/Phoenix reste à comparer à l'amont ; aucune propagation automatique
-vers Qt ou master. Les preuves et limites sont détaillées dans
-`docs/TW-UI-01-MAILER-PHASE2.md`.
-
-### Phase 3 — Qualification complémentaire (9 novembre 2026)
-
-Commits : `711549ce` (vérification HTTP Mailjet), `0b131615` et
-`4adbcd19` (fermeture de la progression Windows et contrôle après idle).
-La CI `42664772427` est verte : 2 900 PASS, 12 SKIP, Windows PASS.
-Le banc wx natif mesure 23 battements, un retard maximal de 32 ms,
-aucun worker ni dialogue résiduel après traitement des événements.
-
-**PASS automatisé borné ; NO GO publication RC** : application complète,
-interruptions réseau réelles et recette utilisateur non vérifiées.
-Le prochain candidat proposé est `v0.9.2-rc12`, sans tag ni release.
-Rapport : `docs/TW-UI-01-MAILER-PHASE3.md`.
-
-### Candidat Windows de recette — `0.9.2-rc12` (non publié)
-
-La construction portable est demandée avec le déclencheur CI existant
-`[windows] [candidate-only]`, après ajout d'une garde empêchant la
-publication automatique d'une Release depuis ce marqueur. Les tests Linux,
-Windows, le démarrage de l'exécutable et le contrôle des manifestes doivent
-être verts sur **le SHA exact du candidat** ; le seul fait de déclencher le
-workflow ne constitue pas une validation.
-
-La recette doit être effectuée dans un profil Windows isolé et sur une
-base fictive ; aucun courriel réel ne doit sortir et aucun dossier RH
-existant ne doit être consulté. Les gates métier G7 et utilisateur G9
-restent **NON TESTÉS** avant l'exécution effective de cette recette.
-Pas de tag `v0.9.2-rc12`, pas de release et pas de remplacement de la
-version utilisée en exploitation. Protocole :
-`docs/TW-UI-01-RECETTE-CANDIDAT-RC12.md`.
 
 ## 1. État réel du projet
 
-Teamworks-CCNS porte actuellement la version **`0.9.1b`**, telle qu'indiquée par le fichier `VERSION`. Cette chaîne de version identifie le build courant mais ne vaut pas, à elle seule, qualification bêta : les critères de maturité du présent document restent seuls décisionnaires.
+La version publiée du rail wx est **`0.9.2-rc12` (préversion)**. `VERSION` identifie ce candidat ; **`v0.9.2` stable n'existe pas encore**. Le commit de la release est `9b02fbe9` ; les commits documentaires ultérieurs sur `wx/master` ne changent ni cet exécutable ni son tag.
 
-Le socle Python 3 / wxPython Phoenix, la CI et le packaging Windows sont largement stabilisés. Le dépôt sait construire un portable Windows reproductible, un installateur Windows, exécuter les parcours critiques Windows automatisés et publier une Release sur tag conforme.
+Le socle Python 3 / wxPython Phoenix, la CI et le packaging Windows sont avancés et qualifiés automatiquement. Le démarrage Windows de RC12 a été confirmé par l'utilisateur, sans recette RH complète. Le gel fonctionnel ci-dessus est une **décision d'organisation révisable**, pas une déclaration de maturité stable.
 
-Le chantier TW-189 de modernisation de l’interface a été fusionné dans `master` le 24 août 2026. Le 25 août 2026, la PR #268 a ensuite consolidé sélectivement les deltas encore utiles de TW-182 et TW-184 sans réintroduire les anciennes versions des fichiers refactorés par TW-189.
+Les jalons `0.9.1b`, CI #789 et PR #314 cités dans les sections historiques suivantes sont conservés pour la traçabilité ; ils ne décrivent **pas** la version wx actuellement publiée.
 
-Le 31 août 2026, la PR #314 a remis en cohérence la garde de non-régression de la fiche individuelle avec l’extraction déjà effective de son cœur historique. Elle a été fusionnée dans `master` par le commit **`4a226af71facf4fe201e022086e6dd00a46ecbf0`**.
-
-La CI **#789** exécutée sur ce commit a réussi : **1 893 tests pytest réussis, 3 ignorés**, **332/332 fichiers Python de l’inventaire compilables**, **0/0 chemin SQLite binaire**, parcours critiques Windows réussis, construction du portable et de l’installateur réussie, démarrage automatisé de l’exécutable réussi et manifeste d’intégrité vérifié.
-
-L’artefact Windows de cette qualification machine contient :
-
-- `Teamworks-CCNS-0.9.1b-windows-x64.zip` ;
-- `Teamworks-CCNS-0.9.1b-windows-x64-setup.exe` ;
-- `SHA256SUMS.txt`.
-
-Les empreintes publiées par le build sont :
-
-- portable ZIP : `b53aad8bda071165b6696e120f17f86001445057b7f6be931a5053fe218fe65f` ;
-- installateur : `98917d083cb5cda827e4a8bb1b00985a8146d325a62e2030a53be53b8d2380ec`.
-
-Le `BUILD.txt` inclus dans le portable confirme la version `0.9.1b` et le commit `4a226af71facf4fe201e022086e6dd00a46ecbf0`.
-
-La qualification **bêta / RC / stable reste volontairement refusée** tant que le parcours Windows minimal n’a pas été validé manuellement sur une copie de base réelle par l’utilisateur. La qualification machine est désormais acquise ; la validation réelle reste le verrou suivant.
-
-Aucune CI verte, aucun pourcentage d’avancement et aucun ZIP généré ne suffisent à qualifier une version.
 
 ## 2. Règles de vérité
 
@@ -195,25 +118,26 @@ Ces collisions sont conservées comme faits historiques et ne doivent pas être 
 - les anciennes branches peuvent rester comme historique, mais ne doivent pas piloter les décisions de développement ;
 - la PR #270 reste un profil de compatibilité MySQL 5.5 isolé et n’est pas un prérequis de qualification du produit courant.
 
-## 5. Priorité immédiate — validation réelle avant pré-release
+## 5. Priorité immédiate — recette finale sur copie avant `v0.9.2` stable
 
-Les trois étapes de qualification machine sont désormais franchies sur le commit `4a226af71facf4fe201e022086e6dd00a46ecbf0` :
+**Acquis :** RC12 publiée et traçable ; tests Linux/Windows, packaging, manifestes et démarrage sur poste utilisateur validés. **Pas encore acquis :** validation fonctionnelle exhaustive et sauvegarde/restauration sur copie indépendante.
 
-1. **fait** — qualifier le code par la CI complète ;
-2. **fait** — produire le portable et l’installateur Windows depuis le même commit ;
-3. **fait** — vérifier archive, checksums, `BUILD.txt`, contenu du paquet, démarrage automatisé de l’exécutable et parcours critiques Windows ;
-4. **à faire** — exécuter le parcours minimal sur une copie de base réelle ;
-5. corriger uniquement les anomalies bloquantes réellement constatées ;
-6. documenter les résultats ;
-7. décider ensuite seulement si la version mérite une qualification bêta ou RC.
+Priorités, sans ajout de fonctionnalités :
 
-La recette manuelle doit être enregistrée dans [`docs/VALIDATION_WINDOWS_0.9.1b.md`](docs/VALIDATION_WINDOWS_0.9.1b.md).
+1. Préparer une copie autorisée des données (ou jeu de recette représentatif), distincte de la base utilisée en exploitation, et une restauration de secours.
+2. Vérifier les écrans RH : salariés, neuf onglets, contrats CDI/CDD/CEE, renouvellement/avenants, présence, recrutement, frais, préférences et persistance après redémarrage.
+3. Éprouver sauvegarde **et** restauration sur la copie, sans altérer la base de production.
+4. Vérifier documents Word/Writer, classement, publipostage, impression et rendu Windows à 100/125/150 %.
+5. Tester le Mailer complet sur transport fictif/local contrôlé, sans courriel réel ; conserver comme non qualifiés les scénarios SMTP/Mailjet réels non exercés et préciser si cela limite la stable.
+6. Relever résultats datés, anomalie reproductible, gravité, correction éventuelle et requalification du nouvel exécutable si le code change.
+7. Appliquer les critères de maturité de la section 16 avant de décider de publier `v0.9.2` stable.
 
-Aucune nouvelle fonction métier, convention collective ou refonte visuelle importante ne passe devant cette validation réelle. Les corrections de qualification et les outils nécessaires à cette recette peuvent en revanche être traités immédiatement.
+Le protocole courant est [TW-UI-01 / recette RC12](docs/TW-UI-01-RECETTE-CANDIDAT-RC12.md). La fiche `VALIDATION_WINDOWS_0.9.1b.md` reste un document d'archive et ne doit pas être complétée comme si elle qualifiait RC12.
+
 
 ## 6. Parcours minimal de validation Windows
 
-Un build n’est qualifiable en pré-release que si le parcours suivant est entièrement validé depuis un dossier fraîchement décompressé, sans dépendre d’un environnement développeur :
+Avant d'envisager `v0.9.2` stable, le parcours suivant doit être entièrement validé sur un exécutable qualifié, une copie de données et sans dépendre d'un environnement développeur :
 
 - lancement de `Teamworks-CCNS.exe` ;
 - ouverture d’une copie de base réelle ;
@@ -247,7 +171,7 @@ Le workflow unique `.github/workflows/ci.yml` construit le paquet Windows unique
 
 - déclenchement manuel avec l’option de build ;
 - tag `v*` conforme à `VERSION` ;
-- commit `master` explicitement marqué `[windows]` pour une construction technique contrôlée.
+- commit `master` ou `wx/master` explicitement marqué `[windows]` pour une construction technique contrôlée.
 
 Il n’existe donc pas de génération systématique d’un paquet à chaque push ou à chaque PR.
 
@@ -270,9 +194,11 @@ Le build :
 
 Ce niveau de packaging est une condition nécessaire mais non suffisante pour une RC.
 
-## 8. CI — état actuel
+## 8. CI — référence courante et historique
 
 La CI doit rester **unique, lisible et frugale**.
+
+**Référence wx RC12 (9 novembre 2026) :** run `42675793471`, commit `9b02fbe9` : 2 902 PASS, 12 SKIP, parcours critiques Windows et paquets portables/installables PASS. Ce run construit les binaires publiés le 11 novembre. Les informations ci-dessous sur CI #789 constituent un jalon historique du socle `0.9.1b`, pas la dernière CI de RC12.
 
 Le seul workflow autorisé est `.github/workflows/ci.yml`.
 
@@ -291,7 +217,7 @@ Il regroupe :
 - build portable et installateur uniquement sur demande explicite, marqueur `[windows]` sur `master` ou tag ;
 - nettoyage contrôlé de l’historique GitHub Actions sur déclenchement manuel.
 
-Qualification courante, CI **#789**, commit `4a226af71facf4fe201e022086e6dd00a46ecbf0` :
+Qualification historique `0.9.1b`, CI **#789**, commit `4a226af71facf4fe201e022086e6dd00a46ecbf0` :
 
 - **1 893 tests pytest réussis, 3 ignorés** ;
 - **332/332 fichiers Python de l’inventaire compilables** ;
@@ -483,14 +409,11 @@ Aucune intégration ne doit fragiliser le socle local.
 - les lots déjà absorbés ou supersédés sont fermés et ne sont pas réactivés artificiellement ;
 - après une instruction générale de poursuite, les étapes techniques sûres peuvent être enchaînées sans demander une validation à chaque micro-étape ; seules les décisions métier, les conflits ambigus et les opérations risquées nécessitent un arrêt explicite.
 
-## 18. Prochain jalon
+## 18. Prochain jalon — sortie du gel vers la stable wx
 
-Le prochain jalon est **la validation manuelle de Teamworks-CCNS 0.9.1b sur une copie de base réelle sous Windows**.
+**Prochain jalon : terminer la recette Windows RC12 sur copie de données**, corriger les seuls défauts confirmés, puis décider de `v0.9.2` stable en appliquant la section 16. Le paquet de référence reste la [RC12 publiée](https://github.com/fr4nck/Teamworks-CCNS/releases/tag/v0.9.2-rc12), run `42675793471`, commit `9b02fbe9`.
 
-Le build machine de référence est celui issu du commit `4a226af71facf4fe201e022086e6dd00a46ecbf0`, CI #789. Le test peut être réalisé avec l’installateur ou le portable issus du même artefact, en vérifiant l’empreinte correspondante avant la recette.
+Une correction de code exige un **nouveau commit**, ses régressions et une nouvelle qualification du paquet ; ne jamais déplacer ou reconstruire silencieusement le tag `v0.9.2-rc12`. Une dérogation au gel est possible **uniquement sur décision explicite et tracée**, selon la décision active en tête de ce fichier.
 
-Séquence :
+La sortie du gel se décide séparément de la publication stable. Elle n'est ni automatique ni conditionnée par une simple absence de ticket GitHub.
 
-**installer ou décompresser le build qualifié → ouvrir une copie de base réelle → exécuter `docs/VALIDATION_WINDOWS_0.9.1b.md` → consigner chaque résultat → corriger uniquement les blocages constatés → reconstruire si du code change → décider ensuite de la qualification pré-release.**
-
-Tant que cette recette n’est pas terminée, le développement fonctionnel majeur reste derrière ce jalon.

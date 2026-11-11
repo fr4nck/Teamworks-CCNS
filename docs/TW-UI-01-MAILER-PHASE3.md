@@ -5,6 +5,8 @@
 **Nature :** preuve technique, distincte de la roadmap officielle `ROADMAP.md`.
 **Aucun serveur, compte, identifiant ou destinataire de production utilisé.**
 
+> **Note de suivi (11 novembre 2026) :** ce rapport décrit l'état de la **phase 3 au 9 novembre**, avant la publication. La [préversion RC12 a été publiée](https://github.com/fr4nck/Teamworks-CCNS/releases/tag/v0.9.2-rc12) depuis le commit `9b02fbe9`, après CI `42675793471` et essai de démarrage Windows 11 confirmé. Les mentions ci-dessous « pas de RC publiée » ne sont donc plus le statut courant ; les réserves de recette Mailer et de stabilité demeurent. Source de vérité : [ROADMAP](../ROADMAP.md).
+
 ## 1. Référence et périmètre
 
 Au prévol :
@@ -152,18 +154,12 @@ Un PASS sur banc fictif ne vaut jamais PASS sur l'application complète.
 complémentaires de G3/G4/G5 ne sont pas acquises. Aucun tag ni release
 ne doit être publié sur cette seule validation.
 
-## 6. Candidat envisagé et limitations
+## 6. Publication ultérieure et limites maintenues
 
-Dernière préversion réellement publiée : `v0.9.2-rc11` le 31 octobre 2026.
-Nom candidat suggéré : **`0.9.2-rc12`**, à vérifier lors de sa création.
+Depuis ce rapport daté du 9 novembre, la [RC12](https://github.com/fr4nck/Teamworks-CCNS/releases/tag/v0.9.2-rc12) a été **publiée comme préversion le 11 novembre 2026**, commit `9b02fbe9`, sur des binaires qualifiés par la CI `42675793471`.
 
-Aucun tag, release ni installeur n'est créé dans cette phase. Un futur
-portable candidat devra être construit du commit exact, avec `BUILD.txt`,
-manifestes, SHA-256, démarrage réel et passage des parcours métier.
+Le **NO GO du rapport du 9 novembre** signifiait que la phase 3 seule ne suffisait pas à justifier une release. La publication de la préversion a été décidée séparément après construction du paquet et essai de démarrage utilisateur. Cela **ne lève pas** les gates G3 bis, G4 bis, G5 bis, G7 et G9 en tant que recette complète ; `v0.9.2` stable reste non qualifiée.
 
-**Verdict documentaire : PASS PARTIEL / NO GO publication RC** tant
-que G7 et G9 restent non testés. Un GO technique borne au moteur de
-messagerie n'est pas une qualification RC globale.
 
 ## 7. Provenance et retour arrière
 
