@@ -19,7 +19,7 @@ Ce document est un **registre des contrôles effectivement réalisés**, non une
 | P1 | Tests Python, parcours simulés Windows, packaging | PASS | CI `42675793471` |
 | P2 | Démarrage réel de RC12, récupération des paramètres du profil | PASS limité | Retour utilisateur ; **aucune écriture métier vérifiée** |
 | P3 | Précontrôle local renouvelé du portable | **PASS — 11/11/2026** | 5700X, PowerShell 5.1 : version/commit conformes ; **2 278/2 278** fichiers SHA-256 PASS ; rapport local `preflight-rc12-20261111-160030-c8e38994.json` ; contrôle sans lancement, SQL ni courriel |
-| B0 | Copie de base indépendante et sauvegarde de secours vérifiées | **BLOQUÉ — isolation non démontrée** | Profil courant contenant les paramètres de connexion existants. Avant tout test en écriture : profil Windows de recette + jeu de données fictif ou copie indépendante sur serveur/base distincts, avec sauvegarde et retour arrière |
+| B0 | Copie de base indépendante et sauvegarde de secours vérifiées | **BLOQUÉ — isolation MySQL non démontrée** | Le 11/11/2026, lecture **locale et sans connexion SQL** de `AppData/Roaming/teamworks/Config.json` : `nomFichier` contient `[RESEAU]`, ce qui sélectionne **MySQL/MariaDB réseau** dans `GestionDB.py`. Serveur, droits, données et sauvegardes non audités. Avant toute écriture : profil de recette distinct, base MySQL de test séparée et droits limités, données fictives, sauvegarde et plan de retour arrière |
 | B1 | Fiche salarié, neuf onglets, navigation et fermeture | NON TESTÉ | Pas de recette complète documentée |
 | B2 | Écriture fictive sur copie, enregistrement, redémarrage et persistance | NON TESTÉ | Ne jamais écrire sur la base de production pour tester |
 | B3 | Contrats CDI/CDD/CEE, renouvellement et transformation, DPAE/DUE | NON TESTÉ | Parcours complet sur copie manquant |
@@ -32,10 +32,17 @@ Ce document est un **registre des contrôles effectivement réalisés**, non une
 | F1 | Absence de bloqueur/majeur, période contrôlée, retour arrière | NON TESTÉ | Pas de procès-verbal de recette |
 | F2 | Décision explicite de passer en version stable | NON DONNÉ | Gel fonctionnel approuvé, **pas** la stable |
 
+## Identification du moteur de données — contrôle du 11 novembre 2026
+
+- Sur le 5700X, le fichier de configuration du **profil Windows courant** contient un `nomFichier` avec le marqueur `[RESEAU]`. La lecture par PowerShell n'a ouvert **aucune connexion SQL**, n'a extrait **aucun secret** et n'a modifié **aucune base**.
+- Dans `teamworks/GestionDB.py`, `[RESEAU]` active le chemin **MySQL/MariaDB**. Un `nomFichier` local sans ce marqueur sélectionnerait SQLite ; cette deuxième hypothèse **ne décrit donc pas la configuration courante**.
+- Le moteur effectivement contacté, la disponibilité du serveur, les droits d'écriture, la base sélectionnée en session et le contenu des données **ne sont pas vérifiés**. Ne publier ni `Config.json`, ni chaîne `nomFichier`, ni adresse de serveur, ni identifiant ou mot de passe dans un journal GitHub.
+- **Séquence B0 à valider avant toute recette métier** : préparer une base **MySQL/MariaDB de test indépendante** (préférer un serveur local isolé, des données fictives et un utilisateur SQL limité au jeu de test), créer un **profil/configuration Windows de recette distinct**, puis confirmer que l'application ne voit aucun serveur/base de production et que la restauration de secours fonctionne. Le seul dossier portable distinct **n'isole pas** le profil utilisateur ni la configuration.
+
 ## Exécution — ordre impératif
 
 1. **P3 : FAIT le 11/11/2026** sur le portable déjà extrait au 5700X ; 2 278 fichiers vérifiés en SHA-256, version et commit corrects. Rapport enregistré localement dans `C:\_Atelier_IA\Teamworks-CCNS\Stabilisation-wx-0.9.2\preflight-rc12-20261111-160030-c8e38994.json`. Aucune donnée métier n'a été ouverte ni modifiée par le contrôle.
-2. **B0 : figer une copie de base** et un plan de restauration, distincts de l'exploitation. Ni le fait que le portable soit dans un autre dossier, ni un simple changement de nom de dossier ne suffisent : Teamworks réemploie les paramètres du profil Windows.
+2. **B0 : isoler MySQL/MariaDB avant tout test en écriture.** Le 5700X conserve une configuration réseau existante, potentiellement de production : ne pas l'utiliser pour la recette. Préparer un serveur et une base de test séparés, un compte SQL dédié et un profil Windows de recette indépendant, puis vérifier sauvegarde/restauration **sur la base de test seulement**. Le portable dans un dossier différent ne suffit pas.
 3. **B1 à B6, U1 :** exécuter sur la copie les opérations réellement utilisées par l'association. Relever précisément les résultats, sans exposer identifiants, salariés, coordonnées ni données RH dans GitHub.
 4. **M1–M2 :** uniquement sur jeu fictif et transport local instrumenté. Aucun mail réel ; un SMTP de production « pour essayer » n'est pas acceptable.
 5. **F1–F2 :** qualifier les anomalies, les corriger avec tests si confirmées, reconstruire depuis un nouveau commit si le code change, puis recueillir une décision expresse pour `v0.9.2`.
