@@ -57,6 +57,7 @@ Ce document est un **registre des contrôles effectivement réalisés**, non une
 ## Points techniques identifiés
 
 - `tools/recette_windows/run_local.ps1` automatise seulement une partie des interactions souris/clavier, **depuis les sources**, avec le profil Windows courant. Il **n'est pas isolant** ; ne pas l'utiliser comme preuve B0 ou B2 sur le profil relié à la production.
+- **Risque au démarrage identifié par lecture du code :** `teamworks/Teamworks.py` appelle `UTILS_Fichiers.DeplaceFichiers()` ; cette fonction examine notamment le dossier `~/teamworks` et déplace éventuellement des anciens fichiers de configuration. Le mode `Portable/` redirige les destinations mais ne prouve **pas à lui seul** l'absence de déplacement depuis le profil courant. Avant de lancer la copie RC12 : travailler depuis son dossier isolé, vérifier/neutraliser ce chemin de migration ou employer un profil utilisateur Windows réellement séparé. Ne pas lancer la copie simplement parce que Docker est sain.
 - Le scénario `tools/smoke_pmsl_contracts_21h.py`, historiquement non qualifié sur un ancien jalon, nécessite une exécution sur base fictive. Son état ne démontre **pas** un bug de RC12 tant qu'il n'est pas reproduit.
 - Le rapport TW-UI-01 Phase 3 qualifie les transports fictifs et la progression wx mais **pas** les coupures réseau réelles ni les envois de bout en bout.
 - Aucune nouvelle fonction wx pendant le gel sans dérogation explicite et documentée. `master` et `qt/master` hors de ce périmètre.
