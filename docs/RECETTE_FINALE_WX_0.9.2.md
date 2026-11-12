@@ -19,7 +19,7 @@ Ce document est un **registre des contrôles effectivement réalisés**, non une
 | P1 | Tests Python, parcours simulés Windows, packaging | PASS | CI `42675793471` |
 | P2 | Démarrage réel de RC12, récupération des paramètres du profil | PASS limité | Retour utilisateur ; **aucune écriture métier vérifiée** |
 | P3 | Précontrôle local renouvelé du portable | **PASS — 11/11/2026** | 5700X, PowerShell 5.1 : version/commit conformes ; **2 278/2 278** fichiers SHA-256 PASS ; rapport local `preflight-rc12-20261111-160030-c8e38994.json` ; contrôle sans lancement, SQL ni courriel |
-| B0 | Copie de base indépendante et sauvegarde de secours vérifiées | **BLOQUÉ — isolation MySQL non démontrée** | Le 11/11/2026, lecture **locale et sans connexion SQL** de `AppData/Roaming/teamworks/Config.json` : `nomFichier` contient `[RESEAU]`, ce qui sélectionne **MySQL/MariaDB réseau** dans `GestionDB.py`. Serveur, droits, données et sauvegardes non audités. Avant toute écriture : profil de recette distinct, base MySQL de test séparée et droits limités, données fictives, sauvegarde et plan de retour arrière |
+| B0 | Copie de base indépendante et sauvegarde de secours vérifiées | **PARTIEL — serveur local sain, recette non isolée** | Le 11/11/2026, lecture **locale et sans connexion SQL** de `AppData/Roaming/teamworks/Config.json` : `nomFichier` contient `[RESEAU]`, ce qui sélectionne **MySQL/MariaDB réseau** dans `GestionDB.py`. Serveur, droits, données et sauvegardes non audités. Avant toute écriture : profil de recette distinct, base MySQL de test séparée et droits limités, données fictives, sauvegarde et plan de retour arrière |
 | B1 | Fiche salarié, neuf onglets, navigation et fermeture | NON TESTÉ | Pas de recette complète documentée |
 | B2 | Écriture fictive sur copie, enregistrement, redémarrage et persistance | NON TESTÉ | Ne jamais écrire sur la base de production pour tester |
 | B3 | Contrats CDI/CDD/CEE, renouvellement et transformation, DPAE/DUE | NON TESTÉ | Parcours complet sur copie manquant |
@@ -38,6 +38,13 @@ Ce document est un **registre des contrôles effectivement réalisés**, non une
 - Dans `teamworks/GestionDB.py`, `[RESEAU]` active le chemin **MySQL/MariaDB**. Un `nomFichier` local sans ce marqueur sélectionnerait SQLite ; cette deuxième hypothèse **ne décrit donc pas la configuration courante**.
 - Le moteur effectivement contacté, la disponibilité du serveur, les droits d'écriture, la base sélectionnée en session et le contenu des données **ne sont pas vérifiés**. Ne publier ni `Config.json`, ni chaîne `nomFichier`, ni adresse de serveur, ni identifiant ou mot de passe dans un journal GitHub.
 - **Séquence B0 à valider avant toute recette métier** : préparer une base **MySQL/MariaDB de test indépendante** (préférer un serveur local isolé, des données fictives et un utilisateur SQL limité au jeu de test), créer un **profil/configuration Windows de recette distinct**, puis confirmer que l'application ne voit aucun serveur/base de production et que la restauration de secours fonctionne. Le seul dossier portable distinct **n'isole pas** le profil utilisateur ni la configuration.
+
+## MariaDB de recette — infrastructure Docker du 12 novembre 2026
+
+- **PASS conteneur seulement :** Docker 29.8.0 (Linux), Docker Compose 5.5.1 ; `tw-rc12-mariadb` (`mariadb:10.11`) en état `healthy`.
+- **Liaison démontrée :** `127.0.0.1:33307 -> 3306/tcp`, réseau Docker `teamworks-rc12_default`. Dossier de travail `C:\_Atelier_IA\Teamworks-CCNS\Stabilisation-wx-0.9.2\MariaDB-RC12`.
+- **Initialisation annoncée :** trois schémas de test `twrc12_tdata`, `twrc12_tphotos`, `twrc12_tdocuments`. Leur accessibilité avec le compte de recette, leurs tables et leurs données n'ont pas encore été vérifiées.
+- **B0 non acquis :** pas encore de configuration portable isolée, de données fictives dans MariaDB, de sauvegarde/restauration qualifiée. Ne pas lancer la RC12 avec les paramètres réseau du profil habituel.
 
 ## Exécution — ordre impératif
 
