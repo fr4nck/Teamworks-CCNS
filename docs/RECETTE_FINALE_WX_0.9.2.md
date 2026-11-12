@@ -19,6 +19,7 @@ Ce document est un **registre des contrôles effectivement réalisés**, non une
 | P1 | Tests Python, parcours simulés Windows, packaging | PASS | CI `42675793471` |
 | P2 | Démarrage réel de RC12, récupération des paramètres du profil | PASS limité | Retour utilisateur ; **aucune écriture métier vérifiée** |
 | P3 | Précontrôle local renouvelé du portable | **PASS — 11/11/2026** | 5700X, PowerShell 5.1 : version/commit conformes ; **2 278/2 278** fichiers SHA-256 PASS ; rapport local `preflight-rc12-20261111-160030-c8e38994.json` ; contrôle sans lancement, SQL ni courriel |
+| P4 | Prévol d'isolation avant lancement | **PASS partiel — 12/11/2026** | `Portable/Config.json` : aucune base ni historique ; chemins historiques examinés : aucun fichier de migration identifié ; accès avec `twrc12` aux trois schémas Docker, **0 table dans chacun** ; application non lancée, données non modifiées. Vérification limitée aux emplacements sondés, pas un audit complet de l'isolation Windows. |
 | B0 | Copie de base indépendante et sauvegarde de secours vérifiées | **PARTIEL — serveur local sain, recette non isolée** | Le 11/11/2026, lecture **locale et sans connexion SQL** de `AppData/Roaming/teamworks/Config.json` : `nomFichier` contient `[RESEAU]`, ce qui sélectionne **MySQL/MariaDB réseau** dans `GestionDB.py`. Serveur, droits, données et sauvegardes non audités. Avant toute écriture : profil de recette distinct, base MySQL de test séparée et droits limités, données fictives, sauvegarde et plan de retour arrière |
 | B1 | Fiche salarié, neuf onglets, navigation et fermeture | NON TESTÉ | Pas de recette complète documentée |
 | B2 | Écriture fictive sur copie, enregistrement, redémarrage et persistance | NON TESTÉ | Ne jamais écrire sur la base de production pour tester |
@@ -44,7 +45,8 @@ Ce document est un **registre des contrôles effectivement réalisés**, non une
 - **PASS conteneur seulement :** Docker 29.8.0 (Linux), Docker Compose 5.5.1 ; `tw-rc12-mariadb` (`mariadb:10.11`) en état `healthy`.
 - **Liaison démontrée :** `127.0.0.1:33307 -> 3306/tcp`, réseau Docker `teamworks-rc12_default`. Dossier de travail `C:\_Atelier_IA\Teamworks-CCNS\Stabilisation-wx-0.9.2\MariaDB-RC12`.
 - **Initialisation annoncée :** trois schémas de test `twrc12_tdata`, `twrc12_tphotos`, `twrc12_tdocuments`. Leur accessibilité avec le compte de recette, leurs tables et leurs données n'ont pas encore été vérifiées.
-- **B0 non acquis :** pas encore de configuration portable isolée, de données fictives dans MariaDB, de sauvegarde/restauration qualifiée. Ne pas lancer la RC12 avec les paramètres réseau du profil habituel.
+- **Préparation du portable confirmée le 12/11/2026 :** copie de RC12 dans `Recette-MariaDB-RC12/Teamworks-CCNS` ; `Portable/Config.json` créé vierge, sans identifiant de production. Prévol : aucune migration legacy détectée parmi les fichiers et emplacements contrôlés ; schémas Docker accessibles, **zéro table**.
+- **B0 toujours PARTIEL :** configuration portable vierge et bases locales distinctes, mais pas encore de session Windows réellement séparée ni de tables métier, de données fictives ou de sauvegarde/restauration qualifiée. Ne pas assimiler ce prévol à une isolation totale de tous les accès possibles du processus.
 
 ## Exécution — ordre impératif
 
