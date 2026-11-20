@@ -1072,8 +1072,19 @@ def LanceFichierExterne(nomFichier) :
     if "win" in nomSysteme : 
         nomFichier = nomFichier.replace("/", "\\")
         os.startfile(nomFichier)
-    if "linux" in nomSysteme : 
-        os.system("xdg-open " + nomFichier)
+    if nomSysteme.startswith("linux"):
+        # Sans shell : les chemins contenant des espaces restent corrects et
+        # aucun caractère provenant du nom de fichier n'est interprété.
+        import subprocess
+        try:
+            subprocess.Popen(
+                ["xdg-open", nomFichier],
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+        except OSError:
+            return False
     
 
 def GetNomDB():
