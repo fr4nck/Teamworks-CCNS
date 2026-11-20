@@ -37,7 +37,9 @@ vendor="$pkg/opt/teamworks-ccns/vendor"
 mkdir -p "$app" "$vendor" "$pkg/DEBIAN" "$pkg/usr/bin" "$pkg/usr/share/applications" "$pkg/usr/share/pixmaps"
 
 # Pas de secrets, bases locales, caches ni environnements non suivis.
-git archive --format=tar HEAD | tar -x -C "$app"
+# Distribution limitée au code et aux ressources nécessaires à l'application.
+# N'embarque jamais .github/, docs/, tests/, scripts/, notes ou rapports.
+git archive --format=tar HEAD -- VERSION teamworks application domain infrastructure | tar -x -C "$app"
 
 # Bibliotheques supplementaires incorporees a la construction.
 # L'installation du paquet lui-meme ne telecharge rien.
@@ -102,8 +104,12 @@ chmod 755 "$pkg/usr/bin/teamworks-ccns"
 python3 -m compileall -q "$app/teamworks/Ctrl/CTRL_Liste_fichiers.py"
 find "$app" -type d -name __pycache__ -prune -exec rm -rf {} +
 find "$app" -type f -name '*.pyc' -delete
+# Audit bloquant AVANT la création de l'artefact.
+python3 packaging/debian/check_privacy.py --stage "$pkg"
 output="$OUT_DIR/teamworks-ccns_${debversion}-1+deb13_${arch}.deb"
 dpkg-deb --root-owner-group --build "$pkg" "$output"
+# Contrôle des octets réellement présents dans le .deb, métadonnées comprises.
+python3 packaging/debian/check_privacy.py --deb "$output"
 dpkg-deb --info "$output"
 sha256sum "$output" > "$output.sha256"
 echo "ARTIFACT=$output"
