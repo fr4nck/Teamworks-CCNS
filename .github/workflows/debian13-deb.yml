@@ -31,7 +31,9 @@ jobs:
             python3-reportlab python3-matplotlib python3-opencv \
             python3-dateutil python3-six python3-requests
       - uses: actions/checkout@v4
-      - name: Construire le paquet hors installation
+      - name: Tester le garde-fou de confidentialite
+        run: python3 -m unittest discover -s tests -p 'test_debian_privacy.py' -v
+      - name: Construire et auditer le paquet
         run: bash packaging/debian/build.sh
       - name: Verifier le paquet
         run: |
