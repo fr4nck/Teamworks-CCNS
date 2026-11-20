@@ -300,9 +300,6 @@ class PanelPersonnes(wx.Panel):
         police.SetPointSize(max(police.GetPointSize() + 2, 11))
         self.titre_liste.SetFont(police)
 
-        if "linux" in sys.platform:
-            self.bouton_export_excel.Enable(False)
-
         self.__set_properties()
         self.__do_layout()
 
