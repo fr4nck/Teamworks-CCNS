@@ -899,12 +899,6 @@ class ListView(ObjectListView):
             
     def ExportExcel(self):
         """ Export de la liste au format Excel """
-        if "linux" in sys.platform :
-            dlg = wx.MessageDialog(self, _(u"Désolé, cette fonction n'est pas disponible dans la version LINUX de Teamworks."), "Fonction indisponible", wx.OK | wx.ICON_ERROR)
-            dlg.ShowModal()
-            dlg.Destroy()
-            return
-        
         if self.GetNbreItems() == 0 :
             dlg = wx.MessageDialog(self, _(u"Il n'y a aucune personne dans la liste !"), "Erreur", wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
