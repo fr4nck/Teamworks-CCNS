@@ -52,7 +52,7 @@ fi
 
 icon=''
 for candidate in \
-    "$app/teamworks/Images/Branding/Teamworks-CCNS.png" \
+    "$app/teamworks/Static/Images/Branding/Teamworks-CCNS.png" \
     "$app/teamworks/Static/Images/80x80/Logo_tw.png" \
     "$app/teamworks/Static/Images/32x32/Logo.png"; do
     if [[ -f "$candidate" ]]; then icon="$candidate"; break; fi
