@@ -33,9 +33,10 @@ REQUIRED = {
 DANGEROUS_SUFFIXES = (
     ".db", ".db3", ".sqlite", ".sqlite3", ".sql", ".dump",
     ".bak", ".backup", ".old", ".swp", ".log",
-    ".csv", ".xlsx", ".xls", ".ods", ".pdf",
+    ".csv", ".xlsx", ".xls", ".ods", ".odt", ".docx", ".pptx", ".pdf",
+    ".eml", ".msg", ".mbox", ".pst", ".ics", ".sqlite-wal", ".sqlite-shm",
     ".p12", ".pfx", ".pem", ".key", ".kdbx", ".ovpn",
-    ".zip", ".7z", ".rar", ".tar", ".tar.gz", ".tgz",
+    ".zip", ".7z", ".rar", ".tar", ".tar.gz", ".tar.xz", ".tgz",
 )
 DANGEROUS_NAMES = {
     "id_rsa", "id_ed25519", "id_ecdsa",
@@ -45,7 +46,7 @@ DANGEROUS_NAMES = {
 DANGEROUS_DIRS = {
     ".ssh", ".config", ".venv", "venv", "__pycache__",
     "backups", "backup", "sauvegardes", "dumps", "logs",
-    "exports", "private", "secrets",
+    "exports", "private", "secrets", "data_personnelles",
 }
 TEXT_SUFFIXES = {
     ".py", ".pyi", ".sh", ".js", ".ts", ".html", ".css",
@@ -53,7 +54,7 @@ TEXT_SUFFIXES = {
     ".txt", ".md", ".rst", ".xml", ".desktop", ".conf",
 }
 SECRET_PATTERNS = (
-    ("clé privée", re.compile(rb"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----")),
+    ("clé privée", re.compile(rb"-----BEGIN (?:RSA |EC |OPENSSH |ENCRYPTED )?PRIVATE KEY-----|-----BEGIN PGP PRIVATE KEY BLOCK-----")),
     ("jeton de service", re.compile(
         rb"\b(?:ghp_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,}|"
         rb"AKIA[0-9A-Z]{16}|xox[baprs]-[A-Za-z0-9-]{20,})\b"
@@ -97,7 +98,7 @@ def examiner(dossier):
     fichiers = set()
     nombre = 0
     for p in dossier.rglob("*"):
-        if p.is_dir():
+        if p.is_dir() and not p.is_symlink():
             continue
         rel = p.relative_to(dossier).as_posix()
         fichiers.add(rel)
@@ -114,7 +115,7 @@ def examiner(dossier):
             continue
         # Les dépendances PyPI sont des paquets tiers publics : on y contrôle
         # les noms à risque, mais pas les exemples de code qu'elles embarquent.
-        if not rel.startswith(APP):
+        if rel.startswith(VENDOR):
             continue
         if p.suffix.lower() not in TEXT_SUFFIXES and p.name != "VERSION":
             continue
