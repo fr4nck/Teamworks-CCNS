@@ -187,3 +187,20 @@ l'application sur une copie de base avec procédure automatique configurée,
 vérifier les trois réponses et les échelles des postes utilisateurs.
 Pas de CI lourde déclenchée, pas de modification Qt ou `artifacts/`,
 pas de PR ni de suppression de branche historique.
+
+
+## Incident Debian 13 du 20 novembre 2026 — questionnaire HyperTreeList
+
+Le parcours **fiche individuelle → Questionnaire** reproduit sous Debian 13
+(Python 3.13.5, wxPython 4.2.3 / GTK3) un `AttributeError: SetItemData`
+dans `CTRL_Questionnaire.Remplissage`. Ce contrôle hérite de
+`wx.lib.agw.hypertreelist.HyperTreeList`, délégué à
+`CustomTreeCtrl`, et non du `wx.TreeCtrl` natif : l'API de stockage
+associée aux éléments est `SetPyData(item, value)`.
+
+Les **deux** utilisations `SetItemData` (catégorie et question) sont remplacées
+par `SetPyData`, sans modifier les identifiants ni les lectures/écritures SQL.
+Le garde-fou `tests/test_questionnaire_hypertreelist_api.py` vérifie
+l'héritage AGW et les deux appels associés. Il est statique et sans affichage :
+la navigation graphique sur la vraie base, la fermeture et la compatibilité
+Windows restent à requalifier séparément. Aucun tag RC existant n'est modifié.
