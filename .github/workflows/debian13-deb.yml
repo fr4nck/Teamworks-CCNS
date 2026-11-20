@@ -1,0 +1,53 @@
+name: Paquet Debian 13 (prototype)
+
+on:
+  push:
+    branches: [wx/master]
+    paths:
+      - 'teamworks/**'
+      - 'application/**'
+      - 'domain/**'
+      - 'infrastructure/**'
+      - 'VERSION'
+      - 'packaging/debian/**'
+      - '.github/workflows/debian13-deb.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  debian13:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    container: debian:trixie
+    steps:
+      - name: Preparer les outils et dependances Debian 13
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            git ca-certificates python3 python3-venv python3-pip \
+            python3-wxgtk4.0 python3-mysqldb python3-numpy python3-pil \
+            python3-reportlab python3-matplotlib python3-opencv \
+            python3-dateutil python3-six python3-requests
+      - uses: actions/checkout@v4
+      - name: Construire le paquet hors installation
+        run: bash packaging/debian/build.sh
+      - name: Verifier le paquet
+        run: |
+          set -eu
+          test "$(find dist -name '*.deb' | wc -l)" -eq 1
+          deb="$(find dist -name '*.deb' -print -quit)"
+          dpkg-deb --contents "$deb" | grep '/usr/bin/teamworks-ccns$'
+          dpkg-deb --contents "$deb" | grep '/usr/share/applications/teamworks-ccns.desktop$'
+          dpkg-deb --contents "$deb" | grep '/usr/share/pixmaps/teamworks-ccns.png$'
+          dpkg-deb --contents "$deb" | grep '/opt/teamworks-ccns/app/teamworks/Teamworks.py$'
+          (cd dist && sha256sum -c *.sha256)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: teamworks-ccns-debian13-amd64
+          path: |
+            dist/*.deb
+            dist/*.sha256
+          if-no-files-found: error
+          retention-days: 14
