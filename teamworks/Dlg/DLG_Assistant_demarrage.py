@@ -33,7 +33,7 @@ class MyPlateBtn(platebtn.PlateButton):
 
 class Dialog(wx.Dialog):
     def __init__(self, parent, checkAffichage=False, afficherDernierFichier=True, nomDernierFichier=""):
-        wx.Dialog.__init__(self, parent, -1, title=_(u"Assistant de démarrage"))
+        wx.Dialog.__init__(self, parent, -1, title=_(u"Assistant de démarrage"), style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
         self.parent = parent
         self.choix = None
 
@@ -82,10 +82,20 @@ class Dialog(wx.Dialog):
 
         self.Bind(wx.EVT_BUTTON, self.OnBoutonAide, self.bouton_aide)
         self.Bind(wx.EVT_BUTTON, self.OnBoutonOk, self.bouton_ok)
+        self.Bind(wx.EVT_SHOW, self.OnAffichage)
 
         self.bouton_ok.SetFocus()
 
     def __set_properties(self):
+        # Identique à l’icône de la fenêtre principale Teamworks-CCNS.
+        icone = wx.Icon()
+        icone.CopyFromBitmap(wx.Bitmap(
+            Chemins.GetStaticPath("Images/Branding/Teamworks-CCNS.ico"),
+            wx.BITMAP_TYPE_ICO,
+        ))
+        if icone.IsOk():
+            self.SetIcon(icone)
+
         self.bouton_aide.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour obtenir de l'aide")))
         self.bouton_aide.SetSize(self.bouton_aide.GetBestSize())
         self.bouton_ok.SetToolTip(wx.ToolTip(_(u"Cliquez ici pour fermer l'assistant et utiliser TeamWorks")))
@@ -120,7 +130,31 @@ class Dialog(wx.Dialog):
         grid_sizer_base.Add(grid_sizer_boutons, 1, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, 10)
         self.SetSizer(grid_sizer_base)
         UTILS_Styles.ApplyWindowProfile(self, "fit")
+        self._AssurerBoutonsVisibles()
+
+    def _AssurerBoutonsVisibles(self):
+        """Evite les boutons rognés quand GTK calcule une taille après Fit()."""
         self.Layout()
+        marge = UTILS_Styles.GetSpacing("lg")
+        minimum = self.GetSizer().CalcMin()
+        client = self.GetClientSize()
+        bas_boutons = max(
+            self.bouton_aide.GetRect().GetBottom(),
+            self.bouton_ok.GetRect().GetBottom(),
+        )
+        largeur = max(client.GetWidth(), minimum.GetWidth() + marge)
+        hauteur = max(client.GetHeight(), minimum.GetHeight() + marge, bas_boutons + marge)
+        self.SetMinClientSize((largeur, hauteur))
+        if (largeur, hauteur) != (client.GetWidth(), client.GetHeight()):
+            self.SetClientSize((largeur, hauteur))
+            self.Layout()
+        self.CentreOnScreen()
+
+    def OnAffichage(self, event):
+        # Le thème GTK peut modifier les métriques après réalisation native.
+        if event.IsShown():
+            wx.CallAfter(self._AssurerBoutonsVisibles)
+        event.Skip()
 
     def OnBoutonAide(self, event):
         from Utils import UTILS_Aide
