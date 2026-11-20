@@ -201,13 +201,13 @@ class CTRL(ULC.UltimateListCtrl):
         self.InsertColumn(1, "Column 2") 
         
         for dictFichier in self.listeFichiers :
-            index = self.InsertItem(sys.maxsize, "")
+            index = self.InsertStringItem(self.GetItemCount(), "")
 
             klass = FirstColumnRenderer(self, titre=dictFichier["titre"], image=dictFichier["image"], description=dictFichier["description"])
             self.SetItemCustomRenderer(index, 0, klass)
             
             if self.details == True and self.mode != "reseau" :
-                self.SetItem(index, 1, "")
+                self.SetStringItem(index, 1, "")
                 klass = SecondColumnRenderer(self, dateModif=dictFichier["dateModif"], taille=dictFichier["taille"])
                 self.SetItemCustomRenderer(index, 1, klass)
             
