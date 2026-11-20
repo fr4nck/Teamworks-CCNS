@@ -204,3 +204,31 @@ Le garde-fou `tests/test_questionnaire_hypertreelist_api.py` vérifie
 l'héritage AGW et les deux appels associés. Il est statique et sans affichage :
 la navigation graphique sur la vraie base, la fermeture et la compatibilité
 Windows restent à requalifier séparément. Aucun tag RC existant n'est modifié.
+
+
+## Export Excel sur Linux — 20 novembre 2026
+
+Le bouton d'export `.xlsx` des **Individus** et du **Recrutement** était
+explicitement désactivé sous Linux, et cinq contrôleurs de listes
+(personnes, candidats, candidatures, entretiens, emplois) refusaient
+l'export selon `sys.platform`. Cette interdiction date du code historique :
+l'exporteur actuel utilise `XlsxWriter`, bibliothèque Python indépendante
+de Microsoft Excel et disponible sous Linux.
+
+La restriction est levée sur ces sept points. Le dialogue de sélection
+reçoit désormais des **indices de lignes locaux à l'export**, plutôt que de
+déduire un identifiant de la première colonne affichée, qui peut être
+masquée, réordonnée ou textuelle. Les données métier et les requêtes SQL
+sont inchangées. Les chaînes exportées ne sont pas interprétées comme
+formules ou URL par XlsxWriter. Sous Linux, l'ouverture externe utilise
+`subprocess.Popen(["xdg-open", chemin])`, sans interprétation par un shell,
+notamment pour les chemins contenant des espaces.
+
+Le test `tests/test_export_excel_linux.py` utilise des lignes
+synthétiques avec une première colonne non numérique et un double
+minimal du dialogue/classeur : il vérifie la sélection, les cellules
+produites, les options sûres de XlsxWriter, les sept restrictions
+supprimées et l'ouverture sans shell. Aucun accès à MariaDB ni à une
+donnée PMSL. **La recette graphique réelle reste à confirmer** sur
+Debian 13 et Windows, ainsi que l'association de fichiers du bureau
+pour ouvrir le `.xlsx` après création. Aucun tag de release n'est modifié.
