@@ -6,6 +6,33 @@
 
 Ce fichier suit la **modernisation graphique et ergonomique** de Teamworks-CCNS indépendamment de la migration Python 3 et des fonctions métier CCNS.
 
+## Assistant de démarrage sur Debian 13 — 20 novembre 2026
+
+Observation sur SERVEURPMSL (Debian 13, Python 3.13.5, wxPython 4.2.3 GTK3) :
+la frame principale et les notes de version affichent l'icône
+`Teamworks-CCNS`, mais le dialogue `DLG_Assistant_demarrage` conserve
+l'icône par défaut. Son pied « Aide / Fermer » est partiellement tronqué
+sur la session XFCE physique.
+
+**Provenance : UI/UX / intégration wx sous GTK.** Le dialogue ne définit
+aucune icône et son ajustement initial `fit` peut précéder la
+stabilisation des métriques des boutons après l'affichage natif.
+
+Correction limitée au dialogue : réutiliser le même fichier `.ico` que
+la fenêtre principale, rendre la boîte redimensionnable, calculer la
+taille minimale de la zone cliente à partir du sizer et de la position
+réelle des boutons, puis revérifier après `EVT_SHOW` via `wx.CallAfter`.
+Aucune modification des données, du flux métier ou du thème global.
+Le script `packaging/debian/build.sh` référence désormais en priorité
+`Static/Images/Branding/Teamworks-CCNS.png` pour l'icône du bureau.
+
+**Validation :** examen du parcours et vérification statique des
+ressources/du code. Compilation et CI GitHub à confirmer après publication.
+**À vérifier manuellement** sous GTK3 et Windows : icône effective,
+boutons complètement visibles à 100 %/125 %, dialogue redimensionnable,
+retour des six commandes et absence de rognage après apparition. Le
+paquet `.deb` n'est pas qualifié à ce stade.
+
 ## Règle de classement
 
 - défaut historique déjà présent dans Teamworks Vanilla → `01_VANILLA_BUGFIX.md` ;
