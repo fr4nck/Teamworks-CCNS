@@ -22,8 +22,14 @@ def Excel(parent, labels_colonnes=None, liste_valeurs=None, tableau=None):
         labels_colonnes = []
     if liste_valeurs is None:
         liste_valeurs = []
-    if tableau == None:
-        dlg = DLG_Selection_liste.Dialog(parent, labels_colonnes, liste_valeurs, type="exportExcel")
+    if tableau is None:
+        # Identifiants locaux à cet export : la première colonne visible peut
+        # être du texte (civilité, nom) ou avoir été réordonnée/masquée.
+        liste_ids = list(range(len(liste_valeurs)))
+        dlg = DLG_Selection_liste.Dialog(
+            parent, labels_colonnes, liste_valeurs,
+            type="exportExcel", listeIDs=liste_ids,
+        )
         if dlg.ShowModal() == wx.ID_OK:
             listeSelections = dlg.GetSelections()
             dlg.Destroy()
@@ -61,11 +67,11 @@ def Excel(parent, labels_colonnes=None, liste_valeurs=None, tableau=None):
             return False
 
     # Création d'un classeur et d'une feuille
-    workbook = xlsxwriter.Workbook(cheminFichier)
+    workbook = xlsxwriter.Workbook(cheminFichier, {"strings_to_formulas": False, "strings_to_urls": False})
     worksheet = workbook.add_worksheet()
 
     # Depuis une liste de sélections
-    if tableau == None:
+    if tableau is None:
         # Création des labels de colonnes
         x = 0
         y = 0
@@ -76,8 +82,9 @@ def Excel(parent, labels_colonnes=None, liste_valeurs=None, tableau=None):
 
         x = 1
         y = 0
-        for valeurs in liste_valeurs:
-            if int(valeurs[0]) in listeSelections:
+        selections = set(listeSelections)
+        for index, valeurs in enumerate(liste_valeurs):
+            if index in selections:
                 for valeur in valeurs:
                     worksheet.write(x, y, valeur)
                     y += 1
@@ -85,7 +92,7 @@ def Excel(parent, labels_colonnes=None, liste_valeurs=None, tableau=None):
                 y = 0
 
     # Depuis une grid
-    if tableau != None:
+    if tableau is not None:
         # Remplissage de la feuille
         nbreColonnes = tableau.GetNumberCols()
         nbreLignes = tableau.GetNumberRows()
