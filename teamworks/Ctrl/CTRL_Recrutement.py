@@ -153,9 +153,6 @@ class Panel(wx.Panel):
         self._creer_boutons()
         self._installer_layout_principal()
 
-        if "linux" in sys.platform:
-            self.bouton_export_excel.Enable(False)
-
         self.bouton_modifier.Enable(False)
         self.bouton_supprimer.Enable(False)
         self.AffichePanelResume(False)
