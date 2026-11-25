@@ -47,7 +47,11 @@ def build_injection(scenario: str) -> str:
                 _smoke_cycles = {cycles}
                 _smoke_db = _smoke_gestiondb.DB()
                 _smoke_db.ExecuterReq(
-                    "SELECT IDpersonne FROM personnes ORDER BY IDpersonne LIMIT 1"
+                    "SELECT IDpersonne FROM personnes "
+                    "WHERE civilite IS NOT NULL AND civilite <> '' "
+                    "AND nom IS NOT NULL AND nom <> '' "
+                    "AND prenom IS NOT NULL AND prenom <> '' "
+                    "ORDER BY IDpersonne LIMIT 1"
                 )
                 _smoke_rows = _smoke_db.ResultatReq()
                 _smoke_db.Close()
@@ -67,24 +71,79 @@ def build_injection(scenario: str) -> str:
                         flush=True,
                     )
                     _dlg = _smoke_person.Dialog(frame, IDpersonne=_smoke_person_id)
-                    _dlg.Show()
-                    _dlg.Layout()
-                    _smoke_wx.Yield()
-
                     if _smoke_mode == "fermer":
-                        if _dlg.Fermer(save=True) is not True:
-                            raise RuntimeError("Fermer(save=True) a échoué")
-                        _smoke_wx.Yield()
+                        # Le mode non modal doit rester refuse.
+                        assert not _dlg.IsModal()
+                        assert _dlg.Fermer(save=True) is False
+
+                        _errors = []
+                        _memo = "TW30 cycle %d" % (_index + 1)
+
+                        def _save_modal():
+                            try:
+                                assert _dlg.IsModal()
+
+                                page = _dlg.notebook.pageGeneralites
+
+                                assert page.combo_box_civilite.GetStringSelection()
+                                assert page.text_nom.GetValue()
+                                assert page.text_prenom.GetValue()
+
+                                page.text_memo.SetValue(_memo)
+
+                                assert _dlg.Fermer(save=True) is True
+
+                            except Exception as exc:
+                                _errors.append(exc)
+
+                                if _dlg.IsModal():
+                                    _dlg.EndModal(_smoke_wx.ID_CANCEL)
+
+                        try:
+                            _smoke_wx.CallAfter(_save_modal)
+                            result = _dlg.ShowModal()
+
+                            if _errors:
+                                raise _errors[0]
+
+                            assert result == _smoke_wx.ID_OK
+                        finally:
+                            _destroy(_dlg)
+
+                        _db = _smoke_gestiondb.DB()
+                        try:
+                            _db.ExecuterReq(
+                                "SELECT memo FROM personnes WHERE IDpersonne=%d"
+                                % _smoke_person_id
+                            )
+                            assert _db.ResultatReq()[0][0] == _memo
+                        finally:
+                            _db.Close()
+
+                        print(
+                            "MODAL_SAVE_READBACK:%d/%d"
+                            % (_index + 1, _smoke_cycles),
+                            flush=True,
+                        )
                     elif _smoke_mode == "save-only":
+                        _dlg.Show()
+                        _dlg.Layout()
+                        _smoke_wx.Yield()
                         _dlg._sauvegarder_pages()
                         _destroy(_dlg)
                     elif _smoke_mode == "current-manual":
+                        _dlg.Show()
+                        _dlg.Layout()
+                        _smoke_wx.Yield()
                         _dlg._sauvegarder_pages()
                         if not _dlg._arreter_callbacks_avant_fermeture():
                             raise RuntimeError("arrêt callbacks refusé")
                         _dlg._rafraichir_frame_personnes(save=True)
                         _destroy(_dlg)
                     elif _smoke_mode == "callbacks-first":
+                        _dlg.Show()
+                        _dlg.Layout()
+                        _smoke_wx.Yield()
                         if not _dlg._arreter_callbacks_avant_fermeture():
                             raise RuntimeError("arrêt callbacks refusé")
                         _dlg._sauvegarder_pages()
@@ -107,7 +166,7 @@ def build_injection(scenario: str) -> str:
                 import traceback as _smoke_traceback
                 _smoke_traceback.print_exc()
                 print("TEAMWORKS_SMOKE_PERSON_CLOSE_ORDER_FAILED", flush=True)
-            _smoke_wx.CallAfter(self.ExitMainLoop)
+            _smoke_wx.CallAfter(frame.Close)
             return True
 '''
 

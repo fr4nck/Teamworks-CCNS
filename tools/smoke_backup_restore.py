@@ -62,11 +62,10 @@ def run() -> None:
     os.chdir(TEAMWORKS_DIR)
 
     import wx
+    app = wx.App(False)
     from Utils import UTILS_Fichiers
     from Utils import UTILS_Sauvegarde
     from Utils import UTILS_Sauvegarde_perimetre
-
-    app = wx.App(False)
     # Le smoke utilise exclusivement une base fictive Exemple.
     # Le moteur de sauvegarde refuserait à juste titre toute opération
     # sans un dossier Teamworks explicitement ouvert.
