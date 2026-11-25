@@ -220,7 +220,7 @@ class ListView(FastObjectListView):
 
         # Import situations
         req = """SELECT IDsituation, situation
-        FROM Situations; """
+        FROM situations; """
         DB.ExecuterReq(req)
         listeSituations = DB.ResultatReq()
         global DICT_SITUATIONS
@@ -230,7 +230,7 @@ class ListView(FastObjectListView):
 
         # Import coordonnées
         req = """SELECT IDcoord, IDpersonne, categorie, texte, intitule
-        FROM Coordonnees; """
+        FROM coordonnees; """
         DB.ExecuterReq(req)
         listeCoordonnees = DB.ResultatReq()
         global DICT_COORDONNEES

@@ -37,20 +37,8 @@ class PanelCalendrier(CTRL_Calendrier_tw.Panel):
         self._appliquer_palette()
 
     def _appliquer_palette(self):
-        couleurs = {
-            "couleurFond": "surface_container_lowest",
-            "couleurNormal": "surface_container_lowest",
-            "couleurWE": "surface_container_low",
-            "couleurSelect": "primary",
-            "couleurSurvol": "on_surface",
-            "couleurFontJours": "on_surface",
-            "couleurVacances": "warning",
-            "couleurFontJoursAvecPresents": "primary",
-            "couleurFerie": "surface_container_high",
-        }
-        for attribut, token in couleurs.items():
-            setattr(self.calendrier, attribut, UTILS_Interface.GetToken(token))
-        self.calendrier.MAJAffichage()
+        super()._appliquer_palette()
+
 
     def SetSelectionDates(self, listeDates):
         self._selection_dates = list(listeDates)

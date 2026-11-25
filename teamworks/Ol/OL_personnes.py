@@ -126,14 +126,14 @@ class ListView(CORE.ListView):
         """Charge références et personnes avec une connexion physique bornée."""
         DB, possede_db = self._obtenir_db_action()
         try:
-            DB.ExecuterReq("SELECT IDsituation, situation FROM Situations;")
+            DB.ExecuterReq("SELECT IDsituation, situation FROM situations;")
             CORE.DICT_SITUATIONS = {
                 IDsituation: situation
                 for IDsituation, situation in DB.ResultatReq()
             }
 
             DB.ExecuterReq(
-                "SELECT IDcoord, IDpersonne, categorie, texte, intitule FROM Coordonnees;"
+                "SELECT IDcoord, IDpersonne, categorie, texte, intitule FROM coordonnees;"
             )
             CORE.DICT_COORDONNEES = {}
             for IDcoord, IDpersonne, categorie, texte, intitule in DB.ResultatReq():

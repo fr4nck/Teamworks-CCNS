@@ -272,12 +272,19 @@ class PanelPersonnes(wx.Panel):
         self.label_selection.SetForegroundColour(UTILS_Interface.GetToken("primary"))
         self.label_selection.Show(False)
 
+        # GTK dessine les traits verticaux du corps avec
+        # un decalage d'un pixel par rapport a l'en-tete.
+        # Conserver les colonnes natives et les lignes horizontales.
+        style_liste = wx.LC_REPORT | wx.LC_SINGLE_SEL | wx.LC_HRULES
+        if wx.Platform != "__WXGTK__":
+            style_liste |= wx.LC_VRULES
+
         self.listCtrl_personnes = OL_personnes.ListView(
             self.window_D,
             id=-1,
             name="OL_personnes",
             view_id="personnes.main",
-            style=wx.LC_REPORT | wx.LC_SINGLE_SEL | wx.LC_HRULES | wx.LC_VRULES,
+            style=style_liste,
         )
         self.listCtrl_personnes.SetMinSize((200, 160))
         self.barreRecherche = BarreRecherche(self.window_D)

@@ -587,6 +587,12 @@ class MyFrame(wx.Frame):
         # Affiche les connexions restées ouvertes
         GestionDB.AfficheConnexionOuvertes()
 
+        if sys.platform.startswith("linux"):
+            dashboard = getattr(self.toolBook.GetPage(0), "html", None)
+            preparer = getattr(dashboard, "PreparerFermeture", None)
+            if callable(preparer):
+                preparer()
+
     def SauvegardeAutomatique(self):
         save = UTILS_Sauvegarde_auto.Sauvegarde_auto(self)
         resultat = save.Start()
@@ -1216,6 +1222,9 @@ class MyFrame(wx.Frame):
         dlg.Destroy()
 
     def On_fichier_quitter(self, event):
+        if sys.platform.startswith("linux"):
+            self.Close()
+            return
         self.Quitter()
         self.Destroy()
         event.Skip()
@@ -1883,7 +1892,11 @@ class MyApp(wx.App):
             route.extend(("backward", index) for index in reversed(range(page_count)))
             for delay, (pass_name, index) in enumerate(route, start=1):
                 wx.CallLater(delay * 750, smoke_activate_page, index, pass_name)
-            wx.CallLater((len(route) + 2) * 750, self.ExitMainLoop)
+            wx.CallLater(
+                (len(route) + 2) * 750,
+                frame.Close if sys.platform.startswith("linux")
+                else self.ExitMainLoop,
+            )
             return True
 
         # Affiche une annonce si c'est un premier démarrage du logiciel

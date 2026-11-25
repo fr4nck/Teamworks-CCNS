@@ -391,6 +391,12 @@ def _detruire_fenetres_smoke(app):
     """Ferme proprement les fenêtres restantes avant la fin d'un smoke wx."""
     if not os.environ.get("TEAMWORKS_SMOKE_MODE"):
         return
+    if sys.platform.startswith("linux"):
+        remaining = len(wx.GetTopLevelWindows())
+        print("WINDOWS_AFTER_MAINLOOP=" + str(remaining), flush=True)
+        if remaining:
+            raise SystemExit(6)
+        return
     for window in list(wx.GetTopLevelWindows()):
         if window:
             window.Destroy()

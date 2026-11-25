@@ -326,12 +326,36 @@ class Gadget_Horloge(wx.Panel):
         self.SetSizer(self.sizer)
 
     def _AppliquerParametres(self, dictParam):
-        couleurFace = dictParam["couleur_face"]
-        couleurFond = dictParam["couleur_fond"]
-        self.horloge.SetBackgroundColour(couleurFond)
-        self.parent.couleurFondCadre = couleurFond
-        self.horloge.SetFaceFillColour(couleurFace)
+        from Utils import UTILS_Couleurs_dessins as couleurs
+
+        palette = UTILS_Interface.GetPalette()
+        sombre = UTILS_Interface.ResolveAppearance() == "dark"
+
+        if sombre:
+            face = palette["surface_container_low"]
+            fond = palette["surface"]
+        else:
+            face = couleurs.couleur(dictParam["couleur_face"])
+            fond = couleurs.couleur(dictParam["couleur_fond"])
+
+        texte = couleurs.texte_lisible(face, palette["on_surface"])
+
+        self.SetBackgroundColour(fond)
+        self.parent.couleurFondCadre = couleurs.rgb(fond)
+
+        self.horloge.SetBackgroundColour(fond)
+        self.horloge.SetFaceFillColour(face)
+        self.horloge.SetFaceBorderColour(texte)
+        self.horloge.SetHandFillColour(texte)
+        self.horloge.SetHandBorderColour(texte)
+        self.horloge.SetTickFillColour(texte)
+        self.horloge.SetTickBorderColour(texte)
+        self.horloge.SetShadowColour(face)
         self.horloge.Refresh()
+
+    def RafraichirVisuel(self):
+        self._AppliquerParametres(self.parent.paramGadget)
+
 
     def RechargerContexte(self):
         self._AppliquerParametres(self.parent.paramGadget)
@@ -409,6 +433,14 @@ class Gadget_Calendrier(CTRL_Calendrier_tw.Panel):
         self._AppliquerParametres(self.parent.paramGadget)
 
     def _AppliquerParametres(self, dictParam):
+        if UTILS_Interface.ResolveAppearance() == "dark":
+            self._appliquer_palette()
+            fond = self.calendrier.GetBackgroundColour()
+            self.parent.couleurFondCadre = (
+                fond.Red(), fond.Green(), fond.Blue()
+            )
+            return
+
         self.calendrier.SetBackgroundColour(dictParam["colFond"])
         self.SetBackgroundColour(dictParam["colFond"])
         self.parent.couleurFondCadre = dictParam["colFond"]
@@ -421,6 +453,14 @@ class Gadget_Calendrier(CTRL_Calendrier_tw.Panel):
         self.calendrier.couleurVacances = dictParam["colVacs"]
         self.calendrier.couleurFontJoursAvecPresents = dictParam["colFontPresents"]
         self.calendrier.couleurFerie = dictParam["colFeries"]
+
+        self.calendrier.couleurSeparateur = UTILS_Interface.GetToken("outline_variant")
+        self.calendrier.couleurAujourdhui = UTILS_Interface.GetToken("danger")
+        self.calendrier.MAJAffichage()
+
+    def RafraichirVisuel(self):
+        self._AppliquerParametres(self.parent.paramGadget)
+
 
     def RechargerContexte(self):
         self._AppliquerParametres(self.parent.paramGadget)

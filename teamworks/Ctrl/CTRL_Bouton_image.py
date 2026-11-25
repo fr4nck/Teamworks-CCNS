@@ -98,6 +98,43 @@ def _token_texte_bouton(role):
     return "on_surface"
 
 
+def _largeur_minimale_bouton(control, texte, best, icon_only=False):
+    largeur = best.GetWidth()
+
+    if texte:
+        largeur_texte, _ = control.GetTextExtent(
+            texte.replace("&", "")
+        )
+
+        marge = (
+            UTILS_Styles.GetLayoutSpacing("field_gap")
+            + UTILS_Styles.GetLayoutSpacing("control_gap")
+        )
+
+        largeur_requise = largeur_texte + 2 * marge
+
+        get_bitmap = getattr(control, "GetBitmap", None)
+        if callable(get_bitmap):
+            bitmap = get_bitmap()
+            if bitmap.IsOk():
+                position = getattr(control, "positionImage", wx.LEFT)
+                if position in (wx.LEFT, wx.RIGHT):
+                    largeur_requise += (
+                        bitmap.GetWidth()
+                        + 2 * UTILS_Styles.GetControlMetric("button_icon_margin")
+                    )
+
+        largeur = max(largeur, largeur_requise)
+
+    if icon_only:
+        largeur = max(
+            largeur,
+            UTILS_Styles.GetControlMetric("button_min_height")
+        )
+
+    return largeur
+
+
 def _appliquer_contrat_bouton(control, texte="", role="default", icon_only=False):
     if role not in BUTTON_ROLES:
         role = "default"
@@ -105,7 +142,15 @@ def _appliquer_contrat_bouton(control, texte="", role="default", icon_only=False
     control._teamworks_text_style = "label"
     control.SetFont(UTILS_Styles.GetFont("label"))
     control._teamworks_font_scaled = True
-    control.SetForegroundColour(UTILS_Interface.GetToken(_token_texte_bouton(role)))
+    control.SetBackgroundColour(
+        UTILS_Interface.GetToken("surface_container_low")
+    )
+    control.SetForegroundColour(
+        UTILS_Interface.GetToken(
+            _token_texte_bouton(role)
+            if control.IsEnabled() else "disabled"
+        )
+    )
     # Recalculer le BestSize sans hériter d'une ancienne largeur maximale,
     # notamment après SetTexte().
     # Idem pour la largeur minimale mémorisée par un précédent calcul : sans
@@ -119,9 +164,9 @@ def _appliquer_contrat_bouton(control, texte="", role="default", icon_only=False
 
     best = control.GetBestSize()
     hauteur_min = UTILS_Styles.GetControlMetric("button_min_height")
-    largeur_min = best.GetWidth()
-    if icon_only:
-        largeur_min = max(largeur_min, hauteur_min)
+    largeur_min = _largeur_minimale_bouton(
+        control, texte, best, icon_only
+    )
     hauteur = max(best.GetHeight(), hauteur_min)
     control.SetMinSize((largeur_min, hauteur))
     # Un bouton d'action garde sa largeur naturelle. Le parent peut consommer
@@ -219,16 +264,6 @@ class CTRL(wx.Button):
             self.SetBitmapMargins(_echelle_marges(self.margesTexte))
 
         self.AppliquerTheme()
-        self.SetInitialSize()
-
-        best = self.GetBestSize()
-        hauteur_min = UTILS_Styles.GetControlMetric("button_min_height")
-        largeur_min = best.GetWidth()
-        if bitmap.IsOk() and not self.texte:
-            largeur_min = max(largeur_min, hauteur_min)
-        hauteur = max(best.GetHeight(), hauteur_min)
-        self.SetMinSize((largeur_min, hauteur))
-        self.SetMaxSize((largeur_min, -1))
         self._stabiliser_rendu()
 
     def AppliquerTheme(self):
@@ -242,6 +277,23 @@ class CTRL(wx.Button):
     def RafraichirVisuel(self):
         """Point d'entrée sûr pour le moteur de thème après zoom/apparence."""
         self.MAJ()
+
+    def Enable(self, enable=True):
+        changed = wx.Button.Enable(self, enable)
+
+        if hasattr(self, "role"):
+            self.SetBackgroundColour(
+                UTILS_Interface.GetToken("surface_container_low")
+            )
+            self.SetForegroundColour(
+                UTILS_Interface.GetToken(
+                    _token_texte_bouton(self.role)
+                    if self.IsEnabled() else "disabled"
+                )
+            )
+            self.Refresh(False)
+
+        return changed
 
     def SetImage(self, cheminImage=""):
         self.SetBitmap(wx.NullBitmap)

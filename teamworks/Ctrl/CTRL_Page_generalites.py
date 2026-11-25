@@ -1271,7 +1271,7 @@ class Panel_general(wx.Panel):
             varDate_Naiss = datetime.date(annee, mois, jour)
 
         varCp_Naiss = self.text_cp_naiss.GetValue()
-        if varCp_Naiss == "     ":
+        if not varCp_Naiss.strip():
             varCp_Naiss = None
         varVille_Naiss = self.text_ville_naiss.GetValue()
         varPays_Naiss = self.IDpays_naiss
@@ -1279,7 +1279,7 @@ class Panel_general(wx.Panel):
         varNum_Secu = self.text_numsecu.GetValue()
         varAdresse_resid = self.text_adresse.GetValue()
         varCp_Resid = self.text_cp.GetValue()
-        if varCp_Resid == "     ":
+        if not varCp_Resid.strip():
             varCp_Resid = None
         varVille_Resid = self.text_ville.GetValue()
         varMemo = self.text_memo.GetValue()

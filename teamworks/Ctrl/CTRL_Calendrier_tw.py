@@ -125,21 +125,40 @@ class Panel(wx.Panel):
             self.calendrier.SelectJours([datetime.date.today()])
 
     def _appliquer_palette(self):
-        """Mappe tous les états visuels sur les cinq familles de la charte."""
-        couleurs = {
+        from Utils import UTILS_Couleurs_dessins as couleurs
+
+        palette = UTILS_Interface.GetPalette()
+        fond = palette["surface_container_lowest"]
+
+        self.SetBackgroundColour(fond)
+        self.calendrier._teamworks_managed_calendar = True
+        self.calendrier.SetBackgroundColour(fond)
+
+        mapping = {
             "couleurFond": "surface_container_lowest",
             "couleurNormal": "surface_container_lowest",
             "couleurWE": "surface_container_low",
             "couleurSelect": "primary_container",
             "couleurSurvol": "primary",
             "couleurFontJours": "on_surface",
-            "couleurVacances": "warning",
             "couleurFontJoursAvecPresents": "primary",
             "couleurFerie": "surface_container_high",
+            "couleurSeparateur": "outline_variant",
+            "couleurAujourdhui": "danger",
         }
-        for attribut, token in couleurs.items():
-            setattr(self.calendrier, attribut, UTILS_Interface.GetToken(token))
+
+        for attribut, token in mapping.items():
+            setattr(self.calendrier, attribut, palette[token])
+
+        self.calendrier.couleurVacances = couleurs.melanger(
+            fond, palette["warning"], 0.22
+        )
+
         self.calendrier.MAJAffichage()
+
+    def RafraichirVisuel(self):
+        self._appliquer_palette()
+
 
     def _do_layout(self, bordHaut, bordBas, bordLateral):
         # Le calendrier garde les proportions historiques : une seule ligne

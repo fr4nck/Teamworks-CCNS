@@ -3120,7 +3120,7 @@ class listCtrl_Actions(wx.ListCtrl):
         self.SetColumnWidth(0, 120)
         self.SetColumnWidth(1, 290)
         
-        images = [Chemins.GetStaticPath("images/16x16/Vide.png"), Chemins.GetStaticPath("images/16x16/Fleche_droite.png"), Chemins.GetStaticPath("images/16x16/Ok.png"), Chemins.GetStaticPath("images/16x16/Interdit.png")]
+        images = [Chemins.GetStaticPath("Images/16x16/Vide.png"), Chemins.GetStaticPath("Images/16x16/Fleche_droite.png"), Chemins.GetStaticPath("Images/16x16/Ok.png"), Chemins.GetStaticPath("Images/16x16/Interdit.png")]
         self.il = wx.ImageList(16, 16)
         for i in images:
             self.il.Add(wx.Bitmap(i))

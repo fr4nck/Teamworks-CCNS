@@ -192,6 +192,9 @@ def _windows_apps_dark():
 
 
 def _system_dark_from_os():
+    # GTK requires an initialized wx application for system appearance.
+    if sys.platform.startswith("linux") and wx.GetApp() is None:
+        return False
     windows_value = _windows_apps_dark()
     if windows_value is not None:
         return windows_value
@@ -438,7 +441,10 @@ def _apply_palette(window, palette, dark):
     )
     if hasattr(wx, "SearchCtrl"):
         input_types = input_types + (wx.SearchCtrl,)
-    if isinstance(window, (wx.Frame, wx.Dialog)):
+    if getattr(window, "_tw_planning_title", False):
+        background = palette["surface"]
+        foreground = palette["text"]
+    elif isinstance(window, (wx.Frame, wx.Dialog)):
         background = palette["surface"]
         foreground = palette["text"]
     elif isinstance(window, input_types):

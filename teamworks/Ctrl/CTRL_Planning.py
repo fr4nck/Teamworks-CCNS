@@ -23,7 +23,33 @@ from Utils import UTILS_Fichiers
 from Utils import UTILS_Adaptations
 from Utils import UTILS_Presences
 
+from Utils import UTILS_Interface
+from Utils import UTILS_Couleurs_dessins as CouleursDessins
+
 CURSOR = wx.Cursor
+
+
+def palette_planning():
+    p = UTILS_Interface.GetPalette()
+
+    return {
+        "couleurBackground": p["surface"],
+        "couleurFondSem": p["surface_container_lowest"],
+        "couleurFondWE": p["surface_container_high"],
+        "couleurVacances": CouleursDessins.melanger(
+            p["surface_container_lowest"], p["warning"], 0.22
+        ),
+        "couleurFeries": p["surface_container_highest"],
+        "couleurTxtGroupe": p["on_surface"],
+        "couleurBarreTitreGroupe": p["surface_container_highest"],
+        "couleurFondGroupe": p["surface_container"],
+        "couleurBordGroupe": p["outline_variant"],
+        "couleurLineGroupe": p["outline_variant"],
+        "couleurTxtLigne": p["on_surface"],
+        "couleurLigneSelect": p["selection"],
+        "couleurTxtLigneSelect": p["primary"],
+    }
+
 
 
 def _wx_int(value):
@@ -250,8 +276,9 @@ class Graduations(wx.ScrolledWindow):
         j = k = etape = 0
         i=coordLigne[0]
 
-        dc.SetPen(wx.Pen("black"))
-        dc.SetTextForeground("black")
+        texte = UTILS_Interface.GetToken("on_surface")
+        dc.SetPen(wx.Pen(texte))
+        dc.SetTextForeground(texte)
         font = self.GetFont()
         font.SetPointSize(tailleFont)
         dc.SetFont(font)
@@ -281,7 +308,7 @@ class Graduations(wx.ScrolledWindow):
         # use PrepateDC to set position correctly
         self.PrepareDC(dc)
         # we need to clear the dc BEFORE calling PrepareDC
-        colFond = wx.SystemSettings.GetColour(30) #self.GetBackgroundColour()
+        colFond = UTILS_Interface.GetToken("surface")
         bg = wx.Brush(colFond)
         dc.SetBackground(bg)
         dc.Clear()
@@ -310,6 +337,9 @@ class Graduations(wx.ScrolledWindow):
 # ----------- TEST DC -----------------------------------------------------------------------------------------------------------
 # --------------------------------------------------------------------------------------------------------------------------------------
 
+    def RafraichirVisuel(self):
+        self.SetBackgroundColour(UTILS_Interface.GetToken("surface"))
+        self.MAJAffichage()
 
 
 class WidgetPlanning(wx.ScrolledWindow):
@@ -423,7 +453,12 @@ class WidgetPlanning(wx.ScrolledWindow):
     def MAJAffichage(self):
         self.DoDrawing(self.pdc)
         self.Refresh()
-                   
+
+    def RafraichirVisuel(self):
+        self.SetBackgroundColour(UTILS_Interface.GetToken("surface"))
+        self.MAJAffichage()
+
+
     def OnPaint(self, event):
         # Create a buffered paint DC.  It will create the real
         # wx.PaintDC and then blit the bitmap to it when dc is
@@ -435,7 +470,7 @@ class WidgetPlanning(wx.ScrolledWindow):
         # use PrepateDC to set position correctly
         self.PrepareDC(dc)
         # we need to clear the dc BEFORE calling PrepareDC
-        colFond = wx.SystemSettings.GetColour(30) #self.GetBackgroundColour()
+        colFond = UTILS_Interface.GetToken("surface")
         bg = wx.Brush(colFond)
         dc.SetBackground(bg)
         dc.Clear()
@@ -453,6 +488,8 @@ class WidgetPlanning(wx.ScrolledWindow):
 
     def DoDrawing(self, dc):
         """ Creation du dessin dans le PseudoDC """
+        self._couleurs = palette_planning()
+        self.SetBackgroundColour(self._couleurs["couleurBackground"])
         dc.RemoveAll()
         self.id_max = 1
         tailleDC = self.GetSize()[0]-20, self.GetSize()[1]
@@ -501,7 +538,7 @@ class WidgetPlanning(wx.ScrolledWindow):
         dc.DrawRectangle(_wx_int(posG), _wx_int(y), _wx_int(posD-posG), _wx_int(h))
         
         # Dessin Heures
-        dc.SetTextForeground(couleurFontHeures)
+        dc.SetTextForeground(CouleursDessins.texte_lisible(couleurFondBarre, couleurFontHeures))
         font = self.GetFont()
         font.SetPointSize(tailleFontHeure)
         dc.SetFont(font)
@@ -520,7 +557,7 @@ class WidgetPlanning(wx.ScrolledWindow):
         dc.DrawText(texteFin, _wx_int(posD - largTexte), _wx_int(y + 2))
         # Dessin L gende
         if hauteurBarre > 25 :
-            dc.SetTextForeground(couleurFontIntitule)
+            dc.SetTextForeground(CouleursDessins.texte_lisible(couleurFondBarre, couleurFontIntitule))
             font = self.GetFont()
             font.SetPointSize(tailleFontIntitule)
             dc.SetFont(font)
@@ -671,10 +708,10 @@ class WidgetPlanning(wx.ScrolledWindow):
                 dc.SetId(IDobjet)
         
             # D termine la couleur de fond du groupe
-            couleurFond = couleurFondGroupe
+            couleurFond = (self._couleurs["couleurFondGroupe"] if mode == "screen" else couleurFondGroupe)
 
             # Dessine le groupe
-            dc.SetPen(wx.Pen(couleurBordGroupe, 1))
+            dc.SetPen(wx.Pen((self._couleurs["couleurBordGroupe"] if mode == "screen" else couleurBordGroupe), 1))
             posH, posB = valeurs[1], valeurs[2]
                 
             texte = valeurs[0]
@@ -684,11 +721,11 @@ class WidgetPlanning(wx.ScrolledWindow):
             dc.SetBrush(wx.Brush(couleurFond))
             dc.DrawRoundedRectangle(10, posY+8-1, tailleDC[0]-20, hauteurGroupe-posY-1, 5)
             # Titre du groupe
-            dc.SetBrush(wx.Brush(couleurBarreTitreGroupe))
+            dc.SetBrush(wx.Brush((self._couleurs["couleurBarreTitreGroupe"] if mode == "screen" else couleurBarreTitreGroupe)))
             dc.DrawRoundedRectangle(10, posY, tailleDC[0]-20, 17, 5)
-            dc.SetPen(wx.Pen(couleurLineGroupe, 2))
+            dc.SetPen(wx.Pen((self._couleurs["couleurLineGroupe"] if mode == "screen" else couleurLineGroupe), 2))
             dc.DrawLine(10, posY + 16, tailleDC[0]-11, posY + 16)
-            dc.SetTextForeground(couleurTxtGroupe)
+            dc.SetTextForeground((self._couleurs["couleurTxtGroupe"] if mode == "screen" else couleurTxtGroupe))
             dc.DrawText(texte, 40, posY+1)
 
         # Dessin des lignes
@@ -700,8 +737,8 @@ class WidgetPlanning(wx.ScrolledWindow):
                 IDobjet = self.CreateID()
                 dc.SetId(IDobjet)
         
-            dc.SetBrush(wx.Brush((230, 230, 230)))
-            dc.SetPen(wx.Pen((230, 230, 230), 1))
+            dc.SetBrush(wx.Brush(self._couleurs["couleurFondSem"]))
+            dc.SetPen(wx.Pen(self._couleurs["couleurBordGroupe"], 1))
             dc.SetFont(wx.Font(8, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, 'Arial'))
             posY = valeurs[1] 
             posX = largeurEnteteLigne+30
@@ -711,24 +748,24 @@ class WidgetPlanning(wx.ScrolledWindow):
             hauteur = hauteurBarre
             # D finit la brush de la ligne
             if key in selectionsLignes : 
-                couleurLigneTmp = couleurLigneSelect
+                couleurLigneTmp = (self._couleurs["couleurLigneSelect"] if mode == "screen" else couleurLigneSelect)
             else:
-                couleurLigneTmp = couleurFondSem
+                couleurLigneTmp = (self._couleurs["couleurFondSem"] if mode == "screen" else couleurFondSem)
                 # Recherche de quelle couleur doit  tre la ligne
                 texteDate = key[1]
                 # Si c'est un jour de vacances
                 if texteDate in self.joursVacances:
-                    couleurLigneTmp = couleurVacances
+                    couleurLigneTmp = (self._couleurs["couleurVacances"] if mode == "screen" else couleurVacances)
                 # Si c'est un jour de Week-end
                 jourSemaine = texteDate.isoweekday()
                 if jourSemaine == 6 or jourSemaine == 7: 
-                    couleurLigneTmp = couleurFondWE
+                    couleurLigneTmp = (self._couleurs["couleurFondWE"] if mode == "screen" else couleurFondWE)
                 # Si c'est un jour f ri 
                 if (texteDate.day, texteDate.month) in self.listeFeriesFixes :
-                    couleurLigneTmp = couleurFeries
+                    couleurLigneTmp = (self._couleurs["couleurFeries"] if mode == "screen" else couleurFeries)
                 else:
                     if texteDate in self.listeFeriesVariables :
-                        couleurLigneTmp = couleurFeries
+                        couleurLigneTmp = (self._couleurs["couleurFeries"] if mode == "screen" else couleurFeries)
                         
             # Dessin de la ligne
             dc.SetBrush(wx.Brush(couleurLigneTmp))
@@ -745,7 +782,7 @@ class WidgetPlanning(wx.ScrolledWindow):
                         if date_debut <= str(texteDate) <= date_fin : 
                             contrat = True
                     if contrat == False :
-                        dc.SetBrush(wx.Brush( (200, 200, 200) , wx.BDIAGONAL_HATCH))
+                        dc.SetBrush(wx.Brush(self._couleurs["couleurBordGroupe"], wx.BDIAGONAL_HATCH))
                         dc.DrawRectangle(_wx_int(posX), _wx_int(posY), _wx_int(largeur), _wx_int(hauteur))
 
             # Cr ation du texte d'entete de ligne
@@ -753,8 +790,8 @@ class WidgetPlanning(wx.ScrolledWindow):
             largeurTexte, hauteurTexte = self.GetTextExtent(texteLigne)
             posYTxt = (hauteurBarre/2) - (hauteurTexte/2) + posY
             posXTxt = largeurEnteteLigne - largeurTexte + 20 # 20 est la taille du bord gauche du DC
-            dc.SetTextForeground(couleurTxtLigne)
-            if key in selectionsLignes : dc.SetTextForeground(couleurTxtLigneSelect)
+            dc.SetTextForeground((self._couleurs["couleurTxtLigne"] if mode == "screen" else couleurTxtLigne))
+            if key in selectionsLignes : dc.SetTextForeground((self._couleurs["couleurTxtLigneSelect"] if mode == "screen" else couleurTxtLigneSelect))
             dc.DrawText(texteLigne, _wx_int(posXTxt), _wx_int(posYTxt))
             
             # Dessin du label temps total de la ligne
@@ -801,7 +838,7 @@ class WidgetPlanning(wx.ScrolledWindow):
                 dc.SetId(IDobjet)
                 self.dictInfosLignes[keyLigne]["IDobjet"] = IDobjet
             
-            dc.SetTextForeground(couleurTxtLigne)
+            dc.SetTextForeground((self._couleurs["couleurTxtLigne"] if mode == "screen" else couleurTxtLigne))
             dc.SetFont(wx.Font(7, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, 'Arial'))
             self.pdc.DrawText(labelTempsLigne, _wx_int(posX), _wx_int(posY))
             
@@ -851,7 +888,7 @@ class WidgetPlanning(wx.ScrolledWindow):
             dc.SetId(IDobjet)
             self.dictInfosGroupes[keyGroupe]["IDobjetTempsGroupe"] = IDobjet
 
-        dc.SetTextForeground(couleurFondGroupe)
+        dc.SetTextForeground((self._couleurs["couleurTxtGroupe"] if mode == "screen" else couleurTxtGroupe))
         dc.SetFont(wx.Font(7, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, 'Arial'))        
         self.pdc.DrawText(labelTempsGroupe, _wx_int(posX), _wx_int(posY))
         
@@ -905,7 +942,7 @@ class WidgetPlanning(wx.ScrolledWindow):
             self.dictInfosGroupes[keyGroupe]["IDobjetNbrePresents"] = IDobjet
             self.dictIDs[IDobjet] = ("barreNbrePresents", keyGroupe)
         
-        couleur = couleurBordGroupe
+        couleur = (self._couleurs["couleurTxtLigne"] if mode == "screen" else couleurTxtLigne)
         dc.SetTextForeground(couleur)
         dc.SetFont(wx.Font(7, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, 'Arial'))        
         
@@ -919,8 +956,8 @@ class WidgetPlanning(wx.ScrolledWindow):
                 texte = str(nbre)
                 largTexte, hautTexte = self.GetTextExtent(texte)
                 positionTexte = ((position + positionSuivante) / 2.0 ) - (largTexte/2.0)+1
-                dc.SetPen(wx.Pen(couleurFondGroupe, 0))
-                dc.SetBrush(wx.Brush(couleurFondGroupe))
+                dc.SetPen(wx.Pen((self._couleurs["couleurFondGroupe"] if mode == "screen" else couleurFondGroupe), 0))
+                dc.SetBrush(wx.Brush((self._couleurs["couleurFondGroupe"] if mode == "screen" else couleurFondGroupe)))
                 dc.DrawRectangle(_wx_int(positionTexte-1), _wx_int(posY-5), _wx_int(largTexte+1), _wx_int(hautTexte-2))
                 self.pdc.DrawText(texte, _wx_int(positionTexte), _wx_int(posY-6))
             index += 1
@@ -1963,37 +2000,37 @@ class BarreOptions(wx.Panel):
 
     def OnMotion_Outils(self, event):
         self.boutonOutils.SetBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Outils_2.png"), wx.BITMAP_TYPE_PNG))
-        self.txtOutils.SetForegroundColour(wx.RED)
+        self.txtOutils.SetForegroundColour(UTILS_Interface.GetToken("primary"))
         self.txtOutils.Refresh()
         event.Skip()
 
     def OnLeaveWindow_Outils(self, event):
         self.boutonOutils.SetBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Outils.png"), wx.BITMAP_TYPE_PNG))
-        self.txtOutils.SetForegroundColour(wx.BLACK)
+        self.txtOutils.SetForegroundColour(UTILS_Interface.GetToken("on_surface"))
         self.txtOutils.Refresh()
         event.Skip()
 
     def OnMotion_Options(self, event):
         self.boutonOptions.SetBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Options_2.png"), wx.BITMAP_TYPE_PNG))
-        self.txtOptions.SetForegroundColour(wx.RED)
+        self.txtOptions.SetForegroundColour(UTILS_Interface.GetToken("primary"))
         self.txtOptions.Refresh()
         event.Skip()
 
     def OnLeaveWindow_Options(self, event):
         self.boutonOptions.SetBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Options.png"), wx.BITMAP_TYPE_PNG))
-        self.txtOptions.SetForegroundColour(wx.BLACK)
+        self.txtOptions.SetForegroundColour(UTILS_Interface.GetToken("on_surface"))
         self.txtOptions.Refresh()
         event.Skip()
         
     def OnMotion_Aide(self, event):
         self.boutonAide.SetBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Aide_2.png"), wx.BITMAP_TYPE_PNG))
-        self.txtAide.SetForegroundColour(wx.RED)
+        self.txtAide.SetForegroundColour(UTILS_Interface.GetToken("primary"))
         self.txtAide.Refresh()
         event.Skip()
 
     def OnLeaveWindow_Aide(self, event):
         self.boutonAide.SetBitmap(wx.Bitmap(Chemins.GetStaticPath("Images/16x16/Aide.png"), wx.BITMAP_TYPE_PNG))
-        self.txtAide.SetForegroundColour(wx.BLACK)
+        self.txtAide.SetForegroundColour(UTILS_Interface.GetToken("on_surface"))
         self.txtAide.Refresh()
         event.Skip()
     
@@ -2114,7 +2151,7 @@ class BarreOptions(wx.Panel):
         # Recherche emails
         DB = GestionDB.DB()
         req = """SELECT IDpersonne, texte
-        FROM Coordonnees 
+        FROM coordonnees
         WHERE categorie='Email';"""
         DB.ExecuterReq(req)
         liste_coords = DB.ResultatReq()
@@ -2326,11 +2363,34 @@ class PanelPlanning(wx.Panel):
         
         self.barreOptions = BarreOptions(self)
         
-        self.barreTitre = FonctionsPerso.BarreTitre(self, _(u"Le planning"), _(u"Le planning"))
+        from Ctrl import CTRL_Texte
+        from Utils import UTILS_Interface, UTILS_Theme
+
+        self.SetBackgroundColour(
+            UTILS_Interface.GetToken("surface")
+        )
+
+        self.barreTitre = CTRL_Texte.H3(
+            self, _(u"Le planning")
+        )
+        self.barreTitre._tw_planning_title = True
+        self.barreTitre.SetToolTip(_(u"Le planning"))
+
+        UTILS_Theme.apply_to_window(
+            self.barreTitre, recursive=False
+        )
 
         # Layout
         sizer =  wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.barreTitre, 0, wx.EXPAND, 0)
+        from Utils import UTILS_Styles
+        padding = UTILS_Styles.GetLayoutSpacing("content_padding")
+        gap = UTILS_Styles.GetLayoutSpacing("field_gap")
+        sizer.Add(
+            self.barreTitre, 0,
+            wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP,
+            padding,
+        )
+        sizer.AddSpacer(gap)
         grid_sizer = wx.FlexGridSizer(rows=3, cols=1, hgap=0, vgap=0)
         grid_sizer.Add(self.DCgraduations, 0, wx.EXPAND|wx.ALL, 10)
         grid_sizer.Add(self.DCplanning, 1, wx.EXPAND|wx.LEFT|wx.RIGHT, 10)

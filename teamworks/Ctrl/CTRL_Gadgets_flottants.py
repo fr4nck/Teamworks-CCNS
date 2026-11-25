@@ -367,6 +367,20 @@ class EspaceGadgets(wx.Panel):
             self.PlanifierSauvegardePerspective()
         event.Skip()
 
+    def PreparerFermeture(self):
+        if self._timer_perspective is not None:
+            if self._timer_perspective.IsRunning():
+                self._timer_perspective.Stop()
+            self._timer_perspective = None
+
+        for timer in list(self._timers_visibilite.values()):
+            if timer.IsRunning():
+                timer.Stop()
+
+        self._timers_visibilite.clear()
+        self.SauverPerspective()
+        self._DetruirePanes()
+
     def OnDestroy(self, event):
         if event.GetEventObject() is self:
             try:

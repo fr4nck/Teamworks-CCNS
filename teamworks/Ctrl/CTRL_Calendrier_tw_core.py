@@ -9,6 +9,7 @@
 import Chemins
 from Utils.UTILS_Traduction import _
 import wx
+from Utils import UTILS_Couleurs_dessins as CouleursDessins
 from Ctrl import CTRL_Bouton_image
 from Utils.WX_COMPAT import wx_int
 import six
@@ -45,6 +46,9 @@ class Calendrier(wx.ScrolledWindow):
         self.couleurVacances = (255, 255, 255)    # Couleur des cases dates d'ouverture de la structure
         self.couleurFontJoursAvecPresents = (255, 0, 0)
         self.couleurFerie = (180, 180, 180) # couleur des jours fériés
+
+        self.couleurSeparateur = (210, 210, 210)
+        self.couleurAujourdhui = (255, 0, 0)
 
         self.headerMois = True
         self.headerJours = True
@@ -134,6 +138,18 @@ class Calendrier(wx.ScrolledWindow):
     def MAJAffichage(self):
         self.DoDrawing(self.pdc)
         self.Refresh()
+
+    def RafraichirVisuel(self):
+        if not getattr(self, "_teamworks_managed_calendar", False):
+            return
+
+        self.SetBackgroundColour(
+            CouleursDessins.couleur(self.couleurFond)
+        )
+        self.SetForegroundColour(
+            CouleursDessins.couleur(self.couleurFontJours)
+        )
+        self.MAJAffichage()
  
     def OnSize(self, event):
         self.MAJAffichage()
@@ -541,7 +557,7 @@ class Calendrier(wx.ScrolledWindow):
         largTexte, hautTexte = self.GetTextExtent(texte)
         dc.DrawText(texte, int(xMois+(largMois/2)-int(largTexte/2)), int(yMois+(hautHeader/2)-int(hautTexte/2)))
         # Dessin de la ligne
-        dc.SetPen(wx.Pen((210, 210, 210), 1))
+        dc.SetPen(wx.Pen(self.couleurSeparateur, 1))
         dc.DrawLine(
             wx_int(xMois + 2),
             wx_int(yMois + hautHeader - 2),
@@ -558,24 +574,24 @@ class Calendrier(wx.ScrolledWindow):
         dc.SetId(IDobjet)
         
         # Application des couleurs normales
-        dc.SetBrush(wx.Brush(self.couleurNormal))
+        fond_case = self.couleurNormal
         dc.SetPen(wx.Pen(self.couleurFond, 1))
 
         # Si c'est un jour de vacances
         if texteDate in self.joursVacances:
-            dc.SetBrush(wx.Brush(self.couleurVacances))
+            fond_case = self.couleurVacances
                         
         # Si c'est un jour de Week-end
         jourSemaine = texteDate.isoweekday()
         if jourSemaine == 6 or jourSemaine == 7:
-            dc.SetBrush(wx.Brush(self.couleurWE))
+            fond_case = self.couleurWE
             
         # Si c'est un jour férié
         if (texteDate.day, texteDate.month) in self.listeFeriesFixes :
-            dc.SetBrush(wx.Brush(self.couleurFerie))
+            fond_case = self.couleurFerie
         else:
             if texteDate in self.listeFeriesVariables :
-                dc.SetBrush(wx.Brush(self.couleurFerie))
+                fond_case = self.couleurFerie
           
         # Si c'est une case survolée
         if survol == True :
@@ -585,22 +601,23 @@ class Calendrier(wx.ScrolledWindow):
         # Dessine d'une case sélectionnée
         if len(self.listeSelections) != 0 :
             if texteDate in self.listeSelections:
-                dc.SetBrush(wx.Brush(self.couleurSelect))
+                fond_case = self.couleurSelect
         
         # Dessin de la case
+        dc.SetBrush(wx.Brush(fond_case))
         dc.DrawRectangle(int(x), int(y), int(l), int(h))
         
         # Dessin du symbole Aujourd'hui
         if texteDate == datetime.date.today() :
-            dc.SetBrush(wx.Brush((255, 0, 0)))
+            dc.SetBrush(wx.Brush(self.couleurAujourdhui))
             dc.SetPen(wx.Pen((0, 0, 0), 0))
             dc.DrawRectangle(int(x+l-7), int(y+2), 4, 4)
 
         # Dessin texte
         if six.text_type(texteDate) in self.listeJoursAvecPresents :
-            dc.SetTextForeground(self.couleurFontJoursAvecPresents)
+            dc.SetTextForeground(CouleursDessins.texte_lisible(fond_case, self.couleurFontJoursAvecPresents))
         else:
-            dc.SetTextForeground(self.couleurFontJours)
+            dc.SetTextForeground(CouleursDessins.texte_lisible(fond_case, self.couleurFontJours))
             
         font = self.GetFont()
         font.SetPointSize(self.tailleFont(l, h))

@@ -386,7 +386,7 @@ class DB:
             sql = "INSERT INTO photos (IDindividu, photo) VALUES (?, ?)"
             self.cursor.execute(sql, [IDindividu, sqlite3.Binary(blobPhoto)])
             self.connexion.commit()
-            self.cursor.execute("SELECT last_insert_rowid() FROM Photos")
+            self.cursor.execute("SELECT last_insert_rowid() FROM photos")
         newID = self.cursor.fetchall()[0][0]
         return newID
 
@@ -1015,6 +1015,67 @@ def ConvertConditionChaine(liste=[]):
 def ConversionLocalReseau(nomFichier="", nouveauFichier="", fenetreParente=None):
     """ Convertit une DB locale en version RESEAU MySQL """
     print("Lancement de la procedure de conversion local->reseau :")
+
+    # Inventorier les sources avant toute creation distante.
+    # Seules les tables additives initialisees a la demande
+    # peuvent etre absentes d'un ancien dossier.
+    from pathlib import Path
+    from contextlib import closing
+
+    tables_optionnelles = {
+        "contrats_cee_baremes",
+        "contrats_documents_modeles",
+    }
+
+    absentes_optionnelles = {}
+
+    for suffixe, definitions in (
+        ("TDATA", Tables.DB_DATA),
+        ("TPHOTOS", Tables.DB_PHOTOS),
+        ("TDOCUMENTS", Tables.DB_DOCUMENTS),
+    ):
+        source = Path(
+            UTILS_Fichiers.GetRepData(
+                "%s_%s.dat" % (nomFichier, suffixe)
+            )
+        ).resolve()
+
+        if not source.is_file():
+            return False, "Fichier source absent : " + suffixe
+
+        try:
+            with closing(sqlite3.connect(
+                source.as_uri() + "?mode=ro",
+                uri=True
+            )) as connexion:
+                presentes = {
+                    row[0] for row in connexion.execute(
+                        "SELECT name FROM sqlite_master WHERE type='table'"
+                    )
+                }
+        except sqlite3.Error as err:
+            return False, "Lecture SQLite impossible : %s" % err
+
+        absentes = set(definitions) - presentes
+
+        autorisees = (
+            tables_optionnelles if suffixe == "TDATA"
+            else set()
+        )
+
+        obligatoires = absentes - autorisees
+
+        if obligatoires:
+            return False, (
+                "Tables sources manquantes (%s) : %s"
+                % (suffixe, ", ".join(sorted(obligatoires)))
+            )
+
+        absentes_optionnelles[suffixe] = absentes
+
+        for table in sorted(absentes):
+            print("CONVERSION_OPTIONAL_TABLE_EMPTY=" + table)
+
     
     for suffixe, dictTables in ( ("TDATA", Tables.DB_DATA), ("TPHOTOS", Tables.DB_PHOTOS), ("TDOCUMENTS", Tables.DB_DOCUMENTS) ) :
         
@@ -1052,6 +1113,15 @@ def ConversionLocalReseau(nomFichier="", nouveauFichier="", fenetreParente=None)
         for nomTable in listeTables :
             print("  > Importation de la table '%s' (%d/%d)" % (nomTable, index, len(listeTables)))
             if fenetreParente != None : fenetreParente.SetStatusText(_(u"Conversion du fichier en cours... Importation de la table %d sur %s...") % (index, len(listeTables)))
+            if nomTable in absentes_optionnelles[suffixe]:
+                # La table cible a deja ete creee par CreationTables.
+                # Aucune donnee source n'existe pour cette table.
+                if not db.IsTableExists(nomTable):
+                    db.Close()
+                    return False, "Table cible absente : " + nomTable
+                index += 1
+                continue
+
             resultat = db.Importation_table(nomTable, nomFichierActif)
             if resultat[0] == False :
                 db.Close()
